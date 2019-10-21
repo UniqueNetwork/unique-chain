@@ -26,7 +26,7 @@ cargo build --release
 
 ### Single node development chain
 
-Purge any existing developer chain state:
+Purge any existing development chain state:
 
 ```bash
 ./target/release/node-template purge-chain --dev
