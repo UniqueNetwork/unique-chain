@@ -75,7 +75,7 @@ cargo run -- \
 
 Additional CLI usage options are available and may be shown by running `cargo run -- --help`.
 
-### Advanced: Generate Your Own Substrate Node Template
+## Advanced: Generate Your Own Substrate Node Template
 
 A substrate node template is always based on a certain version of Substrate. You can inspect it by
 opening [Cargo.toml](Cargo.toml) and see the template referred to a specific Substrate commit(
