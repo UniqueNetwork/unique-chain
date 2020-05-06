@@ -2,7 +2,7 @@
 
 ## Application Development
 
-If you are building an application that operates NFT tokens, use [this guide](doc/application_development.md).
+If you are building an application that operates NFT tokens, use [this document](doc/application_development.md).
 
 ## Building
 
