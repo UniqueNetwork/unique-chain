@@ -2512,25 +2512,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "nix"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50e4785f2c3b7589a0d0c1dd60285e1188adac4006e8abd6dd578e1567027363"
-dependencies = [
- "bitflags",
- "cc",
- "cfg-if",
- "libc",
- "void",
-]
-
-[[package]]
-name = "node-template"
+name = "nft"
 version = "2.0.0-alpha.6"
 dependencies = [
  "futures 0.3.4",
  "log",
- "node-template-runtime",
+ "nft-runtime",
  "sc-basic-authorship",
  "sc-cli",
  "sc-client",
@@ -2553,7 +2540,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "node-template-runtime"
+name = "nft-runtime"
 version = "2.0.0-alpha.6"
 dependencies = [
  "frame-executive",
@@ -2562,9 +2549,9 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",
+ "pallet-nft",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
- "pallet-template",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "parity-scale-codec",
@@ -2582,6 +2569,19 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder-runner",
+]
+
+[[package]]
+name = "nix"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50e4785f2c3b7589a0d0c1dd60285e1188adac4006e8abd6dd578e1567027363"
+dependencies = [
+ "bitflags",
+ "cc",
+ "cfg-if",
+ "libc",
+ "void",
 ]
 
 [[package]]
@@ -2802,6 +2802,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-nft"
+version = "2.0.0-alpha.6"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-randomness-collective-flip"
 version = "2.0.0-alpha.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2844,19 +2857,6 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "serde",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-template"
-version = "2.0.0-alpha.6"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",

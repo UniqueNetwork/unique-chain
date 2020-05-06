@@ -11,7 +11,6 @@
 
 use frame_support::{
 	dispatch::DispatchResult, decl_module, decl_storage, decl_event,
-	weights::{DispatchClass, ClassifyDispatch, WeighData, Weight},
 	ensure,
 };
 use frame_system::{self as system, ensure_signed };
@@ -62,7 +61,7 @@ decl_storage! {
 	trait Store for Module<T: Trait> as TemplateModule {
 
 		/// Next available collection ID
-		pub NextCollectionID get(next_collection_id): u64;
+		pub NextCollectionID get(next_collection_id): u64 = 1;
 
 		/// Collection map
 		pub Collection get(collection): map hasher(blake2_128_concat) u64 => CollectionType<T::AccountId>;

@@ -38,7 +38,7 @@ pub use frame_support::{
 };
 
 /// Importing a template pallet
-pub use template;
+pub use nft;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -92,8 +92,8 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("node-template"),
-	impl_name: create_runtime_str!("node-template"),
+	spec_name: create_runtime_str!("nft"),
+	impl_name: create_runtime_str!("nft"),
 	authoring_version: 1,
 	spec_version: 1,
 	impl_version: 1,
@@ -222,7 +222,7 @@ impl sudo::Trait for Runtime {
 }
 
 /// Used for the module template in `./template.rs`
-impl template::Trait for Runtime {
+impl nft::Trait for Runtime {
 	type Event = Event;
 }
 
@@ -241,7 +241,7 @@ construct_runtime!(
 		TransactionPayment: transaction_payment::{Module, Storage},
 		Sudo: sudo::{Module, Call, Config<T>, Storage, Event<T>},
 		// Used for the module template in `./template.rs`
-		TemplateModule: template::{Module, Call, Storage, Event<T>},
+		Nft: nft::{Module, Call, Storage, Event<T>},
 	}
 );
 

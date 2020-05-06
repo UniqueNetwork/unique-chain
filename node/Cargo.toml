@@ -1,11 +1,11 @@
 [package]
 authors = ['Anonymous']
 build = 'build.rs'
-description = 'Substrate Node template'
+description = 'Substrate Node nft'
 edition = '2018'
 homepage = 'https://substrate.dev'
 license = 'Unlicense'
-name = 'node-template'
+name = 'nft'
 repository = 'https://github.com/paritytech/substrate/'
 version = '2.0.0-alpha.6'
 
@@ -17,7 +17,7 @@ futures = '0.3.4'
 log = '0.4.8'
 structopt = '0.3.8'
 
-[dependencies.node-template-runtime]
+[dependencies.nft-runtime]
 path = '../runtime'
 version = '2.0.0-alpha.6'
 
@@ -75,4 +75,4 @@ version = '2.0.0-alpha.6'
 version = '2.0.0-alpha.6'
 
 [[bin]]
-name = 'node-template'
+name = 'nft'

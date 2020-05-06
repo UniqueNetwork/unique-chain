@@ -95,10 +95,10 @@ default-features = false
 package = 'frame-system'
 version = '2.0.0-alpha.6'
 
-[dependencies.template]
+[dependencies.nft]
 default-features = false
-package = 'pallet-template'
-path = '../pallets/template'
+package = 'pallet-nft'
+path = '../pallets/nft'
 version = '2.0.0-alpha.6'
 
 [dependencies.timestamp]
@@ -120,7 +120,7 @@ authors = ['Anonymous']
 edition = '2018'
 homepage = 'https://substrate.dev'
 license = 'Unlicense'
-name = 'node-template-runtime'
+name = 'nft-runtime'
 repository = 'https://github.com/paritytech/substrate/'
 version = '2.0.0-alpha.6'
 
@@ -154,5 +154,5 @@ std = [
     'system/std',
     'timestamp/std',
     'transaction-payment/std',
-    'template/std',
+    'nft/std',
 ]
