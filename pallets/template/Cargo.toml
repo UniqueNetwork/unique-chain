@@ -17,6 +17,14 @@ features = ['derive']
 package = 'parity-scale-codec'
 version = '1.3.0'
 
+[dependencies.sp-std]
+default-features = false
+version = '2.0.0-alpha.6'
+
+[dependencies.sp-runtime]
+default-features = false
+version = '2.0.0-alpha.6'
+
 [dependencies.frame-support]
 default-features = false
 version = '2.0.0-alpha.6'
@@ -32,9 +40,7 @@ version = '2.0.0-alpha.6'
 default-features = false
 version = '2.0.0-alpha.6'
 
-[dev-dependencies.sp-runtime]
-default-features = false
-version = '2.0.0-alpha.6'
+
 
 [features]
 default = ['std']
@@ -42,4 +48,7 @@ std = [
     'codec/std',
     'frame-support/std',
     'frame-system/std',
+    "sp-io/std",
+    "sp-runtime/std",
+    'sp-std/std',
 ]
