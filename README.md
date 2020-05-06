@@ -1,27 +1,33 @@
-# Substrate Node Template
+# NFT Parachain
 
-A new Substrate node, ready for hacking. This node includes:
+## Application Development
 
-* A FRAME-based runtime
-* A template pallet
-* Aura block authoring
-* Grandpa finality gadget
+If you are building an application that operates NFT tokens, use [this guide](doc/application_development.md).
 
-## Build
+## Building
 
 Install Rust:
 
 ```bash
 curl https://sh.rustup.rs -sSf | sh
+rustup default nightly
+sudo apt-get install libssl-dev pkg-config libclang-dev clang
+
 ```
 
-Initialize your Wasm Build environment:
+Install required tools:
 
 ```bash
 ./scripts/init.sh
 ```
 
-Build Wasm and native code:
+Build the WebAssembly binary:
+
+```bash
+./scripts/build.sh
+```
+
+Build all native code:
 
 ```bash
 cargo build --release
@@ -29,31 +35,17 @@ cargo build --release
 
 ## Run
 
-### Single Node Development Chain
-
-Purge any existing developer chain state:
+You can start a development chain with:
 
 ```bash
-./target/release/node-template purge-chain --dev
-```
-
-Start a development chain with:
-
-```bash
-./target/release/node-template --dev
+cargo run -- --dev
 ```
 
 Detailed logs may be shown by running the node with the following environment variables set: `RUST_LOG=debug RUST_BACKTRACE=1 cargo run -- --dev`.
 
-### Multi-Node Local Testnet
+If you want to see the multi-node consensus algorithm in action locally, then you can create a local testnet with two validator nodes for Alice and Bob, who are the initial authorities of the genesis chain that have been endowed with testnet units. Give each node a name and expose them so they are listed on the Polkadot [telemetry site](https://telemetry.polkadot.io/#/Local%20Testnet). You'll need two terminal windows open.
 
-If you want to see the multi-node consensus algorithm in action locally, then you can create a local testnet with two validator nodes for Alice and Bob, who are the initial authorities of the genesis chain that have been endowed with testnet units.
-
-Optionally, give each node a name and expose them so they are listed on the Polkadot [telemetry site](https://telemetry.polkadot.io/#/Local%20Testnet).
-
-You'll need two terminal windows open.
-
-We'll start Alice's substrate node first on default TCP port 30333 with her chain database stored locally at `/tmp/alice`. The bootnode ID of her node is `QmRpheLN4JWdAnY7HGJfWFNbfkQCb6tFf4vvA6hgjMZKrR`, which is generated from the `--node-key` value that we specify below:
+We'll start Alice's substrate node first on default TCP port 30333 with her chain database stored locally at `/tmp/alice`. The bootnode ID of her node is `QmQZ8TjTqeDj3ciwr93EJ95hxfDsb9pEYDizUAbWpigtQN`, which is generated from the `--node-key` value that we specify below:
 
 ```bash
 cargo run -- \
@@ -70,7 +62,7 @@ In the second terminal, we'll start Bob's substrate node on a different TCP port
 ```bash
 cargo run -- \
   --base-path /tmp/bob \
-  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/QmRpheLN4JWdAnY7HGJfWFNbfkQCb6tFf4vvA6hgjMZKrR \
+  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/QmQZ8TjTqeDj3ciwr93EJ95hxfDsb9pEYDizUAbWpigtQN \
   --chain=local \
   --bob \
   --port 30334 \
@@ -79,29 +71,3 @@ cargo run -- \
 ```
 
 Additional CLI usage options are available and may be shown by running `cargo run -- --help`.
-
-## Advanced: Generate Your Own Substrate Node Template
-
-A substrate node template is always based on a certain version of Substrate. You can inspect it by
-opening [Cargo.toml](Cargo.toml) and see the template referred to a specific Substrate commit(
-`rev` field), branch, or version.
-
-You can generate your own Substrate node-template based on a particular Substrate
-version/commit by running following commands:
-
-```bash
-# git clone from the main Substrate repo
-git clone https://github.com/paritytech/substrate.git
-cd substrate
-
-# Switch to a particular branch or commit of the Substrate repo your node-template based on
-git checkout <branch/tag/sha1>
-
-# Run the helper script to generate a node template.
-# This script compiles Substrate and takes a while to complete. It takes a relative file path
-#   from the current dir. to output the compressed node template.
-.maintain/node-template-release.sh ../node-template.tar.gz
-```
-
-Noted though you will likely get faster and more thorough support if you stick with the releases
-provided in this repository.
