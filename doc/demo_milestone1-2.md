@@ -90,7 +90,7 @@ Run `nft`.`destroyCollection` with collection ID = 1, and then read collection f
 
 ### End user documentation
 
-See [application_development.md][doc/application_development.md]
+See [application_development.md](application_development.md)
 
 ### Docker images for running deliverables for acceptance
 
