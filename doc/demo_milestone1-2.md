@@ -188,7 +188,7 @@ templateModule.itemList: NftItemType
 ```
 
 ### Economic Model Specification
-[Economic Model Specification](doc/economic_model.md)
+[Economic Model Specification](economic_model.md)
 
 ### Contracts Module Specification
 https://docs.google.com/document/d/1gDtYjPR9C1VZChxEA-xAdQWQyEvMg245XrZR_MpE3cg/edit?usp=sharing
