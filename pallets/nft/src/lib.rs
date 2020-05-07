@@ -58,16 +58,16 @@ pub trait Trait: system::Trait {
 decl_storage! {
 	// It is important to update your storage name so that your pallet's
 	// storage items are isolated from other pallets.
-	trait Store for Module<T: Trait> as TemplateModule {
+	trait Store for Module<T: Trait> as Nft {
 
 		/// Next available collection ID
-		pub NextCollectionID get(next_collection_id): u64 = 1;
+		pub NextCollectionID get(fn next_collection_id): u64;
 
 		/// Collection map
-		pub Collection get(collection): map hasher(blake2_128_concat) u64 => CollectionType<T::AccountId>;
+		pub Collection get(collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
 
 		/// Admins map (collection)
-		pub AdminList get(admin_list_collection): map hasher(blake2_128_concat) u64 => Vec<T::AccountId>;
+		pub AdminList get(admin_list_collection): map hasher(identity) u64 => Vec<T::AccountId>;
 
 		/// Balance owner per collection map
 		pub Balance get(balance_count): map hasher(blake2_128_concat) (u64, T::AccountId) => u64;
@@ -113,8 +113,11 @@ decl_module! {
 			let who = ensure_signed(origin)?;
 
 			// Generate next collection ID
-			let next_id = Self::next_collection_id();
-			<NextCollectionID>::put(next_id+1);
+			let next_id = NextCollectionID::get()
+				.checked_add(1)
+				.expect("collection id error");;
+
+			NextCollectionID::put(next_id);
 
 			// Create new collection
 			let new_collection = CollectionType {
@@ -245,8 +248,8 @@ decl_module! {
 				data: properties,
 			};
 
-			let current_index = <ItemListIndex>::get(collection_id);
-			<ItemListIndex>::insert(collection_id, current_index+1);
+			let current_index = <ItemListIndex>::get(collection_id) + 1;
+			<ItemListIndex>::insert(collection_id, current_index);
 			<ItemList<T>>::insert((collection_id, current_index), new_item);
 
 			Ok(())
