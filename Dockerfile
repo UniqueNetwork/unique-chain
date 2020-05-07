@@ -11,6 +11,6 @@ RUN rustup update
 
 # Get project and run it
 RUN git clone https://github.com/usetech-llc/nft_parachain
-RUN cd nft_parachain && cargo build
-RUN cd nft_parachain && cargo test --all
-RUN cd nft_parachain && cargo run -- --dev
+WORKDIR /nft_parachain
+RUN cargo build
+RUN cargo test --all
