@@ -30,6 +30,9 @@ The `set_code` method worked out of the box and we did not need to perform any a
 Before we continue, we need to do some preparations in the UI: Add NFT Data types so that the UI knows how to decode them. Go to [Settings-Developer Tab](https://polkadot.js.org/apps/#/settings/developer) and add following types to the JSON object in there:
 ```
 {
+  "Address": "AccountId",
+  "LookupSource": "AccountId",
+  "Weight": "u32",  
   "NftItemType": {
     "Collection": "u64",
     "Owner": "AccountId",
@@ -42,6 +45,8 @@ Before we continue, we need to do some preparations in the UI: Add NFT Data type
   }
 }
 ```
+
+**Note: ** In the future we will likely switch to substrate "2.0.0-alpha.7", in which case Weight type should be `u64`.
 
 #### CreateCollection
 
