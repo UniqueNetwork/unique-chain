@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  node:
+    image: nft-parachain
+    ports:
+      - 9944:9944
+    build:
+      context: ./
+      dockerfile: Dockerfile
