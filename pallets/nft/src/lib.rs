@@ -115,7 +115,7 @@ decl_module! {
 			// Generate next collection ID
 			let next_id = NextCollectionID::get()
 				.checked_add(1)
-				.expect("collection id error");;
+				.expect("collection id error");
 
 			NextCollectionID::put(next_id);
 
