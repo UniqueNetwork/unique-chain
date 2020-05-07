@@ -68,6 +68,8 @@ fn burn_item() {
         // burn item
         assert_ok!(TemplateModule::burn_item(origin1.clone(), 1, 1));
         assert_noop!(TemplateModule::burn_item(origin1.clone(), 1, 1), "Item does not exists");
+
+        assert_eq!(TemplateModule::balance_count((1, 1)), 0);
 	});
 }
 
@@ -176,5 +178,9 @@ fn transfer() {
         // transfer
         assert_ok!(TemplateModule::transfer(origin1.clone(), 1, 1, 2));
         assert_eq!(TemplateModule::item_id((1,1)).owner, 2);
+
+        // balance_of check
+        assert_eq!(TemplateModule::balance_count((1, 1)), 0);
+        assert_eq!(TemplateModule::balance_count((1, 2)), 1);
         });
 }

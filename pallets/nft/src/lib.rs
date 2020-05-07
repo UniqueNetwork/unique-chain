@@ -280,6 +280,10 @@ decl_module! {
 			}
 			<ItemList<T>>::remove((collection_id, item_id));
 
+			// update balance
+			let new_balance = <Balance<T>>::get((collection_id, item.owner.clone())) - 1;
+			<Balance<T>>::insert((collection_id, item.owner.clone()), new_balance);
+
 			Ok(())
 		}
 
@@ -308,9 +312,18 @@ decl_module! {
 			}
 			<ItemList<T>>::remove((collection_id, item_id));
 
+			// update balance
+			let balance_old_owner = <Balance<T>>::get((collection_id, item.owner.clone())) - 1;
+			<Balance<T>>::insert((collection_id, item.owner.clone()), balance_old_owner);
+
+			let balance_new_owner = <Balance<T>>::get((collection_id, new_owner.clone())) + 1;
+			<Balance<T>>::insert((collection_id, new_owner.clone()), balance_new_owner);
+
 			// change owner
 			item.owner = new_owner;
 			<ItemList<T>>::insert((collection_id, item_id), item);
+
+
 
 			Ok(())
 		}
