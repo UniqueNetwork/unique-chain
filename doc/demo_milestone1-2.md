@@ -46,7 +46,7 @@ Before we continue, we need to do some preparations in the UI: Add NFT Data type
 }
 ```
 
-**Note: ** In the future we will likely switch to substrate "2.0.0-alpha.7", in which case Weight type should be `u64`.
+**Note:** In the future we will likely switch to substrate "2.0.0-alpha.7", in which case Weight type should be `u64`.
 
 #### CreateCollection
 
