@@ -57,10 +57,10 @@ Open extrinsics tab of the [standard UI](https://polkadot.js.org/apps/#/extrinsi
 Also, read the state variable `nft`.`collection` with ID = 1 (Because everything in NFT Palette is numbered from 1, not from 0). You will see something like this:
 
 ```
-templateModule.collection: CollectionType
+nft.collection: CollectionType
 {
-  NextItemId: 0,
   Owner: 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY,
+  NextItemId: 1,
   CustomDataSize: 1
 }
 ```
@@ -70,10 +70,10 @@ templateModule.collection: CollectionType
 Open extrinsics tab of the [standard UI](https://polkadot.js.org/apps/#/extrinsics). Select `nft` module and `changeCollectionOwner` method. First, try to execute it to change owner to BOB for collection 1 from some different account than ALICE - FERDIE to see that it is not possible because ALICE owns collection 1 and FERDIE is not allowed to give it to BOB. Second, select ALICE as transaction signer and run it again. This time the collection owner changes, which will be reflected if you read the state variable `nft`.`collection` with ID = 1:
 
 ```
-templateModule.collection: CollectionType
+nft.collection: CollectionType
 {
-  NextItemId: 0,
   Owner: 5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty,
+  NextItemId: 1,
   CustomDataSize: 1
 }
 ```
