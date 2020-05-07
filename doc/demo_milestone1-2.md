@@ -86,9 +86,10 @@ Change the ownership back to ALICE to continue with this demo.
 
 Run `nft`.`destroyCollection` with collection ID = 1, and then read collection from state. The returned fields will have default values, which indicates that collection does not exsit anymore: 
 ```
+nft.collection: CollectionType
 {
-  NextItemId: 0,
   Owner: 5C4hrfjw9DjXZTzV3MwzrrAr9P1MJhSrvWGWqi1eSuyUpnhM,
+  NextItemId: 0,
   CustomDataSize: 0
 }
 ```
