@@ -123,7 +123,7 @@ Before creating an NFT item, let's read ALICE balance for your collection, which
 Execute extrinsic `nft`.`createItem` from ALICE account. Set properties to `0x01`. Now if you read the chain state `nft`.`balance(<Collection ID>, ALICE)`, it will be equal to 1. Also, you can read chain state `nft`.`itemList(<Collection ID>, 1)`, and it will return data for the token 1:
 
 ```
-templateModule.itemList: NftItemType
+nft.itemList: NftItemType
 {
   Collection: 1,
   Owner: 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY,
@@ -134,7 +134,7 @@ templateModule.itemList: NftItemType
 #### GetOwner
 Reading the ownership is done by reading chainstate `nft`.`itemList(<Collection ID>, 1)`. One of the returned fields is Owner:
 ```
-templateModule.itemList: NftItemType
+nft.itemList: NftItemType
 {
   Collection: 1,
   Owner: 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY,
@@ -145,7 +145,7 @@ templateModule.itemList: NftItemType
 #### Transfer
 Execute `nft`.`transfer` from ALICE address to transfer token 1 to BOB and check the ownership again:
 ```
-templateModule.itemList: NftItemType
+nft.itemList: NftItemType
 {
   Collection: 1,
   Owner: 5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty,
@@ -159,7 +159,7 @@ Transfer the token 1 back to ALICE to enable further demo actions.
 
 Read the chain state `nft`.`balance` for ALICE address and see that she owns 1 token:
 ```
-templateModule.balance: u64
+nft.balance: u64
 1
 ```
 
@@ -167,7 +167,7 @@ templateModule.balance: u64
 Execute `nft`.`AddCollectionAdmin` from ALICE account and let CHARLIE be an admin. Now you can see that CHARLIE can transfer ALICE's token from ALICE's account to EVE and back. Also, you can read admin list from chain state and see that it is not empty:
 
 ```
-templateModule.adminList: Vec<AccountId>
+nft.adminList: Vec<AccountId>
 [
   5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y
 ]
@@ -177,14 +177,14 @@ templateModule.adminList: Vec<AccountId>
 Execute `nft`.`RemoveCollectionAdmin` from ALICE account to remove CHARLIE from admins. Now you can see that CHARLIE cannot transfer ALICE's tokens anymore. If you read the chan state `nft`.`adminList`, the response will be empty:
 
 ```
-templateModule.adminList: Vec<AccountId>
+nft.adminList: Vec<AccountId>
 []
 ```
 
 #### BurnItem
 Execute `nft`.`burnItem` from ALICE account to burn token 1, and then read the chain state `nft`.`itemList(<Collection ID>, 1)`. This time the chain state returns default values in fields because token does not exist anymore. You can also check ALICE balance in chain state, now it is equal 0 again.
 ```
-templateModule.itemList: NftItemType
+nft.itemList: NftItemType
 {
   Collection: 0,
   Owner: 5C4hrfjw9DjXZTzV3MwzrrAr9P1MJhSrvWGWqi1eSuyUpnhM,
