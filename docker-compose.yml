@@ -9,9 +9,4 @@ services:
       context: ./
       dockerfile: Dockerfile
     volumes:
-     - chain-data:/chain-data/
-    command: 
-      cargo run -- --dev --ws-external --rpc-external --base-path=./chain-data
-      
-volumes:
-    chain-data:
+      - ./chain-data:/chain-data

@@ -1,0 +1,1 @@
+cargo run -- --dev --ws-external --rpc-external --base-path=./chain-data
