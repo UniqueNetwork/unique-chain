@@ -14,3 +14,8 @@ RUN git clone https://github.com/usetech-llc/nft_parachain
 WORKDIR /nft_parachain
 RUN cargo build
 RUN cargo test --all
+
+# Copy and run start script
+COPY ["./run.sh", "./run.sh"]
+RUN chmod +x ./run.sh
+CMD ["bash", "-c", "./run.sh"]
