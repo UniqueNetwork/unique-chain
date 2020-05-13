@@ -72,7 +72,7 @@ decl_storage! {
 		/// Balance owner per collection map
 		pub Balance get(balance_count): map hasher(blake2_128_concat) (u64, T::AccountId) => u64;
 
-		/// Item double map (collection)
+		pub ApprovedList get(approved): map hasher(blake2_128_concat) (u64, u64) => Vec<T::AccountId>;
 		pub ItemList get(item_id): map hasher(blake2_128_concat) (u64, u64) => NftItemType<T::AccountId>;
 		pub ItemListIndex get(item_index): map hasher(blake2_128_concat) u64 => u64;
 	}
@@ -323,7 +323,92 @@ decl_module! {
 			item.owner = new_owner;
 			<ItemList<T>>::insert((collection_id, item_id), item);
 
+			// reset approved list
+			let itm: Vec<T::AccountId> = Vec::new();
+			<ApprovedList<T>>::insert((collection_id, item_id), itm);
 
+			Ok(())
+		}
+
+		#[weight = frame_support::weights::SimpleDispatchInfo::default()]
+		pub fn approve(origin, approved: T::AccountId, collection_id: u64, item_id: u64) -> DispatchResult {
+
+			let sender = ensure_signed(origin)?;
+			ensure!(<Collection<T>>::contains_key(collection_id), "This collection does not exist");
+
+			let target_collection = <Collection<T>>::get(collection_id);
+			let is_owner = sender == target_collection.owner;
+
+			ensure!(<ItemList<T>>::contains_key((collection_id, item_id)), "Item does not exists");
+			let item = <ItemList<T>>::get((collection_id, item_id));
+
+			if !is_owner 
+			{
+				// check if item owner
+				if item.owner != sender 
+				{
+					let no_perm_mes = "You do not have permissions to modify this collection";
+
+					ensure!(<AdminList<T>>::contains_key(collection_id), no_perm_mes);
+					ensure!(<AdminList<T>>::get(collection_id).contains(&sender), no_perm_mes);
+				}
+			}
+
+			let list_exists = <ApprovedList<T>>::contains_key((collection_id, item_id));
+			if list_exists {
+				
+				let mut list = <ApprovedList<T>>::get((collection_id, item_id));
+				let item_contains = list.contains(&approved.clone());
+
+				if !item_contains {
+					list.push(approved.clone());
+				} 
+			} else {
+				
+				let mut itm = Vec::new();
+				itm.push(approved.clone());
+				<ApprovedList<T>>::insert((collection_id, item_id), itm);
+			}
+
+			Ok(())
+		}
+
+		#[weight = frame_support::weights::SimpleDispatchInfo::default()]
+		pub fn transfer_from(origin, collection_id: u64, item_id: u64, new_owner: T::AccountId) -> DispatchResult {
+
+			// let sender = ensure_signed(origin)?;
+			// ensure!(<Collection<T>>::contains_key(collection_id), "This collection does not exist");
+
+			// let target_collection = <Collection<T>>::get(collection_id);
+			// let is_owner = sender == target_collection.owner;
+
+			// ensure!(<ItemList<T>>::contains_key((collection_id, item_id)), "Item does not exists");
+			// let mut item = <ItemList<T>>::get((collection_id, item_id));
+
+			// if !is_owner 
+			// {
+			// 	let no_perm_mes = "You do not have permissions to modify this collection";
+
+			// 	// check if item owner
+			// 	if item.owner != sender 
+			// 	{
+			// 		ensure!(<AdminList<T>>::contains_key(collection_id), no_perm_mes);
+			// 		ensure!(<AdminList<T>>::get(collection_id).contains(&sender), no_perm_mes);
+			// 	}
+
+			// 	ensure!(<ApprovedList<T>>::contains_key((collection_id, item_id)), no_perm_mes);
+			// 	let list_itm = <ApprovedList<T>>::get((collection_id, item_id));
+			// 	ensure!(list_itm.contains(&new_owner.clone()), no_perm_mes);
+
+			// }
+
+
+			let no_perm_mes = "You do not have permissions to modify this collection";
+			ensure!(<ApprovedList<T>>::contains_key((collection_id, item_id)), no_perm_mes);
+			let list_itm = <ApprovedList<T>>::get((collection_id, item_id));
+			ensure!(list_itm.contains(&new_owner.clone()), no_perm_mes);
+
+			Self::transfer(origin, collection_id, item_id, new_owner);
 
 			Ok(())
 		}

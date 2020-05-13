@@ -184,3 +184,81 @@ fn transfer() {
         assert_eq!(TemplateModule::balance_count((1, 2)), 1);
         });
 }
+
+#[test]
+fn approve() {
+	new_test_ext().execute_with(|| {
+        let size = 1024;
+        let origin1 = Origin::signed(1);
+        let origin2 = Origin::signed(2);
+        let origin3 = Origin::signed(3);
+
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin2.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin3.clone(), size));
+
+        assert_eq!(TemplateModule::collection(1).owner, 1);
+        assert_eq!(TemplateModule::collection(2).owner, 2);
+        assert_eq!(TemplateModule::collection(3).owner, 3);
+
+        // create item
+        assert_ok!(TemplateModule::create_item(origin1.clone(), 1, [1,1,1].to_vec()));
+
+        // approve
+        assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
+        assert_eq!(TemplateModule::approved((1,1)).contains(&2), true);
+
+        });
+}
+
+#[test]
+fn get_approved() {
+	new_test_ext().execute_with(|| {
+        let size = 1024;
+        let origin1 = Origin::signed(1);
+        let origin2 = Origin::signed(2);
+        let origin3 = Origin::signed(3);
+
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin2.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin3.clone(), size));
+
+        assert_eq!(TemplateModule::collection(1).owner, 1);
+        assert_eq!(TemplateModule::collection(2).owner, 2);
+        assert_eq!(TemplateModule::collection(3).owner, 3);
+
+        // create item
+        assert_ok!(TemplateModule::create_item(origin1.clone(), 1, [1,1,1].to_vec()));
+
+        // approve
+        assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
+        assert_eq!(TemplateModule::approved((1,1)).contains(&2), true);
+
+        });
+}
+
+#[test]
+fn transfer_from() {
+	new_test_ext().execute_with(|| {
+        let size = 1024;
+        let origin1 = Origin::signed(1);
+        let origin2 = Origin::signed(2);
+        let origin3 = Origin::signed(3);
+
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin2.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin3.clone(), size));
+
+        assert_eq!(TemplateModule::collection(1).owner, 1);
+        assert_eq!(TemplateModule::collection(2).owner, 2);
+        assert_eq!(TemplateModule::collection(3).owner, 3);
+
+        // create item
+        assert_ok!(TemplateModule::create_item(origin1.clone(), 1, [1,1,1].to_vec()));
+
+        // approve
+        assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
+        assert_ok!(TemplateModule::transfer_from(origin1.clone(), 1, 1, 2));
+
+        });
+}
