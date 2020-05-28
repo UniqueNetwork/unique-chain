@@ -10,3 +10,4 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./chain-data:/chain-data
+    network_mode: "host"

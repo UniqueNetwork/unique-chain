@@ -12,7 +12,7 @@ We have created chain based on both versions of substrate: 1 and 2. Nonetheless,
 
 The node can be run using docker container:
 ```
-TBD
+docker-compose up -d
 ```
 
 #### NFT Tracking Module
