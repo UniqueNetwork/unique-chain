@@ -59,18 +59,20 @@ decl_storage! {
         /// Next available collection ID
         pub NextCollectionID get(fn next_collection_id): u64;
 
-        /// Collection map
         pub Collection get(collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
+        //pub Collection get(collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
 
-        /// Admins map (collection)
         pub AdminList get(admin_list_collection): map hasher(identity) u64 => Vec<T::AccountId>;
 
         /// Balance owner per collection map
         pub Balance get(balance_count): map hasher(blake2_128_concat) (u64, T::AccountId) => u64;
-
         pub ApprovedList get(approved): map hasher(blake2_128_concat) (u64, u64) => Vec<T::AccountId>;
+
         pub ItemList get(item_id): map hasher(blake2_128_concat) (u64, u64) => NftItemType<T::AccountId>;
+        // pub ItemList get(item_id): map hasher(blake2_128_concat) (u64, u64) => NftItemType<T::AccountId>;
+
         pub ItemListIndex get(item_index): map hasher(blake2_128_concat) u64 => u64;
+        // pub ItemListIndex get(item_index): map hasher(blake2_128_concat) u64 => u64;
     }
 }
 
@@ -114,7 +116,7 @@ decl_module! {
             // Generate next collection ID
             let next_id = NextCollectionID::get()
                 .checked_add(1)
-                .expect("collection id error");
+                .expect("collection id error") - 1;
 
             NextCollectionID::put(next_id);
 
@@ -374,6 +376,19 @@ decl_module! {
 
         #[weight = frame_support::weights::SimpleDispatchInfo::default()]
         pub fn transfer_from(origin, collection_id: u64, item_id: u64, new_owner: T::AccountId) -> DispatchResult {
+
+            let no_perm_mes = "You do not have permissions to modify this collection";
+            ensure!(<ApprovedList<T>>::contains_key((collection_id, item_id)), no_perm_mes);
+            let list_itm = <ApprovedList<T>>::get((collection_id, item_id));
+            ensure!(list_itm.contains(&new_owner.clone()), no_perm_mes);
+
+            Self::transfer(origin, collection_id, item_id, new_owner)?;
+
+            Ok(())
+        }
+
+        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        pub fn safe_transfer_from(origin, collection_id: u64, item_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let no_perm_mes = "You do not have permissions to modify this collection";
             ensure!(<ApprovedList<T>>::contains_key((collection_id, item_id)), no_perm_mes);
