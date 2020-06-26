@@ -114,9 +114,7 @@ decl_module! {
             let who = ensure_signed(origin)?;
 
             // Generate next collection ID
-            let next_id = NextCollectionID::get()
-                .checked_add(1)
-                .expect("collection id error") - 1;
+            let next_id = NextCollectionID::get();
 
             NextCollectionID::put(next_id);
 
@@ -249,7 +247,7 @@ decl_module! {
                 data: properties,
             };
 
-            let current_index = <ItemListIndex>::get(collection_id) + 1;
+            let current_index = <ItemListIndex>::get(collection_id);
             <ItemListIndex>::insert(collection_id, current_index);
             <ItemList<T>>::insert((collection_id, current_index), new_item);
 
@@ -394,6 +392,8 @@ decl_module! {
             ensure!(<ApprovedList<T>>::contains_key((collection_id, item_id)), no_perm_mes);
             let list_itm = <ApprovedList<T>>::get((collection_id, item_id));
             ensure!(list_itm.contains(&new_owner.clone()), no_perm_mes);
+
+            // on_nft_received  call
 
             Self::transfer(origin, collection_id, item_id, new_owner)?;
 
