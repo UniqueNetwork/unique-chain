@@ -59,19 +59,19 @@ decl_storage! {
         /// Next available collection ID
         pub NextCollectionID get(fn next_collection_id): u64;
 
-        pub Collection get(collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
+        pub Collection get(fn collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
         //pub Collection get(collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
 
-        pub AdminList get(admin_list_collection): map hasher(identity) u64 => Vec<T::AccountId>;
+        pub AdminList get(fn admin_list_collection): map hasher(identity) u64 => Vec<T::AccountId>;
 
         /// Balance owner per collection map
-        pub Balance get(balance_count): map hasher(blake2_128_concat) (u64, T::AccountId) => u64;
-        pub ApprovedList get(approved): map hasher(blake2_128_concat) (u64, u64) => Vec<T::AccountId>;
+        pub Balance get(fn balance_count): map hasher(blake2_128_concat) (u64, T::AccountId) => u64;
+        pub ApprovedList get(fn approved): map hasher(blake2_128_concat) (u64, u64) => Vec<T::AccountId>;
 
-        pub ItemList get(item_id): map hasher(blake2_128_concat) (u64, u64) => NftItemType<T::AccountId>;
+        pub ItemList get(fn item_id): map hasher(blake2_128_concat) (u64, u64) => NftItemType<T::AccountId>;
         // pub ItemList get(item_id): map hasher(blake2_128_concat) (u64, u64) => NftItemType<T::AccountId>;
 
-        pub ItemListIndex get(item_index): map hasher(blake2_128_concat) u64 => u64;
+        pub ItemListIndex get(fn item_index): map hasher(blake2_128_concat) u64 => u64;
         // pub ItemListIndex get(item_index): map hasher(blake2_128_concat) u64 => u64;
     }
 }
@@ -108,7 +108,7 @@ decl_module! {
         //
         // @param customDataSz size of custom data in each collection item
         // returns collection ID
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn create_collection(origin, custom_data_sz: u32) -> DispatchResult {
             // Anyone can create a collection
             let who = ensure_signed(origin)?;
@@ -131,7 +131,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn destroy_collection(origin, collection_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -144,7 +144,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn change_collection_owner(origin, collection_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -159,7 +159,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn add_collection_admin(origin, collection_id: u64, new_admin_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -190,7 +190,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn remove_collection_admin(origin, collection_id: u64, account_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -218,7 +218,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn create_item(origin, collection_id: u64, properties: Vec<u8>) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -254,7 +254,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn burn_item(origin, collection_id: u64, item_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -286,7 +286,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn transfer(origin, collection_id: u64, item_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -329,7 +329,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn approve(origin, approved: T::AccountId, collection_id: u64, item_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -372,7 +372,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn transfer_from(origin, collection_id: u64, item_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let no_perm_mes = "You do not have permissions to modify this collection";
@@ -385,7 +385,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn safe_transfer_from(origin, collection_id: u64, item_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let no_perm_mes = "You do not have permissions to modify this collection";

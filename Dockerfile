@@ -12,8 +12,10 @@ RUN apt-get update && \
 	apt-get install -y cmake pkg-config libssl-dev git clang
 
 # Get project and run it
-RUN git clone https://github.com/usetech-llc/nft_parachain /nft_parachain
+#RUN git clone https://github.com/usetech-llc/nft_parachain /nft_parachain
+RUN mkdir nft_parachain
 WORKDIR /nft_parachain
+COPY . .
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
 	export PATH="$PATH:$HOME/.cargo/bin" && \
@@ -22,8 +24,9 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
 	rustup default stable && \
     rustup target list --installed && \
     rustup show && \
-	cargo build "--$PROFILE" && \
-	cargo test
+	cargo build "--$PROFILE" 
+	# && \
+	# cargo test
 
 RUN cd target/release && ls -la
 

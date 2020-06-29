@@ -1,78 +1,117 @@
 [package]
-authors = ['Anonymous']
+authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
 build = 'build.rs'
-description = 'Substrate Node nft'
+description = 'Substrate Node template'
 edition = '2018'
 homepage = 'https://substrate.dev'
 license = 'Unlicense'
-name = 'nft'
-repository = 'https://github.com/paritytech/substrate/'
-version = '2.0.0-alpha.6'
-
+name = 'node-template'
+repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
+version = '2.0.0-rc4'
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
+
+[[bin]]
+name = 'node-template'
 
 [dependencies]
 futures = '0.3.4'
 log = '0.4.8'
+parking_lot = '0.10.0'
 structopt = '0.3.8'
 
 [dependencies.nft-runtime]
 path = '../runtime'
-version = '2.0.0-alpha.6'
+version = '2.0.0-rc4'
 
 [dependencies.sc-basic-authorship]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '0.8.0-rc4'
 
 [dependencies.sc-cli]
-version = '0.8.0-alpha.6'
-
-[dependencies.sc-client]
-version = '0.8.0-alpha.6'
+features = ['wasmtime']
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '0.8.0-rc4'
 
 [dependencies.sc-client-api]
-version = '2.0.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
+
+[dependencies.sc-consensus]
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '0.8.0-rc4'
 
 [dependencies.sc-consensus-aura]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '0.8.0-rc4'
 
 [dependencies.sc-executor]
-version = '0.8.0-alpha.6'
+features = ['wasmtime']
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '0.8.0-rc4'
 
 [dependencies.sc-finality-grandpa]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '0.8.0-rc4'
 
 [dependencies.sc-network]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '0.8.0-rc4'
 
 [dependencies.sc-service]
-version = '0.8.0-alpha.6'
+features = ['wasmtime']
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '0.8.0-rc4'
 
 [dependencies.sc-transaction-pool]
-version = '2.0.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
 
 [dependencies.sp-consensus]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '0.8.0-rc4'
 
 [dependencies.sp-consensus-aura]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '0.8.0-rc4'
 
 [dependencies.sp-core]
-version = '2.0.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
 
 [dependencies.sp-finality-grandpa]
-version = '2.0.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
 
 [dependencies.sp-inherents]
-version = '2.0.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
 
 [dependencies.sp-runtime]
-version = '2.0.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
 
 [dependencies.sp-transaction-pool]
-version = '2.0.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
 [build-dependencies.substrate-build-script-utils]
-version = '2.0.0-alpha.6'
-
-[[bin]]
-name = 'nft'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
