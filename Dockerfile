@@ -22,7 +22,8 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
 	rustup default stable && \
     rustup target list --installed && \
     rustup show && \
-	cargo build "--$PROFILE"
+	cargo build "--$PROFILE" && \
+	cargo test
 
 RUN cd target/release && ls -la
 
