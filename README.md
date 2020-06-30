@@ -1,3 +1,5 @@
+![Docker build](https://github.com/usetech-llc/nft_parachain/workflows/Docker%20build/badge.svg)
+
 # NFT Parachain
 
 ## Application Development
