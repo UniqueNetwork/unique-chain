@@ -1,0 +1,15 @@
+name: Docker build
+
+on:
+  push:
+    branches: [ master ]
+  schedule:
+    - cron: '* 1 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build image
+      run: docker build -t nft_parachain .
