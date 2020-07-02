@@ -297,3 +297,50 @@ fn transfer_from() {
         assert_ok!(TemplateModule::transfer_from(origin1.clone(), 1, 1, 2));
     });
 }
+
+#[test]
+fn index_list() {
+    new_test_ext().execute_with(|| {
+        let size = 1024;
+        let origin1 = Origin::signed(1);
+        let origin2 = Origin::signed(2);
+        let origin3 = Origin::signed(3);
+
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin2.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin3.clone(), size));
+
+        assert_eq!(TemplateModule::collection(1).owner, 1);
+        assert_eq!(TemplateModule::collection(2).owner, 2);
+        assert_eq!(TemplateModule::collection(3).owner, 3);
+
+        // create items
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [1, 1, 1].to_vec()
+        ));
+
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [1, 1, 2].to_vec()
+        ));
+
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [1, 2, 3].to_vec()
+        ));
+
+        assert_eq!(TemplateModule::address_tokens((1, 1)).len(), 3);
+
+        // burn one
+        assert_ok!(TemplateModule::burn_item(origin1.clone(), 1, 2));
+        assert_eq!(TemplateModule::address_tokens((1, 1)).len(), 2);
+
+        // burn another one
+        assert_ok!(TemplateModule::burn_item(origin1.clone(), 1, 3));
+        assert_eq!(TemplateModule::address_tokens((1, 1))[0], 1);
+    });
+}

@@ -58,10 +58,7 @@ decl_storage! {
 
         /// Next available collection ID
         pub NextCollectionID get(fn next_collection_id): u64;
-
         pub Collection get(fn collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
-        //pub Collection get(collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
-
         pub AdminList get(fn admin_list_collection): map hasher(identity) u64 => Vec<T::AccountId>;
 
         /// Balance owner per collection map
@@ -69,10 +66,10 @@ decl_storage! {
         pub ApprovedList get(fn approved): map hasher(blake2_128_concat) (u64, u64) => Vec<T::AccountId>;
 
         pub ItemList get(fn item_id): map hasher(blake2_128_concat) (u64, u64) => NftItemType<T::AccountId>;
-        // pub ItemList get(item_id): map hasher(blake2_128_concat) (u64, u64) => NftItemType<T::AccountId>;
-
         pub ItemListIndex get(fn item_index): map hasher(blake2_128_concat) u64 => u64;
-        // pub ItemListIndex get(item_index): map hasher(blake2_128_concat) u64 => u64;
+
+        pub AddressTokens get(fn address_tokens): map hasher(blake2_128_concat) (u64, T::AccountId) => Vec<u64>;
+
     }
 }
 
@@ -247,7 +244,11 @@ decl_module! {
                 data: properties,
             };
 
+
             let current_index = <ItemListIndex>::get(collection_id);
+
+            Self::add_token_index(collection_id, current_index, new_item.owner.clone())?;
+
             <ItemListIndex>::insert(collection_id, current_index);
             <ItemList<T>>::insert((collection_id, current_index), new_item);
 
@@ -278,6 +279,8 @@ decl_module! {
                 }
             }
             <ItemList<T>>::remove((collection_id, item_id));
+
+            Self::remove_token_index(collection_id, item_id, item.owner.clone())?;
 
             // update balance
             let new_balance = <Balance<T>>::get((collection_id, item.owner.clone())) - 1;
@@ -319,8 +322,12 @@ decl_module! {
             <Balance<T>>::insert((collection_id, new_owner.clone()), balance_new_owner);
 
             // change owner
-            item.owner = new_owner;
+            let old_owner = item.owner.clone();
+            item.owner = new_owner.clone();
             <ItemList<T>>::insert((collection_id, item_id), item);
+
+            // update index collection
+            Self::move_token_index(collection_id, item_id, old_owner, new_owner.clone())?;
 
             // reset approved list
             let itm: Vec<T::AccountId> = Vec::new();
@@ -399,5 +406,57 @@ decl_module! {
 
             Ok(())
         }
+    }
+}
+
+
+impl<T: Trait> Module<T> {
+    fn add_token_index(collection_id: u64, item_index: u64, owner: T::AccountId) -> DispatchResult {
+        
+        let list_exists = <AddressTokens<T>>::contains_key((collection_id, owner.clone()));
+        if list_exists {
+
+            let mut list = <AddressTokens<T>>::get((collection_id, owner.clone()));
+            let item_contains = list.contains(&item_index.clone());
+
+            if !item_contains {
+                list.push(item_index.clone());
+            }
+
+            <AddressTokens<T>>::insert((collection_id, owner.clone()), list);
+
+        } else {
+
+            let mut itm = Vec::new();
+            itm.push(item_index.clone());
+            <AddressTokens<T>>::insert((collection_id, owner), itm);
+        }
+
+        Ok(())
+    }
+
+    fn remove_token_index(collection_id: u64, item_index: u64, owner: T::AccountId) -> DispatchResult {
+        
+        let list_exists = <AddressTokens<T>>::contains_key((collection_id, owner.clone()));
+        if list_exists {
+
+            let mut list = <AddressTokens<T>>::get((collection_id, owner.clone()));
+            let item_contains = list.contains(&item_index.clone());
+
+            if item_contains {
+                list.retain(|&item| item != item_index);
+                <AddressTokens<T>>::insert((collection_id, owner), list);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn move_token_index(collection_id: u64, item_index: u64, old_owner: T::AccountId, new_owner: T::AccountId) -> DispatchResult {
+        
+        Self::remove_token_index(collection_id, item_index, old_owner)?;
+        Self::add_token_index(collection_id, item_index, new_owner)?;
+        
+        Ok(())
     }
 }

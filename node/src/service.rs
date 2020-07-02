@@ -27,6 +27,7 @@ native_executor_instance!(
 /// be able to perform chain operations.
 macro_rules! new_full_start {
 	($config:expr) => {{
+		use jsonrpc_core::IoHandler;
 		use std::sync::Arc;
 		use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 
@@ -86,7 +87,15 @@ macro_rules! new_full_start {
 				import_setup = Some((grandpa_block_import, grandpa_link));
 
 				Ok(import_queue)
-			})?;
+			})?
+			.with_rpc_extensions(|builder| -> Result<IoHandler<sc_rpc::Metadata>, _> {
+                let handler = pallet_contracts_rpc::Contracts::new(builder.client().clone());
+                let delegate = pallet_contracts_rpc::ContractsApi::to_delegate(handler);
+
+                let mut io = IoHandler::default();
+                io.extend_with(delegate);
+                Ok(io)
+            })?;
 
 		(builder, import_setup, inherent_data_providers)
 	}}

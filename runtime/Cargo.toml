@@ -4,6 +4,9 @@ std = [
     'aura/std',
     'balances/std',
     'codec/std',
+    'contracts/std',
+    'contracts-primitives/std',
+    'contracts-rpc-runtime-api/std',
     'frame-executive/std',
     'frame-support/std',
     'grandpa/std',
@@ -46,6 +49,27 @@ default-features = false
 features = ['derive']
 package = 'parity-scale-codec'
 version = '1.3.1'
+
+[dependencies.contracts]
+git = 'https://github.com/paritytech/substrate.git'
+default-features = false
+package = 'pallet-contracts'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
+
+[dependencies.contracts-primitives]
+git = 'https://github.com/paritytech/substrate.git'
+default-features = false
+package = 'pallet-contracts-primitives'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
+
+[dependencies.contracts-rpc-runtime-api]
+git = 'https://github.com/paritytech/substrate.git'
+default-features = false
+package = 'pallet-contracts-rpc-runtime-api'
+version = '0.8.0-rc4'
+tag = 'v2.0.0-rc4'
 
 [dependencies.frame-executive]
 default-features = false

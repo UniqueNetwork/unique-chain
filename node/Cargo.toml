@@ -20,6 +20,16 @@ futures = '0.3.4'
 log = '0.4.8'
 parking_lot = '0.10.0'
 structopt = '0.3.8'
+jsonrpc-core = '14.0.5'
+
+[dependencies.pallet-contracts-rpc]
+git = 'https://github.com/paritytech/substrate.git'
+version = '0.8.0-rc4'
+tag = 'v2.0.0-rc4'
+
+[dependencies.sc-rpc]
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc4'
 
 [dependencies.nft-runtime]
 path = '../runtime'

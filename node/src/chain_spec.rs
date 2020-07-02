@@ -8,6 +8,8 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{Verify, IdentifyAccount};
 use sc_service::ChainType;
 
+use nft_runtime::{ContractsConfig, ContractsSchedule};
+
 // Note this is the URL for the telemetry server
 //const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
@@ -111,6 +113,12 @@ fn testnet_genesis(initial_authorities: Vec<(AuraId, GrandpaId)>,
 		balances: Some(BalancesConfig {
 			balances: endowed_accounts.iter().cloned().map(|k|(k, 1 << 60)).collect(),
 		}),
+		contracts: Some(ContractsConfig {
+            current_schedule: ContractsSchedule {
+              //      enable_println,
+                    ..Default::default()
+            },
+        }),
 		aura: Some(AuraConfig {
 			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
 		}),
