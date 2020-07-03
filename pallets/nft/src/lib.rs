@@ -24,6 +24,9 @@ mod tests;
 pub struct CollectionType<AccountId> {
     pub owner: AccountId,
     pub next_item_id: u64,
+    pub name: Vec<u16>, // 64 include null escape char
+    pub description: Vec<u16>, // 256 include null escape char
+    pub token_trefix: Vec<u8>, // 16 include null escape char
     pub custom_data_size: u32,
 }
 
@@ -79,7 +82,9 @@ decl_event!(
     where
         AccountId = <T as system::Trait>::AccountId,
     {
-        Created(u32, AccountId),
+        Created(u64, AccountId),
+        ItemCreated(u64),
+        ItemDestroyed(u64, u64),
     }
 );
 
@@ -92,10 +97,6 @@ decl_module! {
         // this is needed only if you are using events in your pallet
         fn deposit_event() = default;
 
-        // Initializing events
-        // this is needed only if you are using events in your module
-        // fn deposit_event<T>() = default;
-
         // Create collection of NFT with given parameters
         //
         // @param customDataSz size of custom data in each collection item
@@ -106,9 +107,27 @@ decl_module! {
         // @param customDataSz size of custom data in each collection item
         // returns collection ID
         #[weight = 0]
-        pub fn create_collection(origin, custom_data_sz: u32) -> DispatchResult {
+        pub fn create_collection(   origin, 
+                                    collection_name: Vec<u16>, 
+                                    collection_description: Vec<u16>, 
+                                    token_prefix: Vec<u8>, 
+                                    custom_data_sz: u32) -> DispatchResult {
+
             // Anyone can create a collection
             let who = ensure_signed(origin)?;
+
+            // check params 
+            let mut name = collection_name.to_vec();
+            name.push(0);
+            ensure!(name.len() <= 64, "Collection name can not be longer than 63 char");
+
+            let mut description = collection_description.to_vec();
+            description.push(0);
+            ensure!(name.len() <= 256, "Collection description can not be longer than 255 char");
+
+            let mut token_trefix = token_prefix.to_vec();
+            token_trefix.push(0);
+            ensure!(token_trefix.len() <= 16, "Token prefix can not be longer than 15 char");
 
             // Generate next collection ID
             let next_id = NextCollectionID::get();
@@ -117,13 +136,19 @@ decl_module! {
 
             // Create new collection
             let new_collection = CollectionType {
-                owner: who,
+                owner: who.clone(),
+                name: name,
+                description: description,
+                token_trefix: token_trefix,
                 next_item_id: next_id,
                 custom_data_size: custom_data_sz,
             };
 
             // Add new collection to map
             <Collection<T>>::insert(next_id, new_collection);
+
+            // call event
+            Self::deposit_event(RawEvent::Created(next_id, who.clone()));
 
             Ok(())
         }
@@ -252,6 +277,9 @@ decl_module! {
             <ItemListIndex>::insert(collection_id, current_index);
             <ItemList<T>>::insert((collection_id, current_index), new_item);
 
+            // call event
+            Self::deposit_event(RawEvent::ItemCreated(collection_id));
+
             Ok(())
         }
 
@@ -285,6 +313,9 @@ decl_module! {
             // update balance
             let new_balance = <Balance<T>>::get((collection_id, item.owner.clone())) - 1;
             <Balance<T>>::insert((collection_id, item.owner.clone()), new_balance);
+
+            // call event
+            Self::deposit_event(RawEvent::ItemDestroyed(collection_id, item_id));
 
             Ok(())
         }
