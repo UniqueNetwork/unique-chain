@@ -30,6 +30,7 @@ use contracts_rpc_runtime_api::ContractExecResult;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use timestamp::Call as TimestampCall;
+pub use staking::Call as StakingCall;
 pub use balances::Call as BalancesCall;
 pub use sp_runtime::{Permill, Perbill};
 pub use contracts::Schedule as ContractsSchedule;
@@ -229,6 +230,33 @@ impl timestamp::Trait for Runtime {
 	type MinimumPeriod = MinimumPeriod;
 }
 
+
+parameter_types! {
+    pub const TombstoneDeposit: Balance = 16 * MILLICENTS;
+    pub const RentByteFee: Balance = 4 * MILLICENTS;
+    pub const RentDepositOffset: Balance = 1000 * MILLICENTS;
+    pub const SurchargeReward: Balance = 150 * MILLICENTS;
+}
+
+impl contracts::Trait for Runtime {
+    type Time = Timestamp;
+    type Randomness = RandomnessCollectiveFlip;
+    type Currency = Balances;
+    type Event = Event;
+    type DetermineContractAddress = contracts::SimpleAddressDeterminer<Runtime>;
+    type TrieIdGenerator = contracts::TrieIdFromParentCounter<Runtime>;
+    type RentPayment = ();
+    type SignedClaimHandicap = contracts::DefaultSignedClaimHandicap;
+    type TombstoneDeposit = TombstoneDeposit;
+    type StorageSizeOffset = contracts::DefaultStorageSizeOffset;
+    type RentByteFee = RentByteFee;
+    type RentDepositOffset = RentDepositOffset;
+    type SurchargeReward = SurchargeReward;
+    type MaxDepth = contracts::DefaultMaxDepth;
+    type MaxValueSize = contracts::DefaultMaxValueSize;
+    type WeightPrice = transaction_payment::Module<Self>;
+}
+
 parameter_types! {
 	pub const ExistentialDeposit: u128 = 500;
 }
@@ -260,32 +288,6 @@ impl sudo::Trait for Runtime {
 	type Call = Call;
 }
 
-parameter_types! {
-    pub const TombstoneDeposit: Balance = 16 * MILLICENTS;
-    pub const RentByteFee: Balance = 4 * MILLICENTS;
-    pub const RentDepositOffset: Balance = 1000 * MILLICENTS;
-    pub const SurchargeReward: Balance = 150 * MILLICENTS;
-}
-
-impl contracts::Trait for Runtime {
-    type Time = Timestamp;
-    type Randomness = RandomnessCollectiveFlip;
-    type Currency = Balances;
-    type Event = Event;
-    type DetermineContractAddress = contracts::SimpleAddressDeterminer<Runtime>;
-    type TrieIdGenerator = contracts::TrieIdFromParentCounter<Runtime>;
-    type RentPayment = ();
-    type SignedClaimHandicap = contracts::DefaultSignedClaimHandicap;
-    type TombstoneDeposit = TombstoneDeposit;
-    type StorageSizeOffset = contracts::DefaultStorageSizeOffset;
-    type RentByteFee = RentByteFee;
-    type RentDepositOffset = RentDepositOffset;
-    type SurchargeReward = SurchargeReward;
-    type MaxDepth = contracts::DefaultMaxDepth;
-    type MaxValueSize = contracts::DefaultMaxValueSize;
-    type WeightPrice = transaction_payment::Module<Self>;
-}
-
 /// Used for the module template in `./template.rs`
 impl nft::Trait for Runtime {
     type Event = Event;
@@ -306,6 +308,7 @@ construct_runtime!(
 		Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: transaction_payment::{Module, Storage},
 		Sudo: sudo::{Module, Call, Config<T>, Storage, Event<T>},
+		// Staking: staking::{Module, Call, Config<T>, Storage, Event<T>},
 		// Used for the module template in `./template.rs`
         Nft: nft::{Module, Call, Storage, Event<T>},
 	}

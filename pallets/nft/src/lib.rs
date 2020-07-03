@@ -26,7 +26,7 @@ pub struct CollectionType<AccountId> {
     pub next_item_id: u64,
     pub name: Vec<u16>, // 64 include null escape char
     pub description: Vec<u16>, // 256 include null escape char
-    pub token_trefix: Vec<u8>, // 16 include null escape char
+    pub token_prefix: Vec<u8>, // 16 include null escape char
     pub custom_data_size: u32,
 }
 
@@ -125,9 +125,9 @@ decl_module! {
             description.push(0);
             ensure!(name.len() <= 256, "Collection description can not be longer than 255 char");
 
-            let mut token_trefix = token_prefix.to_vec();
-            token_trefix.push(0);
-            ensure!(token_trefix.len() <= 16, "Token prefix can not be longer than 15 char");
+            let mut prefix = token_prefix.to_vec();
+            prefix.push(0);
+            ensure!(prefix.len() <= 16, "Token prefix can not be longer than 15 char");
 
             // Generate next collection ID
             let next_id = NextCollectionID::get();
@@ -139,7 +139,7 @@ decl_module! {
                 owner: who.clone(),
                 name: name,
                 description: description,
-                token_trefix: token_trefix,
+                token_prefix: prefix,
                 next_item_id: next_id,
                 custom_data_size: custom_data_sz,
             };

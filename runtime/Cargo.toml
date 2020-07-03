@@ -27,6 +27,7 @@ std = [
     'sudo/std',
     'system/std',
     'timestamp/std',
+    'staking/std',
     'transaction-payment/std',
     'nft/std',
 ]
@@ -198,6 +199,14 @@ version = '2.0.0-rc4'
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 package = 'pallet-timestamp'
+tag = 'v2.0.0-rc4'
+version = '2.0.0-rc4'
+
+
+[dependencies.staking]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+package = 'pallet-staking'
 tag = 'v2.0.0-rc4'
 version = '2.0.0-rc4'
 
