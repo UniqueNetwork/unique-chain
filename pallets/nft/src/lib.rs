@@ -130,7 +130,9 @@ decl_module! {
             ensure!(prefix.len() <= 16, "Token prefix can not be longer than 15 char");
 
             // Generate next collection ID
-            let next_id = NextCollectionID::get();
+            let next_id = NextCollectionID::get()
+                .checked_add(1)
+                .expect("collection id error");
 
             NextCollectionID::put(next_id);
 
@@ -270,7 +272,9 @@ decl_module! {
             };
 
 
-            let current_index = <ItemListIndex>::get(collection_id);
+            let current_index = <ItemListIndex>::get(collection_id)
+                .checked_add(1)
+                .expect("Item list index id error");
 
             Self::add_token_index(collection_id, current_index, new_item.owner.clone())?;
 
