@@ -11,5 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Docker login
+      run: docker login -u gzusetech -p "$TOKEN"
+      env:
+        TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
     - name: Build image
-      run: docker build -t nft_parachain .
+      run: docker build -t usetechcorp/nft_parachain .
+    - name: Push the image to Docker hub
+      run: docker push usetechcorp/nft_parachain:latest
