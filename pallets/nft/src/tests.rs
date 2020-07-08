@@ -1,6 +1,7 @@
 // Tests to be written here
-use crate::mock::*;
-use frame_support::{assert_noop, assert_ok};
+
+use crate::{Error, mock::*};
+use frame_support::{assert_ok, assert_noop};
 
 #[test]
 fn create_collection_test() {

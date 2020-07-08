@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode};
 /// A FRAME pallet template with necessary imports
 
 /// Feel free to remove or edit this file as needed.
@@ -9,7 +8,10 @@ use codec::{Decode, Encode};
 
 /// For more guidance on Substrate FRAME, see the example pallet
 /// https://github.com/paritytech/substrate/blob/master/frame/example/src/lib.rs
-use frame_support::{decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure};
+
+use codec::{Decode, Encode};
+
+use frame_support::{decl_module, decl_storage, decl_event, decl_error, dispatch::DispatchResult, ensure};
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::sp_std::prelude::Vec;
 
@@ -47,16 +49,16 @@ pub struct NftItemType<AccountId> {
 
 /// The pallet's configuration trait.
 pub trait Trait: system::Trait {
-    // Add other types and constants required to configure this pallet.
+	// Add other types and constants required to configure this pallet.
 
-    /// The overarching event type.
-    type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+	/// The overarching event type.
+	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
 
 // This pallet's storage items.
 decl_storage! {
-    // It is important to update your storage name so that your pallet's
-    // storage items are isolated from other pallets.
+	// It is important to update your storage name so that your pallet's
+	// storage items are isolated from other pallets.
     trait Store for Module<T: Trait> as Nft {
 
         /// Next available collection ID
@@ -88,6 +90,16 @@ decl_event!(
     }
 );
 
+// The pallet's errors
+decl_error! {
+	pub enum Error for Module<T: Trait> {
+		/// Value was None
+		NoneValue,
+		/// Value reached maximum and cannot be incremented further
+		StorageOverflow,
+	}
+}
+
 // The pallet's dispatchable functions.
 decl_module! {
     /// The module declaration.
@@ -106,7 +118,8 @@ decl_module! {
         //
         // @param customDataSz size of custom data in each collection item
         // returns collection ID
-        #[weight = 0]
+        // TODO: later versions use "#[weight = 0]"
+        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
         pub fn create_collection(   origin, 
                                     collection_name: Vec<u16>, 
                                     collection_description: Vec<u16>, 
@@ -155,7 +168,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 0]
+        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
         pub fn destroy_collection(origin, collection_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -168,7 +181,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 0]
+        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
         pub fn change_collection_owner(origin, collection_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -183,7 +196,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 0]
+        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
         pub fn add_collection_admin(origin, collection_id: u64, new_admin_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -214,7 +227,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 0]
+        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
         pub fn remove_collection_admin(origin, collection_id: u64, account_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -242,7 +255,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 0]
+        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
         pub fn create_item(origin, collection_id: u64, properties: Vec<u8>) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -287,7 +300,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 0]
+        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
         pub fn burn_item(origin, collection_id: u64, item_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -324,7 +337,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 0]
+        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
         pub fn transfer(origin, collection_id: u64, item_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -371,7 +384,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 0]
+        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
         pub fn approve(origin, approved: T::AccountId, collection_id: u64, item_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -414,7 +427,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 0]
+        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
         pub fn transfer_from(origin, collection_id: u64, item_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let no_perm_mes = "You do not have permissions to modify this collection";
@@ -427,7 +440,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 0]
+        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
         pub fn safe_transfer_from(origin, collection_id: u64, item_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let no_perm_mes = "You do not have permissions to modify this collection";
@@ -443,7 +456,6 @@ decl_module! {
         }
     }
 }
-
 
 impl<T: Trait> Module<T> {
     fn add_token_index(collection_id: u64, item_index: u64, owner: T::AccountId) -> DispatchResult {

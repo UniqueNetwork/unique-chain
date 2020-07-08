@@ -27,76 +27,64 @@ std = [
     'sudo/std',
     'system/std',
     'timestamp/std',
-    'staking/std',
     'transaction-payment/std',
     'nft/std',
 ]
+
 [dependencies.aura]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
 package = 'pallet-aura'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.balances]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
 package = 'pallet-balances'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.codec]
 default-features = false
 features = ['derive']
 package = 'parity-scale-codec'
-version = '1.3.1'
+version = '1.3.0'
 
 [dependencies.contracts]
 git = 'https://github.com/paritytech/substrate.git'
 default-features = false
 package = 'pallet-contracts'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+tag = 'v2.0.0-alpha.6'
+version = '2.0.0-alpha.6'
 
 [dependencies.contracts-primitives]
 git = 'https://github.com/paritytech/substrate.git'
 default-features = false
 package = 'pallet-contracts-primitives'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+tag = 'v2.0.0-alpha.6'
+version = '2.0.0-alpha.6'
 
 [dependencies.contracts-rpc-runtime-api]
 git = 'https://github.com/paritytech/substrate.git'
 default-features = false
 package = 'pallet-contracts-rpc-runtime-api'
-version = '0.8.0-rc4'
-tag = 'v2.0.0-rc4'
+tag = 'v2.0.0-alpha.6'
+version = '0.8.0-alpha.6'
 
 [dependencies.frame-executive]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.frame-support]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.grandpa]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
 package = 'pallet-grandpa'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.randomness-collective-flip]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
 package = 'pallet-randomness-collective-flip'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.serde]
 features = ['derive']
@@ -105,117 +93,77 @@ version = '1.0.101'
 
 [dependencies.sp-api]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.sp-block-builder]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.sp-consensus-aura]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '0.8.0-rc4'
+version = '0.8.0-alpha.6'
 
 [dependencies.sp-core]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.sp-inherents]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.sp-io]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.sp-offchain]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.sp-runtime]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.sp-session]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.sp-std]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.sp-transaction-pool]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.sp-version]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.sudo]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
 package = 'pallet-sudo'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.system]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
 package = 'frame-system'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.nft]
 default-features = false
 package = 'pallet-nft'
 path = '../pallets/nft'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.timestamp]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
 package = 'pallet-timestamp'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
-
-
-[dependencies.staking]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-package = 'pallet-staking'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [dependencies.transaction-payment]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
 package = 'pallet-transaction-payment'
-tag = 'v2.0.0-rc4'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [package]
 authors = ['UseTech']
@@ -224,13 +172,11 @@ homepage = 'https://usetech.com/blockchain'
 license = 'Unlicense'
 name = 'nft-runtime'
 repository = 'https://github.com/usetech-llc/nft_parachain/'
-version = '2.0.0-rc4'
+version = '2.0.0-alpha.6'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
 [build-dependencies.wasm-builder-runner]
-git = 'https://github.com/paritytech/substrate.git'
 package = 'substrate-wasm-builder-runner'
-tag = 'v2.0.0-rc4'
 version = '1.0.5'
