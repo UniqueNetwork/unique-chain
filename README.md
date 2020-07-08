@@ -8,31 +8,39 @@ If you are building an application that operates NFT tokens, use [this document]
 
 ## Building
 
-Install Rust:
+Building NFT chain requires special versions of Rust and toolchain. We don't use the most recent versions of everything so that we can keep the builds stable.
+
+1. Install Rust:
 
 ```bash
 curl https://sh.rustup.rs -sSf | sh
-rustup default nightly
 sudo apt-get install libssl-dev pkg-config libclang-dev clang
-
 ```
 
-Install required tools:
+2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
+
+3. Install Rust Toolchain 1.44.0:
 
 ```bash
-./scripts/init.sh
+rustup install 1.44.0
 ```
 
-Build the WebAssembly binary:
-
+4. Make it default (actual toochain version may be different, so do a `rustup toolchain list` first)
 ```bash
-./scripts/build.sh
+rustup toolchain list
+rustup default 1.44.0-x86_64-unknown-linux-gnu
 ```
 
-Build all native code:
+5. Install nightly toolchain and add wasm target for it:
 
 ```bash
-cargo build --release
+rustup toolchain install nightly-2020-05-01
+rustup target add wasm32-unknown-unknown --toolchain nightly-2020-05-01-x86_64-unknown-linux-gnu
+```
+
+6. Build:
+```bash
+cargo build
 ```
 
 ## Run

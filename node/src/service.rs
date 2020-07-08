@@ -30,7 +30,7 @@ macro_rules! new_full_start {
 		let inherent_data_providers = sp_inherents::InherentDataProviders::new();
 
 		let builder = sc_service::ServiceBuilder::new_full::<
-		nft_runtime::opaque::Block, nft_runtime::RuntimeApi, crate::service::Executor
+			nft_runtime::opaque::Block, nft_runtime::RuntimeApi, crate::service::Executor
 		>($config)?
 			.with_select_chain(|_config, backend| {
 				Ok(sc_client::LongestChain::new(backend.clone()))

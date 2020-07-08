@@ -1,2 +1,6 @@
+.git/
+.github/
+doc/
 target/
 chain-data/
+smart_contract/

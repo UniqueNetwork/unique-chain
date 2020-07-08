@@ -3,7 +3,7 @@
 FROM phusion/baseimage:0.10.2 as builder
 LABEL maintainer="gz@usetech.com"
 
-ENV WASM_TOOLCHAIN=nightly
+ENV WASM_TOOLCHAIN=nightly-2020-05-01
 
 ARG PROFILE=release
 
@@ -19,9 +19,10 @@ COPY . .
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
 	export PATH="$PATH:$HOME/.cargo/bin" && \
+	rustup toolchain uninstall $(rustup toolchain list) && \
+	rustup default 1.44.0 && \
 	rustup toolchain install $WASM_TOOLCHAIN && \
 	rustup target add wasm32-unknown-unknown --toolchain $WASM_TOOLCHAIN && \
-	rustup default stable && \
     rustup target list --installed && \
     rustup show && \
 	cargo build "--$PROFILE" 
