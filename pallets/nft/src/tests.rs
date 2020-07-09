@@ -5,9 +5,14 @@ use frame_support::{assert_noop, assert_ok};
 #[test]
 fn create_collection_test() {
     new_test_ext().execute_with(|| {
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
         let size = 1024;
         let origin1 = Origin::signed(1);
-        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
         assert_eq!(TemplateModule::collection(1).owner, 1);
     });
 }
@@ -15,10 +20,15 @@ fn create_collection_test() {
 #[test]
 fn change_collection_owner() {
     new_test_ext().execute_with(|| {
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
         let size = 1024;
         let origin1 = Origin::signed(1);
 
-        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
         assert_ok!(TemplateModule::change_collection_owner(
             origin1.clone(),
             1,
@@ -31,10 +41,15 @@ fn change_collection_owner() {
 #[test]
 fn destroy_collection() {
     new_test_ext().execute_with(|| {
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
         let size = 1024;
         let origin1 = Origin::signed(1);
 
-        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
         assert_ok!(TemplateModule::destroy_collection(origin1.clone(), 1));
     });
 }
@@ -42,11 +57,16 @@ fn destroy_collection() {
 #[test]
 fn create_item() {
     new_test_ext().execute_with(|| {
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
         let size = 1024;
         let origin1 = Origin::signed(1);
         let origin2 = Origin::signed(2);
 
-        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
         assert_ok!(TemplateModule::add_collection_admin(origin1.clone(), 1, 2));
         assert_ok!(TemplateModule::create_item(
             origin2.clone(),
@@ -62,11 +82,16 @@ fn create_item() {
 #[test]
 fn burn_item() {
     new_test_ext().execute_with(|| {
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
         let size = 1024;
         let origin1 = Origin::signed(1);
         let origin2 = Origin::signed(2);
 
-        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
         assert_ok!(TemplateModule::add_collection_admin(origin1.clone(), 1, 2));
         assert_ok!(TemplateModule::create_item(
             origin2.clone(),
@@ -91,14 +116,19 @@ fn burn_item() {
 #[test]
 fn add_collection_admin() {
     new_test_ext().execute_with(|| {
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
         let size = 1024;
         let origin1 = Origin::signed(1);
         let origin2 = Origin::signed(2);
         let origin3 = Origin::signed(3);
 
-        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
-        assert_ok!(TemplateModule::create_collection(origin2.clone(), size));
-        assert_ok!(TemplateModule::create_collection(origin3.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin2.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin3.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
 
         assert_eq!(TemplateModule::collection(1).owner, 1);
         assert_eq!(TemplateModule::collection(2).owner, 2);
@@ -116,14 +146,19 @@ fn add_collection_admin() {
 #[test]
 fn remove_collection_admin() {
     new_test_ext().execute_with(|| {
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
         let size = 1024;
         let origin1 = Origin::signed(1);
         let origin2 = Origin::signed(2);
         let origin3 = Origin::signed(3);
 
-        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
-        assert_ok!(TemplateModule::create_collection(origin2.clone(), size));
-        assert_ok!(TemplateModule::create_collection(origin3.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin2.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin3.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
 
         assert_eq!(TemplateModule::collection(1).owner, 1);
         assert_eq!(TemplateModule::collection(2).owner, 2);
@@ -149,14 +184,19 @@ fn remove_collection_admin() {
 #[test]
 fn balance_of() {
     new_test_ext().execute_with(|| {
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
         let size = 1024;
         let origin1 = Origin::signed(1);
         let origin2 = Origin::signed(2);
         let origin3 = Origin::signed(3);
 
-        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
-        assert_ok!(TemplateModule::create_collection(origin2.clone(), size));
-        assert_ok!(TemplateModule::create_collection(origin3.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin2.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin3.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
 
         assert_eq!(TemplateModule::collection(1).owner, 1);
         assert_eq!(TemplateModule::collection(2).owner, 2);
@@ -181,14 +221,19 @@ fn balance_of() {
 #[test]
 fn transfer() {
     new_test_ext().execute_with(|| {
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
         let size = 1024;
         let origin1 = Origin::signed(1);
         let origin2 = Origin::signed(2);
         let origin3 = Origin::signed(3);
 
-        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
-        assert_ok!(TemplateModule::create_collection(origin2.clone(), size));
-        assert_ok!(TemplateModule::create_collection(origin3.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin2.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin3.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
 
         assert_eq!(TemplateModule::collection(1).owner, 1);
         assert_eq!(TemplateModule::collection(2).owner, 2);
@@ -214,14 +259,19 @@ fn transfer() {
 #[test]
 fn approve() {
     new_test_ext().execute_with(|| {
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
         let size = 1024;
         let origin1 = Origin::signed(1);
         let origin2 = Origin::signed(2);
         let origin3 = Origin::signed(3);
 
-        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
-        assert_ok!(TemplateModule::create_collection(origin2.clone(), size));
-        assert_ok!(TemplateModule::create_collection(origin3.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin2.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin3.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
 
         assert_eq!(TemplateModule::collection(1).owner, 1);
         assert_eq!(TemplateModule::collection(2).owner, 2);
@@ -243,14 +293,19 @@ fn approve() {
 #[test]
 fn get_approved() {
     new_test_ext().execute_with(|| {
+        
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
         let size = 1024;
         let origin1 = Origin::signed(1);
         let origin2 = Origin::signed(2);
         let origin3 = Origin::signed(3);
 
-        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
-        assert_ok!(TemplateModule::create_collection(origin2.clone(), size));
-        assert_ok!(TemplateModule::create_collection(origin3.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin2.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin3.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
 
         assert_eq!(TemplateModule::collection(1).owner, 1);
         assert_eq!(TemplateModule::collection(2).owner, 2);
@@ -272,14 +327,19 @@ fn get_approved() {
 #[test]
 fn transfer_from() {
     new_test_ext().execute_with(|| {
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
         let size = 1024;
         let origin1 = Origin::signed(1);
         let origin2 = Origin::signed(2);
         let origin3 = Origin::signed(3);
 
-        assert_ok!(TemplateModule::create_collection(origin1.clone(), size));
-        assert_ok!(TemplateModule::create_collection(origin2.clone(), size));
-        assert_ok!(TemplateModule::create_collection(origin3.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin2.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin3.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
 
         assert_eq!(TemplateModule::collection(1).owner, 1);
         assert_eq!(TemplateModule::collection(2).owner, 2);
@@ -297,3 +357,50 @@ fn transfer_from() {
         assert_ok!(TemplateModule::transfer_from(origin1.clone(), 1, 1, 2));
     });
 }
+
+#[test]
+fn index_list() {
+    new_test_ext().execute_with(|| {
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
+        let size = 1024;
+        let origin1 = Origin::signed(1);
+        let origin2 = Origin::signed(2);
+        let origin3 = Origin::signed(3);
+
+        assert_ok!(TemplateModule::create_collection(origin1.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin2.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+        assert_ok!(TemplateModule::create_collection(origin3.clone(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), size));
+
+        assert_eq!(TemplateModule::collection(1).owner, 1);
+        assert_eq!(TemplateModule::collection(2).owner, 2);
+        assert_eq!(TemplateModule::collection(3).owner, 3);
+        // create items
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [1, 1, 1].to_vec()
+        ));
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [1, 1, 2].to_vec()
+        ));
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [1, 2, 3].to_vec()
+        ));
+        assert_eq!(TemplateModule::address_tokens((1, 1)).len(), 3);
+        // burn one
+        assert_ok!(TemplateModule::burn_item(origin1.clone(), 1, 2));
+        assert_eq!(TemplateModule::address_tokens((1, 1)).len(), 2);
+        // burn another one
+        assert_ok!(TemplateModule::burn_item(origin1.clone(), 1, 3));
+        assert_eq!(TemplateModule::address_tokens((1, 1))[0], 1);
+    });
+}
+

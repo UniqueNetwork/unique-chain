@@ -24,6 +24,9 @@ mod tests;
 pub struct CollectionType<AccountId> {
     pub owner: AccountId,
     pub next_item_id: u64,
+    pub name: Vec<u16>, // 64 include null escape char
+    pub description: Vec<u16>, // 256 include null escape char
+    pub token_prefix: Vec<u8>, // 16 include null escape char
     pub custom_data_size: u32,
 }
 
@@ -58,21 +61,17 @@ decl_storage! {
 
         /// Next available collection ID
         pub NextCollectionID get(fn next_collection_id): u64;
-
-        pub Collection get(collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
-        //pub Collection get(collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
-
-        pub AdminList get(admin_list_collection): map hasher(identity) u64 => Vec<T::AccountId>;
+        pub Collection get(fn collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
+        pub AdminList get(fn admin_list_collection): map hasher(identity) u64 => Vec<T::AccountId>;
 
         /// Balance owner per collection map
-        pub Balance get(balance_count): map hasher(blake2_128_concat) (u64, T::AccountId) => u64;
-        pub ApprovedList get(approved): map hasher(blake2_128_concat) (u64, u64) => Vec<T::AccountId>;
+        pub Balance get(fn balance_count): map hasher(blake2_128_concat) (u64, T::AccountId) => u64;
+        pub ApprovedList get(fn approved): map hasher(blake2_128_concat) (u64, u64) => Vec<T::AccountId>;
 
-        pub ItemList get(item_id): map hasher(blake2_128_concat) (u64, u64) => NftItemType<T::AccountId>;
-        // pub ItemList get(item_id): map hasher(blake2_128_concat) (u64, u64) => NftItemType<T::AccountId>;
+        pub ItemList get(fn item_id): map hasher(blake2_128_concat) (u64, u64) => NftItemType<T::AccountId>;
+        pub ItemListIndex get(fn item_index): map hasher(blake2_128_concat) u64 => u64;
 
-        pub ItemListIndex get(item_index): map hasher(blake2_128_concat) u64 => u64;
-        // pub ItemListIndex get(item_index): map hasher(blake2_128_concat) u64 => u64;
+        pub AddressTokens get(fn address_tokens): map hasher(blake2_128_concat) (u64, T::AccountId) => Vec<u64>;
     }
 }
 
@@ -82,7 +81,9 @@ decl_event!(
     where
         AccountId = <T as system::Trait>::AccountId,
     {
-        Created(u32, AccountId),
+        Created(u64, AccountId),
+        ItemCreated(u64),
+        ItemDestroyed(u64, u64),
     }
 );
 
@@ -109,24 +110,50 @@ decl_module! {
         // @param customDataSz size of custom data in each collection item
         // returns collection ID
         #[weight = frame_support::weights::SimpleDispatchInfo::default()]
-        pub fn create_collection(origin, custom_data_sz: u32) -> DispatchResult {
+        pub fn create_collection(   origin, 
+                                    collection_name: Vec<u16>, 
+                                    collection_description: Vec<u16>, 
+                                    token_prefix: Vec<u8>, 
+                                    custom_data_sz: u32) -> DispatchResult {
+
             // Anyone can create a collection
             let who = ensure_signed(origin)?;
 
+            // check params 
+            let mut name = collection_name.to_vec();
+            name.push(0);
+            ensure!(name.len() <= 64, "Collection name can not be longer than 63 char");
+
+            let mut description = collection_description.to_vec();
+            description.push(0);
+            ensure!(name.len() <= 256, "Collection description can not be longer than 255 char");
+
+            let mut prefix = token_prefix.to_vec();
+            prefix.push(0);
+            ensure!(prefix.len() <= 16, "Token prefix can not be longer than 15 char");
+
             // Generate next collection ID
-            let next_id = NextCollectionID::get();
+            let next_id = NextCollectionID::get()
+                .checked_add(1)
+                .expect("collection id error");
 
             NextCollectionID::put(next_id);
 
             // Create new collection
             let new_collection = CollectionType {
-                owner: who,
+                owner: who.clone(),
+                name: name,
+                description: description,
+                token_prefix: prefix,
                 next_item_id: next_id,
                 custom_data_size: custom_data_sz,
             };
 
             // Add new collection to map
             <Collection<T>>::insert(next_id, new_collection);
+
+            // call event
+            Self::deposit_event(RawEvent::Created(next_id, who.clone()));
 
             Ok(())
         }
@@ -247,9 +274,18 @@ decl_module! {
                 data: properties,
             };
 
-            let current_index = <ItemListIndex>::get(collection_id);
+
+            let current_index = <ItemListIndex>::get(collection_id)
+                .checked_add(1)
+                .expect("Item list index id error");
+
+            Self::add_token_index(collection_id, current_index, new_item.owner.clone())?;
+
             <ItemListIndex>::insert(collection_id, current_index);
             <ItemList<T>>::insert((collection_id, current_index), new_item);
+
+            // call event
+            Self::deposit_event(RawEvent::ItemCreated(collection_id));
 
             Ok(())
         }
@@ -279,9 +315,14 @@ decl_module! {
             }
             <ItemList<T>>::remove((collection_id, item_id));
 
+            Self::remove_token_index(collection_id, item_id, item.owner.clone())?;
+
             // update balance
             let new_balance = <Balance<T>>::get((collection_id, item.owner.clone())) - 1;
             <Balance<T>>::insert((collection_id, item.owner.clone()), new_balance);
+
+            // call event
+            Self::deposit_event(RawEvent::ItemDestroyed(collection_id, item_id));
 
             Ok(())
         }
@@ -319,8 +360,12 @@ decl_module! {
             <Balance<T>>::insert((collection_id, new_owner.clone()), balance_new_owner);
 
             // change owner
-            item.owner = new_owner;
+            let old_owner = item.owner.clone();
+            item.owner = new_owner.clone();
             <ItemList<T>>::insert((collection_id, item_id), item);
+
+            // update index collection
+            Self::move_token_index(collection_id, item_id, old_owner, new_owner.clone())?;
 
             // reset approved list
             let itm: Vec<T::AccountId> = Vec::new();
@@ -399,5 +444,57 @@ decl_module! {
 
             Ok(())
         }
+    }
+}
+
+
+impl<T: Trait> Module<T> {
+    fn add_token_index(collection_id: u64, item_index: u64, owner: T::AccountId) -> DispatchResult {
+        
+        let list_exists = <AddressTokens<T>>::contains_key((collection_id, owner.clone()));
+        if list_exists {
+
+            let mut list = <AddressTokens<T>>::get((collection_id, owner.clone()));
+            let item_contains = list.contains(&item_index.clone());
+
+            if !item_contains {
+                list.push(item_index.clone());
+            }
+
+            <AddressTokens<T>>::insert((collection_id, owner.clone()), list);
+
+        } else {
+
+            let mut itm = Vec::new();
+            itm.push(item_index.clone());
+            <AddressTokens<T>>::insert((collection_id, owner), itm);
+        }
+
+        Ok(())
+    }
+
+    fn remove_token_index(collection_id: u64, item_index: u64, owner: T::AccountId) -> DispatchResult {
+        
+        let list_exists = <AddressTokens<T>>::contains_key((collection_id, owner.clone()));
+        if list_exists {
+
+            let mut list = <AddressTokens<T>>::get((collection_id, owner.clone()));
+            let item_contains = list.contains(&item_index.clone());
+
+            if item_contains {
+                list.retain(|&item| item != item_index);
+                <AddressTokens<T>>::insert((collection_id, owner), list);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn move_token_index(collection_id: u64, item_index: u64, old_owner: T::AccountId, new_owner: T::AccountId) -> DispatchResult {
+        
+        Self::remove_token_index(collection_id, item_index, old_owner)?;
+        Self::add_token_index(collection_id, item_index, new_owner)?;
+        
+        Ok(())
     }
 }
