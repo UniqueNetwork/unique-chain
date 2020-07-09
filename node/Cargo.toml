@@ -16,6 +16,13 @@ targets = ['x86_64-unknown-linux-gnu']
 futures = '0.3.4'
 log = '0.4.8'
 structopt = '0.3.8'
+jsonrpc-core = '14.0.5'
+
+[dependencies.pallet-contracts-rpc]
+version = '0.8.0-alpha.6'
+
+[dependencies.sc-rpc]
+version = '2.0.0-alpha.6'
 
 [dependencies.nft-runtime]
 path = '../runtime'

@@ -14,6 +14,16 @@ features = ['derive']
 package = 'parity-scale-codec'
 version = '1.3.0'
 
+[dependencies.contracts]
+default-features = false
+package = 'pallet-contracts'
+version = '2.0.0-alpha.6'
+
+[dependencies.contracts-primitives]
+default-features = false
+package = 'pallet-contracts-primitives'
+version = '2.0.0-alpha.6'
+
 [dependencies.frame-executive]
 default-features = false
 version = '2.0.0-alpha.6'
@@ -133,6 +143,8 @@ std = [
     'aura/std',
     'balances/std',
     'codec/std',
+    'contracts/std',
+    'contracts-primitives/std',
     'frame-executive/std',
     'frame-support/std',
     'grandpa/std',

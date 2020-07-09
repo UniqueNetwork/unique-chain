@@ -7,6 +7,7 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{Verify, IdentifyAccount};
 use sc_service::ChainType;
+use nft_runtime::{ContractsConfig, ContractsSchedule};
 
 // Note this is the URL for the telemetry server
 //const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -120,5 +121,12 @@ fn testnet_genesis(initial_authorities: Vec<(AuraId, GrandpaId)>,
 		sudo: Some(SudoConfig {
 			key: root_key,
 		}),
+		contracts: Some(ContractsConfig {
+			gas_price: 1_000_000_000,
+            current_schedule: ContractsSchedule {
+                 //   enable_println,
+                    ..Default::default()
+            },
+        }),
 	}
 }
