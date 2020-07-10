@@ -24,6 +24,11 @@ default-features = false
 package = 'pallet-contracts-primitives'
 version = '2.0.0-alpha.6'
 
+[dependencies.contracts-rpc-runtime-api]
+default-features = false
+package = 'pallet-contracts-rpc-runtime-api'
+version = '0.8.0-alpha.6'
+
 [dependencies.frame-executive]
 default-features = false
 version = '2.0.0-alpha.6'
@@ -143,8 +148,9 @@ std = [
     'aura/std',
     'balances/std',
     'codec/std',
-    'contracts/std',
-    'contracts-primitives/std',
+	"contracts/std",
+	"contracts-primitives/std",
+	"contracts-rpc-runtime-api/std",
     'frame-executive/std',
     'frame-support/std',
     'grandpa/std',

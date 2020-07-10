@@ -122,7 +122,7 @@ fn testnet_genesis(initial_authorities: Vec<(AuraId, GrandpaId)>,
 			key: root_key,
 		}),
 		contracts: Some(ContractsConfig {
-			gas_price: 1_000_000_000,
+			gas_price: 1_000,
             current_schedule: ContractsSchedule {
                  //   enable_println,
                     ..Default::default()
