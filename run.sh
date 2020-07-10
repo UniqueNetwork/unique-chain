@@ -1,3 +1,3 @@
 ls -la /nft_parachain/target/release
 
-/usr/local/bin/nft --dev --ws-external --rpc-external --base-path=/chain-data
+/usr/local/bin/nft --dev --ws-external --rpc-external --base-path=/chain-data -lwarn,runtime
