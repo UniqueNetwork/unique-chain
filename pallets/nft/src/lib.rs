@@ -24,7 +24,7 @@ mod tests;
 pub struct CollectionType<AccountId> {
     pub owner: AccountId,
     pub next_item_id: u64,
-    pub name: Vec<u16>, // 64 include null escape char
+    pub name: Vec<u16>,        // 64 include null escape char
     pub description: Vec<u16>, // 256 include null escape char
     pub token_prefix: Vec<u8>, // 16 include null escape char
     pub custom_data_size: u32,
@@ -109,17 +109,17 @@ decl_module! {
         //
         // @param customDataSz size of custom data in each collection item
         // returns collection ID
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
-        pub fn create_collection(   origin, 
-                                    collection_name: Vec<u16>, 
-                                    collection_description: Vec<u16>, 
-                                    token_prefix: Vec<u8>, 
+        #[weight = 0]
+        pub fn create_collection(   origin,
+                                    collection_name: Vec<u16>,
+                                    collection_description: Vec<u16>,
+                                    token_prefix: Vec<u8>,
                                     custom_data_sz: u32) -> DispatchResult {
 
             // Anyone can create a collection
             let who = ensure_signed(origin)?;
 
-            // check params 
+            // check params
             let mut name = collection_name.to_vec();
             name.push(0);
             ensure!(name.len() <= 64, "Collection name can not be longer than 63 char");
@@ -158,7 +158,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn destroy_collection(origin, collection_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -171,7 +171,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn change_collection_owner(origin, collection_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -186,7 +186,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn add_collection_admin(origin, collection_id: u64, new_admin_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -217,7 +217,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn remove_collection_admin(origin, collection_id: u64, account_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -245,7 +245,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn create_item(origin, collection_id: u64, properties: Vec<u8>) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -290,7 +290,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn burn_item(origin, collection_id: u64, item_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -327,7 +327,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn transfer(origin, collection_id: u64, item_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -374,7 +374,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn approve(origin, approved: T::AccountId, collection_id: u64, item_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -417,7 +417,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn transfer_from(origin, collection_id: u64, item_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let no_perm_mes = "You do not have permissions to modify this collection";
@@ -430,7 +430,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = frame_support::weights::SimpleDispatchInfo::default()]
+        #[weight = 0]
         pub fn safe_transfer_from(origin, collection_id: u64, item_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let no_perm_mes = "You do not have permissions to modify this collection";
@@ -447,13 +447,10 @@ decl_module! {
     }
 }
 
-
 impl<T: Trait> Module<T> {
     fn add_token_index(collection_id: u64, item_index: u64, owner: T::AccountId) -> DispatchResult {
-        
         let list_exists = <AddressTokens<T>>::contains_key((collection_id, owner.clone()));
         if list_exists {
-
             let mut list = <AddressTokens<T>>::get((collection_id, owner.clone()));
             let item_contains = list.contains(&item_index.clone());
 
@@ -462,9 +459,7 @@ impl<T: Trait> Module<T> {
             }
 
             <AddressTokens<T>>::insert((collection_id, owner.clone()), list);
-
         } else {
-
             let mut itm = Vec::new();
             itm.push(item_index.clone());
             <AddressTokens<T>>::insert((collection_id, owner), itm);
@@ -473,11 +468,13 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    fn remove_token_index(collection_id: u64, item_index: u64, owner: T::AccountId) -> DispatchResult {
-        
+    fn remove_token_index(
+        collection_id: u64,
+        item_index: u64,
+        owner: T::AccountId,
+    ) -> DispatchResult {
         let list_exists = <AddressTokens<T>>::contains_key((collection_id, owner.clone()));
         if list_exists {
-
             let mut list = <AddressTokens<T>>::get((collection_id, owner.clone()));
             let item_contains = list.contains(&item_index.clone());
 
@@ -490,11 +487,15 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    fn move_token_index(collection_id: u64, item_index: u64, old_owner: T::AccountId, new_owner: T::AccountId) -> DispatchResult {
-        
+    fn move_token_index(
+        collection_id: u64,
+        item_index: u64,
+        old_owner: T::AccountId,
+        new_owner: T::AccountId,
+    ) -> DispatchResult {
         Self::remove_token_index(collection_id, item_index, old_owner)?;
         Self::add_token_index(collection_id, item_index, new_owner)?;
-        
+
         Ok(())
     }
 }

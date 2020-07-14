@@ -1,13 +1,21 @@
+[build-dependencies.substrate-build-script-utils]
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '2.0.0-rc3'
+
+[[bin]]
+name = 'nft'
+
 [package]
-authors = ['Anonymous']
+authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
 build = 'build.rs'
-description = 'Substrate Node nft'
+description = 'Substrate node nft'
 edition = '2018'
-homepage = 'https://substrate.dev'
+homepage = 'https://substrate.io'
 license = 'Unlicense'
 name = 'nft'
-repository = 'https://github.com/paritytech/substrate/'
-version = '2.0.0-alpha.6'
+repository = 'https://github.com/substrate-developer-hub/nft/'
+version = '2.0.0-rc3'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -15,71 +23,104 @@ targets = ['x86_64-unknown-linux-gnu']
 [dependencies]
 futures = '0.3.4'
 log = '0.4.8'
+parking_lot = '0.10.0'
 structopt = '0.3.8'
 jsonrpc-core = '14.0.5'
 
-[dependencies.pallet-contracts-rpc]
-version = '0.8.0-alpha.6'
-
-[dependencies.sc-rpc]
-version = '2.0.0-alpha.6'
-
 [dependencies.nft-runtime]
 path = '../runtime'
-version = '2.0.0-alpha.6'
+version = '2.0.0-rc3'
 
 [dependencies.sc-basic-authorship]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '0.8.0-rc3'
 
 [dependencies.sc-cli]
-version = '0.8.0-alpha.6'
-
-[dependencies.sc-client]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '0.8.0-rc3'
 
 [dependencies.sc-client-api]
-version = '2.0.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '2.0.0-rc3'
+
+[dependencies.sc-consensus]
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '0.8.0-rc3'
+
+[dependencies.pallet-contracts-rpc]
+git = 'https://github.com/paritytech/substrate.git'
+version = '0.8.0-rc3'
+tag = 'v2.0.0-rc3'
+
+[dependencies.sc-rpc]
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
 
 [dependencies.sc-consensus-aura]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '0.8.0-rc3'
 
 [dependencies.sc-executor]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '0.8.0-rc3'
 
 [dependencies.sc-finality-grandpa]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '0.8.0-rc3'
 
 [dependencies.sc-network]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '0.8.0-rc3'
 
 [dependencies.sc-service]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '0.8.0-rc3'
 
 [dependencies.sc-transaction-pool]
-version = '2.0.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '2.0.0-rc3'
 
 [dependencies.sp-consensus]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '0.8.0-rc3'
 
 [dependencies.sp-consensus-aura]
-version = '0.8.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '0.8.0-rc3'
 
 [dependencies.sp-core]
-version = '2.0.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '2.0.0-rc3'
 
 [dependencies.sp-finality-grandpa]
-version = '2.0.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '2.0.0-rc3'
 
 [dependencies.sp-inherents]
-version = '2.0.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '2.0.0-rc3'
 
 [dependencies.sp-runtime]
-version = '2.0.0-alpha.6'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '2.0.0-rc3'
 
 [dependencies.sp-transaction-pool]
-version = '2.0.0-alpha.6'
-[build-dependencies.substrate-build-script-utils]
-version = '2.0.0-alpha.6'
-
-[[bin]]
-name = 'nft'
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc3'
+version = '2.0.0-rc3'
