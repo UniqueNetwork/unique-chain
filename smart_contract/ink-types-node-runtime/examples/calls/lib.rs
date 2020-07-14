@@ -4,8 +4,8 @@ use ink_lang as ink;
 
 #[ink::contract(version = "0.1.0", env = NodeRuntimeTypes)]
 mod calls {
-    use ink_core::env;
-    use ink_prelude::*;
+    // use ink_core::env;
+    // use ink_prelude::*;
     use ink_types_node_runtime::{calls as runtime_calls, NodeRuntimeTypes};
 
     /// This simple dummy contract dispatches substrate runtime calls
@@ -26,10 +26,10 @@ mod calls {
 
             // report result to console
             // NOTE: println should only be used on a development chain)
-            env::println(&format!(
-                "Balance transfer invoke_runtime result {:?}",
-                result
-            ));
+            // env::println(&format!(
+            //     "Balance transfer invoke_runtime result {:?}",
+            //     result
+            // ));
         }
     }
 
