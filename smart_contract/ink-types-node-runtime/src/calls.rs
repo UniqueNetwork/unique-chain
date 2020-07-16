@@ -50,46 +50,6 @@
 //     Balances::<NodeRuntimeTypes>::transfer(account.into(), balance).into()
 // }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::{calls, NodeRuntimeTypes};
-//     use super::Call;
-
-//     use node_runtime::{self, Runtime};
-//     use pallet_indices::address;
-//     use scale::{Decode, Encode};
-
-
-//     #[test]
-//     fn call_balance_transfer() {
-//         let balance = 10_000;
-//         let account_index = 0;
-
-//         let contract_address = calls::Address::Index(account_index);
-//         let contract_transfer =
-//             calls::Balances::<NodeRuntimeTypes>::transfer(contract_address, balance);
-//         let contract_call = Call::Balances(contract_transfer);
-
-//         let srml_address = address::Address::Index(account_index);
-//         let srml_transfer = node_runtime::BalancesCall::<Runtime>::transfer(srml_address, balance);
-//         let srml_call = node_runtime::Call::Balances(srml_transfer);
-
-//         let contract_call_encoded = contract_call.encode();
-//         let srml_call_encoded = srml_call.encode();
-
-//         assert_eq!(srml_call_encoded, contract_call_encoded);
-
-//         let srml_call_decoded: node_runtime::Call =
-//             Decode::decode(&mut contract_call_encoded.as_slice())
-//                 .expect("Balances transfer call decodes to srml type");
-//         let srml_call_encoded = srml_call_decoded.encode();
-//         let contract_call_decoded: Call = Decode::decode(&mut srml_call_encoded.as_slice())
-//             .expect("Balances transfer call decodes back to contract type");
-//         assert!(contract_call == contract_call_decoded);
-//     }
-// }
-
-
 
 
 
@@ -114,10 +74,10 @@
 
 use ink_core::env::EnvTypes;
 use scale::{Codec, Decode, Encode};
-use pallet_indices::address::Address;
 use sp_runtime::traits::Member;
+use ink_prelude::vec::Vec;
 use crate::{AccountId, Balance, NodeRuntimeTypes};
-use sp_runtime::sp_std::prelude::Vec;
+
 
 /// Default runtime Call type, a subset of the runtime Call module variants
 ///
@@ -125,7 +85,7 @@ use sp_runtime::sp_std::prelude::Vec;
 #[derive(Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Clone, PartialEq, Eq))]
 pub enum Call {
-    #[codec(index = "8")]
+    #[codec(index = "7")]
     Nft(Nft<NodeRuntimeTypes>),
 }
 
@@ -140,61 +100,74 @@ pub enum Nft<T>
  where
      T: EnvTypes,
      T::AccountId: Member + Codec,
-{
-    #[allow(non_camel_case_types)]
-    create_nft_collection(Vec<u16>, Vec<u16>, Vec<u8>, u32),
+    {
+        #[allow(non_camel_case_types)]
+        create_collection(Vec<u16>, Vec<u16>, Vec<u8>, u32),
 
-    #[allow(non_camel_case_types)]
-    add_collection_admin(u64, T::AccountId),
+        #[allow(non_camel_case_types)]
+        destroy_collection(u64),
 
-    // collection_name: Vec<u16>,
-    // collection_description: Vec<u16>,
-    // token_prefix: Vec<u8>,
-    // custom_data_sz: u32
+        #[allow(non_camel_case_types)]
+        change_collection_owner(u64, T::AccountId),
 
-}
+        #[allow(non_camel_case_types)]
+        add_collection_admin(u64, T::AccountId),
 
-// Construct a `Balances::transfer` call
-pub fn create_collection(collection_name: Vec<u16>, collection_description: Vec<u16>, 
-                        token_prefix: Vec<u8>, custom_data_sz: u32) -> Call {
-    Nft::<NodeRuntimeTypes>::create_nft_collection(collection_name, collection_description, token_prefix, custom_data_sz).into()
-}
+        #[allow(non_camel_case_types)]
+        remove_collection_admin(u64, T::AccountId),
 
-#[cfg(test)]
-mod tests {
-    use crate::{calls, NodeRuntimeTypes};
-    use super::Call;
+        #[allow(non_camel_case_types)]
+        create_item(u64, Vec<u8>),
 
-    use node_runtime::{self, Runtime};
-    use pallet_indices::address;
-    use scale::{Decode, Encode};
+        #[allow(non_camel_case_types)]
+        burn_item(u64, u64),
 
+        #[allow(non_camel_case_types)]
+        transfer(u64, u64, T::AccountId),
 
-    #[test]
-    fn call_balance_transfer() {
-        let balance = 10_000;
-        let account_index = 0;
+        #[allow(non_camel_case_types)]
+        nft_approve(T::AccountId, u64, u64),
 
-        let contract_address = calls::Address::Index(account_index);
-        let contract_transfer =
-            calls::Balances::<NodeRuntimeTypes>::transfer(contract_address, balance);
-        let contract_call = Call::Balances(contract_transfer);
+        #[allow(non_camel_case_types)]
+        nft_transfer_from(u64, u64, T::AccountId),
 
-        let srml_address = address::Address::Index(account_index);
-        let srml_transfer = node_runtime::BalancesCall::<Runtime>::transfer(srml_address, balance);
-        let srml_call = node_runtime::Call::Balances(srml_transfer);
-
-        let contract_call_encoded = contract_call.encode();
-        let srml_call_encoded = srml_call.encode();
-
-        assert_eq!(srml_call_encoded, contract_call_encoded);
-
-        let srml_call_decoded: node_runtime::Call =
-            Decode::decode(&mut contract_call_encoded.as_slice())
-                .expect("Balances transfer call decodes to srml type");
-        let srml_call_encoded = srml_call_decoded.encode();
-        let contract_call_decoded: Call = Decode::decode(&mut srml_call_encoded.as_slice())
-            .expect("Balances transfer call decodes back to contract type");
-        assert!(contract_call == contract_call_decoded);
+        #[allow(non_camel_case_types)]
+        nft_safe_transfer(u64, u64, T::AccountId),
     }
+
+
+
+
+pub fn transfer(collection_id: u64, item_id: u64, new_owner: AccountId) -> Call {
+    Nft::<NodeRuntimeTypes>::transfer(collection_id, item_id, new_owner.into()).into()
 }
+
+pub fn create_collection(collection_name: Vec<u16>, collection_description: Vec<u16>, 
+        token_prefix: Vec<u8>, custom_data_sz: u32) -> Call {
+    Nft::<NodeRuntimeTypes>::create_collection(collection_name, collection_description, token_prefix, custom_data_sz).into()
+}
+
+// pub fn safe_transfer(collection_id: u64, item_id: u64, new_owner: AccountId) -> Call {
+//     Nft::<NodeRuntimeTypes>::nft_safe_transfer(collection_id, item_id, new_owner.into()).into()
+// }
+
+pub fn approve(approved: AccountId, collection_id: u64, item_id: u64) -> Call {
+    Nft::<NodeRuntimeTypes>::nft_approve(approved.into(), collection_id, item_id).into()
+}
+
+//GetApproved
+
+pub fn transfer_from(collection_id: u64, item_id: u64, new_owner: AccountId) -> Call {
+    Nft::<NodeRuntimeTypes>::nft_transfer_from(collection_id, item_id, new_owner.into()).into()
+}
+
+pub fn create_item(collection_id: u64, properties: Vec<u8>) -> Call {
+    Nft::<NodeRuntimeTypes>::create_item(collection_id, properties).into()
+}
+
+pub fn burn_item(collection_id: u64, item_id: u64) -> Call {
+    Nft::<NodeRuntimeTypes>::burn_item(collection_id, item_id).into()
+}
+
+//GetOwner
+//BalanceOf
