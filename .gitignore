@@ -5,4 +5,4 @@
 **/*.rs.bk
 
 .DS_Store
-chain-data/
+chain-data*/
