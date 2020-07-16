@@ -189,6 +189,7 @@ dependencies = [
  "ink_types_node_runtime",
  "parity-scale-codec",
  "sp-keyring",
+ "sp-runtime",
  "type-metadata",
 ]
 
