@@ -18,7 +18,7 @@ use ink_core::env::EnvTypes;
 use scale::{Codec, Decode, Encode};
 use pallet_indices::address::Address;
 use sp_runtime::traits::Member;
-use crate::{AccountId, AccountIndex, Balance, NodeRuntimeTypes};
+use crate::{AccountId, Balance, NodeRuntimeTypes};
 
 /// Default runtime Call type, a subset of the runtime Call module variants
 ///
@@ -26,41 +26,34 @@ use crate::{AccountId, AccountIndex, Balance, NodeRuntimeTypes};
 #[derive(Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Clone, PartialEq, Eq))]
 pub enum Call {
-    #[codec(index = "6")]
-    Balances(Balances<NodeRuntimeTypes, AccountIndex>),
+    #[codec(index = "5")]
+    Balances(Balances<NodeRuntimeTypes>),
 }
 
-impl From<Balances<NodeRuntimeTypes, AccountIndex>> for Call {
-    fn from(balances_call: Balances<NodeRuntimeTypes, AccountIndex>) -> Call {
+impl From<Balances<NodeRuntimeTypes>> for Call {
+    fn from(balances_call: Balances<NodeRuntimeTypes>) -> Call {
         Call::Balances(balances_call)
     }
 }
 /// Generic Balance Call, could be used with other runtimes
 #[derive(Encode, Decode, Clone, PartialEq, Eq)]
-pub enum Balances<T, AccountIndex>
+pub enum Balances<T>
 where
     T: EnvTypes,
     T::AccountId: Member + Codec,
-    AccountIndex: Member + Codec,
 {
     #[allow(non_camel_case_types)]
-    transfer(Address<T::AccountId, AccountIndex>, #[codec(compact)] T::Balance),
-    #[allow(non_camel_case_types)]
-    set_balance(
-        Address<T::AccountId, AccountIndex>,
-        #[codec(compact)] T::Balance,
-        #[codec(compact)] T::Balance,
-    ),
+    transfer(T::AccountId, #[codec(compact)] T::Balance),
 }
 
 /// Construct a `Balances::transfer` call
 pub fn transfer_balance(account: AccountId, balance: Balance) -> Call {
-    Balances::<NodeRuntimeTypes, AccountIndex>::transfer(account.into(), balance).into()
+    Balances::<NodeRuntimeTypes>::transfer(account.into(), balance).into()
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{calls, AccountIndex, NodeRuntimeTypes};
+    use crate::{calls, NodeRuntimeTypes};
     use super::Call;
 
     use node_runtime::{self, Runtime};
@@ -75,7 +68,7 @@ mod tests {
 
         let contract_address = calls::Address::Index(account_index);
         let contract_transfer =
-            calls::Balances::<NodeRuntimeTypes, AccountIndex>::transfer(contract_address, balance);
+            calls::Balances::<NodeRuntimeTypes>::transfer(contract_address, balance);
         let contract_call = Call::Balances(contract_transfer);
 
         let srml_address = address::Address::Index(account_index);

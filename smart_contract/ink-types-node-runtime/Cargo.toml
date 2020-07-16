@@ -35,7 +35,7 @@ optional = true
 
 
 [dev-dependencies]
-node-runtime = { git = "https://github.com/paritytech/substrate/", package = "node-runtime", features = ["std"] }
+node-runtime = { git = "https://github.com/usetech-llc/nft_parachain/", package = "nft", features = ["std"] }
 
 [features]
 default = ["std"]

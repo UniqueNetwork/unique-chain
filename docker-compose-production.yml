@@ -1,0 +1,35 @@
+version: "3.5"
+
+services:
+  node_einstein:
+    image: nft-parachain
+    ports:
+      - 9944:9944
+    build:
+      context: ./
+      dockerfile: Dockerfile-production
+    volumes:
+      - ./chain-data-einstein:/chain-data
+    networks: 
+      - substrate_network
+    environment:
+      - NODE=einstein
+
+  node_newton:
+    image: nft-parachain
+    ports:
+      - 9945:9944
+    build:
+      context: ./
+      dockerfile: Dockerfile-production
+    volumes:
+      - ./chain-data-newton:/chain-data
+    networks: 
+      - substrate_network
+    environment:
+      - NODE=newton
+
+networks: 
+  substrate_network:
+    driver: bridge
+    name: substrate_network

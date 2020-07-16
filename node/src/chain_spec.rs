@@ -104,7 +104,7 @@ fn testnet_genesis(
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     root_key: AccountId,
     endowed_accounts: Vec<AccountId>,
-    _enable_println: bool,
+    enable_println: bool,
 ) -> GenesisConfig {
     GenesisConfig {
         system: Some(SystemConfig {
@@ -130,7 +130,7 @@ fn testnet_genesis(
         sudo: Some(SudoConfig { key: root_key }),
         contracts: Some(ContractsConfig {
             current_schedule: ContractsSchedule {
-                // enable_println,
+                enable_println,
                 ..Default::default()
             },
         }),

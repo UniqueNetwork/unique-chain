@@ -239,11 +239,15 @@ impl balances::Trait for Runtime {
     type AccountStore = System;
 }
 
+pub const MILLICENTS: Balance = 1_000_000_000;
+pub const CENTS: Balance = 1_000 * MILLICENTS;
+pub const DOLLARS: Balance = 100 * CENTS;
+
 parameter_types! {
-    pub const TombstoneDeposit: Balance = 1;
-    pub const RentByteFee: Balance = 1;
-    pub const RentDepositOffset: Balance = 1000;
-    pub const SurchargeReward: Balance = 150;
+    pub const TombstoneDeposit: Balance = 16 * MILLICENTS;
+    pub const RentByteFee: Balance = 4 * MILLICENTS;
+    pub const RentDepositOffset: Balance = 1000 * MILLICENTS;
+    pub const SurchargeReward: Balance = 150 * MILLICENTS;
 }
 
 impl contracts::Trait for Runtime {
