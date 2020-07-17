@@ -7,7 +7,7 @@ services:
       - 9944:9944
     build:
       context: ./
-      dockerfile: Dockerfile-production
+      dockerfile: Dockerfile-testnet
     volumes:
       - ./chain-data-einstein:/chain-data
     networks: 
@@ -21,7 +21,7 @@ services:
       - 9945:9944
     build:
       context: ./
-      dockerfile: Dockerfile-production
+      dockerfile: Dockerfile-testnet
     volumes:
       - ./chain-data-newton:/chain-data
     networks: 

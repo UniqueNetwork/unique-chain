@@ -96,15 +96,6 @@ decl_module! {
         // this is needed only if you are using events in your pallet
         fn deposit_event() = default;
 
-        // Initializing events
-        // this is needed only if you are using events in your module
-        // fn deposit_event<T>() = default;
-
-        // Create collection of NFT with given parameters
-        //
-        // @param customDataSz size of custom data in each collection item
-        // returns collection ID
-
         // Create collection of NFT with given parameters
         //
         // @param customDataSz size of custom data in each collection item

@@ -36,6 +36,7 @@ pub enum NodeRuntimeTypes {}
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
 pub struct AccountId (AccountId32);
 
+
 impl From<AccountId32> for AccountId {
     fn from(account: AccountId32) -> Self {
         AccountId(account)
