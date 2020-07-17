@@ -7,8 +7,7 @@ edition = "2018"
 license = "GPL-3.0"
 readme = "README.md"
 
-repository = "https://github.com/paritytech/ink"
-documentation = "https://github.com/paritytech/ink/wiki"
+repository = "https://github.com/usetech-llc/ink"
 homepage = "https://www.parity.io/"
 
 description = "[ink!] Rust based eDSL for writing smart contracts for Substrate"
@@ -18,12 +17,12 @@ categories = ["no-std", "embedded"]
 include = ["/Cargo.toml", "src/**/*.rs", "/README.md", "/LICENSE"]
 
 [dependencies]
-ink_core = { version = "2", git = "https://github.com/paritytech/ink", tag = "latest-v2", package = "ink_core", default-features = false }
-frame-system = { git = "https://github.com/paritytech/substrate/", tag = "v2.0.0-rc3", package = "frame-system", default-features = false }
-pallet-indices = { git = "https://github.com/paritytech/substrate/", tag = "v2.0.0-rc3", package = "pallet-indices", default-features = false }
-sp-core = { git = "https://github.com/paritytech/substrate/", tag = "v2.0.0-rc3", package = "sp-core", default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate/", tag = "v2.0.0-rc3", package = "sp-io", default-features = false, features = ["disable_panic_handler", "disable_oom", "disable_allocator"] }
-sp-runtime = { git = "https://github.com/paritytech/substrate/", tag = "v2.0.0-rc3", package = "sp-runtime", default-features = false }
+ink_core = { version = "2", git = "https://github.com/usetech-llc/ink", tag = "latest-v2", package = "ink_core", default-features = false }
+frame-system = { git = "https://github.com/usetech-llc/substrate/", branch = "nft_rc3", package = "frame-system", default-features = false }
+pallet-indices = { git = "https://github.com/usetech-llc/substrate/", branch = "nft_rc3", package = "pallet-indices", default-features = false }
+sp-core = { git = "https://github.com/usetech-llc/substrate/", branch = "nft_rc3", package = "sp-core", default-features = false }
+sp-io = { git = "https://github.com/usetech-llc/substrate/", branch = "nft_rc3", package = "sp-io", default-features = false, features = ["disable_panic_handler", "disable_oom", "disable_allocator"] }
+sp-runtime = { git = "https://github.com/usetech-llc/substrate/", branch = "nft_rc3", package = "sp-runtime", default-features = false }
 scale = { package = "parity-scale-codec", version = "1.3", default-features = false, features = ["derive"] }
 
 [dependencies.type-metadata]
