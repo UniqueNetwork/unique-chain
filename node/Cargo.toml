@@ -1,17 +1,17 @@
 [build-dependencies.substrate-build-script-utils]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '2.0.0-rc3'
 
 [[bin]]
 name = 'nft'
 
 [package]
-authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
+authors = ['UseTech Professional <https://usetech.com/blockchain>']
 build = 'build.rs'
 description = 'Substrate node nft'
 edition = '2018'
-homepage = 'https://substrate.io'
+homepage = 'https://usetech.com/blockchain'
 license = 'Unlicense'
 name = 'nft'
 repository = 'https://github.com/substrate-developer-hub/nft/'
@@ -32,95 +32,95 @@ path = '../runtime'
 version = '2.0.0-rc3'
 
 [dependencies.sc-basic-authorship]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '0.8.0-rc3'
 
 [dependencies.sc-cli]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '0.8.0-rc3'
 
 [dependencies.sc-client-api]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '2.0.0-rc3'
 
 [dependencies.sc-consensus]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '0.8.0-rc3'
 
 [dependencies.pallet-contracts-rpc]
-git = 'https://github.com/paritytech/substrate.git'
+git = 'https://github.com/usetech-llc/substrate.git'
 version = '0.8.0-rc3'
-tag = 'v2.0.0-rc3'
+branch = 'nft_rc3'
 
 [dependencies.sc-rpc]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 
 [dependencies.sc-consensus-aura]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '0.8.0-rc3'
 
 [dependencies.sc-executor]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '0.8.0-rc3'
 
 [dependencies.sc-finality-grandpa]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '0.8.0-rc3'
 
 [dependencies.sc-network]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '0.8.0-rc3'
 
 [dependencies.sc-service]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '0.8.0-rc3'
 
 [dependencies.sc-transaction-pool]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '2.0.0-rc3'
 
 [dependencies.sp-consensus]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '0.8.0-rc3'
 
 [dependencies.sp-consensus-aura]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '0.8.0-rc3'
 
 [dependencies.sp-core]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '2.0.0-rc3'
 
 [dependencies.sp-finality-grandpa]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '2.0.0-rc3'
 
 [dependencies.sp-inherents]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '2.0.0-rc3'
 
 [dependencies.sp-runtime]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '2.0.0-rc3'
 
 [dependencies.sp-transaction-pool]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc3'
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'nft_rc3'
 version = '2.0.0-rc3'
