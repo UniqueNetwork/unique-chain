@@ -30,8 +30,12 @@ curl http://localhost:9935 -H "Content-Type:application/json;charset=utf-8" -d "
 curl http://localhost:9936 -H "Content-Type:application/json;charset=utf-8" -d "@./newton_store_key_grandpa.json"
 
 ### Stop and restart nodes so that they start finalizing
-docker-compose -f docker-compose-testnet.yml down
-docker-compose -f docker-compose-testnet.yml up -d
+docker stop nft_parachain_node_einstein_1
+docker stop nft_parachain_node_newton_1
+docker stop nft_parachain_node_bohr_1
+docker start nft_parachain_node_einstein_1
+docker start nft_parachain_node_newton_1
+docker start nft_parachain_node_bohr_1
 
 ### Cleanup
 
