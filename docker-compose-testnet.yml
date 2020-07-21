@@ -40,7 +40,7 @@ services:
       - RPCPORT=9936
       - BOOTNODE=False
       - BOOTPORT=30335
-      - BOOTID=12D3KooWRYNrSRQvJ73esUhpyETQNJWGfC2LQ9dW3HJtzHJM28Hc
+      - BOOTID=12D3KooWRLrjXxByPkSCzcsRyf6652brnJT9s4AQHR3uujJ35mxz
       - VALIDATOR=True
 
   node_bohr:
@@ -62,7 +62,7 @@ services:
       - RPCPORT=9934
       - BOOTNODE=False
       - BOOTPORT=30335
-      - BOOTID=12D3KooWRYNrSRQvJ73esUhpyETQNJWGfC2LQ9dW3HJtzHJM28Hc
+      - BOOTID=12D3KooWRLrjXxByPkSCzcsRyf6652brnJT9s4AQHR3uujJ35mxz
       - VALIDATOR=False
       
 networks: 
