@@ -13,12 +13,19 @@
 ### Build and run Einstein node (bootnode) and Newton node
 docker-compose -f docker-compose-testnet.yml up -d --build
 
-### Deploy store keys
+### Deploy aura store keys
 # Einstein
 curl http://localhost:9935 -H "Content-Type:application/json;charset=utf-8" -d "@./einstein_store_key.json"
 
 # Newton
 curl http://localhost:9936 -H "Content-Type:application/json;charset=utf-8" -d "@./newton_store_key.json"
+
+### Deploy standpa store keys
+# Einstein
+curl http://localhost:9935 -H "Content-Type:application/json;charset=utf-8" -d "@./einstein_store_key_grandpa.json"
+
+# Newton
+curl http://localhost:9936 -H "Content-Type:application/json;charset=utf-8" -d "@./newton_store_key_grandpa.json"
 
 ### Stop and restart nodes so that they start finalizing
 docker-compose -f docker-compose-testnet.yml down
