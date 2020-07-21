@@ -15,7 +15,6 @@ RUN apt-get update && \
 #RUN git clone https://github.com/usetech-llc/nft_parachain /nft_parachain
 RUN mkdir nft_parachain
 WORKDIR /nft_parachain
-COPY . .
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
 	export PATH="$PATH:$HOME/.cargo/bin" && \
@@ -25,6 +24,8 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
 	rustup target add wasm32-unknown-unknown --toolchain $WASM_TOOLCHAIN && \
     rustup target list --installed && \
     rustup show
+
+COPY . .
 
 RUN export PATH="$PATH:$HOME/.cargo/bin" && \
     cargo build "--$PROFILE" 

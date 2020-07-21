@@ -14,11 +14,29 @@ then
 echo This is a Bootnode;
 BOOTNODES="";
 else
-echo Bootnode Port   : $BOOTPORT
-echo Bootnode PeerID : $BOOTID
+echo Bootnode Port   : $BOOTPORT;
+echo Bootnode PeerID : $BOOTID;
 BOOTNODES="--bootnodes /dns4/node_einstein/tcp/$BOOTPORT/p2p/$BOOTID";
 fi
 
+if [ "VALIDATOR" = True ];
+then
+echo This is a Validator node;
+/usr/local/bin/nft \
+  --base-path /chain-data \
+  --chain ./nftTestnetSpecRaw.json \
+  --port $P2PPORT \
+  --ws-port $WSPORT \
+  --rpc-port $RPCPORT \
+  --validator \
+  --rpc-methods=Unsafe \
+  --name $NODE \
+  --ws-external \
+  --rpc-external \
+  -lruntime \
+  $BOOTNODES;
+else
+echo This is a Gateway node;
 /usr/local/bin/nft \
   --base-path /chain-data \
   --chain ./nftTestnetSpecRaw.json \
@@ -32,5 +50,5 @@ fi
   --rpc-external \
   --rpc-cors all \
   -lruntime \
-  $BOOTNODES
-
+  $BOOTNODES;
+fi

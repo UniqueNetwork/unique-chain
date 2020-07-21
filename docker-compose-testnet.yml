@@ -4,7 +4,6 @@ services:
   node_einstein:
     image: nft-parachain
     ports:
-      - 9944:9944
       - 9935:9935
     build:
       context: ./
@@ -17,14 +16,14 @@ services:
     environment:
       - NODE=einstein
       - P2PPORT=30335
-      - WSPORT=9944
+      - WSPORT=9945
       - RPCPORT=9935
       - BOOTNODE=True
+      - VALIDATOR=True
 
   node_newton:
     image: nft-parachain
     ports:
-      - 9946:9946
       - 9936:9936
     build:
       context: ./
@@ -42,7 +41,30 @@ services:
       - BOOTNODE=False
       - BOOTPORT=30335
       - BOOTID=12D3KooWRYNrSRQvJ73esUhpyETQNJWGfC2LQ9dW3HJtzHJM28Hc
+      - VALIDATOR=True
 
+  node_bohr:
+    image: nft-parachain
+    ports:
+      - 9944:9944
+    build:
+      context: ./
+      dockerfile: Dockerfile-testnet
+    volumes:
+      - ./chain-data-bohr:/chain-data
+    networks: 
+      - substrate_network
+    restart: always
+    environment:
+      - NODE=bohr
+      - P2PPORT=30334
+      - WSPORT=9944
+      - RPCPORT=9934
+      - BOOTNODE=False
+      - BOOTPORT=30335
+      - BOOTID=12D3KooWRYNrSRQvJ73esUhpyETQNJWGfC2LQ9dW3HJtzHJM28Hc
+      - VALIDATOR=False
+      
 networks: 
   substrate_network:
     driver: bridge
