@@ -5,6 +5,7 @@ services:
     image: nft-parachain
     ports:
       - 9944:9944
+      - 9935:9935
     build:
       context: ./
       dockerfile: Dockerfile-testnet
@@ -14,11 +15,16 @@ services:
       - substrate_network
     environment:
       - NODE=einstein
+      - P2PPORT=30335
+      - WSPORT=9944
+      - RPCPORT=9935
+      - BOOTNODE=True
 
   node_newton:
     image: nft-parachain
     ports:
-      - 9945:9944
+      - 9946:9946
+      - 9936:9936
     build:
       context: ./
       dockerfile: Dockerfile-testnet
@@ -28,6 +34,12 @@ services:
       - substrate_network
     environment:
       - NODE=newton
+      - P2PPORT=30336
+      - WSPORT=9946
+      - RPCPORT=9936
+      - BOOTNODE=False
+      - BOOTPORT=30335
+      - BOOTID=12D3KooWRYNrSRQvJ73esUhpyETQNJWGfC2LQ9dW3HJtzHJM28Hc
 
 networks: 
   substrate_network:

@@ -6,3 +6,6 @@
 
 .DS_Store
 chain-data*/
+
+einstein_key_file
+*store_key.json
