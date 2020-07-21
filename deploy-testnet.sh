@@ -22,7 +22,7 @@ curl http://localhost:9936 -H "Content-Type:application/json;charset=utf-8" -d "
 
 ### Stop and restart nodes so that they start finalizing
 docker-compose -f docker-compose-testnet.yml down
-docker-compose -f docker-compose-testnet.yml up -d --build
+docker-compose -f docker-compose-testnet.yml up -d
 
 ### Cleanup
 
