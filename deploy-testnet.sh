@@ -29,6 +29,8 @@ curl http://localhost:9935 -H "Content-Type:application/json;charset=utf-8" -d "
 # Newton
 curl http://localhost:9936 -H "Content-Type:application/json;charset=utf-8" -d "@./newton_store_key_grandpa.json"
 
+sleep 30 
+
 ### Stop and restart nodes so that they start finalizing
 docker stop nft_parachain_node_einstein_1
 docker stop nft_parachain_node_newton_1
