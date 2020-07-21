@@ -13,6 +13,7 @@ services:
       - ./chain-data-einstein:/chain-data
     networks: 
       - substrate_network
+    restart: always
     environment:
       - NODE=einstein
       - P2PPORT=30335
@@ -32,6 +33,7 @@ services:
       - ./chain-data-newton:/chain-data
     networks: 
       - substrate_network
+    restart: always
     environment:
       - NODE=newton
       - P2PPORT=30336
