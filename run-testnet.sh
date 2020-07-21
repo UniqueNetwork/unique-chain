@@ -30,6 +30,7 @@ fi
   --name $NODE \
   --ws-external \
   --rpc-external \
+  --rpc-cors all \
   -lruntime \
   $BOOTNODES
 
