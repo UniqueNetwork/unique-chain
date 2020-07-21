@@ -13,6 +13,8 @@
 ### Build and run Einstein node (bootnode) and Newton node
 docker-compose -f docker-compose-testnet.yml up -d --build
 
+sleep 30
+
 ### Deploy aura store keys
 # Einstein
 curl http://localhost:9935 -H "Content-Type:application/json;charset=utf-8" -d "@./einstein_store_key.json"
@@ -39,3 +41,5 @@ rm einstein_key_file
 # Delete store key files
 rm ./einstein_store_key.json
 rm ./newton_store_key.json
+rm ./einstein_store_key_grandpa.json
+rm ./newton_store_key_grandpa.json
