@@ -1,22 +1,3 @@
-// Copyright 2018-2019 Parity Technologies (UK) Ltd.
-// This file is part of ink!.
-//
-// ink! is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// ink! is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with ink!.  If not, see <http://www.gnu.org/licenses/>.
-
-//! Definitions for environment types for contracts targeted at a
-//! substrate chain with the default `node-runtime` configuration.
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use core::{array::TryFromSliceError, convert::TryFrom};
@@ -24,7 +5,7 @@ use ink_core::env::Clear;
 use scale::{Decode, Encode};
 use sp_core::crypto::AccountId32;
 #[cfg(feature = "ink-generate-abi")]
-use type_metadata::{HasTypeId, HasTypeDef, Metadata, MetaType, TypeId, TypeDef, TypeIdArray};
+use type_metadata::{HasTypeDef, HasTypeId, MetaType, Metadata, TypeDef, TypeId, TypeIdArray};
 
 pub mod calls;
 
@@ -34,12 +15,17 @@ pub mod calls;
 pub enum NodeRuntimeTypes {}
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
-pub struct AccountId (AccountId32);
-
+pub struct AccountId(AccountId32);
 
 impl From<AccountId32> for AccountId {
     fn from(account: AccountId32) -> Self {
         AccountId(account)
+    }
+}
+
+impl From<[u8; 32]> for AccountId {
+    fn from(account: [u8; 32]) -> Self {
+        AccountId(AccountId32::from(account))
     }
 }
 
