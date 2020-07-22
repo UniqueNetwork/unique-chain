@@ -13,6 +13,8 @@
 ### Build and run Einstein node (bootnode) and Newton node
 docker-compose -f docker-compose-testnet.yml up -d --build
 
+sleep 30
+
 ### Deploy aura store keys
 # Einstein
 curl http://localhost:9935 -H "Content-Type:application/json;charset=utf-8" -d "@./einstein_store_key.json"
@@ -27,9 +29,15 @@ curl http://localhost:9935 -H "Content-Type:application/json;charset=utf-8" -d "
 # Newton
 curl http://localhost:9936 -H "Content-Type:application/json;charset=utf-8" -d "@./newton_store_key_grandpa.json"
 
+sleep 30 
+
 ### Stop and restart nodes so that they start finalizing
-docker-compose -f docker-compose-testnet.yml down
-docker-compose -f docker-compose-testnet.yml up -d
+docker stop nft_parachain_node_einstein_1
+docker stop nft_parachain_node_newton_1
+docker stop nft_parachain_node_bohr_1
+docker start nft_parachain_node_einstein_1
+docker start nft_parachain_node_newton_1
+docker start nft_parachain_node_bohr_1
 
 ### Cleanup
 
@@ -39,3 +47,5 @@ rm einstein_key_file
 # Delete store key files
 rm ./einstein_store_key.json
 rm ./newton_store_key.json
+rm ./einstein_store_key_grandpa.json
+rm ./newton_store_key_grandpa.json
