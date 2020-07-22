@@ -854,17 +854,6 @@ checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 [[package]]
 name = "ed25519-dalek"
 version = "1.0.0-pre.3"
-source = "git+https://github.com/usetech-llc/ed25519-dalek?tag=1.0.0-pre.3#29a06e494ddd4f370256596b7103125295073435"
-dependencies = [
- "clear_on_drop",
- "curve25519-dalek",
- "rand 0.7.3",
- "sha2 0.8.2",
-]
-
-[[package]]
-name = "ed25519-dalek"
-version = "1.0.0-pre.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "978710b352437433c97b2bff193f2fb1dfd58a093f863dd95e225a19baa599a2"
 dependencies = [
@@ -1019,16 +1008,16 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
 name = "fork-tree"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "parity-scale-codec",
 ]
 
 [[package]]
 name = "frame-benchmarking"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -1044,8 +1033,8 @@ dependencies = [
 
 [[package]]
 name = "frame-executive"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -1059,8 +1048,8 @@ dependencies = [
 
 [[package]]
 name = "frame-metadata"
-version = "11.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "11.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -1070,8 +1059,8 @@ dependencies = [
 
 [[package]]
 name = "frame-support"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "bitmask",
  "frame-metadata",
@@ -1095,8 +1084,8 @@ dependencies = [
 
 [[package]]
 name = "frame-support-procedural"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-support-procedural-tools",
  "proc-macro2",
@@ -1106,8 +1095,8 @@ dependencies = [
 
 [[package]]
 name = "frame-support-procedural-tools"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-support-procedural-tools-derive",
  "proc-macro-crate",
@@ -1118,8 +1107,8 @@ dependencies = [
 
 [[package]]
 name = "frame-support-procedural-tools-derive"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "proc-macro2",
  "quote 1.0.7",
@@ -1128,8 +1117,8 @@ dependencies = [
 
 [[package]]
 name = "frame-system"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -1843,6 +1832,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "284f18f85651fe11e8a991b2adb42cb078325c996ed026d994719efcfca1d54b"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1929,6 +1927,20 @@ dependencies = [
  "net2",
  "parking_lot 0.10.2",
  "unicase",
+]
+
+[[package]]
+name = "jsonrpc-ipc-server"
+version = "14.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dedccd693325d833963b549e959137f30a7a0ea650cde92feda81dc0c1393cb5"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-server-utils",
+ "log",
+ "parity-tokio-ipc",
+ "parking_lot 0.10.2",
+ "tokio-service",
 ]
 
 [[package]]
@@ -2129,7 +2141,7 @@ checksum = "3a0387b930c3d4c2533dc4893c1e0394185ddcc019846121b1b27491e45a2c08"
 dependencies = [
  "asn1_der",
  "bs58",
- "ed25519-dalek 1.0.0-pre.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ed25519-dalek",
  "either",
  "fnv",
  "futures 0.3.5",
@@ -2513,9 +2525,9 @@ dependencies = [
 
 [[package]]
 name = "memory-db"
-version = "0.20.1"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be512cb2ccb4ecbdca937fdd4a62ea5f09f8e7195466a85e4632b3d5bcce82e6"
+checksum = "fb2999ff7a65d5a1d72172f6d51fa2ea03024b51aee709ba5ff81c3c629a2410"
 dependencies = [
  "ahash",
  "hash-db",
@@ -2563,7 +2575,7 @@ dependencies = [
  "kernel32-sys",
  "libc",
  "log",
- "miow",
+ "miow 0.2.1",
  "net2",
  "slab",
  "winapi 0.2.8",
@@ -2579,6 +2591,18 @@ dependencies = [
  "log",
  "mio",
  "slab",
+]
+
+[[package]]
+name = "mio-named-pipes"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0840c1c50fd55e521b247f949c241c9997709f23bd7f023b9762cd561e935656"
+dependencies = [
+ "log",
+ "mio",
+ "miow 0.3.5",
+ "winapi 0.3.9",
 ]
 
 [[package]]
@@ -2602,6 +2626,16 @@ dependencies = [
  "net2",
  "winapi 0.2.8",
  "ws2_32-sys",
+]
+
+[[package]]
+name = "miow"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "07b88fb9795d4d36d62a012dfbf49a8f5cf12751f36d31a9dbe66d528e58979e"
+dependencies = [
+ "socket2",
+ "winapi 0.3.9",
 ]
 
 [[package]]
@@ -2692,7 +2726,7 @@ dependencies = [
 
 [[package]]
 name = "nft"
-version = "2.0.0-rc3"
+version = "2.0.0-rc4"
 dependencies = [
  "futures 0.3.5",
  "jsonrpc-core",
@@ -2724,7 +2758,7 @@ dependencies = [
 
 [[package]]
 name = "nft-runtime"
-version = "2.0.0-rc3"
+version = "2.0.0-rc4"
 dependencies = [
  "frame-executive",
  "frame-support",
@@ -2917,8 +2951,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-aura"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -2936,8 +2970,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-balances"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -2950,13 +2984,12 @@ dependencies = [
 
 [[package]]
 name = "pallet-contracts"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-support",
  "frame-system",
  "pallet-contracts-primitives",
- "pallet-transaction-payment",
  "parity-scale-codec",
  "parity-wasm",
  "pwasm-utils",
@@ -2971,8 +3004,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-contracts-primitives"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "parity-scale-codec",
  "sp-runtime",
@@ -2981,8 +3014,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-contracts-rpc"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -3000,8 +3033,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-contracts-rpc-runtime-api"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "pallet-contracts-primitives",
  "parity-scale-codec",
@@ -3012,8 +3045,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-finality-tracker"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3028,8 +3061,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-grandpa"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3048,7 +3081,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-nft"
-version = "2.0.0-rc3"
+version = "2.0.0-rc4"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3060,8 +3093,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-randomness-collective-flip"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3073,8 +3106,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-session"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3082,6 +3115,8 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "serde",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-session",
  "sp-staking",
@@ -3091,8 +3126,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-sudo"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3105,8 +3140,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-timestamp"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -3122,13 +3157,14 @@ dependencies = [
 
 [[package]]
 name = "pallet-transaction-payment"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-support",
  "frame-system",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
+ "serde",
  "smallvec 1.4.1",
  "sp-runtime",
  "sp-std",
@@ -3136,8 +3172,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-transaction-payment-rpc-runtime-api"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -3242,6 +3278,25 @@ name = "parity-send-wrapper"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa9777aa91b8ad9dd5aaa04a9b6bcb02c7f1deb952fca5a66034d5e63afc5c6f"
+
+[[package]]
+name = "parity-tokio-ipc"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e57fea504fea33f9fbb5f49f378359030e7e026a6ab849bb9e8f0787376f1bf"
+dependencies = [
+ "bytes 0.4.12",
+ "futures 0.1.29",
+ "libc",
+ "log",
+ "mio-named-pipes",
+ "miow 0.3.5",
+ "rand 0.7.3",
+ "tokio 0.1.22",
+ "tokio-named-pipes",
+ "tokio-uds",
+ "winapi 0.3.9",
+]
 
 [[package]]
 name = "parity-util-mem"
@@ -3566,7 +3621,7 @@ checksum = "02b10678c913ecbd69350e8535c3aef91a8676c0773fc1d7b95cdd196d7f2f26"
 dependencies = [
  "bytes 0.5.6",
  "heck",
- "itertools",
+ "itertools 0.8.2",
  "log",
  "multimap",
  "petgraph",
@@ -3583,7 +3638,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "537aa19b95acde10a12fec4301466386f757403de4cd4e5b4fa78fb5ecb18f72"
 dependencies = [
  "anyhow",
- "itertools",
+ "itertools 0.8.2",
  "proc-macro2",
  "quote 1.0.7",
  "syn 1.0.34",
@@ -3952,6 +4007,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "rental"
+version = "0.5.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8545debe98b2b139fb04cad8618b530e9b07c152d99a5de83c860b877d67847f"
+dependencies = [
+ "rental-impl",
+ "stable_deref_trait",
+]
+
+[[package]]
+name = "rental-impl"
+version = "0.5.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "475e68978dc5b743f2f40d8e0a8fdc83f1c5e78cbf4b8fa5e74e73beebc340de"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.7",
+ "syn 1.0.34",
+]
+
+[[package]]
 name = "ring"
 version = "0.16.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4084,8 +4160,8 @@ dependencies = [
 
 [[package]]
 name = "sc-basic-authorship"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "futures 0.3.5",
  "futures-timer 3.0.2",
@@ -4108,8 +4184,8 @@ dependencies = [
 
 [[package]]
 name = "sc-block-builder"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "parity-scale-codec",
  "sc-client-api",
@@ -4124,8 +4200,8 @@ dependencies = [
 
 [[package]]
 name = "sc-chain-spec"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "impl-trait-for-tuples",
  "sc-chain-spec-derive",
@@ -4140,8 +4216,8 @@ dependencies = [
 
 [[package]]
 name = "sc-chain-spec-derive"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -4151,14 +4227,13 @@ dependencies = [
 
 [[package]]
 name = "sc-cli"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "ansi_term 0.12.1",
  "atty",
  "chrono",
  "derive_more",
- "directories",
  "env_logger",
  "fdlimit",
  "futures 0.3.5",
@@ -4192,8 +4267,8 @@ dependencies = [
 
 [[package]]
 name = "sc-client-api"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "derive_more",
  "fnv",
@@ -4228,8 +4303,8 @@ dependencies = [
 
 [[package]]
 name = "sc-client-db"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "blake2-rfc",
  "hash-db",
@@ -4257,8 +4332,8 @@ dependencies = [
 
 [[package]]
 name = "sc-consensus"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "sc-client-api",
  "sp-blockchain",
@@ -4268,8 +4343,8 @@ dependencies = [
 
 [[package]]
 name = "sc-consensus-aura"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "derive_more",
  "futures 0.3.5",
@@ -4299,8 +4374,8 @@ dependencies = [
 
 [[package]]
 name = "sc-consensus-slots"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "futures 0.3.5",
  "futures-timer 3.0.2",
@@ -4321,8 +4396,8 @@ dependencies = [
 
 [[package]]
 name = "sc-executor"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "derive_more",
  "lazy_static",
@@ -4348,8 +4423,8 @@ dependencies = [
 
 [[package]]
 name = "sc-executor-common"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "derive_more",
  "log",
@@ -4365,8 +4440,8 @@ dependencies = [
 
 [[package]]
 name = "sc-executor-wasmi"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -4380,8 +4455,8 @@ dependencies = [
 
 [[package]]
 name = "sc-finality-grandpa"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "assert_matches",
  "derive_more",
@@ -4403,6 +4478,7 @@ dependencies = [
  "sc-telemetry",
  "serde_json",
  "sp-api",
+ "sp-application-crypto",
  "sp-arithmetic",
  "sp-blockchain",
  "sp-consensus",
@@ -4417,28 +4493,31 @@ dependencies = [
 
 [[package]]
 name = "sc-informant"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "ansi_term 0.12.1",
  "futures 0.3.5",
  "log",
  "parity-util-mem",
+ "parking_lot 0.10.2",
  "sc-client-api",
  "sc-network",
- "sc-service",
  "sp-blockchain",
  "sp-runtime",
+ "sp-transaction-pool",
+ "sp-utils",
  "wasm-timer",
 ]
 
 [[package]]
 name = "sc-keystore"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "derive_more",
  "hex",
+ "merlin",
  "parking_lot 0.10.2",
  "rand 0.7.3",
  "serde_json",
@@ -4448,9 +4527,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "sc-light"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
+dependencies = [
+ "hash-db",
+ "lazy_static",
+ "parity-scale-codec",
+ "parking_lot 0.10.2",
+ "sc-client-api",
+ "sc-executor",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-externalities",
+ "sp-runtime",
+ "sp-state-machine",
+]
+
+[[package]]
 name = "sc-network"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "bitflags",
  "bs58",
@@ -4501,8 +4599,8 @@ dependencies = [
 
 [[package]]
 name = "sc-network-gossip"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "futures 0.3.5",
  "futures-timer 3.0.2",
@@ -4516,8 +4614,8 @@ dependencies = [
 
 [[package]]
 name = "sc-offchain"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "bytes 0.5.6",
  "fnv",
@@ -4543,8 +4641,8 @@ dependencies = [
 
 [[package]]
 name = "sc-peerset"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "futures 0.3.5",
  "libp2p",
@@ -4556,8 +4654,8 @@ dependencies = [
 
 [[package]]
 name = "sc-proposer-metrics"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "log",
  "substrate-prometheus-endpoint",
@@ -4565,8 +4663,8 @@ dependencies = [
 
 [[package]]
 name = "sc-rpc"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "futures 0.3.5",
  "hash-db",
@@ -4597,8 +4695,8 @@ dependencies = [
 
 [[package]]
 name = "sc-rpc-api"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "derive_more",
  "futures 0.3.5",
@@ -4621,11 +4719,12 @@ dependencies = [
 
 [[package]]
 name = "sc-rpc-server"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-http-server",
+ "jsonrpc-ipc-server",
  "jsonrpc-pubsub",
  "jsonrpc-ws-server",
  "log",
@@ -4636,10 +4735,11 @@ dependencies = [
 
 [[package]]
 name = "sc-service"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "derive_more",
+ "directories",
  "exit-future",
  "futures 0.1.29",
  "futures 0.3.5",
@@ -4661,7 +4761,9 @@ dependencies = [
  "sc-client-api",
  "sc-client-db",
  "sc-executor",
+ "sc-informant",
  "sc-keystore",
+ "sc-light",
  "sc-network",
  "sc-offchain",
  "sc-rpc",
@@ -4689,14 +4791,15 @@ dependencies = [
  "sp-version",
  "substrate-prometheus-endpoint",
  "sysinfo",
+ "tempfile",
  "tracing",
  "wasm-timer",
 ]
 
 [[package]]
 name = "sc-state-db"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -4709,8 +4812,8 @@ dependencies = [
 
 [[package]]
 name = "sc-telemetry"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "bytes 0.5.6",
  "futures 0.3.5",
@@ -4731,23 +4834,25 @@ dependencies = [
 
 [[package]]
 name = "sc-tracing"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "erased-serde",
  "log",
  "parking_lot 0.10.2",
+ "rustc-hash",
  "sc-telemetry",
  "serde",
  "serde_json",
  "slog",
+ "sp-tracing",
  "tracing-core",
 ]
 
 [[package]]
 name = "sc-transaction-graph"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "derive_more",
  "futures 0.3.5",
@@ -4766,8 +4871,8 @@ dependencies = [
 
 [[package]]
 name = "sc-transaction-pool"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "derive_more",
  "futures 0.3.5",
@@ -5098,8 +5203,8 @@ dependencies = [
 
 [[package]]
 name = "sp-allocator"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "derive_more",
  "log",
@@ -5110,8 +5215,8 @@ dependencies = [
 
 [[package]]
 name = "sp-api"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "hash-db",
  "parity-scale-codec",
@@ -5125,8 +5230,8 @@ dependencies = [
 
 [[package]]
 name = "sp-api-proc-macro"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "blake2-rfc",
  "proc-macro-crate",
@@ -5137,8 +5242,8 @@ dependencies = [
 
 [[package]]
 name = "sp-application-crypto"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -5149,8 +5254,8 @@ dependencies = [
 
 [[package]]
 name = "sp-arithmetic"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "integer-sqrt",
  "num-traits 0.2.12",
@@ -5162,8 +5267,8 @@ dependencies = [
 
 [[package]]
 name = "sp-block-builder"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -5174,8 +5279,8 @@ dependencies = [
 
 [[package]]
 name = "sp-blockchain"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "derive_more",
  "log",
@@ -5190,8 +5295,8 @@ dependencies = [
 
 [[package]]
 name = "sp-chain-spec"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "serde",
  "serde_json",
@@ -5199,8 +5304,8 @@ dependencies = [
 
 [[package]]
 name = "sp-consensus"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "derive_more",
  "futures 0.3.5",
@@ -5218,12 +5323,13 @@ dependencies = [
  "sp-utils",
  "sp-version",
  "substrate-prometheus-endpoint",
+ "wasm-timer",
 ]
 
 [[package]]
 name = "sp-consensus-aura"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -5236,14 +5342,14 @@ dependencies = [
 
 [[package]]
 name = "sp-core"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "base58",
  "blake2-rfc",
  "byteorder",
  "derive_more",
- "ed25519-dalek 1.0.0-pre.3 (git+https://github.com/usetech-llc/ed25519-dalek?tag=1.0.0-pre.3)",
+ "ed25519-dalek",
  "futures 0.3.5",
  "hash-db",
  "hash256-std-hasher",
@@ -5278,8 +5384,8 @@ dependencies = [
 
 [[package]]
 name = "sp-database"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "kvdb",
  "parking_lot 0.10.2",
@@ -5287,8 +5393,8 @@ dependencies = [
 
 [[package]]
 name = "sp-debug-derive"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "proc-macro2",
  "quote 1.0.7",
@@ -5297,8 +5403,8 @@ dependencies = [
 
 [[package]]
 name = "sp-externalities"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "environmental",
  "parity-scale-codec",
@@ -5308,8 +5414,8 @@ dependencies = [
 
 [[package]]
 name = "sp-finality-grandpa"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "finality-grandpa",
  "log",
@@ -5324,8 +5430,8 @@ dependencies = [
 
 [[package]]
 name = "sp-finality-tracker"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "parity-scale-codec",
  "sp-inherents",
@@ -5334,8 +5440,8 @@ dependencies = [
 
 [[package]]
 name = "sp-inherents"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "derive_more",
  "parity-scale-codec",
@@ -5346,8 +5452,8 @@ dependencies = [
 
 [[package]]
 name = "sp-io"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "futures 0.3.5",
  "hash-db",
@@ -5360,14 +5466,15 @@ dependencies = [
  "sp-runtime-interface",
  "sp-state-machine",
  "sp-std",
+ "sp-tracing",
  "sp-trie",
  "sp-wasm-interface",
 ]
 
 [[package]]
 name = "sp-keyring"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "lazy_static",
  "sp-core",
@@ -5377,8 +5484,8 @@ dependencies = [
 
 [[package]]
 name = "sp-offchain"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "sp-api",
  "sp-core",
@@ -5387,8 +5494,8 @@ dependencies = [
 
 [[package]]
 name = "sp-panic-handler"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "backtrace",
  "log",
@@ -5396,8 +5503,8 @@ dependencies = [
 
 [[package]]
 name = "sp-rpc"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "serde",
  "sp-core",
@@ -5405,9 +5512,10 @@ dependencies = [
 
 [[package]]
 name = "sp-runtime"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
+ "either",
  "hash256-std-hasher",
  "impl-trait-for-tuples",
  "log",
@@ -5426,8 +5534,8 @@ dependencies = [
 
 [[package]]
 name = "sp-runtime-interface"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "parity-scale-codec",
  "primitive-types",
@@ -5441,8 +5549,8 @@ dependencies = [
 
 [[package]]
 name = "sp-runtime-interface-proc-macro"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "Inflector",
  "proc-macro-crate",
@@ -5453,8 +5561,8 @@ dependencies = [
 
 [[package]]
 name = "sp-sandbox"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "parity-scale-codec",
  "sp-core",
@@ -5466,8 +5574,8 @@ dependencies = [
 
 [[package]]
 name = "sp-serializer"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "serde",
  "serde_json",
@@ -5475,8 +5583,8 @@ dependencies = [
 
 [[package]]
 name = "sp-session"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -5488,8 +5596,8 @@ dependencies = [
 
 [[package]]
 name = "sp-staking"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "parity-scale-codec",
  "sp-runtime",
@@ -5498,15 +5606,17 @@ dependencies = [
 
 [[package]]
 name = "sp-state-machine"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "hash-db",
+ "itertools 0.9.0",
  "log",
  "num-traits 0.2.12",
  "parity-scale-codec",
  "parking_lot 0.10.2",
  "rand 0.7.3",
+ "smallvec 1.4.1",
  "sp-core",
  "sp-externalities",
  "sp-panic-handler",
@@ -5517,13 +5627,13 @@ dependencies = [
 
 [[package]]
 name = "sp-std"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 
 [[package]]
 name = "sp-storage"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "impl-serde 0.2.3",
  "ref-cast",
@@ -5534,8 +5644,8 @@ dependencies = [
 
 [[package]]
 name = "sp-timestamp"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
@@ -5548,16 +5658,18 @@ dependencies = [
 
 [[package]]
 name = "sp-tracing"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
+ "log",
+ "rental",
  "tracing",
 ]
 
 [[package]]
 name = "sp-transaction-pool"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "derive_more",
  "futures 0.3.5",
@@ -5572,8 +5684,8 @@ dependencies = [
 
 [[package]]
 name = "sp-trie"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "hash-db",
  "memory-db",
@@ -5586,19 +5698,20 @@ dependencies = [
 
 [[package]]
 name = "sp-utils"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "futures 0.3.5",
  "futures-core",
+ "futures-timer 3.0.2",
  "lazy_static",
  "prometheus",
 ]
 
 [[package]]
 name = "sp-version"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "impl-serde 0.2.3",
  "parity-scale-codec",
@@ -5609,8 +5722,8 @@ dependencies = [
 
 [[package]]
 name = "sp-wasm-interface"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
@@ -5728,16 +5841,16 @@ dependencies = [
 
 [[package]]
 name = "substrate-build-script-utils"
-version = "2.0.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "2.0.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "platforms",
 ]
 
 [[package]]
 name = "substrate-prometheus-endpoint"
-version = "0.8.0-rc3"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+version = "0.8.0-rc4"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 dependencies = [
  "async-std",
  "derive_more",
@@ -5751,7 +5864,7 @@ dependencies = [
 [[package]]
 name = "substrate-wasm-builder-runner"
 version = "1.0.6"
-source = "git+https://github.com/usetech-llc/substrate.git?branch=nft_rc3#4945a9806adc58b5e8eef01697f5e77de43117f0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=rc4_ext_dispatch_reenabled#b161460bf73e4cc73e29b8e01ab0323bb3d95e84"
 
 [[package]]
 name = "subtle"
@@ -6073,6 +6186,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-named-pipes"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d282d483052288b2308ba5ee795f5673b159c9bdf63c385a05609da782a5eae"
+dependencies = [
+ "bytes 0.4.12",
+ "futures 0.1.29",
+ "mio",
+ "mio-named-pipes",
+ "tokio 0.1.22",
+]
+
+[[package]]
 name = "tokio-reactor"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6101,6 +6227,15 @@ dependencies = [
  "rustls",
  "tokio 0.2.21",
  "webpki",
+]
+
+[[package]]
+name = "tokio-service"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24da22d077e0f15f55162bdbdc661228c1581892f52074fb242678d015b45162"
+dependencies = [
+ "futures 0.1.29",
 ]
 
 [[package]]
@@ -6263,9 +6398,9 @@ dependencies = [
 
 [[package]]
 name = "trie-db"
-version = "0.20.1"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bcc309f34008563989045a4c4dbcc5770467f3a3785ee80a9b5cc0d83362475f"
+checksum = "cb230c24c741993b04cfccbabb45acff6f6480c5f00d3ed8794ea43db3a9d727"
 dependencies = [
  "hash-db",
  "hashbrown 0.6.3",

@@ -139,6 +139,8 @@ parameter_types! {
 }
 
 impl system::Trait for Runtime {
+    /// The basic call filter to use in dispatchable.
+    type BaseCallFilter = ();
     /// The identifier used to distinguish between accounts.
     type AccountId = AccountId;
     /// The aggregated dispatch type that is available for extrinsics.
@@ -251,9 +253,10 @@ parameter_types! {
 }
 
 impl contracts::Trait for Runtime {
+    type Call = Call;
     type Time = Timestamp;
     type Randomness = RandomnessCollectiveFlip;
-    type Call = Call;
+    type Currency = Balances;
     type Event = Event;
     type DetermineContractAddress = contracts::SimpleAddressDeterminer<Runtime>;
     type TrieIdGenerator = contracts::TrieIdFromParentCounter<Runtime>;
@@ -266,6 +269,7 @@ impl contracts::Trait for Runtime {
     type SurchargeReward = SurchargeReward;
     type MaxDepth = contracts::DefaultMaxDepth;
     type MaxValueSize = contracts::DefaultMaxValueSize;
+    type WeightPrice = transaction_payment::Module<Self>;
 }
 
 parameter_types! {

@@ -2,15 +2,15 @@
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
 package = 'pallet-aura'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.balances]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
 package = 'pallet-balances'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.codec]
 default-features = false
@@ -22,48 +22,48 @@ version = '1.3.0'
 git = 'https://github.com/usetech-llc/substrate.git'
 default-features = false
 package = 'pallet-contracts'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.contracts-primitives]
 git = 'https://github.com/usetech-llc/substrate.git'
 default-features = false
 package = 'pallet-contracts-primitives'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.contracts-rpc-runtime-api]
 git = 'https://github.com/usetech-llc/substrate.git'
 default-features = false
 package = 'pallet-contracts-rpc-runtime-api'
-version = '0.8.0-rc3'
-branch = 'nft_rc3'
+version = '0.8.0-rc4'
+branch = 'rc4_ext_dispatch_reenabled'
 
 [dependencies.frame-executive]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.frame-support]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.grandpa]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
 package = 'pallet-grandpa'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.randomness-collective-flip]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
 package = 'pallet-randomness-collective-flip'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.serde]
 features = ['derive']
@@ -73,112 +73,112 @@ version = '1.0.101'
 [dependencies.sp-api]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-block-builder]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-consensus-aura]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '0.8.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '0.8.0-rc4'
 
 [dependencies.sp-core]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-inherents]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-io]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-offchain]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-runtime]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-session]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-std]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-transaction-pool]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-version]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sudo]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
 package = 'pallet-sudo'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.system]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
 package = 'frame-system'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.nft]
 default-features = false
 package = 'pallet-nft'
 path = '../pallets/nft'
-version = '2.0.0-rc3'
+version = '2.0.0-rc4'
 
 [dependencies.timestamp]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
 package = 'pallet-timestamp'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.transaction-payment]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
 package = 'pallet-transaction-payment'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 [build-dependencies.wasm-builder-runner]
 git = 'https://github.com/usetech-llc/substrate.git'
 package = 'substrate-wasm-builder-runner'
-branch = 'nft_rc3'
+branch = 'rc4_ext_dispatch_reenabled'
 version = '1.0.5'
 
 [package]
@@ -188,7 +188,7 @@ homepage = 'https://substrate.io'
 license = 'Unlicense'
 name = 'nft-runtime'
 repository = 'https://github.com/usetech-llc/nft_parachain/'
-version = '2.0.0-rc3'
+version = '2.0.0-rc4'
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 

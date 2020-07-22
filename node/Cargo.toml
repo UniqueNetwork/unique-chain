@@ -1,7 +1,7 @@
 [build-dependencies.substrate-build-script-utils]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [[bin]]
 name = 'nft'
@@ -15,7 +15,7 @@ homepage = 'https://usetech.com/blockchain'
 license = 'Unlicense'
 name = 'nft'
 repository = 'https://github.com/substrate-developer-hub/nft/'
-version = '2.0.0-rc3'
+version = '2.0.0-rc4'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -29,98 +29,98 @@ jsonrpc-core = '14.0.5'
 
 [dependencies.nft-runtime]
 path = '../runtime'
-version = '2.0.0-rc3'
+version = '2.0.0-rc4'
 
 [dependencies.sc-basic-authorship]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '0.8.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '0.8.0-rc4'
 
 [dependencies.sc-cli]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '0.8.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '0.8.0-rc4'
 
 [dependencies.sc-client-api]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sc-consensus]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '0.8.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '0.8.0-rc4'
 
 [dependencies.pallet-contracts-rpc]
 git = 'https://github.com/usetech-llc/substrate.git'
-version = '0.8.0-rc3'
-branch = 'nft_rc3'
+version = '0.8.0-rc4'
+branch = 'rc4_ext_dispatch_reenabled'
 
 [dependencies.sc-rpc]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
+branch = 'rc4_ext_dispatch_reenabled'
 
 [dependencies.sc-consensus-aura]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '0.8.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '0.8.0-rc4'
 
 [dependencies.sc-executor]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '0.8.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '0.8.0-rc4'
 
 [dependencies.sc-finality-grandpa]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '0.8.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '0.8.0-rc4'
 
 [dependencies.sc-network]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '0.8.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '0.8.0-rc4'
 
 [dependencies.sc-service]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '0.8.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '0.8.0-rc4'
 
 [dependencies.sc-transaction-pool]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-consensus]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '0.8.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '0.8.0-rc4'
 
 [dependencies.sp-consensus-aura]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '0.8.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '0.8.0-rc4'
 
 [dependencies.sp-core]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-finality-grandpa]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-inherents]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-runtime]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
 
 [dependencies.sp-transaction-pool]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'nft_rc3'
-version = '2.0.0-rc3'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
