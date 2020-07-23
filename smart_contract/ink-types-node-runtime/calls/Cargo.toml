@@ -12,7 +12,7 @@ ink_lang = { version = "2", git = "https://github.com/usetech-llc/ink", tag = "l
 ink_prelude = { version = "2", git = "https://github.com/usetech-llc/ink", tag = "latest-v2", package = "ink_prelude", default-features = false }
 
 scale = { package = "parity-scale-codec", version = "1.3", default-features = false, features = ["derive"] }
-sp-keyring = { git = "https://github.com/usetech-llc/substrate/", branch = "nft_rc3", package = "sp-keyring", optional = true }
+sp-keyring = { git = "https://github.com/usetech-llc/substrate/", branch = "rc4_ext_dispatch_reenabled", package = "sp-keyring", optional = true }
 ink_types_node_runtime = { path = "../", default-features = false }
 
 [dependencies.type-metadata]
