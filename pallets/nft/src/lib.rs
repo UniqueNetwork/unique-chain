@@ -108,7 +108,7 @@ decl_event!(
         AccountId = <T as system::Trait>::AccountId,
     {
         Created(u64, AccountId),
-        ItemCreated(u64),
+        ItemCreated(u64, u64),
         ItemDestroyed(u64, u64),
     }
 );
@@ -352,7 +352,7 @@ decl_module! {
             <ItemList<T>>::insert((collection_id, current_index), new_item);
 
             // call event
-            Self::deposit_event(RawEvent::ItemCreated(collection_id));
+            Self::deposit_event(RawEvent::ItemCreated(collection_id, current_index));
 
             Ok(())
         }

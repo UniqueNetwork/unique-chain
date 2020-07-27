@@ -106,11 +106,6 @@ mod calls {
         }
 
         #[ink(message)]
-        fn get_test(&self) -> bool {
-            true
-        }
-
-        #[ink(message)]
         fn transfer_from(&self, collection_id: u64, item_id: u64, new_owner: AccountId) {
             env::println(&format!(
                 "transfer_from invoke_runtime params {:?}, {:?}, {:?} ",

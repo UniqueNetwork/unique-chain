@@ -1,6 +1,6 @@
 # Ignore build artifacts
 /target/
-/**/target/
+/examples/**/target/
 
 # Ignore backup files creates by cargo fmt.
 **/*.rs.bk
