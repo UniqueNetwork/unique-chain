@@ -1,13 +1,19 @@
 // Creating mock runtime here
 
 use crate::{Module, Trait};
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
-    traits::{BlakeTwo256, IdentityLookup},
+    traits::{BlakeTwo256, IdentityLookup, Saturating},
     Perbill,
+};
+use frame_support::{
+    parameter_types, impl_outer_origin,
+    weights::{
+        constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
+        Weight,
+    },
 };
 
 impl_outer_origin! {
@@ -24,7 +30,10 @@ parameter_types! {
     pub const MaximumBlockWeight: Weight = 1024;
     pub const MaximumBlockLength: u32 = 2 * 1024;
     pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
+    pub MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get()
+    .saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
 }
+
 impl system::Trait for Test {
     type Origin = Origin;
     type Call = ();
@@ -40,6 +49,11 @@ impl system::Trait for Test {
     type MaximumBlockWeight = MaximumBlockWeight;
     type MaximumBlockLength = MaximumBlockLength;
     type AvailableBlockRatio = AvailableBlockRatio;
+    type BaseCallFilter = (); 
+    type DbWeight = RocksDbWeight; 
+    type BlockExecutionWeight = BlockExecutionWeight; 
+    type ExtrinsicBaseWeight = ExtrinsicBaseWeight;
+    type MaximumExtrinsicWeight = MaximumExtrinsicWeight;
     type Version = ();
     type ModuleToIndex = ();
     type AccountData = ();

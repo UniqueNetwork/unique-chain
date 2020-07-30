@@ -52,7 +52,7 @@ Before we continue, we need to do some preparations in the UI: Add NFT Data type
 
 Before running test, open [chain state tab](https://polkadot.js.org/apps/#/chainstate) and read `nft`.`nextCollectionId` state variable, which shows how many collections were created so far. If you just started the chain, this should equal 0. 
 
-Open extrinsics tab of the [standard UI](https://polkadot.js.org/apps/#/extrinsics) and select ALICE account. Select `nft` module and `createCollection` method. Put 1 in `custom_data_sz` and run the transaction. After it is finalized, read the `nft`.`nextCollectionId` state variable. It will be equal 1.
+Open extrinsics tab of the [standard UI](https://polkadot.js.org/apps/#/extrinsics) and select ALICE account. Select `nft` module and `createCollection` method. Put 1 in `custom_data_size` and run the transaction. After it is finalized, read the `nft`.`nextCollectionId` state variable. It will be equal 1.
 
 Also, read the state variable `nft`.`collection` with ID = 1 (Because everything in NFT Palette is numbered from 1, not from 0). You will see something like this:
 
