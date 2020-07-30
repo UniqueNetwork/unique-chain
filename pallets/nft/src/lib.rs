@@ -112,7 +112,7 @@ decl_event!(
     where
         AccountId = <T as system::Trait>::AccountId,
     {
-        Created(u64, CollectionMode, AccountId),
+        Created(u64, u8, AccountId),
         ItemCreated(u64, u64),
         ItemDestroyed(u64, u64),
     }
@@ -132,25 +132,32 @@ decl_module! {
                                     collection_name: Vec<u16>,
                                     collection_description: Vec<u16>,
                                     token_prefix: Vec<u8>,
-                                    mode: CollectionMode,
+                                    mode: u8,
                                     decimal_points: u32,
                                     custom_data_size: u32) -> DispatchResult {
 
             // Anyone can create a collection
             let who = ensure_signed(origin)?;
+            let collection_mode: CollectionMode;
+            match mode {
+                1 => collection_mode = CollectionMode::NFT,
+                2 => collection_mode = CollectionMode::Fungible,
+                3 => collection_mode = CollectionMode::ReFungible,
+                _ => collection_mode = CollectionMode::Invalid
+            }
 
             // check type
-            ensure!((mode == CollectionMode::Fungible || mode == CollectionMode::NFT || mode == CollectionMode::ReFungible), 
+            ensure!((collection_mode == CollectionMode::Fungible || collection_mode == CollectionMode::NFT || collection_mode == CollectionMode::ReFungible), 
                 "Collection mode must be Fungible, NFT or ReFungible");          
 
             // NFT checks
-            if mode == CollectionMode::NFT
+            if collection_mode == CollectionMode::NFT
             {
                 ensure!(decimal_points == 0, "Collection in NFT mode must have zero in decimal_points parameter"); 
             }
 
             // Fungible checks
-            if mode == CollectionMode::Fungible
+            if collection_mode == CollectionMode::Fungible
             {
                 ensure!(custom_data_size == 0, "Collection in Fungible mode must have zero in custom_data_size parameter"); 
                 ensure!(decimal_points != 0, "Collection in Fungible mode must have not zero in decimal_points parameter"); 
@@ -182,7 +189,7 @@ decl_module! {
             let new_collection = CollectionType {
                 owner: who.clone(),
                 name: name,
-                mode: mode.clone(),
+                mode: collection_mode.clone(),
                 access: AccessMode::Normal,
                 description: description,
                 decimal_points: decimal_points,
@@ -195,7 +202,7 @@ decl_module! {
             <Collection<T>>::insert(next_id, new_collection);
 
             // call event
-            Self::deposit_event(RawEvent::Created(next_id, mode.clone(), who.clone()));
+            Self::deposit_event(RawEvent::Created(next_id, mode, who.clone()));
 
             Ok(())
         }
