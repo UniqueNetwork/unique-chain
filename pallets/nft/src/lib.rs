@@ -525,9 +525,6 @@ impl<T: Trait> Module<T> {
         let itm: Vec<T::AccountId> = Vec::new();
         <ApprovedList<T>>::insert(collection_id, item_id, itm);
 
-        // remove item
-        <NftItemList<T>>::remove(collection_id, item_id);
-
         Ok(())
     }
 
