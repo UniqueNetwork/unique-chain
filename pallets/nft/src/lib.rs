@@ -309,7 +309,12 @@ decl_module! {
         pub fn burn_item(origin, collection_id: u64, item_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
+            let item_owner = Self::is_item_owner(sender.clone(), collection_id, item_id);
+            if !item_owner
+            {
+                Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
+            }
+            
             Self::burn_nft_item(collection_id, item_id)?;
 
             // call event
