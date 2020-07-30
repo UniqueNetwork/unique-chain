@@ -281,8 +281,8 @@ decl_module! {
 
             Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
 
-            let new_balance = <Balance<T>>::get(collection_id, sender.clone()) + 1;
-            <Balance<T>>::insert(collection_id, sender.clone(), new_balance);
+            let new_balance = <Balance<T>>::get(collection_id, owner.clone()) + 1;
+            <Balance<T>>::insert(collection_id, owner.clone(), new_balance);
 
             // TODO: implement other modes
             ensure!(target_collection.mode == CollectionMode::NFT, "Collection type not implemented");
@@ -322,7 +322,11 @@ decl_module! {
         pub fn transfer(origin, recipient: T::AccountId, collection_id: u64, item_id: u64, value: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            Self::check_owner_or_admin_permissions(collection_id, sender)?;
+            let item_owner = Self::is_item_owner(sender.clone(), collection_id, item_id);
+            if !item_owner
+            {
+                Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
+            }
 
             let target_collection = <Collection<T>>::get(collection_id);
 
