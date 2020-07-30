@@ -221,7 +221,7 @@ decl_module! {
                 decimal_points: decimal_points,
                 token_prefix: prefix,
                 next_item_id: next_id,
-                custom_data_size: custom_data_sz,
+                custom_data_size: custom_data_size,
                 sponsor: T::AccountId::default(),
                 unconfirmed_sponsor: T::AccountId::default(),
             };
@@ -344,10 +344,8 @@ decl_module! {
             Ok(())
         }
         
-
-
         #[weight = 0]
-        pub fn create_item(origin, collection_id: u64, properties: Vec<u8>) -> DispatchResult {
+        pub fn create_item(origin, collection_id: u64, properties: Vec<u8>, owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
 
@@ -736,10 +734,10 @@ impl<T:Trait + transaction_payment::Trait + Send + Sync> ChargeTransactionPaymen
         // Determine who is paying transaction fee based on ecnomic model
         // Parse call to extract collection ID and access collection sponsor
         let sponsor: T::AccountId = match call.is_sub_type() {
-            Some(Call::create_item(collection_id, _properties)) => {
+            Some(Call::create_item(collection_id, _properties, _owner)) => {
                 <Collection<T>>::get(collection_id).sponsor
             },
-            Some(Call::transfer(collection_id, _item_id, _new_owner)) => {
+            Some(Call::transfer(_new_owner, collection_id, _item_id, _value)) => {
                 <Collection<T>>::get(collection_id).sponsor
             },
 
