@@ -45,6 +45,7 @@ EXPOSE 9944
 EXPOSE 9946
 EXPOSE 9935
 EXPOSE 9936
+EXPOSE 30334
 VOLUME ["/chain-data"]
 
 # Copy and run start script
