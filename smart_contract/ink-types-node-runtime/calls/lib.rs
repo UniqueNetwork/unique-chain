@@ -123,15 +123,14 @@ mod calls {
         }
 
         // SafeTransferFrom
-
         #[ink(message)]
-        fn create_item(&self, collection_id: u64, properties: Vec<u8>) {
+        fn create_item(&self, collection_id: u64, properties: Vec<u8>, owner: AccountId) {
             env::println(&format!(
                 "create_item invoke_runtime params {:?}, {:?} ",
                 collection_id, properties
             ));
 
-            let create_item_call = runtime_calls::create_item(collection_id, properties);
+            let create_item_call = runtime_calls::create_item(collection_id, properties, owner);
             // dispatch the call to the runtime
             let result = self.env().invoke_runtime(&create_item_call);
 

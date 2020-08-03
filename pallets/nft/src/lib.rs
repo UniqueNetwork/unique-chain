@@ -14,6 +14,27 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[derive(Encode, Decode, Debug, Eq, Clone, PartialEq)]
+pub enum CollectionMode {
+    Invalid,
+    // custom data size
+    NFT(u32),
+    // amount
+	Fungible(u32),
+	ReFungible,
+}
+
+impl Into<u8> for CollectionMode {
+    fn into(self) -> u8{
+        match self {
+            CollectionMode::Invalid => 0,
+            CollectionMode::NFT(_) => 1,
+            CollectionMode::Fungible(_) => 2,
+            CollectionMode::ReFungible => 3,
+        }
+    }
+}
+
 #[derive(Encode, Decode, Debug, Clone, PartialEq)]
 pub enum AccessMode {
     Normal,
@@ -21,13 +42,6 @@ pub enum AccessMode {
 }
 impl Default for AccessMode { fn default() -> Self { Self::Normal } }
 
-#[derive(Encode, Decode, Debug, Eq, Clone, PartialEq)]
-pub enum CollectionMode {
-    Invalid,
-	NFT,
-	Fungible,
-	ReFungible,
-}
 impl Default for CollectionMode { fn default() -> Self { Self::Invalid } }
 
 #[derive(Encode, Decode, Default, Clone, PartialEq)]
@@ -49,6 +63,9 @@ pub struct CollectionType<AccountId> {
     pub description: Vec<u16>, // 256 include null escape char
     pub token_prefix: Vec<u8>, // 16 include null escape char
     pub custom_data_size: u32,
+    pub offchain_schema: Vec<u8>,
+    pub sponsor: AccountId,    // Who pays fees. If set to default address, the fees are applied to the transaction sender
+    pub unconfirmed_sponsor: AccountId, // Sponsor address that has not yet confirmed sponsorship
 }
 
 #[derive(Encode, Decode, Default, Clone, PartialEq)]
@@ -88,8 +105,10 @@ pub trait Trait: system::Trait {
 decl_storage! {
     trait Store for Module<T: Trait> as Nft {
 
-        // Next available collection ID
-        NextCollectionID get(fn next_collection_id): u64;
+        // Private members
+        NextCollectionID: u64;
+        ItemListIndex: map hasher(blake2_128_concat) u64 => u64;
+
         pub Collection get(fn collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
         pub AdminList get(fn admin_list_collection): map hasher(identity) u64 => Vec<T::AccountId>;
 
@@ -101,7 +120,6 @@ decl_storage! {
         pub NftItemList get(fn nft_item_id): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => NftItemType<T::AccountId>;
         pub FungibleItemList get(fn fungible_item_id): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => FungibleItemType<T::AccountId>;
         pub ReFungibleItemList get(fn refungible_item_id): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => ReFungibleItemType<T::AccountId>;
-        ItemListIndex get(fn item_index): map hasher(blake2_128_concat) u64 => u64;
 
         pub AddressTokens get(fn address_tokens): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) T::AccountId => Vec<u64>;
     }
@@ -132,36 +150,19 @@ decl_module! {
                                     collection_name: Vec<u16>,
                                     collection_description: Vec<u16>,
                                     token_prefix: Vec<u8>,
-                                    mode: u8,
-                                    decimal_points: u32,
-                                    custom_data_size: u32) -> DispatchResult {
+                                    mode: CollectionMode) -> DispatchResult {
 
             // Anyone can create a collection
             let who = ensure_signed(origin)?;
-            let collection_mode: CollectionMode;
-            match mode {
-                1 => collection_mode = CollectionMode::NFT,
-                2 => collection_mode = CollectionMode::Fungible,
-                3 => collection_mode = CollectionMode::ReFungible,
-                _ => collection_mode = CollectionMode::Invalid
-            }
+            let custom_data_size = match mode {
+                CollectionMode::NFT(size) => size,
+                _ => 0
+            };
 
-            // check type
-            ensure!((collection_mode == CollectionMode::Fungible || collection_mode == CollectionMode::NFT || collection_mode == CollectionMode::ReFungible), 
-                "Collection mode must be Fungible, NFT or ReFungible");          
-
-            // NFT checks
-            if collection_mode == CollectionMode::NFT
-            {
-                ensure!(decimal_points == 0, "Collection in NFT mode must have zero in decimal_points parameter"); 
-            }
-
-            // Fungible checks
-            if collection_mode == CollectionMode::Fungible
-            {
-                ensure!(custom_data_size == 0, "Collection in Fungible mode must have zero in custom_data_size parameter"); 
-                ensure!(decimal_points != 0, "Collection in Fungible mode must have not zero in decimal_points parameter"); 
-            }
+            let decimal_points = match mode {
+                CollectionMode::Fungible(points) => points,
+                _ => 0
+            };
 
             // check params
             ensure!(decimal_points < 100, "decimal_points parameter must be lower than 100"); 
@@ -189,20 +190,23 @@ decl_module! {
             let new_collection = CollectionType {
                 owner: who.clone(),
                 name: name,
-                mode: collection_mode.clone(),
+                mode: mode.clone(),
                 access: AccessMode::Normal,
                 description: description,
                 decimal_points: decimal_points,
                 token_prefix: prefix,
                 next_item_id: next_id,
+                offchain_schema: Vec::new(),
                 custom_data_size: custom_data_size,
+                sponsor: T::AccountId::default(),
+                unconfirmed_sponsor: T::AccountId::default(),
             };
 
             // Add new collection to map
             <Collection<T>>::insert(next_id, new_collection);
 
             // call event
-            Self::deposit_event(RawEvent::Created(next_id, mode, who.clone()));
+            Self::deposit_event(RawEvent::Created(next_id, mode.into(), who.clone()));
 
             Ok(())
         }
@@ -285,19 +289,21 @@ decl_module! {
             <Balance<T>>::insert(collection_id, owner.clone(), new_balance);
 
             // TODO: implement other modes
-            ensure!(target_collection.mode == CollectionMode::NFT, "Collection type not implemented");
-
-            if target_collection.mode == CollectionMode::NFT
+            match target_collection.mode 
             {
+                CollectionMode::NFT(_) => {
                 // Create nft item
-                let item = NftItemType {
-                    collection: collection_id,
-                    owner: owner,
-                    data: properties,
-                };
-
-                Self::add_nft_item(item)?;
-            }
+                    let item = NftItemType {
+                        collection: collection_id,
+                        owner: owner,
+                        data: properties,
+                    };
+    
+                    Self::add_nft_item(item)?;
+    
+                },
+                _ => ()
+            };
 
             // call event
             Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id)));
@@ -336,12 +342,11 @@ decl_module! {
             let target_collection = <Collection<T>>::get(collection_id);
 
             // TODO: implement other modes
-            ensure!(target_collection.mode == CollectionMode::NFT, "Collection type not implemented");
-
-            if target_collection.mode == CollectionMode::NFT
+            match target_collection.mode 
             {
-                Self::transfer_nft(collection_id, item_id, recipient)?;
-            }
+                CollectionMode::NFT(_) => Self::transfer_nft(collection_id, item_id, recipient)?,
+                _ => ()
+            };
 
             Ok(())
         }
@@ -395,13 +400,12 @@ decl_module! {
             
             let target_collection = <Collection<T>>::get(collection_id);
 
-            // TODO: implement other modes
-            ensure!(target_collection.mode == CollectionMode::NFT, "Collection type not implemented");
-
-            if target_collection.mode == CollectionMode::NFT
+            match target_collection.mode
             {
-                Self::transfer_nft(collection_id, item_id, recipient)?;
-            }
+                CollectionMode::NFT(_) => Self::transfer_nft(collection_id, item_id, recipient)?,
+                // TODO: implement other modes
+                _ => ()
+            };
 
             Ok(())
         }
@@ -419,6 +423,22 @@ decl_module! {
             // Self::transfer(origin, collection_id, item_id, new_owner)?;
 
             Ok(())
+        }
+
+        #[weight = 0]
+        pub fn set_offchain_schema(
+            origin,
+            collection_id: u64,
+            schema: Vec<u8>
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
+            
+            let mut target_collection = <Collection<T>>::get(collection_id);
+            target_collection.offchain_schema = schema;
+            <Collection<T>>::insert(collection_id, target_collection);
+
+            Ok(())        
         }
     }
 }
@@ -460,28 +480,14 @@ impl<T: Trait> Module<T> {
 
     fn is_item_owner(subject: T::AccountId, collection_id: u64, item_id: u64) -> bool{
 
-        let mut result = false;
         let target_collection = <Collection<T>>::get(collection_id);
 
-        if target_collection.mode == CollectionMode::NFT
-        {
-            let item = <NftItemList<T>>::get(collection_id, item_id);
-            result = item.owner == subject;
+        match target_collection.mode {
+            CollectionMode::NFT(_) => <NftItemList<T>>::get(collection_id, item_id).owner == subject,
+            CollectionMode::Fungible(_) => <FungibleItemList<T>>::get(collection_id, item_id).owner.contains(&subject),
+            CollectionMode::ReFungible => <ReFungibleItemList<T>>::get(collection_id, item_id).owner.iter().any(|i| i.owner == subject),
+            CollectionMode::Invalid => false
         }
-
-        if target_collection.mode == CollectionMode::Fungible
-        {
-            let item = <FungibleItemList<T>>::get(collection_id, item_id);
-            result = item.owner.contains(&subject);
-        }
-
-        if target_collection.mode == CollectionMode::ReFungible
-        {
-            let item = <ReFungibleItemList<T>>::get(collection_id, item_id);
-            result = item.owner.iter().any(|i| i.owner == subject);
-        }
-
-        result
     }
 
     fn add_nft_item(item: NftItemType<T::AccountId>) -> DispatchResult {
