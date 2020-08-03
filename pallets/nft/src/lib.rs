@@ -86,10 +86,7 @@ pub struct CollectionType<AccountId> {
     pub description: Vec<u16>, // 256 include null escape char
     pub token_prefix: Vec<u8>, // 16 include null escape char
     pub custom_data_size: u32,
-<<<<<<< HEAD
     pub offchain_schema: Vec<u8>,
-=======
->>>>>>> 10c381b426801d64ec3dcf8623de6b7e279067a2
     pub sponsor: AccountId,    // Who pays fees. If set to default address, the fees are applied to the transaction sender
     pub unconfirmed_sponsor: AccountId, // Sponsor address that has not yet confirmed sponsorship
 }
@@ -138,6 +135,7 @@ decl_storage! {
 
         pub Collection get(fn collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
         pub AdminList get(fn admin_list_collection): map hasher(identity) u64 => Vec<T::AccountId>;
+        pub WhiteList get(fn white_list): map hasher(identity) u64 => Vec<T::AccountId>;
 
         // Balance owner per collection map
         pub Balance get(fn balance_count): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) T::AccountId => u64;
@@ -250,6 +248,7 @@ decl_module! {
             <ItemListIndex>::remove(collection_id);
             <AdminList<T>>::remove(collection_id);
             <Collection<T>>::remove(collection_id);
+            <WhiteList<T>>::remove(collection_id);
 
             Ok(())
         }
