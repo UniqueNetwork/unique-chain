@@ -4,9 +4,32 @@
 /// https://github.com/paritytech/substrate/blob/master/frame/example/src/lib.rs
 
 use codec::{Decode, Encode};
-use frame_support::{decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure};
+pub use frame_support::{
+    decl_event, decl_module, decl_storage,
+    construct_runtime, parameter_types,
+    traits::{Currency, Get, ExistenceRequirement, KeyOwnerProofSystem, OnUnbalanced, Randomness, WithdrawReason, Imbalance},
+    weights::{
+        DispatchInfo, PostDispatchInfo, constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
+        IdentityFee, Weight, WeightToFeePolynomial, GetDispatchInfo, Pays,
+    },
+    StorageValue,
+    dispatch::DispatchResult, 
+    IsSubType,
+    ensure
+};
+
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::sp_std::prelude::Vec;
+use sp_std::prelude::*;
+use sp_runtime::{
+	FixedU128, FixedPointOperand, 
+	transaction_validity::{
+		TransactionPriority, ValidTransaction, InvalidTransaction, TransactionValidityError, TransactionValidity
+	},
+	traits::{
+        Saturating, Dispatchable, DispatchInfoOf, PostDispatchInfoOf, SignedExtension, Zero, SaturatedConversion,
+	},
+};
 
 #[cfg(test)]
 mod mock;
@@ -63,7 +86,10 @@ pub struct CollectionType<AccountId> {
     pub description: Vec<u16>, // 256 include null escape char
     pub token_prefix: Vec<u8>, // 16 include null escape char
     pub custom_data_size: u32,
+<<<<<<< HEAD
     pub offchain_schema: Vec<u8>,
+=======
+>>>>>>> 10c381b426801d64ec3dcf8623de6b7e279067a2
     pub sponsor: AccountId,    // Who pays fees. If set to default address, the fees are applied to the transaction sender
     pub unconfirmed_sponsor: AccountId, // Sponsor address that has not yet confirmed sponsorship
 }
@@ -100,6 +126,7 @@ pub struct ReFungibleItemType<AccountId> {
 
 pub trait Trait: system::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+
 }
 
 decl_storage! {
@@ -274,6 +301,52 @@ decl_module! {
             Ok(())
         }
 
+        #[weight = 0]
+        pub fn set_collection_sponsor(origin, collection_id: u64, new_sponsor: T::AccountId) -> DispatchResult {
+
+            let sender = ensure_signed(origin)?;
+            ensure!(<Collection<T>>::contains_key(collection_id), "This collection does not exist");
+
+            let mut target_collection = <Collection<T>>::get(collection_id);
+            ensure!(sender == target_collection.owner, "You do not own this collection");
+
+            target_collection.unconfirmed_sponsor = new_sponsor;
+            <Collection<T>>::insert(collection_id, target_collection);
+
+            Ok(())
+        }
+
+        #[weight = 0]
+        pub fn confirm_sponsorship(origin, collection_id: u64) -> DispatchResult {
+
+            let sender = ensure_signed(origin)?;
+            ensure!(<Collection<T>>::contains_key(collection_id), "This collection does not exist");
+
+            let mut target_collection = <Collection<T>>::get(collection_id);
+            ensure!(sender == target_collection.unconfirmed_sponsor, "This address is not set as sponsor, use setCollectionSponsor first");
+
+            target_collection.sponsor = target_collection.unconfirmed_sponsor;
+            target_collection.unconfirmed_sponsor = T::AccountId::default();
+            <Collection<T>>::insert(collection_id, target_collection);
+
+            Ok(())
+        }
+
+        #[weight = 0]
+        pub fn remove_collection_sponsor(origin, collection_id: u64) -> DispatchResult {
+
+            let sender = ensure_signed(origin)?;
+            ensure!(<Collection<T>>::contains_key(collection_id), "This collection does not exist");
+
+            let mut target_collection = <Collection<T>>::get(collection_id);
+            ensure!(sender == target_collection.owner, "You do not own this collection");
+
+            target_collection.sponsor = T::AccountId::default();
+            <Collection<T>>::insert(collection_id, target_collection);
+
+            Ok(())
+        }
+        
         #[weight = 0]
         pub fn create_item(origin, collection_id: u64, properties: Vec<u8>, owner: T::AccountId) -> DispatchResult {
 
@@ -593,4 +666,186 @@ impl<T: Trait> Module<T> {
 
         Ok(())
     }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Economic models
+
+/// Fee multiplier.
+pub type Multiplier = FixedU128;
+
+type BalanceOf<T> =
+	<<T as transaction_payment::Trait>::Currency as Currency<<T as system::Trait>::AccountId>>::Balance;
+type NegativeImbalanceOf<T> = <<T as transaction_payment::Trait>::Currency as Currency<
+	<T as system::Trait>::AccountId,>>::NegativeImbalance;
+
+
+
+/// Require the transactor pay for themselves and maybe include a tip to gain additional priority
+/// in the queue.
+#[derive(Encode, Decode, Clone, Eq, PartialEq)]
+pub struct ChargeTransactionPayment<T: transaction_payment::Trait + Send + Sync>(#[codec(compact)] BalanceOf<T>);
+
+impl<T:Trait + transaction_payment::Trait + Send + Sync> sp_std::fmt::Debug for ChargeTransactionPayment<T> {
+	#[cfg(feature = "std")]
+	fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
+		write!(f, "ChargeTransactionPayment<{:?}>", self.0)
+	}
+	#[cfg(not(feature = "std"))]
+	fn fmt(&self, _: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
+		Ok(())
+	}
+}
+
+impl<T:Trait + transaction_payment::Trait + Send + Sync> ChargeTransactionPayment<T> where
+	T::Call: Dispatchable<Info=DispatchInfo, PostInfo=PostDispatchInfo> + IsSubType<Module<T>, T>,
+	BalanceOf<T>: Send + Sync + FixedPointOperand,
+{
+	/// utility constructor. Used only in client/factory code.
+	pub fn from(fee: BalanceOf<T>) -> Self {
+		Self(fee)
+	}
+
+    pub fn traditional_fee(
+        len: usize,
+        info: &DispatchInfoOf<T::Call>,
+        tip: BalanceOf<T>,
+    ) -> BalanceOf<T> where
+        T::Call: Dispatchable<Info=DispatchInfo>,
+    {
+        <transaction_payment::Module<T>>::compute_fee(len as u32, info, tip)
+    }
+
+	fn withdraw_fee(
+		&self,
+        who: &T::AccountId,
+        call: &T::Call,
+		info: &DispatchInfoOf<T::Call>,
+		len: usize,
+	) -> Result<(BalanceOf<T>, Option<NegativeImbalanceOf<T>>), TransactionValidityError> {
+        let tip = self.0;
+
+        // Set fee based on call type. Creating collection costs 1 Unique.
+        // All other transactions have traditional fees so far
+        let fee = match call.is_sub_type() {
+            Some(Call::create_collection(..)) => <BalanceOf<T>>::from(1_000_000_000),
+            _ => Self::traditional_fee(len, info, tip)
+
+            // Flat fee model, use only for testing purposes
+            // _ => <BalanceOf<T>>::from(100)
+        };
+
+        // Determine who is paying transaction fee based on ecnomic model
+        // Parse call to extract collection ID and access collection sponsor
+        let sponsor: T::AccountId = match call.is_sub_type() {
+            Some(Call::create_item(collection_id, _properties, _owner)) => {
+                <Collection<T>>::get(collection_id).sponsor
+            },
+            Some(Call::transfer(_new_owner, collection_id, _item_id, _value)) => {
+                <Collection<T>>::get(collection_id).sponsor
+            },
+
+            _ => T::AccountId::default()
+        };
+
+        let mut who_pays_fee: T::AccountId = sponsor.clone();
+        if sponsor == T::AccountId::default() {
+            who_pays_fee = who.clone();
+        }
+
+		// Only mess with balances if fee is not zero.
+		if fee.is_zero() {
+			return Ok((fee, None));
+		}
+
+		match <T as transaction_payment::Trait>::Currency::withdraw(
+			&who_pays_fee,
+			fee,
+			if tip.is_zero() {
+				WithdrawReason::TransactionPayment.into()
+			} else {
+				WithdrawReason::TransactionPayment | WithdrawReason::Tip
+			},
+			ExistenceRequirement::KeepAlive,
+		) {
+			Ok(imbalance) => Ok((fee, Some(imbalance))),
+			Err(_) => Err(InvalidTransaction::Payment.into()),
+		}
+	}
+}
+
+impl<T:Trait + transaction_payment::Trait + Send + Sync> SignedExtension for ChargeTransactionPayment<T> where
+    BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
+    T::Call: Dispatchable<Info=DispatchInfo, PostInfo=PostDispatchInfo> + IsSubType<Module<T>, T>,
+{
+	const IDENTIFIER: &'static str = "ChargeTransactionPayment";
+	type AccountId = T::AccountId;
+	type Call = T::Call;
+	type AdditionalSigned = ();
+	type Pre = (BalanceOf<T>, Self::AccountId, Option<NegativeImbalanceOf<T>>, BalanceOf<T>);
+	fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> { Ok(()) }
+
+	fn validate(
+		&self,
+		who: &Self::AccountId,
+		call: &Self::Call,
+		info: &DispatchInfoOf<Self::Call>,
+		len: usize,
+	) -> TransactionValidity {
+		let (fee, _) = self.withdraw_fee(who, call, info, len)?;
+
+		let mut r = ValidTransaction::default();
+		// NOTE: we probably want to maximize the _fee (of any type) per weight unit_ here, which
+		// will be a bit more than setting the priority to tip. For now, this is enough.
+		r.priority = fee.saturated_into::<TransactionPriority>();
+		Ok(r)
+	}
+
+	fn pre_dispatch(
+		self,
+		who: &Self::AccountId,
+		call: &Self::Call,
+		info: &DispatchInfoOf<Self::Call>,
+		len: usize
+	) -> Result<Self::Pre, TransactionValidityError> {
+		let (fee, imbalance) = self.withdraw_fee(who, call, info, len)?;
+		Ok((self.0, who.clone(), imbalance, fee))
+	}
+
+	fn post_dispatch(
+		pre: Self::Pre,
+		info: &DispatchInfoOf<Self::Call>,
+		post_info: &PostDispatchInfoOf<Self::Call>,
+		len: usize,
+		_result: &DispatchResult,
+	) -> Result<(), TransactionValidityError> {
+		let (tip, who, imbalance, fee) = pre;
+		if let Some(payed) = imbalance {
+			let actual_fee = <transaction_payment::Module<T>>::compute_actual_fee(
+				len as u32,
+				info,
+				post_info,
+				tip,
+			);
+			let refund = fee.saturating_sub(actual_fee);
+			let actual_payment = match <T as transaction_payment::Trait>::Currency::deposit_into_existing(&who, refund) {
+				Ok(refund_imbalance) => {
+					// The refund cannot be larger than the up front payed max weight.
+					// `PostDispatchInfo::calc_unspent` guards against such a case.
+					match payed.offset(refund_imbalance) {
+						Ok(actual_payment) => actual_payment,
+						Err(_) => return Err(InvalidTransaction::Payment.into()),
+					}
+				}
+				// We do not recreate the account using the refund. The up front payment
+				// is gone in that case.
+				Err(_) => payed,
+			};
+			let imbalances = actual_payment.split(tip);
+			<T as transaction_payment::Trait>::OnTransactionPayment::on_unbalanceds(Some(imbalances.0).into_iter()
+				.chain(Some(imbalances.1)));
+		}
+		Ok(())
+	}
 }

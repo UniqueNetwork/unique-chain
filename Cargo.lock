@@ -3085,11 +3085,13 @@ version = "2.0.0-rc4"
 dependencies = [
  "frame-support",
  "frame-system",
+ "pallet-transaction-payment",
  "parity-scale-codec",
  "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

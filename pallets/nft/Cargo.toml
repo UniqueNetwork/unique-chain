@@ -37,6 +37,19 @@ version = '2.0.0-rc4'
 # third-party dependencies
 serde = { version = "1.0.102", features = ["derive"] }
 
+[dependencies.sp-std]
+default-features = false
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
+
+[dependencies.transaction-payment]
+default-features = false
+git = 'https://github.com/usetech-llc/substrate.git'
+package = 'pallet-transaction-payment'
+branch = 'rc4_ext_dispatch_reenabled'
+version = '2.0.0-rc4'
+
 [package]
 authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
 description = 'FRAME pallet nft'
@@ -57,4 +70,5 @@ std = [
     'frame-support/std',
     'frame-system/std',
     'sp-runtime/std',
+    'sp-std/std',
 ]
