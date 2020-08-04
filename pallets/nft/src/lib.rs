@@ -537,56 +537,6 @@ decl_module! {
 
             Ok(())        
         }
-
-        // Shonsorship methods
-        #[weight = 0]
-        pub fn set_collection_sponsor(
-            origin,
-            collection_id: u64,
-            address: T::AccountId
-        ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
-            Self::check_owner_permissions(collection_id, sender)?;
-            let mut collection = <Collection<T>>::get(collection_id);
-            collection.unconfirmed_sponsor = address;
-            <Collection<T>>::insert(collection_id, collection);
-
-            Ok(())     
-        }
-
-        #[weight = 0]
-        pub fn confirm_sponsorship(
-            origin,
-            collection_id: u64,
-            address: T::AccountId
-        ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
-            let mut collection = <Collection<T>>::get(collection_id);
-
-            ensure!(collection.unconfirmed_sponsor == sender, "Only sponsor can confirm sponsorship");
-
-            collection.sponsor = collection.unconfirmed_sponsor;
-            collection.unconfirmed_sponsor = T::AccountId::default();
-            <Collection<T>>::insert(collection_id, collection);
-
-            Ok(())     
-        }
-
-        #[weight = 0]
-        pub fn remove_collection_sponsor(
-            origin,
-            collection_id: u64
-        ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
-            Self::check_owner_permissions(collection_id, sender)?;
-            let mut collection = <Collection<T>>::get(collection_id);
-            collection.unconfirmed_sponsor = T::AccountId::default();
-            collection.sponsor = T::AccountId::default();
-            <Collection<T>>::insert(collection_id, collection);
-
-            Ok(())     
-        }
-
     }
 }
 
