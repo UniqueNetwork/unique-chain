@@ -44,8 +44,8 @@ pub enum CollectionMode {
     NFT(u32),
     // decimal points
     Fungible(u32),
-    // custom data size
-	ReFungible(u32),
+    // custom data size and decimal points
+	ReFungible(u32, u32),
 }
 
 impl Into<u8> for CollectionMode {
@@ -54,7 +54,7 @@ impl Into<u8> for CollectionMode {
             CollectionMode::Invalid => 0,
             CollectionMode::NFT(_) => 1,
             CollectionMode::Fungible(_) => 2,
-            CollectionMode::ReFungible(_) => 3,
+            CollectionMode::ReFungible(_, _) => 3,
         }
     }
 }
@@ -149,6 +149,10 @@ decl_storage! {
         pub ReFungibleItemList get(fn refungible_item_id): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => ReFungibleItemType<T::AccountId>;
 
         pub AddressTokens get(fn address_tokens): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) T::AccountId => Vec<u64>;
+
+        // Sponsorship
+        pub ContractSponsor get(fn contract_sponsor): map hasher(identity) T::AccountId => T::AccountId;
+        pub UnconfirmedContractSponsor get(fn unconfirmed_contract_sponsor): map hasher(identity) T::AccountId => T::AccountId;
     }
 }
 
@@ -183,12 +187,13 @@ decl_module! {
             let who = ensure_signed(origin)?;
             let custom_data_size = match mode {
                 CollectionMode::NFT(size) => size,
-                CollectionMode::ReFungible(size) => size,
+                CollectionMode::ReFungible(size, _) => size,
                 _ => 0
             };
 
             let decimal_points = match mode {
                 CollectionMode::Fungible(points) => points,
+                CollectionMode::ReFungible(_, points) => points,
                 _ => 0
             };
 
@@ -377,7 +382,7 @@ decl_module! {
                     Self::add_nft_item(item)?;
     
                 },
-                CollectionMode::ReFungible(_) => {
+                CollectionMode::ReFungible(_, _) => {
                     let mut owner_list = Vec::new();
                     let value = (10 as u128).pow(target_collection.decimal_points);
                     owner_list.push(Ownership {owner: owner, fraction: value});
@@ -413,7 +418,7 @@ decl_module! {
             match target_collection.mode 
             {
                 CollectionMode::NFT(_) => Self::burn_nft_item(collection_id, item_id)?,
-                CollectionMode::ReFungible(_) => Self::burn_refungible_item(collection_id, item_id, sender.clone())?,
+                CollectionMode::ReFungible(_, _)  => Self::burn_refungible_item(collection_id, item_id, sender.clone())?,
                 _ => ()
             };
 
@@ -427,19 +432,15 @@ decl_module! {
         pub fn transfer(origin, recipient: T::AccountId, collection_id: u64, item_id: u64, value: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            let item_owner = Self::is_item_owner(sender.clone(), collection_id, item_id);
-            if !item_owner
-            {
-                Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
-            }
+            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id), "Only item owner can call transfer method");
 
             let target_collection = <Collection<T>>::get(collection_id);
 
             // TODO: implement other modes
             match target_collection.mode 
             {
-                CollectionMode::NFT(_) => Self::transfer_nft(collection_id, item_id, recipient)?,
-                CollectionMode::ReFungible(_) => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient)?,
+                CollectionMode::NFT(_) => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient)?,
+                CollectionMode::ReFungible(_, _)  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient)?,
                 _ => ()
             };
 
@@ -477,7 +478,7 @@ decl_module! {
         }
 
         #[weight = 0]
-        pub fn transfer_from(origin, recipient: T::AccountId, collection_id: u64, item_id: u64, ) -> DispatchResult {
+        pub fn transfer_from(origin, from: T::AccountId, recipient: T::AccountId, collection_id: u64, item_id: u64, value: u64 ) -> DispatchResult {
 
             let mut approved: bool = false; 
             let sender = ensure_signed(origin)?;
@@ -497,7 +498,8 @@ decl_module! {
 
             match target_collection.mode
             {
-                CollectionMode::NFT(_) => Self::transfer_nft(collection_id, item_id, recipient)?,
+                CollectionMode::NFT(_) => Self::transfer_nft(collection_id, item_id, from, recipient)?,
+                CollectionMode::ReFungible(_, _)  => Self::transfer_refungible(collection_id, item_id, value, from, recipient)?,
                 // TODO: implement other modes
                 _ => ()
             };
@@ -535,6 +537,56 @@ decl_module! {
 
             Ok(())        
         }
+
+        // Shonsorship methods
+        #[weight = 0]
+        pub fn set_collection_sponsor(
+            origin,
+            collection_id: u64,
+            address: T::AccountId
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            Self::check_owner_permissions(collection_id, sender)?;
+            let mut collection = <Collection<T>>::get(collection_id);
+            collection.unconfirmed_sponsor = address;
+            <Collection<T>>::insert(collection_id, collection);
+
+            Ok(())     
+        }
+
+        #[weight = 0]
+        pub fn confirm_sponsorship(
+            origin,
+            collection_id: u64,
+            address: T::AccountId
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            let mut collection = <Collection<T>>::get(collection_id);
+
+            ensure!(collection.unconfirmed_sponsor == sender, "Only sponsor can confirm sponsorship");
+
+            collection.sponsor = collection.unconfirmed_sponsor;
+            collection.unconfirmed_sponsor = T::AccountId::default();
+            <Collection<T>>::insert(collection_id, collection);
+
+            Ok(())     
+        }
+
+        #[weight = 0]
+        pub fn remove_collection_sponsor(
+            origin,
+            collection_id: u64
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            Self::check_owner_permissions(collection_id, sender)?;
+            let mut collection = <Collection<T>>::get(collection_id);
+            collection.unconfirmed_sponsor = T::AccountId::default();
+            collection.sponsor = T::AccountId::default();
+            <Collection<T>>::insert(collection_id, collection);
+
+            Ok(())     
+        }
+
     }
 }
 
@@ -580,7 +632,7 @@ impl<T: Trait> Module<T> {
         match target_collection.mode {
             CollectionMode::NFT(_) => <NftItemList<T>>::get(collection_id, item_id).owner == subject,
             CollectionMode::Fungible(_) => <FungibleItemList<T>>::get(collection_id, item_id).owner == subject,
-            CollectionMode::ReFungible(_) => <ReFungibleItemList<T>>::get(collection_id, item_id).owner.iter().any(|i| i.owner == subject),
+            CollectionMode::ReFungible(_, _)  => <ReFungibleItemList<T>>::get(collection_id, item_id).owner.iter().any(|i| i.owner == subject),
             CollectionMode::Invalid => false
         }
     }
@@ -695,9 +747,11 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    fn transfer_nft(collection_id: u64, item_id: u64, new_owner: T::AccountId) -> DispatchResult {
+    fn transfer_nft(collection_id: u64, item_id: u64, sender: T::AccountId, new_owner: T::AccountId) -> DispatchResult {
 
         let mut item = <NftItemList<T>>::get(collection_id, item_id);
+
+        ensure!(sender == item.owner,"sender parameter and item owner must be equal");
 
         // update balance
         let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.clone()).checked_sub(1).unwrap();
