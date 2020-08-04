@@ -42,9 +42,10 @@ pub enum CollectionMode {
     Invalid,
     // custom data size
     NFT(u32),
-    // amount
-	Fungible(u32),
-	ReFungible,
+    // decimal points
+    Fungible(u32),
+    // custom data size
+	ReFungible(u32),
 }
 
 impl Into<u8> for CollectionMode {
@@ -53,7 +54,7 @@ impl Into<u8> for CollectionMode {
             CollectionMode::Invalid => 0,
             CollectionMode::NFT(_) => 1,
             CollectionMode::Fungible(_) => 2,
-            CollectionMode::ReFungible => 3,
+            CollectionMode::ReFungible(_) => 3,
         }
     }
 }
@@ -110,8 +111,8 @@ pub struct NftItemType<AccountId> {
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct FungibleItemType<AccountId> {
     pub collection: u64,
-    pub owner: Vec<AccountId>,
-    pub data: Vec<u64>,
+    pub owner: AccountId,
+    pub value: u128,
 }
 
 #[derive(Encode, Decode, Default, Clone, PartialEq)]
@@ -119,6 +120,7 @@ pub struct FungibleItemType<AccountId> {
 pub struct ReFungibleItemType<AccountId> {
     pub collection: u64,
     pub owner: Vec<Ownership<AccountId>>,
+    pub data: Vec<u8>,
 }
 
 pub trait Trait: system::Trait {
@@ -181,6 +183,7 @@ decl_module! {
             let who = ensure_signed(origin)?;
             let custom_data_size = match mode {
                 CollectionMode::NFT(size) => size,
+                CollectionMode::ReFungible(size) => size,
                 _ => 0
             };
 
@@ -190,7 +193,7 @@ decl_module! {
             };
 
             // check params
-            ensure!(decimal_points < 100, "decimal_points parameter must be lower than 100"); 
+            ensure!(decimal_points <= 4, "decimal_points parameter must be lower than 4"); 
 
             let mut name = collection_name.to_vec();
             name.push(0);
@@ -357,7 +360,7 @@ decl_module! {
 
             Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
 
-            let new_balance = <Balance<T>>::get(collection_id, owner.clone()) + 1;
+            let new_balance = <Balance<T>>::get(collection_id, owner.clone()).checked_add(1).unwrap();
             <Balance<T>>::insert(collection_id, owner.clone(), new_balance);
 
             // TODO: implement other modes
@@ -373,6 +376,19 @@ decl_module! {
     
                     Self::add_nft_item(item)?;
     
+                },
+                CollectionMode::ReFungible(_) => {
+                    let mut owner_list = Vec::new();
+                    let value = (10 as u128).pow(target_collection.decimal_points);
+                    owner_list.push(Ownership {owner: owner, fraction: value});
+
+                    let item = ReFungibleItemType {
+                        collection: collection_id,
+                        owner: owner_list,
+                        data: properties
+                    };
+    
+                    Self::add_refungible_item(item)?;
                 },
                 _ => ()
             };
@@ -392,8 +408,14 @@ decl_module! {
             {
                 Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
             }
-            
-            Self::burn_nft_item(collection_id, item_id)?;
+            let target_collection = <Collection<T>>::get(collection_id);
+
+            match target_collection.mode 
+            {
+                CollectionMode::NFT(_) => Self::burn_nft_item(collection_id, item_id)?,
+                CollectionMode::ReFungible(_) => Self::burn_refungible_item(collection_id, item_id, sender.clone())?,
+                _ => ()
+            };
 
             // call event
             Self::deposit_event(RawEvent::ItemDestroyed(collection_id, item_id));
@@ -417,6 +439,7 @@ decl_module! {
             match target_collection.mode 
             {
                 CollectionMode::NFT(_) => Self::transfer_nft(collection_id, item_id, recipient)?,
+                CollectionMode::ReFungible(_) => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient)?,
                 _ => ()
             };
 
@@ -556,12 +579,95 @@ impl<T: Trait> Module<T> {
 
         match target_collection.mode {
             CollectionMode::NFT(_) => <NftItemList<T>>::get(collection_id, item_id).owner == subject,
-            CollectionMode::Fungible(_) => <FungibleItemList<T>>::get(collection_id, item_id).owner.contains(&subject),
-            CollectionMode::ReFungible => <ReFungibleItemList<T>>::get(collection_id, item_id).owner.iter().any(|i| i.owner == subject),
+            CollectionMode::Fungible(_) => <FungibleItemList<T>>::get(collection_id, item_id).owner == subject,
+            CollectionMode::ReFungible(_) => <ReFungibleItemList<T>>::get(collection_id, item_id).owner.iter().any(|i| i.owner == subject),
             CollectionMode::Invalid => false
         }
     }
 
+    fn add_refungible_item(item: ReFungibleItemType<T::AccountId>) -> DispatchResult {
+
+        let current_index = <ItemListIndex>::get(item.collection)
+        .checked_add(1)
+        .expect("Item list index id error");
+
+        Self::add_token_index(item.collection, current_index, item.owner.first().unwrap().owner.clone())?;
+
+        <ItemListIndex>::insert(item.collection, current_index);
+        <ReFungibleItemList<T>>::insert(item.collection, current_index, item);        
+
+        Ok(())
+    }
+
+    fn burn_refungible_item(collection_id: u64, item_id: u64, owner: T::AccountId) -> DispatchResult {
+  
+        let collection = <ReFungibleItemList<T>>::get(collection_id, item_id);
+        let item = collection.owner.iter().filter(|&i| i.owner == owner).next().unwrap();
+        Self::remove_token_index(collection_id, item_id, owner)?;
+
+        // update balance
+        let new_balance = <Balance<T>>::get(collection_id, item.owner.clone()).checked_sub(item.fraction as u64).unwrap();
+        <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
+
+        // TODO
+        <ReFungibleItemList<T>>::remove(collection_id, item_id);
+
+        Ok(())
+    }
+
+    fn transfer_refungible(collection_id: u64, item_id: u64, value: u64, owner: T::AccountId, new_owner: T::AccountId) -> DispatchResult {
+
+        let full_item = <ReFungibleItemList<T>>::get(collection_id, item_id);
+        let item = full_item.owner.iter().filter(|i| i.owner == owner).next().unwrap();
+        let amount = item.fraction;
+
+        ensure!(amount < value.into(),"Item balance not enouth");
+
+        // update balance
+        let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.clone()).checked_sub(value).unwrap();
+        <Balance<T>>::insert(collection_id, item.owner.clone(), balance_old_owner);
+
+        let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone()).checked_add(value).unwrap();
+        <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
+
+        let old_owner = item.owner.clone();
+        let new_owner_has_account = full_item.owner.iter().any(|i| i.owner == new_owner);
+
+        // transfer
+        if amount == value.into() && !new_owner_has_account
+        {
+            // change owner
+            // new owner do not have account
+            let mut new_full_item = full_item.clone();
+            new_full_item.owner.iter_mut().find(|i| i.owner == owner).unwrap().owner = new_owner.clone();
+            <ReFungibleItemList<T>>::insert(collection_id, item_id, new_full_item);
+
+            // update index collection
+            Self::move_token_index(collection_id, item_id, old_owner.clone(), new_owner.clone())?;
+        }
+        else
+        {
+            let mut new_full_item = full_item.clone();
+            new_full_item.owner.iter_mut().find(|i| i.owner == owner).unwrap().fraction -= amount;
+
+            // separate amount
+            if new_owner_has_account {
+                // new owner has account
+                new_full_item.owner.iter_mut().find(|i| i.owner == new_owner).unwrap().fraction += amount;
+            }
+            else
+            {
+                // new owner do not have account
+                new_full_item.owner.push(Ownership { owner: new_owner.clone(), fraction: amount});
+                Self::add_token_index(collection_id, item_id, new_owner.clone())?;
+            }
+
+            <ReFungibleItemList<T>>::insert(collection_id, item_id, new_full_item);
+        }
+
+        Ok(())
+    }
+    
     fn add_nft_item(item: NftItemType<T::AccountId>) -> DispatchResult {
 
         let current_index = <ItemListIndex>::get(item.collection)
