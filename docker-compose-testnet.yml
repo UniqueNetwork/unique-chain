@@ -47,6 +47,7 @@ services:
     image: nft-parachain
     ports:
       - 9944:9944
+      - 30334:30334
     build:
       context: ./
       dockerfile: Dockerfile-testnet
