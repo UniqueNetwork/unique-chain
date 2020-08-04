@@ -73,8 +73,7 @@ cargo +nightly test
   },
   "CollectionType": {
     "Owner": "AccountId",
-    "Mode": "u8",
-    "ModeParam": "u32",
+    "Mode": "CollectionMode",
     "Access": "u8",
     "NextItemId": "u64",
     "DecimalPoints": "u32",

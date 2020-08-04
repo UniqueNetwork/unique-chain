@@ -124,8 +124,7 @@ Additional CLI usage options are available and may be shown by running `cargo ru
   },
   "CollectionType": {
     "Owner": "AccountId",
-    "Mode": "u8",
-    "ModeParam": "u32",
+    "Mode": "CollectionMode",
     "Access": "u8",
     "NextItemId": "u64",
     "DecimalPoints": "u32",
