@@ -63,7 +63,7 @@ cargo +nightly test
       "Invalid": null,
       "NFT": "u32",
       "Fungible": "u32",
-      "ReFungible": null
+      "ReFungible": "(u32, u32)"
     }
   },
   "NftItemType": {
@@ -71,9 +71,7 @@ cargo +nightly test
     "Owner": "AccountId",
     "Data": "Vec<u8>"
   },
-  
-  
-"CollectionType": {
+  "CollectionType": {
     "Owner": "AccountId",
     "Mode": "u8",
     "ModeParam": "u32",
