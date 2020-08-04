@@ -7,7 +7,7 @@ mod calls {
     use ink_core::env;
     use ink_prelude::vec::Vec;
     use ink_prelude::*;
-    use ink_types_node_runtime::{calls as runtime_calls, NodeRuntimeTypes};
+    use ink_types_node_runtime::{calls as runtime_calls, NodeRuntimeTypes, RawData, AccountList };
     use scale::{
         Decode,
         Encode,
@@ -29,13 +29,13 @@ mod calls {
         fn new(&mut self) {}
 
         #[ink(message)]
-        fn transfer(&self, collection_id: u64, item_id: u64, new_owner: AccountId) {
+        fn transfer(&self, new_owner: AccountId, collection_id: u64, item_id: u64, value: u64) {
             env::println(&format!(
-                "transfer invoke_runtime params {:?}, {:?}, {:?} ",
-                collection_id, item_id, new_owner
+                "transfer invoke_runtime params {:?}, {:?}, {:?}, {:?} ",
+                new_owner, collection_id, item_id, value
             ));
 
-            let transfer_call = runtime_calls::transfer(collection_id, item_id, new_owner);
+            let transfer_call = runtime_calls::transfer(new_owner, collection_id, item_id, value);
             // dispatch the call to the runtime
             let result = self.env().invoke_runtime(&transfer_call);
 
@@ -63,7 +63,7 @@ mod calls {
         }
 
         #[ink(message)]
-        fn get_approved(&self, collection_id: u64, item_id: u64) -> Vec<AccountId> {
+        fn get_approved(&self, collection_id: u64, item_id: u64) -> AccountList {
             let mut key = vec![
                 // Precomputed: Twox128("Nft")
                 244, 63, 251, 230, 30, 244, 104, 116, 157, 54, 23, 172, 26, 99, 196, 183,
@@ -92,28 +92,28 @@ mod calls {
             match result {
                 Some(Ok(accounts)) => { 
                     env::println(&format!("get_approved result {:?}", accounts));
-                    accounts 
+                    AccountList(accounts) 
                 },
                 Some(Err(err)) => {
                     env::println(&format!("Error reading {:?}", err));
-                    vec![]
+                    AccountList(vec![])
                 }
                 None => {
                     env::println(&format!("No data at key {:?}", key));
-                    vec![]
+                    AccountList(vec![])
                 }
             }
         }
 
         #[ink(message)]
-        fn transfer_from(&self, collection_id: u64, item_id: u64, new_owner: AccountId) {
+        fn transfer_from(&self, new_owner: AccountId, collection_id: u64, item_id: u64, value: u64) {
             env::println(&format!(
-                "transfer_from invoke_runtime params {:?}, {:?}, {:?} ",
-                collection_id, item_id, new_owner
+                "transfer_from invoke_runtime params {:?}, {:?}, {:?}, {:?} ",
+                new_owner, collection_id, item_id, value
             ));
 
             let transfer_from_call =
-                runtime_calls::transfer_from(collection_id, item_id, new_owner);
+                runtime_calls::transfer_from(new_owner, collection_id, item_id, value);
             // dispatch the call to the runtime
             let result = self.env().invoke_runtime(&transfer_from_call);
 
@@ -124,13 +124,13 @@ mod calls {
 
         // SafeTransferFrom
         #[ink(message)]
-        fn create_item(&self, collection_id: u64, properties: Vec<u8>, owner: AccountId) {
+        fn create_item(&self, collection_id: u64, properties: RawData, owner: AccountId) {
             env::println(&format!(
-                "create_item invoke_runtime params {:?}, {:?} ",
-                collection_id, properties
+                "create_item invoke_runtime params {:?}, {:?}, {:?} ",
+                collection_id, properties, owner
             ));
 
-            let create_item_call = runtime_calls::create_item(collection_id, properties, owner);
+            let create_item_call = runtime_calls::create_item(collection_id, properties.into(), owner);
             // dispatch the call to the runtime
             let result = self.env().invoke_runtime(&create_item_call);
 

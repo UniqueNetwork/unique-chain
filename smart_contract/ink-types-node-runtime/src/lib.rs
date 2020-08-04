@@ -4,8 +4,9 @@ use core::{array::TryFromSliceError, convert::TryFrom};
 use ink_core::env::Clear;
 use scale::{Decode, Encode};
 use sp_core::crypto::AccountId32;
+use ink_prelude::vec::Vec;
 #[cfg(feature = "ink-generate-abi")]
-use type_metadata::{HasTypeDef, HasTypeId, MetaType, Metadata, TypeDef, TypeId, TypeIdArray};
+use type_metadata::{ HasTypeDef, HasTypeId, MetaType, Metadata, TypeDef, TypeId, TypeIdArray, TypeIdSlice};
 
 pub mod calls;
 
@@ -45,6 +46,59 @@ impl HasTypeDef for AccountId {
 
 /// The default SRML balance type.
 pub type Balance = u128;
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
+pub struct AccountList(pub Vec<AccountId>);
+
+impl AccountList {
+    pub fn new(param: Vec<AccountId>) -> AccountList {
+        AccountList(param)
+    }
+}
+
+impl Into<Vec<AccountId>> for AccountList {
+    fn into(self) -> Vec<AccountId> {
+        self.0
+    }
+}
+
+#[cfg(feature = "ink-generate-abi")]
+impl HasTypeDef for AccountList {
+    fn type_def() -> TypeDef {
+        TypeDef::builtin()
+    }
+}
+
+#[cfg(feature = "ink-generate-abi")]
+impl HasTypeId for AccountList {
+    fn type_id() -> TypeId {
+        TypeIdSlice::new(AccountId::meta_type()).into()
+    }
+}
+
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Encode, Decode)]
+pub struct RawData(Vec<u8>);
+
+impl Into<Vec<u8>> for RawData {
+    fn into(self) -> Vec<u8> {
+        self.0
+    }
+}
+
+#[cfg(feature = "ink-generate-abi")]
+impl HasTypeDef for RawData {
+    fn type_def() -> TypeDef {
+        TypeDef::builtin()
+    }
+}
+
+#[cfg(feature = "ink-generate-abi")]
+impl HasTypeId for RawData {
+    fn type_id() -> TypeId {
+        TypeIdSlice::new(u8::meta_type()).into()
+    }
+}
 
 /// The default SRML hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Encode, Decode)]
