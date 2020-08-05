@@ -587,6 +587,7 @@ impl<T: Trait> Module<T> {
         let current_index = <ItemListIndex>::get(item.collection)
         .checked_add(1)
         .expect("Item list index id error");
+        let itemcopy = item.clone();
 
         let value = item.owner.first().unwrap().fraction as u64;
         let owner = item.owner.first().unwrap().owner.clone();
@@ -597,8 +598,8 @@ impl<T: Trait> Module<T> {
         <ReFungibleItemList<T>>::insert(item.collection, current_index, item);  
         
         // Update balance
-        let new_balance = <Balance<T>>::get(item.collection, owner.clone()).checked_add(value).unwrap();
-        <Balance<T>>::insert(item.collection, owner.clone(), new_balance);
+        let new_balance = <Balance<T>>::get(itemcopy.collection, owner.clone()).checked_add(value).unwrap();
+        <Balance<T>>::insert(itemcopy.collection, owner.clone(), new_balance);
 
         Ok(())
     }
@@ -677,6 +678,7 @@ impl<T: Trait> Module<T> {
         let current_index = <ItemListIndex>::get(item.collection)
         .checked_add(1)
         .expect("Item list index id error");
+        let itemcopy = item.clone();
 
         Self::add_token_index(item.collection, current_index, item.owner.clone())?;
 
@@ -684,8 +686,8 @@ impl<T: Trait> Module<T> {
         <NftItemList<T>>::insert(item.collection, current_index, item);
 
         // Update balance
-        let new_balance = <Balance<T>>::get(item.collection, item.owner.clone()).checked_add(1).unwrap();
-        <Balance<T>>::insert(item.collection_id, item.owner.clone(), new_balance);
+        let new_balance = <Balance<T>>::get(itemcopy.collection, itemcopy.owner.clone()).checked_add(1).unwrap();
+        <Balance<T>>::insert(itemcopy.collection, itemcopy.owner.clone(), new_balance);
 
         Ok(())
     }
