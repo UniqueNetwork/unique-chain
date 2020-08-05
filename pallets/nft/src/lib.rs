@@ -371,7 +371,7 @@ decl_module! {
                     let item = NftItemType {
                         collection: collection_id,
                         owner: owner,
-                        data: properties,
+                        data: properties.clone(),
                     };
     
                     Self::add_nft_item(item)?;
@@ -380,17 +380,18 @@ decl_module! {
                 CollectionMode::ReFungible(_, _) => {
                     let mut owner_list = Vec::new();
                     let value = (10 as u128).pow(target_collection.decimal_points);
-                    owner_list.push(Ownership {owner: owner, fraction: value});
+                    owner_list.push(Ownership {owner: owner.clone(), fraction: value});
 
                     let item = ReFungibleItemType {
                         collection: collection_id,
                         owner: owner_list,
-                        data: properties
+                        data: properties.clone()
                     };
     
                     Self::add_refungible_item(item)?;
                 },
-                _ => ()
+                _ => { ensure!(1 == 0,"just error"); }
+
             };
 
             // call event
@@ -595,11 +596,11 @@ impl<T: Trait> Module<T> {
         Self::add_token_index(item.collection, current_index, owner.clone())?;
 
         <ItemListIndex>::insert(item.collection, current_index);
-        <ReFungibleItemList<T>>::insert(item.collection, current_index, item);  
+        <ReFungibleItemList<T>>::insert(item.collection, current_index, itemcopy);  
         
         // Update balance
-        let new_balance = <Balance<T>>::get(itemcopy.collection, owner.clone()).checked_add(value).unwrap();
-        <Balance<T>>::insert(itemcopy.collection, owner.clone(), new_balance);
+       let new_balance = <Balance<T>>::get(item.collection, owner.clone()).checked_add(value).unwrap();
+       <Balance<T>>::insert(item.collection, owner.clone(), new_balance);
 
         Ok(())
     }
@@ -626,7 +627,7 @@ impl<T: Trait> Module<T> {
         let item = full_item.owner.iter().filter(|i| i.owner == owner).next().unwrap();
         let amount = item.fraction;
 
-        ensure!(amount < value.into(),"Item balance not enouth");
+        ensure!(amount >= value.into(),"Item balance not enouth");
 
         // update balance
         let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.clone()).checked_sub(value).unwrap();
@@ -637,9 +638,10 @@ impl<T: Trait> Module<T> {
 
         let old_owner = item.owner.clone();
         let new_owner_has_account = full_item.owner.iter().any(|i| i.owner == new_owner);
+        let val64 = value.into();
 
         // transfer
-        if amount == value.into() && !new_owner_has_account
+        if amount == val64 && !new_owner_has_account
         {
             // change owner
             // new owner do not have account
@@ -653,17 +655,17 @@ impl<T: Trait> Module<T> {
         else
         {
             let mut new_full_item = full_item.clone();
-            new_full_item.owner.iter_mut().find(|i| i.owner == owner).unwrap().fraction -= amount;
+            new_full_item.owner.iter_mut().find(|i| i.owner == owner).unwrap().fraction -= val64;
 
             // separate amount
             if new_owner_has_account {
                 // new owner has account
-                new_full_item.owner.iter_mut().find(|i| i.owner == new_owner).unwrap().fraction += amount;
+                new_full_item.owner.iter_mut().find(|i| i.owner == new_owner).unwrap().fraction += val64;
             }
             else
             {
                 // new owner do not have account
-                new_full_item.owner.push(Ownership { owner: new_owner.clone(), fraction: amount});
+                new_full_item.owner.push(Ownership { owner: new_owner.clone(), fraction: val64});
                 Self::add_token_index(collection_id, item_id, new_owner.clone())?;
             }
 

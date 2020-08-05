@@ -3085,6 +3085,7 @@ version = "2.0.0-rc4"
 dependencies = [
  "frame-support",
  "frame-system",
+ "log",
  "pallet-transaction-payment",
  "parity-scale-codec",
  "serde",
