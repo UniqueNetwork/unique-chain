@@ -126,7 +126,6 @@ Additional CLI usage options are available and may be shown by running `cargo ru
     "Owner": "AccountId",
     "Mode": "CollectionMode",
     "Access": "u8",
-    "NextItemId": "u64",
     "DecimalPoints": "u32",
     "Name": "Vec<u16>",
     "Description": "Vec<u16>",
