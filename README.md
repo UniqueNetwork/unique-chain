@@ -122,6 +122,15 @@ Additional CLI usage options are available and may be shown by running `cargo ru
     "Owner": "AccountId",
     "Data": "Vec<u8>"
   },
+  "Ownership": {
+    "owner": "AccountId",
+    "fraction": "u128"
+  },
+  "ReFungibleItemType": {
+    "Collection": u64,
+    "Owner": "Vec<Ownership<AccountId>>",
+    "Data": "Vec<u8>",
+  },
   "CollectionType": {
     "Owner": "AccountId",
     "Mode": "CollectionMode",
