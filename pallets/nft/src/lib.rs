@@ -81,7 +81,6 @@ pub struct CollectionType<AccountId> {
     pub owner: AccountId,
     pub mode: CollectionMode,
     pub access: AccessMode,
-    pub next_item_id: u64,
     pub decimal_points: u32,
     pub name: Vec<u16>,        // 64 include null escape char
     pub description: Vec<u16>, // 256 include null escape char
@@ -228,7 +227,6 @@ decl_module! {
                 description: description,
                 decimal_points: decimal_points,
                 token_prefix: prefix,
-                next_item_id: next_id,
                 offchain_schema: Vec::new(),
                 custom_data_size: custom_data_size,
                 sponsor: T::AccountId::default(),
@@ -364,9 +362,6 @@ decl_module! {
             ensure!(target_collection.custom_data_size >= properties.len() as u32, "Size of item is too large");
 
             Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
-
-            let new_balance = <Balance<T>>::get(collection_id, owner.clone()).checked_add(1).unwrap();
-            <Balance<T>>::insert(collection_id, owner.clone(), new_balance);
 
             // TODO: implement other modes
             match target_collection.mode 
@@ -593,10 +588,17 @@ impl<T: Trait> Module<T> {
         .checked_add(1)
         .expect("Item list index id error");
 
-        Self::add_token_index(item.collection, current_index, item.owner.first().unwrap().owner.clone())?;
+        let value = item.owner.first().unwrap().fraction as u64;
+        let owner = item.owner.first().unwrap().owner.clone();
+
+        Self::add_token_index(item.collection, current_index, owner.clone())?;
 
         <ItemListIndex>::insert(item.collection, current_index);
-        <ReFungibleItemList<T>>::insert(item.collection, current_index, item);        
+        <ReFungibleItemList<T>>::insert(item.collection, current_index, item);  
+        
+        // Update balance
+        let new_balance = <Balance<T>>::get(item.collection, owner.clone()).checked_add(value).unwrap();
+        <Balance<T>>::insert(item.collection, owner.clone(), new_balance);
 
         Ok(())
     }
@@ -680,6 +682,10 @@ impl<T: Trait> Module<T> {
 
         <ItemListIndex>::insert(item.collection, current_index);
         <NftItemList<T>>::insert(item.collection, current_index, item);
+
+        // Update balance
+        let new_balance = <Balance<T>>::get(item.collection, item.owner.clone()).checked_add(1).unwrap();
+        <Balance<T>>::insert(item.collection_id, item.owner.clone(), new_balance);
 
         Ok(())
     }
