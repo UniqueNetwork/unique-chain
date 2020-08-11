@@ -11,11 +11,9 @@ The pallet also enables storing NFT properties. Though (according to ERC-721) NF
 The NFT Chain also provides:
 
 * Smart Contracts Pallet and example smart contract that interacts with NFT Runtime
-* ERC-1155 Functionality (currently PoC as Re-Fungible tokens)
-* Variety of economic options for dapp producers to choose from to create freemium games and other ways to attract users
-* Solutions that allow non-blockchain developers to quickly deploy dApps for mass markets
-* Interoperability that allows reaching much bigger audiences
-* Scalability on par with non-blockhcain solutions
+* ERC-1155 Functionality (currently PoC as Re-Fungible tokens, i.e. items that are still unique, but that can be split between multiple users)
+* Variety of economic options for dapp producers to choose from to create freemium games and other ways to attract users. As a step one, we implemented an economic model when a collection sponsor can be set to pay for collection Transfer transactions.
+
 
 ## Kusama Hackaphon Update
 
