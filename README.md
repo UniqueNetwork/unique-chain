@@ -17,7 +17,7 @@ The NFT Chain also provides:
 * Interoperability that allows reaching much bigger audiences
 * Scalability on par with non-blockhcain solutions
 
-## Kusama Hachaphon Update
+## Kusama Hackaphon Update
 
 During the Kusama Hackaphon the following changes were made:
 * Enabled Smart Contracts Pallet
