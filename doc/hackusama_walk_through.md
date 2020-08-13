@@ -22,7 +22,7 @@ The TestNet public node is avaiable at wss://unique.usetech.com. It is easy to v
 
 1. Install Polkadot{.js} extension if you don't have it already installed. Here are the links for [Chrome](https://chrome.google.com/webstore/detail/polkadot%7Bjs%7D-extension/mopnmbcafieddcagagdcbnhejhlodfdd) and [Firefox](https://addons.mozilla.org/en-US/firefox/addon/polkadot-js-extension/) extensions.
 2. Create an address
-3. Contact us at [Unique Network Telegram channel](https://t.me/joinchat/DPVt1RwN50Uic_Q9lFcg9A) in order to get some Unique token and some Re-Fungible tokens.
+3. Contact us at [Unique Network Telegram channel](https://t.me/joinchat/DPVt1RwN50Uic_Q9lFcg9A) in order to get some Unique token and some Re-Fungible tokens. Faucent is comming soon, we will update this instructions when it goes live.
 
 ### Smart Contracts Pallet
 
