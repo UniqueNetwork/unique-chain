@@ -4,6 +4,8 @@ This document walks through all Hackusama deliverables made in relation to NFT B
 
 ## Updates to NFT Parachain
 
+[Project Description](https://github.com/usetech-llc/nft_unity/blob/master/README.md)
+
 ### Deployed NFT TestNet
 
 The TestNet public node is avaiable at wss://unique.usetech.com. It is easy to verify that it functions with the standard AppsUI:
@@ -149,6 +151,8 @@ This feature is best demonstrated when you own a SubstraPunk character. Please p
 
 ## NFT Wallet
 
+[Project Description](https://github.com/usetech-llc/apps/blob/master/README.md)
+
 All features of the NFT Wallet were already demonstrated previously:
 
 * Enables adding favorite collections
@@ -173,12 +177,16 @@ The UI was also mainly demonstrated. We only need to show some configuration tha
 
 ## Unity API and SDK PoC
 
+[Project Description](https://github.com/usetech-llc/nft_unity/blob/master/README.md)
+
 In order to see Unity Asset in action, please follow the instructions in this README file:
 
-https://github.com/usetech-llc/nft_unity/blob/master/src/DemoApplication/readme.md
+[Demonstration](https://github.com/usetech-llc/nft_unity/blob/master/src/DemoApplication/readme.md)
 
 
 ## SubstraPunks Game
+
+[Project Description](https://github.com/usetech-llc/substrapunks/blob/master/README.md)
 
 First, you will need some Unique balance. [This section](#getting-some-unique-tokens) tells how to get the TestNet currency.
 
