@@ -14,13 +14,12 @@ The NFT Chain also provides:
 * ERC-1155 Functionality (currently PoC as Re-Fungible tokens, i.e. items that are still unique, but that can be split between multiple users)
 * Variety of economic options for dapp producers to choose from to create freemium games and other ways to attract users. As a step one, we implemented an economic model when a collection sponsor can be set to pay for collection Transfer transactions.
 
-Wider NFT Ecosystem:
-(Most of it was also developed during Hackusama)
+Wider NFT Ecosystem (most of it was developed during Hackusama):
 * [SubstraPunks Game hosted on IPFS](https://github.com/usetech-llc/substrapunks)
 * [NFT Wallet and UI](https://uniqueapps.usetech.com/#/nft)
 * [NFT Asset for Unity Framework](https://github.com/usetech-llc/nft_unity)
 
-Please see our [walk-thorugh instructions](demo/hackusama_walk_through.md) to try everything out!
+Please see our [walk-thorugh instructions](doc/hackusama_walk_through.md) to try everything out!
 
 ## Hackusama Update
 
