@@ -1,7 +1,7 @@
 {
   "name": "NFT Testnet",
   "id": "nft_testnet",
-  "chainType": "Local",
+  "chainType": "Live",
   "bootNodes": [],
   "telemetryEndpoints": null,
   "protocolId": null,
