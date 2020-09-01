@@ -131,7 +131,7 @@ decl_storage! {
     trait Store for Module<T: Trait> as Nft {
 
         // Private members
-        NextCollectionID: u64;
+        CreatedCollectionCount: u64;
         ItemListIndex: map hasher(blake2_128_concat) u64 => u64;
 
         pub Collection get(fn collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
@@ -212,11 +212,11 @@ decl_module! {
             ensure!(prefix.len() <= 16, "Token prefix can not be longer than 15 char");
 
             // Generate next collection ID
-            let next_id = NextCollectionID::get()
+            let next_id = CreatedCollectionCount::get()
                 .checked_add(1)
                 .expect("collection id error");
 
-            NextCollectionID::put(next_id);
+            CreatedCollectionCount::put(next_id);
 
             // Create new collection
             let new_collection = CollectionType {
