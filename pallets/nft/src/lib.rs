@@ -129,6 +129,18 @@ pub struct ApprovePermissions<AccountId> {
     pub amount: u64
 }
 
+#[derive(Encode, Decode, Default, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub struct VestingItem<AccountId, Moment>
+{
+    pub sender: AccountId,
+    pub recipient: AccountId,
+    pub collection_id: u64,
+    pub item_id: u64,
+    pub amount: u64,
+    pub vesting_date: Moment
+}
+
 pub trait Trait: system::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 
@@ -156,6 +168,10 @@ decl_storage! {
         pub FungibleItemList get(fn fungible_item_id): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => FungibleItemType<T::AccountId>;
         pub ReFungibleItemList get(fn refungible_item_id): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => ReFungibleItemType<T::AccountId>;
 
+        // Active vesting list
+        // pub VestingList get(fn vesting): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => VestingItem<T::AccountId, T::Moment>;
+
+        /// Index list
         pub AddressTokens get(fn address_tokens): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) T::AccountId => Vec<u64>;
 
         // Sponsorship
@@ -636,6 +652,7 @@ impl<T: Trait> Module<T> {
 
     fn burn_refungible_item(collection_id: u64, item_id: u64, owner: T::AccountId) -> DispatchResult {
   
+        ensure!(<ReFungibleItemList<T>>::contains_key(collection_id, item_id), "Item does not exists");
         let collection = <ReFungibleItemList<T>>::get(collection_id, item_id);
         let item = collection.owner.iter().filter(|&i| i.owner == owner).next().unwrap();
         Self::remove_token_index(collection_id, item_id, owner.clone())?;
@@ -655,6 +672,7 @@ impl<T: Trait> Module<T> {
 
     fn burn_nft_item(collection_id: u64, item_id: u64) -> DispatchResult {
   
+        ensure!(<NftItemList<T>>::contains_key(collection_id, item_id), "Item does not exists");
         let item = <NftItemList<T>>::get(collection_id, item_id);
         Self::remove_token_index(collection_id, item_id, item.owner.clone())?;
 
@@ -671,6 +689,7 @@ impl<T: Trait> Module<T> {
 
     fn burn_fungible_item(collection_id: u64, item_id: u64) -> DispatchResult {
   
+        ensure!(<FungibleItemList<T>>::contains_key(collection_id, item_id), "Item does not exists");
         let item = <FungibleItemList<T>>::get(collection_id, item_id);
         Self::remove_token_index(collection_id, item_id, item.owner.clone())?;
 
