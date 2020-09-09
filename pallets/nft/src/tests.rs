@@ -1,6 +1,6 @@
 // Tests to be written here
 use crate::mock::*;
-use crate::{CollectionMode, Ownership, ApprovePermissions};
+use crate::{ApprovePermissions, CollectionMode, Ownership};
 use frame_support::{assert_noop, assert_ok};
 
 #[test]
@@ -21,9 +21,13 @@ fn create_nft_item() {
         ));
         assert_eq!(TemplateModule::collection(1).owner, 1);
 
-
-        assert_ok!(TemplateModule::create_item(origin1.clone(), 1, [1,2,3].to_vec(), 1));
-        assert_eq!(TemplateModule::nft_item_id(1,1).data, [1,2,3].to_vec());
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [1, 2, 3].to_vec(),
+            1
+        ));
+        assert_eq!(TemplateModule::nft_item_id(1, 1).data, [1, 2, 3].to_vec());
     });
 }
 
@@ -45,10 +49,23 @@ fn create_refungible_item() {
         ));
         assert_eq!(TemplateModule::collection(1).owner, 1);
 
-
-        assert_ok!(TemplateModule::create_item(origin1.clone(), 1, [1,2,3].to_vec(), 1));
-        assert_eq!(TemplateModule::refungible_item_id(1,1).data, [1,2,3].to_vec());
-        assert_eq!(TemplateModule::refungible_item_id(1,1).owner[0], Ownership { owner: 1, fraction: 1000 });
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [1, 2, 3].to_vec(),
+            1
+        ));
+        assert_eq!(
+            TemplateModule::refungible_item_id(1, 1).data,
+            [1, 2, 3].to_vec()
+        );
+        assert_eq!(
+            TemplateModule::refungible_item_id(1, 1).owner[0],
+            Ownership {
+                owner: 1,
+                fraction: 1000
+            }
+        );
     });
 }
 
@@ -70,10 +87,15 @@ fn create_fungible_item() {
         ));
         assert_eq!(TemplateModule::collection(1).owner, 1);
 
-        assert_ok!(TemplateModule::create_item(origin1.clone(), 1, [].to_vec(), 1));
-        assert_eq!(TemplateModule::fungible_item_id(1,1).owner, 1);
-        assert_eq!(TemplateModule::balance_count(1,1), 1000);
-        assert_eq!(TemplateModule::address_tokens(1,1), [1]);
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [].to_vec(),
+            1
+        ));
+        assert_eq!(TemplateModule::fungible_item_id(1, 1).owner, 1);
+        assert_eq!(TemplateModule::balance_count(1, 1), 1000);
+        assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
     });
 }
 
@@ -96,37 +118,42 @@ fn transfer_fungible_item() {
         ));
         assert_eq!(TemplateModule::collection(1).owner, 1);
 
-        assert_ok!(TemplateModule::create_item(origin1.clone(), 1, [].to_vec(), 1));
-        assert_eq!(TemplateModule::fungible_item_id(1,1).owner, 1);
-        assert_eq!(TemplateModule::balance_count(1,1), 1000);
-        assert_eq!(TemplateModule::address_tokens(1,1), [1]);
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [].to_vec(),
+            1
+        ));
+        assert_eq!(TemplateModule::fungible_item_id(1, 1).owner, 1);
+        assert_eq!(TemplateModule::balance_count(1, 1), 1000);
+        assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
         // change owner scenario
         assert_ok!(TemplateModule::transfer(origin1.clone(), 2, 1, 1, 1000));
-        assert_eq!(TemplateModule::fungible_item_id(1,1).owner, 2);
-        assert_eq!(TemplateModule::fungible_item_id(1,1).value, 1000);
-        assert_eq!(TemplateModule::balance_count(1,1), 0);
-        assert_eq!(TemplateModule::balance_count(1,2), 1000);
-        assert_eq!(TemplateModule::address_tokens(1,1), []);
-        assert_eq!(TemplateModule::address_tokens(1,2), [1]);
+        assert_eq!(TemplateModule::fungible_item_id(1, 1).owner, 2);
+        assert_eq!(TemplateModule::fungible_item_id(1, 1).value, 1000);
+        assert_eq!(TemplateModule::balance_count(1, 1), 0);
+        assert_eq!(TemplateModule::balance_count(1, 2), 1000);
+        assert_eq!(TemplateModule::address_tokens(1, 1), []);
+        assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
 
         // split item scenario
         assert_ok!(TemplateModule::transfer(origin2.clone(), 3, 1, 1, 500));
-        assert_eq!(TemplateModule::fungible_item_id(1,1).owner, 2);
-        assert_eq!(TemplateModule::fungible_item_id(1,2).owner, 3);
-        assert_eq!(TemplateModule::balance_count(1,2), 500);
-        assert_eq!(TemplateModule::balance_count(1,3), 500);
-        assert_eq!(TemplateModule::address_tokens(1,2), [1]);
-        assert_eq!(TemplateModule::address_tokens(1,3), [2]);
+        assert_eq!(TemplateModule::fungible_item_id(1, 1).owner, 2);
+        assert_eq!(TemplateModule::fungible_item_id(1, 2).owner, 3);
+        assert_eq!(TemplateModule::balance_count(1, 2), 500);
+        assert_eq!(TemplateModule::balance_count(1, 3), 500);
+        assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
+        assert_eq!(TemplateModule::address_tokens(1, 3), [2]);
 
         // split item and new owner has account scenario
         assert_ok!(TemplateModule::transfer(origin2.clone(), 3, 1, 1, 200));
-        assert_eq!(TemplateModule::fungible_item_id(1,1).value, 300);
-        assert_eq!(TemplateModule::fungible_item_id(1,2).value, 700);
-        assert_eq!(TemplateModule::balance_count(1,2), 300);
-        assert_eq!(TemplateModule::balance_count(1,3), 700);
-        assert_eq!(TemplateModule::address_tokens(1,2), [1]);
-        assert_eq!(TemplateModule::address_tokens(1,3), [2]);
+        assert_eq!(TemplateModule::fungible_item_id(1, 1).value, 300);
+        assert_eq!(TemplateModule::fungible_item_id(1, 2).value, 700);
+        assert_eq!(TemplateModule::balance_count(1, 2), 300);
+        assert_eq!(TemplateModule::balance_count(1, 3), 700);
+        assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
+        assert_eq!(TemplateModule::address_tokens(1, 3), [2]);
     });
 }
 
@@ -149,37 +176,81 @@ fn transfer_refungible_item() {
         ));
         assert_eq!(TemplateModule::collection(1).owner, 1);
 
-        assert_ok!(TemplateModule::create_item(origin1.clone(), 1, [1,2,3].to_vec(), 1));
-        assert_eq!(TemplateModule::refungible_item_id(1,1).data, [1,2,3].to_vec());
-        assert_eq!(TemplateModule::refungible_item_id(1,1).owner[0], Ownership { owner: 1, fraction: 1000 });
-        assert_eq!(TemplateModule::balance_count(1,1), 1000);
-        assert_eq!(TemplateModule::address_tokens(1,1), [1]);
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [1, 2, 3].to_vec(),
+            1
+        ));
+        assert_eq!(
+            TemplateModule::refungible_item_id(1, 1).data,
+            [1, 2, 3].to_vec()
+        );
+        assert_eq!(
+            TemplateModule::refungible_item_id(1, 1).owner[0],
+            Ownership {
+                owner: 1,
+                fraction: 1000
+            }
+        );
+        assert_eq!(TemplateModule::balance_count(1, 1), 1000);
+        assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
         // change owner scenario
         assert_ok!(TemplateModule::transfer(origin1.clone(), 2, 1, 1, 1000));
-        assert_eq!(TemplateModule::refungible_item_id(1,1).owner[0], Ownership { owner: 2, fraction: 1000 });
-        assert_eq!(TemplateModule::balance_count(1,1), 0);
-        assert_eq!(TemplateModule::balance_count(1,2), 1000);
-        assert_eq!(TemplateModule::address_tokens(1,1), []);
-        assert_eq!(TemplateModule::address_tokens(1,2), [1]);
+        assert_eq!(
+            TemplateModule::refungible_item_id(1, 1).owner[0],
+            Ownership {
+                owner: 2,
+                fraction: 1000
+            }
+        );
+        assert_eq!(TemplateModule::balance_count(1, 1), 0);
+        assert_eq!(TemplateModule::balance_count(1, 2), 1000);
+        assert_eq!(TemplateModule::address_tokens(1, 1), []);
+        assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
 
         // split item scenario
         assert_ok!(TemplateModule::transfer(origin2.clone(), 3, 1, 1, 500));
-        assert_eq!(TemplateModule::refungible_item_id(1,1).owner[0], Ownership { owner: 2, fraction: 500 });
-        assert_eq!(TemplateModule::refungible_item_id(1,1).owner[1], Ownership { owner: 3, fraction: 500 });
-        assert_eq!(TemplateModule::balance_count(1,2), 500);
-        assert_eq!(TemplateModule::balance_count(1,3), 500);
-        assert_eq!(TemplateModule::address_tokens(1,2), [1]);
-        assert_eq!(TemplateModule::address_tokens(1,3), [1]);
+        assert_eq!(
+            TemplateModule::refungible_item_id(1, 1).owner[0],
+            Ownership {
+                owner: 2,
+                fraction: 500
+            }
+        );
+        assert_eq!(
+            TemplateModule::refungible_item_id(1, 1).owner[1],
+            Ownership {
+                owner: 3,
+                fraction: 500
+            }
+        );
+        assert_eq!(TemplateModule::balance_count(1, 2), 500);
+        assert_eq!(TemplateModule::balance_count(1, 3), 500);
+        assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
+        assert_eq!(TemplateModule::address_tokens(1, 3), [1]);
 
         // split item and new owner has account scenario
         assert_ok!(TemplateModule::transfer(origin2.clone(), 3, 1, 1, 200));
-        assert_eq!(TemplateModule::refungible_item_id(1,1).owner[0], Ownership { owner: 2, fraction: 300 });
-        assert_eq!(TemplateModule::refungible_item_id(1,1).owner[1], Ownership { owner: 3, fraction: 700 });
-        assert_eq!(TemplateModule::balance_count(1,2), 300);
-        assert_eq!(TemplateModule::balance_count(1,3), 700);
-        assert_eq!(TemplateModule::address_tokens(1,2), [1]);
-        assert_eq!(TemplateModule::address_tokens(1,3), [1]);
+        assert_eq!(
+            TemplateModule::refungible_item_id(1, 1).owner[0],
+            Ownership {
+                owner: 2,
+                fraction: 300
+            }
+        );
+        assert_eq!(
+            TemplateModule::refungible_item_id(1, 1).owner[1],
+            Ownership {
+                owner: 3,
+                fraction: 700
+            }
+        );
+        assert_eq!(TemplateModule::balance_count(1, 2), 300);
+        assert_eq!(TemplateModule::balance_count(1, 3), 700);
+        assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
+        assert_eq!(TemplateModule::address_tokens(1, 3), [1]);
     });
 }
 
@@ -201,19 +272,23 @@ fn transfer_nft_item() {
         ));
         assert_eq!(TemplateModule::collection(1).owner, 1);
 
-
-        assert_ok!(TemplateModule::create_item(origin1.clone(), 1, [1,2,3].to_vec(), 1));
-        assert_eq!(TemplateModule::nft_item_id(1,1).data, [1,2,3].to_vec());
-        assert_eq!(TemplateModule::balance_count(1,1), 1);
-        assert_eq!(TemplateModule::address_tokens(1,1), [1]);
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [1, 2, 3].to_vec(),
+            1
+        ));
+        assert_eq!(TemplateModule::nft_item_id(1, 1).data, [1, 2, 3].to_vec());
+        assert_eq!(TemplateModule::balance_count(1, 1), 1);
+        assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
         // default scenario
         assert_ok!(TemplateModule::transfer(origin1.clone(), 2, 1, 1, 1000));
-        assert_eq!(TemplateModule::nft_item_id(1,1).owner, 2);
-        assert_eq!(TemplateModule::balance_count(1,1), 0);
-        assert_eq!(TemplateModule::balance_count(1,2), 1);
-        assert_eq!(TemplateModule::address_tokens(1,1), []);
-        assert_eq!(TemplateModule::address_tokens(1,2), [1]); 
+        assert_eq!(TemplateModule::nft_item_id(1, 1).owner, 2);
+        assert_eq!(TemplateModule::balance_count(1, 1), 0);
+        assert_eq!(TemplateModule::balance_count(1, 2), 1);
+        assert_eq!(TemplateModule::address_tokens(1, 1), []);
+        assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
     });
 }
 
@@ -236,11 +311,15 @@ fn nft_approve_and_transfer_from() {
         ));
         assert_eq!(TemplateModule::collection(1).owner, 1);
 
-
-        assert_ok!(TemplateModule::create_item(origin1.clone(), 1, [1,2,3].to_vec(), 1));
-        assert_eq!(TemplateModule::nft_item_id(1,1).data, [1,2,3].to_vec());
-        assert_eq!(TemplateModule::balance_count(1,1), 1);
-        assert_eq!(TemplateModule::address_tokens(1,1), [1]);
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [1, 2, 3].to_vec(),
+            1
+        ));
+        assert_eq!(TemplateModule::nft_item_id(1, 1).data, [1, 2, 3].to_vec());
+        assert_eq!(TemplateModule::balance_count(1, 1), 1);
+        assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
         assert_noop!(
             TemplateModule::transfer_from(origin2.clone(), 1, 3, 1, 1, 1),
@@ -249,13 +328,26 @@ fn nft_approve_and_transfer_from() {
 
         // do approve
         assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
-        assert_eq!(TemplateModule::approved(1,(1,1)).len(), 1);
+        assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 1);
         assert_ok!(TemplateModule::approve(origin1.clone(), 10, 1, 1));
-        assert_eq!(TemplateModule::approved(1,(1,1)).len(), 2);
-        assert_eq!(TemplateModule::approved(1,(1,1))[0], ApprovePermissions { approved: 2, amount: 100000000});
+        assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 2);
+        assert_eq!(
+            TemplateModule::approved(1, (1, 1))[0],
+            ApprovePermissions {
+                approved: 2,
+                amount: 100000000
+            }
+        );
 
-        assert_ok!(TemplateModule::transfer_from(origin2.clone(), 1, 3, 1, 1, 1));
-        assert_eq!(TemplateModule::approved(1,(1,1)).len(), 0);
+        assert_ok!(TemplateModule::transfer_from(
+            origin2.clone(),
+            1,
+            3,
+            1,
+            1,
+            1
+        ));
+        assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 0);
     });
 }
 
@@ -278,11 +370,25 @@ fn refungible_approve_and_transfer_from() {
         ));
         assert_eq!(TemplateModule::collection(1).owner, 1);
 
-        assert_ok!(TemplateModule::create_item(origin1.clone(), 1, [1,2,3].to_vec(), 1));
-        assert_eq!(TemplateModule::refungible_item_id(1,1).data, [1,2,3].to_vec());
-        assert_eq!(TemplateModule::refungible_item_id(1,1).owner[0], Ownership { owner: 1, fraction: 1000 });
-        assert_eq!(TemplateModule::balance_count(1,1), 1000);
-        assert_eq!(TemplateModule::address_tokens(1,1), [1]);
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [1, 2, 3].to_vec(),
+            1
+        ));
+        assert_eq!(
+            TemplateModule::refungible_item_id(1, 1).data,
+            [1, 2, 3].to_vec()
+        );
+        assert_eq!(
+            TemplateModule::refungible_item_id(1, 1).owner[0],
+            Ownership {
+                owner: 1,
+                fraction: 1000
+            }
+        );
+        assert_eq!(TemplateModule::balance_count(1, 1), 1000);
+        assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
         assert_noop!(
             TemplateModule::transfer_from(origin2.clone(), 1, 3, 1, 1, 1),
@@ -291,19 +397,38 @@ fn refungible_approve_and_transfer_from() {
 
         // do approve
         assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
-        assert_eq!(TemplateModule::approved(1,(1,1)).len(), 1);
+        assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 1);
         assert_ok!(TemplateModule::approve(origin1.clone(), 10, 1, 1));
-        assert_eq!(TemplateModule::approved(1,(1,1)).len(), 2);
-        assert_eq!(TemplateModule::approved(1,(1,1))[0], ApprovePermissions { approved: 2, amount: 100000000});
+        assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 2);
+        assert_eq!(
+            TemplateModule::approved(1, (1, 1))[0],
+            ApprovePermissions {
+                approved: 2,
+                amount: 100000000
+            }
+        );
 
-        assert_ok!(TemplateModule::transfer_from(origin2.clone(), 1, 3, 1, 1, 100));
-        assert_eq!(TemplateModule::balance_count(1,1), 900);
-        assert_eq!(TemplateModule::balance_count(1,3), 100);
-        assert_eq!(TemplateModule::address_tokens(1,1), [1]);
-        assert_eq!(TemplateModule::address_tokens(1,3), [1]);
+        assert_ok!(TemplateModule::transfer_from(
+            origin2.clone(),
+            1,
+            3,
+            1,
+            1,
+            100
+        ));
+        assert_eq!(TemplateModule::balance_count(1, 1), 900);
+        assert_eq!(TemplateModule::balance_count(1, 3), 100);
+        assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
+        assert_eq!(TemplateModule::address_tokens(1, 3), [1]);
 
-        assert_eq!(TemplateModule::approved(1,(1,1)).len(), 1);
-        assert_eq!(TemplateModule::approved(1,(1,1))[0], ApprovePermissions { approved: 10, amount: 100000000});
+        assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 1);
+        assert_eq!(
+            TemplateModule::approved(1, (1, 1))[0],
+            ApprovePermissions {
+                approved: 10,
+                amount: 100000000
+            }
+        );
     });
 }
 
@@ -326,10 +451,15 @@ fn fungible_approve_and_transfer_from() {
         ));
         assert_eq!(TemplateModule::collection(1).owner, 1);
 
-        assert_ok!(TemplateModule::create_item(origin1.clone(), 1, [].to_vec(), 1));
-        assert_eq!(TemplateModule::fungible_item_id(1,1).owner, 1);
-        assert_eq!(TemplateModule::balance_count(1,1), 1000);
-        assert_eq!(TemplateModule::address_tokens(1,1), [1]);
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [].to_vec(),
+            1
+        ));
+        assert_eq!(TemplateModule::fungible_item_id(1, 1).owner, 1);
+        assert_eq!(TemplateModule::balance_count(1, 1), 1000);
+        assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
         assert_noop!(
             TemplateModule::transfer_from(origin2.clone(), 1, 3, 1, 1, 1),
@@ -338,28 +468,54 @@ fn fungible_approve_and_transfer_from() {
 
         // do approve
         assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
-        assert_eq!(TemplateModule::approved(1,(1,1)).len(), 1);
+        assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 1);
         assert_ok!(TemplateModule::approve(origin1.clone(), 10, 1, 1));
-        assert_eq!(TemplateModule::approved(1,(1,1)).len(), 2);
-        assert_eq!(TemplateModule::approved(1,(1,1))[0], ApprovePermissions { approved: 2, amount: 100000000});
+        assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 2);
+        assert_eq!(
+            TemplateModule::approved(1, (1, 1))[0],
+            ApprovePermissions {
+                approved: 2,
+                amount: 100000000
+            }
+        );
 
-        assert_ok!(TemplateModule::transfer_from(origin2.clone(), 1, 3, 1, 1, 100));
-        assert_eq!(TemplateModule::balance_count(1,1), 900);
-        assert_eq!(TemplateModule::balance_count(1,3), 100);
-        assert_eq!(TemplateModule::address_tokens(1,1), [1]);
-        assert_eq!(TemplateModule::address_tokens(1,3), [2]);
+        assert_ok!(TemplateModule::transfer_from(
+            origin2.clone(),
+            1,
+            3,
+            1,
+            1,
+            100
+        ));
+        assert_eq!(TemplateModule::balance_count(1, 1), 900);
+        assert_eq!(TemplateModule::balance_count(1, 3), 100);
+        assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
+        assert_eq!(TemplateModule::address_tokens(1, 3), [2]);
 
-        assert_eq!(TemplateModule::approved(1,(1,1)).len(), 1);
-        assert_eq!(TemplateModule::approved(1,(1,1))[0], ApprovePermissions { approved: 10, amount: 100000000});
+        assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 1);
+        assert_eq!(
+            TemplateModule::approved(1, (1, 1))[0],
+            ApprovePermissions {
+                approved: 10,
+                amount: 100000000
+            }
+        );
 
         assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
-        assert_ok!(TemplateModule::transfer_from(origin2.clone(), 1, 3, 1, 1, 900));
-        assert_eq!(TemplateModule::balance_count(1,1), 0);
-        assert_eq!(TemplateModule::balance_count(1,3), 1000);
-        assert_eq!(TemplateModule::address_tokens(1,1), []);
-        assert_eq!(TemplateModule::address_tokens(1,3), [2]);
+        assert_ok!(TemplateModule::transfer_from(
+            origin2.clone(),
+            1,
+            3,
+            1,
+            1,
+            900
+        ));
+        assert_eq!(TemplateModule::balance_count(1, 1), 0);
+        assert_eq!(TemplateModule::balance_count(1, 3), 1000);
+        assert_eq!(TemplateModule::address_tokens(1, 1), []);
+        assert_eq!(TemplateModule::address_tokens(1, 3), [2]);
 
-        assert_eq!(TemplateModule::approved(1,(1,1)).len(), 0);
+        assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 0);
     });
 }
 
@@ -433,7 +589,7 @@ fn burn_nft_item() {
             1
         ));
 
-        assert_eq!(TemplateModule::nft_item_id(1,1).data, [1,2,3].to_vec());
+        assert_eq!(TemplateModule::nft_item_id(1, 1).data, [1, 2, 3].to_vec());
 
         // check balance (collection with id = 1, user id = 1)
         assert_eq!(TemplateModule::balance_count(1, 1), 1);
@@ -509,11 +665,14 @@ fn burn_refungible_item() {
         assert_ok!(TemplateModule::create_item(
             origin2.clone(),
             1,
-            [1,2,3].to_vec(),
+            [1, 2, 3].to_vec(),
             1
         ));
 
-        assert_eq!(TemplateModule::refungible_item_id(1,1).data, [1,2,3].to_vec());
+        assert_eq!(
+            TemplateModule::refungible_item_id(1, 1).data,
+            [1, 2, 3].to_vec()
+        );
 
         // check balance (collection with id = 1, user id = 2)
         assert_eq!(TemplateModule::balance_count(1, 1), 1000);
@@ -769,7 +928,14 @@ fn transfer_from() {
         // approve
         assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
         assert_eq!(TemplateModule::approved(1, (1, 1))[0].approved, 2);
-        assert_ok!(TemplateModule::transfer_from(origin2.clone(), 1, 2, 1, 1, 1));
+        assert_ok!(TemplateModule::transfer_from(
+            origin2.clone(),
+            1,
+            2,
+            1,
+            1,
+            1
+        ));
 
         // after transfer
         assert_eq!(TemplateModule::balance_count(1, 1), 0);
