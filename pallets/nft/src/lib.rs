@@ -160,6 +160,8 @@ decl_storage! {
 
         // Private members
         NextCollectionID: u64;
+        CreatedCollectionCount: u64;
+        ChainVersion: u64;
         ItemListIndex: map hasher(blake2_128_concat) u64 => u64;
 
         pub Collection get(fn collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
@@ -204,6 +206,18 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 
         fn deposit_event() = default;
+
+        fn on_initialize(now: T::BlockNumber) -> Weight {
+
+            if ChainVersion::get() == 0
+            {
+                let value = NextCollectionID::get();
+                CreatedCollectionCount::put(value);
+                ChainVersion::put(2);
+            }
+
+            0
+        }
 
         // Create collection of NFT with given parameters
         //
