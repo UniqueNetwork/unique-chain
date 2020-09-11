@@ -16,7 +16,7 @@
     "typescript": "^3.9.7"
   },
   "scripts": {
-    "test": "mocha -r ts-node/register ./**/*.test.ts"
+    "test": "mocha --timeout 9999999 -r ts-node/register ./**/*.test.ts"
   },
   "author": "",
   "license": "Apache 2.0",

@@ -1,10 +1,11 @@
-import createSubstrateApi from "./substrate-api";
 import {expect} from 'chai';
+import usingApi from "./substrate/substrate-api";
 
 describe('Connection', () => {
   it('Connection can be established', async () => {
-    const api = await createSubstrateApi();
-    const health = await api.rpc.system.health();
-    expect(health).to.be.not.empty;
+    await usingApi(async api => {
+      const health = await api.rpc.system.health();
+      expect(health).to.be.not.empty;
+    });
   });
 });
