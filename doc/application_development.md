@@ -40,15 +40,18 @@ addresses can be changed later.
 
 ##### Permissions
 
-Anyone
+-   Anyone
 
 ##### Parameters
 
-customDataSz: Size of NFT properties data.
+-   customDataSz: Size of NFT properties data.
 
 ##### Events
 
-CollectionCreated CollectionID: Globally unique identifier of newly created collection. Owner: Collection owner
+-   CollectionCreated
+    -   CollectionID: Globally unique identifier of newly created collection.
+    -   Mode: Collection mode
+    -   Owner: Collection owner
 
 #### ChangeCollectionOwner
 
@@ -58,11 +61,11 @@ Change the owner of the collection
 
 ##### Permissions
 
-Collection Owner
+-   Collection Owner
 
 ##### Parameters
 
-CollectionId
+-   CollectionId
 
 #### DestroyCollection
 
@@ -73,11 +76,11 @@ real money.
 
 ##### Permissions
 
-Collection Owner
+-   Collection Owner
 
 ##### Parameters
 
-CollectionId
+-   CollectionId
 
 #### CreateItem
 
@@ -87,17 +90,21 @@ This method creates a concrete instance of NFT Collection created with CreateCol
 
 ##### Permissions
 
-Collection Owner Collection Admin
+-   Collection Owner
+-   Collection Admin
 
 ##### Parameters
 
-CollectionID: ID of the collection Properties: Array of bytes that contains NFT properties. Since NFT Module is agnostic
-of properties’ meaning, it is treated purely as an array of bytes Owner: Address, initial owner of the NFT
+-   CollectionID: ID of the collection
+-   Properties: Array of bytes that contains NFT properties. Since NFT Module is agnostic of properties’ meaning, it is
+    treated purely as an array of bytes
+-   Owner: Address, initial owner of the NFT
 
 ##### Events
 
-ItemCreated ItemId: Identifier of newly created NFT, which is unique within the Collection, so the NFT is uniquely
-identified with a pair of values: CollectionId and ItemId.
+-   ItemCreated
+    -   ItemId: Identifier of newly created NFT, which is unique within the Collection, so the NFT is uniquely
+        identified with a pair of values: CollectionId and ItemId.
 
 #### BurnItem
 
@@ -107,15 +114,20 @@ This method destroys a concrete instance of NFT.
 
 ##### Permissions
 
-Collection Owner Collection Admin Current NFT Owner
+-   Collection Owner
+-   Collection Admin
+-   Current NFT Owner
 
 ##### Parameters
 
-CollectionID: ID of the collection ItemID: ID of NFT to burn
+-   CollectionID: ID of the collection
+-   ItemID: ID of NFT to burn
 
 ##### Events
 
-ItemDestroyed CollectionID ItemId: Identifier of burned NFT
+-   ItemDestroyed
+    -   CollectionID
+    -   ItemId: Identifier of burned NFT
 
 #### AddCollectionAdmin
 
@@ -128,11 +140,13 @@ This method adds an admin of the Collection.
 
 ##### Permissions
 
-Collection Owner Collection Admin
+-   Collection Owner
+-   Collection Admin
 
 ##### Parameters
 
-CollectionID: ID of the Collection to add admin for Admin: Address of new admin to add
+-   CollectionID: ID of the Collection to add admin for
+-   Admin: Address of new admin to add
 
 #### RemoveCollectionAdmin
 
@@ -143,11 +157,13 @@ case only Collection Owner will be able to add an Admin.
 
 ##### Permissions
 
-Collection Owner Collection Admin
+-   Collection Owner
+-   Collection Admin
 
 ##### Parameters
 
-CollectionID: ID of the Collection to remove admin for Admin: Address of admin to remove
+-   CollectionID: ID of the Collection to remove admin for
+-   Admin: Address of admin to remove
 
 ### Item Ownership and Transfers
 
@@ -161,11 +177,12 @@ Return the address of the NFT owner.
 
 ##### Permissions
 
-Anyone
+-   Anyone
 
 ##### Parameters
 
-CollectionId ItemId: ID of the NFT
+-   CollectionId
+-   ItemId: ID of the NFT
 
 ##### Returns
 
@@ -180,11 +197,12 @@ to a given address.
 
 ##### Permissions
 
-Anyone
+-   Anyone
 
 ##### Parameters
 
-CollectionId Address to count NFTs for
+-   CollectionId
+-   Address to count NFTs for
 
 ##### Returns
 
@@ -198,11 +216,15 @@ Change ownership of the NFT.
 
 ##### Permissions
 
-Collection Owner Collection Admin Current NFT owner
+-   Collection Owner
+-   Collection Admin
+-   Current NFT owner
 
 ##### Parameters
 
-Recipient: Address of token recipient ClassId: ID of item class ItemId: ID of the item
+-   Recipient: Address of token recipient
+-   ClassId: ID of item class
+-   ItemId: ID of the item
 
 #### TransferFrom
 
@@ -214,11 +236,16 @@ owner.
 
 ##### Permissions
 
-Collection Owner Collection Admin Current NFT owner Address approved by current NFT owner
+-   Collection Owner
+-   Collection Admin
+-   Current NFT owner
+-   Address approved by current NFT owner
 
 ##### Parameters
 
-Recipient: Address of token recipient ClassId: ID of item class ItemId: ID of the item
+-   Recipient: Address of token recipient
+-   ClassId: ID of item class
+-   ItemId: ID of the item
 
 #### Approve
 
@@ -228,12 +255,15 @@ Set, change, or remove approved address to transfer the ownership of the NFT.
 
 ##### Permissions
 
-Collection Owner Collection Admin Current NFT owner
+-   Collection Owner
+-   Collection Admin
+-   Current NFT owner
 
 ##### Parameters
 
-Approved: Address that is approved to transfer this NFT or zero (if needed to remove approval) ClassId: ID of item class
-ItemId: ID of the item
+-   Approved: Address that is approved to transfer this NFT or zero (if needed to remove approval)
+-   ClassId: ID of item class
+-   ItemId: ID of the item
 
 #### GetApproved
 
@@ -243,11 +273,12 @@ Get the approved address for a single NFT.
 
 ##### Permissions
 
-Anyone
+-   Anyone
 
 ##### Parameters
 
-ClassId: ID of item class ItemId: ID of the item
+-   ClassId: ID of item class
+-   ItemId: ID of the item
 
 ##### Returns
 
