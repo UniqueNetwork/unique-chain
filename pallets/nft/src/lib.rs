@@ -260,11 +260,11 @@ decl_module! {
             ensure!(prefix.len() <= 16, "Token prefix can not be longer than 15 char");
 
             // Generate next collection ID
-            let next_id = NextCollectionID::get()
+            let next_id = CreatedCollectionCount::get()
                 .checked_add(1)
                 .expect("collection id error");
 
-            NextCollectionID::put(next_id);
+            CreatedCollectionCount::put(next_id);
 
             // Create new collection
             let new_collection = CollectionType {
@@ -419,7 +419,7 @@ decl_module! {
                     let item = NftItemType {
                         collection: collection_id,
                         owner: owner,
-                        data: properties,
+                        data: properties.clone(),
                     };
 
                     Self::add_nft_item(item)?;
@@ -445,17 +445,18 @@ decl_module! {
 
                     let mut owner_list = Vec::new();
                     let value = (10 as u128).pow(target_collection.decimal_points);
-                    owner_list.push(Ownership {owner: owner, fraction: value});
+                    owner_list.push(Ownership {owner: owner.clone(), fraction: value});
 
                     let item = ReFungibleItemType {
                         collection: collection_id,
                         owner: owner_list,
-                        data: properties
+                        data: properties.clone()
                     };
 
                     Self::add_refungible_item(item)?;
                 },
-                _ => ()
+                _ => { ensure!(1 == 0,"just error"); }
+
             };
 
             // call event

@@ -1,0 +1,9 @@
+Collection ID: 3
+
+
+IPFS:
+https://ipfs-gateway.usetech.com/ipfs/QmVdFFZjnq6i3fNDjm6FQe2tfAtUDnqMNkBh8e4sYWUmbH/images/image{id}.png
+
+
+
+https://conv.darkbyte.ru/

@@ -36,6 +36,7 @@ version = '2.0.0-rc4'
 [dependencies]
 # third-party dependencies
 serde = { version = "1.0.102", features = ["derive"] }
+log = "0.4.8"
 
 [dependencies.sp-std]
 default-features = false
