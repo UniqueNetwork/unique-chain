@@ -209,7 +209,7 @@ decl_module! {
 
         fn on_initialize(now: T::BlockNumber) -> Weight {
 
-            if ChainVersion::get() == 0
+            if ChainVersion::get() < 2
             {
                 let value = NextCollectionID::get();
                 CreatedCollectionCount::put(value);
