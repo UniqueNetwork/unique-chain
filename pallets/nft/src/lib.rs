@@ -2,34 +2,37 @@
 
 /// For more guidance on Substrate FRAME, see the example pallet
 /// https://github.com/paritytech/substrate/blob/master/frame/example/src/lib.rs
-
 use codec::{Decode, Encode};
 pub use frame_support::{
-    decl_event, decl_module, decl_storage,
-    construct_runtime, parameter_types,
-    traits::{Currency, Get, ExistenceRequirement, KeyOwnerProofSystem, OnUnbalanced, Randomness, WithdrawReason, Imbalance},
-    weights::{
-        DispatchInfo, PostDispatchInfo, constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-        IdentityFee, Weight, WeightToFeePolynomial, GetDispatchInfo, Pays,
+    construct_runtime, decl_event, decl_module, decl_storage,
+    dispatch::DispatchResult,
+    ensure, parameter_types,
+    traits::{
+        Currency, ExistenceRequirement, Get, Imbalance, KeyOwnerProofSystem, OnUnbalanced,
+        Randomness, WithdrawReason,
     },
-    StorageValue,
-    dispatch::DispatchResult, 
-    IsSubType,
-    ensure
+    weights::{
+        constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
+        DispatchInfo, GetDispatchInfo, IdentityFee, Pays, PostDispatchInfo, Weight,
+        WeightToFeePolynomial,
+    },
+    IsSubType, StorageValue,
 };
 
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::sp_std::prelude::Vec;
-use sp_std::prelude::*;
 use sp_runtime::{
-	FixedU128, FixedPointOperand, 
-	transaction_validity::{
-		TransactionPriority, ValidTransaction, InvalidTransaction, TransactionValidityError, TransactionValidity
-	},
-	traits::{
-        Saturating, Dispatchable, DispatchInfoOf, PostDispatchInfoOf, SignedExtension, Zero, SaturatedConversion,
-	},
+    traits::{
+        DispatchInfoOf, Dispatchable, PostDispatchInfoOf, SaturatedConversion, Saturating,
+        SignedExtension, Zero,
+    },
+    transaction_validity::{
+        InvalidTransaction, TransactionPriority, TransactionValidity, TransactionValidityError,
+        ValidTransaction,
+    },
+    FixedPointOperand, FixedU128,
 };
+use sp_std::prelude::*;
 
 #[cfg(test)]
 mod mock;
@@ -45,11 +48,11 @@ pub enum CollectionMode {
     // decimal points
     Fungible(u32),
     // custom data size and decimal points
-	ReFungible(u32, u32),
+    ReFungible(u32, u32),
 }
 
 impl Into<u8> for CollectionMode {
-    fn into(self) -> u8{
+    fn into(self) -> u8 {
         match self {
             CollectionMode::Invalid => 0,
             CollectionMode::NFT(_) => 1,
@@ -62,17 +65,25 @@ impl Into<u8> for CollectionMode {
 #[derive(Encode, Decode, Debug, Clone, PartialEq)]
 pub enum AccessMode {
     Normal,
-	WhiteList,
+    WhiteList,
 }
-impl Default for AccessMode { fn default() -> Self { Self::Normal } }
+impl Default for AccessMode {
+    fn default() -> Self {
+        Self::Normal
+    }
+}
 
-impl Default for CollectionMode { fn default() -> Self { Self::Invalid } }
+impl Default for CollectionMode {
+    fn default() -> Self {
+        Self::Invalid
+    }
+}
 
 #[derive(Encode, Decode, Default, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct Ownership<AccountId> {
     pub owner: AccountId,
-    pub fraction: u128
+    pub fraction: u128,
 }
 
 #[derive(Encode, Decode, Default, Clone, PartialEq)]
@@ -87,7 +98,7 @@ pub struct CollectionType<AccountId> {
     pub token_prefix: Vec<u8>, // 16 include null escape char
     pub custom_data_size: u32,
     pub offchain_schema: Vec<u8>,
-    pub sponsor: AccountId,    // Who pays fees. If set to default address, the fees are applied to the transaction sender
+    pub sponsor: AccountId, // Who pays fees. If set to default address, the fees are applied to the transaction sender
     pub unconfirmed_sponsor: AccountId, // Sponsor address that has not yet confirmed sponsorship
 }
 
@@ -122,31 +133,56 @@ pub struct ReFungibleItemType<AccountId> {
     pub data: Vec<u8>,
 }
 
+#[derive(Encode, Decode, Default, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub struct ApprovePermissions<AccountId> {
+    pub approved: AccountId,
+    pub amount: u64,
+}
+
+#[derive(Encode, Decode, Default, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub struct VestingItem<AccountId, Moment> {
+    pub sender: AccountId,
+    pub recipient: AccountId,
+    pub collection_id: u64,
+    pub item_id: u64,
+    pub amount: u64,
+    pub vesting_date: Moment,
+}
+
 pub trait Trait: system::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
-
 }
 
 decl_storage! {
     trait Store for Module<T: Trait> as Nft {
 
         // Private members
+        NextCollectionID: u64;
         CreatedCollectionCount: u64;
+        ChainVersion: u64;
         ItemListIndex: map hasher(blake2_128_concat) u64 => u64;
 
         pub Collection get(fn collection): map hasher(identity) u64 => CollectionType<T::AccountId>;
         pub AdminList get(fn admin_list_collection): map hasher(identity) u64 => Vec<T::AccountId>;
         pub WhiteList get(fn white_list): map hasher(identity) u64 => Vec<T::AccountId>;
 
-        // Balance owner per collection map
+        /// Balance owner per collection map
         pub Balance get(fn balance_count): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) T::AccountId => u64;
-        pub ApprovedList get(fn approved): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => Vec<T::AccountId>;
 
-        // Item collections
+        /// second parameter: item id + owner account id
+        pub ApprovedList get(fn approved): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) (u64, T::AccountId) => Vec<ApprovePermissions<T::AccountId>>;
+
+        /// Item collections
         pub NftItemList get(fn nft_item_id): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => NftItemType<T::AccountId>;
         pub FungibleItemList get(fn fungible_item_id): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => FungibleItemType<T::AccountId>;
         pub ReFungibleItemList get(fn refungible_item_id): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => ReFungibleItemType<T::AccountId>;
 
+        // Active vesting list
+        // pub VestingList get(fn vesting): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => VestingItem<T::AccountId, T::Moment>;
+
+        /// Index list
         pub AddressTokens get(fn address_tokens): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) T::AccountId => Vec<u64>;
 
         // Sponsorship
@@ -170,6 +206,18 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 
         fn deposit_event() = default;
+
+        fn on_initialize(now: T::BlockNumber) -> Weight {
+
+            if ChainVersion::get() == 0
+            {
+                let value = NextCollectionID::get();
+                CreatedCollectionCount::put(value);
+                ChainVersion::put(2);
+            }
+
+            0
+        }
 
         // Create collection of NFT with given parameters
         //
@@ -197,7 +245,7 @@ decl_module! {
             };
 
             // check params
-            ensure!(decimal_points <= 4, "decimal_points parameter must be lower than 4"); 
+            ensure!(decimal_points <= 4, "decimal_points parameter must be lower than 4");
 
             let mut name = collection_name.to_vec();
             name.push(0);
@@ -248,6 +296,7 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             Self::check_owner_permissions(collection_id, sender)?;
 
+            // TODO Items remove
             <AddressTokens<T>>::remove_prefix(collection_id);
             <ApprovedList<T>>::remove_prefix(collection_id);
             <Balance<T>>::remove_prefix(collection_id);
@@ -351,33 +400,49 @@ decl_module! {
 
             Ok(())
         }
-        
+
         #[weight = 0]
         pub fn create_item(origin, collection_id: u64, properties: Vec<u8>, owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-
-            // check size
             let target_collection = <Collection<T>>::get(collection_id);
-            ensure!(target_collection.custom_data_size >= properties.len() as u32, "Size of item is too large");
-
             Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
 
-            // TODO: implement other modes
-            match target_collection.mode 
+            match target_collection.mode
             {
                 CollectionMode::NFT(_) => {
-                // Create nft item
+
+                    // check size
+                    ensure!(target_collection.custom_data_size >= properties.len() as u32, "Size of item is too large");
+
+                    // Create nft item
                     let item = NftItemType {
                         collection: collection_id,
                         owner: owner,
                         data: properties.clone(),
                     };
-    
+
                     Self::add_nft_item(item)?;
-    
+
+                },
+                CollectionMode::Fungible(_) => {
+
+                    // check size
+                    ensure!(properties.len() as u32 == 0, "Size of item must be 0 with fungible type");
+
+                    let item = FungibleItemType {
+                        collection: collection_id,
+                        owner: owner,
+                        value: (10 as u128).pow(target_collection.decimal_points)
+                    };
+
+                    Self::add_fungible_item(item)?;
                 },
                 CollectionMode::ReFungible(_, _) => {
+
+                    // check size
+                    ensure!(target_collection.custom_data_size >= properties.len() as u32, "Size of item is too large");
+
                     let mut owner_list = Vec::new();
                     let value = (10 as u128).pow(target_collection.decimal_points);
                     owner_list.push(Ownership {owner: owner.clone(), fraction: value});
@@ -387,7 +452,7 @@ decl_module! {
                         owner: owner_list,
                         data: properties.clone()
                     };
-    
+
                     Self::add_refungible_item(item)?;
                 },
                 _ => { ensure!(1 == 0,"just error"); }
@@ -411,9 +476,10 @@ decl_module! {
             }
             let target_collection = <Collection<T>>::get(collection_id);
 
-            match target_collection.mode 
+            match target_collection.mode
             {
                 CollectionMode::NFT(_) => Self::burn_nft_item(collection_id, item_id)?,
+                CollectionMode::Fungible(_)  => Self::burn_fungible_item(collection_id, item_id)?,
                 CollectionMode::ReFungible(_, _)  => Self::burn_refungible_item(collection_id, item_id, sender.clone())?,
                 _ => ()
             };
@@ -433,9 +499,10 @@ decl_module! {
             let target_collection = <Collection<T>>::get(collection_id);
 
             // TODO: implement other modes
-            match target_collection.mode 
+            match target_collection.mode
             {
                 CollectionMode::NFT(_) => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient)?,
+                CollectionMode::Fungible(_)  => Self::transfer_fungible(collection_id, item_id, value, sender.clone(), recipient)?,
                 CollectionMode::ReFungible(_, _)  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient)?,
                 _ => ()
             };
@@ -448,26 +515,26 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
-            let item_owner = Self::is_item_owner(sender.clone(), collection_id, item_id);
-            if !item_owner
-            {
-                Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
-            }
+            // amount param stub
+            let amount = 100000000;
 
-            let list_exists = <ApprovedList<T>>::contains_key(collection_id, item_id);
+            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id), "Only item owner can call transfer method");
+
+            let list_exists = <ApprovedList<T>>::contains_key(collection_id, (item_id, sender.clone()));
             if list_exists {
 
-                let mut list = <ApprovedList<T>>::get(collection_id, item_id);
-                let item_contains = list.contains(&approved.clone());
+                let mut list = <ApprovedList<T>>::get(collection_id, (item_id, sender.clone()));
+                let item_contains = list.iter().any(|i| i.approved == approved);
 
                 if !item_contains {
-                    list.push(approved.clone());
+                    list.push(ApprovePermissions { approved: approved.clone(), amount: amount });
+                    <ApprovedList<T>>::insert(collection_id, (item_id, sender.clone()), list);
                 }
             } else {
 
-                let mut itm = Vec::new();
-                itm.push(approved.clone());
-                <ApprovedList<T>>::insert(collection_id, item_id, itm);
+                let mut list = Vec::new();
+                list.push(ApprovePermissions { approved: approved.clone(), amount: amount });
+                <ApprovedList<T>>::insert(collection_id, (item_id, sender.clone()), list);
             }
 
             Ok(())
@@ -476,27 +543,32 @@ decl_module! {
         #[weight = 0]
         pub fn transfer_from(origin, from: T::AccountId, recipient: T::AccountId, collection_id: u64, item_id: u64, value: u64 ) -> DispatchResult {
 
-            let mut approved: bool = false; 
             let sender = ensure_signed(origin)?;
-            let approved_list_exists = <ApprovedList<T>>::contains_key(collection_id, item_id);
+            let approved_list_exists = <ApprovedList<T>>::contains_key(collection_id, (item_id, from.clone()));
             if approved_list_exists
             {
-                let list_itm = <ApprovedList<T>>::get(collection_id, item_id);
-                approved = list_itm.contains(&recipient.clone());
-            }
+                let list_itm = <ApprovedList<T>>::get(collection_id, (item_id, from.clone()));
+                let opt_item = list_itm.iter().find(|i| i.approved == sender.clone());
+                ensure!(opt_item.is_some(), "No approve found");
+                ensure!(opt_item.unwrap().amount >= value, "Requested value more than approved");
 
-            if !approved
+                // remove approve
+                let approve_list: Vec<ApprovePermissions<T::AccountId>> = <ApprovedList<T>>::get(collection_id, (item_id, from.clone()))
+                    .into_iter().filter(|i| i.approved != sender.clone()).collect();
+                <ApprovedList<T>>::insert(collection_id, (item_id, from.clone()), approve_list);
+            }
+            else
             {
                 Self::check_owner_or_admin_permissions(collection_id, sender)?;
             }
-            
+
             let target_collection = <Collection<T>>::get(collection_id);
 
             match target_collection.mode
             {
                 CollectionMode::NFT(_) => Self::transfer_nft(collection_id, item_id, from, recipient)?,
-                CollectionMode::ReFungible(_, _)  => Self::transfer_refungible(collection_id, item_id, value, from, recipient)?,
-                // TODO: implement other modes
+                CollectionMode::Fungible(_)  => Self::transfer_fungible(collection_id, item_id, value, from.clone(), recipient)?,
+                CollectionMode::ReFungible(_, _)  => Self::transfer_refungible(collection_id, item_id, value, from.clone(), recipient)?,
                 _ => ()
             };
 
@@ -526,68 +598,43 @@ decl_module! {
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
-            
+
             let mut target_collection = <Collection<T>>::get(collection_id);
             target_collection.offchain_schema = schema;
             <Collection<T>>::insert(collection_id, target_collection);
 
-            Ok(())        
+            Ok(())
         }
     }
 }
 
 impl<T: Trait> Module<T> {
+    fn add_fungible_item(item: FungibleItemType<T::AccountId>) -> DispatchResult {
+        let current_index = <ItemListIndex>::get(item.collection)
+            .checked_add(1)
+            .expect("Item list index id error");
+        let itemcopy = item.clone();
+        let owner = item.owner.clone();
+        let value = item.value as u64;
 
-    fn collection_exists(collection_id: u64) -> DispatchResult{
-        ensure!(<Collection<T>>::contains_key(collection_id), "This collection does not exist");
+        Self::add_token_index(item.collection, current_index, owner.clone())?;
+
+        <ItemListIndex>::insert(item.collection, current_index);
+        <FungibleItemList<T>>::insert(item.collection, current_index, itemcopy);
+
+        // Update balance
+        let new_balance = <Balance<T>>::get(item.collection, owner.clone())
+            .checked_add(value)
+            .unwrap();
+        <Balance<T>>::insert(item.collection, owner.clone(), new_balance);
+
         Ok(())
-    }
-
-    fn check_owner_permissions(collection_id: u64, subject: T::AccountId) -> DispatchResult {
-
-        Self::collection_exists(collection_id)?;
-
-        let target_collection = <Collection<T>>::get(collection_id);
-        ensure!(subject == target_collection.owner, "You do not own this collection");
-
-        Ok(())
-    }
-
-    fn check_owner_or_admin_permissions(collection_id: u64, subject: T::AccountId) -> DispatchResult {
-
-        Self::collection_exists(collection_id)?;
-
-        let target_collection = <Collection<T>>::get(collection_id);
-        let is_owner = subject == target_collection.owner;
-
-        let no_perm_mes = "You do not have permissions to modify this collection";
-        let exists = <AdminList<T>>::contains_key(collection_id);
-
-        if !is_owner
-        {
-            ensure!(exists, no_perm_mes);
-            ensure!(<AdminList<T>>::get(collection_id).contains(&subject), no_perm_mes);
-        }
-        Ok(())
-    }
-
-    fn is_item_owner(subject: T::AccountId, collection_id: u64, item_id: u64) -> bool{
-
-        let target_collection = <Collection<T>>::get(collection_id);
-
-        match target_collection.mode {
-            CollectionMode::NFT(_) => <NftItemList<T>>::get(collection_id, item_id).owner == subject,
-            CollectionMode::Fungible(_) => <FungibleItemList<T>>::get(collection_id, item_id).owner == subject,
-            CollectionMode::ReFungible(_, _)  => <ReFungibleItemList<T>>::get(collection_id, item_id).owner.iter().any(|i| i.owner == subject),
-            CollectionMode::Invalid => false
-        }
     }
 
     fn add_refungible_item(item: ReFungibleItemType<T::AccountId>) -> DispatchResult {
-
         let current_index = <ItemListIndex>::get(item.collection)
-        .checked_add(1)
-        .expect("Item list index id error");
+            .checked_add(1)
+            .expect("Item list index id error");
         let itemcopy = item.clone();
 
         let value = item.owner.first().unwrap().fraction as u64;
@@ -596,44 +643,286 @@ impl<T: Trait> Module<T> {
         Self::add_token_index(item.collection, current_index, owner.clone())?;
 
         <ItemListIndex>::insert(item.collection, current_index);
-        <ReFungibleItemList<T>>::insert(item.collection, current_index, itemcopy);  
-        
+        <ReFungibleItemList<T>>::insert(item.collection, current_index, itemcopy);
+
         // Update balance
-       let new_balance = <Balance<T>>::get(item.collection, owner.clone()).checked_add(value).unwrap();
-       <Balance<T>>::insert(item.collection, owner.clone(), new_balance);
+        let new_balance = <Balance<T>>::get(item.collection, owner.clone())
+            .checked_add(value)
+            .unwrap();
+        <Balance<T>>::insert(item.collection, owner.clone(), new_balance);
 
         Ok(())
     }
 
-    fn burn_refungible_item(collection_id: u64, item_id: u64, owner: T::AccountId) -> DispatchResult {
-  
+    fn add_nft_item(item: NftItemType<T::AccountId>) -> DispatchResult {
+        let current_index = <ItemListIndex>::get(item.collection)
+            .checked_add(1)
+            .expect("Item list index id error");
+
+        let item_owner = item.owner.clone();
+        let collection_id = item.collection.clone();
+        Self::add_token_index(collection_id, current_index, item.owner.clone())?;
+
+        <ItemListIndex>::insert(collection_id, current_index);
+        <NftItemList<T>>::insert(collection_id, current_index, item);
+
+        // Update balance
+        let new_balance = <Balance<T>>::get(collection_id, item_owner.clone())
+            .checked_add(1)
+            .unwrap();
+        <Balance<T>>::insert(collection_id, item_owner.clone(), new_balance);
+
+        Ok(())
+    }
+
+    fn burn_refungible_item(
+        collection_id: u64,
+        item_id: u64,
+        owner: T::AccountId,
+    ) -> DispatchResult {
+        ensure!(
+            <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
+            "Item does not exists"
+        );
         let collection = <ReFungibleItemList<T>>::get(collection_id, item_id);
-        let item = collection.owner.iter().filter(|&i| i.owner == owner).next().unwrap();
-        Self::remove_token_index(collection_id, item_id, owner)?;
+        let item = collection
+            .owner
+            .iter()
+            .filter(|&i| i.owner == owner)
+            .next()
+            .unwrap();
+        Self::remove_token_index(collection_id, item_id, owner.clone())?;
+
+        // remove approve list
+        <ApprovedList<T>>::remove(collection_id, (item_id, owner.clone()));
 
         // update balance
-        let new_balance = <Balance<T>>::get(collection_id, item.owner.clone()).checked_sub(item.fraction as u64).unwrap();
+        let new_balance = <Balance<T>>::get(collection_id, item.owner.clone())
+            .checked_sub(item.fraction as u64)
+            .unwrap();
         <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
 
-        // TODO
         <ReFungibleItemList<T>>::remove(collection_id, item_id);
 
         Ok(())
     }
 
-    fn transfer_refungible(collection_id: u64, item_id: u64, value: u64, owner: T::AccountId, new_owner: T::AccountId) -> DispatchResult {
+    fn burn_nft_item(collection_id: u64, item_id: u64) -> DispatchResult {
+        ensure!(
+            <NftItemList<T>>::contains_key(collection_id, item_id),
+            "Item does not exists"
+        );
+        let item = <NftItemList<T>>::get(collection_id, item_id);
+        Self::remove_token_index(collection_id, item_id, item.owner.clone())?;
 
-        let full_item = <ReFungibleItemList<T>>::get(collection_id, item_id);
-        let item = full_item.owner.iter().filter(|i| i.owner == owner).next().unwrap();
-        let amount = item.fraction;
-
-        ensure!(amount >= value.into(),"Item balance not enouth");
+        // remove approve list
+        <ApprovedList<T>>::remove(collection_id, (item_id, item.owner.clone()));
 
         // update balance
-        let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.clone()).checked_sub(value).unwrap();
+        let new_balance = <Balance<T>>::get(collection_id, item.owner.clone())
+            .checked_sub(1)
+            .unwrap();
+        <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
+        <NftItemList<T>>::remove(collection_id, item_id);
+
+        Ok(())
+    }
+
+    fn burn_fungible_item(collection_id: u64, item_id: u64) -> DispatchResult {
+        ensure!(
+            <FungibleItemList<T>>::contains_key(collection_id, item_id),
+            "Item does not exists"
+        );
+        let item = <FungibleItemList<T>>::get(collection_id, item_id);
+        Self::remove_token_index(collection_id, item_id, item.owner.clone())?;
+
+        // remove approve list
+        <ApprovedList<T>>::remove(collection_id, (item_id, item.owner.clone()));
+
+        // update balance
+        let new_balance = <Balance<T>>::get(collection_id, item.owner.clone())
+            .checked_sub(item.value as u64)
+            .unwrap();
+        <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
+
+        <FungibleItemList<T>>::remove(collection_id, item_id);
+
+        Ok(())
+    }
+
+    fn collection_exists(collection_id: u64) -> DispatchResult {
+        ensure!(
+            <Collection<T>>::contains_key(collection_id),
+            "This collection does not exist"
+        );
+        Ok(())
+    }
+
+    fn check_owner_permissions(collection_id: u64, subject: T::AccountId) -> DispatchResult {
+        Self::collection_exists(collection_id)?;
+
+        let target_collection = <Collection<T>>::get(collection_id);
+        ensure!(
+            subject == target_collection.owner,
+            "You do not own this collection"
+        );
+
+        Ok(())
+    }
+
+    fn check_owner_or_admin_permissions(
+        collection_id: u64,
+        subject: T::AccountId,
+    ) -> DispatchResult {
+        Self::collection_exists(collection_id)?;
+
+        let target_collection = <Collection<T>>::get(collection_id);
+        let is_owner = subject == target_collection.owner;
+
+        let no_perm_mes = "You do not have permissions to modify this collection";
+        let exists = <AdminList<T>>::contains_key(collection_id);
+
+        if !is_owner {
+            ensure!(exists, no_perm_mes);
+            ensure!(
+                <AdminList<T>>::get(collection_id).contains(&subject),
+                no_perm_mes
+            );
+        }
+        Ok(())
+    }
+
+    fn is_item_owner(subject: T::AccountId, collection_id: u64, item_id: u64) -> bool {
+        let target_collection = <Collection<T>>::get(collection_id);
+
+        match target_collection.mode {
+            CollectionMode::NFT(_) => {
+                <NftItemList<T>>::get(collection_id, item_id).owner == subject
+            }
+            CollectionMode::Fungible(_) => {
+                <FungibleItemList<T>>::get(collection_id, item_id).owner == subject
+            }
+            CollectionMode::ReFungible(_, _) => {
+                <ReFungibleItemList<T>>::get(collection_id, item_id)
+                    .owner
+                    .iter()
+                    .any(|i| i.owner == subject)
+            }
+            CollectionMode::Invalid => false,
+        }
+    }
+
+    fn transfer_fungible(
+        collection_id: u64,
+        item_id: u64,
+        value: u64,
+        owner: T::AccountId,
+        new_owner: T::AccountId,
+    ) -> DispatchResult {
+        let full_item = <FungibleItemList<T>>::get(collection_id, item_id);
+        let amount = full_item.value;
+
+        ensure!(amount >= value.into(), "Item balance not enouth");
+
+        // update balance
+        let balance_old_owner = <Balance<T>>::get(collection_id, owner.clone())
+            .checked_sub(value)
+            .unwrap();
+        <Balance<T>>::insert(collection_id, owner.clone(), balance_old_owner);
+
+        let mut new_owner_account_id = 0;
+        let new_owner_items = <AddressTokens<T>>::get(collection_id, new_owner.clone());
+        if new_owner_items.len() > 0 {
+            new_owner_account_id = new_owner_items[0];
+        }
+
+        let val64 = value.into();
+
+        // transfer
+        if amount == val64 && new_owner_account_id == 0 {
+            // change owner
+            // new owner do not have account
+            let mut new_full_item = full_item.clone();
+            new_full_item.owner = new_owner.clone();
+            <FungibleItemList<T>>::insert(collection_id, item_id, new_full_item);
+
+            // update balance
+            let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
+                .checked_add(value)
+                .unwrap();
+            <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
+
+            // update index collection
+            Self::move_token_index(collection_id, item_id, owner.clone(), new_owner.clone())?;
+        } else {
+            let mut new_full_item = full_item.clone();
+            new_full_item.value -= val64;
+
+            // separate amount
+            if new_owner_account_id > 0 {
+                // new owner has account
+                let mut item = <FungibleItemList<T>>::get(collection_id, new_owner_account_id);
+                item.value += val64;
+
+                // update balance
+                let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
+                    .checked_add(value)
+                    .unwrap();
+                <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
+
+                <FungibleItemList<T>>::insert(collection_id, new_owner_account_id, item);
+            } else {
+                // new owner do not have account
+                let item = FungibleItemType {
+                    collection: collection_id,
+                    owner: new_owner.clone(),
+                    value: val64,
+                };
+
+                Self::add_fungible_item(item)?;
+            }
+
+            if amount == val64 {
+                Self::remove_token_index(collection_id, item_id, full_item.owner.clone())?;
+
+                // remove approve list
+                <ApprovedList<T>>::remove(collection_id, (item_id, full_item.owner.clone()));
+                <FungibleItemList<T>>::remove(collection_id, item_id);
+            }
+
+            <FungibleItemList<T>>::insert(collection_id, item_id, new_full_item);
+        }
+
+        Ok(())
+    }
+
+    fn transfer_refungible(
+        collection_id: u64,
+        item_id: u64,
+        value: u64,
+        owner: T::AccountId,
+        new_owner: T::AccountId,
+    ) -> DispatchResult {
+        let full_item = <ReFungibleItemList<T>>::get(collection_id, item_id);
+        let item = full_item
+            .owner
+            .iter()
+            .filter(|i| i.owner == owner)
+            .next()
+            .unwrap();
+        let amount = item.fraction;
+
+        ensure!(amount >= value.into(), "Item balance not enouth");
+
+        // update balance
+        let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.clone())
+            .checked_sub(value)
+            .unwrap();
         <Balance<T>>::insert(collection_id, item.owner.clone(), balance_old_owner);
 
-        let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone()).checked_add(value).unwrap();
+        let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
+            .checked_add(value)
+            .unwrap();
         <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
 
         let old_owner = item.owner.clone();
@@ -641,31 +930,44 @@ impl<T: Trait> Module<T> {
         let val64 = value.into();
 
         // transfer
-        if amount == val64 && !new_owner_has_account
-        {
+        if amount == val64 && !new_owner_has_account {
             // change owner
             // new owner do not have account
             let mut new_full_item = full_item.clone();
-            new_full_item.owner.iter_mut().find(|i| i.owner == owner).unwrap().owner = new_owner.clone();
+            new_full_item
+                .owner
+                .iter_mut()
+                .find(|i| i.owner == owner)
+                .unwrap()
+                .owner = new_owner.clone();
             <ReFungibleItemList<T>>::insert(collection_id, item_id, new_full_item);
 
             // update index collection
             Self::move_token_index(collection_id, item_id, old_owner.clone(), new_owner.clone())?;
-        }
-        else
-        {
+        } else {
             let mut new_full_item = full_item.clone();
-            new_full_item.owner.iter_mut().find(|i| i.owner == owner).unwrap().fraction -= val64;
+            new_full_item
+                .owner
+                .iter_mut()
+                .find(|i| i.owner == owner)
+                .unwrap()
+                .fraction -= val64;
 
             // separate amount
             if new_owner_has_account {
                 // new owner has account
-                new_full_item.owner.iter_mut().find(|i| i.owner == new_owner).unwrap().fraction += val64;
-            }
-            else
-            {
+                new_full_item
+                    .owner
+                    .iter_mut()
+                    .find(|i| i.owner == new_owner)
+                    .unwrap()
+                    .fraction += val64;
+            } else {
                 // new owner do not have account
-                new_full_item.owner.push(Ownership { owner: new_owner.clone(), fraction: val64});
+                new_full_item.owner.push(Ownership {
+                    owner: new_owner.clone(),
+                    fraction: val64,
+                });
                 Self::add_token_index(collection_id, item_id, new_owner.clone())?;
             }
 
@@ -674,50 +976,29 @@ impl<T: Trait> Module<T> {
 
         Ok(())
     }
-    
-    fn add_nft_item(item: NftItemType<T::AccountId>) -> DispatchResult {
 
-        let current_index = <ItemListIndex>::get(item.collection)
-        .checked_add(1)
-        .expect("Item list index id error");
-        let itemcopy = item.clone();
-
-        Self::add_token_index(item.collection, current_index, item.owner.clone())?;
-
-        <ItemListIndex>::insert(item.collection, current_index);
-        <NftItemList<T>>::insert(item.collection, current_index, item);
-
-        // Update balance
-        let new_balance = <Balance<T>>::get(itemcopy.collection, itemcopy.owner.clone()).checked_add(1).unwrap();
-        <Balance<T>>::insert(itemcopy.collection, itemcopy.owner.clone(), new_balance);
-
-        Ok(())
-    }
-
-    fn burn_nft_item(collection_id: u64, item_id: u64) -> DispatchResult {
-  
-        let item = <NftItemList<T>>::get(collection_id, item_id);
-        Self::remove_token_index(collection_id, item_id, item.owner.clone())?;
-
-        // update balance
-        let new_balance = <Balance<T>>::get(collection_id, item.owner.clone()).checked_sub(1).unwrap();
-        <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
-        <NftItemList<T>>::remove(collection_id, item_id);
-
-        Ok(())
-    }
-
-    fn transfer_nft(collection_id: u64, item_id: u64, sender: T::AccountId, new_owner: T::AccountId) -> DispatchResult {
-
+    fn transfer_nft(
+        collection_id: u64,
+        item_id: u64,
+        sender: T::AccountId,
+        new_owner: T::AccountId,
+    ) -> DispatchResult {
         let mut item = <NftItemList<T>>::get(collection_id, item_id);
 
-        ensure!(sender == item.owner,"sender parameter and item owner must be equal");
+        ensure!(
+            sender == item.owner,
+            "sender parameter and item owner must be equal"
+        );
 
         // update balance
-        let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.clone()).checked_sub(1).unwrap();
+        let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.clone())
+            .checked_sub(1)
+            .unwrap();
         <Balance<T>>::insert(collection_id, item.owner.clone(), balance_old_owner);
 
-        let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone()).checked_add(1).unwrap();
+        let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
+            .checked_add(1)
+            .unwrap();
         <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
 
         // change owner
@@ -726,12 +1007,10 @@ impl<T: Trait> Module<T> {
         <NftItemList<T>>::insert(collection_id, item_id, item);
 
         // update index collection
-        Self::move_token_index(collection_id, item_id, old_owner, new_owner.clone())?;
+        Self::move_token_index(collection_id, item_id, old_owner.clone(), new_owner.clone())?;
 
         // reset approved list
-        let itm: Vec<T::AccountId> = Vec::new();
-        <ApprovedList<T>>::insert(collection_id, item_id, itm);
-
+        <ApprovedList<T>>::remove(collection_id, (item_id, old_owner));
         Ok(())
     }
 
@@ -787,72 +1066,76 @@ impl<T: Trait> Module<T> {
     }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Economic models
 
 /// Fee multiplier.
 pub type Multiplier = FixedU128;
 
-type BalanceOf<T> =
-	<<T as transaction_payment::Trait>::Currency as Currency<<T as system::Trait>::AccountId>>::Balance;
+type BalanceOf<T> = <<T as transaction_payment::Trait>::Currency as Currency<
+    <T as system::Trait>::AccountId,
+>>::Balance;
 type NegativeImbalanceOf<T> = <<T as transaction_payment::Trait>::Currency as Currency<
-	<T as system::Trait>::AccountId,>>::NegativeImbalance;
-
-
+    <T as system::Trait>::AccountId,
+>>::NegativeImbalance;
 
 /// Require the transactor pay for themselves and maybe include a tip to gain additional priority
 /// in the queue.
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct ChargeTransactionPayment<T: transaction_payment::Trait + Send + Sync>(#[codec(compact)] BalanceOf<T>);
+pub struct ChargeTransactionPayment<T: transaction_payment::Trait + Send + Sync>(
+    #[codec(compact)] BalanceOf<T>,
+);
 
-impl<T:Trait + transaction_payment::Trait + Send + Sync> sp_std::fmt::Debug for ChargeTransactionPayment<T> {
-	#[cfg(feature = "std")]
-	fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-		write!(f, "ChargeTransactionPayment<{:?}>", self.0)
-	}
-	#[cfg(not(feature = "std"))]
-	fn fmt(&self, _: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-		Ok(())
-	}
+impl<T: Trait + transaction_payment::Trait + Send + Sync> sp_std::fmt::Debug
+    for ChargeTransactionPayment<T>
+{
+    #[cfg(feature = "std")]
+    fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
+        write!(f, "ChargeTransactionPayment<{:?}>", self.0)
+    }
+    #[cfg(not(feature = "std"))]
+    fn fmt(&self, _: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
+        Ok(())
+    }
 }
 
-impl<T:Trait + transaction_payment::Trait + Send + Sync> ChargeTransactionPayment<T> where
-	T::Call: Dispatchable<Info=DispatchInfo, PostInfo=PostDispatchInfo> + IsSubType<Module<T>, T>,
-	BalanceOf<T>: Send + Sync + FixedPointOperand,
+impl<T: Trait + transaction_payment::Trait + Send + Sync> ChargeTransactionPayment<T>
+where
+    T::Call:
+        Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Module<T>, T>,
+    BalanceOf<T>: Send + Sync + FixedPointOperand,
 {
-	/// utility constructor. Used only in client/factory code.
-	pub fn from(fee: BalanceOf<T>) -> Self {
-		Self(fee)
-	}
+    /// utility constructor. Used only in client/factory code.
+    pub fn from(fee: BalanceOf<T>) -> Self {
+        Self(fee)
+    }
 
     pub fn traditional_fee(
         len: usize,
         info: &DispatchInfoOf<T::Call>,
         tip: BalanceOf<T>,
-    ) -> BalanceOf<T> where
-        T::Call: Dispatchable<Info=DispatchInfo>,
+    ) -> BalanceOf<T>
+    where
+        T::Call: Dispatchable<Info = DispatchInfo>,
     {
         <transaction_payment::Module<T>>::compute_fee(len as u32, info, tip)
     }
 
-	fn withdraw_fee(
-		&self,
+    fn withdraw_fee(
+        &self,
         who: &T::AccountId,
         call: &T::Call,
-		info: &DispatchInfoOf<T::Call>,
-		len: usize,
-	) -> Result<(BalanceOf<T>, Option<NegativeImbalanceOf<T>>), TransactionValidityError> {
+        info: &DispatchInfoOf<T::Call>,
+        len: usize,
+    ) -> Result<(BalanceOf<T>, Option<NegativeImbalanceOf<T>>), TransactionValidityError> {
         let tip = self.0;
 
         // Set fee based on call type. Creating collection costs 1 Unique.
         // All other transactions have traditional fees so far
         let fee = match call.is_sub_type() {
             Some(Call::create_collection(..)) => <BalanceOf<T>>::from(1_000_000_000),
-            _ => Self::traditional_fee(len, info, tip)
-
-            // Flat fee model, use only for testing purposes
-            // _ => <BalanceOf<T>>::from(100)
+            _ => Self::traditional_fee(len, info, tip), // Flat fee model, use only for testing purposes
+                                                        // _ => <BalanceOf<T>>::from(100)
         };
 
         // Determine who is paying transaction fee based on ecnomic model
@@ -860,12 +1143,12 @@ impl<T:Trait + transaction_payment::Trait + Send + Sync> ChargeTransactionPaymen
         let sponsor: T::AccountId = match call.is_sub_type() {
             Some(Call::create_item(collection_id, _properties, _owner)) => {
                 <Collection<T>>::get(collection_id).sponsor
-            },
+            }
             Some(Call::transfer(_new_owner, collection_id, _item_id, _value)) => {
                 <Collection<T>>::get(collection_id).sponsor
-            },
+            }
 
-            _ => T::AccountId::default()
+            _ => T::AccountId::default(),
         };
 
         let mut who_pays_fee: T::AccountId = sponsor.clone();
@@ -873,98 +1156,109 @@ impl<T:Trait + transaction_payment::Trait + Send + Sync> ChargeTransactionPaymen
             who_pays_fee = who.clone();
         }
 
-		// Only mess with balances if fee is not zero.
-		if fee.is_zero() {
-			return Ok((fee, None));
-		}
+        // Only mess with balances if fee is not zero.
+        if fee.is_zero() {
+            return Ok((fee, None));
+        }
 
-		match <T as transaction_payment::Trait>::Currency::withdraw(
-			&who_pays_fee,
-			fee,
-			if tip.is_zero() {
-				WithdrawReason::TransactionPayment.into()
-			} else {
-				WithdrawReason::TransactionPayment | WithdrawReason::Tip
-			},
-			ExistenceRequirement::KeepAlive,
-		) {
-			Ok(imbalance) => Ok((fee, Some(imbalance))),
-			Err(_) => Err(InvalidTransaction::Payment.into()),
-		}
-	}
+        match <T as transaction_payment::Trait>::Currency::withdraw(
+            &who_pays_fee,
+            fee,
+            if tip.is_zero() {
+                WithdrawReason::TransactionPayment.into()
+            } else {
+                WithdrawReason::TransactionPayment | WithdrawReason::Tip
+            },
+            ExistenceRequirement::KeepAlive,
+        ) {
+            Ok(imbalance) => Ok((fee, Some(imbalance))),
+            Err(_) => Err(InvalidTransaction::Payment.into()),
+        }
+    }
 }
 
-impl<T:Trait + transaction_payment::Trait + Send + Sync> SignedExtension for ChargeTransactionPayment<T> where
+impl<T: Trait + transaction_payment::Trait + Send + Sync> SignedExtension
+    for ChargeTransactionPayment<T>
+where
     BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
-    T::Call: Dispatchable<Info=DispatchInfo, PostInfo=PostDispatchInfo> + IsSubType<Module<T>, T>,
+    T::Call:
+        Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Module<T>, T>,
 {
-	const IDENTIFIER: &'static str = "ChargeTransactionPayment";
-	type AccountId = T::AccountId;
-	type Call = T::Call;
-	type AdditionalSigned = ();
-	type Pre = (BalanceOf<T>, Self::AccountId, Option<NegativeImbalanceOf<T>>, BalanceOf<T>);
-	fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> { Ok(()) }
+    const IDENTIFIER: &'static str = "ChargeTransactionPayment";
+    type AccountId = T::AccountId;
+    type Call = T::Call;
+    type AdditionalSigned = ();
+    type Pre = (
+        BalanceOf<T>,
+        Self::AccountId,
+        Option<NegativeImbalanceOf<T>>,
+        BalanceOf<T>,
+    );
+    fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> {
+        Ok(())
+    }
 
-	fn validate(
-		&self,
-		who: &Self::AccountId,
-		call: &Self::Call,
-		info: &DispatchInfoOf<Self::Call>,
-		len: usize,
-	) -> TransactionValidity {
-		let (fee, _) = self.withdraw_fee(who, call, info, len)?;
+    fn validate(
+        &self,
+        who: &Self::AccountId,
+        call: &Self::Call,
+        info: &DispatchInfoOf<Self::Call>,
+        len: usize,
+    ) -> TransactionValidity {
+        let (fee, _) = self.withdraw_fee(who, call, info, len)?;
 
-		let mut r = ValidTransaction::default();
-		// NOTE: we probably want to maximize the _fee (of any type) per weight unit_ here, which
-		// will be a bit more than setting the priority to tip. For now, this is enough.
-		r.priority = fee.saturated_into::<TransactionPriority>();
-		Ok(r)
-	}
+        let mut r = ValidTransaction::default();
+        // NOTE: we probably want to maximize the _fee (of any type) per weight unit_ here, which
+        // will be a bit more than setting the priority to tip. For now, this is enough.
+        r.priority = fee.saturated_into::<TransactionPriority>();
+        Ok(r)
+    }
 
-	fn pre_dispatch(
-		self,
-		who: &Self::AccountId,
-		call: &Self::Call,
-		info: &DispatchInfoOf<Self::Call>,
-		len: usize
-	) -> Result<Self::Pre, TransactionValidityError> {
-		let (fee, imbalance) = self.withdraw_fee(who, call, info, len)?;
-		Ok((self.0, who.clone(), imbalance, fee))
-	}
+    fn pre_dispatch(
+        self,
+        who: &Self::AccountId,
+        call: &Self::Call,
+        info: &DispatchInfoOf<Self::Call>,
+        len: usize,
+    ) -> Result<Self::Pre, TransactionValidityError> {
+        let (fee, imbalance) = self.withdraw_fee(who, call, info, len)?;
+        Ok((self.0, who.clone(), imbalance, fee))
+    }
 
-	fn post_dispatch(
-		pre: Self::Pre,
-		info: &DispatchInfoOf<Self::Call>,
-		post_info: &PostDispatchInfoOf<Self::Call>,
-		len: usize,
-		_result: &DispatchResult,
-	) -> Result<(), TransactionValidityError> {
-		let (tip, who, imbalance, fee) = pre;
-		if let Some(payed) = imbalance {
-			let actual_fee = <transaction_payment::Module<T>>::compute_actual_fee(
-				len as u32,
-				info,
-				post_info,
-				tip,
-			);
-			let refund = fee.saturating_sub(actual_fee);
-			let actual_payment = match <T as transaction_payment::Trait>::Currency::deposit_into_existing(&who, refund) {
-				Ok(refund_imbalance) => {
-					// The refund cannot be larger than the up front payed max weight.
-					// `PostDispatchInfo::calc_unspent` guards against such a case.
-					match payed.offset(refund_imbalance) {
-						Ok(actual_payment) => actual_payment,
-						Err(_) => return Err(InvalidTransaction::Payment.into()),
-					}
-				}
-				// We do not recreate the account using the refund. The up front payment
-				// is gone in that case.
-				Err(_) => payed,
-			};
-			let imbalances = actual_payment.split(tip);
-			<T as transaction_payment::Trait>::OnTransactionPayment::on_unbalanceds(Some(imbalances.0).into_iter()
-				.chain(Some(imbalances.1)));
-		}
-		Ok(())
-	}
+    fn post_dispatch(
+        pre: Self::Pre,
+        info: &DispatchInfoOf<Self::Call>,
+        post_info: &PostDispatchInfoOf<Self::Call>,
+        len: usize,
+        _result: &DispatchResult,
+    ) -> Result<(), TransactionValidityError> {
+        let (tip, who, imbalance, fee) = pre;
+        if let Some(payed) = imbalance {
+            let actual_fee = <transaction_payment::Module<T>>::compute_actual_fee(
+                len as u32, info, post_info, tip,
+            );
+            let refund = fee.saturating_sub(actual_fee);
+            let actual_payment =
+                match <T as transaction_payment::Trait>::Currency::deposit_into_existing(
+                    &who, refund,
+                ) {
+                    Ok(refund_imbalance) => {
+                        // The refund cannot be larger than the up front payed max weight.
+                        // `PostDispatchInfo::calc_unspent` guards against such a case.
+                        match payed.offset(refund_imbalance) {
+                            Ok(actual_payment) => actual_payment,
+                            Err(_) => return Err(InvalidTransaction::Payment.into()),
+                        }
+                    }
+                    // We do not recreate the account using the refund. The up front payment
+                    // is gone in that case.
+                    Err(_) => payed,
+                };
+            let imbalances = actual_payment.split(tip);
+            <T as transaction_payment::Trait>::OnTransactionPayment::on_unbalanceds(
+                Some(imbalances.0).into_iter().chain(Some(imbalances.1)),
+            );
+        }
+        Ok(())
+    }
 }

@@ -171,6 +171,20 @@ Additional CLI usage options are available and may be shown by running `cargo ru
       "ReFungible": "(u32, u32)"
     }
   },
+  "Ownership": {
+    "Owner": "AccountId",
+    "Fraction": "u128"
+  },
+  "FungibleItemType": {
+    "Collection": "u64",
+    "Owner": "AccountId",
+    "Value": "u128"
+  },
+  "ReFungibleItemType": {
+    "Collection": "u64",
+    "Owner": "Vec<Ownership>",
+    "Data": "Vec<u8>"
+  },
   "NftItemType": {
     "Collection": "u64",
     "Owner": "AccountId",

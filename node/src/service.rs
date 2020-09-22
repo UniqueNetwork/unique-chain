@@ -188,7 +188,7 @@ pub fn new_full(config: Configuration) -> Result<impl AbstractService, ServiceEr
             prometheus_registry: service.prometheus_registry(),
             shared_voter_state: SharedVoterState::empty(),
         };
-        
+
         // the GRANDPA voter task is considered infallible, i.e.
         // if it fails we take down the service with it.
         service.spawn_essential_task_handle().spawn_blocking(
