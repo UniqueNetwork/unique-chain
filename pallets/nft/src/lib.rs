@@ -475,10 +475,7 @@ decl_module! {
             let target_collection = <Collection<T>>::get(collection_id);
 
             if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
-                if target_collection.mint_mode == false {
-                    panic!("Collection is not in mint mode");
-                }
-
+                ensure!(target_collection.mint_mode == true, "Collection is not in mint mode");
                 Self::check_white_list(collection_id, owner.clone())?;
             }
 
@@ -628,25 +625,21 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
             let approved_list_exists = <ApprovedList<T>>::contains_key(collection_id, (item_id, from.clone()));
-            if approved_list_exists
-            {
-                Self::check_white_list(collection_id, from.clone())?;
-                Self::check_white_list(collection_id, recipient.clone())?;
 
-                let list_itm = <ApprovedList<T>>::get(collection_id, (item_id, from.clone()));
-                let opt_item = list_itm.iter().find(|i| i.approved == sender.clone());
-                ensure!(opt_item.is_some(), "No approve found");
-                ensure!(opt_item.unwrap().amount >= value, "Requested value more than approved");
+            ensure!(approved_list_exists, "Only approved addresses can call this method");
 
-                // remove approve
-                let approve_list: Vec<ApprovePermissions<T::AccountId>> = <ApprovedList<T>>::get(collection_id, (item_id, from.clone()))
-                    .into_iter().filter(|i| i.approved != sender.clone()).collect();
-                <ApprovedList<T>>::insert(collection_id, (item_id, from.clone()), approve_list);
-            }
-            else
-            {
-                panic!("Only approved addresses can call this method");
-            }
+            Self::check_white_list(collection_id, from.clone())?;
+            Self::check_white_list(collection_id, recipient.clone())?;
+
+            let list_itm = <ApprovedList<T>>::get(collection_id, (item_id, from.clone()));
+            let opt_item = list_itm.iter().find(|i| i.approved == sender.clone());
+            ensure!(opt_item.is_some(), "No approve found");
+            ensure!(opt_item.unwrap().amount >= value, "Requested value more than approved");
+
+            // remove approve
+            let approve_list: Vec<ApprovePermissions<T::AccountId>> = <ApprovedList<T>>::get(collection_id, (item_id, from.clone()))
+                .into_iter().filter(|i| i.approved != sender.clone()).collect();
+            <ApprovedList<T>>::insert(collection_id, (item_id, from.clone()), approve_list);
 
             let target_collection = <Collection<T>>::get(collection_id);
 
@@ -872,11 +865,8 @@ impl<T: Trait> Module<T> {
         Self::collection_exists(collection_id)?;
         let result = Self::is_owner_or_admin_permissions(collection_id, subject.clone());
 
-        if result == true {
-            Ok(())
-        } else {
-            panic!("You do not have permissions to modify this collection")
-        }
+        ensure!(result, "You do not have permissions to modify this collection");
+        Ok(())
     }
 
     fn is_item_owner(subject: T::AccountId, collection_id: u64, item_id: u64) -> bool {
@@ -902,15 +892,10 @@ impl<T: Trait> Module<T> {
     fn check_white_list(collection_id: u64, address: T::AccountId) -> DispatchResult {
 
         let mes = "Address is not in white list";
-        if <WhiteList<T>>::contains_key(collection_id){
-            let wl = <WhiteList<T>>::get(collection_id);
-            if !wl.contains(&address.clone()) {
-                panic!(mes);
-            }
-        }
-        else {
-            panic!(mes);
-        }
+        ensure!(<WhiteList<T>>::contains_key(collection_id), mes);
+        let wl = <WhiteList<T>>::get(collection_id);
+        ensure!(wl.contains(&address.clone()), mes);
+
         Ok(())
     }
 

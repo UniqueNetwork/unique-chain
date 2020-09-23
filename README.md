@@ -109,6 +109,12 @@ Additional CLI usage options are available and may be shown by running `cargo ru
     "enable_println": "bool",
     "max_subject_len": "u32"
   },
+  "AccessMode": {
+    "_enum": [
+      "Normal",
+      "WhiteList"
+    ]
+  },
   "CollectionMode": {
     "_enum": {
       "Invalid": null,
@@ -139,7 +145,7 @@ Additional CLI usage options are available and may be shown by running `cargo ru
   "CollectionType": {
     "Owner": "AccountId",
     "Mode": "CollectionMode",
-    "Access": "u8",
+    "Access": "AccessMode",
     "DecimalPoints": "u32",
     "Name": "Vec<u16>",
     "Description": "Vec<u16>",
@@ -155,4 +161,5 @@ Additional CLI usage options are available and may be shown by running `cargo ru
   "LookupSource": "AccountId",
   "Weight": "u64"
 }
+
 ```
