@@ -1,6 +1,6 @@
 // Tests to be written here
 use crate::mock::*;
-use crate::{ApprovePermissions, CollectionMode, Ownership};
+use crate::{ApprovePermissions, CollectionMode, AccessMode, Ownership};
 use frame_support::{assert_noop, assert_ok};
 
 #[test]
@@ -321,10 +321,11 @@ fn nft_approve_and_transfer_from() {
         assert_eq!(TemplateModule::balance_count(1, 1), 1);
         assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
-        assert_noop!(
-            TemplateModule::transfer_from(origin2.clone(), 1, 3, 1, 1, 1),
-            "You do not have permissions to modify this collection"
-        );
+        assert_ok!(TemplateModule::set_mint_permission(origin1.clone(), 1, true));
+        assert_ok!(TemplateModule::set_public_access_mode(origin1.clone(), 1, AccessMode::WhiteList));
+        assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 1));
+        assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 2));
+        assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 3));
 
         // do approve
         assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
@@ -390,10 +391,11 @@ fn refungible_approve_and_transfer_from() {
         assert_eq!(TemplateModule::balance_count(1, 1), 1000);
         assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
-        assert_noop!(
-            TemplateModule::transfer_from(origin2.clone(), 1, 3, 1, 1, 1),
-            "You do not have permissions to modify this collection"
-        );
+        assert_ok!(TemplateModule::set_mint_permission(origin1.clone(), 1, true));
+        assert_ok!(TemplateModule::set_public_access_mode(origin1.clone(), 1, AccessMode::WhiteList));
+        assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 1));
+        assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 2));
+        assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 3));
 
         // do approve
         assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
@@ -461,10 +463,11 @@ fn fungible_approve_and_transfer_from() {
         assert_eq!(TemplateModule::balance_count(1, 1), 1000);
         assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
-        assert_noop!(
-            TemplateModule::transfer_from(origin2.clone(), 1, 3, 1, 1, 1),
-            "You do not have permissions to modify this collection"
-        );
+        assert_ok!(TemplateModule::set_mint_permission(origin1.clone(), 1, true));
+        assert_ok!(TemplateModule::set_public_access_mode(origin1.clone(), 1, AccessMode::WhiteList));
+        assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 1));
+        assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 2));
+        assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 3));
 
         // do approve
         assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
@@ -573,7 +576,6 @@ fn burn_nft_item() {
         let mode: CollectionMode = CollectionMode::NFT(2000);
 
         let origin1 = Origin::signed(1);
-        let origin2 = Origin::signed(2);
         assert_ok!(TemplateModule::create_collection(
             origin1.clone(),
             col_name1.clone(),
@@ -583,7 +585,7 @@ fn burn_nft_item() {
         ));
         assert_ok!(TemplateModule::add_collection_admin(origin1.clone(), 1, 2));
         assert_ok!(TemplateModule::create_item(
-            origin2.clone(),
+            origin1.clone(),
             1,
             [1, 2, 3].to_vec(),
             1
@@ -614,7 +616,6 @@ fn burn_fungible_item() {
         let mode: CollectionMode = CollectionMode::Fungible(3);
 
         let origin1 = Origin::signed(1);
-        let origin2 = Origin::signed(2);
         assert_ok!(TemplateModule::create_collection(
             origin1.clone(),
             col_name1.clone(),
@@ -624,7 +625,7 @@ fn burn_fungible_item() {
         ));
         assert_ok!(TemplateModule::add_collection_admin(origin1.clone(), 1, 2));
         assert_ok!(TemplateModule::create_item(
-            origin2.clone(),
+            origin1.clone(),
             1,
             [].to_vec(),
             1
@@ -661,6 +662,11 @@ fn burn_refungible_item() {
             token_prefix1.clone(),
             mode
         ));
+        
+        assert_ok!(TemplateModule::set_mint_permission(origin1.clone(), 1, true));
+        assert_ok!(TemplateModule::set_public_access_mode(origin1.clone(), 1, AccessMode::WhiteList));
+        assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 1));
+
         assert_ok!(TemplateModule::add_collection_admin(origin1.clone(), 1, 2));
         assert_ok!(TemplateModule::create_item(
             origin2.clone(),
@@ -928,6 +934,13 @@ fn transfer_from() {
         // approve
         assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
         assert_eq!(TemplateModule::approved(1, (1, 1))[0].approved, 2);
+
+        assert_ok!(TemplateModule::set_mint_permission(origin1.clone(), 1, true));
+        assert_ok!(TemplateModule::set_public_access_mode(origin1.clone(), 1, AccessMode::WhiteList));
+        assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 1));
+        assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 2));
+        assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 3));
+
         assert_ok!(TemplateModule::transfer_from(
             origin2.clone(),
             1,

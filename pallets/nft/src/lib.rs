@@ -97,6 +97,7 @@ pub struct CollectionType<AccountId> {
     pub description: Vec<u16>, // 256 include null escape char
     pub token_prefix: Vec<u8>, // 16 include null escape char
     pub custom_data_size: u32,
+    pub mint_mode: bool,
     pub offchain_schema: Vec<u8>,
     pub sponsor: AccountId, // Who pays fees. If set to default address, the fees are applied to the transaction sender
     pub unconfirmed_sponsor: AccountId, // Sponsor address that has not yet confirmed sponsorship
@@ -179,9 +180,6 @@ decl_storage! {
         pub FungibleItemList get(fn fungible_item_id): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => FungibleItemType<T::AccountId>;
         pub ReFungibleItemList get(fn refungible_item_id): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => ReFungibleItemType<T::AccountId>;
 
-        // Active vesting list
-        // pub VestingList get(fn vesting): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => VestingItem<T::AccountId, T::Moment>;
-
         /// Index list
         pub AddressTokens get(fn address_tokens): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) T::AccountId => Vec<u64>;
 
@@ -209,7 +207,7 @@ decl_module! {
 
         fn on_initialize(now: T::BlockNumber) -> Weight {
 
-            if ChainVersion::get() == 0
+            if ChainVersion::get() < 2
             {
                 let value = NextCollectionID::get();
                 CreatedCollectionCount::put(value);
@@ -224,11 +222,11 @@ decl_module! {
         // @param customDataSz size of custom data in each collection item
         // returns collection ID
         #[weight = 0]
-        pub fn create_collection(   origin,
-                                    collection_name: Vec<u16>,
-                                    collection_description: Vec<u16>,
-                                    token_prefix: Vec<u8>,
-                                    mode: CollectionMode) -> DispatchResult {
+        pub fn create_collection(origin,
+                                 collection_name: Vec<u16>,
+                                 collection_description: Vec<u16>,
+                                 token_prefix: Vec<u8>,
+                                 mode: CollectionMode) -> DispatchResult {
 
             // Anyone can create a collection
             let who = ensure_signed(origin)?;
@@ -271,6 +269,7 @@ decl_module! {
                 owner: who.clone(),
                 name: name,
                 mode: mode.clone(),
+                mint_mode: false,
                 access: AccessMode::Normal,
                 description: description,
                 decimal_points: decimal_points,
@@ -304,6 +303,73 @@ decl_module! {
             <AdminList<T>>::remove(collection_id);
             <Collection<T>>::remove(collection_id);
             <WhiteList<T>>::remove(collection_id);
+
+            Ok(())
+        }
+
+        #[weight = 0]
+        pub fn add_to_white_list(origin, collection_id: u64, address: T::AccountId) -> DispatchResult{
+
+            let sender = ensure_signed(origin)?;
+            Self::check_owner_or_admin_permissions(collection_id, sender)?;
+
+            let mut white_list_collection: Vec<T::AccountId>;
+            if <WhiteList<T>>::contains_key(collection_id) {
+                white_list_collection = <WhiteList<T>>::get(collection_id);
+                if !white_list_collection.contains(&address.clone())
+                {
+                    white_list_collection.push(address.clone());
+                }
+            }
+            else {
+                white_list_collection = Vec::new();
+                white_list_collection.push(address.clone());
+            }
+
+            <WhiteList<T>>::insert(collection_id, white_list_collection);
+            Ok(())
+        }
+
+        #[weight = 0]
+        pub fn remove_from_white_list(origin, collection_id: u64, address: T::AccountId) -> DispatchResult{
+
+            let sender = ensure_signed(origin)?;
+            Self::check_owner_or_admin_permissions(collection_id, sender)?;
+
+            if <WhiteList<T>>::contains_key(collection_id) {
+                let mut white_list_collection = <WhiteList<T>>::get(collection_id);
+                if white_list_collection.contains(&address.clone())
+                {
+                    white_list_collection.retain(|i| *i != address.clone());
+                    <WhiteList<T>>::insert(collection_id, white_list_collection);
+                }
+            }
+
+            Ok(())
+        }
+
+        #[weight = 0]
+        pub fn set_public_access_mode(origin, collection_id: u64, mode: AccessMode) -> DispatchResult
+        {
+            let sender = ensure_signed(origin)?;
+
+            Self::check_owner_permissions(collection_id, sender)?;
+            let mut target_collection = <Collection<T>>::get(collection_id);
+            target_collection.access = mode;
+            <Collection<T>>::insert(collection_id, target_collection);
+
+            Ok(())
+        }
+
+        #[weight = 0]
+        pub fn set_mint_permission(origin, collection_id: u64, mint_permission: bool) -> DispatchResult
+        {
+            let sender = ensure_signed(origin)?;
+
+            Self::check_owner_permissions(collection_id, sender)?;
+            let mut target_collection = <Collection<T>>::get(collection_id);
+            target_collection.mint_mode = mint_permission;
+            <Collection<T>>::insert(collection_id, target_collection);
 
             Ok(())
         }
@@ -405,8 +471,16 @@ decl_module! {
         pub fn create_item(origin, collection_id: u64, properties: Vec<u8>, owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
+            Self::collection_exists(collection_id)?;
             let target_collection = <Collection<T>>::get(collection_id);
-            Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
+
+            if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
+                if target_collection.mint_mode == false {
+                    panic!("Collection is not in mint mode");
+                }
+
+                Self::check_white_list(collection_id, owner.clone())?;
+            }
 
             match target_collection.mode
             {
@@ -469,10 +543,13 @@ decl_module! {
         pub fn burn_item(origin, collection_id: u64, item_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
+            Self::collection_exists(collection_id)?;
             let item_owner = Self::is_item_owner(sender.clone(), collection_id, item_id);
             if !item_owner
             {
-                Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
+                if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {  
+                    Self::check_white_list(collection_id, sender.clone())?;
+                }
             }
             let target_collection = <Collection<T>>::get(collection_id);
 
@@ -494,11 +571,15 @@ decl_module! {
         pub fn transfer(origin, recipient: T::AccountId, collection_id: u64, item_id: u64, value: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id), "Only item owner can call transfer method");
+
+            let item_owner = Self::is_item_owner(sender.clone(), collection_id, item_id);
+            if !item_owner {
+                Self::check_white_list(collection_id, sender.clone())?;
+                Self::check_white_list(collection_id, recipient.clone())?;
+            }
 
             let target_collection = <Collection<T>>::get(collection_id);
 
-            // TODO: implement other modes
             match target_collection.mode
             {
                 CollectionMode::NFT(_) => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient)?,
@@ -518,7 +599,10 @@ decl_module! {
             // amount param stub
             let amount = 100000000;
 
-            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id), "Only item owner can call transfer method");
+            let item_owner = Self::is_item_owner(sender.clone(), collection_id, item_id);
+            if !item_owner {
+                Self::check_white_list(collection_id, approved.clone())?;
+            }
 
             let list_exists = <ApprovedList<T>>::contains_key(collection_id, (item_id, sender.clone()));
             if list_exists {
@@ -547,6 +631,9 @@ decl_module! {
             let approved_list_exists = <ApprovedList<T>>::contains_key(collection_id, (item_id, from.clone()));
             if approved_list_exists
             {
+                Self::check_white_list(collection_id, from.clone())?;
+                Self::check_white_list(collection_id, recipient.clone())?;
+
                 let list_itm = <ApprovedList<T>>::get(collection_id, (item_id, from.clone()));
                 let opt_item = list_itm.iter().find(|i| i.approved == sender.clone());
                 ensure!(opt_item.is_some(), "No approve found");
@@ -559,7 +646,7 @@ decl_module! {
             }
             else
             {
-                Self::check_owner_or_admin_permissions(collection_id, sender)?;
+                panic!("Only approved addresses can call this method");
             }
 
             let target_collection = <Collection<T>>::get(collection_id);
@@ -675,11 +762,7 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    fn burn_refungible_item(
-        collection_id: u64,
-        item_id: u64,
-        owner: T::AccountId,
-    ) -> DispatchResult {
+    fn burn_refungible_item(collection_id: u64, item_id: u64, owner: T::AccountId) -> DispatchResult {
         ensure!(
             <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
             "Item does not exists"
@@ -770,26 +853,31 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    fn check_owner_or_admin_permissions(
-        collection_id: u64,
-        subject: T::AccountId,
-    ) -> DispatchResult {
-        Self::collection_exists(collection_id)?;
+    fn is_owner_or_admin_permissions(collection_id: u64, subject: T::AccountId) -> bool {
 
         let target_collection = <Collection<T>>::get(collection_id);
-        let is_owner = subject == target_collection.owner;
-
-        let no_perm_mes = "You do not have permissions to modify this collection";
+        let mut result: bool = subject == target_collection.owner;
         let exists = <AdminList<T>>::contains_key(collection_id);
 
-        if !is_owner {
-            ensure!(exists, no_perm_mes);
-            ensure!(
-                <AdminList<T>>::get(collection_id).contains(&subject),
-                no_perm_mes
-            );
+        if !result & exists {
+            if <AdminList<T>>::get(collection_id).contains(&subject) {
+                result = true
+            }
         }
-        Ok(())
+
+        result
+    }
+
+    fn check_owner_or_admin_permissions(collection_id: u64, subject: T::AccountId) -> DispatchResult {
+        
+        Self::collection_exists(collection_id)?;
+        let result = Self::is_owner_or_admin_permissions(collection_id, subject.clone());
+
+        if result == true {
+            Ok(())
+        } else {
+            panic!("You do not have permissions to modify this collection")
+        }
     }
 
     fn is_item_owner(subject: T::AccountId, collection_id: u64, item_id: u64) -> bool {
@@ -812,6 +900,21 @@ impl<T: Trait> Module<T> {
         }
     }
 
+    fn check_white_list(collection_id: u64, address: T::AccountId) -> DispatchResult {
+
+        let mes = "Address is not in white list";
+        if <WhiteList<T>>::contains_key(collection_id){
+            let wl = <WhiteList<T>>::get(collection_id);
+            if !wl.contains(&address.clone()) {
+                panic!(mes);
+            }
+        }
+        else {
+            panic!(mes);
+        }
+        Ok(())
+    }
+
     fn transfer_fungible(
         collection_id: u64,
         item_id: u64,
@@ -819,6 +922,12 @@ impl<T: Trait> Module<T> {
         owner: T::AccountId,
         new_owner: T::AccountId,
     ) -> DispatchResult {
+
+        ensure!(
+            <FungibleItemList<T>>::contains_key(collection_id, item_id),
+            "Item not exists"
+        );
+
         let full_item = <FungibleItemList<T>>::get(collection_id, item_id);
         let amount = full_item.value;
 
@@ -903,6 +1012,12 @@ impl<T: Trait> Module<T> {
         owner: T::AccountId,
         new_owner: T::AccountId,
     ) -> DispatchResult {
+
+        ensure!(
+            <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
+            "Item not exists"
+        );
+
         let full_item = <ReFungibleItemList<T>>::get(collection_id, item_id);
         let item = full_item
             .owner
@@ -983,6 +1098,12 @@ impl<T: Trait> Module<T> {
         sender: T::AccountId,
         new_owner: T::AccountId,
     ) -> DispatchResult {
+    
+        ensure!(
+            <NftItemList<T>>::contains_key(collection_id, item_id),
+            "Item not exists"
+        );
+
         let mut item = <NftItemList<T>>::get(collection_id, item_id);
 
         ensure!(
