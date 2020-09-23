@@ -258,11 +258,11 @@ decl_module! {
             ensure!(prefix.len() <= 16, "Token prefix can not be longer than 15 char");
 
             // Generate next collection ID
-            let next_id = NextCollectionID::get()
+            let next_id = CreatedCollectionCount::get()
                 .checked_add(1)
                 .expect("collection id error");
 
-            NextCollectionID::put(next_id);
+            CreatedCollectionCount::put(next_id);
 
             // Create new collection
             let new_collection = CollectionType {
@@ -921,6 +921,12 @@ impl<T: Trait> Module<T> {
         owner: T::AccountId,
         new_owner: T::AccountId,
     ) -> DispatchResult {
+
+        ensure!(
+            <FungibleItemList<T>>::contains_key(collection_id, item_id),
+            "Item not exists"
+        );
+
         let full_item = <FungibleItemList<T>>::get(collection_id, item_id);
         let amount = full_item.value;
 
@@ -1005,6 +1011,12 @@ impl<T: Trait> Module<T> {
         owner: T::AccountId,
         new_owner: T::AccountId,
     ) -> DispatchResult {
+
+        ensure!(
+            <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
+            "Item not exists"
+        );
+
         let full_item = <ReFungibleItemList<T>>::get(collection_id, item_id);
         let item = full_item
             .owner
@@ -1085,6 +1097,12 @@ impl<T: Trait> Module<T> {
         sender: T::AccountId,
         new_owner: T::AccountId,
     ) -> DispatchResult {
+    
+        ensure!(
+            <NftItemList<T>>::contains_key(collection_id, item_id),
+            "Item not exists"
+        );
+
         let mut item = <NftItemList<T>>::get(collection_id, item_id);
 
         ensure!(

@@ -145,6 +145,7 @@ Additional CLI usage options are available and may be shown by running `cargo ru
     "Description": "Vec<u16>",
     "TokenPrefix": "Vec<u8>",
     "CustomDataSize": "u32",
+    "MintMode": "bool",
     "OffchainSchema": "Vec<u8>",
     "Sponsor": "AccountId",
     "UnconfirmedSponsor": "AccountId"
