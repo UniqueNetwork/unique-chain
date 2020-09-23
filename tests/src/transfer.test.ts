@@ -5,6 +5,8 @@ import { expect } from "chai";
 import usingApi from "./substrate/substrate-api";
 import promisifySubstrate from "./substrate/promisify-substrate";
 import waitNewBlocks from "./substrate/wait-new-blocks";
+import { alicesPublicKey, bobsPublicKey } from "./accounts";
+import privateKey from "./substrate/privateKey";
 
 async function getBalance(api: ApiPromise, accounts: string[]): Promise<bigint[]> {
   const balance = promisifySubstrate(api, (accounts: string[]) => api.query.system.account.multi(accounts));
@@ -14,18 +16,14 @@ async function getBalance(api: ApiPromise, accounts: string[]): Promise<bigint[]
 
 describe('Transfer', () => {
   it('Balance transfers', async () => {
-    const bobsPublicKey = '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty';
-    const alicesPublicKey = '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY';
     await usingApi(async api => {
       const [alicesBalanceBefore, bobsBalanceBefore] = await getBalance(api, [alicesPublicKey, bobsPublicKey]);
 
-      const keyring = new Keyring({ type: 'sr25519' });
-      
-      const alicePrivateKey = keyring.addFromUri('//Alice');
+      const alicePrivateKey = privateKey('//Alice');
       
       const transfer = api.tx.balances.transfer(bobsPublicKey, 1n);
       
-      const hash = await transfer.signAndSend(alicePrivateKey);
+      await promisifySubstrate(api, () => transfer.signAndSend(alicePrivateKey))();
 
       await waitNewBlocks(api);
   
