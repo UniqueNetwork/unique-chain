@@ -567,13 +567,8 @@ decl_module! {
         pub fn transfer(origin, recipient: T::AccountId, collection_id: u64, item_id: u64, value: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-
-            let item_owner = Self::is_item_owner(sender.clone(), collection_id, item_id);
-            if !item_owner {
-                Self::check_white_list(collection_id, sender.clone())?;
-                Self::check_white_list(collection_id, recipient.clone())?;
-            }
-
+            Self::check_white_list(collection_id, sender.clone())?;
+            Self::check_white_list(collection_id, recipient.clone())?;
             let target_collection = <Collection<T>>::get(collection_id);
 
             match target_collection.mode
