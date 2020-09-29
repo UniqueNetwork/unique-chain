@@ -15,9 +15,9 @@ describe('Connection', () => {
     });
   });
 
-  it('Cannot connect to 0.0.0.0', () => {
-    const neverConnectProvider = new WsProvider('ws://0.0.0.0:9944');
-    expect((async () => {
+  it('Cannot connect to 255.255.255.255', async () => {
+    const neverConnectProvider = new WsProvider('ws://255.255.255.255:9944');
+    await expect((async () => {
       await usingApi(async api => {
         const health = await api.rpc.system.health();
       }, { provider: neverConnectProvider });

@@ -10,13 +10,16 @@ function defaultApiOptions(): ApiOptions {
 
 export default async function usingApi(action: (api: ApiPromise) => Promise<void>, settings: ApiOptions | undefined = undefined): Promise<void> {
   settings = settings || defaultApiOptions();
-  let api: ApiPromise | undefined = undefined;
+  let api: ApiPromise = new ApiPromise(settings);
 
   try {
-    api = new ApiPromise(settings);
-    await promisifySubstrate(api, () => api && api.isReady)();
-    await action(api);
+    await promisifySubstrate(api, async () => {
+      if(api) {
+        await api.isReadyOrError;
+        await action(api);
+      }
+    })();
   } finally {
-    api && api.disconnect();
+    await api.disconnect();
   }
 }
