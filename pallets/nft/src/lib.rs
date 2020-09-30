@@ -562,14 +562,16 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
             Self::collection_exists(collection_id)?;
-            let item_owner = Self::is_item_owner(sender.clone(), collection_id, item_id);
-            if !item_owner
-            {
-                if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {  
-                    Self::check_white_list(collection_id, sender.clone())?;
-                }
-            }
+
+            // Transfer permissions check
             let target_collection = <Collection<T>>::get(collection_id);
+            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) || 
+                Self::is_owner_or_admin_permissions(collection_id, sender.clone()), 
+                "Only item owner, collection owner and admins can modify item");
+
+            if target_collection.access == AccessMode::WhiteList {
+                Self::check_white_list(collection_id, sender.clone())?;
+            }
 
             match target_collection.mode
             {
@@ -590,14 +592,15 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
-            // Check access and mint mode 
+            // Transfer permissions check
             let target_collection = <Collection<T>>::get(collection_id);
-            if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
+            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) || 
+                Self::is_owner_or_admin_permissions(collection_id, sender.clone()), 
+                "Only item owner, collection owner and admins can modify item");
 
+            if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, sender.clone())?;
                 Self::check_white_list(collection_id, recipient.clone())?;
-                ensure!(target_collection.access == AccessMode::WhiteList, "Collection must have WhiteList access");
-                ensure!(target_collection.mint_mode == true, "Collection must be in mint mode");
             }
 
             match target_collection.mode
@@ -616,13 +619,19 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
-            // amount param stub
-            let amount = 100000000;
+            // Transfer permissions check
+            let target_collection = <Collection<T>>::get(collection_id);
+            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) || 
+                Self::is_owner_or_admin_permissions(collection_id, sender.clone()), 
+                "Only item owner, collection owner and admins can approve");
 
-            let item_owner = Self::is_item_owner(sender.clone(), collection_id, item_id);
-            if !item_owner {
+            if target_collection.access == AccessMode::WhiteList {
+                Self::check_white_list(collection_id, sender.clone())?;
                 Self::check_white_list(collection_id, approved.clone())?;
             }
+
+            // amount param stub
+            let amount = 100000000;
 
             let list_exists = <ApprovedList<T>>::contains_key(collection_id, (item_id, sender.clone()));
             if list_exists {
@@ -648,22 +657,24 @@ decl_module! {
         pub fn transfer_from(origin, from: T::AccountId, recipient: T::AccountId, collection_id: u64, item_id: u64, value: u64 ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            let approved_list_exists = <ApprovedList<T>>::contains_key(collection_id, (item_id, from.clone()));
-            ensure!(approved_list_exists, "Only approved addresses can call this method");
+            let mut appoved_transfer = false;
 
-            let list_itm = <ApprovedList<T>>::get(collection_id, (item_id, from.clone()));
-            let opt_item = list_itm.iter().find(|i| i.approved == sender.clone());
-            ensure!(opt_item.is_some(), "No approve found");
-            ensure!(opt_item.unwrap().amount >= value, "Requested value more than approved");
+            // Check approve
+            if <ApprovedList<T>>::contains_key(collection_id, (item_id, from.clone())) {
+                let list_itm = <ApprovedList<T>>::get(collection_id, (item_id, from.clone()));
+                let opt_item = list_itm.iter().find(|i| i.approved == sender.clone());
+                appoved_transfer = opt_item.is_some();
+                ensure!(opt_item.unwrap().amount >= value, "Requested value more than approved");
+            }
 
-            // Check access and mint mode 
+            // Transfer permissions check
             let target_collection = <Collection<T>>::get(collection_id);
-            if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
+            ensure!(appoved_transfer || Self::is_owner_or_admin_permissions(collection_id, sender.clone()), 
+                "Only item owner, collection owner and admins can modify items");
 
+            if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, sender.clone())?;
                 Self::check_white_list(collection_id, recipient.clone())?;
-                ensure!(target_collection.access == AccessMode::WhiteList, "Collection must have WhiteList access");
-                ensure!(target_collection.mint_mode == true, "Collection must be in mint mode");
             }
 
             // remove approve

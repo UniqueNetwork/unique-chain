@@ -330,7 +330,7 @@ fn nft_approve_and_transfer_from() {
         // do approve
         assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
         assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 1);
-        assert_ok!(TemplateModule::approve(origin1.clone(), 10, 1, 1));
+        assert_ok!(TemplateModule::approve(origin1.clone(), 3, 1, 1));
         assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 2);
         assert_eq!(
             TemplateModule::approved(1, (1, 1))[0],
@@ -400,7 +400,7 @@ fn refungible_approve_and_transfer_from() {
         // do approve
         assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
         assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 1);
-        assert_ok!(TemplateModule::approve(origin1.clone(), 10, 1, 1));
+        assert_ok!(TemplateModule::approve(origin1.clone(), 3, 1, 1));
         assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 2);
         assert_eq!(
             TemplateModule::approved(1, (1, 1))[0],
@@ -427,7 +427,7 @@ fn refungible_approve_and_transfer_from() {
         assert_eq!(
             TemplateModule::approved(1, (1, 1))[0],
             ApprovePermissions {
-                approved: 10,
+                approved: 3,
                 amount: 100000000
             }
         );
@@ -472,7 +472,7 @@ fn fungible_approve_and_transfer_from() {
         // do approve
         assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
         assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 1);
-        assert_ok!(TemplateModule::approve(origin1.clone(), 10, 1, 1));
+        assert_ok!(TemplateModule::approve(origin1.clone(), 3, 1, 1));
         assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 2);
         assert_eq!(
             TemplateModule::approved(1, (1, 1))[0],
@@ -499,7 +499,7 @@ fn fungible_approve_and_transfer_from() {
         assert_eq!(
             TemplateModule::approved(1, (1, 1))[0],
             ApprovePermissions {
-                approved: 10,
+                approved: 3,
                 amount: 100000000
             }
         );
