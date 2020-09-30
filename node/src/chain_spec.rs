@@ -1,8 +1,9 @@
-use nft_runtime::{
-    AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-    SystemConfig, WASM_BINARY,
-};
-use nft_runtime::{ContractsConfig, ContractsSchedule};
+// use nft_runtime::{
+//     AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
+//     SystemConfig, WASM_BINARY,
+// };
+// use nft_runtime::{ContractsConfig, ContractsSchedule, NftConfig, CollectionType};
+use nft_runtime::*;
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
@@ -128,6 +129,25 @@ fn testnet_genesis(
                 .collect(),
         }),
         sudo: Some(SudoConfig { key: root_key }),
+        nft: Some(NftConfig {
+            collection: vec![(1, CollectionType { 
+                owner: get_account_id_from_seed::<sr25519::Public>("Alice"),
+                mode: CollectionMode::NFT(50),
+                access: AccessMode::Normal,
+                decimal_points: 0,
+                name: vec!(),
+                description: vec!(),
+                token_prefix: vec!(),
+                custom_data_size: 50,
+                mint_mode: false,
+                offchain_schema: vec!(),
+                sponsor: get_account_id_from_seed::<sr25519::Public>("Alice"),
+                unconfirmed_sponsor: get_account_id_from_seed::<sr25519::Public>("Alice"),
+            })],
+            nft_item_id: vec!(),
+            fungible_item_id: vec!(),
+            refungible_item_id: vec!(),
+        }),
         contracts: Some(ContractsConfig {
             current_schedule: ContractsSchedule {
                 enable_println,
