@@ -49,6 +49,7 @@ echo This is a Gateway node;
   --rpc-port $RPCPORT \
   --name $NODE \
   --ws-external \
+  --ws-max-connections 10000 \
   --rpc-cors all \
   -lruntime \
   $BOOTNODES;
