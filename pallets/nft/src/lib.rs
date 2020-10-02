@@ -40,6 +40,9 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+// Structs
+// #region
+
 #[derive(Encode, Decode, Eq, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum CollectionMode {
@@ -157,6 +160,8 @@ pub struct VestingItem<AccountId, Moment> {
 pub trait Trait: system::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
+
+// #endregion
 
 decl_storage! {
     trait Store for Module<T: Trait> as Nft {
@@ -1287,6 +1292,7 @@ impl<T: Trait> Module<T> {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Economic models
+// #region
 
 /// Fee multiplier.
 pub type Multiplier = FixedU128;
@@ -1481,3 +1487,4 @@ where
         Ok(())
     }
 }
+// #endregion
