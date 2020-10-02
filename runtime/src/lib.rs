@@ -53,8 +53,10 @@ use system::{self as system};
 
 pub use timestamp::Call as TimestampCall;
 
-/// Importing a nft pallet
-pub use nft;
+/// Re-export a nft pallet
+/// TODO: Check this re-export. Is this safe and good style?
+extern crate nft;
+pub use nft::*;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -111,7 +113,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("nft"),
     impl_name: create_runtime_str!("nft"),
     authoring_version: 1,
-    spec_version: 1,
+    spec_version: 2,
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -318,7 +320,7 @@ construct_runtime!(
         Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: transaction_payment::{Module, Storage},
         Sudo: sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        Nft: nft::{Module, Call, Storage, Event<T>},
+        Nft: nft::{Module, Call, Config<T>, Storage, Event<T>},
     }
 );
 
