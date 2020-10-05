@@ -34,6 +34,20 @@ const config = {
         "ReFungible": "(u32, u32)"
       }
     },
+    "Ownership": {
+      "Owner": "AccountId",
+      "Fraction": "u128"
+    },
+    "FungibleItemType": {
+      "Collection": "u64",
+      "Owner": "AccountId",
+      "Value": "u128"
+    },
+    "ReFungibleItemType": {
+      "Collection": "u64",
+      "Owner": "Vec<Ownership>",
+      "Data": "Vec<u8>"
+    },
     "NftItemType": {
       "Collection": "u64",
       "Owner": "AccountId",
@@ -57,9 +71,14 @@ const config = {
       "Description": "Vec<u16>",
       "TokenPrefix": "Vec<u8>",
       "CustomDataSize": "u32",
+      "MintMode": "bool",
       "OffchainSchema": "Vec<u8>",
       "Sponsor": "AccountId",
       "UnconfirmedSponsor": "AccountId"
+    },
+    "ApprovePermissions": {
+      "Approved": "AccountId",
+      "Amount": "u64"
     },
     "RawData": "Vec<u8>",
     "Address": "AccountId",

@@ -198,6 +198,10 @@ Additional CLI usage options are available and may be shown by running `cargo ru
     "Sponsor": "AccountId",
     "UnconfirmedSponsor": "AccountId"
   },
+  "ApprovePermissions": {
+    "Approved": "AccountId",
+    "Amount": "u64"
+  },
   "RawData": "Vec<u8>",
   "Address": "AccountId",
   "LookupSource": "AccountId",

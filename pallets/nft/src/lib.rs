@@ -502,8 +502,9 @@ decl_module! {
             let target_collection = <Collection<T>>::get(collection_id);
 
             if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
-                ensure!(target_collection.mint_mode == true, "Collection is not in mint mode");
-                Self::check_white_list(collection_id, owner.clone())?;
+                ensure!(target_collection.mint_mode == true, "Public minting is not allowed for this collection");
+                Self::check_white_list(collection_id, &owner)?;
+                Self::check_white_list(collection_id, &sender)?;
             }
 
             match target_collection.mode
@@ -576,7 +577,7 @@ decl_module! {
                 "Only item owner, collection owner and admins can modify item");
 
             if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(collection_id, sender.clone())?;
+                Self::check_white_list(collection_id, &sender)?;
             }
 
             match target_collection.mode
@@ -605,8 +606,8 @@ decl_module! {
                 "Only item owner, collection owner and admins can modify item");
 
             if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(collection_id, sender.clone())?;
-                Self::check_white_list(collection_id, recipient.clone())?;
+                Self::check_white_list(collection_id, &sender)?;
+                Self::check_white_list(collection_id, &recipient)?;
             }
 
             match target_collection.mode
@@ -632,8 +633,8 @@ decl_module! {
                 "Only item owner, collection owner and admins can approve");
 
             if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(collection_id, sender.clone())?;
-                Self::check_white_list(collection_id, approved.clone())?;
+                Self::check_white_list(collection_id, &sender)?;
+                Self::check_white_list(collection_id, &approved)?;
             }
 
             // amount param stub
@@ -679,8 +680,8 @@ decl_module! {
                 "Only item owner, collection owner and admins can modify items");
 
             if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(collection_id, sender.clone())?;
-                Self::check_white_list(collection_id, recipient.clone())?;
+                Self::check_white_list(collection_id, &sender)?;
+                Self::check_white_list(collection_id, &recipient)?;
             }
 
             // remove approve
@@ -935,12 +936,12 @@ impl<T: Trait> Module<T> {
         }
     }
 
-    fn check_white_list(collection_id: u64, address: T::AccountId) -> DispatchResult {
+    fn check_white_list(collection_id: u64, address: &T::AccountId) -> DispatchResult {
 
         let mes = "Address is not in white list";
         ensure!(<WhiteList<T>>::contains_key(collection_id), mes);
         let wl = <WhiteList<T>>::get(collection_id);
-        ensure!(wl.contains(&address.clone()), mes);
+        ensure!(wl.contains(address), mes);
 
         Ok(())
     }
