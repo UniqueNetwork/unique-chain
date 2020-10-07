@@ -24,6 +24,7 @@
   "homepage": "",
   "dependencies": {
     "@polkadot/api": "^1.34.1",
+    "@polkadot/api-contract": "^1.34.1",
     "@polkadot/types": "^1.34.1",
     "@polkadot/util": "^3.4.1",
     "@types/bn.js": "^4.11.6",
