@@ -1,0 +1,96 @@
+{
+  "registry": {
+    "strings": [
+      "Storage",
+      "calls",
+      "__ink_private",
+      "__ink_storage",
+      "new",
+      "balance_transfer",
+      "dest",
+      "AccountId",
+      "value",
+      "Balance"
+    ],
+    "types": [
+      {
+        "id": {
+          "custom.name": 1,
+          "custom.namespace": [
+            2,
+            2,
+            3,
+            4
+          ],
+          "custom.params": []
+        },
+        "def": {
+          "struct.fields": []
+        }
+      },
+      {
+        "id": {
+          "array.len": 32,
+          "array.type": 3
+        },
+        "def": "builtin"
+      },
+      {
+        "id": "u8",
+        "def": "builtin"
+      },
+      {
+        "id": "u128",
+        "def": "builtin"
+      }
+    ]
+  },
+  "storage": {
+    "struct.type": 1,
+    "struct.fields": []
+  },
+  "contract": {
+    "name": 2,
+    "constructors": [
+      {
+        "name": 5,
+        "selector": "[\"0x5E\",\"0xBD\",\"0x88\",\"0xD6\"]",
+        "args": [],
+        "docs": []
+      }
+    ],
+    "messages": [
+      {
+        "name": 6,
+        "selector": "[\"0xEC\",\"0x9F\",\"0xA4\",\"0xF0\"]",
+        "mutates": false,
+        "args": [
+          {
+            "name": 7,
+            "type": {
+              "ty": 2,
+              "display_name": [
+                8
+              ]
+            }
+          },
+          {
+            "name": 9,
+            "type": {
+              "ty": 4,
+              "display_name": [
+                10
+              ]
+            }
+          }
+        ],
+        "return_type": null,
+        "docs": [
+          "Dispatches a `transfer` call to the Balances srml module"
+        ]
+      }
+    ],
+    "events": [],
+    "docs": []
+  }
+}
