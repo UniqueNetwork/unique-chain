@@ -258,8 +258,33 @@ decl_event!(
     where
         AccountId = <T as system::Trait>::AccountId,
     {
+        /// New collection was created
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id: Globally unique identifier of newly created collection.
+        /// 
+        /// * mode: [CollectionMode] converted into u8.
+        /// 
+        /// * account_id: Collection owner.
         Created(u64, u8, AccountId),
+
+        /// New item was created.
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id: Id of the collection where item was created.
+        /// 
+        /// * item_id: Id of an item. Unique within the collection.
         ItemCreated(u64, u64),
+
+        /// Collection item was burned.
+        /// 
+        /// # Arguments
+        /// 
+        /// collection_id.
+        /// 
+        /// item_id: Identifier of burned NFT.
         ItemDestroyed(u64, u64),
     }
 );
@@ -281,9 +306,21 @@ decl_module! {
             0
         }
 
-        // Create collection of NFT with given parameters
-        //
-        // @param customDataSz size of custom data in each collection item
+        /// This method creates a Collection of NFTs. Each Token may have multiple properties encoded as an array of bytes of certain length. The initial owner and admin of the collection are set to the address that signed the transaction. Both addresses can be changed later.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Anyone.
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_name: UTF-16 string with collection name (limit 64 characters), will be stored as zero-terminated.
+        /// 
+        /// * collection_description: UTF-16 string with collection description (limit 256 characters), will be stored as zero-terminated.
+        /// 
+        /// * token_prefix: UTF-8 string with token prefix.
+        /// 
+        /// * mode: [CollectionMode] collection type and type dependent data.
         // returns collection ID
         #[weight = 0]
         pub fn create_collection(origin,
@@ -372,6 +409,15 @@ decl_module! {
             Ok(())
         }
 
+        /// **DANGEROUS**: Destroys collection and all NFTs within this collection. Users irrecoverably lose their assets and may lose real money.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner.
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id: collection to destroy.
         #[weight = 0]
         pub fn destroy_collection(origin, collection_id: u64) -> DispatchResult {
 
@@ -407,6 +453,18 @@ decl_module! {
             Ok(())
         }
 
+        /// Add an address to white list.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner
+        /// * Collection Admin
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id.
+        /// 
+        /// * address.
         #[weight = 0]
         pub fn add_to_white_list(origin, collection_id: u64, address: T::AccountId) -> DispatchResult{
 
@@ -430,6 +488,18 @@ decl_module! {
             Ok(())
         }
 
+        /// Remove an address from white list.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner
+        /// * Collection Admin
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id.
+        /// 
+        /// * address.
         #[weight = 0]
         pub fn remove_from_white_list(origin, collection_id: u64, address: T::AccountId) -> DispatchResult{
 
@@ -448,6 +518,17 @@ decl_module! {
             Ok(())
         }
 
+        /// Toggle between normal and white list access for the methods with access for `Anyone`.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner.
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id.
+        /// 
+        /// * mode: [AccessMode]
         #[weight = 0]
         pub fn set_public_access_mode(origin, collection_id: u64, mode: AccessMode) -> DispatchResult
         {
@@ -461,6 +542,19 @@ decl_module! {
             Ok(())
         }
 
+        /// Allows Anyone to create tokens if:
+        /// * White List is enabled, and
+        /// * Address is added to white list, and
+        /// * This method was called with True parameter
+        /// 
+        /// # Permissions
+        /// * Collection Owner
+        ///
+        /// # Arguments
+        /// 
+        /// * collection_id.
+        /// 
+        /// * mint_permission: Boolean parameter. If True, allows minting to Anyone with conditions above.
         #[weight = 0]
         pub fn set_mint_permission(origin, collection_id: u64, mint_permission: bool) -> DispatchResult
         {
@@ -474,6 +568,17 @@ decl_module! {
             Ok(())
         }
 
+        /// Change the owner of the collection.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner.
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id.
+        /// 
+        /// * new_owner.
         #[weight = 0]
         pub fn change_collection_owner(origin, collection_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
@@ -486,6 +591,19 @@ decl_module! {
             Ok(())
         }
 
+        /// Adds an admin of the Collection.
+        /// NFT Collection can be controlled by multiple admin addresses (some which can also be servers, for example). Admins can issue and burn NFTs, as well as add and remove other admins, but cannot change NFT or Collection ownership. 
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner.
+        /// * Collection Admin.
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id: ID of the Collection to add admin for.
+        /// 
+        /// * new_admin_id: Address of new admin to add.
         #[weight = 0]
         pub fn add_collection_admin(origin, collection_id: u64, new_admin_id: T::AccountId) -> DispatchResult {
 
@@ -508,6 +626,18 @@ decl_module! {
             Ok(())
         }
 
+        /// Remove admin address of the Collection. An admin address can remove itself. List of admins may become empty, in which case only Collection Owner will be able to add an Admin.
+        ///
+        /// # Permissions
+        /// 
+        /// * Collection Owner.
+        /// * Collection Admin.
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id: ID of the Collection to remove admin for.
+        /// 
+        /// * account_id: Address of admin to remove.
         #[weight = 0]
         pub fn remove_collection_admin(origin, collection_id: u64, account_id: T::AccountId) -> DispatchResult {
 
@@ -524,6 +654,15 @@ decl_module! {
             Ok(())
         }
 
+        /// # Permissions
+        /// 
+        /// * Collection Owner
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id.
+        /// 
+        /// * new_sponsor.
         #[weight = 0]
         pub fn set_collection_sponsor(origin, collection_id: u64, new_sponsor: T::AccountId) -> DispatchResult {
 
@@ -539,6 +678,13 @@ decl_module! {
             Ok(())
         }
 
+        /// # Permissions
+        /// 
+        /// * Sponsor.
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id.
         #[weight = 0]
         pub fn confirm_sponsorship(origin, collection_id: u64) -> DispatchResult {
 
@@ -555,6 +701,15 @@ decl_module! {
             Ok(())
         }
 
+        /// Switch back to pay-per-own-transaction model.
+        ///
+        /// # Permissions
+        ///
+        /// * Collection owner.
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id.
         #[weight = 0]
         pub fn remove_collection_sponsor(origin, collection_id: u64) -> DispatchResult {
 
@@ -570,6 +725,24 @@ decl_module! {
             Ok(())
         }
 
+        /// This method creates a concrete instance of NFT Collection created with CreateCollection method.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner.
+        /// * Collection Admin.
+        /// * Anyone if
+        ///     * White List is enabled, and
+        ///     * Address is added to white list, and
+        ///     * MintPermission is enabled (see SetMintPermission method)
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id: ID of the collection.
+        /// 
+        /// * properties: Array of bytes that contains NFT properties. Since NFT Module is agnostic of properties meaning, it is treated purely as an array of bytes.
+        /// 
+        /// * owner: Address, initial owner of the NFT.
         #[weight = 0]
         pub fn create_item(origin, collection_id: u64, properties: Vec<u8>, owner: T::AccountId) -> DispatchResult {
 
@@ -578,8 +751,9 @@ decl_module! {
             let target_collection = <Collection<T>>::get(collection_id);
 
             if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
-                ensure!(target_collection.mint_mode == true, "Collection is not in mint mode");
-                Self::check_white_list(collection_id, owner.clone())?;
+                ensure!(target_collection.mint_mode == true, "Public minting is not allowed for this collection");
+                Self::check_white_list(collection_id, &owner)?;
+                Self::check_white_list(collection_id, &sender)?;
             }
 
             match target_collection.mode
@@ -593,7 +767,7 @@ decl_module! {
                     let item = NftItemType {
                         collection: collection_id,
                         owner: owner,
-                        data: properties,
+                        data: properties.clone(),
                     };
 
                     Self::add_nft_item(item)?;
@@ -619,17 +793,18 @@ decl_module! {
 
                     let mut owner_list = Vec::new();
                     let value = (10 as u128).pow(target_collection.decimal_points);
-                    owner_list.push(Ownership {owner: owner, fraction: value});
+                    owner_list.push(Ownership {owner: owner.clone(), fraction: value});
 
                     let item = ReFungibleItemType {
                         collection: collection_id,
                         owner: owner_list,
-                        data: properties
+                        data: properties.clone()
                     };
 
                     Self::add_refungible_item(item)?;
                 },
-                _ => ()
+                _ => { ensure!(1 == 0,"just error"); }
+
             };
 
             // call event
@@ -638,6 +813,19 @@ decl_module! {
             Ok(())
         }
 
+        /// Destroys a concrete instance of NFT.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner.
+        /// * Collection Admin.
+        /// * Current NFT Owner.
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id: ID of the collection.
+        /// 
+        /// * item_id: ID of NFT to burn.
         #[weight = 0]
         pub fn burn_item(origin, collection_id: u64, item_id: u64) -> DispatchResult {
 
@@ -651,7 +839,7 @@ decl_module! {
                 "Only item owner, collection owner and admins can modify item");
 
             if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(collection_id, sender.clone())?;
+                Self::check_white_list(collection_id, &sender)?;
             }
 
             match target_collection.mode
@@ -668,6 +856,29 @@ decl_module! {
             Ok(())
         }
 
+        /// Change ownership of the token.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner
+        /// * Collection Admin
+        /// * Current NFT owner
+        ///
+        /// # Arguments
+        /// 
+        /// * recipient: Address of token recipient.
+        /// 
+        /// * collection_id.
+        /// 
+        /// * item_id: ID of the item
+        ///     * Non-Fungible Mode: Required.
+        ///     * Fungible Mode: Ignored.
+        ///     * Re-Fungible Mode: Required.
+        /// 
+        /// * value: Amount to transfer.
+        ///     * Non-Fungible Mode: Ignored
+        ///     * Fungible Mode: Must specify transferred amount
+        ///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
         #[weight = 0]
         pub fn transfer(origin, recipient: T::AccountId, collection_id: u64, item_id: u64, value: u64) -> DispatchResult {
 
@@ -680,8 +891,8 @@ decl_module! {
                 "Only item owner, collection owner and admins can modify item");
 
             if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(collection_id, sender.clone())?;
-                Self::check_white_list(collection_id, recipient.clone())?;
+                Self::check_white_list(collection_id, &sender)?;
+                Self::check_white_list(collection_id, &recipient)?;
             }
 
             match target_collection.mode
@@ -695,6 +906,21 @@ decl_module! {
             Ok(())
         }
 
+        /// Set, change, or remove approved address to transfer the ownership of the NFT.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner
+        /// * Collection Admin
+        /// * Current NFT owner
+        /// 
+        /// # Arguments
+        /// 
+        /// * approved: Address that is approved to transfer this NFT or zero (if needed to remove approval).
+        /// 
+        /// * collection_id.
+        /// 
+        /// * item_id: ID of the item.
         #[weight = 0]
         pub fn approve(origin, approved: T::AccountId, collection_id: u64, item_id: u64) -> DispatchResult {
 
@@ -707,8 +933,8 @@ decl_module! {
                 "Only item owner, collection owner and admins can approve");
 
             if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(collection_id, sender.clone())?;
-                Self::check_white_list(collection_id, approved.clone())?;
+                Self::check_white_list(collection_id, &sender)?;
+                Self::check_white_list(collection_id, &approved)?;
             }
 
             // amount param stub
@@ -733,7 +959,26 @@ decl_module! {
 
             Ok(())
         }
-
+        
+        /// Change ownership of a NFT on behalf of the owner. See Approve method for additional information. After this method executes, the approval is removed so that the approved address will not be able to transfer this NFT again from this owner.
+        /// 
+        /// # Permissions
+        /// * Collection Owner
+        /// * Collection Admin
+        /// * Current NFT owner
+        /// * Address approved by current NFT owner
+        /// 
+        /// # Arguments
+        /// 
+        /// * from: Address that owns token.
+        /// 
+        /// * recipient: Address of token recipient.
+        /// 
+        /// * collection_id.
+        /// 
+        /// * item_id: ID of the item.
+        /// 
+        /// * value: Amount to transfer.
         #[weight = 0]
         pub fn transfer_from(origin, from: T::AccountId, recipient: T::AccountId, collection_id: u64, item_id: u64, value: u64 ) -> DispatchResult {
 
@@ -754,8 +999,8 @@ decl_module! {
                 "Only item owner, collection owner and admins can modify items");
 
             if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(collection_id, sender.clone())?;
-                Self::check_white_list(collection_id, recipient.clone())?;
+                Self::check_white_list(collection_id, &sender)?;
+                Self::check_white_list(collection_id, &recipient)?;
             }
 
             // remove approve
@@ -775,6 +1020,7 @@ decl_module! {
             Ok(())
         }
 
+        ///
         #[weight = 0]
         pub fn safe_transfer_from(origin, collection_id: u64, item_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
@@ -790,6 +1036,18 @@ decl_module! {
             Ok(())
         }
 
+        /// Set off-chain data schema.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner
+        /// * Collection Admin
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id.
+        /// 
+        /// * schema: String representing the offchain data schema.
         #[weight = 0]
         pub fn set_offchain_schema(
             origin,
@@ -1041,11 +1299,11 @@ impl<T: Trait> Module<T> {
         }
     }
 
-    fn check_white_list(collection_id: u64, address: T::AccountId) -> DispatchResult {
+    fn check_white_list(collection_id: u64, address: &T::AccountId) -> DispatchResult {
         let mes = "Address is not in white list";
         ensure!(<WhiteList<T>>::contains_key(collection_id), mes);
         let wl = <WhiteList<T>>::get(collection_id);
-        ensure!(wl.contains(&address.clone()), mes);
+        ensure!(wl.contains(address), mes);
 
         Ok(())
     }
