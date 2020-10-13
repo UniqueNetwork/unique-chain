@@ -833,6 +833,10 @@ impl<T: Trait> Module<T> {
         <ItemListIndex>::insert(item.collection, current_index);
         <FungibleItemList<T>>::insert(item.collection, current_index, itemcopy);
 
+        // Add current block
+        let v: Vec<BasketItem<T::AccountId, T::BlockNumber>> = Vec::new();
+        <FungibleTransferBasket<T>>::insert(item.collection, current_index, v);
+        
         // Update balance
         let new_balance = <Balance<T>>::get(item.collection, owner.clone())
             .checked_add(value)
@@ -856,6 +860,10 @@ impl<T: Trait> Module<T> {
         <ItemListIndex>::insert(item.collection, current_index);
         <ReFungibleItemList<T>>::insert(item.collection, current_index, itemcopy);
 
+        // Add current block
+        let block_number: T::BlockNumber = 0.into();
+        <ReFungibleTransferBasket<T>>::insert(item.collection, current_index, block_number);
+
         // Update balance
         let new_balance = <Balance<T>>::get(item.collection, owner.clone())
             .checked_add(value)
@@ -876,6 +884,10 @@ impl<T: Trait> Module<T> {
 
         <ItemListIndex>::insert(collection_id, current_index);
         <NftItemList<T>>::insert(collection_id, current_index, item);
+
+        // Add current block
+        let block_number: T::BlockNumber = 0.into();
+        <NftTransferBasket<T>>::insert(collection_id, current_index, block_number);
 
         // Update balance
         let new_balance = <Balance<T>>::get(collection_id, item_owner.clone())
@@ -1494,53 +1506,58 @@ where
                 let _collection_mode = <Collection<T>>::get(collection_id).mode;
 
                 // sponsor timeout
-                let sponsor_timeout = match _collection_mode {
+                let sponsor_transfer = match _collection_mode {
                     CollectionMode::NFT(_) => {
                         let basket = <NftTransferBasket<T>>::get(collection_id, _item_id);
                         let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
-                        let time = basket - ChainLimit::get().nft_sponsor_transfer_timeout.into() - block_number;
-                        if time <= 0.into() {
+                        let limit_time = basket + ChainLimit::get().nft_sponsor_transfer_timeout.into();
+                        if block_number >= limit_time {
                             <NftTransferBasket<T>>::insert(collection_id, _item_id, block_number);
+                            true
                         }
-                        time
+                        else {
+                            false
+                        }
                     }
                     CollectionMode::Fungible(_) => {
                         let mut basket = <FungibleTransferBasket<T>>::get(collection_id, _item_id);
                         let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
-                        let time: T::BlockNumber;
                         if basket.iter().any(|i| i.address == _new_owner.clone())
                         {
                             let item = basket.iter_mut().find(|i| i.address == _new_owner.clone()).unwrap().clone();
-                            time = block_number - ChainLimit::get().fungible_sponsor_transfer_timeout.into() - item.start_block;
-                            if time <= 0.into() {
+                            let limit_time = item.start_block + ChainLimit::get().fungible_sponsor_transfer_timeout.into();
+                            if block_number >= limit_time {
                                 basket.retain(|x| x.address == item.address);
                                 basket.push(BasketItem { start_block: block_number, address: _new_owner.clone() });
                                 <FungibleTransferBasket<T>>::insert(collection_id, _item_id, basket);
+                                true
+                            }
+                            else {
+                                false
                             }
                         }
                         else {
-                            time = block_number;
                             basket.push(BasketItem { start_block: block_number, address: _new_owner.clone()});
+                            true
                         }
-
-                        time
                     }
                     CollectionMode::ReFungible(_, _) => {
                         let basket = <ReFungibleTransferBasket<T>>::get(collection_id, _item_id);
                         let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
-                        let time = basket - ChainLimit::get().refungible_sponsor_transfer_timeout.into() - block_number;
-                        if time <= 0.into() {
+                        let limit_time = basket + ChainLimit::get().nft_sponsor_transfer_timeout.into();
+                        if block_number >= limit_time {
                             <ReFungibleTransferBasket<T>>::insert(collection_id, _item_id, block_number);
+                            true
+                        } else {
+                            false
                         }
-                        time
                     }
                     _ => {
-                        let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
-                        block_number
+                        false
                     },
                 };
 
-                if sponsor_timeout > 0.into() {
+                if !sponsor_transfer {
                     T::AccountId::default()
                 } else {
                     <Collection<T>>::get(collection_id).sponsor
