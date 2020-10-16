@@ -38,8 +38,8 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
     (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
 
-pub fn development_config() -> ChainSpec {
-    ChainSpec::from_genesis(
+pub fn development_config() -> Result<ChainSpec, String> {
+    Ok(ChainSpec::from_genesis(
         "Development",
         "dev",
         ChainType::Development,
@@ -61,11 +61,11 @@ pub fn development_config() -> ChainSpec {
         None,
         None,
         None,
-    )
+    ))
 }
 
-pub fn local_testnet_config() -> ChainSpec {
-    ChainSpec::from_genesis(
+pub fn local_testnet_config() -> Result<ChainSpec, String> {
+    Ok(ChainSpec::from_genesis(
         "Local Testnet",
         "local_testnet",
         ChainType::Local,
@@ -98,7 +98,7 @@ pub fn local_testnet_config() -> ChainSpec {
         None,
         None,
         None,
-    )
+    ))
 }
 
 fn testnet_genesis(
