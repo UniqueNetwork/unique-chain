@@ -44,6 +44,50 @@ fn create_nft_item() {
     });
 }
 
+// Use cases tests region
+// #region
+#[test]
+fn create_nft_multiple_items() {
+    new_test_ext().execute_with(|| {
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+        let mode: CollectionMode = CollectionMode::NFT(2000);
+
+        assert_ok!(TemplateModule::set_chain_limits(RawOrigin::Root.into(), ChainLimits { 
+            collection_numbers_limit: 10,
+            account_token_ownership_limit: 10,
+            collections_admins_limit: 5,
+            custom_data_limit: 2048,
+            nft_sponsor_transfer_timeout: 15,
+            fungible_sponsor_transfer_timeout: 15,
+            refungible_sponsor_transfer_timeout: 15,          
+        }));
+
+        let origin1 = Origin::signed(1);
+        assert_ok!(TemplateModule::create_collection(
+            origin1.clone(),
+            col_name1.clone(),
+            col_desc1.clone(),
+            token_prefix1.clone(),
+            mode
+        ));
+        assert_eq!(TemplateModule::collection(1).owner, 1);
+
+        let properties = [[1, 2, 3].to_vec(), [3, 2, 1].to_vec(), [3, 3, 3].to_vec()].to_vec();
+
+        assert_ok!(TemplateModule::create_multiple_items(
+            origin1.clone(),
+            1,
+            properties.clone(),
+            1
+        ));
+        for (index, data) in properties.iter().enumerate() {
+            assert_eq!(TemplateModule::nft_item_id(1, (index + 1) as u64).data, *data);
+        }
+    });
+}
+
 #[test]
 fn create_refungible_item() {
     new_test_ext().execute_with(|| {
@@ -93,6 +137,57 @@ fn create_refungible_item() {
 }
 
 #[test]
+fn create_multiple_refungible_items() {
+    new_test_ext().execute_with(|| {
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+        let mode: CollectionMode = CollectionMode::ReFungible(2000, 3);
+
+        assert_ok!(TemplateModule::set_chain_limits(RawOrigin::Root.into(), ChainLimits { 
+            collection_numbers_limit: 10,
+            account_token_ownership_limit: 10,
+            collections_admins_limit: 5,
+            custom_data_limit: 2048,
+            nft_sponsor_transfer_timeout: 15,
+            fungible_sponsor_transfer_timeout: 15,
+            refungible_sponsor_transfer_timeout: 15,          
+        }));
+
+        let origin1 = Origin::signed(1);
+        assert_ok!(TemplateModule::create_collection(
+            origin1.clone(),
+            col_name1.clone(),
+            col_desc1.clone(),
+            token_prefix1.clone(),
+            mode
+        ));
+        assert_eq!(TemplateModule::collection(1).owner, 1);
+
+        let properties = [[1, 2, 3].to_vec(), [3, 2, 1].to_vec(), [3, 3, 3].to_vec()].to_vec();
+
+        assert_ok!(TemplateModule::create_multiple_items(
+            origin1.clone(),
+            1,
+            properties.clone(),
+            1
+        ));
+        for (index, data) in properties.iter().enumerate() {
+
+            let item = TemplateModule::refungible_item_id(1, (index + 1) as u64);
+            assert_eq!(item.data, *data);
+            assert_eq!(
+                item.owner[0],
+                Ownership {
+                    owner: 1,
+                    fraction: 1000
+                }
+            );
+        }
+    });
+}
+
+#[test]
 fn create_fungible_item() {
     new_test_ext().execute_with(|| {
         let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
@@ -127,8 +222,51 @@ fn create_fungible_item() {
             1
         ));
         assert_eq!(TemplateModule::fungible_item_id(1, 1).owner, 1);
-        assert_eq!(TemplateModule::balance_count(1, 1), 1000);
-        assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
+    });
+}
+
+#[test]
+fn create_multiple_fungible_items() {
+    new_test_ext().execute_with(|| {
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+        let mode: CollectionMode = CollectionMode::Fungible(3);
+
+        assert_ok!(TemplateModule::set_chain_limits(RawOrigin::Root.into(), ChainLimits { 
+            collection_numbers_limit: 10,
+            account_token_ownership_limit: 10,
+            collections_admins_limit: 5,
+            custom_data_limit: 2048,
+            nft_sponsor_transfer_timeout: 15,
+            fungible_sponsor_transfer_timeout: 15,
+            refungible_sponsor_transfer_timeout: 15,          
+        }));
+
+        let origin1 = Origin::signed(1);
+        assert_ok!(TemplateModule::create_collection(
+            origin1.clone(),
+            col_name1.clone(),
+            col_desc1.clone(),
+            token_prefix1.clone(),
+            mode
+        ));
+        assert_eq!(TemplateModule::collection(1).owner, 1);
+
+        let properties = [[].to_vec(), [].to_vec(), [].to_vec()].to_vec();
+
+        assert_ok!(TemplateModule::create_multiple_items(
+            origin1.clone(),
+            1,
+            properties.clone(),
+            1
+        ));
+        
+        for (index, _) in properties.iter().enumerate() {
+            assert_eq!(TemplateModule::fungible_item_id(1, (index + 1) as u64).owner, 1);
+        }
+        assert_eq!(TemplateModule::balance_count(1, 1), 3000);
+        assert_eq!(TemplateModule::address_tokens(1, 1), [1, 2, 3]);
     });
 }
 

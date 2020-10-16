@@ -10,7 +10,7 @@ use codec::{Decode, Encode};
 pub use frame_support::{
     construct_runtime, decl_event, decl_module, decl_storage,
     dispatch::DispatchResult,
-    ensure, parameter_types,
+    ensure, fail, parameter_types,
     traits::{
         Currency, ExistenceRequirement, Get, Imbalance, KeyOwnerProofSystem, OnUnbalanced,
         Randomness, WithdrawReason,
@@ -747,68 +747,53 @@ decl_module! {
         pub fn create_item(origin, collection_id: u64, properties: Vec<u8>, owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
+
+            Self::collection_exists(collection_id)?;
+
+            let target_collection = <Collection<T>>::get(collection_id);
+
+            Self::can_create_items_in_collection(collection_id, &target_collection, &sender, &owner)?;
+            Self::validate_create_item_args(&target_collection, &properties)?;
+            Self::create_item_no_validation(collection_id, &target_collection, &properties, &owner)?;
+
+            Ok(())
+        }
+
+        /// This method creates multiple instances of NFT Collection created with CreateCollection method.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner.
+        /// * Collection Admin.
+        /// * Anyone if
+        ///     * White List is enabled, and
+        ///     * Address is added to white list, and
+        ///     * MintPermission is enabled (see SetMintPermission method)
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id: ID of the collection.
+        /// 
+        /// * properties: Array items properties. Each property is an array of bytes itself, see [create_item].
+        /// 
+        /// * owner: Address, initial owner of the NFT.
+        #[weight = 0]
+        pub fn create_multiple_items(origin, collection_id: u64, properties: Vec<Vec<u8>>, owner: T::AccountId) -> DispatchResult {
+
+            ensure!(properties.len() > 0, "Length of items properties must be greater than 0.");
+            let sender = ensure_signed(origin)?;
+
             Self::collection_exists(collection_id)?;
             let target_collection = <Collection<T>>::get(collection_id);
 
-            if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
-                ensure!(target_collection.mint_mode == true, "Public minting is not allowed for this collection");
-                Self::check_white_list(collection_id, &owner)?;
-                Self::check_white_list(collection_id, &sender)?;
+            Self::can_create_items_in_collection(collection_id, &target_collection, &sender, &owner)?;
+
+            for prop in &properties {
+                Self::validate_create_item_args(&target_collection, prop)?;
             }
-
-            match target_collection.mode
-            {
-                CollectionMode::NFT(_) => {
-
-                    // check size
-                    ensure!(target_collection.custom_data_size >= properties.len() as u32, "Size of item is too large");
-
-                    // Create nft item
-                    let item = NftItemType {
-                        collection: collection_id,
-                        owner: owner,
-                        data: properties.clone(),
-                    };
-
-                    Self::add_nft_item(item)?;
-
-                },
-                CollectionMode::Fungible(_) => {
-
-                    // check size
-                    ensure!(properties.len() as u32 == 0, "Size of item must be 0 with fungible type");
-
-                    let item = FungibleItemType {
-                        collection: collection_id,
-                        owner: owner,
-                        value: (10 as u128).pow(target_collection.decimal_points)
-                    };
-
-                    Self::add_fungible_item(item)?;
-                },
-                CollectionMode::ReFungible(_, _) => {
-
-                    // check size
-                    ensure!(target_collection.custom_data_size >= properties.len() as u32, "Size of item is too large");
-
-                    let mut owner_list = Vec::new();
-                    let value = (10 as u128).pow(target_collection.decimal_points);
-                    owner_list.push(Ownership {owner: owner.clone(), fraction: value});
-
-                    let item = ReFungibleItemType {
-                        collection: collection_id,
-                        owner: owner_list,
-                        data: properties.clone()
-                    };
-
-                    Self::add_refungible_item(item)?;
-                },
-                _ => { ensure!(1 == 0,"just error"); }
-
-            };
-
-            // call event
-            Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id)));
+            for prop in &properties {
+                Self::create_item_no_validation(collection_id, &target_collection, prop, &owner)?;
+            }
 
             Ok(())
         }
@@ -1078,6 +1063,94 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
+
+    fn can_create_items_in_collection(collection_id: u64, collection: &CollectionType<T::AccountId>, sender: &T::AccountId, owner: &T::AccountId) -> DispatchResult {
+
+        if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
+            ensure!(collection.mint_mode == true, "Public minting is not allowed for this collection");
+            Self::check_white_list(collection_id, owner)?;
+            Self::check_white_list(collection_id, sender)?;
+        }
+
+        Ok(())
+    }
+
+    fn validate_create_item_args(collection: &CollectionType<T::AccountId>, properties: &Vec<u8>) -> DispatchResult {
+
+        match collection.mode
+        {
+            CollectionMode::NFT(_) => {
+
+                // check size
+                ensure!(collection.custom_data_size >= properties.len() as u32, "Size of item is too large")
+            },
+            CollectionMode::Fungible(_) => {
+
+                // check size
+                ensure!(properties.len() as u32 == 0, "Size of item must be 0 with fungible type")
+            },
+            CollectionMode::ReFungible(_, _) => {
+
+                // check size
+                ensure!(collection.custom_data_size >= properties.len() as u32, "Size of item is too large")
+            },
+            _ => {
+                fail!("Unexpected collection mode")
+            }
+        }
+
+        Ok(())
+    }
+
+    fn create_item_no_validation(collection_id: u64, collection: &CollectionType<T::AccountId>, properties: &Vec<u8>, owner: &T::AccountId) -> DispatchResult {
+        match collection.mode
+        {
+            CollectionMode::NFT(_) => {
+
+                // Create nft item
+                let item = NftItemType {
+                    collection: collection_id,
+                    owner: owner.clone(),
+                    data: properties.clone(),
+                };
+
+                Self::add_nft_item(item)?;
+
+            },
+            CollectionMode::Fungible(_) => {
+
+                let item = FungibleItemType {
+                    collection: collection_id,
+                    owner: owner.clone(),
+                    value: (10 as u128).pow(collection.decimal_points)
+                };
+
+                Self::add_fungible_item(item)?;
+            },
+            CollectionMode::ReFungible(_, _) => {
+
+                let mut owner_list = Vec::new();
+                let value = (10 as u128).pow(collection.decimal_points);
+                owner_list.push(Ownership {owner: owner.clone(), fraction: value});
+
+                let item = ReFungibleItemType {
+                    collection: collection_id,
+                    owner: owner_list,
+                    data: properties.clone()
+                };
+
+                Self::add_refungible_item(item)?;
+            },
+            _ => { ensure!(1 == 0,"just error"); }
+
+        };
+
+        // call event
+        Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id)));
+
+        Ok(())
+    }
+
     fn add_fungible_item(item: FungibleItemType<T::AccountId>) -> DispatchResult {
         let current_index = <ItemListIndex>::get(item.collection)
             .checked_add(1)
