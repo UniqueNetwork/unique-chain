@@ -131,7 +131,7 @@ describe('Contracts', () => {
     });
   });
 
-  it('Can transfer balance using smart contract.', async () => {
+  it.skip('Can transfer balance using smart contract.', async () => {
     await usingApi(async api => {
       const [alicesBalanceBefore, bobsBalanceBefore] = await getBalance(api, [alicesPublicKey, bobsPublicKey]);
       const wasm = fs.readFileSync('./src/balance-transfer-contract/calls.wasm');

@@ -23,9 +23,9 @@
   "license": "Apache 2.0",
   "homepage": "",
   "dependencies": {
-    "@polkadot/api": "^1.34.1",
-    "@polkadot/api-contract": "^1.34.1",
-    "@polkadot/types": "^1.34.1",
+    "@polkadot/api": "^2.0.1",
+    "@polkadot/api-contract": "^2.0.1",
+    "@polkadot/types": "^2.0.1",
     "@polkadot/util": "^3.4.1",
     "@types/bn.js": "^4.11.6",
     "chai-as-promised": "^7.1.1"
