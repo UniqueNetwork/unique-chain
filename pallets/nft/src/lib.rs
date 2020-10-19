@@ -1718,7 +1718,7 @@ impl<T: Trait + transaction_payment::Trait + Send + Sync> sp_std::fmt::Debug
 impl<T: Trait + transaction_payment::Trait + Send + Sync> ChargeTransactionPayment<T>
 where
     T::Call:
-        Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Module<T>, T>,
+        Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Call<T>>,
     BalanceOf<T>: Send + Sync + FixedPointOperand,
 {
     /// utility constructor. Used only in client/factory code.
@@ -1855,8 +1855,7 @@ impl<T: Trait + transaction_payment::Trait + Send + Sync> SignedExtension
     for ChargeTransactionPayment<T>
 where
     BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
-    T::Call:
-        Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Module<T>, T>,
+    T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Call<T>>,
 {
     const IDENTIFIER: &'static str = "ChargeTransactionPayment";
     type AccountId = T::AccountId;

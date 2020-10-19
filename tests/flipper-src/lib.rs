@@ -1,70 +1,64 @@
+// Copyright 2018-2020 Parity Technologies (UK) Ltd.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use ink_lang as ink;
 
-#[ink::contract(version = "0.1.0")]
-mod flipper {
-    use ink_core::storage;
-
-    /// Defines the storage of your contract.
-    /// Add new fields to the below struct in order
-    /// to add new static storage fields to your contract.
+#[ink::contract]
+pub mod flipper {
     #[ink(storage)]
-    struct Flipper {
-        /// Stores a single `bool` value on the storage.
-        value: storage::Value<bool>,
+    pub struct Flipper {
+        value: bool,
     }
 
     impl Flipper {
-        /// Constructor that initializes the `bool` value to the given `init_value`.
+        /// Creates a new flipper smart contract initialized with the given value.
         #[ink(constructor)]
-        fn new(&mut self, init_value: bool) {
-            self.value.set(init_value);
+        pub fn new(init_value: bool) -> Self {
+            Self { value: init_value }
         }
 
-        /// Constructor that initializes the `bool` value to `false`.
-        ///
-        /// Constructors can delegate to other constructors.
+        /// Creates a new flipper smart contract initialized to `false`.
         #[ink(constructor)]
-        fn default(&mut self) {
-            self.new(false)
+        pub fn default() -> Self {
+            Self::new(Default::default())
         }
 
-        /// A message that can be called on instantiated contracts.
-        /// This one flips the value of the stored `bool` from `true`
-        /// to `false` and vice versa.
+        /// Flips the current value of the Flipper's bool.
         #[ink(message)]
-        fn flip(&mut self) {
-            *self.value = !self.get();
+        pub fn flip(&mut self) {
+            self.value = !self.value;
         }
 
-        /// Simply returns the current value of our `bool`.
+        /// Returns the current value of the Flipper's bool.
         #[ink(message)]
-        fn get(&self) -> bool {
-            *self.value
+        pub fn get(&self) -> bool {
+            self.value
         }
     }
 
-    /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
-    /// module and test functions are marked with a `#[test]` attribute.
-    /// The below code is technically just normal Rust code.
     #[cfg(test)]
     mod tests {
-        /// Imports all the definitions from the outer scope so we can use them here.
         use super::*;
 
-        /// We test if the default constructor does its job.
         #[test]
         fn default_works() {
-            // Note that even though we defined our `#[ink(constructor)]`
-            // above as `&mut self` functions that return nothing we can call
-            // them in test code as if they were normal Rust constructors
-            // that take no `self` argument but return `Self`.
             let flipper = Flipper::default();
             assert_eq!(flipper.get(), false);
         }
 
-        /// We test a simple use case of our contract.
         #[test]
         fn it_works() {
             let mut flipper = Flipper::new(false);
