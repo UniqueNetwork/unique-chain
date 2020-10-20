@@ -35,30 +35,31 @@ parameter_types! {
 }
 
 impl system::Trait for Test {
-    type Origin = Origin;
-    type Call = ();
-    type Index = u64;
-    type BlockNumber = u64;
-    type Hash = H256;
-    type Hashing = BlakeTwo256;
-    type AccountId = u64;
-    type Lookup = IdentityLookup<Self::AccountId>;
-    type Header = Header;
-    type Event = ();
-    type BlockHashCount = BlockHashCount;
-    type MaximumBlockWeight = MaximumBlockWeight;
-    type MaximumBlockLength = MaximumBlockLength;
-    type AvailableBlockRatio = AvailableBlockRatio;
-    type BaseCallFilter = ();
-    type DbWeight = RocksDbWeight;
-    type BlockExecutionWeight = BlockExecutionWeight;
-    type ExtrinsicBaseWeight = ExtrinsicBaseWeight;
-    type MaximumExtrinsicWeight = MaximumExtrinsicWeight;
-    type Version = ();
-    type ModuleToIndex = ();
-    type AccountData = ();
-    type OnNewAccount = ();
-    type OnKilledAccount = ();
+	type BaseCallFilter = ();
+	type Origin = Origin;
+	type Call = ();
+	type Index = u64;
+	type BlockNumber = u64;
+	type Hash = H256;
+	type Hashing = BlakeTwo256;
+	type AccountId = u64;
+	type Lookup = IdentityLookup<Self::AccountId>;
+	type Header = Header;
+	type Event = ();
+	type BlockHashCount = BlockHashCount;
+	type MaximumBlockWeight = MaximumBlockWeight;
+	type DbWeight = ();
+	type BlockExecutionWeight = ();
+	type ExtrinsicBaseWeight = ();
+	type MaximumExtrinsicWeight = MaximumBlockWeight;
+	type MaximumBlockLength = MaximumBlockLength;
+	type AvailableBlockRatio = AvailableBlockRatio;
+	type Version = ();
+	type PalletInfo = ();
+	type AccountData = ();
+	type OnNewAccount = ();
+	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
 }
 impl Trait for Test {
     type Event = ();

@@ -16,7 +16,7 @@ native_executor_instance!(
 	pub Executor,
     nft_runtime::api::dispatch,
     nft_runtime::native_version,
-	// frame_benchmarking::benchmarking::HostFunctions,
+	frame_benchmarking::benchmarking::HostFunctions,
 );
 
 type FullClient = sc_service::TFullClient<Block, RuntimeApi, Executor>;

@@ -1,194 +1,3 @@
-[dependencies.aura]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-package = 'pallet-aura'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.balances]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-package = 'pallet-balances'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.codec]
-default-features = false
-features = ['derive']
-package = 'parity-scale-codec'
-version = '1.3.0'
-
-[dependencies.contracts]
-git = 'https://github.com/usetech-llc/substrate.git'
-default-features = false
-package = 'pallet-contracts'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.contracts-primitives]
-git = 'https://github.com/usetech-llc/substrate.git'
-default-features = false
-package = 'pallet-contracts-primitives'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.contracts-rpc-runtime-api]
-git = 'https://github.com/usetech-llc/substrate.git'
-default-features = false
-package = 'pallet-contracts-rpc-runtime-api'
-version = '0.8.0'
-branch = 'v2.0.0_release'
-
-[dependencies.frame-executive]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.frame-support]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.grandpa]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-package = 'pallet-grandpa'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.randomness-collective-flip]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-package = 'pallet-randomness-collective-flip'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.serde]
-features = ['derive']
-optional = true
-version = '1.0.101'
-
-[dependencies.sp-api]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sp-block-builder]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sp-consensus-aura]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '0.8.0'
-
-[dependencies.sp-core]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sp-inherents]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sp-offchain]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sp-runtime]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sp-session]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sp-std]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sp-transaction-pool]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sp-version]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sudo]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-package = 'pallet-sudo'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.system]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-package = 'frame-system'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.nft]
-default-features = false
-package = 'pallet-nft'
-path = '../pallets/nft'
-version = '2.0.0'
-
-[dependencies.timestamp]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-package = 'pallet-timestamp'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.transaction-payment]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-package = 'pallet-transaction-payment'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.frame-system-rpc-runtime-api]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-version = '2.0.0'
-branch = 'v2.0.0_release'
-
-[dependencies.transaction-payment-rpc-runtime-api]
-default-features = false
-git = 'https://github.com/usetech-llc/substrate.git'
-package = 'pallet-transaction-payment-rpc-runtime-api'
-version = '2.0.0'
-branch = 'v2.0.0_release'
-
-[build-dependencies.wasm-builder-runner]
-git = 'https://github.com/usetech-llc/substrate.git'
-package = 'substrate-wasm-builder-runner'
-version = '1.0.5'
-branch = 'v2.0.0_release'
-
 [package]
 authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
 edition = '2018'
@@ -201,21 +10,84 @@ version = '2.0.0'
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
+[build-dependencies]
+wasm-builder-runner = { package = 'substrate-wasm-builder-runner', version = '1.0.5' }
+
+# alias "parity-scale-code" to "codec"
+[dependencies.codec]
+default-features = false
+features = ['derive']
+package = 'parity-scale-codec'
+version = '1.3.4'
+
+[dependencies]
+hex-literal = { optional = true, version = '0.3.1' }
+serde = { features = ['derive'], optional = true, version = '1.0.101' }
+
+# local dependencies
+pallet-nft = { path = '../pallets/nft', default-features = false, version = '2.0.0' }
+
+# Substrate dependencies
+frame-benchmarking = { default-features = false, optional = true, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+frame-executive = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+frame-support = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+frame-system = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+frame-system-benchmarking = { default-features = false, optional = true, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+frame-system-rpc-runtime-api = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-aura = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-balances = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-contracts = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-contracts-primitives = { default-features = false, version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-contracts-rpc-runtime-api = { default-features = false, version = '0.8.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-grandpa = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-randomness-collective-flip = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-sudo = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-timestamp = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-transaction-payment = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-api = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-block-builder = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-consensus-aura = { default-features = false, version = '0.8.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-core = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-inherents = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-offchain = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-runtime = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-session = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-std = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-transaction-pool = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-version = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+
 [features]
 default = ['std']
+runtime-benchmarks = [
+    'hex-literal',
+    'frame-benchmarking',
+    'frame-support/runtime-benchmarks',
+    'frame-system-benchmarking',
+    'frame-system/runtime-benchmarks',
+    'pallet-balances/runtime-benchmarks',
+    'pallet-timestamp/runtime-benchmarks',
+    'sp-runtime/runtime-benchmarks',
+]
 std = [
-    'aura/std',
-    'balances/std',
     'codec/std',
-    'contracts/std',
-    'contracts-primitives/std',
-    'contracts-rpc-runtime-api/std',
+    'serde',
     'frame-executive/std',
     'frame-support/std',
+    'frame-system/std',
     'frame-system-rpc-runtime-api/std',
-    'grandpa/std',
-    'randomness-collective-flip/std',
-    'serde',
+    'pallet-aura/std',
+    'pallet-balances/std',
+    'pallet-contracts/std',
+    'pallet-contracts-primitives/std',
+    'pallet-contracts-rpc-runtime-api/std',
+    'pallet-grandpa/std',
+    'pallet-randomness-collective-flip/std',
+    'pallet-sudo/std',
+    'pallet-timestamp/std',
+    'pallet-transaction-payment/std',
+    'pallet-transaction-payment-rpc-runtime-api/std',
+    'pallet-nft/std',
     'sp-api/std',
     'sp-block-builder/std',
     'sp-consensus-aura/std',
@@ -227,10 +99,4 @@ std = [
     'sp-std/std',
     'sp-transaction-pool/std',
     'sp-version/std',
-    'sudo/std',
-    'system/std',
-    'timestamp/std',
-    'transaction-payment/std',
-    'transaction-payment-rpc-runtime-api/std',
-    'nft/std',
 ]
