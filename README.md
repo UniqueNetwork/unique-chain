@@ -118,13 +118,19 @@ Additional CLI usage options are available and may be shown by running `cargo ru
 ## Benchmarks
 
 First of all, add rust toolchain and make it default.
+```bash
 rustup target add wasm32-unknown-unknown --toolchain nightly-2020-10-01
+```
 
 Then in "/node/src" run build command below
+```bash
 cargo +nightly-2020-10-01 build --release --features runtime-benchmarks
+```
 
 Run benchmark
+```bash
 target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" --repeat 1
+```
 
 ## UI custom types
 ```
