@@ -185,6 +185,49 @@ pub trait Trait: system::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
 
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking {
+    use super::*;
+    use sp_std::prelude::*;
+    use frame_system::RawOrigin;
+    // use frame_support::{ensure, traits::OnFinalize};
+    use frame_benchmarking::{benchmarks, account};  // , TrackedStorageKey, whitelisted_caller
+    use crate::Module as Nft;
+
+    const SEED: u32 = 1;
+
+    benchmarks! {
+
+        _ {}
+
+        create_collection {
+            let col_name1: Vec<u16> = "Test1".encode_utf16().collect::<Vec<u16>>();
+            let col_desc1: Vec<u16> = "TestDescription1".encode_utf16().collect::<Vec<u16>>();
+            let token_prefix1: Vec<u8> = b"token_prefix1".to_vec();
+            let mode: CollectionMode = CollectionMode::NFT(2000);
+            let caller: T::AccountId = account("caller", 0, SEED);
+        }: create_collection(RawOrigin::Signed(caller.clone()), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), mode)
+        verify {
+			assert_eq!(Nft::<T>::collection(2).owner, caller);
+		}
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use crate::tests_composite::{ExtBuilder, Test};
+        use frame_support::assert_ok;
+
+        #[test]
+        fn create_collection() {
+            ExtBuilder::default().build().execute_with(|| {
+                assert_ok!(test_benchmark_create_collection::<Test>());
+            });
+        }
+    }
+}
+
 // #endregion
 
 decl_storage! {
@@ -1936,3 +1979,5 @@ where
     }
 }
 // #endregion
+
+

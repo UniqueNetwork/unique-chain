@@ -42,7 +42,7 @@ git = 'https://github.com/usetech-llc/substrate.git'
 branch = 'v2.0.0_release'
 version = '2.0.0'
 
-[dev-dependencies.sp-runtime]
+[dependencies.sp-runtime]
 default-features = false
 git = 'https://github.com/usetech-llc/substrate.git'
 branch = 'v2.0.0_release'
@@ -66,6 +66,13 @@ package = 'pallet-transaction-payment'
 branch = 'v2.0.0_release'
 version = '2.0.0'
 
+[dependencies.frame-benchmarking]
+version = "2.0.0"
+default-features = false
+git = 'https://github.com/usetech-llc/substrate.git'
+branch = 'v2.0.0_release'
+optional = true
+
 [features]
 default = ['std']
 std = [
@@ -74,4 +81,7 @@ std = [
     'frame-support/std',
     'frame-system/std',
     'sp-std/std',
+    'sp-runtime/std',
+    'frame-benchmarking/std',
 ]
+runtime-benchmarks = ["frame-benchmarking"]
