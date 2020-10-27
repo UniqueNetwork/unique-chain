@@ -142,7 +142,22 @@
             let caller: T::AccountId = T::AccountId::from(whitelisted_caller());
             Nft::<T>::create_collection(RawOrigin::Signed(caller.clone()).into(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), mode.clone())?;
 
-        }: create_item(RawOrigin::Signed(caller.clone()), 2, [1, 2, 3].to_vec(), caller.clone())
+        }: create_item(RawOrigin::Signed(caller.clone()), 2, [1,2,3].to_vec(), caller.clone())
+
+        #[extra]
+        create_item_nft_large {
+            let col_name1: Vec<u16> = "Test1".encode_utf16().collect::<Vec<u16>>();
+            let col_desc1: Vec<u16> = "TestDescription1".encode_utf16().collect::<Vec<u16>>();
+            let token_prefix1: Vec<u8> = b"token_prefix1".to_vec();
+            let mode: CollectionMode = CollectionMode::NFT(2000);
+            let caller: T::AccountId = T::AccountId::from(whitelisted_caller());
+            let mut item_large: Vec<u8> = Vec::new(); 
+            for i in 0..1998 {
+                item_large.push(10);
+            }
+            Nft::<T>::create_collection(RawOrigin::Signed(caller.clone()).into(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), mode.clone())?;
+
+        }: create_item(RawOrigin::Signed(caller.clone()), 2, item_large, caller.clone())
 
         // fungible item
         create_item_fungible {

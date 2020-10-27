@@ -785,6 +785,7 @@ decl_module! {
         /// * owner: Address, initial owner of the NFT.
         #[weight =
         (130_000_000 as Weight)
+        .saturating_add((2135 as Weight).saturating_mul((properties.len() as u64) as Weight))
         .saturating_add(RocksDbWeight::get().reads(10 as Weight))
         .saturating_add(RocksDbWeight::get().writes(8 as Weight))]
         pub fn create_item(origin, collection_id: u64, properties: Vec<u8>, owner: T::AccountId) -> DispatchResult {
