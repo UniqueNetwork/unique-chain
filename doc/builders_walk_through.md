@@ -53,6 +53,8 @@ The Ink! 3.0 Chain Extensions will allow calling pallets from smart contracts wi
 
 Fungible and Re-Fungible modes are fully implemented and ready for QA as of now. Fungible mode allows creation of ERC-20-like tokens, and Re-Fungible allows sharing NFT tokens between multiple addresses.
 
+#### Re-Fungibility
+
 Re-fungible feature is best demonstrated in action using our NFT wallet. First, you need to have some Unique and Re-Fungible tokens. [This section](#getting-some-unique-tokens) tells how to get them.
 
 1. Open the [NFT Wallet](https://uniqueapps.usetech.com/#/nft)
@@ -61,6 +63,8 @@ Re-fungible feature is best demonstrated in action using our NFT wallet. First, 
 4. Expand the "Artwork" collection and see that you own a token with a partial balance
 5. Transfer the token to some other address: Click "Transfer token" and enter address and the amount. Amount should be entered as decimal fraction. For example "0.01" to transfer 1/100th part of the token. 
 6. Observe that your balance decreased by the amount you entered.
+
+#### Fungibility
 
 Fungible tokens can be created manually by calling extrinsics:
 1. Open [Extrinsics page in UI](https://uniqueapps.usetech.com/#/extrinsics)
@@ -225,7 +229,7 @@ Here is how one can test Marketplace:
 2. Contact us in [Unique Telegram channel](https://t.me/Uniquechain), so we can place a test NFT for you buy on the marketplace.
 3. Refresh the marketplace page and click on the NFT to buy (the one we placed)
 4. Go through buying process
-5. Let us know to exchange KSM back for the NFT (if you'd would not like to keep the punk of course :) )
+5. Let us know to exchange KSM back for the NFT (if you would not like to keep the punk of course :) )
 
 ### How Marketplace works
 
