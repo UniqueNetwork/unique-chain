@@ -84,6 +84,7 @@ pub type Hash = sp_core::H256;
 /// Digest item type.
 pub type DigestItem = generic::DigestItem<Hash>;
 
+mod nft_weights;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -144,9 +145,12 @@ parameter_types! {
     pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
     pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
     /// Assume 10% of weight for average on_initialize calls.
-    pub MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get()
-        .saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
-    pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
+    // pub MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get()
+    //     .saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
+
+    pub MaximumExtrinsicWeight: Weight = 4_294_967_295; 
+    //pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
+    pub const MaximumBlockLength: u32 = 4_294_967_295;
     pub const Version: RuntimeVersion = VERSION;
 }
 
@@ -291,7 +295,7 @@ impl pallet_contracts::Trait for Runtime {
 }
 
 parameter_types! {
-    pub const TransactionByteFee: Balance = 1;
+	pub const TransactionByteFee: Balance = 10 * MILLICENTS;
 }
 
 impl pallet_transaction_payment::Trait for Runtime {
@@ -299,7 +303,7 @@ impl pallet_transaction_payment::Trait for Runtime {
     type OnTransactionPayment = ();
     type TransactionByteFee = TransactionByteFee;
     type WeightToFee = IdentityFee<Balance>;
-    type FeeMultiplierUpdate = ();
+    type FeeMultiplierUpdate =  ();
 }
 
 impl pallet_sudo::Trait for Runtime {
@@ -310,6 +314,7 @@ impl pallet_sudo::Trait for Runtime {
 /// Used for the module nft in `./nft.rs`
 impl pallet_nft::Trait for Runtime {
     type Event = Event;
+    type WeightInfo = nft_weights::WeightInfo;
 }
 
 construct_runtime!(

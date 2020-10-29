@@ -44,6 +44,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod default_weights;
+
 // Structs
 // #region
 
@@ -182,8 +184,32 @@ pub struct ChainLimits {
     pub refungible_sponsor_transfer_timeout: u32,
 }
 
-pub trait Trait: system::Trait {
+pub trait WeightInfo {
+	fn create_collection() -> Weight;
+	fn destroy_collection() -> Weight;
+	fn add_to_white_list() -> Weight;
+	fn remove_from_white_list() -> Weight;
+    fn set_public_access_mode() -> Weight;
+    fn set_mint_permission() -> Weight;
+    fn change_collection_owner() -> Weight;
+    fn add_collection_admin() -> Weight;
+    fn remove_collection_admin() -> Weight;
+    fn set_collection_sponsor() -> Weight;
+    fn confirm_sponsorship() -> Weight;
+    fn remove_collection_sponsor() -> Weight;
+    fn create_item(s: usize, ) -> Weight;
+    fn burn_item() -> Weight;
+    fn transfer() -> Weight;
+    fn approve() -> Weight;
+    fn transfer_from() -> Weight;
+    fn set_offchain_schema() -> Weight;
+}
+
+pub trait Trait: system::Trait + Sized  {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+
+    /// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -326,10 +352,7 @@ decl_module! {
         /// 
         /// * mode: [CollectionMode] collection type and type dependent data.
         // returns collection ID
-        #[weight =
-        (70_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(7 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(5 as Weight))]
+        #[weight = T::WeightInfo::create_collection()]
         pub fn create_collection(origin,
                                  collection_name: Vec<u16>,
                                  collection_description: Vec<u16>,
@@ -425,10 +448,7 @@ decl_module! {
         /// # Arguments
         /// 
         /// * collection_id: collection to destroy.
-        #[weight =
-        (90_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(2 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(5 as Weight))]
+        #[weight = T::WeightInfo::destroy_collection()]
         pub fn destroy_collection(origin, collection_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -475,10 +495,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * address.
-        #[weight =
-        (30_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(3 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(1 as Weight))]
+        #[weight = T::WeightInfo::add_to_white_list()]
         pub fn add_to_white_list(origin, collection_id: u64, address: T::AccountId) -> DispatchResult{
 
             let sender = ensure_signed(origin)?;
@@ -513,10 +530,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * address.
-        #[weight =
-        (35_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(3 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(1 as Weight))]
+        #[weight = T::WeightInfo::remove_from_white_list()]
         pub fn remove_from_white_list(origin, collection_id: u64, address: T::AccountId) -> DispatchResult{
 
             let sender = ensure_signed(origin)?;
@@ -545,10 +559,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * mode: [AccessMode]
-        #[weight =
-        (27_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(1 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(1 as Weight))]
+        #[weight = T::WeightInfo::set_public_access_mode()]
         pub fn set_public_access_mode(origin, collection_id: u64, mode: AccessMode) -> DispatchResult
         {
             let sender = ensure_signed(origin)?;
@@ -574,10 +585,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * mint_permission: Boolean parameter. If True, allows minting to Anyone with conditions above.
-        #[weight =
-        (27_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(1 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(1 as Weight))]
+        #[weight = T::WeightInfo::set_mint_permission()]
         pub fn set_mint_permission(origin, collection_id: u64, mint_permission: bool) -> DispatchResult
         {
             let sender = ensure_signed(origin)?;
@@ -601,10 +609,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * new_owner.
-        #[weight =
-        (27_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(1 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(1 as Weight))]
+        #[weight = T::WeightInfo::change_collection_owner()]
         pub fn change_collection_owner(origin, collection_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -629,10 +634,7 @@ decl_module! {
         /// * collection_id: ID of the Collection to add admin for.
         /// 
         /// * new_admin_id: Address of new admin to add.
-        #[weight =
-        (32_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(3 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(1 as Weight))]
+        #[weight = T::WeightInfo::add_collection_admin()]
         pub fn add_collection_admin(origin, collection_id: u64, new_admin_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -666,10 +668,7 @@ decl_module! {
         /// * collection_id: ID of the Collection to remove admin for.
         /// 
         /// * account_id: Address of admin to remove.
-        #[weight =
-        (50_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(2 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(1 as Weight))]
+        #[weight = T::WeightInfo::remove_collection_admin()]
         pub fn remove_collection_admin(origin, collection_id: u64, account_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -694,10 +693,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * new_sponsor.
-        #[weight =
-        (32_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(2 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(1 as Weight))]
+        #[weight = T::WeightInfo::set_collection_sponsor()]
         pub fn set_collection_sponsor(origin, collection_id: u64, new_sponsor: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -719,10 +715,7 @@ decl_module! {
         /// # Arguments
         /// 
         /// * collection_id.
-        #[weight =
-        (22_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(1 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(1 as Weight))]
+        #[weight = T::WeightInfo::confirm_sponsorship()]
         pub fn confirm_sponsorship(origin, collection_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -747,10 +740,7 @@ decl_module! {
         /// # Arguments
         /// 
         /// * collection_id.
-        #[weight =
-        (24_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(1 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(1 as Weight))]
+        #[weight = T::WeightInfo::remove_collection_sponsor()]
         pub fn remove_collection_sponsor(origin, collection_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -783,11 +773,13 @@ decl_module! {
         /// * properties: Array of bytes that contains NFT properties. Since NFT Module is agnostic of properties meaning, it is treated purely as an array of bytes.
         /// 
         /// * owner: Address, initial owner of the NFT.
-        #[weight =
-        (130_000_000 as Weight)
-        .saturating_add((2135 as Weight).saturating_mul((properties.len() as u64) as Weight))
-        .saturating_add(RocksDbWeight::get().reads(10 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(8 as Weight))]
+        // #[weight =
+        // (130_000_000 as Weight)
+        // .saturating_add((2135 as Weight).saturating_mul((properties.len() as u64) as Weight))
+        // .saturating_add(RocksDbWeight::get().reads(10 as Weight))
+        // .saturating_add(RocksDbWeight::get().writes(8 as Weight))]
+
+        #[weight = T::WeightInfo::create_item(properties.len())]
         pub fn create_item(origin, collection_id: u64, properties: Vec<u8>, owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -870,10 +862,7 @@ decl_module! {
         /// * collection_id: ID of the collection.
         /// 
         /// * item_id: ID of NFT to burn.
-        #[weight =
-        (170_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(9 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(7 as Weight))]
+        #[weight = T::WeightInfo::burn_item()]
         pub fn burn_item(origin, collection_id: u64, item_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -926,10 +915,7 @@ decl_module! {
         ///     * Non-Fungible Mode: Ignored
         ///     * Fungible Mode: Must specify transferred amount
         ///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
-        #[weight =
-        (125_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(7 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(7 as Weight))]
+        #[weight = T::WeightInfo::transfer()]
         pub fn transfer(origin, recipient: T::AccountId, collection_id: u64, item_id: u64, value: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -971,10 +957,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * item_id: ID of the item.
-        #[weight =
-        (45_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(3 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(1 as Weight))]
+        #[weight = T::WeightInfo::approve()]
         pub fn approve(origin, approved: T::AccountId, collection_id: u64, item_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -1032,10 +1015,7 @@ decl_module! {
         /// * item_id: ID of the item.
         /// 
         /// * value: Amount to transfer.
-        #[weight =
-        (150_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(9 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(8 as Weight))]
+        #[weight = T::WeightInfo::transfer_from()]
         pub fn transfer_from(origin, from: T::AccountId, recipient: T::AccountId, collection_id: u64, item_id: u64, value: u64 ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -1107,10 +1087,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * schema: String representing the offchain data schema.
-        #[weight =
-        (33_000_000 as Weight)
-        .saturating_add(RocksDbWeight::get().reads(2 as Weight))
-        .saturating_add(RocksDbWeight::get().writes(1 as Weight))]
+        #[weight = T::WeightInfo::set_offchain_schema()]
         pub fn set_offchain_schema(
             origin,
             collection_id: u64,
