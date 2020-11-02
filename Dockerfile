@@ -3,7 +3,7 @@
 FROM phusion/baseimage:0.10.2 as builder
 LABEL maintainer="gz@usetech.com"
 
-ENV WASM_TOOLCHAIN=nightly-2020-05-01
+ENV WASM_TOOLCHAIN=nightly-2020-10-01
 
 ARG PROFILE=release
 
@@ -17,19 +17,23 @@ RUN mkdir nft_parachain
 WORKDIR /nft_parachain
 COPY . .
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-	export PATH="$PATH:$HOME/.cargo/bin" && \
+RUN export CARGO_HOME="/cargo-home" && curl https://sh.rustup.rs -sSf | sh -s -- -y
+RUN export PATH="/cargo-home/bin:$PATH" && \
+    export CARGO_HOME="/cargo-home" && \
+	cargo fetch
+RUN export PATH="/cargo-home/bin:$PATH" && \
+    export CARGO_HOME="/cargo-home" && \
 	rustup toolchain uninstall $(rustup toolchain list) && \
-	rustup default 1.44.0 && \
 	rustup toolchain install $WASM_TOOLCHAIN && \
 	rustup target add wasm32-unknown-unknown --toolchain $WASM_TOOLCHAIN && \
     rustup target list --installed && \
-    rustup show && \
-	cargo build "--$PROFILE" 
+    rustup show
+
+RUN export PATH="/cargo-home/bin:$PATH" && \
+    export CARGO_HOME="/cargo-home" && \
+	cargo +$WASM_TOOLCHAIN build "--$PROFILE"
 	# && \
 	# cargo test
-
-RUN cd target/release && ls -la
 
 # ===== RUN ======
 
