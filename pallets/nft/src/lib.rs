@@ -11,7 +11,6 @@ pub use frame_support::{
     construct_runtime, decl_event, decl_module, decl_storage,
     dispatch::DispatchResult,
     ensure, parameter_types,
-    debug,
     traits::{
         Currency, ExistenceRequirement, Get, Imbalance, KeyOwnerProofSystem, OnUnbalanced,
         Randomness, WithdrawReason,
@@ -23,22 +22,21 @@ pub use frame_support::{
     },
     IsSubType, StorageValue,
 };
-use sp_runtime::print;
 // use frame_support::weights::{Weight, constants::RocksDbWeight as DbWeight};
 
 use frame_system::{self as system, ensure_signed, ensure_root};
 use sp_runtime::sp_std::prelude::Vec;
 use sp_runtime::{
     traits::{
-        DispatchInfoOf, Dispatchable, PostDispatchInfoOf, SaturatedConversion, Saturating,
-        SignedExtension, Zero,
+        DispatchInfoOf, Dispatchable, PostDispatchInfoOf, Saturating, SignedExtension, Zero,
     },
     transaction_validity::{
-        InvalidTransaction, TransactionPriority, TransactionValidity, TransactionValidityError,
-        ValidTransaction,
+        InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
     },
     FixedPointOperand, FixedU128,
 };
+use pallet_contracts::ContractAddressFor;
+use sp_runtime::traits::StaticLookup;
 
 #[cfg(test)]
 mod mock;
@@ -205,6 +203,7 @@ pub trait WeightInfo {
     fn approve() -> Weight;
     fn transfer_from() -> Weight;
     fn set_offchain_schema() -> Weight;
+    // fn enable_contract_sponsoring() -> Weight;
 }
 
 pub trait Trait: system::Trait + Sized + transaction_payment::Trait + pallet_contracts::Trait {
@@ -259,9 +258,9 @@ decl_storage! {
         pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => Vec<BasketItem<T::AccountId, T::BlockNumber>>;
         pub ReFungibleTransferBasket get(fn refungible_transfer_basket): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => T::BlockNumber;
 
-        // Sponsorship
-        pub ContractSponsor get(fn contract_sponsor): map hasher(identity) T::AccountId => T::AccountId;
-        pub UnconfirmedContractSponsor get(fn unconfirmed_contract_sponsor): map hasher(identity) T::AccountId => T::AccountId;
+        // Contract Sponsorship and Ownership
+        pub ContractOwner get(fn contract_owner): map hasher(identity) T::AccountId => T::AccountId;
+        pub ContractSelfSponsoring get(fn contract_self_sponsoring): map hasher(identity) T::AccountId => bool;
     }
     add_extra_genesis {
         build(|config: &GenesisConfig<T>| {
@@ -1114,7 +1113,37 @@ decl_module! {
             ensure_root(origin)?;
             <ChainLimit>::put(limits);
             Ok(())
-        }        
+        }
+
+        /// Enable smart contract self-sponsoring.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Contract Owner
+        /// 
+        /// # Arguments
+        /// 
+        /// * contract address
+        /// * enable flag
+        /// 
+        #[weight = 0]
+        pub fn enable_contract_sponsoring(
+            origin,
+            contract_address: T::AccountId,
+            enable: bool
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            let mut is_owner = false;
+            if <ContractOwner<T>>::contains_key(contract_address.clone()) {
+                let owner = <ContractOwner<T>>::get(&contract_address);
+                is_owner = sender == owner;
+            }
+            ensure!(is_owner, "Only contract owner may call this method");
+
+            <ContractSelfSponsoring<T>>::insert(contract_address, enable);
+            Ok(())
+        }
+
     }
 }
 
@@ -1758,7 +1787,7 @@ impl<T: Trait + Send + Sync> sp_std::fmt::Debug
 
 impl<T: Trait + Send + Sync> ChargeTransactionPayment<T>
 where
-    T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Call<T>>,
+    T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Call<T>> + IsSubType<pallet_contracts::Call<T>>,
     BalanceOf<T>: Send + Sync + FixedPointOperand,
 {
     /// utility constructor. Used only in client/factory code.
@@ -1797,7 +1826,7 @@ where
 
         // Determine who is paying transaction fee based on ecnomic model
         // Parse call to extract collection ID and access collection sponsor
-        let sponsor: T::AccountId = match call.is_sub_type() {
+        let mut sponsor: T::AccountId = match IsSubType::<Call<T>>::is_sub_type(call) {
             Some(Call::create_item(collection_id, _properties, _owner)) => {
                 <Collection<T>>::get(collection_id).sponsor
             }
@@ -1863,12 +1892,40 @@ where
                 }
             }
 
-            // Some(pallet_contracts::Call::call(_dest, _value, _gas_limit, _data)) => {
-            // Some(pallet_contracts::Call::call(..)) => {
-            //     T::AccountId::default()
-            // }
-
             _ => T::AccountId::default(),
+        };
+
+        // Sponsor smart contracts
+        sponsor = match IsSubType::<pallet_contracts::Call<T>>::is_sub_type(call) {
+
+            // On instantiation: set the contract owner
+            Some(pallet_contracts::Call::instantiate(_endowment, _gas_limit, code_hash, data)) => {
+
+                let new_contract_address = <T as pallet_contracts::Trait>::DetermineContractAddress::contract_address_for(
+                    code_hash,
+                    &data,
+                    &who,
+                );
+                <ContractOwner<T>>::insert(new_contract_address.clone(), who.clone());
+
+                T::AccountId::default()
+            },
+
+            // When the contract is called, check if the sponsoring is enabled and pay fees from contract endowment if it is
+            Some(pallet_contracts::Call::call(dest, _value, _gas_limit, _data)) => {
+
+                let mut sp = T::AccountId::default();
+                let called_contract: T::AccountId = T::Lookup::lookup((*dest).clone()).unwrap_or(T::AccountId::default());
+                if <ContractSelfSponsoring<T>>::contains_key(called_contract.clone()) {
+                    if <ContractSelfSponsoring<T>>::get(called_contract.clone()) {
+                        sp = called_contract;
+                    }
+                }
+
+                sp
+            },
+
+            _ => sponsor,
         };
 
         let mut who_pays_fee: T::AccountId = sponsor.clone();
@@ -1902,34 +1959,29 @@ impl<T: Trait + Send + Sync> SignedExtension
     for ChargeTransactionPayment<T>
 where
     BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
-    T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Call<T>>,
+    T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Call<T>> + IsSubType<pallet_contracts::Call<T>>,
 {
     const IDENTIFIER: &'static str = "ChargeTransactionPayment";
     type AccountId = T::AccountId;
     type Call = T::Call;
     type AdditionalSigned = ();
-    type Pre = ();
-    // type Pre = (
-    //     BalanceOf<T>,
-    //     Self::AccountId,
-    //     Option<NegativeImbalanceOf<T>>,
-    //     BalanceOf<T>,
-    // );
+    type Pre = (
+        BalanceOf<T>,
+        Self::AccountId,
+        Option<NegativeImbalanceOf<T>>,
+        BalanceOf<T>,
+    );
     fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> {
         Ok(())
     }
 
     fn validate(
         &self,
-        who: &Self::AccountId,
-        call: &Self::Call,
-        info: &DispatchInfoOf<Self::Call>,
-        len: usize,
+        _who: &Self::AccountId,
+        _call: &Self::Call,
+        _info: &DispatchInfoOf<Self::Call>,
+        _len: usize,
     ) -> TransactionValidity {
-        let (fee, _) = self.withdraw_fee(who, call, info, len)?;
-
-        print("====== validate");
-
         Ok(ValidTransaction::default())
     }
 
@@ -1940,15 +1992,8 @@ where
         info: &DispatchInfoOf<Self::Call>,
         len: usize,
     ) -> Result<Self::Pre, TransactionValidityError> {
-
-        print("========= PreDispatch");
-
-        // let (fee, imbalance) = self.withdraw_fee(who, call, info, len)?;
-
-        // debug::info!("Fee: {:?}", fee);
-
-        // Ok((self.0, who.clone(), imbalance, fee))
-        Ok(())
+        let (fee, imbalance) = self.withdraw_fee(who, call, info, len)?;
+        Ok((self.0, who.clone(), imbalance, fee))
     }
 
     fn post_dispatch(
@@ -1958,222 +2003,36 @@ where
         len: usize,
         _result: &DispatchResult,
     ) -> Result<(), TransactionValidityError> {
-        // let (tip, who, imbalance, fee) = pre;
-        // if let Some(payed) = imbalance {
-        //     let actual_fee = <transaction_payment::Module<T>>::compute_actual_fee(
-        //         len as u32, info, post_info, tip,
-        //     );
-        //     let refund = fee.saturating_sub(actual_fee);
-        //     let actual_payment =
-        //         match <T as transaction_payment::Trait>::Currency::deposit_into_existing(
-        //             &who, refund,
-        //         ) {
-        //             Ok(refund_imbalance) => {
-        //                 // The refund cannot be larger than the up front payed max weight.
-        //                 // `PostDispatchInfo::calc_unspent` guards against such a case.
-        //                 match payed.offset(refund_imbalance) {
-        //                     Ok(actual_payment) => actual_payment,
-        //                     Err(_) => return Err(InvalidTransaction::Payment.into()),
-        //                 }
-        //             }
-        //             // We do not recreate the account using the refund. The up front payment
-        //             // is gone in that case.
-        //             Err(_) => payed,
-        //         };
-        //     let imbalances = actual_payment.split(tip);
-        //     <T as transaction_payment::Trait>::OnTransactionPayment::on_unbalanceds(
-        //         Some(imbalances.0).into_iter().chain(Some(imbalances.1)),
-        //     );
-        // }
+        let (tip, who, imbalance, fee) = pre;
+        if let Some(payed) = imbalance {
+            let actual_fee = <transaction_payment::Module<T>>::compute_actual_fee(
+                len as u32, info, post_info, tip,
+            );
+            let refund = fee.saturating_sub(actual_fee);
+            let actual_payment =
+                match <T as transaction_payment::Trait>::Currency::deposit_into_existing(
+                    &who, refund,
+                ) {
+                    Ok(refund_imbalance) => {
+                        // The refund cannot be larger than the up front payed max weight.
+                        // `PostDispatchInfo::calc_unspent` guards against such a case.
+                        match payed.offset(refund_imbalance) {
+                            Ok(actual_payment) => actual_payment,
+                            Err(_) => return Err(InvalidTransaction::Payment.into()),
+                        }
+                    }
+                    // We do not recreate the account using the refund. The up front payment
+                    // is gone in that case.
+                    Err(_) => payed,
+                };
+            let imbalances = actual_payment.split(tip);
+            <T as transaction_payment::Trait>::OnTransactionPayment::on_unbalanceds(
+                Some(imbalances.0).into_iter().chain(Some(imbalances.1)),
+            );
+        }
         Ok(())
     }
 }
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-#[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct ChargeContractTransactionPayment<T: Trait + Send + Sync>(
-    #[codec(compact)] BalanceOf<T>
-);
-
-impl<T: Trait + Send + Sync> sp_std::fmt::Debug
-    for ChargeContractTransactionPayment<T>
-{
-    #[cfg(feature = "std")]
-    fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-        write!(f, "ChargeContractTransactionPayment<{:?}>", self.0)
-    }
-    #[cfg(not(feature = "std"))]
-    fn fmt(&self, _: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-        Ok(())
-    }
-}
-
-// impl<T: Trait + Send + Sync> ChargeContractTransactionPayment<T>
-// where
-//     // T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo>,
-//     T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<pallet_contracts::Call<T>>,
-//     BalanceOf<T>: Send + Sync + FixedPointOperand,
-// {
-//     // /// utility constructor. Used only in client/factory code.
-//     // pub fn from(fee: BalanceOf<T>) -> Self {
-//     //     Self(fee)
-//     // }
-
-//     pub fn traditional_fee(
-//         len: usize,
-//         info: &DispatchInfoOf<T::Call>,
-//         tip: BalanceOf<T>,
-//     ) -> BalanceOf<T>
-//     where
-//         T::Call: Dispatchable<Info = DispatchInfo>,
-//     {
-//         <transaction_payment::Module<T>>::compute_fee(len as u32, info, tip)
-//     }
-
-//     fn withdraw_fee(
-//         &self,
-//         who: &T::AccountId,
-//         call: &T::Call,
-//         info: &DispatchInfoOf<T::Call>,
-//         len: usize,
-//     ) -> Result<(BalanceOf<T>, Option<NegativeImbalanceOf<T>>), TransactionValidityError> {
-//         let tip = self.0;
-
-//         let mut fee = Self::traditional_fee(len, info, tip);
-
-//         // Determine who is paying transaction fee based on ecnomic model
-//         // Parse call to extract collection ID and access collection sponsor
-//         // let sponsor: T::AccountId = match call.is_sub_type() {
-//         //     // Some(pallet_contracts::Call::call(_dest, _value, _gas_limit, _data)) => {
-//         //     Some(pallet_contracts::Call::call(..)) => {
-//         //         // fee = <BalanceOf<T>>::from(0);
-//         //         T::AccountId::default()
-//         //     }
-//         //     _ => T::AccountId::default(),
-//         // };
-//         let sponsor = T::AccountId::default();
-
-//         let mut who_pays_fee: T::AccountId = sponsor.clone();
-//         if sponsor == T::AccountId::default() {
-//             who_pays_fee = who.clone();
-//         }
-
-//         // Only mess with balances if fee is not zero.
-//         if fee.is_zero() {
-//             return Ok((fee, None));
-//         }
-
-//         match <T as transaction_payment::Trait>::Currency::withdraw(
-//             &who_pays_fee,
-//             fee,
-//             if tip.is_zero() {
-//                 WithdrawReason::TransactionPayment.into()
-//             } else {
-//                 WithdrawReason::TransactionPayment | WithdrawReason::Tip
-//             },
-//             ExistenceRequirement::KeepAlive,
-//         ) {
-//             Ok(imbalance) => Ok((fee, Some(imbalance))),
-//             Err(_) => Err(InvalidTransaction::Payment.into()),
-//         }
-//     }
-// }
-
-
-
-impl<T: Trait + Send + Sync> SignedExtension
-    for ChargeContractTransactionPayment<T>
-where
-    BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
-    // T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo>,
-    T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<pallet_contracts::Call<T>>,
-{
-    const IDENTIFIER: &'static str = "ChargeContractTransactionPayment";
-    type AccountId = T::AccountId;
-    type Call = T::Call;
-    type AdditionalSigned = ();
-    type Pre = ();
-
-    // type Pre = (
-    //     BalanceOf<T>,
-    //     Self::AccountId,
-    //     Option<NegativeImbalanceOf<T>>,
-    //     BalanceOf<T>,
-    // );
-    fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> {
-        Ok(())
-    }
-
-    fn validate(
-        &self,
-        who: &Self::AccountId,
-        call: &Self::Call,
-        info: &DispatchInfoOf<Self::Call>,
-        len: usize,
-    ) -> TransactionValidity {
-        // let (fee, _) = self.withdraw_fee(who, call, info, len)?;
-
-        print("====== Contracts validate");
-
-        Ok(ValidTransaction::default())
-    }
-
-    fn pre_dispatch(
-        self,
-        who: &Self::AccountId,
-        call: &Self::Call,
-        info: &DispatchInfoOf<Self::Call>,
-        len: usize,
-    ) -> Result<Self::Pre, TransactionValidityError> {
-        // let (fee, imbalance) = self.withdraw_fee(who, call, info, len)?;
-        // Ok((self.0, who.clone(), imbalance, fee))
-
-        print("====== Contracts pre-dispatch");
-        // debug::info!("Fee: {:?}", fee);
-
-        Ok(())
-    }
-
-    fn post_dispatch(
-        pre: Self::Pre,
-        info: &DispatchInfoOf<Self::Call>,
-        post_info: &PostDispatchInfoOf<Self::Call>,
-        len: usize,
-        _result: &DispatchResult,
-    ) -> Result<(), TransactionValidityError> {
-        // let (tip, who, imbalance, fee) = pre;
-        // if let Some(payed) = imbalance {
-        //     let actual_fee = <transaction_payment::Module<T>>::compute_actual_fee(
-        //         len as u32, info, post_info, tip,
-        //     );
-        //     let refund = fee.saturating_sub(actual_fee);
-        //     let actual_payment =
-        //         match <T as transaction_payment::Trait>::Currency::deposit_into_existing(
-        //             &who, refund,
-        //         ) {
-        //             Ok(refund_imbalance) => {
-        //                 // The refund cannot be larger than the up front payed max weight.
-        //                 // `PostDispatchInfo::calc_unspent` guards against such a case.
-        //                 match payed.offset(refund_imbalance) {
-        //                     Ok(actual_payment) => actual_payment,
-        //                     Err(_) => return Err(InvalidTransaction::Payment.into()),
-        //                 }
-        //             }
-        //             // We do not recreate the account using the refund. The up front payment
-        //             // is gone in that case.
-        //             Err(_) => payed,
-        //         };
-        //     let imbalances = actual_payment.split(tip);
-        //     <T as transaction_payment::Trait>::OnTransactionPayment::on_unbalanceds(
-        //         Some(imbalances.0).into_iter().chain(Some(imbalances.1)),
-        //     );
-        // }
-        Ok(())
-    }
-}
-
 
 // #endregion
 
