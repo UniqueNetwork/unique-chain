@@ -73,6 +73,13 @@ git = 'https://github.com/usetech-llc/substrate.git'
 branch = 'v2.0.0_release'
 optional = true
 
+[dependencies.pallet-contracts]
+default-features = false
+git = 'https://github.com/usetech-llc/substrate.git'
+package = 'pallet-contracts'
+branch = 'v2.0.0_release'
+version = '2.0.0'
+
 [features]
 default = ['std']
 std = [

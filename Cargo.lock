@@ -3737,6 +3737,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
+ "pallet-contracts",
  "pallet-transaction-payment",
  "parity-scale-codec",
  "serde",

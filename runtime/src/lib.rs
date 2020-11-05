@@ -352,6 +352,7 @@ pub type SignedExtra = (
     system::CheckNonce<Runtime>,
     system::CheckWeight<Runtime>,
     pallet_nft::ChargeTransactionPayment<Runtime>,
+    pallet_nft::ChargeContractTransactionPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
