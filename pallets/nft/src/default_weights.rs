@@ -92,4 +92,9 @@ impl crate::WeightInfo for () {
             .saturating_add(DbWeight::get().reads(2 as Weight))
             .saturating_add(DbWeight::get().writes(1 as Weight))
     }
+    // fn enable_contract_sponsoring() -> Weight {
+    //     (0 as Weight)
+    //         .saturating_add(DbWeight::get().reads(1 as Weight))
+    //         .saturating_add(DbWeight::get().writes(1 as Weight))
+    // }
 }
