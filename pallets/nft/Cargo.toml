@@ -80,6 +80,27 @@ package = 'pallet-contracts'
 branch = 'v2.0.0_release'
 version = '2.0.0'
 
+[dependencies.pallet-balances]
+default-features = false
+git = 'https://github.com/usetech-llc/substrate.git'
+package = 'pallet-balances'
+branch = 'v2.0.0_release'
+version = '2.0.0'
+
+[dependencies.pallet-timestamp]
+default-features = false
+git = 'https://github.com/usetech-llc/substrate.git'
+package = 'pallet-timestamp'
+branch = 'v2.0.0_release'
+version = '2.0.0'
+
+[dependencies.pallet-randomness-collective-flip]
+default-features = false
+git = 'https://github.com/usetech-llc/substrate.git'
+package = 'pallet-randomness-collective-flip'
+branch = 'v2.0.0_release'
+version = '2.0.0'
+
 [features]
 default = ['std']
 std = [
@@ -87,6 +108,9 @@ std = [
     "serde/std",
     'frame-support/std',
     'frame-system/std',
+    'pallet-balances/std',
+    'pallet-timestamp/std',
+    'pallet-randomness-collective-flip/std',
     'sp-std/std',
     'sp-runtime/std',
     'frame-benchmarking/std',
