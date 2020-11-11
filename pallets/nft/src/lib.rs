@@ -28,15 +28,15 @@ use frame_system::{self as system, ensure_signed, ensure_root};
 use sp_runtime::sp_std::prelude::Vec;
 use sp_runtime::{
     traits::{
-        DispatchInfoOf, Dispatchable, PostDispatchInfoOf, SaturatedConversion, Saturating,
-        SignedExtension, Zero,
+        DispatchInfoOf, Dispatchable, PostDispatchInfoOf, Saturating, SignedExtension, Zero,
     },
     transaction_validity::{
-        InvalidTransaction, TransactionPriority, TransactionValidity, TransactionValidityError,
-        ValidTransaction,
+        InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
     },
     FixedPointOperand, FixedU128,
 };
+use pallet_contracts::ContractAddressFor;
+use sp_runtime::traits::StaticLookup;
 
 #[cfg(test)]
 mod mock;
@@ -208,6 +208,7 @@ pub trait WeightInfo {
     fn set_const_on_chain_schema() -> Weight;
     fn set_variable_on_chain_schema() -> Weight;
     fn set_variable_meta_data() -> Weight;
+    // fn enable_contract_sponsoring() -> Weight;
 }
 
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
@@ -249,7 +250,7 @@ impl CreateItemData {
     }
 }
 
-pub trait Trait: system::Trait + Sized  {
+pub trait Trait: system::Trait + Sized + transaction_payment::Trait + pallet_contracts::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 
     /// Weight information for extrinsics in this pallet.
@@ -301,9 +302,9 @@ decl_storage! {
         pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => Vec<BasketItem<T::AccountId, T::BlockNumber>>;
         pub ReFungibleTransferBasket get(fn refungible_transfer_basket): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => T::BlockNumber;
 
-        // Sponsorship
-        pub ContractSponsor get(fn contract_sponsor): map hasher(identity) T::AccountId => T::AccountId;
-        pub UnconfirmedContractSponsor get(fn unconfirmed_contract_sponsor): map hasher(identity) T::AccountId => T::AccountId;
+        // Contract Sponsorship and Ownership
+        pub ContractOwner get(fn contract_owner): map hasher(identity) T::AccountId => T::AccountId;
+        pub ContractSelfSponsoring get(fn contract_self_sponsoring): map hasher(identity) T::AccountId => bool;
     }
     add_extra_genesis {
         build(|config: &GenesisConfig<T>| {
@@ -1251,7 +1252,37 @@ decl_module! {
             ensure_root(origin)?;
             <ChainLimit>::put(limits);
             Ok(())
-        }        
+        }
+
+        /// Enable smart contract self-sponsoring.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Contract Owner
+        /// 
+        /// # Arguments
+        /// 
+        /// * contract address
+        /// * enable flag
+        /// 
+        #[weight = 0]
+        pub fn enable_contract_sponsoring(
+            origin,
+            contract_address: T::AccountId,
+            enable: bool
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            let mut is_owner = false;
+            if <ContractOwner<T>>::contains_key(contract_address.clone()) {
+                let owner = <ContractOwner<T>>::get(&contract_address);
+                is_owner = sender == owner;
+            }
+            ensure!(is_owner, "Only contract owner may call this method");
+
+            <ContractSelfSponsoring<T>>::insert(contract_address, enable);
+            Ok(())
+        }
+
     }
 }
 
@@ -1919,11 +1950,11 @@ type NegativeImbalanceOf<T> = <<T as transaction_payment::Trait>::Currency as Cu
 /// Require the transactor pay for themselves and maybe include a tip to gain additional priority
 /// in the queue.
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct ChargeTransactionPayment<T: transaction_payment::Trait + Send + Sync>(
-    #[codec(compact)] BalanceOf<T>,
+pub struct ChargeTransactionPayment<T: Trait + Send + Sync>(
+    #[codec(compact)] BalanceOf<T>
 );
 
-impl<T: Trait + transaction_payment::Trait + Send + Sync> sp_std::fmt::Debug
+impl<T: Trait + Send + Sync> sp_std::fmt::Debug
     for ChargeTransactionPayment<T>
 {
     #[cfg(feature = "std")]
@@ -1936,10 +1967,9 @@ impl<T: Trait + transaction_payment::Trait + Send + Sync> sp_std::fmt::Debug
     }
 }
 
-impl<T: Trait + transaction_payment::Trait + Send + Sync> ChargeTransactionPayment<T>
+impl<T: Trait + Send + Sync> ChargeTransactionPayment<T>
 where
-    T::Call:
-        Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Call<T>>,
+    T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Call<T>> + IsSubType<pallet_contracts::Call<T>>,
     BalanceOf<T>: Send + Sync + FixedPointOperand,
 {
     /// utility constructor. Used only in client/factory code.
@@ -1969,15 +1999,16 @@ where
 
         // Set fee based on call type. Creating collection costs 1 Unique.
         // All other transactions have traditional fees so far
-        let fee = match call.is_sub_type() {
-            Some(Call::create_collection(..)) => <BalanceOf<T>>::from(1_000_000_000),
-            _ => Self::traditional_fee(len, info, tip), // Flat fee model, use only for testing purposes
-                                                        // _ => <BalanceOf<T>>::from(100)
-        };
+        // let fee = match call.is_sub_type() {
+        //     Some(Call::create_collection(..)) => <BalanceOf<T>>::from(1_000_000_000),
+        //     _ => Self::traditional_fee(len, info, tip), // Flat fee model, use only for testing purposes
+        //                                                 // _ => <BalanceOf<T>>::from(100)
+        // };
+        let fee = Self::traditional_fee(len, info, tip);
 
         // Determine who is paying transaction fee based on ecnomic model
         // Parse call to extract collection ID and access collection sponsor
-        let sponsor: T::AccountId = match call.is_sub_type() {
+        let mut sponsor: T::AccountId = match IsSubType::<Call<T>>::is_sub_type(call) {
             Some(Call::create_item(collection_id, _properties, _owner)) => {
                 <Collection<T>>::get(collection_id).sponsor
             }
@@ -2046,6 +2077,39 @@ where
             _ => T::AccountId::default(),
         };
 
+        // Sponsor smart contracts
+        sponsor = match IsSubType::<pallet_contracts::Call<T>>::is_sub_type(call) {
+
+            // On instantiation: set the contract owner
+            Some(pallet_contracts::Call::instantiate(_endowment, _gas_limit, code_hash, data)) => {
+
+                let new_contract_address = <T as pallet_contracts::Trait>::DetermineContractAddress::contract_address_for(
+                    code_hash,
+                    &data,
+                    &who,
+                );
+                <ContractOwner<T>>::insert(new_contract_address.clone(), who.clone());
+
+                T::AccountId::default()
+            },
+
+            // When the contract is called, check if the sponsoring is enabled and pay fees from contract endowment if it is
+            Some(pallet_contracts::Call::call(dest, _value, _gas_limit, _data)) => {
+
+                let mut sp = T::AccountId::default();
+                let called_contract: T::AccountId = T::Lookup::lookup((*dest).clone()).unwrap_or(T::AccountId::default());
+                if <ContractSelfSponsoring<T>>::contains_key(called_contract.clone()) {
+                    if <ContractSelfSponsoring<T>>::get(called_contract.clone()) {
+                        sp = called_contract;
+                    }
+                }
+
+                sp
+            },
+
+            _ => sponsor,
+        };
+
         let mut who_pays_fee: T::AccountId = sponsor.clone();
         if sponsor == T::AccountId::default() {
             who_pays_fee = who.clone();
@@ -2072,11 +2136,12 @@ where
     }
 }
 
-impl<T: Trait + transaction_payment::Trait + Send + Sync> SignedExtension
+
+impl<T: Trait + Send + Sync> SignedExtension
     for ChargeTransactionPayment<T>
 where
     BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
-    T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Call<T>>,
+    T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Call<T>> + IsSubType<pallet_contracts::Call<T>>,
 {
     const IDENTIFIER: &'static str = "ChargeTransactionPayment";
     type AccountId = T::AccountId;
@@ -2094,18 +2159,12 @@ where
 
     fn validate(
         &self,
-        who: &Self::AccountId,
-        call: &Self::Call,
-        info: &DispatchInfoOf<Self::Call>,
-        len: usize,
+        _who: &Self::AccountId,
+        _call: &Self::Call,
+        _info: &DispatchInfoOf<Self::Call>,
+        _len: usize,
     ) -> TransactionValidity {
-        let (fee, _) = self.withdraw_fee(who, call, info, len)?;
-
-        let mut r = ValidTransaction::default();
-        // NOTE: we probably want to maximize the _fee (of any type) per weight unit_ here, which
-        // will be a bit more than setting the priority to tip. For now, this is enough.
-        r.priority = fee.saturated_into::<TransactionPriority>();
-        Ok(r)
+        Ok(ValidTransaction::default())
     }
 
     fn pre_dispatch(
@@ -2156,6 +2215,7 @@ where
         Ok(())
     }
 }
+
 // #endregion
 
 

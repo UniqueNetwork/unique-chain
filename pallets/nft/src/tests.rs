@@ -292,6 +292,77 @@ fn nft_approve_and_transfer_from() {
         assert_eq!(TemplateModule::balance_count(1, 1), 1);
         assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
+        // neg transfer
+        assert_noop!(TemplateModule::transfer_from(
+            origin2.clone(),
+            1,
+            2,
+            1,
+            1,
+            1), "Only item owner, collection owner and admins can modify items");
+
+        // do approve
+        assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
+        assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 1);
+        assert_eq!(
+            TemplateModule::approved(1, (1, 1))[0],
+            ApprovePermissions {
+                approved: 2,
+                amount: 100000000
+            }
+        );
+
+        assert_ok!(TemplateModule::transfer_from(
+            origin2.clone(),
+            1,
+            2,
+            1,
+            1,
+            1
+        ));
+        assert_eq!(TemplateModule::approved(1, (1, 1)).len(), 0);
+    });
+}
+
+#[test]
+fn nft_approve_and_transfer_from_white_list() {
+    new_test_ext().execute_with(|| {
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+        let mode: CollectionMode = CollectionMode::NFT(2000);
+
+        assert_ok!(TemplateModule::set_chain_limits(RawOrigin::Root.into(), ChainLimits { 
+            collection_numbers_limit: 10,
+            account_token_ownership_limit: 10,
+            collections_admins_limit: 5,
+            custom_data_limit: 2048,
+            nft_sponsor_transfer_timeout: 15,
+            fungible_sponsor_transfer_timeout: 15,
+            refungible_sponsor_transfer_timeout: 15,          
+        }));
+
+        let origin1 = Origin::signed(1);
+        let origin2 = Origin::signed(2);
+        assert_ok!(TemplateModule::create_collection(
+            origin1.clone(),
+            col_name1.clone(),
+            col_desc1.clone(),
+            token_prefix1.clone(),
+            mode
+        ));
+        assert_eq!(TemplateModule::collection(1).owner, 1);
+
+        assert_ok!(TemplateModule::create_item(
+            origin1.clone(),
+            1,
+            [1, 2, 3].to_vec(),
+            1
+        ));
+        assert_eq!(TemplateModule::nft_item_id(1, 1).data, [1, 2, 3].to_vec());
+        assert_eq!(TemplateModule::balance_count(1, 1), 1);
+        assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
+
         assert_ok!(TemplateModule::set_mint_permission(
             origin1.clone(),
             1,
