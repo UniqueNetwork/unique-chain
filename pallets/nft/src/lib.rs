@@ -250,6 +250,24 @@ impl CreateItemData {
     }
 }
 
+impl From<CreateNftData> for CreateItemData {
+    fn from(item: CreateNftData) -> Self {
+        CreateItemData::NFT(item)
+    }
+}
+
+impl From<CreateReFungibleData> for CreateItemData {
+    fn from(item: CreateReFungibleData) -> Self {
+        CreateItemData::ReFungible(item)
+    }
+}
+
+impl From<CreateFungibleData> for CreateItemData {
+    fn from(item: CreateFungibleData) -> Self {
+        CreateItemData::Fungible(item)
+    }
+}
+
 pub trait Trait: system::Trait + Sized + transaction_payment::Trait + pallet_contracts::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 
