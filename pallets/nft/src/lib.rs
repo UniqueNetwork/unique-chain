@@ -10,7 +10,7 @@ use codec::{Decode, Encode};
 pub use frame_support::{
     construct_runtime, decl_event, decl_module, decl_storage,
     dispatch::DispatchResult,
-    ensure, parameter_types,
+    ensure, parameter_types, fail,
     traits::{
         Currency, ExistenceRequirement, Get, Imbalance, KeyOwnerProofSystem, OnUnbalanced,
         Randomness, WithdrawReason,
@@ -53,21 +53,20 @@ mod default_weights;
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum CollectionMode {
     Invalid,
-    // custom data size
-    NFT(u32),
+    NFT,
     // decimal points
     Fungible(u32),
-    // custom data size and decimal points
-    ReFungible(u32, u32),
+    // decimal points
+    ReFungible(u32),
 }
 
 impl Into<u8> for CollectionMode {
     fn into(self) -> u8 {
         match self {
             CollectionMode::Invalid => 0,
-            CollectionMode::NFT(_) => 1,
+            CollectionMode::NFT => 1,
             CollectionMode::Fungible(_) => 2,
-            CollectionMode::ReFungible(_, _) => 3,
+            CollectionMode::ReFungible(_) => 3,
         }
     }
 }
@@ -107,11 +106,12 @@ pub struct CollectionType<AccountId> {
     pub name: Vec<u16>,        // 64 include null escape char
     pub description: Vec<u16>, // 256 include null escape char
     pub token_prefix: Vec<u8>, // 16 include null escape char
-    pub custom_data_size: u32,
     pub mint_mode: bool,
     pub offchain_schema: Vec<u8>,
     pub sponsor: AccountId, // Who pays fees. If set to default address, the fees are applied to the transaction sender
     pub unconfirmed_sponsor: AccountId, // Sponsor address that has not yet confirmed sponsorship
+    pub variable_on_chain_schema: Vec<u8>, //
+    pub const_on_chain_schema: Vec<u8>, //
 }
 
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
@@ -126,7 +126,8 @@ pub struct CollectionAdminsType<AccountId> {
 pub struct NftItemType<AccountId> {
     pub collection: u64,
     pub owner: AccountId,
-    pub data: Vec<u8>,
+    pub const_data: Vec<u8>,
+    pub variable_data: Vec<u8>,
 }
 
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
@@ -142,7 +143,8 @@ pub struct FungibleItemType<AccountId> {
 pub struct ReFungibleItemType<AccountId> {
     pub collection: u64,
     pub owner: Vec<Ownership<AccountId>>,
-    pub data: Vec<u8>,
+    pub const_data: Vec<u8>,
+    pub variable_data: Vec<u8>,
 }
 
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
@@ -197,13 +199,73 @@ pub trait WeightInfo {
     fn set_collection_sponsor() -> Weight;
     fn confirm_sponsorship() -> Weight;
     fn remove_collection_sponsor() -> Weight;
-    fn create_item(s: usize, ) -> Weight;
+    fn create_item(s: usize) -> Weight;
     fn burn_item() -> Weight;
     fn transfer() -> Weight;
     fn approve() -> Weight;
     fn transfer_from() -> Weight;
     fn set_offchain_schema() -> Weight;
+    fn set_const_on_chain_schema() -> Weight;
+    fn set_variable_on_chain_schema() -> Weight;
+    fn set_variable_meta_data() -> Weight;
     // fn enable_contract_sponsoring() -> Weight;
+}
+
+#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct CreateNftData {
+    pub const_data: Vec<u8>,
+    pub variable_data: Vec<u8>,
+}
+
+#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct CreateFungibleData {
+}
+
+#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct CreateReFungibleData {
+    pub const_data: Vec<u8>,
+    pub variable_data: Vec<u8>,
+}
+
+#[derive(Encode, Decode, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum CreateItemData {
+    NFT(CreateNftData),
+    Fungible(CreateFungibleData),
+    ReFungible(CreateReFungibleData)
+}
+
+impl CreateItemData {
+    pub fn len(&self) -> usize {
+        let len = match self {
+            CreateItemData::NFT(data) => data.variable_data.len() + data.const_data.len(),
+            CreateItemData::ReFungible(data) => data.variable_data.len() + data.const_data.len(),
+            _ => 0
+        };
+        
+        return len;
+    }
+}
+
+impl From<CreateNftData> for CreateItemData {
+    fn from(item: CreateNftData) -> Self {
+        CreateItemData::NFT(item)
+    }
+}
+
+impl From<CreateReFungibleData> for CreateItemData {
+    fn from(item: CreateReFungibleData) -> Self {
+        CreateItemData::ReFungible(item)
+    }
+}
+
+impl From<CreateFungibleData> for CreateItemData {
+    fn from(item: CreateFungibleData) -> Self {
+        CreateItemData::Fungible(item)
+    }
 }
 
 pub trait Trait: system::Trait + Sized + transaction_payment::Trait + pallet_contracts::Trait {
@@ -362,25 +424,10 @@ decl_module! {
 
             // Anyone can create a collection
             let who = ensure_signed(origin)?;
-            let custom_data_size = match mode {
-                CollectionMode::NFT(size) => {
-
-                    // bound Custom data size
-                    ensure!(size < ChainLimit::get().custom_data_limit, "Custom data size bound exceeded");
-                    size
-                },
-                CollectionMode::ReFungible(size, _) => {
-
-                    // bound Custom data size
-                    ensure!(size < ChainLimit::get().custom_data_limit, "Custom data size bound exceeded");
-                    size
-                },
-                _ => 0
-            };
 
             let decimal_points = match mode {
                 CollectionMode::Fungible(points) => points,
-                CollectionMode::ReFungible(_, points) => points,
+                CollectionMode::ReFungible(points) => points,
                 _ => 0
             };
 
@@ -426,9 +473,10 @@ decl_module! {
                 decimal_points: decimal_points,
                 token_prefix: prefix,
                 offchain_schema: Vec::new(),
-                custom_data_size: custom_data_size,
                 sponsor: T::AccountId::default(),
                 unconfirmed_sponsor: T::AccountId::default(),
+                variable_on_chain_schema: Vec::new(),
+                const_on_chain_schema: Vec::new(),
             };
 
             // Add new collection to map
@@ -441,7 +489,7 @@ decl_module! {
         }
 
         /// **DANGEROUS**: Destroys collection and all NFTs within this collection. Users irrecoverably lose their assets and may lose real money.
-        /// 
+        ///     
         /// # Permissions
         /// 
         /// * Collection Owner.
@@ -771,77 +819,88 @@ decl_module! {
         /// 
         /// * collection_id: ID of the collection.
         /// 
-        /// * properties: Array of bytes that contains NFT properties. Since NFT Module is agnostic of properties meaning, it is treated purely as an array of bytes.
-        /// 
         /// * owner: Address, initial owner of the NFT.
+        ///
+        /// * data: Token data to store on chain.
         // #[weight =
         // (130_000_000 as Weight)
         // .saturating_add((2135 as Weight).saturating_mul((properties.len() as u64) as Weight))
         // .saturating_add(RocksDbWeight::get().reads(10 as Weight))
         // .saturating_add(RocksDbWeight::get().writes(8 as Weight))]
 
-        #[weight = T::WeightInfo::create_item(properties.len())]
-        pub fn create_item(origin, collection_id: u64, properties: Vec<u8>, owner: T::AccountId) -> DispatchResult {
+        #[weight = T::WeightInfo::create_item(data.len())]
+        pub fn create_item(origin, collection_id: u64, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
             Self::collection_exists(collection_id)?;
             let target_collection = <Collection<T>>::get(collection_id);
 
             if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
-                ensure!(target_collection.mint_mode == true, "Public minting is not allowed for this collection");
+                ensure!(target_collection.mint_mode == true, "Public minting is not allowed for this collection.");
                 Self::check_white_list(collection_id, &owner)?;
                 Self::check_white_list(collection_id, &sender)?;
             }
 
             match target_collection.mode
             {
-                CollectionMode::NFT(_) => {
-
-                    // check size
-                    ensure!(target_collection.custom_data_size >= properties.len() as u32, "Size of item is too large");
-
-                    // Create nft item
-                    let item = NftItemType {
-                        collection: collection_id,
-                        owner: owner,
-                        data: properties.clone(),
-                    };
-
-                    Self::add_nft_item(item)?;
-
+                CollectionMode::NFT => {
+                    if let CreateItemData::NFT(data) = data {
+                        // check sizes
+                        ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, "const_data exceeded data limit.");
+                        ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, "variable_data exceeded data limit.");
+    
+                        // Create nft item
+                        let item = NftItemType {
+                            collection: collection_id,
+                            owner: owner,
+                            const_data: data.const_data.clone(),
+                            variable_data: data.variable_data.clone() 
+                        };
+    
+                        Self::add_nft_item(item)?;
+                    
+                    } else {
+                        fail!("Not NFT item data used to mint in NFT collection.");
+                    }
                 },
                 CollectionMode::Fungible(_) => {
-
-                    // check size
-                    ensure!(properties.len() as u32 == 0, "Size of item must be 0 with fungible type");
-
-                    let item = FungibleItemType {
-                        collection: collection_id,
-                        owner: owner,
-                        value: (10 as u128).pow(target_collection.decimal_points)
-                    };
-
-                    Self::add_fungible_item(item)?;
+                    if let CreateItemData::Fungible(_) = data {
+    
+                        let item = FungibleItemType {
+                            collection: collection_id,
+                            owner: owner,
+                            value: (10 as u128).pow(target_collection.decimal_points)
+                        };
+    
+                        Self::add_fungible_item(item)?;
+                    } else {
+                        fail!("Not Fungible item data used to mint in Fungible collection.");
+                    }
                 },
-                CollectionMode::ReFungible(_, _) => {
-
-                    // check size
-                    ensure!(target_collection.custom_data_size >= properties.len() as u32, "Size of item is too large");
-
-                    let mut owner_list = Vec::new();
-                    let value = (10 as u128).pow(target_collection.decimal_points);
-                    owner_list.push(Ownership {owner: owner.clone(), fraction: value});
-
-                    let item = ReFungibleItemType {
-                        collection: collection_id,
-                        owner: owner_list,
-                        data: properties.clone()
-                    };
-
-                    Self::add_refungible_item(item)?;
+                CollectionMode::ReFungible(_) => {
+                    if let CreateItemData::ReFungible(data) = data {
+    
+                        // check sizes
+                        ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, "const_data exceeded data limit.");
+                        ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, "variable_data exceeded data limit.");
+    
+                        let mut owner_list = Vec::new();
+                        let value = (10 as u128).pow(target_collection.decimal_points);
+                        owner_list.push(Ownership {owner: owner.clone(), fraction: value});
+    
+                        let item = ReFungibleItemType {
+                            collection: collection_id,
+                            owner: owner_list,
+                            const_data: data.const_data.clone(),
+                            variable_data: data.variable_data.clone() 
+                        };
+    
+                        Self::add_refungible_item(item)?;
+                    } else {
+                        fail!("Not Re Fungible item data used to mint in Re Fungible collection.");
+                    }
                 },
-                _ => { ensure!(1 == 0,"just error"); }
-
+                _ => { ensure!(1 == 0,"Unexpected collection type."); }
             };
 
             // call event
@@ -881,9 +940,9 @@ decl_module! {
 
             match target_collection.mode
             {
-                CollectionMode::NFT(_) => Self::burn_nft_item(collection_id, item_id)?,
+                CollectionMode::NFT => Self::burn_nft_item(collection_id, item_id)?,
                 CollectionMode::Fungible(_)  => Self::burn_fungible_item(collection_id, item_id)?,
-                CollectionMode::ReFungible(_, _)  => Self::burn_refungible_item(collection_id, item_id, sender.clone())?,
+                CollectionMode::ReFungible(_)  => Self::burn_refungible_item(collection_id, item_id, sender.clone())?,
                 _ => ()
             };
 
@@ -934,9 +993,9 @@ decl_module! {
 
             match target_collection.mode
             {
-                CollectionMode::NFT(_) => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient)?,
+                CollectionMode::NFT => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient)?,
                 CollectionMode::Fungible(_)  => Self::transfer_fungible(collection_id, item_id, value, sender.clone(), recipient)?,
-                CollectionMode::ReFungible(_, _)  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient)?,
+                CollectionMode::ReFungible(_)  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient)?,
                 _ => ()
             };
 
@@ -1051,9 +1110,9 @@ decl_module! {
 
             match target_collection.mode
             {
-                CollectionMode::NFT(_) => Self::transfer_nft(collection_id, item_id, from, recipient)?,
+                CollectionMode::NFT => Self::transfer_nft(collection_id, item_id, from, recipient)?,
                 CollectionMode::Fungible(_)  => Self::transfer_fungible(collection_id, item_id, value, from.clone(), recipient)?,
-                CollectionMode::ReFungible(_, _)  => Self::transfer_refungible(collection_id, item_id, value, from.clone(), recipient)?,
+                CollectionMode::ReFungible(_)  => Self::transfer_refungible(collection_id, item_id, value, from.clone(), recipient)?,
                 _ => ()
             };
 
@@ -1075,6 +1134,48 @@ decl_module! {
 
             Ok(())
         }
+        
+        /// Set off-chain data schema.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner
+        /// * Collection Admin
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id.
+        /// 
+        /// * schema: String representing the offchain data schema.
+        #[weight = T::WeightInfo::set_variable_meta_data()]
+        pub fn set_variable_meta_data (
+            origin,
+            collection_id: u64,
+            item_id: u64,
+            data: Vec<u8>
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            
+            Self::collection_exists(collection_id)?;
+
+            // Modify permissions check
+            let target_collection = <Collection<T>>::get(collection_id);
+            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
+                Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
+                "Only item owner, collection owner and admins can modify item");
+
+            Self::item_exists(collection_id, item_id, &target_collection.mode)?;
+
+            match target_collection.mode
+            {
+                CollectionMode::NFT => Self::set_nft_variable_data(collection_id, item_id, data)?,
+                CollectionMode::ReFungible(_)  => Self::set_re_fungible_variable_data(collection_id, item_id, data)?,
+                _ => ()
+            };
+
+            Ok(())
+        }
+        
 
         /// Set off-chain data schema.
         /// 
@@ -1099,6 +1200,62 @@ decl_module! {
 
             let mut target_collection = <Collection<T>>::get(collection_id);
             target_collection.offchain_schema = schema;
+            <Collection<T>>::insert(collection_id, target_collection);
+
+            Ok(())
+        }
+
+        /// Set const on-chain data schema.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner
+        /// * Collection Admin
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id.
+        /// 
+        /// * schema: String representing the const on-chain data schema.
+        #[weight = T::WeightInfo::set_const_on_chain_schema()]
+        pub fn set_const_on_chain_schema (
+            origin,
+            collection_id: u64,
+            schema: Vec<u8>
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
+
+            let mut target_collection = <Collection<T>>::get(collection_id);
+            target_collection.const_on_chain_schema = schema;
+            <Collection<T>>::insert(collection_id, target_collection);
+
+            Ok(())
+        }
+
+        /// Set variable on-chain data schema.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner
+        /// * Collection Admin
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id.
+        /// 
+        /// * schema: String representing the variable on-chain data schema.
+        #[weight = T::WeightInfo::set_const_on_chain_schema()]
+        pub fn set_variable_on_chain_schema (
+            origin,
+            collection_id: u64,
+            schema: Vec<u8>
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
+
+            let mut target_collection = <Collection<T>>::get(collection_id);
+            target_collection.variable_on_chain_schema = schema;
             <Collection<T>>::insert(collection_id, target_collection);
 
             Ok(())
@@ -1353,13 +1510,13 @@ impl<T: Trait> Module<T> {
         let target_collection = <Collection<T>>::get(collection_id);
 
         match target_collection.mode {
-            CollectionMode::NFT(_) => {
+            CollectionMode::NFT => {
                 <NftItemList<T>>::get(collection_id, item_id).owner == subject
             }
             CollectionMode::Fungible(_) => {
                 <FungibleItemList<T>>::get(collection_id, item_id).owner == subject
             }
-            CollectionMode::ReFungible(_, _) => {
+            CollectionMode::ReFungible(_) => {
                 <ReFungibleItemList<T>>::get(collection_id, item_id)
                     .owner
                     .iter()
@@ -1592,6 +1749,49 @@ impl<T: Trait> Module<T> {
 
         // reset approved list
         <ApprovedList<T>>::remove(collection_id, (item_id, old_owner));
+        Ok(())
+    }
+    
+    fn item_exists(
+        collection_id: u64,
+        item_id: u64,
+        mode: &CollectionMode
+    ) -> DispatchResult {
+        match mode {
+            CollectionMode::NFT => ensure!(<NftItemList<T>>::contains_key(collection_id, item_id), "Item does not exists"),
+            CollectionMode::ReFungible(_) => ensure!(<ReFungibleItemList<T>>::contains_key(collection_id, item_id), "Item does not exists"),
+            CollectionMode::Fungible(_) => ensure!(<FungibleItemList<T>>::contains_key(collection_id, item_id), "Item does not exists"),
+            _ => ()
+        };
+        
+        Ok(())
+    }
+
+    fn set_re_fungible_variable_data(
+        collection_id: u64,
+        item_id: u64,
+        data: Vec<u8>
+    ) -> DispatchResult {
+        let mut item = <ReFungibleItemList<T>>::get(collection_id, item_id);
+
+        item.variable_data = data;
+
+        <ReFungibleItemList<T>>::insert(collection_id, item_id, item);
+
+        Ok(())
+    }
+
+    fn set_nft_variable_data(
+        collection_id: u64,
+        item_id: u64,
+        data: Vec<u8>
+    ) -> DispatchResult {
+        let mut item = <NftItemList<T>>::get(collection_id, item_id);
+        
+        item.variable_data = data;
+
+        <NftItemList<T>>::insert(collection_id, item_id, item);
+        
         Ok(())
     }
 
@@ -1835,7 +2035,7 @@ where
 
                 // sponsor timeout
                 let sponsor_transfer = match _collection_mode {
-                    CollectionMode::NFT(_) => {
+                    CollectionMode::NFT => {
                         let basket = <NftTransferBasket<T>>::get(collection_id, _item_id);
                         let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
                         let limit_time = basket + ChainLimit::get().nft_sponsor_transfer_timeout.into();
@@ -1869,7 +2069,7 @@ where
                             true
                         }
                     }
-                    CollectionMode::ReFungible(_, _) => {
+                    CollectionMode::ReFungible(_) => {
                         let basket = <ReFungibleTransferBasket<T>>::get(collection_id, _item_id);
                         let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
                         let limit_time = basket + ChainLimit::get().nft_sponsor_transfer_timeout.into();

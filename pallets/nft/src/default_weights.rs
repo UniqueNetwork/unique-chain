@@ -92,6 +92,21 @@ impl crate::WeightInfo for () {
             .saturating_add(DbWeight::get().reads(2 as Weight))
             .saturating_add(DbWeight::get().writes(1 as Weight))
     }
+    fn set_const_on_chain_schema() -> Weight {
+        (11_100_000 as Weight)
+            .saturating_add(DbWeight::get().reads(2 as Weight))
+            .saturating_add(DbWeight::get().writes(1 as Weight))
+    }
+    fn set_variable_on_chain_schema() -> Weight {
+        (11_100_000 as Weight)
+            .saturating_add(DbWeight::get().reads(2 as Weight))
+            .saturating_add(DbWeight::get().writes(1 as Weight))
+    }
+    fn set_variable_meta_data() -> Weight {
+        (17_500_000 as Weight)
+            .saturating_add(DbWeight::get().reads(2 as Weight))
+            .saturating_add(DbWeight::get().writes(1 as Weight))
+    }
     // fn enable_contract_sponsoring() -> Weight {
     //     (0 as Weight)
     //         .saturating_add(DbWeight::get().reads(1 as Weight))
