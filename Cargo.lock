@@ -1153,6 +1153,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
+name = "enumflags2"
+version = "0.6.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83c8d82922337cd23a15f88b70d8e4ef5f11da38dd7cdb55e84dd5de99695da0"
+dependencies = [
+ "enumflags2_derive",
+]
+
+[[package]]
+name = "enumflags2_derive"
+version = "0.6.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "946ee94e3dbf58fdd324f9ce245c7b238d46a66f00e86a020b71996349e46cce"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "env_logger"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3343,17 +3363,28 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "futures 0.3.6",
+ "hex-literal",
  "jsonrpc-core",
  "log",
  "nft-runtime",
+ "node-executor",
+ "node-primitives",
+ "node-rpc",
+ "pallet-authority-discovery",
  "pallet-contracts-rpc",
+ "pallet-grandpa",
+ "pallet-im-online",
+ "pallet-staking",
  "pallet-transaction-payment-rpc",
  "parking_lot 0.10.2",
+ "sc-authority-discovery",
  "sc-basic-authorship",
+ "sc-chain-spec",
  "sc-cli",
  "sc-client-api",
  "sc-consensus",
- "sc-consensus-aura",
+ "sc-consensus-babe",
+ "sc-consensus-epochs",
  "sc-executor",
  "sc-finality-grandpa",
  "sc-network",
@@ -3362,10 +3393,12 @@ dependencies = [
  "sc-service",
  "sc-transaction-pool",
  "sp-api",
+ "sp-application-crypto",
+ "sp-authority-discovery",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
- "sp-consensus-aura",
+ "sp-consensus-babe",
  "sp-core",
  "sp-finality-grandpa",
  "sp-inherents",
@@ -3387,32 +3420,48 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
- "pallet-aura",
+ "node-primitives",
+ "pallet-authority-discovery",
+ "pallet-authorship",
+ "pallet-babe",
  "pallet-balances",
+ "pallet-collective",
  "pallet-contracts",
  "pallet-contracts-primitives",
  "pallet-contracts-rpc-runtime-api",
+ "pallet-democracy",
+ "pallet-elections-phragmen",
  "pallet-grandpa",
+ "pallet-im-online",
+ "pallet-indices",
+ "pallet-membership",
  "pallet-nft",
+ "pallet-offences",
  "pallet-randomness-collective-flip",
+ "pallet-scheduler",
+ "pallet-session",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-treasury",
  "parity-scale-codec",
  "serde",
  "sp-api",
  "sp-block-builder",
- "sp-consensus-aura",
+ "sp-consensus-babe",
  "sp-core",
  "sp-inherents",
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-staking",
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
- "substrate-wasm-builder-runner",
+ "substrate-wasm-builder-runner 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -3426,6 +3475,129 @@ dependencies = [
  "cfg-if 0.1.10",
  "libc",
  "void",
+]
+
+[[package]]
+name = "node-executor"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-benchmarking",
+ "node-primitives",
+ "node-runtime",
+ "parity-scale-codec",
+ "sc-executor",
+ "sp-core",
+ "sp-io",
+ "sp-state-machine",
+ "sp-trie",
+ "trie-root",
+]
+
+[[package]]
+name = "node-primitives"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-system",
+ "parity-scale-codec",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-runtime",
+]
+
+[[package]]
+name = "node-rpc"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "jsonrpc-core",
+ "node-primitives",
+ "node-runtime",
+ "pallet-contracts-rpc",
+ "pallet-transaction-payment-rpc",
+ "sc-client-api",
+ "sc-consensus-babe",
+ "sc-consensus-babe-rpc",
+ "sc-consensus-epochs",
+ "sc-finality-grandpa",
+ "sc-finality-grandpa-rpc",
+ "sc-keystore",
+ "sc-rpc",
+ "sc-rpc-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-babe",
+ "sp-runtime",
+ "sp-transaction-pool",
+ "substrate-frame-rpc-system",
+]
+
+[[package]]
+name = "node-runtime"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-benchmarking",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "frame-system-rpc-runtime-api",
+ "integer-sqrt",
+ "node-primitives",
+ "pallet-authority-discovery",
+ "pallet-authorship",
+ "pallet-babe",
+ "pallet-balances",
+ "pallet-collective",
+ "pallet-contracts",
+ "pallet-contracts-primitives",
+ "pallet-contracts-rpc-runtime-api",
+ "pallet-democracy",
+ "pallet-elections-phragmen",
+ "pallet-finality-tracker",
+ "pallet-grandpa",
+ "pallet-identity",
+ "pallet-im-online",
+ "pallet-indices",
+ "pallet-membership",
+ "pallet-multisig",
+ "pallet-offences",
+ "pallet-proxy",
+ "pallet-randomness-collective-flip",
+ "pallet-recovery",
+ "pallet-scheduler",
+ "pallet-session",
+ "pallet-society",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
+ "pallet-sudo",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-treasury",
+ "pallet-utility",
+ "pallet-vesting",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-block-builder",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-inherents",
+ "sp-keyring",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-version",
+ "static_assertions",
+ "substrate-wasm-builder-runner 1.0.6 (git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release)",
 ]
 
 [[package]]
@@ -3582,22 +3754,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-aura"
+name = "pallet-authority-discovery"
 version = "2.0.0"
 source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
 dependencies = [
  "frame-support",
  "frame-system",
  "pallet-session",
- "pallet-timestamp",
  "parity-scale-codec",
  "serde",
  "sp-application-crypto",
- "sp-consensus-aura",
- "sp-inherents",
+ "sp-authority-discovery",
  "sp-runtime",
  "sp-std",
- "sp-timestamp",
 ]
 
 [[package]]
@@ -3616,6 +3785,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-babe"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-authorship",
+ "pallet-session",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "serde",
+ "sp-application-crypto",
+ "sp-consensus-babe",
+ "sp-consensus-vrf",
+ "sp-inherents",
+ "sp-io",
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-std",
+ "sp-timestamp",
+]
+
+[[package]]
 name = "pallet-balances"
 version = "2.0.0"
 source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
@@ -3625,6 +3819,21 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "serde",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-collective"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -3692,6 +3901,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-democracy"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-elections-phragmen"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-npos-elections",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-finality-tracker"
 version = "2.0.0"
 source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
@@ -3730,14 +3968,125 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-identity"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "enumflags2",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-im-online"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-authorship",
+ "pallet-session",
+ "parity-scale-codec",
+ "serde",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-indices"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-keyring",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-membership"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-multisig"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-nft"
 version = "2.0.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "hex-literal",
  "log",
  "pallet-transaction-payment",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-offences"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "serde",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-proxy"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -3760,6 +4109,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-recovery"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "enumflags2",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-scheduler"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-session"
 version = "2.0.0"
 source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
@@ -3777,6 +4156,51 @@ dependencies = [
  "sp-staking",
  "sp-std",
  "sp-trie",
+]
+
+[[package]]
+name = "pallet-society"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "rand_chacha 0.2.2",
+ "serde",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-staking"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-authorship",
+ "pallet-session",
+ "parity-scale-codec",
+ "serde",
+ "sp-application-crypto",
+ "sp-io",
+ "sp-npos-elections",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+ "static_assertions",
+]
+
+[[package]]
+name = "pallet-staking-reward-curve"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -3855,6 +4279,49 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-api",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-treasury"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "serde",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-utility"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-vesting"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "enumflags2",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
  "sp-runtime",
  "sp-std",
 ]
@@ -4126,6 +4593,12 @@ dependencies = [
  "crypto-mac 0.7.0",
  "rayon",
 ]
+
+[[package]]
+name = "pdqselect"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ec91767ecc0a0bbe558ce8c9da33c068066c57ecc8bb8477ef8c1ad3ef77c27"
 
 [[package]]
 name = "peeking_take_while"
@@ -4904,6 +5377,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "sc-authority-discovery"
+version = "0.8.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "bytes 0.5.6",
+ "derive_more",
+ "either",
+ "futures 0.3.6",
+ "futures-timer 3.0.2",
+ "libp2p",
+ "log",
+ "parity-scale-codec",
+ "prost",
+ "prost-build",
+ "rand 0.7.3",
+ "sc-client-api",
+ "sc-keystore",
+ "sc-network",
+ "serde_json",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "substrate-prometheus-endpoint",
+]
+
+[[package]]
 name = "sc-basic-authorship"
 version = "0.8.0"
 source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
@@ -5099,34 +5600,84 @@ dependencies = [
 ]
 
 [[package]]
-name = "sc-consensus-aura"
+name = "sc-consensus-babe"
 version = "0.8.0"
 source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
 dependencies = [
  "derive_more",
+ "fork-tree",
  "futures 0.3.6",
  "futures-timer 3.0.2",
  "log",
+ "merlin",
+ "num-bigint",
+ "num-rational",
+ "num-traits",
  "parity-scale-codec",
  "parking_lot 0.10.2",
- "sc-block-builder",
+ "pdqselect",
+ "rand 0.7.3",
+ "retain_mut",
  "sc-client-api",
+ "sc-consensus-epochs",
  "sc-consensus-slots",
+ "sc-consensus-uncles",
  "sc-keystore",
  "sc-telemetry",
+ "schnorrkel",
+ "serde",
  "sp-api",
  "sp-application-crypto",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
- "sp-consensus-aura",
+ "sp-consensus-babe",
+ "sp-consensus-vrf",
  "sp-core",
  "sp-inherents",
  "sp-io",
  "sp-runtime",
  "sp-timestamp",
+ "sp-utils",
  "sp-version",
  "substrate-prometheus-endpoint",
+]
+
+[[package]]
+name = "sc-consensus-babe-rpc"
+version = "0.8.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "derive_more",
+ "futures 0.3.6",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "sc-consensus-babe",
+ "sc-consensus-epochs",
+ "sc-keystore",
+ "sc-rpc-api",
+ "serde",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-runtime",
+]
+
+[[package]]
+name = "sc-consensus-epochs"
+version = "0.8.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "fork-tree",
+ "parity-scale-codec",
+ "parking_lot 0.10.2",
+ "sc-client-api",
+ "sp-blockchain",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -5150,6 +5701,20 @@ dependencies = [
  "sp-inherents",
  "sp-runtime",
  "sp-state-machine",
+]
+
+[[package]]
+name = "sc-consensus-uncles"
+version = "0.8.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "log",
+ "sc-client-api",
+ "sp-authorship",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -5265,6 +5830,30 @@ dependencies = [
  "sp-runtime",
  "sp-utils",
  "substrate-prometheus-endpoint",
+]
+
+[[package]]
+name = "sc-finality-grandpa-rpc"
+version = "0.8.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "derive_more",
+ "finality-grandpa",
+ "futures 0.3.6",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "jsonrpc-pubsub",
+ "log",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-finality-grandpa",
+ "sc-rpc",
+ "serde",
+ "serde_json",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -6111,6 +6700,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-authority-discovery"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "parity-scale-codec",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "sp-authorship"
 version = "2.0.0"
 source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
@@ -6186,13 +6787,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "sp-consensus-aura"
+name = "sp-consensus-babe"
 version = "0.8.0"
 source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
 dependencies = [
+ "merlin",
  "parity-scale-codec",
  "sp-api",
  "sp-application-crypto",
+ "sp-consensus",
+ "sp-consensus-slots",
+ "sp-consensus-vrf",
+ "sp-core",
  "sp-inherents",
  "sp-runtime",
  "sp-std",
@@ -6206,6 +6812,18 @@ source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release
 dependencies = [
  "parity-scale-codec",
  "sp-runtime",
+]
+
+[[package]]
+name = "sp-consensus-vrf"
+version = "0.8.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "parity-scale-codec",
+ "schnorrkel",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -6352,6 +6970,29 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "strum",
+]
+
+[[package]]
+name = "sp-npos-elections"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "parity-scale-codec",
+ "serde",
+ "sp-arithmetic",
+ "sp-npos-elections-compact",
+ "sp-std",
+]
+
+[[package]]
+name = "sp-npos-elections-compact"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -6776,6 +7417,11 @@ name = "substrate-wasm-builder-runner"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2a965994514ab35d3893e9260245f2947fd1981cdd4fffd2c6e6d1a9ce02e6a"
+
+[[package]]
+name = "substrate-wasm-builder-runner"
+version = "1.0.6"
+source = "git+https://github.com/usetech-llc/substrate.git?branch=v2.0.0_release#a200cdb93c6af5763b9c7bf313fa708764ac88ca"
 
 [[package]]
 name = "subtle"

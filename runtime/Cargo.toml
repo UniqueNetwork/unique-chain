@@ -21,7 +21,7 @@ package = 'parity-scale-codec'
 version = '1.3.4'
 
 [dependencies]
-hex-literal = { optional = true, version = '0.3.1' }
+hex-literal = { version = '0.3.1' }
 serde = { features = ['derive'], optional = true, version = '1.0.101' }
 
 # local dependencies
@@ -34,7 +34,7 @@ frame-support = { default-features = false, version = '2.0.0' , git = 'https://g
 frame-system = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
 frame-system-benchmarking = { default-features = false, optional = true, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
 frame-system-rpc-runtime-api = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
-pallet-aura = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+#pallet-aura = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
 pallet-balances = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
 pallet-contracts = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
 pallet-contracts-primitives = { default-features = false, version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
@@ -45,9 +45,10 @@ pallet-sudo = { default-features = false, version = '2.0.0' , git = 'https://git
 pallet-timestamp = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
 pallet-transaction-payment = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
 pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
-sp-api = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
-sp-block-builder = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
-sp-consensus-aura = { default-features = false, version = '0.8.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-api = { default-features = false, version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-block-builder = { default-features = false, version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+#sp-consensus-aura = { default-features = false, version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-consensus-babe = { default-features = false, version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
 sp-core = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
 sp-inherents = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
 sp-offchain = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
@@ -57,10 +58,28 @@ sp-std = { default-features = false, version = '2.0.0' , git = 'https://github.c
 sp-transaction-pool = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
 sp-version = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
 
+#sp-application-crypto = { version = "2.0.0", git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-offences = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+sp-staking = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-scheduler = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-staking = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-staking-reward-curve = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-session = { default-features = false, features = ["historical"], version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-democracy = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-elections-phragmen = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+node-primitives = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-membership = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-collective = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-authorship = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-authority-discovery = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-babe = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-treasury = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-im-online = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-indices = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+
 [features]
 default = ['std']
 runtime-benchmarks = [
-    'hex-literal',
     'frame-benchmarking',
     'frame-support/runtime-benchmarks',
     'frame-system-benchmarking',
@@ -77,7 +96,7 @@ std = [
     'frame-support/std',
     'frame-system/std',
     'frame-system-rpc-runtime-api/std',
-    'pallet-aura/std',
+  # 'pallet-aura/std',
     'pallet-balances/std',
     'pallet-contracts/std',
     'pallet-contracts-primitives/std',
@@ -88,10 +107,12 @@ std = [
     'pallet-timestamp/std',
     'pallet-transaction-payment/std',
     'pallet-transaction-payment-rpc-runtime-api/std',
+    'pallet-indices/std',
     'pallet-nft/std',
     'sp-api/std',
     'sp-block-builder/std',
-    'sp-consensus-aura/std',
+    'sp-consensus-babe/std',
+    #'sp-consensus-aura/std',
     'sp-core/std',
     'sp-inherents/std',
     'sp-offchain/std',
@@ -100,4 +121,22 @@ std = [
     'sp-std/std',
     'sp-transaction-pool/std',
     'sp-version/std',
+
+    'pallet-authority-discovery/std',
+    'pallet-collective/std',
+    'pallet-democracy/std',
+    'pallet-elections-phragmen/std',
+    'sp-staking/std',
+    #'sp-application-crypto/std',
+    'pallet-treasury/std',
+    'pallet-staking/std',
+    'pallet-session/std',
+    'pallet-scheduler/std',
+    'pallet-offences/std',
+    'pallet-im-online/std',
+    'node-primitives/std',
+    'pallet-membership/std',
+    'pallet-authorship/std',
+    'pallet-babe/std',
+
 ]
