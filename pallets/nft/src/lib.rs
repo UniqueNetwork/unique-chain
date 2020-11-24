@@ -22,6 +22,7 @@ pub use frame_support::{
     },
     IsSubType, StorageValue,
 };
+// use frame_support::weights::{Weight, constants::RocksDbWeight as DbWeight};
 
 use frame_system::{self as system, ensure_signed, ensure_root};
 use sp_runtime::sp_std::prelude::Vec;
@@ -42,6 +43,8 @@ mod mock;
 
 #[cfg(test)]
 mod tests;
+
+mod default_weights;
 
 // Structs
 // #region
@@ -181,9 +184,36 @@ pub struct ChainLimits {
     pub refungible_sponsor_transfer_timeout: u32,
 }
 
-pub trait Trait: system::Trait {
-    type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+pub trait WeightInfo {
+	fn create_collection() -> Weight;
+	fn destroy_collection() -> Weight;
+	fn add_to_white_list() -> Weight;
+	fn remove_from_white_list() -> Weight;
+    fn set_public_access_mode() -> Weight;
+    fn set_mint_permission() -> Weight;
+    fn change_collection_owner() -> Weight;
+    fn add_collection_admin() -> Weight;
+    fn remove_collection_admin() -> Weight;
+    fn set_collection_sponsor() -> Weight;
+    fn confirm_sponsorship() -> Weight;
+    fn remove_collection_sponsor() -> Weight;
+    fn create_item(s: usize, ) -> Weight;
+    fn burn_item() -> Weight;
+    fn transfer() -> Weight;
+    fn approve() -> Weight;
+    fn transfer_from() -> Weight;
+    fn set_offchain_schema() -> Weight;
 }
+
+pub trait Trait: system::Trait + Sized  {
+    type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+
+    /// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 
 // #endregion
 
@@ -322,7 +352,7 @@ decl_module! {
         /// 
         /// * mode: [CollectionMode] collection type and type dependent data.
         // returns collection ID
-        #[weight = 0]
+        #[weight = T::WeightInfo::create_collection()]
         pub fn create_collection(origin,
                                  collection_name: Vec<u16>,
                                  collection_description: Vec<u16>,
@@ -418,7 +448,7 @@ decl_module! {
         /// # Arguments
         /// 
         /// * collection_id: collection to destroy.
-        #[weight = 0]
+        #[weight = T::WeightInfo::destroy_collection()]
         pub fn destroy_collection(origin, collection_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -465,7 +495,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * address.
-        #[weight = 0]
+        #[weight = T::WeightInfo::add_to_white_list()]
         pub fn add_to_white_list(origin, collection_id: u64, address: T::AccountId) -> DispatchResult{
 
             let sender = ensure_signed(origin)?;
@@ -500,7 +530,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * address.
-        #[weight = 0]
+        #[weight = T::WeightInfo::remove_from_white_list()]
         pub fn remove_from_white_list(origin, collection_id: u64, address: T::AccountId) -> DispatchResult{
 
             let sender = ensure_signed(origin)?;
@@ -529,7 +559,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * mode: [AccessMode]
-        #[weight = 0]
+        #[weight = T::WeightInfo::set_public_access_mode()]
         pub fn set_public_access_mode(origin, collection_id: u64, mode: AccessMode) -> DispatchResult
         {
             let sender = ensure_signed(origin)?;
@@ -555,7 +585,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * mint_permission: Boolean parameter. If True, allows minting to Anyone with conditions above.
-        #[weight = 0]
+        #[weight = T::WeightInfo::set_mint_permission()]
         pub fn set_mint_permission(origin, collection_id: u64, mint_permission: bool) -> DispatchResult
         {
             let sender = ensure_signed(origin)?;
@@ -579,7 +609,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * new_owner.
-        #[weight = 0]
+        #[weight = T::WeightInfo::change_collection_owner()]
         pub fn change_collection_owner(origin, collection_id: u64, new_owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -604,7 +634,7 @@ decl_module! {
         /// * collection_id: ID of the Collection to add admin for.
         /// 
         /// * new_admin_id: Address of new admin to add.
-        #[weight = 0]
+        #[weight = T::WeightInfo::add_collection_admin()]
         pub fn add_collection_admin(origin, collection_id: u64, new_admin_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -638,7 +668,7 @@ decl_module! {
         /// * collection_id: ID of the Collection to remove admin for.
         /// 
         /// * account_id: Address of admin to remove.
-        #[weight = 0]
+        #[weight = T::WeightInfo::remove_collection_admin()]
         pub fn remove_collection_admin(origin, collection_id: u64, account_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -663,7 +693,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * new_sponsor.
-        #[weight = 0]
+        #[weight = T::WeightInfo::set_collection_sponsor()]
         pub fn set_collection_sponsor(origin, collection_id: u64, new_sponsor: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -685,7 +715,7 @@ decl_module! {
         /// # Arguments
         /// 
         /// * collection_id.
-        #[weight = 0]
+        #[weight = T::WeightInfo::confirm_sponsorship()]
         pub fn confirm_sponsorship(origin, collection_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -710,7 +740,7 @@ decl_module! {
         /// # Arguments
         /// 
         /// * collection_id.
-        #[weight = 0]
+        #[weight = T::WeightInfo::remove_collection_sponsor()]
         pub fn remove_collection_sponsor(origin, collection_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -743,7 +773,13 @@ decl_module! {
         /// * properties: Array of bytes that contains NFT properties. Since NFT Module is agnostic of properties meaning, it is treated purely as an array of bytes.
         /// 
         /// * owner: Address, initial owner of the NFT.
-        #[weight = 0]
+        // #[weight =
+        // (130_000_000 as Weight)
+        // .saturating_add((2135 as Weight).saturating_mul((properties.len() as u64) as Weight))
+        // .saturating_add(RocksDbWeight::get().reads(10 as Weight))
+        // .saturating_add(RocksDbWeight::get().writes(8 as Weight))]
+
+        #[weight = T::WeightInfo::create_item(properties.len())]
         pub fn create_item(origin, collection_id: u64, properties: Vec<u8>, owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -811,7 +847,7 @@ decl_module! {
         /// * collection_id: ID of the collection.
         /// 
         /// * item_id: ID of NFT to burn.
-        #[weight = 0]
+        #[weight = T::WeightInfo::burn_item()]
         pub fn burn_item(origin, collection_id: u64, item_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -864,7 +900,7 @@ decl_module! {
         ///     * Non-Fungible Mode: Ignored
         ///     * Fungible Mode: Must specify transferred amount
         ///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
-        #[weight = 0]
+        #[weight = T::WeightInfo::transfer()]
         pub fn transfer(origin, recipient: T::AccountId, collection_id: u64, item_id: u64, value: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -906,7 +942,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * item_id: ID of the item.
-        #[weight = 0]
+        #[weight = T::WeightInfo::approve()]
         pub fn approve(origin, approved: T::AccountId, collection_id: u64, item_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -964,7 +1000,7 @@ decl_module! {
         /// * item_id: ID of the item.
         /// 
         /// * value: Amount to transfer.
-        #[weight = 0]
+        #[weight = T::WeightInfo::transfer_from()]
         pub fn transfer_from(origin, from: T::AccountId, recipient: T::AccountId, collection_id: u64, item_id: u64, value: u64 ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -974,8 +1010,11 @@ decl_module! {
             if <ApprovedList<T>>::contains_key(collection_id, (item_id, from.clone())) {
                 let list_itm = <ApprovedList<T>>::get(collection_id, (item_id, from.clone()));
                 let opt_item = list_itm.iter().find(|i| i.approved == sender.clone());
-                appoved_transfer = opt_item.is_some();
-                ensure!(opt_item.unwrap().amount >= value, "Requested value more than approved");
+                if opt_item.is_some()
+                {
+                    appoved_transfer = true;
+                    ensure!(opt_item.unwrap().amount >= value, "Requested value more than approved");
+                }
             }
 
             // Transfer permissions check
@@ -1033,7 +1072,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * schema: String representing the offchain data schema.
-        #[weight = 0]
+        #[weight = T::WeightInfo::set_offchain_schema()]
         pub fn set_offchain_schema(
             origin,
             collection_id: u64,
@@ -1791,7 +1830,7 @@ impl<T: Trait + transaction_payment::Trait + Send + Sync> sp_std::fmt::Debug
 impl<T: Trait + transaction_payment::Trait + Send + Sync> ChargeTransactionPayment<T>
 where
     T::Call:
-        Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Module<T>, T>,
+        Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Call<T>>,
     BalanceOf<T>: Send + Sync + FixedPointOperand,
 {
     /// utility constructor. Used only in client/factory code.
@@ -1928,8 +1967,7 @@ impl<T: Trait + transaction_payment::Trait + Send + Sync> SignedExtension
     for ChargeTransactionPayment<T>
 where
     BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
-    T::Call:
-        Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Module<T>, T>,
+    T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Call<T>>,
 {
     const IDENTIFIER: &'static str = "ChargeTransactionPayment";
     type AccountId = T::AccountId;
@@ -2010,3 +2048,5 @@ where
     }
 }
 // #endregion
+
+
