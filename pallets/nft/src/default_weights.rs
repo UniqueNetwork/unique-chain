@@ -63,7 +63,7 @@ impl crate::WeightInfo for () {
     }  
     fn create_item(s: usize, ) -> Weight {
         (130_000_000 as Weight)
-            .saturating_add((2135 as Weight).saturating_mul(s as Weight))
+            .saturating_add((2135 as Weight).saturating_mul(s as Weight).saturating_mul(500 as Weight)) // 500 is temporary multiplier, fee for storage
             .saturating_add(DbWeight::get().reads(10 as Weight))
             .saturating_add(DbWeight::get().writes(8 as Weight))
     }  
