@@ -167,9 +167,9 @@ target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" -
   "CollectionMode": {
     "_enum": {
       "Invalid": null,
-      "NFT": "u32",
+      "NFT": null,
       "Fungible": "u32",
-      "ReFungible": "(u32, u32)"
+      "ReFungible": "u32"
     }
   },
   "Ownership": {
@@ -189,7 +189,8 @@ target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" -
   "NftItemType": {
     "Collection": "u64",
     "Owner": "AccountId",
-    "Data": "Vec<u8>"
+    "ConstData": "Vec<u8>",
+    "VariableData": "Vec<u8>"
   },
   "Ownership": {
     "owner": "AccountId",
@@ -198,7 +199,8 @@ target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" -
   "ReFungibleItemType": {
     "Collection": "u64",
     "Owner": "Vec<Ownership<AccountId>>",
-    "Data": "Vec<u8>"
+    "ConstData": "Vec<u8>",
+    "VariableData": "Vec<u8>"
   },
   "CollectionType": {
     "Owner": "AccountId",
@@ -208,11 +210,12 @@ target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" -
     "Name": "Vec<u16>",
     "Description": "Vec<u16>",
     "TokenPrefix": "Vec<u8>",
-    "CustomDataSize": "u32",
     "MintMode": "bool",
     "OffchainSchema": "Vec<u8>",
     "Sponsor": "AccountId",
-    "UnconfirmedSponsor": "AccountId"
+    "UnconfirmedSponsor": "AccountId",
+    "VariableOnChainSchema": "Vec<u8>",
+    "ConstOnChainSchema": "Vec<u8>"
   },
   "ApprovePermissions": {
     "Approved": "AccountId",
@@ -221,7 +224,23 @@ target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" -
   "RawData": "Vec<u8>",
   "Address": "AccountId",
   "LookupSource": "AccountId",
-  "Weight": "u64"
+  "Weight": "u64",
+  "CreateNftData": {
+    "const_data": "Vec<u8>",
+    "variable_data": "Vec<u8>" 
+  },
+  "CreateFungibleData": {},
+  "CreateReFungibleData": {
+    "const_data": "Vec<u8>",
+    "variable_data": "Vec<u8>" 
+  },
+  "CreateItemData": {
+    "_enum": {
+      "NFT": "CreateNftData",
+      "Fungible": "CreateFungibleData",
+      "ReFungible": "CreateReFungibleData"
+    }
+  }
 }
 
 ```
