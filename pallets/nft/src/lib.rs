@@ -10,7 +10,7 @@ use codec::{Decode, Encode};
 pub use frame_support::{
     construct_runtime, decl_event, decl_module, decl_storage,
     dispatch::DispatchResult,
-    ensure, parameter_types, fail,
+    ensure, fail, parameter_types,
     traits::{
         Currency, ExistenceRequirement, Get, Imbalance, KeyOwnerProofSystem, OnUnbalanced,
         Randomness, WithdrawReason,
@@ -22,7 +22,6 @@ pub use frame_support::{
     },
     IsSubType, StorageValue,
 };
-// use frame_support::weights::{Weight, constants::RocksDbWeight as DbWeight};
 
 use frame_system::{self as system, ensure_signed, ensure_root};
 use sp_runtime::sp_std::prelude::Vec;
@@ -489,7 +488,7 @@ decl_module! {
         }
 
         /// **DANGEROUS**: Destroys collection and all NFTs within this collection. Users irrecoverably lose their assets and may lose real money.
-        ///     
+        /// 
         /// # Permissions
         /// 
         /// * Collection Owner.
@@ -832,79 +831,55 @@ decl_module! {
         pub fn create_item(origin, collection_id: u64, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
+
+            Self::collection_exists(collection_id)?;
+
+            let target_collection = <Collection<T>>::get(collection_id);
+
+            Self::can_create_items_in_collection(collection_id, &target_collection, &sender, &owner)?;
+            Self::validate_create_item_args(&target_collection, &data)?;
+            Self::create_item_no_validation(collection_id, &target_collection, owner, data)?;
+
+            Ok(())
+        }
+
+        /// This method creates multiple instances of NFT Collection created with CreateCollection method.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner.
+        /// * Collection Admin.
+        /// * Anyone if
+        ///     * White List is enabled, and
+        ///     * Address is added to white list, and
+        ///     * MintPermission is enabled (see SetMintPermission method)
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id: ID of the collection.
+        /// 
+        /// * itemsData: Array items properties. Each property is an array of bytes itself, see [create_item].
+        /// 
+        /// * owner: Address, initial owner of the NFT.
+        #[weight = T::WeightInfo::create_item(items_data.into_iter()
+                               .map(|data| { data.len() })
+                               .sum())]
+        pub fn create_multiple_items(origin, collection_id: u64, owner: T::AccountId, items_data: Vec<CreateItemData>) -> DispatchResult {
+
+            ensure!(items_data.len() > 0, "Length of items properties must be greater than 0.");
+            let sender = ensure_signed(origin)?;
+
             Self::collection_exists(collection_id)?;
             let target_collection = <Collection<T>>::get(collection_id);
 
-            if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
-                ensure!(target_collection.mint_mode == true, "Public minting is not allowed for this collection.");
-                Self::check_white_list(collection_id, &owner)?;
-                Self::check_white_list(collection_id, &sender)?;
+            Self::can_create_items_in_collection(collection_id, &target_collection, &sender, &owner)?;
+
+            for data in &items_data {
+                Self::validate_create_item_args(&target_collection, data)?;
             }
-
-            match target_collection.mode
-            {
-                CollectionMode::NFT => {
-                    if let CreateItemData::NFT(data) = data {
-                        // check sizes
-                        ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, "const_data exceeded data limit.");
-                        ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, "variable_data exceeded data limit.");
-    
-                        // Create nft item
-                        let item = NftItemType {
-                            collection: collection_id,
-                            owner: owner,
-                            const_data: data.const_data.clone(),
-                            variable_data: data.variable_data.clone() 
-                        };
-    
-                        Self::add_nft_item(item)?;
-                    
-                    } else {
-                        fail!("Not NFT item data used to mint in NFT collection.");
-                    }
-                },
-                CollectionMode::Fungible(_) => {
-                    if let CreateItemData::Fungible(_) = data {
-    
-                        let item = FungibleItemType {
-                            collection: collection_id,
-                            owner: owner,
-                            value: (10 as u128).pow(target_collection.decimal_points)
-                        };
-    
-                        Self::add_fungible_item(item)?;
-                    } else {
-                        fail!("Not Fungible item data used to mint in Fungible collection.");
-                    }
-                },
-                CollectionMode::ReFungible(_) => {
-                    if let CreateItemData::ReFungible(data) = data {
-    
-                        // check sizes
-                        ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, "const_data exceeded data limit.");
-                        ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, "variable_data exceeded data limit.");
-    
-                        let mut owner_list = Vec::new();
-                        let value = (10 as u128).pow(target_collection.decimal_points);
-                        owner_list.push(Ownership {owner: owner.clone(), fraction: value});
-    
-                        let item = ReFungibleItemType {
-                            collection: collection_id,
-                            owner: owner_list,
-                            const_data: data.const_data.clone(),
-                            variable_data: data.variable_data.clone() 
-                        };
-    
-                        Self::add_refungible_item(item)?;
-                    } else {
-                        fail!("Not Re Fungible item data used to mint in Re Fungible collection.");
-                    }
-                },
-                _ => { ensure!(1 == 0,"Unexpected collection type."); }
-            };
-
-            // call event
-            Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id)));
+            for data in &items_data {
+                Self::create_item_no_validation(collection_id, &target_collection, owner.clone(), data.clone())?;
+            }
 
             Ok(())
         }
@@ -1134,7 +1109,7 @@ decl_module! {
 
             Ok(())
         }
-        
+
         /// Set off-chain data schema.
         /// 
         /// # Permissions
@@ -1305,6 +1280,97 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
+
+    fn can_create_items_in_collection(collection_id: u64, collection: &CollectionType<T::AccountId>, sender: &T::AccountId, owner: &T::AccountId) -> DispatchResult {
+
+        if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
+            ensure!(collection.mint_mode == true, "Public minting is not allowed for this collection");
+            Self::check_white_list(collection_id, owner)?;
+            Self::check_white_list(collection_id, sender)?;
+        }
+
+        Ok(())
+    }
+
+    fn validate_create_item_args(target_collection: &CollectionType<T::AccountId>, data: &CreateItemData) -> DispatchResult {
+        match target_collection.mode
+        {
+            CollectionMode::NFT => {
+                if let CreateItemData::NFT(data) = data {
+                    // check sizes
+                    ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, "const_data exceeded data limit.");
+                    ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, "variable_data exceeded data limit.");
+                } else {
+                    fail!("Not NFT item data used to mint in NFT collection.");
+                }
+            },
+            CollectionMode::Fungible(_) => {
+                if let CreateItemData::Fungible(_) = data {
+                } else {
+                    fail!("Not Fungible item data used to mint in Fungible collection.");
+                }
+            },
+            CollectionMode::ReFungible(_) => {
+                if let CreateItemData::ReFungible(data) = data {
+
+                    // check sizes
+                    ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, "const_data exceeded data limit.");
+                    ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, "variable_data exceeded data limit.");
+                } else {
+                    fail!("Not Re Fungible item data used to mint in Re Fungible collection.");
+                }
+            },
+            _ => { fail!("Unexpected collection type."); }
+        };
+
+        Ok(())
+    }
+
+    fn create_item_no_validation(collection_id: u64, collection: &CollectionType<T::AccountId>, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
+        match data
+        {
+            CreateItemData::NFT(data) => {
+                let item = NftItemType {
+                    collection: collection_id,
+                    owner,
+                    const_data: data.const_data,
+                    variable_data: data.variable_data
+                };
+
+                Self::add_nft_item(item)?;
+            },
+            CreateItemData::Fungible(_) => {
+                let item = FungibleItemType {
+                    collection: collection_id,
+                    owner,
+                    value: (10 as u128).pow(collection.decimal_points)
+                };
+
+                Self::add_fungible_item(item)?;
+            },
+            CreateItemData::ReFungible(data) => {
+                let mut owner_list = Vec::new();
+                let value = (10 as u128).pow(collection.decimal_points);
+                owner_list.push(Ownership {owner: owner.clone(), fraction: value});
+
+                let item = ReFungibleItemType {
+                    collection: collection_id,
+                    owner: owner_list,
+                    const_data: data.const_data,
+                    variable_data: data.variable_data
+                };
+
+                Self::add_refungible_item(item)?;
+            }
+        };
+
+
+        // call event
+        Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id)));
+
+        Ok(())
+    }
+
     fn add_fungible_item(item: FungibleItemType<T::AccountId>) -> DispatchResult {
         let current_index = <ItemListIndex>::get(item.collection)
             .checked_add(1)
@@ -2235,5 +2301,3 @@ where
 }
 
 // #endregion
-
-

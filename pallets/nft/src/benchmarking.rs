@@ -165,7 +165,7 @@
             let token_prefix1: Vec<u8> = b"token_prefix1".to_vec();
             let mode: CollectionMode = CollectionMode::NFT;
             let caller: T::AccountId = T::AccountId::from(whitelisted_caller());
-            let nft_data = CreateNftData {
+            let mut nft_data = CreateNftData {
                 const_data: vec![],
                 variable_data: vec![]
             };
@@ -173,7 +173,7 @@
                 nft_data.const_data.push(10);
                 nft_data.variable_data.push(10);
             }
-            let mut data = CreateItemData::NFT(nft_data);
+            let data = CreateItemData::NFT(nft_data);
             Nft::<T>::create_collection(RawOrigin::Signed(caller.clone()).into(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), mode.clone())?;
 
         }: create_item(RawOrigin::Signed(caller.clone()), 2, caller.clone(), data)
