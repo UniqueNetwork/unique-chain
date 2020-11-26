@@ -92,41 +92,23 @@ fn create_nft_item() {
 #[test]
 fn create_nft_multiple_items() {
     new_test_ext().execute_with(|| {
-        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
-        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
-        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
-        let mode: CollectionMode = CollectionMode::NFT(2000);
-
-        assert_ok!(TemplateModule::set_chain_limits(RawOrigin::Root.into(), ChainLimits { 
-            collection_numbers_limit: 10,
-            account_token_ownership_limit: 10,
-            collections_admins_limit: 5,
-            custom_data_limit: 2048,
-            nft_sponsor_transfer_timeout: 15,
-            fungible_sponsor_transfer_timeout: 15,
-            refungible_sponsor_transfer_timeout: 15,          
-        }));
+        default_limits();
+        
+        create_test_collection(&CollectionMode::NFT, 1);
 
         let origin1 = Origin::signed(1);
-        assert_ok!(TemplateModule::create_collection(
-            origin1.clone(),
-            col_name1.clone(),
-            col_desc1.clone(),
-            token_prefix1.clone(),
-            mode
-        ));
-        assert_eq!(TemplateModule::collection(1).owner, 1);
 
-        let properties = [[1, 2, 3].to_vec(), [3, 2, 1].to_vec(), [3, 3, 3].to_vec()].to_vec();
+        let items_data = vec![default_nft_data(), default_nft_data(), default_nft_data()];
 
         assert_ok!(TemplateModule::create_multiple_items(
             origin1.clone(),
             1,
-            properties.clone(),
-            1
+            1,
+            items_data.clone().into_iter().map(|d| { d.into() }).collect()
         ));
-        for (index, data) in properties.iter().enumerate() {
-            assert_eq!(TemplateModule::nft_item_id(1, (index + 1) as u64).data, *data);
+        for (index, data) in items_data.iter().enumerate() {
+            assert_eq!(TemplateModule::nft_item_id(1, (index + 1) as u64).const_data.to_vec(), data.const_data);
+            assert_eq!(TemplateModule::nft_item_id(1, (index + 1) as u64).variable_data.to_vec(), data.variable_data);
         }
     });
 }
@@ -160,43 +142,25 @@ fn create_refungible_item() {
 #[test]
 fn create_multiple_refungible_items() {
     new_test_ext().execute_with(|| {
-        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
-        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
-        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
-        let mode: CollectionMode = CollectionMode::ReFungible(2000, 3);
-
-        assert_ok!(TemplateModule::set_chain_limits(RawOrigin::Root.into(), ChainLimits { 
-            collection_numbers_limit: 10,
-            account_token_ownership_limit: 10,
-            collections_admins_limit: 5,
-            custom_data_limit: 2048,
-            nft_sponsor_transfer_timeout: 15,
-            fungible_sponsor_transfer_timeout: 15,
-            refungible_sponsor_transfer_timeout: 15,          
-        }));
+        default_limits();
+        
+        create_test_collection(&CollectionMode::ReFungible(3), 1);
 
         let origin1 = Origin::signed(1);
-        assert_ok!(TemplateModule::create_collection(
-            origin1.clone(),
-            col_name1.clone(),
-            col_desc1.clone(),
-            token_prefix1.clone(),
-            mode
-        ));
-        assert_eq!(TemplateModule::collection(1).owner, 1);
 
-        let properties = [[1, 2, 3].to_vec(), [3, 2, 1].to_vec(), [3, 3, 3].to_vec()].to_vec();
+        let items_data = vec![default_re_fungible_data(), default_re_fungible_data(), default_re_fungible_data()];
 
         assert_ok!(TemplateModule::create_multiple_items(
             origin1.clone(),
             1,
-            properties.clone(),
-            1
+            1,
+            items_data.clone().into_iter().map(|d| { d.into() }).collect()
         ));
-        for (index, data) in properties.iter().enumerate() {
+        for (index, data) in items_data.iter().enumerate() {
 
             let item = TemplateModule::refungible_item_id(1, (index + 1) as u64);
-            assert_eq!(item.data, *data);
+            assert_eq!(item.const_data.to_vec(), data.const_data);
+            assert_eq!(item.variable_data.to_vec(), data.variable_data);
             assert_eq!(
                 item.owner[0],
                 Ownership {
@@ -225,41 +189,22 @@ fn create_fungible_item() {
 #[test]
 fn create_multiple_fungible_items() {
     new_test_ext().execute_with(|| {
-        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
-        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
-        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
-        let mode: CollectionMode = CollectionMode::Fungible(3);
+        default_limits();
 
-        assert_ok!(TemplateModule::set_chain_limits(RawOrigin::Root.into(), ChainLimits { 
-            collection_numbers_limit: 10,
-            account_token_ownership_limit: 10,
-            collections_admins_limit: 5,
-            custom_data_limit: 2048,
-            nft_sponsor_transfer_timeout: 15,
-            fungible_sponsor_transfer_timeout: 15,
-            refungible_sponsor_transfer_timeout: 15,          
-        }));
+        create_test_collection(&CollectionMode::Fungible(3), 1);
 
         let origin1 = Origin::signed(1);
-        assert_ok!(TemplateModule::create_collection(
-            origin1.clone(),
-            col_name1.clone(),
-            col_desc1.clone(),
-            token_prefix1.clone(),
-            mode
-        ));
-        assert_eq!(TemplateModule::collection(1).owner, 1);
 
-        let properties = [[].to_vec(), [].to_vec(), [].to_vec()].to_vec();
+        let items_data = vec![default_fungible_data(), default_fungible_data(), default_fungible_data()];
 
         assert_ok!(TemplateModule::create_multiple_items(
             origin1.clone(),
             1,
-            properties.clone(),
-            1
+            1,
+            items_data.clone().into_iter().map(|d| { d.into() }).collect()
         ));
         
-        for (index, _) in properties.iter().enumerate() {
+        for (index, _) in items_data.iter().enumerate() {
             assert_eq!(TemplateModule::fungible_item_id(1, (index + 1) as u64).owner, 1);
         }
         assert_eq!(TemplateModule::balance_count(1, 1), 3000);
@@ -1471,7 +1416,7 @@ fn white_list_test_11() {
 
         assert_noop!(
             TemplateModule::create_item(origin2.clone(), 1, 2, default_nft_data().into()),
-            "Public minting is not allowed for this collection."
+            "Public minting is not allowed for this collection"
         );
     });
 }
@@ -1500,7 +1445,7 @@ fn white_list_test_12() {
 
         assert_noop!(
             TemplateModule::create_item(origin2.clone(), 1, 2, default_nft_data().into()),
-            "Public minting is not allowed for this collection."
+            "Public minting is not allowed for this collection"
         );
     });
 }
