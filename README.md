@@ -115,6 +115,22 @@ cargo run -- \
 
 Additional CLI usage options are available and may be shown by running `cargo run -- --help`.
 
+## Benchmarks
+
+First of all, add rust toolchain and make it default.
+```bash
+rustup target add wasm32-unknown-unknown --toolchain nightly-2020-10-01
+```
+
+Then in "/node/src" run build command below
+```bash
+cargo +nightly-2020-10-01 build --release --features runtime-benchmarks
+```
+
+Run benchmark
+```bash
+target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" --repeat 1
+```
 
 ## UI custom types
 ```
@@ -151,9 +167,9 @@ Additional CLI usage options are available and may be shown by running `cargo ru
   "CollectionMode": {
     "_enum": {
       "Invalid": null,
-      "NFT": "u32",
+      "NFT": null,
       "Fungible": "u32",
-      "ReFungible": "(u32, u32)"
+      "ReFungible": "u32"
     }
   },
   "Ownership": {
@@ -173,7 +189,8 @@ Additional CLI usage options are available and may be shown by running `cargo ru
   "NftItemType": {
     "Collection": "u64",
     "Owner": "AccountId",
-    "Data": "Vec<u8>"
+    "ConstData": "Vec<u8>",
+    "VariableData": "Vec<u8>"
   },
   "Ownership": {
     "owner": "AccountId",
@@ -182,7 +199,8 @@ Additional CLI usage options are available and may be shown by running `cargo ru
   "ReFungibleItemType": {
     "Collection": "u64",
     "Owner": "Vec<Ownership<AccountId>>",
-    "Data": "Vec<u8>"
+    "ConstData": "Vec<u8>",
+    "VariableData": "Vec<u8>"
   },
   "CollectionType": {
     "Owner": "AccountId",
@@ -192,11 +210,12 @@ Additional CLI usage options are available and may be shown by running `cargo ru
     "Name": "Vec<u16>",
     "Description": "Vec<u16>",
     "TokenPrefix": "Vec<u8>",
-    "CustomDataSize": "u32",
     "MintMode": "bool",
     "OffchainSchema": "Vec<u8>",
     "Sponsor": "AccountId",
-    "UnconfirmedSponsor": "AccountId"
+    "UnconfirmedSponsor": "AccountId",
+    "VariableOnChainSchema": "Vec<u8>",
+    "ConstOnChainSchema": "Vec<u8>"
   },
   "ApprovePermissions": {
     "Approved": "AccountId",
@@ -205,7 +224,23 @@ Additional CLI usage options are available and may be shown by running `cargo ru
   "RawData": "Vec<u8>",
   "Address": "AccountId",
   "LookupSource": "AccountId",
-  "Weight": "u64"
+  "Weight": "u64",
+  "CreateNftData": {
+    "const_data": "Vec<u8>",
+    "variable_data": "Vec<u8>" 
+  },
+  "CreateFungibleData": {},
+  "CreateReFungibleData": {
+    "const_data": "Vec<u8>",
+    "variable_data": "Vec<u8>" 
+  },
+  "CreateItemData": {
+    "_enum": {
+      "NFT": "CreateNftData",
+      "Fungible": "CreateFungibleData",
+      "ReFungible": "CreateReFungibleData"
+    }
+  }
 }
 
 ```
