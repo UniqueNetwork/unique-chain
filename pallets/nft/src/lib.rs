@@ -115,13 +115,6 @@ pub struct CollectionType<AccountId> {
 
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct CollectionAdminsType<AccountId> {
-    pub admin: AccountId,
-    pub collection_id: u64,
-}
-
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct NftItemType<AccountId> {
     pub collection: u64,
     pub owner: AccountId,
