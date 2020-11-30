@@ -1767,3 +1767,59 @@ fn set_variable_on_chain_schema() {
         assert_eq!(TemplateModule::collection(collection_id).variable_on_chain_schema, b"test variable on chain schema".to_vec());
     });
 }
+
+#[test]
+fn set_variable_meta_data_on_nft_token_stores_variable_meta_data() {
+    new_test_ext().execute_with(|| {
+        default_limits();
+
+        let collection_id = create_test_collection(&CollectionMode::NFT, 1);
+
+        let origin1 = Origin::signed(1);
+        
+        let data = default_nft_data();
+        create_test_item(1, &data.into());
+        
+        let variable_data = b"test set_variable_meta_data method.".to_vec();
+        assert_ok!(TemplateModule::set_variable_meta_data(origin1, collection_id, 1, variable_data.clone()));
+
+        assert_eq!(TemplateModule::nft_item_id(collection_id, 1).variable_data, variable_data);
+    });
+}
+
+#[test]
+fn set_variable_meta_data_on_re_fungible_token_stores_variable_meta_data() {
+    new_test_ext().execute_with(|| {
+        default_limits();
+
+        let collection_id = create_test_collection(&CollectionMode::ReFungible(3), 1);
+
+        let origin1 = Origin::signed(1);
+
+        let data = default_re_fungible_data();
+        create_test_item(1, &data.into());
+
+        let variable_data = b"test set_variable_meta_data method.".to_vec();
+        assert_ok!(TemplateModule::set_variable_meta_data(origin1, collection_id, 1, variable_data.clone()));
+
+        assert_eq!(TemplateModule::refungible_item_id(collection_id, 1).variable_data, variable_data);
+    });
+}
+
+
+#[test]
+fn set_variable_meta_data_on_fungible_token_fails() {
+    new_test_ext().execute_with(|| {
+        default_limits();
+
+        let collection_id = create_test_collection(&CollectionMode::Fungible(3), 1);
+
+        let origin1 = Origin::signed(1);
+
+        let data = default_fungible_data();
+        create_test_item(1, &data.into());
+
+        let variable_data = b"test set_variable_meta_data method.".to_vec();
+        assert_noop!(TemplateModule::set_variable_meta_data(origin1, collection_id, 1, variable_data.clone()), "Can't store metadata in fungible tokens.");
+    });
+}

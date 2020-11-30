@@ -1162,7 +1162,7 @@ decl_module! {
             let target_collection = <Collection<T>>::get(collection_id);
             ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
                 Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                "Only item owner, collection owner and admins can modify item");
+                "Only item owner, collection owner and admins can modify item.");
 
             Self::item_exists(collection_id, item_id, &target_collection.mode)?;
 
@@ -1170,7 +1170,7 @@ decl_module! {
             {
                 CollectionMode::NFT => Self::set_nft_variable_data(collection_id, item_id, data)?,
                 CollectionMode::ReFungible(_)  => Self::set_re_fungible_variable_data(collection_id, item_id, data)?,
-                CollectionMode::Fungible(_) => fail!("Can't store metadata in fungible tokens"),
+                CollectionMode::Fungible(_) => fail!("Can't store metadata in fungible tokens."),
                 _ => fail!("Unexpected collection type.")
             };
 
