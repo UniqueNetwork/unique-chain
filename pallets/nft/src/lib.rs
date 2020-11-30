@@ -1170,7 +1170,8 @@ decl_module! {
             {
                 CollectionMode::NFT => Self::set_nft_variable_data(collection_id, item_id, data)?,
                 CollectionMode::ReFungible(_)  => Self::set_re_fungible_variable_data(collection_id, item_id, data)?,
-                _ => ()
+                CollectionMode::Fungible(_) => fail!("Can't store metadata in fungible tokens"),
+                _ => fail!("Unexpected collection type.")
             };
 
             Ok(())
