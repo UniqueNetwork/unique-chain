@@ -264,52 +264,64 @@ impl From<CreateFungibleData> for CreateItemData {
 decl_error! {
 	/// Error for non-fungible-token module.
 	pub enum Error for Module<T: Trait> {
-        /// Total collections bound exceeded
+        /// Total collections bound exceeded.
         TotalCollectionsLimitExceeded,
-		/// Decimal_points parameter must be lower than 4
+		/// Decimal_points parameter must be lower than 4.
         CollectionDecimalPointLimitExceeded, 
-        /// Collection name can not be longer than 63 char
+        /// Collection name can not be longer than 63 char.
         CollectionNameLimitExceeded, 
-        /// Collection description can not be longer than 255 char
+        /// Collection description can not be longer than 255 char.
         CollectionDescriptionLimitExceeded, 
-        /// Token prefix can not be longer than 15 char
+        /// Token prefix can not be longer than 15 char.
         CollectionTokenPrefixLimitExceeded,
-        /// This collection does not exist
+        /// This collection does not exist.
         CollectionNotFound,
-        /// Item not exists
+        /// Item not exists.
         TokenNotFound,
-        /// Arithmetic calculation overflow
+        /// Arithmetic calculation overflow.
         NumOverflow,       
-        /// Account already has admin role
+        /// Account already has admin role.
         AlreadyAdmin,  
-        /// You do not own this collection
+        /// You do not own this collection.
         NoPermission,
-        /// This address is not set as sponsor, use setCollectionSponsor first
+        /// This address is not set as sponsor, use setCollectionSponsor first.
         ConfirmUnsetSponsorFail,
-        /// Collection is not in mint mode
+        /// Collection is not in mint mode.
         PublicMintingNotAllowed,
-        /// Sender parameter and item owner must be equal
+        /// Sender parameter and item owner must be equal.
         MustBeTokenOwner,
-        /// Item balance not enouth
+        /// Item balance not enough.
         TokenValueTooLow,
-        /// Size of item is too large
+        /// Size of item is too large.
         NftSizeLimitExceeded,
-        /// Size of item must be 0 with fungible type
-        FungibleUnexpectedParam,
         /// No approve found
         ApproveNotFound,
-        /// Requested value more than approved
+        /// Requested value more than approved.
         TokenValueNotEnough,
-        /// Only approved addresses can call this method
+        /// Only approved addresses can call this method.
         ApproveRequired,
-        /// Address is not in white list
+        /// Address is not in white list.
         AddresNotInWhiteList,
-        /// Number of collection admins bound exceeded
+        /// Number of collection admins bound exceeded.
         CollectionAdminsLimitExceeded,
-        /// Owned tokens by a single address bound exceeded
+        /// Owned tokens by a single address bound exceeded.
         AddressOwnershipLimitExceeded,
-        /// Length of items properties must be greater than 0
+        /// Length of items properties must be greater than 0.
         EmptyArgument,
+        /// const_data exceeded data limit.
+        TokenConstDataLimitExceeded,
+        /// variable_data exceeded data limit.
+        TokenVariableDataLimitExceeded,
+        /// Not NFT item data used to mint in NFT collection.
+        NotNftDataUsedToMintNftCollectionToken,
+        /// Not Fungible item data used to mint in Fungible collection.
+        NotFungibleDataUsedToMintFungibleCollectionToken,
+        /// Not Re Fungible item data used to mint in Re Fungible collection.
+        NotReFungibleDataUsedToMintReFungibleCollectionToken,
+        /// Unexpected collection type.
+        UnexpectedCollectionType,
+        /// Can't store metadata in fungible tokens.
+        CantSotreMetadataInFungibleTokens
 	}
 }
 
@@ -1192,8 +1204,8 @@ decl_module! {
             {
                 CollectionMode::NFT => Self::set_nft_variable_data(collection_id, item_id, data)?,
                 CollectionMode::ReFungible(_)  => Self::set_re_fungible_variable_data(collection_id, item_id, data)?,
-                CollectionMode::Fungible(_) => fail!("Can't store metadata in fungible tokens."),
-                _ => fail!("Unexpected collection type.")
+                CollectionMode::Fungible(_) => fail!(Error::<T>::CantSotreMetadataInFungibleTokens),
+                _ => fail!(Error::<T>::UnexpectedCollectionType)
             };
 
             Ok(())
@@ -1323,7 +1335,6 @@ decl_module! {
             <ContractSelfSponsoring<T>>::insert(contract_address, enable);
             Ok(())
         }
-
     }
 }
 
@@ -1346,29 +1357,29 @@ impl<T: Trait> Module<T> {
             CollectionMode::NFT => {
                 if let CreateItemData::NFT(data) = data {
                     // check sizes
-                    ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, "const_data exceeded data limit.");
-                    ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, "variable_data exceeded data limit.");
+                    ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, Error::<T>::TokenConstDataLimitExceeded);
+                    ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, Error::<T>::TokenVariableDataLimitExceeded);
                 } else {
-                    fail!("Not NFT item data used to mint in NFT collection.");
+                    fail!(Error::<T>::NotNftDataUsedToMintNftCollectionToken);
                 }
             },
             CollectionMode::Fungible(_) => {
                 if let CreateItemData::Fungible(_) = data {
                 } else {
-                    fail!("Not Fungible item data used to mint in Fungible collection.");
+                    fail!(Error::<T>::NotFungibleDataUsedToMintFungibleCollectionToken);
                 }
             },
             CollectionMode::ReFungible(_) => {
                 if let CreateItemData::ReFungible(data) = data {
 
                     // check sizes
-                    ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, "const_data exceeded data limit.");
-                    ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, "variable_data exceeded data limit.");
+                    ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, Error::<T>::TokenConstDataLimitExceeded);
+                    ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, Error::<T>::TokenVariableDataLimitExceeded);
                 } else {
-                    fail!("Not Re Fungible item data used to mint in Re Fungible collection.");
+                    fail!(Error::<T>::NotReFungibleDataUsedToMintReFungibleCollectionToken);
                 }
             },
-            _ => { fail!("Unexpected collection type."); }
+            _ => { fail!(Error::<T>::UnexpectedCollectionType); }
         };
 
         Ok(())
