@@ -87,6 +87,32 @@ fn create_nft_item() {
     });
 }
 
+// Use cases tests region
+// #region
+#[test]
+fn create_nft_multiple_items() {
+    new_test_ext().execute_with(|| {
+        default_limits();
+        
+        create_test_collection(&CollectionMode::NFT, 1);
+
+        let origin1 = Origin::signed(1);
+
+        let items_data = vec![default_nft_data(), default_nft_data(), default_nft_data()];
+
+        assert_ok!(TemplateModule::create_multiple_items(
+            origin1.clone(),
+            1,
+            1,
+            items_data.clone().into_iter().map(|d| { d.into() }).collect()
+        ));
+        for (index, data) in items_data.iter().enumerate() {
+            assert_eq!(TemplateModule::nft_item_id(1, (index + 1) as u64).const_data.to_vec(), data.const_data);
+            assert_eq!(TemplateModule::nft_item_id(1, (index + 1) as u64).variable_data.to_vec(), data.variable_data);
+        }
+    });
+}
+
 #[test]
 fn create_refungible_item() {
     new_test_ext().execute_with(|| {
@@ -114,6 +140,39 @@ fn create_refungible_item() {
 }
 
 #[test]
+fn create_multiple_refungible_items() {
+    new_test_ext().execute_with(|| {
+        default_limits();
+        
+        create_test_collection(&CollectionMode::ReFungible(3), 1);
+
+        let origin1 = Origin::signed(1);
+
+        let items_data = vec![default_re_fungible_data(), default_re_fungible_data(), default_re_fungible_data()];
+
+        assert_ok!(TemplateModule::create_multiple_items(
+            origin1.clone(),
+            1,
+            1,
+            items_data.clone().into_iter().map(|d| { d.into() }).collect()
+        ));
+        for (index, data) in items_data.iter().enumerate() {
+
+            let item = TemplateModule::refungible_item_id(1, (index + 1) as u64);
+            assert_eq!(item.const_data.to_vec(), data.const_data);
+            assert_eq!(item.variable_data.to_vec(), data.variable_data);
+            assert_eq!(
+                item.owner[0],
+                Ownership {
+                    owner: 1,
+                    fraction: 1000
+                }
+            );
+        }
+    });
+}
+
+#[test]
 fn create_fungible_item() {
     new_test_ext().execute_with(|| {
         default_limits();
@@ -124,8 +183,32 @@ fn create_fungible_item() {
         create_test_item(collection_id, &data.into());
 
         assert_eq!(TemplateModule::fungible_item_id(collection_id, 1).owner, 1);
-        assert_eq!(TemplateModule::balance_count(1, 1), 1000);
-        assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
+    });
+}
+
+#[test]
+fn create_multiple_fungible_items() {
+    new_test_ext().execute_with(|| {
+        default_limits();
+
+        create_test_collection(&CollectionMode::Fungible(3), 1);
+
+        let origin1 = Origin::signed(1);
+
+        let items_data = vec![default_fungible_data(), default_fungible_data(), default_fungible_data()];
+
+        assert_ok!(TemplateModule::create_multiple_items(
+            origin1.clone(),
+            1,
+            1,
+            items_data.clone().into_iter().map(|d| { d.into() }).collect()
+        ));
+        
+        for (index, _) in items_data.iter().enumerate() {
+            assert_eq!(TemplateModule::fungible_item_id(1, (index + 1) as u64).owner, 1);
+        }
+        assert_eq!(TemplateModule::balance_count(1, 1), 3000);
+        assert_eq!(TemplateModule::address_tokens(1, 1), [1, 2, 3]);
     });
 }
 
@@ -1333,7 +1416,7 @@ fn white_list_test_11() {
 
         assert_noop!(
             TemplateModule::create_item(origin2.clone(), 1, 2, default_nft_data().into()),
-            "Public minting is not allowed for this collection."
+            "Public minting is not allowed for this collection"
         );
     });
 }
@@ -1362,7 +1445,7 @@ fn white_list_test_12() {
 
         assert_noop!(
             TemplateModule::create_item(origin2.clone(), 1, 2, default_nft_data().into()),
-            "Public minting is not allowed for this collection."
+            "Public minting is not allowed for this collection"
         );
     });
 }

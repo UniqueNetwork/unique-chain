@@ -8,9 +8,9 @@ pub use serde::*;
 
 use codec::{Decode, Encode};
 pub use frame_support::{
-    construct_runtime, decl_event, decl_module, decl_storage,
+    construct_runtime, decl_event, decl_module, decl_storage, decl_error,
     dispatch::DispatchResult,
-    ensure, parameter_types, fail,
+    ensure, fail, parameter_types,
     traits::{
         Currency, ExistenceRequirement, Get, Imbalance, KeyOwnerProofSystem, OnUnbalanced,
         Randomness, WithdrawReason,
@@ -22,7 +22,6 @@ pub use frame_support::{
     },
     IsSubType, StorageValue,
 };
-// use frame_support::weights::{Weight, constants::RocksDbWeight as DbWeight};
 
 use frame_system::{self as system, ensure_signed, ensure_root};
 use sp_runtime::sp_std::prelude::Vec;
@@ -112,13 +111,6 @@ pub struct CollectionType<AccountId> {
     pub unconfirmed_sponsor: AccountId, // Sponsor address that has not yet confirmed sponsorship
     pub variable_on_chain_schema: Vec<u8>, //
     pub const_on_chain_schema: Vec<u8>, //
-}
-
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct CollectionAdminsType<AccountId> {
-    pub admin: AccountId,
-    pub collection_id: u64,
 }
 
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
@@ -268,6 +260,59 @@ impl From<CreateFungibleData> for CreateItemData {
     }
 }
 
+
+decl_error! {
+	/// Error for non-fungible-token module.
+	pub enum Error for Module<T: Trait> {
+        /// Total collections bound exceeded
+        TotalCollectionsLimitExceeded,
+		/// Decimal_points parameter must be lower than 4
+        CollectionDecimalPointLimitExceeded, 
+        /// Collection name can not be longer than 63 char
+        CollectionNameLimitExceeded, 
+        /// Collection description can not be longer than 255 char
+        CollectionDescriptionLimitExceeded, 
+        /// Token prefix can not be longer than 15 char
+        CollectionTokenPrefixLimitExceeded,
+        /// This collection does not exist
+        CollectionNotFound,
+        /// Item not exists
+        TokenNotFound,
+        /// Arithmetic calculation overflow
+        NumOverflow,       
+        /// Account already has admin role
+        AlreadyAdmin,  
+        /// You do not own this collection
+        NoPermission,
+        /// This address is not set as sponsor, use setCollectionSponsor first
+        ConfirmUnsetSponsorFail,
+        /// Collection is not in mint mode
+        PublicMintingNotAllowed,
+        /// Sender parameter and item owner must be equal
+        MustBeTokenOwner,
+        /// Item balance not enouth
+        TokenValueTooLow,
+        /// Size of item is too large
+        NftSizeLimitExceeded,
+        /// Size of item must be 0 with fungible type
+        FungibleUnexpectedParam,
+        /// No approve found
+        ApproveNotFound,
+        /// Requested value more than approved
+        TokenValueNotEnough,
+        /// Only approved addresses can call this method
+        ApproveRequired,
+        /// Address is not in white list
+        AddresNotInWhiteList,
+        /// Number of collection admins bound exceeded
+        CollectionAdminsLimitExceeded,
+        /// Owned tokens by a single address bound exceeded
+        AddressOwnershipLimitExceeded,
+        /// Length of items properties must be greater than 0
+        EmptyArgument,
+	}
+}
+
 pub trait Trait: system::Trait + Sized + transaction_payment::Trait + pallet_contracts::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 
@@ -386,6 +431,7 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 
         fn deposit_event() = default;
+        type Error = Error<T>;
 
         fn on_initialize(now: T::BlockNumber) -> Weight {
 
@@ -432,32 +478,32 @@ decl_module! {
             };
 
             // bound Total number of collections
-            ensure!(CollectionCount::get() < ChainLimit::get().collection_numbers_limit, "Total collections bound exceeded");
+            ensure!(CollectionCount::get() < ChainLimit::get().collection_numbers_limit, Error::<T>::TotalCollectionsLimitExceeded);
 
             // check params
-            ensure!(decimal_points <= 4, "decimal_points parameter must be lower than 4");
+            ensure!(decimal_points <= 4, Error::<T>::CollectionDecimalPointLimitExceeded);
 
             let mut name = collection_name.to_vec();
             name.push(0);
-            ensure!(name.len() <= 64, "Collection name can not be longer than 63 char");
+            ensure!(name.len() <= 64, Error::<T>::CollectionNameLimitExceeded);
 
             let mut description = collection_description.to_vec();
             description.push(0);
-            ensure!(name.len() <= 256, "Collection description can not be longer than 255 char");
+            ensure!(name.len() <= 256, Error::<T>::CollectionDescriptionLimitExceeded);
 
             let mut prefix = token_prefix.to_vec();
             prefix.push(0);
-            ensure!(prefix.len() <= 16, "Token prefix can not be longer than 15 char");
+            ensure!(prefix.len() <= 16, Error::<T>::CollectionTokenPrefixLimitExceeded);
 
             // Generate next collection ID
             let next_id = CreatedCollectionCount::get()
                 .checked_add(1)
-                .expect("collection id error");
+                .ok_or(Error::<T>::NumOverflow)?;
 
             // bound counter
             let total = CollectionCount::get()
                 .checked_add(1)
-                .expect("collection counter error");
+                .ok_or(Error::<T>::NumOverflow)?;
 
             CreatedCollectionCount::put(next_id);
             CollectionCount::put(total);
@@ -489,7 +535,7 @@ decl_module! {
         }
 
         /// **DANGEROUS**: Destroys collection and all NFTs within this collection. Users irrecoverably lose their assets and may lose real money.
-        ///     
+        /// 
         /// # Permissions
         /// 
         /// * Collection Owner.
@@ -524,7 +570,7 @@ decl_module! {
                 // bound couter
                 let total = CollectionCount::get()
                     .checked_sub(1)
-                    .expect("collection counter error");
+                    .ok_or(Error::<T>::NumOverflow)?;
 
                 CollectionCount::put(total);
             }
@@ -693,11 +739,11 @@ decl_module! {
             if <AdminList<T>>::contains_key(collection_id)
             {
                 admin_arr = <AdminList<T>>::get(collection_id);
-                ensure!(!admin_arr.contains(&new_admin_id), "Account already has admin role");
+                ensure!(!admin_arr.contains(&new_admin_id), Error::<T>::AlreadyAdmin);
             }
 
             // Number of collection admins
-            ensure!((admin_arr.len() as u64) < ChainLimit::get().collections_admins_limit, "Number of collection admins bound exceeded");
+            ensure!((admin_arr.len() as u64) < ChainLimit::get().collections_admins_limit, Error::<T>::CollectionAdminsLimitExceeded);
 
             admin_arr.push(new_admin_id);
             <AdminList<T>>::insert(collection_id, admin_arr);
@@ -746,10 +792,10 @@ decl_module! {
         pub fn set_collection_sponsor(origin, collection_id: u64, new_sponsor: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            ensure!(<Collection<T>>::contains_key(collection_id), "This collection does not exist");
+            ensure!(<Collection<T>>::contains_key(collection_id), Error::<T>::CollectionNotFound);
 
             let mut target_collection = <Collection<T>>::get(collection_id);
-            ensure!(sender == target_collection.owner, "You do not own this collection");
+            ensure!(sender == target_collection.owner, Error::<T>::NoPermission);
 
             target_collection.unconfirmed_sponsor = new_sponsor;
             <Collection<T>>::insert(collection_id, target_collection);
@@ -768,10 +814,10 @@ decl_module! {
         pub fn confirm_sponsorship(origin, collection_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            ensure!(<Collection<T>>::contains_key(collection_id), "This collection does not exist");
+            ensure!(<Collection<T>>::contains_key(collection_id), Error::<T>::CollectionNotFound);
 
             let mut target_collection = <Collection<T>>::get(collection_id);
-            ensure!(sender == target_collection.unconfirmed_sponsor, "This address is not set as sponsor, use setCollectionSponsor first");
+            ensure!(sender == target_collection.unconfirmed_sponsor, Error::<T>::ConfirmUnsetSponsorFail);
 
             target_collection.sponsor = target_collection.unconfirmed_sponsor;
             target_collection.unconfirmed_sponsor = T::AccountId::default();
@@ -793,10 +839,10 @@ decl_module! {
         pub fn remove_collection_sponsor(origin, collection_id: u64) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            ensure!(<Collection<T>>::contains_key(collection_id), "This collection does not exist");
+            ensure!(<Collection<T>>::contains_key(collection_id), Error::<T>::CollectionNotFound);
 
             let mut target_collection = <Collection<T>>::get(collection_id);
-            ensure!(sender == target_collection.owner, "You do not own this collection");
+            ensure!(sender == target_collection.owner, Error::<T>::NoPermission);
 
             target_collection.sponsor = T::AccountId::default();
             <Collection<T>>::insert(collection_id, target_collection);
@@ -832,79 +878,55 @@ decl_module! {
         pub fn create_item(origin, collection_id: u64, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
+
+            Self::collection_exists(collection_id)?;
+
+            let target_collection = <Collection<T>>::get(collection_id);
+
+            Self::can_create_items_in_collection(collection_id, &target_collection, &sender, &owner)?;
+            Self::validate_create_item_args(&target_collection, &data)?;
+            Self::create_item_no_validation(collection_id, &target_collection, owner, data)?;
+
+            Ok(())
+        }
+
+        /// This method creates multiple instances of NFT Collection created with CreateCollection method.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner.
+        /// * Collection Admin.
+        /// * Anyone if
+        ///     * White List is enabled, and
+        ///     * Address is added to white list, and
+        ///     * MintPermission is enabled (see SetMintPermission method)
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id: ID of the collection.
+        /// 
+        /// * itemsData: Array items properties. Each property is an array of bytes itself, see [create_item].
+        /// 
+        /// * owner: Address, initial owner of the NFT.
+        #[weight = T::WeightInfo::create_item(items_data.into_iter()
+                               .map(|data| { data.len() })
+                               .sum())]
+        pub fn create_multiple_items(origin, collection_id: u64, owner: T::AccountId, items_data: Vec<CreateItemData>) -> DispatchResult {
+
+            ensure!(items_data.len() > 0, Error::<T>::EmptyArgument);
+            let sender = ensure_signed(origin)?;
+
             Self::collection_exists(collection_id)?;
             let target_collection = <Collection<T>>::get(collection_id);
 
-            if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
-                ensure!(target_collection.mint_mode == true, "Public minting is not allowed for this collection.");
-                Self::check_white_list(collection_id, &owner)?;
-                Self::check_white_list(collection_id, &sender)?;
+            Self::can_create_items_in_collection(collection_id, &target_collection, &sender, &owner)?;
+
+            for data in &items_data {
+                Self::validate_create_item_args(&target_collection, data)?;
             }
-
-            match target_collection.mode
-            {
-                CollectionMode::NFT => {
-                    if let CreateItemData::NFT(data) = data {
-                        // check sizes
-                        ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, "const_data exceeded data limit.");
-                        ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, "variable_data exceeded data limit.");
-    
-                        // Create nft item
-                        let item = NftItemType {
-                            collection: collection_id,
-                            owner: owner,
-                            const_data: data.const_data.clone(),
-                            variable_data: data.variable_data.clone() 
-                        };
-    
-                        Self::add_nft_item(item)?;
-                    
-                    } else {
-                        fail!("Not NFT item data used to mint in NFT collection.");
-                    }
-                },
-                CollectionMode::Fungible(_) => {
-                    if let CreateItemData::Fungible(_) = data {
-    
-                        let item = FungibleItemType {
-                            collection: collection_id,
-                            owner: owner,
-                            value: (10 as u128).pow(target_collection.decimal_points)
-                        };
-    
-                        Self::add_fungible_item(item)?;
-                    } else {
-                        fail!("Not Fungible item data used to mint in Fungible collection.");
-                    }
-                },
-                CollectionMode::ReFungible(_) => {
-                    if let CreateItemData::ReFungible(data) = data {
-    
-                        // check sizes
-                        ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, "const_data exceeded data limit.");
-                        ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, "variable_data exceeded data limit.");
-    
-                        let mut owner_list = Vec::new();
-                        let value = (10 as u128).pow(target_collection.decimal_points);
-                        owner_list.push(Ownership {owner: owner.clone(), fraction: value});
-    
-                        let item = ReFungibleItemType {
-                            collection: collection_id,
-                            owner: owner_list,
-                            const_data: data.const_data.clone(),
-                            variable_data: data.variable_data.clone() 
-                        };
-    
-                        Self::add_refungible_item(item)?;
-                    } else {
-                        fail!("Not Re Fungible item data used to mint in Re Fungible collection.");
-                    }
-                },
-                _ => { ensure!(1 == 0,"Unexpected collection type."); }
-            };
-
-            // call event
-            Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id)));
+            for data in &items_data {
+                Self::create_item_no_validation(collection_id, &target_collection, owner.clone(), data.clone())?;
+            }
 
             Ok(())
         }
@@ -932,7 +954,7 @@ decl_module! {
             let target_collection = <Collection<T>>::get(collection_id);
             ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
                 Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                "Only item owner, collection owner and admins can modify item");
+                Error::<T>::NoPermission);
 
             if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, &sender)?;
@@ -984,7 +1006,7 @@ decl_module! {
             let target_collection = <Collection<T>>::get(collection_id);
             ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
                 Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                "Only item owner, collection owner and admins can modify item");
+                Error::<T>::NoPermission);
 
             if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, &sender)?;
@@ -1026,7 +1048,7 @@ decl_module! {
             let target_collection = <Collection<T>>::get(collection_id);
             ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
                 Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                "Only item owner, collection owner and admins can approve");
+                Error::<T>::NoPermission);
 
             if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, &sender)?;
@@ -1088,14 +1110,14 @@ decl_module! {
                 if opt_item.is_some()
                 {
                     appoved_transfer = true;
-                    ensure!(opt_item.unwrap().amount >= value, "Requested value more than approved");
+                    ensure!(opt_item.unwrap().amount >= value, Error::<T>::TokenValueNotEnough);
                 }
             }
 
             // Transfer permissions check
             let target_collection = <Collection<T>>::get(collection_id);
-            ensure!(appoved_transfer || Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                "Only item owner, collection owner and admins can modify items");
+                ensure!(appoved_transfer || Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
+                Error::<T>::NoPermission);
 
             if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, &sender)?;
@@ -1134,7 +1156,7 @@ decl_module! {
 
             Ok(())
         }
-        
+
         /// Set off-chain data schema.
         /// 
         /// # Permissions
@@ -1162,7 +1184,7 @@ decl_module! {
             let target_collection = <Collection<T>>::get(collection_id);
             ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
                 Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                "Only item owner, collection owner and admins can modify item.");
+                Error::<T>::NoPermission);
 
             Self::item_exists(collection_id, item_id, &target_collection.mode)?;
 
@@ -1296,7 +1318,7 @@ decl_module! {
                 let owner = <ContractOwner<T>>::get(&contract_address);
                 is_owner = sender == owner;
             }
-            ensure!(is_owner, "Only contract owner may call this method");
+            ensure!(is_owner, Error::<T>::NoPermission);
 
             <ContractSelfSponsoring<T>>::insert(contract_address, enable);
             Ok(())
@@ -1306,10 +1328,101 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
+
+    fn can_create_items_in_collection(collection_id: u64, collection: &CollectionType<T::AccountId>, sender: &T::AccountId, owner: &T::AccountId) -> DispatchResult {
+
+        if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
+            ensure!(collection.mint_mode == true, Error::<T>::PublicMintingNotAllowed);
+            Self::check_white_list(collection_id, owner)?;
+            Self::check_white_list(collection_id, sender)?;
+        }
+
+        Ok(())
+    }
+
+    fn validate_create_item_args(target_collection: &CollectionType<T::AccountId>, data: &CreateItemData) -> DispatchResult {
+        match target_collection.mode
+        {
+            CollectionMode::NFT => {
+                if let CreateItemData::NFT(data) = data {
+                    // check sizes
+                    ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, "const_data exceeded data limit.");
+                    ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, "variable_data exceeded data limit.");
+                } else {
+                    fail!("Not NFT item data used to mint in NFT collection.");
+                }
+            },
+            CollectionMode::Fungible(_) => {
+                if let CreateItemData::Fungible(_) = data {
+                } else {
+                    fail!("Not Fungible item data used to mint in Fungible collection.");
+                }
+            },
+            CollectionMode::ReFungible(_) => {
+                if let CreateItemData::ReFungible(data) = data {
+
+                    // check sizes
+                    ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, "const_data exceeded data limit.");
+                    ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, "variable_data exceeded data limit.");
+                } else {
+                    fail!("Not Re Fungible item data used to mint in Re Fungible collection.");
+                }
+            },
+            _ => { fail!("Unexpected collection type."); }
+        };
+
+        Ok(())
+    }
+
+    fn create_item_no_validation(collection_id: u64, collection: &CollectionType<T::AccountId>, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
+        match data
+        {
+            CreateItemData::NFT(data) => {
+                let item = NftItemType {
+                    collection: collection_id,
+                    owner,
+                    const_data: data.const_data,
+                    variable_data: data.variable_data
+                };
+
+                Self::add_nft_item(item)?;
+            },
+            CreateItemData::Fungible(_) => {
+                let item = FungibleItemType {
+                    collection: collection_id,
+                    owner,
+                    value: (10 as u128).pow(collection.decimal_points)
+                };
+
+                Self::add_fungible_item(item)?;
+            },
+            CreateItemData::ReFungible(data) => {
+                let mut owner_list = Vec::new();
+                let value = (10 as u128).pow(collection.decimal_points);
+                owner_list.push(Ownership {owner: owner.clone(), fraction: value});
+
+                let item = ReFungibleItemType {
+                    collection: collection_id,
+                    owner: owner_list,
+                    const_data: data.const_data,
+                    variable_data: data.variable_data
+                };
+
+                Self::add_refungible_item(item)?;
+            }
+        };
+
+
+        // call event
+        Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id)));
+
+        Ok(())
+    }
+
     fn add_fungible_item(item: FungibleItemType<T::AccountId>) -> DispatchResult {
         let current_index = <ItemListIndex>::get(item.collection)
             .checked_add(1)
-            .expect("Item list index id error");
+            .ok_or(Error::<T>::NumOverflow)?;
         let itemcopy = item.clone();
         let owner = item.owner.clone();
         let value = item.value as u64;
@@ -1326,7 +1439,7 @@ impl<T: Trait> Module<T> {
         // Update balance
         let new_balance = <Balance<T>>::get(item.collection, owner.clone())
             .checked_add(value)
-            .unwrap();
+            .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(item.collection, owner.clone(), new_balance);
 
         Ok(())
@@ -1335,7 +1448,7 @@ impl<T: Trait> Module<T> {
     fn add_refungible_item(item: ReFungibleItemType<T::AccountId>) -> DispatchResult {
         let current_index = <ItemListIndex>::get(item.collection)
             .checked_add(1)
-            .expect("Item list index id error");
+            .ok_or(Error::<T>::NumOverflow)?;
         let itemcopy = item.clone();
 
         let value = item.owner.first().unwrap().fraction as u64;
@@ -1353,7 +1466,7 @@ impl<T: Trait> Module<T> {
         // Update balance
         let new_balance = <Balance<T>>::get(item.collection, owner.clone())
             .checked_add(value)
-            .unwrap();
+            .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(item.collection, owner.clone(), new_balance);
 
         Ok(())
@@ -1362,7 +1475,7 @@ impl<T: Trait> Module<T> {
     fn add_nft_item(item: NftItemType<T::AccountId>) -> DispatchResult {
         let current_index = <ItemListIndex>::get(item.collection)
             .checked_add(1)
-            .expect("Item list index id error");
+            .ok_or(Error::<T>::NumOverflow)?;
 
         let item_owner = item.owner.clone();
         let collection_id = item.collection.clone();
@@ -1378,7 +1491,7 @@ impl<T: Trait> Module<T> {
         // Update balance
         let new_balance = <Balance<T>>::get(collection_id, item_owner.clone())
             .checked_add(1)
-            .unwrap();
+            .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item_owner.clone(), new_balance);
 
         Ok(())
@@ -1391,7 +1504,7 @@ impl<T: Trait> Module<T> {
     ) -> DispatchResult {
         ensure!(
             <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
-            "Item does not exists"
+            Error::<T>::TokenNotFound
         );
         let collection = <ReFungibleItemList<T>>::get(collection_id, item_id);
         let item = collection
@@ -1408,7 +1521,7 @@ impl<T: Trait> Module<T> {
         // update balance
         let new_balance = <Balance<T>>::get(collection_id, item.owner.clone())
             .checked_sub(item.fraction as u64)
-            .unwrap();
+            .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
 
         <ReFungibleItemList<T>>::remove(collection_id, item_id);
@@ -1419,7 +1532,7 @@ impl<T: Trait> Module<T> {
     fn burn_nft_item(collection_id: u64, item_id: u64) -> DispatchResult {
         ensure!(
             <NftItemList<T>>::contains_key(collection_id, item_id),
-            "Item does not exists"
+            Error::<T>::TokenNotFound
         );
         let item = <NftItemList<T>>::get(collection_id, item_id);
         Self::remove_token_index(collection_id, item_id, item.owner.clone())?;
@@ -1430,7 +1543,7 @@ impl<T: Trait> Module<T> {
         // update balance
         let new_balance = <Balance<T>>::get(collection_id, item.owner.clone())
             .checked_sub(1)
-            .unwrap();
+            .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
         <NftItemList<T>>::remove(collection_id, item_id);
 
@@ -1440,7 +1553,7 @@ impl<T: Trait> Module<T> {
     fn burn_fungible_item(collection_id: u64, item_id: u64) -> DispatchResult {
         ensure!(
             <FungibleItemList<T>>::contains_key(collection_id, item_id),
-            "Item does not exists"
+            Error::<T>::TokenNotFound
         );
         let item = <FungibleItemList<T>>::get(collection_id, item_id);
         Self::remove_token_index(collection_id, item_id, item.owner.clone())?;
@@ -1451,7 +1564,7 @@ impl<T: Trait> Module<T> {
         // update balance
         let new_balance = <Balance<T>>::get(collection_id, item.owner.clone())
             .checked_sub(item.value as u64)
-            .unwrap();
+            .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
 
         <FungibleItemList<T>>::remove(collection_id, item_id);
@@ -1462,7 +1575,7 @@ impl<T: Trait> Module<T> {
     fn collection_exists(collection_id: u64) -> DispatchResult {
         ensure!(
             <Collection<T>>::contains_key(collection_id),
-            "This collection does not exist"
+            Error::<T>::CollectionNotFound
         );
         Ok(())
     }
@@ -1473,7 +1586,7 @@ impl<T: Trait> Module<T> {
         let target_collection = <Collection<T>>::get(collection_id);
         ensure!(
             subject == target_collection.owner,
-            "You do not own this collection"
+            Error::<T>::NoPermission
         );
 
         Ok(())
@@ -1502,7 +1615,7 @@ impl<T: Trait> Module<T> {
 
         ensure!(
             result,
-            "You do not have permissions to modify this collection"
+            Error::<T>::NoPermission
         );
         Ok(())
     }
@@ -1528,7 +1641,7 @@ impl<T: Trait> Module<T> {
     }
 
     fn check_white_list(collection_id: u64, address: &T::AccountId) -> DispatchResult {
-        let mes = "Address is not in white list";
+        let mes = Error::<T>::AddresNotInWhiteList;
         ensure!(<WhiteList<T>>::contains_key(collection_id), mes);
         let wl = <WhiteList<T>>::get(collection_id);
         ensure!(wl.contains(address), mes);
@@ -1545,18 +1658,18 @@ impl<T: Trait> Module<T> {
     ) -> DispatchResult {
         ensure!(
             <FungibleItemList<T>>::contains_key(collection_id, item_id),
-            "Item not exists"
+            Error::<T>::TokenNotFound
         );
 
         let full_item = <FungibleItemList<T>>::get(collection_id, item_id);
         let amount = full_item.value;
 
-        ensure!(amount >= value.into(), "Item balance not enouth");
+        ensure!(amount >= value.into(), Error::<T>::TokenValueTooLow);
 
         // update balance
         let balance_old_owner = <Balance<T>>::get(collection_id, owner.clone())
             .checked_sub(value)
-            .unwrap();
+            .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, owner.clone(), balance_old_owner);
 
         let mut new_owner_account_id = 0;
@@ -1578,7 +1691,7 @@ impl<T: Trait> Module<T> {
             // update balance
             let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
                 .checked_add(value)
-                .unwrap();
+                .ok_or(Error::<T>::NumOverflow)?;
             <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
 
             // update index collection
@@ -1596,7 +1709,7 @@ impl<T: Trait> Module<T> {
                 // update balance
                 let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
                     .checked_add(value)
-                    .unwrap();
+                    .ok_or(Error::<T>::NumOverflow)?;
                 <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
 
                 <FungibleItemList<T>>::insert(collection_id, new_owner_account_id, item);
@@ -1634,7 +1747,7 @@ impl<T: Trait> Module<T> {
     ) -> DispatchResult {
         ensure!(
             <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
-            "Item not exists"
+            Error::<T>::TokenNotFound
         );
 
         let full_item = <ReFungibleItemList<T>>::get(collection_id, item_id);
@@ -1643,20 +1756,20 @@ impl<T: Trait> Module<T> {
             .iter()
             .filter(|i| i.owner == owner)
             .next()
-            .unwrap();
+            .ok_or(Error::<T>::NumOverflow)?;
         let amount = item.fraction;
 
-        ensure!(amount >= value.into(), "Item balance not enouth");
+        ensure!(amount >= value.into(), Error::<T>::TokenValueTooLow);
 
         // update balance
         let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.clone())
             .checked_sub(value)
-            .unwrap();
+            .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), balance_old_owner);
 
         let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
             .checked_add(value)
-            .unwrap();
+            .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
 
         let old_owner = item.owner.clone();
@@ -1719,25 +1832,25 @@ impl<T: Trait> Module<T> {
     ) -> DispatchResult {
         ensure!(
             <NftItemList<T>>::contains_key(collection_id, item_id),
-            "Item not exists"
+            Error::<T>::TokenNotFound
         );
 
         let mut item = <NftItemList<T>>::get(collection_id, item_id);
 
         ensure!(
             sender == item.owner,
-            "sender parameter and item owner must be equal"
+            Error::<T>::MustBeTokenOwner
         );
 
         // update balance
         let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.clone())
             .checked_sub(1)
-            .unwrap();
+            .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), balance_old_owner);
 
         let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
             .checked_add(1)
-            .unwrap();
+            .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
 
         // change owner
@@ -1759,9 +1872,9 @@ impl<T: Trait> Module<T> {
         mode: &CollectionMode
     ) -> DispatchResult {
         match mode {
-            CollectionMode::NFT => ensure!(<NftItemList<T>>::contains_key(collection_id, item_id), "Item does not exists"),
-            CollectionMode::ReFungible(_) => ensure!(<ReFungibleItemList<T>>::contains_key(collection_id, item_id), "Item does not exists"),
-            CollectionMode::Fungible(_) => ensure!(<FungibleItemList<T>>::contains_key(collection_id, item_id), "Item does not exists"),
+            CollectionMode::NFT => ensure!(<NftItemList<T>>::contains_key(collection_id, item_id), Error::<T>::TokenNotFound),
+            CollectionMode::ReFungible(_) => ensure!(<ReFungibleItemList<T>>::contains_key(collection_id, item_id), Error::<T>::TokenNotFound),
+            CollectionMode::Fungible(_) => ensure!(<FungibleItemList<T>>::contains_key(collection_id, item_id), Error::<T>::TokenNotFound),
             _ => ()
         };
         
@@ -1818,7 +1931,7 @@ impl<T: Trait> Module<T> {
         // Generate next collection ID
         let next_id = CreatedCollectionCount::get()
             .checked_add(1)
-            .expect("collection id error");
+            .unwrap();
 
         CreatedCollectionCount::put(next_id);
     }
@@ -1826,7 +1939,7 @@ impl<T: Trait> Module<T> {
     fn init_nft_token(item: &NftItemType<T::AccountId>) {
         let current_index = <ItemListIndex>::get(item.collection)
             .checked_add(1)
-            .expect("Item list index id error");
+            .unwrap();
 
         let item_owner = item.owner.clone();
         let collection_id = item.collection.clone();
@@ -1844,7 +1957,7 @@ impl<T: Trait> Module<T> {
     fn init_fungible_token(item: &FungibleItemType<T::AccountId>) {
         let current_index = <ItemListIndex>::get(item.collection)
             .checked_add(1)
-            .expect("Item list index id error");
+            .unwrap();
         let owner = item.owner.clone();
         let value = item.value as u64;
 
@@ -1862,7 +1975,7 @@ impl<T: Trait> Module<T> {
     fn init_refungible_token(item: &ReFungibleItemType<T::AccountId>) {
         let current_index = <ItemListIndex>::get(item.collection)
             .checked_add(1)
-            .expect("Item list index id error");
+            .unwrap();
 
         let value = item.owner.first().unwrap().fraction as u64;
         let owner = item.owner.first().unwrap().owner.clone();
@@ -1885,10 +1998,11 @@ impl<T: Trait> Module<T> {
 
             // bound Owned tokens by a single address
             let count = <AccountItemCount<T>>::get(owner.clone());
-            ensure!(count < ChainLimit::get().account_token_ownership_limit, "Owned tokens by a single address bound exceeded");
+            ensure!(count < ChainLimit::get().account_token_ownership_limit, Error::<T>::AddressOwnershipLimitExceeded);
 
-            <AccountItemCount<T>>::insert(owner.clone(), 
-                count.checked_add(1).unwrap());
+            <AccountItemCount<T>>::insert(owner.clone(), count
+                .checked_add(1)
+                .ok_or(Error::<T>::NumOverflow)?);
         }
         else {
             <AccountItemCount<T>>::insert(owner.clone(), 1);
@@ -1922,7 +2036,9 @@ impl<T: Trait> Module<T> {
 
         // update counter
         <AccountItemCount<T>>::insert(owner.clone(), 
-            <AccountItemCount<T>>::get(owner.clone()).checked_sub(1).unwrap());
+            <AccountItemCount<T>>::get(owner.clone())
+            .checked_sub(1)
+            .ok_or(Error::<T>::NumOverflow)?);
 
 
         let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner.clone());
@@ -2236,5 +2352,3 @@ where
 }
 
 // #endregion
-
-
