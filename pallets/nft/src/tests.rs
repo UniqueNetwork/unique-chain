@@ -1,6 +1,8 @@
 // Tests to be written here
+use super::*;
 use crate::mock::*;
-use crate::{AccessMode, ApprovePermissions, CollectionMode, Ownership, ChainLimits, CreateItemData, CreateNftData, CreateFungibleData, CreateReFungibleData};
+use crate::{AccessMode, ApprovePermissions, CollectionMode,
+     Ownership, ChainLimits, CreateItemData, CreateNftData, CreateFungibleData, CreateReFungibleData}; //Err
 use frame_support::{assert_noop, assert_ok};
 use frame_system::{ RawOrigin };
 
@@ -392,7 +394,7 @@ fn nft_approve_and_transfer_from() {
             2,
             1,
             1,
-            1), "Only item owner, collection owner and admins can modify items");
+            1), Error::<Test>::NoPermission);
 
         // do approve
         assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1));
@@ -672,7 +674,7 @@ fn burn_nft_item() {
         assert_ok!(TemplateModule::burn_item(origin1.clone(), 1, 1));
         assert_noop!(
             TemplateModule::burn_item(origin1.clone(), 1, 1),
-            "Item does not exists"
+            Error::<Test>::TokenNotFound
         );
 
         assert_eq!(TemplateModule::balance_count(1, 1), 0);
@@ -699,7 +701,7 @@ fn burn_fungible_item() {
         assert_ok!(TemplateModule::burn_item(origin1.clone(), 1, 1));
         assert_noop!(
             TemplateModule::burn_item(origin1.clone(), 1, 1),
-            "Item does not exists"
+            Error::<Test>::TokenNotFound
         );
 
         assert_eq!(TemplateModule::balance_count(1, 1), 0);
@@ -738,7 +740,7 @@ fn burn_refungible_item() {
         assert_ok!(TemplateModule::burn_item(origin1.clone(), 1, 1));
         assert_noop!(
             TemplateModule::burn_item(origin1.clone(), 1, 1),
-            "Item does not exists"
+            Error::<Test>::TokenNotFound
         );
 
         assert_eq!(TemplateModule::balance_count(1, 1), 0);
@@ -933,7 +935,7 @@ fn nonprivileged_user_cannot_add_address_to_white_list() {
         let origin2 = Origin::signed(2);
         assert_noop!(
             TemplateModule::add_to_white_list(origin2.clone(), collection_id, 3),
-            "You do not have permissions to modify this collection"
+            Error::<Test>::NoPermission
         );
     });
 }
@@ -947,7 +949,7 @@ fn nobody_can_add_address_to_white_list_of_nonexisting_collection() {
 
         assert_noop!(
             TemplateModule::add_to_white_list(origin1.clone(), 1, 2),
-            "This collection does not exist"
+            Error::<Test>::CollectionNotFound
         );
     });
 }
@@ -963,7 +965,7 @@ fn nobody_can_add_address_to_white_list_of_deleted_collection() {
         assert_ok!(TemplateModule::destroy_collection(origin1.clone(), collection_id));
         assert_noop!(
             TemplateModule::add_to_white_list(origin1.clone(), collection_id, 2),
-            "This collection does not exist"
+            Error::<Test>::CollectionNotFound
         );
     });
 }
@@ -1035,7 +1037,7 @@ fn nonprivileged_user_cannot_remove_address_from_white_list() {
         assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), collection_id, 2));
         assert_noop!(
             TemplateModule::remove_from_white_list(origin2.clone(), collection_id, 2),
-            "You do not have permissions to modify this collection"
+            Error::<Test>::NoPermission
         );
         assert_eq!(TemplateModule::white_list(collection_id)[0], 2);
     });
@@ -1049,7 +1051,7 @@ fn nobody_can_remove_address_from_white_list_of_nonexisting_collection() {
 
         assert_noop!(
             TemplateModule::remove_from_white_list(origin1.clone(), 1, 2),
-            "This collection does not exist"
+            Error::<Test>::CollectionNotFound
         );
     });
 }
@@ -1067,7 +1069,7 @@ fn nobody_can_remove_address_from_white_list_of_deleted_collection() {
         assert_ok!(TemplateModule::destroy_collection(origin1.clone(), collection_id));
         assert_noop!(
             TemplateModule::remove_from_white_list(origin2.clone(), collection_id, 2),
-            "This collection does not exist"
+            Error::<Test>::CollectionNotFound
         );
         assert_eq!(TemplateModule::white_list(collection_id).len(), 0);
     });
@@ -1119,7 +1121,7 @@ fn white_list_test_1() {
 
         assert_noop!(
             TemplateModule::transfer(origin1.clone(), 3, 1, 1, 1),
-            "Address is not in white list"
+            Error::<Test>::AddresNotInWhiteList
         );
     });
 }
@@ -1155,7 +1157,7 @@ fn white_list_test_2() {
 
         assert_noop!(
             TemplateModule::transfer_from(origin1.clone(), 1, 3, 1, 1, 1),
-            "Address is not in white list"
+            Error::<Test>::AddresNotInWhiteList
         );
     });
 }
@@ -1182,7 +1184,7 @@ fn white_list_test_3() {
 
         assert_noop!(
             TemplateModule::transfer(origin1.clone(), 3, 1, 1, 1),
-            "Address is not in white list"
+            Error::<Test>::AddresNotInWhiteList
         );
     });
 }
@@ -1219,7 +1221,7 @@ fn white_list_test_4() {
 
         assert_noop!(
             TemplateModule::transfer_from(origin1.clone(), 1, 3, 1, 1, 1),
-            "Address is not in white list"
+            Error::<Test>::AddresNotInWhiteList
         );
     });
 }
@@ -1244,7 +1246,7 @@ fn white_list_test_5() {
         ));
         assert_noop!(
             TemplateModule::burn_item(origin1.clone(), 1, 1),
-            "Address is not in white list"
+            Error::<Test>::AddresNotInWhiteList
         );
     });
 }
@@ -1267,7 +1269,7 @@ fn white_list_test_6() {
         // do approve
         assert_noop!(
             TemplateModule::approve(origin1.clone(), 1, 1, 1),
-            "Address is not in white list"
+            Error::<Test>::AddresNotInWhiteList
         );
     });
 }
@@ -1416,7 +1418,7 @@ fn white_list_test_11() {
 
         assert_noop!(
             TemplateModule::create_item(origin2.clone(), 1, 2, default_nft_data().into()),
-            "Public minting is not allowed for this collection"
+            Error::<Test>::PublicMintingNotAllowed
         );
     });
 }
@@ -1445,7 +1447,7 @@ fn white_list_test_12() {
 
         assert_noop!(
             TemplateModule::create_item(origin2.clone(), 1, 2, default_nft_data().into()),
-            "Public minting is not allowed for this collection"
+            Error::<Test>::PublicMintingNotAllowed
         );
     });
 }
@@ -1533,7 +1535,7 @@ fn white_list_test_15() {
 
         assert_noop!(
             TemplateModule::create_item(origin2.clone(), 1, 2, default_nft_data().into()),
-            "Address is not in white list"
+            Error::<Test>::AddresNotInWhiteList
         );
     });
 }
@@ -1603,7 +1605,7 @@ fn total_number_collections_bound_neg() {
             col_desc1.clone(),
             token_prefix1.clone(),
             CollectionMode::NFT
-        ), "Total collections bound exceeded");
+        ), Error::<Test>::TotalCollectionsLimitExceeded);
     });
 }
 
@@ -1646,7 +1648,7 @@ fn owned_tokens_bound_neg() {
             1,
             1,
             data.into()
-        ), "Owned tokens by a single address bound exceeded");
+        ),  Error::<Test>::AddressOwnershipLimitExceeded);
     });
 }
 
@@ -1692,7 +1694,7 @@ fn collection_admins_bound_neg() {
         let origin1 = Origin::signed(1);
 
         assert_ok!(TemplateModule::add_collection_admin(origin1.clone(), collection_id, 2));
-        assert_noop!(TemplateModule::add_collection_admin(origin1.clone(), collection_id, 3), "Number of collection admins bound exceeded");
+        assert_noop!(TemplateModule::add_collection_admin(origin1.clone(), collection_id, 3), Error::<Test>::CollectionAdminsLimitExceeded);
     });
 }
 
