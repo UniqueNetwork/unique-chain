@@ -366,8 +366,10 @@ decl_storage! {
         pub ReFungibleTransferBasket get(fn refungible_transfer_basket): double_map hasher(blake2_128_concat) u64, hasher(blake2_128_concat) u64 => T::BlockNumber;
 
         // Contract Sponsorship and Ownership
-        pub ContractOwner get(fn contract_owner): map hasher(identity) T::AccountId => T::AccountId;
-        pub ContractSelfSponsoring get(fn contract_self_sponsoring): map hasher(identity) T::AccountId => bool;
+        pub ContractOwner get(fn contract_owner): map hasher(twox_64_concat) T::AccountId => T::AccountId;
+        pub ContractSelfSponsoring get(fn contract_self_sponsoring): map hasher(twox_64_concat) T::AccountId => bool;
+        pub ContractSponsorBasket get(fn contract_sponsor_basket): map hasher(twox_64_concat) T::AccountId => T::BlockNumber;
+        pub ContractSponsoringRateLimit get(fn contract_sponsoring_rate_limit): map hasher(twox_64_concat) T::AccountId => T::BlockNumber;
     }
     add_extra_genesis {
         build(|config: &GenesisConfig<T>| {
@@ -1323,6 +1325,41 @@ decl_module! {
             Ok(())
         }
 
+        /// Set the rate limit for contract sponsoring to specified number of blocks.
+        /// 
+        /// If not set (has the default value of 0 blocks), the sponsoring will be disabled. 
+        /// If set to the number B (for blocks), the transactions will be sponsored with a rate 
+        /// limit of B, i.e. fees for every transaction sent to this smart contract will be paid 
+        /// from contract endowment if there are at least B blocks between such transactions. 
+        /// Nonetheless, if transactions are sent more frequently, the fees are paid by the sender.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Contract Owner
+        /// 
+        /// # Arguments
+        /// 
+        /// -`contract_address`: Address of the contract to sponsor
+        /// -`rate_limit`: Number of blocks to wait until the next sponsored transaction is allowed
+        /// 
+        #[weight = 0]
+        pub fn set_contract_sponsoring_rate_limit(
+            origin,
+            contract_address: T::AccountId,
+            rate_limit: T::BlockNumber
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            let mut is_owner = false;
+            if <ContractOwner<T>>::contains_key(contract_address.clone()) {
+                let owner = <ContractOwner<T>>::get(&contract_address);
+                is_owner = sender == owner;
+            }
+            ensure!(is_owner, Error::<T>::NoPermission);
+
+            <ContractSponsoringRateLimit<T>>::insert(contract_address, rate_limit);
+            Ok(())
+        }
+
     }
 }
 
@@ -2230,11 +2267,30 @@ where
             // When the contract is called, check if the sponsoring is enabled and pay fees from contract endowment if it is
             Some(pallet_contracts::Call::call(dest, _value, _gas_limit, _data)) => {
 
-                let mut sp = T::AccountId::default();
                 let called_contract: T::AccountId = T::Lookup::lookup((*dest).clone()).unwrap_or(T::AccountId::default());
-                if <ContractSelfSponsoring<T>>::contains_key(called_contract.clone()) {
-                    if <ContractSelfSponsoring<T>>::get(called_contract.clone()) {
-                        sp = called_contract;
+
+                let mut sponsor_transfer = false;
+                if <ContractSponsoringRateLimit<T>>::contains_key(called_contract.clone()) {
+                    let last_tx_block = <ContractSponsorBasket<T>>::get(&called_contract);
+                    let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
+                    let rate_limit = <ContractSponsoringRateLimit<T>>::get(&called_contract);
+                    let limit_time = last_tx_block + rate_limit;
+
+                    if block_number >= limit_time {
+                        <ContractSponsorBasket<T>>::insert(called_contract.clone(), block_number);
+                        sponsor_transfer = true;
+                    }
+                } else {
+                    sponsor_transfer = false;
+                }
+               
+                
+                let mut sp = T::AccountId::default();
+                if sponsor_transfer {
+                    if <ContractSelfSponsoring<T>>::contains_key(called_contract.clone()) {
+                        if <ContractSelfSponsoring<T>>::get(called_contract.clone()) {
+                            sp = called_contract;
+                        }
                     }
                 }
 
