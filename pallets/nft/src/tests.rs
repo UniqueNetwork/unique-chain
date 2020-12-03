@@ -1725,7 +1725,7 @@ fn custom_data_size_nft_const_data_bound_neg() {
             collection_id,
             1,
             too_big_const_data
-        ), "const_data exceeded data limit.");
+        ), Error::<Test>::TokenConstDataLimitExceeded);
     });
 }
 
@@ -1756,7 +1756,7 @@ fn custom_data_size_nft_variable_data_bound_neg() {
             collection_id,
             1,
             too_big_const_data
-        ), "variable_data exceeded data limit.");
+        ), Error::<Test>::TokenVariableDataLimitExceeded);
     });
 }
 
@@ -1787,7 +1787,7 @@ fn custom_data_size_re_fungible_const_data_bound_neg() {
             collection_id,
             1,
             too_big_const_data
-        ), "const_data exceeded data limit.");
+        ), Error::<Test>::TokenConstDataLimitExceeded);
     });
 }
 
@@ -1818,7 +1818,7 @@ fn custom_data_size_re_fungible_variable_data_bound_neg() {
             collection_id,
             1,
             too_big_const_data
-        ), "variable_data exceeded data limit.");
+        ), Error::<Test>::TokenVariableDataLimitExceeded);
     });
 }
 // #endregion
@@ -1905,6 +1905,57 @@ fn set_variable_meta_data_on_fungible_token_fails() {
         create_test_item(1, &data.into());
 
         let variable_data = b"test set_variable_meta_data method.".to_vec();
-        assert_noop!(TemplateModule::set_variable_meta_data(origin1, collection_id, 1, variable_data.clone()), "Can't store metadata in fungible tokens.");
+        assert_noop!(TemplateModule::set_variable_meta_data(origin1, collection_id, 1, variable_data.clone()), Error::<Test>::CantStoreMetadataInFungibleTokens);
+    });
+}
+
+#[test]
+fn set_variable_meta_data_on_nft_token_fails_for_big_data() {
+    new_test_ext().execute_with(|| {
+        assert_ok!(TemplateModule::set_chain_limits(RawOrigin::Root.into(), ChainLimits { 
+            collection_numbers_limit: default_collection_numbers_limit(),
+            account_token_ownership_limit: 10,
+            collections_admins_limit: 5,
+            custom_data_limit: 10,
+            nft_sponsor_transfer_timeout: 15,
+            fungible_sponsor_transfer_timeout: 15,
+            refungible_sponsor_transfer_timeout: 15,          
+        }));
+
+        let collection_id = create_test_collection(&CollectionMode::NFT, 1);
+
+        let origin1 = Origin::signed(1);
+
+        let data = default_nft_data();
+        create_test_item(1, &data.into());
+
+        let variable_data = b"test set_variable_meta_data method, bigger than limits.".to_vec();
+        assert_noop!(TemplateModule::set_variable_meta_data(origin1, collection_id, 1, variable_data), Error::<Test>::TokenVariableDataLimitExceeded);
+    });
+}
+
+#[test]
+fn set_variable_meta_data_on_re_fungible_token_fails_for_big_data() {
+    new_test_ext().execute_with(|| {
+        assert_ok!(TemplateModule::set_chain_limits(RawOrigin::Root.into(), ChainLimits { 
+            collection_numbers_limit: default_collection_numbers_limit(),
+            account_token_ownership_limit: 10,
+            collections_admins_limit: 5,
+            custom_data_limit: 10,
+            nft_sponsor_transfer_timeout: 15,
+            fungible_sponsor_transfer_timeout: 15,
+            refungible_sponsor_transfer_timeout: 15,          
+        }));
+
+
+        let collection_id = create_test_collection(&CollectionMode::ReFungible(3), 1);
+
+        let origin1 = Origin::signed(1);
+
+        let data = default_re_fungible_data();
+        create_test_item(1, &data.into());
+
+        let variable_data = b"test set_variable_meta_data method, bigger than limits.".to_vec();
+        assert_noop!(TemplateModule::set_variable_meta_data(origin1, collection_id, 1, variable_data), Error::<Test>::TokenVariableDataLimitExceeded);
     });
 }

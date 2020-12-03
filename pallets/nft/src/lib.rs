@@ -321,7 +321,7 @@ decl_error! {
         /// Unexpected collection type.
         UnexpectedCollectionType,
         /// Can't store metadata in fungible tokens.
-        CantSotreMetadataInFungibleTokens
+        CantStoreMetadataInFungibleTokens
 	}
 }
 
@@ -1193,6 +1193,8 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             
             Self::collection_exists(collection_id)?;
+            
+            ensure!(ChainLimit::get().custom_data_limit >= data.len() as u32, Error::<T>::TokenVariableDataLimitExceeded);
 
             // Modify permissions check
             let target_collection = <Collection<T>>::get(collection_id);
@@ -1206,7 +1208,7 @@ decl_module! {
             {
                 CollectionMode::NFT => Self::set_nft_variable_data(collection_id, item_id, data)?,
                 CollectionMode::ReFungible(_)  => Self::set_re_fungible_variable_data(collection_id, item_id, data)?,
-                CollectionMode::Fungible(_) => fail!(Error::<T>::CantSotreMetadataInFungibleTokens),
+                CollectionMode::Fungible(_) => fail!(Error::<T>::CantStoreMetadataInFungibleTokens),
                 _ => fail!(Error::<T>::UnexpectedCollectionType)
             };
 
