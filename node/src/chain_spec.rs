@@ -147,12 +147,24 @@ fn testnet_genesis(
         pallet_aura: Some(AuraConfig {
             authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
         }),
-        pallet_grandpa: Some(GrandpaConfig {
+		pallet_collective_Instance1: Some(CouncilConfig {
+			members: vec![],
+			phantom: Default::default(),
+		}),
+		pallet_collective_Instance2: Some(TechnicalCommitteeConfig {
+			members: vec![],
+			phantom: Default::default(),
+		}),
+		pallet_democracy: Some(DemocracyConfig::default()),
+		pallet_grandpa: Some(GrandpaConfig {
             authorities: initial_authorities
                 .iter()
                 .map(|x| (x.1.clone(), 1))
                 .collect(),
-        }),
+		}),
+		pallet_elections_phragmen: Some(Default::default()),
+		pallet_membership: Some(Default::default()),
+		pallet_treasury: Some(Default::default()),
         pallet_sudo: Some(SudoConfig { key: root_key }),
         pallet_nft: Some(NftConfig {
             collection: vec![(

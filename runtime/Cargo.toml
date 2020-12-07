@@ -57,6 +57,13 @@ sp-std = { default-features = false, version = '2.0.0' , git = 'https://github.c
 sp-transaction-pool = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
 sp-version = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
 
+pallet-membership = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-collective = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-democracy = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-elections-phragmen = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-treasury = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+pallet-scheduler = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'v2.0.0_release' }
+
 [features]
 default = ['std']
 runtime-benchmarks = [
@@ -100,4 +107,11 @@ std = [
     'sp-std/std',
     'sp-transaction-pool/std',
     'sp-version/std',
+
+    'pallet-collective/std',
+    'pallet-democracy/std',
+    'pallet-elections-phragmen/std', 
+    'pallet-membership/std',
+    'pallet-treasury/std',
+    'pallet-scheduler/std',
 ]
