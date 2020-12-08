@@ -112,11 +112,11 @@ impl crate::WeightInfo for () {
     //         .saturating_add(DbWeight::get().reads(1 as Weight))
     //         .saturating_add(DbWeight::get().writes(1 as Weight))
     // }
-    // fn enable_contract_sponsoring() -> Weight {
-    //     (0 as Weight)
-    //         .saturating_add(DbWeight::get().reads(1 as Weight))
-    //         .saturating_add(DbWeight::get().writes(1 as Weight))
-    // }
+    fn enable_contract_sponsoring() -> Weight {
+        (13_000_000 as Weight)
+            .saturating_add(DbWeight::get().reads(1 as Weight))
+            .saturating_add(DbWeight::get().writes(1 as Weight))
+    }
     // fn set_contract_sponsoring_rate_limit() -> Weight {
     //     (0 as Weight)
     //         .saturating_add(DbWeight::get().reads(1 as Weight))

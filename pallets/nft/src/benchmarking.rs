@@ -311,6 +311,11 @@
 
         }: transfer_from(RawOrigin::Signed(caller.clone()), caller.clone(), recipient.clone(), 2, 1, 1)
 
+        enable_contract_sponsoring {
+            let caller: T::AccountId = T::AccountId::from(whitelisted_caller());
+
+        }: enable_contract_sponsoring(RawOrigin::Signed(caller.clone()), caller.clone(), true)
+
         set_offchain_schema {
             let col_name1: Vec<u16> = "Test1".encode_utf16().collect::<Vec<u16>>();
             let col_desc1: Vec<u16> = "TestDescription1".encode_utf16().collect::<Vec<u16>>();
