@@ -200,7 +200,7 @@ pub trait WeightInfo {
     fn set_const_on_chain_schema() -> Weight;
     fn set_variable_on_chain_schema() -> Weight;
     fn set_variable_meta_data() -> Weight;
-    // fn enable_contract_sponsoring() -> Weight;
+    fn enable_contract_sponsoring() -> Weight;
 }
 
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
@@ -1307,7 +1307,7 @@ decl_module! {
         /// * contract address
         /// * enable flag
         /// 
-        #[weight = 0]
+        #[weight = T::WeightInfo::enable_contract_sponsoring()]
         pub fn enable_contract_sponsoring(
             origin,
             contract_address: T::AccountId,
