@@ -1328,7 +1328,12 @@ decl_module! {
             contract_address: T::AccountId,
             enable: bool
         ) -> DispatchResult {
+
             let sender = ensure_signed(origin)?;
+
+            #[cfg(feature = "runtime-benchmarks")]
+            <ContractOwner<T>>::insert(contract_address.clone(), sender.clone());
+
             let mut is_owner = false;
             if <ContractOwner<T>>::contains_key(contract_address.clone()) {
                 let owner = <ContractOwner<T>>::get(&contract_address);
@@ -1375,6 +1380,17 @@ decl_module! {
             Ok(())
         }
 
+        // #[cfg(feature = "runtime-benchmarks")]
+        // #[weight = 0]
+        // pub fn add_contract_sponsoring_debug(
+        //     origin,
+        //     contract_address: T::AccountId, 
+        //     owner: T::AccountId) -> DispatchResult {
+        //     let sender = ensure_signed(origin)?;
+        //     <ContractOwner<T>>::insert(contract_address.clone(), owner);
+        //     Ok(())
+        // }
+    
     }
 }
 
