@@ -351,7 +351,7 @@ decl_storage! {
         NextCollectionID: CollectionId;
         CreatedCollectionCount: u32;
         ChainVersion: u64;
-        ItemListIndex: map hasher(blake2_128_concat) CollectionId => TokenId;
+        ItemListIndex: map hasher(identity) CollectionId => TokenId;
 
         // Chain limits struct
         pub ChainLimit get(fn chain_limit) config(): ChainLimits;
@@ -366,23 +366,23 @@ decl_storage! {
         pub WhiteList get(fn white_list): map hasher(identity) CollectionId => Vec<T::AccountId>;
 
         /// Balance owner per collection map
-        pub Balance get(fn balance_count): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) T::AccountId => u64;
+        pub Balance get(fn balance_count): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => u64;
 
         /// second parameter: item id + owner account id
-        pub ApprovedList get(fn approved): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) (TokenId, T::AccountId) => Vec<ApprovePermissions<T::AccountId>>;
+        pub ApprovedList get(fn approved): double_map hasher(identity) CollectionId, hasher(blake2_128_concat) (TokenId, T::AccountId) => Vec<ApprovePermissions<T::AccountId>>;
 
         /// Item collections
-        pub NftItemList get(fn nft_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => NftItemType<T::AccountId>;
-        pub FungibleItemList get(fn fungible_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => FungibleItemType<T::AccountId>;
-        pub ReFungibleItemList get(fn refungible_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => ReFungibleItemType<T::AccountId>;
+        pub NftItemList get(fn nft_item_id) config(): double_map hasher(identity) CollectionId, hasher(identity) TokenId => NftItemType<T::AccountId>;
+        pub FungibleItemList get(fn fungible_item_id) config(): double_map hasher(identity) CollectionId, hasher(identity) TokenId => FungibleItemType<T::AccountId>;
+        pub ReFungibleItemList get(fn refungible_item_id) config(): double_map hasher(identity) CollectionId, hasher(identity) TokenId => ReFungibleItemType<T::AccountId>;
 
         /// Index list
-        pub AddressTokens get(fn address_tokens): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) T::AccountId => Vec<TokenId>;
+        pub AddressTokens get(fn address_tokens): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => Vec<TokenId>;
 
         /// Tokens transfer baskets
-        pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => T::BlockNumber;
-        pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Vec<BasketItem<T::AccountId, T::BlockNumber>>;
-        pub ReFungibleTransferBasket get(fn refungible_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => T::BlockNumber;
+        pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => T::BlockNumber;
+        pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => Vec<BasketItem<T::AccountId, T::BlockNumber>>;
+        pub ReFungibleTransferBasket get(fn refungible_transfer_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => T::BlockNumber;
 
         // Contract Sponsorship and Ownership
         pub ContractOwner get(fn contract_owner): map hasher(twox_64_concat) T::AccountId => T::AccountId;
