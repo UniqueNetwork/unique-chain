@@ -150,7 +150,7 @@ pub struct ReFungibleItemType<AccountId> {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct ApprovePermissions<AccountId> {
     pub approved: AccountId,
-    pub amount: u64,
+    pub amount: u128,
 }
 
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
@@ -366,7 +366,7 @@ decl_storage! {
         pub WhiteList get(fn white_list): map hasher(identity) CollectionId => Vec<T::AccountId>;
 
         /// Balance owner per collection map
-        pub Balance get(fn balance_count): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => u64;
+        pub Balance get(fn balance_count): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => u128;
 
         /// second parameter: item id + owner account id
         pub ApprovedList get(fn approved): double_map hasher(identity) CollectionId, hasher(blake2_128_concat) (TokenId, T::AccountId) => Vec<ApprovePermissions<T::AccountId>>;
@@ -1019,7 +1019,7 @@ decl_module! {
         ///     * Fungible Mode: Must specify transferred amount
         ///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
         #[weight = T::WeightInfo::transfer()]
-        pub fn transfer(origin, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u64) -> DispatchResult {
+        pub fn transfer(origin, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
 
@@ -1119,7 +1119,7 @@ decl_module! {
         /// 
         /// * value: Amount to transfer.
         #[weight = T::WeightInfo::transfer_from()]
-        pub fn transfer_from(origin, from: T::AccountId, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u64 ) -> DispatchResult {
+        pub fn transfer_from(origin, from: T::AccountId, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
             let mut appoved_transfer = false;
@@ -1499,7 +1499,6 @@ impl<T: Trait> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         let itemcopy = item.clone();
         let owner = item.owner.clone();
-        let value = item.value as u64;
 
         Self::add_token_index(item.collection, current_index, owner.clone())?;
 
@@ -1512,7 +1511,7 @@ impl<T: Trait> Module<T> {
         
         // Update balance
         let new_balance = <Balance<T>>::get(item.collection, owner.clone())
-            .checked_add(value)
+            .checked_add(item.value)
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(item.collection, owner.clone(), new_balance);
 
@@ -1525,7 +1524,7 @@ impl<T: Trait> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         let itemcopy = item.clone();
 
-        let value = item.owner.first().unwrap().fraction as u64;
+        let value = item.owner.first().unwrap().fraction;
         let owner = item.owner.first().unwrap().owner.clone();
 
         Self::add_token_index(item.collection, current_index, owner.clone())?;
@@ -1594,7 +1593,7 @@ impl<T: Trait> Module<T> {
 
         // update balance
         let new_balance = <Balance<T>>::get(collection_id, item.owner.clone())
-            .checked_sub(item.fraction as u64)
+            .checked_sub(item.fraction)
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
 
@@ -1637,7 +1636,7 @@ impl<T: Trait> Module<T> {
 
         // update balance
         let new_balance = <Balance<T>>::get(collection_id, item.owner.clone())
-            .checked_sub(item.value as u64)
+            .checked_sub(item.value)
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
 
@@ -1726,7 +1725,7 @@ impl<T: Trait> Module<T> {
     fn transfer_fungible(
         collection_id: CollectionId,
         item_id: TokenId,
-        value: u64,
+        value: u128,
         owner: T::AccountId,
         new_owner: T::AccountId,
     ) -> DispatchResult {
@@ -1738,7 +1737,7 @@ impl<T: Trait> Module<T> {
         let full_item = <FungibleItemList<T>>::get(collection_id, item_id);
         let amount = full_item.value;
 
-        ensure!(amount >= value.into(), Error::<T>::TokenValueTooLow);
+        ensure!(amount >= value, Error::<T>::TokenValueTooLow);
 
         // update balance
         let balance_old_owner = <Balance<T>>::get(collection_id, owner.clone())
@@ -1752,10 +1751,8 @@ impl<T: Trait> Module<T> {
             new_owner_account_id = new_owner_items[0];
         }
 
-        let val64 = value.into();
-
         // transfer
-        if amount == val64 && new_owner_account_id == 0 {
+        if amount == value && new_owner_account_id == 0 {
             // change owner
             // new owner do not have account
             let mut new_full_item = full_item.clone();
@@ -1772,13 +1769,13 @@ impl<T: Trait> Module<T> {
             Self::move_token_index(collection_id, item_id, owner.clone(), new_owner.clone())?;
         } else {
             let mut new_full_item = full_item.clone();
-            new_full_item.value -= val64;
+            new_full_item.value -= value;
 
             // separate amount
             if new_owner_account_id > 0 {
                 // new owner has account
                 let mut item = <FungibleItemList<T>>::get(collection_id, new_owner_account_id);
-                item.value += val64;
+                item.value += value;
 
                 // update balance
                 let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
@@ -1792,13 +1789,13 @@ impl<T: Trait> Module<T> {
                 let item = FungibleItemType {
                     collection: collection_id,
                     owner: new_owner.clone(),
-                    value: val64,
+                    value
                 };
 
                 Self::add_fungible_item(item)?;
             }
 
-            if amount == val64 {
+            if amount == value {
                 Self::remove_token_index(collection_id, item_id, full_item.owner.clone())?;
 
                 // remove approve list
@@ -1815,7 +1812,7 @@ impl<T: Trait> Module<T> {
     fn transfer_refungible(
         collection_id: CollectionId,
         item_id: TokenId,
-        value: u64,
+        value: u128,
         owner: T::AccountId,
         new_owner: T::AccountId,
     ) -> DispatchResult {
@@ -1833,7 +1830,7 @@ impl<T: Trait> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         let amount = item.fraction;
 
-        ensure!(amount >= value.into(), Error::<T>::TokenValueTooLow);
+        ensure!(amount >= value, Error::<T>::TokenValueTooLow);
 
         // update balance
         let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.clone())
@@ -1848,10 +1845,9 @@ impl<T: Trait> Module<T> {
 
         let old_owner = item.owner.clone();
         let new_owner_has_account = full_item.owner.iter().any(|i| i.owner == new_owner);
-        let val64 = value.into();
 
         // transfer
-        if amount == val64 && !new_owner_has_account {
+        if amount == value && !new_owner_has_account {
             // change owner
             // new owner do not have account
             let mut new_full_item = full_item.clone();
@@ -1872,7 +1868,7 @@ impl<T: Trait> Module<T> {
                 .iter_mut()
                 .find(|i| i.owner == owner)
                 .unwrap()
-                .fraction -= val64;
+                .fraction -= value;
 
             // separate amount
             if new_owner_has_account {
@@ -1882,12 +1878,12 @@ impl<T: Trait> Module<T> {
                     .iter_mut()
                     .find(|i| i.owner == new_owner)
                     .unwrap()
-                    .fraction += val64;
+                    .fraction += value;
             } else {
                 // new owner do not have account
                 new_full_item.owner.push(Ownership {
                     owner: new_owner.clone(),
-                    fraction: val64,
+                    fraction: value,
                 });
                 Self::add_token_index(collection_id, item_id, new_owner.clone())?;
             }
@@ -2033,7 +2029,6 @@ impl<T: Trait> Module<T> {
             .checked_add(1)
             .unwrap();
         let owner = item.owner.clone();
-        let value = item.value as u64;
 
         Self::add_token_index(item.collection, current_index, owner.clone()).unwrap();
 
@@ -2041,7 +2036,7 @@ impl<T: Trait> Module<T> {
 
         // Update balance
         let new_balance = <Balance<T>>::get(item.collection, owner.clone())
-            .checked_add(value)
+            .checked_add(item.value)
             .unwrap();
         <Balance<T>>::insert(item.collection, owner.clone(), new_balance);
     }
@@ -2051,7 +2046,7 @@ impl<T: Trait> Module<T> {
             .checked_add(1)
             .unwrap();
 
-        let value = item.owner.first().unwrap().fraction as u64;
+        let value = item.owner.first().unwrap().fraction;
         let owner = item.owner.first().unwrap().owner.clone();
 
         Self::add_token_index(item.collection, current_index, owner.clone()).unwrap();
