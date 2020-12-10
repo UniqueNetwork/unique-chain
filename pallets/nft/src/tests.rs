@@ -3,7 +3,7 @@ use super::*;
 use crate::mock::*;
 use crate::{AccessMode, ApprovePermissions, CollectionMode,
     Ownership, ChainLimits, CreateItemData, CreateNftData, CreateFungibleData, CreateReFungibleData,
-    CollectionId, TokenId}; //Err
+    CollectionId, TokenId, MAX_DECIMAL_POINTS}; //Err
 use frame_support::{assert_noop, assert_ok};
 use frame_system::{ RawOrigin };
 
@@ -77,6 +77,46 @@ fn create_test_item(collection_id: CollectionId, data: &CreateItemData) {
 
 // Use cases tests region
 // #region
+#[test]
+fn create_fungible_collection_fails_with_large_decimal_numbers() {
+    new_test_ext().execute_with(|| {
+        default_limits();
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
+        let origin1 = Origin::signed(1);
+        assert_noop!(TemplateModule::create_collection(
+            origin1,
+            col_name1,
+            col_desc1,
+            token_prefix1,
+            CollectionMode::Fungible(MAX_DECIMAL_POINTS + 1)
+        ), Error::<Test>::CollectionDecimalPointLimitExceeded);
+    });    
+}
+
+#[test]
+fn create_re_fungible_collection_fails_with_large_decimal_numbers() {
+    new_test_ext().execute_with(|| {
+        default_limits();
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
+        let origin1 = Origin::signed(1);
+        assert_noop!(TemplateModule::create_collection(
+            origin1,
+            col_name1,
+            col_desc1,
+            token_prefix1,
+            CollectionMode::ReFungible(MAX_DECIMAL_POINTS + 1)
+        ), Error::<Test>::CollectionDecimalPointLimitExceeded);
+    });
+}
+
 #[test]
 fn create_nft_item() {
     new_test_ext().execute_with(|| {

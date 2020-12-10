@@ -45,11 +45,15 @@ mod tests;
 
 mod default_weights;
 
+pub const MAX_DECIMAL_POINTS: DecimalPoints = 30;
+
 // Structs
 // #region
 
 pub type CollectionId = u32;
 pub type TokenId = u32;
+
+pub type DecimalPoints = u8;
 
 #[derive(Encode, Decode, Eq, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -57,9 +61,9 @@ pub enum CollectionMode {
     Invalid,
     NFT,
     // decimal points
-    Fungible(u32),
+    Fungible(DecimalPoints),
     // decimal points
-    ReFungible(u32),
+    ReFungible(DecimalPoints),
 }
 
 impl Into<u8> for CollectionMode {
@@ -104,7 +108,7 @@ pub struct CollectionType<AccountId> {
     pub owner: AccountId,
     pub mode: CollectionMode,
     pub access: AccessMode,
-    pub decimal_points: u32,
+    pub decimal_points: DecimalPoints,
     pub name: Vec<u16>,        // 64 include null escape char
     pub description: Vec<u16>, // 256 include null escape char
     pub token_prefix: Vec<u8>, // 16 include null escape char
@@ -269,7 +273,7 @@ decl_error! {
 	pub enum Error for Module<T: Trait> {
         /// Total collections bound exceeded.
         TotalCollectionsLimitExceeded,
-		/// Decimal_points parameter must be lower than 4.
+		/// Decimal_points parameter must be lower than MAX_DECIMAL_POINTS constant, currently it is 30.
         CollectionDecimalPointLimitExceeded, 
         /// Collection name can not be longer than 63 char.
         CollectionNameLimitExceeded, 
@@ -498,7 +502,7 @@ decl_module! {
             ensure!(CollectionCount::get() < ChainLimit::get().collection_numbers_limit, Error::<T>::TotalCollectionsLimitExceeded);
 
             // check params
-            ensure!(decimal_points <= 4, Error::<T>::CollectionDecimalPointLimitExceeded);
+            ensure!(decimal_points <= MAX_DECIMAL_POINTS, Error::<T>::CollectionDecimalPointLimitExceeded);
 
             let mut name = collection_name.to_vec();
             name.push(0);
@@ -1461,14 +1465,14 @@ impl<T: Trait> Module<T> {
                 let item = FungibleItemType {
                     collection: collection_id,
                     owner,
-                    value: (10 as u128).pow(collection.decimal_points)
+                    value: (10 as u128).pow(collection.decimal_points as u32)
                 };
 
                 Self::add_fungible_item(item)?;
             },
             CreateItemData::ReFungible(data) => {
                 let mut owner_list = Vec::new();
-                let value = (10 as u128).pow(collection.decimal_points);
+                let value = (10 as u128).pow(collection.decimal_points as u32);
                 owner_list.push(Ownership {owner: owner.clone(), fraction: value});
 
                 let item = ReFungibleItemType {
@@ -1982,8 +1986,8 @@ impl<T: Trait> Module<T> {
     fn init_collection(item: &CollectionType<T::AccountId>) {
         // check params
         assert!(
-            item.decimal_points <= 4,
-            "decimal_points parameter must be lower than 4"
+            item.decimal_points <= MAX_DECIMAL_POINTS,
+            "decimal_points parameter must be lower than MAX_DECIMAL_POINTS"
         );
         assert!(
             item.name.len() <= 64,
