@@ -240,7 +240,9 @@ target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" -
       "Fungible": "CreateFungibleData",
       "ReFungible": "CreateReFungibleData"
     }
-  }
+  },
+  "CollectionId": "u32",
+  "TokenId": "u32"
 }
 
 ```
