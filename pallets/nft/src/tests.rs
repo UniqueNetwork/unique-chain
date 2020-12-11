@@ -2,11 +2,12 @@
 use super::*;
 use crate::mock::*;
 use crate::{AccessMode, ApprovePermissions, CollectionMode,
-     Ownership, ChainLimits, CreateItemData, CreateNftData, CreateFungibleData, CreateReFungibleData}; //Err
+    Ownership, ChainLimits, CreateItemData, CreateNftData, CreateFungibleData, CreateReFungibleData,
+    CollectionId, TokenId, MAX_DECIMAL_POINTS}; //Err
 use frame_support::{assert_noop, assert_ok};
 use frame_system::{ RawOrigin };
 
-fn default_collection_numbers_limit() -> u64 {
+fn default_collection_numbers_limit() -> u32 {
     10
 }
 
@@ -34,7 +35,7 @@ fn default_re_fungible_data () -> CreateReFungibleData {
     CreateReFungibleData { const_data: vec![1, 2, 3], variable_data: vec![3, 2, 1] }
 }
 
-fn create_test_collection_for_owner(mode: &CollectionMode, owner: u64, id: u64) -> u64 {
+fn create_test_collection_for_owner(mode: &CollectionMode, owner: u64, id: CollectionId) -> CollectionId {
     let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
     let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
     let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
@@ -59,11 +60,11 @@ fn create_test_collection_for_owner(mode: &CollectionMode, owner: u64, id: u64) 
     id
 }
 
-fn create_test_collection(mode: &CollectionMode, id: u64) -> u64 {
+fn create_test_collection(mode: &CollectionMode, id: CollectionId) -> CollectionId {
     create_test_collection_for_owner(&mode, 1, id)
 }
 
-fn create_test_item(collection_id: u64, data: &CreateItemData) {
+fn create_test_item(collection_id: CollectionId, data: &CreateItemData) {
     let origin1 = Origin::signed(1);
     assert_ok!(TemplateModule::create_item(
             origin1.clone(),
@@ -76,6 +77,46 @@ fn create_test_item(collection_id: u64, data: &CreateItemData) {
 
 // Use cases tests region
 // #region
+#[test]
+fn create_fungible_collection_fails_with_large_decimal_numbers() {
+    new_test_ext().execute_with(|| {
+        default_limits();
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
+        let origin1 = Origin::signed(1);
+        assert_noop!(TemplateModule::create_collection(
+            origin1,
+            col_name1,
+            col_desc1,
+            token_prefix1,
+            CollectionMode::Fungible(MAX_DECIMAL_POINTS + 1)
+        ), Error::<Test>::CollectionDecimalPointLimitExceeded);
+    });    
+}
+
+#[test]
+fn create_re_fungible_collection_fails_with_large_decimal_numbers() {
+    new_test_ext().execute_with(|| {
+        default_limits();
+
+        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+
+        let origin1 = Origin::signed(1);
+        assert_noop!(TemplateModule::create_collection(
+            origin1,
+            col_name1,
+            col_desc1,
+            token_prefix1,
+            CollectionMode::ReFungible(MAX_DECIMAL_POINTS + 1)
+        ), Error::<Test>::CollectionDecimalPointLimitExceeded);
+    });
+}
+
 #[test]
 fn create_nft_item() {
     new_test_ext().execute_with(|| {
@@ -109,8 +150,8 @@ fn create_nft_multiple_items() {
             items_data.clone().into_iter().map(|d| { d.into() }).collect()
         ));
         for (index, data) in items_data.iter().enumerate() {
-            assert_eq!(TemplateModule::nft_item_id(1, (index + 1) as u64).const_data.to_vec(), data.const_data);
-            assert_eq!(TemplateModule::nft_item_id(1, (index + 1) as u64).variable_data.to_vec(), data.variable_data);
+            assert_eq!(TemplateModule::nft_item_id(1, (index + 1) as TokenId).const_data.to_vec(), data.const_data);
+            assert_eq!(TemplateModule::nft_item_id(1, (index + 1) as TokenId).variable_data.to_vec(), data.variable_data);
         }
     });
 }
@@ -160,7 +201,7 @@ fn create_multiple_refungible_items() {
         ));
         for (index, data) in items_data.iter().enumerate() {
 
-            let item = TemplateModule::refungible_item_id(1, (index + 1) as u64);
+            let item = TemplateModule::refungible_item_id(1, (index + 1) as TokenId);
             assert_eq!(item.const_data.to_vec(), data.const_data);
             assert_eq!(item.variable_data.to_vec(), data.variable_data);
             assert_eq!(
@@ -207,7 +248,7 @@ fn create_multiple_fungible_items() {
         ));
         
         for (index, _) in items_data.iter().enumerate() {
-            assert_eq!(TemplateModule::fungible_item_id(1, (index + 1) as u64).owner, 1);
+            assert_eq!(TemplateModule::fungible_item_id(1, (index + 1) as TokenId).owner, 1);
         }
         assert_eq!(TemplateModule::balance_count(1, 1), 3000);
         assert_eq!(TemplateModule::address_tokens(1, 1), [1, 2, 3]);
