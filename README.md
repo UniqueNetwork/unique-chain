@@ -241,6 +241,12 @@ target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" -
       "ReFungible": "CreateReFungibleData"
     }
   }
+  "CollectionLimits": {
+    "AccountTokenOwnershipLimit": "u32",
+    "SponsoredDataSize": "u32",
+    "TokenLimit": "u32",
+    "SponsorTransferTimeout": "u32"
+  }
 }
 
 ```
