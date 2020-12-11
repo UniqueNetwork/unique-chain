@@ -2,10 +2,11 @@ import { WsProvider, ApiPromise } from "@polkadot/api";
 import config from "../config";
 import promisifySubstrate from "./promisify-substrate";
 import { ApiOptions } from "@polkadot/api/types";
+import rtt from "../../../runtime_types.json";
 
 function defaultApiOptions(): ApiOptions {
   const wsProvider = new WsProvider(config.substrateUrl);
-  return { provider: wsProvider, types: JSON.parse(config.customTypes) };
+  return { provider: wsProvider, types: rtt };
 }
 
 export default async function usingApi(action: (api: ApiPromise) => Promise<void>, settings: ApiOptions | undefined = undefined): Promise<void> {
