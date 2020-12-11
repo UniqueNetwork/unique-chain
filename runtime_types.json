@@ -109,15 +109,15 @@
       "account_token_ownership_limit": "u32",
       "collections_admins_limit": "u64",
       "custom_data_limit": "u32",
-      "nft_sponsor_transfer_timeout": "u32",
-      "fungible_sponsor_transfer_timeout": "u32",
-      "refungible_sponsor_transfer_timeout": "u32"
+      "nft_sponsor_timeout": "u32",
+      "fungible_sponsor_timeout": "u32",
+      "refungible_sponsor_timeout": "u32"
     },
     "CollectionLimits": {
       "AccountTokenOwnershipLimit": "u32",
-      "SponsoredDataSize": "u32",
+      "SponsoredMintSize": "u32",
       "TokenLimit": "u32",
-      "SponsorTransferTimeout": "u32"
+      "SponsorTimeout": "u32"
     }
   }
   
