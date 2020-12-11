@@ -387,7 +387,7 @@ decl_storage! {
         // Contract Sponsorship and Ownership
         pub ContractOwner get(fn contract_owner): map hasher(twox_64_concat) T::AccountId => T::AccountId;
         pub ContractSelfSponsoring get(fn contract_self_sponsoring): map hasher(twox_64_concat) T::AccountId => bool;
-        pub ContractSponsorBasket get(fn contract_sponsor_basket): map hasher(twox_64_concat) T::AccountId => T::BlockNumber;
+        pub ContractSponsorBasket get(fn contract_sponsor_basket): map hasher(twox_64_concat) (T::AccountId, T::AccountId) => T::BlockNumber;
         pub ContractSponsoringRateLimit get(fn contract_sponsoring_rate_limit): map hasher(twox_64_concat) T::AccountId => T::BlockNumber;
     }
     add_extra_genesis {
@@ -2304,13 +2304,13 @@ where
 
                 let mut sponsor_transfer = false;
                 if <ContractSponsoringRateLimit<T>>::contains_key(called_contract.clone()) {
-                    let last_tx_block = <ContractSponsorBasket<T>>::get(&called_contract);
+                    let last_tx_block = <ContractSponsorBasket<T>>::get((&called_contract, &who));
                     let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
                     let rate_limit = <ContractSponsoringRateLimit<T>>::get(&called_contract);
                     let limit_time = last_tx_block + rate_limit;
 
                     if block_number >= limit_time {
-                        <ContractSponsorBasket<T>>::insert(called_contract.clone(), block_number);
+                        <ContractSponsorBasket<T>>::insert((called_contract.clone(), who.clone()), block_number);
                         sponsor_transfer = true;
                     }
                 } else {
