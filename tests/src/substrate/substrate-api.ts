@@ -2,9 +2,7 @@ import { WsProvider, ApiPromise } from "@polkadot/api";
 import config from "../config";
 import promisifySubstrate from "./promisify-substrate";
 import { ApiOptions } from "@polkadot/api/types";
-import fs from "fs";
-
-const rtt = JSON.parse(fs.readFileSync('../runtime_types.json', 'utf8'));
+import rtt from "../../../runtime_types.json";
 
 function defaultApiOptions(): ApiOptions {
   const wsProvider = new WsProvider(config.substrateUrl);
