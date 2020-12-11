@@ -3,7 +3,7 @@ use super::*;
 use crate::mock::*;
 use crate::{AccessMode, ApprovePermissions, CollectionMode,
     Ownership, ChainLimits, CreateItemData, CreateNftData, CreateFungibleData, CreateReFungibleData,
-    CollectionId, TokenId, MAX_DECIMAL_POINTS}; //Err
+    CollectionId, TokenId, MAX_DECIMAL_POINTS};
 use frame_support::{assert_noop, assert_ok};
 use frame_system::{ RawOrigin };
 

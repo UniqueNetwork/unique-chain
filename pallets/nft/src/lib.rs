@@ -186,10 +186,10 @@ pub struct CollectionLimits {
 impl Default for CollectionLimits {
     fn default() -> CollectionLimits {
         CollectionLimits { 
-            account_token_ownership_limit: 0, 
-            token_limit: 0,
-            sponsored_data_size: 0, 
-            sponsor_transfer_timeout: 0 }
+            account_token_ownership_limit: u32::max_value(), 
+            token_limit: u32::max_value(),
+            sponsored_data_size: u32::max_value(), 
+            sponsor_transfer_timeout: u32::max_value() }
     }
 }
 
@@ -1417,7 +1417,7 @@ decl_module! {
         #[weight = 0]
         pub fn set_collection_limits(
             origin,
-            collection_id: u64,
+            collection_id: u32,
             limits: CollectionLimits,
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
@@ -1439,9 +1439,9 @@ impl<T: Trait> Module<T> {
         if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
 
             // check token limit and account token limit
-            let total_items: u64 = ItemListIndex::get(collection_id);
+            let total_items: u32 = ItemListIndex::get(collection_id);
             let account_items: u32 = <AddressTokens<T>>::get(collection_id, sender.clone()).len() as u32;
-            ensure!(collection.limits.token_limit as u64 > total_items,  Error::<T>::CollectionTokenLimitExceeded);
+            ensure!(collection.limits.token_limit > total_items,  Error::<T>::CollectionTokenLimitExceeded);
             ensure!(collection.limits.account_token_ownership_limit > account_items,  Error::<T>::AccountTokenLimitExceeded);
             ensure!(collection.mint_mode == true, Error::<T>::PublicMintingNotAllowed);
             Self::check_white_list(collection_id, owner)?;
