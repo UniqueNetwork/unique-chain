@@ -1440,7 +1440,7 @@ impl<T: Trait> Module<T> {
 
             // check token limit and account token limit
             let total_items: u32 = ItemListIndex::get(collection_id);
-            let account_items: u32 = <AddressTokens<T>>::get(collection_id, sender.clone()).len() as u32;
+            let account_items: u32 = <AddressTokens<T>>::get(collection_id, owner.clone()).len() as u32;
             ensure!(collection.limits.token_limit > total_items,  Error::<T>::CollectionTokenLimitExceeded);
             ensure!(collection.limits.account_token_ownership_limit > account_items,  Error::<T>::AccountTokenLimitExceeded);
             ensure!(collection.mint_mode == true, Error::<T>::PublicMintingNotAllowed);
