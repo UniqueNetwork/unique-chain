@@ -164,12 +164,13 @@ target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" -
       "WhiteList"
     ]
   },
+  "DecimalPoints": "u8",
   "CollectionMode": {
     "_enum": {
       "Invalid": null,
       "NFT": null,
-      "Fungible": "u32",
-      "ReFungible": "u32"
+      "Fungible": "DecimalPoints",
+      "ReFungible": "DecimalPoints"
     }
   },
   "Ownership": {
@@ -177,17 +178,17 @@ target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" -
     "Fraction": "u128"
   },
   "FungibleItemType": {
-    "Collection": "u64",
+    "Collection": "CollectionId",
     "Owner": "AccountId",
     "Value": "u128"
   },
   "ReFungibleItemType": {
-    "Collection": "u64",
+    "Collection": "CollectionId",
     "Owner": "Vec<Ownership>",
     "Data": "Vec<u8>"
   },
   "NftItemType": {
-    "Collection": "u64",
+    "Collection": "CollectionId",
     "Owner": "AccountId",
     "ConstData": "Vec<u8>",
     "VariableData": "Vec<u8>"
@@ -197,7 +198,7 @@ target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" -
     "fraction": "u128"
   },
   "ReFungibleItemType": {
-    "Collection": "u64",
+    "Collection": "CollectionId",
     "Owner": "Vec<Ownership<AccountId>>",
     "ConstData": "Vec<u8>",
     "VariableData": "Vec<u8>"
@@ -206,7 +207,7 @@ target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" -
     "Owner": "AccountId",
     "Mode": "CollectionMode",
     "Access": "AccessMode",
-    "DecimalPoints": "u32",
+    "DecimalPoints": "DecimalPoints",
     "Name": "Vec<u16>",
     "Description": "Vec<u16>",
     "TokenPrefix": "Vec<u8>",
@@ -219,7 +220,7 @@ target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" -
   },
   "ApprovePermissions": {
     "Approved": "AccountId",
-    "Amount": "u64"
+    "Amount": "u128"
   },
   "RawData": "Vec<u8>",
   "Address": "AccountId",
