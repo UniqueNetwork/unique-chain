@@ -358,7 +358,7 @@ decl_storage! {
 
         // Bound counters
         CollectionCount: u32;
-        pub AccountItemCount get(fn account_item_count): map hasher(identity) T::AccountId => u32;
+        pub AccountItemCount get(fn account_item_count): map hasher(twox_64_concat) T::AccountId => u32;
 
         // Basic collections
         pub Collection get(fn collection) config(): map hasher(identity) CollectionId => CollectionType<T::AccountId>;
@@ -366,10 +366,10 @@ decl_storage! {
         pub WhiteList get(fn white_list): map hasher(identity) CollectionId => Vec<T::AccountId>;
 
         /// Balance owner per collection map
-        pub Balance get(fn balance_count): double_map hasher(identity) CollectionId, hasher(identity) T::AccountId => u128;
+        pub Balance get(fn balance_count): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => u128;
 
         /// second parameter: item id + owner account id
-        pub ApprovedList get(fn approved): double_map hasher(identity) CollectionId, hasher(identity) (TokenId, T::AccountId) => Vec<ApprovePermissions<T::AccountId>>;
+        pub ApprovedList get(fn approved): double_map hasher(identity) CollectionId, hasher(twox_64_concat) (TokenId, T::AccountId) => Vec<ApprovePermissions<T::AccountId>>;
 
         /// Item collections
         pub NftItemList get(fn nft_item_id) config(): double_map hasher(identity) CollectionId, hasher(identity) TokenId => NftItemType<T::AccountId>;
@@ -377,7 +377,7 @@ decl_storage! {
         pub ReFungibleItemList get(fn refungible_item_id) config(): double_map hasher(identity) CollectionId, hasher(identity) TokenId => ReFungibleItemType<T::AccountId>;
 
         /// Index list
-        pub AddressTokens get(fn address_tokens): double_map hasher(identity) CollectionId, hasher(identity) T::AccountId => Vec<TokenId>;
+        pub AddressTokens get(fn address_tokens): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => Vec<TokenId>;
 
         /// Tokens transfer baskets
         pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => T::BlockNumber;
@@ -385,10 +385,10 @@ decl_storage! {
         pub ReFungibleTransferBasket get(fn refungible_transfer_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => T::BlockNumber;
 
         // Contract Sponsorship and Ownership
-        pub ContractOwner get(fn contract_owner): map hasher(identity) T::AccountId => T::AccountId;
-        pub ContractSelfSponsoring get(fn contract_self_sponsoring): map hasher(identity) T::AccountId => bool;
-        pub ContractSponsorBasket get(fn contract_sponsor_basket): map hasher(identity) T::AccountId => T::BlockNumber;
-        pub ContractSponsoringRateLimit get(fn contract_sponsoring_rate_limit): map hasher(identity) T::AccountId => T::BlockNumber;
+        pub ContractOwner get(fn contract_owner): map hasher(twox_64_concat) T::AccountId => T::AccountId;
+        pub ContractSelfSponsoring get(fn contract_self_sponsoring): map hasher(twox_64_concat) T::AccountId => bool;
+        pub ContractSponsorBasket get(fn contract_sponsor_basket): map hasher(twox_64_concat) T::AccountId => T::BlockNumber;
+        pub ContractSponsoringRateLimit get(fn contract_sponsoring_rate_limit): map hasher(twox_64_concat) T::AccountId => T::BlockNumber;
     }
     add_extra_genesis {
         build(|config: &GenesisConfig<T>| {
