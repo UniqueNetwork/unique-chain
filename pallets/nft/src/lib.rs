@@ -1049,9 +1049,12 @@ decl_module! {
         pub fn transfer(origin, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
+            let target_collection = <Collection<T>>::get(collection_id);
+
+            // Limits check
+            Self::is_correct_transfer(collection_id, &target_collection, &recipient)?;
 
             // Transfer permissions check
-            let target_collection = <Collection<T>>::get(collection_id);
             ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
                 Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
                 Error::<T>::NoPermission);
@@ -1162,10 +1165,14 @@ decl_module! {
                 }
             }
 
-            // Transfer permissions check
             let target_collection = <Collection<T>>::get(collection_id);
-                ensure!(appoved_transfer || Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                Error::<T>::NoPermission);
+
+            // Limits check
+            Self::is_correct_transfer(collection_id, &target_collection, &recipient)?;
+
+            // Transfer permissions check         
+            ensure!(appoved_transfer || Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
+            Error::<T>::NoPermission);
 
             if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, &sender)?;
@@ -1422,8 +1429,15 @@ decl_module! {
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             Self::check_owner_permissions(collection_id, sender.clone())?;
-
             let mut target_collection = <Collection<T>>::get(collection_id);
+            let chain_limits = ChainLimit::get();
+            let climits = target_collection.limits;
+
+            // token_limit   check  prev
+            ensure!(climits.token_limit > limits.token_limit && 
+                climits.token_limit <= chain_limits.account_token_ownership_limit, 
+                Error::<T>::AccountTokenLimitExceeded);
+
             target_collection.limits = limits;
             <Collection<T>>::insert(collection_id, target_collection);
 
@@ -1434,13 +1448,25 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
 
+    fn is_correct_transfer(collection_id: CollectionId, collection: &CollectionType<T::AccountId>, recipient: &T::AccountId) -> DispatchResult {
+
+        if !Self::is_owner_or_admin_permissions(collection_id, recipient.clone()) {
+
+            // check token limit and account token limit
+            let account_items: u32 = <AddressTokens<T>>::get(collection_id, recipient).len() as u32;
+            ensure!(collection.limits.account_token_ownership_limit > account_items,  Error::<T>::AccountTokenLimitExceeded);
+        }
+
+        Ok(())
+    }
+
     fn can_create_items_in_collection(collection_id: CollectionId, collection: &CollectionType<T::AccountId>, sender: &T::AccountId, owner: &T::AccountId) -> DispatchResult {
 
         if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
 
             // check token limit and account token limit
             let total_items: u32 = ItemListIndex::get(collection_id);
-            let account_items: u32 = <AddressTokens<T>>::get(collection_id, owner.clone()).len() as u32;
+            let account_items: u32 = <AddressTokens<T>>::get(collection_id, owner).len() as u32;
             ensure!(collection.limits.token_limit > total_items,  Error::<T>::CollectionTokenLimitExceeded);
             ensure!(collection.limits.account_token_ownership_limit > account_items,  Error::<T>::AccountTokenLimitExceeded);
             ensure!(collection.mint_mode == true, Error::<T>::PublicMintingNotAllowed);
