@@ -46,20 +46,11 @@
       "Owner": "AccountId",
       "Value": "u128"
     },
-    "ReFungibleItemType": {
-      "Collection": "CollectionId",
-      "Owner": "Vec<Ownership>",
-      "Data": "Vec<u8>"
-    },
     "NftItemType": {
       "Collection": "CollectionId",
       "Owner": "AccountId",
       "ConstData": "Vec<u8>",
       "VariableData": "Vec<u8>"
-    },
-    "Ownership": {
-      "owner": "AccountId",
-      "fraction": "u128"
     },
     "ReFungibleItemType": {
       "Collection": "CollectionId",
@@ -79,6 +70,7 @@
       "OffchainSchema": "Vec<u8>",
       "Sponsor": "AccountId",
       "UnconfirmedSponsor": "AccountId",
+      "Limits": "CollectionLimits",
       "VariableOnChainSchema": "Vec<u8>",
       "ConstOnChainSchema": "Vec<u8>"
     },
@@ -117,9 +109,15 @@
       "account_token_ownership_limit": "u32",
       "collections_admins_limit": "u64",
       "custom_data_limit": "u32",
-      "nft_sponsor_transfer_timeout": "u32",
-      "fungible_sponsor_transfer_timeout": "u32",
-      "refungible_sponsor_transfer_timeout": "u32"
+      "nft_sponsor_timeout": "u32",
+      "fungible_sponsor_timeout": "u32",
+      "refungible_sponsor_timeout": "u32"
+    },
+    "CollectionLimits": {
+      "AccountTokenOwnershipLimit": "u32",
+      "SponsoredMintSize": "u32",
+      "TokenLimit": "u32",
+      "SponsorTimeout": "u32"
     }
   }
   

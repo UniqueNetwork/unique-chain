@@ -171,7 +171,8 @@ fn testnet_genesis(
                     sponsor: get_account_id_from_seed::<sr25519::Public>("Alice"),
                     unconfirmed_sponsor: get_account_id_from_seed::<sr25519::Public>("Alice"),
                     const_on_chain_schema: vec![],
-                    variable_on_chain_schema: vec![]
+					variable_on_chain_schema: vec![],
+					limits: CollectionLimits::default()
                 },
             )],
             nft_item_id: vec![],

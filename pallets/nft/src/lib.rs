@@ -46,6 +46,8 @@ mod tests;
 mod default_weights;
 
 pub const MAX_DECIMAL_POINTS: DecimalPoints = 30;
+pub const MAX_SPONSOR_TIMEOUT: u32 = 10_368_000;
+pub const MAX_TOKEN_OWNERSHIP: u32 = 10_000_000;
 
 // Structs
 // #region
@@ -116,6 +118,7 @@ pub struct CollectionType<AccountId> {
     pub offchain_schema: Vec<u8>,
     pub sponsor: AccountId, // Who pays fees. If set to default address, the fees are applied to the transaction sender
     pub unconfirmed_sponsor: AccountId, // Sponsor address that has not yet confirmed sponsorship
+    pub limits: CollectionLimits, // Collection private restrictions 
     pub variable_on_chain_schema: Vec<u8>, //
     pub const_on_chain_schema: Vec<u8>, //
 }
@@ -169,6 +172,27 @@ pub struct VestingItem<AccountId, Moment> {
 pub struct BasketItem<AccountId, BlockNumber> {
     pub address: AccountId,
     pub start_block: BlockNumber,
+}
+
+#[derive(Encode, Decode, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct CollectionLimits {
+    pub account_token_ownership_limit: u32,
+    pub sponsored_data_size: u32,
+    pub token_limit: u32,
+
+    // Timeouts for item types in passed blocks
+    pub sponsor_transfer_timeout: u32,
+}
+
+impl Default for CollectionLimits {
+    fn default() -> CollectionLimits {
+        CollectionLimits { 
+            account_token_ownership_limit: 10_000_000, 
+            token_limit: u32::max_value(),
+            sponsored_data_size: u32::max_value(), 
+            sponsor_transfer_timeout: 14400 }
+    }
 }
 
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
@@ -328,7 +352,13 @@ decl_error! {
         /// Unexpected collection type.
         UnexpectedCollectionType,
         /// Can't store metadata in fungible tokens.
-        CantStoreMetadataInFungibleTokens
+        CantStoreMetadataInFungibleTokens,
+        /// Collection token limit exceeded
+        CollectionTokenLimitExceeded,
+        /// Account token limit exceeded per collection
+        AccountTokenLimitExceeded,
+        /// Collection limit bounds per collection exceeded
+        CollectionLimitBoundsExceeded
 	}
 }
 
@@ -544,6 +574,7 @@ decl_module! {
                 unconfirmed_sponsor: T::AccountId::default(),
                 variable_on_chain_schema: Vec::new(),
                 const_on_chain_schema: Vec::new(),
+                limits: CollectionLimits::default(),
             };
 
             // Add new collection to map
@@ -1022,9 +1053,12 @@ decl_module! {
         pub fn transfer(origin, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
+            let target_collection = <Collection<T>>::get(collection_id);
+
+            // Limits check
+            Self::is_correct_transfer(collection_id, &target_collection, &recipient)?;
 
             // Transfer permissions check
-            let target_collection = <Collection<T>>::get(collection_id);
             ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
                 Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
                 Error::<T>::NoPermission);
@@ -1135,10 +1169,14 @@ decl_module! {
                 }
             }
 
-            // Transfer permissions check
             let target_collection = <Collection<T>>::get(collection_id);
-                ensure!(appoved_transfer || Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                Error::<T>::NoPermission);
+
+            // Limits check
+            Self::is_correct_transfer(collection_id, &target_collection, &recipient)?;
+
+            // Transfer permissions check         
+            ensure!(appoved_transfer || Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
+            Error::<T>::NoPermission);
 
             if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, &sender)?;
@@ -1387,23 +1425,54 @@ decl_module! {
             Ok(())
         }
 
-        // #[cfg(feature = "runtime-benchmarks")]
-        // #[weight = 0]
-        // pub fn add_contract_sponsoring_debug(
-        //     origin,
-        //     contract_address: T::AccountId, 
-        //     owner: T::AccountId) -> DispatchResult {
-        //     let sender = ensure_signed(origin)?;
-        //     <ContractOwner<T>>::insert(contract_address.clone(), owner);
-        //     Ok(())
-        // }
-    
+        #[weight = 0]
+        pub fn set_collection_limits(
+            origin,
+            collection_id: u32,
+            limits: CollectionLimits,
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            Self::check_owner_permissions(collection_id, sender.clone())?;
+            let mut target_collection = <Collection<T>>::get(collection_id);
+            let chain_limits = ChainLimit::get();
+            let climits = target_collection.limits;
+
+            // collection bounds
+            ensure!(limits.sponsor_transfer_timeout <= MAX_SPONSOR_TIMEOUT &&
+                limits.account_token_ownership_limit <= MAX_TOKEN_OWNERSHIP,  
+                Error::<T>::CollectionLimitBoundsExceeded);
+
+            // token_limit   check  prev
+            ensure!(climits.token_limit > limits.token_limit && 
+                limits.token_limit <= chain_limits.account_token_ownership_limit, 
+                Error::<T>::AccountTokenLimitExceeded);
+
+            target_collection.limits = limits;
+            <Collection<T>>::insert(collection_id, target_collection);
+
+            Ok(())
+        } 
     }
 }
 
 impl<T: Trait> Module<T> {
 
+    fn is_correct_transfer(collection_id: CollectionId, collection: &CollectionType<T::AccountId>, recipient: &T::AccountId) -> DispatchResult {
+        
+        // check token limit and account token limit
+        let account_items: u32 = <AddressTokens<T>>::get(collection_id, recipient).len() as u32;
+        ensure!(collection.limits.account_token_ownership_limit > account_items,  Error::<T>::AccountTokenLimitExceeded);
+        
+        Ok(())
+    }
+
     fn can_create_items_in_collection(collection_id: CollectionId, collection: &CollectionType<T::AccountId>, sender: &T::AccountId, owner: &T::AccountId) -> DispatchResult {
+
+        // check token limit and account token limit
+        let total_items: u32 = ItemListIndex::get(collection_id);
+        let account_items: u32 = <AddressTokens<T>>::get(collection_id, owner).len() as u32;
+        ensure!(collection.limits.token_limit > total_items,  Error::<T>::CollectionTokenLimitExceeded);
+        ensure!(collection.limits.account_token_ownership_limit > account_items,  Error::<T>::AccountTokenLimitExceeded);
 
         if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
             ensure!(collection.mint_mode == true, Error::<T>::PublicMintingNotAllowed);
@@ -1485,7 +1554,6 @@ impl<T: Trait> Module<T> {
                 Self::add_refungible_item(item)?;
             }
         };
-
 
         // call event
         Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id)));
@@ -2213,18 +2281,35 @@ where
         // Determine who is paying transaction fee based on ecnomic model
         // Parse call to extract collection ID and access collection sponsor
         let mut sponsor: T::AccountId = match IsSubType::<Call<T>>::is_sub_type(call) {
-            Some(Call::create_item(collection_id, _properties, _owner)) => {
-                <Collection<T>>::get(collection_id).sponsor
+            Some(Call::create_item(collection_id, _owner, _properties)) => {
+
+                // check free create limit
+                if <Collection<T>>::get(collection_id).limits.sponsored_data_size >= (_properties.len() as u32)
+                {
+                    <Collection<T>>::get(collection_id).sponsor
+                } else {
+                    T::AccountId::default()
+                }
             }
             Some(Call::transfer(_new_owner, collection_id, _item_id, _value)) => {
+                
+                let _collection_limits = <Collection<T>>::get(collection_id).limits;
                 let _collection_mode = <Collection<T>>::get(collection_id).mode;
 
                 // sponsor timeout
                 let sponsor_transfer = match _collection_mode {
                     CollectionMode::NFT => {
+
+                        // get correct limit
+                        let limit: u32 = if _collection_limits.sponsor_transfer_timeout > 0 {
+                            _collection_limits.sponsor_transfer_timeout
+                        } else {
+                            ChainLimit::get().nft_sponsor_transfer_timeout
+                        };
+
                         let basket = <NftTransferBasket<T>>::get(collection_id, _item_id);
                         let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
-                        let limit_time = basket + ChainLimit::get().nft_sponsor_transfer_timeout.into();
+                        let limit_time = basket + limit.into();
                         if block_number >= limit_time {
                             <NftTransferBasket<T>>::insert(collection_id, _item_id, block_number);
                             true
@@ -2234,12 +2319,20 @@ where
                         }
                     }
                     CollectionMode::Fungible(_) => {
+
+                        // get correct limit
+                        let limit: u32 = if _collection_limits.sponsor_transfer_timeout > 0 {
+                            _collection_limits.sponsor_transfer_timeout
+                        } else {
+                            ChainLimit::get().fungible_sponsor_transfer_timeout
+                        };
+
                         let mut basket = <FungibleTransferBasket<T>>::get(collection_id, _item_id);
                         let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
                         if basket.iter().any(|i| i.address == _new_owner.clone())
                         {
                             let item = basket.iter_mut().find(|i| i.address == _new_owner.clone()).unwrap().clone();
-                            let limit_time = item.start_block + ChainLimit::get().fungible_sponsor_transfer_timeout.into();
+                            let limit_time = item.start_block + limit.into();
                             if block_number >= limit_time {
                                 basket.retain(|x| x.address == item.address);
                                 basket.push(BasketItem { start_block: block_number, address: _new_owner.clone() });
@@ -2256,9 +2349,17 @@ where
                         }
                     }
                     CollectionMode::ReFungible(_) => {
+
+                        // get correct limit
+                        let limit: u32 = if _collection_limits.sponsor_transfer_timeout > 0 {
+                            _collection_limits.sponsor_transfer_timeout
+                        } else {
+                            ChainLimit::get().refungible_sponsor_transfer_timeout
+                        };
+
                         let basket = <ReFungibleTransferBasket<T>>::get(collection_id, _item_id);
                         let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
-                        let limit_time = basket + ChainLimit::get().nft_sponsor_transfer_timeout.into();
+                        let limit_time = basket + limit.into();
                         if block_number >= limit_time {
                             <ReFungibleTransferBasket<T>>::insert(collection_id, _item_id, block_number);
                             true
