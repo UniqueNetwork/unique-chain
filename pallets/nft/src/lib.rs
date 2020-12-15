@@ -46,6 +46,8 @@ mod tests;
 mod default_weights;
 
 pub const MAX_DECIMAL_POINTS: DecimalPoints = 30;
+pub const MAX_SPONSOR_TIMEOUT: u32 = 10_368_000;
+pub const MAX_TOKEN_OWNERSHIP: u32 = 10_000_000;
 
 // Structs
 // #region
@@ -186,10 +188,10 @@ pub struct CollectionLimits {
 impl Default for CollectionLimits {
     fn default() -> CollectionLimits {
         CollectionLimits { 
-            account_token_ownership_limit: u32::max_value(), 
+            account_token_ownership_limit: 10_000_000, 
             token_limit: u32::max_value(),
             sponsored_data_size: u32::max_value(), 
-            sponsor_transfer_timeout: u32::max_value() }
+            sponsor_transfer_timeout: 14400 }
     }
 }
 
@@ -354,7 +356,9 @@ decl_error! {
         /// Collection token limit exceeded
         CollectionTokenLimitExceeded,
         /// Account token limit exceeded per collection
-        AccountTokenLimitExceeded
+        AccountTokenLimitExceeded,
+        /// Collection limit bounds per collection exceeded
+        CollectionLimitBoundsExceeded
 	}
 }
 
@@ -1433,9 +1437,14 @@ decl_module! {
             let chain_limits = ChainLimit::get();
             let climits = target_collection.limits;
 
+            // collection bounds
+            ensure!(limits.sponsor_transfer_timeout <= MAX_SPONSOR_TIMEOUT &&
+                limits.account_token_ownership_limit <= MAX_TOKEN_OWNERSHIP,  
+                Error::<T>::CollectionLimitBoundsExceeded);
+
             // token_limit   check  prev
             ensure!(climits.token_limit > limits.token_limit && 
-                climits.token_limit <= chain_limits.account_token_ownership_limit, 
+                limits.token_limit <= chain_limits.account_token_ownership_limit, 
                 Error::<T>::AccountTokenLimitExceeded);
 
             target_collection.limits = limits;
