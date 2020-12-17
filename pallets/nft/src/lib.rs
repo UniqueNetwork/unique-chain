@@ -1,3 +1,5 @@
+#![recursion_limit = "1024"]
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(feature = "std")]
@@ -54,7 +56,6 @@ pub const MAX_TOKEN_OWNERSHIP: u32 = 10_000_000;
 
 pub type CollectionId = u32;
 pub type TokenId = u32;
-
 pub type DecimalPoints = u8;
 
 #[derive(Encode, Decode, Eq, Debug, Clone, PartialEq)]
@@ -97,6 +98,18 @@ impl Default for CollectionMode {
     }
 }
 
+#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum SchemaVersion {
+    ImageURL,
+    Unique,
+}
+impl Default for SchemaVersion {
+    fn default() -> Self {
+        Self::ImageURL
+    }
+}
+
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Ownership<AccountId> {
@@ -116,6 +129,7 @@ pub struct CollectionType<AccountId> {
     pub token_prefix: Vec<u8>, // 16 include null escape char
     pub mint_mode: bool,
     pub offchain_schema: Vec<u8>,
+    pub schema_version: SchemaVersion,
     pub sponsor: AccountId, // Who pays fees. If set to default address, the fees are applied to the transaction sender
     pub unconfirmed_sponsor: AccountId, // Sponsor address that has not yet confirmed sponsorship
     pub limits: CollectionLimits, // Collection private restrictions 
@@ -258,7 +272,7 @@ pub struct CreateReFungibleData {
 pub enum CreateItemData {
     NFT(CreateNftData),
     Fungible(CreateFungibleData),
-    ReFungible(CreateReFungibleData)
+    ReFungible(CreateReFungibleData),
 }
 
 impl CreateItemData {
@@ -570,6 +584,7 @@ decl_module! {
                 decimal_points: decimal_points,
                 token_prefix: prefix,
                 offchain_schema: Vec::new(),
+                schema_version: SchemaVersion::ImageURL,
                 sponsor: T::AccountId::default(),
                 unconfirmed_sponsor: T::AccountId::default(),
                 variable_on_chain_schema: Vec::new(),
@@ -1200,7 +1215,6 @@ decl_module! {
             Ok(())
         }
 
-        ///
         #[weight = 0]
         pub fn safe_transfer_from(origin, collection_id: CollectionId, item_id: TokenId, new_owner: T::AccountId) -> DispatchResult {
 
@@ -1259,7 +1273,35 @@ decl_module! {
 
             Ok(())
         }
-        
+ 
+        /// Set schema standard
+        /// ImageURL
+        /// Unique
+        /// 
+        /// # Permissions
+        /// 
+        /// * Collection Owner
+        /// * Collection Admin
+        /// 
+        /// # Arguments
+        /// 
+        /// * collection_id.
+        /// 
+        /// * schema: SchemaVersion: enum
+        #[weight = 0]
+        pub fn set_schema_version(
+            origin,
+            collection_id: CollectionId,
+            version: SchemaVersion
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
+            let mut target_collection = <Collection<T>>::get(collection_id);
+            target_collection.schema_version = version;
+            <Collection<T>>::insert(collection_id, target_collection);
+
+            Ok(())
+        }
 
         /// Set off-chain data schema.
         /// 
@@ -1458,7 +1500,7 @@ decl_module! {
 impl<T: Trait> Module<T> {
 
     fn is_correct_transfer(collection_id: CollectionId, collection: &CollectionType<T::AccountId>, recipient: &T::AccountId) -> DispatchResult {
-        
+
         // check token limit and account token limit
         let account_items: u32 = <AddressTokens<T>>::get(collection_id, recipient).len() as u32;
         ensure!(collection.limits.account_token_ownership_limit > account_items,  Error::<T>::AccountTokenLimitExceeded);
