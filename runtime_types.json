@@ -98,6 +98,12 @@
         "ReFungible": "CreateReFungibleData"
       }
     },
+    "SchemaVersion": {
+      "_enum": [
+        "ImageURL",
+        "Unique"
+      ]
+    },
     "CollectionId": "u32",
     "TokenId": "u32",
     "BasketItem": {
