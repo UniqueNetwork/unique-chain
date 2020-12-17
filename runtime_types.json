@@ -68,6 +68,7 @@
       "TokenPrefix": "Vec<u8>",
       "MintMode": "bool",
       "OffchainSchema": "Vec<u8>",
+      "SchemaVersion": "SchemaVersion",
       "Sponsor": "AccountId",
       "UnconfirmedSponsor": "AccountId",
       "Limits": "CollectionLimits",
