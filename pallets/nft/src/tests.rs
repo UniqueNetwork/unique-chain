@@ -77,6 +77,19 @@ fn create_test_item(collection_id: CollectionId, data: &CreateItemData) {
 
 // Use cases tests region
 // #region
+
+#[test]
+fn set_version_schema() {
+    new_test_ext().execute_with(|| {
+        default_limits();
+        let origin1 = Origin::signed(1);
+        let collection_id = create_test_collection(&CollectionMode::NFT, 1);
+        
+        assert_ok!(TemplateModule::set_schema_version(origin1, collection_id, SchemaVersion::Unique));
+        assert_eq!(TemplateModule::collection(collection_id).schema_version, SchemaVersion::Unique);
+    });
+}
+
 #[test]
 fn create_fungible_collection_fails_with_large_decimal_numbers() {
     new_test_ext().execute_with(|| {
