@@ -147,12 +147,13 @@ fn testnet_genesis(
         pallet_aura: Some(AuraConfig {
             authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
         }),
-        pallet_grandpa: Some(GrandpaConfig {
+		pallet_grandpa: Some(GrandpaConfig {
             authorities: initial_authorities
                 .iter()
                 .map(|x| (x.1.clone(), 1))
                 .collect(),
-        }),
+		}),
+		pallet_treasury: Some(Default::default()),
         pallet_sudo: Some(SudoConfig { key: root_key }),
         pallet_nft: Some(NftConfig {
             collection: vec![(
@@ -166,11 +167,13 @@ fn testnet_genesis(
                     description: vec![],
                     token_prefix: vec![],
                     mint_mode: false,
-                    offchain_schema: vec![],
+					offchain_schema: vec![],
+					schema_version: SchemaVersion::default(),
                     sponsor: get_account_id_from_seed::<sr25519::Public>("Alice"),
                     unconfirmed_sponsor: get_account_id_from_seed::<sr25519::Public>("Alice"),
                     const_on_chain_schema: vec![],
-                    variable_on_chain_schema: vec![]
+					variable_on_chain_schema: vec![],
+					limits: CollectionLimits::default()
                 },
             )],
             nft_item_id: vec![],

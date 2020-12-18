@@ -13,12 +13,12 @@ use pallet_grandpa::fg_primitives;
 use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{ crypto::KeyTypeId, crypto::Public, OpaqueMetadata };
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     traits::{
-        BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating,
-        Verify,
+        Convert, BlakeTwo256, Block as BlockT, IdentifyAccount, 
+        IdentityLookup, NumberFor, Saturating, Verify,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, MultiSignature,
@@ -37,7 +37,7 @@ pub use frame_support::{
     parameter_types,
     traits::{
         Currency, ExistenceRequirement, Get, KeyOwnerProofSystem, OnUnbalanced, Randomness,
-        WithdrawReason,
+        WithdrawReason, LockIdentifier,
     },
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -48,10 +48,33 @@ pub use frame_support::{
 };
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::Perbill;
-use frame_system::{self as system};
+use sp_runtime:: { Perbill, Permill, Percent, ModuleId };
+use frame_system::{self as system, EnsureRoot };
+use sp_std::{marker::PhantomData};
 
 pub use pallet_timestamp::Call as TimestampCall;
+
+/// Struct that handles the conversion of Balance -> `u64`. This is used for
+/// staking's election calculation.
+pub struct CurrencyToVoteHandler;
+
+impl CurrencyToVoteHandler {
+	fn factor() -> Balance {
+		(Balances::total_issuance() / u64::max_value() as Balance).max(1)
+	}
+}
+
+impl Convert<Balance, u64> for CurrencyToVoteHandler {
+	fn convert(x: Balance) -> u64 {
+		(x / Self::factor()) as u64
+	}
+}
+
+impl Convert<u128, Balance> for CurrencyToVoteHandler {
+	fn convert(x: u128) -> Balance {
+		x * Self::factor()
+	}
+}
 
 /// Re-export a nft pallet
 /// TODO: Check this re-export. Is this safe and good style?
@@ -137,6 +160,43 @@ pub fn native_version() -> NativeVersion {
         runtime_version: VERSION,
         can_author_with: Default::default(),
     }
+}
+
+/// Provides a membership set with only the configured aura users
+pub struct ValiudatorsOnly<Runtime: pallet_aura::Trait>(PhantomData<Runtime>);
+impl frame_support::traits::Contains<AccountId> for ValiudatorsOnly<Runtime> {
+	fn contains(t: &AccountId) -> bool {
+        let arr: [u8; 32] = *t.as_ref();
+        let raw_key: Vec<u8> = Vec::from(arr);
+
+        match pallet_aura::Module::<Runtime>::authorities().iter().find(|auth| auth.to_raw_vec() == raw_key) {
+            Some(_) => true,
+            None => false,
+        }  
+	}
+	fn sorted_members() -> Vec<AccountId> {
+        let mut members: Vec<AccountId> = Vec::new();
+        for auth in pallet_aura::Module::<Runtime>::authorities() {
+            let mut arr: [u8; 32] = Default::default(); 
+            let bor_arr = auth.clone().to_raw_vec();
+            let slice = bor_arr.as_slice();
+            arr.copy_from_slice(slice);
+            members.push(AccountId::from(arr));
+        }
+        members  
+	}
+	fn count() -> usize {
+        pallet_aura::Module::<Runtime>::authorities().len()
+	}
+}
+
+impl frame_support::traits::ContainsLengthBound for ValiudatorsOnly<Runtime> {
+	fn min_len() -> usize {
+		1
+	}
+	fn max_len() -> usize {
+		100
+	}
 }
 
 parameter_types! {
@@ -266,7 +326,7 @@ pub const CENTS: Balance = 1_000 * MILLICENTS;
 pub const DOLLARS: Balance = 100 * CENTS;
 
 parameter_types! {
-    pub const TombstoneDeposit: Balance = 16 * MILLICENTS;
+    pub const TombstoneDeposit: Balance = 0;
     pub const RentByteFee: Balance = 4 * MILLICENTS;
     pub const RentDepositOffset: Balance = 1000 * MILLICENTS;
     pub const SurchargeReward: Balance = 150 * MILLICENTS;
@@ -303,6 +363,50 @@ impl pallet_transaction_payment::Trait for Runtime {
     type FeeMultiplierUpdate =  ();
 }
 
+parameter_types! {
+	pub const ProposalBond: Permill = Permill::from_percent(5);
+	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
+	pub const SpendPeriod: BlockNumber = 5 * MINUTES;
+	pub const Burn: Permill = Permill::from_percent(0);
+	pub const TipCountdown: BlockNumber = 1 * DAYS;
+	pub const TipFindersFee: Percent = Percent::from_percent(20);
+	pub const TipReportDepositBase: Balance = 1 * DOLLARS;
+	pub const DataDepositPerByte: Balance = 1 * CENTS;
+	pub const BountyDepositBase: Balance = 1 * DOLLARS;
+	pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
+	pub const TreasuryModuleId: ModuleId = ModuleId(*b"py/trsry");
+	pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
+	pub const MaximumReasonLength: u32 = 16384;
+	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
+	pub const BountyValueMinimum: Balance = 5 * DOLLARS;
+}
+
+impl pallet_treasury::Trait for Runtime {
+	type ModuleId = TreasuryModuleId;
+	type Currency = Balances;
+    type ApproveOrigin = EnsureRoot<AccountId>;
+	type RejectOrigin = EnsureRoot<AccountId>;
+	type Tippers = ValiudatorsOnly<Self>;
+	type TipCountdown = TipCountdown;
+	type TipFindersFee = TipFindersFee;
+	type TipReportDepositBase = TipReportDepositBase;
+	type DataDepositPerByte = DataDepositPerByte;
+	type Event = Event;
+	type OnSlash = ();
+	type ProposalBond = ProposalBond;
+	type ProposalBondMinimum = ProposalBondMinimum;
+	type SpendPeriod = SpendPeriod;
+	type Burn = Burn;
+	type BountyDepositBase = BountyDepositBase;
+	type BountyDepositPayoutDelay = BountyDepositPayoutDelay;
+	type BountyUpdatePeriod = BountyUpdatePeriod;
+	type BountyCuratorDeposit = BountyCuratorDeposit;
+	type BountyValueMinimum = BountyValueMinimum;
+	type MaximumReasonLength = MaximumReasonLength;
+	type BurnDestination = ();
+	type WeightInfo = ();
+}
+
 impl pallet_sudo::Trait for Runtime {
     type Event = Event;
     type Call = Call;
@@ -330,6 +434,7 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
         Nft: pallet_nft::{Module, Call, Config<T>, Storage, Event<T>},
+        Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
     }
 );
 
