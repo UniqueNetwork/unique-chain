@@ -1,13 +1,14 @@
 import { expect } from "chai";
 import usingApi from "./substrate/substrate-api";
 import fs from "fs";
-import { Abi, BlueprintPromise, CodePromise } from "@polkadot/api-contract";
+import { Abi, BlueprintPromise, CodePromise, ContractPromise } from "@polkadot/api-contract";
 import { IKeyringPair } from "@polkadot/types/types";
 import { Keyring } from "@polkadot/api";
 import { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
 
 const value = 0;
 const gasLimit = 3000n * 1000000n;
+const marketContractAddress = '5CYN9j3YvRkqxewoxeSvRbhAym4465C57uMmX5j4yz99L5H6';
 
 function deployBlueprint(alice: IKeyringPair, code: CodePromise): Promise<BlueprintPromise> {
   return new Promise<BlueprintPromise>(async (resolve, reject) => {
@@ -90,6 +91,16 @@ describe('Contracts', () => {
       const afterFlipGetResponse = await getFlipValue();
 
       expect(afterFlipGetResponse).to.be.false;
+    });
+  });
+
+  it('Can initialize contract instance', async () => {
+    await usingApi(async (api) => {
+      const metadata = JSON.parse(fs.readFileSync('./src/flipper/metadata.json').toString('utf-8'));
+      const abi = new Abi(metadata);
+      const newContractInstance = new ContractPromise(api, abi, marketContractAddress);
+      expect(newContractInstance).to.have.property('address');
+      expect(newContractInstance.address.toString()).to.equal(marketContractAddress);
     });
   });
 
