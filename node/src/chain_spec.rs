@@ -180,8 +180,8 @@ fn testnet_genesis(
             fungible_item_id: vec![],
             refungible_item_id: vec![],
             chain_limit: ChainLimits {
-                collection_numbers_limit: 10,
-                account_token_ownership_limit: 10,
+                collection_numbers_limit: 100000,
+                account_token_ownership_limit: 1000000,
                 collections_admins_limit: 5,
                 custom_data_limit: 2048,
                 nft_sponsor_transfer_timeout: 15,

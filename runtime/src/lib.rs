@@ -315,7 +315,7 @@ impl pallet_balances::Trait for Runtime {
 	type Balance = Balance;
 	/// The ubiquitous event type.
 	type Event = Event;
-	type DustRemoval = ();
+	type DustRemoval = Treasury;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
@@ -357,7 +357,7 @@ parameter_types! {
 
 impl pallet_transaction_payment::Trait for Runtime {
     type Currency = pallet_balances::Module<Runtime>;
-    type OnTransactionPayment = ();
+    type OnTransactionPayment = Treasury;
     type TransactionByteFee = TransactionByteFee;
     type WeightToFee = IdentityFee<Balance>;
     type FeeMultiplierUpdate =  ();

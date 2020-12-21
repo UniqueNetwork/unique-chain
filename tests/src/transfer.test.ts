@@ -1,8 +1,6 @@
-import { expect } from "chai";
-import usingApi from "./substrate/substrate-api";
-import promisifySubstrate from "./substrate/promisify-substrate";
-import waitNewBlocks from "./substrate/wait-new-blocks";
-import { alicesPublicKey, bobsPublicKey } from "./accounts";
+import { expect, assert } from "chai";
+import { default as usingApi, submitTransactionAsync } from "./substrate/substrate-api";
+import { alicesPublicKey, bobsPublicKey, ferdiesPublicKey } from "./accounts";
 import privateKey from "./substrate/privateKey";
 import getBalance from "./substrate/get-balance";
 
@@ -14,15 +12,30 @@ describe('Transfer', () => {
       const alicePrivateKey = privateKey('//Alice');
       
       const transfer = api.tx.balances.transfer(bobsPublicKey, 1n);
-      
-      await promisifySubstrate(api, () => transfer.signAndSend(alicePrivateKey))();
+      const result = await submitTransactionAsync(alicePrivateKey, transfer);
 
-      await waitNewBlocks(api);
-  
       const [alicesBalanceAfter, bobsBalanceAfter] = await getBalance(api, [alicesPublicKey, bobsPublicKey]);
 
       expect(alicesBalanceAfter < alicesBalanceBefore).to.be.true;
       expect(bobsBalanceAfter > bobsBalanceBefore).to.be.true;
+    });
+  });
+
+  it('Inability to pay fees error message is correct', async () => {
+    await usingApi(async api => {
+      const pk = privateKey('//Ferdie');
+
+      console.log = function () {};
+      console.error = function () {};
+  
+      const badTransfer = api.tx.balances.transfer(bobsPublicKey, 1n);
+      const badTransaction = async function () { 
+        const result = await submitTransactionAsync(pk, badTransfer);
+      };
+      await expect(badTransaction()).to.be.rejectedWith("Inability to pay some fees");
+
+      delete console.log;
+      delete console.error;
     });
   });
 });
