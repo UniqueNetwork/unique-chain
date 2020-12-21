@@ -8,17 +8,17 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use contracts_rpc_runtime_api::ContractExecResult;
-use grandpa::fg_primitives;
-use grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
+use pallet_contracts_rpc_runtime_api::ContractExecResult;
+use pallet_grandpa::fg_primitives;
+use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{ crypto::KeyTypeId, crypto::Public, OpaqueMetadata };
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     traits::{
-        BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating,
-        Verify,
+        Convert, BlakeTwo256, Block as BlockT, IdentifyAccount, 
+        IdentityLookup, NumberFor, Saturating, Verify,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, MultiSignature,
@@ -29,15 +29,15 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
-pub use balances::Call as BalancesCall;
-pub use contracts::Schedule as ContractsSchedule;
+pub use pallet_balances::Call as BalancesCall;
+pub use pallet_contracts::Schedule as ContractsSchedule;
 pub use frame_support::{
     construct_runtime,
     dispatch::DispatchResult,
     parameter_types,
     traits::{
         Currency, ExistenceRequirement, Get, KeyOwnerProofSystem, OnUnbalanced, Randomness,
-        WithdrawReason,
+        WithdrawReason, LockIdentifier,
     },
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -48,15 +48,38 @@ pub use frame_support::{
 };
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::Perbill;
-use system::{self as system};
+use sp_runtime:: { Perbill, Permill, Percent, ModuleId };
+use frame_system::{self as system, EnsureRoot };
+use sp_std::{marker::PhantomData};
 
-pub use timestamp::Call as TimestampCall;
+pub use pallet_timestamp::Call as TimestampCall;
+
+/// Struct that handles the conversion of Balance -> `u64`. This is used for
+/// staking's election calculation.
+pub struct CurrencyToVoteHandler;
+
+impl CurrencyToVoteHandler {
+	fn factor() -> Balance {
+		(Balances::total_issuance() / u64::max_value() as Balance).max(1)
+	}
+}
+
+impl Convert<Balance, u64> for CurrencyToVoteHandler {
+	fn convert(x: Balance) -> u64 {
+		(x / Self::factor()) as u64
+	}
+}
+
+impl Convert<u128, Balance> for CurrencyToVoteHandler {
+	fn convert(x: u128) -> Balance {
+		x * Self::factor()
+	}
+}
 
 /// Re-export a nft pallet
 /// TODO: Check this re-export. Is this safe and good style?
-extern crate nft;
-pub use nft::*;
+extern crate pallet_nft;
+pub use pallet_nft::*;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -83,6 +106,8 @@ pub type Hash = sp_core::H256;
 
 /// Digest item type.
 pub type DigestItem = generic::DigestItem<Hash>;
+
+mod nft_weights;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -135,6 +160,43 @@ pub fn native_version() -> NativeVersion {
         runtime_version: VERSION,
         can_author_with: Default::default(),
     }
+}
+
+/// Provides a membership set with only the configured aura users
+pub struct ValiudatorsOnly<Runtime: pallet_aura::Trait>(PhantomData<Runtime>);
+impl frame_support::traits::Contains<AccountId> for ValiudatorsOnly<Runtime> {
+	fn contains(t: &AccountId) -> bool {
+        let arr: [u8; 32] = *t.as_ref();
+        let raw_key: Vec<u8> = Vec::from(arr);
+
+        match pallet_aura::Module::<Runtime>::authorities().iter().find(|auth| auth.to_raw_vec() == raw_key) {
+            Some(_) => true,
+            None => false,
+        }  
+	}
+	fn sorted_members() -> Vec<AccountId> {
+        let mut members: Vec<AccountId> = Vec::new();
+        for auth in pallet_aura::Module::<Runtime>::authorities() {
+            let mut arr: [u8; 32] = Default::default(); 
+            let bor_arr = auth.clone().to_raw_vec();
+            let slice = bor_arr.as_slice();
+            arr.copy_from_slice(slice);
+            members.push(AccountId::from(arr));
+        }
+        members  
+	}
+	fn count() -> usize {
+        pallet_aura::Module::<Runtime>::authorities().len()
+	}
+}
+
+impl frame_support::traits::ContainsLengthBound for ValiudatorsOnly<Runtime> {
+	fn min_len() -> usize {
+		1
+	}
+	fn max_len() -> usize {
+		100
+	}
 }
 
 parameter_types! {
@@ -201,16 +263,16 @@ impl system::Trait for Runtime {
     /// What to do if an account is fully reaped from the system.
     type OnKilledAccount = ();
     /// The data to be stored in an account.
-    type AccountData = balances::AccountData<Balance>;
+    type AccountData = pallet_balances::AccountData<Balance>;
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = ();
 }
 
-impl aura::Trait for Runtime {
+impl pallet_aura::Trait for Runtime {
     type AuthorityId = AuraId;
 }
 
-impl grandpa::Trait for Runtime {
+impl pallet_grandpa::Trait for Runtime {
 	type Event = Event;
 	type Call = Call;
 
@@ -233,7 +295,7 @@ parameter_types! {
     pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
 
-impl timestamp::Trait for Runtime {
+impl pallet_timestamp::Trait for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
 	type OnTimestampSet = Aura;
@@ -247,7 +309,7 @@ parameter_types! {
 	pub const MaxLocks: u32 = 50;
 }
 
-impl balances::Trait for Runtime {
+impl pallet_balances::Trait for Runtime {
 	type MaxLocks = MaxLocks;
 	/// The type for recording an account's balance.
 	type Balance = Balance;
@@ -264,51 +326,96 @@ pub const CENTS: Balance = 1_000 * MILLICENTS;
 pub const DOLLARS: Balance = 100 * CENTS;
 
 parameter_types! {
-    pub const TombstoneDeposit: Balance = 16 * MILLICENTS;
+    pub const TombstoneDeposit: Balance = 0;
     pub const RentByteFee: Balance = 4 * MILLICENTS;
     pub const RentDepositOffset: Balance = 1000 * MILLICENTS;
     pub const SurchargeReward: Balance = 150 * MILLICENTS;
 }
 
-impl contracts::Trait for Runtime {
+impl pallet_contracts::Trait for Runtime {
 	type Time = Timestamp;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
 	type Event = Event;
-	type DetermineContractAddress = contracts::SimpleAddressDeterminer<Runtime>;
-	type TrieIdGenerator = contracts::TrieIdFromParentCounter<Runtime>;
+	type DetermineContractAddress = pallet_contracts::SimpleAddressDeterminer<Runtime>;
+	type TrieIdGenerator = pallet_contracts::TrieIdFromParentCounter<Runtime>;
 	type RentPayment = ();
-	type SignedClaimHandicap = contracts::DefaultSignedClaimHandicap;
+	type SignedClaimHandicap = pallet_contracts::DefaultSignedClaimHandicap;
 	type TombstoneDeposit = TombstoneDeposit;
-	type StorageSizeOffset = contracts::DefaultStorageSizeOffset;
+	type StorageSizeOffset = pallet_contracts::DefaultStorageSizeOffset;
 	type RentByteFee = RentByteFee;
 	type RentDepositOffset = RentDepositOffset;
 	type SurchargeReward = SurchargeReward;
-	type MaxDepth = contracts::DefaultMaxDepth;
-	type MaxValueSize = contracts::DefaultMaxValueSize;
-	type WeightPrice = transaction_payment::Module<Self>;
+	type MaxDepth = pallet_contracts::DefaultMaxDepth;
+	type MaxValueSize = pallet_contracts::DefaultMaxValueSize;
+	type WeightPrice = pallet_transaction_payment::Module<Self>;
 }
 
 parameter_types! {
-    pub const TransactionByteFee: Balance = 1;
+	pub const TransactionByteFee: Balance = 10 * MILLICENTS;
 }
 
-impl transaction_payment::Trait for Runtime {
-    type Currency = balances::Module<Runtime>;
+impl pallet_transaction_payment::Trait for Runtime {
+    type Currency = pallet_balances::Module<Runtime>;
     type OnTransactionPayment = ();
     type TransactionByteFee = TransactionByteFee;
     type WeightToFee = IdentityFee<Balance>;
-    type FeeMultiplierUpdate = ();
+    type FeeMultiplierUpdate =  ();
 }
 
-impl sudo::Trait for Runtime {
+parameter_types! {
+	pub const ProposalBond: Permill = Permill::from_percent(5);
+	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
+	pub const SpendPeriod: BlockNumber = 5 * MINUTES;
+	pub const Burn: Permill = Permill::from_percent(0);
+	pub const TipCountdown: BlockNumber = 1 * DAYS;
+	pub const TipFindersFee: Percent = Percent::from_percent(20);
+	pub const TipReportDepositBase: Balance = 1 * DOLLARS;
+	pub const DataDepositPerByte: Balance = 1 * CENTS;
+	pub const BountyDepositBase: Balance = 1 * DOLLARS;
+	pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
+	pub const TreasuryModuleId: ModuleId = ModuleId(*b"py/trsry");
+	pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
+	pub const MaximumReasonLength: u32 = 16384;
+	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
+	pub const BountyValueMinimum: Balance = 5 * DOLLARS;
+}
+
+impl pallet_treasury::Trait for Runtime {
+	type ModuleId = TreasuryModuleId;
+	type Currency = Balances;
+    type ApproveOrigin = EnsureRoot<AccountId>;
+	type RejectOrigin = EnsureRoot<AccountId>;
+	type Tippers = ValiudatorsOnly<Self>;
+	type TipCountdown = TipCountdown;
+	type TipFindersFee = TipFindersFee;
+	type TipReportDepositBase = TipReportDepositBase;
+	type DataDepositPerByte = DataDepositPerByte;
+	type Event = Event;
+	type OnSlash = ();
+	type ProposalBond = ProposalBond;
+	type ProposalBondMinimum = ProposalBondMinimum;
+	type SpendPeriod = SpendPeriod;
+	type Burn = Burn;
+	type BountyDepositBase = BountyDepositBase;
+	type BountyDepositPayoutDelay = BountyDepositPayoutDelay;
+	type BountyUpdatePeriod = BountyUpdatePeriod;
+	type BountyCuratorDeposit = BountyCuratorDeposit;
+	type BountyValueMinimum = BountyValueMinimum;
+	type MaximumReasonLength = MaximumReasonLength;
+	type BurnDestination = ();
+	type WeightInfo = ();
+}
+
+impl pallet_sudo::Trait for Runtime {
     type Event = Event;
     type Call = Call;
 }
 
 /// Used for the module nft in `./nft.rs`
-impl nft::Trait for Runtime {
+impl pallet_nft::Trait for Runtime {
     type Event = Event;
+    type WeightInfo = nft_weights::WeightInfo;
 }
 
 construct_runtime!(
@@ -318,15 +425,16 @@ construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic
     {
         System: system::{Module, Call, Config, Storage, Event<T>},
-        RandomnessCollectiveFlip: randomness_collective_flip::{Module, Call, Storage},
-        Contracts: contracts::{Module, Call, Config, Storage, Event<T>},
-        Timestamp: timestamp::{Module, Call, Storage, Inherent},
-        Aura: aura::{Module, Config<T>, Inherent},
-        Grandpa: grandpa::{Module, Call, Storage, Config, Event},
-        Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
-        TransactionPayment: transaction_payment::{Module, Storage},
-        Sudo: sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        Nft: nft::{Module, Call, Config<T>, Storage, Event<T>},
+        RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
+        Contracts: pallet_contracts::{Module, Call, Config, Storage, Event<T>},
+        Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
+        Aura: pallet_aura::{Module, Config<T>, Inherent},
+        Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
+        Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
+        TransactionPayment: pallet_transaction_payment::{Module, Storage},
+        Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
+        Nft: pallet_nft::{Module, Call, Config<T>, Storage, Event<T>},
+        Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
     }
 );
 
@@ -348,7 +456,7 @@ pub type SignedExtra = (
     system::CheckEra<Runtime>,
     system::CheckNonce<Runtime>,
     system::CheckWeight<Runtime>,
-    nft::ChargeTransactionPayment<Runtime>,
+    pallet_nft::ChargeTransactionPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -360,7 +468,7 @@ pub type Executive =
 
 impl_runtime_apis! {
 
-    impl contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber>
+    impl pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber>
     for Runtime
     {
         fn call(
@@ -385,13 +493,13 @@ impl_runtime_apis! {
         fn get_storage(
             address: AccountId,
             key: [u8; 32],
-        ) -> contracts_primitives::GetStorageResult {
+        ) -> pallet_contracts_primitives::GetStorageResult {
             Contracts::get_storage(address, key)
         }
 
         fn rent_projection(
             address: AccountId,
-        ) -> contracts_primitives::RentProjectionResult<BlockNumber> {
+        ) -> pallet_contracts_primitives::RentProjectionResult<BlockNumber> {
             Contracts::rent_projection(address)
         }
     }
@@ -510,13 +618,42 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
+	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
 		fn query_info(
 			uxt: <Block as BlockT>::Extrinsic,
 			len: u32,
-		) -> transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
+		) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_info(uxt, len)
 		}
 	}
 
+    #[cfg(feature = "runtime-benchmarks")]
+	impl frame_benchmarking::Benchmark<Block> for Runtime {
+		fn dispatch_benchmark(
+			config: frame_benchmarking::BenchmarkConfig
+		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
+			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+
+			let whitelist: Vec<TrackedStorageKey> = vec![
+				// Alice account
+				hex_literal::hex!("d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d").to_vec().into(),
+				// // Total Issuance
+				// hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
+				// // Execution Phase
+				// hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
+				// // Event Count
+				// hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
+				// // System Events
+				// hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
+            ];
+
+			let mut batches = Vec::<BenchmarkBatch>::new();
+			let params = (&config, &whitelist);
+
+			add_benchmark!(params, batches, pallet_nft, Nft);
+
+			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
+			Ok(batches)
+		}
+	}
 }

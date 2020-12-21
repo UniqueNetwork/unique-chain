@@ -39,69 +39,94 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 }
 
 pub fn development_config() -> Result<ChainSpec, String> {
-    Ok(ChainSpec::from_genesis(
-        "Development",
-        "dev",
-        ChainType::Development,
-        || {
-            testnet_genesis(
-                vec![authority_keys_from_seed("Alice")],
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                vec![
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                ],
-                true,
-            )
-        },
-        vec![],
-        None,
-        None,
-        None,
-        None,
-    ))
+	let wasm_binary = WASM_BINARY.ok_or("Development wasm binary not available".to_string())?;
+
+	Ok(ChainSpec::from_genesis(
+		// Name
+		"Development",
+		// ID
+		"dev",
+		ChainType::Development,
+		move || testnet_genesis(
+			wasm_binary,
+			// Initial PoA authorities
+			vec![
+				authority_keys_from_seed("Alice"),
+			],
+			// Sudo account
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			// Pre-funded accounts
+			vec![
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_account_id_from_seed::<sr25519::Public>("Bob"),
+				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+			],
+			true,
+		),
+		// Bootnodes
+		vec![],
+		// Telemetry
+		None,
+		// Protocol ID
+		None,
+		// Properties
+		None,
+		// Extensions
+		None,
+	))
 }
 
 pub fn local_testnet_config() -> Result<ChainSpec, String> {
-    Ok(ChainSpec::from_genesis(
-        "Local Testnet",
-        "local_testnet",
-        ChainType::Local,
-        || {
-            testnet_genesis(
-                vec![
-                    authority_keys_from_seed("Alice"),
-                    authority_keys_from_seed("Bob"),
-                ],
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                vec![
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-                ],
-                true,
-            )
-        },
-        vec![],
-        None,
-        None,
-        None,
-        None,
-    ))
+	let wasm_binary = WASM_BINARY.ok_or("Development wasm binary not available".to_string())?;
+
+	Ok(ChainSpec::from_genesis(
+		// Name
+		"Local Testnet",
+		// ID
+		"local_testnet",
+		ChainType::Local,
+		move || testnet_genesis(
+			wasm_binary,
+			// Initial PoA authorities
+			vec![
+				authority_keys_from_seed("Alice"),
+				authority_keys_from_seed("Bob"),
+			],
+			// Sudo account
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			// Pre-funded accounts
+			vec![
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_account_id_from_seed::<sr25519::Public>("Bob"),
+				get_account_id_from_seed::<sr25519::Public>("Charlie"),
+				get_account_id_from_seed::<sr25519::Public>("Dave"),
+				get_account_id_from_seed::<sr25519::Public>("Eve"),
+				get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+			],
+			true,
+		),
+		// Bootnodes
+		vec![],
+		// Telemetry
+		None,
+		// Protocol ID
+		None,
+		// Properties
+		None,
+		// Extensions
+		None,
+	))
 }
 
 fn testnet_genesis(
+    wasm_binary: &[u8],
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     root_key: AccountId,
     endowed_accounts: Vec<AccountId>,
@@ -109,50 +134,54 @@ fn testnet_genesis(
 ) -> GenesisConfig {
     GenesisConfig {
         system: Some(SystemConfig {
-            code: WASM_BINARY.to_vec(),
+            code: wasm_binary.to_vec(),
             changes_trie_config: Default::default(),
         }),
-        balances: Some(BalancesConfig {
+        pallet_balances: Some(BalancesConfig {
             balances: endowed_accounts
                 .iter()
                 .cloned()
                 .map(|k| (k, 1 << 100))
                 .collect(),
         }),
-        aura: Some(AuraConfig {
+        pallet_aura: Some(AuraConfig {
             authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
         }),
-        grandpa: Some(GrandpaConfig {
+		pallet_grandpa: Some(GrandpaConfig {
             authorities: initial_authorities
                 .iter()
                 .map(|x| (x.1.clone(), 1))
                 .collect(),
-        }),
-        sudo: Some(SudoConfig { key: root_key }),
-        nft: Some(NftConfig {
+		}),
+		pallet_treasury: Some(Default::default()),
+        pallet_sudo: Some(SudoConfig { key: root_key }),
+        pallet_nft: Some(NftConfig {
             collection: vec![(
                 1,
                 CollectionType {
                     owner: get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    mode: CollectionMode::NFT(50),
+                    mode: CollectionMode::NFT,
                     access: AccessMode::Normal,
                     decimal_points: 0,
                     name: vec![],
                     description: vec![],
                     token_prefix: vec![],
-                    custom_data_size: 50,
                     mint_mode: false,
-                    offchain_schema: vec![],
+					offchain_schema: vec![],
+					schema_version: SchemaVersion::default(),
                     sponsor: get_account_id_from_seed::<sr25519::Public>("Alice"),
                     unconfirmed_sponsor: get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    const_on_chain_schema: vec![],
+					variable_on_chain_schema: vec![],
+					limits: CollectionLimits::default()
                 },
             )],
             nft_item_id: vec![],
             fungible_item_id: vec![],
             refungible_item_id: vec![],
             chain_limit: ChainLimits {
-                collection_numbers_limit: 10,
-                account_token_ownership_limit: 10,
+                collection_numbers_limit: 100000,
+                account_token_ownership_limit: 1000000,
                 collections_admins_limit: 5,
                 custom_data_limit: 2048,
                 nft_sponsor_transfer_timeout: 15,
@@ -160,7 +189,7 @@ fn testnet_genesis(
                 refungible_sponsor_transfer_timeout: 15,
             },
         }),
-        contracts: Some(ContractsConfig {
+        pallet_contracts: Some(ContractsConfig {
             current_schedule: ContractsSchedule {
                 enable_println,
                 ..Default::default()

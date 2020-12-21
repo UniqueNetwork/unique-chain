@@ -1,6 +1,6 @@
 [build-dependencies.substrate-build-script-utils]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
+branch = 'release_flexi'
 version = '2.0.0'
 
 [[bin]]
@@ -23,135 +23,41 @@ targets = ['x86_64-unknown-linux-gnu']
 [dependencies]
 futures = '0.3.4'
 log = '0.4.8'
+flexi_logger = "0.15.7"
 parking_lot = '0.10.0'
 structopt = '0.3.8'
 jsonrpc-core = '15.0.0'
 
-[dependencies.nft-runtime]
-path = '../runtime'
-version = '2.0.0'
+# Substrate dependencies
+nft-runtime = { path = '../runtime', version = '2.0.0' }
+frame-benchmarking = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+frame-benchmarking-cli = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+pallet-transaction-payment-rpc = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sc-basic-authorship = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sc-cli = { features = ['wasmtime'], version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
+sc-client-api = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sc-consensus = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sc-consensus-aura = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sc-executor = { features = ['wasmtime'], version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
+sc-finality-grandpa = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sc-rpc = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sc-rpc-api = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sc-service = { features = ['wasmtime'], version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
+sc-transaction-pool = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sp-api = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sp-block-builder = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sp-blockchain = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sp-consensus = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sp-consensus-aura = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sp-core = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sp-finality-grandpa = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sp-inherents = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sp-runtime = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sp-transaction-pool = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+sc-network = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'} 
+substrate-frame-rpc-system = {version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'}
+pallet-contracts-rpc = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi'} 
 
-[dependencies.sc-basic-authorship]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '0.8.0'
-
-[dependencies.sc-cli]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '0.8.0'
-
-[dependencies.sc-client-api]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sc-consensus]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '0.8.0'
-
-[dependencies.pallet-contracts-rpc]
-git = 'https://github.com/usetech-llc/substrate.git'
-version = '0.8.0'
-branch = 'v2.0.0_release'
-
-[dependencies.sc-rpc]
-git = 'https://github.com/usetech-llc/substrate.git'
-version = '2.0.0'
-branch = 'v2.0.0_release'
-
-[dependencies.sp-api]
-git = 'https://github.com/usetech-llc/substrate.git'
-version = '2.0.0'
-branch = 'v2.0.0_release'
-
-[dependencies.sp-blockchain]
-git = 'https://github.com/usetech-llc/substrate.git'
-version = '2.0.0'
-branch = 'v2.0.0_release'
-
-[dependencies.sp-block-builder]
-git = 'https://github.com/usetech-llc/substrate.git'
-version = '2.0.0'
-branch = 'v2.0.0_release'
-
-[dependencies.sc-rpc-api]
-git = 'https://github.com/usetech-llc/substrate.git'
-version = '0.8.0'
-branch = 'v2.0.0_release'
-
-[dependencies.substrate-frame-rpc-system]
-git = 'https://github.com/usetech-llc/substrate.git'
-version = '2.0.0'
-branch = 'v2.0.0_release'
-
-[dependencies.pallet-transaction-payment-rpc]
-git = 'https://github.com/usetech-llc/substrate.git'
-version = '2.0.0'
-branch = 'v2.0.0_release'
-
-[dependencies.sc-consensus-aura]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '0.8.0'
-
-[dependencies.sc-executor]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '0.8.0'
-
-[dependencies.sc-finality-grandpa]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '0.8.0'
-
-[dependencies.sc-network]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '0.8.0'
-
-[dependencies.sc-service]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '0.8.0'
-
-[dependencies.sc-transaction-pool]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sp-consensus]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '0.8.0'
-
-[dependencies.sp-consensus-aura]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '0.8.0'
-
-[dependencies.sp-core]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sp-finality-grandpa]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sp-inherents]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sp-runtime]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
-
-[dependencies.sp-transaction-pool]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'v2.0.0_release'
-version = '2.0.0'
+[features]
+default = []
+runtime-benchmarks = ['nft-runtime/runtime-benchmarks']
