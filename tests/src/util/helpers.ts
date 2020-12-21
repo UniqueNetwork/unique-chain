@@ -35,7 +35,7 @@ function getCreateCollectionResult(events: EventRecord[]): CreateCollectionResul
 export async function createCollectionExpectSuccess(name: string, description: string, tokenPrefix: string, mode: string) {
   await usingApi(async (api) => {
     // Get number of collections before the transaction
-    const AcollectionCount = parseInt((await api.query.nft.collectionCount()).toString());
+    const AcollectionCount = parseInt((await api.query.nft.createdCollectionCount()).toString());
 
     // Run the CreateCollection transaction
     const alicePrivateKey = privateKey('//Alice');
@@ -44,7 +44,7 @@ export async function createCollectionExpectSuccess(name: string, description: s
     const result = getCreateCollectionResult(events);
 
     // Get number of collections after the transaction
-    const BcollectionCount = parseInt((await api.query.nft.collectionCount()).toString());
+    const BcollectionCount = parseInt((await api.query.nft.createdCollectionCount()).toString());
 
     // Get the collection 
     const collection: any = (await api.query.nft.collection(result.collectionId)).toJSON();
@@ -64,7 +64,7 @@ export async function createCollectionExpectSuccess(name: string, description: s
 export async function createCollectionExpectFailure(name: string, description: string, tokenPrefix: string, mode: string) {
   await usingApi(async (api) => {
     // Get number of collections before the transaction
-    const AcollectionCount = parseInt((await api.query.nft.collectionCount()).toString());
+    const AcollectionCount = parseInt((await api.query.nft.createdCollectionCount()).toString());
 
     // Run the CreateCollection transaction
     const alicePrivateKey = privateKey('//Alice');
@@ -73,7 +73,7 @@ export async function createCollectionExpectFailure(name: string, description: s
     const result = getCreateCollectionResult(events);
 
     // Get number of collections after the transaction
-    const BcollectionCount = parseInt((await api.query.nft.collectionCount()).toString());
+    const BcollectionCount = parseInt((await api.query.nft.createdCollectionCount()).toString());
 
     // What to expect
     expect(result.success).to.be.false;
