@@ -9,10 +9,27 @@ import { strToUTF16, utf16ToStr, hexToStr } from '../util/util';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
+type GenericResult = {
+  success: boolean,
+};
+
 type CreateCollectionResult = {
   success: boolean,
   collectionId: number
 };
+
+export function getGenericResult(events: EventRecord[]): GenericResult {
+  let result: GenericResult = {
+    success: false
+  }
+  events.forEach(({ phase, event: { data, method, section } }) => {
+    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
+    if (method == 'ExtrinsicSuccess') {
+      result.success = true;
+    }
+  });
+  return result;
+}
 
 function getCreateCollectionResult(events: EventRecord[]): CreateCollectionResult {
   let success = false;
