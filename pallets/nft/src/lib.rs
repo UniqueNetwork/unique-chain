@@ -29,10 +29,10 @@ use frame_system::{self as system, ensure_signed, ensure_root};
 use sp_runtime::sp_std::prelude::Vec;
 use sp_runtime::{
     traits::{
-        DispatchInfoOf, Dispatchable, PostDispatchInfoOf, Saturating, SignedExtension, Zero,
+        DispatchInfoOf, Dispatchable, PostDispatchInfoOf, Saturating, SaturatedConversion, SignedExtension, Zero,
     },
     transaction_validity::{
-        InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
+        TransactionPriority, InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
     },
     FixedPointOperand, FixedU128,
 };
@@ -2302,6 +2302,13 @@ where
         <transaction_payment::Module<T>>::compute_fee(len as u32, info, tip)
     }
 
+	fn get_priority(len: usize, info: &DispatchInfoOf<T::Call>, final_fee: BalanceOf<T>) -> TransactionPriority {
+		let weight_saturation = T::MaximumBlockWeight::get() / info.weight.max(1);
+		let len_saturation = T::MaximumBlockLength::get() as u64 / (len as u64).max(1);
+		let coefficient: BalanceOf<T> = weight_saturation.min(len_saturation).saturated_into::<BalanceOf<T>>();
+		final_fee.saturating_mul(coefficient).saturated_into::<TransactionPriority>()
+	}
+
     fn withdraw_fee(
         &self,
         who: &T::AccountId,
@@ -2525,12 +2532,16 @@ where
 
     fn validate(
         &self,
-        _who: &Self::AccountId,
-        _call: &Self::Call,
-        _info: &DispatchInfoOf<Self::Call>,
-        _len: usize,
+        who: &Self::AccountId,
+        call: &Self::Call,
+        info: &DispatchInfoOf<Self::Call>,
+        len: usize,
     ) -> TransactionValidity {
-        Ok(ValidTransaction::default())
+		let (fee, _) = self.withdraw_fee(who, call, info, len)?;
+		Ok(ValidTransaction {
+			priority: Self::get_priority(len, info, fee),
+			..Default::default()
+		})
     }
 
     fn pre_dispatch(
