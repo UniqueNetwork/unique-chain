@@ -1,10 +1,13 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import type { EventRecord } from '@polkadot/types/interfaces';
+import type { AccountId, EventRecord } from '@polkadot/types/interfaces';
+import { ApiPromise, Keyring } from "@polkadot/api";
 import { default as usingApi, submitTransactionAsync } from "../substrate/substrate-api";
 import privateKey from '../substrate/privateKey';
 import { alicesPublicKey } from "../accounts";
 import { strToUTF16, utf16ToStr, hexToStr } from '../util/util';
+import { IKeyringPair } from "@polkadot/types/types";
+import { BigNumber } from 'bignumber.js';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -98,3 +101,14 @@ export async function createCollectionExpectFailure(name: string, description: s
   });
 }
   
+export async function findUnusedAddress(api: ApiPromise): Promise<IKeyringPair> {
+  let bal = new BigNumber(0);
+  let unused;
+  do {
+    const randomSeed = 'seed' +  Math.floor(Math.random() * Math.floor(10000));
+    const keyring = new Keyring({ type: 'sr25519' });
+    unused = keyring.addFromUri(`//${randomSeed}`);
+    bal = new BigNumber((await api.query.system.account(unused.address)).data.free.toString());
+  } while (bal.toFixed() != '0');
+  return unused; 
+}

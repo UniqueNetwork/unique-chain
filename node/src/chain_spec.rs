@@ -154,7 +154,8 @@ fn testnet_genesis(
                 .collect(),
 		}),
 		pallet_treasury: Some(Default::default()),
-        pallet_sudo: Some(SudoConfig { key: root_key }),
+		pallet_sudo: Some(SudoConfig { key: root_key }),
+		pallet_vesting: Some(Default::default()),
         pallet_nft: Some(NftConfig {
             collection: vec![(
                 1,
