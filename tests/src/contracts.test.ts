@@ -1,13 +1,17 @@
+import { ApiPromise } from "@polkadot/api";
 import { expect } from "chai";
-import usingApi from "./substrate/substrate-api";
+import { default as usingApi, submitTransactionAsync } from "./substrate/substrate-api";
 import fs from "fs";
 import { Abi, BlueprintPromise, CodePromise } from "@polkadot/api-contract";
 import { IKeyringPair } from "@polkadot/types/types";
 import { Keyring } from "@polkadot/api";
 import { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
+import { BigNumber } from 'bignumber.js';
+import { findUnusedAddress } from './util/helpers'
 
 const value = 0;
 const gasLimit = 3000n * 1000000n;
+const endowment = `1000000000000000`;
 
 function deployBlueprint(alice: IKeyringPair, code: CodePromise): Promise<BlueprintPromise> {
   return new Promise<BlueprintPromise>(async (resolve, reject) => {
@@ -25,7 +29,6 @@ function deployBlueprint(alice: IKeyringPair, code: CodePromise): Promise<Bluepr
 
 function deployContract(alice: IKeyringPair, blueprint: BlueprintPromise) : Promise<any> {
   return new Promise<any>(async (resolve, reject) => {
-    const endowment = 1000000000000000n;
     const initValue = true;
 
     const unsub = await blueprint.tx
@@ -39,28 +42,25 @@ function deployContract(alice: IKeyringPair, blueprint: BlueprintPromise) : Prom
   });
 }
 
-function runTransaction(privateKey: IKeyringPair, extrinsic: SubmittableExtrinsic<ApiTypes>) {
-  return new Promise<void>(async (resolve, reject) => {
-    extrinsic.signAndSend(privateKey, async result => {
-        if(!result.isInBlock) {
-          return;
-        }
+async function prepareDeployer(api: ApiPromise) {
+  // Find unused address
+  const deployer = await findUnusedAddress(api);
 
-        if(result.findRecord('system', 'ExtrinsicSuccess')) {
-          resolve();
-        }
-        else {
-          reject('Failed to flip value.');
-        }
-      })
-  });
+  // Transfer balance to it
+  const keyring = new Keyring({ type: 'sr25519' });
+  const alice = keyring.addFromUri(`//Alice`);
+  let amount = new BigNumber(endowment);
+  amount = amount.plus(1e15);
+  const tx = api.tx.balances.transfer(deployer.address, amount.toFixed());
+  await submitTransactionAsync(alice, tx);
+
+  return deployer;
 }
 
-describe('Contracts', () => {
+describe('Contracts smoke test', () => {
   it(`Can deploy smart contract Flipper, instantiate it and call it's get and flip messages.`, async () => {
     await usingApi(async api => {
-      const keyring = new Keyring({ type: 'sr25519' });
-      const alice = keyring.addFromUri("//Alice");
+      const deployer = await prepareDeployer(api);
       
       const wasm = fs.readFileSync('./src/flipper/flipper.wasm');
       
@@ -69,11 +69,11 @@ describe('Contracts', () => {
 
       const code = new CodePromise(api, abi, wasm);
 
-      const blueprint = await deployBlueprint(alice, code);
-      const contract = (await deployContract(alice, blueprint))['contract'];
+      const blueprint = await deployBlueprint(deployer, code);
+      const contract = (await deployContract(deployer, blueprint))['contract'];
 
       const getFlipValue = async () => {
-        const result = await contract.query.get(alice.address, value, gasLimit);
+        const result = await contract.query.get(deployer.address, value, gasLimit);
 
         if(!result.result.isSuccess) {
           throw `Failed to get flipper value`;
@@ -85,7 +85,7 @@ describe('Contracts', () => {
       expect(initialGetResponse).to.be.true;
 
       const flip = contract.exec('flip', value, gasLimit);
-      await runTransaction(alice, flip);
+      await submitTransactionAsync(deployer, flip);
 
       const afterFlipGetResponse = await getFlipValue();
 
@@ -112,7 +112,7 @@ describe('Contracts', () => {
       // const bob = new GenericAccountId(api.registry, bobsPublicKey);
 
       // const transfer = contractInstance.exec('balance_transfer', 0, 1000000000000n, [bob, new u128(api.registry, 1000000)]);
-      // await runTransaction(alicesPrivateKey, transfer);
+      // await submitTransactionAsync(alicesPrivateKey, transfer);
 
       // const [alicesBalanceAfter, bobsBalanceAfter] = await getBalance(api, [alicesPublicKey, bobsPublicKey]);
 
