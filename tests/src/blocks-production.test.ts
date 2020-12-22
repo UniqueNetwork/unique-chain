@@ -1,3 +1,8 @@
+//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+
 import usingApi from "./substrate/substrate-api";
 import promisifySubstrate from "./substrate/promisify-substrate";
 import { expect } from "chai";

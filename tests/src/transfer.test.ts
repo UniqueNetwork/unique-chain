@@ -1,3 +1,8 @@
+//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+
 import { expect, assert } from "chai";
 import { default as usingApi, submitTransactionAsync } from "./substrate/substrate-api";
 import { alicesPublicKey, bobsPublicKey, ferdiesPublicKey } from "./accounts";

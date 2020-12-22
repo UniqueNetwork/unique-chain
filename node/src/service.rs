@@ -1,5 +1,10 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
+//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+
 use std::sync::Arc;
 use std::time::Duration;
 use sc_client_api::{ExecutorProvider, RemoteBackend};
