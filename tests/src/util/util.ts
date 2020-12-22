@@ -1,3 +1,8 @@
+//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+
 export function strToUTF16(str: string): any {
   let buf: number[] = [];
   for (let i=0, strLen=str.length; i < strLen; i++) {
