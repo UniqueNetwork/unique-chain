@@ -52,7 +52,8 @@ function getCreateCollectionResult(events: EventRecord[]): CreateCollectionResul
   return result;
 }
 
-export async function createCollectionExpectSuccess(name: string, description: string, tokenPrefix: string, mode: string) {
+export async function createCollectionExpectSuccess(name: string, description: string, tokenPrefix: string, mode: string): Promise<number> {
+  let collectionId: number = 0;
   await usingApi(async (api) => {
     // Get number of collections before the transaction
     const AcollectionCount = parseInt((await api.query.nft.createdCollectionCount()).toString());
@@ -78,7 +79,11 @@ export async function createCollectionExpectSuccess(name: string, description: s
     expect(utf16ToStr(collection.Name)).to.be.equal(name);
     expect(utf16ToStr(collection.Description)).to.be.equal(description);
     expect(hexToStr(collection.TokenPrefix)).to.be.equal(tokenPrefix);
+
+    collectionId = result.collectionId;
   });
+
+  return collectionId;
 }
   
 export async function createCollectionExpectFailure(name: string, description: string, tokenPrefix: string, mode: string) {
