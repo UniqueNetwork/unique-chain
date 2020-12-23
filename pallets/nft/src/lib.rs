@@ -2356,6 +2356,7 @@ where
                 
                 let mut sponsor_transfer = false;
                 if <Collection<T>>::get(collection_id).sponsor_confirmed {
+
                     let collection_limits = <Collection<T>>::get(collection_id).limits;
                     let collection_mode = <Collection<T>>::get(collection_id).mode;
     

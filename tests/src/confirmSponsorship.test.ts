@@ -58,37 +58,57 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await setCollectionSponsorExpectSuccess(collectionId, charlie.address);
   });
 
-  it.only('Transfer fees are paid by the sponsor after confirmation', async () => {
+  it('NFT: Transfer fees are paid by the sponsor after confirmation', async () => {
     const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
-    const itemId = await createItemExpectSuccess(collectionId, 'NFT', '//Alice');
 
     await usingApi(async (api) => {
-      const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).toString());
+      const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
 
       // Find unused address
       const zeroBalance = await findUnusedAddress(api);
-      
-      const aliceToZero = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 0);
-      await submitTransactionAsync(alice, aliceToZero);
 
+      // Mint token for unused address
+      const itemId = await createItemExpectSuccess(collectionId, 'NFT', zeroBalance.address, '//Alice');
+
+      // Transfer this token from unused address to Alice
       const zeroToAlice = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 0);
       const events = await submitTransactionAsync(zeroBalance, zeroToAlice);
       const result = getGenericResult(events);
 
-      const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).toString());
+      const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
 
       expect(result.success).to.be.true;
-      expect(BsponsorBalance.toNumber()).to.be.lessThan(AsponsorBalance.toNumber());
+      expect(BsponsorBalance.lt(AsponsorBalance)).to.be.true;
     });
 
+  });
+
+  it('Fungible: Transfer fees are paid by the sponsor after confirmation', async () => {
+    expect(false).to.be.true;
+  });
+
+  it('ReFungible: Transfer fees are paid by the sponsor after confirmation', async () => {
+    expect(false).to.be.true;
   });
 
   it.skip('CreateItem fees are paid by the sponsor after confirmation', async () => {
     // const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
     // await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     // await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+    expect(false).to.be.true;
+  });
+
+  it('NFT: Sponsoring is rate limited', async () => {
+    expect(false).to.be.true;
+  });
+
+  it('Fungible: Sponsoring is rate limited', async () => {
+    expect(false).to.be.true;
+  });
+
+  it('ReFungible: Sponsoring is rate limited', async () => {
     expect(false).to.be.true;
   });
 

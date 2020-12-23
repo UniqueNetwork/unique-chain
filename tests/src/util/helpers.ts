@@ -258,13 +258,14 @@ export async function confirmSponsorshipExpectFailure(collectionId: number, send
   });
 }
 
-export async function createItemExpectSuccess(collectionId: number, createMode: string, senderSeed: string = '//Alice') {
+export async function createItemExpectSuccess(collectionId: number, createMode: string, owner: string = '', senderSeed: string = '//Alice') {
   let newItemId: number = 0;
   await usingApi(async (api) => {
     const AItemCount = parseInt((await api.query.nft.itemListIndex(collectionId)).toString());
 
     const sender = privateKey(senderSeed);
-    const tx = api.tx.nft.createItem(collectionId, sender.address, createMode);
+    if (owner === '') owner = sender.address;
+    const tx = api.tx.nft.createItem(collectionId, owner, createMode);
     const events = await submitTransactionAsync(sender, tx);
     const result = getCreateItemResult(events);
   
