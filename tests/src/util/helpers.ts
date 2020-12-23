@@ -122,3 +122,21 @@ export async function findUnusedAddress(api: ApiPromise): Promise<IKeyringPair> 
   } while (bal.toFixed() != '0');
   return unused; 
 }
+
+export async function createItemExpectSuccess(collectionId: number, createMode: string, senderSeed: string = '//Alice') {
+  await usingApi(async (api) => {
+
+    const AItemCount = parseInt((await api.query.nft.itemListIndex(collectionId)).toString());
+
+    const sender = privateKey(senderSeed);
+    const tx = api.tx.nft.createItem(collectionId, sender.address, createMode);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+  
+    const BItemCount = parseInt((await api.query.nft.itemListIndex(collectionId)).toString());
+
+    // What to expect
+    expect(result.success).to.be.true;
+    expect(BItemCount).to.be.equal(AItemCount+1);
+  });
+}
