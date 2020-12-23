@@ -13,10 +13,14 @@ import {
   setCollectionSponsorExpectFailure,
   confirmSponsorshipExpectSuccess,
   confirmSponsorshipExpectFailure,
+  createItemExpectSuccess,
+  findUnusedAddress,
+  getGenericResult,
 } from "./util/helpers";
 import { Keyring } from "@polkadot/api";
 import { IKeyringPair } from "@polkadot/types/types";
 import type { AccountId } from '@polkadot/types/interfaces';
+import { BigNumber } from 'bignumber.js';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -30,6 +34,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
   before(async () => {
     await usingApi(async (api) => {
       const keyring = new Keyring({ type: 'sr25519' });
+      alice = keyring.addFromUri(`//Alice`);
       bob = keyring.addFromUri(`//Bob`);
       charlie = keyring.addFromUri(`//Charlie`);
     });
@@ -53,11 +58,31 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await setCollectionSponsorExpectSuccess(collectionId, charlie.address);
   });
 
-  it.skip('Transfer fees are paid by the sponsor after confirmation', async () => {
-    // const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
-    // await setCollectionSponsorExpectSuccess(collectionId, bob.address);
-    // await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
-    expect(false).to.be.true;
+  it.only('Transfer fees are paid by the sponsor after confirmation', async () => {
+    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+    const itemId = await createItemExpectSuccess(collectionId, 'NFT', '//Alice');
+
+    await usingApi(async (api) => {
+      const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).toString());
+
+      // Find unused address
+      const zeroBalance = await findUnusedAddress(api);
+      
+      const aliceToZero = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 0);
+      await submitTransactionAsync(alice, aliceToZero);
+
+      const zeroToAlice = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 0);
+      const events = await submitTransactionAsync(zeroBalance, zeroToAlice);
+      const result = getGenericResult(events);
+
+      const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).toString());
+
+      expect(result.success).to.be.true;
+      expect(BsponsorBalance.toNumber()).to.be.lessThan(AsponsorBalance.toNumber());
+    });
+
   });
 
   it.skip('CreateItem fees are paid by the sponsor after confirmation', async () => {

@@ -26,6 +26,12 @@ type CreateCollectionResult = {
   collectionId: number
 };
 
+type CreateItemResult = {
+  success: boolean,
+  collectionId: number,
+  itemId: number
+};
+
 export function getGenericResult(events: EventRecord[]): GenericResult {
   let result: GenericResult = {
     success: false
@@ -53,6 +59,27 @@ function getCreateCollectionResult(events: EventRecord[]): CreateCollectionResul
   let result: CreateCollectionResult = {
     success,
     collectionId
+  }
+  return result;
+}
+
+function getCreateItemResult(events: EventRecord[]): CreateItemResult {
+  let success = false;
+  let collectionId: number = 0;
+  let itemId: number = 0;
+  events.forEach(({ phase, event: { data, method, section } }) => {
+    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
+    if (method == 'ExtrinsicSuccess') {
+      success = true;
+    } else if ((section == 'nft') && (method == 'ItemCreated')) {
+      collectionId = parseInt(data[0].toString());
+      itemId = parseInt(data[1].toString());
+    }
+  });
+  let result: CreateItemResult = {
+    success,
+    collectionId,
+    itemId
   }
   return result;
 }
@@ -231,3 +258,24 @@ export async function confirmSponsorshipExpectFailure(collectionId: number, send
   });
 }
 
+export async function createItemExpectSuccess(collectionId: number, createMode: string, senderSeed: string = '//Alice') {
+  let newItemId: number = 0;
+  await usingApi(async (api) => {
+    const AItemCount = parseInt((await api.query.nft.itemListIndex(collectionId)).toString());
+
+    const sender = privateKey(senderSeed);
+    const tx = api.tx.nft.createItem(collectionId, sender.address, createMode);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getCreateItemResult(events);
+  
+    const BItemCount = parseInt((await api.query.nft.itemListIndex(collectionId)).toString());
+
+    // What to expect
+    expect(result.success).to.be.true;
+    expect(BItemCount).to.be.equal(AItemCount+1);
+    expect(collectionId).to.be.equal(result.collectionId);
+    expect(BItemCount).to.be.equal(result.itemId);
+    newItemId = result.itemId;
+  });
+  return newItemId;
+}
