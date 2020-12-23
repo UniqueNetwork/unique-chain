@@ -70,7 +70,7 @@
       "OffchainSchema": "Vec<u8>",
       "SchemaVersion": "SchemaVersion",
       "Sponsor": "AccountId",
-      "UnconfirmedSponsor": "AccountId",
+      "SponsorConfirmed": "bool",
       "Limits": "CollectionLimits",
       "VariableOnChainSchema": "Vec<u8>",
       "ConstOnChainSchema": "Vec<u8>"

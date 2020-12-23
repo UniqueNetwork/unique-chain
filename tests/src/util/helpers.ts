@@ -9,7 +9,7 @@ import type { AccountId, EventRecord } from '@polkadot/types/interfaces';
 import { ApiPromise, Keyring } from "@polkadot/api";
 import { default as usingApi, submitTransactionAsync } from "../substrate/substrate-api";
 import privateKey from '../substrate/privateKey';
-import { alicesPublicKey } from "../accounts";
+import { alicesPublicKey, nullPublicKey } from "../accounts";
 import { strToUTF16, utf16ToStr, hexToStr } from '../util/util';
 import { IKeyringPair } from "@polkadot/types/types";
 import { BigNumber } from 'bignumber.js';
@@ -121,4 +121,79 @@ export async function findUnusedAddress(api: ApiPromise): Promise<IKeyringPair> 
     bal = new BigNumber((await api.query.system.account(unused.address)).data.free.toString());
   } while (bal.toFixed() != '0');
   return unused; 
+}
+
+function getDestroyResult(events: EventRecord[]): boolean {
+  let success: boolean = false;
+  events.forEach(({ phase, event: { data, method, section } }) => {
+    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
+    if (method == 'ExtrinsicSuccess') {
+      success = true;
+    }
+  });
+  return success;
+}
+
+export async function setCollectionSponsorExpectSuccess(collectionId: number, sponsor: string) {
+  await usingApi(async (api) => {
+
+    // Run the transaction
+    const alicePrivateKey = privateKey('//Alice');
+    const tx = api.tx.nft.setCollectionSponsor(collectionId, sponsor);
+    const events = await submitTransactionAsync(alicePrivateKey, tx);
+    const result = getGenericResult(events);
+
+    // Get the collection 
+    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+
+    // What to expect
+    expect(result.success).to.be.true;
+    expect(collection.Sponsor.toString()).to.be.equal(sponsor.toString());
+    expect(collection.SponsorConfirmed).to.be.false;
+  });
+}
+
+export async function destroyCollectionExpectFailure(collectionId: number, senderSeed: string = '//Alice') {
+  await usingApi(async (api) => {
+    // Run the DestroyCollection transaction
+    const alicePrivateKey = privateKey(senderSeed);
+    const tx = api.tx.nft.destroyCollection(collectionId);
+    const events = await submitTransactionAsync(alicePrivateKey, tx);
+    const result = getDestroyResult(events);
+
+    // What to expect
+    expect(result).to.be.false;
+  });
+}
+
+export async function destroyCollectionExpectSuccess(collectionId: number, senderSeed: string = '//Alice') {
+  await usingApi(async (api) => {
+    // Run the DestroyCollection transaction
+    const alicePrivateKey = privateKey(senderSeed);
+    const tx = api.tx.nft.destroyCollection(collectionId);
+    const events = await submitTransactionAsync(alicePrivateKey, tx);
+    const result = getDestroyResult(events);
+
+    // Get the collection 
+    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+
+    // What to expect
+    expect(result).to.be.true;
+    expect(collection).to.be.not.null;
+    expect(collection.Owner).to.be.equal(nullPublicKey);
+  });
+}
+
+export async function setCollectionSponsorExpectFailure(collectionId: number, sponsor: string) {
+  await usingApi(async (api) => {
+
+    // Run the transaction
+    const alicePrivateKey = privateKey('//Alice');
+    const tx = api.tx.nft.setCollectionSponsor(collectionId, sponsor);
+    const events = await submitTransactionAsync(alicePrivateKey, tx);
+    const result = getGenericResult(events);
+
+    // What to expect
+    expect(result.success).to.be.false;
+  });
 }
