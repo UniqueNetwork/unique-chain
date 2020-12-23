@@ -1876,10 +1876,10 @@ impl<T: Trait> Module<T> {
             <FungibleItemList<T>>::insert(collection_id, item_id, new_full_item);
 
             // update balance
-            let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
+            let balancenew_owner = <Balance<T>>::get(collection_id, new_owner.clone())
                 .checked_add(value)
                 .ok_or(Error::<T>::NumOverflow)?;
-            <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
+            <Balance<T>>::insert(collection_id, new_owner.clone(), balancenew_owner);
 
             // update index collection
             Self::move_token_index(collection_id, item_id, owner.clone(), new_owner.clone())?;
@@ -1894,10 +1894,10 @@ impl<T: Trait> Module<T> {
                 item.value += value;
 
                 // update balance
-                let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
+                let balancenew_owner = <Balance<T>>::get(collection_id, new_owner.clone())
                     .checked_add(value)
                     .ok_or(Error::<T>::NumOverflow)?;
-                <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
+                <Balance<T>>::insert(collection_id, new_owner.clone(), balancenew_owner);
 
                 <FungibleItemList<T>>::insert(collection_id, new_owner_account_id, item);
             } else {
@@ -1954,10 +1954,10 @@ impl<T: Trait> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), balance_old_owner);
 
-        let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
+        let balancenew_owner = <Balance<T>>::get(collection_id, new_owner.clone())
             .checked_add(value)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
+        <Balance<T>>::insert(collection_id, new_owner.clone(), balancenew_owner);
 
         let old_owner = item.owner.clone();
         let new_owner_has_account = full_item.owner.iter().any(|i| i.owner == new_owner);
@@ -2034,10 +2034,10 @@ impl<T: Trait> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), balance_old_owner);
 
-        let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
+        let balancenew_owner = <Balance<T>>::get(collection_id, new_owner.clone())
             .checked_add(1)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
+        <Balance<T>>::insert(collection_id, new_owner.clone(), balancenew_owner);
 
         // change owner
         let old_owner = item.owner.clone();
@@ -2333,6 +2333,11 @@ where
         // };
         let fee = Self::traditional_fee(len, info, tip);
 
+        // Only mess with balances if fee is not zero.
+        if fee.is_zero() {
+            return Ok((fee, None));
+        }
+
         // Determine who is paying transaction fee based on ecnomic model
         // Parse call to extract collection ID and access collection sponsor
         let mut sponsor: T::AccountId = match IsSubType::<Call<T>>::is_sub_type(call) {
@@ -2347,29 +2352,29 @@ where
                     T::AccountId::default()
                 }
             }
-            Some(Call::transfer(_new_owner, collection_id, _item_id, _value)) => {
+            Some(Call::transfer(new_owner, collection_id, item_id, _value)) => {
                 
                 let mut sponsor_transfer = false;
                 if <Collection<T>>::get(collection_id).sponsor_confirmed {
-                    let _collection_limits = <Collection<T>>::get(collection_id).limits;
-                    let _collection_mode = <Collection<T>>::get(collection_id).mode;
+                    let collection_limits = <Collection<T>>::get(collection_id).limits;
+                    let collection_mode = <Collection<T>>::get(collection_id).mode;
     
                     // sponsor timeout
-                    sponsor_transfer = match _collection_mode {
+                    sponsor_transfer = match collection_mode {
                         CollectionMode::NFT => {
     
                             // get correct limit
-                            let limit: u32 = if _collection_limits.sponsor_transfer_timeout > 0 {
-                                _collection_limits.sponsor_transfer_timeout
+                            let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
+                                collection_limits.sponsor_transfer_timeout
                             } else {
                                 ChainLimit::get().nft_sponsor_transfer_timeout
                             };
     
-                            let basket = <NftTransferBasket<T>>::get(collection_id, _item_id);
+                            let basket = <NftTransferBasket<T>>::get(collection_id, item_id);
                             let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
                             let limit_time = basket + limit.into();
                             if block_number >= limit_time {
-                                <NftTransferBasket<T>>::insert(collection_id, _item_id, block_number);
+                                <NftTransferBasket<T>>::insert(collection_id, item_id, block_number);
                                 true
                             }
                             else {
@@ -2379,22 +2384,22 @@ where
                         CollectionMode::Fungible(_) => {
     
                             // get correct limit
-                            let limit: u32 = if _collection_limits.sponsor_transfer_timeout > 0 {
-                                _collection_limits.sponsor_transfer_timeout
+                            let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
+                                collection_limits.sponsor_transfer_timeout
                             } else {
                                 ChainLimit::get().fungible_sponsor_transfer_timeout
                             };
     
-                            let mut basket = <FungibleTransferBasket<T>>::get(collection_id, _item_id);
+                            let mut basket = <FungibleTransferBasket<T>>::get(collection_id, item_id);
                             let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
-                            if basket.iter().any(|i| i.address == _new_owner.clone())
+                            if basket.iter().any(|i| i.address == new_owner.clone())
                             {
-                                let item = basket.iter_mut().find(|i| i.address == _new_owner.clone()).unwrap().clone();
+                                let item = basket.iter_mut().find(|i| i.address == new_owner.clone()).unwrap().clone();
                                 let limit_time = item.start_block + limit.into();
                                 if block_number >= limit_time {
                                     basket.retain(|x| x.address == item.address);
-                                    basket.push(BasketItem { start_block: block_number, address: _new_owner.clone() });
-                                    <FungibleTransferBasket<T>>::insert(collection_id, _item_id, basket);
+                                    basket.push(BasketItem { start_block: block_number, address: new_owner.clone() });
+                                    <FungibleTransferBasket<T>>::insert(collection_id, item_id, basket);
                                     true
                                 }
                                 else {
@@ -2402,24 +2407,24 @@ where
                                 }
                             }
                             else {
-                                basket.push(BasketItem { start_block: block_number, address: _new_owner.clone()});
+                                basket.push(BasketItem { start_block: block_number, address: new_owner.clone()});
                                 true
                             }
                         }
                         CollectionMode::ReFungible(_) => {
     
                             // get correct limit
-                            let limit: u32 = if _collection_limits.sponsor_transfer_timeout > 0 {
-                                _collection_limits.sponsor_transfer_timeout
+                            let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
+                                collection_limits.sponsor_transfer_timeout
                             } else {
                                 ChainLimit::get().refungible_sponsor_transfer_timeout
                             };
     
-                            let basket = <ReFungibleTransferBasket<T>>::get(collection_id, _item_id);
+                            let basket = <ReFungibleTransferBasket<T>>::get(collection_id, item_id);
                             let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
                             let limit_time = basket + limit.into();
                             if block_number >= limit_time {
-                                <ReFungibleTransferBasket<T>>::insert(collection_id, _item_id, block_number);
+                                <ReFungibleTransferBasket<T>>::insert(collection_id, item_id, block_number);
                                 true
                             } else {
                                 false
@@ -2496,11 +2501,6 @@ where
         let mut who_pays_fee: T::AccountId = sponsor.clone();
         if sponsor == T::AccountId::default() {
             who_pays_fee = who.clone();
-        }
-
-        // Only mess with balances if fee is not zero.
-        if fee.is_zero() {
-            return Ok((fee, None));
         }
 
         match <T as transaction_payment::Trait>::Currency::withdraw(
