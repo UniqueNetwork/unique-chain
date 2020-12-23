@@ -61,6 +61,10 @@ describe('(!negative test!) integration test: ext. setCollectionSponsor():', () 
     });
   });
 
+  it('(!negative test!) Add sponsor with a non-owner', async () => {
+    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    await setCollectionSponsorExpectFailure(collectionId, bob.address, '//Bob');
+  });
   it('(!negative test!) Add sponsor to a collection that never existed', async () => {
     // Find the collection that never existed
     const collectionId = 0;

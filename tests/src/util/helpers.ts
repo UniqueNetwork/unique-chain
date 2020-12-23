@@ -134,25 +134,6 @@ function getDestroyResult(events: EventRecord[]): boolean {
   return success;
 }
 
-export async function setCollectionSponsorExpectSuccess(collectionId: number, sponsor: string) {
-  await usingApi(async (api) => {
-
-    // Run the transaction
-    const alicePrivateKey = privateKey('//Alice');
-    const tx = api.tx.nft.setCollectionSponsor(collectionId, sponsor);
-    const events = await submitTransactionAsync(alicePrivateKey, tx);
-    const result = getGenericResult(events);
-
-    // Get the collection 
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
-
-    // What to expect
-    expect(result.success).to.be.true;
-    expect(collection.Sponsor.toString()).to.be.equal(sponsor.toString());
-    expect(collection.SponsorConfirmed).to.be.false;
-  });
-}
-
 export async function destroyCollectionExpectFailure(collectionId: number, senderSeed: string = '//Alice') {
   await usingApi(async (api) => {
     // Run the DestroyCollection transaction
@@ -184,7 +165,7 @@ export async function destroyCollectionExpectSuccess(collectionId: number, sende
   });
 }
 
-export async function setCollectionSponsorExpectFailure(collectionId: number, sponsor: string) {
+export async function setCollectionSponsorExpectSuccess(collectionId: number, sponsor: string) {
   await usingApi(async (api) => {
 
     // Run the transaction
@@ -193,7 +174,60 @@ export async function setCollectionSponsorExpectFailure(collectionId: number, sp
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getGenericResult(events);
 
+    // Get the collection 
+    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+
+    // What to expect
+    expect(result.success).to.be.true;
+    expect(collection.Sponsor.toString()).to.be.equal(sponsor.toString());
+    expect(collection.SponsorConfirmed).to.be.false;
+  });
+}
+
+export async function setCollectionSponsorExpectFailure(collectionId: number, sponsor: string, senderSeed: string = '//Alice') {
+  await usingApi(async (api) => {
+
+    // Run the transaction
+    const alicePrivateKey = privateKey(senderSeed);
+    const tx = api.tx.nft.setCollectionSponsor(collectionId, sponsor);
+    const events = await submitTransactionAsync(alicePrivateKey, tx);
+    const result = getGenericResult(events);
+
     // What to expect
     expect(result.success).to.be.false;
   });
 }
+
+export async function confirmSponsorshipExpectSuccess(collectionId: number, senderSeed: string = '//Alice') {
+  await usingApi(async (api) => {
+
+    // Run the transaction
+    const sender = privateKey(senderSeed);
+    const tx = api.tx.nft.confirmSponsorship(collectionId);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    // Get the collection 
+    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+
+    // What to expect
+    expect(result.success).to.be.true;
+    expect(collection.Sponsor).to.be.equal(sender.address);
+    expect(collection.SponsorConfirmed).to.be.true;
+  });
+}
+
+export async function confirmSponsorshipExpectFailure(collectionId: number, senderSeed: string = '//Alice') {
+  await usingApi(async (api) => {
+
+    // Run the transaction
+    const sender = privateKey(senderSeed);
+    const tx = api.tx.nft.confirmSponsorship(collectionId);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    // What to expect
+    expect(result.success).to.be.false;
+  });
+}
+
