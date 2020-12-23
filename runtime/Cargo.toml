@@ -45,6 +45,8 @@ pallet-sudo = { default-features = false, version = '2.0.0' , git = 'https://git
 pallet-timestamp = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
 pallet-transaction-payment = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
 pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
+pallet-treasury = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
+pallet-vesting = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
 sp-api = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
 sp-block-builder = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
 sp-consensus-aura = { default-features = false, version = '0.8.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
@@ -56,8 +58,6 @@ sp-session = { default-features = false, version = '2.0.0' , git = 'https://gith
 sp-std = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
 sp-transaction-pool = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
 sp-version = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-
-pallet-treasury = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
 
 [features]
 default = ['std']
@@ -90,6 +90,9 @@ std = [
     'pallet-timestamp/std',
     'pallet-transaction-payment/std',
     'pallet-transaction-payment-rpc-runtime-api/std',
+    'pallet-treasury/std',
+    'pallet-vesting/std',
+
     'pallet-nft/std',
     'sp-api/std',
     'sp-block-builder/std',
@@ -103,5 +106,4 @@ std = [
     'sp-transaction-pool/std',
     'sp-version/std',
 
-    'pallet-treasury/std',
 ]

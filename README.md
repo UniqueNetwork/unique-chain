@@ -52,28 +52,27 @@ sudo apt-get install libssl-dev pkg-config libclang-dev clang
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
 
-3. Install Rust Toolchain 1.44.0:
+3. Install Toolchain and make it default:
 
 ```bash
-rustup install 1.44.0
+rustup toolchain install nightly-2020-10-01
+rustup default nightly-2020-10-01
 ```
 
-4. Make it default (actual toochain version may be different, so do a `rustup toolchain list` first)
-```bash
-rustup toolchain list
-rustup default 1.44.0-x86_64-unknown-linux-gnu
-```
-
-5. Install nightly toolchain and add wasm target for it:
+4. Add wasm target for default toolchain:
 
 ```bash
-rustup toolchain install nightly-2020-05-01
-rustup target add wasm32-unknown-unknown --toolchain nightly-2020-05-01-x86_64-unknown-linux-gnu
+rustup target add wasm32-unknown-unknown
 ```
 
-6. Build:
+5. Build:
 ```bash
 cargo build
+```
+
+optionally, build in release:
+```bash
+cargo build --release
 ```
 
 ## Run
@@ -135,3 +134,7 @@ target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" -
 ## UI custom types
 
 Moved to [runtime_types.json](./runtime_types.json).
+
+## Running Integration Tests
+
+See [tests/README.md](./tests/README.md).

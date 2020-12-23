@@ -1,3 +1,8 @@
+//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+
 #![recursion_limit = "1024"]
 
 #![cfg_attr(not(feature = "std"), no_std)]

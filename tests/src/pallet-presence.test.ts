@@ -1,3 +1,8 @@
+//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+
 import { ApiPromise } from "@polkadot/api";
 import { expect } from "chai";
 import usingApi from "./substrate/substrate-api";
@@ -6,20 +11,34 @@ function getModuleNames(api: ApiPromise): string[] {
   return api.runtimeMetadata.asLatest.modules.map(m => m.name.toString().toLowerCase());
 }
 
-describe('Pallet presence.', () => {
-  it('NFT pallet is present.', async () => {
+// Pallets that must always be present
+const requiredPallets = [
+  'nft', 'balances', 'contracts', 'randomnesscollectiveflip', 'system', 'timestamp', 'transactionpayment', 'treasury', 'vesting'
+];
+
+// Pallets that depend on consensus and governance configuration
+const consensusPallets = [
+  'sudo', 'grandpa', 'aura'
+];
+
+describe('Pallet presence', () => {
+  it('Required pallets are present', async () => {
     await usingApi(async api => {
-      expect(getModuleNames(api)).to.include('nft');
+      for (let i=0; i<requiredPallets.length; i++) {
+        expect(getModuleNames(api)).to.include(requiredPallets[i]);
+      }
     });
   });
-  it('Balances pallet is present.', async () => {
+  it('Governance and consensus pallets are present', async () => {
     await usingApi(async api => {
-      expect(getModuleNames(api)).to.include('balances');
+      for (let i=0; i<consensusPallets.length; i++) {
+        expect(getModuleNames(api)).to.include(consensusPallets[i]);
+      }
     });
   });
-  it('Contracts pallet is present.', async () => {
+  it('No extra pallets are included', async () => {
     await usingApi(async api => {
-      expect(getModuleNames(api)).to.include('contracts');
+      expect(getModuleNames(api).length).to.be.equal(requiredPallets.length + consensusPallets.length);
     });
   });
 });
