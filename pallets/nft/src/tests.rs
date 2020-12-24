@@ -960,7 +960,7 @@ fn owner_can_add_address_to_white_list() {
 
         let origin1 = Origin::signed(1);
         assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), collection_id, 2));
-        assert_eq!(TemplateModule::white_list(collection_id)[0], 2);
+        assert_eq!(TemplateModule::white_list(collection_id, 2), true);
     });
 }
 
@@ -975,7 +975,7 @@ fn admin_can_add_address_to_white_list() {
 
         assert_ok!(TemplateModule::add_collection_admin(origin1.clone(), collection_id, 2));
         assert_ok!(TemplateModule::add_to_white_list(origin2.clone(), collection_id, 3));
-        assert_eq!(TemplateModule::white_list(collection_id)[0], 3);
+        assert_eq!(TemplateModule::white_list(collection_id, 3), true);
     });
 }
 
@@ -1035,8 +1035,7 @@ fn address_is_already_added_to_white_list() {
         
         assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), collection_id, 2));
         assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), collection_id, 2));
-        assert_eq!(TemplateModule::white_list(collection_id)[0], 2);
-        assert_eq!(TemplateModule::white_list(collection_id).len(), 1);
+        assert_eq!(TemplateModule::white_list(collection_id, 2), true);
     });
 }
 
@@ -1054,7 +1053,7 @@ fn owner_can_remove_address_from_white_list() {
             collection_id,
             2
         ));
-        assert_eq!(TemplateModule::white_list(collection_id).len(), 0);
+        assert_eq!(TemplateModule::white_list(collection_id, 2), false);
     });
 }
 
@@ -1075,7 +1074,7 @@ fn admin_can_remove_address_from_white_list() {
             collection_id,
             3
         ));
-        assert_eq!(TemplateModule::white_list(collection_id).len(), 0);
+        assert_eq!(TemplateModule::white_list(collection_id, 3), false);
     });
 }
 
@@ -1093,7 +1092,7 @@ fn nonprivileged_user_cannot_remove_address_from_white_list() {
             TemplateModule::remove_from_white_list(origin2.clone(), collection_id, 2),
             Error::<Test>::NoPermission
         );
-        assert_eq!(TemplateModule::white_list(collection_id)[0], 2);
+        assert_eq!(TemplateModule::white_list(collection_id, 2), true);
     });
 }
 
@@ -1125,7 +1124,7 @@ fn nobody_can_remove_address_from_white_list_of_deleted_collection() {
             TemplateModule::remove_from_white_list(origin2.clone(), collection_id, 2),
             Error::<Test>::CollectionNotFound
         );
-        assert_eq!(TemplateModule::white_list(collection_id).len(), 0);
+        assert_eq!(TemplateModule::white_list(collection_id, 2), false);
     });
 }
 
@@ -1149,7 +1148,7 @@ fn address_is_already_removed_from_white_list() {
             collection_id,
             2
         ));
-        assert_eq!(TemplateModule::white_list(collection_id).len(), 0);
+        assert_eq!(TemplateModule::white_list(collection_id, 2), false);
     });
 }
 
