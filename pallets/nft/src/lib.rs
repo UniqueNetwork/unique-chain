@@ -145,7 +145,6 @@ pub struct CollectionType<AccountId> {
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct NftItemType<AccountId> {
-    pub collection: CollectionId,
     pub owner: AccountId,
     pub const_data: Vec<u8>,
     pub variable_data: Vec<u8>,
@@ -154,7 +153,6 @@ pub struct NftItemType<AccountId> {
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct FungibleItemType<AccountId> {
-    pub collection: CollectionId,
     pub owner: AccountId,
     pub value: u128,
 }
@@ -162,7 +160,6 @@ pub struct FungibleItemType<AccountId> {
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct ReFungibleItemType<AccountId> {
-    pub collection: CollectionId,
     pub owner: Vec<Ownership<AccountId>>,
     pub const_data: Vec<u8>,
     pub variable_data: Vec<u8>,
@@ -175,16 +172,16 @@ pub struct ApprovePermissions<AccountId> {
     pub amount: u128,
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct VestingItem<AccountId, Moment> {
-    pub sender: AccountId,
-    pub recipient: AccountId,
-    pub collection_id: CollectionId,
-    pub item_id: TokenId,
-    pub amount: u64,
-    pub vesting_date: Moment,
-}
+// #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
+// #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+// pub struct VestingItem<AccountId, Moment> {
+//     pub sender: AccountId,
+//     pub recipient: AccountId,
+//     pub collection_id: CollectionId,
+//     pub item_id: TokenId,
+//     pub amount: u64,
+//     pub vesting_date: Moment,
+// }
 
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -446,16 +443,16 @@ decl_storage! {
                 <Module<T>>::init_collection(_c);
             }
 
-            for (_num, _q, _i) in &config.nft_item_id {
-                <Module<T>>::init_nft_token(_i);
+            for (_num, _c, _i) in &config.nft_item_id {
+                <Module<T>>::init_nft_token(*_c, _i);
             }
 
-            for (_num, _q, _i) in &config.fungible_item_id {
-                <Module<T>>::init_fungible_token(_i);
+            for (_num, _c, _i) in &config.fungible_item_id {
+                <Module<T>>::init_fungible_token(*_c, _i);
             }
 
-            for (_num, _q, _i) in &config.refungible_item_id {
-                <Module<T>>::init_refungible_token(_i);
+            for (_num, _c, _i) in &config.refungible_item_id {
+                <Module<T>>::init_refungible_token(*_c, _i);
             }
         })
     }
@@ -1570,22 +1567,20 @@ impl<T: Trait> Module<T> {
         {
             CreateItemData::NFT(data) => {
                 let item = NftItemType {
-                    collection: collection_id,
                     owner,
                     const_data: data.const_data,
                     variable_data: data.variable_data
                 };
 
-                Self::add_nft_item(item)?;
+                Self::add_nft_item(collection_id, item)?;
             },
             CreateItemData::Fungible(_) => {
                 let item = FungibleItemType {
-                    collection: collection_id,
                     owner,
                     value: (10 as u128).pow(collection.decimal_points as u32)
                 };
 
-                Self::add_fungible_item(item)?;
+                Self::add_fungible_item(collection_id, item)?;
             },
             CreateItemData::ReFungible(data) => {
                 let mut owner_list = Vec::new();
@@ -1593,13 +1588,12 @@ impl<T: Trait> Module<T> {
                 owner_list.push(Ownership {owner: owner.clone(), fraction: value});
 
                 let item = ReFungibleItemType {
-                    collection: collection_id,
                     owner: owner_list,
                     const_data: data.const_data,
                     variable_data: data.variable_data
                 };
 
-                Self::add_refungible_item(item)?;
+                Self::add_refungible_item(collection_id, item)?;
             }
         };
 
@@ -1609,33 +1603,33 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    fn add_fungible_item(item: FungibleItemType<T::AccountId>) -> DispatchResult {
-        let current_index = <ItemListIndex>::get(item.collection)
+    fn add_fungible_item(collection_id: CollectionId, item: FungibleItemType<T::AccountId>) -> DispatchResult {
+        let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
             .ok_or(Error::<T>::NumOverflow)?;
         let itemcopy = item.clone();
         let owner = item.owner.clone();
 
-        Self::add_token_index(item.collection, current_index, owner.clone())?;
+        Self::add_token_index(collection_id, current_index, owner.clone())?;
 
-        <ItemListIndex>::insert(item.collection, current_index);
-        <FungibleItemList<T>>::insert(item.collection, current_index, itemcopy);
+        <ItemListIndex>::insert(collection_id, current_index);
+        <FungibleItemList<T>>::insert(collection_id, current_index, itemcopy);
 
         // Add current block
         let v: Vec<BasketItem<T::AccountId, T::BlockNumber>> = Vec::new();
-        <FungibleTransferBasket<T>>::insert(item.collection, current_index, v);
+        <FungibleTransferBasket<T>>::insert(collection_id, current_index, v);
         
         // Update balance
-        let new_balance = <Balance<T>>::get(item.collection, owner.clone())
+        let new_balance = <Balance<T>>::get(collection_id, owner.clone())
             .checked_add(item.value)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(item.collection, owner.clone(), new_balance);
+        <Balance<T>>::insert(collection_id, owner.clone(), new_balance);
 
         Ok(())
     }
 
-    fn add_refungible_item(item: ReFungibleItemType<T::AccountId>) -> DispatchResult {
-        let current_index = <ItemListIndex>::get(item.collection)
+    fn add_refungible_item(collection_id: CollectionId, item: ReFungibleItemType<T::AccountId>) -> DispatchResult {
+        let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
             .ok_or(Error::<T>::NumOverflow)?;
         let itemcopy = item.clone();
@@ -1643,31 +1637,30 @@ impl<T: Trait> Module<T> {
         let value = item.owner.first().unwrap().fraction;
         let owner = item.owner.first().unwrap().owner.clone();
 
-        Self::add_token_index(item.collection, current_index, owner.clone())?;
+        Self::add_token_index(collection_id, current_index, owner.clone())?;
 
-        <ItemListIndex>::insert(item.collection, current_index);
-        <ReFungibleItemList<T>>::insert(item.collection, current_index, itemcopy);
+        <ItemListIndex>::insert(collection_id, current_index);
+        <ReFungibleItemList<T>>::insert(collection_id, current_index, itemcopy);
 
         // Add current block
         let block_number: T::BlockNumber = 0.into();
-        <ReFungibleTransferBasket<T>>::insert(item.collection, current_index, block_number);
+        <ReFungibleTransferBasket<T>>::insert(collection_id, current_index, block_number);
 
         // Update balance
-        let new_balance = <Balance<T>>::get(item.collection, owner.clone())
+        let new_balance = <Balance<T>>::get(collection_id, owner.clone())
             .checked_add(value)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(item.collection, owner.clone(), new_balance);
+        <Balance<T>>::insert(collection_id, owner.clone(), new_balance);
 
         Ok(())
     }
 
-    fn add_nft_item(item: NftItemType<T::AccountId>) -> DispatchResult {
-        let current_index = <ItemListIndex>::get(item.collection)
+    fn add_nft_item(collection_id: CollectionId, item: NftItemType<T::AccountId>) -> DispatchResult {
+        let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
             .ok_or(Error::<T>::NumOverflow)?;
 
         let item_owner = item.owner.clone();
-        let collection_id = item.collection.clone();
         Self::add_token_index(collection_id, current_index, item.owner.clone())?;
 
         <ItemListIndex>::insert(collection_id, current_index);
@@ -1903,12 +1896,11 @@ impl<T: Trait> Module<T> {
             } else {
                 // new owner do not have account
                 let item = FungibleItemType {
-                    collection: collection_id,
                     owner: new_owner.clone(),
                     value
                 };
 
-                Self::add_fungible_item(item)?;
+                Self::add_fungible_item(collection_id, item)?;
             }
 
             if amount == value {
@@ -2122,13 +2114,12 @@ impl<T: Trait> Module<T> {
         CreatedCollectionCount::put(next_id);
     }
 
-    fn init_nft_token(item: &NftItemType<T::AccountId>) {
-        let current_index = <ItemListIndex>::get(item.collection)
+    fn init_nft_token(collection_id: CollectionId, item: &NftItemType<T::AccountId>) {
+        let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
             .unwrap();
 
         let item_owner = item.owner.clone();
-        let collection_id = item.collection.clone();
         Self::add_token_index(collection_id, current_index, item.owner.clone()).unwrap();
 
         <ItemListIndex>::insert(collection_id, current_index);
@@ -2140,40 +2131,40 @@ impl<T: Trait> Module<T> {
         <Balance<T>>::insert(collection_id, item_owner.clone(), new_balance);
     }
 
-    fn init_fungible_token(item: &FungibleItemType<T::AccountId>) {
-        let current_index = <ItemListIndex>::get(item.collection)
+    fn init_fungible_token(collection_id: CollectionId, item: &FungibleItemType<T::AccountId>) {
+        let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
             .unwrap();
         let owner = item.owner.clone();
 
-        Self::add_token_index(item.collection, current_index, owner.clone()).unwrap();
+        Self::add_token_index(collection_id, current_index, owner.clone()).unwrap();
 
-        <ItemListIndex>::insert(item.collection, current_index);
+        <ItemListIndex>::insert(collection_id, current_index);
 
         // Update balance
-        let new_balance = <Balance<T>>::get(item.collection, owner.clone())
+        let new_balance = <Balance<T>>::get(collection_id, owner.clone())
             .checked_add(item.value)
             .unwrap();
-        <Balance<T>>::insert(item.collection, owner.clone(), new_balance);
+        <Balance<T>>::insert(collection_id, owner.clone(), new_balance);
     }
 
-    fn init_refungible_token(item: &ReFungibleItemType<T::AccountId>) {
-        let current_index = <ItemListIndex>::get(item.collection)
+    fn init_refungible_token(collection_id: CollectionId, item: &ReFungibleItemType<T::AccountId>) {
+        let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
             .unwrap();
 
         let value = item.owner.first().unwrap().fraction;
         let owner = item.owner.first().unwrap().owner.clone();
 
-        Self::add_token_index(item.collection, current_index, owner.clone()).unwrap();
+        Self::add_token_index(collection_id, current_index, owner.clone()).unwrap();
 
-        <ItemListIndex>::insert(item.collection, current_index);
+        <ItemListIndex>::insert(collection_id, current_index);
 
         // Update balance
-        let new_balance = <Balance<T>>::get(item.collection, owner.clone())
+        let new_balance = <Balance<T>>::get(collection_id, owner.clone())
             .checked_add(value)
             .unwrap();
-        <Balance<T>>::insert(item.collection, owner.clone(), new_balance);
+        <Balance<T>>::insert(collection_id, owner.clone(), new_balance);
     }
 
     fn add_token_index(collection_id: CollectionId, item_index: TokenId, owner: T::AccountId) -> DispatchResult {
