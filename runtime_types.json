@@ -42,7 +42,6 @@
       "Fraction": "u128"
     },
     "FungibleItemType": {
-      "Owner": "AccountId",
       "Value": "u128"
     },
     "NftItemType": {
@@ -72,10 +71,6 @@
       "VariableOnChainSchema": "Vec<u8>",
       "ConstOnChainSchema": "Vec<u8>"
     },
-    "ApprovePermissions": {
-      "Approved": "AccountId",
-      "Amount": "u128"
-    },
     "RawData": "Vec<u8>",
     "Address": "AccountId",
     "LookupSource": "AccountId",
@@ -84,7 +79,9 @@
       "const_data": "Vec<u8>",
       "variable_data": "Vec<u8>" 
     },
-    "CreateFungibleData": {},
+    "CreateFungibleData": {
+      "value": "u128"
+    },
     "CreateReFungibleData": {
       "const_data": "Vec<u8>",
       "variable_data": "Vec<u8>" 
@@ -104,10 +101,6 @@
     },
     "CollectionId": "u32",
     "TokenId": "u32",
-    "BasketItem": {
-      "Address": "AccountId",
-      "start_block": "BlockNumber"
-    },
     "ChainLimits": {
       "collection_numbers_limit": "u32",
       "account_token_ownership_limit": "u32",

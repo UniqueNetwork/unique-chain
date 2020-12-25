@@ -13,6 +13,8 @@ import { alicesPublicKey, nullPublicKey } from "../accounts";
 import { strToUTF16, utf16ToStr, hexToStr } from '../util/util';
 import { IKeyringPair } from "@polkadot/types/types";
 import { BigNumber } from 'bignumber.js';
+import { Struct, Enum } from '@polkadot/types/codec';
+import { u128 } from '@polkadot/types/primitive';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -258,25 +260,73 @@ export async function confirmSponsorshipExpectFailure(collectionId: number, send
   });
 }
 
+export interface CreateFungibleData extends Struct {
+  readonly value: u128;
+};
+
+export interface CreateReFungibleData extends Struct {};
+export interface CreateNftData extends Struct {};
+
+export interface CreateItemData extends Enum {
+  NFT: CreateNftData,
+  Fungible: CreateFungibleData,
+  ReFungible: CreateReFungibleData
+};
+
 export async function createItemExpectSuccess(collectionId: number, createMode: string, owner: string = '', senderSeed: string = '//Alice') {
   let newItemId: number = 0;
   await usingApi(async (api) => {
     const AItemCount = parseInt((await api.query.nft.itemListIndex(collectionId)).toString());
+    const Aitem: any = (await api.query.nft.fungibleItemList(collectionId, owner)).toJSON();    
+    const AItemBalance = new BigNumber(Aitem.Value);
 
     const sender = privateKey(senderSeed);
     if (owner === '') owner = sender.address;
-    const tx = api.tx.nft.createItem(collectionId, owner, createMode);
+
+    let tx;
+    if (createMode == 'Fungible') {
+      let createData = {fungible: {value: 10}};
+      tx = api.tx.nft.createItem(collectionId, owner, createData);
+    }
+    else {
+      tx = api.tx.nft.createItem(collectionId, owner, createMode);
+    }
     const events = await submitTransactionAsync(sender, tx);
     const result = getCreateItemResult(events);
-  
+
     const BItemCount = parseInt((await api.query.nft.itemListIndex(collectionId)).toString());
+    const Bitem: any = (await api.query.nft.fungibleItemList(collectionId, owner)).toJSON();    
+    const BItemBalance = new BigNumber(Bitem.Value);
 
     // What to expect
     expect(result.success).to.be.true;
-    expect(BItemCount).to.be.equal(AItemCount+1);
+    if (createMode == 'Fungible') {
+      expect(BItemBalance.minus(AItemBalance).toNumber()).to.be.equal(10);
+    }
+    else {
+      expect(BItemCount).to.be.equal(AItemCount+1);
+    }
     expect(collectionId).to.be.equal(result.collectionId);
     expect(BItemCount).to.be.equal(result.itemId);
     newItemId = result.itemId;
   });
   return newItemId;
+}
+
+export async function enableWhiteListExpectSuccess(collectionId: number, senderSeed: string = '//Alice') {
+  await usingApi(async (api) => {
+
+    // Run the transaction
+    const sender = privateKey(senderSeed);
+    const tx = api.tx.nft.setPublicAccessMode(collectionId, 'WhiteList');
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    // Get the collection 
+    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+
+    // What to expect
+    expect(result.success).to.be.true;
+    expect(collection.Access).to.be.equal('WhiteList');
+  });
 }

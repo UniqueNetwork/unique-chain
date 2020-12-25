@@ -16,6 +16,7 @@ import {
   createItemExpectSuccess,
   findUnusedAddress,
   getGenericResult,
+  enableWhiteListExpectSuccess,
 } from "./util/helpers";
 import { Keyring } from "@polkadot/api";
 import { IKeyringPair } from "@polkadot/types/types";
@@ -72,7 +73,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       // Mint token for unused address
       const itemId = await createItemExpectSuccess(collectionId, 'NFT', zeroBalance.address, '//Alice');
 
-      // Transfer this token from unused address to Alice
+      // Transfer this tokens from unused address to Alice
       const zeroToAlice = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 0);
       const events = await submitTransactionAsync(zeroBalance, zeroToAlice);
       const result = getGenericResult(events);
@@ -86,30 +87,198 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   it('Fungible: Transfer fees are paid by the sponsor after confirmation', async () => {
-    expect(false).to.be.true;
+    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'Fungible');
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+
+    await usingApi(async (api) => {
+      const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
+
+      // Find unused address
+      const zeroBalance = await findUnusedAddress(api);
+
+      // Mint token for unused address
+      const itemId = await createItemExpectSuccess(collectionId, 'Fungible', zeroBalance.address, '//Alice');
+
+      // Transfer this tokens from unused address to Alice
+      const zeroToAlice = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 1);
+      const events1 = await submitTransactionAsync(zeroBalance, zeroToAlice);
+      const result1 = getGenericResult(events1);
+
+      const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
+
+      expect(result1.success).to.be.true;
+      expect(BsponsorBalance.lt(AsponsorBalance)).to.be.true;
+    });
   });
 
   it('ReFungible: Transfer fees are paid by the sponsor after confirmation', async () => {
-    expect(false).to.be.true;
+    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'ReFungible');
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+
+    await usingApi(async (api) => {
+      const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
+
+      // Find unused address
+      const zeroBalance = await findUnusedAddress(api);
+
+      // Mint token for unused address
+      const itemId = await createItemExpectSuccess(collectionId, 'ReFungible', zeroBalance.address, '//Alice');
+
+      // Transfer this tokens from unused address to Alice
+      const zeroToAlice = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 1);
+      const events1 = await submitTransactionAsync(zeroBalance, zeroToAlice);
+      const result1 = getGenericResult(events1);
+
+      const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
+
+      expect(result1.success).to.be.true;
+      expect(BsponsorBalance.lt(AsponsorBalance)).to.be.true;
+    });
   });
 
-  it.skip('CreateItem fees are paid by the sponsor after confirmation', async () => {
-    // const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
-    // await setCollectionSponsorExpectSuccess(collectionId, bob.address);
-    // await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
-    expect(false).to.be.true;
+  it.only('CreateItem fees are paid by the sponsor after confirmation', async () => {
+    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+
+    // Enable collection white list 
+    await enableWhiteListExpectSuccess(collectionId);
+
+    // Enable public minting
+
+    // Create Item
+
+
+
   });
 
   it('NFT: Sponsoring is rate limited', async () => {
-    expect(false).to.be.true;
+    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+
+    await usingApi(async (api) => {
+      // Find unused address
+      const zeroBalance = await findUnusedAddress(api);
+
+      // Mint token for alice
+      const itemId = await createItemExpectSuccess(collectionId, 'NFT', alice.address, '//Alice');
+
+      // Transfer this token from Alice to unused address and back
+      // Alice to Zero gets sponsored
+      const aliceToZero = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 0);
+      const events1 = await submitTransactionAsync(alice, aliceToZero);
+      const result1 = getGenericResult(events1);
+
+      // Second transfer should fail
+      const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
+      const zeroToAlice = api.tx.nft.transfer(alice.address, collectionId, itemId, 0);
+      const badTransaction = async function () { 
+        console.log = function () {};
+        console.error = function () {};
+        await submitTransactionAsync(zeroBalance, zeroToAlice);
+        delete console.log;
+        delete console.error;
+      };
+      await expect(badTransaction()).to.be.rejectedWith("Inability to pay some fees");
+      const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
+
+      // Try again after Zero gets some balance - now it should succeed
+      const balancetx = api.tx.balances.transfer(zeroBalance.address, 1e15);
+      await submitTransactionAsync(alice, balancetx);
+      const events2 = await submitTransactionAsync(zeroBalance, zeroToAlice);
+      const result2 = getGenericResult(events2);
+
+      expect(result1.success).to.be.true;
+      expect(result2.success).to.be.true;
+      expect(BsponsorBalance.isEqualTo(AsponsorBalance)).to.be.true;
+    });
   });
 
   it('Fungible: Sponsoring is rate limited', async () => {
-    expect(false).to.be.true;
+    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'Fungible');
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+
+    await usingApi(async (api) => {
+      // Find unused address
+      const zeroBalance = await findUnusedAddress(api);
+
+      // Mint token for unused address
+      const itemId = await createItemExpectSuccess(collectionId, 'Fungible', zeroBalance.address, '//Alice');
+
+      // Transfer this tokens in parts from unused address to Alice
+      const zeroToAlice = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 1);
+      const events1 = await submitTransactionAsync(zeroBalance, zeroToAlice);
+      const result1 = getGenericResult(events1);
+
+      const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
+
+      const badTransaction = async function () { 
+        console.log = function () {};
+        console.error = function () {};
+        await submitTransactionAsync(zeroBalance, zeroToAlice);
+        delete console.log;
+        delete console.error;
+      };
+
+      const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
+
+      // Try again after Zero gets some balance - now it should succeed
+      const balancetx = api.tx.balances.transfer(zeroBalance.address, 1e15);
+      await submitTransactionAsync(alice, balancetx);
+      const events2 = await submitTransactionAsync(zeroBalance, zeroToAlice);
+      const result2 = getGenericResult(events2);
+
+      expect(result1.success).to.be.true;
+      expect(result2.success).to.be.true;
+      expect(BsponsorBalance.isEqualTo(AsponsorBalance)).to.be.true;
+    });
   });
 
   it('ReFungible: Sponsoring is rate limited', async () => {
-    expect(false).to.be.true;
+    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'ReFungible');
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+
+    await usingApi(async (api) => {
+      // Find unused address
+      const zeroBalance = await findUnusedAddress(api);
+
+      // Mint token for alice
+      const itemId = await createItemExpectSuccess(collectionId, 'ReFungible', alice.address, '//Alice');
+
+      // Transfer this token from Alice to unused address and back
+      // Alice to Zero gets sponsored
+      const aliceToZero = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 1);
+      const events1 = await submitTransactionAsync(alice, aliceToZero);
+      const result1 = getGenericResult(events1);
+
+      // Second transfer should fail
+      const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
+      const zeroToAlice = api.tx.nft.transfer(alice.address, collectionId, itemId, 1);
+      const badTransaction = async function () { 
+        console.log = function () {};
+        console.error = function () {};
+        await submitTransactionAsync(zeroBalance, zeroToAlice);
+        delete console.log;
+        delete console.error;
+      };
+      await expect(badTransaction()).to.be.rejectedWith("Inability to pay some fees");
+      const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
+
+      // Try again after Zero gets some balance - now it should succeed
+      const balancetx = api.tx.balances.transfer(zeroBalance.address, 1e15);
+      await submitTransactionAsync(alice, balancetx);
+      const events2 = await submitTransactionAsync(zeroBalance, zeroToAlice);
+      const result2 = getGenericResult(events2);
+
+      expect(result1.success).to.be.true;
+      expect(result2.success).to.be.true;
+      expect(BsponsorBalance.isEqualTo(AsponsorBalance)).to.be.true;
+    });
   });
 
 });
