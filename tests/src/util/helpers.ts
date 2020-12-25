@@ -213,6 +213,39 @@ export async function setCollectionSponsorExpectSuccess(collectionId: number, sp
   });
 }
 
+export async function removeCollectionSponsorExpectSuccess(collectionId: number) {
+  await usingApi(async (api) => {
+
+    // Run the transaction
+    const alicePrivateKey = privateKey('//Alice');
+    const tx = api.tx.nft.removeCollectionSponsor(collectionId);
+    const events = await submitTransactionAsync(alicePrivateKey, tx);
+    const result = getGenericResult(events);
+
+    // Get the collection 
+    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+
+    // What to expect
+    expect(result.success).to.be.true;
+    expect(collection.Sponsor).to.be.equal(nullPublicKey);
+    expect(collection.SponsorConfirmed).to.be.false;
+  });
+}
+
+export async function removeCollectionSponsorExpectFailure(collectionId: number) {
+  await usingApi(async (api) => {
+
+    // Run the transaction
+    const alicePrivateKey = privateKey('//Alice');
+    const tx = api.tx.nft.removeCollectionSponsor(collectionId);
+    const events = await submitTransactionAsync(alicePrivateKey, tx);
+    const result = getGenericResult(events);
+
+    // What to expect
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function setCollectionSponsorExpectFailure(collectionId: number, sponsor: string, senderSeed: string = '//Alice') {
   await usingApi(async (api) => {
 

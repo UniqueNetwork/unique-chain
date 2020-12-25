@@ -32,7 +32,7 @@ let alice: IKeyringPair;
 let bob: IKeyringPair;
 let charlie: IKeyringPair;
 
-describe.only('integration test: ext. confirmSponsorship():', () => {
+describe('integration test: ext. confirmSponsorship():', () => {
 
   before(async () => {
     await usingApi(async (api) => {
@@ -299,7 +299,7 @@ describe.only('integration test: ext. confirmSponsorship():', () => {
 
 });
 
-describe.only('(!negative test!) integration test: ext. setCollectionSponsor():', () => {
+describe('(!negative test!) integration test: ext. removeCollectionSponsor():', () => {
   before(async () => {
     await usingApi(async (api) => {
       const keyring = new Keyring({ type: 'sr25519' });
