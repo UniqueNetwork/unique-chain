@@ -56,3 +56,25 @@ export function submitTransactionAsync(sender: IKeyringPair, transaction: Submit
     }
   });
 }
+
+export function submitTransactionExpectFailAsync(sender: IKeyringPair, transaction: SubmittableExtrinsic<ApiTypes>): Promise<EventRecord[]> {
+  return new Promise(async function(resolve, reject) {
+    try {
+      await transaction.signAndSend(sender, ({ events = [], status }) => {
+        if (status.isReady) {
+          // nothing to do
+          // console.log(`Current tx status is Ready`);
+        } else if (status.isBroadcast) {
+          // nothing to do
+          // console.log(`Current tx status is Broadcast`);
+        } else if (status.isInBlock || status.isFinalized) {
+          resolve(events);
+        } else {
+          reject("Transaction failed");
+        }
+      });
+    } catch (e) {
+      reject(e);
+    }
+  });
+}

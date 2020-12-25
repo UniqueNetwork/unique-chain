@@ -412,7 +412,7 @@ decl_storage! {
         // Basic collections
         pub Collection get(fn collection) config(): map hasher(identity) CollectionId => CollectionType<T::AccountId>;
         pub AdminList get(fn admin_list_collection): map hasher(identity) CollectionId => Vec<T::AccountId>;
-        pub WhiteList get(fn white_list): map hasher(identity) CollectionId => Vec<T::AccountId>;
+        pub WhiteList get(fn white_list): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => bool;
 
         /// Balance owner per collection map
         pub Balance get(fn balance_count): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => u128;
@@ -438,6 +438,8 @@ decl_storage! {
         pub ContractSelfSponsoring get(fn contract_self_sponsoring): map hasher(twox_64_concat) T::AccountId => bool;
         pub ContractSponsorBasket get(fn contract_sponsor_basket): map hasher(twox_64_concat) (T::AccountId, T::AccountId) => T::BlockNumber;
         pub ContractSponsoringRateLimit get(fn contract_sponsoring_rate_limit): map hasher(twox_64_concat) T::AccountId => T::BlockNumber;
+        pub ContractWhiteListEnabled get(fn contract_white_list_enabled): map hasher(twox_64_concat) T::AccountId => bool; 
+        pub ContractWhiteList get(fn contract_white_list): double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) T::AccountId => bool; 
     }
     add_extra_genesis {
         build(|config: &GenesisConfig<T>| {
@@ -627,7 +629,7 @@ decl_module! {
             <ItemListIndex>::remove(collection_id);
             <AdminList<T>>::remove(collection_id);
             <Collection<T>>::remove(collection_id);
-            <WhiteList<T>>::remove(collection_id);
+            <WhiteList<T>>::remove_prefix(collection_id);
 
             <NftItemList<T>>::remove_prefix(collection_id);
             <FungibleItemList<T>>::remove_prefix(collection_id);
@@ -668,20 +670,8 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             Self::check_owner_or_admin_permissions(collection_id, sender)?;
 
-            let mut white_list_collection: Vec<T::AccountId>;
-            if <WhiteList<T>>::contains_key(collection_id) {
-                white_list_collection = <WhiteList<T>>::get(collection_id);
-                if !white_list_collection.contains(&address.clone())
-                {
-                    white_list_collection.push(address.clone());
-                }
-            }
-            else {
-                white_list_collection = Vec::new();
-                white_list_collection.push(address.clone());
-            }
-
-            <WhiteList<T>>::insert(collection_id, white_list_collection);
+            <WhiteList<T>>::insert(collection_id, address, true);
+            
             Ok(())
         }
 
@@ -703,14 +693,7 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             Self::check_owner_or_admin_permissions(collection_id, sender)?;
 
-            if <WhiteList<T>>::contains_key(collection_id) {
-                let mut white_list_collection = <WhiteList<T>>::get(collection_id);
-                if white_list_collection.contains(&address.clone())
-                {
-                    white_list_collection.retain(|i| *i != address.clone());
-                    <WhiteList<T>>::insert(collection_id, white_list_collection);
-                }
-            }
+            <WhiteList<T>>::remove(collection_id, address);
 
             Ok(())
         }
@@ -1426,12 +1409,7 @@ decl_module! {
             #[cfg(feature = "runtime-benchmarks")]
             <ContractOwner<T>>::insert(contract_address.clone(), sender.clone());
 
-            let mut is_owner = false;
-            if <ContractOwner<T>>::contains_key(contract_address.clone()) {
-                let owner = <ContractOwner<T>>::get(&contract_address);
-                is_owner = sender == owner;
-            }
-            ensure!(is_owner, Error::<T>::NoPermission);
+            Self::ensure_contract_owned(sender, &contract_address)?;
 
             <ContractSelfSponsoring<T>>::insert(contract_address, enable);
             Ok(())
@@ -1461,14 +1439,81 @@ decl_module! {
             rate_limit: T::BlockNumber
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            let mut is_owner = false;
-            if <ContractOwner<T>>::contains_key(contract_address.clone()) {
-                let owner = <ContractOwner<T>>::get(&contract_address);
-                is_owner = sender == owner;
-            }
-            ensure!(is_owner, Error::<T>::NoPermission);
+            Self::ensure_contract_owned(sender, &contract_address)?;
 
             <ContractSponsoringRateLimit<T>>::insert(contract_address, rate_limit);
+            Ok(())
+        }
+
+        /// Enable the white list for a contract. Only addresses added to the white list with addToContractWhiteList will be able to call this smart contract.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Address that deployed smart contract.
+        /// 
+        /// # Arguments
+        /// 
+        /// -`contract_address`: Address of the contract.
+        /// 
+        /// - `enable`: .  
+        #[weight = 0]
+        pub fn toggle_contract_white_list(
+            origin,
+            contract_address: T::AccountId,
+            enable: bool
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            Self::ensure_contract_owned(sender, &contract_address)?;
+
+            <ContractWhiteListEnabled<T>>::insert(contract_address, enable);
+            Ok(())
+        }
+        
+        /// Add an address to smart contract white list.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Address that deployed smart contract.
+        /// 
+        /// # Arguments
+        /// 
+        /// -`contract_address`: Address of the contract.
+        ///
+        /// -`account_address`: Address to add.
+        #[weight = 0]
+        pub fn add_to_contract_white_list(
+            origin,
+            contract_address: T::AccountId,
+            account_address: T::AccountId
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            Self::ensure_contract_owned(sender, &contract_address)?;
+            
+            <ContractWhiteList<T>>::insert(contract_address, account_address, true);
+            Ok(())
+        }
+
+        /// Remove an address from smart contract white list.
+        /// 
+        /// # Permissions
+        /// 
+        /// * Address that deployed smart contract.
+        /// 
+        /// # Arguments
+        /// 
+        /// -`contract_address`: Address of the contract.
+        ///
+        /// -`account_address`: Address to remove.
+        #[weight = 0]
+        pub fn remove_from_contract_white_list(
+            origin,
+            contract_address: T::AccountId,
+            account_address: T::AccountId
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            Self::ensure_contract_owned(sender, &contract_address)?;
+            
+            <ContractWhiteList<T>>::remove(contract_address, account_address);
             Ok(())
         }
 
@@ -1830,9 +1875,7 @@ impl<T: Trait> Module<T> {
 
     fn check_white_list(collection_id: CollectionId, address: &T::AccountId) -> DispatchResult {
         let mes = Error::<T>::AddresNotInWhiteList;
-        ensure!(<WhiteList<T>>::contains_key(collection_id), mes);
-        let wl = <WhiteList<T>>::get(collection_id);
-        ensure!(wl.contains(address), mes);
+        ensure!(<WhiteList<T>>::contains_key(collection_id, address), mes);
 
         Ok(())
     }
@@ -2250,6 +2293,17 @@ impl<T: Trait> Module<T> {
 
         Ok(())
     }
+    
+    fn ensure_contract_owned(account: T::AccountId, contract: &T::AccountId) -> DispatchResult {
+        if <ContractOwner<T>>::contains_key(contract.clone()) {
+            let owner = <ContractOwner<T>>::get(contract);
+            ensure!(account == owner, Error::<T>::NoPermission);
+        } else {
+            fail!(Error::<T>::NoPermission);
+        }
+
+        Ok(())
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2456,6 +2510,16 @@ where
             Some(pallet_contracts::Call::call(dest, _value, _gas_limit, _data)) => {
 
                 let called_contract: T::AccountId = T::Lookup::lookup((*dest).clone()).unwrap_or(T::AccountId::default());
+
+                let owned_contract = <ContractOwner<T>>::contains_key(called_contract.clone())
+                  && <ContractOwner<T>>::get(called_contract.clone()) == *who;
+                let white_list_enabled = <ContractWhiteListEnabled<T>>::contains_key(called_contract.clone()) && <ContractWhiteListEnabled<T>>::get(called_contract.clone());
+                  
+                if !owned_contract && white_list_enabled {
+                    if !<ContractWhiteList<T>>::contains_key(called_contract.clone(), who) {
+                        return Err(InvalidTransaction::Call.into());
+                    }
+                }
 
                 let mut sponsor_transfer = false;
                 if <ContractSponsoringRateLimit<T>>::contains_key(called_contract.clone()) {

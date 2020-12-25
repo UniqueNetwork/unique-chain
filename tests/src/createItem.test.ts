@@ -8,7 +8,7 @@ import {
   createItemExpectSuccess
 } from './util/helpers';
 
-describe.only('integration test: ext. createItem():', () => {
+describe('integration test: ext. createItem():', () => {
   it('Create new item in NFT collection', async () => {
     const createMode = 'NFT';
     const newCollectionID = await createCollectionExpectSuccess('0', '0', '0', createMode);
