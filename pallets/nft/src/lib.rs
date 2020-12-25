@@ -251,6 +251,13 @@ pub trait WeightInfo {
     fn set_variable_on_chain_schema() -> Weight;
     fn set_variable_meta_data() -> Weight;
     fn enable_contract_sponsoring() -> Weight;
+    fn set_schema_version() -> Weight;
+    fn set_chain_limits() -> Weight;
+    fn set_contract_sponsoring_rate_limit() -> Weight;
+    fn toggle_contract_white_list() -> Weight;
+    fn add_to_contract_white_list() -> Weight;
+    fn remove_from_contract_white_list() -> Weight;
+    fn set_collection_limits() -> Weight;
 }
 
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
@@ -1276,7 +1283,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * schema: SchemaVersion: enum
-        #[weight = 0]
+        #[weight = T::WeightInfo::set_schema_version()]
         pub fn set_schema_version(
             origin,
             collection_id: CollectionId,
@@ -1376,12 +1383,15 @@ decl_module! {
         }
 
         // Sudo permissions function
-        #[weight = 0]
+        #[weight = T::WeightInfo::set_chain_limits()]
         pub fn set_chain_limits(
             origin,
             limits: ChainLimits
         ) -> DispatchResult {
+
+            #[cfg(not(feature = "runtime-benchmarks"))]
             ensure_root(origin)?;
+
             <ChainLimit>::put(limits);
             Ok(())
         }
@@ -1432,15 +1442,18 @@ decl_module! {
         /// -`contract_address`: Address of the contract to sponsor
         /// -`rate_limit`: Number of blocks to wait until the next sponsored transaction is allowed
         /// 
-        #[weight = 0]
+        #[weight = T::WeightInfo::set_contract_sponsoring_rate_limit()]
         pub fn set_contract_sponsoring_rate_limit(
             origin,
             contract_address: T::AccountId,
             rate_limit: T::BlockNumber
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            Self::ensure_contract_owned(sender, &contract_address)?;
 
+            #[cfg(feature = "runtime-benchmarks")]
+            <ContractOwner<T>>::insert(contract_address.clone(), sender.clone());
+
+            Self::ensure_contract_owned(sender, &contract_address)?;
             <ContractSponsoringRateLimit<T>>::insert(contract_address, rate_limit);
             Ok(())
         }
@@ -1456,15 +1469,18 @@ decl_module! {
         /// -`contract_address`: Address of the contract.
         /// 
         /// - `enable`: .  
-        #[weight = 0]
+        #[weight = T::WeightInfo::toggle_contract_white_list()]
         pub fn toggle_contract_white_list(
             origin,
             contract_address: T::AccountId,
             enable: bool
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            Self::ensure_contract_owned(sender, &contract_address)?;
 
+            #[cfg(feature = "runtime-benchmarks")]
+            <ContractOwner<T>>::insert(contract_address.clone(), sender.clone());
+
+            Self::ensure_contract_owned(sender, &contract_address)?;
             <ContractWhiteListEnabled<T>>::insert(contract_address, enable);
             Ok(())
         }
@@ -1480,15 +1496,18 @@ decl_module! {
         /// -`contract_address`: Address of the contract.
         ///
         /// -`account_address`: Address to add.
-        #[weight = 0]
+        #[weight = T::WeightInfo::add_to_contract_white_list()]
         pub fn add_to_contract_white_list(
             origin,
             contract_address: T::AccountId,
             account_address: T::AccountId
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            Self::ensure_contract_owned(sender, &contract_address)?;
+
+            #[cfg(feature = "runtime-benchmarks")]
+            <ContractOwner<T>>::insert(contract_address.clone(), sender.clone());
             
+            Self::ensure_contract_owned(sender, &contract_address)?;      
             <ContractWhiteList<T>>::insert(contract_address, account_address, true);
             Ok(())
         }
@@ -1504,20 +1523,23 @@ decl_module! {
         /// -`contract_address`: Address of the contract.
         ///
         /// -`account_address`: Address to remove.
-        #[weight = 0]
+        #[weight = T::WeightInfo::remove_from_contract_white_list()]
         pub fn remove_from_contract_white_list(
             origin,
             contract_address: T::AccountId,
             account_address: T::AccountId
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
+
+            #[cfg(feature = "runtime-benchmarks")]
+            <ContractOwner<T>>::insert(contract_address.clone(), sender.clone());
+
             Self::ensure_contract_owned(sender, &contract_address)?;
-            
             <ContractWhiteList<T>>::remove(contract_address, account_address);
             Ok(())
         }
 
-        #[weight = 0]
+        #[weight = T::WeightInfo::set_collection_limits()]
         pub fn set_collection_limits(
             origin,
             collection_id: u32,
