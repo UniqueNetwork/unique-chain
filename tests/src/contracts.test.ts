@@ -89,14 +89,15 @@ async function getFlipValue(contract: Contract, deployer: IKeyringPair) {
   return (result.result.asSuccess.data[0] == 0x00) ? false : true;
 }
 
-describe('Contracts smoke test', () => {
+describe('Contracts', () => {
   it(`Can deploy smart contract Flipper, instantiate it and call it's get and flip messages.`, async () => {
     await usingApi(async api => {
       const [contract, deployer] = await deployFlipper(api);
       const initialGetResponse = await getFlipValue(contract, deployer);
 
+      const bob = privateKey("//Bob");
       const flip = contract.exec('flip', value, gasLimit);
-      await submitTransactionAsync(deployer, flip);
+      await submitTransactionAsync(bob, flip);
 
       const afterFlipGetResponse = await getFlipValue(contract, deployer);
       expect(afterFlipGetResponse).not.to.be.eq(initialGetResponse, 'Flipping should change value.');
