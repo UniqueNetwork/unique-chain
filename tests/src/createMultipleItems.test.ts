@@ -11,7 +11,7 @@ import waitNewBlocks from './substrate/wait-new-blocks';
 
 const idCollection = 12;
 
-describe('integration test: ext. createMultipleItems():', () => {
+describe.skip('integration test: ext. createMultipleItems():', () => {
   it('Create two NFT tokens in active NFT collection', async () => {
     await usingApi(async (api) => {
       const AitemListIndex = await api.query.nft.itemListIndex(idCollection);
