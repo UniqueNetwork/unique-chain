@@ -2513,10 +2513,10 @@ where
 
                 let owned_contract = <ContractOwner<T>>::contains_key(called_contract.clone())
                   && <ContractOwner<T>>::get(called_contract.clone()) == *who;
+                let white_list_enabled = <ContractWhiteListEnabled<T>>::contains_key(called_contract.clone()) && <ContractWhiteListEnabled<T>>::get(called_contract.clone());
                   
-                if !owned_contract {
-                    let white_list_enabled = <ContractWhiteListEnabled<T>>::contains_key(called_contract.clone()) && <ContractWhiteListEnabled<T>>::get(called_contract.clone());
-                    if !white_list_enabled || !<ContractWhiteList<T>>::contains_key(called_contract.clone(), who) {
+                if !owned_contract && white_list_enabled {
+                    if !<ContractWhiteList<T>>::contains_key(called_contract.clone(), who) {
                         return Err(InvalidTransaction::Call.into());
                     }
                 }

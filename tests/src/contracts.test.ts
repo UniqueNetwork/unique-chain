@@ -115,9 +115,10 @@ describe('Contracts smoke test', () => {
       let expectedFlipValue = await getFlipValue(contract, deployer);
 
       const flip = contract.exec('flip', value, gasLimit);
-      await expect(submitTransactionExpectFailAsync(bob, flip)).to.be.rejected;
-      const firstFailResponse = await getFlipValue(contract, deployer);
-      expect(firstFailResponse).to.be.eq(expectedFlipValue, `Only account who deployed contract can flip value.`);
+      await submitTransactionAsync(bob, flip);
+      expectedFlipValue = !expectedFlipValue;
+      const afterFlip = await getFlipValue(contract,deployer);
+      expect(afterFlip).to.be.eq(expectedFlipValue, `Anyone can call new contract.`);
 
       const deployerCanFlip = async () => {
         expectedFlipValue = !expectedFlipValue;
@@ -147,31 +148,22 @@ describe('Contracts smoke test', () => {
 
       await deployerCanFlip();
 
-      const disableWhiteListTx = api.tx.nft.toggleContractWhiteList(contract.address, false);
-      const disableeResult = await submitTransactionAsync(deployer, disableWhiteListTx);
-      const flipWithDisabledWhitelist = contract.exec('flip', value, gasLimit);
-      await expect(submitTransactionExpectFailAsync(bob, flipWithDisabledWhitelist)).to.be.rejected;
-      const flipWithDisabledWhiteList = await getFlipValue(contract, deployer);
-      expect(flipWithDisabledWhiteList).to.be.eq(expectedFlipValue, `Bob can't flip when whitelist is disabled, even tho he is in whitelist.`);
-
-      await deployerCanFlip();
-
-      const enableWhiteListOneMoreTimeTx = api.tx.nft.toggleContractWhiteList(contract.address, true);
-      const enableOneMoreTimeResult = await submitTransactionAsync(deployer, enableWhiteListOneMoreTimeTx);
-
-      await deployerCanFlip();
-
       const removeBobFromWhiteListTx = api.tx.nft.removeFromContractWhiteList(contract.address, bob.address);
       const removeBobResult = await submitTransactionAsync(deployer, removeBobFromWhiteListTx);
       const bobRemoved = contract.exec('flip', value, gasLimit);
       await expect(submitTransactionExpectFailAsync(bob, bobRemoved)).to.be.rejected;
       const afterBobRemoved = await getFlipValue(contract, deployer);
-      expect(afterBobRemoved).to.be.eq(expectedFlipValue, `Enabling whitelist doesn't make it possible to call contract for everyone.`);
+      expect(afterBobRemoved).to.be.eq(expectedFlipValue, `Bob can't call contract, now when he is removeed from white list.`);
 
       await deployerCanFlip();
 
-      const cleanupTx = api.tx.nft.toggleContractWhiteList(contract.address, false);
-      const cleanupResult = await submitTransactionAsync(deployer, cleanupTx);
+      const disableWhiteListTx = api.tx.nft.toggleContractWhiteList(contract.address, false);
+      const disableWhiteListResult = await submitTransactionAsync(deployer, disableWhiteListTx);
+      const whiteListDisabledFlip = contract.exec('flip', value, gasLimit);
+      await submitTransactionAsync(bob, whiteListDisabledFlip);
+      expectedFlipValue = !expectedFlipValue;
+      const afterWhiteListDisabled = await getFlipValue(contract,deployer);
+      expect(afterWhiteListDisabled).to.be.eq(expectedFlipValue, `Anyone can call contract with disabled whitelist.`);
 
       console.error = consoleError;
     });
