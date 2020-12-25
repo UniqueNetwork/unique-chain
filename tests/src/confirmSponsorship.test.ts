@@ -17,6 +17,8 @@ import {
   findUnusedAddress,
   getGenericResult,
   enableWhiteListExpectSuccess,
+  enablePublicMintingExpectSuccess,
+  addToWhiteListExpectSuccess,
 } from "./util/helpers";
 import { Keyring } from "@polkadot/api";
 import { IKeyringPair } from "@polkadot/types/types";
@@ -30,7 +32,7 @@ let alice: IKeyringPair;
 let bob: IKeyringPair;
 let charlie: IKeyringPair;
 
-describe('integration test: ext. confirmSponsorship():', () => {
+describe.only('integration test: ext. confirmSponsorship():', () => {
 
   before(async () => {
     await usingApi(async (api) => {
@@ -71,7 +73,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const zeroBalance = await findUnusedAddress(api);
 
       // Mint token for unused address
-      const itemId = await createItemExpectSuccess(collectionId, 'NFT', zeroBalance.address, '//Alice');
+      const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', zeroBalance.address);
 
       // Transfer this tokens from unused address to Alice
       const zeroToAlice = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 0);
@@ -98,7 +100,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const zeroBalance = await findUnusedAddress(api);
 
       // Mint token for unused address
-      const itemId = await createItemExpectSuccess(collectionId, 'Fungible', zeroBalance.address, '//Alice');
+      const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', zeroBalance.address);
 
       // Transfer this tokens from unused address to Alice
       const zeroToAlice = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 1);
@@ -124,7 +126,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const zeroBalance = await findUnusedAddress(api);
 
       // Mint token for unused address
-      const itemId = await createItemExpectSuccess(collectionId, 'ReFungible', zeroBalance.address, '//Alice');
+      const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', zeroBalance.address);
 
       // Transfer this tokens from unused address to Alice
       const zeroToAlice = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 1);
@@ -138,20 +140,34 @@ describe('integration test: ext. confirmSponsorship():', () => {
     });
   });
 
-  it.only('CreateItem fees are paid by the sponsor after confirmation', async () => {
+  it('CreateItem fees are paid by the sponsor after confirmation', async () => {
     const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
     // Enable collection white list 
-    await enableWhiteListExpectSuccess(collectionId);
+    await enableWhiteListExpectSuccess(alice, collectionId);
 
     // Enable public minting
+    await enablePublicMintingExpectSuccess(alice, collectionId);
 
-    // Create Item
+    // Create Item 
+    await usingApi(async (api) => {
+      const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
 
+      // Find unused address
+      const zeroBalance = await findUnusedAddress(api);
 
+      // Add zeroBalance address to white list
+      await addToWhiteListExpectSuccess(alice, collectionId, zeroBalance.address);
 
+      // Mint token using unused address as signer
+      const tokenId = await createItemExpectSuccess(zeroBalance, collectionId, 'NFT', zeroBalance.address);
+
+      const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
+
+      expect(BsponsorBalance.lt(AsponsorBalance)).to.be.true;
+    });
   });
 
   it('NFT: Sponsoring is rate limited', async () => {
@@ -164,7 +180,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const zeroBalance = await findUnusedAddress(api);
 
       // Mint token for alice
-      const itemId = await createItemExpectSuccess(collectionId, 'NFT', alice.address, '//Alice');
+      const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
 
       // Transfer this token from Alice to unused address and back
       // Alice to Zero gets sponsored
@@ -207,7 +223,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const zeroBalance = await findUnusedAddress(api);
 
       // Mint token for unused address
-      const itemId = await createItemExpectSuccess(collectionId, 'Fungible', zeroBalance.address, '//Alice');
+      const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', zeroBalance.address);
 
       // Transfer this tokens in parts from unused address to Alice
       const zeroToAlice = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 1);
@@ -248,7 +264,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const zeroBalance = await findUnusedAddress(api);
 
       // Mint token for alice
-      const itemId = await createItemExpectSuccess(collectionId, 'ReFungible', alice.address, '//Alice');
+      const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', alice.address);
 
       // Transfer this token from Alice to unused address and back
       // Alice to Zero gets sponsored
@@ -283,7 +299,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
 });
 
-describe('(!negative test!) integration test: ext. setCollectionSponsor():', () => {
+describe.only('(!negative test!) integration test: ext. setCollectionSponsor():', () => {
   before(async () => {
     await usingApi(async (api) => {
       const keyring = new Keyring({ type: 'sr25519' });

@@ -273,14 +273,13 @@ export interface CreateItemData extends Enum {
   ReFungible: CreateReFungibleData
 };
 
-export async function createItemExpectSuccess(collectionId: number, createMode: string, owner: string = '', senderSeed: string = '//Alice') {
+export async function createItemExpectSuccess(sender: IKeyringPair, collectionId: number, createMode: string, owner: string = '') {
   let newItemId: number = 0;
   await usingApi(async (api) => {
     const AItemCount = parseInt((await api.query.nft.itemListIndex(collectionId)).toString());
     const Aitem: any = (await api.query.nft.fungibleItemList(collectionId, owner)).toJSON();    
     const AItemBalance = new BigNumber(Aitem.Value);
 
-    const sender = privateKey(senderSeed);
     if (owner === '') owner = sender.address;
 
     let tx;
@@ -313,11 +312,10 @@ export async function createItemExpectSuccess(collectionId: number, createMode: 
   return newItemId;
 }
 
-export async function enableWhiteListExpectSuccess(collectionId: number, senderSeed: string = '//Alice') {
+export async function enableWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number) {
   await usingApi(async (api) => {
 
     // Run the transaction
-    const sender = privateKey(senderSeed);
     const tx = api.tx.nft.setPublicAccessMode(collectionId, 'WhiteList');
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
@@ -330,3 +328,38 @@ export async function enableWhiteListExpectSuccess(collectionId: number, senderS
     expect(collection.Access).to.be.equal('WhiteList');
   });
 }
+
+export async function enablePublicMintingExpectSuccess(sender: IKeyringPair, collectionId: number) {
+  await usingApi(async (api) => {
+
+    // Run the transaction
+    const tx = api.tx.nft.setMintPermission(collectionId, true);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    // Get the collection 
+    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+
+    // What to expect
+    expect(result.success).to.be.true;
+    expect(collection.MintMode).to.be.equal(true);
+  });
+}
+
+export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number, address: string) {
+  await usingApi(async (api) => {
+
+    // Run the transaction
+    const tx = api.tx.nft.addToWhiteList(collectionId, address);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    // Get the collection 
+    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+
+    // What to expect
+    expect(result.success).to.be.true;
+    expect(collection.MintMode).to.be.equal(true);
+  });
+}
+
