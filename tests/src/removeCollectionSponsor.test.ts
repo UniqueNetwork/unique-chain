@@ -5,7 +5,7 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { default as usingApi, submitTransactionAsync } from "./substrate/substrate-api";
+import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from "./substrate/substrate-api";
 import { 
   createCollectionExpectSuccess, 
   setCollectionSponsorExpectSuccess, 
@@ -46,7 +46,7 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
   });
 
   it('Remove NFT collection sponsor stops sponsorship', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
     await removeCollectionSponsorExpectSuccess(collectionId);
@@ -62,11 +62,7 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
       const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
       const zeroToAlice = api.tx.nft.transfer(alice.address, collectionId, itemId, 0);
       const badTransaction = async function () { 
-        console.log = function () {};
-        console.error = function () {};
-        await submitTransactionAsync(zeroBalance, zeroToAlice);
-        delete console.log;
-        delete console.error;
+        await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       };
       await expect(badTransaction()).to.be.rejectedWith("Inability to pay some fees");
       const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
@@ -76,7 +72,7 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
   });
 
   it('Remove a sponsor after it was already removed', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
     await removeCollectionSponsorExpectSuccess(collectionId);
@@ -84,12 +80,12 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
   });
 
   it('Remove sponsor in a collection that never had the sponsor set', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await removeCollectionSponsorExpectSuccess(collectionId);
   });
 
   it('Remove sponsor for a collection that had the sponsor set, but not confirmed', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await removeCollectionSponsorExpectSuccess(collectionId);
   });
@@ -117,21 +113,21 @@ describe('(!negative test!) integration test: ext. removeCollectionSponsor():', 
   });
 
   it('(!negative test!) Remove sponsor in a destroyed collection', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await destroyCollectionExpectSuccess(collectionId);
     await removeCollectionSponsorExpectFailure(collectionId);
   });
 
   it('Set - remove - confirm: fails', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await removeCollectionSponsorExpectSuccess(collectionId);
     await confirmSponsorshipExpectFailure(collectionId, '//Bob');
   });
 
   it('Set - confirm - remove - confirm: Sponsor cannot come back', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
     await removeCollectionSponsorExpectSuccess(collectionId);

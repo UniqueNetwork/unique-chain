@@ -18,17 +18,17 @@ describe('integration test: ext. createItem():', () => {
 
   it('Create new item in NFT collection', async () => {
     const createMode = 'NFT';
-    const newCollectionID = await createCollectionExpectSuccess('0', '0', '0', createMode);
+    const newCollectionID = await createCollectionExpectSuccess({mode: createMode});
     await createItemExpectSuccess(alice, newCollectionID, createMode);
   });
   it('Create new item in Fungible collection', async () => {
     const createMode = 'Fungible';
-    const newCollectionID = await createCollectionExpectSuccess('0', '0', '0', createMode);
+    const newCollectionID = await createCollectionExpectSuccess({mode: createMode});
     await createItemExpectSuccess(alice, newCollectionID, createMode);
   });
   it('Create new item in ReFungible collection', async () => {
     const createMode = 'ReFungible';
-    const newCollectionID = await createCollectionExpectSuccess('0', '0', '0', createMode);
+    const newCollectionID = await createCollectionExpectSuccess({mode: createMode});
     await createItemExpectSuccess(alice, newCollectionID, createMode);
   });
 });

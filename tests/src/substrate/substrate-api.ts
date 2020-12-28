@@ -33,19 +33,40 @@ export default async function usingApi(action: (api: ApiPromise) => Promise<void
   }
 }
 
+enum TransactionStatus {
+  Success,
+  Fail,
+  NotReady
+}
+
+function getTransactionStatus(events: EventRecord[], status: ExtrinsicStatus): TransactionStatus {
+  if (status.isReady) {
+    return TransactionStatus.NotReady;
+  }
+  if (status.isBroadcast) {
+    return TransactionStatus.NotReady;
+  } 
+  if (status.isInBlock || status.isFinalized) {
+    if(events.filter(e => e.event.data.method === 'ExtrinsicFailed').length > 0) {
+      return TransactionStatus.Fail;
+    }
+    if(events.filter(e => e.event.data.method === 'ExtrinsicSuccess').length > 0) {
+      return TransactionStatus.Success;
+    }
+  }
+
+  return TransactionStatus.Fail;
+}
+
 export function submitTransactionAsync(sender: IKeyringPair, transaction: SubmittableExtrinsic<ApiTypes>): Promise<EventRecord[]> {
   return new Promise(async function(resolve, reject) {
     try {
       await transaction.signAndSend(sender, ({ events = [], status }) => {
-        if (status.isReady) {
-          // nothing to do
-          // console.log(`Current tx status is Ready`);
-        } else if (status.isBroadcast) {
-          // nothing to do
-          // console.log(`Current tx status is Broadcast`);
-        } else if (status.isInBlock || status.isFinalized) {
+        const transactionStatus = getTransactionStatus(events, status);
+
+        if (transactionStatus == TransactionStatus.Success) {
           resolve(events);
-        } else {
+        } else if (transactionStatus == TransactionStatus.Fail) {
           console.log(`Something went wrong with transaction. Status: ${status}`);
           reject("Transaction failed");
         }
@@ -58,18 +79,34 @@ export function submitTransactionAsync(sender: IKeyringPair, transaction: Submit
 }
 
 export function submitTransactionExpectFailAsync(sender: IKeyringPair, transaction: SubmittableExtrinsic<ApiTypes>): Promise<EventRecord[]> {
-  return new Promise(async function(resolve, reject) {
+  const consoleError = console.error;
+  const consoleLog = console.log;
+  console.error = () => {};
+  console.log = () => {};
+
+  return new Promise<EventRecord[]>(async function(res, rej) {
+    const resolve = (rec: EventRecord[]) => {
+      setTimeout(() => {
+        res(rec);
+        console.error = consoleError;
+        console.log = consoleLog;
+        
+      });
+    };
+    const reject = (errror: any) => {
+      setTimeout(() => {
+        rej(errror);
+        console.error = consoleError;
+        console.log = consoleLog;
+      });
+    };
     try {
       await transaction.signAndSend(sender, ({ events = [], status }) => {
-        if (status.isReady) {
-          // nothing to do
-          // console.log(`Current tx status is Ready`);
-        } else if (status.isBroadcast) {
-          // nothing to do
-          // console.log(`Current tx status is Broadcast`);
-        } else if (status.isInBlock || status.isFinalized) {
+        const transactionStatus = getTransactionStatus(events, status);
+
+        if (transactionStatus == TransactionStatus.Success) {
           resolve(events);
-        } else {
+        } else if (transactionStatus == TransactionStatus.Fail) {
           reject("Transaction failed");
         }
       });

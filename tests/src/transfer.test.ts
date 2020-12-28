@@ -33,6 +33,8 @@ describe('Transfer', () => {
       // Find unused address
       const pk = await findUnusedAddress(api);
 
+      const error = console.error;
+      const log = console.log;
       console.log = function () {};
       console.error = function () {};
   
@@ -42,8 +44,8 @@ describe('Transfer', () => {
       };
       await expect(badTransaction()).to.be.rejectedWith("Inability to pay some fees");
 
-      delete console.log;
-      delete console.error;
+      console.log = log;
+      console.error = error;
     });
   });
 });

@@ -5,7 +5,7 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { default as usingApi, submitTransactionAsync } from "./substrate/substrate-api";
+import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from "./substrate/substrate-api";
 import { 
   createCollectionExpectSuccess, 
   setCollectionSponsorExpectSuccess, 
@@ -44,25 +44,25 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   it('Confirm collection sponsorship', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
   });
   it('Add sponsor to a collection after the same sponsor was already added and confirmed', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
   });
   it('Add new sponsor to a collection after another sponsor was already added and confirmed', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
     await setCollectionSponsorExpectSuccess(collectionId, charlie.address);
   });
 
   it('NFT: Transfer fees are paid by the sponsor after confirmation', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
@@ -89,7 +89,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   it('Fungible: Transfer fees are paid by the sponsor after confirmation', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'Fungible');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
@@ -115,7 +115,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   it('ReFungible: Transfer fees are paid by the sponsor after confirmation', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'ReFungible');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
@@ -141,7 +141,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   it('CreateItem fees are paid by the sponsor after confirmation', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
@@ -171,7 +171,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   it('NFT: Sponsoring is rate limited', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
@@ -192,11 +192,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
       const zeroToAlice = api.tx.nft.transfer(alice.address, collectionId, itemId, 0);
       const badTransaction = async function () { 
-        console.log = function () {};
-        console.error = function () {};
-        await submitTransactionAsync(zeroBalance, zeroToAlice);
-        delete console.log;
-        delete console.error;
+        await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       };
       await expect(badTransaction()).to.be.rejectedWith("Inability to pay some fees");
       const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
@@ -214,7 +210,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   it('Fungible: Sponsoring is rate limited', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'Fungible');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
@@ -233,11 +229,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
 
       const badTransaction = async function () { 
-        console.log = function () {};
-        console.error = function () {};
-        await submitTransactionAsync(zeroBalance, zeroToAlice);
-        delete console.log;
-        delete console.error;
+        await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       };
 
       const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
@@ -255,7 +247,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   it('ReFungible: Sponsoring is rate limited', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'ReFungible');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
@@ -276,11 +268,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
       const zeroToAlice = api.tx.nft.transfer(alice.address, collectionId, itemId, 1);
       const badTransaction = async function () { 
-        console.log = function () {};
-        console.error = function () {};
-        await submitTransactionAsync(zeroBalance, zeroToAlice);
-        delete console.log;
-        delete console.error;
+        await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       };
       await expect(badTransaction()).to.be.rejectedWith("Inability to pay some fees");
       const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
@@ -320,7 +308,7 @@ describe('(!negative test!) integration test: ext. removeCollectionSponsor():', 
   });
 
   it('(!negative test!) Confirm sponsorship using a non-sponsor address', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
 
     await usingApi(async (api) => {
@@ -332,18 +320,18 @@ describe('(!negative test!) integration test: ext. removeCollectionSponsor():', 
   });
 
   it('(!negative test!) Confirm sponsorship using owner address', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectFailure(collectionId, '//Alice');
   });
 
   it('(!negative test!) Confirm sponsorship without sponsor being set with setCollectionSponsor', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await confirmSponsorshipExpectFailure(collectionId, '//Bob');
   });
     
   it('(!negative test!) Confirm sponsorship in a collection that was destroyed', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectSuccess(collectionId);
     await confirmSponsorshipExpectFailure(collectionId, '//Bob');
   });

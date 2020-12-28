@@ -86,7 +86,24 @@ function getCreateItemResult(events: EventRecord[]): CreateItemResult {
   return result;
 }
 
-export async function createCollectionExpectSuccess(name: string, description: string, tokenPrefix: string, mode: string): Promise<number> {
+export type CollectionMode = 'NFT' | 'Fungible' | 'ReFungible';
+export type CreateCollectionParams = {
+  mode: CollectionMode,
+  name: string,
+  description: string,
+  tokenPrefix: string
+};
+
+const defaultCreateCollectionParams: CreateCollectionParams = {
+  name: 'name',
+  description: 'description',
+  mode: 'NFT',
+  tokenPrefix: 'prefix'
+}
+
+export async function createCollectionExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
+  const {name, description, mode, tokenPrefix } = {...defaultCreateCollectionParams, ...params};
+
   let collectionId: number = 0;
   await usingApi(async (api) => {
     // Get number of collections before the transaction
@@ -120,14 +137,16 @@ export async function createCollectionExpectSuccess(name: string, description: s
   return collectionId;
 }
   
-export async function createCollectionExpectFailure(name: string, description: string, tokenPrefix: string, mode: string) {
+export async function createCollectionExpectFailure(params: Partial<CreateCollectionParams> = {}) {
+  const {name, description, mode, tokenPrefix } = {...defaultCreateCollectionParams, ...params};
+
   await usingApi(async (api) => {
     // Get number of collections before the transaction
     const AcollectionCount = parseInt((await api.query.nft.createdCollectionCount()).toString());
 
     // Run the CreateCollection transaction
     const alicePrivateKey = privateKey('//Alice');
-    const tx = api.tx.nft.createCollection(name, description, tokenPrefix, mode);
+    const tx = api.tx.nft.createCollection(strToUTF16(name), strToUTF16(description), strToUTF16(tokenPrefix), mode);
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getCreateCollectionResult(events);
 
