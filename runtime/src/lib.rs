@@ -1,3 +1,8 @@
+//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+
 //! The Substrate Node Template runtime. This can be compiled with `#[no_std]`, ready for Wasm.
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -17,7 +22,7 @@ use sp_core::{ crypto::KeyTypeId, crypto::Public, OpaqueMetadata };
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     traits::{
-        Convert, BlakeTwo256, Block as BlockT, IdentifyAccount, 
+        Convert, ConvertInto, BlakeTwo256, Block as BlockT, IdentifyAccount, 
         IdentityLookup, NumberFor, Saturating, Verify,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
@@ -315,7 +320,7 @@ impl pallet_balances::Trait for Runtime {
 	type Balance = Balance;
 	/// The ubiquitous event type.
 	type Event = Event;
-	type DustRemoval = ();
+	type DustRemoval = Treasury;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
@@ -357,7 +362,7 @@ parameter_types! {
 
 impl pallet_transaction_payment::Trait for Runtime {
     type Currency = pallet_balances::Module<Runtime>;
-    type OnTransactionPayment = ();
+    type OnTransactionPayment = Treasury;
     type TransactionByteFee = TransactionByteFee;
     type WeightToFee = IdentityFee<Balance>;
     type FeeMultiplierUpdate =  ();
@@ -412,6 +417,18 @@ impl pallet_sudo::Trait for Runtime {
     type Call = Call;
 }
 
+parameter_types! {
+	pub const MinVestedTransfer: Balance = 100 * DOLLARS;
+}
+
+impl pallet_vesting::Trait for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type BlockNumberToBalance = ConvertInto;
+	type MinVestedTransfer = MinVestedTransfer;
+	type WeightInfo = ();
+}
+
 /// Used for the module nft in `./nft.rs`
 impl pallet_nft::Trait for Runtime {
     type Event = Event;
@@ -435,6 +452,7 @@ construct_runtime!(
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
         Nft: pallet_nft::{Module, Call, Config<T>, Storage, Event<T>},
         Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
+        Vesting: pallet_vesting::{Module, Call, Config<T>, Storage, Event<T>},
     }
 );
 

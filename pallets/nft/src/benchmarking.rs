@@ -355,4 +355,66 @@
             Nft::<T>::create_item(RawOrigin::Signed(caller.clone()).into(), 2, caller.clone(), data)?;
 
         }: set_variable_meta_data(RawOrigin::Signed(caller.clone()), 2, 1, [1, 2, 3].to_vec())
+
+        set_schema_version {
+            let col_name1: Vec<u16> = "Test1".encode_utf16().collect::<Vec<u16>>();
+            let col_desc1: Vec<u16> = "TestDescription1".encode_utf16().collect::<Vec<u16>>();
+            let token_prefix1: Vec<u8> = b"token_prefix1".to_vec();
+            let mode: CollectionMode = CollectionMode::NFT;
+            let caller: T::AccountId = T::AccountId::from(whitelisted_caller());
+            Nft::<T>::create_collection(RawOrigin::Signed(caller.clone()).into(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), mode.clone())?;
+        }: set_schema_version(RawOrigin::Signed(caller.clone()), 2, SchemaVersion::Unique)
+
+        set_chain_limits {
+            let caller: T::AccountId = T::AccountId::from(whitelisted_caller());
+            let limits = ChainLimits { 
+                collection_numbers_limit: 0,
+                account_token_ownership_limit: 0,
+                collections_admins_limit: 0,
+                custom_data_limit: 0,
+                nft_sponsor_transfer_timeout: 0,
+                fungible_sponsor_transfer_timeout: 0,
+                refungible_sponsor_transfer_timeout: 0
+            };
+        }: set_chain_limits(RawOrigin::Signed(caller.clone()), limits)
+
+        set_contract_sponsoring_rate_limit {
+            let col_name1: Vec<u16> = "Test1".encode_utf16().collect::<Vec<u16>>();
+            let col_desc1: Vec<u16> = "TestDescription1".encode_utf16().collect::<Vec<u16>>();
+            let token_prefix1: Vec<u8> = b"token_prefix1".to_vec();
+            let mode: CollectionMode = CollectionMode::NFT;
+            let caller: T::AccountId = T::AccountId::from(whitelisted_caller());
+            Nft::<T>::create_collection(RawOrigin::Signed(caller.clone()).into(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), mode.clone())?;
+            let block_number: T::BlockNumber = 0.into();   
+        }: set_contract_sponsoring_rate_limit(RawOrigin::Signed(caller.clone()), caller.clone(), block_number)
+
+        set_collection_limits{
+            let col_name1: Vec<u16> = "Test1".encode_utf16().collect::<Vec<u16>>();
+            let col_desc1: Vec<u16> = "TestDescription1".encode_utf16().collect::<Vec<u16>>();
+            let token_prefix1: Vec<u8> = b"token_prefix1".to_vec();
+            let mode: CollectionMode = CollectionMode::NFT;
+            let caller: T::AccountId = T::AccountId::from(whitelisted_caller());
+            Nft::<T>::create_collection(RawOrigin::Signed(caller.clone()).into(), col_name1.clone(), col_desc1.clone(), token_prefix1.clone(), mode.clone())?;
+     
+            let cl = CollectionLimits {
+                account_token_ownership_limit: 0,
+                sponsored_data_size: 0,
+                token_limit: 0,
+                sponsor_transfer_timeout: 0
+            };
+
+        }: set_collection_limits(RawOrigin::Signed(caller.clone()), 2, cl)
+
+        add_to_contract_white_list{
+            let caller: T::AccountId = T::AccountId::from(whitelisted_caller());
+        }: add_to_contract_white_list(RawOrigin::Signed(caller.clone()), caller.clone(), caller.clone())
+
+        remove_from_contract_white_list{
+            let caller: T::AccountId = T::AccountId::from(whitelisted_caller());
+            Nft::<T>::add_to_contract_white_list(RawOrigin::Signed(caller.clone()).into(), caller.clone(), caller.clone())?;
+        }: remove_from_contract_white_list(RawOrigin::Signed(caller.clone()), caller.clone(), caller.clone())
+
+        toggle_contract_white_list{
+            let caller: T::AccountId = T::AccountId::from(whitelisted_caller());
+        }: toggle_contract_white_list(RawOrigin::Signed(caller.clone()), caller.clone(), true)
 }

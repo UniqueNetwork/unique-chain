@@ -1,17 +1,25 @@
-import { expect } from "chai";
-import usingApi from "./substrate/substrate-api";
+import chai from "chai";
+import chaiAsPromised from 'chai-as-promised';
+import usingApi, { submitTransactionAsync, submitTransactionExpectFailAsync } from "./substrate/substrate-api";
 import fs from "fs";
-import { Abi, BlueprintPromise, CodePromise, ContractPromise } from "@polkadot/api-contract";
+import { Abi, BlueprintPromise as Blueprint, CodePromise, ContractPromise as Contract } from "@polkadot/api-contract";
 import { IKeyringPair } from "@polkadot/types/types";
-import { Keyring } from "@polkadot/api";
+import { ApiPromise, Keyring } from "@polkadot/api";
 import { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
+import privateKey from "./substrate/privateKey";
+
+chai.use(chaiAsPromised);
+const expect = chai.expect;
+import { BigNumber } from 'bignumber.js';
+import { findUnusedAddress } from './util/helpers'
 
 const value = 0;
 const gasLimit = 3000n * 1000000n;
+const endowment = `1000000000000000`;
 const marketContractAddress = '5CYN9j3YvRkqxewoxeSvRbhAym4465C57uMmX5j4yz99L5H6';
 
-function deployBlueprint(alice: IKeyringPair, code: CodePromise): Promise<BlueprintPromise> {
-  return new Promise<BlueprintPromise>(async (resolve, reject) => {
+function deployBlueprint(alice: IKeyringPair, code: CodePromise): Promise<Blueprint> {
+  return new Promise<Blueprint>(async (resolve, reject) => {
     const unsub = await code
       .createBlueprint()
       .signAndSend(alice, (result) => {
@@ -24,7 +32,7 @@ function deployBlueprint(alice: IKeyringPair, code: CodePromise): Promise<Bluepr
   });
 }
 
-function deployContract(alice: IKeyringPair, blueprint: BlueprintPromise) : Promise<any> {
+function deployContract(alice: IKeyringPair, blueprint: Blueprint) : Promise<any> {
   return new Promise<any>(async (resolve, reject) => {
     const endowment = 1000000000000000n;
     const initValue = true;
@@ -40,57 +48,127 @@ function deployContract(alice: IKeyringPair, blueprint: BlueprintPromise) : Prom
   });
 }
 
-function runTransaction(privateKey: IKeyringPair, extrinsic: SubmittableExtrinsic<ApiTypes>) {
-  return new Promise<void>(async (resolve, reject) => {
-    extrinsic.signAndSend(privateKey, async result => {
-        if(!result.isInBlock) {
-          return;
-        }
+async function prepareDeployer(api: ApiPromise) {
+  // Find unused address
+  const deployer = await findUnusedAddress(api);
 
-        if(result.findRecord('system', 'ExtrinsicSuccess')) {
-          resolve();
-        }
-        else {
-          reject('Failed to flip value.');
-        }
-      })
-  });
+  // Transfer balance to it
+  const keyring = new Keyring({ type: 'sr25519' });
+  const alice = keyring.addFromUri(`//Alice`);
+  let amount = new BigNumber(endowment);
+  amount = amount.plus(1e15);
+  const tx = api.tx.balances.transfer(deployer.address, amount.toFixed());
+  await submitTransactionAsync(alice, tx);
+
+  return deployer;
+}
+
+async function deployFlipper(api: ApiPromise): Promise<[Contract, IKeyringPair]> {
+  const metadata = JSON.parse(fs.readFileSync('./src/flipper/metadata.json').toString('utf-8'));
+  const abi = new Abi(metadata);
+
+  const deployer = await prepareDeployer(api);
+
+  const wasm = fs.readFileSync('./src/flipper/flipper.wasm');
+
+  const code = new CodePromise(api, abi, wasm);
+
+  const blueprint = await deployBlueprint(deployer, code);
+  const contract = (await deployContract(deployer, blueprint))['contract'] as Contract;
+
+  const initialGetResponse = await getFlipValue(contract, deployer);
+  expect(initialGetResponse).to.be.true;
+
+  return [contract, deployer];
+}
+
+async function getFlipValue(contract: Contract, deployer: IKeyringPair) {
+  const result = await contract.query.get(deployer.address, value, gasLimit);
+
+  if(!result.result.isSuccess) {
+    throw `Failed to get flipper value`;
+  }
+  return (result.result.asSuccess.data[0] == 0x00) ? false : true;
 }
 
 describe('Contracts', () => {
   it(`Can deploy smart contract Flipper, instantiate it and call it's get and flip messages.`, async () => {
     await usingApi(async api => {
-      const keyring = new Keyring({ type: 'sr25519' });
-      const alice = keyring.addFromUri("//Alice");
-      
-      const wasm = fs.readFileSync('./src/flipper/flipper.wasm');
-      
-      const metadata = JSON.parse(fs.readFileSync('./src/flipper/metadata.json').toString('utf-8'));
-      const abi = new Abi(metadata);
+      const [contract, deployer] = await deployFlipper(api);
+      const initialGetResponse = await getFlipValue(contract, deployer);
 
-      const code = new CodePromise(api, abi, wasm);
+      const bob = privateKey("//Bob");
+      const flip = contract.exec('flip', value, gasLimit);
+      await submitTransactionAsync(bob, flip);
 
-      const blueprint = await deployBlueprint(alice, code);
-      const contract = (await deployContract(alice, blueprint))['contract'];
+      const afterFlipGetResponse = await getFlipValue(contract, deployer);
+      expect(afterFlipGetResponse).not.to.be.eq(initialGetResponse, 'Flipping should change value.');
+    });
+  });
 
-      const getFlipValue = async () => {
-        const result = await contract.query.get(alice.address, value, gasLimit);
+  it(`Whitelisted account can call contract.`, async () => {
+    await usingApi(async api => {
+      const bob = privateKey("//Bob");
 
-        if(!result.result.isSuccess) {
-          throw `Failed to get flipper value`;
-        }
-        return (result.result.asSuccess.data[0] == 0x00) ? false : true;
-      }
+      const [contract, deployer] = await deployFlipper(api);
+      const consoleError = console.error;
+      console.error = (...data: any[]) => {
+      };
 
-      const initialGetResponse = await getFlipValue();
-      expect(initialGetResponse).to.be.true;
+      let expectedFlipValue = await getFlipValue(contract, deployer);
 
       const flip = contract.exec('flip', value, gasLimit);
-      await runTransaction(alice, flip);
+      await submitTransactionAsync(bob, flip);
+      expectedFlipValue = !expectedFlipValue;
+      const afterFlip = await getFlipValue(contract,deployer);
+      expect(afterFlip).to.be.eq(expectedFlipValue, `Anyone can call new contract.`);
 
-      const afterFlipGetResponse = await getFlipValue();
+      const deployerCanFlip = async () => {
+        expectedFlipValue = !expectedFlipValue;
+        const deployerFlip = contract.exec('flip', value, gasLimit);
+        await submitTransactionAsync(deployer, deployerFlip);
+        const aliceFlip1Response = await getFlipValue(contract, deployer);
+        expect(aliceFlip1Response).to.be.eq(expectedFlipValue, `Deployer always can flip.`);
+      };
+      await deployerCanFlip();
 
-      expect(afterFlipGetResponse).to.be.false;
+      const enableWhiteListTx = api.tx.nft.toggleContractWhiteList(contract.address, true);
+      const enableResult = await submitTransactionAsync(deployer, enableWhiteListTx);
+      const flipWithEnabledWhiteList = contract.exec('flip', value, gasLimit);
+      await expect(submitTransactionExpectFailAsync(bob, flipWithEnabledWhiteList)).to.be.rejected;
+      const flipValueAfterEnableWhiteList = await getFlipValue(contract, deployer);
+      expect(flipValueAfterEnableWhiteList).to.be.eq(expectedFlipValue, `Enabling whitelist doesn't make it possible to call contract for everyone.`);
+
+      await deployerCanFlip();
+
+      const addBobToWhiteListTx = api.tx.nft.addToContractWhiteList(contract.address, bob.address);
+      const addBobResult = await submitTransactionAsync(deployer, addBobToWhiteListTx);
+      const flipWithWhitelistedBob = contract.exec('flip', value, gasLimit);
+      await submitTransactionAsync(bob, flipWithWhitelistedBob);
+      expectedFlipValue = !expectedFlipValue;
+      const flipAfterWhiteListed = await getFlipValue(contract,deployer);
+      expect(flipAfterWhiteListed).to.be.eq(expectedFlipValue, `Bob was whitelisted, now he can flip.`);
+
+      await deployerCanFlip();
+
+      const removeBobFromWhiteListTx = api.tx.nft.removeFromContractWhiteList(contract.address, bob.address);
+      const removeBobResult = await submitTransactionAsync(deployer, removeBobFromWhiteListTx);
+      const bobRemoved = contract.exec('flip', value, gasLimit);
+      await expect(submitTransactionExpectFailAsync(bob, bobRemoved)).to.be.rejected;
+      const afterBobRemoved = await getFlipValue(contract, deployer);
+      expect(afterBobRemoved).to.be.eq(expectedFlipValue, `Bob can't call contract, now when he is removeed from white list.`);
+
+      await deployerCanFlip();
+
+      const disableWhiteListTx = api.tx.nft.toggleContractWhiteList(contract.address, false);
+      const disableWhiteListResult = await submitTransactionAsync(deployer, disableWhiteListTx);
+      const whiteListDisabledFlip = contract.exec('flip', value, gasLimit);
+      await submitTransactionAsync(bob, whiteListDisabledFlip);
+      expectedFlipValue = !expectedFlipValue;
+      const afterWhiteListDisabled = await getFlipValue(contract,deployer);
+      expect(afterWhiteListDisabled).to.be.eq(expectedFlipValue, `Anyone can call contract with disabled whitelist.`);
+
+      console.error = consoleError;
     });
   });
 
@@ -123,7 +201,7 @@ describe('Contracts', () => {
       // const bob = new GenericAccountId(api.registry, bobsPublicKey);
 
       // const transfer = contractInstance.exec('balance_transfer', 0, 1000000000000n, [bob, new u128(api.registry, 1000000)]);
-      // await runTransaction(alicesPrivateKey, transfer);
+      // await submitTransactionAsync(alicesPrivateKey, transfer);
 
       // const [alicesBalanceAfter, bobsBalanceAfter] = await getBalance(api, [alicesPublicKey, bobsPublicKey]);
 

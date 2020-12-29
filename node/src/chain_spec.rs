@@ -1,3 +1,8 @@
+//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+
 // use nft_runtime::{
 //     AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
 //     SystemConfig, WASM_BINARY,
@@ -9,6 +14,7 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use serde_json::map::Map;
 
 // Note this is the URL for the telemetry server
 //const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -41,6 +47,11 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 pub fn development_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or("Development wasm binary not available".to_string())?;
 
+	let mut properties = Map::new();
+	properties.insert("tokenSymbol".into(), "UniqueTest".into());
+	properties.insert("tokenDecimals".into(), 15.into());
+	properties.insert("ss58Format".into(), 42.into()); // Generic Substrate wildcard (SS58 checksum preimage)
+
 	Ok(ChainSpec::from_genesis(
 		// Name
 		"Development",
@@ -71,7 +82,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		// Protocol ID
 		None,
 		// Properties
-		None,
+		Some(properties),
 		// Extensions
 		None,
 	))
@@ -132,6 +143,11 @@ fn testnet_genesis(
     endowed_accounts: Vec<AccountId>,
     enable_println: bool,
 ) -> GenesisConfig {
+
+	let vested_accounts = vec![
+		get_account_id_from_seed::<sr25519::Public>("Bob"),
+	];
+
     GenesisConfig {
         system: Some(SystemConfig {
             code: wasm_binary.to_vec(),
@@ -154,7 +170,14 @@ fn testnet_genesis(
                 .collect(),
 		}),
 		pallet_treasury: Some(Default::default()),
-        pallet_sudo: Some(SudoConfig { key: root_key }),
+		pallet_sudo: Some(SudoConfig { key: root_key }),
+		pallet_vesting: Some(VestingConfig {
+            vesting: vested_accounts
+                .iter()
+                .cloned()
+                .map(|k| (k, 1000, 100, 1 << 98))
+                .collect(),
+        }),
         pallet_nft: Some(NftConfig {
             collection: vec![(
                 1,
@@ -170,7 +193,7 @@ fn testnet_genesis(
 					offchain_schema: vec![],
 					schema_version: SchemaVersion::default(),
                     sponsor: get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    unconfirmed_sponsor: get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    sponsor_confirmed: true,
                     const_on_chain_schema: vec![],
 					variable_on_chain_schema: vec![],
 					limits: CollectionLimits::default()
@@ -180,8 +203,8 @@ fn testnet_genesis(
             fungible_item_id: vec![],
             refungible_item_id: vec![],
             chain_limit: ChainLimits {
-                collection_numbers_limit: 10,
-                account_token_ownership_limit: 10,
+                collection_numbers_limit: 100000,
+                account_token_ownership_limit: 1000000,
                 collections_admins_limit: 5,
                 custom_data_limit: 2048,
                 nft_sponsor_transfer_timeout: 15,
