@@ -7,7 +7,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import type { AccountId, EventRecord } from '@polkadot/types/interfaces';
 import { ApiPromise, Keyring } from "@polkadot/api";
-import { default as usingApi, submitTransactionAsync } from "../substrate/substrate-api";
+import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from "../substrate/substrate-api";
 import privateKey from '../substrate/privateKey';
 import { alicesPublicKey, nullPublicKey } from "../accounts";
 import { strToUTF16, utf16ToStr, hexToStr } from '../util/util';
@@ -86,7 +86,24 @@ function getCreateItemResult(events: EventRecord[]): CreateItemResult {
   return result;
 }
 
-export async function createCollectionExpectSuccess(name: string, description: string, tokenPrefix: string, mode: string): Promise<number> {
+export type CollectionMode = 'NFT' | 'Fungible' | 'ReFungible';
+export type CreateCollectionParams = {
+  mode: CollectionMode,
+  name: string,
+  description: string,
+  tokenPrefix: string
+};
+
+const defaultCreateCollectionParams: CreateCollectionParams = {
+  name: 'name',
+  description: 'description',
+  mode: 'NFT',
+  tokenPrefix: 'prefix'
+}
+
+export async function createCollectionExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
+  const {name, description, mode, tokenPrefix } = {...defaultCreateCollectionParams, ...params};
+
   let collectionId: number = 0;
   await usingApi(async (api) => {
     // Get number of collections before the transaction
@@ -120,15 +137,17 @@ export async function createCollectionExpectSuccess(name: string, description: s
   return collectionId;
 }
   
-export async function createCollectionExpectFailure(name: string, description: string, tokenPrefix: string, mode: string) {
+export async function createCollectionExpectFailure(params: Partial<CreateCollectionParams> = {}) {
+  const {name, description, mode, tokenPrefix } = {...defaultCreateCollectionParams, ...params};
+
   await usingApi(async (api) => {
     // Get number of collections before the transaction
     const AcollectionCount = parseInt((await api.query.nft.createdCollectionCount()).toString());
 
     // Run the CreateCollection transaction
     const alicePrivateKey = privateKey('//Alice');
-    const tx = api.tx.nft.createCollection(name, description, tokenPrefix, mode);
-    const events = await submitTransactionAsync(alicePrivateKey, tx);
+    const tx = api.tx.nft.createCollection(strToUTF16(name), strToUTF16(description), strToUTF16(tokenPrefix), mode);
+    const events = await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
     const result = getCreateCollectionResult(events);
 
     // Get number of collections after the transaction
@@ -168,11 +187,7 @@ export async function destroyCollectionExpectFailure(collectionId: number, sende
     // Run the DestroyCollection transaction
     const alicePrivateKey = privateKey(senderSeed);
     const tx = api.tx.nft.destroyCollection(collectionId);
-    const events = await submitTransactionAsync(alicePrivateKey, tx);
-    const result = getDestroyResult(events);
-
-    // What to expect
-    expect(result).to.be.false;
+    await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
 }
 
@@ -238,11 +253,7 @@ export async function removeCollectionSponsorExpectFailure(collectionId: number)
     // Run the transaction
     const alicePrivateKey = privateKey('//Alice');
     const tx = api.tx.nft.removeCollectionSponsor(collectionId);
-    const events = await submitTransactionAsync(alicePrivateKey, tx);
-    const result = getGenericResult(events);
-
-    // What to expect
-    expect(result.success).to.be.false;
+    await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
 }
 
@@ -252,11 +263,7 @@ export async function setCollectionSponsorExpectFailure(collectionId: number, sp
     // Run the transaction
     const alicePrivateKey = privateKey(senderSeed);
     const tx = api.tx.nft.setCollectionSponsor(collectionId, sponsor);
-    const events = await submitTransactionAsync(alicePrivateKey, tx);
-    const result = getGenericResult(events);
-
-    // What to expect
-    expect(result.success).to.be.false;
+    await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
 }
 
@@ -285,11 +292,7 @@ export async function confirmSponsorshipExpectFailure(collectionId: number, send
     // Run the transaction
     const sender = privateKey(senderSeed);
     const tx = api.tx.nft.confirmSponsorship(collectionId);
-    const events = await submitTransactionAsync(sender, tx);
-    const result = getGenericResult(events);
-
-    // What to expect
-    expect(result.success).to.be.false;
+    await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
   });
 }
 

@@ -111,9 +111,6 @@ describe('Contracts', () => {
       const bob = privateKey("//Bob");
 
       const [contract, deployer] = await deployFlipper(api);
-      const consoleError = console.error;
-      console.error = (...data: any[]) => {
-      };
 
       let expectedFlipValue = await getFlipValue(contract, deployer);
 
@@ -168,7 +165,6 @@ describe('Contracts', () => {
       const afterWhiteListDisabled = await getFlipValue(contract,deployer);
       expect(afterWhiteListDisabled).to.be.eq(expectedFlipValue, `Anyone can call contract with disabled whitelist.`);
 
-      console.error = consoleError;
     });
   });
 
