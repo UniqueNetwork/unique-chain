@@ -11,7 +11,7 @@ import privateKey from "./substrate/privateKey";
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 import { BigNumber } from 'bignumber.js';
-import { findUnusedAddress } from './util/helpers'
+import { findUnusedAddress } from './util/helpers';
 
 const value = 0;
 const gasLimit = 3000n * 1000000n;
@@ -63,7 +63,7 @@ async function prepareDeployer(api: ApiPromise) {
   return deployer;
 }
 
-async function deployFlipper(api: ApiPromise): Promise<[Contract, IKeyringPair]> {
+export async function deployFlipper(api: ApiPromise): Promise<[Contract, IKeyringPair]> {
   const metadata = JSON.parse(fs.readFileSync('./src/flipper/metadata.json').toString('utf-8'));
   const abi = new Abi(metadata);
 
@@ -176,7 +176,7 @@ describe('Contracts', () => {
     await usingApi(async (api) => {
       const metadata = JSON.parse(fs.readFileSync('./src/flipper/metadata.json').toString('utf-8'));
       const abi = new Abi(metadata);
-      const newContractInstance = new ContractPromise(api, abi, marketContractAddress);
+      const newContractInstance = new Contract(api, abi, marketContractAddress);
       expect(newContractInstance).to.have.property('address');
       expect(newContractInstance.address.toString()).to.equal(marketContractAddress);
     });
@@ -208,5 +208,5 @@ describe('Contracts', () => {
       // expect(alicesBalanceAfter < alicesBalanceBefore).to.be.true;
       // expect(bobsBalanceAfter > bobsBalanceBefore).to.be.true;
     });
-  })
+  });
 });
