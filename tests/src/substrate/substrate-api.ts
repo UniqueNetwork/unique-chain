@@ -68,7 +68,7 @@ export function submitTransactionAsync(sender: IKeyringPair, transaction: Submit
           resolve(events);
         } else if (transactionStatus == TransactionStatus.Fail) {
           console.log(`Something went wrong with transaction. Status: ${status}`);
-          reject("Transaction failed");
+          reject(events);
         }
       });
     } catch (e) {
@@ -107,7 +107,7 @@ export function submitTransactionExpectFailAsync(sender: IKeyringPair, transacti
         if (transactionStatus == TransactionStatus.Success) {
           resolve(events);
         } else if (transactionStatus == TransactionStatus.Fail) {
-          reject("Transaction failed");
+          reject(events);
         }
       });
     } catch (e) {
