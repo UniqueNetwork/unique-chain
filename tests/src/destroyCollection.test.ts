@@ -10,15 +10,15 @@ const expect = chai.expect;
 
 describe('integration test: ext. destroyCollection():', () => {
   it('NFT collection can be destroyed', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectSuccess(collectionId);
   });
   it('Fungible collection can be destroyed', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'Fungible');
+    const collectionId = await createCollectionExpectSuccess({ mode: 'Fungible' });
     await destroyCollectionExpectSuccess(collectionId);
   });
   it('ReFungible collection can be destroyed', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'ReFungible');
+    const collectionId = await createCollectionExpectSuccess({ mode: 'ReFungible' });
     await destroyCollectionExpectSuccess(collectionId);
   });
 });
@@ -32,12 +32,12 @@ describe('(!negative test!) integration test: ext. destroyCollection():', () => 
     });
   });
   it('(!negative test!) Destroy a collection that has already been destroyed', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectSuccess(collectionId);
     await destroyCollectionExpectFailure(collectionId);
   });
   it('(!negative test!) Destroy a collection using non-owner account', async () => {
-    const collectionId = await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+    const collectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectFailure(collectionId, '//Bob');
     await destroyCollectionExpectSuccess(collectionId, '//Alice');
   });
