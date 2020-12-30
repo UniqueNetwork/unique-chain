@@ -21,6 +21,8 @@ describe('Connection smoke test', () => {
   });
 
   it('Cannot connect to 255.255.255.255', async () => {
+    const log = console.log;
+    const error = console.error;
     console.log = function () {};
     console.error = function () {};
 
@@ -31,7 +33,7 @@ describe('Connection smoke test', () => {
       }, { provider: neverConnectProvider });
     })()).to.be.eventually.rejected;
 
-    delete console.log;
-    delete console.error;
+    console.log = log;
+    console.error = error;
   });
 });

@@ -5,7 +5,7 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { default as usingApi, submitTransactionAsync } from "./substrate/substrate-api";
+import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from "./substrate/substrate-api";
 import { alicesPublicKey, bobsPublicKey } from "./accounts";
 import privateKey from "./substrate/privateKey";
 import { BigNumber } from 'bignumber.js';
@@ -63,14 +63,13 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       const bobBalanceBefore = new BigNumber((await api.query.system.account(bobsPublicKey)).data.free.toString());
 
       const badTx = api.tx.balances.setBalance(alicesPublicKey, 0, 0);
-      const result = getGenericResult(await submitTransactionAsync(bobPrivateKey, badTx));
+      await expect(submitTransactionExpectFailAsync(bobPrivateKey, badTx)).to.be.rejected;
 
       const treasuryBalanceAfter = new BigNumber((await api.query.system.account(Treasury)).data.free.toString());
       const bobBalanceAfter = new BigNumber((await api.query.system.account(bobsPublicKey)).data.free.toString());
       const fee = bobBalanceBefore.minus(bobBalanceAfter);
       const treasuryIncrease = treasuryBalanceAfter.minus(treasuryBalanceBefore);
 
-      expect(result.success).to.be.false;
       expect(treasuryIncrease.toFixed()).to.be.equal(fee.toFixed());
     });
   });
@@ -80,7 +79,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       const treasuryBalanceBefore = new BigNumber((await api.query.system.account(Treasury)).data.free.toString());
       const aliceBalanceBefore = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
 
-      await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+      await createCollectionExpectSuccess();
 
       const treasuryBalanceAfter = new BigNumber((await api.query.system.account(Treasury)).data.free.toString());
       const aliceBalanceAfter = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
@@ -96,7 +95,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       const treasuryBalanceBefore = new BigNumber((await api.query.system.account(Treasury)).data.free.toString());
       const aliceBalanceBefore = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
 
-      await createCollectionExpectSuccess('A', 'B', 'C', 'NFT');
+      await createCollectionExpectSuccess();
 
       const treasuryBalanceAfter = new BigNumber((await api.query.system.account(Treasury)).data.free.toString());
       const aliceBalanceAfter = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
