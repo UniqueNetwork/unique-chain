@@ -4,8 +4,6 @@ import { IKeyringPair } from '@polkadot/types/types';
 import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
-import promisifySubstrate from './substrate/promisify-substrate';
 import usingApi, { submitTransactionAsync } from './substrate/substrate-api';
 import { ICollectionInterface } from './types';
 import { createCollectionExpectSuccess, destroyCollectionExpectSuccess, getCreateItemResult } from './util/helpers';
@@ -22,33 +20,26 @@ let collectionIdForTesting: number;
 3. Use this id for setSchemaVersion.
 */
 
-async function getDetailedCollectionInfo(api: ApiPromise, collectionId: number)
-  : Promise<ICollectionInterface | null> {
+const getDetailedCollectionInfo = async (api: ApiPromise, collectionId: number)
+  : Promise<ICollectionInterface | null> => {
   return await api.query.nft.collection(collectionId) as unknown as ICollectionInterface;
-}
+};
 
-async function getCollectionCount(api: ApiPromise): Promise<number> {
+const getCreatedCollectionCount = async (api: ApiPromise): Promise<number> => {
   // set global object - collectionsCount
-  return (await api.query.nft.collectionCount() as unknown as BN).toNumber();
-}
-
-function utf8Decoder(name: [Uint8Array]) {
-  const collectionNameArr = Array.prototype.slice.call(name);
-  return String.fromCharCode(...collectionNameArr);
-}
+  return (await api.query.nft.createdCollectionCount() as unknown as BN).toNumber();
+};
 
 describe('hooks', () => {
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
       alice = keyring.addFromUri('//Alice');
     });
   });
   it('choose or create collection for testing', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const newCollectionId = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: 'NFT'});
-      console.log('newCollectionId', newCollectionId);
-      collectionIdForTesting = newCollectionId;
+    await usingApi(async () => {
+      collectionIdForTesting = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: 'NFT'});
     });
   });
 });
@@ -56,7 +47,7 @@ describe('hooks', () => {
 describe('setSchemaVersion positive', () => {
   let tx;
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
       alice = keyring.addFromUri('//Alice');
     });
@@ -95,14 +86,14 @@ describe('setSchemaVersion positive', () => {
 describe('setSchemaVersion negative', () => {
   let tx;
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
       alice = keyring.addFromUri('//Alice');
     });
   });
   it('execute setSchemaVersion for not exists collection', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const collectionCount = await getCollectionCount(api);
+      const collectionCount = await getCreatedCollectionCount(api);
       const nonExistedCollectionId = collectionCount + 1;
       tx = api.tx.nft.setSchemaVersion(nonExistedCollectionId, 'ImageURL');
       try {
@@ -128,10 +119,9 @@ describe('setSchemaVersion negative', () => {
 
   it('execute setSchemaVersion for deleted collection', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const collectionCount = await getCollectionCount(api);
-      await destroyCollectionExpectSuccess(collectionCount);
+      await destroyCollectionExpectSuccess(collectionIdForTesting);
       try {
-        tx = api.tx.nft.setSchemaVersion(collectionCount, 'ImageURL');
+        tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'ImageURL');
         await submitTransactionAsync(alice, tx);
       } catch (e) {
         // tslint:disable-next-line:no-unused-expression
