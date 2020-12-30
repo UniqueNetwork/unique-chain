@@ -47,7 +47,7 @@ export function getGenericResult(events: EventRecord[]): GenericResult {
   return result;
 }
 
-function getCreateCollectionResult(events: EventRecord[]): CreateCollectionResult {
+export function getCreateCollectionResult(events: EventRecord[]): CreateCollectionResult {
   let success = false;
   let collectionId: number = 0;
   events.forEach(({ phase, event: { data, method, section } }) => {
@@ -65,7 +65,7 @@ function getCreateCollectionResult(events: EventRecord[]): CreateCollectionResul
   return result;
 }
 
-function getCreateItemResult(events: EventRecord[]): CreateItemResult {
+export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
   let success = false;
   let collectionId: number = 0;
   let itemId: number = 0;
