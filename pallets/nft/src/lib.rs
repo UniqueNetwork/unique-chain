@@ -544,18 +544,9 @@ decl_module! {
 
             // check params
             ensure!(decimal_points <= MAX_DECIMAL_POINTS, Error::<T>::CollectionDecimalPointLimitExceeded);
-
-            let mut name = collection_name.to_vec();
-            name.push(0);
-            ensure!(name.len() <= 64, Error::<T>::CollectionNameLimitExceeded);
-
-            let mut description = collection_description.to_vec();
-            description.push(0);
-            ensure!(name.len() <= 256, Error::<T>::CollectionDescriptionLimitExceeded);
-
-            let mut prefix = token_prefix.to_vec();
-            prefix.push(0);
-            ensure!(prefix.len() <= 16, Error::<T>::CollectionTokenPrefixLimitExceeded);
+            ensure!(collection_name.len() <= 64, Error::<T>::CollectionNameLimitExceeded);
+            ensure!(collection_description.len() <= 256, Error::<T>::CollectionDescriptionLimitExceeded);
+            ensure!(token_prefix.len() <= 16, Error::<T>::CollectionTokenPrefixLimitExceeded);
 
             // Generate next collection ID
             let next_id = CreatedCollectionCount::get()
@@ -573,13 +564,13 @@ decl_module! {
             // Create new collection
             let new_collection = CollectionType {
                 owner: who.clone(),
-                name: name,
+                name: collection_name,
                 mode: mode.clone(),
                 mint_mode: false,
                 access: AccessMode::Normal,
-                description: description,
+                description: collection_description,
                 decimal_points: decimal_points,
-                token_prefix: prefix,
+                token_prefix: token_prefix,
                 offchain_schema: Vec::new(),
                 schema_version: SchemaVersion::ImageURL,
                 sponsor: T::AccountId::default(),
