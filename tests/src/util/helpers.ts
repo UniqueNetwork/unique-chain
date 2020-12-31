@@ -10,11 +10,13 @@ import { ApiPromise, Keyring } from "@polkadot/api";
 import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from "../substrate/substrate-api";
 import privateKey from '../substrate/privateKey';
 import { alicesPublicKey, nullPublicKey } from "../accounts";
-import { strToUTF16, utf16ToStr, hexToStr } from '../util/util';
-import { IKeyringPair } from "@polkadot/types/types";
+import { strToUTF16, utf16ToStr, hexToStr } from './util';
+import { IKeyringPair } from '@polkadot/types/types';
 import { BigNumber } from 'bignumber.js';
 import { Struct, Enum } from '@polkadot/types/codec';
 import { u128 } from '@polkadot/types/primitive';
+import { ICollectionInterface } from '../types';
+import BN from "bn.js";
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -399,3 +401,12 @@ export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collecti
   });
 }
 
+export const getDetailedCollectionInfo = async (api: ApiPromise, collectionId: number)
+  : Promise<ICollectionInterface | null> => {
+  return await api.query.nft.collection(collectionId) as unknown as ICollectionInterface;
+};
+
+export const getCreatedCollectionCount = async (api: ApiPromise): Promise<number> => {
+  // set global object - collectionsCount
+  return (await api.query.nft.createdCollectionCount() as unknown as BN).toNumber();
+};

@@ -7,14 +7,20 @@ export interface ICollectionInterface {
   // constOnChainSchema
   Description: [BN, BN]; // utf16
   isReFungible: boolean;
+  Limits: {
+    AccountTokenOwnershipLimit: BN;
+    SponsoredMintSize: BN;
+    TokenLimit: BN;
+    SponsorTimeout: BN;
+  };
   MintMode: boolean;
   Mode: {
     Nft: null;
   };
   Name: [BN, BN]; // utf16
   OffchainSchema: [Uint8Array];
-  SchemaVersion: string;
   Owner: [Uint8Array];
+  SchemaVersion: string;
   // prefix
   // sponsor
   // tokenPrefix

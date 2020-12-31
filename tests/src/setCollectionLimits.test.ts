@@ -1,15 +1,12 @@
-// https://unique-network.readthedocs.io/en/latest/jsapi.html#setschemaversion
+// https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
 import { ApiPromise, Keyring } from '@polkadot/api';
 import { IKeyringPair } from '@polkadot/types/types';
-import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import usingApi, { submitTransactionAsync } from './substrate/substrate-api';
 import { ICollectionInterface } from './types';
 import {
-  createCollectionExpectSuccess,
-  destroyCollectionExpectSuccess,
-  getCreatedCollectionCount,
+  createCollectionExpectSuccess, getCreatedCollectionCount,
   getCreateItemResult,
   getDetailedCollectionInfo,
 } from './util/helpers';
@@ -18,13 +15,13 @@ chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 let alice: IKeyringPair;
+let bob: IKeyringPair;
 let collectionIdForTesting: number;
 
-/*
-1. We create collection.
-2. Save just created collection id.
-3. Use this id for setSchemaVersion.
-*/
+const accountTokenOwnershipLimit = 0;
+const sponsoredDataSize = 0;
+const sponsoredMintSize = 0;
+const tokenLimit = 0;
 
 describe('hooks', () => {
   before(async () => {
@@ -36,11 +33,12 @@ describe('hooks', () => {
   it('choose or create collection for testing', async () => {
     await usingApi(async () => {
       collectionIdForTesting = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: 'NFT'});
+      console.log('collectionIdForTesting', collectionIdForTesting);
     });
   });
 });
 
-describe('setSchemaVersion positive', () => {
+describe('setCollectionLimits positive', () => {
   let tx;
   before(async () => {
     await usingApi(async () => {
@@ -48,50 +46,56 @@ describe('setSchemaVersion positive', () => {
       alice = keyring.addFromUri('//Alice');
     });
   });
-  it('execute setSchemaVersion with image url and unique ', async () => {
+  it('execute setCollectionLimits with predefined params ', async () => {
     await usingApi(async (api: ApiPromise) => {
-      tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'Unique');
+      tx = api.tx.nft.setCollectionLimits(
+        collectionIdForTesting,
+        {
+          accountTokenOwnershipLimit,
+          sponsoredDataSize,
+          sponsoredMintSize,
+          tokenLimit,
+        },
+      );
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateItemResult(events);
-      const collectionInfo = await getDetailedCollectionInfo(api, collectionIdForTesting) as ICollectionInterface;
       // tslint:disable-next-line:no-unused-expression
       expect(result.success).to.be.true;
-      // tslint:disable-next-line:no-unused-expression
-      expect(collectionInfo).to.be.exist;
-      // tslint:disable-next-line:no-unused-expression
-      expect(collectionInfo ? collectionInfo.SchemaVersion.toString() : '').to.be.equal('Unique');
     });
   });
-
-  it('validate schema version with just entered data', async () => {
+  it('get collection limits defined in previous test', async () => {
     await usingApi(async (api: ApiPromise) => {
-      tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'ImageURL');
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getCreateItemResult(events);
       const collectionInfo = await getDetailedCollectionInfo(api, collectionIdForTesting) as ICollectionInterface;
-      // tslint:disable-next-line:no-unused-expression
-      expect(result.success).to.be.true;
-      // tslint:disable-next-line:no-unused-expression
-      expect(collectionInfo).to.be.exist;
-      // tslint:disable-next-line:no-unused-expression
-      expect(collectionInfo ? collectionInfo.SchemaVersion.toString() : '').to.be.equal('ImageURL');
+      expect(collectionInfo.Limits.AccountTokenOwnershipLimit.toNumber()).to.be.equal(accountTokenOwnershipLimit);
+      expect(collectionInfo.Limits.SponsoredMintSize.toNumber()).to.be.equal(sponsoredMintSize);
+      expect(collectionInfo.Limits.TokenLimit.toNumber()).to.be.equal(tokenLimit);
+      expect(collectionInfo.Limits.SponsorTimeout.toNumber()).to.be.equal(sponsoredDataSize);
     });
   });
 });
 
-describe('setSchemaVersion negative', () => {
+describe('setCollectionLimits negative', () => {
   let tx;
   before(async () => {
     await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
       alice = keyring.addFromUri('//Alice');
+      bob = keyring.addFromUri('//Bob');
     });
   });
-  it('execute setSchemaVersion for not exists collection', async () => {
+  it('execute setCollectionLimits for not exists collection', async () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionCount = await getCreatedCollectionCount(api);
       const nonExistedCollectionId = collectionCount + 1;
-      tx = api.tx.nft.setSchemaVersion(nonExistedCollectionId, 'ImageURL');
+      tx = api.tx.nft.setCollectionLimits(
+        nonExistedCollectionId,
+        {
+          accountTokenOwnershipLimit,
+          sponsoredDataSize,
+          sponsoredMintSize,
+          tokenLimit,
+        },
+      );
       try {
         await submitTransactionAsync(alice, tx);
       } catch (e) {
@@ -100,24 +104,37 @@ describe('setSchemaVersion negative', () => {
       }
     });
   });
-
-  it('execute setSchemaVersion with not correct schema version', async () => {
+  it('execute setCollectionLimits from user who is not owner of this collection', async () => {
     await usingApi(async (api: ApiPromise) => {
+      tx = api.tx.nft.setCollectionLimits(
+        collectionIdForTesting,
+        {
+          accountTokenOwnershipLimit,
+          sponsoredDataSize,
+          sponsoredMintSize,
+          tokenLimit,
+        },
+      );
       try {
-        tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'Test');
-        await submitTransactionAsync(alice, tx);
+        await submitTransactionAsync(bob, tx);
       } catch (e) {
         // tslint:disable-next-line:no-unused-expression
         expect(e).to.be.exist;
       }
     });
   });
-
-  it('execute setSchemaVersion for deleted collection', async () => {
+  it('execute setCollectionLimits with incorrect limits', async () => {
     await usingApi(async (api: ApiPromise) => {
-      await destroyCollectionExpectSuccess(collectionIdForTesting);
+      tx = api.tx.nft.setCollectionLimits(
+        collectionIdForTesting,
+        {
+          accountTokenOwnershipLimit: 'awdawd',
+          sponsorTransferTimeout: 'awd',
+          sponsoredDataSize: '12312312312312312',
+          tokenLimit: '-100',
+        },
+      );
       try {
-        tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'ImageURL');
         await submitTransactionAsync(alice, tx);
       } catch (e) {
         // tslint:disable-next-line:no-unused-expression
