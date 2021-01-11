@@ -4,7 +4,7 @@ import { IKeyringPair } from '@polkadot/types/types';
 import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import usingApi, { submitTransactionAsync } from './substrate/substrate-api';
+import usingApi, {submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import { ICollectionInterface } from './types';
 import {
   createCollectionExpectSuccess,
@@ -92,12 +92,13 @@ describe('setSchemaVersion negative', () => {
       const collectionCount = await getCreatedCollectionCount(api);
       const nonExistedCollectionId = collectionCount + 1;
       tx = api.tx.nft.setSchemaVersion(nonExistedCollectionId, 'ImageURL');
-      try {
+      await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
+      /*try {
         await submitTransactionAsync(alice, tx);
       } catch (e) {
         // tslint:disable-next-line:no-unused-expression
         expect(e).to.be.exist;
-      }
+      }*/
     });
   });
 
@@ -116,13 +117,15 @@ describe('setSchemaVersion negative', () => {
   it('execute setSchemaVersion for deleted collection', async () => {
     await usingApi(async (api: ApiPromise) => {
       await destroyCollectionExpectSuccess(collectionIdForTesting);
-      try {
+      tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'ImageURL');
+      await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
+      /*try {
         tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'ImageURL');
         await submitTransactionAsync(alice, tx);
       } catch (e) {
         // tslint:disable-next-line:no-unused-expression
         expect(e).to.be.exist;
-      }
+      }*/
     });
   });
 });

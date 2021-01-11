@@ -3,7 +3,7 @@ import { ApiPromise, Keyring } from '@polkadot/api';
 import { IKeyringPair } from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import usingApi, { submitTransactionAsync } from './substrate/substrate-api';
+import usingApi, {submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import { ICollectionInterface } from './types';
 import {
   createCollectionExpectSuccess, getCreatedCollectionCount,
@@ -33,7 +33,6 @@ describe('hooks', () => {
   it('choose or create collection for testing', async () => {
     await usingApi(async () => {
       collectionIdForTesting = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: 'NFT'});
-      console.log('collectionIdForTesting', collectionIdForTesting);
     });
   });
 });
@@ -96,12 +95,7 @@ describe('setCollectionLimits negative', () => {
           tokenLimit,
         },
       );
-      try {
-        await submitTransactionAsync(alice, tx);
-      } catch (e) {
-        // tslint:disable-next-line:no-unused-expression
-        expect(e).to.be.exist;
-      }
+      await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });
   it('execute setCollectionLimits from user who is not owner of this collection', async () => {
@@ -115,12 +109,7 @@ describe('setCollectionLimits negative', () => {
           tokenLimit,
         },
       );
-      try {
-        await submitTransactionAsync(bob, tx);
-      } catch (e) {
-        // tslint:disable-next-line:no-unused-expression
-        expect(e).to.be.exist;
-      }
+      await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
     });
   });
   it('execute setCollectionLimits with incorrect limits', async () => {
@@ -134,12 +123,7 @@ describe('setCollectionLimits negative', () => {
           tokenLimit: '-100',
         },
       );
-      try {
-        await submitTransactionAsync(alice, tx);
-      } catch (e) {
-        // tslint:disable-next-line:no-unused-expression
-        expect(e).to.be.exist;
-      }
+      await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });
 });
