@@ -67,33 +67,15 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
     });
   });
 
-  it('Remove admin from collection that has reached the maximum number of admins limit', async () => {
+  it('Remove admin from collection that has no admins', async () => {
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');
-      const accounts = [
-        'GsvVmjr1CBHwQHw84pPHMDxgNY3iBLz6Qn7qS3CH8qPhrHz',
-        'FoQJpPyadYccjavVdTWxpxU7rUEaYhfLCPwXgkfD6Zat9QP',
-        'JKspFU6ohf1Grg3Phdzj2pSgWvsYWzSfKghhfzMbdhNBWs5',
-        'JKspFU6ohf1Grg3Phdzj2pSgWvsYWzSfKghhfzMbdhNBWs5',
-        'Fr4NzY1udSFFLzb2R3qxVQkwz9cZraWkyfH4h3mVVk7BK7P',
-        'DfnTB4z7eUvYRqcGtTpFsLC69o6tvBSC1pEv8vWPZFtCkaK',
-        'HnMAUz7r2G8G3hB27SYNyit5aJmh2a5P4eMdDtACtMFDbam',
-        'DE14BzQ1bDXWPKeLoAqdLAm1GpyAWaWF1knF74cEZeomTBM',
-      ];
       const collectionId = await createCollectionExpectSuccess();
 
-      const chainLimit = await api.query.nft.chainLimit() as unknown as { collections_admins_limit: BN };
-      const chainLimitNumber = chainLimit.collections_admins_limit.toNumber();
-      expect(chainLimitNumber).to.be.equal(5);
+      const adminListBeforeAddAdmin: any = (await api.query.nft.adminList(collectionId));
+      expect(adminListBeforeAddAdmin).to.have.lengthOf(0);
 
-      for (let i = 0; i < chainLimitNumber - 1; i++) {
-        const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, accounts[i]);
-        await submitTransactionAsync(Alice, changeAdminTx);
-        const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
-        expect(adminListAfterAddAdmin).to.be.contains(accounts[i]);
-      }
-
-      const tx = api.tx.nft.removeCollectionAdmin(collectionId, accounts[1]);
+      const tx = api.tx.nft.removeCollectionAdmin(collectionId, Alice.address);
       await expect(submitTransactionExpectFailAsync(Alice, tx)).to.be.rejected;
     });
   });
