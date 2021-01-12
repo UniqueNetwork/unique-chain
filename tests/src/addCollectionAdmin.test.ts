@@ -67,7 +67,6 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
         'GsvVmjr1CBHwQHw84pPHMDxgNY3iBLz6Qn7qS3CH8qPhrHz',
         'FoQJpPyadYccjavVdTWxpxU7rUEaYhfLCPwXgkfD6Zat9QP',
         'JKspFU6ohf1Grg3Phdzj2pSgWvsYWzSfKghhfzMbdhNBWs5',
-        'JKspFU6ohf1Grg3Phdzj2pSgWvsYWzSfKghhfzMbdhNBWs5',
         'Fr4NzY1udSFFLzb2R3qxVQkwz9cZraWkyfH4h3mVVk7BK7P',
         'DfnTB4z7eUvYRqcGtTpFsLC69o6tvBSC1pEv8vWPZFtCkaK',
         'HnMAUz7r2G8G3hB27SYNyit5aJmh2a5P4eMdDtACtMFDbam',
@@ -79,7 +78,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
       const chainLimitNumber = chainLimit.collections_admins_limit.toNumber();
       expect(chainLimitNumber).to.be.equal(5);
 
-      for (let i = 0; i < chainLimitNumber - 1; i++) {
+      for (let i = 0; i < chainLimitNumber; i++) {
         const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, accounts[i]);
         await submitTransactionAsync(Alice, changeAdminTx);
         const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
@@ -87,7 +86,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
         expect(adminListAfterAddAdmin).to.be.contains(accounts[i]);
       }
 
-      const tx = api.tx.nft.addCollectionAdmin(collectionId, accounts[chainLimitNumber - 1]);
+      const tx = api.tx.nft.addCollectionAdmin(collectionId, accounts[chainLimitNumber]);
       await expect(submitTransactionExpectFailAsync(Alice, tx)).to.be.rejected;
     });
   });
