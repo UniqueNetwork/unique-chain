@@ -16,7 +16,12 @@
     "typescript": "^3.9.7"
   },
   "scripts": {
-    "test": "mocha --timeout 9999999 -r ts-node/register ./**/*.test.ts"
+    "test": "mocha --timeout 9999999 -r ts-node/register ./**/*.test.ts",
+    "load": "mocha --timeout 9999999 -r ts-node/register ./**/*.load.ts",
+    "testSetSchemaVersion": "mocha --timeout 9999999 -r ts-node/register ./**/setSchemaVersion.test.ts",
+    "testSetCollectionLimits": "mocha --timeout 9999999 -r ts-node/register ./**/setCollectionLimits.test.ts",
+    "testConnection": "mocha --timeout 9999999 -r ts-node/register ./**/connection.test.ts",
+    "testCollection": "mocha --timeout 9999999 -r ts-node/register ./**/createCollection.test.ts"
   },
   "author": "",
   "license": "Apache 2.0",

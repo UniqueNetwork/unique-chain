@@ -11,11 +11,12 @@ import privateKey from "./substrate/privateKey";
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 import { BigNumber } from 'bignumber.js';
-import { findUnusedAddress } from './util/helpers'
+import { findUnusedAddress } from './util/helpers';
 
 const value = 0;
 const gasLimit = 3000n * 1000000n;
 const endowment = `1000000000000000`;
+const marketContractAddress = '5CYN9j3YvRkqxewoxeSvRbhAym4465C57uMmX5j4yz99L5H6';
 
 function deployBlueprint(alice: IKeyringPair, code: CodePromise): Promise<Blueprint> {
   return new Promise<Blueprint>(async (resolve, reject) => {
@@ -33,6 +34,7 @@ function deployBlueprint(alice: IKeyringPair, code: CodePromise): Promise<Bluepr
 
 function deployContract(alice: IKeyringPair, blueprint: Blueprint) : Promise<any> {
   return new Promise<any>(async (resolve, reject) => {
+    const endowment = 1000000000000000n;
     const initValue = true;
 
     const unsub = await blueprint.tx
@@ -61,7 +63,7 @@ async function prepareDeployer(api: ApiPromise) {
   return deployer;
 }
 
-async function deployFlipper(api: ApiPromise): Promise<[Contract, IKeyringPair]> {
+export async function deployFlipper(api: ApiPromise): Promise<[Contract, IKeyringPair]> {
   const metadata = JSON.parse(fs.readFileSync('./src/flipper/metadata.json').toString('utf-8'));
   const abi = new Abi(metadata);
 
@@ -107,11 +109,8 @@ describe('Contracts', () => {
   it(`Whitelisted account can call contract.`, async () => {
     await usingApi(async api => {
       const bob = privateKey("//Bob");
-      
+
       const [contract, deployer] = await deployFlipper(api);
-      const consoleError = console.error;
-      console.error = (...data: any[]) => {
-      };
 
       let expectedFlipValue = await getFlipValue(contract, deployer);
 
@@ -166,7 +165,16 @@ describe('Contracts', () => {
       const afterWhiteListDisabled = await getFlipValue(contract,deployer);
       expect(afterWhiteListDisabled).to.be.eq(expectedFlipValue, `Anyone can call contract with disabled whitelist.`);
 
-      console.error = consoleError;
+    });
+  });
+
+  it('Can initialize contract instance', async () => {
+    await usingApi(async (api) => {
+      const metadata = JSON.parse(fs.readFileSync('./src/flipper/metadata.json').toString('utf-8'));
+      const abi = new Abi(metadata);
+      const newContractInstance = new Contract(api, abi, marketContractAddress);
+      expect(newContractInstance).to.have.property('address');
+      expect(newContractInstance.address.toString()).to.equal(marketContractAddress);
     });
   });
 
@@ -196,5 +204,5 @@ describe('Contracts', () => {
       // expect(alicesBalanceAfter < alicesBalanceBefore).to.be.true;
       // expect(bobsBalanceAfter > bobsBalanceBefore).to.be.true;
     });
-  })
+  });
 });
