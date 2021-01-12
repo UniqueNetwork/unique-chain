@@ -1,4 +1,6 @@
-﻿import chai from 'chai';
+﻿import { ApiPromise } from '@polkadot/api';
+import BN from 'bn.js';
+import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
@@ -55,6 +57,38 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
       await createCollectionExpectSuccess();
+    });
+  });
+
+  it('Add an admin to a collection that has reached the maximum number of admins limit', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const Alice = privateKey('//Alice');
+      const accounts = [
+        'GsvVmjr1CBHwQHw84pPHMDxgNY3iBLz6Qn7qS3CH8qPhrHz',
+        'FoQJpPyadYccjavVdTWxpxU7rUEaYhfLCPwXgkfD6Zat9QP',
+        'JKspFU6ohf1Grg3Phdzj2pSgWvsYWzSfKghhfzMbdhNBWs5',
+        'JKspFU6ohf1Grg3Phdzj2pSgWvsYWzSfKghhfzMbdhNBWs5',
+        'Fr4NzY1udSFFLzb2R3qxVQkwz9cZraWkyfH4h3mVVk7BK7P',
+        'DfnTB4z7eUvYRqcGtTpFsLC69o6tvBSC1pEv8vWPZFtCkaK',
+        'HnMAUz7r2G8G3hB27SYNyit5aJmh2a5P4eMdDtACtMFDbam',
+        'DE14BzQ1bDXWPKeLoAqdLAm1GpyAWaWF1knF74cEZeomTBM',
+      ];
+      const collectionId = await createCollectionExpectSuccess();
+
+      const chainLimit = await api.query.nft.chainLimit() as unknown as { collections_admins_limit: BN };
+      const chainLimitNumber = chainLimit.collections_admins_limit.toNumber();
+      expect(chainLimitNumber).to.be.equal(5);
+
+      for (let i = 0; i < chainLimitNumber - 1; i++) {
+        const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, accounts[i]);
+        await submitTransactionAsync(Alice, changeAdminTx);
+        const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
+        adminListAfterAddAdmin.map((item: any) => console.log(item.toString()));
+        expect(adminListAfterAddAdmin).to.be.contains(accounts[i]);
+      }
+
+      const tx = api.tx.nft.addCollectionAdmin(collectionId, accounts[chainLimitNumber - 1]);
+      await expect(submitTransactionExpectFailAsync(Alice, tx)).to.be.rejected;
     });
   });
 });

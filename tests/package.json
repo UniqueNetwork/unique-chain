@@ -17,7 +17,8 @@
   },
   "scripts": {
     "test": "mocha --timeout 9999999 -r ts-node/register ./**/*.test.ts",
-    "load": "mocha --timeout 9999999 -r ts-node/register ./**/*.load.ts"
+    "load": "mocha --timeout 9999999 -r ts-node/register ./**/*.load.ts",
+    "testAddCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/addCollectionAdmin.test.ts"
   },
   "author": "",
   "license": "Apache 2.0",
