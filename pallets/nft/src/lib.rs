@@ -1503,6 +1503,14 @@ decl_module! {
             Ok(())
         }
 
+        #[weight = T::WeightInfo::add_to_contract_white_list()]
+        pub fn wasm_dummy_method(
+            origin
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            Ok(())
+        }
+
         /// Remove an address from smart contract white list.
         /// 
         /// # Permissions
