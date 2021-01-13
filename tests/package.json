@@ -21,7 +21,8 @@
     "testSetSchemaVersion": "mocha --timeout 9999999 -r ts-node/register ./**/setSchemaVersion.test.ts",
     "testSetCollectionLimits": "mocha --timeout 9999999 -r ts-node/register ./**/setCollectionLimits.test.ts",
     "testConnection": "mocha --timeout 9999999 -r ts-node/register ./**/connection.test.ts",
-    "testCollection": "mocha --timeout 9999999 -r ts-node/register ./**/createCollection.test.ts"
+    "testCollection": "mocha --timeout 9999999 -r ts-node/register ./**/createCollection.test.ts",
+    "testCreateMultipleItems": "mocha --timeout 9999999 -r ts-node/register ./**/createMultipleItems.test.ts"
   },
   "author": "",
   "license": "Apache 2.0",
