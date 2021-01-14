@@ -88,7 +88,26 @@ export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
   return result;
 }
 
-export type CollectionMode = 'NFT' | 'Fungible' | 'ReFungible';
+interface Invalid {
+  type: 'Invalid'
+}
+
+interface Nft {
+  type: 'NFT'
+}
+
+interface Fungible {
+  type: 'Fungible',
+  decimalPoints: number
+}
+
+interface ReFungible {
+  type: 'ReFungible',
+  decimalPoints: number
+}
+
+type CollectionMode = Nft | Fungible | ReFungible | Invalid;
+
 export type CreateCollectionParams = {
   mode: CollectionMode,
   name: string,
@@ -99,7 +118,7 @@ export type CreateCollectionParams = {
 const defaultCreateCollectionParams: CreateCollectionParams = {
   name: 'name',
   description: 'description',
-  mode: 'NFT',
+  mode: { type: "NFT" },
   tokenPrefix: 'prefix'
 }
 
@@ -113,7 +132,22 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
 
     // Run the CreateCollection transaction
     const alicePrivateKey = privateKey('//Alice');
-    const tx = api.tx.nft.createCollection(strToUTF16(name), strToUTF16(description), strToUTF16(tokenPrefix), mode);
+
+    let modeprm = {};
+    if (mode.type == 'NFT') {
+      modeprm = {nft: null};
+    }
+    else if (mode.type == 'Fungible') {
+      modeprm = {fungible: mode.decimalPoints};
+    }
+    else if (mode.type == 'ReFungible') {
+      modeprm = {refungible: mode.decimalPoints};
+    }
+    else if (mode.type == 'Invalid') {
+      modeprm = {invalid: null};
+    }
+
+    const tx = api.tx.nft.createCollection(strToUTF16(name), strToUTF16(description), strToUTF16(tokenPrefix), modeprm);
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getCreateCollectionResult(events);
 

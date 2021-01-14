@@ -6,14 +6,14 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { default as usingApi } from "./substrate/substrate-api";
-import { createCollectionExpectSuccess, createCollectionExpectFailure, CollectionMode } from "./util/helpers";
+import { createCollectionExpectSuccess, createCollectionExpectFailure } from "./util/helpers";
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 describe('integration test: ext. createCollection():', () => {
   it('Create new NFT collection', async () => {
-    await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: 'NFT'});
+    await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'}});
   });
   it('Create new NFT collection whith collection_name of maximum length (64 bytes)', async () => {
     await createCollectionExpectSuccess({name: 'A'.repeat(64)});
@@ -25,10 +25,10 @@ describe('integration test: ext. createCollection():', () => {
     await createCollectionExpectSuccess({tokenPrefix: 'A'.repeat(16)});
   });
   it('Create new Fungible collection', async () => {
-    await createCollectionExpectSuccess({mode: 'Fungible'});
+    await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
   });
   it('Create new ReFungible collection', async () => {
-    await createCollectionExpectSuccess({mode: 'ReFungible'});
+    await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
   });
 });
 
@@ -38,7 +38,7 @@ describe('(!negative test!) integration test: ext. createCollection():', () => {
       const AcollectionCount = parseInt((await api.query.nft.collectionCount()).toString());
 
       const badTransaction = async function () { 
-        await createCollectionExpectSuccess({mode: 'BadMode' as CollectionMode});
+        await createCollectionExpectSuccess({mode: {type: 'Invalid'}});
       };
       expect(badTransaction()).to.be.rejected;
 
