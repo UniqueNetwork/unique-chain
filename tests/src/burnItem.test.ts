@@ -89,7 +89,7 @@ describe('integration test: ext. burnItem():', () => {
 
   });
 
-  it.only('Burn owned portion of item in ReFungible collection', async () => {
+  it('Burn owned portion of item in ReFungible collection', async () => {
     const createMode = 'ReFungible';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 2 }});
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
