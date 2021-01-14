@@ -35,7 +35,7 @@ describe('hooks', () => {
   });
   it('choose or create collection for testing', async () => {
     await usingApi(async () => {
-      collectionIdForTesting = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: 'NFT'});
+      collectionIdForTesting = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'}});
     });
   });
 });
