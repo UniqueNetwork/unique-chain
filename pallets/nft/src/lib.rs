@@ -1153,7 +1153,7 @@ decl_module! {
             }
 
             // Reduce approval by transferred amount or remove if remaining approval drops to 0
-            if approval - value > 0 {
+            if approval.checked_sub(value).unwrap_or(0) > 0 {
                 <Allowances<T>>::insert(collection_id, (item_id, &from, &recipient), approval - value);
             }
             else {

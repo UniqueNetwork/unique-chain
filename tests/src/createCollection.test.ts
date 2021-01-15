@@ -37,7 +37,9 @@ describe('(!negative test!) integration test: ext. createCollection():', () => {
     await usingApi(async (api) => {
       const AcollectionCount = parseInt((await api.query.nft.collectionCount()).toString(), 10);
 
-      const badTransaction = async () => await createCollectionExpectSuccess({mode: {type: 'Invalid'}});
+      const badTransaction = async () => {
+        await createCollectionExpectSuccess({mode: {type: 'Invalid'}});
+      };
       // tslint:disable-next-line:no-unused-expression
       expect(badTransaction()).to.be.rejected;
 

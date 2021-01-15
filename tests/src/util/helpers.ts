@@ -112,6 +112,20 @@ interface ReFungible {
   decimalPoints: number;
 }
 
+interface Nft {
+  type: 'NFT'
+}
+
+interface Fungible {
+  type: 'Fungible',
+  decimalPoints: number
+}
+
+interface ReFungible {
+  type: 'ReFungible',
+  decimalPoints: number
+}
+
 type CollectionMode = Nft | Fungible | ReFungible | Invalid;
 
 export type CreateCollectionParams = {
