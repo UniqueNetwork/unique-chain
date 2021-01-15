@@ -14,11 +14,11 @@ describe('integration test: ext. destroyCollection():', () => {
     await destroyCollectionExpectSuccess(collectionId);
   });
   it('Fungible collection can be destroyed', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode: 'Fungible' });
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     await destroyCollectionExpectSuccess(collectionId);
   });
   it('ReFungible collection can be destroyed', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode: 'ReFungible' });
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
     await destroyCollectionExpectSuccess(collectionId);
   });
 });
