@@ -5,15 +5,15 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { default as usingApi } from "./substrate/substrate-api";
-import { createCollectionExpectSuccess, createCollectionExpectFailure, CollectionMode } from "./util/helpers";
+import { default as usingApi } from './substrate/substrate-api';
+import { createCollectionExpectFailure, createCollectionExpectSuccess } from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 describe('integration test: ext. createCollection():', () => {
   it('Create new NFT collection', async () => {
-    await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: 'NFT'});
+    await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'}});
   });
   it('Create new NFT collection whith collection_name of maximum length (64 bytes)', async () => {
     await createCollectionExpectSuccess({name: 'A'.repeat(64)});
@@ -25,34 +25,33 @@ describe('integration test: ext. createCollection():', () => {
     await createCollectionExpectSuccess({tokenPrefix: 'A'.repeat(16)});
   });
   it('Create new Fungible collection', async () => {
-    await createCollectionExpectSuccess({mode: 'Fungible'});
+    await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
   });
   it('Create new ReFungible collection', async () => {
-    await createCollectionExpectSuccess({mode: 'ReFungible'});
+    await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
   });
 });
 
 describe('(!negative test!) integration test: ext. createCollection():', () => {
   it('(!negative test!) create new NFT collection whith incorrect data (mode)', async () => {
     await usingApi(async (api) => {
-      const AcollectionCount = parseInt((await api.query.nft.collectionCount()).toString());
+      const AcollectionCount = parseInt((await api.query.nft.collectionCount()).toString(), 10);
 
-      const badTransaction = async function () { 
-        await createCollectionExpectSuccess({mode: 'BadMode' as CollectionMode});
-      };
+      const badTransaction = async () => await createCollectionExpectSuccess({mode: {type: 'Invalid'}});
+      // tslint:disable-next-line:no-unused-expression
       expect(badTransaction()).to.be.rejected;
 
-      const BcollectionCount = parseInt((await api.query.nft.collectionCount()).toString());
+      const BcollectionCount = parseInt((await api.query.nft.collectionCount()).toString(), 10);
       expect(BcollectionCount).to.be.equal(AcollectionCount, 'Error: Incorrect collection created.');
     });
   });
   it('(!negative test!) create new NFT collection whith incorrect data (collection_name)', async () => {
-    await createCollectionExpectFailure({name: 'A'.repeat(65)});
+    await createCollectionExpectFailure({ name: 'A'.repeat(65), mode: {type: 'NFT'}});
   });
   it('(!negative test!) create new NFT collection whith incorrect data (collection_description)', async () => {
-    await createCollectionExpectFailure({description: 'A'.repeat(257)});
+    await createCollectionExpectFailure({ description: 'A'.repeat(257), mode: { type: 'NFT' }});
   });
   it('(!negative test!) create new NFT collection whith incorrect data (token_prefix)', async () => {
-    await createCollectionExpectFailure({tokenPrefix: 'A'.repeat(17)});
+    await createCollectionExpectFailure({tokenPrefix: 'A'.repeat(17), mode: {type: 'NFT'}});
   });
 });
