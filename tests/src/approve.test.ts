@@ -7,7 +7,7 @@ import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
-import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
+import { default as usingApi } from './substrate/substrate-api';
 import {
   approveExpectFail,
   approveExpectSuccess,
@@ -29,11 +29,12 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
       await approveExpectSuccess(nftCollectionId, newNftTokenId, Alice, Bob);
       // fungible
-      const fungibleCollectionId = await createCollectionExpectSuccess({mode: 'Fungible'});
+      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
       const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible');
       await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob);
       // reFungible
-      const reFungibleCollectionId = await createCollectionExpectSuccess({mode: 'ReFungible'});
+      const reFungibleCollectionId =
+        await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
 
@@ -54,12 +55,13 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
       await approveExpectSuccess(nftCollectionId, newNftTokenId, Alice, Bob, 1);
       await approveExpectSuccess(nftCollectionId, newNftTokenId, Alice, Bob, 0);
       // fungible
-      const fungibleCollectionId = await createCollectionExpectSuccess({mode: 'Fungible'});
+      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
       const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible');
       await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob, 1);
       await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob, 0);
       // reFungible
-      const reFungibleCollectionId = await createCollectionExpectSuccess({mode: 'ReFungible'});
+      const reFungibleCollectionId =
+        await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob, 1);
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob, 0);
@@ -81,10 +83,11 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
       const nftCollectionId = await createCollectionExpectSuccess();
       await approveExpectFail(nftCollectionId + 1, 1, Alice, Bob);
       // fungible
-      const fungibleCollectionId = await createCollectionExpectSuccess({mode: 'Fungible'});
+      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
       await approveExpectFail(fungibleCollectionId + 1, 1, Alice, Bob);
       // reFungible
-      const reFungibleCollectionId = await createCollectionExpectSuccess({mode: 'ReFungible'});
+      const reFungibleCollectionId =
+        await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
       await approveExpectFail(reFungibleCollectionId + 1, 1, Alice, Bob);
       // garbage collection :-D
       await destroyCollectionExpectSuccess(nftCollectionId);
@@ -102,11 +105,12 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
       await destroyCollectionExpectSuccess(nftCollectionId);
       await approveExpectFail(nftCollectionId, 1, Alice, Bob);
       // fungible
-      const fungibleCollectionId = await createCollectionExpectSuccess({mode: 'Fungible'});
+      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
       await destroyCollectionExpectSuccess(fungibleCollectionId);
       await approveExpectFail(fungibleCollectionId, 1, Alice, Bob);
       // reFungible
-      const reFungibleCollectionId = await createCollectionExpectSuccess({mode: 'ReFungible'});
+      const reFungibleCollectionId =
+        await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
       await destroyCollectionExpectSuccess(reFungibleCollectionId);
       await approveExpectFail(reFungibleCollectionId, 1, Alice, Bob);
     });
@@ -120,10 +124,11 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
       const nftCollectionId = await createCollectionExpectSuccess();
       await approveExpectFail(nftCollectionId, 2, Alice, Bob);
       // fungible
-      const fungibleCollectionId = await createCollectionExpectSuccess({mode: 'Fungible'});
+      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
       await approveExpectFail(fungibleCollectionId, 2, Alice, Bob);
       // reFungible
-      const reFungibleCollectionId = await createCollectionExpectSuccess({mode: 'ReFungible'});
+      const reFungibleCollectionId =
+        await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
       await approveExpectFail(reFungibleCollectionId, 2, Alice, Bob);
       // garbage collection :-D
       await destroyCollectionExpectSuccess(nftCollectionId);
@@ -141,11 +146,12 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
       await approveExpectFail(nftCollectionId, newNftTokenId, Bob, Alice);
       // fungible
-      const fungibleCollectionId = await createCollectionExpectSuccess({mode: 'Fungible'});
+      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
       const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible');
       await approveExpectFail(fungibleCollectionId, newFungibleTokenId, Bob, Alice);
       // reFungible
-      const reFungibleCollectionId = await createCollectionExpectSuccess({mode: 'ReFungible'});
+      const reFungibleCollectionId =
+        await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, Bob, Alice);
 
