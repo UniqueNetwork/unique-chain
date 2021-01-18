@@ -26,7 +26,8 @@
     "testCollection": "mocha --timeout 9999999 -r ts-node/register ./**/createCollection.test.ts",
     "testApprove": "mocha --timeout 9999999 -r ts-node/register ./**/approve.test.ts",
     "testTransferFrom": "mocha --timeout 9999999 -r ts-node/register ./**/transferFrom.test.ts",
-    "testCreateCollection": "mocha --timeout 9999999 -r ts-node/register ./**/createCollection.test.ts"
+    "testCreateCollection": "mocha --timeout 9999999 -r ts-node/register ./**/createCollection.test.ts",
+    "testToggleContractWhiteList": "mocha --timeout 9999999 -r ts-node/register ./**/toggleContractWhiteList.test.ts"
   },
   "author": "",
   "license": "Apache 2.0",
