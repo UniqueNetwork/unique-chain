@@ -37,11 +37,6 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
         await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
-
-      // garbage collection :-D
-      await destroyCollectionExpectSuccess(nftCollectionId);
-      await destroyCollectionExpectSuccess(fungibleCollectionId);
-      await destroyCollectionExpectSuccess(reFungibleCollectionId);
     });
   });
 
@@ -65,11 +60,6 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob, 1);
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob, 0);
-
-      // garbage collection :-D
-      await destroyCollectionExpectSuccess(nftCollectionId);
-      await destroyCollectionExpectSuccess(fungibleCollectionId);
-      await destroyCollectionExpectSuccess(reFungibleCollectionId);
     });
   });
 });
@@ -80,19 +70,14 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
       // nft
-      const nftCollectionId = await createCollectionExpectSuccess();
-      await approveExpectFail(nftCollectionId + 1, 1, Alice, Bob);
+      const nftCollectionCount = await api.query.nft.createdCollectionCount() as unknown as number;
+      await approveExpectFail(nftCollectionCount + 1, 1, Alice, Bob);
       // fungible
-      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-      await approveExpectFail(fungibleCollectionId + 1, 1, Alice, Bob);
+      const fungibleCollectionCount = await api.query.nft.createdCollectionCount() as unknown as number;
+      await approveExpectFail(fungibleCollectionCount + 1, 1, Alice, Bob);
       // reFungible
-      const reFungibleCollectionId =
-        await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
-      await approveExpectFail(reFungibleCollectionId + 1, 1, Alice, Bob);
-      // garbage collection :-D
-      await destroyCollectionExpectSuccess(nftCollectionId);
-      await destroyCollectionExpectSuccess(fungibleCollectionId);
-      await destroyCollectionExpectSuccess(reFungibleCollectionId);
+      const reFungibleCollectionCount = await api.query.nft.createdCollectionCount() as unknown as number;
+      await approveExpectFail(reFungibleCollectionCount + 1, 1, Alice, Bob);
     });
   });
 
@@ -130,10 +115,6 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
       const reFungibleCollectionId =
         await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
       await approveExpectFail(reFungibleCollectionId, 2, Alice, Bob);
-      // garbage collection :-D
-      await destroyCollectionExpectSuccess(nftCollectionId);
-      await destroyCollectionExpectSuccess(fungibleCollectionId);
-      await destroyCollectionExpectSuccess(reFungibleCollectionId);
     });
   });
 
@@ -154,11 +135,6 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
         await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, Bob, Alice);
-
-      // garbage collection :-D
-      await destroyCollectionExpectSuccess(nftCollectionId);
-      await destroyCollectionExpectSuccess(fungibleCollectionId);
-      await destroyCollectionExpectSuccess(reFungibleCollectionId);
     });
   });
 });

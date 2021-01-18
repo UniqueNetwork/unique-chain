@@ -45,11 +45,6 @@ describe('Integration Test transferFrom(from, recipient, collection_id, item_id,
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
       await transferFromExpectSuccess(reFungibleCollectionId,
         newReFungibleTokenId, Bob, Alice, Charlie, 1, 'ReFungible');
-
-      // garbage collection :-D
-      await destroyCollectionExpectSuccess(nftCollectionId);
-      await destroyCollectionExpectSuccess(fungibleCollectionId);
-      await destroyCollectionExpectSuccess(reFungibleCollectionId);
     });
   });
 });
@@ -61,27 +56,21 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       const Bob = privateKey('//Bob');
       const Charlie = privateKey('//CHARLIE');
       // nft
-      const nftCollectionId = await createCollectionExpectSuccess();
-      await approveExpectFail(nftCollectionId + 1, 1, Alice, Bob);
+      const nftCollectionCount = await api.query.nft.createdCollectionCount() as unknown as number;
+      await approveExpectFail(nftCollectionCount + 1, 1, Alice, Bob);
 
-      await transferFromExpectFail(nftCollectionId + 1, 1, Bob, Alice, Charlie, 1);
+      await transferFromExpectFail(nftCollectionCount + 1, 1, Bob, Alice, Charlie, 1);
 
       // fungible
-      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-      await approveExpectFail(fungibleCollectionId + 1, 1, Alice, Bob);
+      const fungibleCollectionCount = await api.query.nft.createdCollectionCount() as unknown as number;
+      await approveExpectFail(fungibleCollectionCount + 1, 1, Alice, Bob);
 
-      await transferFromExpectFail(fungibleCollectionId + 1, 1, Bob, Alice, Charlie, 1);
+      await transferFromExpectFail(fungibleCollectionCount + 1, 1, Bob, Alice, Charlie, 1);
       // reFungible
-      const reFungibleCollectionId = await
-        createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
-      await approveExpectFail(reFungibleCollectionId + 1, 1, Alice, Bob);
+      const reFungibleCollectionCount = await api.query.nft.createdCollectionCount() as unknown as number;
+      await approveExpectFail(reFungibleCollectionCount + 1, 1, Alice, Bob);
 
-      await transferFromExpectFail(reFungibleCollectionId + 1, 1, Bob, Alice, Charlie, 1);
-
-      // garbage collection :-D
-      await destroyCollectionExpectSuccess(nftCollectionId);
-      await destroyCollectionExpectSuccess(fungibleCollectionId);
-      await destroyCollectionExpectSuccess(reFungibleCollectionId);
+      await transferFromExpectFail(reFungibleCollectionCount + 1, 1, Bob, Alice, Charlie, 1);
     });
   });
 
@@ -124,11 +113,6 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await transferFromExpectFail(reFungibleCollectionId,
         newReFungibleTokenId, Bob, Alice, Charlie, 1);
-
-      // garbage collection :-D
-      await destroyCollectionExpectSuccess(nftCollectionId);
-      await destroyCollectionExpectSuccess(fungibleCollectionId);
-      await destroyCollectionExpectSuccess(reFungibleCollectionId);
     });
   });
 
@@ -156,11 +140,6 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
       await transferFromExpectFail(reFungibleCollectionId,
         newReFungibleTokenId, Bob, Alice, Charlie, 2);
-
-      // garbage collection :-D
-      await destroyCollectionExpectSuccess(nftCollectionId);
-      await destroyCollectionExpectSuccess(fungibleCollectionId);
-      await destroyCollectionExpectSuccess(reFungibleCollectionId);
     });
   });
 
@@ -204,10 +183,6 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
         // tslint:disable-next-line:no-unused-expression
         expect(e).to.be.exist;
       }
-      // garbage collection :-D
-      await destroyCollectionExpectSuccess(nftCollectionId);
-      await destroyCollectionExpectSuccess(fungibleCollectionId);
-      await destroyCollectionExpectSuccess(reFungibleCollectionId);
     });
   });
 });
