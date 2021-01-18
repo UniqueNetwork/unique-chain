@@ -419,6 +419,7 @@ decl_storage! {
         pub AddressTokens get(fn address_tokens): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => Vec<TokenId>;
 
         /// Tokens transfer baskets
+        pub CreateItemBasket get(fn create_item_basket): map hasher(twox_64_concat) (CollectionId, T::AccountId) => T::BlockNumber;
         pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => T::BlockNumber;
         pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => T::BlockNumber;
         pub ReFungibleTransferBasket get(fn refungible_transfer_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => T::BlockNumber;
@@ -2297,9 +2298,26 @@ where
         let mut sponsor: T::AccountId = match IsSubType::<Call<T>>::is_sub_type(call) {
             Some(Call::create_item(collection_id, _owner, _properties)) => {
 
+                // sponsor timeout
+                let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
+
+                let limit = <Collection<T>>::get(collection_id).limits.sponsor_transfer_timeout;
+                let mut sponsored = true;
+                if <CreateItemBasket<T>>::contains_key((collection_id, &who)) {
+                    let last_tx_block = <CreateItemBasket<T>>::get((collection_id, &who));
+                    let limit_time = last_tx_block + limit.into();
+                    if block_number <= limit_time {
+                        sponsored = false;
+                    }
+                }
+                if sponsored {
+                    <CreateItemBasket<T>>::insert((collection_id, who.clone()), block_number);
+                }
+
                 // check free create limit
                 if (<Collection<T>>::get(collection_id).limits.sponsored_data_size >= (_properties.len() as u32)) &&
-                   (<Collection<T>>::get(collection_id).sponsor_confirmed)
+                   (<Collection<T>>::get(collection_id).sponsor_confirmed) &&
+                   (sponsored)
                 {
                     <Collection<T>>::get(collection_id).sponsor
                 } else {
