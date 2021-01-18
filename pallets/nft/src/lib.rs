@@ -74,6 +74,12 @@ pub enum CollectionMode {
     ReFungible(DecimalPoints),
 }
 
+impl Default for CollectionMode {
+    fn default() -> Self {
+        Self::Invalid
+    }
+}
+
 impl Into<u8> for CollectionMode {
     fn into(self) -> u8 {
         match self {
@@ -94,12 +100,6 @@ pub enum AccessMode {
 impl Default for AccessMode {
     fn default() -> Self {
         Self::Normal
-    }
-}
-
-impl Default for CollectionMode {
-    fn default() -> Self {
-        Self::Invalid
     }
 }
 
@@ -208,6 +208,11 @@ pub struct ChainLimits {
     pub nft_sponsor_transfer_timeout: u32,
     pub fungible_sponsor_transfer_timeout: u32,
     pub refungible_sponsor_transfer_timeout: u32,
+
+    // Schema limits
+    pub offchain_schema_limit: u32,
+    pub variable_on_chain_schema_limit: u32,
+    pub const_on_chain_schema_limit: u32,
 }
 
 pub trait WeightInfo {
@@ -367,7 +372,9 @@ decl_error! {
         /// Account token limit exceeded per collection
         AccountTokenLimitExceeded,
         /// Collection limit bounds per collection exceeded
-        CollectionLimitBoundsExceeded
+        CollectionLimitBoundsExceeded,
+        /// Schema data size limit bound exceeded
+        SchemaDataLimitExceeded
 	}
 }
 
@@ -1281,6 +1288,9 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
 
+            // check schema limit
+            ensure!(schema.len() as u32 > ChainLimit::get().offchain_schema_limit, "");
+
             let mut target_collection = <Collection<T>>::get(collection_id);
             target_collection.offchain_schema = schema;
             <Collection<T>>::insert(collection_id, target_collection);
@@ -1309,6 +1319,9 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
 
+            // check schema limit
+            ensure!(schema.len() as u32 > ChainLimit::get().const_on_chain_schema_limit, "");
+
             let mut target_collection = <Collection<T>>::get(collection_id);
             target_collection.const_on_chain_schema = schema;
             <Collection<T>>::insert(collection_id, target_collection);
@@ -1336,6 +1349,9 @@ decl_module! {
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
+
+            // check schema limit
+            ensure!(schema.len() as u32 > ChainLimit::get().variable_on_chain_schema_limit, "");
 
             let mut target_collection = <Collection<T>>::get(collection_id);
             target_collection.variable_on_chain_schema = schema;

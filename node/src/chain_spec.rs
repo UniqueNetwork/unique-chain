@@ -209,7 +209,10 @@ fn testnet_genesis(
                 custom_data_limit: 2048,
                 nft_sponsor_transfer_timeout: 15,
                 fungible_sponsor_transfer_timeout: 15,
-                refungible_sponsor_transfer_timeout: 15,
+				refungible_sponsor_transfer_timeout: 15,
+				offchain_schema_limit: 1024,
+				variable_on_chain_schema_limit: 1024,
+				const_on_chain_schema_limit: 1024,
             },
         }),
         pallet_contracts: Some(ContractsConfig {
