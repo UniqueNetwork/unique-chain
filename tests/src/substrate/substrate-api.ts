@@ -90,7 +90,6 @@ export function submitTransactionExpectFailAsync(sender: IKeyringPair, transacti
         res(rec);
         console.error = consoleError;
         console.log = consoleLog;
-        
       });
     };
     const reject = (errror: any) => {
@@ -103,6 +102,8 @@ export function submitTransactionExpectFailAsync(sender: IKeyringPair, transacti
     try {
       await transaction.signAndSend(sender, ({ events = [], status }) => {
         const transactionStatus = getTransactionStatus(events, status);
+
+        console.log('transactionStatus', transactionStatus, 'events', events);
 
         if (transactionStatus == TransactionStatus.Success) {
           resolve(events);
