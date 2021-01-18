@@ -46,6 +46,7 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
       const changeAdminTxCharlie = api.tx.nft.addCollectionAdmin(collectionId, Charlie.address);
       await submitTransactionAsync(Bob, changeAdminTxCharlie);
       const adminListAfterAddNewAdmin: any = (await api.query.nft.adminList(collectionId));
+      expect(adminListAfterAddNewAdmin).to.be.contains(Bob.address);
       expect(adminListAfterAddNewAdmin).to.be.contains(Charlie.address);
     });
   });
@@ -83,7 +84,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
     });
   });
 
-  it("Can't add collection admin of destroyed collection.", async () => {
+  it("Can't add an admin to a destroyed collection.", async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       const Alice = privateKey('//Alice');
