@@ -4,7 +4,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
-import { createCollectionExpectSuccess } from './util/helpers';
+import {createCollectionExpectSuccess, destroyCollectionExpectSuccess} from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -24,6 +24,29 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
 
       const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
       expect(adminListAfterAddAdmin).to.be.contains(bob.address);
+    });
+  });
+
+  it('Add admin using added collection admin.', async () => {
+    await usingApi(async (api) => {
+      const collectionId = await createCollectionExpectSuccess();
+      const Alice = privateKey('//Alice');
+      const Bob = privateKey('//Bob');
+      const Charlie = privateKey('//CHARLIE');
+
+      const collection: any = (await api.query.nft.collection(collectionId));
+      expect(collection.Owner.toString()).to.be.eq(Alice.address);
+
+      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, Bob.address);
+      await submitTransactionAsync(Alice, changeAdminTx);
+
+      const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
+      expect(adminListAfterAddAdmin).to.be.contains(Bob.address);
+
+      const changeAdminTxCharlie = api.tx.nft.addCollectionAdmin(collectionId, Charlie.address);
+      await submitTransactionAsync(Bob, changeAdminTxCharlie);
+      const adminListAfterAddNewAdmin: any = (await api.query.nft.adminList(collectionId));
+      expect(adminListAfterAddNewAdmin).to.be.contains(Charlie.address);
     });
   });
 });
@@ -60,6 +83,20 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
     });
   });
 
+  it("Can't add collection admin of destroyed collection.", async () => {
+    await usingApi(async (api) => {
+      const collectionId = await createCollectionExpectSuccess();
+      const Alice = privateKey('//Alice');
+      const Bob = privateKey('//Bob');
+      await destroyCollectionExpectSuccess(collectionId);
+      const changeOwnerTx = api.tx.nft.addCollectionAdmin(collectionId, Bob.address);
+      await expect(submitTransactionExpectFailAsync(Alice, changeOwnerTx)).to.be.rejected;
+
+      // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
+      await createCollectionExpectSuccess();
+    });
+  });
+
   it('Add an admin to a collection that has reached the maximum number of admins limit', async () => {
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');
@@ -82,7 +119,6 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
         const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, accounts[i]);
         await submitTransactionAsync(Alice, changeAdminTx);
         const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
-        adminListAfterAddAdmin.map((item: any) => console.log(item.toString()));
         expect(adminListAfterAddAdmin).to.be.contains(accounts[i]);
       }
 
