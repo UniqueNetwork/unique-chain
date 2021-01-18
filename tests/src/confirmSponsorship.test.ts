@@ -89,7 +89,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   it('Fungible: Transfer fees are paid by the sponsor after confirmation', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode: 'Fungible'});
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0 }});
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
@@ -115,7 +115,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   it('ReFungible: Transfer fees are paid by the sponsor after confirmation', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode: 'ReFungible'});
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0 }});
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
@@ -209,8 +209,8 @@ describe('integration test: ext. confirmSponsorship():', () => {
     });
   });
 
-  it('Fungible: Sponsoring of transfers is rate limited', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode: 'Fungible'});
+  it('Fungible: Sponsoring is rate limited', async () => {
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0 }});
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
@@ -246,8 +246,8 @@ describe('integration test: ext. confirmSponsorship():', () => {
     });
   });
 
-  it('ReFungible: Sponsoring of transfers is rate limited', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode: 'ReFungible'});
+  it('ReFungible: Sponsoring is rate limited', async () => {
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0 }});
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
