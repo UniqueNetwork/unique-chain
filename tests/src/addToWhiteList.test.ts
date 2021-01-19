@@ -1,3 +1,4 @@
+import { IKeyringPair } from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
@@ -14,49 +15,38 @@ import {
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-describe('Integration Test ext. addToWhiteList()', () => {
+let Alice: IKeyringPair;
+let Bob: IKeyringPair;
+
+describe.only('Integration Test ext. addToWhiteList()', () => {
+
+  before(async () => {
+    await usingApi(async (api) => {
+      Alice = privateKey('//Alice');
+      Bob = privateKey('//Bob');
+    });
+  });
 
   it('Execute the extrinsic with parameters: Collection ID and address to add to the white list', async () => {
-    await usingApi(async (api) => {
-      const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
-      const collectionId = await createCollectionExpectSuccess();
-      const whiteListedBefore = (await api.query.nft.whiteList(collectionId, Bob.address)).toJSON();
-      await addToWhiteListExpectSuccess(Alice, collectionId, Bob.address);
-      const whiteListedAfter = (await api.query.nft.whiteList(collectionId, Bob.address)).toJSON();
-      // tslint:disable-next-line: no-unused-expression
-      expect(whiteListedBefore).to.be.false;
-      // tslint:disable-next-line: no-unused-expression
-      expect(whiteListedAfter).to.be.true;
-    });
+    const collectionId = await createCollectionExpectSuccess();
+    await addToWhiteListExpectSuccess(Alice, collectionId, Bob.address);
   });
 
   it('Whitelisted minting: list restrictions', async () => {
-    await usingApi(async (api) => {
-      const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
-      const collectionId = await createCollectionExpectSuccess();
-      const whiteListedBefore = (await api.query.nft.whiteList(collectionId, Bob.address)).toJSON();
-      await addToWhiteListExpectSuccess(Alice, collectionId, Bob.address);
-      const whiteListedAfter = (await api.query.nft.whiteList(collectionId, Bob.address)).toJSON();
-      // tslint:disable-next-line: no-unused-expression
-      expect(whiteListedBefore).to.be.false;
-      // tslint:disable-next-line: no-unused-expression
-      expect(whiteListedAfter).to.be.true;
-      await enableWhiteListExpectSuccess(Alice, collectionId);
-      await enablePublicMintingExpectSuccess(Alice, collectionId);
-      await createItemExpectSuccess(Bob, collectionId, 'NFT', Bob.address);
-    });
+    const collectionId = await createCollectionExpectSuccess();
+    await addToWhiteListExpectSuccess(Alice, collectionId, Bob.address);
+    await enableWhiteListExpectSuccess(Alice, collectionId);
+    await enablePublicMintingExpectSuccess(Alice, collectionId);
+    await createItemExpectSuccess(Bob, collectionId, 'NFT', Bob.address);
   });
 });
 
-describe('Negative Integration Test ext. addToWhiteList()', () => {
+describe.only('Negative Integration Test ext. addToWhiteList()', () => {
 
   it('White list an address in the collection that does not exist', async () => {
     await usingApi(async (api) => {
-      const Alice = privateKey('//Alice');
       // tslint:disable-next-line: no-bitwise
-      const collectionId = (1 << 32) - 1;
+      const collectionId = parseInt((await api.query.nft.createdCollectionCount()).toString()) + 1;
       const Bob = privateKey('//Bob');
 
       const tx = api.tx.nft.addToWhiteList(collectionId, Bob.address);

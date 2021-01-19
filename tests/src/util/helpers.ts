@@ -550,17 +550,21 @@ export async function enablePublicMintingExpectSuccess(sender: IKeyringPair, col
 export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number, address: string) {
   await usingApi(async (api) => {
 
+    const whiteListedBefore = (await api.query.nft.whiteList(collectionId, address)).toJSON();
+
     // Run the transaction
     const tx = api.tx.nft.addToWhiteList(collectionId, address);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
 
-    // Get the collection
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+    const whiteListedAfter = (await api.query.nft.whiteList(collectionId, address)).toJSON();
 
     // What to expect
     expect(result.success).to.be.true;
-    expect(collection.MintMode).to.be.equal(true);
+    // tslint:disable-next-line: no-unused-expression
+    expect(whiteListedBefore).to.be.false;
+    // tslint:disable-next-line: no-unused-expression
+    expect(whiteListedAfter).to.be.true;
   });
 }
 

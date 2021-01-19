@@ -33,7 +33,7 @@ describe('Integration Test toggleContractWhiteList', () => {
     });
   });
 
-  it.only(`Only whitelisted account can call contract`, async () => {
+  it(`Only whitelisted account can call contract`, async () => {
     await usingApi(async api => {
       const bob = privateKey("//Bob");
 
