@@ -462,6 +462,40 @@ transferFromExpectFail(collectionId: number,
 }
 
 export async function
+transferExpectSuccess(collectionId: number,
+                      tokenId: number,
+                      sender: IKeyringPair,
+                      recipient: IKeyringPair,
+                      value: number = 1,
+                      type: string = 'NFT') {
+  await usingApi(async (api: ApiPromise) => {
+    let balanceBefore = new BN(0);
+    if (type === 'Fungible') {
+      balanceBefore = await api.query.nft.balance(collectionId, recipient.address) as unknown as BN;
+    }
+    const transferTx = await api.tx.nft.transfer(recipient.address, collectionId, tokenId, value);
+    const events = await submitTransactionAsync(sender, transferTx);
+    const result = getCreateItemResult(events);
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.true;
+    if (type === 'NFT') {
+      const nftItemData = await api.query.nft.nftItemList(collectionId, tokenId) as unknown as ITokenDataType;
+      expect(nftItemData.Owner.toString()).to.be.equal(recipient.address);
+    }
+    if (type === 'Fungible') {
+      const balanceAfter = await api.query.nft.balance(collectionId, recipient.address) as unknown as BN;
+      expect(balanceAfter.sub(balanceBefore).toNumber()).to.be.equal(value);
+    }
+    if (type === 'ReFungible') {
+      const nftItemData =
+        await api.query.nft.reFungibleItemList(collectionId, tokenId) as unknown as IReFungibleTokenDataType;
+      expect(nftItemData.Owner[0].Owner.toString()).to.be.equal(recipient.address);
+      expect(nftItemData.Owner[0].Fraction.toNumber()).to.be.equal(value);
+    }
+  });
+}
+
+export async function
 approveExpectFail(collectionId: number,
                   tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number = 1) {
   await usingApi(async (api: ApiPromise) => {
