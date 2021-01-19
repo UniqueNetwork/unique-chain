@@ -393,7 +393,7 @@ export interface CreateItemData extends Enum {
 
 export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: number, tokenId: number, value = 0) {
   await usingApi(async (api) => {
-    const tx = api.tx.nft.burnItem(collectionId, tokenId, 0);
+    const tx = api.tx.nft.burnItem(collectionId, tokenId, value);
     const events = await submitTransactionAsync(owner, tx);
     const result = getGenericResult(events);
     // Get the item
