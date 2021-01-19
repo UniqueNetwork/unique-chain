@@ -19,7 +19,7 @@ import {
   transferExpectSuccess,
 } from './util/helpers';
 
-/*describe('Integration Test Transfer(recipient, collection_id, item_id, value)', () => {
+describe('Integration Test Transfer(recipient, collection_id, item_id, value)', () => {
   it('Balance transfers and check balance', async () => {
     await usingApi(async (api: ApiPromise) => {
       const [alicesBalanceBefore, bobsBalanceBefore] = await getBalance(api, [alicesPublicKey, bobsPublicKey]);
@@ -78,10 +78,10 @@ import {
         newReFungibleTokenId, Alice, Bob, 1, 'ReFungible');
     });
   });
-});*/
+});
 
 describe('Negative Integration Test Transfer(recipient, collection_id, item_id, value)', () => {
-  /*it('Transfer with not existed collection_id', async () => {
+  it('Transfer with not existed collection_id', async () => {
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
@@ -158,7 +158,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
       await transferExpectFail(reFungibleCollectionId,
         newReFungibleTokenId, Alice, Bob, 1, 'ReFungible');
     });
-  });*/
+  });
   it('Transfer with recipient that is not owner', async () => {
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');

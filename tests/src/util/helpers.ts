@@ -521,9 +521,11 @@ transferExpectFail(collectionId: number,
   await usingApi(async (api: ApiPromise) => {
     const transferTx = await api.tx.nft.transfer(recipient.address, collectionId, tokenId, value);
     const events = await expect(submitTransactionExpectFailAsync(sender, transferTx)).to.be.rejected;
-    const result = getCreateCollectionResult(events);
-    // tslint:disable-next-line:no-unused-expression
-    expect(result.success).to.be.false;
+    if (events && Array.isArray(events)) {
+      const result = getCreateCollectionResult(events);
+      // tslint:disable-next-line:no-unused-expression
+      expect(result.success).to.be.false;
+    }
   });
 }
 
@@ -627,6 +629,7 @@ export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collecti
     const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
 
     // What to expect
+    // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
     expect(collection.MintMode).to.be.equal(true);
   });
