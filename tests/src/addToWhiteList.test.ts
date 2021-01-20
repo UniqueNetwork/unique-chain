@@ -18,7 +18,7 @@ const expect = chai.expect;
 let Alice: IKeyringPair;
 let Bob: IKeyringPair;
 
-describe.only('Integration Test ext. addToWhiteList()', () => {
+describe('Integration Test ext. addToWhiteList()', () => {
 
   before(async () => {
     await usingApi(async (api) => {
@@ -41,7 +41,7 @@ describe.only('Integration Test ext. addToWhiteList()', () => {
   });
 });
 
-describe.only('Negative Integration Test ext. addToWhiteList()', () => {
+describe('Negative Integration Test ext. addToWhiteList()', () => {
 
   it('White list an address in the collection that does not exist', async () => {
     await usingApi(async (api) => {

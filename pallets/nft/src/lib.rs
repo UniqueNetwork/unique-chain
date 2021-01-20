@@ -1009,7 +1009,7 @@ decl_module! {
             {
                 CollectionMode::NFT => Self::burn_nft_item(collection_id, item_id)?,
                 CollectionMode::Fungible(_)  => Self::burn_fungible_item(&sender, collection_id, value)?,
-                CollectionMode::ReFungible(_)  => Self::burn_refungible_item(collection_id, item_id, sender.clone())?,
+                CollectionMode::ReFungible(_)  => Self::burn_refungible_item(collection_id, item_id, &sender)?,
                 _ => ()
             };
 
@@ -1091,6 +1091,9 @@ decl_module! {
         pub fn approve(origin, spender: T::AccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
+
+            Self::collection_exists(collection_id)?;
+            Self::token_exists(collection_id, item_id, &sender)?;
 
             // Transfer permissions check
             let target_collection = <Collection<T>>::get(collection_id);
@@ -1216,7 +1219,8 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             
             Self::collection_exists(collection_id)?;
-            
+            Self::token_exists(collection_id, item_id, &sender)?;
+
             ensure!(ChainLimit::get().custom_data_limit >= data.len() as u32, Error::<T>::TokenVariableDataLimitExceeded);
 
             // Modify permissions check
@@ -1224,8 +1228,6 @@ decl_module! {
             ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
                 Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
                 Error::<T>::NoPermission);
-
-            Self::item_exists(collection_id, item_id, &target_collection.mode)?;
 
             match target_collection.mode
             {
@@ -1677,13 +1679,13 @@ impl<T: Trait> Module<T> {
         let value = item.owner.first().unwrap().fraction;
         let owner = item.owner.first().unwrap().owner.clone();
 
-        Self::add_token_index(collection_id, current_index, owner.clone())?;
+        Self::add_token_index(collection_id, current_index, &owner)?;
 
         <ItemListIndex>::insert(collection_id, current_index);
         <ReFungibleItemList<T>>::insert(collection_id, current_index, itemcopy);
 
         // Update balance
-        let new_balance = <Balance<T>>::get(collection_id, owner.clone())
+        let new_balance = <Balance<T>>::get(collection_id, &owner)
             .checked_add(value)
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, owner.clone(), new_balance);
@@ -1697,7 +1699,7 @@ impl<T: Trait> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
 
         let item_owner = item.owner.clone();
-        Self::add_token_index(collection_id, current_index, item.owner.clone())?;
+        Self::add_token_index(collection_id, current_index, &item.owner)?;
 
         <ItemListIndex>::insert(collection_id, current_index);
         <NftItemList<T>>::insert(collection_id, current_index, item);
@@ -1714,28 +1716,43 @@ impl<T: Trait> Module<T> {
     fn burn_refungible_item(
         collection_id: CollectionId,
         item_id: TokenId,
-        owner: T::AccountId,
+        owner: &T::AccountId,
     ) -> DispatchResult {
         ensure!(
             <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
             Error::<T>::TokenNotFound
         );
-        let collection = <ReFungibleItemList<T>>::get(collection_id, item_id);
-        let item = collection
+        let mut token = <ReFungibleItemList<T>>::get(collection_id, item_id);
+        let rft_balance = token
             .owner
             .iter()
-            .filter(|&i| i.owner == owner)
+            .filter(|&i| i.owner == *owner)
             .next()
             .unwrap();
-        Self::remove_token_index(collection_id, item_id, owner.clone())?;
+        Self::remove_token_index(collection_id, item_id, owner)?;
 
         // update balance
-        let new_balance = <Balance<T>>::get(collection_id, item.owner.clone())
-            .checked_sub(item.fraction)
+        let new_balance = <Balance<T>>::get(collection_id, rft_balance.owner.clone())
+            .checked_sub(rft_balance.fraction)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
+        <Balance<T>>::insert(collection_id, rft_balance.owner.clone(), new_balance);
 
-        <ReFungibleItemList<T>>::remove(collection_id, item_id);
+        // Re-create owners list with sender removed
+        let index = token
+            .owner
+            .iter()
+            .position(|i| i.owner == *owner)
+            .unwrap();
+        token.owner.remove(index);
+        let owner_count = token.owner.len();
+
+        // Burn the token completely if this was the last (only) owner
+        if owner_count == 0 {
+            <ReFungibleItemList<T>>::remove(collection_id, item_id);
+        }
+        else {
+            <ReFungibleItemList<T>>::insert(collection_id, item_id, token);
+        }
 
         Ok(())
     }
@@ -1746,10 +1763,10 @@ impl<T: Trait> Module<T> {
             Error::<T>::TokenNotFound
         );
         let item = <NftItemList<T>>::get(collection_id, item_id);
-        Self::remove_token_index(collection_id, item_id, item.owner.clone())?;
+        Self::remove_token_index(collection_id, item_id, &item.owner)?;
 
         // update balance
-        let new_balance = <Balance<T>>::get(collection_id, item.owner.clone())
+        let new_balance = <Balance<T>>::get(collection_id, &item.owner)
             .checked_sub(1)
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
@@ -1858,16 +1875,33 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
+    /// Check if token exists. In case of Fungible, check if there is an entry for 
+    /// the owner in fungible balances double map
+    fn token_exists(
+        collection_id: CollectionId,
+        item_id: TokenId,
+        owner: &T::AccountId
+    ) -> DispatchResult {
+        let target_collection = <Collection<T>>::get(collection_id);
+        let exists = match target_collection.mode
+        {
+            CollectionMode::NFT => <NftItemList<T>>::contains_key(collection_id, item_id),
+            CollectionMode::Fungible(_)  => <FungibleItemList<T>>::contains_key(collection_id, owner),
+            CollectionMode::ReFungible(_)  => <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
+            _ => false
+        };
+
+        ensure!(exists == true, Error::<T>::TokenNotFound);
+        Ok(())
+    }
+
     fn transfer_fungible(
         collection_id: CollectionId,
         value: u128,
         owner: &T::AccountId,
         recipient: &T::AccountId,
     ) -> DispatchResult {
-        ensure!(
-            <FungibleItemList<T>>::contains_key(collection_id, owner),
-            Error::<T>::TokenNotFound
-        );
+        Self::token_exists(collection_id, 0, owner)?;
 
         let mut balance = <FungibleItemList<T>>::get(collection_id, owner);
         ensure!(balance.value >= value, Error::<T>::TokenValueTooLow);
@@ -1897,10 +1931,7 @@ impl<T: Trait> Module<T> {
         owner: T::AccountId,
         new_owner: T::AccountId,
     ) -> DispatchResult {
-        ensure!(
-            <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
-            Error::<T>::TokenNotFound
-        );
+        Self::token_exists(collection_id, item_id, &owner)?;
 
         let full_item = <ReFungibleItemList<T>>::get(collection_id, item_id);
         let item = full_item
@@ -1941,7 +1972,7 @@ impl<T: Trait> Module<T> {
             <ReFungibleItemList<T>>::insert(collection_id, item_id, new_full_item);
 
             // update index collection
-            Self::move_token_index(collection_id, item_id, old_owner.clone(), new_owner.clone())?;
+            Self::move_token_index(collection_id, item_id, &old_owner, &new_owner)?;
         } else {
             let mut new_full_item = full_item.clone();
             new_full_item
@@ -1966,7 +1997,7 @@ impl<T: Trait> Module<T> {
                     owner: new_owner.clone(),
                     fraction: value,
                 });
-                Self::add_token_index(collection_id, item_id, new_owner.clone())?;
+                Self::add_token_index(collection_id, item_id, &new_owner)?;
             }
 
             <ReFungibleItemList<T>>::insert(collection_id, item_id, new_full_item);
@@ -1981,10 +2012,7 @@ impl<T: Trait> Module<T> {
         sender: T::AccountId,
         new_owner: T::AccountId,
     ) -> DispatchResult {
-        ensure!(
-            <NftItemList<T>>::contains_key(collection_id, item_id),
-            Error::<T>::TokenNotFound
-        );
+        Self::token_exists(collection_id, item_id, &sender)?;
 
         let mut item = <NftItemList<T>>::get(collection_id, item_id);
 
@@ -2010,25 +2038,11 @@ impl<T: Trait> Module<T> {
         <NftItemList<T>>::insert(collection_id, item_id, item);
 
         // update index collection
-        Self::move_token_index(collection_id, item_id, old_owner.clone(), new_owner.clone())?;
+        Self::move_token_index(collection_id, item_id, &old_owner, &new_owner)?;
 
         Ok(())
     }
     
-    fn item_exists(
-        collection_id: CollectionId,
-        item_id: TokenId,
-        mode: &CollectionMode
-    ) -> DispatchResult {
-        match mode {
-            CollectionMode::NFT => ensure!(<NftItemList<T>>::contains_key(collection_id, item_id), Error::<T>::TokenNotFound),
-            CollectionMode::ReFungible(_) => ensure!(<ReFungibleItemList<T>>::contains_key(collection_id, item_id), Error::<T>::TokenNotFound),
-            _ => ()
-        };
-        
-        Ok(())
-    }
-
     fn set_re_fungible_variable_data(
         collection_id: CollectionId,
         item_id: TokenId,
@@ -2090,12 +2104,12 @@ impl<T: Trait> Module<T> {
             .unwrap();
 
         let item_owner = item.owner.clone();
-        Self::add_token_index(collection_id, current_index, item.owner.clone()).unwrap();
+        Self::add_token_index(collection_id, current_index, &item.owner).unwrap();
 
         <ItemListIndex>::insert(collection_id, current_index);
 
         // Update balance
-        let new_balance = <Balance<T>>::get(collection_id, item_owner.clone())
+        let new_balance = <Balance<T>>::get(collection_id, &item_owner)
             .checked_add(1)
             .unwrap();
         <Balance<T>>::insert(collection_id, item_owner.clone(), new_balance);
@@ -2106,7 +2120,7 @@ impl<T: Trait> Module<T> {
             .checked_add(1)
             .unwrap();
 
-        Self::add_token_index(collection_id, current_index, (*owner).clone()).unwrap();
+        Self::add_token_index(collection_id, current_index, owner).unwrap();
 
         <ItemListIndex>::insert(collection_id, current_index);
 
@@ -2125,24 +2139,24 @@ impl<T: Trait> Module<T> {
         let value = item.owner.first().unwrap().fraction;
         let owner = item.owner.first().unwrap().owner.clone();
 
-        Self::add_token_index(collection_id, current_index, owner.clone()).unwrap();
+        Self::add_token_index(collection_id, current_index, &owner).unwrap();
 
         <ItemListIndex>::insert(collection_id, current_index);
 
         // Update balance
-        let new_balance = <Balance<T>>::get(collection_id, owner.clone())
+        let new_balance = <Balance<T>>::get(collection_id, &owner)
             .checked_add(value)
             .unwrap();
         <Balance<T>>::insert(collection_id, owner.clone(), new_balance);
     }
 
-    fn add_token_index(collection_id: CollectionId, item_index: TokenId, owner: T::AccountId) -> DispatchResult {
+    fn add_token_index(collection_id: CollectionId, item_index: TokenId, owner: &T::AccountId) -> DispatchResult {
 
         // add to account limit
-        if <AccountItemCount<T>>::contains_key(owner.clone()) {
+        if <AccountItemCount<T>>::contains_key(owner) {
 
             // bound Owned tokens by a single address
-            let count = <AccountItemCount<T>>::get(owner.clone());
+            let count = <AccountItemCount<T>>::get(owner);
             ensure!(count < ChainLimit::get().account_token_ownership_limit, Error::<T>::AddressOwnershipLimitExceeded);
 
             <AccountItemCount<T>>::insert(owner.clone(), count
@@ -2153,9 +2167,9 @@ impl<T: Trait> Module<T> {
             <AccountItemCount<T>>::insert(owner.clone(), 1);
         }
 
-        let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner.clone());
+        let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner);
         if list_exists {
-            let mut list = <AddressTokens<T>>::get(collection_id, owner.clone());
+            let mut list = <AddressTokens<T>>::get(collection_id, owner);
             let item_contains = list.contains(&item_index.clone());
 
             if !item_contains {
@@ -2166,8 +2180,7 @@ impl<T: Trait> Module<T> {
         } else {
             let mut itm = Vec::new();
             itm.push(item_index.clone());
-            <AddressTokens<T>>::insert(collection_id, owner, itm);
-            
+            <AddressTokens<T>>::insert(collection_id, owner.clone(), itm);
         }
 
         Ok(())
@@ -2176,24 +2189,24 @@ impl<T: Trait> Module<T> {
     fn remove_token_index(
         collection_id: CollectionId,
         item_index: TokenId,
-        owner: T::AccountId,
+        owner: &T::AccountId,
     ) -> DispatchResult {
 
         // update counter
         <AccountItemCount<T>>::insert(owner.clone(), 
-            <AccountItemCount<T>>::get(owner.clone())
+            <AccountItemCount<T>>::get(owner)
             .checked_sub(1)
             .ok_or(Error::<T>::NumOverflow)?);
 
 
-        let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner.clone());
+        let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner);
         if list_exists {
-            let mut list = <AddressTokens<T>>::get(collection_id, owner.clone());
+            let mut list = <AddressTokens<T>>::get(collection_id, owner);
             let item_contains = list.contains(&item_index.clone());
 
             if item_contains {
                 list.retain(|&item| item != item_index);
-                <AddressTokens<T>>::insert(collection_id, owner, list);
+                <AddressTokens<T>>::insert(collection_id, owner.clone(), list);
             }
         }
 
@@ -2203,8 +2216,8 @@ impl<T: Trait> Module<T> {
     fn move_token_index(
         collection_id: CollectionId,
         item_index: TokenId,
-        old_owner: T::AccountId,
-        new_owner: T::AccountId,
+        old_owner: &T::AccountId,
+        new_owner: &T::AccountId,
     ) -> DispatchResult {
         Self::remove_token_index(collection_id, item_index, old_owner)?;
         Self::add_token_index(collection_id, item_index, new_owner)?;
