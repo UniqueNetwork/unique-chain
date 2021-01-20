@@ -1322,7 +1322,7 @@ decl_module! {
             Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
 
             // check schema limit
-            ensure!(schema.len() as u32 > ChainLimit::get().const_on_chain_schema_limit, "");
+            ensure!(schema.len() as u32 <= ChainLimit::get().const_on_chain_schema_limit, "");
 
             let mut target_collection = <Collection<T>>::get(collection_id);
             target_collection.const_on_chain_schema = schema;
@@ -1353,7 +1353,7 @@ decl_module! {
             Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
 
             // check schema limit
-            ensure!(schema.len() as u32 > ChainLimit::get().variable_on_chain_schema_limit, "");
+            ensure!(schema.len() as u32 <= ChainLimit::get().variable_on_chain_schema_limit, "");
 
             let mut target_collection = <Collection<T>>::get(collection_id);
             target_collection.variable_on_chain_schema = schema;
