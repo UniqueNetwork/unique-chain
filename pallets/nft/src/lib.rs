@@ -323,6 +323,8 @@ decl_error! {
         CollectionNotFound,
         /// Item not exists.
         TokenNotFound,
+        /// Admin not found
+        AdminNotFound,
         /// Arithmetic calculation overflow.
         NumOverflow,       
         /// Account already has admin role.
@@ -812,13 +814,11 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
             Self::check_owner_or_admin_permissions(collection_id, sender)?;
+            ensure!(<AdminList<T>>::contains_key(collection_id), Error::<T>::AdminNotFound);
 
-            if <AdminList<T>>::contains_key(collection_id)
-            {
-                let mut admin_arr = <AdminList<T>>::get(collection_id);
-                admin_arr.retain(|i| *i != account_id);
-                <AdminList<T>>::insert(collection_id, admin_arr);
-            }
+            let mut admin_arr = <AdminList<T>>::get(collection_id);
+            admin_arr.retain(|i| *i != account_id);
+            <AdminList<T>>::insert(collection_id, admin_arr);
 
             Ok(())
         }
