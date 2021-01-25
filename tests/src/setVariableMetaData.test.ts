@@ -8,6 +8,7 @@ import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
   destroyCollectionExpectSuccess,
+  findNotExistingCollection,
   setVariableMetaDataExpectFailure,
   setVariableMetaDataExpectSuccess,
 } from './util/helpers';
@@ -62,9 +63,10 @@ describe('Negative Integration Test setVariableMetaData', () => {
   });
 
   it('fails on not existing collection id', async () => {
-    // Not sure how to implement it
-    const nonExistingCollectionId = 200000;
-    await setVariableMetaDataExpectFailure(alice, nonExistingCollectionId, 1, data);
+    await usingApi(async api => {
+      let nonExistingCollectionId = await findNotExistingCollection(api);
+      await setVariableMetaDataExpectFailure(alice, nonExistingCollectionId, 1, data);
+    });
   });
   it('fails on removed collection id', async () => {
     const removedCollectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
@@ -81,7 +83,7 @@ describe('Negative Integration Test setVariableMetaData', () => {
     await setVariableMetaDataExpectFailure(alice, removedTokenCollectionId, removedTokenId, data);
   });
   it('fails on not existing token', async () => {
-    const nonExistingTokenId = 200000;
+    const nonExistingTokenId = validTokenId + 1;
 
     await setVariableMetaDataExpectFailure(alice, validCollectionId, nonExistingTokenId, data);
   });
