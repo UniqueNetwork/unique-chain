@@ -102,8 +102,8 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       const fee = aliceBalanceBefore.minus(aliceBalanceAfter);
       const treasuryIncrease = treasuryBalanceAfter.minus(treasuryBalanceBefore);
 
-      expect(fee.dividedBy(1e15).toNumber()).to.be.lessThan(0.01);
-      expect(fee.dividedBy(1e15).toNumber()).to.be.greaterThan(0.0001);
+      expect(fee.dividedBy(1e15).toNumber()).to.be.lessThan(saneMaximumFee);
+      expect(fee.dividedBy(1e15).toNumber()).to.be.greaterThan(saneMinimumFee);
     });
   });
 
