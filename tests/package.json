@@ -20,6 +20,7 @@
     "load": "mocha --timeout 9999999 -r ts-node/register ./**/*.load.ts",
     "testAddCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/addCollectionAdmin.test.ts",
     "testSetSchemaVersion": "mocha --timeout 9999999 -r ts-node/register ./**/setSchemaVersion.test.ts",
+    "testSetVariableMetaData": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetaData.test.ts",
     "testSetCollectionLimits": "mocha --timeout 9999999 -r ts-node/register ./**/setCollectionLimits.test.ts",
     "testRemoveCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/removeCollectionAdmin.test.ts",
     "testConnection": "mocha --timeout 9999999 -r ts-node/register ./**/connection.test.ts",
