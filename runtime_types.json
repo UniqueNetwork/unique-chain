@@ -115,6 +115,14 @@
       "SponsoredMintSize": "u32",
       "TokenLimit": "u32",
       "SponsorTimeout": "u32"
+    },
+    "AccountInfo": "AccountInfoWithProviders",
+    "AccountInfoWithProviders": {
+      "nonce": "Index",
+      "consumers": "RefCount",
+      "providers": "RefCount",
+      "data": "AccountData"
     }
+
   }
   
