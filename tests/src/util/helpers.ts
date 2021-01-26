@@ -254,8 +254,9 @@ export async function findUnusedAddress(api: ApiPromise): Promise<IKeyringPair> 
 }
 
 export async function findNotExistingCollection(api: ApiPromise): Promise<number> {
-  let collection: number = parseInt((await api.query.nft.createdCollectionCount()).toString()) as unknown as number + 1;
-  return collection;
+  const totalNumber = parseInt((await api.query.nft.createdCollectionCount()).toString(), 10) as unknown as number;
+  const newCollection: number = totalNumber + 1;
+  return newCollection;
 }
 
 function getDestroyResult(events: EventRecord[]): boolean {
