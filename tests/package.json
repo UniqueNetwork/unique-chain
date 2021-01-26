@@ -35,7 +35,7 @@
     "testBurnItem": "mocha --timeout 9999999 -r ts-node/register ./**/burnItem.test.ts"
   },
   "author": "",
-  "license": "Apache 2.0",
+  "license": "SEE LICENSE IN ../LICENSE",
   "homepage": "",
   "dependencies": {
     "@polkadot/api": "^3.6.3",

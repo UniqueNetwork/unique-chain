@@ -86,11 +86,9 @@ export async function deployFlipper(api: ApiPromise): Promise<[Contract, IKeyrin
 
 export async function getFlipValue(contract: Contract, deployer: IKeyringPair) {
   const result = await contract.query.get(deployer.address, value, gasLimit);
-  console.log(result);
 
-//   if(!result.result.isSuccess) {
-//     throw `Failed to get flipper value`;
-//   }
-//   return (result.result.asSuccess.data[0] == 0x00) ? false : true;
-    return false;
+  if(!result.result.isOk) {
+    throw `Failed to get flipper value`;
+  }
+  return (result.result.asOk.data[0] == 0x00) ? false : true;
 }
