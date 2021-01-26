@@ -35,7 +35,7 @@ describe('hooks', () => {
   });
   it('choose or create collection for testing', async () => {
     await usingApi(async () => {
-      collectionIdForTesting = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: 'NFT'});
+      collectionIdForTesting = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'}});
     });
   });
 });
@@ -93,12 +93,6 @@ describe('setSchemaVersion negative', () => {
       const nonExistedCollectionId = collectionCount + 1;
       tx = api.tx.nft.setSchemaVersion(nonExistedCollectionId, 'ImageURL');
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
-      /*try {
-        await submitTransactionAsync(alice, tx);
-      } catch (e) {
-        // tslint:disable-next-line:no-unused-expression
-        expect(e).to.be.exist;
-      }*/
     });
   });
 
@@ -119,13 +113,6 @@ describe('setSchemaVersion negative', () => {
       await destroyCollectionExpectSuccess(collectionIdForTesting);
       tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'ImageURL');
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
-      /*try {
-        tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'ImageURL');
-        await submitTransactionAsync(alice, tx);
-      } catch (e) {
-        // tslint:disable-next-line:no-unused-expression
-        expect(e).to.be.exist;
-      }*/
     });
   });
 });

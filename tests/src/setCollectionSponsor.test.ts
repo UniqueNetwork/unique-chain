@@ -30,11 +30,11 @@ describe('integration test: ext. setCollectionSponsor():', () => {
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
   });
   it('Set Fungible collection sponsor', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode: 'Fungible' });
+    const collectionId = await createCollectionExpectSuccess({ mode: {type: 'Fungible', decimalPoints: 0} });
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
   });
   it('Set ReFungible collection sponsor', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode: 'ReFungible' });
+    const collectionId = await createCollectionExpectSuccess({ mode: {type: 'ReFungible', decimalPoints: 0} });
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
   });
 

@@ -58,21 +58,22 @@ function getTransactionStatus(events: EventRecord[], status: ExtrinsicStatus): T
   return TransactionStatus.Fail;
 }
 
-export function submitTransactionAsync(sender: IKeyringPair, transaction: SubmittableExtrinsic<ApiTypes>): Promise<EventRecord[]> {
-  return new Promise(async function(resolve, reject) {
+export function
+submitTransactionAsync(sender: IKeyringPair, transaction: SubmittableExtrinsic<ApiTypes>): Promise<EventRecord[]> {
+  return new Promise(async (resolve, reject) => {
     try {
       await transaction.signAndSend(sender, ({ events = [], status }) => {
         const transactionStatus = getTransactionStatus(events, status);
 
-        if (transactionStatus == TransactionStatus.Success) {
+        if (transactionStatus === TransactionStatus.Success) {
           resolve(events);
-        } else if (transactionStatus == TransactionStatus.Fail) {
+        } else if (transactionStatus === TransactionStatus.Fail) {
           console.log(`Something went wrong with transaction. Status: ${status}`);
           reject(events);
         }
       });
     } catch (e) {
-      console.log("Error: ", e);
+      console.log('Error: ', e);
       reject(e);
     }
   });
@@ -90,7 +91,6 @@ export function submitTransactionExpectFailAsync(sender: IKeyringPair, transacti
         res(rec);
         console.error = consoleError;
         console.log = consoleLog;
-        
       });
     };
     const reject = (errror: any) => {
@@ -103,6 +103,8 @@ export function submitTransactionExpectFailAsync(sender: IKeyringPair, transacti
     try {
       await transaction.signAndSend(sender, ({ events = [], status }) => {
         const transactionStatus = getTransactionStatus(events, status);
+
+        console.log('transactionStatus', transactionStatus, 'events', events);
 
         if (transactionStatus == TransactionStatus.Success) {
           resolve(events);
