@@ -68,15 +68,6 @@ describe('Negative Integration Test setMintPermission', () => {
     });
   });
 
-  it('fails on same mint status set', async () => {
-    await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-      await enableWhiteListExpectSuccess(alice, collectionId);
-      await setMintPermissionExpectSuccess(alice, collectionId, true);
-      await setMintPermissionExpectFailure(alice, collectionId, true);
-    });
-  });
-
   it('fails when not collection owner tries to set mint status', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
     await enableWhiteListExpectSuccess(alice, collectionId);
