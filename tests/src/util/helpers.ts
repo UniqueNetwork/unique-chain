@@ -253,6 +253,12 @@ export async function findUnusedAddress(api: ApiPromise): Promise<IKeyringPair> 
   return unused;
 }
 
+export async function findNotExistingCollection(api: ApiPromise): Promise<number> {
+  const totalNumber = parseInt((await api.query.nft.createdCollectionCount()).toString(), 10) as unknown as number;
+  const newCollection: number = totalNumber + 1;
+  return newCollection;
+}
+
 function getDestroyResult(events: EventRecord[]): boolean {
   let success: boolean = false;
   events.forEach(({ phase, event: { data, method, section } }) => {
@@ -374,6 +380,23 @@ export async function confirmSponsorshipExpectFailure(collectionId: number, send
     // Run the transaction
     const sender = privateKey(senderSeed);
     const tx = api.tx.nft.confirmSponsorship(collectionId);
+    await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+  });
+}
+
+export async function setVariableMetaDataExpectSuccess(sender: IKeyringPair, collectionId: number, itemId: number, data: number[]) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.setVariableMetaData(collectionId, itemId, '0x' + Buffer.from(data).toString('hex'));
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+}
+
+export async function setVariableMetaDataExpectFailure(sender: IKeyringPair, collectionId: number, itemId: number, data: number[]) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.setVariableMetaData(collectionId, itemId, '0x' + Buffer.from(data).toString('hex'));
     await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
   });
 }
