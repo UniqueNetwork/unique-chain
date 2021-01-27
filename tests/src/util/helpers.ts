@@ -651,6 +651,14 @@ export async function enablePublicMintingExpectSuccess(sender: IKeyringPair, col
   });
 }
 
+export async function isWhitelisted(collectionId: number, address: string) {
+  let whitelisted: boolean = false;
+  await usingApi(async (api) => {
+    whitelisted = (await api.query.nft.whiteList(collectionId, address)).toJSON() as unknown as boolean;
+  });
+  return whitelisted;
+}
+
 export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number, address: string) {
   await usingApi(async (api) => {
 
