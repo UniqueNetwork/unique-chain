@@ -605,11 +605,14 @@ export async function createItemExpectSuccess(
   return newItemId;
 }
 
-export async function enableWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number) {
+export async function setPublicAccessModeExpectSuccess(
+  sender: IKeyringPair, collectionId: number,
+  accessMode: 'Normal' | 'WhiteList',
+) {
   await usingApi(async (api) => {
 
     // Run the transaction
-    const tx = api.tx.nft.setPublicAccessMode(collectionId, 'WhiteList');
+    const tx = api.tx.nft.setPublicAccessMode(collectionId, accessMode);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
 
@@ -619,8 +622,16 @@ export async function enableWhiteListExpectSuccess(sender: IKeyringPair, collect
     // What to expect
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
-    expect(collection.Access).to.be.equal('WhiteList');
+    expect(collection.Access).to.be.equal(accessMode);
   });
+}
+
+export async function enableWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number) {
+  await setPublicAccessModeExpectSuccess(sender, collectionId, 'WhiteList');
+}
+
+export async function disableWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number) {
+  await setPublicAccessModeExpectSuccess(sender, collectionId, 'Normal');
 }
 
 export async function enablePublicMintingExpectSuccess(sender: IKeyringPair, collectionId: number) {
