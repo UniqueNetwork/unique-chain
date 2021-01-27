@@ -681,6 +681,32 @@ export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collecti
   });
 }
 
+export async function removeFromWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number, address: string) {
+  await usingApi(async (api) => {
+    // Run the transaction
+    const tx = api.tx.nft.removeFromWhiteList(collectionId, address);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.true;
+  });
+}
+
+export async function removeFromWhiteListExpectFailure(sender: IKeyringPair, collectionId: number, address: string) {
+  await usingApi(async (api) => {
+    // Run the transaction
+    const tx = api.tx.nft.removeFromWhiteList(collectionId, address);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.false;
+  });
+}
+
 export const getDetailedCollectionInfo = async (api: ApiPromise, collectionId: number)
   : Promise<ICollectionInterface | null> => {
   return await api.query.nft.collection(collectionId) as unknown as ICollectionInterface;
