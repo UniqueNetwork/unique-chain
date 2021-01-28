@@ -62,6 +62,22 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob, 0);
     });
   });
+
+  it('Approve twice with overflowing total sum', async () => {
+    await usingApi(async () => {
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
+      const charlie = privateKey('//Charlie');
+
+      // fungible
+      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+      const newFungibleTokenId = await createFungibleItemExpectSuccess(alice, fungibleCollectionId, { Value: U128_MAX });
+
+      await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob, U128_MAX);
+      await transferFromExpectSuccess(fungibleCollectionId, newFungibleTokenId, bob, alice, charlie, U128_MAX, 'Fungible');
+      await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob, 1);
+    });
+  });
 });
 
 describe('Negative Integration Test approve(spender, collection_id, item_id, amount):', () => {
