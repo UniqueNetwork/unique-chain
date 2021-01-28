@@ -11,8 +11,10 @@ import {
   approveExpectFail,
   approveExpectSuccess,
   createCollectionExpectSuccess,
+  createFungibleItemExpectSuccess,
   createItemExpectSuccess,
   destroyCollectionExpectSuccess,
+  getAllowance,
   transferFromExpectFail,
   transferFromExpectSuccess,
 } from './util/helpers';
@@ -45,6 +47,22 @@ describe('Integration Test transferFrom(from, recipient, collection_id, item_id,
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
       await transferFromExpectSuccess(reFungibleCollectionId,
         newReFungibleTokenId, Bob, Alice, Charlie, 1, 'ReFungible');
+    });
+  });
+
+  it.only('Should reduce allowance if value is big', async () => {
+    await usingApi(async () => {
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
+      const charlie = privateKey('//Charlie');
+
+      // fungible
+      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+      const newFungibleTokenId = await createFungibleItemExpectSuccess(alice, fungibleCollectionId, { Value: 500000n });
+
+      await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob, 500000n);
+      await transferFromExpectSuccess(fungibleCollectionId, newFungibleTokenId, bob, alice, charlie, 500000n, 'Fungible');
+      expect((await getAllowance(fungibleCollectionId, newFungibleTokenId, alice.address, bob.address)).toString()).to.equal('0');
     });
   });
 });
