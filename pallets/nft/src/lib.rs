@@ -1047,32 +1047,8 @@ decl_module! {
         ///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
         #[weight = <T as Config>::WeightInfo::transfer()]
         pub fn transfer(origin, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
-
             let sender = ensure_signed(origin)?;
-            let target_collection = <Collection<T>>::get(collection_id);
-
-            // Limits check
-            Self::is_correct_transfer(collection_id, &target_collection, &recipient)?;
-
-            // Transfer permissions check
-            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
-                Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                Error::<T>::NoPermission);
-
-            if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(collection_id, &sender)?;
-                Self::check_white_list(collection_id, &recipient)?;
-            }
-
-            match target_collection.mode
-            {
-                CollectionMode::NFT => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient)?,
-                CollectionMode::Fungible(_)  => Self::transfer_fungible(collection_id, value, &sender, &recipient)?,
-                CollectionMode::ReFungible(_)  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient)?,
-                _ => ()
-            };
-
-            Ok(())
+            Self::transfer_internal(sender, recipient, collection_id, item_id, value)
         }
 
         /// Set, change, or remove approved address to transfer the ownership of the NFT.
@@ -1553,6 +1529,35 @@ decl_module! {
 }
 
 impl<T: Config> Module<T> {
+
+    pub fn transfer_internal(sender: T::AccountId, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
+
+        let target_collection = <Collection<T>>::get(collection_id);
+
+        // Limits check
+        Self::is_correct_transfer(collection_id, &target_collection, &recipient)?;
+
+        // Transfer permissions check
+        ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
+            Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
+            Error::<T>::NoPermission);
+
+        if target_collection.access == AccessMode::WhiteList {
+            Self::check_white_list(collection_id, &sender)?;
+            Self::check_white_list(collection_id, &recipient)?;
+        }
+
+        match target_collection.mode
+        {
+            CollectionMode::NFT => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient)?,
+            CollectionMode::Fungible(_)  => Self::transfer_fungible(collection_id, value, &sender, &recipient)?,
+            CollectionMode::ReFungible(_)  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient)?,
+            _ => ()
+        };
+
+        Ok(())
+    }
+
 
     fn is_correct_transfer(collection_id: CollectionId, collection: &CollectionType<T::AccountId>, recipient: &T::AccountId) -> DispatchResult {
 

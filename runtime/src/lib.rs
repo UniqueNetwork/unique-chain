@@ -63,6 +63,9 @@ use sp_std::{marker::PhantomData};
 
 pub use pallet_timestamp::Call as TimestampCall;
 
+mod chain_extension;
+use crate::chain_extension::NFTExtension;
+
 /// Struct that handles the conversion of Balance -> `u64`. This is used for
 /// staking's election calculation.
 pub struct CurrencyToVoteHandler;
@@ -413,7 +416,7 @@ impl pallet_contracts::Config for Runtime {
 	type MaxValueSize = MaxValueSize;
 	type WeightPrice = pallet_transaction_payment::Module<Self>;
 	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
-	type ChainExtension = ();
+	type ChainExtension = NFTExtension;
 	type DeletionQueueDepth = DeletionQueueDepth;
 	type DeletionWeightLimit = DeletionWeightLimit;
 }
