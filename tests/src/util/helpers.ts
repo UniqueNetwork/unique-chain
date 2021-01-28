@@ -476,7 +476,7 @@ export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: n
 
 export async function
 approveExpectSuccess(collectionId: number,
-                     tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number = 1) {
+                     tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number | bigint = 1) {
   await usingApi(async (api: ApiPromise) => {
     const allowanceBefore =
       await api.query.nft.allowances(collectionId, [tokenId, owner.address, approved.address]) as unknown as BN;
@@ -487,7 +487,7 @@ approveExpectSuccess(collectionId: number,
     expect(result.success).to.be.true;
     const allowanceAfter =
       await api.query.nft.allowances(collectionId, [tokenId, owner.address, approved.address]) as unknown as BN;
-    expect(allowanceAfter.toNumber() - allowanceBefore.toNumber()).to.be.equal(amount);
+    expect(allowanceAfter.sub(allowanceBefore).toString()).to.be.equal(amount.toString());
   });
 }
 
