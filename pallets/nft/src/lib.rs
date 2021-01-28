@@ -1143,8 +1143,8 @@ decl_module! {
 
             // Check approval
             let mut approval: u128 = 0;
-            if <Allowances<T>>::contains_key(collection_id, (item_id, &from, &recipient)) {
-                approval = <Allowances<T>>::get(collection_id, (item_id, &from, &recipient));
+            if <Allowances<T>>::contains_key(collection_id, (item_id, &from, &sender)) {
+                approval = <Allowances<T>>::get(collection_id, (item_id, &from, &sender));
                 ensure!(approval >= value, Error::<T>::TokenValueNotEnough);
                 appoved_transfer = true;
             }
@@ -1165,10 +1165,10 @@ decl_module! {
 
             // Reduce approval by transferred amount or remove if remaining approval drops to 0
             if approval.checked_sub(value).unwrap_or(0) > 0 {
-                <Allowances<T>>::insert(collection_id, (item_id, &from, &recipient), approval - value);
+                <Allowances<T>>::insert(collection_id, (item_id, &from, &sender), approval - value);
             }
             else {
-                <Allowances<T>>::remove(collection_id, (item_id, &from, &recipient));
+                <Allowances<T>>::remove(collection_id, (item_id, &from, &sender));
             }
 
             match target_collection.mode
