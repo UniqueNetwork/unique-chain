@@ -403,18 +403,20 @@ export async function setVariableMetaDataExpectFailure(sender: IKeyringPair, col
   });
 }
 
-export interface CreateFungibleData extends Struct {
-  readonly value: u128;
+export interface CreateFungibleData {
+  readonly Value: bigint;
 }
 
-export interface CreateReFungibleData extends Struct {}
-export interface CreateNftData extends Struct {}
+export interface CreateReFungibleData { }
+export interface CreateNftData { }
 
-export interface CreateItemData extends Enum {
+export type CreateItemData = {
   NFT: CreateNftData;
+} | {
   Fungible: CreateFungibleData;
+} | {
   ReFungible: CreateReFungibleData;
-}
+};
 
 export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: number, tokenId: number, value = 0) {
   await usingApi(async (api) => {
