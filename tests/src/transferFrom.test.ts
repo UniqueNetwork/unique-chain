@@ -50,7 +50,7 @@ describe('Integration Test transferFrom(from, recipient, collection_id, item_id,
     });
   });
 
-  it.only('Should reduce allowance if value is big', async () => {
+  it('Should reduce allowance if value is big', async () => {
     await usingApi(async () => {
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
