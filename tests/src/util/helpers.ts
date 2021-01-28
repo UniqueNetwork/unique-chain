@@ -590,7 +590,7 @@ transferExpectFail(collectionId: number,
                    tokenId: number,
                    sender: IKeyringPair,
                    recipient: IKeyringPair,
-                   value: number = 1,
+                   value: number | bigint = 1,
                    type: string = 'NFT') {
   await usingApi(async (api: ApiPromise) => {
     const transferTx = await api.tx.nft.transfer(recipient.address, collectionId, tokenId, value);
