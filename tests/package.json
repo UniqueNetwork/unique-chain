@@ -6,7 +6,7 @@
   "devDependencies": {
     "@polkadot/dev": "^0.61.24",
     "@polkadot/ts": "^0.3.59",
-    "@polkadot/typegen": "^3.6.3",
+    "@polkadot/typegen": "^3.6.4",
     "@polkadot/util-crypto": "^5.4.4",
     "@types/chai": "^4.2.12",
     "@types/chai-as-promised": "^7.1.3",
@@ -32,15 +32,16 @@
     "testToggleContractWhiteList": "mocha --timeout 9999999 -r ts-node/register ./**/toggleContractWhiteList.test.ts",
     "testAddToContractWhiteList": "mocha --timeout 9999999 -r ts-node/register ./**/addToContractWhiteList.test.ts",
     "testTransfer": "mocha --timeout 9999999 -r ts-node/register ./**/transfer.test.ts",
-    "testBurnItem": "mocha --timeout 9999999 -r ts-node/register ./**/burnItem.test.ts"
+    "testBurnItem": "mocha --timeout 9999999 -r ts-node/register ./**/burnItem.test.ts",
+    "testCreditFeesToTreasury": "mocha --timeout 9999999 -r ts-node/register ./**/creditFeesToTreasury.test.ts"
   },
   "author": "",
   "license": "SEE LICENSE IN ../LICENSE",
   "homepage": "",
   "dependencies": {
-    "@polkadot/api": "^3.6.3",
-    "@polkadot/api-contract": "^3.6.3",
-    "@polkadot/util": "^3.6.3",
+    "@polkadot/api": "^3.6.4",
+    "@polkadot/api-contract": "^3.6.4",
+    "@polkadot/util": "^3.6.4",
     "bignumber.js": "^9.0.0",
     "chai-as-promised": "^7.1.1"
   },

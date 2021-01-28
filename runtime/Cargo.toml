@@ -48,6 +48,7 @@ pallet-transaction-payment-rpc-runtime-api = { default-features = false, version
 pallet-treasury = { version = "2.0.1", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
 pallet-vesting = { version = "2.0.1", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
 sp-api = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sp-arithmetic = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
 sp-block-builder = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
 sp-consensus-aura = { default-features = false, version = '0.8.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
 sp-core = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
@@ -58,6 +59,7 @@ sp-session = { default-features = false, version = '2.0.1' , git = 'https://gith
 sp-std = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
 sp-transaction-pool = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
 sp-version = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+smallvec = "1.4.1"
 
 [features]
 default = ['std']

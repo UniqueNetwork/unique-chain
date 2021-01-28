@@ -23,12 +23,12 @@ export default async function usingApi(action: (api: ApiPromise) => Promise<void
 
   // TODO: Remove, this is temporary: Filter unneeded API output 
   // (Jaco promised it will be removed in the next version)
-  const consoleLog = console.log;
-  console.log = (message: string) => {
-    if (!(message.includes("API/INIT: Capabilities detected") || message.includes("2021-"))) {
-      consoleLog(message);
-    }
-  };
+  // const consoleLog = console.log;
+  // console.log = (message: string) => {
+  //   if (!(message.includes("API/INIT: Capabilities detected") || message.includes("2021-"))) {
+  //     consoleLog(message);
+  //   }
+  // };
 
   try {
     await promisifySubstrate(api, async () => {
@@ -39,7 +39,7 @@ export default async function usingApi(action: (api: ApiPromise) => Promise<void
     })();
   } finally {
     await api.disconnect();
-    console.log = consoleLog;
+    // console.log = consoleLog;
   }
 }
 

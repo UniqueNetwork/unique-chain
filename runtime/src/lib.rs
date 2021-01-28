@@ -49,8 +49,8 @@ pub use frame_support::{
     },
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-        DispatchInfo, GetDispatchInfo, IdentityFee, Pays, PostDispatchInfo, Weight,
-        WeightToFeePolynomial,
+        DispatchInfo, GetDispatchInfo, Pays, PostDispatchInfo, Weight,
+        WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients
     },
     StorageValue,
 };
@@ -60,6 +60,8 @@ use frame_system::{
     EnsureRoot, 
     limits::{BlockWeights, BlockLength}};
 use sp_std::{marker::PhantomData};
+use sp_arithmetic::{traits::{BaseArithmetic, Unsigned}};
+use smallvec::{smallvec, SmallVec};
 
 pub use pallet_timestamp::Call as TimestampCall;
 
@@ -217,11 +219,11 @@ pub struct DealWithFees;
 impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item=NegativeImbalance>) {
 		if let Some(fees) = fees_then_tips.next() {
-			// for fees, 80% to treasury, 20% to author
-			let mut split = fees.ration(80, 20);
+			// for fees, 100% to treasury
+			let mut split = fees.ration(100, 0);
 			if let Some(tips) = fees_then_tips.next() {
-				// for tips, if any, 80% to treasury, 20% to author (though this can be anything)
-				tips.ration_merge_into(80, 20, &mut split);
+				// for tips, if any, 100% to treasury
+				tips.ration_merge_into(100, 0, &mut split);
 			}
 			Treasury::on_unbalanced(split.0);
 			// Author::on_unbalanced(split.1);
@@ -366,12 +368,13 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = ();
 }
 
-pub const MILLICENTS: Balance = 1_000_000_000;
-pub const CENTS: Balance = 1_000 * MILLICENTS;
-pub const DOLLARS: Balance = 100 * CENTS;
+pub const MICROUNIQUE: Balance = 1_000_000_000;
+pub const MILLIUNIQUE: Balance = 1_000 * MICROUNIQUE;
+pub const CENTIUNIQUE: Balance = 10 * MILLIUNIQUE;
+pub const UNIQUE: Balance      = 100 * CENTIUNIQUE;
 
 pub const fn deposit(items: u32, bytes: u32) -> Balance {
-    items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
+    items as Balance * 15 * CENTIUNIQUE + (bytes as Balance) * 6 * CENTIUNIQUE
 }
 
 parameter_types! {
@@ -383,7 +386,7 @@ parameter_types! {
 	pub const DepositPerStorageByte: Balance = deposit(0, 1);
 	pub const DepositPerStorageItem: Balance = deposit(1, 0);
 	pub RentFraction: Perbill = Perbill::from_rational_approximation(1u32, 30 * DAYS);
-	pub const SurchargeReward: Balance = 150 * MILLICENTS;
+	pub const SurchargeReward: Balance = 150 * MILLIUNIQUE;
 	pub const SignedClaimHandicap: u32 = 2;
 	pub const MaxDepth: u32 = 32;
 	pub const MaxValueSize: u32 = 16 * 1024;
@@ -422,36 +425,50 @@ impl pallet_contracts::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 10 * MILLICENTS;
-	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
-	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(1, 100_000);
-	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_000u128);
+	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE; // Targeting 0.1 Unique per NFT transfer 
+}
+
+/// Linear implementor of `WeightToFeePolynomial` 
+pub struct LinearFee<T>(sp_std::marker::PhantomData<T>);
+
+impl<T> WeightToFeePolynomial for LinearFee<T> where
+	T: BaseArithmetic + From<u32> + Copy + Unsigned
+{
+	type Balance = T;
+
+	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+		smallvec!(WeightToFeeCoefficient {
+			coeff_integer: 146_700u32.into(), // Targeting 0.1 Unique per NFT transfer
+			coeff_frac: Perbill::zero(),
+			negative: false,
+			degree: 1,
+		})
+	}
 }
 
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees>;
 	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = IdentityFee<Balance>;
-	type FeeMultiplierUpdate =
-		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+	type WeightToFee = LinearFee<Balance>;
+	type FeeMultiplierUpdate = ();
 }
 
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
+	pub const ProposalBondMinimum: Balance = 1 * UNIQUE;
 	pub const SpendPeriod: BlockNumber = 5 * MINUTES;
 	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance = 1 * DOLLARS;
-	pub const DataDepositPerByte: Balance = 1 * CENTS;
-	pub const BountyDepositBase: Balance = 1 * DOLLARS;
+	pub const TipReportDepositBase: Balance = 1 * UNIQUE;
+	pub const DataDepositPerByte: Balance = 1 * CENTIUNIQUE;
+	pub const BountyDepositBase: Balance = 1 * UNIQUE;
 	pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
 	pub const TreasuryModuleId: ModuleId = ModuleId(*b"py/trsry");
 	pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
 	pub const MaximumReasonLength: u32 = 16384;
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
-	pub const BountyValueMinimum: Balance = 5 * DOLLARS;
+	pub const BountyValueMinimum: Balance = 5 * UNIQUE;
 }
 
 impl pallet_treasury::Config for Runtime {
@@ -476,7 +493,7 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinVestedTransfer: Balance = 100 * DOLLARS;
+	pub const MinVestedTransfer: Balance = 10 * UNIQUE;
 }
 
 impl pallet_vesting::Config for Runtime {
