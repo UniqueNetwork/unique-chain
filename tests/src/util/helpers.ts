@@ -21,6 +21,8 @@ import { hexToStr, strToUTF16, utf16ToStr } from './util';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
+export const U128_MAX = (1n << 128n) - 1n;
+
 type GenericResult = {
   success: boolean,
 };
