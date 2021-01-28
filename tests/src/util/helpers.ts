@@ -457,7 +457,7 @@ transferFromExpectSuccess(collectionId: number,
                           accountApproved: IKeyringPair,
                           accountFrom: IKeyringPair,
                           accountTo: IKeyringPair,
-                          value: number = 1,
+                          value: number | bigint = 1,
                           type: string = 'NFT') {
   await usingApi(async (api: ApiPromise) => {
     let balanceBefore = new BN(0);
@@ -476,7 +476,7 @@ transferFromExpectSuccess(collectionId: number,
     }
     if (type === 'Fungible') {
       const balanceAfter = await api.query.nft.balance(collectionId, accountTo.address) as unknown as BN;
-      expect(balanceAfter.sub(balanceBefore).toNumber()).to.be.equal(value);
+      expect(balanceAfter.sub(balanceBefore).toString()).to.be.equal(value.toString());
     }
     if (type === 'ReFungible') {
       const nftItemData =
