@@ -42,6 +42,17 @@ describe('Integration Test removeFromWhiteList', () => {
   it('ensure bob is no longer in whitelist', async () => {
     expect(await isWhitelisted(collectionId, bob.address)).to.be.false;
   });
+
+  it('allows removal from collection with unset whitelist status', async () => {
+    await usingApi(async () => {
+      const collectionWithoutWhitelistId = await createCollectionExpectSuccess();
+      await enableWhiteListExpectSuccess(alice, collectionWithoutWhitelistId);
+      await addToWhiteListExpectSuccess(alice, collectionWithoutWhitelistId, bob.address);
+      await disableWhiteListExpectSuccess(alice, collectionWithoutWhitelistId);
+
+      await removeFromWhiteListExpectSuccess(alice, collectionWithoutWhitelistId, bob.address);
+    });
+  });
 });
 
 describe('Negative Integration Test removeFromWhiteList', () => {
@@ -69,17 +80,6 @@ describe('Negative Integration Test removeFromWhiteList', () => {
       await enableWhiteListExpectSuccess(alice, collectionId);
       await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
       await destroyCollectionExpectSuccess(collectionId);
-
-      await removeFromWhiteListExpectFailure(alice, collectionId, bob.address);
-    });
-  });
-
-  it('fails on removal from collection with unset whitelist status', async () => {
-    await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess();
-      await enableWhiteListExpectSuccess(alice, collectionId);
-      await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
-      await disableWhiteListExpectSuccess(alice, collectionId);
 
       await removeFromWhiteListExpectFailure(alice, collectionId, bob.address);
     });
