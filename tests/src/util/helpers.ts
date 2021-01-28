@@ -462,7 +462,7 @@ transferFromExpectSuccess(collectionId: number,
     }
     const transferFromTx = await api.tx.nft.transferFrom(
       accountFrom.address, accountTo.address, collectionId, tokenId, value);
-    const events = await submitTransactionAsync(accountFrom, transferFromTx);
+    const events = await submitTransactionAsync(accountApproved, transferFromTx);
     const result = getCreateItemResult(events);
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
