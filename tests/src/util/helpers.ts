@@ -540,7 +540,7 @@ transferFromExpectFail(collectionId: number,
                        accountApproved: IKeyringPair,
                        accountFrom: IKeyringPair,
                        accountTo: IKeyringPair,
-                       value: number = 1) {
+                       value: number | bigint = 1) {
   await usingApi(async (api: ApiPromise) => {
     const transferFromTx = await api.tx.nft.transferFrom(
       accountFrom.address, accountTo.address, collectionId, tokenId, value);
