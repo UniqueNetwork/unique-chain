@@ -34,25 +34,6 @@ pub struct NFTExtTransfer<E: Ext> {
 /// The chain Extension of NFT pallet
 pub struct NFTExtension;
 
-// pub trait ToAccount32 {
-//     fn to_account32<E: Ext>(addr: <E::T as SysConfig>::AccountId);
-// }
-
-// impl ToAccount32 for NFTExtension {
-//     fn to_account32<E: Ext>(addr: <E::T as SysConfig>::AccountId) 
-//     where
-//         <E::T as SysConfig>::AccountId: UncheckedFrom<<E::T as SysConfig>::Hash> + AsRef<[u8]>,
-//     {
-//         let mut bytes: [u8; 32];
-//         let addrVec: Vec<u8> = addr.encode();
-//         for i in 0..32 {
-//             bytes[i] = addrVec[i];
-//         }
-//         AccountId32::from(bytes)
-//     }
-
-// }
-
 impl ChainExtension for NFTExtension {
     fn call<E: Ext>(func_id: u32, env: Environment<E, InitState>) -> Result<RetVal, DispatchError>
     where
@@ -80,14 +61,10 @@ impl ChainExtension for NFTExtension {
                 }
                 let recipient = AccountId32::from(bytesRec);
 
-
-
                 match pallet_nft::Module::<Runtime>::transfer_internal(sender, recipient, input.collection_id, input.token_id, input.amount) {
                     Ok(_) => Ok(RetVal::Converging(func_id)),
                     DispatchError => Err(DispatchError::Other("Transfer error"))
                 }
-
-                
             },
 			_ => {
 				panic!("Passed unknown func_id to test chain extension: {}", func_id);
