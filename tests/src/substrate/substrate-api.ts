@@ -18,9 +18,10 @@ function defaultApiOptions(): ApiOptions {
   return { provider: wsProvider, types: rtt };
 }
 
-export default async function usingApi(action: (api: ApiPromise) => Promise<void>, settings: ApiOptions | undefined = undefined): Promise<void> {
+export default async function usingApi<T = void>(action: (api: ApiPromise) => Promise<T>, settings: ApiOptions | undefined = undefined): Promise<T> {
   settings = settings || defaultApiOptions();
   let api: ApiPromise = new ApiPromise(settings);
+  let result: T = null as unknown as T;
 
   // TODO: Remove, this is temporary: Filter unneeded API output 
   // (Jaco promised it will be removed in the next version)
@@ -38,9 +39,9 @@ export default async function usingApi(action: (api: ApiPromise) => Promise<void
 
   try {
     await promisifySubstrate(api, async () => {
-      if(api) {
+      if (api) {
         await api.isReadyOrError;
-        await action(api);
+        result = await action(api);
       }
     })();
   } finally {
@@ -48,6 +49,7 @@ export default async function usingApi(action: (api: ApiPromise) => Promise<void
     console.log = consoleLog;
     console.error = consoleErr;
   }
+  return result as T;
 }
 
 enum TransactionStatus {
