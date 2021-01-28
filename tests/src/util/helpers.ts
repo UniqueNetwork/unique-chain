@@ -615,6 +615,33 @@ approveExpectFail(collectionId: number,
   });
 }
 
+export async function getFungibleBalance(
+  collectionId: number,
+  owner: string,
+) {
+  return await usingApi(async (api) => {
+    const response = (await api.query.nft.fungibleItemList(collectionId, owner)).toJSON() as unknown as {Value: string};
+    return BigInt(response.Value);
+  });
+}
+
+export async function createFungibleItemExpectSuccess(
+  sender: IKeyringPair,
+  collectionId: number,
+  data: CreateFungibleData,
+  owner: string = sender.address,
+) {
+  return await usingApi(async (api) => {
+    const tx = api.tx.nft.createItem(collectionId, owner, { Fungible: data });
+
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getCreateItemResult(events);
+
+    expect(result.success).to.be.true;
+    return result.itemId;
+  });
+}
+
 export async function createItemExpectSuccess(
   sender: IKeyringPair, collectionId: number, createMode: string, owner: string = '') {
   let newItemId: number = 0;
