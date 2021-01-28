@@ -255,6 +255,13 @@ export async function findUnusedAddress(api: ApiPromise): Promise<IKeyringPair> 
   return unused;
 }
 
+export async function getAllowance(collectionId: number, tokenId: number, owner: string, approved: string) {
+  return await usingApi(async (api) => {
+    const bn = await api.query.nft.allowances(collectionId, [tokenId, owner, approved]) as unknown as BN;
+    return BigInt(bn.toString());
+  });
+}
+
 export async function findNotExistingCollection(api: ApiPromise): Promise<number> {
   const totalNumber = parseInt((await api.query.nft.createdCollectionCount()).toString(), 10) as unknown as number;
   const newCollection: number = totalNumber + 1;
