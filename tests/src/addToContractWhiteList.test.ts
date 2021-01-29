@@ -14,7 +14,7 @@ const expect = chai.expect;
 
 describe('Integration Test addToContractWhiteList', () => {
 
-  it(`Add an address to a contract white list`, async () => {
+  it.only(`Add an address to a contract white list`, async () => {
     await usingApi(async api => {
       const bob = privateKey("//Bob");
       const [contract, deployer] = await deployFlipper(api);

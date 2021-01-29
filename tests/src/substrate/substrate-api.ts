@@ -4,7 +4,8 @@
 //
 
 import { WsProvider, ApiPromise } from "@polkadot/api";
-import type { AccountId, Address, ApplyExtrinsicResult, DispatchError, DispatchInfo, EventRecord, Extrinsic, ExtrinsicStatus, Hash, RuntimeDispatchInfo } from '@polkadot/types/interfaces';
+import { EventRecord } from '@polkadot/types/interfaces/system/types';
+import { ExtrinsicStatus } from '@polkadot/types/interfaces/author/types';
 import { IKeyringPair } from "@polkadot/types/types";
 
 import config from "../config";

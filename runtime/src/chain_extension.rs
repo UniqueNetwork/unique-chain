@@ -20,7 +20,6 @@ pub use pallet_nft::*;
 use crate::Runtime;
 use sp_runtime::AccountId32;
 use crate::Vec;
-use frame_system::Origin;
 
 /// Transfer parameters
 #[derive(Debug, PartialEq, Encode, Decode)]
@@ -46,24 +45,24 @@ impl ChainExtension for NFTExtension {
                 let input: NFTExtTransfer<E> = env.read_as()?;
 
                 // Sender to AccountId32
-                let mut bytesSender: [u8; 32] = [0; 32];
-                let addrVecSender: Vec<u8> = env.ext().caller().encode();
+                let mut bytes_sender: [u8; 32] = [0; 32];
+                let addr_vec_sender: Vec<u8> = env.ext().caller().encode();
                 for i in 0..32 {
-                    bytesSender[i] = addrVecSender[i];
+                    bytes_sender[i] = addr_vec_sender[i];
                 }
-                let sender = AccountId32::from(bytesSender);
+                let sender = AccountId32::from(bytes_sender);
 
                 // Recipient to AccountId32
-                let mut bytesRec: [u8; 32] = [0; 32];
-                let addrVecRec: Vec<u8> = input.recipient.encode();
+                let mut bytes_rec: [u8; 32] = [0; 32];
+                let addr_vec_rec: Vec<u8> = input.recipient.encode();
                 for i in 0..32 {
-                    bytesRec[i] = addrVecRec[i];
+                    bytes_rec[i] = addr_vec_rec[i];
                 }
-                let recipient = AccountId32::from(bytesRec);
+                let recipient = AccountId32::from(bytes_rec);
 
                 match pallet_nft::Module::<Runtime>::transfer_internal(sender, recipient, input.collection_id, input.token_id, input.amount) {
                     Ok(_) => Ok(RetVal::Converging(func_id)),
-                    DispatchError => Err(DispatchError::Other("Transfer error"))
+                    _ => Err(DispatchError::Other("Transfer error"))
                 }
             },
 			_ => {

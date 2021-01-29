@@ -19,9 +19,8 @@ use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{ crypto::KeyTypeId, crypto::Public, OpaqueMetadata };
 use sp_runtime::{
-    Permill, Perbill, Perquintill, Percent,
-    // BuildStorage, 
-    ModuleId, FixedPointNumber,
+    Permill, Perbill, Percent,
+    ModuleId,
     create_runtime_str, generic, impl_opaque_keys,
     traits::{
         Convert, ConvertInto, BlakeTwo256, Block as BlockT, IdentifyAccount, 
@@ -30,19 +29,18 @@ use sp_runtime::{
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, MultiSignature,
 };
-use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 pub use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment, CurrencyAdapter, FeeDetails, RuntimeDispatchInfo};
 // A few exports that help ease life for downstream crates.
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_contracts::Schedule as ContractsSchedule;
-use pallet_contracts::WeightInfo;
+pub use pallet_contracts::{Schedule as ContractsSchedule, WeightInfo};
 pub use frame_support::{
     construct_runtime,
     dispatch::DispatchResult,
     parameter_types,
+    StorageValue,
     traits::{
         Currency, ExistenceRequirement, Get, KeyOwnerProofSystem, OnUnbalanced, Randomness,
         LockIdentifier,
@@ -52,16 +50,16 @@ pub use frame_support::{
         DispatchInfo, GetDispatchInfo, Pays, PostDispatchInfo, Weight,
         WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients
     },
-    StorageValue,
 };
 // #[cfg(any(feature = "std", test))]
 use frame_system::{
     self as system,
     EnsureRoot, 
-    limits::{BlockWeights, BlockLength}};
-use sp_std::{marker::PhantomData};
+	limits::{BlockWeights, BlockLength},
+};
+use sp_std::{prelude::*, marker::PhantomData};
 use sp_arithmetic::{traits::{BaseArithmetic, Unsigned}};
-use smallvec::{smallvec, SmallVec};
+use smallvec::smallvec;
 
 pub use pallet_timestamp::Call as TimestampCall;
 

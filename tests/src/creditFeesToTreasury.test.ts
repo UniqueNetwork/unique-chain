@@ -133,7 +133,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       const aliceBalanceAfter = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
       const fee = aliceBalanceBefore.minus(aliceBalanceAfter);
 
-      console.log(fee.toString());
+      // console.log(fee.toString());
       const expectedTransferFee = 0.1;
       const tolerance = 0.00001;
       expect(fee.dividedBy(1e15).minus(expectedTransferFee).abs().toNumber()).to.be.lessThan(tolerance);

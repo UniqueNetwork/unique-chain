@@ -17,8 +17,8 @@ import { BigNumber } from 'bignumber.js';
 import { findUnusedAddress } from '../util/helpers';
 
 const value = 0;
-const gasLimit = 3000n * 1000000n;
-const endowment = `1000000000000000`;
+const gasLimit = 200000n * 1000000n;
+const endowment = '100000000000000000';
 
 function deployBlueprint(alice: IKeyringPair, code: CodePromise): Promise<Blueprint> {
   return new Promise<Blueprint>(async (resolve, reject) => {
@@ -36,13 +36,15 @@ function deployBlueprint(alice: IKeyringPair, code: CodePromise): Promise<Bluepr
 
 function deployContract(alice: IKeyringPair, blueprint: Blueprint) : Promise<any> {
   return new Promise<any>(async (resolve, reject) => {
-    const endowment = 1000000000000000n;
     const initValue = true;
 
     const unsub = await blueprint.tx
     .new(endowment, gasLimit, initValue)
     .signAndSend(alice, (result) => {
       if (result.status.isInBlock || result.status.isFinalized) {
+
+        console.log("Contract deployed: ", result);
+
         unsub();
         resolve(result);
       }

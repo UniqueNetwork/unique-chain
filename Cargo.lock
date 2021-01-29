@@ -3398,7 +3398,7 @@ dependencies = [
 
 [[package]]
 name = "nft"
-version = "2.0.1"
+version = "3.0.0"
 dependencies = [
  "flexi_logger",
  "frame-benchmarking",
@@ -3443,7 +3443,7 @@ dependencies = [
 
 [[package]]
 name = "nft-runtime"
-version = "2.0.1"
+version = "3.0.0"
 dependencies = [
  "frame-benchmarking",
  "frame-executive",
@@ -3772,7 +3772,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-nft"
-version = "2.0.1"
+version = "3.0.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
