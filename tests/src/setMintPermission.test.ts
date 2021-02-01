@@ -4,6 +4,7 @@ import usingApi from './substrate/substrate-api';
 import {
   addToWhiteListExpectSuccess,
   createCollectionExpectSuccess,
+  createItemExpectFailure,
   createItemExpectSuccess,
   destroyCollectionExpectSuccess,
   enableWhiteListExpectSuccess,
@@ -31,6 +32,16 @@ describe('Integration Test setMintPermission', () => {
       await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
 
       await createItemExpectSuccess(bob, collectionId, 'NFT');
+    });
+  });
+
+  it('ensure non-white-listed non-privileged address can\'t mint tokens', async () => {
+    await usingApi(async () => {
+      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      await enableWhiteListExpectSuccess(alice, collectionId);
+      await setMintPermissionExpectSuccess(alice, collectionId, true);
+
+      await createItemExpectFailure(bob, collectionId, 'NFT');
     });
   });
 });
