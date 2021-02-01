@@ -26,7 +26,7 @@ before(async () => {
 
   });
 });
-describe.only('Integration Test ext. setConstOnChainSchema()', () => {
+describe('Integration Test ext. setConstOnChainSchema()', () => {
 
   it('Run extrinsic with parameters of the collection id, set the scheme', async () => {
       await usingApi(async (api) => {
@@ -50,7 +50,7 @@ describe.only('Integration Test ext. setConstOnChainSchema()', () => {
   });
 });
 
-describe.only('Negative Integration Test ext. setConstOnChainSchema()', () => {
+describe('Negative Integration Test ext. setConstOnChainSchema()', () => {
 
   it('Set a non-existent collection', async () => {
     await usingApi(async (api) => {
