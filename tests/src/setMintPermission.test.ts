@@ -16,26 +16,20 @@ describe('Integration Test setMintPermission', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
-  let collectionId: number;
   before(async () => {
     await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
-
-      collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-    });
-  });
-
-  it('execute setMintPermission', async () => {
-    await usingApi(async () => {
-      await enableWhiteListExpectSuccess(alice, collectionId);
-      await setMintPermissionExpectSuccess(alice, collectionId, true);
     });
   });
 
   it('ensure white-listed non-privileged address can mint tokens', async () => {
     await usingApi(async () => {
+      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      await enableWhiteListExpectSuccess(alice, collectionId);
+      await setMintPermissionExpectSuccess(alice, collectionId, true);
       await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
+
       await createItemExpectSuccess(bob, collectionId, 'NFT');
     });
   });
