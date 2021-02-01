@@ -588,6 +588,17 @@ export async function createItemExpectSuccess(
   return newItemId;
 }
 
+export async function createItemExpectFailure(
+  sender: IKeyringPair, collectionId: number, createMode: string, owner: string = sender.address) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.createItem(collectionId, owner, createMode);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getCreateItemResult(events);
+
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function enableWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number) {
   await usingApi(async (api) => {
 
