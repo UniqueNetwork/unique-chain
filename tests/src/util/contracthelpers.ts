@@ -17,8 +17,8 @@ import { BigNumber } from 'bignumber.js';
 import { findUnusedAddress } from '../util/helpers';
 
 const value = 0;
-const gasLimit = 3000n * 1000000n;
-const endowment = `1000000000000000`;
+const gasLimit = '200000000000';
+const endowment = '100000000000000000';
 
 function deployBlueprint(alice: IKeyringPair, code: CodePromise): Promise<Blueprint> {
   return new Promise<Blueprint>(async (resolve, reject) => {
@@ -36,7 +36,6 @@ function deployBlueprint(alice: IKeyringPair, code: CodePromise): Promise<Bluepr
 
 function deployContract(alice: IKeyringPair, blueprint: Blueprint) : Promise<any> {
   return new Promise<any>(async (resolve, reject) => {
-    const endowment = 1000000000000000n;
     const initValue = true;
 
     const unsub = await blueprint.tx
@@ -58,7 +57,7 @@ async function prepareDeployer(api: ApiPromise) {
   const keyring = new Keyring({ type: 'sr25519' });
   const alice = keyring.addFromUri(`//Alice`);
   let amount = new BigNumber(endowment);
-  amount = amount.plus(1e15);
+  amount = amount.plus(100e15);
   const tx = api.tx.balances.transfer(deployer.address, amount.toFixed());
   await submitTransactionAsync(alice, tx);
 
@@ -87,8 +86,37 @@ export async function deployFlipper(api: ApiPromise): Promise<[Contract, IKeyrin
 export async function getFlipValue(contract: Contract, deployer: IKeyringPair) {
   const result = await contract.query.get(deployer.address, value, gasLimit);
 
-  if(!result.result.isSuccess) {
+  if(!result.result.isOk) {
     throw `Failed to get flipper value`;
   }
-  return (result.result.asSuccess.data[0] == 0x00) ? false : true;
+  return (result.result.asOk.data[0] == 0x00) ? false : true;
+}
+
+function instantiateTransferContract(alice: IKeyringPair, blueprint: Blueprint) : Promise<any> {
+  return new Promise<any>(async (resolve, reject) => {
+    const unsub = await blueprint.tx
+    .default(endowment, gasLimit)
+    .signAndSend(alice, (result) => {
+      if (result.status.isInBlock || result.status.isFinalized) {
+        unsub();
+        resolve(result);
+      }
+    });    
+  });
+}
+
+export async function deployTransferContract(api: ApiPromise): Promise<[Contract, IKeyringPair]> {
+  const metadata = JSON.parse(fs.readFileSync('./src/transfer_contract/metadata.json').toString('utf-8'));
+  const abi = new Abi(metadata);
+
+  const deployer = await prepareDeployer(api);
+
+  const wasm = fs.readFileSync('./src/transfer_contract/nft_transfer.wasm');
+
+  const code = new CodePromise(api, abi, wasm);
+
+  const blueprint = await deployBlueprint(deployer, code);
+  const contract = (await instantiateTransferContract(deployer, blueprint))['contract'] as Contract;
+
+  return [contract, deployer];
 }

@@ -52,17 +52,18 @@ sudo apt-get install libssl-dev pkg-config libclang-dev clang
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
 
-3. Install Toolchain and make it default:
+3. Install stable toolchain 1.49.0 and make it default, install nightly 2021-01-27:
 
 ```bash
+rustup toolchain install 1.49.0
 rustup toolchain install nightly-2020-10-01
-rustup default nightly-2020-10-01
+rustup default nightly-2021-01-27
 ```
 
 4. Add wasm target for default toolchain:
 
 ```bash
-rustup target add wasm32-unknown-unknown
+rustup target add wasm32-unknown-unknown --toolchain nightly-2021-01-27
 ```
 
 5. Build:
@@ -113,6 +114,20 @@ cargo run -- \
 ```
 
 Additional CLI usage options are available and may be shown by running `cargo run -- --help`.
+
+## Run Integration Tests
+
+1. Install all needed dependecies
+```
+cd tests
+yarn install
+```
+
+2. Run tests
+```
+yarn test
+```
+
 
 ## Benchmarks
 
