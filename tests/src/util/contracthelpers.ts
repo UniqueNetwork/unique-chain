@@ -37,21 +37,11 @@ function deployBlueprint(alice: IKeyringPair, code: CodePromise): Promise<Bluepr
 function deployContract(alice: IKeyringPair, blueprint: Blueprint) : Promise<any> {
   return new Promise<any>(async (resolve, reject) => {
     const initValue = true;
-    const constructorIndex = 0;
-
-    // const unsub = await blueprint
-    // .createContract(constructorIndex, { gasLimit: gasLimit, salt: null, value: endowment }, initValue)
-
-    // const unsub = await blueprint.tx
-    // .new({ gasLimit: gasLimit, salt: null, value: endowment }, initValue)
 
     const unsub = await blueprint.tx
     .new(endowment, gasLimit, initValue)
     .signAndSend(alice, (result) => {
       if (result.status.isInBlock || result.status.isFinalized) {
-
-        console.log("Contract deployed: ", result);
-
         unsub();
         resolve(result);
       }
@@ -67,7 +57,7 @@ async function prepareDeployer(api: ApiPromise) {
   const keyring = new Keyring({ type: 'sr25519' });
   const alice = keyring.addFromUri(`//Alice`);
   let amount = new BigNumber(endowment);
-  amount = amount.plus(1e15);
+  amount = amount.plus(100e15);
   const tx = api.tx.balances.transfer(deployer.address, amount.toFixed());
   await submitTransactionAsync(alice, tx);
 
@@ -100,4 +90,33 @@ export async function getFlipValue(contract: Contract, deployer: IKeyringPair) {
     throw `Failed to get flipper value`;
   }
   return (result.result.asOk.data[0] == 0x00) ? false : true;
+}
+
+function instantiateTransferContract(alice: IKeyringPair, blueprint: Blueprint) : Promise<any> {
+  return new Promise<any>(async (resolve, reject) => {
+    const unsub = await blueprint.tx
+    .default(endowment, gasLimit)
+    .signAndSend(alice, (result) => {
+      if (result.status.isInBlock || result.status.isFinalized) {
+        unsub();
+        resolve(result);
+      }
+    });    
+  });
+}
+
+export async function deployTransferContract(api: ApiPromise): Promise<[Contract, IKeyringPair]> {
+  const metadata = JSON.parse(fs.readFileSync('./src/transfer_contract/metadata.json').toString('utf-8'));
+  const abi = new Abi(metadata);
+
+  const deployer = await prepareDeployer(api);
+
+  const wasm = fs.readFileSync('./src/transfer_contract/nft_transfer.wasm');
+
+  const code = new CodePromise(api, abi, wasm);
+
+  const blueprint = await deployBlueprint(deployer, code);
+  const contract = (await instantiateTransferContract(deployer, blueprint))['contract'] as Contract;
+
+  return [contract, deployer];
 }
