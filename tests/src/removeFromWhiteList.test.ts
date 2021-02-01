@@ -21,26 +21,23 @@ const expect = chai.expect;
 describe('Integration Test removeFromWhiteList', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
-  let collectionId: number;
 
   before(async () => {
     await usingApi(async (api) => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
-      collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+    });
+  });
+
+  it('ensure bob is not in whitelist after removal', async () => {
+    await usingApi(async () => {
+      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
       await enableWhiteListExpectSuccess(alice, collectionId);
       await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
-    });
-  });
 
-  it('remove bob from whitelist', async () => {
-    await usingApi(async () => {
       await removeFromWhiteListExpectSuccess(alice, collectionId, bob.address);
+      expect(await isWhitelisted(collectionId, bob.address)).to.be.false;
     });
-  });
-
-  it('ensure bob is no longer in whitelist', async () => {
-    expect(await isWhitelisted(collectionId, bob.address)).to.be.false;
   });
 
   it('allows removal from collection with unset whitelist status', async () => {
