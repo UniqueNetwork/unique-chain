@@ -98,12 +98,16 @@ describe('setSchemaVersion negative', () => {
 
   it('execute setSchemaVersion with not correct schema version', async () => {
     await usingApi(async (api: ApiPromise) => {
+      const consoleError = console.error;
+      console.error = (message: string) => {};
       try {
         tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'Test');
         await submitTransactionAsync(alice, tx);
       } catch (e) {
         // tslint:disable-next-line:no-unused-expression
         expect(e).to.be.exist;
+      } finally {
+        console.error = consoleError;
       }
     });
   });

@@ -102,19 +102,30 @@
     "CollectionId": "u32",
     "TokenId": "u32",
     "ChainLimits": {
-      "collection_numbers_limit": "u32",
-      "account_token_ownership_limit": "u32",
-      "collections_admins_limit": "u64",
-      "custom_data_limit": "u32",
-      "nft_sponsor_timeout": "u32",
-      "fungible_sponsor_timeout": "u32",
-      "refungible_sponsor_timeout": "u32"
+      "CollectionNumbersLimit": "u32",
+      "AccountTokenOwnershipLimit": "u32",
+      "CollectionAdminsLimit": "u64",
+      "CustomDataLimit": "u32",
+      "NftSponsorTimeout": "u32",
+      "FungibleSponsorTimeout": "u32",
+      "RefungibleSponsorTimeout": "u32",
+      "OffchainSchemaLimit": "u32",
+      "VariableOnChainSchemaLimit": "u32",
+      "ConstOnChainSchemaLimit": "u32"
     },
     "CollectionLimits": {
       "AccountTokenOwnershipLimit": "u32",
       "SponsoredMintSize": "u32",
       "TokenLimit": "u32",
       "SponsorTimeout": "u32"
+    },
+    "AccountInfo": "AccountInfoWithProviders",
+    "AccountInfoWithProviders": {
+      "nonce": "Index",
+      "consumers": "RefCount",
+      "providers": "RefCount",
+      "data": "AccountData"
     }
+
   }
   

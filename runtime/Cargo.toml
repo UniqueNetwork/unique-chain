@@ -5,7 +5,7 @@ homepage = 'https://substrate.io'
 license = 'Unlicense'
 name = 'nft-runtime'
 repository = 'https://github.com/usetech-llc/nft_parachain/'
-version = '2.0.0'
+version = '3.0.0'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -25,39 +25,41 @@ hex-literal = { optional = true, version = '0.3.1' }
 serde = { features = ['derive'], optional = true, version = '1.0.101' }
 
 # local dependencies
-pallet-nft = { path = '../pallets/nft', default-features = false, version = '2.0.0' }
+pallet-nft = { path = '../pallets/nft', default-features = false, version = '3.0.0' }
 
 # Substrate dependencies
-frame-benchmarking = { default-features = false, optional = true, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-frame-executive = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-frame-support = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-frame-system = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-frame-system-benchmarking = { default-features = false, optional = true, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-frame-system-rpc-runtime-api = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-pallet-aura = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-pallet-balances = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-pallet-contracts = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-pallet-contracts-primitives = { default-features = false, version = '2.0.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-pallet-contracts-rpc-runtime-api = { default-features = false, version = '0.8.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-pallet-grandpa = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-pallet-randomness-collective-flip = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-pallet-sudo = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-pallet-timestamp = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-pallet-transaction-payment = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-pallet-treasury = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-pallet-vesting = { version = "2.0.0", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-sp-api = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-sp-block-builder = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-sp-consensus-aura = { default-features = false, version = '0.8.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-sp-core = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-sp-inherents = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-sp-offchain = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-sp-runtime = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-sp-session = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-sp-std = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-sp-transaction-pool = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
-sp-version = { default-features = false, version = '2.0.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'release_flexi' }
+frame-benchmarking = { default-features = false, optional = true, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+frame-executive = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+frame-support = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+frame-system = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+frame-system-benchmarking = { default-features = false, optional = true, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+frame-system-rpc-runtime-api = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+pallet-aura = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+pallet-balances = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+pallet-contracts = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+pallet-contracts-primitives = { default-features = false, version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+pallet-contracts-rpc-runtime-api = { default-features = false, version = '0.8.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+pallet-grandpa = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+pallet-randomness-collective-flip = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+pallet-sudo = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+pallet-timestamp = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+pallet-transaction-payment = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+pallet-treasury = { version = "2.0.1", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+pallet-vesting = { version = "2.0.1", default-features = false, git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sp-api = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sp-arithmetic = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sp-block-builder = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sp-consensus-aura = { default-features = false, version = '0.8.0' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sp-core = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sp-inherents = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sp-offchain = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sp-runtime = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sp-session = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sp-std = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sp-transaction-pool = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sp-version = { default-features = false, version = '2.0.1' , git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+smallvec = "1.4.1"
 
 [features]
 default = ['std']

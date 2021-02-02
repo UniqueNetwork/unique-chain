@@ -170,7 +170,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
     });
   });
 
-  it('NFT: Sponsoring is rate limited', async () => {
+  it('NFT: Sponsoring of transfers is rate limited', async () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
@@ -281,6 +281,51 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
       expect(result1.success).to.be.true;
       expect(result2.success).to.be.true;
+      expect(BsponsorBalance.isEqualTo(AsponsorBalance)).to.be.true;
+    });
+  });
+
+  it('NFT: Sponsoring of createItem is rate limited', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+
+    // Enable collection white list 
+    await enableWhiteListExpectSuccess(alice, collectionId);
+
+    // Enable public minting
+    await enablePublicMintingExpectSuccess(alice, collectionId);
+
+    await usingApi(async (api) => {
+      // Find unused address
+      const zeroBalance = await findUnusedAddress(api);
+
+      // Add zeroBalance address to white list
+      await addToWhiteListExpectSuccess(alice, collectionId, zeroBalance.address);
+
+      // Mint token using unused address as signer - gets sponsored
+      await createItemExpectSuccess(zeroBalance, collectionId, 'NFT', zeroBalance.address);
+
+      // Second mint should fail
+      const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
+      
+      const consoleError = console.error;
+      const consoleLog = console.log;
+      console.error = () => {};
+      console.log = () => {};
+      const badTransaction = async function () { 
+        await createItemExpectSuccess(zeroBalance, collectionId, 'NFT', zeroBalance.address);
+      };
+      await expect(badTransaction()).to.be.rejectedWith("Inability to pay some fees");
+      console.error = consoleError;
+      console.log = consoleLog;
+      const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
+
+      // Try again after Zero gets some balance - now it should succeed
+      const balancetx = api.tx.balances.transfer(zeroBalance.address, 1e15);
+      await submitTransactionAsync(alice, balancetx);
+      await createItemExpectSuccess(zeroBalance, collectionId, 'NFT', zeroBalance.address);
+
       expect(BsponsorBalance.isEqualTo(AsponsorBalance)).to.be.true;
     });
   });

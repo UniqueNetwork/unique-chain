@@ -1,15 +1,15 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x36431d9da78a6bb099474e49c9e35a9c3a04272b58815634082626109826cac6",
-    "language": "ink! 3.0.0-rc1",
-    "compiler": "rustc 1.49.0-nightly"
+    "hash": "0x5b02ceadaacee8408d3c6496394847092c099bcb897221dbe8d22c16d372fa17",
+    "language": "ink! 3.0.0-rc2",
+    "compiler": "rustc 1.51.0-nightly"
   },
   "contract": {
     "name": "flipper",
-    "version": "3.0.0-rc1",
+    "version": "0.1.0",
     "authors": [
-      "Parity Technologies <admin@parity.io>"
+      "[your_name] <[your_email]>"
     ]
   },
   "spec": {
@@ -27,7 +27,7 @@
           }
         ],
         "docs": [
-          " Creates a new flipper smart contract initialized with the given value."
+          " Constructor that initializes the `bool` value to the given `init_value`."
         ],
         "name": [
           "new"
@@ -37,7 +37,9 @@
       {
         "args": [],
         "docs": [
-          " Creates a new flipper smart contract initialized to `false`."
+          " Constructor that initializes the `bool` value to `false`.",
+          "",
+          " Constructors can delegate to other constructors."
         ],
         "name": [
           "default"
@@ -51,7 +53,9 @@
       {
         "args": [],
         "docs": [
-          " Flips the current value of the Flipper's bool."
+          " A message that can be called on instantiated contracts.",
+          " This one flips the value of the stored `bool` from `true`",
+          " to `false` and vice versa."
         ],
         "mutates": true,
         "name": [
@@ -64,7 +68,7 @@
       {
         "args": [],
         "docs": [
-          " Returns the current value of the Flipper's bool."
+          " Simply returns the current value of our `bool`."
         ],
         "mutates": false,
         "name": [

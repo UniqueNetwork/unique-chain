@@ -35,16 +35,16 @@ describe('integration test: ext. burnItem():', () => {
       const tx = api.tx.nft.burnItem(collectionId, tokenId, 0);
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
-  
-      // Get the item 
+      // Get the item
       const item: any = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON();
- 
       // What to expect
+      // tslint:disable-next-line:no-unused-expression
       expect(result.success).to.be.true;
+      // tslint:disable-next-line:no-unused-expression
       expect(item).to.be.not.null;
       expect(item.Owner).to.be.equal(nullPublicKey);
     });
-  
+
   });
   it('Burn item in Fungible collection', async () => {
     const createMode = 'Fungible';

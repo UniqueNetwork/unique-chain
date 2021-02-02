@@ -253,6 +253,12 @@ export async function findUnusedAddress(api: ApiPromise): Promise<IKeyringPair> 
   return unused;
 }
 
+export async function findNotExistingCollection(api: ApiPromise): Promise<number> {
+  const totalNumber = parseInt((await api.query.nft.createdCollectionCount()).toString(), 10) as unknown as number;
+  const newCollection: number = totalNumber + 1;
+  return newCollection;
+}
+
 function getDestroyResult(events: EventRecord[]): boolean {
   let success: boolean = false;
   events.forEach(({ phase, event: { data, method, section } }) => {
@@ -378,6 +384,23 @@ export async function confirmSponsorshipExpectFailure(collectionId: number, send
   });
 }
 
+export async function setVariableMetaDataExpectSuccess(sender: IKeyringPair, collectionId: number, itemId: number, data: number[]) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.setVariableMetaData(collectionId, itemId, '0x' + Buffer.from(data).toString('hex'));
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+}
+
+export async function setVariableMetaDataExpectFailure(sender: IKeyringPair, collectionId: number, itemId: number, data: number[]) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.setVariableMetaData(collectionId, itemId, '0x' + Buffer.from(data).toString('hex'));
+    await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+  });
+}
+
 export interface CreateFungibleData extends Struct {
   readonly value: u128;
 }
@@ -389,6 +412,22 @@ export interface CreateItemData extends Enum {
   NFT: CreateNftData;
   Fungible: CreateFungibleData;
   ReFungible: CreateReFungibleData;
+}
+
+export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: number, tokenId: number, value = 0) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.burnItem(collectionId, tokenId, value);
+    const events = await submitTransactionAsync(owner, tx);
+    const result = getGenericResult(events);
+    // Get the item
+    const item: any = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON();
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.true;
+    // tslint:disable-next-line:no-unused-expression
+    expect(item).to.be.not.null;
+    expect(item.Owner).to.be.equal(nullPublicKey);
+  });
 }
 
 export async function
@@ -462,6 +501,58 @@ transferFromExpectFail(collectionId: number,
 }
 
 export async function
+transferExpectSuccess(collectionId: number,
+                      tokenId: number,
+                      sender: IKeyringPair,
+                      recipient: IKeyringPair,
+                      value: number = 1,
+                      type: string = 'NFT') {
+  await usingApi(async (api: ApiPromise) => {
+    let balanceBefore = new BN(0);
+    if (type === 'Fungible') {
+      balanceBefore = await api.query.nft.balance(collectionId, recipient.address) as unknown as BN;
+    }
+    const transferTx = await api.tx.nft.transfer(recipient.address, collectionId, tokenId, value);
+    const events = await submitTransactionAsync(sender, transferTx);
+    const result = getCreateItemResult(events);
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.true;
+    if (type === 'NFT') {
+      const nftItemData = await api.query.nft.nftItemList(collectionId, tokenId) as unknown as ITokenDataType;
+      expect(nftItemData.Owner.toString()).to.be.equal(recipient.address);
+    }
+    if (type === 'Fungible') {
+      const balanceAfter = await api.query.nft.balance(collectionId, recipient.address) as unknown as BN;
+      expect(balanceAfter.sub(balanceBefore).toNumber()).to.be.equal(value);
+    }
+    if (type === 'ReFungible') {
+      const nftItemData =
+        await api.query.nft.reFungibleItemList(collectionId, tokenId) as unknown as IReFungibleTokenDataType;
+      expect(nftItemData.Owner[0].Owner.toString()).to.be.equal(recipient.address);
+      expect(nftItemData.Owner[0].Fraction.toNumber()).to.be.equal(value);
+    }
+  });
+}
+
+export async function
+transferExpectFail(collectionId: number,
+                   tokenId: number,
+                   sender: IKeyringPair,
+                   recipient: IKeyringPair,
+                   value: number = 1,
+                   type: string = 'NFT') {
+  await usingApi(async (api: ApiPromise) => {
+    const transferTx = await api.tx.nft.transfer(recipient.address, collectionId, tokenId, value);
+    const events = await expect(submitTransactionExpectFailAsync(sender, transferTx)).to.be.rejected;
+    if (events && Array.isArray(events)) {
+      const result = getCreateCollectionResult(events);
+      // tslint:disable-next-line:no-unused-expression
+      expect(result.success).to.be.false;
+    }
+  });
+}
+
+export async function
 approveExpectFail(collectionId: number,
                   tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number = 1) {
   await usingApi(async (api: ApiPromise) => {
@@ -473,7 +564,8 @@ approveExpectFail(collectionId: number,
   });
 }
 
-export async function createItemExpectSuccess(sender: IKeyringPair, collectionId: number, createMode: string, owner: string = '') {
+export async function createItemExpectSuccess(
+  sender: IKeyringPair, collectionId: number, createMode: string, owner: string = '') {
   let newItemId: number = 0;
   await usingApi(async (api) => {
     const AItemCount = parseInt((await api.query.nft.itemListIndex(collectionId)).toString(), 10);
@@ -525,6 +617,7 @@ export async function enableWhiteListExpectSuccess(sender: IKeyringPair, collect
     const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
 
     // What to expect
+    // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
     expect(collection.Access).to.be.equal('WhiteList');
   });
@@ -550,17 +643,22 @@ export async function enablePublicMintingExpectSuccess(sender: IKeyringPair, col
 export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number, address: string) {
   await usingApi(async (api) => {
 
+    const whiteListedBefore = (await api.query.nft.whiteList(collectionId, address)).toJSON();
+
     // Run the transaction
     const tx = api.tx.nft.addToWhiteList(collectionId, address);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
 
-    // Get the collection
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+    const whiteListedAfter = (await api.query.nft.whiteList(collectionId, address)).toJSON();
 
     // What to expect
+    // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
-    expect(collection.MintMode).to.be.equal(true);
+    // tslint:disable-next-line: no-unused-expression
+    expect(whiteListedBefore).to.be.false;
+    // tslint:disable-next-line: no-unused-expression
+    expect(whiteListedAfter).to.be.true;
   });
 }
 

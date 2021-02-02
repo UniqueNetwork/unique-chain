@@ -12,14 +12,17 @@ fn default_collection_numbers_limit() -> u32 {
 }
 
 fn default_limits() {
-    assert_ok!(TemplateModule::set_chain_limits(RawOrigin::Root.into(), ChainLimits { 
+    assert_ok!(TemplateModule::set_chain_limits(RawOrigin::Root.into(), ChainLimits {
             collection_numbers_limit: default_collection_numbers_limit(),
             account_token_ownership_limit: 10,
             collections_admins_limit: 5,
             custom_data_limit: 2048,
             nft_sponsor_transfer_timeout: 15,
             fungible_sponsor_transfer_timeout: 15,
-            refungible_sponsor_transfer_timeout: 15,          
+            refungible_sponsor_transfer_timeout: 15,
+            const_on_chain_schema_limit: 1024,
+            offchain_schema_limit: 1024,
+            variable_on_chain_schema_limit: 1024,
         }));
 }
 
@@ -1255,7 +1258,7 @@ fn white_list_test_5() {
     });
 }
 
-// If Public Access mode is set to WhiteList, oken transfers can’t be Approved by a non-whitelisted address (see Approve method).
+// If Public Access mode is set to WhiteList, token transfers can’t be Approved by a non-whitelisted address (see Approve method).
 #[test]
 fn white_list_test_6() {
     new_test_ext().execute_with(|| {
@@ -1264,6 +1267,10 @@ fn white_list_test_6() {
         let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
         let origin1 = Origin::signed(1);
+
+        let data = default_nft_data();
+        create_test_item(collection_id, &data.into());
+
         assert_ok!(TemplateModule::set_public_access_mode(
             origin1.clone(),
             collection_id,
@@ -1638,7 +1645,10 @@ fn owned_tokens_bound_neg() {
             custom_data_limit: 2048,
             nft_sponsor_transfer_timeout: 15,
             fungible_sponsor_transfer_timeout: 15,
-            refungible_sponsor_transfer_timeout: 15,          
+            refungible_sponsor_transfer_timeout: 15,
+            const_on_chain_schema_limit: 1024,
+            offchain_schema_limit: 1024,
+            variable_on_chain_schema_limit: 1024,
         }));
         
         let collection_id = create_test_collection(&CollectionMode::NFT, 1);
@@ -1667,7 +1677,10 @@ fn collection_admins_bound() {
             custom_data_limit: 2048,
             nft_sponsor_transfer_timeout: 15,
             fungible_sponsor_transfer_timeout: 15,
-            refungible_sponsor_transfer_timeout: 15,          
+            refungible_sponsor_transfer_timeout: 15,
+            const_on_chain_schema_limit: 1024,
+            offchain_schema_limit: 1024,
+            variable_on_chain_schema_limit: 1024,
         }));
         
         let collection_id = create_test_collection(&CollectionMode::NFT, 1);
@@ -1690,7 +1703,10 @@ fn collection_admins_bound_neg() {
             custom_data_limit: 2048,
             nft_sponsor_transfer_timeout: 15,
             fungible_sponsor_transfer_timeout: 15,
-            refungible_sponsor_transfer_timeout: 15,          
+            refungible_sponsor_transfer_timeout: 15,
+            const_on_chain_schema_limit: 1024,
+            offchain_schema_limit: 1024,
+            variable_on_chain_schema_limit: 1024,
         }));
         
         let collection_id = create_test_collection(&CollectionMode::NFT, 1);
@@ -1713,7 +1729,10 @@ fn custom_data_size_nft_const_data_bound_neg() {
             custom_data_limit: 2,
             nft_sponsor_transfer_timeout: 15,
             fungible_sponsor_transfer_timeout: 15,
-            refungible_sponsor_transfer_timeout: 15,          
+            refungible_sponsor_transfer_timeout: 15,
+            const_on_chain_schema_limit: 1024,
+            offchain_schema_limit: 1024,
+            variable_on_chain_schema_limit: 1024,
         }));
         
         let collection_id = create_test_collection(&CollectionMode::NFT, 1);
@@ -1744,7 +1763,10 @@ fn custom_data_size_nft_variable_data_bound_neg() {
             custom_data_limit: 2,
             nft_sponsor_transfer_timeout: 15,
             fungible_sponsor_transfer_timeout: 15,
-            refungible_sponsor_transfer_timeout: 15,          
+            refungible_sponsor_transfer_timeout: 15,
+            const_on_chain_schema_limit: 1024,
+            offchain_schema_limit: 1024,
+            variable_on_chain_schema_limit: 1024,
         }));
 
         let collection_id = create_test_collection(&CollectionMode::NFT, 1);
@@ -1775,7 +1797,10 @@ fn custom_data_size_re_fungible_const_data_bound_neg() {
             custom_data_limit: 2,
             nft_sponsor_transfer_timeout: 15,
             fungible_sponsor_transfer_timeout: 15,
-            refungible_sponsor_transfer_timeout: 15,          
+            refungible_sponsor_transfer_timeout: 15,
+            const_on_chain_schema_limit: 1024,
+            offchain_schema_limit: 1024,
+            variable_on_chain_schema_limit: 1024,
         }));
 
         let collection_id = create_test_collection(&CollectionMode::NFT, 1);
@@ -1806,7 +1831,10 @@ fn custom_data_size_re_fungible_variable_data_bound_neg() {
             custom_data_limit: 2,
             nft_sponsor_transfer_timeout: 15,
             fungible_sponsor_transfer_timeout: 15,
-            refungible_sponsor_transfer_timeout: 15,          
+            refungible_sponsor_transfer_timeout: 15,
+            const_on_chain_schema_limit: 1024,
+            offchain_schema_limit: 1024,
+            variable_on_chain_schema_limit: 1024,
         }));
 
         let collection_id = create_test_collection(&CollectionMode::NFT, 1);
@@ -1923,7 +1951,10 @@ fn set_variable_meta_data_on_nft_token_fails_for_big_data() {
             custom_data_limit: 10,
             nft_sponsor_transfer_timeout: 15,
             fungible_sponsor_transfer_timeout: 15,
-            refungible_sponsor_transfer_timeout: 15,          
+            refungible_sponsor_transfer_timeout: 15,
+            const_on_chain_schema_limit: 1024,
+            offchain_schema_limit: 1024,
+            variable_on_chain_schema_limit: 1024,
         }));
 
         let collection_id = create_test_collection(&CollectionMode::NFT, 1);
@@ -1948,7 +1979,10 @@ fn set_variable_meta_data_on_re_fungible_token_fails_for_big_data() {
             custom_data_limit: 10,
             nft_sponsor_transfer_timeout: 15,
             fungible_sponsor_transfer_timeout: 15,
-            refungible_sponsor_transfer_timeout: 15,          
+            refungible_sponsor_transfer_timeout: 15,
+            const_on_chain_schema_limit: 1024,
+            offchain_schema_limit: 1024,
+            variable_on_chain_schema_limit: 1024,
         }));
 
 
