@@ -384,6 +384,36 @@ export async function confirmSponsorshipExpectFailure(collectionId: number, send
   });
 }
 
+export async function enableContractSponsoringExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, enable: boolean) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.enableContractSponsoring(contractAddress, enable);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+}
+
+export async function enableContractSponsoringExpectFailure(sender: IKeyringPair, contractAddress: AccountId | string, enable: boolean) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.enableContractSponsoring(contractAddress, enable);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.false;
+  });
+}
+
+export async function setContractSponsoringRateLimitExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, rateLimit: number) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.setContractSponsoringRateLimit(contractAddress, rateLimit);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+}
+
 export async function setVariableMetaDataExpectSuccess(sender: IKeyringPair, collectionId: number, itemId: number, data: number[]) {
   await usingApi(async (api) => {
     const tx = api.tx.nft.setVariableMetaData(collectionId, itemId, '0x' + Buffer.from(data).toString('hex'));
