@@ -5,7 +5,7 @@
 
 import chai from "chai";
 import chaiAsPromised from 'chai-as-promised';
-import { submitTransactionAsync } from "../substrate/substrate-api";
+import { submitTransactionAsync, submitTransactionExpectFailAsync } from "../substrate/substrate-api";
 import fs from "fs";
 import { Abi, BlueprintPromise as Blueprint, CodePromise, ContractPromise as Contract } from "@polkadot/api-contract";
 import { IKeyringPair } from "@polkadot/types/types";
@@ -98,6 +98,11 @@ export async function toggleFlipValueExpectSuccess(sender: IKeyringPair, contrac
   const result = getGenericResult(events);
 
   expect(result.success).to.be.true;
+}
+
+export async function toggleFlipValueExpectFailure(sender: IKeyringPair, contract: Contract) {
+  const tx = contract.tx.flip(value, gasLimit);
+  await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
 }
 
 function instantiateTransferContract(alice: IKeyringPair, blueprint: Blueprint) : Promise<any> {
