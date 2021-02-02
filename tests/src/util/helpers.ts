@@ -414,6 +414,16 @@ export async function setContractSponsoringRateLimitExpectSuccess(sender: IKeyri
   });
 }
 
+export async function setContractSponsoringRateLimitExpectFailure(sender: IKeyringPair, contractAddress: AccountId | string, rateLimit: number) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.setContractSponsoringRateLimit(contractAddress, rateLimit);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function setVariableMetaDataExpectSuccess(sender: IKeyringPair, collectionId: number, itemId: number, data: number[]) {
   await usingApi(async (api) => {
     const tx = api.tx.nft.setVariableMetaData(collectionId, itemId, '0x' + Buffer.from(data).toString('hex'));
