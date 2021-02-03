@@ -25,6 +25,7 @@
     "testSetVariableMetaData": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetaData.test.ts",
     "testSetCollectionLimits": "mocha --timeout 9999999 -r ts-node/register ./**/setCollectionLimits.test.ts",
     "testRemoveCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/removeCollectionAdmin.test.ts",
+    "testRemoveFromWhiteList": "mocha --timeout 9999999 -r ts-node/register ./**/removeFromWhiteList.test.ts",
     "testConnection": "mocha --timeout 9999999 -r ts-node/register ./**/connection.test.ts",
     "testCollection": "mocha --timeout 9999999 -r ts-node/register ./**/createCollection.test.ts",
     "testCreateMultipleItems": "mocha --timeout 9999999 -r ts-node/register ./**/createMultipleItems.test.ts",
