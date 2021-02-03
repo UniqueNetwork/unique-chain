@@ -30,7 +30,8 @@
     "testToggleContractWhiteList": "mocha --timeout 9999999 -r ts-node/register ./**/toggleContractWhiteList.test.ts",
     "testAddToContractWhiteList": "mocha --timeout 9999999 -r ts-node/register ./**/addToContractWhiteList.test.ts",
     "testTransfer": "mocha --timeout 9999999 -r ts-node/register ./**/transfer.test.ts",
-    "testBurnItem": "mocha --timeout 9999999 -r ts-node/register ./**/burnItem.test.ts"
+    "testBurnItem": "mocha --timeout 9999999 -r ts-node/register ./**/burnItem.test.ts",
+    "testSetMintPermission": "mocha --timeout 9999999 -r ts-node/register ./**/setMintPermission.test.ts"
   },
   "author": "",
   "license": "Apache 2.0",
