@@ -34,7 +34,8 @@
     "testAddToContractWhiteList": "mocha --timeout 9999999 -r ts-node/register ./**/addToContractWhiteList.test.ts",
     "testTransfer": "mocha --timeout 9999999 -r ts-node/register ./**/transfer.test.ts",
     "testBurnItem": "mocha --timeout 9999999 -r ts-node/register ./**/burnItem.test.ts",
-    "testCreditFeesToTreasury": "mocha --timeout 9999999 -r ts-node/register ./**/creditFeesToTreasury.test.ts"
+    "testCreditFeesToTreasury": "mocha --timeout 9999999 -r ts-node/register ./**/creditFeesToTreasury.test.ts",
+    "testEnableContractSponsoring": "mocha --timeout 9999999 -r ts-node/register ./**/enableContractSponsoring.test.ts"
   },
   "author": "",
   "license": "SEE LICENSE IN ../LICENSE",
