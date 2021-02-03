@@ -56,7 +56,7 @@ sudo apt-get install libssl-dev pkg-config libclang-dev clang
 
 ```bash
 rustup toolchain install 1.49.0
-rustup toolchain install nightly-2020-10-01
+rustup toolchain install nightly-2020-01-27
 rustup default nightly-2021-01-27
 ```
 
