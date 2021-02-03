@@ -10,7 +10,7 @@ import {
   setContractSponsoringRateLimitExpectSuccess,
 } from './util/helpers';
 
-describe.only('Integration Test setContractSponsoringRateLimit', () => {
+describe('Integration Test setContractSponsoringRateLimit', () => {
   it('ensure sponsored contract can\'t be called twice without pause for free', async () => {
     await usingApi(async (api) => {
       const user = await findUnusedAddress(api);
@@ -37,7 +37,7 @@ describe.only('Integration Test setContractSponsoringRateLimit', () => {
   });
 });
 
-describe.only('Negative Integration Test setContractSponsoringRateLimit', () => {
+describe('Negative Integration Test setContractSponsoringRateLimit', () => {
   let alice: IKeyringPair;
 
   before(async () => {
