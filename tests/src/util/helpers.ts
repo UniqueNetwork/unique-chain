@@ -51,7 +51,7 @@ interface IFungibleTokenDataType {
   Value: BN;
 }
 
-interface IReFungibleTokenDataType {
+export interface IReFungibleTokenDataType {
   Owner: IReFungibleOwner[];
   ConstData: number[];
   VariableData: number[];

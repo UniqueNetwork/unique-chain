@@ -123,9 +123,9 @@ export function submitTransactionExpectFailAsync(sender: IKeyringPair, transacti
 
         // console.log('transactionStatus', transactionStatus, 'events', events);
 
-        if (transactionStatus == TransactionStatus.Success) {
+        if (transactionStatus === TransactionStatus.Success) {
           resolve(events);
-        } else if (transactionStatus == TransactionStatus.Fail) {
+        } else if (transactionStatus === TransactionStatus.Fail) {
           reject(events);
         }
       });
