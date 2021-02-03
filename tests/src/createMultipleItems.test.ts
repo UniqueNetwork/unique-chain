@@ -113,10 +113,10 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
 
   it('Create token in not existing collection', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionExpectSuccess();
+      const collectionId = parseInt((await api.query.nft.createdCollectionCount()).toString()) + 1;
       const Alice = privateKey('//Alice');
       const createMultipleItemsTx = await api.tx.nft
-        .createMultipleItems(collectionId + 1, Alice.address, ['NFT', 'NFT', 'NFT']);
+        .createMultipleItems(collectionId, Alice.address, ['NFT', 'NFT', 'NFT']);
       await expect(submitTransactionExpectFailAsync(Alice, createMultipleItemsTx)).to.be.rejected;
     });
   });
