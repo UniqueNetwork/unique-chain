@@ -508,7 +508,7 @@ fn nft_approve_and_transfer_from_white_list() {
             1,
             1
         ));
-        assert_eq!(TemplateModule::approved(1, (1, 1, 3)), 4);
+        assert_eq!(TemplateModule::approved(1, (1, 1, 2)), 4);
     });
 }
 
