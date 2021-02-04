@@ -44,6 +44,23 @@ describe('Integration Test setMintPermission', () => {
       await createItemExpectFailure(bob, collectionId, 'NFT');
     });
   });
+
+  it('can be enabled twice', async () => {
+    await usingApi(async () => {
+      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      await setMintPermissionExpectSuccess(alice, collectionId, true);
+      await setMintPermissionExpectSuccess(alice, collectionId, true);
+    });
+  });
+
+  it('can be disabled twice', async () => {
+    await usingApi(async () => {
+      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      await setMintPermissionExpectSuccess(alice, collectionId, true);
+      await setMintPermissionExpectSuccess(alice, collectionId, false);
+      await setMintPermissionExpectSuccess(alice, collectionId, false);
+    });
+  });
 });
 
 describe('Negative Integration Test setMintPermission', () => {
