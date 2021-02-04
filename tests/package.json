@@ -25,8 +25,10 @@
     "testSetVariableMetaData": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetaData.test.ts",
     "testSetCollectionLimits": "mocha --timeout 9999999 -r ts-node/register ./**/setCollectionLimits.test.ts",
     "testRemoveCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/removeCollectionAdmin.test.ts",
+    "testRemoveFromWhiteList": "mocha --timeout 9999999 -r ts-node/register ./**/removeFromWhiteList.test.ts",
     "testConnection": "mocha --timeout 9999999 -r ts-node/register ./**/connection.test.ts",
     "testCollection": "mocha --timeout 9999999 -r ts-node/register ./**/createCollection.test.ts",
+    "testCreateMultipleItems": "mocha --timeout 9999999 -r ts-node/register ./**/createMultipleItems.test.ts",
     "testApprove": "mocha --timeout 9999999 -r ts-node/register ./**/approve.test.ts",
     "testTransferFrom": "mocha --timeout 9999999 -r ts-node/register ./**/transferFrom.test.ts",
     "testCreateCollection": "mocha --timeout 9999999 -r ts-node/register ./**/createCollection.test.ts",
@@ -35,7 +37,8 @@
     "testTransfer": "mocha --timeout 9999999 -r ts-node/register ./**/transfer.test.ts",
     "testBurnItem": "mocha --timeout 9999999 -r ts-node/register ./**/burnItem.test.ts",
     "testCreditFeesToTreasury": "mocha --timeout 9999999 -r ts-node/register ./**/creditFeesToTreasury.test.ts",
-    "testEnableContractSponsoring": "mocha --timeout 9999999 -r ts-node/register ./**/enableContractSponsoring.test.ts"
+    "testEnableContractSponsoring": "mocha --timeout 9999999 -r ts-node/register ./**/enableContractSponsoring.test.ts",
+    "testSetContractSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setContractSponsoringRateLimit.test.ts"
   },
   "author": "",
   "license": "SEE LICENSE IN ../LICENSE",
