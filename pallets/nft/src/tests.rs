@@ -618,10 +618,8 @@ fn fungible_approve_and_transfer_from() {
         assert_eq!(TemplateModule::balance_count(1, 1), 1);
         assert_eq!(TemplateModule::balance_count(1, 3), 4);
 
-        assert_eq!(TemplateModule::approved(1, (1, 1, 2)), 5);
-        assert_eq!(TemplateModule::approved(1, (1, 1, 3)), 1);
+        assert_eq!(TemplateModule::approved(1, (1, 1, 2)), 1);
 
-        assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1, 5));
         assert_noop!(TemplateModule::transfer_from(
             origin2.clone(),
             1,
