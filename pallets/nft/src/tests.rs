@@ -543,10 +543,8 @@ fn refungible_approve_and_transfer_from() {
         assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 3));
 
         // do approve
-        assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1, 5));
-        assert_eq!(TemplateModule::approved(1, (1, 1, 2)), 5);
-        assert_ok!(TemplateModule::approve(origin1.clone(), 3, 1, 1, 1000));
-        assert_eq!(TemplateModule::approved(1, (1, 1, 3)), 1000);
+        assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1, 1000));
+        assert_eq!(TemplateModule::approved(1, (1, 1, 2)), 1000);
 
         assert_ok!(TemplateModule::transfer_from(
             origin2.clone(),
@@ -562,7 +560,7 @@ fn refungible_approve_and_transfer_from() {
         assert_eq!(TemplateModule::address_tokens(1, 3), [1]);
 
         assert_eq!(
-            TemplateModule::approved(1, (1, 1, 3)),
+            TemplateModule::approved(1, (1, 1, 2)),
             900
         );
     });
