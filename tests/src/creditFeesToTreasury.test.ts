@@ -9,16 +9,32 @@ import { default as usingApi, submitTransactionAsync, submitTransactionExpectFai
 import { alicesPublicKey, bobsPublicKey } from "./accounts";
 import privateKey from "./substrate/privateKey";
 import { BigNumber } from 'bignumber.js';
-import { createCollectionExpectSuccess, getGenericResult } from './util/helpers';
+import { IKeyringPair } from '@polkadot/types/types';
+import { 
+  createCollectionExpectSuccess, 
+  createItemExpectSuccess,
+  getGenericResult,
+  transferExpectSuccess
+} from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 const Treasury = "5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z";
-const saneMinimumFee = 0.0001;
-const saneMaximumFee = 0.01;
+const saneMinimumFee = 0.05;
+const saneMaximumFee = 0.5;
+
+let alice: IKeyringPair;
+let bob: IKeyringPair;
 
 describe('integration test: Fees must be credited to Treasury:', () => {
+  before(async () => {
+    await usingApi(async (api) => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+    });
+  });
+
   it('Total issuance does not change', async () => {
     await usingApi(async (api) => {
       const totalBefore = new BigNumber((await api.query.balances.totalIssuance()).toString());
@@ -102,8 +118,25 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       const fee = aliceBalanceBefore.minus(aliceBalanceAfter);
       const treasuryIncrease = treasuryBalanceAfter.minus(treasuryBalanceBefore);
 
-      expect(fee.dividedBy(1e15).toNumber()).to.be.lessThan(0.01);
-      expect(fee.dividedBy(1e15).toNumber()).to.be.greaterThan(0.0001);
+      expect(fee.dividedBy(1e15).toNumber()).to.be.lessThan(saneMaximumFee);
+      expect(fee.dividedBy(1e15).toNumber()).to.be.greaterThan(saneMinimumFee);
+    });
+  });
+
+  it('NFT Transfer fee is close to 0.1 Unique', async () => {
+    await usingApi(async (api) => {
+      const collectionId = await createCollectionExpectSuccess();
+      const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
+
+      const aliceBalanceBefore = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
+      await transferExpectSuccess(collectionId, tokenId, alice, bob, 1, 'NFT');
+      const aliceBalanceAfter = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
+      const fee = aliceBalanceBefore.minus(aliceBalanceAfter);
+
+      // console.log(fee.toString());
+      const expectedTransferFee = 0.1;
+      const tolerance = 0.00001;
+      expect(fee.dividedBy(1e15).minus(expectedTransferFee).abs().toNumber()).to.be.lessThan(tolerance);
     });
   });
 

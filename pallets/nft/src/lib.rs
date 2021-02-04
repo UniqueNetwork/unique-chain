@@ -20,14 +20,14 @@ pub use frame_support::{
     ensure, fail, parameter_types,
     traits::{
         Currency, ExistenceRequirement, Get, Imbalance, KeyOwnerProofSystem, OnUnbalanced,
-        Randomness, WithdrawReason,
+        Randomness, IsSubType,
     },
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
         DispatchInfo, GetDispatchInfo, IdentityFee, Pays, PostDispatchInfo, Weight,
-        WeightToFeePolynomial,
+        WeightToFeePolynomial, DispatchClass,
     },
-    IsSubType, StorageValue,
+    StorageValue,
 };
 
 use frame_system::{self as system, ensure_signed, ensure_root};
@@ -41,8 +41,9 @@ use sp_runtime::{
     },
     FixedPointOperand, FixedU128,
 };
-use pallet_contracts::ContractAddressFor;
 use sp_runtime::traits::StaticLookup;
+use pallet_contracts::chain_extension::UncheckedFrom;
+use transaction_payment::OnChargeTransaction;
 
 #[cfg(test)]
 mod mock;
@@ -308,7 +309,7 @@ impl From<CreateFungibleData> for CreateItemData {
 
 decl_error! {
 	/// Error for non-fungible-token module.
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
         /// Total collections bound exceeded.
         TotalCollectionsLimitExceeded,
 		/// Decimal_points parameter must be lower than MAX_DECIMAL_POINTS constant, currently it is 30.
@@ -380,8 +381,8 @@ decl_error! {
 	}
 }
 
-pub trait Trait: system::Trait + Sized + transaction_payment::Trait + pallet_contracts::Trait {
-    type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+pub trait Config: system::Config + Sized + transaction_payment::Config + pallet_contracts::Config {
+    type Event: From<Event<Self>> + Into<<Self as system::Config>::Event>;
 
     /// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
@@ -393,7 +394,7 @@ mod benchmarking;
 // #endregion
 
 decl_storage! {
-    trait Store for Module<T: Trait> as Nft {
+    trait Store for Module<T: Config> as Nft {
 
         // Private members
         NextCollectionID: CollectionId;
@@ -466,7 +467,7 @@ decl_storage! {
 decl_event!(
     pub enum Event<T>
     where
-        AccountId = <T as system::Trait>::AccountId,
+        AccountId = <T as system::Config>::AccountId,
     {
         /// New collection was created
         /// 
@@ -500,8 +501,10 @@ decl_event!(
 );
 
 decl_module! {
-    pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-
+    pub struct Module<T: Config> for enum Call 
+    where 
+        origin: T::Origin
+    {
         fn deposit_event() = default;
         type Error = Error<T>;
 
@@ -533,7 +536,7 @@ decl_module! {
         /// 
         /// * mode: [CollectionMode] collection type and type dependent data.
         // returns collection ID
-        #[weight = T::WeightInfo::create_collection()]
+        #[weight = <T as Config>::WeightInfo::create_collection()]
         pub fn create_collection(origin,
                                  collection_name: Vec<u16>,
                                  collection_description: Vec<u16>,
@@ -608,7 +611,7 @@ decl_module! {
         /// # Arguments
         /// 
         /// * collection_id: collection to destroy.
-        #[weight = T::WeightInfo::destroy_collection()]
+        #[weight = <T as Config>::WeightInfo::destroy_collection()]
         pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -655,7 +658,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * address.
-        #[weight = T::WeightInfo::add_to_white_list()]
+        #[weight = <T as Config>::WeightInfo::add_to_white_list()]
         pub fn add_to_white_list(origin, collection_id: CollectionId, address: T::AccountId) -> DispatchResult{
 
             let sender = ensure_signed(origin)?;
@@ -678,7 +681,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * address.
-        #[weight = T::WeightInfo::remove_from_white_list()]
+        #[weight = <T as Config>::WeightInfo::remove_from_white_list()]
         pub fn remove_from_white_list(origin, collection_id: CollectionId, address: T::AccountId) -> DispatchResult{
 
             let sender = ensure_signed(origin)?;
@@ -700,7 +703,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * mode: [AccessMode]
-        #[weight = T::WeightInfo::set_public_access_mode()]
+        #[weight = <T as Config>::WeightInfo::set_public_access_mode()]
         pub fn set_public_access_mode(origin, collection_id: CollectionId, mode: AccessMode) -> DispatchResult
         {
             let sender = ensure_signed(origin)?;
@@ -726,7 +729,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * mint_permission: Boolean parameter. If True, allows minting to Anyone with conditions above.
-        #[weight = T::WeightInfo::set_mint_permission()]
+        #[weight = <T as Config>::WeightInfo::set_mint_permission()]
         pub fn set_mint_permission(origin, collection_id: CollectionId, mint_permission: bool) -> DispatchResult
         {
             let sender = ensure_signed(origin)?;
@@ -750,7 +753,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * new_owner.
-        #[weight = T::WeightInfo::change_collection_owner()]
+        #[weight = <T as Config>::WeightInfo::change_collection_owner()]
         pub fn change_collection_owner(origin, collection_id: CollectionId, new_owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -775,7 +778,7 @@ decl_module! {
         /// * collection_id: ID of the Collection to add admin for.
         /// 
         /// * new_admin_id: Address of new admin to add.
-        #[weight = T::WeightInfo::add_collection_admin()]
+        #[weight = <T as Config>::WeightInfo::add_collection_admin()]
         pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -809,7 +812,7 @@ decl_module! {
         /// * collection_id: ID of the Collection to remove admin for.
         /// 
         /// * account_id: Address of admin to remove.
-        #[weight = T::WeightInfo::remove_collection_admin()]
+        #[weight = <T as Config>::WeightInfo::remove_collection_admin()]
         pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -832,7 +835,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * new_sponsor.
-        #[weight = T::WeightInfo::set_collection_sponsor()]
+        #[weight = <T as Config>::WeightInfo::set_collection_sponsor()]
         pub fn set_collection_sponsor(origin, collection_id: CollectionId, new_sponsor: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -855,7 +858,7 @@ decl_module! {
         /// # Arguments
         /// 
         /// * collection_id.
-        #[weight = T::WeightInfo::confirm_sponsorship()]
+        #[weight = <T as Config>::WeightInfo::confirm_sponsorship()]
         pub fn confirm_sponsorship(origin, collection_id: CollectionId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -879,7 +882,7 @@ decl_module! {
         /// # Arguments
         /// 
         /// * collection_id.
-        #[weight = T::WeightInfo::remove_collection_sponsor()]
+        #[weight = <T as Config>::WeightInfo::remove_collection_sponsor()]
         pub fn remove_collection_sponsor(origin, collection_id: CollectionId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -919,7 +922,7 @@ decl_module! {
         // .saturating_add(RocksDbWeight::get().reads(10 as Weight))
         // .saturating_add(RocksDbWeight::get().writes(8 as Weight))]
 
-        #[weight = T::WeightInfo::create_item(data.len())]
+        #[weight = <T as Config>::WeightInfo::create_item(data.len())]
         pub fn create_item(origin, collection_id: CollectionId, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -953,7 +956,7 @@ decl_module! {
         /// * itemsData: Array items properties. Each property is an array of bytes itself, see [create_item].
         /// 
         /// * owner: Address, initial owner of the NFT.
-        #[weight = T::WeightInfo::create_item(items_data.into_iter()
+        #[weight = <T as Config>::WeightInfo::create_item(items_data.into_iter()
                                .map(|data| { data.len() })
                                .sum())]
         pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::AccountId, items_data: Vec<CreateItemData>) -> DispatchResult {
@@ -989,7 +992,7 @@ decl_module! {
         /// * collection_id: ID of the collection.
         /// 
         /// * item_id: ID of NFT to burn.
-        #[weight = T::WeightInfo::burn_item()]
+        #[weight = <T as Config>::WeightInfo::burn_item()]
         pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -1042,34 +1045,10 @@ decl_module! {
         ///     * Non-Fungible Mode: Ignored
         ///     * Fungible Mode: Must specify transferred amount
         ///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
-        #[weight = T::WeightInfo::transfer()]
+        #[weight = <T as Config>::WeightInfo::transfer()]
         pub fn transfer(origin, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
-
             let sender = ensure_signed(origin)?;
-            let target_collection = <Collection<T>>::get(collection_id);
-
-            // Limits check
-            Self::is_correct_transfer(collection_id, &target_collection, &recipient)?;
-
-            // Transfer permissions check
-            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
-                Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                Error::<T>::NoPermission);
-
-            if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(collection_id, &sender)?;
-                Self::check_white_list(collection_id, &recipient)?;
-            }
-
-            match target_collection.mode
-            {
-                CollectionMode::NFT => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient)?,
-                CollectionMode::Fungible(_)  => Self::transfer_fungible(collection_id, value, &sender, &recipient)?,
-                CollectionMode::ReFungible(_)  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient)?,
-                _ => ()
-            };
-
-            Ok(())
+            Self::transfer_internal(sender, recipient, collection_id, item_id, value)
         }
 
         /// Set, change, or remove approved address to transfer the ownership of the NFT.
@@ -1087,7 +1066,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * item_id: ID of the item.
-        #[weight = T::WeightInfo::approve()]
+        #[weight = <T as Config>::WeightInfo::approve()]
         pub fn approve(origin, spender: T::AccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -1135,7 +1114,7 @@ decl_module! {
         /// * item_id: ID of the item.
         /// 
         /// * value: Amount to transfer.
-        #[weight = T::WeightInfo::transfer_from()]
+        #[weight = <T as Config>::WeightInfo::transfer_from()]
         pub fn transfer_from(origin, from: T::AccountId, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -1143,8 +1122,8 @@ decl_module! {
 
             // Check approval
             let mut approval: u128 = 0;
-            if <Allowances<T>>::contains_key(collection_id, (item_id, &from, &recipient)) {
-                approval = <Allowances<T>>::get(collection_id, (item_id, &from, &recipient));
+            if <Allowances<T>>::contains_key(collection_id, (item_id, &from, &sender)) {
+                approval = <Allowances<T>>::get(collection_id, (item_id, &from, &sender));
                 ensure!(approval >= value, Error::<T>::TokenValueNotEnough);
                 appoved_transfer = true;
             }
@@ -1165,10 +1144,10 @@ decl_module! {
 
             // Reduce approval by transferred amount or remove if remaining approval drops to 0
             if approval.checked_sub(value).unwrap_or(0) > 0 {
-                <Allowances<T>>::insert(collection_id, (item_id, &from, &recipient), approval - value);
+                <Allowances<T>>::insert(collection_id, (item_id, &from, &sender), approval - value);
             }
             else {
-                <Allowances<T>>::remove(collection_id, (item_id, &from, &recipient));
+                <Allowances<T>>::remove(collection_id, (item_id, &from, &sender));
             }
 
             match target_collection.mode
@@ -1182,20 +1161,20 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 0]
-        pub fn safe_transfer_from(origin, collection_id: CollectionId, item_id: TokenId, new_owner: T::AccountId) -> DispatchResult {
+        // #[weight = 0]
+        // pub fn safe_transfer_from(origin, collection_id: CollectionId, item_id: TokenId, new_owner: T::AccountId) -> DispatchResult {
 
-            // let no_perm_mes = "You do not have permissions to modify this collection";
-            // ensure!(<ApprovedList<T>>::contains_key((collection_id, item_id)), no_perm_mes);
-            // let list_itm = <ApprovedList<T>>::get((collection_id, item_id));
-            // ensure!(list_itm.contains(&new_owner.clone()), no_perm_mes);
+        //     // let no_perm_mes = "You do not have permissions to modify this collection";
+        //     // ensure!(<ApprovedList<T>>::contains_key((collection_id, item_id)), no_perm_mes);
+        //     // let list_itm = <ApprovedList<T>>::get((collection_id, item_id));
+        //     // ensure!(list_itm.contains(&new_owner.clone()), no_perm_mes);
 
-            // // on_nft_received  call
+        //     // // on_nft_received  call
 
-            // Self::transfer(origin, collection_id, item_id, new_owner)?;
+        //     // Self::transfer(origin, collection_id, item_id, new_owner)?;
 
-            Ok(())
-        }
+        //     Ok(())
+        // }
 
         /// Set off-chain data schema.
         /// 
@@ -1209,7 +1188,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * schema: String representing the offchain data schema.
-        #[weight = T::WeightInfo::set_variable_meta_data()]
+        #[weight = <T as Config>::WeightInfo::set_variable_meta_data()]
         pub fn set_variable_meta_data (
             origin,
             collection_id: CollectionId,
@@ -1254,7 +1233,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * schema: SchemaVersion: enum
-        #[weight = T::WeightInfo::set_schema_version()]
+        #[weight = <T as Config>::WeightInfo::set_schema_version()]
         pub fn set_schema_version(
             origin,
             collection_id: CollectionId,
@@ -1281,7 +1260,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * schema: String representing the offchain data schema.
-        #[weight = T::WeightInfo::set_offchain_schema()]
+        #[weight = <T as Config>::WeightInfo::set_offchain_schema()]
         pub fn set_offchain_schema(
             origin,
             collection_id: CollectionId,
@@ -1312,7 +1291,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * schema: String representing the const on-chain data schema.
-        #[weight = T::WeightInfo::set_const_on_chain_schema()]
+        #[weight = <T as Config>::WeightInfo::set_const_on_chain_schema()]
         pub fn set_const_on_chain_schema (
             origin,
             collection_id: CollectionId,
@@ -1343,7 +1322,7 @@ decl_module! {
         /// * collection_id.
         /// 
         /// * schema: String representing the variable on-chain data schema.
-        #[weight = T::WeightInfo::set_const_on_chain_schema()]
+        #[weight = <T as Config>::WeightInfo::set_const_on_chain_schema()]
         pub fn set_variable_on_chain_schema (
             origin,
             collection_id: CollectionId,
@@ -1363,7 +1342,7 @@ decl_module! {
         }
 
         // Sudo permissions function
-        #[weight = T::WeightInfo::set_chain_limits()]
+        #[weight = <T as Config>::WeightInfo::set_chain_limits()]
         pub fn set_chain_limits(
             origin,
             limits: ChainLimits
@@ -1387,7 +1366,7 @@ decl_module! {
         /// * contract address
         /// * enable flag
         /// 
-        #[weight = T::WeightInfo::enable_contract_sponsoring()]
+        #[weight = <T as Config>::WeightInfo::enable_contract_sponsoring()]
         pub fn enable_contract_sponsoring(
             origin,
             contract_address: T::AccountId,
@@ -1422,7 +1401,7 @@ decl_module! {
         /// -`contract_address`: Address of the contract to sponsor
         /// -`rate_limit`: Number of blocks to wait until the next sponsored transaction is allowed
         /// 
-        #[weight = T::WeightInfo::set_contract_sponsoring_rate_limit()]
+        #[weight = <T as Config>::WeightInfo::set_contract_sponsoring_rate_limit()]
         pub fn set_contract_sponsoring_rate_limit(
             origin,
             contract_address: T::AccountId,
@@ -1449,7 +1428,7 @@ decl_module! {
         /// -`contract_address`: Address of the contract.
         /// 
         /// - `enable`: .  
-        #[weight = T::WeightInfo::toggle_contract_white_list()]
+        #[weight = <T as Config>::WeightInfo::toggle_contract_white_list()]
         pub fn toggle_contract_white_list(
             origin,
             contract_address: T::AccountId,
@@ -1476,7 +1455,7 @@ decl_module! {
         /// -`contract_address`: Address of the contract.
         ///
         /// -`account_address`: Address to add.
-        #[weight = T::WeightInfo::add_to_contract_white_list()]
+        #[weight = <T as Config>::WeightInfo::add_to_contract_white_list()]
         pub fn add_to_contract_white_list(
             origin,
             contract_address: T::AccountId,
@@ -1503,7 +1482,7 @@ decl_module! {
         /// -`contract_address`: Address of the contract.
         ///
         /// -`account_address`: Address to remove.
-        #[weight = T::WeightInfo::remove_from_contract_white_list()]
+        #[weight = <T as Config>::WeightInfo::remove_from_contract_white_list()]
         pub fn remove_from_contract_white_list(
             origin,
             contract_address: T::AccountId,
@@ -1519,7 +1498,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = T::WeightInfo::set_collection_limits()]
+        #[weight = <T as Config>::WeightInfo::set_collection_limits()]
         pub fn set_collection_limits(
             origin,
             collection_id: u32,
@@ -1549,7 +1528,36 @@ decl_module! {
     }
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
+
+    pub fn transfer_internal(sender: T::AccountId, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
+
+        let target_collection = <Collection<T>>::get(collection_id);
+
+        // Limits check
+        Self::is_correct_transfer(collection_id, &target_collection, &recipient)?;
+
+        // Transfer permissions check
+        ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
+            Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
+            Error::<T>::NoPermission);
+
+        if target_collection.access == AccessMode::WhiteList {
+            Self::check_white_list(collection_id, &sender)?;
+            Self::check_white_list(collection_id, &recipient)?;
+        }
+
+        match target_collection.mode
+        {
+            CollectionMode::NFT => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient)?,
+            CollectionMode::Fungible(_)  => Self::transfer_fungible(collection_id, value, &sender, &recipient)?,
+            CollectionMode::ReFungible(_)  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient)?,
+            _ => ()
+        };
+
+        Ok(())
+    }
+
 
     fn is_correct_transfer(collection_id: CollectionId, collection: &CollectionType<T::AccountId>, recipient: &T::AccountId) -> DispatchResult {
 
@@ -2244,44 +2252,34 @@ impl<T: Trait> Module<T> {
 /// Fee multiplier.
 pub type Multiplier = FixedU128;
 
-type BalanceOf<T> = <<T as transaction_payment::Trait>::Currency as Currency<
-    <T as system::Trait>::AccountId,
->>::Balance;
-type NegativeImbalanceOf<T> = <<T as transaction_payment::Trait>::Currency as Currency<
-    <T as system::Trait>::AccountId,
->>::NegativeImbalance;
+type BalanceOf<T> = <<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::Balance;
 
 /// Require the transactor pay for themselves and maybe include a tip to gain additional priority
 /// in the queue.
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct ChargeTransactionPayment<T: Trait + Send + Sync>(
-    #[codec(compact)] BalanceOf<T>
-);
+pub struct ChargeTransactionPayment<T: Config>(#[codec(compact)] BalanceOf<T>);
 
-impl<T: Trait + Send + Sync> sp_std::fmt::Debug
+impl<T: Config + Send + Sync> sp_std::fmt::Debug 
     for ChargeTransactionPayment<T>
 {
-    #[cfg(feature = "std")]
-    fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-        write!(f, "ChargeTransactionPayment<{:?}>", self.0)
-    }
-    #[cfg(not(feature = "std"))]
-    fn fmt(&self, _: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-        Ok(())
-    }
+	#[cfg(feature = "std")]
+	fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
+		write!(f, "ChargeTransactionPayment<{:?}>", self.0)
+	}
+	#[cfg(not(feature = "std"))]
+	fn fmt(&self, _: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
+		Ok(())
+	}
 }
 
-impl<T: Trait + Send + Sync> ChargeTransactionPayment<T>
+impl<T: Config> ChargeTransactionPayment<T>
 where
-    T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Call<T>> + IsSubType<pallet_contracts::Call<T>>,
-    BalanceOf<T>: Send + Sync + FixedPointOperand,
+    T::Call: Dispatchable<Info=DispatchInfo, PostInfo=PostDispatchInfo> + IsSubType<Call<T>> + IsSubType<pallet_contracts::Call<T>>,
+    BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
+    T::AccountId: AsRef<[u8]>,
+    T::AccountId: UncheckedFrom<T::Hash>,
 {
-    /// utility constructor. Used only in client/factory code.
-    pub fn from(fee: BalanceOf<T>) -> Self {
-        Self(fee)
-    }
-
-    pub fn traditional_fee(
+    fn traditional_fee(
         len: usize,
         info: &DispatchInfoOf<T::Call>,
         tip: BalanceOf<T>,
@@ -2293,11 +2291,16 @@ where
     }
 
 	fn get_priority(len: usize, info: &DispatchInfoOf<T::Call>, final_fee: BalanceOf<T>) -> TransactionPriority {
-		let weight_saturation = T::MaximumBlockWeight::get() / info.weight.max(1);
-		let len_saturation = T::MaximumBlockLength::get() as u64 / (len as u64).max(1);
-		let coefficient: BalanceOf<T> = weight_saturation.min(len_saturation).saturated_into::<BalanceOf<T>>();
-		final_fee.saturating_mul(coefficient).saturated_into::<TransactionPriority>()
-	}
+        let weight_saturation = T::BlockWeights::get().max_block / info.weight.max(1);
+        let max_block_length = *T::BlockLength::get().max.get(DispatchClass::Normal);
+        let len_saturation = max_block_length as u64 / (len as u64).max(1);
+        let coefficient: BalanceOf<T> = weight_saturation
+            .min(len_saturation)
+            .saturated_into::<BalanceOf<T>>();
+        final_fee
+            .saturating_mul(coefficient)
+            .saturated_into::<TransactionPriority>()
+    }
 
     fn withdraw_fee(
         &self,
@@ -2305,7 +2308,13 @@ where
         call: &T::Call,
         info: &DispatchInfoOf<T::Call>,
         len: usize,
-    ) -> Result<(BalanceOf<T>, Option<NegativeImbalanceOf<T>>), TransactionValidityError> {
+	) -> Result<
+		(
+			BalanceOf<T>,
+			<<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::LiquidityInfo,
+		),
+		TransactionValidityError,
+	> {
         let tip = self.0;
 
         // Set fee based on call type. Creating collection costs 1 Unique.
@@ -2319,7 +2328,8 @@ where
 
         // Only mess with balances if fee is not zero.
         if fee.is_zero() {
-            return Ok((fee, None));
+            return <<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::withdraw_fee(who, call, info, fee, tip)
+			.map(|i| (fee, i));
         }
 
         // Determine who is paying transaction fee based on ecnomic model
@@ -2454,12 +2464,12 @@ where
         sponsor = match IsSubType::<pallet_contracts::Call<T>>::is_sub_type(call) {
 
             // On instantiation: set the contract owner
-            Some(pallet_contracts::Call::instantiate(_endowment, _gas_limit, code_hash, data)) => {
+            Some(pallet_contracts::Call::instantiate(_endowment, _gas_limit, code_hash, _data, salt)) => {
 
-                let new_contract_address = <T as pallet_contracts::Trait>::DetermineContractAddress::contract_address_for(
-                    code_hash,
-                    &data,
+                let new_contract_address = <pallet_contracts::Module<T>>::contract_address(
                     &who,
+                    code_hash,
+                    salt,
                 );
                 <ContractOwner<T>>::insert(new_contract_address.clone(), who.clone());
 
@@ -2517,38 +2527,31 @@ where
             who_pays_fee = who.clone();
         }
 
-        match <T as transaction_payment::Trait>::Currency::withdraw(
-            &who_pays_fee,
-            fee,
-            if tip.is_zero() {
-                WithdrawReason::TransactionPayment.into()
-            } else {
-                WithdrawReason::TransactionPayment | WithdrawReason::Tip
-            },
-            ExistenceRequirement::KeepAlive,
-        ) {
-            Ok(imbalance) => Ok((fee, Some(imbalance))),
-            Err(_) => Err(InvalidTransaction::Payment.into()),
-        }
+		<<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::withdraw_fee(&who_pays_fee, call, info, fee, tip)
+			.map(|i| (fee, i))
     }
 }
 
 
-impl<T: Trait + Send + Sync> SignedExtension
+impl<T: Config + Send + Sync> SignedExtension
     for ChargeTransactionPayment<T>
 where
     BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
     T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + IsSubType<Call<T>> + IsSubType<pallet_contracts::Call<T>>,
+    T::AccountId: AsRef<[u8]>,
+    T::AccountId: UncheckedFrom<T::Hash>,
 {
     const IDENTIFIER: &'static str = "ChargeTransactionPayment";
     type AccountId = T::AccountId;
     type Call = T::Call;
     type AdditionalSigned = ();
     type Pre = (
+        // tip
         BalanceOf<T>,
+        // who pays fee
         Self::AccountId,
-        Option<NegativeImbalanceOf<T>>,
-        BalanceOf<T>,
+		// imbalance resulting from withdrawing the fee
+		<<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::LiquidityInfo,
     );
     fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> {
         Ok(())
@@ -2575,8 +2578,8 @@ where
         info: &DispatchInfoOf<Self::Call>,
         len: usize,
     ) -> Result<Self::Pre, TransactionValidityError> {
-        let (fee, imbalance) = self.withdraw_fee(who, call, info, len)?;
-        Ok((self.0, who.clone(), imbalance, fee))
+        let (_fee, imbalance) = self.withdraw_fee(who, call, info, len)?;
+        Ok((self.0, who.clone(), imbalance))
     }
 
     fn post_dispatch(
@@ -2586,34 +2589,15 @@ where
         len: usize,
         _result: &DispatchResult,
     ) -> Result<(), TransactionValidityError> {
-        let (tip, who, imbalance, fee) = pre;
-        if let Some(payed) = imbalance {
-            let actual_fee = <transaction_payment::Module<T>>::compute_actual_fee(
-                len as u32, info, post_info, tip,
-            );
-            let refund = fee.saturating_sub(actual_fee);
-            let actual_payment =
-                match <T as transaction_payment::Trait>::Currency::deposit_into_existing(
-                    &who, refund,
-                ) {
-                    Ok(refund_imbalance) => {
-                        // The refund cannot be larger than the up front payed max weight.
-                        // `PostDispatchInfo::calc_unspent` guards against such a case.
-                        match payed.offset(refund_imbalance) {
-                            Ok(actual_payment) => actual_payment,
-                            Err(_) => return Err(InvalidTransaction::Payment.into()),
-                        }
-                    }
-                    // We do not recreate the account using the refund. The up front payment
-                    // is gone in that case.
-                    Err(_) => payed,
-                };
-            let imbalances = actual_payment.split(tip);
-            <T as transaction_payment::Trait>::OnTransactionPayment::on_unbalanceds(
-                Some(imbalances.0).into_iter().chain(Some(imbalances.1)),
-            );
-        }
-        Ok(())
+		let (tip, who, imbalance) = pre;
+		let actual_fee = transaction_payment::Module::<T>::compute_actual_fee(
+			len as u32,
+			info,
+			post_info,
+			tip,
+		);
+		<T as transaction_payment::Config>::OnChargeTransaction::correct_and_deposit_fee(&who, info, post_info, actual_fee, tip, imbalance)?;
+		Ok(())
     }
 }
 

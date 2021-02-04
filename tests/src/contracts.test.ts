@@ -6,8 +6,16 @@ import { Abi, ContractPromise as Contract } from "@polkadot/api-contract";
 import privateKey from "./substrate/privateKey";
 import {
   deployFlipper,
-  getFlipValue
+  getFlipValue,
+  deployTransferContract,
 } from "./util/contracthelpers";
+
+import {
+  createCollectionExpectSuccess,
+  createItemExpectSuccess,
+  getGenericResult
+} from "./util/helpers";
+
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -23,7 +31,7 @@ describe('Contracts', () => {
       const initialGetResponse = await getFlipValue(contract, deployer);
 
       const bob = privateKey("//Bob");
-      const flip = contract.exec('flip', value, gasLimit);
+      const flip = contract.tx.flip(value, gasLimit);
       await submitTransactionAsync(bob, flip);
 
       const afterFlipGetResponse = await getFlipValue(contract, deployer);
@@ -41,31 +49,27 @@ describe('Contracts', () => {
     });
   });
 
-  it.skip('Can transfer balance using smart contract.', async () => {
+  it('Can transfer NFT using smart contract.', async () => {
     await usingApi(async api => {
-      // const [alicesBalanceBefore, bobsBalanceBefore] = await getBalance(api, [alicesPublicKey, bobsPublicKey]);
-      // const wasm = fs.readFileSync('./src/balance-transfer-contract/calls.wasm');
-      // const contract = compactAddLength(u8aToU8a(wasm));
+      const alice = privateKey("//Alice");
+      const bob = privateKey("//Bob");
 
-      // const metadata = JSON.parse(fs.readFileSync('./src/balance-transfer-contract/metadata.json').toString('utf-8'));
-      // const abi = new Abi(api.registry as any, metadata);
+      // Prep work
+      const collectionId = await createCollectionExpectSuccess();
+      const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
+      const [contract, deployer] = await deployTransferContract(api);
+      const tokenBefore: any = await api.query.nft.nftItemList(collectionId, tokenId);
+      
+      // Transfer
+      const transferTx = contract.tx.transfer(value, gasLimit, bob.address, collectionId, tokenId, 1);
+      const events = await submitTransactionAsync(alice, transferTx);
+      const result = getGenericResult(events);
+      const tokenAfter: any = await api.query.nft.nftItemList(collectionId, tokenId);
 
-      // const alicesPrivateKey = privateKey('//Alice');
-
-      // const contractHash = await deployContract(api, contract, alicesPrivateKey);
-
-      // // const args = abi.constructors[0]();
-      // const instanceAccountId = await instantiateContract(api, contractHash, /*args,*/ alicesPrivateKey);
-      // const contractInstance = new ContractPromise(api, abi, instanceAccountId);
-      // const bob = new GenericAccountId(api.registry, bobsPublicKey);
-
-      // const transfer = contractInstance.exec('balance_transfer', 0, 1000000000000n, [bob, new u128(api.registry, 1000000)]);
-      // await submitTransactionAsync(alicesPrivateKey, transfer);
-
-      // const [alicesBalanceAfter, bobsBalanceAfter] = await getBalance(api, [alicesPublicKey, bobsPublicKey]);
-
-      // expect(alicesBalanceAfter < alicesBalanceBefore).to.be.true;
-      // expect(bobsBalanceAfter > bobsBalanceBefore).to.be.true;
+      // tslint:disable-next-line:no-unused-expression
+      expect(result.success).to.be.true;
+      expect(tokenBefore.Owner.toString()).to.be.equal(alice.address);
+      expect(tokenAfter.Owner.toString()).to.be.equal(bob.address);
     });
   });
 });
