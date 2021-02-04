@@ -27,6 +27,25 @@ describe('Integration Test enableContractSponsoring', () => {
       expect(await getFlipValue(flipper, deployer)).to.be.false;
     });
   });
+
+  it('ensure it can be enabled twice', async () => {
+    await usingApi(async (api) => {
+      const [flipper, deployer] = await deployFlipper(api);
+
+      await enableContractSponsoringExpectSuccess(deployer, flipper.address, true);
+      await enableContractSponsoringExpectSuccess(deployer, flipper.address, true);
+    });
+  });
+
+  it('ensure it can be disabled twice', async () => {
+    await usingApi(async (api) => {
+      const [flipper, deployer] = await deployFlipper(api);
+
+      await enableContractSponsoringExpectSuccess(deployer, flipper.address, true);
+      await enableContractSponsoringExpectSuccess(deployer, flipper.address, false);
+      await enableContractSponsoringExpectSuccess(deployer, flipper.address, false);
+    });
+  });
 });
 
 describe('Negative Integration Test enableContractSponsoring', () => {
