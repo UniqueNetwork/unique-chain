@@ -454,7 +454,7 @@ fn nft_approve_and_transfer_from() {
         assert_ok!(TemplateModule::transfer_from(
             origin2.clone(),
             1,
-            2,
+            3,
             1,
             1,
             1
