@@ -46,6 +46,17 @@ describe('Integration Test enableContractSponsoring', () => {
       await enableContractSponsoringExpectSuccess(deployer, flipper.address, false);
     });
   });
+
+  it('ensure it can be re-enabled', async () => {
+    await usingApi(async (api) => {
+      const [flipper, deployer] = await deployFlipper(api);
+
+      await enableContractSponsoringExpectSuccess(deployer, flipper.address, true);
+      await enableContractSponsoringExpectSuccess(deployer, flipper.address, false);
+      await enableContractSponsoringExpectSuccess(deployer, flipper.address, true);
+    });
+  });
+
 });
 
 describe('Negative Integration Test enableContractSponsoring', () => {
