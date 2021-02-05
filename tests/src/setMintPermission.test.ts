@@ -35,16 +35,6 @@ describe('Integration Test setMintPermission', () => {
     });
   });
 
-  it('ensure non-white-listed non-privileged address can\'t mint tokens', async () => {
-    await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-      await enableWhiteListExpectSuccess(alice, collectionId);
-      await setMintPermissionExpectSuccess(alice, collectionId, true);
-
-      await createItemExpectFailure(bob, collectionId, 'NFT');
-    });
-  });
-
   it('can be enabled twice', async () => {
     await usingApi(async () => {
       const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
@@ -94,5 +84,15 @@ describe('Negative Integration Test setMintPermission', () => {
     const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
     await enableWhiteListExpectSuccess(alice, collectionId);
     await setMintPermissionExpectFailure(bob, collectionId, true);
+  });
+
+  it('ensure non-white-listed non-privileged address can\'t mint tokens', async () => {
+    await usingApi(async () => {
+      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      await enableWhiteListExpectSuccess(alice, collectionId);
+      await setMintPermissionExpectSuccess(alice, collectionId, true);
+
+      await createItemExpectFailure(bob, collectionId, 'NFT');
+    });
   });
 });
