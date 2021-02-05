@@ -645,6 +645,17 @@ export async function createItemExpectSuccess(
   return newItemId;
 }
 
+export async function createItemExpectFailure(
+  sender: IKeyringPair, collectionId: number, createMode: string, owner: string = sender.address) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.createItem(collectionId, owner, createMode);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getCreateItemResult(events);
+
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function setPublicAccessModeExpectSuccess(
   sender: IKeyringPair, collectionId: number,
   accessMode: 'Normal' | 'WhiteList',
@@ -674,11 +685,11 @@ export async function disableWhiteListExpectSuccess(sender: IKeyringPair, collec
   await setPublicAccessModeExpectSuccess(sender, collectionId, 'Normal');
 }
 
-export async function enablePublicMintingExpectSuccess(sender: IKeyringPair, collectionId: number) {
+export async function setMintPermissionExpectSuccess(sender: IKeyringPair, collectionId: number, enabled: boolean) {
   await usingApi(async (api) => {
 
     // Run the transaction
-    const tx = api.tx.nft.setMintPermission(collectionId, true);
+    const tx = api.tx.nft.setMintPermission(collectionId, enabled);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
 
@@ -686,8 +697,24 @@ export async function enablePublicMintingExpectSuccess(sender: IKeyringPair, col
     const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
 
     // What to expect
+    // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
-    expect(collection.MintMode).to.be.equal(true);
+    expect(collection.MintMode).to.be.equal(enabled);
+  });
+}
+
+export async function enablePublicMintingExpectSuccess(sender: IKeyringPair, collectionId: number) {
+  await setMintPermissionExpectSuccess(sender, collectionId, true);
+}
+
+export async function setMintPermissionExpectFailure(sender: IKeyringPair, collectionId: number, enabled: boolean) {
+  await usingApi(async (api) => {
+    // Run the transaction
+    const tx = api.tx.nft.setMintPermission(collectionId, enabled);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getCreateCollectionResult(events);
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.false;
   });
 }
 
