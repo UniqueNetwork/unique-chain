@@ -368,6 +368,7 @@ export async function confirmSponsorshipExpectSuccess(collectionId: number, send
   });
 }
 
+
 export async function confirmSponsorshipExpectFailure(collectionId: number, senderSeed: string = '//Alice') {
   await usingApi(async (api) => {
 
@@ -409,7 +410,7 @@ export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: n
 
 export async function
 approveExpectSuccess(collectionId: number,
-                     tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number = 1) {
+                     tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number = 1) { //alice,bob
   await usingApi(async (api: ApiPromise) => {
     const allowanceBefore =
       await api.query.nft.allowances(collectionId, [tokenId, owner.address, approved.address]) as unknown as BN;
@@ -427,9 +428,9 @@ approveExpectSuccess(collectionId: number,
 export async function
 transferFromExpectSuccess(collectionId: number,
                           tokenId: number,
-                          accountApproved: IKeyringPair,
-                          accountFrom: IKeyringPair,
-                          accountTo: IKeyringPair,
+                          accountApproved: IKeyringPair, //bob
+                          accountFrom: IKeyringPair, //alice
+                          accountTo: IKeyringPair, //charlie
                           value: number = 1,
                           type: string = 'NFT') {
   await usingApi(async (api: ApiPromise) => {
