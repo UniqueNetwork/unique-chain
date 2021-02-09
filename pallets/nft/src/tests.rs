@@ -35,7 +35,7 @@ fn default_fungible_data () -> CreateFungibleData {
 }
 
 fn default_re_fungible_data () -> CreateReFungibleData {
-    CreateReFungibleData { const_data: vec![1, 2, 3], variable_data: vec![3, 2, 1] }
+    CreateReFungibleData { const_data: vec![1, 2, 3], variable_data: vec![3, 2, 1], pieces: 1023 }
 }
 
 fn create_test_collection_for_owner(mode: &CollectionMode, owner: u64, id: CollectionId) -> CollectionId {
@@ -114,26 +114,6 @@ fn create_fungible_collection_fails_with_large_decimal_numbers() {
 }
 
 #[test]
-fn create_re_fungible_collection_fails_with_large_decimal_numbers() {
-    new_test_ext().execute_with(|| {
-        default_limits();
-
-        let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
-        let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
-        let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
-
-        let origin1 = Origin::signed(1);
-        assert_noop!(TemplateModule::create_collection(
-            origin1,
-            col_name1,
-            col_desc1,
-            token_prefix1,
-            CollectionMode::ReFungible(MAX_DECIMAL_POINTS + 1)
-        ), Error::<Test>::CollectionDecimalPointLimitExceeded);
-    });
-}
-
-#[test]
 fn create_nft_item() {
     new_test_ext().execute_with(|| {
         default_limits();
@@ -176,7 +156,7 @@ fn create_nft_multiple_items() {
 fn create_refungible_item() {
     new_test_ext().execute_with(|| {
         default_limits();
-        let collection_id = create_test_collection(&CollectionMode::ReFungible(3), 1);
+        let collection_id = create_test_collection(&CollectionMode::ReFungible, 1);
 
         let data = default_re_fungible_data();
         create_test_item(collection_id, &data.clone().into());
@@ -192,7 +172,7 @@ fn create_refungible_item() {
             TemplateModule::refungible_item_id(collection_id, 1).owner[0],
             Ownership {
                 owner: 1,
-                fraction: 1000
+                fraction: 1023
             }
         );
     });
@@ -203,7 +183,7 @@ fn create_multiple_refungible_items() {
     new_test_ext().execute_with(|| {
         default_limits();
         
-        create_test_collection(&CollectionMode::ReFungible(3), 1);
+        create_test_collection(&CollectionMode::ReFungible, 1);
 
         let origin1 = Origin::signed(1);
 
@@ -224,7 +204,7 @@ fn create_multiple_refungible_items() {
                 item.owner[0],
                 Ownership {
                     owner: 1,
-                    fraction: 1000
+                    fraction: 1023
                 }
             );
         }
@@ -312,7 +292,7 @@ fn transfer_refungible_item() {
     new_test_ext().execute_with(|| {
         default_limits();
         
-        let collection_id = create_test_collection(&CollectionMode::ReFungible(3), 1);
+        let collection_id = create_test_collection(&CollectionMode::ReFungible, 1);
 
         let data = default_re_fungible_data();
         create_test_item(collection_id, &data.clone().into());
@@ -331,23 +311,23 @@ fn transfer_refungible_item() {
             TemplateModule::refungible_item_id(collection_id, 1).owner[0],
             Ownership {
                 owner: 1,
-                fraction: 1000
+                fraction: 1023
             }
         );
-        assert_eq!(TemplateModule::balance_count(1, 1), 1000);
+        assert_eq!(TemplateModule::balance_count(1, 1), 1023);
         assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
         // change owner scenario
-        assert_ok!(TemplateModule::transfer(origin1.clone(), 2, 1, 1, 1000));
+        assert_ok!(TemplateModule::transfer(origin1.clone(), 2, 1, 1, 1023));
         assert_eq!(
             TemplateModule::refungible_item_id(1, 1).owner[0],
             Ownership {
                 owner: 2,
-                fraction: 1000
+                fraction: 1023
             }
         );
         assert_eq!(TemplateModule::balance_count(1, 1), 0);
-        assert_eq!(TemplateModule::balance_count(1, 2), 1000);
+        assert_eq!(TemplateModule::balance_count(1, 2), 1023);
         // assert_eq!(TemplateModule::address_tokens(1, 1), []);
         assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
 
@@ -357,7 +337,7 @@ fn transfer_refungible_item() {
             TemplateModule::refungible_item_id(1, 1).owner[0],
             Ownership {
                 owner: 2,
-                fraction: 500
+                fraction: 523
             }
         );
         assert_eq!(
@@ -367,7 +347,7 @@ fn transfer_refungible_item() {
                 fraction: 500
             }
         );
-        assert_eq!(TemplateModule::balance_count(1, 2), 500);
+        assert_eq!(TemplateModule::balance_count(1, 2), 523);
         assert_eq!(TemplateModule::balance_count(1, 3), 500);
         assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
         assert_eq!(TemplateModule::address_tokens(1, 3), [1]);
@@ -378,7 +358,7 @@ fn transfer_refungible_item() {
             TemplateModule::refungible_item_id(1, 1).owner[0],
             Ownership {
                 owner: 2,
-                fraction: 300
+                fraction: 323
             }
         );
         assert_eq!(
@@ -388,7 +368,7 @@ fn transfer_refungible_item() {
                 fraction: 700
             }
         );
-        assert_eq!(TemplateModule::balance_count(1, 2), 300);
+        assert_eq!(TemplateModule::balance_count(1, 2), 323);
         assert_eq!(TemplateModule::balance_count(1, 3), 700);
         assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
         assert_eq!(TemplateModule::address_tokens(1, 3), [1]);
@@ -454,7 +434,7 @@ fn nft_approve_and_transfer_from() {
         assert_ok!(TemplateModule::transfer_from(
             origin2.clone(),
             1,
-            2,
+            3,
             1,
             1,
             1
@@ -508,7 +488,7 @@ fn nft_approve_and_transfer_from_white_list() {
             1,
             1
         ));
-        assert_eq!(TemplateModule::approved(1, (1, 1, 3)), 4);
+        assert_eq!(TemplateModule::approved(1, (1, 1, 2)), 4);
     });
 }
 
@@ -517,7 +497,7 @@ fn refungible_approve_and_transfer_from() {
     new_test_ext().execute_with(|| {
         default_limits();
         
-        let collection_id = create_test_collection(&CollectionMode::ReFungible(3), 1);
+        let collection_id = create_test_collection(&CollectionMode::ReFungible, 1);
         
         let origin1 = Origin::signed(1);
         let origin2 = Origin::signed(2);
@@ -525,7 +505,7 @@ fn refungible_approve_and_transfer_from() {
         let data = default_re_fungible_data();
         create_test_item(collection_id, &data.into());
 
-        assert_eq!(TemplateModule::balance_count(1, 1), 1000);
+        assert_eq!(TemplateModule::balance_count(1, 1), 1023);
         assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
         assert_ok!(TemplateModule::set_mint_permission(
@@ -543,10 +523,8 @@ fn refungible_approve_and_transfer_from() {
         assert_ok!(TemplateModule::add_to_white_list(origin1.clone(), 1, 3));
 
         // do approve
-        assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1, 5));
-        assert_eq!(TemplateModule::approved(1, (1, 1, 2)), 5);
-        assert_ok!(TemplateModule::approve(origin1.clone(), 3, 1, 1, 1000));
-        assert_eq!(TemplateModule::approved(1, (1, 1, 3)), 1000);
+        assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1, 1023));
+        assert_eq!(TemplateModule::approved(1, (1, 1, 2)), 1023);
 
         assert_ok!(TemplateModule::transfer_from(
             origin2.clone(),
@@ -556,14 +534,14 @@ fn refungible_approve_and_transfer_from() {
             1,
             100
         ));
-        assert_eq!(TemplateModule::balance_count(1, 1), 900);
+        assert_eq!(TemplateModule::balance_count(1, 1), 923);
         assert_eq!(TemplateModule::balance_count(1, 3), 100);
         assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
         assert_eq!(TemplateModule::address_tokens(1, 3), [1]);
 
         assert_eq!(
-            TemplateModule::approved(1, (1, 1, 3)),
-            900
+            TemplateModule::approved(1, (1, 1, 2)),
+            923
         );
     });
 }
@@ -618,10 +596,8 @@ fn fungible_approve_and_transfer_from() {
         assert_eq!(TemplateModule::balance_count(1, 1), 1);
         assert_eq!(TemplateModule::balance_count(1, 3), 4);
 
-        assert_eq!(TemplateModule::approved(1, (1, 1, 2)), 5);
-        assert_eq!(TemplateModule::approved(1, (1, 1, 3)), 1);
+        assert_eq!(TemplateModule::approved(1, (1, 1, 2)), 1);
 
-        assert_ok!(TemplateModule::approve(origin1.clone(), 2, 1, 1, 5));
         assert_noop!(TemplateModule::transfer_from(
             origin2.clone(),
             1,
@@ -721,7 +697,7 @@ fn burn_refungible_item() {
     new_test_ext().execute_with(|| {
         default_limits();
         
-        let collection_id = create_test_collection(&CollectionMode::ReFungible(3), 1);
+        let collection_id = create_test_collection(&CollectionMode::ReFungible, 1);
         let origin1 = Origin::signed(1);
 
         assert_ok!(TemplateModule::set_mint_permission(
@@ -742,12 +718,12 @@ fn burn_refungible_item() {
         create_test_item(collection_id, &data.into());
 
         // check balance (collection with id = 1, user id = 2)
-        assert_eq!(TemplateModule::balance_count(1, 1), 1000);
+        assert_eq!(TemplateModule::balance_count(1, 1), 1023);
 
         // burn item
-        assert_ok!(TemplateModule::burn_item(origin1.clone(), 1, 1, 1000));
+        assert_ok!(TemplateModule::burn_item(origin1.clone(), 1, 1, 1023));
         assert_noop!(
-            TemplateModule::burn_item(origin1.clone(), 1, 1, 1000),
+            TemplateModule::burn_item(origin1.clone(), 1, 1, 1023),
             Error::<Test>::TokenNotFound
         );
 
@@ -811,7 +787,7 @@ fn balance_of() {
         
         let nft_collection_id = create_test_collection(&CollectionMode::NFT, 1);
         let fungible_collection_id = create_test_collection(&CollectionMode::Fungible(3), 2);
-        let re_fungible_collection_id = create_test_collection(&CollectionMode::ReFungible(3), 3);
+        let re_fungible_collection_id = create_test_collection(&CollectionMode::ReFungible, 3);
         
         // check balance before
         assert_eq!(TemplateModule::balance_count(nft_collection_id, 1), 0);
@@ -830,7 +806,7 @@ fn balance_of() {
         // check balance (collection with id = 1, user id = 1)
         assert_eq!(TemplateModule::balance_count(nft_collection_id, 1), 1);
         assert_eq!(TemplateModule::balance_count(fungible_collection_id, 1), 5);
-        assert_eq!(TemplateModule::balance_count(re_fungible_collection_id, 1), 1000);
+        assert_eq!(TemplateModule::balance_count(re_fungible_collection_id, 1), 1023);
         assert_eq!(TemplateModule::nft_item_id(nft_collection_id, 1).owner, 1);
         assert_eq!(TemplateModule::fungible_item_id(fungible_collection_id, 1).value, 5);
         assert_eq!(TemplateModule::refungible_item_id(re_fungible_collection_id, 1).owner[0].owner, 1);
@@ -1909,7 +1885,7 @@ fn set_variable_meta_data_on_re_fungible_token_stores_variable_meta_data() {
     new_test_ext().execute_with(|| {
         default_limits();
 
-        let collection_id = create_test_collection(&CollectionMode::ReFungible(3), 1);
+        let collection_id = create_test_collection(&CollectionMode::ReFungible, 1);
 
         let origin1 = Origin::signed(1);
 
@@ -1986,7 +1962,7 @@ fn set_variable_meta_data_on_re_fungible_token_fails_for_big_data() {
         }));
 
 
-        let collection_id = create_test_collection(&CollectionMode::ReFungible(3), 1);
+        let collection_id = create_test_collection(&CollectionMode::ReFungible, 1);
 
         let origin1 = Origin::signed(1);
 

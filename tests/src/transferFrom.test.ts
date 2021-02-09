@@ -41,11 +41,11 @@ describe('Integration Test transferFrom(from, recipient, collection_id, item_id,
       await transferFromExpectSuccess(fungibleCollectionId, newFungibleTokenId, Bob, Alice, Charlie, 1, 'Fungible');
       // reFungible
       const reFungibleCollectionId = await
-        createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
+        createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
-      await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
+      await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob, 100);
       await transferFromExpectSuccess(reFungibleCollectionId,
-        newReFungibleTokenId, Bob, Alice, Charlie, 1, 'ReFungible');
+        newReFungibleTokenId, Bob, Alice, Charlie, 100, 'ReFungible');
     });
   });
 });
@@ -110,7 +110,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       await transferFromExpectFail(fungibleCollectionId, newFungibleTokenId, Bob, Alice, Charlie, 1);
       // reFungible
       const reFungibleCollectionId = await
-        createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
+        createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await transferFromExpectFail(reFungibleCollectionId,
         newReFungibleTokenId, Bob, Alice, Charlie, 1);
@@ -136,7 +136,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       await transferFromExpectFail(fungibleCollectionId, newFungibleTokenId, Bob, Alice, Charlie, 2);
       // reFungible
       const reFungibleCollectionId = await
-        createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
+        createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
       await transferFromExpectFail(reFungibleCollectionId,
@@ -149,7 +149,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
       const Charlie = privateKey('//Charlie');
-      const Dave = privateKey('//DAVE');
+      const Dave = privateKey('//Dave');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
@@ -175,7 +175,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       }
       // reFungible
       const reFungibleCollectionId = await
-        createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
+        createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       try {
         await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, Dave, Bob);

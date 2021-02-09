@@ -1,4 +1,9 @@
-﻿import chai from 'chai';
+﻿//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+
+import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from "./substrate/substrate-api";

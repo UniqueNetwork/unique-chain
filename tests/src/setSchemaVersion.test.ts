@@ -1,7 +1,11 @@
+//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setschemaversion
 import { ApiPromise, Keyring } from '@polkadot/api';
 import { IKeyringPair } from '@polkadot/types/types';
-import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import usingApi, {submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
@@ -98,12 +102,16 @@ describe('setSchemaVersion negative', () => {
 
   it('execute setSchemaVersion with not correct schema version', async () => {
     await usingApi(async (api: ApiPromise) => {
+      const consoleError = console.error;
+      console.error = (message: string) => {};
       try {
         tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'Test');
         await submitTransactionAsync(alice, tx);
       } catch (e) {
         // tslint:disable-next-line:no-unused-expression
         expect(e).to.be.exist;
+      } finally {
+        console.error = consoleError;
       }
     });
   });

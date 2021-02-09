@@ -115,7 +115,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   it('ReFungible: Transfer fees are paid by the sponsor after confirmation', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0 }});
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
@@ -247,7 +247,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   it('ReFungible: Sponsoring is rate limited', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0 }});
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 

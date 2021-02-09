@@ -1,26 +1,21 @@
 // Creating mock runtime here
 
-use crate::{Module, Trait};
-
-use pallet_contracts::{
-	ContractAddressFor, TrieId, TrieIdGenerator,
-};
+use crate::{Module, Config};
 
 use frame_support::{
     impl_outer_origin, parameter_types,
-    weights::{
-      //  constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
-        Weight, IdentityFee,
-    },
+    weights::{Weight, IdentityFee},
 };
 use frame_system as system;
-use transaction_payment;
+use system::limits::{BlockLength, BlockWeights};
+use transaction_payment::{self, CurrencyAdapter};
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
-    traits::{BlakeTwo256, IdentityLookup, Saturating},
+    traits::{BlakeTwo256, IdentityLookup},
     Perbill,
 };
+use pallet_contracts::WeightInfo;
 pub use pallet_balances;
 
 impl_outer_origin! {
@@ -34,14 +29,12 @@ impl_outer_origin! {
 pub struct Test;
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
-    pub const MaximumBlockWeight: Weight = 1024;
-    pub const MaximumBlockLength: u32 = 2 * 1024;
-    pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
-    pub MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get()
-    .saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
+	pub TestBlockWeights: BlockWeights = BlockWeights::default();
+	pub TestBlockLength: BlockLength = BlockLength::default();
+	pub SS58Prefix: u8 = 0;
 }
 
-impl system::Trait for Test {
+impl system::Config for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
 	type Call = ();
@@ -54,18 +47,15 @@ impl system::Trait for Test {
 	type Header = Header;
 	type Event = ();
 	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
+	type BlockWeights = TestBlockWeights;
 	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
+	type BlockLength = TestBlockLength;
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = pallet_balances::AccountData<u64>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
+	type SS58Prefix = SS58Prefix;
 	type SystemWeightInfo = ();
 }
 
@@ -75,7 +65,7 @@ parameter_types! {
 }
 
 type System = frame_system::Module<Test>;
-impl pallet_balances::Trait for Test {
+impl pallet_balances::Config for Test {
     type AccountStore = System;
     type Balance = u64;
     type DustRemoval = ();
@@ -88,9 +78,9 @@ impl pallet_balances::Trait for Test {
 parameter_types! {
 	pub const TransactionByteFee: u64 = 1;
 }
-impl transaction_payment::Trait for Test {
-	type Currency = pallet_balances::Module<Test>;
-	type OnTransactionPayment = ();
+
+impl transaction_payment::Config for Test {
+	type OnChargeTransaction = CurrencyAdapter<pallet_balances::Module<Test>, ()>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<u64>;
 	type FeeMultiplierUpdate = ();
@@ -100,7 +90,7 @@ impl transaction_payment::Trait for Test {
 parameter_types! {
 	pub const MinimumPeriod: u64 = 1;
 }
-impl pallet_timestamp::Trait for Test {
+impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
@@ -112,49 +102,45 @@ type Randomness = pallet_randomness_collective_flip::Module<Test>;
 
 parameter_types! {
 	pub const TombstoneDeposit: u64 = 1;
-	pub const RentByteFee: u64 = 1;
-	pub const RentDepositOffset: u64 = 1;
+	pub const DepositPerContract: u64 = 1;
+	pub const DepositPerStorageByte: u64 = 1;
+	pub const DepositPerStorageItem: u64 = 1;
+	pub RentFraction: Perbill = Perbill::from_rational_approximation(1u32, 30 * 24 * 60 * 10);
 	pub const SurchargeReward: u64 = 1;
+	pub const SignedClaimHandicap: u32 = 2;
+	pub const MaxDepth: u32 = 32;
+	pub const MaxValueSize: u32 = 16 * 1024;
+	pub DeletionWeightLimit: Weight = Perbill::from_percent(10) *
+		TestBlockWeights::get().max_block;
+	pub DeletionQueueDepth: u32 = ((DeletionWeightLimit::get() / (
+		<Test as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(1) -
+		<Test as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(0)
+	)) / 5) as u32;
 }
 
-pub struct DummyTrieIdGenerator;
-impl TrieIdGenerator<u64> for DummyTrieIdGenerator {
-	fn trie_id(account_id: &u64) -> TrieId {
-		let new_seed = *account_id + 1;
-		let mut res = vec![];
-		res.extend_from_slice(&new_seed.to_le_bytes());
-		res.extend_from_slice(&account_id.to_le_bytes());
-		res
-	}
-}
-
-pub struct DummyContractAddressFor;
-impl ContractAddressFor<H256, u64> for DummyContractAddressFor {
-	fn contract_address_for(_code_hash: &H256, _data: &[u8], origin: &u64) -> u64 {
-		*origin + 1
-	}
-}
-
-impl pallet_contracts::Trait for Test {
+impl pallet_contracts::Config for Test {
 	type Time = Timestamp;
 	type Randomness = Randomness;
 	type Currency = pallet_balances::Module<Test>;
 	type Event = ();
-	type DetermineContractAddress = DummyContractAddressFor;
-	type TrieIdGenerator = DummyTrieIdGenerator;
 	type RentPayment = ();
-	type SignedClaimHandicap = pallet_contracts::DefaultSignedClaimHandicap;
+	type SignedClaimHandicap = SignedClaimHandicap;
 	type TombstoneDeposit = TombstoneDeposit;
-	type StorageSizeOffset = pallet_contracts::DefaultStorageSizeOffset;
-	type RentByteFee = RentByteFee;
-	type RentDepositOffset = RentDepositOffset;
+	type DepositPerContract = DepositPerContract;
+	type DepositPerStorageByte = DepositPerStorageByte;
+	type DepositPerStorageItem = DepositPerStorageItem;
+	type RentFraction = RentFraction;
 	type SurchargeReward = SurchargeReward;
-	type MaxDepth = pallet_contracts::DefaultMaxDepth;
-	type MaxValueSize = pallet_contracts::DefaultMaxValueSize;
+	type DeletionWeightLimit = DeletionWeightLimit;
+	type MaxDepth = MaxDepth;
+	type DeletionQueueDepth = DeletionQueueDepth;
+	type MaxValueSize = MaxValueSize;
+	type ChainExtension = ();
 	type WeightPrice = ();
+	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
 }
 
-impl Trait for Test {
+impl Config for Test {
 	type Event = ();
 	type WeightInfo = ();
 

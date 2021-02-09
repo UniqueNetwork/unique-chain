@@ -5,7 +5,7 @@
 
 import chai from "chai";
 import chaiAsPromised from 'chai-as-promised';
-import { submitTransactionAsync } from "../substrate/substrate-api";
+import { submitTransactionAsync, submitTransactionExpectFailAsync } from "../substrate/substrate-api";
 import fs from "fs";
 import { Abi, BlueprintPromise as Blueprint, CodePromise, ContractPromise as Contract } from "@polkadot/api-contract";
 import { IKeyringPair } from "@polkadot/types/types";
@@ -14,7 +14,7 @@ import { ApiPromise, Keyring } from "@polkadot/api";
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 import { BigNumber } from 'bignumber.js';
-import { findUnusedAddress } from '../util/helpers';
+import { findUnusedAddress, getGenericResult } from '../util/helpers';
 
 const value = 0;
 const gasLimit = '200000000000';
@@ -90,6 +90,19 @@ export async function getFlipValue(contract: Contract, deployer: IKeyringPair) {
     throw `Failed to get flipper value`;
   }
   return (result.result.asOk.data[0] == 0x00) ? false : true;
+}
+
+export async function toggleFlipValueExpectSuccess(sender: IKeyringPair, contract: Contract) {
+  const tx = contract.tx.flip(value, gasLimit);
+  const events = await submitTransactionAsync(sender, tx);
+  const result = getGenericResult(events);
+
+  expect(result.success).to.be.true;
+}
+
+export async function toggleFlipValueExpectFailure(sender: IKeyringPair, contract: Contract) {
+  const tx = contract.tx.flip(value, gasLimit);
+  await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
 }
 
 function instantiateTransferContract(alice: IKeyringPair, blueprint: Blueprint) : Promise<any> {
