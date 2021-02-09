@@ -54,6 +54,7 @@ mod tests;
 mod default_weights;
 
 pub const MAX_DECIMAL_POINTS: DecimalPoints = 30;
+pub const MAX_REFUNGIBLE_PIECES: u128 = 1_000_000_000_000_000_000_000;
 pub const MAX_SPONSOR_TIMEOUT: u32 = 10_368_000;
 pub const MAX_TOKEN_OWNERSHIP: u32 = 10_000_000;
 
@@ -71,8 +72,7 @@ pub enum CollectionMode {
     NFT,
     // decimal points
     Fungible(DecimalPoints),
-    // decimal points
-    ReFungible(DecimalPoints),
+    ReFungible,
 }
 
 impl Default for CollectionMode {
@@ -87,7 +87,7 @@ impl Into<u8> for CollectionMode {
             CollectionMode::Invalid => 0,
             CollectionMode::NFT => 1,
             CollectionMode::Fungible(_) => 2,
-            CollectionMode::ReFungible(_) => 3,
+            CollectionMode::ReFungible => 3,
         }
     }
 }
@@ -266,6 +266,7 @@ pub struct CreateFungibleData {
 pub struct CreateReFungibleData {
     pub const_data: Vec<u8>,
     pub variable_data: Vec<u8>,
+    pub pieces: u128,
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq)]
@@ -377,7 +378,9 @@ decl_error! {
         /// Collection limit bounds per collection exceeded
         CollectionLimitBoundsExceeded,
         /// Schema data size limit bound exceeded
-        SchemaDataLimitExceeded
+        SchemaDataLimitExceeded,
+        /// Maximum refungibility exceeded
+        WrongRefungiblePieces
 	}
 }
 
@@ -548,7 +551,6 @@ decl_module! {
 
             let decimal_points = match mode {
                 CollectionMode::Fungible(points) => points,
-                CollectionMode::ReFungible(points) => points,
                 _ => 0
             };
 
@@ -933,7 +935,7 @@ decl_module! {
 
             Self::can_create_items_in_collection(collection_id, &target_collection, &sender, &owner)?;
             Self::validate_create_item_args(&target_collection, &data)?;
-            Self::create_item_no_validation(collection_id, &target_collection, owner, data)?;
+            Self::create_item_no_validation(collection_id, owner, data)?;
 
             Ok(())
         }
@@ -973,7 +975,7 @@ decl_module! {
                 Self::validate_create_item_args(&target_collection, data)?;
             }
             for data in &items_data {
-                Self::create_item_no_validation(collection_id, &target_collection, owner.clone(), data.clone())?;
+                Self::create_item_no_validation(collection_id, owner.clone(), data.clone())?;
             }
 
             Ok(())
@@ -1012,7 +1014,7 @@ decl_module! {
             {
                 CollectionMode::NFT => Self::burn_nft_item(collection_id, item_id)?,
                 CollectionMode::Fungible(_)  => Self::burn_fungible_item(&sender, collection_id, value)?,
-                CollectionMode::ReFungible(_)  => Self::burn_refungible_item(collection_id, item_id, &sender)?,
+                CollectionMode::ReFungible  => Self::burn_refungible_item(collection_id, item_id, &sender)?,
                 _ => ()
             };
 
@@ -1154,7 +1156,7 @@ decl_module! {
             {
                 CollectionMode::NFT => Self::transfer_nft(collection_id, item_id, from, recipient)?,
                 CollectionMode::Fungible(_)  => Self::transfer_fungible(collection_id, value, &from, &recipient)?,
-                CollectionMode::ReFungible(_)  => Self::transfer_refungible(collection_id, item_id, value, from.clone(), recipient)?,
+                CollectionMode::ReFungible  => Self::transfer_refungible(collection_id, item_id, value, from.clone(), recipient)?,
                 _ => ()
             };
 
@@ -1211,7 +1213,7 @@ decl_module! {
             match target_collection.mode
             {
                 CollectionMode::NFT => Self::set_nft_variable_data(collection_id, item_id, data)?,
-                CollectionMode::ReFungible(_)  => Self::set_re_fungible_variable_data(collection_id, item_id, data)?,
+                CollectionMode::ReFungible  => Self::set_re_fungible_variable_data(collection_id, item_id, data)?,
                 CollectionMode::Fungible(_) => fail!(Error::<T>::CantStoreMetadataInFungibleTokens),
                 _ => fail!(Error::<T>::UnexpectedCollectionType)
             };
@@ -1551,7 +1553,7 @@ impl<T: Config> Module<T> {
         {
             CollectionMode::NFT => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient)?,
             CollectionMode::Fungible(_)  => Self::transfer_fungible(collection_id, value, &sender, &recipient)?,
-            CollectionMode::ReFungible(_)  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient)?,
+            CollectionMode::ReFungible  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient)?,
             _ => ()
         };
 
@@ -1603,12 +1605,16 @@ impl<T: Config> Module<T> {
                     fail!(Error::<T>::NotFungibleDataUsedToMintFungibleCollectionToken);
                 }
             },
-            CollectionMode::ReFungible(_) => {
+            CollectionMode::ReFungible => {
                 if let CreateItemData::ReFungible(data) = data {
 
                     // check sizes
                     ensure!(ChainLimit::get().custom_data_limit >= data.const_data.len() as u32, Error::<T>::TokenConstDataLimitExceeded);
                     ensure!(ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32, Error::<T>::TokenVariableDataLimitExceeded);
+
+                    // Check refungibility limits
+                    ensure!(data.pieces <= MAX_REFUNGIBLE_PIECES, Error::<T>::WrongRefungiblePieces);
+                    ensure!(data.pieces > 0, Error::<T>::WrongRefungiblePieces);
                 } else {
                     fail!(Error::<T>::NotReFungibleDataUsedToMintReFungibleCollectionToken);
                 }
@@ -1619,7 +1625,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn create_item_no_validation(collection_id: CollectionId, collection: &CollectionType<T::AccountId>, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
+    fn create_item_no_validation(collection_id: CollectionId, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
         match data
         {
             CreateItemData::NFT(data) => {
@@ -1636,8 +1642,7 @@ impl<T: Config> Module<T> {
             },
             CreateItemData::ReFungible(data) => {
                 let mut owner_list = Vec::new();
-                let value = (10 as u128).pow(collection.decimal_points as u32);
-                owner_list.push(Ownership {owner: owner.clone(), fraction: value});
+                owner_list.push(Ownership {owner: owner.clone(), fraction: data.pieces});
 
                 let item = ReFungibleItemType {
                     owner: owner_list,
@@ -1866,7 +1871,7 @@ impl<T: Config> Module<T> {
             CollectionMode::Fungible(_) => {
                 <FungibleItemList<T>>::contains_key(collection_id, &subject)
             }
-            CollectionMode::ReFungible(_) => {
+            CollectionMode::ReFungible => {
                 <ReFungibleItemList<T>>::get(collection_id, item_id)
                     .owner
                     .iter()
@@ -1895,7 +1900,7 @@ impl<T: Config> Module<T> {
         {
             CollectionMode::NFT => <NftItemList<T>>::contains_key(collection_id, item_id),
             CollectionMode::Fungible(_)  => <FungibleItemList<T>>::contains_key(collection_id, owner),
-            CollectionMode::ReFungible(_)  => <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
+            CollectionMode::ReFungible  => <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
             _ => false
         };
 
@@ -2421,7 +2426,7 @@ where
 
                             sponsored
                         }
-                        CollectionMode::ReFungible(_) => {
+                        CollectionMode::ReFungible => {
     
                             // get correct limit
                             let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {

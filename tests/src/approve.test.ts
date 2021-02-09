@@ -34,7 +34,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
       await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob);
       // reFungible
       const reFungibleCollectionId =
-        await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
+        await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
     });
@@ -56,7 +56,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
       await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob, 0);
       // reFungible
       const reFungibleCollectionId =
-        await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
+        await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob, 1);
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob, 0);
@@ -95,7 +95,7 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
       await approveExpectFail(fungibleCollectionId, 1, Alice, Bob);
       // reFungible
       const reFungibleCollectionId =
-        await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
+        await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       await destroyCollectionExpectSuccess(reFungibleCollectionId);
       await approveExpectFail(reFungibleCollectionId, 1, Alice, Bob);
     });
@@ -113,7 +113,7 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
       await approveExpectFail(fungibleCollectionId, 2, Alice, Bob);
       // reFungible
       const reFungibleCollectionId =
-        await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
+        await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       await approveExpectFail(reFungibleCollectionId, 2, Alice, Bob);
     });
   });
@@ -132,7 +132,7 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
       await approveExpectFail(fungibleCollectionId, newFungibleTokenId, Bob, Alice);
       // reFungible
       const reFungibleCollectionId =
-        await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
+        await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, Bob, Alice);
     });

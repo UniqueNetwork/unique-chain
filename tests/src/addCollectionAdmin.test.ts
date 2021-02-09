@@ -1,4 +1,9 @@
-﻿import { ApiPromise } from '@polkadot/api';
+﻿//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+
+import { ApiPromise } from '@polkadot/api';
 import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -98,7 +103,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
     });
   });
 
-  it('Add an admin to a collection that has reached the maximum number of admins limit', async () => {
+  it.only('Add an admin to a collection that has reached the maximum number of admins limit', async () => {
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');
       const accounts = [
@@ -112,8 +117,8 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
       ];
       const collectionId = await createCollectionExpectSuccess();
 
-      const chainLimits: any = await api.query.nft.chainLimit();
-      const chainAdminLimit = chainLimits.CollectionAdminsLimit.toNumber();
+      const chainLimit = await api.query.nft.chainLimit() as unknown as { CollectionAdminsLimit: BN };
+      const chainAdminLimit = chainLimit.CollectionAdminsLimit.toNumber();
       expect(chainAdminLimit).to.be.equal(5);
 
       for (let i = 0; i < chainAdminLimit; i++) {
