@@ -5,7 +5,7 @@ import { addToContractWhiteListExpectSuccess, isWhitelistedInContract, removeFro
 import { IKeyringPair } from '@polkadot/types/types';
 import { expect } from "chai";
 
-describe.only('Integration Test removeFromContractWhiteList', () => {
+describe('Integration Test removeFromContractWhiteList', () => {
     let bob: IKeyringPair;
 
     before(() => {
@@ -47,7 +47,7 @@ describe.only('Integration Test removeFromContractWhiteList', () => {
     });
 });
 
-describe.only('Negative Integration Test removeFromContractWhiteList', () => {
+describe('Negative Integration Test removeFromContractWhiteList', () => {
     let alice: IKeyringPair;
     let bob: IKeyringPair;
 
