@@ -1,4 +1,9 @@
-﻿import { ApiPromise } from '@polkadot/api';
+﻿//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+
+import { ApiPromise } from '@polkadot/api';
 import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -112,8 +117,8 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
       ];
       const collectionId = await createCollectionExpectSuccess();
 
-      const chainLimit = await api.query.nft.chainLimit() as unknown as { collections_admins_limit: BN };
-      const chainLimitNumber = chainLimit.collections_admins_limit.toNumber();
+      const chainLimit = await api.query.nft.chainLimit() as unknown as { CollectionAdminsLimit: BN };
+      const chainLimitNumber = chainLimit.CollectionAdminsLimit.toNumber();
       expect(chainLimitNumber).to.be.equal(5);
 
       for (let i = 0; i < chainLimitNumber; i++) {

@@ -28,7 +28,7 @@ describe('integration test: ext. createCollection():', () => {
     await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
   });
   it('Create new ReFungible collection', async () => {
-    await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
+    await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
   });
 });
 

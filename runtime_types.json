@@ -1,27 +1,4 @@
 {
-    "Schedule": {
-      "version": "u32",
-      "put_code_per_byte_cost": "Gas",
-      "grow_mem_cost": "Gas",
-      "regular_op_cost": "Gas",
-      "return_data_per_byte_cost": "Gas",
-      "event_data_per_byte_cost": "Gas",
-      "event_per_topic_cost": "Gas",
-      "event_base_cost": "Gas",
-      "call_base_cost": "Gas",
-      "instantiate_base_cost": "Gas",
-      "dispatch_base_cost": "Gas",
-      "sandbox_data_read_cost": "Gas",
-      "sandbox_data_write_cost": "Gas",
-      "transfer_cost": "Gas",
-      "instantiate_cost": "Gas",
-      "max_event_topics": "u32",
-      "max_stack_height": "u32",
-      "max_memory_pages": "u32",
-      "max_table_size": "u32",
-      "enable_println": "bool",
-      "max_subject_len": "u32"
-    },
     "AccessMode": {
       "_enum": [
         "Normal",
@@ -34,7 +11,7 @@
         "Invalid": null,
         "NFT": null,
         "Fungible": "DecimalPoints",
-        "ReFungible": "DecimalPoints"
+        "ReFungible": null
       }
     },
     "Ownership": {
@@ -84,7 +61,8 @@
     },
     "CreateReFungibleData": {
       "const_data": "Vec<u8>",
-      "variable_data": "Vec<u8>" 
+      "variable_data": "Vec<u8>",
+      "pieces": "u128"
     },
     "CreateItemData": {
       "_enum": {
@@ -118,14 +96,5 @@
       "SponsoredMintSize": "u32",
       "TokenLimit": "u32",
       "SponsorTimeout": "u32"
-    },
-    "AccountInfo": "AccountInfoWithProviders",
-    "AccountInfoWithProviders": {
-      "nonce": "Index",
-      "consumers": "RefCount",
-      "providers": "RefCount",
-      "data": "AccountData"
     }
-
-  }
-  
+}
