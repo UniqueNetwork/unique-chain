@@ -56,14 +56,14 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
 
   it('Create  0x31, 0x32, 0x33 items in active ReFungible collection and verify tokens data in chain', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
+      const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const itemsListIndexBefore = await api.query.nft.itemListIndex(collectionId) as unknown as BN;
       expect(itemsListIndexBefore.toNumber()).to.be.equal(0);
       const Alice = privateKey('//Alice');
       const args = [
-        { Refungible: ['0x31', '0x31'] },
-        { Refungible: ['0x32', '0x32'] },
-        { Refungible: ['0x33', '0x33'] },
+        {refungible: {const_data: [0x31], variable_data: [0x31], pieces: 1}},
+        {refungible: {const_data: [0x32], variable_data: [0x32], pieces: 1}},
+        {refungible: {const_data: [0x33], variable_data: [0x33], pieces: 1}},
       ];
       const createMultipleItemsTx = await api.tx.nft
         .createMultipleItems(collectionId, Alice.address, args);
@@ -137,7 +137,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
 
       // ReFungible
       const collectionIdReFungible =
-        await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
+        await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const argsReFungible = [
         { ReFungible: ['1'.repeat(2049), '1'.repeat(2049)] },
         { ReFungible: ['2'.repeat(2049), '2'.repeat(2049)] },

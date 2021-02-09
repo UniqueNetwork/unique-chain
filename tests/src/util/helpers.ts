@@ -124,21 +124,6 @@ interface Fungible {
 
 interface ReFungible {
   type: 'ReFungible';
-  decimalPoints: number;
-}
-
-interface Nft {
-  type: 'NFT'
-}
-
-interface Fungible {
-  type: 'Fungible',
-  decimalPoints: number
-}
-
-interface ReFungible {
-  type: 'ReFungible',
-  decimalPoints: number
 }
 
 type CollectionMode = Nft | Fungible | ReFungible | Invalid;
@@ -174,7 +159,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     } else if (mode.type === 'Fungible') {
       modeprm = {fungible: mode.decimalPoints};
     } else if (mode.type === 'ReFungible') {
-      modeprm = {refungible: mode.decimalPoints};
+      modeprm = {refungible: null};
     } else if (mode.type === 'Invalid') {
       modeprm = {invalid: null};
     }
@@ -216,7 +201,7 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
   } else if (mode.type === 'Fungible') {
     modeprm = {fungible: mode.decimalPoints};
   } else if (mode.type === 'ReFungible') {
-    modeprm = {refungible: mode.decimalPoints};
+    modeprm = {refungible: null};
   } else if (mode.type === 'Invalid') {
     modeprm = {invalid: null};
   }
@@ -424,6 +409,54 @@ export async function setContractSponsoringRateLimitExpectFailure(sender: IKeyri
   });
 }
 
+export async function toggleContractWhitelistExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, enabled: boolean) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.toggleContractWhiteList(contractAddress, true);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+}
+
+export async function isWhitelistedInContract(contractAddress: AccountId | string, user: string) {
+  let whitelisted: boolean = false;
+  await usingApi(async (api) => {
+    whitelisted = (await api.query.nft.contractWhiteList(contractAddress, user)).toJSON() as boolean;
+  });
+  return whitelisted;
+}
+
+export async function addToContractWhiteListExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, user: string) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.addToContractWhiteList(contractAddress, user);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+}
+
+export async function removeFromContractWhiteListExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, user: string) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.removeFromContractWhiteList(contractAddress, user);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+}
+
+export async function removeFromContractWhiteListExpectFailure(sender: IKeyringPair, contractAddress: AccountId | string, user: string) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.removeFromContractWhiteList(contractAddress, user);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function setVariableMetaDataExpectSuccess(sender: IKeyringPair, collectionId: number, itemId: number, data: number[]) {
   await usingApi(async (api) => {
     const tx = api.tx.nft.setVariableMetaData(collectionId, itemId, '0x' + Buffer.from(data).toString('hex'));
@@ -619,6 +652,9 @@ export async function createItemExpectSuccess(
     let tx;
     if (createMode === 'Fungible') {
       const createData = {fungible: {value: 10}};
+      tx = api.tx.nft.createItem(collectionId, owner, createData);
+    } else if (createMode === 'ReFungible') {
+      const createData = {refungible: {const_data: [], variable_data: [], pieces: 100}};
       tx = api.tx.nft.createItem(collectionId, owner, createData);
     } else {
       tx = api.tx.nft.createItem(collectionId, owner, createMode);
