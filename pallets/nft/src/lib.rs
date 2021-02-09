@@ -185,6 +185,8 @@ pub struct CollectionLimits {
 
     // Timeouts for item types in passed blocks
     pub sponsor_transfer_timeout: u32,
+    pub owner_can_transfer: bool,
+    pub owner_can_destroy: bool,
 }
 
 impl Default for CollectionLimits {
@@ -193,7 +195,10 @@ impl Default for CollectionLimits {
             account_token_ownership_limit: 10_000_000, 
             token_limit: u32::max_value(),
             sponsored_data_size: u32::max_value(), 
-            sponsor_transfer_timeout: 14400 }
+            sponsor_transfer_timeout: 14400,
+            owner_can_transfer: true,
+            owner_can_destroy: true
+        }
     }
 }
 
@@ -590,7 +595,7 @@ decl_module! {
                 sponsor_confirmed: false,
                 variable_on_chain_schema: Vec::new(),
                 const_on_chain_schema: Vec::new(),
-                limits: CollectionLimits::default(),
+                limits: CollectionLimits::default()
             };
 
             // Add new collection to map

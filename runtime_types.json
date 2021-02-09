@@ -117,7 +117,9 @@
       "AccountTokenOwnershipLimit": "u32",
       "SponsoredMintSize": "u32",
       "TokenLimit": "u32",
-      "SponsorTimeout": "u32"
+      "SponsorTimeout": "u32",
+      "OwnerCanTransfer": "bool",
+      "OwnerCanDestroy": "bool"
     },
     "AccountInfo": "AccountInfoWithProviders",
     "AccountInfoWithProviders": {
