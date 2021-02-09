@@ -124,21 +124,6 @@ interface Fungible {
 
 interface ReFungible {
   type: 'ReFungible';
-  decimalPoints: number;
-}
-
-interface Nft {
-  type: 'NFT'
-}
-
-interface Fungible {
-  type: 'Fungible',
-  decimalPoints: number
-}
-
-interface ReFungible {
-  type: 'ReFungible',
-  decimalPoints: number
 }
 
 type CollectionMode = Nft | Fungible | ReFungible | Invalid;
@@ -174,7 +159,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     } else if (mode.type === 'Fungible') {
       modeprm = {fungible: mode.decimalPoints};
     } else if (mode.type === 'ReFungible') {
-      modeprm = {refungible: mode.decimalPoints};
+      modeprm = {refungible: null};
     } else if (mode.type === 'Invalid') {
       modeprm = {invalid: null};
     }
@@ -216,7 +201,7 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
   } else if (mode.type === 'Fungible') {
     modeprm = {fungible: mode.decimalPoints};
   } else if (mode.type === 'ReFungible') {
-    modeprm = {refungible: mode.decimalPoints};
+    modeprm = {refungible: null};
   } else if (mode.type === 'Invalid') {
     modeprm = {invalid: null};
   }
@@ -619,6 +604,9 @@ export async function createItemExpectSuccess(
     let tx;
     if (createMode === 'Fungible') {
       const createData = {fungible: {value: 10}};
+      tx = api.tx.nft.createItem(collectionId, owner, createData);
+    } else if (createMode === 'ReFungible') {
+      const createData = {refungible: {const_data: [], variable_data: [], pieces: 100}};
       tx = api.tx.nft.createItem(collectionId, owner, createData);
     } else {
       tx = api.tx.nft.createItem(collectionId, owner, createMode);

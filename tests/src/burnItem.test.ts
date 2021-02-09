@@ -1,3 +1,8 @@
+//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+
 import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
 import { Keyring } from "@polkadot/api";
 import { IKeyringPair } from "@polkadot/types/types";
@@ -70,7 +75,7 @@ describe('integration test: ext. burnItem():', () => {
   });
   it('Burn item in ReFungible collection', async () => {
     const createMode = 'ReFungible';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 2 }});
+    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode }});
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
 
     await usingApi(async (api) => {
@@ -91,7 +96,7 @@ describe('integration test: ext. burnItem():', () => {
 
   it('Burn owned portion of item in ReFungible collection', async () => {
     const createMode = 'ReFungible';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 2 }});
+    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
 
     await usingApi(async (api) => {
@@ -107,7 +112,7 @@ describe('integration test: ext. burnItem():', () => {
       const tx = api.tx.nft.burnItem(collectionId, tokenId, 0);
       const events2 = await submitTransactionAsync(bob, tx);
       const result2 = getGenericResult(events2);
-  
+
       // Get balances 
       const balance: any = (await api.query.nft.reFungibleItemList(collectionId, tokenId)).toJSON();
       // console.log(balance);

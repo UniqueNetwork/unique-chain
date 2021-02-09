@@ -9,7 +9,6 @@ import { default as usingApi } from "./substrate/substrate-api";
 import { createCollectionExpectSuccess, setCollectionSponsorExpectSuccess, destroyCollectionExpectSuccess, setCollectionSponsorExpectFailure } from "./util/helpers";
 import { Keyring } from "@polkadot/api";
 import { IKeyringPair } from "@polkadot/types/types";
-import type { AccountId } from '@polkadot/types/interfaces';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -34,7 +33,7 @@ describe('integration test: ext. setCollectionSponsor():', () => {
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
   });
   it('Set ReFungible collection sponsor', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode: {type: 'ReFungible', decimalPoints: 0} });
+    const collectionId = await createCollectionExpectSuccess({ mode: {type: 'ReFungible'} });
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
   });
 
