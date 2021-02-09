@@ -103,7 +103,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
     });
   });
 
-  it('Add an admin to a collection that has reached the maximum number of admins limit', async () => {
+  it.only('Add an admin to a collection that has reached the maximum number of admins limit', async () => {
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');
       const accounts = [
@@ -118,17 +118,17 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
       const collectionId = await createCollectionExpectSuccess();
 
       const chainLimit = await api.query.nft.chainLimit() as unknown as { CollectionAdminsLimit: BN };
-      const chainLimitNumber = chainLimit.CollectionAdminsLimit.toNumber();
-      expect(chainLimitNumber).to.be.equal(5);
+      const chainAdminLimit = chainLimit.CollectionAdminsLimit.toNumber();
+      expect(chainAdminLimit).to.be.equal(5);
 
-      for (let i = 0; i < chainLimitNumber; i++) {
+      for (let i = 0; i < chainAdminLimit; i++) {
         const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, accounts[i]);
         await submitTransactionAsync(Alice, changeAdminTx);
         const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
         expect(adminListAfterAddAdmin).to.be.contains(accounts[i]);
       }
 
-      const tx = api.tx.nft.addCollectionAdmin(collectionId, accounts[chainLimitNumber]);
+      const tx = api.tx.nft.addCollectionAdmin(collectionId, accounts[chainAdminLimit]);
       await expect(submitTransactionExpectFailAsync(Alice, tx)).to.be.rejected;
     });
   });

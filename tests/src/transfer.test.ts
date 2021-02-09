@@ -63,7 +63,7 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
     });
   });
 
-  it('Create collection, balance transfers and check balance', async () => {
+  it('User can transfer owned token', async () => {
     await usingApi(async (api) => {
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
