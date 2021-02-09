@@ -26,7 +26,7 @@ describe('Integration Test transferFrom(from, recipient, collection_id, item_id,
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//CHARLIE');
+      const Charlie = privateKey('//Charlie');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
@@ -55,7 +55,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//CHARLIE');
+      const Charlie = privateKey('//Charlie');
       // nft
       const nftCollectionCount = await api.query.nft.createdCollectionCount() as unknown as number;
       await approveExpectFail(nftCollectionCount + 1, 1, Alice, Bob);
@@ -97,7 +97,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//CHARLIE');
+      const Charlie = privateKey('//Charlie');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
@@ -121,7 +121,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//CHARLIE');
+      const Charlie = privateKey('//Charlie');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
@@ -148,7 +148,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//CHARLIE');
+      const Charlie = privateKey('//Charlie');
       const Dave = privateKey('//DAVE');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
@@ -190,7 +190,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//CHARLIE');
+      const Charlie = privateKey('//Charlie');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
@@ -203,7 +203,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     await usingApi(async (api: ApiPromise) => {
     const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//CHARLIE');
+      const Charlie = privateKey('//Charlie');
       const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
       const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible');
       await burnItemExpectSuccess(Alice, fungibleCollectionId, 1, 10);
@@ -216,7 +216,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     await usingApi(async (api: ApiPromise) => {
     const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//CHARLIE');
+      const Charlie = privateKey('//Charlie');
       const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 1);
@@ -230,7 +230,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//CHARLIE');
+      const Charlie = privateKey('//Charlie');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
@@ -243,7 +243,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     await usingApi(async (api: ApiPromise) => {
     const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//CHARLIE');
+      const Charlie = privateKey('//Charlie');
       const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
       const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible');
       await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob);
@@ -256,7 +256,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     await usingApi(async (api: ApiPromise) => {
     const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//CHARLIE');
+      const Charlie = privateKey('//Charlie');
       const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
