@@ -81,6 +81,7 @@ impl Default for CollectionMode {
     }
 }
 
+// REVIEW: This looks like a footgun because you loose information.
 impl Into<u8> for CollectionMode {
     fn into(self) -> u8 {
         match self {
@@ -136,6 +137,8 @@ pub struct CollectionType<AccountId> {
     pub mint_mode: bool,
     pub offchain_schema: Vec<u8>,
     pub schema_version: SchemaVersion,
+    // REVIEW: You could replace the two sponsor fields with an enum like:
+    // enum Sponsor { None, Unconfirmed(AccountId), Confirmed(AccountId) }
     pub sponsor: AccountId, // Who pays fees. If set to default address, the fees are applied to the transaction sender
     pub sponsor_confirmed: bool, // False if sponsor address has not yet confirmed sponsorship. True otherwise.
     pub limits: CollectionLimits, // Collection private restrictions 
@@ -406,6 +409,8 @@ decl_storage! {
 
         // Private members
         NextCollectionID: CollectionId;
+        // REVIEW: Consider introducing more type defs for the different number types to improve
+        // readability.
         CreatedCollectionCount: u32;
         ChainVersion: u64;
         ItemListIndex: map hasher(identity) CollectionId => TokenId;
@@ -418,6 +423,7 @@ decl_storage! {
         pub AccountItemCount get(fn account_item_count): map hasher(twox_64_concat) T::AccountId => u32;
 
         // Basic collections
+        // REVIEW: Prefer `twox_64_concat` for non-random keys (even if controlled by the chain).
         pub Collection get(fn collection) config(): map hasher(identity) CollectionId => CollectionType<T::AccountId>;
         pub AdminList get(fn admin_list_collection): map hasher(identity) CollectionId => Vec<T::AccountId>;
         pub WhiteList get(fn white_list): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => bool;
@@ -516,6 +522,9 @@ decl_module! {
         fn deposit_event() = default;
         type Error = Error<T>;
 
+        // REVIEW: (Prefer to) Use `on_runtime_upgrade` for storage migrations. Use genesis config
+        // for initialization of chain storage at genesis.
+        // REVIEW: Weight is incorrect. `ChainVersion` leads to 1 storage read on every run.
         fn on_initialize(now: T::BlockNumber) -> Weight {
 
             if ChainVersion::get() < 2
@@ -593,6 +602,7 @@ decl_module! {
                 token_prefix: token_prefix,
                 offchain_schema: Vec::new(),
                 schema_version: SchemaVersion::ImageURL,
+                // REVIEW: Use Option<Account> or the suggested enum for this.
                 sponsor: T::AccountId::default(),
                 sponsor_confirmed: false,
                 variable_on_chain_schema: Vec::new(),
@@ -618,6 +628,7 @@ decl_module! {
         /// # Arguments
         /// 
         /// * collection_id: collection to destroy.
+        // REVIEW: You probably want to incentivize cleanup by requiring (and refunding) a deposit.
         #[weight = <T as Config>::WeightInfo::destroy_collection()]
         pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
 
