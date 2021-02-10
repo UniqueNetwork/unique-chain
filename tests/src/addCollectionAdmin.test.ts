@@ -103,7 +103,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
     });
   });
 
-  it.only('Add an admin to a collection that has reached the maximum number of admins limit', async () => {
+  it('Add an admin to a collection that has reached the maximum number of admins limit', async () => {
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');
       const accounts = [
