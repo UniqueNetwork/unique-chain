@@ -20,6 +20,7 @@
   "scripts": {
     "test": "mocha --timeout 9999999 -r ts-node/register ./**/*.test.ts",
     "load": "mocha --timeout 9999999 -r ts-node/register ./**/*.load.ts",
+    "loadTransfer": "ts-node src/transfer.nload.ts",
     "testAddCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/addCollectionAdmin.test.ts",
     "testSetSchemaVersion": "mocha --timeout 9999999 -r ts-node/register ./**/setSchemaVersion.test.ts",
     "testSetVariableMetaData": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetaData.test.ts",
