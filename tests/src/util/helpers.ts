@@ -605,7 +605,7 @@ transferExpectFail(collectionId: number,
 
 export async function
 approveExpectFail(collectionId: number,
-                  tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number = 1) {
+                  tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number | bigint = 1) {
   await usingApi(async (api: ApiPromise) => {
     const approveNftTx = await api.tx.nft.approve(approved.address, collectionId, tokenId, amount);
     const events = await expect(submitTransactionExpectFailAsync(owner, approveNftTx)).to.be.rejected;
