@@ -247,6 +247,10 @@ export async function getAllowance(collectionId: number, tokenId: number, owner:
   });
 }
 
+export function findUnusedAddresses(api: ApiPromise, amount: number): Promise<IKeyringPair[]> {
+  return Promise.all(new Array(amount).fill(null).map(() => findUnusedAddress(api, '_' + Date.now())));
+}
+
 export async function findNotExistingCollection(api: ApiPromise): Promise<number> {
   const totalNumber = parseInt((await api.query.nft.createdCollectionCount()).toString(), 10) as unknown as number;
   const newCollection: number = totalNumber + 1;
@@ -517,7 +521,7 @@ export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: n
 
 export async function
 approveExpectSuccess(collectionId: number,
-                     tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number | bigint = 1) { //alice,bob
+                     tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number | bigint = 1) {
   await usingApi(async (api: ApiPromise) => {
     const allowanceBefore =
       await api.query.nft.allowances(collectionId, [tokenId, owner.address, approved.address]) as unknown as BN;
@@ -535,9 +539,9 @@ approveExpectSuccess(collectionId: number,
 export async function
 transferFromExpectSuccess(collectionId: number,
                           tokenId: number,
-                          accountApproved: IKeyringPair, //bob
-                          accountFrom: IKeyringPair, //alice
-                          accountTo: IKeyringPair, //charlie
+                          accountApproved: IKeyringPair,
+                          accountFrom: IKeyringPair,
+                          accountTo: IKeyringPair,
                           value: number | bigint = 1,
                           type: string = 'NFT') {
   await usingApi(async (api: ApiPromise) => {
