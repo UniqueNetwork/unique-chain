@@ -126,21 +126,6 @@ interface Fungible {
 
 interface ReFungible {
   type: 'ReFungible';
-  decimalPoints: number;
-}
-
-interface Nft {
-  type: 'NFT'
-}
-
-interface Fungible {
-  type: 'Fungible',
-  decimalPoints: number
-}
-
-interface ReFungible {
-  type: 'ReFungible',
-  decimalPoints: number
 }
 
 type CollectionMode = Nft | Fungible | ReFungible | Invalid;
@@ -176,7 +161,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     } else if (mode.type === 'Fungible') {
       modeprm = {fungible: mode.decimalPoints};
     } else if (mode.type === 'ReFungible') {
-      modeprm = {refungible: mode.decimalPoints};
+      modeprm = {refungible: null};
     } else if (mode.type === 'Invalid') {
       modeprm = {invalid: null};
     }
@@ -218,7 +203,7 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
   } else if (mode.type === 'Fungible') {
     modeprm = {fungible: mode.decimalPoints};
   } else if (mode.type === 'ReFungible') {
-    modeprm = {refungible: mode.decimalPoints};
+    modeprm = {refungible: null};
   } else if (mode.type === 'Invalid') {
     modeprm = {invalid: null};
   }
@@ -383,6 +368,7 @@ export async function confirmSponsorshipExpectSuccess(collectionId: number, send
   });
 }
 
+
 export async function confirmSponsorshipExpectFailure(collectionId: number, senderSeed: string = '//Alice') {
   await usingApi(async (api) => {
 
@@ -426,6 +412,54 @@ export async function setContractSponsoringRateLimitExpectSuccess(sender: IKeyri
 export async function setContractSponsoringRateLimitExpectFailure(sender: IKeyringPair, contractAddress: AccountId | string, rateLimit: number) {
   await usingApi(async (api) => {
     const tx = api.tx.nft.setContractSponsoringRateLimit(contractAddress, rateLimit);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.false;
+  });
+}
+
+export async function toggleContractWhitelistExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, enabled: boolean) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.toggleContractWhiteList(contractAddress, true);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+}
+
+export async function isWhitelistedInContract(contractAddress: AccountId | string, user: string) {
+  let whitelisted: boolean = false;
+  await usingApi(async (api) => {
+    whitelisted = (await api.query.nft.contractWhiteList(contractAddress, user)).toJSON() as boolean;
+  });
+  return whitelisted;
+}
+
+export async function addToContractWhiteListExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, user: string) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.addToContractWhiteList(contractAddress, user);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+}
+
+export async function removeFromContractWhiteListExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, user: string) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.removeFromContractWhiteList(contractAddress, user);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+}
+
+export async function removeFromContractWhiteListExpectFailure(sender: IKeyringPair, contractAddress: AccountId | string, user: string) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.removeFromContractWhiteList(contractAddress, user);
     const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
     const result = getGenericResult(events);
 
@@ -483,7 +517,7 @@ export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: n
 
 export async function
 approveExpectSuccess(collectionId: number,
-                     tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number | bigint = 1) {
+                     tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number | bigint = 1) { //alice,bob
   await usingApi(async (api: ApiPromise) => {
     const allowanceBefore =
       await api.query.nft.allowances(collectionId, [tokenId, owner.address, approved.address]) as unknown as BN;
@@ -501,9 +535,9 @@ approveExpectSuccess(collectionId: number,
 export async function
 transferFromExpectSuccess(collectionId: number,
                           tokenId: number,
-                          accountApproved: IKeyringPair,
-                          accountFrom: IKeyringPair,
-                          accountTo: IKeyringPair,
+                          accountApproved: IKeyringPair, //bob
+                          accountFrom: IKeyringPair, //alice
+                          accountTo: IKeyringPair, //charlie
                           value: number | bigint = 1,
                           type: string = 'NFT') {
   await usingApi(async (api: ApiPromise) => {
@@ -657,6 +691,9 @@ export async function createItemExpectSuccess(
     let tx;
     if (createMode === 'Fungible') {
       const createData = {fungible: {value: 10}};
+      tx = api.tx.nft.createItem(collectionId, owner, createData);
+    } else if (createMode === 'ReFungible') {
+      const createData = {refungible: {const_data: [], variable_data: [], pieces: 100}};
       tx = api.tx.nft.createItem(collectionId, owner, createData);
     } else {
       tx = api.tx.nft.createItem(collectionId, owner, createMode);

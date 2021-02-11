@@ -1,3 +1,8 @@
+//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setschemaversion
 import { ApiPromise, Keyring } from '@polkadot/api';
 import { IKeyringPair } from '@polkadot/types/types';

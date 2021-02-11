@@ -1,9 +1,9 @@
 # ===== BUILD ======
 
-FROM phusion/baseimage:0.10.2 as builder
+FROM phusion/baseimage:18.04-1.0.0 as builder
 LABEL maintainer="gz@usetech.com"
 
-ENV WASM_TOOLCHAIN=nightly-2020-10-01
+ENV WASM_TOOLCHAIN=nightly-2021-01-27
 
 ARG PROFILE=release
 
@@ -37,7 +37,7 @@ RUN export PATH="/cargo-home/bin:$PATH" && \
 
 # ===== RUN ======
 
-FROM phusion/baseimage:0.10.2
+FROM phusion/baseimage:18.04-1.0.0
 ARG PROFILE=release
 
 COPY --from=builder /nft_parachain/target/$PROFILE/nft /usr/local/bin
