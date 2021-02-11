@@ -217,7 +217,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
       const Charlie = privateKey('//Charlie');
-      const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
+      const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 1);
       await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
@@ -257,7 +257,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
       const Charlie = privateKey('//Charlie');
-      const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible', decimalPoints: 0}});
+      const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
       await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 1);
