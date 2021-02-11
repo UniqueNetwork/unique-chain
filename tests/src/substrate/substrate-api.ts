@@ -22,20 +22,6 @@ export default async function usingApi(action: (api: ApiPromise) => Promise<void
   settings = settings || defaultApiOptions();
   let api: ApiPromise = new ApiPromise(settings);
 
-  // TODO: Remove, this is temporary: Filter unneeded API output 
-  // (Jaco promised it will be removed in the next version)
-  const consoleLog = console.log;
-  console.log = (message: string) => {
-    if (message.includes("API/INIT: Capabilities detected") || message.includes("2021-")) {}
-    else if (message.includes("StorageChangeSet:: WebSocket is not connected") || message.includes("2021-")) {}
-    else consoleLog(message);
-  };
-  const consoleErr = console.error;
-  console.error = (message: string) => {
-    if (message.includes("StorageChangeSet:: WebSocket is not connected") || message.includes("2021-")) {}
-    else consoleErr(message);
-  };
-
   try {
     await promisifySubstrate(api, async () => {
       if(api) {
@@ -45,8 +31,6 @@ export default async function usingApi(action: (api: ApiPromise) => Promise<void
     })();
   } finally {
     await api.disconnect();
-    console.log = consoleLog;
-    console.error = consoleErr;
   }
 }
 
