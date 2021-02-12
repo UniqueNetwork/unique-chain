@@ -40,7 +40,8 @@
     "testSetMintPermission": "mocha --timeout 9999999 -r ts-node/register ./**/setMintPermission.test.ts",
     "testCreditFeesToTreasury": "mocha --timeout 9999999 -r ts-node/register ./**/creditFeesToTreasury.test.ts",
     "testEnableContractSponsoring": "mocha --timeout 9999999 -r ts-node/register ./**/enableContractSponsoring.test.ts",
-    "testSetContractSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setContractSponsoringRateLimit.test.ts"
+    "testSetContractSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setContractSponsoringRateLimit.test.ts",
+    "testOverflow": "mocha --timeout 9999999 -r ts-node/register ./**/overflow.test.ts"
   },
   "author": "",
   "license": "SEE LICENSE IN ../LICENSE",
