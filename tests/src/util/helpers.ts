@@ -228,11 +228,11 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
   });
 }
 
-export async function findUnusedAddress(api: ApiPromise): Promise<IKeyringPair> {
+export async function findUnusedAddress(api: ApiPromise, seedAddition = ''): Promise<IKeyringPair> {
   let bal = new BigNumber(0);
   let unused;
   do {
-    const randomSeed = 'seed' +  Math.floor(Math.random() * Math.floor(10000));
+    const randomSeed = 'seed' +  Math.floor(Math.random() * Math.floor(10000)) + seedAddition;
     const keyring = new Keyring({ type: 'sr25519' });
     unused = keyring.addFromUri(`//${randomSeed}`);
     bal = new BigNumber((await api.query.system.account(unused.address)).data.free.toString());
