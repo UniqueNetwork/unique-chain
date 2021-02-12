@@ -55,13 +55,13 @@ describe('Integration Test fungible overflows', () => {
         await transferFromExpectSuccess(fungibleCollectionId, 0, bob, alice, charlie, U128_MAX, 'Fungible');
 
         expect(await getFungibleBalance(fungibleCollectionId, charlie.address)).to.equal(U128_MAX);
-        expect(await getAllowance(fungibleCollectionId, 0, alice.address, bob.address)).to.equal(0n);
+        expect((await getAllowance(fungibleCollectionId, 0, alice.address, bob.address)).toString()).to.equal('0');
 
         await createFungibleItemExpectSuccess(alice, fungibleCollectionId, { Value: U128_MAX });
         await approveExpectSuccess(fungibleCollectionId, 0, alice, bob, 1n);
         await transferFromExpectFail(fungibleCollectionId, 0, bob, alice, charlie, 1);
 
         expect(await getFungibleBalance(fungibleCollectionId, charlie.address)).to.equal(U128_MAX);
-        expect(await getAllowance(fungibleCollectionId, 0, alice.address, bob.address)).to.equal(0n);
+        expect((await getAllowance(fungibleCollectionId, 0, alice.address, bob.address)).toString()).to.equal('1');
     });
 });
