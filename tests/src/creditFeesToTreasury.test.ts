@@ -118,6 +118,8 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('Fees are sane', async () => {
     await usingApi(async (api) => {
+      await waitNewBlocks(api, 1);
+
       const aliceBalanceBefore = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
 
       await createCollectionExpectSuccess();
@@ -132,6 +134,8 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('NFT Transfer fee is close to 0.1 Unique', async () => {
     await usingApi(async (api) => {
+      await waitNewBlocks(api, 1);
+
       const collectionId = await createCollectionExpectSuccess();
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
 
