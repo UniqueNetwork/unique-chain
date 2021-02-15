@@ -20,6 +20,7 @@
   "scripts": {
     "test": "mocha --timeout 9999999 -r ts-node/register ./**/*.test.ts",
     "load": "mocha --timeout 9999999 -r ts-node/register ./**/*.load.ts",
+    "loadTransfer": "ts-node src/transfer.nload.ts",
     "testAddCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/addCollectionAdmin.test.ts",
     "testSetSchemaVersion": "mocha --timeout 9999999 -r ts-node/register ./**/setSchemaVersion.test.ts",
     "testSetVariableMetaData": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetaData.test.ts",
@@ -39,15 +40,17 @@
     "testSetMintPermission": "mocha --timeout 9999999 -r ts-node/register ./**/setMintPermission.test.ts",
     "testCreditFeesToTreasury": "mocha --timeout 9999999 -r ts-node/register ./**/creditFeesToTreasury.test.ts",
     "testEnableContractSponsoring": "mocha --timeout 9999999 -r ts-node/register ./**/enableContractSponsoring.test.ts",
-    "testSetContractSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setContractSponsoringRateLimit.test.ts"
+    "testSetContractSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setContractSponsoringRateLimit.test.ts",
+    "testSetOffchainSchema": "mocha --timeout 9999999 -r ts-node/register ./**/setOffchainSchema.test.ts",
+    "testOverflow": "mocha --timeout 9999999 -r ts-node/register ./**/overflow.test.ts"
   },
   "author": "",
   "license": "SEE LICENSE IN ../LICENSE",
   "homepage": "",
   "dependencies": {
-    "@polkadot/api": "^3.6.4",
-    "@polkadot/api-contract": "^3.6.4",
-    "@polkadot/util": "^3.6.4",
+    "@polkadot/api": "3.8.1",
+    "@polkadot/api-contract": "3.8.1",
+    "@polkadot/util": "5.6.2",
     "bignumber.js": "^9.0.0",
     "chai-as-promised": "^7.1.1"
   },

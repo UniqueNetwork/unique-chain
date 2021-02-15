@@ -21,6 +21,8 @@ import { hexToStr, strToUTF16, utf16ToStr } from './util';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
+export const U128_MAX = (1n << 128n) - 1n;
+
 type GenericResult = {
   success: boolean,
 };
@@ -226,16 +228,27 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
   });
 }
 
-export async function findUnusedAddress(api: ApiPromise): Promise<IKeyringPair> {
+export async function findUnusedAddress(api: ApiPromise, seedAddition = ''): Promise<IKeyringPair> {
   let bal = new BigNumber(0);
   let unused;
   do {
-    const randomSeed = 'seed' +  Math.floor(Math.random() * Math.floor(10000));
+    const randomSeed = 'seed' +  Math.floor(Math.random() * Math.floor(10000)) + seedAddition;
     const keyring = new Keyring({ type: 'sr25519' });
     unused = keyring.addFromUri(`//${randomSeed}`);
     bal = new BigNumber((await api.query.system.account(unused.address)).data.free.toString());
   } while (bal.toFixed() != '0');
   return unused;
+}
+
+export async function getAllowance(collectionId: number, tokenId: number, owner: string, approved: string) {
+  return await usingApi(async (api) => {
+    const bn = await api.query.nft.allowances(collectionId, [tokenId, owner, approved]) as unknown as BN;
+    return BigInt(bn.toString());
+  });
+}
+
+export function findUnusedAddresses(api: ApiPromise, amount: number): Promise<IKeyringPair[]> {
+  return Promise.all(new Array(amount).fill(null).map(() => findUnusedAddress(api, '_' + Date.now())));
 }
 
 export async function findNotExistingCollection(api: ApiPromise): Promise<number> {
@@ -475,18 +488,37 @@ export async function setVariableMetaDataExpectFailure(sender: IKeyringPair, col
   });
 }
 
-export interface CreateFungibleData extends Struct {
-  readonly value: u128;
+export async function setOffchainSchemaExpectSuccess(sender: IKeyringPair, collectionId: number, data: number[]) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.setOffchainSchema(collectionId, '0x' + Buffer.from(data).toString('hex'));
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
 }
 
-export interface CreateReFungibleData extends Struct {}
-export interface CreateNftData extends Struct {}
+export async function setOffchainSchemaExpectFailure(sender: IKeyringPair, collectionId: number, data: number[]) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.setOffchainSchema(collectionId, '0x' + Buffer.from(data).toString('hex'));
+    await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+  });
+}
 
-export interface CreateItemData extends Enum {
+export interface CreateFungibleData {
+  readonly Value: bigint;
+}
+
+export interface CreateReFungibleData { }
+export interface CreateNftData { }
+
+export type CreateItemData = {
   NFT: CreateNftData;
+} | {
   Fungible: CreateFungibleData;
+} | {
   ReFungible: CreateReFungibleData;
-}
+};
 
 export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: number, tokenId: number, value = 0) {
   await usingApi(async (api) => {
@@ -506,7 +538,7 @@ export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: n
 
 export async function
 approveExpectSuccess(collectionId: number,
-                     tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number = 1) { //alice,bob
+                     tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number | bigint = 1) {
   await usingApi(async (api: ApiPromise) => {
     const allowanceBefore =
       await api.query.nft.allowances(collectionId, [tokenId, owner.address, approved.address]) as unknown as BN;
@@ -517,17 +549,17 @@ approveExpectSuccess(collectionId: number,
     expect(result.success).to.be.true;
     const allowanceAfter =
       await api.query.nft.allowances(collectionId, [tokenId, owner.address, approved.address]) as unknown as BN;
-    expect(allowanceAfter.toNumber() - allowanceBefore.toNumber()).to.be.equal(amount);
+    expect(allowanceAfter.sub(allowanceBefore).toString()).to.be.equal(amount.toString());
   });
 }
 
 export async function
 transferFromExpectSuccess(collectionId: number,
                           tokenId: number,
-                          accountApproved: IKeyringPair, //bob
-                          accountFrom: IKeyringPair, //alice
-                          accountTo: IKeyringPair, //charlie
-                          value: number = 1,
+                          accountApproved: IKeyringPair,
+                          accountFrom: IKeyringPair,
+                          accountTo: IKeyringPair,
+                          value: number | bigint = 1,
                           type: string = 'NFT') {
   await usingApi(async (api: ApiPromise) => {
     let balanceBefore = new BN(0);
@@ -546,7 +578,7 @@ transferFromExpectSuccess(collectionId: number,
     }
     if (type === 'Fungible') {
       const balanceAfter = await api.query.nft.balance(collectionId, accountTo.address) as unknown as BN;
-      expect(balanceAfter.sub(balanceBefore).toNumber()).to.be.equal(value);
+      expect(balanceAfter.sub(balanceBefore).toString()).to.be.equal(value.toString());
     }
     if (type === 'ReFungible') {
       const nftItemData =
@@ -563,7 +595,7 @@ transferFromExpectFail(collectionId: number,
                        accountApproved: IKeyringPair,
                        accountFrom: IKeyringPair,
                        accountTo: IKeyringPair,
-                       value: number = 1) {
+                       value: number | bigint = 1) {
   await usingApi(async (api: ApiPromise) => {
     const transferFromTx = await api.tx.nft.transferFrom(
       accountFrom.address, accountTo.address, collectionId, tokenId, value);
@@ -579,7 +611,7 @@ transferExpectSuccess(collectionId: number,
                       tokenId: number,
                       sender: IKeyringPair,
                       recipient: IKeyringPair,
-                      value: number = 1,
+                      value: number | bigint = 1,
                       type: string = 'NFT') {
   await usingApi(async (api: ApiPromise) => {
     let balanceBefore = new BN(0);
@@ -597,7 +629,7 @@ transferExpectSuccess(collectionId: number,
     }
     if (type === 'Fungible') {
       const balanceAfter = await api.query.nft.balance(collectionId, recipient.address) as unknown as BN;
-      expect(balanceAfter.sub(balanceBefore).toNumber()).to.be.equal(value);
+      expect(balanceAfter.sub(balanceBefore).toString()).to.be.equal(value.toString());
     }
     if (type === 'ReFungible') {
       const nftItemData =
@@ -613,7 +645,7 @@ transferExpectFail(collectionId: number,
                    tokenId: number,
                    sender: IKeyringPair,
                    recipient: IKeyringPair,
-                   value: number = 1,
+                   value: number | bigint = 1,
                    type: string = 'NFT') {
   await usingApi(async (api: ApiPromise) => {
     const transferTx = await api.tx.nft.transfer(recipient.address, collectionId, tokenId, value);
@@ -628,13 +660,40 @@ transferExpectFail(collectionId: number,
 
 export async function
 approveExpectFail(collectionId: number,
-                  tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number = 1) {
+                  tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number | bigint = 1) {
   await usingApi(async (api: ApiPromise) => {
     const approveNftTx = await api.tx.nft.approve(approved.address, collectionId, tokenId, amount);
     const events = await expect(submitTransactionExpectFailAsync(owner, approveNftTx)).to.be.rejected;
     const result = getCreateCollectionResult(events);
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.false;
+  });
+}
+
+export async function getFungibleBalance(
+  collectionId: number,
+  owner: string,
+) {
+  return await usingApi(async (api) => {
+    const response = (await api.query.nft.fungibleItemList(collectionId, owner)).toJSON() as unknown as {Value: string};
+    return BigInt(response.Value);
+  });
+}
+
+export async function createFungibleItemExpectSuccess(
+  sender: IKeyringPair,
+  collectionId: number,
+  data: CreateFungibleData,
+  owner: string = sender.address,
+) {
+  return await usingApi(async (api) => {
+    const tx = api.tx.nft.createItem(collectionId, owner, { Fungible: data });
+
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getCreateItemResult(events);
+
+    expect(result.success).to.be.true;
+    return result.itemId;
   });
 }
 
@@ -820,3 +879,9 @@ export const getCreatedCollectionCount = async (api: ApiPromise): Promise<number
   // set global object - collectionsCount
   return (await api.query.nft.createdCollectionCount() as unknown as BN).toNumber();
 };
+
+export async function queryCollectionExpectSuccess(collectionId: number): Promise<ICollectionInterface> {
+  return await usingApi(async (api) => {
+    return (await api.query.nft.collection(collectionId)) as unknown as ICollectionInterface;
+  });
+}

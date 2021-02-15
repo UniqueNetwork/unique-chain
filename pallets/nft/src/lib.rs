@@ -1277,7 +1277,7 @@ decl_module! {
             Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
 
             // check schema limit
-            ensure!(schema.len() as u32 > ChainLimit::get().offchain_schema_limit, "");
+            ensure!(schema.len() as u32 <= ChainLimit::get().offchain_schema_limit, "");
 
             let mut target_collection = <Collection<T>>::get(collection_id);
             target_collection.offchain_schema = schema;
