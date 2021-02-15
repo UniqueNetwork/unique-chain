@@ -488,6 +488,23 @@ export async function setVariableMetaDataExpectFailure(sender: IKeyringPair, col
   });
 }
 
+export async function setOffchainSchemaExpectSuccess(sender: IKeyringPair, collectionId: number, data: number[]) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.setOffchainSchema(collectionId, '0x' + Buffer.from(data).toString('hex'));
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+}
+
+export async function setOffchainSchemaExpectFailure(sender: IKeyringPair, collectionId: number, data: number[]) {
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.setOffchainSchema(collectionId, '0x' + Buffer.from(data).toString('hex'));
+    await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+  });
+}
+
 export interface CreateFungibleData {
   readonly Value: bigint;
 }
@@ -862,3 +879,9 @@ export const getCreatedCollectionCount = async (api: ApiPromise): Promise<number
   // set global object - collectionsCount
   return (await api.query.nft.createdCollectionCount() as unknown as BN).toNumber();
 };
+
+export async function queryCollectionExpectSuccess(collectionId: number): Promise<ICollectionInterface> {
+  return await usingApi(async (api) => {
+    return (await api.query.nft.collection(collectionId)) as unknown as ICollectionInterface;
+  });
+}
