@@ -1,9 +1,10 @@
 # ===== BUILD ======
 
 FROM phusion/baseimage:18.04-1.0.0 as builder
-LABEL maintainer="gz@usetech.com"
+LABEL maintainer="UniqueNetwork.io"
 
 ENV WASM_TOOLCHAIN=nightly-2021-01-27
+ENV NATIVE_TOOLCHAIN=1.49.0
 
 ARG PROFILE=release
 
@@ -24,14 +25,16 @@ RUN export PATH="/cargo-home/bin:$PATH" && \
 RUN export PATH="/cargo-home/bin:$PATH" && \
     export CARGO_HOME="/cargo-home" && \
 	rustup toolchain uninstall $(rustup toolchain list) && \
+	rustup toolchain install $NATIVE_TOOLCHAIN && \
 	rustup toolchain install $WASM_TOOLCHAIN && \
 	rustup target add wasm32-unknown-unknown --toolchain $WASM_TOOLCHAIN && \
+	rustup default $NATIVE_TOOLCHAIN && \
     rustup target list --installed && \
     rustup show
 
 RUN export PATH="/cargo-home/bin:$PATH" && \
     export CARGO_HOME="/cargo-home" && \
-	cargo +$WASM_TOOLCHAIN build "--$PROFILE"
+	cargo build "--$PROFILE"
 	# && \
 	# cargo test
 
