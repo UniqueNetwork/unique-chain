@@ -654,9 +654,14 @@ transferExpectSuccess(collectionId: number,
     }
     const transferTx = await api.tx.nft.transfer(recipient.address, collectionId, tokenId, value);
     const events = await submitTransactionAsync(sender, transferTx);
-    const result = getCreateItemResult(events);
+    const result = getTransferResult(events);
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
+    expect(result.collectionId).to.be.equal(collectionId);
+    expect(result.itemId).to.be.equal(tokenId);
+    expect(result.sender).to.be.equal(sender.address);
+    expect(result.recipient).to.be.equal(recipient.address);
+    expect(result.value.toString()).to.be.equal(value.toString());
     if (type === 'NFT') {
       const nftItemData = await api.query.nft.nftItemList(collectionId, tokenId) as unknown as ITokenDataType;
       expect(nftItemData.Owner.toString()).to.be.equal(recipient.address);
