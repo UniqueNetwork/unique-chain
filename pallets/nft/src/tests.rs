@@ -225,6 +225,7 @@ fn create_fungible_item() {
     });
 }
 
+// REVIEW: Why is this commented out?
 //#[test]
 // fn create_multiple_fungible_items() {
 //     new_test_ext().execute_with(|| {

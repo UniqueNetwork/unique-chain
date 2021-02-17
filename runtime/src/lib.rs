@@ -499,6 +499,7 @@ impl pallet_vesting::Config for Runtime {
 	type Currency = Balances;
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
+    // REVIEW: determine weights for all pallets
 	type WeightInfo = ();
 }
 

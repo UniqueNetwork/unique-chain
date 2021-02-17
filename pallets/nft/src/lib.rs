@@ -168,6 +168,7 @@ pub struct ReFungibleItemType<AccountId> {
     pub variable_data: Vec<u8>,
 }
 
+// REVIEW: dead code (should probably be removed)
 // #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
 // #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 // pub struct VestingItem<AccountId, Moment> {
@@ -406,6 +407,7 @@ mod benchmarking;
 
 decl_storage! {
     trait Store for Module<T: Config> as Nft {
+        // REVIEW: Would be cool to have docs per storage item/map.
 
         // Private members
         NextCollectionID: CollectionId;
@@ -1691,6 +1693,7 @@ impl<T: Config> Module<T> {
 
         // Mint 
         let item = FungibleItemType {
+            // REVIEW: unsafe math, use `checked_add` or `saturating_add`
             value: balance + value
         };
         <FungibleItemList<T>>::insert(collection_id, (*owner).clone(), item);
@@ -2374,6 +2377,9 @@ where
 
                 let limit = <Collection<T>>::get(collection_id).limits.sponsor_transfer_timeout;
                 let mut sponsored = true;
+                // REVIEW: Consider replacing this `contains_key` + `get` pattern with storing
+                // `Option<T>` instead of bare `T` in storage, then doing a simple `get` and
+                // checking for `None`.
                 if <CreateItemBasket<T>>::contains_key((collection_id, &who)) {
                     let last_tx_block = <CreateItemBasket<T>>::get((collection_id, &who));
                     let limit_time = last_tx_block + limit.into();
