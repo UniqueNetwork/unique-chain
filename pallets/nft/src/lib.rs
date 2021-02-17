@@ -415,9 +415,11 @@ decl_storage! {
 
         // Bound counters
         CollectionCount: u32;
+        // Review: Prefer blake2_128_concat hasher to twox_64_concat (https://substrate.dev/recipes/storage-maps.html#choosing-a-hasher)
         pub AccountItemCount get(fn account_item_count): map hasher(twox_64_concat) T::AccountId => u32;
 
         // Basic collections
+        // Review: Prefer blake2_128_concat hasher to identity for all storage maps (https://substrate.dev/recipes/storage-maps.html#choosing-a-hasher)
         pub Collection get(fn collection) config(): map hasher(identity) CollectionId => CollectionType<T::AccountId>;
         pub AdminList get(fn admin_list_collection): map hasher(identity) CollectionId => Vec<T::AccountId>;
         pub WhiteList get(fn white_list): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => bool;
@@ -528,6 +530,8 @@ decl_module! {
             0
         }
 
+        /// Review: 'Anyone can create a collection' -> a malicious user could create a lot of collections up to 'collection_numbers_limit'.
+        /// 
         /// This method creates a Collection of NFTs. Each Token may have multiple properties encoded as an array of bytes of certain length. The initial owner and admin of the collection are set to the address that signed the transaction. Both addresses can be changed later.
         /// 
         /// # Permissions
@@ -609,6 +613,7 @@ decl_module! {
             Ok(())
         }
 
+        /// Review: this seems very radical .. maybe add a delay / grace period + governance ?
         /// **DANGEROUS**: Destroys collection and all NFTs within this collection. Users irrecoverably lose their assets and may lose real money.
         /// 
         /// # Permissions
@@ -653,6 +658,8 @@ decl_module! {
             Ok(())
         }
 
+        /// Review: Investigate extracting the admin/whitelisting (re-name to allow-list ?) features to a separate pallet w/ signed extension.
+        //         See: https://github.com/gautamdhameja/substrate-rbac
         /// Add an address to white list.
         /// 
         /// # Permissions
@@ -858,6 +865,8 @@ decl_module! {
             Ok(())
         }
 
+        /// Review: Investigate extracting the sponsorship features to a separate pallet.
+        ///
         /// # Permissions
         /// 
         /// * Sponsor.
@@ -1362,6 +1371,7 @@ decl_module! {
             Ok(())
         }
 
+        /// Review: Investigate extracting the contract-related features to a separate pallet.
         /// Enable smart contract self-sponsoring.
         /// 
         /// # Permissions
@@ -2264,6 +2274,8 @@ pub type Multiplier = FixedU128;
 
 type BalanceOf<T> = <<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::Balance;
 
+/// Review: Investigate extracting this into a separate pallet w/ sponsorship-related features.
+
 /// Require the transactor pay for themselves and maybe include a tip to gain additional priority
 /// in the queue.
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
@@ -2312,6 +2324,11 @@ where
             .saturated_into::<TransactionPriority>()
     }
 
+    /// Review: - Code is very complex -> impact on maintenance, test, security.
+    ///         - Concern about the "predictability" of the fee payment system:
+    ///           when sending a tx, we can't be sure in advance of who's gonna pay.
+    ///         - Storage access: - multiple reads, this might impact transaction processing performace.
+    //                            - writes to storage before transaction has been processed.
     fn withdraw_fee(
         &self,
         who: &T::AccountId,
