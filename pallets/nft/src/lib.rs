@@ -495,7 +495,9 @@ decl_event!(
         /// * collection_id: Id of the collection where item was created.
         /// 
         /// * item_id: Id of an item. Unique within the collection.
-        ItemCreated(CollectionId, TokenId),
+        ///
+        /// * recipient: Owner of newly created item 
+        ItemCreated(CollectionId, TokenId, AccountId),
 
         /// Collection item was burned.
         /// 
@@ -1635,7 +1637,7 @@ impl<T: Config> Module<T> {
         {
             CreateItemData::NFT(data) => {
                 let item = NftItemType {
-                    owner,
+                    owner: owner.clone(),
                     const_data: data.const_data,
                     variable_data: data.variable_data
                 };
@@ -1660,7 +1662,7 @@ impl<T: Config> Module<T> {
         };
 
         // call event
-        Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id)));
+        Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id), owner));
 
         Ok(())
     }

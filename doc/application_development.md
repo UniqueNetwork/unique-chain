@@ -79,6 +79,7 @@ Owner: Address, initial owner of the NFT
 ##### Events
 ItemCreated
 ItemId: Identifier of newly created NFT, which is unique within the Collection, so the NFT is uniquely identified with a pair of values: CollectionId and ItemId.
+Recipient: Address, owner of newly created item
 
 #### BurnItem
 
