@@ -740,6 +740,7 @@ export async function createItemExpectSuccess(
     }
     expect(collectionId).to.be.equal(result.collectionId);
     expect(BItemCount).to.be.equal(result.itemId);
+    expect(owner).to.be.equal(result.recipient);
     newItemId = result.itemId;
   });
   return newItemId;
