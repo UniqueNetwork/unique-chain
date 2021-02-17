@@ -77,6 +77,8 @@
         }: set_public_access_mode(RawOrigin::Signed(caller.clone()), 2, AccessMode::WhiteList)
 
         set_mint_permission {
+            // REVIEW: It's probably negligible, but encoding time influences weight so I would
+            // benchmark with the maximum allowed data sizes.
             let col_name1: Vec<u16> = "Test1".encode_utf16().collect::<Vec<u16>>();
             let col_desc1: Vec<u16> = "TestDescription1".encode_utf16().collect::<Vec<u16>>();
             let token_prefix1: Vec<u8> = b"token_prefix1".to_vec();
@@ -158,6 +160,9 @@
             
         }: create_item(RawOrigin::Signed(caller.clone()), 2, caller.clone(), data)
 
+        // REVIEW: The worst case should be what you use to calculate the weight. At least before
+        // extrinsic execution. So if this is the worst case this should probably be your weight.
+        // (You can refund at the end of the extrinsic if you can calculate more precisely there.)
         #[extra]
         create_item_nft_large {
             let col_name1: Vec<u16> = "Test1".encode_utf16().collect::<Vec<u16>>();

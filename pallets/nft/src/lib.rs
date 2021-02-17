@@ -939,7 +939,7 @@ decl_module! {
         // .saturating_add((2135 as Weight).saturating_mul((properties.len() as u64) as Weight))
         // .saturating_add(RocksDbWeight::get().reads(10 as Weight))
         // .saturating_add(RocksDbWeight::get().writes(8 as Weight))]
-
+        // REVIEW: This should be the maximum of the different scenarios, not a random one of them.
         #[weight = <T as Config>::WeightInfo::create_item(data.len())]
         pub fn create_item(origin, collection_id: CollectionId, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
 
@@ -956,7 +956,8 @@ decl_module! {
             Ok(())
         }
 
-        /// This method creates multiple instances of NFT Collection created with CreateCollection method.
+        // REVIEW: confusing docs (IMO), maybe change to this (if it is accurate)?
+        /// This method creates multiple NFT items in a collection created with CreateCollection method.
         /// 
         /// # Permissions
         /// 
@@ -1063,6 +1064,8 @@ decl_module! {
         ///     * Non-Fungible Mode: Ignored
         ///     * Fungible Mode: Must specify transferred amount
         ///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
+        // REVIEW: My impression is that non-fungible, fungible and re-fungible tokens are (treated)
+        // different(ly) and thus might "deserve" their own extrinsic.
         #[weight = <T as Config>::WeightInfo::transfer()]
         pub fn transfer(origin, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
             let sender = ensure_signed(origin)?;
@@ -1635,6 +1638,7 @@ impl<T: Config> Module<T> {
                     fail!(Error::<T>::NotReFungibleDataUsedToMintReFungibleCollectionToken);
                 }
             },
+            // REVIEW: Is this for extensibility's sake? Otherwise I'm unsure I see the purpose.
             _ => { fail!(Error::<T>::UnexpectedCollectionType); }
         };
 
@@ -1671,6 +1675,7 @@ impl<T: Config> Module<T> {
         };
 
         // call event
+        // REVIEW: nitpick: I would return the index from the `add_*` functions.
         Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id)));
 
         Ok(())
@@ -1705,6 +1710,8 @@ impl<T: Config> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         let itemcopy = item.clone();
 
+        // REVIEW: You should use `expect` instead of `unwrap` with a "proof" explaining why this
+        // is safe so you can make sure to adher to the invariant that you're relying on.
         let value = item.owner.first().unwrap().fraction;
         let owner = item.owner.first().unwrap().owner.clone();
 
@@ -2053,13 +2060,14 @@ impl<T: Config> Module<T> {
         // update balance
         let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.clone())
             .checked_sub(1)
+            // REVIEW: nitpick: technically it's an underflow.
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), balance_old_owner);
 
-        let balancenew_owner = <Balance<T>>::get(collection_id, new_owner.clone())
+        let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
             .checked_add(1)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(collection_id, new_owner.clone(), balancenew_owner);
+        <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
 
         // change owner
         let old_owner = item.owner.clone();
@@ -2067,6 +2075,8 @@ impl<T: Config> Module<T> {
         <NftItemList<T>>::insert(collection_id, item_id, item);
 
         // update index collection
+        // REVIEW: This can fail after writes have already happened above. Keep to 
+        // "check first, write last" or introduce `with_transaction`.
         Self::move_token_index(collection_id, item_id, &old_owner, &new_owner)?;
 
         Ok(())
@@ -2147,6 +2157,7 @@ impl<T: Config> Module<T> {
     fn init_fungible_token(collection_id: CollectionId, owner: &T::AccountId, item: &FungibleItemType) {
         let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
+            // REVIEW: Use `expect` with "proof" instead. (Applies to the other locations as well.)
             .unwrap();
 
         Self::add_token_index(collection_id, current_index, owner).unwrap();
