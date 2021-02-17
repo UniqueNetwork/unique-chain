@@ -505,6 +505,19 @@ decl_event!(
         /// 
         /// item_id: Identifier of burned NFT.
         ItemDestroyed(CollectionId, TokenId),
+
+        /// Item was transferred
+        ///
+        /// * collection_id: Id of collection to which item is belong
+        ///
+        /// * item_id: Id of an item
+        ///
+        /// * sender: Original owner of item
+        ///
+        /// * recipient: New owner of item
+        ///
+        /// * amount: Always 1 for NFT
+        Transfer(CollectionId, TokenId, AccountId, AccountId, u128),
     }
 );
 
@@ -1556,11 +1569,13 @@ impl<T: Config> Module<T> {
 
         match target_collection.mode
         {
-            CollectionMode::NFT => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient)?,
+            CollectionMode::NFT => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient.clone())?,
             CollectionMode::Fungible(_)  => Self::transfer_fungible(collection_id, value, &sender, &recipient)?,
-            CollectionMode::ReFungible  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient)?,
+            CollectionMode::ReFungible  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient.clone())?,
             _ => ()
         };
+
+        Self::deposit_event(RawEvent::Transfer(collection_id, item_id, sender, recipient, value));
 
         Ok(())
     }
