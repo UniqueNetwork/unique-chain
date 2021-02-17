@@ -36,6 +36,7 @@ interface CreateItemResult {
   success: boolean;
   collectionId: number;
   itemId: number;
+  recipient: string;
 }
 
 interface IReFungibleOwner {
@@ -94,6 +95,7 @@ export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
   let success = false;
   let collectionId: number = 0;
   let itemId: number = 0;
+  let recipient: string = '';
   events.forEach(({ phase, event: { data, method, section } }) => {
     // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
     if (method == 'ExtrinsicSuccess') {
@@ -101,12 +103,14 @@ export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
     } else if ((section == 'nft') && (method == 'ItemCreated')) {
       collectionId = parseInt(data[0].toString());
       itemId = parseInt(data[1].toString());
+      recipient = data[2].toString();
     }
   });
   const result: CreateItemResult = {
     success,
     collectionId,
     itemId,
+    recipient,
   };
   return result;
 }
