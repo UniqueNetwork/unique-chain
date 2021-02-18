@@ -12,9 +12,9 @@ build = 'build.rs'
 description = 'Substrate node nft'
 edition = '2018'
 homepage = 'https://usetech.com/blockchain'
-license = 'Unlicense'
+license = 'All Rights Reserved'
 name = 'nft'
-repository = 'https://github.com/substrate-developer-hub/nft/'
+repository = 'https://github.com/usetech-llc/nft_private/'
 version = '3.0.0'
 
 [package.metadata.docs.rs]
@@ -29,7 +29,7 @@ structopt = '0.3.8'
 jsonrpc-core = '15.0.0'
 
 # Substrate dependencies
-nft-runtime = { path = '../runtime', version = '3.0.0' }
+nft-runtime = { path = '../runtime', version = '2.1.0' }
 frame-benchmarking = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
 frame-benchmarking-cli = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
 pallet-transaction-payment-rpc = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
