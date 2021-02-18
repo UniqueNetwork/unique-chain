@@ -1,7 +1,7 @@
 [build-dependencies.substrate-build-script-utils]
 git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '2.0.0-rc4'
+branch = 'unique'
+version = '2.0.1'
 
 [[bin]]
 name = 'nft'
@@ -12,10 +12,10 @@ build = 'build.rs'
 description = 'Substrate node nft'
 edition = '2018'
 homepage = 'https://usetech.com/blockchain'
-license = 'Unlicense'
+license = 'All Rights Reserved'
 name = 'nft'
-repository = 'https://github.com/substrate-developer-hub/nft/'
-version = '2.0.0-rc4'
+repository = 'https://github.com/usetech-llc/nft_private/'
+version = '3.0.0'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -23,104 +23,46 @@ targets = ['x86_64-unknown-linux-gnu']
 [dependencies]
 futures = '0.3.4'
 log = '0.4.8'
+flexi_logger = "0.15.7"
 parking_lot = '0.10.0'
 structopt = '0.3.8'
-jsonrpc-core = '14.0.5'
+jsonrpc-core = '15.0.0'
 
-[dependencies.nft-runtime]
-path = '../runtime'
-version = '2.0.0-rc4'
+# Substrate dependencies
+nft-runtime = { path = '../runtime', version = '2.1.0' }
+frame-benchmarking = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+frame-benchmarking-cli = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+pallet-transaction-payment-rpc = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sc-basic-authorship = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sc-cli = { features = ['wasmtime'], version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sc-client-api = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sc-consensus = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sc-consensus-aura = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sc-executor = { features = ['wasmtime'], version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sc-finality-grandpa = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sc-rpc = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sc-rpc-api = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sc-service = { features = ['wasmtime'], version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique' }
+sc-transaction-pool = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sp-api = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sp-block-builder = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sp-blockchain = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sp-consensus = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sp-consensus-aura = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sp-core = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sp-finality-grandpa = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sp-inherents = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sp-runtime = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sp-transaction-pool = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+sc-network = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'} 
+substrate-frame-rpc-system = {version = '2.0.1', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'}
+pallet-contracts-rpc = {version = '0.8.0', git = 'https://github.com/usetech-llc/substrate.git', branch = 'unique'} 
+sc-keystore = { version = "2.0.0", git = "https://github.com/usetech-llc/substrate.git", branch = 'unique'}
+sc-telemetry = { version = "2.0.0", git = "https://github.com/usetech-llc/substrate.git", branch = 'unique'}
 
-[dependencies.sc-basic-authorship]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '0.8.0-rc4'
+serde = { version = "1.0.102", features = ["derive"] }
+serde_json = "1.0.41"
 
-[dependencies.sc-cli]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '0.8.0-rc4'
-
-[dependencies.sc-client-api]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '2.0.0-rc4'
-
-[dependencies.sc-consensus]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '0.8.0-rc4'
-
-[dependencies.pallet-contracts-rpc]
-git = 'https://github.com/usetech-llc/substrate.git'
-version = '0.8.0-rc4'
-branch = 'rc4_ext_dispatch_reenabled'
-
-[dependencies.sc-rpc]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-
-[dependencies.sc-consensus-aura]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '0.8.0-rc4'
-
-[dependencies.sc-executor]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '0.8.0-rc4'
-
-[dependencies.sc-finality-grandpa]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '0.8.0-rc4'
-
-[dependencies.sc-network]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '0.8.0-rc4'
-
-[dependencies.sc-service]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '0.8.0-rc4'
-
-[dependencies.sc-transaction-pool]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '2.0.0-rc4'
-
-[dependencies.sp-consensus]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '0.8.0-rc4'
-
-[dependencies.sp-consensus-aura]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '0.8.0-rc4'
-
-[dependencies.sp-core]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '2.0.0-rc4'
-
-[dependencies.sp-finality-grandpa]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '2.0.0-rc4'
-
-[dependencies.sp-inherents]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '2.0.0-rc4'
-
-[dependencies.sp-runtime]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '2.0.0-rc4'
-
-[dependencies.sp-transaction-pool]
-git = 'https://github.com/usetech-llc/substrate.git'
-branch = 'rc4_ext_dispatch_reenabled'
-version = '2.0.0-rc4'
+[features]
+default = []
+runtime-benchmarks = ['nft-runtime/runtime-benchmarks']
