@@ -39,6 +39,15 @@ interface CreateItemResult {
   recipient: string;
 }
 
+interface TransferResult {
+  success: boolean;
+  collectionId: number;
+  itemId: number;
+  sender: string;
+  recipient: string;
+  value: bigint;
+}
+
 interface IReFungibleOwner {
   Fraction: BN;
   Owner: number[];
@@ -112,6 +121,31 @@ export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
     itemId,
     recipient,
   };
+  return result;
+}
+
+export function getTransferResult(events: EventRecord[]): TransferResult {
+  const result: TransferResult = {
+    success: false,
+    collectionId: 0,
+    itemId: 0,
+    sender: '',
+    recipient: '',
+    value: 0n,
+  };
+
+  events.forEach(({event: {data, method, section}}) => {
+    if (method === 'ExtrinsicSuccess') {
+      result.success = true;
+    } else if (section === 'nft' && method === 'Transfer') {
+      result.collectionId = +data[0].toString();
+      result.itemId = +data[1].toString();
+      result.sender = data[2].toString();
+      result.recipient = data[3].toString();
+      result.value = BigInt(data[4].toString());
+    }
+  });
+
   return result;
 }
 
@@ -624,9 +658,14 @@ transferExpectSuccess(collectionId: number,
     }
     const transferTx = await api.tx.nft.transfer(recipient.address, collectionId, tokenId, value);
     const events = await submitTransactionAsync(sender, transferTx);
-    const result = getCreateItemResult(events);
+    const result = getTransferResult(events);
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
+    expect(result.collectionId).to.be.equal(collectionId);
+    expect(result.itemId).to.be.equal(tokenId);
+    expect(result.sender).to.be.equal(sender.address);
+    expect(result.recipient).to.be.equal(recipient.address);
+    expect(result.value.toString()).to.be.equal(value.toString());
     if (type === 'NFT') {
       const nftItemData = await api.query.nft.nftItemList(collectionId, tokenId) as unknown as ITokenDataType;
       expect(nftItemData.Owner.toString()).to.be.equal(recipient.address);
