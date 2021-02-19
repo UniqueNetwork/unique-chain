@@ -14,6 +14,8 @@ import {
   createCollectionExpectSuccess, getCreatedCollectionCount,
   getCreateItemResult,
   getDetailedCollectionInfo,
+  setCollectionLimitsExpectFailure,
+  setCollectionLimitsExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -130,5 +132,17 @@ describe('setCollectionLimits negative', () => {
       );
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
+  });
+
+  it('fails when trying to enable OwnerCanTransfer after it was disabled', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await setCollectionLimitsExpectSuccess(alice, collectionId, { OwnerCanTransfer: false });
+    await setCollectionLimitsExpectFailure(alice, collectionId, { OwnerCanTransfer: true });
+  });
+
+  it('fails when trying to enable OwnerCanDestroy after it was disabled', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await setCollectionLimitsExpectSuccess(alice, collectionId, { OwnerCanDestroy: false });
+    await setCollectionLimitsExpectFailure(alice, collectionId, { OwnerCanDestroy: true });
   });
 });
