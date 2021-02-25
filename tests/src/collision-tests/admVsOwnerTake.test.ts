@@ -44,8 +44,6 @@ describe('Admin vs Owner take token: ', () => {
       ]);
       const itemBurn: any = await api.query.nft.nftItemList(collectionId, itemId);
       expect(itemBurn.Owner.toString()).to.be.eq('5C4hrfjw9DjXZTzV3MwzrrAr9P1MJhSrvWGWqi1eSuyUpnhM');
-      const blockHash = await api.query.system.number();
-      console.log(`blockHash: ${blockHash}`);
     });
   });
 });

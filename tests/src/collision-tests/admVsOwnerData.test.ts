@@ -47,8 +47,6 @@ describe('Admin vs Owner changes the data in the token: ', () => {
       ]);
       const item: any = await api.query.nft.nftItemList(collectionId, itemId);
       expect(Array.from(item.VariableData)).to.deep.equal(Array.from([]));
-      const blockHash = await api.query.system.number();
-      console.log(`blockHash: ${blockHash}`);
     });
   });
 });

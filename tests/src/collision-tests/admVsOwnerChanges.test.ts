@@ -48,8 +48,6 @@ describe('Admin vs Owner changes token: ', () => {
       ]);
       const itemBefore: any = await api.query.nft.nftItemList(collectionId, itemId);
       expect(itemBefore.Owner.toString()).not.to.be.eq(Bob.address);
-      const blockHash = await api.query.system.number();
-      console.log(`blockHash: ${blockHash}`);
     });
   });
 });

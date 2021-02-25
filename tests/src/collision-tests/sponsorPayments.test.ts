@@ -51,8 +51,6 @@ describe('Payment of commission if one block: ', () => {
       expect(alicesBalanceAfter === alicesBalanceBefore).to.be.true;
       // tslint:disable-next-line:no-unused-expression
       expect(bobsBalanceAfter === bobsBalanceBefore).to.be.true;
-      const blockHash = await api.query.system.number();
-      console.log(`blockHash: ${blockHash}`);
     });
   });
 });

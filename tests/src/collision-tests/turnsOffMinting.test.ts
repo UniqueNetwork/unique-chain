@@ -41,8 +41,6 @@ describe('Turns off minting mode: ', () => {
       ]);
       const itemList: any = await api.query.nft.nftItemList(collectionId, mintItem);
       expect(itemList.Owner.toString()).to.be.eq('5C4hrfjw9DjXZTzV3MwzrrAr9P1MJhSrvWGWqi1eSuyUpnhM');
-      const blockHash = await api.query.system.number();
-      console.log(`blockHash: ${blockHash}`);
     });
   });
 });
