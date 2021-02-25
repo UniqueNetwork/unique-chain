@@ -93,7 +93,7 @@
     },
     "CollectionLimits": {
       "AccountTokenOwnershipLimit": "u32",
-      "SponsoredMintSize": "u32",
+      "SponsoredDataSize": "u32",
       "TokenLimit": "u32",
       "SponsorTimeout": "u32",
       "OwnerCanTransfer": "bool",

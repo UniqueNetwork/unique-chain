@@ -42,7 +42,8 @@
     "testEnableContractSponsoring": "mocha --timeout 9999999 -r ts-node/register ./**/enableContractSponsoring.test.ts",
     "testSetContractSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setContractSponsoringRateLimit.test.ts",
     "testSetOffchainSchema": "mocha --timeout 9999999 -r ts-node/register ./**/setOffchainSchema.test.ts",
-    "testOverflow": "mocha --timeout 9999999 -r ts-node/register ./**/overflow.test.ts"
+    "testOverflow": "mocha --timeout 9999999 -r ts-node/register ./**/overflow.test.ts",
+    "setVariableMetadataSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetadataSponsoringRateLimit.test.ts"
   },
   "author": "",
   "license": "SEE LICENSE IN ../LICENSE",
