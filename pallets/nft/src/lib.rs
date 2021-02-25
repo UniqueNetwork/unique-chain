@@ -1788,6 +1788,7 @@ impl<T: Config> Module<T> {
         // Burn the token completely if this was the last (only) owner
         if owner_count == 0 {
             <ReFungibleItemList<T>>::remove(collection_id, item_id);
+            <VariableMetaDataBasket<T>>::remove(collection_id, item_id);
         }
         else {
             <ReFungibleItemList<T>>::insert(collection_id, item_id, token);
@@ -1810,6 +1811,7 @@ impl<T: Config> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
         <NftItemList<T>>::remove(collection_id, item_id);
+        <VariableMetaDataBasket<T>>::remove(collection_id, item_id);
 
         Ok(())
     }
