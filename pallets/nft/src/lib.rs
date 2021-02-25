@@ -247,6 +247,7 @@ pub trait WeightInfo {
     fn set_schema_version() -> Weight;
     fn set_chain_limits() -> Weight;
     fn set_contract_sponsoring_rate_limit() -> Weight;
+    fn set_variable_meta_data_sponsoring_rate_limit() -> Weight;
     fn toggle_contract_white_list() -> Weight;
     fn add_to_contract_white_list() -> Weight;
     fn remove_from_contract_white_list() -> Weight;
@@ -441,6 +442,10 @@ decl_storage! {
         pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => T::BlockNumber;
         pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => T::BlockNumber;
         pub ReFungibleTransferBasket get(fn refungible_transfer_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => T::BlockNumber;
+
+        /// Variable metadata sponsoring
+        pub VariableMetaDataBasket get(fn variable_meta_data_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => Option<T::BlockNumber> = None;
+        pub VariableMetaDataSponsoringRateLimit get(fn variable_meta_data_sponsoring_rate_limit): map hasher(identity) CollectionId => T::BlockNumber = 0.into();
 
         // Contract Sponsorship and Ownership
         pub ContractOwner get(fn contract_owner): map hasher(twox_64_concat) T::AccountId => T::AccountId;
@@ -639,6 +644,9 @@ decl_module! {
             <NftTransferBasket<T>>::remove_prefix(collection_id);
             <FungibleTransferBasket<T>>::remove_prefix(collection_id);
             <ReFungibleTransferBasket<T>>::remove_prefix(collection_id);
+
+            <VariableMetaDataBasket<T>>::remove_prefix(collection_id);
+            <VariableMetaDataSponsoringRateLimit<T>>::remove(collection_id);
 
             if CollectionCount::get() > 0
             {
@@ -1424,6 +1432,19 @@ decl_module! {
             Ok(())
         }
 
+        #[weight = <T as Config>::WeightInfo::set_variable_meta_data_sponsoring_rate_limit()]
+        pub fn set_variable_meta_data_sponsoring_rate_limit(
+            origin,
+            collection_id: CollectionId,
+            rate_limit: T::BlockNumber
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            Self::check_collection_sponsor(collection_id.clone(), sender.clone())?;
+
+            <VariableMetaDataSponsoringRateLimit<T>>::insert(collection_id, rate_limit);
+            Ok(())
+        }
+
         /// Enable the white list for a contract. Only addresses added to the white list with addToContractWhiteList will be able to call this smart contract.
         /// 
         /// # Permissions
@@ -1862,6 +1883,21 @@ impl<T: Config> Module<T> {
         ensure!(
             result,
             Error::<T>::NoPermission
+        );
+        Ok(())
+    }
+
+    fn check_collection_sponsor(
+        collection_id: CollectionId,
+        subject: T::AccountId,
+    ) -> DispatchResult {
+        Self::collection_exists(collection_id)?;
+        let collection = <Collection<T>>::get(collection_id);
+        
+        ensure!(
+            collection.sponsor_confirmed &&
+            collection.sponsor == subject,
+            Error::<T>::NoPermission,
         );
         Ok(())
     }
@@ -2461,6 +2497,39 @@ where
                 }
 
                 if !sponsor_transfer {
+                    T::AccountId::default()
+                } else {
+                    <Collection<T>>::get(collection_id).sponsor
+                }
+            }
+
+            Some(Call::set_variable_meta_data(collection_id, item_id, data)) => {
+                let mut sponsor_metadata_changes = false;
+
+                let collection = <Collection<T>>::get(collection_id);
+                if
+                    collection.sponsor_confirmed &&
+                    // Can't sponsor fungible collection, this tx will be rejected
+                    // as invalid
+                    !matches!(collection.mode, CollectionMode::Fungible(_)) &&
+                    data.len() <= collection.limits.sponsored_data_size as usize
+                {
+                    let rate_limit = <VariableMetaDataSponsoringRateLimit<T>>::get(collection_id);
+                    if rate_limit > 0.into() {
+                        // sponsor timeout
+                        let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
+
+                        if <VariableMetaDataBasket<T>>::get(collection_id, item_id)
+                            .map(|last_block| block_number - last_block >= rate_limit)
+                            .unwrap_or(true) 
+                        {
+                            sponsor_metadata_changes = true;
+                            <VariableMetaDataBasket<T>>::insert(collection_id, item_id, block_number);
+                        }
+                    }
+                }
+
+                if !sponsor_metadata_changes {
                     T::AccountId::default()
                 } else {
                     <Collection<T>>::get(collection_id).sponsor
