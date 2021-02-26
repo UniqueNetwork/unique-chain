@@ -28,21 +28,8 @@ let collectionIdForTesting: number;
 const accountTokenOwnershipLimit = 0;
 const sponsoredDataSize = 0;
 const sponsoredMintSize = 0;
-const tokenLimit = 0;
-
-describe('hooks', () => {
-  before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({ type: 'sr25519' });
-      alice = keyring.addFromUri('//Alice');
-    });
-  });
-  it('choose or create collection for testing', async () => {
-    await usingApi(async () => {
-      collectionIdForTesting = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'}});
-    });
-  });
-});
+const sponsorTimeout = 1;
+const tokenLimit = 1;
 
 describe('setCollectionLimits positive', () => {
   let tx;
@@ -50,6 +37,7 @@ describe('setCollectionLimits positive', () => {
     await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
       alice = keyring.addFromUri('//Alice');
+      collectionIdForTesting = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'}});
     });
   });
   it('execute setCollectionLimits with predefined params ', async () => {
@@ -57,25 +45,28 @@ describe('setCollectionLimits positive', () => {
       tx = api.tx.nft.setCollectionLimits(
         collectionIdForTesting,
         {
-          accountTokenOwnershipLimit,
-          sponsoredDataSize,
-          sponsoredMintSize,
-          tokenLimit,
+          AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
+          SponsoredMintSize: sponsoredDataSize,
+          TokenLimit: tokenLimit,
+          SponsorTimeout: sponsorTimeout,
+          OwnerCanTransfer: true,
+          OwnerCanDestroy: true
         },
       );
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateItemResult(events);
+
+      // get collection limits defined previously
+      const collectionInfo = await getDetailedCollectionInfo(api, collectionIdForTesting) as ICollectionInterface;
+
       // tslint:disable-next-line:no-unused-expression
       expect(result.success).to.be.true;
-    });
-  });
-  it('get collection limits defined in previous test', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const collectionInfo = await getDetailedCollectionInfo(api, collectionIdForTesting) as ICollectionInterface;
       expect(collectionInfo.Limits.AccountTokenOwnershipLimit.toNumber()).to.be.equal(accountTokenOwnershipLimit);
-      expect(collectionInfo.Limits.SponsoredMintSize.toNumber()).to.be.equal(sponsoredMintSize);
+      expect(collectionInfo.Limits.SponsoredMintSize.toNumber()).to.be.equal(sponsoredDataSize);
       expect(collectionInfo.Limits.TokenLimit.toNumber()).to.be.equal(tokenLimit);
-      expect(collectionInfo.Limits.SponsorTimeout.toNumber()).to.be.equal(sponsoredDataSize);
+      expect(collectionInfo.Limits.SponsorTimeout.toNumber()).to.be.equal(sponsorTimeout);
+      expect(collectionInfo.Limits.OwnerCanTransfer.valueOf()).to.be.true;
+      expect(collectionInfo.Limits.OwnerCanDestroy.valueOf()).to.be.true;
     });
   });
 });
@@ -87,6 +78,7 @@ describe('setCollectionLimits negative', () => {
       const keyring = new Keyring({ type: 'sr25519' });
       alice = keyring.addFromUri('//Alice');
       bob = keyring.addFromUri('//Bob');
+      collectionIdForTesting = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'}});
     });
   });
   it('execute setCollectionLimits for not exists collection', async () => {
@@ -136,13 +128,41 @@ describe('setCollectionLimits negative', () => {
 
   it('fails when trying to enable OwnerCanTransfer after it was disabled', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await setCollectionLimitsExpectSuccess(alice, collectionId, { OwnerCanTransfer: false });
-    await setCollectionLimitsExpectFailure(alice, collectionId, { OwnerCanTransfer: true });
+    await setCollectionLimitsExpectSuccess(alice, collectionId, { 
+      AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
+      SponsoredMintSize: sponsoredDataSize,
+      TokenLimit: tokenLimit,
+      SponsorTimeout: sponsorTimeout,
+      OwnerCanTransfer: false,
+      OwnerCanDestroy: true
+    });
+    await setCollectionLimitsExpectFailure(alice, collectionId, { 
+      AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
+      SponsoredMintSize: sponsoredDataSize,
+      TokenLimit: tokenLimit,
+      SponsorTimeout: sponsorTimeout,
+      OwnerCanTransfer: true,
+      OwnerCanDestroy: true
+    });
   });
 
   it('fails when trying to enable OwnerCanDestroy after it was disabled', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await setCollectionLimitsExpectSuccess(alice, collectionId, { OwnerCanDestroy: false });
-    await setCollectionLimitsExpectFailure(alice, collectionId, { OwnerCanDestroy: true });
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {
+      AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
+      SponsoredMintSize: sponsoredDataSize,
+      TokenLimit: tokenLimit,
+      SponsorTimeout: sponsorTimeout,
+      OwnerCanTransfer: true,
+      OwnerCanDestroy: false
+    });
+    await setCollectionLimitsExpectFailure(alice, collectionId, { 
+      AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
+      SponsoredMintSize: sponsoredDataSize,
+      TokenLimit: tokenLimit,
+      SponsorTimeout: sponsorTimeout,
+      OwnerCanTransfer: true,
+      OwnerCanDestroy: true
+    });
   });
 });
