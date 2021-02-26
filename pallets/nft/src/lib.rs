@@ -348,8 +348,6 @@ decl_error! {
         TokenValueTooLow,
         /// Size of item is too large.
         NftSizeLimitExceeded,
-        /// Owned amount is lesser than tried to approve
-        CantAfford,
         /// No approve found
         ApproveNotFound,
         /// Requested value more than approved.
@@ -1111,7 +1109,7 @@ decl_module! {
                 allowance += <Allowances<T>>::get(collection_id, (item_id, &sender, &spender));
             }
             if let Some(limit) = allowance_limit {
-                ensure!(limit >= allowance, Error::<T>::CantAfford);
+                ensure!(limit >= allowance, Error::<T>::TokenValueTooLow);
             }
             <Allowances<T>>::insert(collection_id, (item_id, sender.clone(), spender.clone()), allowance);
 
