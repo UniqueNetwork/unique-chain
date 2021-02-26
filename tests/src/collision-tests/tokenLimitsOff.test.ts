@@ -76,20 +76,8 @@ describe('Token limit exceeded collection: ', () => {
       ]);
       await timeoutPromise(10000);
       const itemsListIndexAfter = await api.query.nft.itemListIndex(collectionId) as unknown as BN;
-      expect(itemsListIndexAfter.toNumber()).to.be.equal(6); // Maybe 4? TokenLimit = 4.
-      const token1Data = await api.query.nft.nftItemList(collectionId, 1) as unknown as ITokenDataType;
-      const token2Data = await api.query.nft.nftItemList(collectionId, 2) as unknown as ITokenDataType;
-      const token3Data = await api.query.nft.nftItemList(collectionId, 3) as unknown as ITokenDataType;
-      const token4Data = await api.query.nft.nftItemList(collectionId, 4) as unknown as ITokenDataType;
-      const token5Data = await api.query.nft.nftItemList(collectionId, 5) as unknown as ITokenDataType;
-      const token6Data = await api.query.nft.nftItemList(collectionId, 6) as unknown as ITokenDataType;
-
-      expect(token1Data.Owner.toString()).to.be.equal(Bob.address);
-      expect(token2Data.Owner.toString()).to.be.equal(Bob.address);
-      expect(token3Data.Owner.toString()).to.be.equal(Bob.address);
-      expect(token4Data.Owner.toString()).to.be.equal(Ferdie.address);
-      expect(token5Data.Owner.toString()).to.be.equal(Ferdie.address);
-      expect(token6Data.Owner.toString()).to.be.equal(Ferdie.address);
+      expect(itemsListIndexAfter.toNumber()).to.be.equal(3);
+      // TokenLimit = 4. The first transaction is successful. The second should fail. (bug: NFTPAR-367)
     });
   });
 });
