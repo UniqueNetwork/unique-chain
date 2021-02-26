@@ -3,10 +3,12 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
+import { IKeyringPair } from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
+import privateKey from './substrate/privateKey';
 import { default as usingApi } from "./substrate/substrate-api";
-import { createCollectionExpectSuccess, destroyCollectionExpectSuccess, destroyCollectionExpectFailure } from "./util/helpers";
+import { createCollectionExpectSuccess, destroyCollectionExpectSuccess, destroyCollectionExpectFailure, setCollectionLimitsExpectSuccess } from "./util/helpers";
 
 chai.use(chaiAsPromised);
 
@@ -26,6 +28,14 @@ describe('integration test: ext. destroyCollection():', () => {
 });
 
 describe('(!negative test!) integration test: ext. destroyCollection():', () => {
+  let alice: IKeyringPair;
+
+  before(async () => {
+    await usingApi(async (api) => {
+      alice = privateKey('//Alice');
+    });
+  });
+
   it('(!negative test!) Destroy a collection that never existed', async () => {
     await usingApi(async (api) => {
       // Find the collection that never existed
@@ -42,5 +52,11 @@ describe('(!negative test!) integration test: ext. destroyCollection():', () => 
     const collectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectFailure(collectionId, '//Bob');
     await destroyCollectionExpectSuccess(collectionId, '//Alice');
+  });
+  it('fails when OwnerCanDestroy == false', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await setCollectionLimitsExpectSuccess(alice, collectionId, { OwnerCanDestroy: false });
+
+    await destroyCollectionExpectFailure(collectionId, '//Alice');
   });
 });

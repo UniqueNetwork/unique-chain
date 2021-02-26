@@ -382,6 +382,8 @@ decl_error! {
         AccountTokenLimitExceeded,
         /// Collection limit bounds per collection exceeded
         CollectionLimitBoundsExceeded,
+        /// Tried to enable permissions which are only permitted to be disabled
+        OwnerPermissionsCantBeReverted,
         /// Schema data size limit bound exceeded
         SchemaDataLimitExceeded,
         /// Maximum refungibility exceeded
@@ -638,6 +640,11 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
             Self::check_owner_permissions(collection_id, sender)?;
+
+            let target_collection = <Collection<T>>::get(collection_id);
+            if !target_collection.limits.owner_can_destroy {
+                fail!(Error::<T>::NoPermission);
+            }
 
             <AddressTokens<T>>::remove_prefix(collection_id);
             <Allowances<T>>::remove_prefix(collection_id);
@@ -1022,9 +1029,14 @@ decl_module! {
 
             // Transfer permissions check
             let target_collection = <Collection<T>>::get(collection_id);
-            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
-                Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                Error::<T>::NoPermission);
+            ensure!(
+                Self::is_item_owner(sender.clone(), collection_id, item_id) ||
+                (
+                    target_collection.limits.owner_can_transfer &&
+                    Self::is_owner_or_admin_permissions(collection_id, sender.clone())
+                ),
+                Error::<T>::NoPermission
+            );
 
             if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, &sender)?;
@@ -1098,9 +1110,14 @@ decl_module! {
 
             // Transfer permissions check
             let target_collection = <Collection<T>>::get(collection_id);
-            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
-                Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                Error::<T>::NoPermission);
+            ensure!(
+                Self::is_item_owner(sender.clone(), collection_id, item_id) ||
+                (
+                    target_collection.limits.owner_can_transfer &&
+                    Self::is_owner_or_admin_permissions(collection_id, sender.clone())
+                ),
+                Error::<T>::NoPermission
+            );
 
             if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, &sender)?;
@@ -1156,8 +1173,14 @@ decl_module! {
             Self::is_correct_transfer(collection_id, &target_collection, &recipient)?;
 
             // Transfer permissions check         
-            ensure!(appoved_transfer || Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                Error::<T>::NoPermission);
+            ensure!(
+                appoved_transfer || 
+                (
+                    target_collection.limits.owner_can_transfer &&
+                    Self::is_owner_or_admin_permissions(collection_id, sender.clone())
+                ),
+                Error::<T>::NoPermission
+            );
 
             if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, &sender)?;
@@ -1524,25 +1547,32 @@ decl_module! {
         pub fn set_collection_limits(
             origin,
             collection_id: u32,
-            limits: CollectionLimits,
+            new_limits: CollectionLimits,
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             Self::check_owner_permissions(collection_id, sender.clone())?;
             let mut target_collection = <Collection<T>>::get(collection_id);
+            let old_limits = target_collection.limits;
             let chain_limits = ChainLimit::get();
-            let climits = target_collection.limits;
 
             // collection bounds
-            ensure!(limits.sponsor_transfer_timeout <= MAX_SPONSOR_TIMEOUT &&
-                limits.account_token_ownership_limit <= MAX_TOKEN_OWNERSHIP,  
+            ensure!(new_limits.sponsor_transfer_timeout <= MAX_SPONSOR_TIMEOUT &&
+                new_limits.account_token_ownership_limit <= MAX_TOKEN_OWNERSHIP && 
+                new_limits.sponsored_data_size <= chain_limits.custom_data_limit &&
+                new_limits.sponsored_mint_size <= chain_limits.custom_data_limit,
                 Error::<T>::CollectionLimitBoundsExceeded);
 
             // token_limit   check  prev
-            ensure!(climits.token_limit > limits.token_limit && 
-                limits.token_limit <= chain_limits.account_token_ownership_limit, 
-                Error::<T>::AccountTokenLimitExceeded);
+            ensure!(old_limits.token_limit >= new_limits.token_limit, Error::<T>::CollectionTokenLimitExceeded);
+            ensure!(new_limits.token_limit > 0, Error::<T>::CollectionTokenLimitExceeded);
 
-            target_collection.limits = limits;
+            ensure!(
+                (old_limits.owner_can_transfer || !new_limits.owner_can_transfer) &&
+                (old_limits.owner_can_destroy || !new_limits.owner_can_destroy),
+                Error::<T>::OwnerPermissionsCantBeReverted,
+            );
+
+            target_collection.limits = new_limits;
             <Collection<T>>::insert(collection_id, target_collection);
 
             Ok(())

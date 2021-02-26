@@ -333,6 +333,36 @@ export async function destroyCollectionExpectSuccess(collectionId: number, sende
   });
 }
 
+export async function queryCollectionLimits(collectionId: number) {
+  return await usingApi(async (api) => {
+    return ((await api.query.nft.collection(collectionId)).toJSON() as any).Limits;
+  });
+}
+
+export async function setCollectionLimitsExpectSuccess(sender: IKeyringPair, collectionId: number, limits: any) {
+  await usingApi(async (api) => {
+    const oldLimits = await queryCollectionLimits(collectionId);
+    const newLimits = { ...oldLimits as any, ...limits };
+    const tx = api.tx.nft.setCollectionLimits(collectionId, newLimits);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+}
+
+export async function setCollectionLimitsExpectFailure(sender: IKeyringPair, collectionId: number, limits: any) {
+  await usingApi(async (api) => {
+    const oldLimits = await queryCollectionLimits(collectionId);
+    const newLimits = { ...oldLimits as any, ...limits };
+    const tx = api.tx.nft.setCollectionLimits(collectionId, newLimits);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function setCollectionSponsorExpectSuccess(collectionId: number, sponsor: string) {
   await usingApi(async (api) => {
 

@@ -17,6 +17,8 @@ export interface ICollectionInterface {
     SponsoredMintSize: BN;
     TokenLimit: BN;
     SponsorTimeout: BN;
+    OwnerCanTransfer: boolean;
+    OwnerCanDestroy: boolean;
   };
   MintMode: boolean;
   Mode: {
