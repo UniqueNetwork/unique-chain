@@ -1558,8 +1558,7 @@ decl_module! {
             // collection bounds
             ensure!(new_limits.sponsor_transfer_timeout <= MAX_SPONSOR_TIMEOUT &&
                 new_limits.account_token_ownership_limit <= MAX_TOKEN_OWNERSHIP && 
-                new_limits.sponsored_data_size <= chain_limits.custom_data_limit &&
-                new_limits.sponsored_mint_size <= chain_limits.custom_data_limit,
+                new_limits.sponsored_data_size <= chain_limits.custom_data_limit,
                 Error::<T>::CollectionLimitBoundsExceeded);
 
             // token_limit   check  prev
