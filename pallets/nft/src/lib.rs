@@ -1110,14 +1110,23 @@ decl_module! {
 
             // Transfer permissions check
             let target_collection = <Collection<T>>::get(collection_id);
-            ensure!(
-                Self::is_item_owner(sender.clone(), collection_id, item_id) ||
-                (
-                    target_collection.limits.owner_can_transfer &&
-                    Self::is_owner_or_admin_permissions(collection_id, sender.clone())
-                ),
-                Error::<T>::NoPermission
-            );
+            let allowance_limit = if (
+                target_collection.limits.owner_can_transfer &&
+                Self::is_owner_or_admin_permissions(
+                    collection_id,
+                    sender.clone(),
+                )
+            ) {
+                None
+            } else if let Some(amount) = Self::owned_amount(
+                sender.clone(),
+                collection_id,
+                item_id,
+            ) {
+                Some(amount)
+            } else {
+                fail!(Error::<T>::NoPermission);
+            };
 
             if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, &sender)?;
@@ -1128,6 +1137,9 @@ decl_module! {
             let mut allowance: u128 = amount;
             if allowance_exists {
                 allowance += <Allowances<T>>::get(collection_id, (item_id, &sender, &spender));
+            }
+            if let Some(limit) = allowance_limit {
+                ensure!(limit >= allowance, Error::<T>::TokenValueTooLow);
             }
             <Allowances<T>>::insert(collection_id, (item_id, sender.clone(), spender.clone()), allowance);
 
@@ -1910,6 +1922,36 @@ impl<T: Config> Module<T> {
             Error::<T>::NoPermission
         );
         Ok(())
+    }
+
+    fn owned_amount(
+        subject: T::AccountId,
+        collection_id: CollectionId,
+        item_id: TokenId,
+    ) -> Option<u128> {
+        let target_collection = <Collection<T>>::get(collection_id);
+
+        match target_collection.mode {
+            CollectionMode::NFT => {
+                if <NftItemList<T>>::get(collection_id, item_id).owner == subject {
+                    return Some(1)
+                }
+                None
+            },
+            CollectionMode::Fungible(_) => {
+                if <FungibleItemList<T>>::contains_key(collection_id, &subject) {
+                    return Some(<FungibleItemList<T>>::get(collection_id, &subject)
+                        .value);
+                }
+                None
+            },
+            CollectionMode::ReFungible => <ReFungibleItemList<T>>::get(collection_id, item_id)
+                .owner
+                .iter()
+                .find(|i| i.owner == subject)
+                .map(|i| i.fraction),
+            CollectionMode::Invalid => None,
+        }
     }
 
     fn is_item_owner(subject: T::AccountId, collection_id: CollectionId, item_id: TokenId) -> bool {
