@@ -194,7 +194,7 @@ impl Default for CollectionLimits {
         CollectionLimits { 
             account_token_ownership_limit: 10_000_000, 
             token_limit: u32::max_value(),
-            sponsored_data_size: u32::max_value(), 
+            sponsored_data_size: ChainLimit::get().custom_data_limit, 
             sponsor_transfer_timeout: 14400,
             owner_can_transfer: true,
             owner_can_destroy: true
