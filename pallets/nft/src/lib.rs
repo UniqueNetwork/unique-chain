@@ -1876,21 +1876,6 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn check_collection_sponsor(
-        collection_id: CollectionId,
-        subject: T::AccountId,
-    ) -> DispatchResult {
-        Self::collection_exists(collection_id)?;
-        let collection = <Collection<T>>::get(collection_id).unwrap();
-        
-        ensure!(
-            collection.sponsor_confirmed &&
-            collection.sponsor == subject,
-            Error::<T>::NoPermission,
-        );
-        Ok(())
-    }
-
     fn is_item_owner(subject: T::AccountId, collection_id: CollectionId, item_id: TokenId) -> bool {
         let target_collection = <Collection<T>>::get(collection_id).unwrap();
 
