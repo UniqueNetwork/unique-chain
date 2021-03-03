@@ -123,10 +123,10 @@ pub struct Ownership<AccountId> {
     pub fraction: u128,
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct CollectionType<AccountId> {
-    pub owner: AccountId,
+pub struct CollectionType<T: Config> {
+    pub owner: T::AccountId,
     pub mode: CollectionMode,
     pub access: AccessMode,
     pub decimal_points: DecimalPoints,
@@ -136,9 +136,9 @@ pub struct CollectionType<AccountId> {
     pub mint_mode: bool,
     pub offchain_schema: Vec<u8>,
     pub schema_version: SchemaVersion,
-    pub sponsor: AccountId, // Who pays fees. If set to default address, the fees are applied to the transaction sender
+    pub sponsor: T::AccountId, // Who pays fees. If set to default address, the fees are applied to the transaction sender
     pub sponsor_confirmed: bool, // False if sponsor address has not yet confirmed sponsorship. True otherwise.
-    pub limits: CollectionLimits, // Collection private restrictions 
+    pub limits: CollectionLimits<T::BlockNumber>, // Collection private restrictions 
     pub variable_on_chain_schema: Vec<u8>, //
     pub const_on_chain_schema: Vec<u8>, //
 }
@@ -178,9 +178,13 @@ pub struct ReFungibleItemType<AccountId> {
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct CollectionLimits {
+pub struct CollectionLimits<BlockNumber: Encode + Decode> {
     pub account_token_ownership_limit: u32,
     pub sponsored_data_size: u32,
+    /// None - setVariableMetadata is not sponsored
+    /// Some(v) - setVariableMetadata is sponsored 
+    ///           if there is v block between txs
+    pub sponsored_data_rate_limit: Option<BlockNumber>,
     pub token_limit: u32,
 
     // Timeouts for item types in passed blocks
@@ -189,12 +193,13 @@ pub struct CollectionLimits {
     pub owner_can_destroy: bool,
 }
 
-impl Default for CollectionLimits {
-    fn default() -> CollectionLimits {
-        CollectionLimits { 
+impl<BlockNumber: Encode + Decode> Default for CollectionLimits<BlockNumber> {
+    fn default() -> Self {
+        Self { 
             account_token_ownership_limit: 10_000_000, 
             token_limit: u32::max_value(),
             sponsored_data_size: u32::max_value(), 
+            sponsored_data_rate_limit: None,
             sponsor_transfer_timeout: 14400,
             owner_can_transfer: true,
             owner_can_destroy: true
@@ -419,7 +424,7 @@ decl_storage! {
         pub AccountItemCount get(fn account_item_count): map hasher(twox_64_concat) T::AccountId => u32;
 
         // Basic collections
-        pub Collection get(fn collection) config(): map hasher(identity) CollectionId => CollectionType<T::AccountId>;
+        pub Collection get(fn collection) config(): map hasher(identity) CollectionId => Option<CollectionType<T>> = None;
         pub AdminList get(fn admin_list_collection): map hasher(identity) CollectionId => Vec<T::AccountId>;
         pub WhiteList get(fn white_list): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => bool;
 
@@ -445,7 +450,6 @@ decl_storage! {
 
         /// Variable metadata sponsoring
         pub VariableMetaDataBasket get(fn variable_meta_data_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => Option<T::BlockNumber> = None;
-        pub VariableMetaDataSponsoringRateLimit get(fn variable_meta_data_sponsoring_rate_limit): map hasher(identity) CollectionId => T::BlockNumber = 0.into();
 
         // Contract Sponsorship and Ownership
         pub ContractOwner get(fn contract_owner): map hasher(twox_64_concat) T::AccountId => T::AccountId;
@@ -646,7 +650,6 @@ decl_module! {
             <ReFungibleTransferBasket<T>>::remove_prefix(collection_id);
 
             <VariableMetaDataBasket<T>>::remove_prefix(collection_id);
-            <VariableMetaDataSponsoringRateLimit<T>>::remove(collection_id);
 
             if CollectionCount::get() > 0
             {
@@ -724,7 +727,7 @@ decl_module! {
             let sender = ensure_signed(origin)?;
 
             Self::check_owner_permissions(collection_id, sender)?;
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = <Collection<T>>::get(collection_id).unwrap();
             target_collection.access = mode;
             <Collection<T>>::insert(collection_id, target_collection);
 
@@ -750,7 +753,7 @@ decl_module! {
             let sender = ensure_signed(origin)?;
 
             Self::check_owner_permissions(collection_id, sender)?;
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = <Collection<T>>::get(collection_id).unwrap();
             target_collection.mint_mode = mint_permission;
             <Collection<T>>::insert(collection_id, target_collection);
 
@@ -773,7 +776,7 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
             Self::check_owner_permissions(collection_id, sender)?;
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = <Collection<T>>::get(collection_id).unwrap();
             target_collection.owner = new_owner;
             <Collection<T>>::insert(collection_id, target_collection);
 
@@ -854,9 +857,8 @@ decl_module! {
         pub fn set_collection_sponsor(origin, collection_id: CollectionId, new_sponsor: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            ensure!(<Collection<T>>::contains_key(collection_id), Error::<T>::CollectionNotFound);
 
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = <Collection<T>>::get(collection_id).ok_or(Error::<T>::CollectionNotFound)?;
             ensure!(sender == target_collection.owner, Error::<T>::NoPermission);
 
             target_collection.sponsor = new_sponsor;
@@ -877,9 +879,8 @@ decl_module! {
         pub fn confirm_sponsorship(origin, collection_id: CollectionId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            ensure!(<Collection<T>>::contains_key(collection_id), Error::<T>::CollectionNotFound);
 
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = <Collection<T>>::get(collection_id).ok_or(Error::<T>::CollectionNotFound)?;
             ensure!(sender == target_collection.sponsor, Error::<T>::ConfirmUnsetSponsorFail);
 
             target_collection.sponsor_confirmed = true;
@@ -901,9 +902,8 @@ decl_module! {
         pub fn remove_collection_sponsor(origin, collection_id: CollectionId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            ensure!(<Collection<T>>::contains_key(collection_id), Error::<T>::CollectionNotFound);
 
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = <Collection<T>>::get(collection_id).ok_or(Error::<T>::CollectionNotFound)?;
             ensure!(sender == target_collection.owner, Error::<T>::NoPermission);
 
             target_collection.sponsor = T::AccountId::default();
@@ -944,7 +944,7 @@ decl_module! {
 
             Self::collection_exists(collection_id)?;
 
-            let target_collection = <Collection<T>>::get(collection_id);
+            let target_collection = <Collection<T>>::get(collection_id).unwrap();
 
             Self::can_create_items_in_collection(collection_id, &target_collection, &sender, &owner)?;
             Self::validate_create_item_args(&target_collection, &data)?;
@@ -980,7 +980,7 @@ decl_module! {
             let sender = ensure_signed(origin)?;
 
             Self::collection_exists(collection_id)?;
-            let target_collection = <Collection<T>>::get(collection_id);
+            let target_collection = <Collection<T>>::get(collection_id).unwrap();
 
             Self::can_create_items_in_collection(collection_id, &target_collection, &sender, &owner)?;
 
@@ -1014,7 +1014,7 @@ decl_module! {
             Self::collection_exists(collection_id)?;
 
             // Transfer permissions check
-            let target_collection = <Collection<T>>::get(collection_id);
+            let target_collection = <Collection<T>>::get(collection_id).unwrap();
             ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
                 Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
                 Error::<T>::NoPermission);
@@ -1090,7 +1090,7 @@ decl_module! {
             Self::token_exists(collection_id, item_id, &sender)?;
 
             // Transfer permissions check
-            let target_collection = <Collection<T>>::get(collection_id);
+            let target_collection = <Collection<T>>::get(collection_id).unwrap();
             ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
                 Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
                 Error::<T>::NoPermission);
@@ -1143,7 +1143,7 @@ decl_module! {
                 appoved_transfer = true;
             }
 
-            let target_collection = <Collection<T>>::get(collection_id);
+            let target_collection = <Collection<T>>::get(collection_id).unwrap();
 
             // Limits check
             Self::is_correct_transfer(collection_id, &target_collection, &recipient)?;
@@ -1218,7 +1218,7 @@ decl_module! {
             ensure!(ChainLimit::get().custom_data_limit >= data.len() as u32, Error::<T>::TokenVariableDataLimitExceeded);
 
             // Modify permissions check
-            let target_collection = <Collection<T>>::get(collection_id);
+            let target_collection = <Collection<T>>::get(collection_id).unwrap();
             ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
                 Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
                 Error::<T>::NoPermission);
@@ -1256,7 +1256,7 @@ decl_module! {
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = <Collection<T>>::get(collection_id).unwrap();
             target_collection.schema_version = version;
             <Collection<T>>::insert(collection_id, target_collection);
 
@@ -1287,7 +1287,7 @@ decl_module! {
             // check schema limit
             ensure!(schema.len() as u32 <= ChainLimit::get().offchain_schema_limit, "");
 
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = <Collection<T>>::get(collection_id).unwrap();
             target_collection.offchain_schema = schema;
             <Collection<T>>::insert(collection_id, target_collection);
 
@@ -1318,7 +1318,7 @@ decl_module! {
             // check schema limit
             ensure!(schema.len() as u32 <= ChainLimit::get().const_on_chain_schema_limit, "");
 
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = <Collection<T>>::get(collection_id).unwrap();
             target_collection.const_on_chain_schema = schema;
             <Collection<T>>::insert(collection_id, target_collection);
 
@@ -1349,7 +1349,7 @@ decl_module! {
             // check schema limit
             ensure!(schema.len() as u32 <= ChainLimit::get().variable_on_chain_schema_limit, "");
 
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = <Collection<T>>::get(collection_id).unwrap();
             target_collection.variable_on_chain_schema = schema;
             <Collection<T>>::insert(collection_id, target_collection);
 
@@ -1429,19 +1429,6 @@ decl_module! {
 
             Self::ensure_contract_owned(sender, &contract_address)?;
             <ContractSponsoringRateLimit<T>>::insert(contract_address, rate_limit);
-            Ok(())
-        }
-
-        #[weight = <T as Config>::WeightInfo::set_variable_meta_data_sponsoring_rate_limit()]
-        pub fn set_variable_meta_data_sponsoring_rate_limit(
-            origin,
-            collection_id: CollectionId,
-            rate_limit: T::BlockNumber
-        ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
-            Self::check_collection_sponsor(collection_id.clone(), sender.clone())?;
-
-            <VariableMetaDataSponsoringRateLimit<T>>::insert(collection_id, rate_limit);
             Ok(())
         }
 
@@ -1530,11 +1517,11 @@ decl_module! {
         pub fn set_collection_limits(
             origin,
             collection_id: u32,
-            limits: CollectionLimits,
+            limits: CollectionLimits<T::BlockNumber>,
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             Self::check_owner_permissions(collection_id, sender.clone())?;
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = <Collection<T>>::get(collection_id).unwrap();
             let chain_limits = ChainLimit::get();
             let climits = target_collection.limits;
 
@@ -1560,7 +1547,7 @@ impl<T: Config> Module<T> {
 
     pub fn transfer_internal(sender: T::AccountId, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
 
-        let target_collection = <Collection<T>>::get(collection_id);
+        let target_collection = <Collection<T>>::get(collection_id).unwrap();
 
         // Limits check
         Self::is_correct_transfer(collection_id, &target_collection, &recipient)?;
@@ -1587,7 +1574,7 @@ impl<T: Config> Module<T> {
     }
 
 
-    fn is_correct_transfer(collection_id: CollectionId, collection: &CollectionType<T::AccountId>, recipient: &T::AccountId) -> DispatchResult {
+    fn is_correct_transfer(collection_id: CollectionId, collection: &CollectionType<T>, recipient: &T::AccountId) -> DispatchResult {
 
         // check token limit and account token limit
         let account_items: u32 = <AddressTokens<T>>::get(collection_id, recipient).len() as u32;
@@ -1596,7 +1583,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn can_create_items_in_collection(collection_id: CollectionId, collection: &CollectionType<T::AccountId>, sender: &T::AccountId, owner: &T::AccountId) -> DispatchResult {
+    fn can_create_items_in_collection(collection_id: CollectionId, collection: &CollectionType<T>, sender: &T::AccountId, owner: &T::AccountId) -> DispatchResult {
 
         // check token limit and account token limit
         let total_items: u32 = ItemListIndex::get(collection_id);
@@ -1613,7 +1600,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn validate_create_item_args(target_collection: &CollectionType<T::AccountId>, data: &CreateItemData) -> DispatchResult {
+    fn validate_create_item_args(target_collection: &CollectionType<T>, data: &CreateItemData) -> DispatchResult {
         match target_collection.mode
         {
             CollectionMode::NFT => {
@@ -1852,7 +1839,7 @@ impl<T: Config> Module<T> {
     fn check_owner_permissions(collection_id: CollectionId, subject: T::AccountId) -> DispatchResult {
         Self::collection_exists(collection_id)?;
 
-        let target_collection = <Collection<T>>::get(collection_id);
+        let target_collection = <Collection<T>>::get(collection_id).unwrap();
         ensure!(
             subject == target_collection.owner,
             Error::<T>::NoPermission
@@ -1862,7 +1849,7 @@ impl<T: Config> Module<T> {
     }
 
     fn is_owner_or_admin_permissions(collection_id: CollectionId, subject: T::AccountId) -> bool {
-        let target_collection = <Collection<T>>::get(collection_id);
+        let target_collection = <Collection<T>>::get(collection_id).unwrap();
         let mut result: bool = subject == target_collection.owner;
         let exists = <AdminList<T>>::contains_key(collection_id);
 
@@ -1894,7 +1881,7 @@ impl<T: Config> Module<T> {
         subject: T::AccountId,
     ) -> DispatchResult {
         Self::collection_exists(collection_id)?;
-        let collection = <Collection<T>>::get(collection_id);
+        let collection = <Collection<T>>::get(collection_id).unwrap();
         
         ensure!(
             collection.sponsor_confirmed &&
@@ -1905,7 +1892,7 @@ impl<T: Config> Module<T> {
     }
 
     fn is_item_owner(subject: T::AccountId, collection_id: CollectionId, item_id: TokenId) -> bool {
-        let target_collection = <Collection<T>>::get(collection_id);
+        let target_collection = <Collection<T>>::get(collection_id).unwrap();
 
         match target_collection.mode {
             CollectionMode::NFT => {
@@ -1938,7 +1925,7 @@ impl<T: Config> Module<T> {
         item_id: TokenId,
         owner: &T::AccountId
     ) -> DispatchResult {
-        let target_collection = <Collection<T>>::get(collection_id);
+        let target_collection = <Collection<T>>::get(collection_id).unwrap();
         let exists = match target_collection.mode
         {
             CollectionMode::NFT => <NftItemList<T>>::contains_key(collection_id, item_id),
@@ -2127,7 +2114,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn init_collection(item: &CollectionType<T::AccountId>) {
+    fn init_collection(item: &CollectionType<T>) {
         // check params
         assert!(
             item.decimal_points <= MAX_DECIMAL_POINTS,
@@ -2384,11 +2371,12 @@ where
         // Parse call to extract collection ID and access collection sponsor
         let mut sponsor: T::AccountId = match IsSubType::<Call<T>>::is_sub_type(call) {
             Some(Call::create_item(collection_id, _owner, _properties)) => {
+                let collection = <Collection<T>>::get(collection_id).unwrap();
 
                 // sponsor timeout
                 let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
 
-                let limit = <Collection<T>>::get(collection_id).limits.sponsor_transfer_timeout;
+                let limit = collection.limits.sponsor_transfer_timeout;
                 let mut sponsored = true;
                 if <CreateItemBasket<T>>::contains_key((collection_id, &who)) {
                     let last_tx_block = <CreateItemBasket<T>>::get((collection_id, &who));
@@ -2402,22 +2390,23 @@ where
                 }
 
                 // check free create limit
-                if (<Collection<T>>::get(collection_id).limits.sponsored_data_size >= (_properties.len() as u32)) &&
-                   (<Collection<T>>::get(collection_id).sponsor_confirmed) &&
+                if (collection.limits.sponsored_data_size >= (_properties.len() as u32)) &&
+                   (collection.sponsor_confirmed) &&
                    (sponsored)
                 {
-                    <Collection<T>>::get(collection_id).sponsor
+                    collection.sponsor
                 } else {
                     T::AccountId::default()
                 }
             }
             Some(Call::transfer(_new_owner, collection_id, item_id, _value)) => {
+                let collection = <Collection<T>>::get(collection_id).unwrap();
                 
                 let mut sponsor_transfer = false;
-                if <Collection<T>>::get(collection_id).sponsor_confirmed {
+                if collection.sponsor_confirmed {
 
-                    let collection_limits = <Collection<T>>::get(collection_id).limits;
-                    let collection_mode = <Collection<T>>::get(collection_id).mode;
+                    let collection_limits = collection.limits;
+                    let collection_mode = collection.mode;
     
                     // sponsor timeout
                     let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
@@ -2501,14 +2490,15 @@ where
                 if !sponsor_transfer {
                     T::AccountId::default()
                 } else {
-                    <Collection<T>>::get(collection_id).sponsor
+                    collection.sponsor
                 }
             }
 
             Some(Call::set_variable_meta_data(collection_id, item_id, data)) => {
                 let mut sponsor_metadata_changes = false;
 
-                let collection = <Collection<T>>::get(collection_id);
+                let collection = <Collection<T>>::get(collection_id).unwrap();
+
                 if
                     collection.sponsor_confirmed &&
                     // Can't sponsor fungible collection, this tx will be rejected
@@ -2516,13 +2506,11 @@ where
                     !matches!(collection.mode, CollectionMode::Fungible(_)) &&
                     data.len() <= collection.limits.sponsored_data_size as usize
                 {
-                    let rate_limit = <VariableMetaDataSponsoringRateLimit<T>>::get(collection_id);
-                    if rate_limit > 0.into() {
-                        // sponsor timeout
+                    if let Some(rate_limit) = collection.limits.sponsored_data_rate_limit {
                         let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
 
                         if <VariableMetaDataBasket<T>>::get(collection_id, item_id)
-                            .map(|last_block| block_number - last_block >= rate_limit)
+                            .map(|last_block| block_number - last_block > rate_limit)
                             .unwrap_or(true) 
                         {
                             sponsor_metadata_changes = true;
@@ -2534,7 +2522,7 @@ where
                 if !sponsor_metadata_changes {
                     T::AccountId::default()
                 } else {
-                    <Collection<T>>::get(collection_id).sponsor
+                    collection.sponsor
                 }
             }
 
