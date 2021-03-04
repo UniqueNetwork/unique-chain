@@ -35,7 +35,7 @@ use sp_version::RuntimeVersion;
 pub use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment, CurrencyAdapter, FeeDetails, RuntimeDispatchInfo};
 // A few exports that help ease life for downstream crates.
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_contracts::{Schedule as ContractsSchedule, WeightInfo};
+pub use pallet_contracts::{Schedule as ContractsSchedule };
 pub use frame_support::{
     construct_runtime,
     dispatch::DispatchResult,
@@ -47,10 +47,11 @@ pub use frame_support::{
     },
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-        DispatchInfo, GetDispatchInfo, Pays, PostDispatchInfo, Weight,
+        DispatchClass, DispatchInfo, GetDispatchInfo, Pays, PostDispatchInfo, Weight,
         WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients
     },
 };
+use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
 use frame_system::{
     self as system,
@@ -64,7 +65,7 @@ use smallvec::smallvec;
 pub use pallet_timestamp::Call as TimestampCall;
 
 mod chain_extension;
-use crate::chain_extension::NFTExtension;
+use crate::chain_extension::{ NFTExtension, Imbalance };
 
 /// Struct that handles the conversion of Balance -> `u64`. This is used for
 /// staking's election calculation.
@@ -229,6 +230,21 @@ impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 	}
 }
 
+// impl OnUnbalanced<NegativeImbalance> for DealWithFees {
+// 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item=NegativeImbalance>) {
+// 		if let Some(fees) = fees_then_tips.next() {
+// 			// for fees, 100% to treasury
+// 			let mut split = fees.ration(100, 0);
+// 			if let Some(tips) = fees_then_tips.next() {
+// 				// for tips, if any, 100% to treasury
+// 				tips.ration_merge_into(100, 0, &mut split);
+// 			}
+// 			Treasury::on_unbalanced(split.0);
+// 			// Author::on_unbalanced(split.1);
+// 		}
+// 	}
+// }
+
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.
 const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
@@ -388,6 +404,7 @@ parameter_types! {
 	pub const SignedClaimHandicap: u32 = 2;
 	pub const MaxDepth: u32 = 32;
 	pub const MaxValueSize: u32 = 16 * 1024;
+	pub const MaxCodeSize: u32 = 1024 * 1024 * 25; // 25 Mb 
 	// The lazy deletion runs inside on_initialize.
 	pub DeletionWeightLimit: Weight = AVERAGE_ON_INITIALIZE_RATIO *
 		RuntimeBlockWeights::get().max_block;
@@ -420,6 +437,7 @@ impl pallet_contracts::Config for Runtime {
 	type ChainExtension = NFTExtension;
 	type DeletionQueueDepth = DeletionQueueDepth;
 	type DeletionWeightLimit = DeletionWeightLimit;
+	type MaxCodeSize = MaxCodeSize;
 }
 
 parameter_types! {
@@ -518,7 +536,7 @@ construct_runtime!(
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Contracts: pallet_contracts::{Module, Call, Config<T>, Storage, Event<T>},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-        Aura: pallet_aura::{Module, Config<T>, Inherent},
+        Aura: pallet_aura::{Module, Config<T> },
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
@@ -547,7 +565,7 @@ pub type SignedExtra = (
     system::CheckEra<Runtime>,
     system::CheckNonce<Runtime>,
     system::CheckWeight<Runtime>,
-    pallet_nft::ChargeTransactionPayment<Runtime>,
+    // pallet_nft::ChargeTransactionPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;

@@ -33,7 +33,7 @@ pub struct NFTExtTransfer<E: Ext> {
 /// The chain Extension of NFT pallet
 pub struct NFTExtension;
 
-impl ChainExtension for NFTExtension {
+impl<C: Config> ChainExtension<C> for NFTExtension {
     fn call<E: Ext>(func_id: u32, env: Environment<E, InitState>) -> Result<RetVal, DispatchError>
     where
         <E::T as SysConfig>::AccountId: UncheckedFrom<<E::T as SysConfig>::Hash> + AsRef<[u8]>,
@@ -71,4 +71,3 @@ impl ChainExtension for NFTExtension {
         }
     }
 }
-
