@@ -194,7 +194,7 @@ impl Default for CollectionLimits {
         CollectionLimits { 
             account_token_ownership_limit: 10_000_000, 
             token_limit: u32::max_value(),
-            sponsored_data_size: u32::max_value(), 
+            sponsored_data_size: u32::MAX,
             sponsor_transfer_timeout: 14400,
             owner_can_transfer: true,
             owner_can_destroy: true
@@ -576,8 +576,10 @@ decl_module! {
                 _ => 0
             };
 
+            let chain_limit = ChainLimit::get();
+
             // bound Total number of collections
-            ensure!(CollectionCount::get() < ChainLimit::get().collection_numbers_limit, Error::<T>::TotalCollectionsLimitExceeded);
+            ensure!(CollectionCount::get() < chain_limit.collection_numbers_limit, Error::<T>::TotalCollectionsLimitExceeded);
 
             // check params
             ensure!(decimal_points <= MAX_DECIMAL_POINTS, Error::<T>::CollectionDecimalPointLimitExceeded);
@@ -598,6 +600,11 @@ decl_module! {
             CreatedCollectionCount::put(next_id);
             CollectionCount::put(total);
 
+            let limits = CollectionLimits {
+                sponsored_data_size: chain_limit.custom_data_limit,
+                ..Default::default()
+            };
+
             // Create new collection
             let new_collection = CollectionType {
                 owner: who.clone(),
@@ -614,7 +621,7 @@ decl_module! {
                 sponsor_confirmed: false,
                 variable_on_chain_schema: Vec::new(),
                 const_on_chain_schema: Vec::new(),
-                limits: CollectionLimits::default()
+                limits,
             };
 
             // Add new collection to map
