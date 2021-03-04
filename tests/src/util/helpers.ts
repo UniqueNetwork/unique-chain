@@ -63,10 +63,37 @@ interface IFungibleTokenDataType {
   Value: BN;
 }
 
+interface IGetMessage {
+  checkMsgNftMethod: string;
+  checkMsgTrsMethod: string;
+  checkMsgSysMethod: string;
+}
+
 export interface IReFungibleTokenDataType {
   Owner: IReFungibleOwner[];
   ConstData: number[];
   VariableData: number[];
+}
+
+export function nftEventMessage(events: EventRecord[]): IGetMessage {
+  let checkMsgNftMethod: string = '';
+  let checkMsgTrsMethod: string = '';
+  let checkMsgSysMethod: string = '';
+  events.forEach(({ event: { method, section } }) => {
+    if (section === 'nft') {
+      checkMsgNftMethod = method;
+    } else if (section === 'treasury') {
+      checkMsgTrsMethod = method;
+    } else if (section === 'system') {
+      checkMsgSysMethod = method;
+    } else { return null; }
+  });
+  const result: IGetMessage = {
+    checkMsgNftMethod,
+    checkMsgTrsMethod,
+    checkMsgSysMethod,
+  };
+  return result;
 }
 
 export function getGenericResult(events: EventRecord[]): GenericResult {
