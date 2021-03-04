@@ -194,7 +194,7 @@ impl Default for CollectionLimits {
         CollectionLimits { 
             account_token_ownership_limit: 10_000_000, 
             token_limit: u32::max_value(),
-            sponsored_data_size: ChainLimit::get().custom_data_limit, 
+            sponsored_data_size: u32::max_value(), 
             sponsor_transfer_timeout: 14400,
             owner_can_transfer: true,
             owner_can_destroy: true
@@ -1570,7 +1570,7 @@ decl_module! {
             // collection bounds
             ensure!(new_limits.sponsor_transfer_timeout <= MAX_SPONSOR_TIMEOUT &&
                 new_limits.account_token_ownership_limit <= MAX_TOKEN_OWNERSHIP && 
-                new_limits.sponsored_data_size <= chain_limits.custom_data_limit
+                new_limits.sponsored_data_size <= chain_limits.custom_data_limit,
                 Error::<T>::CollectionLimitBoundsExceeded);
 
             // token_limit   check  prev
