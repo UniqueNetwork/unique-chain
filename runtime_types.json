@@ -31,7 +31,8 @@
       "ConstData": "Vec<u8>",
       "VariableData": "Vec<u8>"
     },
-    "CollectionType": {
+    "Collection": {
+      "Id": "CollectionId",
       "Owner": "AccountId",
       "Mode": "CollectionMode",
       "Access": "AccessMode",

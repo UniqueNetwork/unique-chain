@@ -179,9 +179,10 @@ fn testnet_genesis(
                 .collect(),
         }),
         pallet_nft: Some(NftConfig {
-            collection: vec![(
+            collection_id: vec![(
                 1,
-                CollectionType {
+                Collection {
+					id: 1,
                     owner: get_account_id_from_seed::<sr25519::Public>("Alice"),
                     mode: CollectionMode::NFT,
                     access: AccessMode::Normal,
