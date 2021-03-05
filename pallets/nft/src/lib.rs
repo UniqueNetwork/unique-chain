@@ -34,7 +34,7 @@ use frame_system::{self as system, ensure_signed, ensure_root};
 use sp_runtime::sp_std::prelude::Vec;
 use sp_runtime::{
     traits::{
-        DispatchInfoOf, Dispatchable, PostDispatchInfoOf, Saturating, SaturatedConversion, SignedExtension, Zero,
+        Hash, DispatchInfoOf, Dispatchable, PostDispatchInfoOf, Saturating, SaturatedConversion, SignedExtension, Zero,
     },
     transaction_validity::{
         TransactionPriority, InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
@@ -43,6 +43,7 @@ use sp_runtime::{
 };
 use sp_runtime::traits::StaticLookup;
 use pallet_contracts::chain_extension::UncheckedFrom;
+use pallet_contracts::*;
 use pallet_transaction_payment::OnChargeTransaction;
 
 #[cfg(test)]
@@ -2580,6 +2581,20 @@ where
 
                 T::AccountId::default()
             },
+
+            // On instantiation with code: set the contract owner
+            Some(pallet_contracts::Call::instantiate_with_code(_endowment, _gas_limit, _code, _data, _salt))  => {
+
+                let new_contract_address = <pallet_contracts::Module<T>>::contract_address(
+                    &who,
+                    &T::Hashing::hash(&_code),
+                    _salt,
+                );
+
+                <ContractOwner<T>>::insert(new_contract_address.clone(), who.clone());
+
+                T::AccountId::default()
+            }
 
             // When the contract is called, check if the sponsoring is enabled and pay fees from contract endowment if it is
             Some(pallet_contracts::Call::call(dest, _value, _gas_limit, _data)) => {
