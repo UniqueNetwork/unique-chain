@@ -11,7 +11,9 @@ import { default as usingApi, submitTransactionAsync, submitTransactionExpectFai
 import {
   createCollectionExpectSuccess,
   destroyCollectionExpectSuccess,
+  getGenericResult,
   IReFungibleTokenDataType,
+  setCollectionLimitsExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -90,6 +92,25 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(token1Data.VariableData.toString()).to.be.equal('0x31');
       expect(token2Data.VariableData.toString()).to.be.equal('0x32');
       expect(token3Data.VariableData.toString()).to.be.equal('0x33');
+    });
+  });
+
+  it('Can mint amount of items equals to collection limits', async () => {
+    await usingApi(async (api) => {
+      const alice = privateKey('//Alice');
+
+      const collectionId = await createCollectionExpectSuccess();
+      await setCollectionLimitsExpectSuccess(alice, collectionId, {
+        TokenLimit: 2,
+      });
+      const args = [
+        { nft: ['A', 'A'] },
+        { nft: ['B', 'B'] },
+      ];
+      const createMultipleItemsTx = api.tx.nft.createMultipleItems(collectionId, alice.address, args);
+      const events = await submitTransactionAsync(alice, createMultipleItemsTx);
+      const result = getGenericResult(events);
+      expect(result.success).to.be.true;
     });
   });
 });
@@ -173,6 +194,23 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       const createMultipleItemsTx = await api.tx.nft
         .createMultipleItems(collectionId, Alice.address, args);
       await expect(submitTransactionExpectFailAsync(Alice, createMultipleItemsTx)).to.be.rejected;
+    });
+  });
+
+  it('Fails when minting tokens exceeds collectionLimits amount', async () => {
+    await usingApi(async (api) => {
+      const alice = privateKey('//Alice');
+
+      const collectionId = await createCollectionExpectSuccess();
+      await setCollectionLimitsExpectSuccess(alice, collectionId, {
+        TokenLimit: 1,
+      });
+      const args = [
+        { nft: ['A', 'A'] },
+        { nft: ['B', 'B'] },
+      ];
+      const createMultipleItemsTx = api.tx.nft.createMultipleItems(collectionId, alice.address, args);
+      await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTx)).to.be.rejected;
     });
   });
 });
