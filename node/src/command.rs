@@ -23,7 +23,7 @@ use nft_runtime::Block;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Substrate Node".into()
+		"Unique Node".into()
 	}
 
 	fn impl_version() -> String {

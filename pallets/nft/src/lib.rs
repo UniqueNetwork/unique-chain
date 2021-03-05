@@ -198,7 +198,7 @@ impl<BlockNumber: Encode + Decode> Default for CollectionLimits<BlockNumber> {
         Self { 
             account_token_ownership_limit: 10_000_000, 
             token_limit: u32::max_value(),
-            sponsored_data_size: u32::max_value(), 
+            sponsored_data_size: u32::MAX, 
             sponsored_data_rate_limit: None,
             sponsor_transfer_timeout: 14400,
             owner_can_transfer: true,
@@ -388,6 +388,8 @@ decl_error! {
         AccountTokenLimitExceeded,
         /// Collection limit bounds per collection exceeded
         CollectionLimitBoundsExceeded,
+        /// Tried to enable permissions which are only permitted to be disabled
+        OwnerPermissionsCantBeReverted,
         /// Schema data size limit bound exceeded
         SchemaDataLimitExceeded,
         /// Maximum refungibility exceeded
@@ -504,7 +506,9 @@ decl_event!(
         /// * collection_id: Id of the collection where item was created.
         /// 
         /// * item_id: Id of an item. Unique within the collection.
-        ItemCreated(CollectionId, TokenId),
+        ///
+        /// * recipient: Owner of newly created item 
+        ItemCreated(CollectionId, TokenId, AccountId),
 
         /// Collection item was burned.
         /// 
@@ -514,6 +518,19 @@ decl_event!(
         /// 
         /// item_id: Identifier of burned NFT.
         ItemDestroyed(CollectionId, TokenId),
+
+        /// Item was transferred
+        ///
+        /// * collection_id: Id of collection to which item is belong
+        ///
+        /// * item_id: Id of an item
+        ///
+        /// * sender: Original owner of item
+        ///
+        /// * recipient: New owner of item
+        ///
+        /// * amount: Always 1 for NFT
+        Transfer(CollectionId, TokenId, AccountId, AccountId, u128),
     }
 );
 
@@ -568,8 +585,10 @@ decl_module! {
                 _ => 0
             };
 
+            let chain_limit = ChainLimit::get();
+
             // bound Total number of collections
-            ensure!(CollectionCount::get() < ChainLimit::get().collection_numbers_limit, Error::<T>::TotalCollectionsLimitExceeded);
+            ensure!(CollectionCount::get() < chain_limit.collection_numbers_limit, Error::<T>::TotalCollectionsLimitExceeded);
 
             // check params
             ensure!(decimal_points <= MAX_DECIMAL_POINTS, Error::<T>::CollectionDecimalPointLimitExceeded);
@@ -590,6 +609,11 @@ decl_module! {
             CreatedCollectionCount::put(next_id);
             CollectionCount::put(total);
 
+            let limits = CollectionLimits {
+                sponsored_data_size: chain_limit.custom_data_limit,
+                ..Default::default()
+            };
+
             // Create new collection
             let new_collection = CollectionType {
                 owner: who.clone(),
@@ -606,7 +630,7 @@ decl_module! {
                 sponsor_confirmed: false,
                 variable_on_chain_schema: Vec::new(),
                 const_on_chain_schema: Vec::new(),
-                limits: CollectionLimits::default()
+                limits,
             };
 
             // Add new collection to map
@@ -632,6 +656,11 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
             Self::check_owner_permissions(collection_id, sender)?;
+
+            let target_collection = <Collection<T>>::get(collection_id);
+            if !target_collection.limits.owner_can_destroy {
+                fail!(Error::<T>::NoPermission);
+            }
 
             <AddressTokens<T>>::remove_prefix(collection_id);
             <Allowances<T>>::remove_prefix(collection_id);
@@ -1015,9 +1044,14 @@ decl_module! {
 
             // Transfer permissions check
             let target_collection = <Collection<T>>::get(collection_id).unwrap();
-            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
-                Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                Error::<T>::NoPermission);
+            ensure!(
+                Self::is_item_owner(sender.clone(), collection_id, item_id) ||
+                (
+                    target_collection.limits.owner_can_transfer &&
+                    Self::is_owner_or_admin_permissions(collection_id, sender.clone())
+                ),
+                Error::<T>::NoPermission
+            );
 
             if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, &sender)?;
@@ -1091,9 +1125,23 @@ decl_module! {
 
             // Transfer permissions check
             let target_collection = <Collection<T>>::get(collection_id).unwrap();
-            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
-                Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                Error::<T>::NoPermission);
+            let allowance_limit = if (
+                target_collection.limits.owner_can_transfer &&
+                Self::is_owner_or_admin_permissions(
+                    collection_id,
+                    sender.clone(),
+                )
+            ) {
+                None
+            } else if let Some(amount) = Self::owned_amount(
+                sender.clone(),
+                collection_id,
+                item_id,
+            ) {
+                Some(amount)
+            } else {
+                fail!(Error::<T>::NoPermission);
+            };
 
             if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, &sender)?;
@@ -1104,6 +1152,9 @@ decl_module! {
             let mut allowance: u128 = amount;
             if allowance_exists {
                 allowance += <Allowances<T>>::get(collection_id, (item_id, &sender, &spender));
+            }
+            if let Some(limit) = allowance_limit {
+                ensure!(limit >= allowance, Error::<T>::TokenValueTooLow);
             }
             <Allowances<T>>::insert(collection_id, (item_id, sender.clone(), spender.clone()), allowance);
 
@@ -1149,8 +1200,14 @@ decl_module! {
             Self::is_correct_transfer(collection_id, &target_collection, &recipient)?;
 
             // Transfer permissions check         
-            ensure!(appoved_transfer || Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                Error::<T>::NoPermission);
+            ensure!(
+                appoved_transfer || 
+                (
+                    target_collection.limits.owner_can_transfer &&
+                    Self::is_owner_or_admin_permissions(collection_id, sender.clone())
+                ),
+                Error::<T>::NoPermission
+            );
 
             if target_collection.access == AccessMode::WhiteList {
                 Self::check_white_list(collection_id, &sender)?;
@@ -1517,25 +1574,31 @@ decl_module! {
         pub fn set_collection_limits(
             origin,
             collection_id: u32,
-            limits: CollectionLimits<T::BlockNumber>,
+            new_limits: CollectionLimits<T::BlockNumber>,
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             Self::check_owner_permissions(collection_id, sender.clone())?;
             let mut target_collection = <Collection<T>>::get(collection_id).unwrap();
+            let old_limits = target_collection.limits;
             let chain_limits = ChainLimit::get();
-            let climits = target_collection.limits;
 
             // collection bounds
-            ensure!(limits.sponsor_transfer_timeout <= MAX_SPONSOR_TIMEOUT &&
-                limits.account_token_ownership_limit <= MAX_TOKEN_OWNERSHIP,  
+            ensure!(new_limits.sponsor_transfer_timeout <= MAX_SPONSOR_TIMEOUT &&
+                new_limits.account_token_ownership_limit <= MAX_TOKEN_OWNERSHIP && 
+                new_limits.sponsored_data_size <= chain_limits.custom_data_limit,
                 Error::<T>::CollectionLimitBoundsExceeded);
 
             // token_limit   check  prev
-            ensure!(climits.token_limit > limits.token_limit && 
-                limits.token_limit <= chain_limits.account_token_ownership_limit, 
-                Error::<T>::AccountTokenLimitExceeded);
+            ensure!(old_limits.token_limit >= new_limits.token_limit, Error::<T>::CollectionTokenLimitExceeded);
+            ensure!(new_limits.token_limit > 0, Error::<T>::CollectionTokenLimitExceeded);
 
-            target_collection.limits = limits;
+            ensure!(
+                (old_limits.owner_can_transfer || !new_limits.owner_can_transfer) &&
+                (old_limits.owner_can_destroy || !new_limits.owner_can_destroy),
+                Error::<T>::OwnerPermissionsCantBeReverted,
+            );
+
+            target_collection.limits = new_limits;
             <Collection<T>>::insert(collection_id, target_collection);
 
             Ok(())
@@ -1564,11 +1627,13 @@ impl<T: Config> Module<T> {
 
         match target_collection.mode
         {
-            CollectionMode::NFT => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient)?,
+            CollectionMode::NFT => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient.clone())?,
             CollectionMode::Fungible(_)  => Self::transfer_fungible(collection_id, value, &sender, &recipient)?,
-            CollectionMode::ReFungible  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient)?,
+            CollectionMode::ReFungible  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient.clone())?,
             _ => ()
         };
+
+        Self::deposit_event(RawEvent::Transfer(collection_id, item_id, sender, recipient, value));
 
         Ok(())
     }
@@ -1643,7 +1708,7 @@ impl<T: Config> Module<T> {
         {
             CreateItemData::NFT(data) => {
                 let item = NftItemType {
-                    owner,
+                    owner: owner.clone(),
                     const_data: data.const_data,
                     variable_data: data.variable_data
                 };
@@ -1668,7 +1733,7 @@ impl<T: Config> Module<T> {
         };
 
         // call event
-        Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id)));
+        Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id), owner));
 
         Ok(())
     }
@@ -1874,6 +1939,36 @@ impl<T: Config> Module<T> {
             Error::<T>::NoPermission
         );
         Ok(())
+    }
+
+    fn owned_amount(
+        subject: T::AccountId,
+        collection_id: CollectionId,
+        item_id: TokenId,
+    ) -> Option<u128> {
+        let target_collection = <Collection<T>>::get(collection_id);
+
+        match target_collection.mode {
+            CollectionMode::NFT => {
+                if <NftItemList<T>>::get(collection_id, item_id).owner == subject {
+                    return Some(1)
+                }
+                None
+            },
+            CollectionMode::Fungible(_) => {
+                if <FungibleItemList<T>>::contains_key(collection_id, &subject) {
+                    return Some(<FungibleItemList<T>>::get(collection_id, &subject)
+                        .value);
+                }
+                None
+            },
+            CollectionMode::ReFungible => <ReFungibleItemList<T>>::get(collection_id, item_id)
+                .owner
+                .iter()
+                .find(|i| i.owner == subject)
+                .map(|i| i.fraction),
+            CollectionMode::Invalid => None,
+        }
     }
 
     fn is_item_owner(subject: T::AccountId, collection_id: CollectionId, item_id: TokenId) -> bool {
