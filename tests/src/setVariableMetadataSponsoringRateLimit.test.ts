@@ -10,14 +10,11 @@ import {
   confirmSponsorshipExpectSuccess,
   createCollectionExpectSuccess,
   createItemExpectSuccess,
-  findNotExistingCollection,
   findUnusedAddress,
   setCollectionLimitsExpectSuccess,
   setCollectionSponsorExpectSuccess,
   setVariableMetaDataExpectFailure,
   setVariableMetaDataExpectSuccess,
-  setVariableMetaDataSponsoringRateLimitExpectFailure,
-  setVariableMetaDataSponsoringRateLimitExpectSuccess,
 } from './util/helpers';
 
 describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
@@ -35,7 +32,9 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
-    await setVariableMetaDataSponsoringRateLimitExpectSuccess(alice, collectionId, 1);
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {
+      SponsoredDataRateLimit: 0,
+    });
 
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', userWithNoBalance.address);
     await setVariableMetaDataExpectSuccess(userWithNoBalance, collectionId, itemId, [1, 2, 3]);
@@ -46,7 +45,9 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
-    await setVariableMetaDataSponsoringRateLimitExpectSuccess(alice, collectionId, 10);
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {
+      SponsoredDataRateLimit: 10,
+    });
 
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', userWithNoBalance.address);
     await setVariableMetaDataExpectSuccess(userWithNoBalance, collectionId, itemId, [1, 2, 3]);
@@ -57,34 +58,13 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
-    await setVariableMetaDataSponsoringRateLimitExpectSuccess(alice, collectionId, 1);
     await setCollectionLimitsExpectSuccess(alice, collectionId, {
+      SponsoredDataRateLimit: 0,
       SponsoredDataSize: 1,
     });
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', userWithNoBalance.address);
 
     await setVariableMetaDataExpectSuccess(userWithNoBalance, collectionId, itemId, [1]);
     await setVariableMetaDataExpectFailure(userWithNoBalance, collectionId, itemId, [1, 2]);
-  });
-});
-
-describe('Negative Integration Test setVariableMetadataSponsoringRateLimit', () => {
-  let alice: IKeyringPair;
-  let nonExistingCollection: number;
-
-  before(async () => {
-    await usingApi(async (api) => {
-      alice = privateKey('//Alice');
-      nonExistingCollection = await findNotExistingCollection(api);
-    });
-  });
-
-  it('fails when called with non-existing collection id', async () => {
-    await setVariableMetaDataSponsoringRateLimitExpectFailure(alice, nonExistingCollection, 1);
-  });
-
-  it('fails when called by non collection sponsor', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await setVariableMetaDataSponsoringRateLimitExpectFailure(alice, collectionId, 1);
   });
 });
