@@ -94,6 +94,7 @@
     "CollectionLimits": {
       "AccountTokenOwnershipLimit": "u32",
       "SponsoredDataSize": "u32",
+      "SponsoredDataRateLimit": "Option<BlockNumber>",
       "TokenLimit": "u32",
       "SponsorTimeout": "u32",
       "OwnerCanTransfer": "bool",
