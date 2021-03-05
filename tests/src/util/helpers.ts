@@ -556,26 +556,6 @@ export async function setVariableMetaDataExpectFailure(sender: IKeyringPair, col
   });
 }
 
-export async function setVariableMetaDataSponsoringRateLimitExpectSuccess(sender: IKeyringPair, collectionId: number, rateLimit: number) {
-  await usingApi(async (api) => {
-    const tx = api.tx.nft.setVariableMetaDataSponsoringRateLimit(collectionId, rateLimit);
-    const events = await submitTransactionAsync(sender, tx);
-    const result = getGenericResult(events);
-
-    expect(result.success).to.be.true;
-  });
-}
-
-export async function setVariableMetaDataSponsoringRateLimitExpectFailure(sender: IKeyringPair, collectionId: number, rateLimit: number) {
-  await usingApi(async (api) => {
-    const tx = api.tx.nft.setVariableMetaDataSponsoringRateLimit(collectionId, rateLimit);
-    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
-    const result = getGenericResult(events);
-
-    expect(result.success).to.be.false;
-  });
-}
-
 export async function setOffchainSchemaExpectSuccess(sender: IKeyringPair, collectionId: number, data: number[]) {
   await usingApi(async (api) => {
     const tx = api.tx.nft.setOffchainSchema(collectionId, '0x' + Buffer.from(data).toString('hex'));
