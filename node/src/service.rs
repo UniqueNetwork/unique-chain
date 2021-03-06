@@ -16,7 +16,6 @@ pub use sc_executor::NativeExecutor;
 use sp_consensus_aura::sr25519::{AuthorityPair as AuraPair};
 use sc_finality_grandpa::SharedVoterState;
 use sc_keystore::LocalKeystore;
-use sc_telemetry::TelemetrySpan;
 
 // Our native executor instance.
 native_executor_instance!(

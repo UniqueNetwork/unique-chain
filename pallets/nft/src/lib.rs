@@ -43,7 +43,6 @@ use sp_runtime::{
 };
 use sp_runtime::traits::StaticLookup;
 use pallet_contracts::chain_extension::UncheckedFrom;
-use pallet_contracts::*;
 use pallet_transaction_payment::OnChargeTransaction;
 
 #[cfg(test)]
@@ -1118,13 +1117,11 @@ decl_module! {
 
             // Transfer permissions check
             let target_collection = <Collection<T>>::get(collection_id);
-            let allowance_limit = if (
-                target_collection.limits.owner_can_transfer &&
+            let allowance_limit = if target_collection.limits.owner_can_transfer &&
                 Self::is_owner_or_admin_permissions(
                     collection_id,
                     sender.clone(),
-                )
-            ) {
+                ) {
                 None
             } else if let Some(amount) = Self::owned_amount(
                 sender.clone(),
