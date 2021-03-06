@@ -63,18 +63,17 @@ sudo apt-get install libssl-dev pkg-config libclang-dev clang
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
 
-3. Install stable toolchain 1.49.0 and make it default, install nightly 2021-01-27:
+3. Install install nightly 2021-03-01 and make it default:
 
 ```bash
-rustup toolchain install 1.49.0
-rustup toolchain install nightly-2020-01-27
-rustup default nightly-2021-01-27
+rustup toolchain install nightly-2021-03-01
+rustup default nightly-2021-03-01
 ```
 
 4. Add wasm target for nightly toolchain:
 
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2021-01-27
+rustup target add wasm32-unknown-unknown --toolchain nightly-2021-03-01
 ```
 
 5. Build:

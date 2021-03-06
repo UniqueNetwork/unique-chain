@@ -34,7 +34,7 @@ use frame_system::{self as system, ensure_signed, ensure_root};
 use sp_runtime::sp_std::prelude::Vec;
 use sp_runtime::{
     traits::{
-        DispatchInfoOf, Dispatchable, PostDispatchInfoOf, Saturating, SaturatedConversion, SignedExtension, Zero,
+        Hash, DispatchInfoOf, Dispatchable, PostDispatchInfoOf, Saturating, SaturatedConversion, SignedExtension, Zero,
     },
     transaction_validity::{
         TransactionPriority, InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
@@ -43,7 +43,7 @@ use sp_runtime::{
 };
 use sp_runtime::traits::StaticLookup;
 use pallet_contracts::chain_extension::UncheckedFrom;
-use transaction_payment::OnChargeTransaction;
+use pallet_transaction_payment::OnChargeTransaction;
 
 #[cfg(test)]
 mod mock;
@@ -391,7 +391,7 @@ decl_error! {
 	}
 }
 
-pub trait Config: system::Config + Sized + transaction_payment::Config + pallet_contracts::Config {
+pub trait Config: system::Config + Sized + pallet_transaction_payment::Config + pallet_contracts::Config {
     type Event: From<Event<Self>> + Into<<Self as system::Config>::Event>;
 
     /// Weight information for extrinsics in this pallet.
@@ -1117,13 +1117,11 @@ decl_module! {
 
             // Transfer permissions check
             let target_collection = <Collection<T>>::get(collection_id);
-            let allowance_limit = if (
-                target_collection.limits.owner_can_transfer &&
+            let allowance_limit = if target_collection.limits.owner_can_transfer &&
                 Self::is_owner_or_admin_permissions(
                     collection_id,
                     sender.clone(),
-                )
-            ) {
+                ) {
                 None
             } else if let Some(amount) = Self::owned_amount(
                 sender.clone(),
@@ -2357,7 +2355,7 @@ impl<T: Config> Module<T> {
 /// Fee multiplier.
 pub type Multiplier = FixedU128;
 
-type BalanceOf<T> = <<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::Balance;
+type BalanceOf<T> = <<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::Balance;
 
 /// Require the transactor pay for themselves and maybe include a tip to gain additional priority
 /// in the queue.
@@ -2392,7 +2390,7 @@ where
     where
         T::Call: Dispatchable<Info = DispatchInfo>,
     {
-        <transaction_payment::Module<T>>::compute_fee(len as u32, info, tip)
+        <pallet_transaction_payment::Module<T>>::compute_fee(len as u32, info, tip)
     }
 
 	fn get_priority(len: usize, info: &DispatchInfoOf<T::Call>, final_fee: BalanceOf<T>) -> TransactionPriority {
@@ -2416,7 +2414,7 @@ where
 	) -> Result<
 		(
 			BalanceOf<T>,
-			<<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::LiquidityInfo,
+			<<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::LiquidityInfo,
 		),
 		TransactionValidityError,
 	> {
@@ -2433,7 +2431,7 @@ where
 
         // Only mess with balances if fee is not zero.
         if fee.is_zero() {
-            return <<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::withdraw_fee(who, call, info, fee, tip)
+            return <<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::withdraw_fee(who, call, info, fee, tip)
 			.map(|i| (fee, i));
         }
 
@@ -2581,6 +2579,20 @@ where
                 T::AccountId::default()
             },
 
+            // On instantiation with code: set the contract owner
+            Some(pallet_contracts::Call::instantiate_with_code(_endowment, _gas_limit, _code, _data, _salt))  => {
+
+                let new_contract_address = <pallet_contracts::Module<T>>::contract_address(
+                    &who,
+                    &T::Hashing::hash(&_code),
+                    _salt,
+                );
+
+                <ContractOwner<T>>::insert(new_contract_address.clone(), who.clone());
+
+                T::AccountId::default()
+            }
+
             // When the contract is called, check if the sponsoring is enabled and pay fees from contract endowment if it is
             Some(pallet_contracts::Call::call(dest, _value, _gas_limit, _data)) => {
 
@@ -2632,7 +2644,7 @@ where
             who_pays_fee = who.clone();
         }
 
-		<<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::withdraw_fee(&who_pays_fee, call, info, fee, tip)
+		<<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::withdraw_fee(&who_pays_fee, call, info, fee, tip)
 			.map(|i| (fee, i))
     }
 }
@@ -2656,7 +2668,7 @@ where
         // who pays fee
         Self::AccountId,
 		// imbalance resulting from withdrawing the fee
-		<<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::LiquidityInfo,
+		<<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::LiquidityInfo,
     );
     fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> {
         Ok(())
@@ -2695,13 +2707,13 @@ where
         _result: &DispatchResult,
     ) -> Result<(), TransactionValidityError> {
 		let (tip, who, imbalance) = pre;
-		let actual_fee = transaction_payment::Module::<T>::compute_actual_fee(
+		let actual_fee = pallet_transaction_payment::Module::<T>::compute_actual_fee(
 			len as u32,
 			info,
 			post_info,
 			tip,
 		);
-		<T as transaction_payment::Config>::OnChargeTransaction::correct_and_deposit_fee(&who, info, post_info, actual_fee, tip, imbalance)?;
+		<T as pallet_transaction_payment::Config>::OnChargeTransaction::correct_and_deposit_fee(&who, info, post_info, actual_fee, tip, imbalance)?;
 		Ok(())
     }
 }
