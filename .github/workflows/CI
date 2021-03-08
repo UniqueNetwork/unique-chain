@@ -1,0 +1,52 @@
+name: Build & test
+
+# Controls when the action will run. 
+on:
+ # Triggers the workflow on push or pull request events but only for the master branch
+ # push:
+ #   branches: [ master ]
+  pull_request:
+    branches: [ develop ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-20.04
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+          
+     #runs ssh connection
+      - name: Go to server
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          port: ${{ secrets.SERVER_PORT }}
+          command_timeout: 200m
+          username: ${{ secrets.SERVER_USERNAME }}
+        #  password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.KEY }}
+
+          script: |
+            ssh-agent bash -c 'ssh-add /path/key
+            git clone https://github.com/usetech-llc/nft_private.git
+            cd nft_private
+            git checkout develop
+            git pull --develop
+#           docker run -d -p 5000:5000 --restart=always --name registry registry:2
+            docker-compose up -d
+            sleep 20
+            docker-compose ps -a
+            sleep 20
+            while [[ "$(docker ps | grep nvm_test | wc -l)" -ge 1 ]]; do sleep 5; done && docker log nvm_test &> tests.log
+            echo "Workflow completed"
+            docker-compose down
+#            export GIST_TOKEN=${{ secrets.GIST_TOKEN }}
+#            python3 check_test.py
+
