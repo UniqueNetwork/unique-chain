@@ -1,43 +1,44 @@
-// Creating mock runtime here
-
-use crate::{Module, Config};
-
-use frame_support::{
-    impl_outer_origin, parameter_types,
-    weights::{Weight, IdentityFee},
-};
-use frame_system as system;
-use system::limits::{BlockLength, BlockWeights};
-use transaction_payment::{self, CurrencyAdapter};
+use crate as pallet_template;
 use sp_core::H256;
-use sp_runtime::{
-    testing::Header,
-    traits::{BlakeTwo256, IdentityLookup},
-    Perbill,
+use frame_support::{ 
+	parameter_types,
+	weights::IdentityFee,
 };
-use pallet_contracts::WeightInfo;
-pub use pallet_balances;
+use sp_runtime::{
+	traits::{BlakeTwo256, IdentityLookup}, 
+	testing::Header, 
+	Perbill,
+};
+use pallet_transaction_payment::{ CurrencyAdapter};
+use frame_system as system;
 
-impl_outer_origin! {
-    pub enum Origin for Test {}
-}
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+type Block = frame_system::mocking::MockBlock<Test>; 
 
-// For testing the pallet, we construct most of a mock runtime. This means
-// first constructing a configuration type (`Test`) which `impl`s each of the
-// configuration traits of pallets we want to use.
-#[derive(Clone, Eq, PartialEq)]
-pub struct Test;
+// Configure a mock runtime to test the pallet.
+frame_support::construct_runtime!(
+	pub enum Test where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Module, Call, Config, Storage, Event<T>},
+		TemplateModule: pallet_template::{Module, Call, Storage},
+	}
+);
+
 parameter_types! {
-    pub const BlockHashCount: u64 = 250;
-	pub TestBlockWeights: BlockWeights = BlockWeights::default();
-	pub TestBlockLength: BlockLength = BlockLength::default();
-	pub SS58Prefix: u8 = 0;
+	pub const BlockHashCount: u64 = 250;
+	pub const SS58Prefix: u8 = 42;
 }
 
 impl system::Config for Test {
 	type BaseCallFilter = ();
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
 	type Origin = Origin;
-	type Call = ();
+	type Call = Call;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -47,24 +48,20 @@ impl system::Config for Test {
 	type Header = Header;
 	type Event = ();
 	type BlockHashCount = BlockHashCount;
-	type BlockWeights = TestBlockWeights;
-	type DbWeight = ();
-	type BlockLength = TestBlockLength;
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = pallet_balances::AccountData<u64>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
-	type SS58Prefix = SS58Prefix;
 	type SystemWeightInfo = ();
+	type SS58Prefix = SS58Prefix;
 }
 
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 	pub const MaxLocks: u32 = 50;
 }
-
-type System = frame_system::Module<Test>;
+//frame_system::Module<Test>;
 impl pallet_balances::Config for Test {
     type AccountStore = System;
     type Balance = u64;
@@ -79,13 +76,12 @@ parameter_types! {
 	pub const TransactionByteFee: u64 = 1;
 }
 
-impl transaction_payment::Config for Test {
+impl pallet_transaction_payment::Config for Test {
 	type OnChargeTransaction = CurrencyAdapter<pallet_balances::Module<Test>, ()>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<u64>;
 	type FeeMultiplierUpdate = ();
 }
-
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = 1;
@@ -110,12 +106,8 @@ parameter_types! {
 	pub const SignedClaimHandicap: u32 = 2;
 	pub const MaxDepth: u32 = 32;
 	pub const MaxValueSize: u32 = 16 * 1024;
-	pub DeletionWeightLimit: Weight = Perbill::from_percent(10) *
-		TestBlockWeights::get().max_block;
-	pub DeletionQueueDepth: u32 = ((DeletionWeightLimit::get() / (
-		<Test as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(1) -
-		<Test as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(0)
-	)) / 5) as u32;
+	pub DeletionWeightLimit: u64 = u64::MAX;//Perbill::from_percent(10);
+	pub DeletionQueueDepth: u32 = 10;
 }
 
 impl pallet_contracts::Config for Test {
@@ -136,23 +128,17 @@ impl pallet_contracts::Config for Test {
 	type DeletionQueueDepth = DeletionQueueDepth;
 	type MaxValueSize = MaxValueSize;
 	type ChainExtension = ();
+	type MaxCodeSize = ();
 	type WeightPrice = ();
 	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
 }
 
-impl Config for Test {
+impl pallet_template::Config for Test {
 	type Event = ();
 	type WeightInfo = ();
-
 }
-pub type TemplateModule = Module<Test>;
 
-
-// This function basically just builds a genesis storage key/value store according to
-// our desired mockup.
+// Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    system::GenesisConfig::default()
-        .build_storage::<Test>()
-        .unwrap()
-        .into()
+	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }
