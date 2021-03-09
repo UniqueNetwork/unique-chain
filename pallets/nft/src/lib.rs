@@ -2664,7 +2664,7 @@ where
 
                 <ContractOwner<T>>::insert(new_contract_address.clone(), who.clone());
 
-                T::AccountId::default()
+                None
             }
 
             // When the contract is called, check if the sponsoring is enabled and pay fees from contract endowment if it is
