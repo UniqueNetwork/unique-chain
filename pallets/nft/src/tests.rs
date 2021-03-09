@@ -55,11 +55,11 @@ fn create_test_collection_for_owner(mode: &CollectionMode, owner: u64, id: Colle
     let saved_col_name: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
     let saved_description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
     let saved_prefix: Vec<u8> = b"token_prefix1\0".to_vec();
-    assert_eq!(TemplateModule::collection(id).owner, owner);
-    assert_eq!(TemplateModule::collection(id).name, saved_col_name);
-    assert_eq!(TemplateModule::collection(id).mode, *mode);
-    assert_eq!(TemplateModule::collection(id).description, saved_description);
-    assert_eq!(TemplateModule::collection(id).token_prefix, saved_prefix);
+    assert_eq!(TemplateModule::collection_id(id).unwrap().owner, owner);
+    assert_eq!(TemplateModule::collection_id(id).unwrap().name, saved_col_name);
+    assert_eq!(TemplateModule::collection_id(id).unwrap().mode, *mode);
+    assert_eq!(TemplateModule::collection_id(id).unwrap().description, saved_description);
+    assert_eq!(TemplateModule::collection_id(id).unwrap().token_prefix, saved_prefix);
     id
 }
 
@@ -89,7 +89,7 @@ fn set_version_schema() {
         let collection_id = create_test_collection(&CollectionMode::NFT, 1);
         
         assert_ok!(TemplateModule::set_schema_version(origin1, collection_id, SchemaVersion::Unique));
-        assert_eq!(TemplateModule::collection(collection_id).schema_version, SchemaVersion::Unique);
+        assert_eq!(TemplateModule::collection_id(collection_id).unwrap().schema_version, SchemaVersion::Unique);
     });
 }
 
@@ -622,7 +622,7 @@ fn change_collection_owner() {
             collection_id,
             2
         ));
-        assert_eq!(TemplateModule::collection(collection_id).owner, 2);
+        assert_eq!(TemplateModule::collection_id(collection_id).unwrap().owner, 2);
     });
 }
 
@@ -1841,8 +1841,8 @@ fn set_const_on_chain_schema() {
         let origin1 = Origin::signed(1);
         assert_ok!(TemplateModule::set_const_on_chain_schema(origin1, collection_id, b"test const on chain schema".to_vec()));
 
-        assert_eq!(TemplateModule::collection(collection_id).const_on_chain_schema, b"test const on chain schema".to_vec());
-        assert_eq!(TemplateModule::collection(collection_id).variable_on_chain_schema, b"".to_vec());
+        assert_eq!(TemplateModule::collection_id(collection_id).unwrap().const_on_chain_schema, b"test const on chain schema".to_vec());
+        assert_eq!(TemplateModule::collection_id(collection_id).unwrap().variable_on_chain_schema, b"".to_vec());
     });
 }
 
@@ -1856,8 +1856,8 @@ fn set_variable_on_chain_schema() {
         let origin1 = Origin::signed(1);
         assert_ok!(TemplateModule::set_variable_on_chain_schema(origin1, collection_id, b"test variable on chain schema".to_vec()));
 
-        assert_eq!(TemplateModule::collection(collection_id).const_on_chain_schema, b"".to_vec());
-        assert_eq!(TemplateModule::collection(collection_id).variable_on_chain_schema, b"test variable on chain schema".to_vec());
+        assert_eq!(TemplateModule::collection_id(collection_id).unwrap().const_on_chain_schema, b"".to_vec());
+        assert_eq!(TemplateModule::collection_id(collection_id).unwrap().variable_on_chain_schema, b"test variable on chain schema".to_vec());
     });
 }
 
