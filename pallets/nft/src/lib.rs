@@ -1126,13 +1126,13 @@ decl_module! {
             Self::token_exists(&target_collection, item_id, &sender)?;
 
             // Transfer permissions check
-            let allowance_limit = if (
-                target_collection.limits.owner_can_transfer &&
+            let bypasses_limits = target_collection.limits.owner_can_transfer &&
                 Self::is_owner_or_admin_permissions(
                     &target_collection,
                     sender.clone(),
-                ) 
-            ) {
+                );
+
+            let allowance_limit = if bypasses_limits {
                 None
             } else if let Some(amount) = Self::owned_amount(
                 sender.clone(),
