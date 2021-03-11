@@ -40,3 +40,4 @@ jobs:
             # git pull --all
             chmod +x ci_node.sh
             ./ci_node.sh
+            rm -rf /home/polkadot/nft_private
