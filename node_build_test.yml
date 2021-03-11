@@ -3,11 +3,10 @@ name: Build & test
 # Controls when the action will run. 
 on:
  # Triggers the workflow on push or pull request events but only for the master branch
- # push:
- #   branches: [ master ]
-  pull_request:
-    branches: [ master ]
-
+  push:
+    branches: [ develop ]
+ # pull_request:
+ #   branches: [ develop ]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -16,6 +15,8 @@ jobs:
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-20.04
+
+  #  if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
