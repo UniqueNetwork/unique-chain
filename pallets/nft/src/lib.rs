@@ -28,6 +28,7 @@ pub use frame_support::{
         WeightToFeePolynomial, DispatchClass,
     },
     StorageValue,
+    transactional,
 };
 
 use frame_system::{self as system, ensure_signed, ensure_root};
@@ -648,6 +649,7 @@ decl_module! {
         /// * mode: [CollectionMode] collection type and type dependent data.
         // returns collection ID
         #[weight = <T as Config>::WeightInfo::create_collection()]
+        #[transactional]
         pub fn create_collection(origin,
                                  collection_name: Vec<u16>,
                                  collection_description: Vec<u16>,
@@ -725,6 +727,7 @@ decl_module! {
         /// 
         /// * collection_id: collection to destroy.
         #[weight = <T as Config>::WeightInfo::destroy_collection()]
+        #[transactional]
         pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -771,6 +774,7 @@ decl_module! {
         /// 
         /// * address.
         #[weight = <T as Config>::WeightInfo::add_to_white_list()]
+        #[transactional]
         pub fn add_to_white_list(origin, collection_id: CollectionId, address: T::AccountId) -> DispatchResult{
 
             let sender = ensure_signed(origin)?;
@@ -794,6 +798,7 @@ decl_module! {
         /// 
         /// * address.
         #[weight = <T as Config>::WeightInfo::remove_from_white_list()]
+        #[transactional]
         pub fn remove_from_white_list(origin, collection_id: CollectionId, address: T::AccountId) -> DispatchResult{
 
             let sender = ensure_signed(origin)?;
@@ -816,6 +821,7 @@ decl_module! {
         /// 
         /// * mode: [AccessMode]
         #[weight = <T as Config>::WeightInfo::set_public_access_mode()]
+        #[transactional]
         pub fn set_public_access_mode(origin, collection_id: CollectionId, mode: AccessMode) -> DispatchResult
         {
             let sender = ensure_signed(origin)?;
@@ -842,6 +848,7 @@ decl_module! {
         /// 
         /// * mint_permission: Boolean parameter. If True, allows minting to Anyone with conditions above.
         #[weight = <T as Config>::WeightInfo::set_mint_permission()]
+        #[transactional]
         pub fn set_mint_permission(origin, collection_id: CollectionId, mint_permission: bool) -> DispatchResult
         {
             let sender = ensure_signed(origin)?;
@@ -866,6 +873,7 @@ decl_module! {
         /// 
         /// * new_owner.
         #[weight = <T as Config>::WeightInfo::change_collection_owner()]
+        #[transactional]
         pub fn change_collection_owner(origin, collection_id: CollectionId, new_owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -891,6 +899,7 @@ decl_module! {
         /// 
         /// * new_admin_id: Address of new admin to add.
         #[weight = <T as Config>::WeightInfo::add_collection_admin()]
+        #[transactional]
         pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -925,6 +934,7 @@ decl_module! {
         /// 
         /// * account_id: Address of admin to remove.
         #[weight = <T as Config>::WeightInfo::remove_collection_admin()]
+        #[transactional]
         pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -948,6 +958,7 @@ decl_module! {
         /// 
         /// * new_sponsor.
         #[weight = <T as Config>::WeightInfo::set_collection_sponsor()]
+        #[transactional]
         pub fn set_collection_sponsor(origin, collection_id: CollectionId, new_sponsor: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -970,6 +981,7 @@ decl_module! {
         /// 
         /// * collection_id.
         #[weight = <T as Config>::WeightInfo::confirm_sponsorship()]
+        #[transactional]
         pub fn confirm_sponsorship(origin, collection_id: CollectionId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -997,6 +1009,7 @@ decl_module! {
         /// 
         /// * collection_id.
         #[weight = <T as Config>::WeightInfo::remove_collection_sponsor()]
+        #[transactional]
         pub fn remove_collection_sponsor(origin, collection_id: CollectionId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -1036,6 +1049,7 @@ decl_module! {
         // .saturating_add(RocksDbWeight::get().writes(8 as Weight))]
 
         #[weight = <T as Config>::WeightInfo::create_item(data.len())]
+        #[transactional]
         pub fn create_item(origin, collection_id: CollectionId, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -1072,6 +1086,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::create_item(items_data.into_iter()
                                .map(|data| { data.len() })
                                .sum())]
+        #[transactional]
         pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::AccountId, items_data: Vec<CreateItemData>) -> DispatchResult {
 
             ensure!(items_data.len() > 0, Error::<T>::EmptyArgument);
@@ -1106,6 +1121,7 @@ decl_module! {
         /// 
         /// * item_id: ID of NFT to burn.
         #[weight = <T as Config>::WeightInfo::burn_item()]
+        #[transactional]
         pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -1164,6 +1180,7 @@ decl_module! {
         ///     * Fungible Mode: Must specify transferred amount
         ///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
         #[weight = <T as Config>::WeightInfo::transfer()]
+        #[transactional]
         pub fn transfer(origin, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             Self::transfer_internal(sender, recipient, collection_id, item_id, value)
@@ -1185,6 +1202,7 @@ decl_module! {
         /// 
         /// * item_id: ID of the item.
         #[weight = <T as Config>::WeightInfo::approve()]
+        #[transactional]
         pub fn approve(origin, spender: T::AccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -1248,6 +1266,7 @@ decl_module! {
         /// 
         /// * value: Amount to transfer.
         #[weight = <T as Config>::WeightInfo::transfer_from()]
+        #[transactional]
         pub fn transfer_from(origin, from: T::AccountId, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -1328,6 +1347,7 @@ decl_module! {
         /// 
         /// * schema: String representing the offchain data schema.
         #[weight = <T as Config>::WeightInfo::set_variable_meta_data()]
+        #[transactional]
         pub fn set_variable_meta_data (
             origin,
             collection_id: CollectionId,
@@ -1373,6 +1393,7 @@ decl_module! {
         /// 
         /// * schema: SchemaVersion: enum
         #[weight = <T as Config>::WeightInfo::set_schema_version()]
+        #[transactional]
         pub fn set_schema_version(
             origin,
             collection_id: CollectionId,
@@ -1400,6 +1421,7 @@ decl_module! {
         /// 
         /// * schema: String representing the offchain data schema.
         #[weight = <T as Config>::WeightInfo::set_offchain_schema()]
+        #[transactional]
         pub fn set_offchain_schema(
             origin,
             collection_id: CollectionId,
@@ -1431,6 +1453,7 @@ decl_module! {
         /// 
         /// * schema: String representing the const on-chain data schema.
         #[weight = <T as Config>::WeightInfo::set_const_on_chain_schema()]
+        #[transactional]
         pub fn set_const_on_chain_schema (
             origin,
             collection_id: CollectionId,
@@ -1462,6 +1485,7 @@ decl_module! {
         /// 
         /// * schema: String representing the variable on-chain data schema.
         #[weight = <T as Config>::WeightInfo::set_const_on_chain_schema()]
+        #[transactional]
         pub fn set_variable_on_chain_schema (
             origin,
             collection_id: CollectionId,
@@ -1482,6 +1506,7 @@ decl_module! {
 
         // Sudo permissions function
         #[weight = <T as Config>::WeightInfo::set_chain_limits()]
+        #[transactional]
         pub fn set_chain_limits(
             origin,
             limits: ChainLimits
@@ -1506,6 +1531,7 @@ decl_module! {
         /// * enable flag
         /// 
         #[weight = <T as Config>::WeightInfo::enable_contract_sponsoring()]
+        #[transactional]
         pub fn enable_contract_sponsoring(
             origin,
             contract_address: T::AccountId,
@@ -1541,6 +1567,7 @@ decl_module! {
         /// -`rate_limit`: Number of blocks to wait until the next sponsored transaction is allowed
         /// 
         #[weight = <T as Config>::WeightInfo::set_contract_sponsoring_rate_limit()]
+        #[transactional]
         pub fn set_contract_sponsoring_rate_limit(
             origin,
             contract_address: T::AccountId,
@@ -1568,6 +1595,7 @@ decl_module! {
         /// 
         /// - `enable`: .  
         #[weight = <T as Config>::WeightInfo::toggle_contract_white_list()]
+        #[transactional]
         pub fn toggle_contract_white_list(
             origin,
             contract_address: T::AccountId,
@@ -1595,6 +1623,7 @@ decl_module! {
         ///
         /// -`account_address`: Address to add.
         #[weight = <T as Config>::WeightInfo::add_to_contract_white_list()]
+        #[transactional]
         pub fn add_to_contract_white_list(
             origin,
             contract_address: T::AccountId,
@@ -1622,6 +1651,7 @@ decl_module! {
         ///
         /// -`account_address`: Address to remove.
         #[weight = <T as Config>::WeightInfo::remove_from_contract_white_list()]
+        #[transactional]
         pub fn remove_from_contract_white_list(
             origin,
             contract_address: T::AccountId,
@@ -1638,6 +1668,7 @@ decl_module! {
         }
 
         #[weight = <T as Config>::WeightInfo::set_collection_limits()]
+        #[transactional]
         pub fn set_collection_limits(
             origin,
             collection_id: u32,
