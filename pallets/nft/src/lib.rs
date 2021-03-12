@@ -1051,7 +1051,7 @@ decl_module! {
             Ok(())
         }
 
-        /// This method creates multiple instances of NFT Collection created with CreateCollection method.
+        /// This method creates multiple items in a collection created with CreateCollection method.
         /// 
         /// # Permissions
         /// 
