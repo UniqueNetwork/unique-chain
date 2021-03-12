@@ -403,54 +403,113 @@ mod benchmarking;
 
 // #endregion
 
+// # Used definitions
+//
+// ## User control levels
+//
+// chain-controlled - key is uncontrolled by user
+//                    i.e autoincrementing index
+//                    can use non-cryptographic hash
+// real - key is controlled by user
+//        but it is hard to generate enough colliding values, i.e owner of signed txs
+//        can use non-cryptographic hash
+// controlled - key is completly controlled by users
+//              i.e maps with mutable keys
+//              should use cryptographic hash
+//
+// ## User control level downgrade reasons
+//
+// ?1 - chain-controlled -> controlled
+//      collections/tokens can be destroyed, resulting in massive holes
+// ?2 - chain-controlled -> controlled
+//      same as ?1, but can be only added, resulting in easier exploitation
+// ?3 - real -> controlled
+//      no confirmation required, so addresses can be easily generated
 decl_storage! {
     trait Store for Module<T: Config> as Nft {
 
-        // Private members
-        NextCollectionID: CollectionId;
+        //#region Private members
+        /// Id of next collection
         CreatedCollectionCount: u32;
+        /// Used for migrations
         ChainVersion: u64;
-        ItemListIndex: map hasher(identity) CollectionId => TokenId;
+        /// Id of last collection token
+        /// Collection id (controlled?1)
+        ItemListIndex: map hasher(blake2_128_concat) CollectionId => TokenId;
+        //#endregion
 
-        // Chain limits struct
+        //#region Chain limits struct
         pub ChainLimit get(fn chain_limit) config(): ChainLimits;
+        //#endregion
 
-        // Bound counters
-        CollectionCount: u32;
+        //#region Bound counters
+        /// Amount of collections destroyed, used for total amount tracking with
+        /// CreatedCollectionCount
+        DestroyedCollectionCount: u32;
+        /// Total amount of account owned tokens (NFTs + RFTs + unique fungibles)
+        /// Account id (real)
         pub AccountItemCount get(fn account_item_count): map hasher(twox_64_concat) T::AccountId => u32;
+        //#endregion
 
-        // Basic collections
-        pub Collection get(fn collection) config(): map hasher(identity) CollectionId => CollectionType<T::AccountId>;
-        pub AdminList get(fn admin_list_collection): map hasher(identity) CollectionId => Vec<T::AccountId>;
-        pub WhiteList get(fn white_list): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => bool;
+        //#region Basic collections
+        /// Collection info
+        /// Collection id (controlled?1)
+        pub Collection get(fn collection) config(): map hasher(blake2_128_concat) CollectionId => CollectionType<T::AccountId>;
+        /// List of collection admins
+        /// Collection id (controlled?2)
+        pub AdminList get(fn admin_list_collection): map hasher(blake2_128_concat) CollectionId => Vec<T::AccountId>;
+        /// Whitelisted collection users
+        /// Collection id (controlled?2), user id (controlled?3)
+        pub WhiteList get(fn white_list): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) T::AccountId => bool;
+        //#endregion
 
-        /// Balance owner per collection map
-        pub Balance get(fn balance_count): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => u128;
+        /// How many of collection items user have
+        /// Collection id (controlled?2), account id (real)
+        pub Balance get(fn balance_count): double_map hasher(blake2_128_concat) CollectionId, hasher(twox_64_concat) T::AccountId => u128;
 
-        /// second parameter: item id + owner account id + spender account id
-        pub Allowances get(fn approved): double_map hasher(identity) CollectionId, hasher(twox_64_concat) (TokenId, T::AccountId, T::AccountId) => u128;
+        /// Amount of items which spender can transfer out of owners account (via transferFrom)
+        /// Collection id (controlled?2), (token id (controlled ?2) + owner account id (real) + spender account id (controlled?3))
+        pub Allowances get(fn approved): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) (TokenId, T::AccountId, T::AccountId) => u128;
 
-        /// Item collections
-        pub NftItemList get(fn nft_item_id) config(): double_map hasher(identity) CollectionId, hasher(identity) TokenId => NftItemType<T::AccountId>;
-        pub FungibleItemList get(fn fungible_item_id) config(): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => FungibleItemType;
-        pub ReFungibleItemList get(fn refungible_item_id) config(): double_map hasher(identity) CollectionId, hasher(identity) TokenId => ReFungibleItemType<T::AccountId>;
+        //#region Item collections
+        /// Collection id (controlled?2), token id (controlled?1)
+        pub NftItemList get(fn nft_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => NftItemType<T::AccountId>;
+        /// Collection id (controlled?2), owner (controlled?2)
+        pub FungibleItemList get(fn fungible_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) T::AccountId => FungibleItemType;
+        /// Collection id (controlled?2), token id (controlled?1)
+        pub ReFungibleItemList get(fn refungible_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => ReFungibleItemType<T::AccountId>;
+        //#endregion
 
-        /// Index list
-        pub AddressTokens get(fn address_tokens): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => Vec<TokenId>;
+        //#region Index list
+        /// Collection id (controlled?2), tokens owner (controlled?2)
+        pub AddressTokens get(fn address_tokens): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) T::AccountId => Vec<TokenId>;
+        //#endregion
 
-        /// Tokens transfer baskets
-        pub CreateItemBasket get(fn create_item_basket): map hasher(twox_64_concat) (CollectionId, T::AccountId) => T::BlockNumber;
-        pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => T::BlockNumber;
-        pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => T::BlockNumber;
-        pub ReFungibleTransferBasket get(fn refungible_transfer_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => T::BlockNumber;
+        //#region Tokens transfer rate limit baskets
+        /// (Collection id (controlled?2), who created (real))
+        pub CreateItemBasket get(fn create_item_basket): map hasher(blake2_128_concat) (CollectionId, T::AccountId) => T::BlockNumber;
+        /// Collection id (controlled?2), token id (controlled?2)
+        pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => T::BlockNumber;
+        /// Collection id (controlled?2), owning user (real)
+        pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(twox_64_concat) T::AccountId => T::BlockNumber;
+        /// Collection id (controlled?2), token id (controlled?2)
+        pub ReFungibleTransferBasket get(fn refungible_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => T::BlockNumber;
+        //#endregion
 
-        // Contract Sponsorship and Ownership
+        //#region Contract Sponsorship and Ownership
+        /// Contract address (real)
         pub ContractOwner get(fn contract_owner): map hasher(twox_64_concat) T::AccountId => T::AccountId;
+        /// Contract address (real)
         pub ContractSelfSponsoring get(fn contract_self_sponsoring): map hasher(twox_64_concat) T::AccountId => bool;
+        /// (Contract address(real), caller (real))
         pub ContractSponsorBasket get(fn contract_sponsor_basket): map hasher(twox_64_concat) (T::AccountId, T::AccountId) => T::BlockNumber;
+        /// Contract address (real)
         pub ContractSponsoringRateLimit get(fn contract_sponsoring_rate_limit): map hasher(twox_64_concat) T::AccountId => T::BlockNumber;
+        /// Contract address (real)
         pub ContractWhiteListEnabled get(fn contract_white_list_enabled): map hasher(twox_64_concat) T::AccountId => bool; 
-        pub ContractWhiteList get(fn contract_white_list): double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) T::AccountId => bool; 
+        /// Contract address (real) => Whitelisted user (controlled?3)
+        pub ContractWhiteList get(fn contract_white_list): double_map hasher(twox_64_concat) T::AccountId, hasher(blake2_128_concat) T::AccountId => bool; 
+        //#endregion
     }
     add_extra_genesis {
         build(|config: &GenesisConfig<T>| {
@@ -534,14 +593,6 @@ decl_module! {
         type Error = Error<T>;
 
         fn on_initialize(now: T::BlockNumber) -> Weight {
-
-            if ChainVersion::get() < 2
-            {
-                let value = NextCollectionID::get();
-                CreatedCollectionCount::put(value);
-                ChainVersion::put(2);
-            }
-
             0
         }
 
@@ -578,8 +629,11 @@ decl_module! {
 
             let chain_limit = ChainLimit::get();
 
+            let created_count = CreatedCollectionCount::get();
+            let destroyed_count = DestroyedCollectionCount::get();
+
             // bound Total number of collections
-            ensure!(CollectionCount::get() < chain_limit.collection_numbers_limit, Error::<T>::TotalCollectionsLimitExceeded);
+            ensure!(created_count - destroyed_count < chain_limit.collection_numbers_limit, Error::<T>::TotalCollectionsLimitExceeded);
 
             // check params
             ensure!(decimal_points <= MAX_DECIMAL_POINTS, Error::<T>::CollectionDecimalPointLimitExceeded);
@@ -588,17 +642,11 @@ decl_module! {
             ensure!(token_prefix.len() <= 16, Error::<T>::CollectionTokenPrefixLimitExceeded);
 
             // Generate next collection ID
-            let next_id = CreatedCollectionCount::get()
-                .checked_add(1)
-                .ok_or(Error::<T>::NumOverflow)?;
-
-            // bound counter
-            let total = CollectionCount::get()
+            let next_id = created_count
                 .checked_add(1)
                 .ok_or(Error::<T>::NumOverflow)?;
 
             CreatedCollectionCount::put(next_id);
-            CollectionCount::put(total);
 
             let limits = CollectionLimits {
                 sponsored_data_size: chain_limit.custom_data_limit,
@@ -669,15 +717,9 @@ decl_module! {
             <FungibleTransferBasket<T>>::remove_prefix(collection_id);
             <ReFungibleTransferBasket<T>>::remove_prefix(collection_id);
 
-            if CollectionCount::get() > 0
-            {
-                // bound couter
-                let total = CollectionCount::get()
-                    .checked_sub(1)
-                    .ok_or(Error::<T>::NumOverflow)?;
-
-                CollectionCount::put(total);
-            }
+            DestroyedCollectionCount::put(DestroyedCollectionCount::get()
+                .checked_add(1)
+                .ok_or(Error::<T>::NumOverflow)?);
 
             Ok(())
         }
