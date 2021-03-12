@@ -2176,10 +2176,10 @@ impl<T: Config> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), balance_old_owner);
 
-        let balancenew_owner = <Balance<T>>::get(collection_id, new_owner.clone())
+        let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
             .checked_add(value)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(collection_id, new_owner.clone(), balancenew_owner);
+        <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
 
         let old_owner = item.owner.clone();
         let new_owner_has_account = full_item.owner.iter().any(|i| i.owner == new_owner);
