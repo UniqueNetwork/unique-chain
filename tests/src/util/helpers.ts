@@ -377,8 +377,9 @@ export async function setCollectionSponsorExpectSuccess(collectionId: number, sp
 
     // What to expect
     expect(result.success).to.be.true;
-    expect(collection.Sponsor.toString()).to.be.equal(sponsor.toString());
-    expect(collection.SponsorConfirmed).to.be.false;
+    expect(collection.Sponsorship).to.deep.equal({
+      Unconfirmed: sponsor.toString(),
+    });
   });
 }
 
@@ -434,8 +435,9 @@ export async function confirmSponsorshipExpectSuccess(collectionId: number, send
 
     // What to expect
     expect(result.success).to.be.true;
-    expect(collection.Sponsor).to.be.equal(sender.address);
-    expect(collection.SponsorConfirmed).to.be.true;
+    expect(collection.Sponsorship).to.be.deep.equal({
+      Confirmed: sender.address,
+    });
   });
 }
 

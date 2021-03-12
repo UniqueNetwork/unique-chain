@@ -25,6 +25,8 @@
     "testSetSchemaVersion": "mocha --timeout 9999999 -r ts-node/register ./**/setSchemaVersion.test.ts",
     "testSetVariableMetaData": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetaData.test.ts",
     "testSetCollectionLimits": "mocha --timeout 9999999 -r ts-node/register ./**/setCollectionLimits.test.ts",
+    "testSetCollectionSponsor": "mocha --timeout 9999999 -r ts-node/register ./**/setCollectionSponsor.test.ts",
+    "testConfirmSponsorship": "mocha --timeout 9999999 -r ts-node/register ./**/confirmSponsorship.test.ts",
     "testRemoveCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/removeCollectionAdmin.test.ts",
     "testRemoveCollectionSponsor": "mocha --timeout 9999999 -r ts-node/register ./**/removeCollectionSponsor.test.ts",
     "testRemoveFromWhiteList": "mocha --timeout 9999999 -r ts-node/register ./**/removeFromWhiteList.test.ts",
