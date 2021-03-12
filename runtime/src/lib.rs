@@ -510,6 +510,7 @@ impl pallet_sudo::Config for Runtime {
 
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 10 * UNIQUE;
+	pub const CollectionCreationPrice: Balance = 100 * UNIQUE;
 }
 
 impl pallet_vesting::Config for Runtime {
@@ -524,6 +525,7 @@ impl pallet_vesting::Config for Runtime {
 impl pallet_nft::Config for Runtime {
     type Event = Event;
     type WeightInfo = nft_weights::WeightInfo;
+	type CollectionCreationPrice = CollectionCreationPrice;
 }
 
 construct_runtime!(

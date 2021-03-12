@@ -434,6 +434,8 @@ pub trait Config: system::Config + Sized + pallet_transaction_payment::Config + 
 
     /// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
+
+    type CollectionCreationPrice: Get<BalanceOf<Self>>;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -2535,14 +2537,10 @@ where
 	> {
         let tip = self.0;
 
-        // Set fee based on call type. Creating collection costs 1 Unique.
-        // All other transactions have traditional fees so far
-        // let fee = match call.is_sub_type() {
-        //     Some(Call::create_collection(..)) => <BalanceOf<T>>::from(1_000_000_000),
-        //     _ => Self::traditional_fee(len, info, tip), // Flat fee model, use only for testing purposes
-        //                                                 // _ => <BalanceOf<T>>::from(100)
-        // };
-        let fee = Self::traditional_fee(len, info, tip);
+        let fee = match call.is_sub_type() {
+            Some(Call::create_collection(..)) => T::CollectionCreationPrice::get(),
+            _ => Self::traditional_fee(len, info, tip),
+        };
 
         // Only mess with balances if fee is not zero.
         if fee.is_zero() {
