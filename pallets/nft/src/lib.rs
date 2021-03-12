@@ -423,7 +423,9 @@ decl_error! {
         /// Schema data size limit bound exceeded
         SchemaDataLimitExceeded,
         /// Maximum refungibility exceeded
-        WrongRefungiblePieces
+        WrongRefungiblePieces,
+        /// createRefungible should be called with one owner
+        BadCreateRefungibleCall,
 	}
 }
 
@@ -1301,7 +1303,7 @@ decl_module! {
             }
 
             // Reduce approval by transferred amount or remove if remaining approval drops to 0
-            if approval.checked_sub(value).unwrap_or(0) > 0 {
+            if approval.saturating_sub(value) > 0 {
                 <Allowances<T>>::insert(collection_id, (item_id, &from, &sender), approval - value);
             }
             else {
@@ -1863,8 +1865,14 @@ impl<T: Config> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         let itemcopy = item.clone();
 
-        let value = item.owner.first().unwrap().fraction;
-        let owner = item.owner.first().unwrap().owner.clone();
+        ensure!(
+            item.owner.len() == 1,
+            Error::<T>::BadCreateRefungibleCall,
+        );
+        let item_owner = item.owner.first().expect("only one owner is defined");
+
+        let value = item_owner.fraction;
+        let owner = item_owner.owner.clone();
 
         Self::add_token_index(collection_id, current_index, &owner)?;
 
@@ -1915,9 +1923,8 @@ impl<T: Config> Module<T> {
         let rft_balance = token
             .owner
             .iter()
-            .filter(|&i| i.owner == *owner)
-            .next()
-            .unwrap();
+            .find(|&i| i.owner == *owner)
+            .ok_or(Error::<T>::TokenNotFound)?;
         Self::remove_token_index(collection_id, item_id, owner)?;
 
         // update balance
@@ -1931,7 +1938,7 @@ impl<T: Config> Module<T> {
             .owner
             .iter()
             .position(|i| i.owner == *owner)
-            .unwrap();
+            .expect("owned item is exists");
         token.owner.remove(index);
         let owner_count = token.owner.len();
 
@@ -2158,7 +2165,7 @@ impl<T: Config> Module<T> {
             .iter()
             .filter(|i| i.owner == owner)
             .next()
-            .ok_or(Error::<T>::NumOverflow)?;
+            .ok_or(Error::<T>::TokenNotFound)?;
         let amount = item.fraction;
 
         ensure!(amount >= value, Error::<T>::TokenValueTooLow);
@@ -2186,7 +2193,7 @@ impl<T: Config> Module<T> {
                 .owner
                 .iter_mut()
                 .find(|i| i.owner == owner)
-                .unwrap()
+                .expect("old owner does present in refungible")
                 .owner = new_owner.clone();
             <ReFungibleItemList<T>>::insert(collection_id, item_id, new_full_item);
 
@@ -2198,7 +2205,7 @@ impl<T: Config> Module<T> {
                 .owner
                 .iter_mut()
                 .find(|i| i.owner == owner)
-                .unwrap()
+                .expect("old owner does present in refungible")
                 .fraction -= value;
 
             // separate amount
@@ -2208,7 +2215,7 @@ impl<T: Config> Module<T> {
                     .owner
                     .iter_mut()
                     .find(|i| i.owner == new_owner)
-                    .unwrap()
+                    .expect("new owner has account")
                     .fraction += value;
             } else {
                 // new owner do not have account
