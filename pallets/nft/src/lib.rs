@@ -1799,9 +1799,6 @@ impl<T: Config> Module<T> {
             }
         };
 
-        // call event
-        Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id), owner));
-
         Ok(())
     }
 
@@ -1825,6 +1822,7 @@ impl<T: Config> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, (*owner).clone(), new_balance);
 
+        Self::deposit_event(RawEvent::ItemCreated(collection_id, 0, owner.clone()));
         Ok(())
     }
 
@@ -1848,6 +1846,7 @@ impl<T: Config> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, owner.clone(), new_balance);
 
+        Self::deposit_event(RawEvent::ItemCreated(collection_id, current_index, owner));
         Ok(())
     }
 
@@ -1868,6 +1867,7 @@ impl<T: Config> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item_owner.clone(), new_balance);
 
+        Self::deposit_event(RawEvent::ItemCreated(collection_id, current_index, item_owner));
         Ok(())
     }
 
