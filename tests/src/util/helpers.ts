@@ -396,8 +396,7 @@ export async function removeCollectionSponsorExpectSuccess(collectionId: number)
 
     // What to expect
     expect(result.success).to.be.true;
-    expect(collection.Sponsor).to.be.equal(nullPublicKey);
-    expect(collection.SponsorConfirmed).to.be.false;
+    expect(collection.Sponsorship).to.be.deep.equal({ Disabled: null });
   });
 }
 

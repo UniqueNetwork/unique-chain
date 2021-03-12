@@ -123,6 +123,42 @@ pub struct Ownership<AccountId> {
     pub fraction: u128,
 }
 
+#[derive(Encode, Decode, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum SponsorshipState<AccountId> {
+    /// The fees are applied to the transaction sender
+    Disabled,
+    Unconfirmed(AccountId),
+    /// Transactions are sponsored by specified account
+    Confirmed(AccountId),
+}
+
+impl<AccountId> SponsorshipState<AccountId> {
+    fn sponsor(&self) -> Option<&AccountId> {
+        match self {
+            Self::Confirmed(sponsor) => Some(sponsor),
+            _ => None,
+        }
+    }
+
+    fn pending_sponsor(&self) -> Option<&AccountId> {
+        match self {
+            Self::Unconfirmed(sponsor) | Self::Confirmed(sponsor) => Some(sponsor),
+            _ => None,
+        }
+    }
+
+    fn confirmed(&self) -> bool {
+        matches!(self, Self::Confirmed(_))
+    }
+}
+
+impl<T> Default for SponsorshipState<T> {
+    fn default() -> Self {
+        Self::Disabled
+    }
+}
+
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct CollectionType<AccountId> {
@@ -136,8 +172,7 @@ pub struct CollectionType<AccountId> {
     pub mint_mode: bool,
     pub offchain_schema: Vec<u8>,
     pub schema_version: SchemaVersion,
-    pub sponsor: AccountId, // Who pays fees. If set to default address, the fees are applied to the transaction sender
-    pub sponsor_confirmed: bool, // False if sponsor address has not yet confirmed sponsorship. True otherwise.
+    pub sponsorship: SponsorshipState<AccountId>,
     pub limits: CollectionLimits, // Collection private restrictions 
     pub variable_on_chain_schema: Vec<u8>, //
     pub const_on_chain_schema: Vec<u8>, //
@@ -665,8 +700,7 @@ decl_module! {
                 token_prefix: token_prefix,
                 offchain_schema: Vec::new(),
                 schema_version: SchemaVersion::ImageURL,
-                sponsor: T::AccountId::default(),
-                sponsor_confirmed: false,
+                sponsorship: SponsorshipState::Disabled,
                 variable_on_chain_schema: Vec::new(),
                 const_on_chain_schema: Vec::new(),
                 limits,
@@ -922,8 +956,7 @@ decl_module! {
             let mut target_collection = <Collection<T>>::get(collection_id);
             ensure!(sender == target_collection.owner, Error::<T>::NoPermission);
 
-            target_collection.sponsor = new_sponsor;
-            target_collection.sponsor_confirmed = false;
+            target_collection.sponsorship = SponsorshipState::Unconfirmed(new_sponsor);
             <Collection<T>>::insert(collection_id, target_collection);
 
             Ok(())
@@ -943,9 +976,12 @@ decl_module! {
             ensure!(<Collection<T>>::contains_key(collection_id), Error::<T>::CollectionNotFound);
 
             let mut target_collection = <Collection<T>>::get(collection_id);
-            ensure!(sender == target_collection.sponsor, Error::<T>::ConfirmUnsetSponsorFail);
+            ensure!(
+                target_collection.sponsorship.pending_sponsor() == Some(&sender),
+                Error::<T>::ConfirmUnsetSponsorFail
+            );
 
-            target_collection.sponsor_confirmed = true;
+            target_collection.sponsorship = SponsorshipState::Confirmed(sender);
             <Collection<T>>::insert(collection_id, target_collection);
 
             Ok(())
@@ -969,8 +1005,7 @@ decl_module! {
             let mut target_collection = <Collection<T>>::get(collection_id);
             ensure!(sender == target_collection.owner, Error::<T>::NoPermission);
 
-            target_collection.sponsor = T::AccountId::default();
-            target_collection.sponsor_confirmed = false;
+            target_collection.sponsorship = SponsorshipState::Disabled;
             <Collection<T>>::insert(collection_id, target_collection);
 
             Ok(())
@@ -2485,7 +2520,9 @@ where
                 // sponsor timeout
                 let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
 
-                let limit = <Collection<T>>::get(collection_id).limits.sponsor_transfer_timeout;
+                let collection = <Collection<T>>::get(collection_id);
+
+                let limit = collection.limits.sponsor_transfer_timeout;
                 let mut sponsored = true;
                 if <CreateItemBasket<T>>::contains_key((collection_id, &who)) {
                     let last_tx_block = <CreateItemBasket<T>>::get((collection_id, &who));
@@ -2499,11 +2536,12 @@ where
                 }
 
                 // check free create limit
-                if (<Collection<T>>::get(collection_id).limits.sponsored_data_size >= (_properties.len() as u32)) &&
-                   (<Collection<T>>::get(collection_id).sponsor_confirmed) &&
+                if (collection.limits.sponsored_data_size >= (_properties.len() as u32)) &&
                    (sponsored)
                 {
-                    <Collection<T>>::get(collection_id).sponsor
+                    collection.sponsorship.sponsor()
+                        .cloned()
+                        .unwrap_or_default()
                 } else {
                     T::AccountId::default()
                 }
@@ -2511,7 +2549,7 @@ where
             Some(Call::transfer(_new_owner, collection_id, item_id, _value)) => {
                 
                 let mut sponsor_transfer = false;
-                if <Collection<T>>::get(collection_id).sponsor_confirmed {
+                if <Collection<T>>::get(collection_id).sponsorship.confirmed() {
 
                     let collection_limits = <Collection<T>>::get(collection_id).limits;
                     let collection_mode = <Collection<T>>::get(collection_id).mode;
@@ -2598,7 +2636,9 @@ where
                 if !sponsor_transfer {
                     T::AccountId::default()
                 } else {
-                    <Collection<T>>::get(collection_id).sponsor
+                    <Collection<T>>::get(collection_id).sponsorship.sponsor()
+                        .cloned()
+                        .unwrap_or_default()
                 }
             }
 
