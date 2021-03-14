@@ -21,6 +21,8 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile-tests
+      volumes:
+      - ./tests/src/config_docker.ts:/nft_parachain/tests/src/config.ts
     networks:
       - node_test_network
     depends_on:
