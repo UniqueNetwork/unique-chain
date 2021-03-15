@@ -32,7 +32,6 @@
       "VariableData": "Vec<u8>"
     },
     "Collection": {
-      "Id": "CollectionId",
       "Owner": "AccountId",
       "Mode": "CollectionMode",
       "Access": "AccessMode",

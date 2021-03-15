@@ -13,6 +13,7 @@ pub use std::*;
 #[cfg(feature = "std")]
 pub use serde::*;
 
+use core::ops::{Deref, DerefMut};
 use codec::{Decode, Encode};
 pub use frame_support::{
     construct_runtime, decl_event, decl_module, decl_storage, decl_error,
@@ -126,7 +127,6 @@ pub struct Ownership<AccountId> {
 #[derive(Encode, Decode, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Collection<T: Config> {
-    pub id: CollectionId,
     pub owner: T::AccountId,
     pub mode: CollectionMode,
     pub access: AccessMode,
@@ -142,6 +142,25 @@ pub struct Collection<T: Config> {
     pub limits: CollectionLimits<T::BlockNumber>, // Collection private restrictions 
     pub variable_on_chain_schema: Vec<u8>, //
     pub const_on_chain_schema: Vec<u8>, //
+}
+
+pub struct CollectionHandle<T: Config> {
+    pub id: CollectionId,
+    collection: Collection<T>,
+}
+
+impl<T: Config> Deref for CollectionHandle<T> {
+    type Target = Collection<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.collection
+    }
+}
+
+impl<T: Config> DerefMut for CollectionHandle<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.collection
+    }
 }
 
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
@@ -617,7 +636,6 @@ decl_module! {
 
             // Create new collection
             let new_collection = Collection {
-                id: next_id,
                 owner: who.clone(),
                 name: collection_name,
                 mode: mode.clone(),
@@ -1579,7 +1597,7 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             let mut target_collection = Self::get_collection(collection_id)?;
             Self::check_owner_permissions(&target_collection, sender.clone())?;
-            let old_limits = target_collection.limits;
+            let old_limits = &target_collection.limits;
             let chain_limits = ChainLimit::get();
 
             // collection bounds
@@ -1608,7 +1626,7 @@ decl_module! {
 
 impl<T: Config> Module<T> {
 
-    pub fn transfer_internal(sender: T::AccountId, recipient: T::AccountId, target_collection: &Collection<T>, item_id: TokenId, value: u128) -> DispatchResult {
+    pub fn transfer_internal(sender: T::AccountId, recipient: T::AccountId, target_collection: &CollectionHandle<T>, item_id: TokenId, value: u128) -> DispatchResult {
         // Limits check
         Self::is_correct_transfer(target_collection, &recipient)?;
 
@@ -1636,7 +1654,7 @@ impl<T: Config> Module<T> {
     }
 
 
-    fn is_correct_transfer(collection: &Collection<T>, recipient: &T::AccountId) -> DispatchResult {
+    fn is_correct_transfer(collection: &CollectionHandle<T>, recipient: &T::AccountId) -> DispatchResult {
         let collection_id = collection.id;
 
         // check token limit and account token limit
@@ -1646,7 +1664,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn can_create_items_in_collection(collection: &Collection<T>, sender: &T::AccountId, owner: &T::AccountId) -> DispatchResult {
+    fn can_create_items_in_collection(collection: &CollectionHandle<T>, sender: &T::AccountId, owner: &T::AccountId) -> DispatchResult {
         let collection_id = collection.id;
 
         // check token limit and account token limit
@@ -1664,7 +1682,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn validate_create_item_args(target_collection: &Collection<T>, data: &CreateItemData) -> DispatchResult {
+    fn validate_create_item_args(target_collection: &CollectionHandle<T>, data: &CreateItemData) -> DispatchResult {
         match target_collection.mode
         {
             CollectionMode::NFT => {
@@ -1702,7 +1720,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn create_item_no_validation(collection: &Collection<T>, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
+    fn create_item_no_validation(collection: &CollectionHandle<T>, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
         let collection_id = collection.id;
 
         match data
@@ -1739,7 +1757,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn add_fungible_item(collection: &Collection<T>, owner: &T::AccountId, value: u128) -> DispatchResult {
+    fn add_fungible_item(collection: &CollectionHandle<T>, owner: &T::AccountId, value: u128) -> DispatchResult {
         let collection_id = collection.id;
 
         // Does new owner already have an account?
@@ -1763,7 +1781,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn add_refungible_item(collection: &Collection<T>, item: ReFungibleItemType<T::AccountId>) -> DispatchResult {
+    fn add_refungible_item(collection: &CollectionHandle<T>, item: ReFungibleItemType<T::AccountId>) -> DispatchResult {
         let collection_id = collection.id;
 
         let current_index = <ItemListIndex>::get(collection_id)
@@ -1788,7 +1806,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn add_nft_item(collection: &Collection<T>, item: NftItemType<T::AccountId>) -> DispatchResult {
+    fn add_nft_item(collection: &CollectionHandle<T>, item: NftItemType<T::AccountId>) -> DispatchResult {
         let collection_id = collection.id;
 
         let current_index = <ItemListIndex>::get(collection_id)
@@ -1811,7 +1829,7 @@ impl<T: Config> Module<T> {
     }
 
     fn burn_refungible_item(
-        collection: &Collection<T>,
+        collection: &CollectionHandle<T>,
         item_id: TokenId,
         owner: &T::AccountId,
     ) -> DispatchResult {
@@ -1857,7 +1875,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn burn_nft_item(collection: &Collection<T>, item_id: TokenId) -> DispatchResult {
+    fn burn_nft_item(collection: &CollectionHandle<T>, item_id: TokenId) -> DispatchResult {
         let collection_id = collection.id;
 
         ensure!(
@@ -1878,7 +1896,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn burn_fungible_item(owner: &T::AccountId, collection: &Collection<T>, value: u128) -> DispatchResult {
+    fn burn_fungible_item(owner: &T::AccountId, collection: &CollectionHandle<T>, value: u128) -> DispatchResult {
         let collection_id = collection.id;
 
         ensure!(
@@ -1905,16 +1923,20 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    pub fn get_collection(collection_id: CollectionId) -> Result<Collection<T>, sp_runtime::DispatchError> {
+    pub fn get_collection(collection_id: CollectionId) -> Result<CollectionHandle<T>, sp_runtime::DispatchError> {
         Ok(<CollectionById<T>>::get(collection_id)
+            .map(|collection| CollectionHandle {
+                id: collection_id,
+                collection
+            })
             .ok_or(Error::<T>::CollectionNotFound)?)
     }
 
-    fn save_collection(collection: Collection<T>) {
-        <CollectionById<T>>::insert(collection.id, collection);
+    fn save_collection(collection: CollectionHandle<T>) {
+        <CollectionById<T>>::insert(collection.id, collection.collection);
     }
 
-    fn check_owner_permissions(target_collection: &Collection<T>, subject: T::AccountId) -> DispatchResult {
+    fn check_owner_permissions(target_collection: &CollectionHandle<T>, subject: T::AccountId) -> DispatchResult {
         ensure!(
             subject == target_collection.owner,
             Error::<T>::NoPermission
@@ -1923,7 +1945,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn is_owner_or_admin_permissions(collection: &Collection<T>, subject: T::AccountId) -> bool {
+    fn is_owner_or_admin_permissions(collection: &CollectionHandle<T>, subject: T::AccountId) -> bool {
         let mut result: bool = subject == collection.owner;
         let exists = <AdminList<T>>::contains_key(collection.id);
 
@@ -1937,7 +1959,7 @@ impl<T: Config> Module<T> {
     }
 
     fn check_owner_or_admin_permissions(
-        collection: &Collection<T>,
+        collection: &CollectionHandle<T>,
         subject: T::AccountId,
     ) -> DispatchResult {
         let result = Self::is_owner_or_admin_permissions(collection, subject.clone());
@@ -1951,7 +1973,7 @@ impl<T: Config> Module<T> {
 
     fn owned_amount(
         subject: T::AccountId,
-        target_collection: &Collection<T>,
+        target_collection: &CollectionHandle<T>,
         item_id: TokenId,
     ) -> Option<u128> {
         let collection_id = target_collection.id;
@@ -1979,7 +2001,7 @@ impl<T: Config> Module<T> {
         }
     }
 
-    fn is_item_owner(subject: T::AccountId, target_collection: &Collection<T>, item_id: TokenId) -> bool {
+    fn is_item_owner(subject: T::AccountId, target_collection: &CollectionHandle<T>, item_id: TokenId) -> bool {
         let collection_id = target_collection.id;
 
         match target_collection.mode {
@@ -1999,7 +2021,7 @@ impl<T: Config> Module<T> {
         }
     }
 
-    fn check_white_list(collection: &Collection<T>, address: &T::AccountId) -> DispatchResult {
+    fn check_white_list(collection: &CollectionHandle<T>, address: &T::AccountId) -> DispatchResult {
         let collection_id = collection.id;
 
         let mes = Error::<T>::AddresNotInWhiteList;
@@ -2011,7 +2033,7 @@ impl<T: Config> Module<T> {
     /// Check if token exists. In case of Fungible, check if there is an entry for 
     /// the owner in fungible balances double map
     fn token_exists(
-        target_collection: &Collection<T>,
+        target_collection: &CollectionHandle<T>,
         item_id: TokenId,
         owner: &T::AccountId
     ) -> DispatchResult {
@@ -2029,7 +2051,7 @@ impl<T: Config> Module<T> {
     }
 
     fn transfer_fungible(
-        collection: &Collection<T>,
+        collection: &CollectionHandle<T>,
         value: u128,
         owner: &T::AccountId,
         recipient: &T::AccountId,
@@ -2059,7 +2081,7 @@ impl<T: Config> Module<T> {
     }
 
     fn transfer_refungible(
-        collection: &Collection<T>,
+        collection: &CollectionHandle<T>,
         item_id: TokenId,
         value: u128,
         owner: T::AccountId,
@@ -2142,7 +2164,7 @@ impl<T: Config> Module<T> {
     }
 
     fn transfer_nft(
-        collection: &Collection<T>,
+        collection: &CollectionHandle<T>,
         item_id: TokenId,
         sender: T::AccountId,
         new_owner: T::AccountId,
@@ -2180,7 +2202,7 @@ impl<T: Config> Module<T> {
     }
     
     fn set_re_fungible_variable_data(
-        collection: &Collection<T>,
+        collection: &CollectionHandle<T>,
         item_id: TokenId,
         data: Vec<u8>
     ) -> DispatchResult {
@@ -2195,7 +2217,7 @@ impl<T: Config> Module<T> {
     }
 
     fn set_nft_variable_data(
-        collection: &Collection<T>,
+        collection: &CollectionHandle<T>,
         item_id: TokenId,
         data: Vec<u8>
     ) -> DispatchResult {

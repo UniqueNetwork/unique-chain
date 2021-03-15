@@ -183,7 +183,6 @@ fn testnet_genesis(
             collection_id: vec![(
                 1,
                 Collection {
-					id: 1,
                     owner: get_account_id_from_seed::<sr25519::Public>("Alice"),
                     mode: CollectionMode::NFT,
                     access: AccessMode::Normal,
