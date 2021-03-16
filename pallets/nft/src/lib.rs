@@ -995,7 +995,7 @@ decl_module! {
 
             let target_collection = Self::get_collection(collection_id)?;
 
-            Self::can_create_items_in_collection(&target_collection, &sender, &owner)?;
+            Self::can_create_items_in_collection(&target_collection, &sender, &owner, 1)?;
             Self::validate_create_item_args(&target_collection, &data)?;
             Self::create_item_no_validation(&target_collection, owner, data)?;
 
@@ -1030,7 +1030,7 @@ decl_module! {
 
             let target_collection = Self::get_collection(collection_id)?;
 
-            Self::can_create_items_in_collection(&target_collection, &sender, &owner)?;
+            Self::can_create_items_in_collection(&target_collection, &sender, &owner, items_data.len() as u32)?;
 
             for data in &items_data {
                 Self::validate_create_item_args(&target_collection, data)?;
@@ -1664,14 +1664,18 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn can_create_items_in_collection(collection: &CollectionHandle<T>, sender: &T::AccountId, owner: &T::AccountId) -> DispatchResult {
+    fn can_create_items_in_collection(collection: &CollectionHandle<T>, sender: &T::AccountId, owner: &T::AccountId, amount: u32) -> DispatchResult {
         let collection_id = collection.id;
 
         // check token limit and account token limit
-        let total_items: u32 = ItemListIndex::get(collection_id);
-        let account_items: u32 = <AddressTokens<T>>::get(collection_id, owner).len() as u32;
-        ensure!(collection.limits.token_limit > total_items,  Error::<T>::CollectionTokenLimitExceeded);
-        ensure!(collection.limits.account_token_ownership_limit > account_items,  Error::<T>::AccountTokenLimitExceeded);
+        let total_items: u32 = ItemListIndex::get(collection_id)
+            .checked_add(amount)
+            .ok_or(Error::<T>::CollectionTokenLimitExceeded)?;
+        let account_items: u32 = (<AddressTokens<T>>::get(collection_id, owner).len() as u32)
+            .checked_add(amount)
+            .ok_or(Error::<T>::AccountTokenLimitExceeded)?;
+        ensure!(collection.limits.token_limit >= total_items,  Error::<T>::CollectionTokenLimitExceeded);
+        ensure!(collection.limits.account_token_ownership_limit >= account_items,  Error::<T>::AccountTokenLimitExceeded);
 
         if !Self::is_owner_or_admin_permissions(collection, sender.clone()) {
             ensure!(collection.mint_mode == true, Error::<T>::PublicMintingNotAllowed);
