@@ -18,6 +18,7 @@ const expect = chai.expect;
 describe('Transfer event ', () => {
   let Alice: IKeyringPair;
   let Bob: IKeyringPair;
+  const checkSection = 'Transfer';
   const checkTreasury = 'Deposit';
   const checkSystem = 'ExtrinsicSuccess';
   before(async () => {
@@ -33,6 +34,7 @@ describe('Transfer event ', () => {
       const transfer = api.tx.nft.transfer(Bob.address, collectionID, itemID, 1);
       const events = await submitTransactionAsync(Alice, transfer);
       const msg = JSON.stringify(nftEventMessage(events));
+      expect(msg).to.be.contain(checkSection);
       expect(msg).to.be.contain(checkTreasury);
       expect(msg).to.be.contain(checkSystem);
     });

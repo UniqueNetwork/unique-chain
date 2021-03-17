@@ -17,7 +17,7 @@ const expect = chai.expect;
 
 describe('Create collection event ', () => {
   let Alice: IKeyringPair;
-  const checkSection = 'Created';
+  const checkSection = 'CollectionCreated';
   const checkTreasury = 'Deposit';
   const checkSystem = 'ExtrinsicSuccess';
   before(async () => {
