@@ -20,7 +20,7 @@ pub use frame_support::{
     ensure, fail, parameter_types,
     traits::{
         Currency, ExistenceRequirement, Get, Imbalance, KeyOwnerProofSystem, OnUnbalanced,
-        Randomness, IsSubType,
+        Randomness, IsSubType, WithdrawReasons,
     },
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -435,7 +435,9 @@ pub trait Config: system::Config + Sized + pallet_transaction_payment::Config + 
     /// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 
-    type CollectionCreationPrice: Get<BalanceOf<Self>>;
+    type Currency: Currency<Self::AccountId>;
+    type CollectionCreationPrice: Get<<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance>;
+    type TreasuryAccountId: Get<Self::AccountId>;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -662,6 +664,18 @@ decl_module! {
 
             // Anyone can create a collection
             let who = ensure_signed(origin)?;
+
+            let mut imbalance = <<<T as Config>::Currency as Currency<T::AccountId>>::PositiveImbalance>::zero();
+            imbalance.subsume(<<T as Config>::Currency as Currency<T::AccountId>>::deposit_creating(
+                &T::TreasuryAccountId::get(),
+                T::CollectionCreationPrice::get(),
+            ));
+            <T as Config>::Currency::settle(
+                &who,
+                imbalance,
+                WithdrawReasons::TRANSFER,
+                ExistenceRequirement::KeepAlive,
+            ).map_err(|_| Error::<T>::NoPermission)?;
 
             let decimal_points = match mode {
                 CollectionMode::Fungible(points) => points,
@@ -2537,10 +2551,7 @@ where
 	> {
         let tip = self.0;
 
-        let fee = match call.is_sub_type() {
-            Some(Call::create_collection(..)) => T::CollectionCreationPrice::get(),
-            _ => Self::traditional_fee(len, info, tip),
-        };
+        let fee = Self::traditional_fee(len, info, tip);
 
         // Only mess with balances if fee is not zero.
         if fee.is_zero() {

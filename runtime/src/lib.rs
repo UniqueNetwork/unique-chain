@@ -24,7 +24,7 @@ use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     traits::{
         Convert, ConvertInto, BlakeTwo256, Block as BlockT, IdentifyAccount, 
-        IdentityLookup, NumberFor, Verify,
+        IdentityLookup, NumberFor, Verify, AccountIdConversion,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, MultiSignature,
@@ -510,7 +510,6 @@ impl pallet_sudo::Config for Runtime {
 
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 10 * UNIQUE;
-	pub const CollectionCreationPrice: Balance = 100 * UNIQUE;
 }
 
 impl pallet_vesting::Config for Runtime {
@@ -521,11 +520,18 @@ impl pallet_vesting::Config for Runtime {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account();
+	pub const CollectionCreationPrice: Balance = 100 * UNIQUE;
+}
+
 /// Used for the module nft in `./nft.rs`
 impl pallet_nft::Config for Runtime {
     type Event = Event;
     type WeightInfo = nft_weights::WeightInfo;
+	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
+	type TreasuryAccountId = TreasuryAccountId;
 }
 
 construct_runtime!(
