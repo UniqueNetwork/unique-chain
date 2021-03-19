@@ -1,7 +1,7 @@
 name: telegram message
 on:
   push:
-    branches: [ develop ]  
+    branches: [ Antz0x0z-patch-1 ]  
 jobs:
   build:    
     runs-on: ubuntu-latest    
