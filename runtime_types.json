@@ -31,6 +31,13 @@
       "ConstData": "Vec<u8>",
       "VariableData": "Vec<u8>"
     },
+    "SponsorshipState": {
+      "_enum": {
+        "Disabled": null,
+        "Unconfirmed": "AccountId",
+        "Confirmed": "AccountId"
+      }
+    },
     "CollectionType": {
       "Owner": "AccountId",
       "Mode": "CollectionMode",
@@ -42,8 +49,7 @@
       "MintMode": "bool",
       "OffchainSchema": "Vec<u8>",
       "SchemaVersion": "SchemaVersion",
-      "Sponsor": "AccountId",
-      "SponsorConfirmed": "bool",
+      "Sponsorship": "SponsorshipState",
       "Limits": "CollectionLimits",
       "VariableOnChainSchema": "Vec<u8>",
       "ConstOnChainSchema": "Vec<u8>"
