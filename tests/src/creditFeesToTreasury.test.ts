@@ -25,6 +25,7 @@ const expect = chai.expect;
 const Treasury = "5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z";
 const saneMinimumFee = 0.05;
 const saneMaximumFee = 0.5;
+const createCollectionDeposit = 100;
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
@@ -127,8 +128,8 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       const aliceBalanceAfter = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
       const fee = aliceBalanceBefore.minus(aliceBalanceAfter);
 
-      expect(fee.dividedBy(1e15).toNumber()).to.be.lessThan(saneMaximumFee);
-      expect(fee.dividedBy(1e15).toNumber()).to.be.greaterThan(saneMinimumFee);
+      expect(fee.dividedBy(1e15).toNumber()).to.be.lessThan(saneMaximumFee + createCollectionDeposit);
+      expect(fee.dividedBy(1e15).toNumber()).to.be.greaterThan(saneMinimumFee  + createCollectionDeposit);
     });
   });
 

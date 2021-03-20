@@ -665,6 +665,7 @@ decl_module! {
             // Anyone can create a collection
             let who = ensure_signed(origin)?;
 
+            // Take a (non-refundable) deposit of collection creation
             let mut imbalance = <<<T as Config>::Currency as Currency<T::AccountId>>::PositiveImbalance>::zero();
             imbalance.subsume(<<T as Config>::Currency as Currency<T::AccountId>>::deposit_creating(
                 &T::TreasuryAccountId::get(),
