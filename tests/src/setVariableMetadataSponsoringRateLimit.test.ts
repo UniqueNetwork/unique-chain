@@ -67,4 +67,14 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     await setVariableMetaDataExpectSuccess(userWithNoBalance, collectionId, itemId, [1]);
     await setVariableMetaDataExpectFailure(userWithNoBalance, collectionId, itemId, [1, 2]);
   });
+
+  it.only('Default value of rate limit does not sponsor setting variable metadata', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await setCollectionSponsorExpectSuccess(collectionId, alice.address);
+    await confirmSponsorshipExpectSuccess(collectionId);
+
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', userWithNoBalance.address);
+    await setVariableMetaDataExpectFailure(userWithNoBalance, collectionId, itemId, [1]);
+  });
+
 });
