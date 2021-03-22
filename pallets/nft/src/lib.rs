@@ -174,7 +174,7 @@ pub struct Collection<T: Config> {
     pub mint_mode: bool,
     pub offchain_schema: Vec<u8>,
     pub schema_version: SchemaVersion,
-    pub sponsorship: SponsorshipState<AccountId>,
+    pub sponsorship: SponsorshipState<T::AccountId>,
     pub limits: CollectionLimits<T::BlockNumber>, // Collection private restrictions 
     pub variable_on_chain_schema: Vec<u8>, //
     pub const_on_chain_schema: Vec<u8>, //
@@ -1853,8 +1853,6 @@ impl<T: Config> Module<T> {
     }
 
     fn create_item_no_validation(collection: &CollectionHandle<T>, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
-        let collection_id = collection.id;
-
         match data
         {
             CreateItemData::NFT(data) => {
@@ -2622,10 +2620,7 @@ where
                 // sponsor timeout
                 let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
 
-                let collection = <Collection<T>>::get(collection_id);
-
                 let limit = collection.limits.sponsor_transfer_timeout;
-                let mut sponsored = true;
                 if <CreateItemBasket<T>>::contains_key((collection_id, &who)) {
                     let last_tx_block = <CreateItemBasket<T>>::get((collection_id, &who));
                     let limit_time = last_tx_block + limit.into();
@@ -2636,9 +2631,7 @@ where
                 <CreateItemBasket<T>>::insert((collection_id, who.clone()), block_number);
 
                 // check free create limit
-                if (collection.limits.sponsored_data_size >= (_properties.len() as u32)) &&
-                   (sponsored)
-                {
+                if collection.limits.sponsored_data_size >= (_properties.len() as u32) {
                     collection.sponsorship.sponsor()
                         .cloned()
                 } else {
@@ -2747,7 +2740,7 @@ where
                 let collection = <CollectionById<T>>::get(collection_id)?;
 
                 if
-                    collection.sponsor_confirmed &&
+                    collection.sponsorship.confirmed() &&
                     // Can't sponsor fungible collection, this tx will be rejected
                     // as invalid
                     !matches!(collection.mode, CollectionMode::Fungible(_)) &&
@@ -2769,7 +2762,7 @@ where
                 if !sponsor_metadata_changes {
                     None
                 } else {
-                    Some(collection.sponsor)
+                    collection.sponsorship.sponsor().cloned()
                 }
             }
 
