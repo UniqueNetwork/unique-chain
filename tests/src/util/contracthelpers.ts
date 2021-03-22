@@ -22,9 +22,9 @@ const endowment = '100000000000000000';
 
 function deployContract(alice: IKeyringPair, code: CodePromise, constructor: string = 'default', ...args: any[]): Promise<Contract> {
   return new Promise<Contract>(async (resolve, reject) => {
-    const unsub = await code
+    const unsub = await (code as any)
       .tx[constructor]({value: endowment, gasLimit}, ...args)
-      .signAndSend(alice, (result) => {
+      .signAndSend(alice, (result: any) => {
         if (result.status.isInBlock || result.status.isFinalized) {
           // here we have an additional field in the result, containing the blueprint
           resolve((result as any).contract);

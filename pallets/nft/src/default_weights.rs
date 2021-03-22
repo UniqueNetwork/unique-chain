@@ -127,6 +127,11 @@ impl crate::WeightInfo for () {
             .saturating_add(DbWeight::get().reads(0 as Weight))
             .saturating_add(DbWeight::get().writes(2 as Weight))
     }    
+    fn set_variable_meta_data_sponsoring_rate_limit() -> Weight {
+        (3_500_000 as Weight)
+            .saturating_add(DbWeight::get().reads(2 as Weight))
+            .saturating_add(DbWeight::get().writes(1 as Weight))
+    }
     fn toggle_contract_white_list() -> Weight {
         (3_000_000 as Weight)
             .saturating_add(DbWeight::get().reads(0 as Weight))

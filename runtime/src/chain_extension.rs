@@ -60,7 +60,9 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                 }
                 let recipient = AccountId32::from(bytes_rec);
 
-                match pallet_nft::Module::<Runtime>::transfer_internal(sender, recipient, input.collection_id, input.token_id, input.amount) {
+                let collection = pallet_nft::Module::<Runtime>::get_collection(input.collection_id)?;
+
+                match pallet_nft::Module::<Runtime>::transfer_internal(sender, recipient, &collection, input.token_id, input.amount) {
                     Ok(_) => Ok(RetVal::Converging(func_id)),
                     _ => Err(DispatchError::Other("Transfer error"))
                 }

@@ -212,7 +212,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     const BcollectionCount = parseInt((await api.query.nft.createdCollectionCount()).toString(), 10);
 
     // Get the collection
-    const collection: any = (await api.query.nft.collection(result.collectionId)).toJSON();
+    const collection: any = (await api.query.nft.collectionById(result.collectionId)).toJSON();
 
     // What to expect
     // tslint:disable-next-line:no-unused-expression
@@ -324,18 +324,17 @@ export async function destroyCollectionExpectSuccess(collectionId: number, sende
     const result = getDestroyResult(events);
 
     // Get the collection
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+    const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
 
     // What to expect
     expect(result).to.be.true;
-    expect(collection).to.be.not.null;
-    expect(collection.Owner).to.be.equal(nullPublicKey);
+    expect(collection).to.be.null;
   });
 }
 
 export async function queryCollectionLimits(collectionId: number) {
   return await usingApi(async (api) => {
-    return ((await api.query.nft.collection(collectionId)).toJSON() as any).Limits;
+    return ((await api.query.nft.collectionById(collectionId)).toJSON() as any).Limits;
   });
 }
 
@@ -373,7 +372,7 @@ export async function setCollectionSponsorExpectSuccess(collectionId: number, sp
     const result = getGenericResult(events);
 
     // Get the collection
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+    const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
 
     // What to expect
     expect(result.success).to.be.true;
@@ -393,7 +392,7 @@ export async function removeCollectionSponsorExpectSuccess(collectionId: number)
     const result = getGenericResult(events);
 
     // Get the collection
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+    const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
 
     // What to expect
     expect(result.success).to.be.true;
@@ -431,7 +430,7 @@ export async function confirmSponsorshipExpectSuccess(collectionId: number, send
     const result = getGenericResult(events);
 
     // Get the collection
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+    const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
 
     // What to expect
     expect(result.success).to.be.true;
@@ -839,7 +838,7 @@ export async function setPublicAccessModeExpectSuccess(
     const result = getGenericResult(events);
 
     // Get the collection
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+    const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
 
     // What to expect
     // tslint:disable-next-line:no-unused-expression
@@ -865,7 +864,7 @@ export async function setMintPermissionExpectSuccess(sender: IKeyringPair, colle
     const result = getGenericResult(events);
 
     // Get the collection
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+    const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
 
     // What to expect
     // tslint:disable-next-line:no-unused-expression
@@ -947,7 +946,7 @@ export async function removeFromWhiteListExpectFailure(sender: IKeyringPair, col
 
 export const getDetailedCollectionInfo = async (api: ApiPromise, collectionId: number)
   : Promise<ICollectionInterface | null> => {
-  return await api.query.nft.collection(collectionId) as unknown as ICollectionInterface;
+  return (await api.query.nft.collectionById(collectionId)).toJSON() as unknown as ICollectionInterface;
 };
 
 export const getCreatedCollectionCount = async (api: ApiPromise): Promise<number> => {
@@ -957,6 +956,6 @@ export const getCreatedCollectionCount = async (api: ApiPromise): Promise<number
 
 export async function queryCollectionExpectSuccess(collectionId: number): Promise<ICollectionInterface> {
   return await usingApi(async (api) => {
-    return (await api.query.nft.collection(collectionId)) as unknown as ICollectionInterface;
+    return (await api.query.nft.collectionById(collectionId)).toJSON() as unknown as ICollectionInterface;
   });
 }

@@ -61,12 +61,12 @@ describe('setCollectionLimits positive', () => {
 
       // tslint:disable-next-line:no-unused-expression
       expect(result.success).to.be.true;
-      expect(collectionInfo.Limits.AccountTokenOwnershipLimit.toNumber()).to.be.equal(accountTokenOwnershipLimit);
-      expect(collectionInfo.Limits.SponsoredMintSize.toNumber()).to.be.equal(sponsoredDataSize);
-      expect(collectionInfo.Limits.TokenLimit.toNumber()).to.be.equal(tokenLimit);
-      expect(collectionInfo.Limits.SponsorTimeout.toNumber()).to.be.equal(sponsorTimeout);
-      expect(collectionInfo.Limits.OwnerCanTransfer.valueOf()).to.be.true;
-      expect(collectionInfo.Limits.OwnerCanDestroy.valueOf()).to.be.true;
+      expect(collectionInfo.Limits.AccountTokenOwnershipLimit).to.be.equal(accountTokenOwnershipLimit);
+      expect(collectionInfo.Limits.SponsoredDataSize).to.be.equal(sponsoredDataSize);
+      expect(collectionInfo.Limits.TokenLimit).to.be.equal(tokenLimit);
+      expect(collectionInfo.Limits.SponsorTimeout).to.be.equal(sponsorTimeout);
+      expect(collectionInfo.Limits.OwnerCanTransfer).to.be.true;
+      expect(collectionInfo.Limits.OwnerCanDestroy).to.be.true;
     });
   });
 });

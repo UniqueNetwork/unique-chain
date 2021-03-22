@@ -38,7 +38,7 @@
         "Confirmed": "AccountId"
       }
     },
-    "CollectionType": {
+    "Collection": {
       "Owner": "AccountId",
       "Mode": "CollectionMode",
       "Access": "AccessMode",
@@ -99,7 +99,8 @@
     },
     "CollectionLimits": {
       "AccountTokenOwnershipLimit": "u32",
-      "SponsoredMintSize": "u32",
+      "SponsoredDataSize": "u32",
+      "SponsoredDataRateLimit": "Option<BlockNumber>",
       "TokenLimit": "u32",
       "SponsorTimeout": "u32",
       "OwnerCanTransfer": "bool",
