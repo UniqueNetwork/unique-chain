@@ -193,8 +193,7 @@ fn testnet_genesis(
                     mint_mode: false,
 					offchain_schema: vec![],
 					schema_version: SchemaVersion::default(),
-                    sponsor: get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    sponsor_confirmed: true,
+                    sponsorship: SponsorshipState::Confirmed(get_account_id_from_seed::<sr25519::Public>("Alice")),
                     const_on_chain_schema: vec![],
 					variable_on_chain_schema: vec![],
 					limits: CollectionLimits::default()

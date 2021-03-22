@@ -133,9 +133,14 @@ impl pallet_contracts::Config for Test {
 	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
 }
 
+parameter_types! {
+	pub const CollectionCreationPrice: u64 = 1_000_000_000_000;
+}
+
 impl pallet_template::Config for Test {
 	type Event = ();
 	type WeightInfo = ();
+	type CollectionCreationPrice = CollectionCreationPrice;
 }
 
 // Build genesis storage according to the mock runtime.
