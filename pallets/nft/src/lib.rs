@@ -199,7 +199,7 @@ impl<T: Config> DerefMut for CollectionHandle<T> {
     }
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct NftItemType<AccountId> {
     pub owner: AccountId,
@@ -213,7 +213,7 @@ pub struct FungibleItemType {
     pub value: u128,
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct ReFungibleItemType<AccountId> {
     pub owner: Vec<Ownership<AccountId>>,
@@ -537,15 +537,16 @@ decl_storage! {
 
         /// Amount of items which spender can transfer out of owners account (via transferFrom)
         /// Collection id (controlled?2), (token id (controlled ?2) + owner account id (real) + spender account id (controlled?3))
+        /// TODO: Off chain worker should remove from this map when token gets removed
         pub Allowances get(fn approved): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) (TokenId, T::AccountId, T::AccountId) => u128;
 
         //#region Item collections
         /// Collection id (controlled?2), token id (controlled?1)
-        pub NftItemList get(fn nft_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => NftItemType<T::AccountId>;
+        pub NftItemList get(fn nft_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<NftItemType<T::AccountId>>;
         /// Collection id (controlled?2), owner (controlled?2)
         pub FungibleItemList get(fn fungible_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) T::AccountId => FungibleItemType;
         /// Collection id (controlled?2), token id (controlled?1)
-        pub ReFungibleItemList get(fn refungible_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => ReFungibleItemType<T::AccountId>;
+        pub ReFungibleItemList get(fn refungible_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<ReFungibleItemType<T::AccountId>>;
         //#endregion
 
         //#region Index list
@@ -555,6 +556,7 @@ decl_storage! {
 
         //#region Tokens transfer rate limit baskets
         /// (Collection id (controlled?2), who created (real))
+        /// TODO: Off chain worker should remove from this map when collection gets removed
         pub CreateItemBasket get(fn create_item_basket): map hasher(blake2_128_concat) (CollectionId, T::AccountId) => T::BlockNumber;
         /// Collection id (controlled?2), token id (controlled?2)
         pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => T::BlockNumber;
@@ -570,7 +572,7 @@ decl_storage! {
       
         //#region Contract Sponsorship and Ownership
         /// Contract address (real)
-        pub ContractOwner get(fn contract_owner): map hasher(twox_64_concat) T::AccountId => T::AccountId;
+        pub ContractOwner get(fn contract_owner): map hasher(twox_64_concat) T::AccountId => Option<T::AccountId>;
         /// Contract address (real)
         pub ContractSelfSponsoring get(fn contract_self_sponsoring): map hasher(twox_64_concat) T::AccountId => bool;
         /// (Contract address(real), caller (real))
@@ -968,20 +970,17 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             let collection = Self::get_collection(collection_id)?;
             Self::check_owner_or_admin_permissions(&collection, sender)?;
-            let mut admin_arr: Vec<T::AccountId> = Vec::new();
+            let mut admin_arr = <AdminList<T>>::get(collection_id);
 
-            if <AdminList<T>>::contains_key(collection_id)
-            {
-                admin_arr = <AdminList<T>>::get(collection_id);
-                ensure!(!admin_arr.contains(&new_admin_id), Error::<T>::AlreadyAdmin);
+            match admin_arr.binary_search(&new_admin_id) {
+                Ok(_) => {},
+                Err(idx) => {
+                    let limits = ChainLimit::get();
+                    ensure!(admin_arr.len() < limits.collections_admins_limit as usize, Error::<T>::CollectionAdminsLimitExceeded);
+                    admin_arr.insert(idx, new_admin_id);
+                    <AdminList<T>>::insert(collection_id, admin_arr);
+                }
             }
-
-            // Number of collection admins
-            ensure!((admin_arr.len() as u64) < ChainLimit::get().collections_admins_limit, Error::<T>::CollectionAdminsLimitExceeded);
-
-            admin_arr.push(new_admin_id);
-            <AdminList<T>>::insert(collection_id, admin_arr);
-
             Ok(())
         }
 
@@ -1004,12 +1003,15 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             let collection = Self::get_collection(collection_id)?;
             Self::check_owner_or_admin_permissions(&collection, sender)?;
-            ensure!(<AdminList<T>>::contains_key(collection_id), Error::<T>::AdminNotFound);
-
             let mut admin_arr = <AdminList<T>>::get(collection_id);
-            admin_arr.retain(|i| *i != account_id);
-            <AdminList<T>>::insert(collection_id, admin_arr);
 
+            match admin_arr.binary_search(&account_id) {
+                Ok(idx) => {
+                    admin_arr.remove(idx);
+                    <AdminList<T>>::insert(collection_id, admin_arr);
+                },
+                Err(_) => {}
+            }
             Ok(())
         }
 
@@ -1267,7 +1269,7 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             let target_collection = Self::get_collection(collection_id)?;
 
-            Self::token_exists(&target_collection, item_id, &sender)?;
+            Self::token_exists(&target_collection, item_id)?;
 
             // Transfer permissions check
             let bypasses_limits = target_collection.limits.owner_can_transfer &&
@@ -1419,7 +1421,7 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             
             let target_collection = Self::get_collection(collection_id)?;
-            Self::token_exists(&target_collection, item_id, &sender)?;
+            Self::token_exists(&target_collection, item_id)?;
 
             ensure!(ChainLimit::get().custom_data_limit >= data.len() as u32, Error::<T>::TokenVariableDataLimitExceeded);
 
@@ -1668,7 +1670,11 @@ decl_module! {
             <ContractOwner<T>>::insert(contract_address.clone(), sender.clone());
 
             Self::ensure_contract_owned(sender, &contract_address)?;
-            <ContractWhiteListEnabled<T>>::insert(contract_address, enable);
+            if enable {
+                <ContractWhiteListEnabled<T>>::insert(contract_address, true);
+            } else {
+                <ContractWhiteListEnabled<T>>::remove(contract_address);
+            }
             Ok(())
         }
         
@@ -1901,14 +1907,11 @@ impl<T: Config> Module<T> {
         let collection_id = collection.id;
 
         // Does new owner already have an account?
-        let mut balance: u128 = 0;
-        if <FungibleItemList<T>>::contains_key(collection_id, owner) {
-            balance = <FungibleItemList<T>>::get(collection_id, owner).value;
-        } 
+        let balance: u128 = <FungibleItemList<T>>::get(collection_id, owner).value;
 
         // Mint 
         let item = FungibleItemType {
-            value: balance + value
+            value: balance.checked_add(value).ok_or(Error::<T>::NumOverflow)?,
         };
         <FungibleItemList<T>>::insert(collection_id, (*owner).clone(), item);
 
@@ -1984,11 +1987,8 @@ impl<T: Config> Module<T> {
     ) -> DispatchResult {
         let collection_id = collection.id;
 
-        ensure!(
-            <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
-            Error::<T>::TokenNotFound
-        );
-        let mut token = <ReFungibleItemList<T>>::get(collection_id, item_id);
+        let mut token = <ReFungibleItemList<T>>::get(collection_id, item_id)
+            .ok_or(Error::<T>::TokenNotFound)?;
         let rft_balance = token
             .owner
             .iter()
@@ -2026,11 +2026,8 @@ impl<T: Config> Module<T> {
     fn burn_nft_item(collection: &CollectionHandle<T>, item_id: TokenId) -> DispatchResult {
         let collection_id = collection.id;
 
-        ensure!(
-            <NftItemList<T>>::contains_key(collection_id, item_id),
-            Error::<T>::TokenNotFound
-        );
-        let item = <NftItemList<T>>::get(collection_id, item_id);
+        let item = <NftItemList<T>>::get(collection_id, item_id)
+            .ok_or(Error::<T>::TokenNotFound)?;
         Self::remove_token_index(collection_id, item_id, &item.owner)?;
 
         // update balance
@@ -2047,10 +2044,6 @@ impl<T: Config> Module<T> {
     fn burn_fungible_item(owner: &T::AccountId, collection: &CollectionHandle<T>, value: u128) -> DispatchResult {
         let collection_id = collection.id;
 
-        ensure!(
-            <FungibleItemList<T>>::contains_key(collection_id, owner),
-            Error::<T>::TokenNotFound
-        );
         let mut balance = <FungibleItemList<T>>::get(collection_id, owner);
         ensure!(balance.value >= value, Error::<T>::TokenValueNotEnough);
 
@@ -2094,28 +2087,15 @@ impl<T: Config> Module<T> {
     }
 
     fn is_owner_or_admin_permissions(collection: &CollectionHandle<T>, subject: T::AccountId) -> bool {
-        let mut result: bool = subject == collection.owner;
-        let exists = <AdminList<T>>::contains_key(collection.id);
-
-        if !result & exists {
-            if <AdminList<T>>::get(collection.id).contains(&subject) {
-                result = true
-            }
-        }
-
-        result
+        subject == collection.owner || <AdminList<T>>::get(collection.id).contains(&subject)
     }
 
     fn check_owner_or_admin_permissions(
         collection: &CollectionHandle<T>,
         subject: T::AccountId,
     ) -> DispatchResult {
-        let result = Self::is_owner_or_admin_permissions(collection, subject.clone());
+        ensure!(Self::is_owner_or_admin_permissions(collection, subject), Error::<T>::NoPermission);
 
-        ensure!(
-            result,
-            Error::<T>::NoPermission
-        );
         Ok(())
     }
 
@@ -2127,20 +2107,11 @@ impl<T: Config> Module<T> {
         let collection_id = target_collection.id;
 
         match target_collection.mode {
-            CollectionMode::NFT => {
-                if <NftItemList<T>>::get(collection_id, item_id).owner == subject {
-                    return Some(1)
-                }
-                None
-            },
-            CollectionMode::Fungible(_) => {
-                if <FungibleItemList<T>>::contains_key(collection_id, &subject) {
-                    return Some(<FungibleItemList<T>>::get(collection_id, &subject)
-                        .value);
-                }
-                None
-            },
-            CollectionMode::ReFungible => <ReFungibleItemList<T>>::get(collection_id, item_id)
+            CollectionMode::NFT => (<NftItemList<T>>::get(collection_id, item_id)?.owner == subject)
+                .then(|| 1),
+            CollectionMode::Fungible(_) => Some(<FungibleItemList<T>>::get(collection_id, &subject)
+                .value),
+            CollectionMode::ReFungible => <ReFungibleItemList<T>>::get(collection_id, item_id)?
                 .owner
                 .iter()
                 .find(|i| i.owner == subject)
@@ -2150,22 +2121,9 @@ impl<T: Config> Module<T> {
     }
 
     fn is_item_owner(subject: T::AccountId, target_collection: &CollectionHandle<T>, item_id: TokenId) -> bool {
-        let collection_id = target_collection.id;
-
         match target_collection.mode {
-            CollectionMode::NFT => {
-                <NftItemList<T>>::get(collection_id, item_id).owner == subject
-            }
-            CollectionMode::Fungible(_) => {
-                <FungibleItemList<T>>::contains_key(collection_id, &subject)
-            }
-            CollectionMode::ReFungible => {
-                <ReFungibleItemList<T>>::get(collection_id, item_id)
-                    .owner
-                    .iter()
-                    .any(|i| i.owner == subject)
-            }
-            CollectionMode::Invalid => false,
+            CollectionMode::Fungible(_) => true,
+            _ => Self::owned_amount(subject, target_collection, item_id).is_some(),
         }
     }
 
@@ -2183,13 +2141,12 @@ impl<T: Config> Module<T> {
     fn token_exists(
         target_collection: &CollectionHandle<T>,
         item_id: TokenId,
-        owner: &T::AccountId
     ) -> DispatchResult {
         let collection_id = target_collection.id;
         let exists = match target_collection.mode
         {
             CollectionMode::NFT => <NftItemList<T>>::contains_key(collection_id, item_id),
-            CollectionMode::Fungible(_)  => <FungibleItemList<T>>::contains_key(collection_id, owner),
+            CollectionMode::Fungible(_)  => true,
             CollectionMode::ReFungible  => <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
             _ => false
         };
@@ -2205,7 +2162,6 @@ impl<T: Config> Module<T> {
         recipient: &T::AccountId,
     ) -> DispatchResult {
         let collection_id = collection.id;
-        Self::token_exists(&collection, 0, owner)?;
 
         let mut balance = <FungibleItemList<T>>::get(collection_id, owner);
         ensure!(balance.value >= value, Error::<T>::TokenValueTooLow);
@@ -2236,9 +2192,9 @@ impl<T: Config> Module<T> {
         new_owner: T::AccountId,
     ) -> DispatchResult {
         let collection_id = collection.id;
-        Self::token_exists(collection, item_id, &owner)?;
+        let full_item = <ReFungibleItemList<T>>::get(collection_id, item_id)
+            .ok_or(Error::<T>::TokenNotFound)?;
 
-        let full_item = <ReFungibleItemList<T>>::get(collection_id, item_id);
         let item = full_item
             .owner
             .iter()
@@ -2318,9 +2274,8 @@ impl<T: Config> Module<T> {
         new_owner: T::AccountId,
     ) -> DispatchResult {
         let collection_id = collection.id;
-        Self::token_exists(&collection, item_id, &sender)?;
-
-        let mut item = <NftItemList<T>>::get(collection_id, item_id);
+        let mut item = <NftItemList<T>>::get(collection_id, item_id)
+            .ok_or(Error::<T>::TokenNotFound)?;
 
         ensure!(
             sender == item.owner,
@@ -2355,7 +2310,8 @@ impl<T: Config> Module<T> {
         data: Vec<u8>
     ) -> DispatchResult {
         let collection_id = collection.id;
-        let mut item = <ReFungibleItemList<T>>::get(collection_id, item_id);
+        let mut item = <ReFungibleItemList<T>>::get(collection_id, item_id)
+            .ok_or(Error::<T>::TokenNotFound)?;
 
         item.variable_data = data;
 
@@ -2370,7 +2326,8 @@ impl<T: Config> Module<T> {
         data: Vec<u8>
     ) -> DispatchResult {
         let collection_id = collection.id;
-        let mut item = <NftItemList<T>>::get(collection_id, item_id);
+        let mut item = <NftItemList<T>>::get(collection_id, item_id)
+            .ok_or(Error::<T>::TokenNotFound)?;
         
         item.variable_data = data;
 
@@ -2533,12 +2490,7 @@ impl<T: Config> Module<T> {
     }
     
     fn ensure_contract_owned(account: T::AccountId, contract: &T::AccountId) -> DispatchResult {
-        if <ContractOwner<T>>::contains_key(contract.clone()) {
-            let owner = <ContractOwner<T>>::get(contract);
-            ensure!(account == owner, Error::<T>::NoPermission);
-        } else {
-            fail!(Error::<T>::NoPermission);
-        }
+        ensure!(<ContractOwner<T>>::get(contract) == Some(account), Error::<T>::NoPermission);
 
         Ok(())
     }
@@ -2787,9 +2739,8 @@ where
 
                 let called_contract: T::AccountId = T::Lookup::lookup((*dest).clone()).unwrap_or(T::AccountId::default());
 
-                let owned_contract = <ContractOwner<T>>::contains_key(called_contract.clone())
-                  && <ContractOwner<T>>::get(called_contract.clone()) == *who;
-                let white_list_enabled = <ContractWhiteListEnabled<T>>::contains_key(called_contract.clone()) && <ContractWhiteListEnabled<T>>::get(called_contract.clone());
+                let owned_contract = <ContractOwner<T>>::get(called_contract.clone()).as_ref() == Some(who);
+                let white_list_enabled = <ContractWhiteListEnabled<T>>::contains_key(called_contract.clone());
                   
                 if !owned_contract && white_list_enabled {
                     if !<ContractWhiteList<T>>::contains_key(called_contract.clone(), who) {
