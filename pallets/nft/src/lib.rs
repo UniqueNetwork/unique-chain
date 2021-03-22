@@ -1371,12 +1371,13 @@ decl_module! {
 
             match target_collection.mode
             {
-                CollectionMode::NFT => Self::transfer_nft(&target_collection, item_id, from, recipient)?,
+                CollectionMode::NFT => Self::transfer_nft(&target_collection, item_id, from.clone(), recipient.clone())?,
                 CollectionMode::Fungible(_)  => Self::transfer_fungible(&target_collection, value, &from, &recipient)?,
-                CollectionMode::ReFungible  => Self::transfer_refungible(&target_collection, item_id, value, from.clone(), recipient)?,
+                CollectionMode::ReFungible  => Self::transfer_refungible(&target_collection, item_id, value, from.clone(), recipient.clone())?,
                 _ => ()
             };
 
+            Self::deposit_event(RawEvent::Transfer(target_collection.id, item_id, from, recipient, value));
             Ok(())
         }
 
