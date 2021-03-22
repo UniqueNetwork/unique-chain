@@ -123,9 +123,6 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
     // nft
     const nftCollectionId = await createCollectionExpectSuccess();
     await approveExpectFail(nftCollectionId, 2, Alice, Bob);
-    // fungible
-    const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    await approveExpectFail(fungibleCollectionId, 2, Alice, Bob);
     // reFungible
     const reFungibleCollectionId =
       await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});

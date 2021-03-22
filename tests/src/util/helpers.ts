@@ -599,8 +599,7 @@ export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: n
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
     // tslint:disable-next-line:no-unused-expression
-    expect(item).to.be.not.null;
-    expect(item.Owner).to.be.equal(nullPublicKey);
+    expect(item).to.be.null;
   });
 }
 
@@ -641,16 +640,16 @@ transferFromExpectSuccess(collectionId: number,
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
     if (type === 'NFT') {
-      const nftItemData = await api.query.nft.nftItemList(collectionId, tokenId) as unknown as ITokenDataType;
+      const nftItemData = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap() as ITokenDataType;
       expect(nftItemData.Owner.toString()).to.be.equal(accountTo.address);
     }
     if (type === 'Fungible') {
-      const balanceAfter = await api.query.nft.balance(collectionId, accountTo.address) as unknown as BN;
+      const balanceAfter = (await api.query.nft.fungibleItemList(collectionId, accountTo.address) as any).Value as unknown as BN;
       expect(balanceAfter.sub(balanceBefore).toString()).to.be.equal(value.toString());
     }
     if (type === 'ReFungible') {
       const nftItemData =
-        await api.query.nft.reFungibleItemList(collectionId, tokenId) as unknown as IReFungibleTokenDataType;
+        (await api.query.nft.reFungibleItemList(collectionId, tokenId) as any).unwrap() as IReFungibleTokenDataType;
       expect(nftItemData.Owner[0].Owner.toString()).to.be.equal(accountTo.address);
       expect(nftItemData.Owner[0].Fraction.toNumber()).to.be.equal(value);
     }
@@ -697,18 +696,18 @@ transferExpectSuccess(collectionId: number,
     expect(result.recipient).to.be.equal(recipient.address);
     expect(result.value.toString()).to.be.equal(value.toString());
     if (type === 'NFT') {
-      const nftItemData = await api.query.nft.nftItemList(collectionId, tokenId) as unknown as ITokenDataType;
+      const nftItemData = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON() as unknown as ITokenDataType;
       expect(nftItemData.Owner.toString()).to.be.equal(recipient.address);
     }
     if (type === 'Fungible') {
-      const balanceAfter = await api.query.nft.balance(collectionId, recipient.address) as unknown as BN;
+      const balanceAfter = (await api.query.nft.fungibleItemList(collectionId, recipient.address) as any).Value as unknown as BN;
       expect(balanceAfter.sub(balanceBefore).toString()).to.be.equal(value.toString());
     }
     if (type === 'ReFungible') {
       const nftItemData =
-        await api.query.nft.reFungibleItemList(collectionId, tokenId) as unknown as IReFungibleTokenDataType;
+        (await api.query.nft.reFungibleItemList(collectionId, tokenId)).toJSON() as unknown as IReFungibleTokenDataType;
       expect(nftItemData.Owner[0].Owner.toString()).to.be.equal(recipient.address);
-      expect(nftItemData.Owner[0].Fraction.toNumber()).to.be.equal(value);
+      expect(nftItemData.Owner[0].Fraction.toString()).to.be.equal(value.toString());
     }
   });
 }

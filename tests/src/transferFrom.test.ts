@@ -237,7 +237,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
       const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible');
       await burnItemExpectSuccess(Alice, fungibleCollectionId, 1, 10);
-      await approveExpectFail(fungibleCollectionId, newFungibleTokenId, Alice, Bob);
+      await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob);
       await transferFromExpectFail(fungibleCollectionId, newFungibleTokenId, Bob, Alice, Charlie, 1);
           
     });
