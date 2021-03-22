@@ -38,9 +38,9 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       await submitTransactionAsync(Alice, createMultipleItemsTx);
       const itemsListIndexAfter = await api.query.nft.itemListIndex(collectionId) as unknown as BN;
       expect(itemsListIndexAfter.toNumber()).to.be.equal(3);
-      const token1Data = await api.query.nft.nftItemList(collectionId, 1) as unknown as ITokenDataType;
-      const token2Data = await api.query.nft.nftItemList(collectionId, 2) as unknown as ITokenDataType;
-      const token3Data = await api.query.nft.nftItemList(collectionId, 3) as unknown as ITokenDataType;
+      const token1Data = (await api.query.nft.nftItemList(collectionId, 1)).toJSON() as unknown as ITokenDataType;
+      const token2Data = (await api.query.nft.nftItemList(collectionId, 2)).toJSON() as unknown as ITokenDataType;
+      const token3Data = (await api.query.nft.nftItemList(collectionId, 3)).toJSON() as unknown as ITokenDataType;
 
       expect(token1Data.Owner.toString()).to.be.equal(Alice.address);
       expect(token2Data.Owner.toString()).to.be.equal(Alice.address);
@@ -72,9 +72,9 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       await submitTransactionAsync(Alice, createMultipleItemsTx);
       const itemsListIndexAfter = await api.query.nft.itemListIndex(collectionId) as unknown as BN;
       expect(itemsListIndexAfter.toNumber()).to.be.equal(3);
-      const token1Data = await api.query.nft.reFungibleItemList(collectionId, 1) as unknown as IReFungibleTokenDataType;
-      const token2Data = await api.query.nft.reFungibleItemList(collectionId, 2) as unknown as IReFungibleTokenDataType;
-      const token3Data = await api.query.nft.reFungibleItemList(collectionId, 3) as unknown as IReFungibleTokenDataType;
+      const token1Data = (await api.query.nft.reFungibleItemList(collectionId, 1) as any).unwrap() as unknown as IReFungibleTokenDataType;
+      const token2Data = (await api.query.nft.reFungibleItemList(collectionId, 2) as any).unwrap() as unknown as IReFungibleTokenDataType;
+      const token3Data = (await api.query.nft.reFungibleItemList(collectionId, 3) as any).unwrap() as unknown as IReFungibleTokenDataType;
 
       expect(token1Data.Owner[0].Owner.toString()).to.be.equal(Alice.address);
       expect(token1Data.Owner[0].Fraction.toNumber()).to.be.equal(1);

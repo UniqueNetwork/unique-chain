@@ -46,8 +46,7 @@ describe('integration test: ext. burnItem():', () => {
       // tslint:disable-next-line:no-unused-expression
       expect(result.success).to.be.true;
       // tslint:disable-next-line:no-unused-expression
-      expect(item).to.be.not.null;
-      expect(item.Owner).to.be.equal(nullPublicKey);
+      expect(item).to.be.null;
     });
 
   });
@@ -88,8 +87,7 @@ describe('integration test: ext. burnItem():', () => {
       
       // What to expect
       expect(result.success).to.be.true;
-      expect(balance).to.be.not.null;
-      expect(balance.Owner.length).to.be.equal(0);
+      expect(balance).to.be.null;
     });
 
   });

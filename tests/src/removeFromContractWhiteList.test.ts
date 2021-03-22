@@ -13,8 +13,10 @@ import { expect } from "chai";
 describe('Integration Test removeFromContractWhiteList', () => {
     let bob: IKeyringPair;
 
-    before(() => {
-        bob = privateKey('//Bob');
+    before(async () => {
+        await usingApi(async () => {
+            bob = privateKey('//Bob');
+        });
     });
 
     it('user is no longer whitelisted after removal', async () => {
@@ -56,9 +58,11 @@ describe('Negative Integration Test removeFromContractWhiteList', () => {
     let alice: IKeyringPair;
     let bob: IKeyringPair;
 
-    before(() => {
-        alice = privateKey('//Alice');
-        bob = privateKey('//Bob');
+    before(async () => {
+        await usingApi(async () => {
+            alice = privateKey('//Alice');
+            bob = privateKey('//Bob');
+        });
     });
 
     it('fails when called with non-contract address', async () => {
