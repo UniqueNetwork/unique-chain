@@ -110,7 +110,7 @@ describe('RPC Tests', () => {
     });
   });
 
-  it.only('Smart Contract RPC Load Test', async () => {
+  it('Smart Contract RPC Load Test', async () => {
     await usingApi(async api => {
 
       // Deploy smart contract

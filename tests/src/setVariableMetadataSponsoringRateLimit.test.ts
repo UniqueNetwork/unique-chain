@@ -68,7 +68,7 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     await setVariableMetaDataExpectFailure(userWithNoBalance, collectionId, itemId, [1, 2]);
   });
 
-  it.only('Default value of rate limit does not sponsor setting variable metadata', async () => {
+  it('Default value of rate limit does not sponsor setting variable metadata', async () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
