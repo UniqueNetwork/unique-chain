@@ -653,6 +653,17 @@ decl_event!(
         ///
         /// * amount: Always 1 for NFT
         Transfer(CollectionId, TokenId, AccountId, AccountId, u128),
+
+        /// * collection_id
+        ///
+        /// * item_id
+        ///
+        /// * sender
+        ///
+        /// * spender
+        ///
+        /// * amount
+        Approved(CollectionId, TokenId, AccountId, AccountId, u128),
     }
 );
 
@@ -1292,6 +1303,7 @@ decl_module! {
             }
             <Allowances<T>>::insert(collection_id, (item_id, sender.clone(), spender.clone()), allowance);
 
+            Self::deposit_event(RawEvent::Approved(target_collection.id, item_id, sender, spender, allowance));
             Ok(())
         }
         
