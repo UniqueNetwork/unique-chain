@@ -621,7 +621,7 @@ decl_event!(
         /// * mode: [CollectionMode] converted into u8.
         /// 
         /// * account_id: Collection owner.
-        Created(CollectionId, u8, AccountId),
+        CollectionCreated(CollectionId, u8, AccountId),
 
         /// New item was created.
         /// 
@@ -774,7 +774,7 @@ decl_module! {
             <CollectionById<T>>::insert(next_id, new_collection);
 
             // call event
-            Self::deposit_event(RawEvent::Created(next_id, mode.into(), who.clone()));
+            Self::deposit_event(RawEvent::CollectionCreated(next_id, mode.into(), who.clone()));
 
             Ok(())
         }
