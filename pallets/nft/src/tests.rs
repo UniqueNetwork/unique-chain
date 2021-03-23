@@ -617,7 +617,7 @@ fn fungible_approve_and_transfer_from() {
             1,
             1,
             4
-        ), Error::<Test>::TokenValueNotEnough);
+        ), Error::<Test>::NoPermission);
     });
 }
 
