@@ -1295,11 +1295,9 @@ decl_module! {
                 Self::check_white_list(&target_collection, &spender)?;
             }
 
-            let allowance_exists = <Allowances<T>>::contains_key(collection_id, (item_id, &sender, &spender));
-            let mut allowance: u128 = amount;
-            if allowance_exists {
-                allowance += <Allowances<T>>::get(collection_id, (item_id, &sender, &spender));
-            }
+            let allowance: u128 = amount
+                .checked_add(<Allowances<T>>::get(collection_id, (item_id, &sender, &spender)))
+                .ok_or(Error::<T>::NumOverflow)?;
             if let Some(limit) = allowance_limit {
                 ensure!(limit >= allowance, Error::<T>::TokenValueTooLow);
             }
@@ -1335,22 +1333,15 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             let target_collection = Self::get_collection(collection_id)?;
 
-            let mut appoved_transfer = false;
-
             // Check approval
-            let mut approval: u128 = 0;
-            if <Allowances<T>>::contains_key(collection_id, (item_id, &from, &sender)) {
-                approval = <Allowances<T>>::get(collection_id, (item_id, &from, &sender));
-                ensure!(approval >= value, Error::<T>::TokenValueNotEnough);
-                appoved_transfer = true;
-            }
+            let approval: u128 = <Allowances<T>>::get(collection_id, (item_id, &from, &sender));
 
             // Limits check
             Self::is_correct_transfer(&target_collection, &recipient)?;
 
             // Transfer permissions check         
             ensure!(
-                appoved_transfer || 
+                approval >= value || 
                 (
                     target_collection.limits.owner_can_transfer &&
                     Self::is_owner_or_admin_permissions(&target_collection, sender.clone())
