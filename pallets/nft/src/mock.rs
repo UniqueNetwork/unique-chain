@@ -24,6 +24,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Module, Call, Config, Storage, Event<T>},
 		TemplateModule: pallet_template::{Module, Call, Storage},
+		Balances: pallet_balances::{Module, Call, Storage},
 	}
 );
 
@@ -134,13 +135,16 @@ impl pallet_contracts::Config for Test {
 }
 
 parameter_types! {
-	pub const CollectionCreationPrice: u64 = 1_000_000_000_000;
+	pub const CollectionCreationPrice: u32 = 0;
+    pub TreasuryAccountId: u64 = 1234;
 }
 
 impl pallet_template::Config for Test {
 	type Event = ();
 	type WeightInfo = ();
 	type CollectionCreationPrice = CollectionCreationPrice;
+    type Currency = pallet_balances::Module<Test>;
+    type TreasuryAccountId = TreasuryAccountId;
 }
 
 // Build genesis storage according to the mock runtime.
