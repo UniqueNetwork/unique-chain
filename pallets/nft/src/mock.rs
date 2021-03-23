@@ -135,7 +135,7 @@ impl pallet_contracts::Config for Test {
 }
 
 parameter_types! {
-	pub const CollectionCreationPrice: u32 = 1_000_000;
+	pub const CollectionCreationPrice: u32 = 0;
     pub TreasuryAccountId: u64 = 1234;
 }
 
