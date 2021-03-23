@@ -24,6 +24,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Module, Call, Config, Storage, Event<T>},
 		TemplateModule: pallet_template::{Module, Call, Storage},
+		Balances: pallet_balances::{Module, Call, Storage},
 	}
 );
 
