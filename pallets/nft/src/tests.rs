@@ -697,7 +697,7 @@ fn burn_fungible_item() {
         assert_ok!(TemplateModule::burn_item(origin1.clone(), 1, 1, 5));
         assert_noop!(
             TemplateModule::burn_item(origin1.clone(), 1, 1, 5),
-            Error::<Test>::TokenNotFound
+            Error::<Test>::TokenValueNotEnough
         );
 
         assert_eq!(TemplateModule::balance_count(1, 1), 0);
