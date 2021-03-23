@@ -118,7 +118,7 @@ export function getCreateCollectionResult(events: EventRecord[]): CreateCollecti
     // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
     if (method == 'ExtrinsicSuccess') {
       success = true;
-    } else if ((section == 'nft') && (method == 'Created')) {
+    } else if ((section == 'nft')  && (method == 'CollectionCreated')) {
       collectionId = parseInt(data[0].toString());
     }
   });
