@@ -55,11 +55,11 @@ fn create_test_collection_for_owner(mode: &CollectionMode, owner: u64, id: Colle
     let saved_col_name: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
     let saved_description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
     let saved_prefix: Vec<u8> = b"token_prefix1\0".to_vec();
-    assert_eq!(TemplateModule::collection(id).owner, owner);
-    assert_eq!(TemplateModule::collection(id).name, saved_col_name);
-    assert_eq!(TemplateModule::collection(id).mode, *mode);
-    assert_eq!(TemplateModule::collection(id).description, saved_description);
-    assert_eq!(TemplateModule::collection(id).token_prefix, saved_prefix);
+    assert_eq!(TemplateModule::collection_id(id).unwrap().owner, owner);
+    assert_eq!(TemplateModule::collection_id(id).unwrap().name, saved_col_name);
+    assert_eq!(TemplateModule::collection_id(id).unwrap().mode, *mode);
+    assert_eq!(TemplateModule::collection_id(id).unwrap().description, saved_description);
+    assert_eq!(TemplateModule::collection_id(id).unwrap().token_prefix, saved_prefix);
     id
 }
 
@@ -89,7 +89,7 @@ fn set_version_schema() {
         let collection_id = create_test_collection(&CollectionMode::NFT, 1);
         
         assert_ok!(TemplateModule::set_schema_version(origin1, collection_id, SchemaVersion::Unique));
-        assert_eq!(TemplateModule::collection(collection_id).schema_version, SchemaVersion::Unique);
+        assert_eq!(TemplateModule::collection_id(collection_id).unwrap().schema_version, SchemaVersion::Unique);
     });
 }
 
@@ -121,8 +121,9 @@ fn create_nft_item() {
         
         let data = default_nft_data();
         create_test_item(collection_id, &data.clone().into());
-        assert_eq!(TemplateModule::nft_item_id(collection_id, 1).const_data, data.const_data);
-        assert_eq!(TemplateModule::nft_item_id(collection_id, 1).variable_data, data.variable_data);
+        let item = TemplateModule::nft_item_id(collection_id, 1).unwrap();
+        assert_eq!(item.const_data, data.const_data);
+        assert_eq!(item.variable_data, data.variable_data);
     });
 }
 
@@ -146,8 +147,9 @@ fn create_nft_multiple_items() {
             items_data.clone().into_iter().map(|d| { d.into() }).collect()
         ));
         for (index, data) in items_data.iter().enumerate() {
-            assert_eq!(TemplateModule::nft_item_id(1, (index + 1) as TokenId).const_data.to_vec(), data.const_data);
-            assert_eq!(TemplateModule::nft_item_id(1, (index + 1) as TokenId).variable_data.to_vec(), data.variable_data);
+            let item = TemplateModule::nft_item_id(1, (index + 1) as TokenId).unwrap(); 
+            assert_eq!(item.const_data.to_vec(), data.const_data);
+            assert_eq!(item.variable_data.to_vec(), data.variable_data);
         }
     });
 }
@@ -160,16 +162,17 @@ fn create_refungible_item() {
 
         let data = default_re_fungible_data();
         create_test_item(collection_id, &data.clone().into());
+        let item = TemplateModule::refungible_item_id(collection_id, 1).unwrap();
         assert_eq!(
-            TemplateModule::refungible_item_id(collection_id, 1).const_data,
+            item.const_data,
             data.const_data
         );
         assert_eq!(
-            TemplateModule::refungible_item_id(collection_id, 1).variable_data,
+            item.variable_data,
             data.variable_data
         );
         assert_eq!(
-            TemplateModule::refungible_item_id(collection_id, 1).owner[0],
+            item.owner[0],
             Ownership {
                 owner: 1,
                 fraction: 1023
@@ -197,7 +200,7 @@ fn create_multiple_refungible_items() {
         ));
         for (index, data) in items_data.iter().enumerate() {
 
-            let item = TemplateModule::refungible_item_id(1, (index + 1) as TokenId);
+            let item = TemplateModule::refungible_item_id(1, (index + 1) as TokenId).unwrap();
             assert_eq!(item.const_data.to_vec(), data.const_data);
             assert_eq!(item.variable_data.to_vec(), data.variable_data);
             assert_eq!(
@@ -299,28 +302,31 @@ fn transfer_refungible_item() {
 
         let origin1 = Origin::signed(1);
         let origin2 = Origin::signed(2);
-        assert_eq!(
-            TemplateModule::refungible_item_id(collection_id, 1).const_data,
-            data.const_data
-        );
-        assert_eq!(
-            TemplateModule::refungible_item_id(collection_id, 1).variable_data,
-            data.variable_data
-        );
-        assert_eq!(
-            TemplateModule::refungible_item_id(collection_id, 1).owner[0],
-            Ownership {
-                owner: 1,
-                fraction: 1023
-            }
-        );
+        {
+            let item = TemplateModule::refungible_item_id(collection_id, 1).unwrap();
+            assert_eq!(
+                item.const_data,
+                data.const_data
+            );
+            assert_eq!(
+                item.variable_data,
+                data.variable_data
+            );
+            assert_eq!(
+                item.owner[0],
+                Ownership {
+                    owner: 1,
+                    fraction: 1023
+                }
+            );
+        }
         assert_eq!(TemplateModule::balance_count(1, 1), 1023);
         assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
         // change owner scenario
         assert_ok!(TemplateModule::transfer(origin1.clone(), 2, 1, 1, 1023));
         assert_eq!(
-            TemplateModule::refungible_item_id(1, 1).owner[0],
+            TemplateModule::refungible_item_id(1, 1).unwrap().owner[0],
             Ownership {
                 owner: 2,
                 fraction: 1023
@@ -333,20 +339,23 @@ fn transfer_refungible_item() {
 
         // split item scenario
         assert_ok!(TemplateModule::transfer(origin2.clone(), 3, 1, 1, 500));
-        assert_eq!(
-            TemplateModule::refungible_item_id(1, 1).owner[0],
-            Ownership {
-                owner: 2,
-                fraction: 523
-            }
-        );
-        assert_eq!(
-            TemplateModule::refungible_item_id(1, 1).owner[1],
-            Ownership {
-                owner: 3,
-                fraction: 500
-            }
-        );
+        {
+            let item = TemplateModule::refungible_item_id(1, 1).unwrap();
+            assert_eq!(
+                item.owner[0],
+                Ownership {
+                    owner: 2,
+                    fraction: 523
+                }
+            );
+            assert_eq!(
+                item.owner[1],
+                Ownership {
+                    owner: 3,
+                    fraction: 500
+                }
+            );
+        }
         assert_eq!(TemplateModule::balance_count(1, 2), 523);
         assert_eq!(TemplateModule::balance_count(1, 3), 500);
         assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
@@ -354,20 +363,23 @@ fn transfer_refungible_item() {
 
         // split item and new owner has account scenario
         assert_ok!(TemplateModule::transfer(origin2.clone(), 3, 1, 1, 200));
-        assert_eq!(
-            TemplateModule::refungible_item_id(1, 1).owner[0],
-            Ownership {
-                owner: 2,
-                fraction: 323
-            }
-        );
-        assert_eq!(
-            TemplateModule::refungible_item_id(1, 1).owner[1],
-            Ownership {
-                owner: 3,
-                fraction: 700
-            }
-        );
+        {
+            let item = TemplateModule::refungible_item_id(1, 1).unwrap();
+            assert_eq!(
+                item.owner[0],
+                Ownership {
+                    owner: 2,
+                    fraction: 323
+                }
+            );
+            assert_eq!(
+                item.owner[1],
+                Ownership {
+                    owner: 3,
+                    fraction: 700
+                }
+            );
+        }
         assert_eq!(TemplateModule::balance_count(1, 2), 323);
         assert_eq!(TemplateModule::balance_count(1, 3), 700);
         assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
@@ -390,7 +402,7 @@ fn transfer_nft_item() {
         let origin1 = Origin::signed(1);
         // default scenario
         assert_ok!(TemplateModule::transfer(origin1.clone(), 2, 1, 1, 1000));
-        assert_eq!(TemplateModule::nft_item_id(1, 1).owner, 2);
+        assert_eq!(TemplateModule::nft_item_id(1, 1).unwrap().owner, 2);
         assert_eq!(TemplateModule::balance_count(1, 1), 0);
         assert_eq!(TemplateModule::balance_count(1, 2), 1);
         // assert_eq!(TemplateModule::address_tokens(1, 1), []);
@@ -456,7 +468,7 @@ fn nft_approve_and_transfer_from_white_list() {
         let data = default_nft_data();
         create_test_item(collection_id, &data.clone().into());
 
-        assert_eq!(TemplateModule::nft_item_id(1, 1).const_data, data.const_data);
+        assert_eq!(TemplateModule::nft_item_id(1, 1).unwrap().const_data, data.const_data);
         assert_eq!(TemplateModule::balance_count(1, 1), 1);
         assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
@@ -605,7 +617,7 @@ fn fungible_approve_and_transfer_from() {
             1,
             1,
             4
-        ), Error::<Test>::TokenValueNotEnough);
+        ), Error::<Test>::NoPermission);
     });
 }
 
@@ -622,7 +634,7 @@ fn change_collection_owner() {
             collection_id,
             2
         ));
-        assert_eq!(TemplateModule::collection(collection_id).owner, 2);
+        assert_eq!(TemplateModule::collection_id(collection_id).unwrap().owner, 2);
     });
 }
 
@@ -685,7 +697,7 @@ fn burn_fungible_item() {
         assert_ok!(TemplateModule::burn_item(origin1.clone(), 1, 1, 5));
         assert_noop!(
             TemplateModule::burn_item(origin1.clone(), 1, 1, 5),
-            Error::<Test>::TokenNotFound
+            Error::<Test>::TokenValueNotEnough
         );
 
         assert_eq!(TemplateModule::balance_count(1, 1), 0);
@@ -807,9 +819,9 @@ fn balance_of() {
         assert_eq!(TemplateModule::balance_count(nft_collection_id, 1), 1);
         assert_eq!(TemplateModule::balance_count(fungible_collection_id, 1), 5);
         assert_eq!(TemplateModule::balance_count(re_fungible_collection_id, 1), 1023);
-        assert_eq!(TemplateModule::nft_item_id(nft_collection_id, 1).owner, 1);
+        assert_eq!(TemplateModule::nft_item_id(nft_collection_id, 1).unwrap().owner, 1);
         assert_eq!(TemplateModule::fungible_item_id(fungible_collection_id, 1).value, 5);
-        assert_eq!(TemplateModule::refungible_item_id(re_fungible_collection_id, 1).owner[0].owner, 1);
+        assert_eq!(TemplateModule::refungible_item_id(re_fungible_collection_id, 1).unwrap().owner[0].owner, 1);
     });
 }
 
@@ -1841,8 +1853,8 @@ fn set_const_on_chain_schema() {
         let origin1 = Origin::signed(1);
         assert_ok!(TemplateModule::set_const_on_chain_schema(origin1, collection_id, b"test const on chain schema".to_vec()));
 
-        assert_eq!(TemplateModule::collection(collection_id).const_on_chain_schema, b"test const on chain schema".to_vec());
-        assert_eq!(TemplateModule::collection(collection_id).variable_on_chain_schema, b"".to_vec());
+        assert_eq!(TemplateModule::collection_id(collection_id).unwrap().const_on_chain_schema, b"test const on chain schema".to_vec());
+        assert_eq!(TemplateModule::collection_id(collection_id).unwrap().variable_on_chain_schema, b"".to_vec());
     });
 }
 
@@ -1856,8 +1868,8 @@ fn set_variable_on_chain_schema() {
         let origin1 = Origin::signed(1);
         assert_ok!(TemplateModule::set_variable_on_chain_schema(origin1, collection_id, b"test variable on chain schema".to_vec()));
 
-        assert_eq!(TemplateModule::collection(collection_id).const_on_chain_schema, b"".to_vec());
-        assert_eq!(TemplateModule::collection(collection_id).variable_on_chain_schema, b"test variable on chain schema".to_vec());
+        assert_eq!(TemplateModule::collection_id(collection_id).unwrap().const_on_chain_schema, b"".to_vec());
+        assert_eq!(TemplateModule::collection_id(collection_id).unwrap().variable_on_chain_schema, b"test variable on chain schema".to_vec());
     });
 }
 
@@ -1876,7 +1888,7 @@ fn set_variable_meta_data_on_nft_token_stores_variable_meta_data() {
         let variable_data = b"test set_variable_meta_data method.".to_vec();
         assert_ok!(TemplateModule::set_variable_meta_data(origin1, collection_id, 1, variable_data.clone()));
 
-        assert_eq!(TemplateModule::nft_item_id(collection_id, 1).variable_data, variable_data);
+        assert_eq!(TemplateModule::nft_item_id(collection_id, 1).unwrap().variable_data, variable_data);
     });
 }
 
@@ -1895,7 +1907,7 @@ fn set_variable_meta_data_on_re_fungible_token_stores_variable_meta_data() {
         let variable_data = b"test set_variable_meta_data method.".to_vec();
         assert_ok!(TemplateModule::set_variable_meta_data(origin1, collection_id, 1, variable_data.clone()));
 
-        assert_eq!(TemplateModule::refungible_item_id(collection_id, 1).variable_data, variable_data);
+        assert_eq!(TemplateModule::refungible_item_id(collection_id, 1).unwrap().variable_data, variable_data);
     });
 }
 

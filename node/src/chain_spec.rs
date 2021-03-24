@@ -15,6 +15,7 @@ use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use serde_json::map::Map;
+// use crate::chain_spec::api::chain_extension::*;
 
 // Note this is the URL for the telemetry server
 //const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -179,9 +180,9 @@ fn testnet_genesis(
                 .collect(),
         }),
         pallet_nft: Some(NftConfig {
-            collection: vec![(
+            collection_id: vec![(
                 1,
-                CollectionType {
+                Collection {
                     owner: get_account_id_from_seed::<sr25519::Public>("Alice"),
                     mode: CollectionMode::NFT,
                     access: AccessMode::Normal,
@@ -192,8 +193,7 @@ fn testnet_genesis(
                     mint_mode: false,
 					offchain_schema: vec![],
 					schema_version: SchemaVersion::default(),
-                    sponsor: get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    sponsor_confirmed: true,
+                    sponsorship: SponsorshipState::Confirmed(get_account_id_from_seed::<sr25519::Public>("Alice")),
                     const_on_chain_schema: vec![],
 					variable_on_chain_schema: vec![],
 					limits: CollectionLimits::default()

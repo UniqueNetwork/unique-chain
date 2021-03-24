@@ -36,7 +36,7 @@ describe('Integration Test ext. setConstOnChainSchema()', () => {
   it('Run extrinsic with parameters of the collection id, set the scheme', async () => {
       await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const collection: any = (await api.query.nft.collection(collectionId));
+      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
       expect(collection.Owner.toString()).to.be.eq(Alice.address);
       const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
       await submitTransactionAsync(Alice, setShema);
@@ -48,7 +48,7 @@ describe('Integration Test ext. setConstOnChainSchema()', () => {
         const collectionId = await createCollectionExpectSuccess();
         const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
         await submitTransactionAsync(Alice, setShema);
-        const collection: any = (await api.query.nft.collection(collectionId));
+        const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
         expect(collection.ConstOnChainSchema.toString()).to.be.eq(Shema);
 
     });
@@ -86,7 +86,7 @@ describe('Negative Integration Test ext. setConstOnChainSchema()', () => {
   it('Execute method not on behalf of the collection owner', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const collection: any = (await api.query.nft.collection(collectionId));
+      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
       expect(collection.Owner.toString()).to.be.eq(Alice.address);
       const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
       await expect(submitTransactionExpectFailAsync(Bob, setShema)).to.be.rejected;

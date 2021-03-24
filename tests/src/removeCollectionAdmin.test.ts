@@ -19,7 +19,7 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
       const collectionId = await createCollectionExpectSuccess();
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
-      const collection: any = (await api.query.nft.collection(collectionId));
+      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
       expect(collection.Owner.toString()).to.be.eq(Alice.address);
       // first - add collection admin Bob
       const addAdminTx = api.tx.nft.addCollectionAdmin(collectionId, Bob.address);
@@ -34,6 +34,19 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
 
       const adminListAfterRemoveAdmin: any = (await api.query.nft.adminList(collectionId));
       expect(adminListAfterRemoveAdmin).not.to.be.contains(Bob.address);
+    });
+  });
+
+  it('Remove admin from collection that has no admins', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const Alice = privateKey('//Alice');
+      const collectionId = await createCollectionExpectSuccess();
+
+      const adminListBeforeAddAdmin: any = (await api.query.nft.adminList(collectionId));
+      expect(adminListBeforeAddAdmin).to.have.lengthOf(0);
+
+      const tx = api.tx.nft.removeCollectionAdmin(collectionId, Alice.address);
+      await submitTransactionAsync(Alice, tx);
     });
   });
 });
@@ -68,19 +81,6 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
       await createCollectionExpectSuccess();
-    });
-  });
-
-  it('Remove admin from collection that has no admins', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const Alice = privateKey('//Alice');
-      const collectionId = await createCollectionExpectSuccess();
-
-      const adminListBeforeAddAdmin: any = (await api.query.nft.adminList(collectionId));
-      expect(adminListBeforeAddAdmin).to.have.lengthOf(0);
-
-      const tx = api.tx.nft.removeCollectionAdmin(collectionId, Alice.address);
-      await expect(submitTransactionExpectFailAsync(Alice, tx)).to.be.rejected;
     });
   });
 });

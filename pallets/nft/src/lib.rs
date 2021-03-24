@@ -13,6 +13,7 @@ pub use std::*;
 #[cfg(feature = "std")]
 pub use serde::*;
 
+use core::ops::{Deref, DerefMut};
 use codec::{Decode, Encode};
 pub use frame_support::{
     construct_runtime, decl_event, decl_module, decl_storage, decl_error,
@@ -20,7 +21,7 @@ pub use frame_support::{
     ensure, fail, parameter_types,
     traits::{
         Currency, ExistenceRequirement, Get, Imbalance, KeyOwnerProofSystem, OnUnbalanced,
-        Randomness, IsSubType,
+        Randomness, IsSubType, WithdrawReasons,
     },
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -28,13 +29,14 @@ pub use frame_support::{
         WeightToFeePolynomial, DispatchClass,
     },
     StorageValue,
+    transactional,
 };
 
 use frame_system::{self as system, ensure_signed, ensure_root};
 use sp_runtime::sp_std::prelude::Vec;
 use sp_runtime::{
     traits::{
-        DispatchInfoOf, Dispatchable, PostDispatchInfoOf, Saturating, SaturatedConversion, SignedExtension, Zero,
+        Hash, DispatchInfoOf, Dispatchable, PostDispatchInfoOf, Saturating, SaturatedConversion, SignedExtension, Zero,
     },
     transaction_validity::{
         TransactionPriority, InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
@@ -43,7 +45,7 @@ use sp_runtime::{
 };
 use sp_runtime::traits::StaticLookup;
 use pallet_contracts::chain_extension::UncheckedFrom;
-use transaction_payment::OnChargeTransaction;
+use pallet_transaction_payment::OnChargeTransaction;
 
 #[cfg(test)]
 mod mock;
@@ -123,10 +125,46 @@ pub struct Ownership<AccountId> {
     pub fraction: u128,
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct CollectionType<AccountId> {
-    pub owner: AccountId,
+pub enum SponsorshipState<AccountId> {
+    /// The fees are applied to the transaction sender
+    Disabled,
+    Unconfirmed(AccountId),
+    /// Transactions are sponsored by specified account
+    Confirmed(AccountId),
+}
+
+impl<AccountId> SponsorshipState<AccountId> {
+    fn sponsor(&self) -> Option<&AccountId> {
+        match self {
+            Self::Confirmed(sponsor) => Some(sponsor),
+            _ => None,
+        }
+    }
+
+    fn pending_sponsor(&self) -> Option<&AccountId> {
+        match self {
+            Self::Unconfirmed(sponsor) | Self::Confirmed(sponsor) => Some(sponsor),
+            _ => None,
+        }
+    }
+
+    fn confirmed(&self) -> bool {
+        matches!(self, Self::Confirmed(_))
+    }
+}
+
+impl<T> Default for SponsorshipState<T> {
+    fn default() -> Self {
+        Self::Disabled
+    }
+}
+
+#[derive(Encode, Decode, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct Collection<T: Config> {
+    pub owner: T::AccountId,
     pub mode: CollectionMode,
     pub access: AccessMode,
     pub decimal_points: DecimalPoints,
@@ -136,14 +174,32 @@ pub struct CollectionType<AccountId> {
     pub mint_mode: bool,
     pub offchain_schema: Vec<u8>,
     pub schema_version: SchemaVersion,
-    pub sponsor: AccountId, // Who pays fees. If set to default address, the fees are applied to the transaction sender
-    pub sponsor_confirmed: bool, // False if sponsor address has not yet confirmed sponsorship. True otherwise.
-    pub limits: CollectionLimits, // Collection private restrictions 
+    pub sponsorship: SponsorshipState<T::AccountId>,
+    pub limits: CollectionLimits<T::BlockNumber>, // Collection private restrictions 
     pub variable_on_chain_schema: Vec<u8>, //
     pub const_on_chain_schema: Vec<u8>, //
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
+pub struct CollectionHandle<T: Config> {
+    pub id: CollectionId,
+    collection: Collection<T>,
+}
+
+impl<T: Config> Deref for CollectionHandle<T> {
+    type Target = Collection<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.collection
+    }
+}
+
+impl<T: Config> DerefMut for CollectionHandle<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.collection
+    }
+}
+
+#[derive(Encode, Decode, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct NftItemType<AccountId> {
     pub owner: AccountId,
@@ -157,7 +213,7 @@ pub struct FungibleItemType {
     pub value: u128,
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct ReFungibleItemType<AccountId> {
     pub owner: Vec<Ownership<AccountId>>,
@@ -178,9 +234,13 @@ pub struct ReFungibleItemType<AccountId> {
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct CollectionLimits {
+pub struct CollectionLimits<BlockNumber: Encode + Decode> {
     pub account_token_ownership_limit: u32,
     pub sponsored_data_size: u32,
+    /// None - setVariableMetadata is not sponsored
+    /// Some(v) - setVariableMetadata is sponsored 
+    ///           if there is v block between txs
+    pub sponsored_data_rate_limit: Option<BlockNumber>,
     pub token_limit: u32,
 
     // Timeouts for item types in passed blocks
@@ -189,12 +249,13 @@ pub struct CollectionLimits {
     pub owner_can_destroy: bool,
 }
 
-impl Default for CollectionLimits {
-    fn default() -> CollectionLimits {
-        CollectionLimits { 
+impl<BlockNumber: Encode + Decode> Default for CollectionLimits<BlockNumber> {
+    fn default() -> Self {
+        Self { 
             account_token_ownership_limit: 10_000_000, 
             token_limit: u32::max_value(),
-            sponsored_data_size: u32::max_value(), 
+            sponsored_data_size: u32::MAX, 
+            sponsored_data_rate_limit: None,
             sponsor_transfer_timeout: 14400,
             owner_can_transfer: true,
             owner_can_destroy: true
@@ -247,6 +308,7 @@ pub trait WeightInfo {
     fn set_schema_version() -> Weight;
     fn set_chain_limits() -> Weight;
     fn set_contract_sponsoring_rate_limit() -> Weight;
+    fn set_variable_meta_data_sponsoring_rate_limit() -> Weight;
     fn toggle_contract_white_list() -> Weight;
     fn add_to_contract_white_list() -> Weight;
     fn remove_from_contract_white_list() -> Weight;
@@ -382,18 +444,26 @@ decl_error! {
         AccountTokenLimitExceeded,
         /// Collection limit bounds per collection exceeded
         CollectionLimitBoundsExceeded,
+        /// Tried to enable permissions which are only permitted to be disabled
+        OwnerPermissionsCantBeReverted,
         /// Schema data size limit bound exceeded
         SchemaDataLimitExceeded,
         /// Maximum refungibility exceeded
-        WrongRefungiblePieces
+        WrongRefungiblePieces,
+        /// createRefungible should be called with one owner
+        BadCreateRefungibleCall,
 	}
 }
 
-pub trait Config: system::Config + Sized + transaction_payment::Config + pallet_contracts::Config {
+pub trait Config: system::Config + Sized + pallet_transaction_payment::Config + pallet_contracts::Config {
     type Event: From<Event<Self>> + Into<<Self as system::Config>::Event>;
 
     /// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
+
+    type Currency: Currency<Self::AccountId>;
+    type CollectionCreationPrice: Get<<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance>;
+    type TreasuryAccountId: Get<Self::AccountId>;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -401,59 +471,124 @@ mod benchmarking;
 
 // #endregion
 
+// # Used definitions
+//
+// ## User control levels
+//
+// chain-controlled - key is uncontrolled by user
+//                    i.e autoincrementing index
+//                    can use non-cryptographic hash
+// real - key is controlled by user
+//        but it is hard to generate enough colliding values, i.e owner of signed txs
+//        can use non-cryptographic hash
+// controlled - key is completly controlled by users
+//              i.e maps with mutable keys
+//              should use cryptographic hash
+//
+// ## User control level downgrade reasons
+//
+// ?1 - chain-controlled -> controlled
+//      collections/tokens can be destroyed, resulting in massive holes
+// ?2 - chain-controlled -> controlled
+//      same as ?1, but can be only added, resulting in easier exploitation
+// ?3 - real -> controlled
+//      no confirmation required, so addresses can be easily generated
 decl_storage! {
     trait Store for Module<T: Config> as Nft {
 
-        // Private members
-        NextCollectionID: CollectionId;
+        //#region Private members
+        /// Id of next collection
         CreatedCollectionCount: u32;
+        /// Used for migrations
         ChainVersion: u64;
-        ItemListIndex: map hasher(identity) CollectionId => TokenId;
+        /// Id of last collection token
+        /// Collection id (controlled?1)
+        ItemListIndex: map hasher(blake2_128_concat) CollectionId => TokenId;
+        //#endregion
 
-        // Chain limits struct
+        //#region Chain limits struct
         pub ChainLimit get(fn chain_limit) config(): ChainLimits;
+        //#endregion
 
-        // Bound counters
-        CollectionCount: u32;
+        //#region Bound counters
+        /// Amount of collections destroyed, used for total amount tracking with
+        /// CreatedCollectionCount
+        DestroyedCollectionCount: u32;
+        /// Total amount of account owned tokens (NFTs + RFTs + unique fungibles)
+        /// Account id (real)
         pub AccountItemCount get(fn account_item_count): map hasher(twox_64_concat) T::AccountId => u32;
+        //#endregion
 
-        // Basic collections
-        pub Collection get(fn collection) config(): map hasher(identity) CollectionId => CollectionType<T::AccountId>;
-        pub AdminList get(fn admin_list_collection): map hasher(identity) CollectionId => Vec<T::AccountId>;
-        pub WhiteList get(fn white_list): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => bool;
+        //#region Basic collections
+        /// Collection info
+        /// Collection id (controlled?1)
+        pub CollectionById get(fn collection_id) config(): map hasher(blake2_128_concat) CollectionId => Option<Collection<T>> = None;
+        /// List of collection admins
+        /// Collection id (controlled?2)
+        pub AdminList get(fn admin_list_collection): map hasher(blake2_128_concat) CollectionId => Vec<T::AccountId>;
+        /// Whitelisted collection users
+        /// Collection id (controlled?2), user id (controlled?3)
+        pub WhiteList get(fn white_list): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) T::AccountId => bool;
+        //#endregion
 
-        /// Balance owner per collection map
-        pub Balance get(fn balance_count): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => u128;
+        /// How many of collection items user have
+        /// Collection id (controlled?2), account id (real)
+        pub Balance get(fn balance_count): double_map hasher(blake2_128_concat) CollectionId, hasher(twox_64_concat) T::AccountId => u128;
 
-        /// second parameter: item id + owner account id + spender account id
-        pub Allowances get(fn approved): double_map hasher(identity) CollectionId, hasher(twox_64_concat) (TokenId, T::AccountId, T::AccountId) => u128;
+        /// Amount of items which spender can transfer out of owners account (via transferFrom)
+        /// Collection id (controlled?2), (token id (controlled ?2) + owner account id (real) + spender account id (controlled?3))
+        /// TODO: Off chain worker should remove from this map when token gets removed
+        pub Allowances get(fn approved): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) (TokenId, T::AccountId, T::AccountId) => u128;
 
-        /// Item collections
-        pub NftItemList get(fn nft_item_id) config(): double_map hasher(identity) CollectionId, hasher(identity) TokenId => NftItemType<T::AccountId>;
-        pub FungibleItemList get(fn fungible_item_id) config(): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => FungibleItemType;
-        pub ReFungibleItemList get(fn refungible_item_id) config(): double_map hasher(identity) CollectionId, hasher(identity) TokenId => ReFungibleItemType<T::AccountId>;
+        //#region Item collections
+        /// Collection id (controlled?2), token id (controlled?1)
+        pub NftItemList get(fn nft_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<NftItemType<T::AccountId>>;
+        /// Collection id (controlled?2), owner (controlled?2)
+        pub FungibleItemList get(fn fungible_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) T::AccountId => FungibleItemType;
+        /// Collection id (controlled?2), token id (controlled?1)
+        pub ReFungibleItemList get(fn refungible_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<ReFungibleItemType<T::AccountId>>;
+        //#endregion
 
-        /// Index list
-        pub AddressTokens get(fn address_tokens): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => Vec<TokenId>;
+        //#region Index list
+        /// Collection id (controlled?2), tokens owner (controlled?2)
+        pub AddressTokens get(fn address_tokens): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) T::AccountId => Vec<TokenId>;
+        //#endregion
 
-        /// Tokens transfer baskets
-        pub CreateItemBasket get(fn create_item_basket): map hasher(twox_64_concat) (CollectionId, T::AccountId) => T::BlockNumber;
-        pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => T::BlockNumber;
-        pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(identity) CollectionId, hasher(twox_64_concat) T::AccountId => T::BlockNumber;
-        pub ReFungibleTransferBasket get(fn refungible_transfer_basket): double_map hasher(identity) CollectionId, hasher(identity) TokenId => T::BlockNumber;
+        //#region Tokens transfer rate limit baskets
+        /// (Collection id (controlled?2), who created (real))
+        /// TODO: Off chain worker should remove from this map when collection gets removed
+        pub CreateItemBasket get(fn create_item_basket): map hasher(blake2_128_concat) (CollectionId, T::AccountId) => T::BlockNumber;
+        /// Collection id (controlled?2), token id (controlled?2)
+        pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => T::BlockNumber;
+        /// Collection id (controlled?2), owning user (real)
+        pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(twox_64_concat) T::AccountId => T::BlockNumber;
+        /// Collection id (controlled?2), token id (controlled?2)
+        pub ReFungibleTransferBasket get(fn refungible_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => T::BlockNumber;
+        //#endregion
 
-        // Contract Sponsorship and Ownership
-        pub ContractOwner get(fn contract_owner): map hasher(twox_64_concat) T::AccountId => T::AccountId;
+        /// Variable metadata sponsoring
+        /// Collection id (controlled?2), token id (controlled?2)
+        pub VariableMetaDataBasket get(fn variable_meta_data_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber> = None;
+      
+        //#region Contract Sponsorship and Ownership
+        /// Contract address (real)
+        pub ContractOwner get(fn contract_owner): map hasher(twox_64_concat) T::AccountId => Option<T::AccountId>;
+        /// Contract address (real)
         pub ContractSelfSponsoring get(fn contract_self_sponsoring): map hasher(twox_64_concat) T::AccountId => bool;
+        /// (Contract address(real), caller (real))
         pub ContractSponsorBasket get(fn contract_sponsor_basket): map hasher(twox_64_concat) (T::AccountId, T::AccountId) => T::BlockNumber;
+        /// Contract address (real)
         pub ContractSponsoringRateLimit get(fn contract_sponsoring_rate_limit): map hasher(twox_64_concat) T::AccountId => T::BlockNumber;
+        /// Contract address (real)
         pub ContractWhiteListEnabled get(fn contract_white_list_enabled): map hasher(twox_64_concat) T::AccountId => bool; 
-        pub ContractWhiteList get(fn contract_white_list): double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) T::AccountId => bool; 
+        /// Contract address (real) => Whitelisted user (controlled?3)
+        pub ContractWhiteList get(fn contract_white_list): double_map hasher(twox_64_concat) T::AccountId, hasher(blake2_128_concat) T::AccountId => bool; 
+        //#endregion
     }
     add_extra_genesis {
         build(|config: &GenesisConfig<T>| {
             // Modification of storage
-            for (_num, _c) in &config.collection {
+            for (_num, _c) in &config.collection_id {
                 <Module<T>>::init_collection(_c);
             }
 
@@ -486,7 +621,7 @@ decl_event!(
         /// * mode: [CollectionMode] converted into u8.
         /// 
         /// * account_id: Collection owner.
-        Created(CollectionId, u8, AccountId),
+        CollectionCreated(CollectionId, u8, AccountId),
 
         /// New item was created.
         /// 
@@ -520,6 +655,17 @@ decl_event!(
         ///
         /// * amount: Always 1 for NFT
         Transfer(CollectionId, TokenId, AccountId, AccountId, u128),
+
+        /// * collection_id
+        ///
+        /// * item_id
+        ///
+        /// * sender
+        ///
+        /// * spender
+        ///
+        /// * amount
+        Approved(CollectionId, TokenId, AccountId, AccountId, u128),
     }
 );
 
@@ -532,14 +678,6 @@ decl_module! {
         type Error = Error<T>;
 
         fn on_initialize(now: T::BlockNumber) -> Weight {
-
-            if ChainVersion::get() < 2
-            {
-                let value = NextCollectionID::get();
-                CreatedCollectionCount::put(value);
-                ChainVersion::put(2);
-            }
-
             0
         }
 
@@ -560,6 +698,7 @@ decl_module! {
         /// * mode: [CollectionMode] collection type and type dependent data.
         // returns collection ID
         #[weight = <T as Config>::WeightInfo::create_collection()]
+        #[transactional]
         pub fn create_collection(origin,
                                  collection_name: Vec<u16>,
                                  collection_description: Vec<u16>,
@@ -569,13 +708,31 @@ decl_module! {
             // Anyone can create a collection
             let who = ensure_signed(origin)?;
 
+            // Take a (non-refundable) deposit of collection creation
+            let mut imbalance = <<<T as Config>::Currency as Currency<T::AccountId>>::PositiveImbalance>::zero();
+            imbalance.subsume(<<T as Config>::Currency as Currency<T::AccountId>>::deposit_creating(
+                &T::TreasuryAccountId::get(),
+                T::CollectionCreationPrice::get(),
+            ));
+            <T as Config>::Currency::settle(
+                &who,
+                imbalance,
+                WithdrawReasons::TRANSFER,
+                ExistenceRequirement::KeepAlive,
+            ).map_err(|_| Error::<T>::NoPermission)?;
+
             let decimal_points = match mode {
                 CollectionMode::Fungible(points) => points,
                 _ => 0
             };
 
+            let chain_limit = ChainLimit::get();
+
+            let created_count = CreatedCollectionCount::get();
+            let destroyed_count = DestroyedCollectionCount::get();
+
             // bound Total number of collections
-            ensure!(CollectionCount::get() < ChainLimit::get().collection_numbers_limit, Error::<T>::TotalCollectionsLimitExceeded);
+            ensure!(created_count - destroyed_count < chain_limit.collection_numbers_limit, Error::<T>::TotalCollectionsLimitExceeded);
 
             // check params
             ensure!(decimal_points <= MAX_DECIMAL_POINTS, Error::<T>::CollectionDecimalPointLimitExceeded);
@@ -584,20 +741,19 @@ decl_module! {
             ensure!(token_prefix.len() <= 16, Error::<T>::CollectionTokenPrefixLimitExceeded);
 
             // Generate next collection ID
-            let next_id = CreatedCollectionCount::get()
-                .checked_add(1)
-                .ok_or(Error::<T>::NumOverflow)?;
-
-            // bound counter
-            let total = CollectionCount::get()
+            let next_id = created_count
                 .checked_add(1)
                 .ok_or(Error::<T>::NumOverflow)?;
 
             CreatedCollectionCount::put(next_id);
-            CollectionCount::put(total);
+
+            let limits = CollectionLimits {
+                sponsored_data_size: chain_limit.custom_data_limit,
+                ..Default::default()
+            };
 
             // Create new collection
-            let new_collection = CollectionType {
+            let new_collection = Collection {
                 owner: who.clone(),
                 name: collection_name,
                 mode: mode.clone(),
@@ -608,18 +764,17 @@ decl_module! {
                 token_prefix: token_prefix,
                 offchain_schema: Vec::new(),
                 schema_version: SchemaVersion::ImageURL,
-                sponsor: T::AccountId::default(),
-                sponsor_confirmed: false,
+                sponsorship: SponsorshipState::Disabled,
                 variable_on_chain_schema: Vec::new(),
                 const_on_chain_schema: Vec::new(),
-                limits: CollectionLimits::default()
+                limits,
             };
 
             // Add new collection to map
-            <Collection<T>>::insert(next_id, new_collection);
+            <CollectionById<T>>::insert(next_id, new_collection);
 
             // call event
-            Self::deposit_event(RawEvent::Created(next_id, mode.into(), who.clone()));
+            Self::deposit_event(RawEvent::CollectionCreated(next_id, mode.into(), who.clone()));
 
             Ok(())
         }
@@ -634,17 +789,22 @@ decl_module! {
         /// 
         /// * collection_id: collection to destroy.
         #[weight = <T as Config>::WeightInfo::destroy_collection()]
+        #[transactional]
         pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            Self::check_owner_permissions(collection_id, sender)?;
+            let collection = Self::get_collection(collection_id)?;
+            Self::check_owner_permissions(&collection, sender)?;
+            if !collection.limits.owner_can_destroy {
+                fail!(Error::<T>::NoPermission);
+            }
 
             <AddressTokens<T>>::remove_prefix(collection_id);
             <Allowances<T>>::remove_prefix(collection_id);
             <Balance<T>>::remove_prefix(collection_id);
             <ItemListIndex>::remove(collection_id);
             <AdminList<T>>::remove(collection_id);
-            <Collection<T>>::remove(collection_id);
+            <CollectionById<T>>::remove(collection_id);
             <WhiteList<T>>::remove_prefix(collection_id);
 
             <NftItemList<T>>::remove_prefix(collection_id);
@@ -655,15 +815,11 @@ decl_module! {
             <FungibleTransferBasket<T>>::remove_prefix(collection_id);
             <ReFungibleTransferBasket<T>>::remove_prefix(collection_id);
 
-            if CollectionCount::get() > 0
-            {
-                // bound couter
-                let total = CollectionCount::get()
-                    .checked_sub(1)
-                    .ok_or(Error::<T>::NumOverflow)?;
+            <VariableMetaDataBasket<T>>::remove_prefix(collection_id);
 
-                CollectionCount::put(total);
-            }
+            DestroyedCollectionCount::put(DestroyedCollectionCount::get()
+                .checked_add(1)
+                .ok_or(Error::<T>::NumOverflow)?);
 
             Ok(())
         }
@@ -681,10 +837,12 @@ decl_module! {
         /// 
         /// * address.
         #[weight = <T as Config>::WeightInfo::add_to_white_list()]
+        #[transactional]
         pub fn add_to_white_list(origin, collection_id: CollectionId, address: T::AccountId) -> DispatchResult{
 
             let sender = ensure_signed(origin)?;
-            Self::check_owner_or_admin_permissions(collection_id, sender)?;
+            let collection = Self::get_collection(collection_id)?;
+            Self::check_owner_or_admin_permissions(&collection, sender)?;
 
             <WhiteList<T>>::insert(collection_id, address, true);
             
@@ -704,10 +862,12 @@ decl_module! {
         /// 
         /// * address.
         #[weight = <T as Config>::WeightInfo::remove_from_white_list()]
+        #[transactional]
         pub fn remove_from_white_list(origin, collection_id: CollectionId, address: T::AccountId) -> DispatchResult{
 
             let sender = ensure_signed(origin)?;
-            Self::check_owner_or_admin_permissions(collection_id, sender)?;
+            let collection = Self::get_collection(collection_id)?;
+            Self::check_owner_or_admin_permissions(&collection, sender)?;
 
             <WhiteList<T>>::remove(collection_id, address);
 
@@ -726,14 +886,15 @@ decl_module! {
         /// 
         /// * mode: [AccessMode]
         #[weight = <T as Config>::WeightInfo::set_public_access_mode()]
+        #[transactional]
         pub fn set_public_access_mode(origin, collection_id: CollectionId, mode: AccessMode) -> DispatchResult
         {
             let sender = ensure_signed(origin)?;
 
-            Self::check_owner_permissions(collection_id, sender)?;
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = Self::get_collection(collection_id)?;
+            Self::check_owner_permissions(&target_collection, sender)?;
             target_collection.access = mode;
-            <Collection<T>>::insert(collection_id, target_collection);
+            Self::save_collection(target_collection);
 
             Ok(())
         }
@@ -752,14 +913,15 @@ decl_module! {
         /// 
         /// * mint_permission: Boolean parameter. If True, allows minting to Anyone with conditions above.
         #[weight = <T as Config>::WeightInfo::set_mint_permission()]
+        #[transactional]
         pub fn set_mint_permission(origin, collection_id: CollectionId, mint_permission: bool) -> DispatchResult
         {
             let sender = ensure_signed(origin)?;
 
-            Self::check_owner_permissions(collection_id, sender)?;
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = Self::get_collection(collection_id)?;
+            Self::check_owner_permissions(&target_collection, sender)?;
             target_collection.mint_mode = mint_permission;
-            <Collection<T>>::insert(collection_id, target_collection);
+            Self::save_collection(target_collection);
 
             Ok(())
         }
@@ -776,13 +938,14 @@ decl_module! {
         /// 
         /// * new_owner.
         #[weight = <T as Config>::WeightInfo::change_collection_owner()]
+        #[transactional]
         pub fn change_collection_owner(origin, collection_id: CollectionId, new_owner: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            Self::check_owner_permissions(collection_id, sender)?;
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = Self::get_collection(collection_id)?;
+            Self::check_owner_permissions(&target_collection, sender)?;
             target_collection.owner = new_owner;
-            <Collection<T>>::insert(collection_id, target_collection);
+            Self::save_collection(target_collection);
 
             Ok(())
         }
@@ -801,24 +964,23 @@ decl_module! {
         /// 
         /// * new_admin_id: Address of new admin to add.
         #[weight = <T as Config>::WeightInfo::add_collection_admin()]
+        #[transactional]
         pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            Self::check_owner_or_admin_permissions(collection_id, sender)?;
-            let mut admin_arr: Vec<T::AccountId> = Vec::new();
+            let collection = Self::get_collection(collection_id)?;
+            Self::check_owner_or_admin_permissions(&collection, sender)?;
+            let mut admin_arr = <AdminList<T>>::get(collection_id);
 
-            if <AdminList<T>>::contains_key(collection_id)
-            {
-                admin_arr = <AdminList<T>>::get(collection_id);
-                ensure!(!admin_arr.contains(&new_admin_id), Error::<T>::AlreadyAdmin);
+            match admin_arr.binary_search(&new_admin_id) {
+                Ok(_) => {},
+                Err(idx) => {
+                    let limits = ChainLimit::get();
+                    ensure!(admin_arr.len() < limits.collections_admins_limit as usize, Error::<T>::CollectionAdminsLimitExceeded);
+                    admin_arr.insert(idx, new_admin_id);
+                    <AdminList<T>>::insert(collection_id, admin_arr);
+                }
             }
-
-            // Number of collection admins
-            ensure!((admin_arr.len() as u64) < ChainLimit::get().collections_admins_limit, Error::<T>::CollectionAdminsLimitExceeded);
-
-            admin_arr.push(new_admin_id);
-            <AdminList<T>>::insert(collection_id, admin_arr);
-
             Ok(())
         }
 
@@ -835,16 +997,21 @@ decl_module! {
         /// 
         /// * account_id: Address of admin to remove.
         #[weight = <T as Config>::WeightInfo::remove_collection_admin()]
+        #[transactional]
         pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            Self::check_owner_or_admin_permissions(collection_id, sender)?;
-            ensure!(<AdminList<T>>::contains_key(collection_id), Error::<T>::AdminNotFound);
-
+            let collection = Self::get_collection(collection_id)?;
+            Self::check_owner_or_admin_permissions(&collection, sender)?;
             let mut admin_arr = <AdminList<T>>::get(collection_id);
-            admin_arr.retain(|i| *i != account_id);
-            <AdminList<T>>::insert(collection_id, admin_arr);
 
+            match admin_arr.binary_search(&account_id) {
+                Ok(idx) => {
+                    admin_arr.remove(idx);
+                    <AdminList<T>>::insert(collection_id, admin_arr);
+                },
+                Err(_) => {}
+            }
             Ok(())
         }
 
@@ -858,17 +1025,15 @@ decl_module! {
         /// 
         /// * new_sponsor.
         #[weight = <T as Config>::WeightInfo::set_collection_sponsor()]
+        #[transactional]
         pub fn set_collection_sponsor(origin, collection_id: CollectionId, new_sponsor: T::AccountId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            ensure!(<Collection<T>>::contains_key(collection_id), Error::<T>::CollectionNotFound);
+            let mut target_collection = Self::get_collection(collection_id)?;
+            Self::check_owner_permissions(&target_collection, sender)?;
 
-            let mut target_collection = <Collection<T>>::get(collection_id);
-            ensure!(sender == target_collection.owner, Error::<T>::NoPermission);
-
-            target_collection.sponsor = new_sponsor;
-            target_collection.sponsor_confirmed = false;
-            <Collection<T>>::insert(collection_id, target_collection);
+            target_collection.sponsorship = SponsorshipState::Unconfirmed(new_sponsor);
+            Self::save_collection(target_collection);
 
             Ok(())
         }
@@ -881,16 +1046,19 @@ decl_module! {
         /// 
         /// * collection_id.
         #[weight = <T as Config>::WeightInfo::confirm_sponsorship()]
+        #[transactional]
         pub fn confirm_sponsorship(origin, collection_id: CollectionId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            ensure!(<Collection<T>>::contains_key(collection_id), Error::<T>::CollectionNotFound);
 
-            let mut target_collection = <Collection<T>>::get(collection_id);
-            ensure!(sender == target_collection.sponsor, Error::<T>::ConfirmUnsetSponsorFail);
+            let mut target_collection = Self::get_collection(collection_id)?;
+            ensure!(
+                target_collection.sponsorship.pending_sponsor() == Some(&sender),
+                Error::<T>::ConfirmUnsetSponsorFail
+            );
 
-            target_collection.sponsor_confirmed = true;
-            <Collection<T>>::insert(collection_id, target_collection);
+            target_collection.sponsorship = SponsorshipState::Confirmed(sender);
+            Self::save_collection(target_collection);
 
             Ok(())
         }
@@ -905,17 +1073,16 @@ decl_module! {
         /// 
         /// * collection_id.
         #[weight = <T as Config>::WeightInfo::remove_collection_sponsor()]
+        #[transactional]
         pub fn remove_collection_sponsor(origin, collection_id: CollectionId) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            ensure!(<Collection<T>>::contains_key(collection_id), Error::<T>::CollectionNotFound);
 
-            let mut target_collection = <Collection<T>>::get(collection_id);
-            ensure!(sender == target_collection.owner, Error::<T>::NoPermission);
+            let mut target_collection = Self::get_collection(collection_id)?;
+            Self::check_owner_permissions(&target_collection, sender)?;
 
-            target_collection.sponsor = T::AccountId::default();
-            target_collection.sponsor_confirmed = false;
-            <Collection<T>>::insert(collection_id, target_collection);
+            target_collection.sponsorship = SponsorshipState::Disabled;
+            Self::save_collection(target_collection);
 
             Ok(())
         }
@@ -945,22 +1112,21 @@ decl_module! {
         // .saturating_add(RocksDbWeight::get().writes(8 as Weight))]
 
         #[weight = <T as Config>::WeightInfo::create_item(data.len())]
+        #[transactional]
         pub fn create_item(origin, collection_id: CollectionId, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
 
-            Self::collection_exists(collection_id)?;
+            let target_collection = Self::get_collection(collection_id)?;
 
-            let target_collection = <Collection<T>>::get(collection_id);
-
-            Self::can_create_items_in_collection(collection_id, &target_collection, &sender, &owner)?;
+            Self::can_create_items_in_collection(&target_collection, &sender, &owner, 1)?;
             Self::validate_create_item_args(&target_collection, &data)?;
-            Self::create_item_no_validation(collection_id, owner, data)?;
+            Self::create_item_no_validation(&target_collection, owner, data)?;
 
             Ok(())
         }
 
-        /// This method creates multiple instances of NFT Collection created with CreateCollection method.
+        /// This method creates multiple items in a collection created with CreateCollection method.
         /// 
         /// # Permissions
         /// 
@@ -981,21 +1147,21 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::create_item(items_data.into_iter()
                                .map(|data| { data.len() })
                                .sum())]
+        #[transactional]
         pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::AccountId, items_data: Vec<CreateItemData>) -> DispatchResult {
 
             ensure!(items_data.len() > 0, Error::<T>::EmptyArgument);
             let sender = ensure_signed(origin)?;
 
-            Self::collection_exists(collection_id)?;
-            let target_collection = <Collection<T>>::get(collection_id);
+            let target_collection = Self::get_collection(collection_id)?;
 
-            Self::can_create_items_in_collection(collection_id, &target_collection, &sender, &owner)?;
+            Self::can_create_items_in_collection(&target_collection, &sender, &owner, items_data.len() as u32)?;
 
             for data in &items_data {
                 Self::validate_create_item_args(&target_collection, data)?;
             }
             for data in &items_data {
-                Self::create_item_no_validation(collection_id, owner.clone(), data.clone())?;
+                Self::create_item_no_validation(&target_collection, owner.clone(), data.clone())?;
             }
 
             Ok(())
@@ -1015,31 +1181,36 @@ decl_module! {
         /// 
         /// * item_id: ID of NFT to burn.
         #[weight = <T as Config>::WeightInfo::burn_item()]
+        #[transactional]
         pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            Self::collection_exists(collection_id)?;
 
             // Transfer permissions check
-            let target_collection = <Collection<T>>::get(collection_id);
-            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
-                Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                Error::<T>::NoPermission);
+            let target_collection = Self::get_collection(collection_id)?;
+            ensure!(
+                Self::is_item_owner(sender.clone(), &target_collection, item_id) ||
+                (
+                    target_collection.limits.owner_can_transfer &&
+                    Self::is_owner_or_admin_permissions(&target_collection, sender.clone())
+                ),
+                Error::<T>::NoPermission
+            );
 
             if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(collection_id, &sender)?;
+                Self::check_white_list(&target_collection, &sender)?;
             }
 
             match target_collection.mode
             {
-                CollectionMode::NFT => Self::burn_nft_item(collection_id, item_id)?,
-                CollectionMode::Fungible(_)  => Self::burn_fungible_item(&sender, collection_id, value)?,
-                CollectionMode::ReFungible  => Self::burn_refungible_item(collection_id, item_id, &sender)?,
+                CollectionMode::NFT => Self::burn_nft_item(&target_collection, item_id)?,
+                CollectionMode::Fungible(_)  => Self::burn_fungible_item(&sender, &target_collection, value)?,
+                CollectionMode::ReFungible  => Self::burn_refungible_item(&target_collection, item_id, &sender)?,
                 _ => ()
             };
 
             // call event
-            Self::deposit_event(RawEvent::ItemDestroyed(collection_id, item_id));
+            Self::deposit_event(RawEvent::ItemDestroyed(target_collection.id, item_id));
 
             Ok(())
         }
@@ -1068,9 +1239,12 @@ decl_module! {
         ///     * Fungible Mode: Must specify transferred amount
         ///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
         #[weight = <T as Config>::WeightInfo::transfer()]
+        #[transactional]
         pub fn transfer(origin, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            Self::transfer_internal(sender, recipient, collection_id, item_id, value)
+            let collection = Self::get_collection(collection_id)?;
+
+            Self::transfer_internal(sender, recipient, &collection, item_id, value)
         }
 
         /// Set, change, or remove approved address to transfer the ownership of the NFT.
@@ -1089,23 +1263,26 @@ decl_module! {
         /// 
         /// * item_id: ID of the item.
         #[weight = <T as Config>::WeightInfo::approve()]
+        #[transactional]
         pub fn approve(origin, spender: T::AccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
+            let target_collection = Self::get_collection(collection_id)?;
 
-            Self::collection_exists(collection_id)?;
-            Self::token_exists(collection_id, item_id, &sender)?;
+            Self::token_exists(&target_collection, item_id)?;
 
             // Transfer permissions check
-            let target_collection = <Collection<T>>::get(collection_id);
-            let allowance_limit = if Self::is_owner_or_admin_permissions(
-                collection_id,
-                sender.clone(),
-            ) {
+            let bypasses_limits = target_collection.limits.owner_can_transfer &&
+                Self::is_owner_or_admin_permissions(
+                    &target_collection,
+                    sender.clone(),
+                );
+
+            let allowance_limit = if bypasses_limits {
                 None
             } else if let Some(amount) = Self::owned_amount(
                 sender.clone(),
-                collection_id,
+                &target_collection,
                 item_id,
             ) {
                 Some(amount)
@@ -1114,20 +1291,19 @@ decl_module! {
             };
 
             if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(collection_id, &sender)?;
-                Self::check_white_list(collection_id, &spender)?;
+                Self::check_white_list(&target_collection, &sender)?;
+                Self::check_white_list(&target_collection, &spender)?;
             }
 
-            let allowance_exists = <Allowances<T>>::contains_key(collection_id, (item_id, &sender, &spender));
-            let mut allowance: u128 = amount;
-            if allowance_exists {
-                allowance += <Allowances<T>>::get(collection_id, (item_id, &sender, &spender));
-            }
+            let allowance: u128 = amount
+                .checked_add(<Allowances<T>>::get(collection_id, (item_id, &sender, &spender)))
+                .ok_or(Error::<T>::NumOverflow)?;
             if let Some(limit) = allowance_limit {
                 ensure!(limit >= allowance, Error::<T>::TokenValueTooLow);
             }
             <Allowances<T>>::insert(collection_id, (item_id, sender.clone(), spender.clone()), allowance);
 
+            Self::deposit_event(RawEvent::Approved(target_collection.id, item_id, sender, spender, allowance));
             Ok(())
         }
         
@@ -1151,35 +1327,35 @@ decl_module! {
         /// 
         /// * value: Amount to transfer.
         #[weight = <T as Config>::WeightInfo::transfer_from()]
+        #[transactional]
         pub fn transfer_from(origin, from: T::AccountId, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            let mut appoved_transfer = false;
+            let target_collection = Self::get_collection(collection_id)?;
 
             // Check approval
-            let mut approval: u128 = 0;
-            if <Allowances<T>>::contains_key(collection_id, (item_id, &from, &sender)) {
-                approval = <Allowances<T>>::get(collection_id, (item_id, &from, &sender));
-                ensure!(approval >= value, Error::<T>::TokenValueNotEnough);
-                appoved_transfer = true;
-            }
-
-            let target_collection = <Collection<T>>::get(collection_id);
+            let approval: u128 = <Allowances<T>>::get(collection_id, (item_id, &from, &sender));
 
             // Limits check
-            Self::is_correct_transfer(collection_id, &target_collection, &recipient)?;
+            Self::is_correct_transfer(&target_collection, &recipient)?;
 
             // Transfer permissions check         
-            ensure!(appoved_transfer || Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
-                Error::<T>::NoPermission);
+            ensure!(
+                approval >= value || 
+                (
+                    target_collection.limits.owner_can_transfer &&
+                    Self::is_owner_or_admin_permissions(&target_collection, sender.clone())
+                ),
+                Error::<T>::NoPermission
+            );
 
             if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(collection_id, &sender)?;
-                Self::check_white_list(collection_id, &recipient)?;
+                Self::check_white_list(&target_collection, &sender)?;
+                Self::check_white_list(&target_collection, &recipient)?;
             }
 
             // Reduce approval by transferred amount or remove if remaining approval drops to 0
-            if approval.checked_sub(value).unwrap_or(0) > 0 {
+            if approval.saturating_sub(value) > 0 {
                 <Allowances<T>>::insert(collection_id, (item_id, &from, &sender), approval - value);
             }
             else {
@@ -1188,12 +1364,13 @@ decl_module! {
 
             match target_collection.mode
             {
-                CollectionMode::NFT => Self::transfer_nft(collection_id, item_id, from, recipient)?,
-                CollectionMode::Fungible(_)  => Self::transfer_fungible(collection_id, value, &from, &recipient)?,
-                CollectionMode::ReFungible  => Self::transfer_refungible(collection_id, item_id, value, from.clone(), recipient)?,
+                CollectionMode::NFT => Self::transfer_nft(&target_collection, item_id, from.clone(), recipient.clone())?,
+                CollectionMode::Fungible(_)  => Self::transfer_fungible(&target_collection, value, &from, &recipient)?,
+                CollectionMode::ReFungible  => Self::transfer_refungible(&target_collection, item_id, value, from.clone(), recipient.clone())?,
                 _ => ()
             };
 
+            Self::deposit_event(RawEvent::Transfer(target_collection.id, item_id, from, recipient, value));
             Ok(())
         }
 
@@ -1225,6 +1402,7 @@ decl_module! {
         /// 
         /// * schema: String representing the offchain data schema.
         #[weight = <T as Config>::WeightInfo::set_variable_meta_data()]
+        #[transactional]
         pub fn set_variable_meta_data (
             origin,
             collection_id: CollectionId,
@@ -1233,21 +1411,20 @@ decl_module! {
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             
-            Self::collection_exists(collection_id)?;
-            Self::token_exists(collection_id, item_id, &sender)?;
+            let target_collection = Self::get_collection(collection_id)?;
+            Self::token_exists(&target_collection, item_id)?;
 
             ensure!(ChainLimit::get().custom_data_limit >= data.len() as u32, Error::<T>::TokenVariableDataLimitExceeded);
 
             // Modify permissions check
-            let target_collection = <Collection<T>>::get(collection_id);
-            ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
-                Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
+            ensure!(Self::is_item_owner(sender.clone(), &target_collection, item_id) ||
+                Self::is_owner_or_admin_permissions(&target_collection, sender.clone()),
                 Error::<T>::NoPermission);
 
             match target_collection.mode
             {
-                CollectionMode::NFT => Self::set_nft_variable_data(collection_id, item_id, data)?,
-                CollectionMode::ReFungible  => Self::set_re_fungible_variable_data(collection_id, item_id, data)?,
+                CollectionMode::NFT => Self::set_nft_variable_data(&target_collection, item_id, data)?,
+                CollectionMode::ReFungible  => Self::set_re_fungible_variable_data(&target_collection, item_id, data)?,
                 CollectionMode::Fungible(_) => fail!(Error::<T>::CantStoreMetadataInFungibleTokens),
                 _ => fail!(Error::<T>::UnexpectedCollectionType)
             };
@@ -1270,16 +1447,17 @@ decl_module! {
         /// 
         /// * schema: SchemaVersion: enum
         #[weight = <T as Config>::WeightInfo::set_schema_version()]
+        #[transactional]
         pub fn set_schema_version(
             origin,
             collection_id: CollectionId,
             version: SchemaVersion
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = Self::get_collection(collection_id)?;
+            Self::check_owner_or_admin_permissions(&target_collection, sender.clone())?;
             target_collection.schema_version = version;
-            <Collection<T>>::insert(collection_id, target_collection);
+            Self::save_collection(target_collection);
 
             Ok(())
         }
@@ -1297,20 +1475,21 @@ decl_module! {
         /// 
         /// * schema: String representing the offchain data schema.
         #[weight = <T as Config>::WeightInfo::set_offchain_schema()]
+        #[transactional]
         pub fn set_offchain_schema(
             origin,
             collection_id: CollectionId,
             schema: Vec<u8>
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
+            let mut target_collection = Self::get_collection(collection_id)?;
+            Self::check_owner_or_admin_permissions(&target_collection, sender.clone())?;
 
             // check schema limit
             ensure!(schema.len() as u32 <= ChainLimit::get().offchain_schema_limit, "");
 
-            let mut target_collection = <Collection<T>>::get(collection_id);
             target_collection.offchain_schema = schema;
-            <Collection<T>>::insert(collection_id, target_collection);
+            Self::save_collection(target_collection);
 
             Ok(())
         }
@@ -1328,20 +1507,21 @@ decl_module! {
         /// 
         /// * schema: String representing the const on-chain data schema.
         #[weight = <T as Config>::WeightInfo::set_const_on_chain_schema()]
+        #[transactional]
         pub fn set_const_on_chain_schema (
             origin,
             collection_id: CollectionId,
             schema: Vec<u8>
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
+            let mut target_collection = Self::get_collection(collection_id)?;
+            Self::check_owner_or_admin_permissions(&target_collection, sender.clone())?;
 
             // check schema limit
             ensure!(schema.len() as u32 <= ChainLimit::get().const_on_chain_schema_limit, "");
 
-            let mut target_collection = <Collection<T>>::get(collection_id);
             target_collection.const_on_chain_schema = schema;
-            <Collection<T>>::insert(collection_id, target_collection);
+            Self::save_collection(target_collection);
 
             Ok(())
         }
@@ -1359,26 +1539,28 @@ decl_module! {
         /// 
         /// * schema: String representing the variable on-chain data schema.
         #[weight = <T as Config>::WeightInfo::set_const_on_chain_schema()]
+        #[transactional]
         pub fn set_variable_on_chain_schema (
             origin,
             collection_id: CollectionId,
             schema: Vec<u8>
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            Self::check_owner_or_admin_permissions(collection_id, sender.clone())?;
+            let mut target_collection = Self::get_collection(collection_id)?;
+            Self::check_owner_or_admin_permissions(&target_collection, sender.clone())?;
 
             // check schema limit
             ensure!(schema.len() as u32 <= ChainLimit::get().variable_on_chain_schema_limit, "");
 
-            let mut target_collection = <Collection<T>>::get(collection_id);
             target_collection.variable_on_chain_schema = schema;
-            <Collection<T>>::insert(collection_id, target_collection);
+            Self::save_collection(target_collection);
 
             Ok(())
         }
 
         // Sudo permissions function
         #[weight = <T as Config>::WeightInfo::set_chain_limits()]
+        #[transactional]
         pub fn set_chain_limits(
             origin,
             limits: ChainLimits
@@ -1403,6 +1585,7 @@ decl_module! {
         /// * enable flag
         /// 
         #[weight = <T as Config>::WeightInfo::enable_contract_sponsoring()]
+        #[transactional]
         pub fn enable_contract_sponsoring(
             origin,
             contract_address: T::AccountId,
@@ -1438,6 +1621,7 @@ decl_module! {
         /// -`rate_limit`: Number of blocks to wait until the next sponsored transaction is allowed
         /// 
         #[weight = <T as Config>::WeightInfo::set_contract_sponsoring_rate_limit()]
+        #[transactional]
         pub fn set_contract_sponsoring_rate_limit(
             origin,
             contract_address: T::AccountId,
@@ -1465,6 +1649,7 @@ decl_module! {
         /// 
         /// - `enable`: .  
         #[weight = <T as Config>::WeightInfo::toggle_contract_white_list()]
+        #[transactional]
         pub fn toggle_contract_white_list(
             origin,
             contract_address: T::AccountId,
@@ -1476,7 +1661,11 @@ decl_module! {
             <ContractOwner<T>>::insert(contract_address.clone(), sender.clone());
 
             Self::ensure_contract_owned(sender, &contract_address)?;
-            <ContractWhiteListEnabled<T>>::insert(contract_address, enable);
+            if enable {
+                <ContractWhiteListEnabled<T>>::insert(contract_address, true);
+            } else {
+                <ContractWhiteListEnabled<T>>::remove(contract_address);
+            }
             Ok(())
         }
         
@@ -1492,6 +1681,7 @@ decl_module! {
         ///
         /// -`account_address`: Address to add.
         #[weight = <T as Config>::WeightInfo::add_to_contract_white_list()]
+        #[transactional]
         pub fn add_to_contract_white_list(
             origin,
             contract_address: T::AccountId,
@@ -1519,6 +1709,7 @@ decl_module! {
         ///
         /// -`account_address`: Address to remove.
         #[weight = <T as Config>::WeightInfo::remove_from_contract_white_list()]
+        #[transactional]
         pub fn remove_from_contract_white_list(
             origin,
             contract_address: T::AccountId,
@@ -1535,29 +1726,36 @@ decl_module! {
         }
 
         #[weight = <T as Config>::WeightInfo::set_collection_limits()]
+        #[transactional]
         pub fn set_collection_limits(
             origin,
             collection_id: u32,
-            limits: CollectionLimits,
+            new_limits: CollectionLimits<T::BlockNumber>,
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-            Self::check_owner_permissions(collection_id, sender.clone())?;
-            let mut target_collection = <Collection<T>>::get(collection_id);
+            let mut target_collection = Self::get_collection(collection_id)?;
+            Self::check_owner_permissions(&target_collection, sender.clone())?;
+            let old_limits = &target_collection.limits;
             let chain_limits = ChainLimit::get();
-            let climits = target_collection.limits;
 
             // collection bounds
-            ensure!(limits.sponsor_transfer_timeout <= MAX_SPONSOR_TIMEOUT &&
-                limits.account_token_ownership_limit <= MAX_TOKEN_OWNERSHIP,  
+            ensure!(new_limits.sponsor_transfer_timeout <= MAX_SPONSOR_TIMEOUT &&
+                new_limits.account_token_ownership_limit <= MAX_TOKEN_OWNERSHIP && 
+                new_limits.sponsored_data_size <= chain_limits.custom_data_limit,
                 Error::<T>::CollectionLimitBoundsExceeded);
 
             // token_limit   check  prev
-            ensure!(climits.token_limit > limits.token_limit && 
-                limits.token_limit <= chain_limits.account_token_ownership_limit, 
-                Error::<T>::AccountTokenLimitExceeded);
+            ensure!(old_limits.token_limit >= new_limits.token_limit, Error::<T>::CollectionTokenLimitExceeded);
+            ensure!(new_limits.token_limit > 0, Error::<T>::CollectionTokenLimitExceeded);
 
-            target_collection.limits = limits;
-            <Collection<T>>::insert(collection_id, target_collection);
+            ensure!(
+                (old_limits.owner_can_transfer || !new_limits.owner_can_transfer) &&
+                (old_limits.owner_can_destroy || !new_limits.owner_can_destroy),
+                Error::<T>::OwnerPermissionsCantBeReverted,
+            );
+
+            target_collection.limits = new_limits;
+            Self::save_collection(target_collection);
 
             Ok(())
         } 
@@ -1566,38 +1764,36 @@ decl_module! {
 
 impl<T: Config> Module<T> {
 
-    pub fn transfer_internal(sender: T::AccountId, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
-
-        let target_collection = <Collection<T>>::get(collection_id);
-
+    pub fn transfer_internal(sender: T::AccountId, recipient: T::AccountId, target_collection: &CollectionHandle<T>, item_id: TokenId, value: u128) -> DispatchResult {
         // Limits check
-        Self::is_correct_transfer(collection_id, &target_collection, &recipient)?;
+        Self::is_correct_transfer(target_collection, &recipient)?;
 
         // Transfer permissions check
-        ensure!(Self::is_item_owner(sender.clone(), collection_id, item_id) ||
-            Self::is_owner_or_admin_permissions(collection_id, sender.clone()),
+        ensure!(Self::is_item_owner(sender.clone(), target_collection, item_id) ||
+            Self::is_owner_or_admin_permissions(target_collection, sender.clone()),
             Error::<T>::NoPermission);
 
         if target_collection.access == AccessMode::WhiteList {
-            Self::check_white_list(collection_id, &sender)?;
-            Self::check_white_list(collection_id, &recipient)?;
+            Self::check_white_list(target_collection, &sender)?;
+            Self::check_white_list(target_collection, &recipient)?;
         }
 
         match target_collection.mode
         {
-            CollectionMode::NFT => Self::transfer_nft(collection_id, item_id, sender.clone(), recipient.clone())?,
-            CollectionMode::Fungible(_)  => Self::transfer_fungible(collection_id, value, &sender, &recipient)?,
-            CollectionMode::ReFungible  => Self::transfer_refungible(collection_id, item_id, value, sender.clone(), recipient.clone())?,
+            CollectionMode::NFT => Self::transfer_nft(target_collection, item_id, sender.clone(), recipient.clone())?,
+            CollectionMode::Fungible(_)  => Self::transfer_fungible(target_collection, value, &sender, &recipient)?,
+            CollectionMode::ReFungible  => Self::transfer_refungible(target_collection, item_id, value, sender.clone(), recipient.clone())?,
             _ => ()
         };
 
-        Self::deposit_event(RawEvent::Transfer(collection_id, item_id, sender, recipient, value));
+        Self::deposit_event(RawEvent::Transfer(target_collection.id, item_id, sender, recipient, value));
 
         Ok(())
     }
 
 
-    fn is_correct_transfer(collection_id: CollectionId, collection: &CollectionType<T::AccountId>, recipient: &T::AccountId) -> DispatchResult {
+    fn is_correct_transfer(collection: &CollectionHandle<T>, recipient: &T::AccountId) -> DispatchResult {
+        let collection_id = collection.id;
 
         // check token limit and account token limit
         let account_items: u32 = <AddressTokens<T>>::get(collection_id, recipient).len() as u32;
@@ -1606,24 +1802,29 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn can_create_items_in_collection(collection_id: CollectionId, collection: &CollectionType<T::AccountId>, sender: &T::AccountId, owner: &T::AccountId) -> DispatchResult {
+    fn can_create_items_in_collection(collection: &CollectionHandle<T>, sender: &T::AccountId, owner: &T::AccountId, amount: u32) -> DispatchResult {
+        let collection_id = collection.id;
 
         // check token limit and account token limit
-        let total_items: u32 = ItemListIndex::get(collection_id);
-        let account_items: u32 = <AddressTokens<T>>::get(collection_id, owner).len() as u32;
-        ensure!(collection.limits.token_limit > total_items,  Error::<T>::CollectionTokenLimitExceeded);
-        ensure!(collection.limits.account_token_ownership_limit > account_items,  Error::<T>::AccountTokenLimitExceeded);
+        let total_items: u32 = ItemListIndex::get(collection_id)
+            .checked_add(amount)
+            .ok_or(Error::<T>::CollectionTokenLimitExceeded)?;
+        let account_items: u32 = (<AddressTokens<T>>::get(collection_id, owner).len() as u32)
+            .checked_add(amount)
+            .ok_or(Error::<T>::AccountTokenLimitExceeded)?;
+        ensure!(collection.limits.token_limit >= total_items,  Error::<T>::CollectionTokenLimitExceeded);
+        ensure!(collection.limits.account_token_ownership_limit >= account_items,  Error::<T>::AccountTokenLimitExceeded);
 
-        if !Self::is_owner_or_admin_permissions(collection_id, sender.clone()) {
+        if !Self::is_owner_or_admin_permissions(collection, sender.clone()) {
             ensure!(collection.mint_mode == true, Error::<T>::PublicMintingNotAllowed);
-            Self::check_white_list(collection_id, owner)?;
-            Self::check_white_list(collection_id, sender)?;
+            Self::check_white_list(collection, owner)?;
+            Self::check_white_list(collection, sender)?;
         }
 
         Ok(())
     }
 
-    fn validate_create_item_args(target_collection: &CollectionType<T::AccountId>, data: &CreateItemData) -> DispatchResult {
+    fn validate_create_item_args(target_collection: &CollectionHandle<T>, data: &CreateItemData) -> DispatchResult {
         match target_collection.mode
         {
             CollectionMode::NFT => {
@@ -1661,7 +1862,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn create_item_no_validation(collection_id: CollectionId, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
+    fn create_item_no_validation(collection: &CollectionHandle<T>, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
         match data
         {
             CreateItemData::NFT(data) => {
@@ -1671,10 +1872,10 @@ impl<T: Config> Module<T> {
                     variable_data: data.variable_data
                 };
 
-                Self::add_nft_item(collection_id, item)?;
+                Self::add_nft_item(collection, item)?;
             },
             CreateItemData::Fungible(data) => {
-                Self::add_fungible_item(collection_id, &owner, data.value)?;
+                Self::add_fungible_item(collection, &owner, data.value)?;
             },
             CreateItemData::ReFungible(data) => {
                 let mut owner_list = Vec::new();
@@ -1686,27 +1887,22 @@ impl<T: Config> Module<T> {
                     variable_data: data.variable_data
                 };
 
-                Self::add_refungible_item(collection_id, item)?;
+                Self::add_refungible_item(collection, item)?;
             }
         };
-
-        // call event
-        Self::deposit_event(RawEvent::ItemCreated(collection_id, <ItemListIndex>::get(collection_id), owner));
 
         Ok(())
     }
 
-    fn add_fungible_item(collection_id: CollectionId, owner: &T::AccountId, value: u128) -> DispatchResult {
+    fn add_fungible_item(collection: &CollectionHandle<T>, owner: &T::AccountId, value: u128) -> DispatchResult {
+        let collection_id = collection.id;
 
         // Does new owner already have an account?
-        let mut balance: u128 = 0;
-        if <FungibleItemList<T>>::contains_key(collection_id, owner) {
-            balance = <FungibleItemList<T>>::get(collection_id, owner).value;
-        } 
+        let balance: u128 = <FungibleItemList<T>>::get(collection_id, owner).value;
 
         // Mint 
         let item = FungibleItemType {
-            value: balance + value
+            value: balance.checked_add(value).ok_or(Error::<T>::NumOverflow)?,
         };
         <FungibleItemList<T>>::insert(collection_id, (*owner).clone(), item);
 
@@ -1716,17 +1912,26 @@ impl<T: Config> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, (*owner).clone(), new_balance);
 
+        Self::deposit_event(RawEvent::ItemCreated(collection_id, 0, owner.clone()));
         Ok(())
     }
 
-    fn add_refungible_item(collection_id: CollectionId, item: ReFungibleItemType<T::AccountId>) -> DispatchResult {
+    fn add_refungible_item(collection: &CollectionHandle<T>, item: ReFungibleItemType<T::AccountId>) -> DispatchResult {
+        let collection_id = collection.id;
+
         let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
             .ok_or(Error::<T>::NumOverflow)?;
         let itemcopy = item.clone();
 
-        let value = item.owner.first().unwrap().fraction;
-        let owner = item.owner.first().unwrap().owner.clone();
+        ensure!(
+            item.owner.len() == 1,
+            Error::<T>::BadCreateRefungibleCall,
+        );
+        let item_owner = item.owner.first().expect("only one owner is defined");
+
+        let value = item_owner.fraction;
+        let owner = item_owner.owner.clone();
 
         Self::add_token_index(collection_id, current_index, &owner)?;
 
@@ -1739,10 +1944,13 @@ impl<T: Config> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, owner.clone(), new_balance);
 
+        Self::deposit_event(RawEvent::ItemCreated(collection_id, current_index, owner));
         Ok(())
     }
 
-    fn add_nft_item(collection_id: CollectionId, item: NftItemType<T::AccountId>) -> DispatchResult {
+    fn add_nft_item(collection: &CollectionHandle<T>, item: NftItemType<T::AccountId>) -> DispatchResult {
+        let collection_id = collection.id;
+
         let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
             .ok_or(Error::<T>::NumOverflow)?;
@@ -1759,25 +1967,24 @@ impl<T: Config> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item_owner.clone(), new_balance);
 
+        Self::deposit_event(RawEvent::ItemCreated(collection_id, current_index, item_owner));
         Ok(())
     }
 
     fn burn_refungible_item(
-        collection_id: CollectionId,
+        collection: &CollectionHandle<T>,
         item_id: TokenId,
         owner: &T::AccountId,
     ) -> DispatchResult {
-        ensure!(
-            <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
-            Error::<T>::TokenNotFound
-        );
-        let mut token = <ReFungibleItemList<T>>::get(collection_id, item_id);
+        let collection_id = collection.id;
+
+        let mut token = <ReFungibleItemList<T>>::get(collection_id, item_id)
+            .ok_or(Error::<T>::TokenNotFound)?;
         let rft_balance = token
             .owner
             .iter()
-            .filter(|&i| i.owner == *owner)
-            .next()
-            .unwrap();
+            .find(|&i| i.owner == *owner)
+            .ok_or(Error::<T>::TokenNotFound)?;
         Self::remove_token_index(collection_id, item_id, owner)?;
 
         // update balance
@@ -1791,13 +1998,14 @@ impl<T: Config> Module<T> {
             .owner
             .iter()
             .position(|i| i.owner == *owner)
-            .unwrap();
+            .expect("owned item is exists");
         token.owner.remove(index);
         let owner_count = token.owner.len();
 
         // Burn the token completely if this was the last (only) owner
         if owner_count == 0 {
             <ReFungibleItemList<T>>::remove(collection_id, item_id);
+            <VariableMetaDataBasket<T>>::remove(collection_id, item_id);
         }
         else {
             <ReFungibleItemList<T>>::insert(collection_id, item_id, token);
@@ -1806,12 +2014,11 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn burn_nft_item(collection_id: CollectionId, item_id: TokenId) -> DispatchResult {
-        ensure!(
-            <NftItemList<T>>::contains_key(collection_id, item_id),
-            Error::<T>::TokenNotFound
-        );
-        let item = <NftItemList<T>>::get(collection_id, item_id);
+    fn burn_nft_item(collection: &CollectionHandle<T>, item_id: TokenId) -> DispatchResult {
+        let collection_id = collection.id;
+
+        let item = <NftItemList<T>>::get(collection_id, item_id)
+            .ok_or(Error::<T>::TokenNotFound)?;
         Self::remove_token_index(collection_id, item_id, &item.owner)?;
 
         // update balance
@@ -1820,15 +2027,14 @@ impl<T: Config> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
         <NftItemList<T>>::remove(collection_id, item_id);
+        <VariableMetaDataBasket<T>>::remove(collection_id, item_id);
 
         Ok(())
     }
 
-    fn burn_fungible_item(owner: &T::AccountId, collection_id: CollectionId, value: u128) -> DispatchResult {
-        ensure!(
-            <FungibleItemList<T>>::contains_key(collection_id, owner),
-            Error::<T>::TokenNotFound
-        );
+    fn burn_fungible_item(owner: &T::AccountId, collection: &CollectionHandle<T>, value: u128) -> DispatchResult {
+        let collection_id = collection.id;
+
         let mut balance = <FungibleItemList<T>>::get(collection_id, owner);
         ensure!(balance.value >= value, Error::<T>::TokenValueNotEnough);
 
@@ -1849,18 +2055,20 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn collection_exists(collection_id: CollectionId) -> DispatchResult {
-        ensure!(
-            <Collection<T>>::contains_key(collection_id),
-            Error::<T>::CollectionNotFound
-        );
-        Ok(())
+    pub fn get_collection(collection_id: CollectionId) -> Result<CollectionHandle<T>, sp_runtime::DispatchError> {
+        Ok(<CollectionById<T>>::get(collection_id)
+            .map(|collection| CollectionHandle {
+                id: collection_id,
+                collection
+            })
+            .ok_or(Error::<T>::CollectionNotFound)?)
     }
 
-    fn check_owner_permissions(collection_id: CollectionId, subject: T::AccountId) -> DispatchResult {
-        Self::collection_exists(collection_id)?;
+    fn save_collection(collection: CollectionHandle<T>) {
+        <CollectionById<T>>::insert(collection.id, collection.collection);
+    }
 
-        let target_collection = <Collection<T>>::get(collection_id);
+    fn check_owner_permissions(target_collection: &CollectionHandle<T>, subject: T::AccountId) -> DispatchResult {
         ensure!(
             subject == target_collection.owner,
             Error::<T>::NoPermission
@@ -1869,56 +2077,32 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn is_owner_or_admin_permissions(collection_id: CollectionId, subject: T::AccountId) -> bool {
-        let target_collection = <Collection<T>>::get(collection_id);
-        let mut result: bool = subject == target_collection.owner;
-        let exists = <AdminList<T>>::contains_key(collection_id);
-
-        if !result & exists {
-            if <AdminList<T>>::get(collection_id).contains(&subject) {
-                result = true
-            }
-        }
-
-        result
+    fn is_owner_or_admin_permissions(collection: &CollectionHandle<T>, subject: T::AccountId) -> bool {
+        subject == collection.owner || <AdminList<T>>::get(collection.id).contains(&subject)
     }
 
     fn check_owner_or_admin_permissions(
-        collection_id: CollectionId,
+        collection: &CollectionHandle<T>,
         subject: T::AccountId,
     ) -> DispatchResult {
-        Self::collection_exists(collection_id)?;
-        let result = Self::is_owner_or_admin_permissions(collection_id, subject.clone());
+        ensure!(Self::is_owner_or_admin_permissions(collection, subject), Error::<T>::NoPermission);
 
-        ensure!(
-            result,
-            Error::<T>::NoPermission
-        );
         Ok(())
     }
 
     fn owned_amount(
         subject: T::AccountId,
-        collection_id: CollectionId,
+        target_collection: &CollectionHandle<T>,
         item_id: TokenId,
     ) -> Option<u128> {
-        let target_collection = <Collection<T>>::get(collection_id);
+        let collection_id = target_collection.id;
 
         match target_collection.mode {
-            CollectionMode::NFT => {
-                if <NftItemList<T>>::get(collection_id, item_id).owner == subject {
-                    return Some(1)
-                }
-                None
-            },
-            CollectionMode::Fungible(_) => {
-                if <FungibleItemList<T>>::contains_key(collection_id, &subject) {
-                    return Some(<FungibleItemList<T>>::get(collection_id, &subject)
-                        .value);
-                }
-                None
-            },
-            CollectionMode::ReFungible => <ReFungibleItemList<T>>::get(collection_id, item_id)
+            CollectionMode::NFT => (<NftItemList<T>>::get(collection_id, item_id)?.owner == subject)
+                .then(|| 1),
+            CollectionMode::Fungible(_) => Some(<FungibleItemList<T>>::get(collection_id, &subject)
+                .value),
+            CollectionMode::ReFungible => <ReFungibleItemList<T>>::get(collection_id, item_id)?
                 .owner
                 .iter()
                 .find(|i| i.owner == subject)
@@ -1927,27 +2111,16 @@ impl<T: Config> Module<T> {
         }
     }
 
-    fn is_item_owner(subject: T::AccountId, collection_id: CollectionId, item_id: TokenId) -> bool {
-        let target_collection = <Collection<T>>::get(collection_id);
-
+    fn is_item_owner(subject: T::AccountId, target_collection: &CollectionHandle<T>, item_id: TokenId) -> bool {
         match target_collection.mode {
-            CollectionMode::NFT => {
-                <NftItemList<T>>::get(collection_id, item_id).owner == subject
-            }
-            CollectionMode::Fungible(_) => {
-                <FungibleItemList<T>>::contains_key(collection_id, &subject)
-            }
-            CollectionMode::ReFungible => {
-                <ReFungibleItemList<T>>::get(collection_id, item_id)
-                    .owner
-                    .iter()
-                    .any(|i| i.owner == subject)
-            }
-            CollectionMode::Invalid => false,
+            CollectionMode::Fungible(_) => true,
+            _ => Self::owned_amount(subject, target_collection, item_id).is_some(),
         }
     }
 
-    fn check_white_list(collection_id: CollectionId, address: &T::AccountId) -> DispatchResult {
+    fn check_white_list(collection: &CollectionHandle<T>, address: &T::AccountId) -> DispatchResult {
+        let collection_id = collection.id;
+
         let mes = Error::<T>::AddresNotInWhiteList;
         ensure!(<WhiteList<T>>::contains_key(collection_id, address), mes);
 
@@ -1957,15 +2130,14 @@ impl<T: Config> Module<T> {
     /// Check if token exists. In case of Fungible, check if there is an entry for 
     /// the owner in fungible balances double map
     fn token_exists(
-        collection_id: CollectionId,
+        target_collection: &CollectionHandle<T>,
         item_id: TokenId,
-        owner: &T::AccountId
     ) -> DispatchResult {
-        let target_collection = <Collection<T>>::get(collection_id);
+        let collection_id = target_collection.id;
         let exists = match target_collection.mode
         {
             CollectionMode::NFT => <NftItemList<T>>::contains_key(collection_id, item_id),
-            CollectionMode::Fungible(_)  => <FungibleItemList<T>>::contains_key(collection_id, owner),
+            CollectionMode::Fungible(_)  => true,
             CollectionMode::ReFungible  => <ReFungibleItemList<T>>::contains_key(collection_id, item_id),
             _ => false
         };
@@ -1975,18 +2147,18 @@ impl<T: Config> Module<T> {
     }
 
     fn transfer_fungible(
-        collection_id: CollectionId,
+        collection: &CollectionHandle<T>,
         value: u128,
         owner: &T::AccountId,
         recipient: &T::AccountId,
     ) -> DispatchResult {
-        Self::token_exists(collection_id, 0, owner)?;
+        let collection_id = collection.id;
 
         let mut balance = <FungibleItemList<T>>::get(collection_id, owner);
         ensure!(balance.value >= value, Error::<T>::TokenValueTooLow);
 
         // Send balance to recipient (updates balanceOf of recipient)
-        Self::add_fungible_item(collection_id, recipient, value)?;
+        Self::add_fungible_item(collection, recipient, value)?;
 
         // update balanceOf of sender
         <Balance<T>>::insert(collection_id, (*owner).clone(), balance.value - value);
@@ -2004,21 +2176,22 @@ impl<T: Config> Module<T> {
     }
 
     fn transfer_refungible(
-        collection_id: CollectionId,
+        collection: &CollectionHandle<T>,
         item_id: TokenId,
         value: u128,
         owner: T::AccountId,
         new_owner: T::AccountId,
     ) -> DispatchResult {
-        Self::token_exists(collection_id, item_id, &owner)?;
+        let collection_id = collection.id;
+        let full_item = <ReFungibleItemList<T>>::get(collection_id, item_id)
+            .ok_or(Error::<T>::TokenNotFound)?;
 
-        let full_item = <ReFungibleItemList<T>>::get(collection_id, item_id);
         let item = full_item
             .owner
             .iter()
             .filter(|i| i.owner == owner)
             .next()
-            .ok_or(Error::<T>::NumOverflow)?;
+            .ok_or(Error::<T>::TokenNotFound)?;
         let amount = item.fraction;
 
         ensure!(amount >= value, Error::<T>::TokenValueTooLow);
@@ -2029,10 +2202,10 @@ impl<T: Config> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item.owner.clone(), balance_old_owner);
 
-        let balancenew_owner = <Balance<T>>::get(collection_id, new_owner.clone())
+        let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
             .checked_add(value)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(collection_id, new_owner.clone(), balancenew_owner);
+        <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
 
         let old_owner = item.owner.clone();
         let new_owner_has_account = full_item.owner.iter().any(|i| i.owner == new_owner);
@@ -2046,7 +2219,7 @@ impl<T: Config> Module<T> {
                 .owner
                 .iter_mut()
                 .find(|i| i.owner == owner)
-                .unwrap()
+                .expect("old owner does present in refungible")
                 .owner = new_owner.clone();
             <ReFungibleItemList<T>>::insert(collection_id, item_id, new_full_item);
 
@@ -2058,7 +2231,7 @@ impl<T: Config> Module<T> {
                 .owner
                 .iter_mut()
                 .find(|i| i.owner == owner)
-                .unwrap()
+                .expect("old owner does present in refungible")
                 .fraction -= value;
 
             // separate amount
@@ -2068,7 +2241,7 @@ impl<T: Config> Module<T> {
                     .owner
                     .iter_mut()
                     .find(|i| i.owner == new_owner)
-                    .unwrap()
+                    .expect("new owner has account")
                     .fraction += value;
             } else {
                 // new owner do not have account
@@ -2086,14 +2259,14 @@ impl<T: Config> Module<T> {
     }
 
     fn transfer_nft(
-        collection_id: CollectionId,
+        collection: &CollectionHandle<T>,
         item_id: TokenId,
         sender: T::AccountId,
         new_owner: T::AccountId,
     ) -> DispatchResult {
-        Self::token_exists(collection_id, item_id, &sender)?;
-
-        let mut item = <NftItemList<T>>::get(collection_id, item_id);
+        let collection_id = collection.id;
+        let mut item = <NftItemList<T>>::get(collection_id, item_id)
+            .ok_or(Error::<T>::TokenNotFound)?;
 
         ensure!(
             sender == item.owner,
@@ -2123,11 +2296,13 @@ impl<T: Config> Module<T> {
     }
     
     fn set_re_fungible_variable_data(
-        collection_id: CollectionId,
+        collection: &CollectionHandle<T>,
         item_id: TokenId,
         data: Vec<u8>
     ) -> DispatchResult {
-        let mut item = <ReFungibleItemList<T>>::get(collection_id, item_id);
+        let collection_id = collection.id;
+        let mut item = <ReFungibleItemList<T>>::get(collection_id, item_id)
+            .ok_or(Error::<T>::TokenNotFound)?;
 
         item.variable_data = data;
 
@@ -2137,11 +2312,13 @@ impl<T: Config> Module<T> {
     }
 
     fn set_nft_variable_data(
-        collection_id: CollectionId,
+        collection: &CollectionHandle<T>,
         item_id: TokenId,
         data: Vec<u8>
     ) -> DispatchResult {
-        let mut item = <NftItemList<T>>::get(collection_id, item_id);
+        let collection_id = collection.id;
+        let mut item = <NftItemList<T>>::get(collection_id, item_id)
+            .ok_or(Error::<T>::TokenNotFound)?;
         
         item.variable_data = data;
 
@@ -2150,7 +2327,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn init_collection(item: &CollectionType<T::AccountId>) {
+    fn init_collection(item: &Collection<T>) {
         // check params
         assert!(
             item.decimal_points <= MAX_DECIMAL_POINTS,
@@ -2230,7 +2407,6 @@ impl<T: Config> Module<T> {
     }
 
     fn add_token_index(collection_id: CollectionId, item_index: TokenId, owner: &T::AccountId) -> DispatchResult {
-
         // add to account limit
         if <AccountItemCount<T>>::contains_key(owner) {
 
@@ -2305,12 +2481,7 @@ impl<T: Config> Module<T> {
     }
     
     fn ensure_contract_owned(account: T::AccountId, contract: &T::AccountId) -> DispatchResult {
-        if <ContractOwner<T>>::contains_key(contract.clone()) {
-            let owner = <ContractOwner<T>>::get(contract);
-            ensure!(account == owner, Error::<T>::NoPermission);
-        } else {
-            fail!(Error::<T>::NoPermission);
-        }
+        ensure!(<ContractOwner<T>>::get(contract) == Some(account), Error::<T>::NoPermission);
 
         Ok(())
     }
@@ -2323,7 +2494,7 @@ impl<T: Config> Module<T> {
 /// Fee multiplier.
 pub type Multiplier = FixedU128;
 
-type BalanceOf<T> = <<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::Balance;
+type BalanceOf<T> = <<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::Balance;
 
 /// Require the transactor pay for themselves and maybe include a tip to gain additional priority
 /// in the queue.
@@ -2358,7 +2529,7 @@ where
     where
         T::Call: Dispatchable<Info = DispatchInfo>,
     {
-        <transaction_payment::Module<T>>::compute_fee(len as u32, info, tip)
+        <pallet_transaction_payment::Module<T>>::compute_fee(len as u32, info, tip)
     }
 
 	fn get_priority(len: usize, info: &DispatchInfoOf<T::Call>, final_fee: BalanceOf<T>) -> TransactionPriority {
@@ -2382,65 +2553,55 @@ where
 	) -> Result<
 		(
 			BalanceOf<T>,
-			<<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::LiquidityInfo,
+			<<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::LiquidityInfo,
 		),
 		TransactionValidityError,
 	> {
         let tip = self.0;
 
-        // Set fee based on call type. Creating collection costs 1 Unique.
-        // All other transactions have traditional fees so far
-        // let fee = match call.is_sub_type() {
-        //     Some(Call::create_collection(..)) => <BalanceOf<T>>::from(1_000_000_000),
-        //     _ => Self::traditional_fee(len, info, tip), // Flat fee model, use only for testing purposes
-        //                                                 // _ => <BalanceOf<T>>::from(100)
-        // };
         let fee = Self::traditional_fee(len, info, tip);
 
         // Only mess with balances if fee is not zero.
         if fee.is_zero() {
-            return <<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::withdraw_fee(who, call, info, fee, tip)
+            return <<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::withdraw_fee(who, call, info, fee, tip)
 			.map(|i| (fee, i));
         }
 
         // Determine who is paying transaction fee based on ecnomic model
         // Parse call to extract collection ID and access collection sponsor
-        let mut sponsor: T::AccountId = match IsSubType::<Call<T>>::is_sub_type(call) {
+        let mut sponsor: Option<T::AccountId> = (|| match IsSubType::<Call<T>>::is_sub_type(call) {
             Some(Call::create_item(collection_id, _owner, _properties)) => {
+                let collection = <CollectionById<T>>::get(collection_id)?;
 
                 // sponsor timeout
                 let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
 
-                let limit = <Collection<T>>::get(collection_id).limits.sponsor_transfer_timeout;
-                let mut sponsored = true;
+                let limit = collection.limits.sponsor_transfer_timeout;
                 if <CreateItemBasket<T>>::contains_key((collection_id, &who)) {
                     let last_tx_block = <CreateItemBasket<T>>::get((collection_id, &who));
                     let limit_time = last_tx_block + limit.into();
                     if block_number <= limit_time {
-                        sponsored = false;
+                        return None;
                     }
                 }
-                if sponsored {
-                    <CreateItemBasket<T>>::insert((collection_id, who.clone()), block_number);
-                }
+                <CreateItemBasket<T>>::insert((collection_id, who.clone()), block_number);
 
                 // check free create limit
-                if (<Collection<T>>::get(collection_id).limits.sponsored_data_size >= (_properties.len() as u32)) &&
-                   (<Collection<T>>::get(collection_id).sponsor_confirmed) &&
-                   (sponsored)
-                {
-                    <Collection<T>>::get(collection_id).sponsor
+                if collection.limits.sponsored_data_size >= (_properties.len() as u32) {
+                    collection.sponsorship.sponsor()
+                        .cloned()
                 } else {
-                    T::AccountId::default()
+                    None
                 }
             }
             Some(Call::transfer(_new_owner, collection_id, item_id, _value)) => {
+                let collection = <CollectionById<T>>::get(collection_id)?;
                 
                 let mut sponsor_transfer = false;
-                if <Collection<T>>::get(collection_id).sponsor_confirmed {
+                if collection.sponsorship.confirmed() {
 
-                    let collection_limits = <Collection<T>>::get(collection_id).limits;
-                    let collection_mode = <Collection<T>>::get(collection_id).mode;
+                    let collection_limits = collection.limits;
+                    let collection_mode = collection.mode;
     
                     // sponsor timeout
                     let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
@@ -2522,17 +2683,67 @@ where
                 }
 
                 if !sponsor_transfer {
-                    T::AccountId::default()
+                    None
                 } else {
-                    <Collection<T>>::get(collection_id).sponsor
+                    collection.sponsorship.sponsor()
+                        .cloned()
                 }
             }
 
-            _ => T::AccountId::default(),
-        };
+            Some(Call::set_variable_meta_data(collection_id, item_id, data)) => {
+                let mut sponsor_metadata_changes = false;
+
+                let collection = <CollectionById<T>>::get(collection_id)?;
+
+                if
+                    collection.sponsorship.confirmed() &&
+                    // Can't sponsor fungible collection, this tx will be rejected
+                    // as invalid
+                    !matches!(collection.mode, CollectionMode::Fungible(_)) &&
+                    data.len() <= collection.limits.sponsored_data_size as usize
+                {
+                    if let Some(rate_limit) = collection.limits.sponsored_data_rate_limit {
+                        let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
+
+                        if <VariableMetaDataBasket<T>>::get(collection_id, item_id)
+                            .map(|last_block| block_number - last_block > rate_limit)
+                            .unwrap_or(true) 
+                        {
+                            sponsor_metadata_changes = true;
+                            <VariableMetaDataBasket<T>>::insert(collection_id, item_id, block_number);
+                        }
+                    }
+                }
+
+                if !sponsor_metadata_changes {
+                    None
+                } else {
+                    collection.sponsorship.sponsor().cloned()
+                }
+            }
+
+            _ => None,
+        })();
+
+        match IsSubType::<pallet_contracts::Call<T>>::is_sub_type(call) {
+            Some(pallet_contracts::Call::call(dest, _value, _gas_limit, _data)) => {
+
+                let called_contract: T::AccountId = T::Lookup::lookup((*dest).clone()).unwrap_or(T::AccountId::default());
+
+                let owned_contract = <ContractOwner<T>>::get(called_contract.clone()).as_ref() == Some(who);
+                let white_list_enabled = <ContractWhiteListEnabled<T>>::contains_key(called_contract.clone());
+                  
+                if !owned_contract && white_list_enabled {
+                    if !<ContractWhiteList<T>>::contains_key(called_contract.clone(), who) {
+                        return Err(InvalidTransaction::Call.into());
+                    }
+                }
+            },
+            _ => {},
+        }
 
         // Sponsor smart contracts
-        sponsor = match IsSubType::<pallet_contracts::Call<T>>::is_sub_type(call) {
+        sponsor = sponsor.or_else(|| match IsSubType::<pallet_contracts::Call<T>>::is_sub_type(call) {
 
             // On instantiation: set the contract owner
             Some(pallet_contracts::Call::instantiate(_endowment, _gas_limit, code_hash, _data, salt)) => {
@@ -2544,23 +2755,27 @@ where
                 );
                 <ContractOwner<T>>::insert(new_contract_address.clone(), who.clone());
 
-                T::AccountId::default()
+                None
             },
+
+            // On instantiation with code: set the contract owner
+            Some(pallet_contracts::Call::instantiate_with_code(_endowment, _gas_limit, _code, _data, _salt))  => {
+
+                let new_contract_address = <pallet_contracts::Module<T>>::contract_address(
+                    &who,
+                    &T::Hashing::hash(&_code),
+                    _salt,
+                );
+
+                <ContractOwner<T>>::insert(new_contract_address.clone(), who.clone());
+
+                None
+            }
 
             // When the contract is called, check if the sponsoring is enabled and pay fees from contract endowment if it is
             Some(pallet_contracts::Call::call(dest, _value, _gas_limit, _data)) => {
 
                 let called_contract: T::AccountId = T::Lookup::lookup((*dest).clone()).unwrap_or(T::AccountId::default());
-
-                let owned_contract = <ContractOwner<T>>::contains_key(called_contract.clone())
-                  && <ContractOwner<T>>::get(called_contract.clone()) == *who;
-                let white_list_enabled = <ContractWhiteListEnabled<T>>::contains_key(called_contract.clone()) && <ContractWhiteListEnabled<T>>::get(called_contract.clone());
-                  
-                if !owned_contract && white_list_enabled {
-                    if !<ContractWhiteList<T>>::contains_key(called_contract.clone(), who) {
-                        return Err(InvalidTransaction::Call.into());
-                    }
-                }
 
                 let mut sponsor_transfer = false;
                 if <ContractSponsoringRateLimit<T>>::contains_key(called_contract.clone()) {
@@ -2577,28 +2792,23 @@ where
                     sponsor_transfer = false;
                 }
                
-                
-                let mut sp = T::AccountId::default();
                 if sponsor_transfer {
                     if <ContractSelfSponsoring<T>>::contains_key(called_contract.clone()) {
                         if <ContractSelfSponsoring<T>>::get(called_contract.clone()) {
-                            sp = called_contract;
+                            return Some(called_contract);
                         }
                     }
                 }
 
-                sp
+                None
             },
 
-            _ => sponsor,
-        };
+            _ => None,
+        });
 
-        let mut who_pays_fee: T::AccountId = sponsor.clone();
-        if sponsor == T::AccountId::default() {
-            who_pays_fee = who.clone();
-        }
+        let who_pays_fee = sponsor.unwrap_or_else(|| who.clone());
 
-		<<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::withdraw_fee(&who_pays_fee, call, info, fee, tip)
+		<<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::withdraw_fee(&who_pays_fee, call, info, fee, tip)
 			.map(|i| (fee, i))
     }
 }
@@ -2622,7 +2832,7 @@ where
         // who pays fee
         Self::AccountId,
 		// imbalance resulting from withdrawing the fee
-		<<T as transaction_payment::Config>::OnChargeTransaction as transaction_payment::OnChargeTransaction<T>>::LiquidityInfo,
+		<<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::LiquidityInfo,
     );
     fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> {
         Ok(())
@@ -2661,13 +2871,13 @@ where
         _result: &DispatchResult,
     ) -> Result<(), TransactionValidityError> {
 		let (tip, who, imbalance) = pre;
-		let actual_fee = transaction_payment::Module::<T>::compute_actual_fee(
+		let actual_fee = pallet_transaction_payment::Module::<T>::compute_actual_fee(
 			len as u32,
 			info,
 			post_info,
 			tip,
 		);
-		<T as transaction_payment::Config>::OnChargeTransaction::correct_and_deposit_fee(&who, info, post_info, actual_fee, tip, imbalance)?;
+		<T as pallet_transaction_payment::Config>::OnChargeTransaction::correct_and_deposit_fee(&who, info, post_info, actual_fee, tip, imbalance)?;
 		Ok(())
     }
 }

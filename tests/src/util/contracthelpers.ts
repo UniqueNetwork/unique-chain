@@ -20,32 +20,17 @@ const value = 0;
 const gasLimit = '200000000000';
 const endowment = '100000000000000000';
 
-function deployBlueprint(alice: IKeyringPair, code: CodePromise): Promise<Blueprint> {
-  return new Promise<Blueprint>(async (resolve, reject) => {
-    const unsub = await code
-      .createBlueprint()
-      .signAndSend(alice, (result) => {
+function deployContract(alice: IKeyringPair, code: CodePromise, constructor: string = 'default', ...args: any[]): Promise<Contract> {
+  return new Promise<Contract>(async (resolve, reject) => {
+    const unsub = await (code as any)
+      .tx[constructor]({value: endowment, gasLimit}, ...args)
+      .signAndSend(alice, (result: any) => {
         if (result.status.isInBlock || result.status.isFinalized) {
           // here we have an additional field in the result, containing the blueprint
-          resolve(result.blueprint);
+          resolve((result as any).contract);
           unsub();
         }
       })
-  });
-}
-
-function deployContract(alice: IKeyringPair, blueprint: Blueprint) : Promise<any> {
-  return new Promise<any>(async (resolve, reject) => {
-    const initValue = true;
-
-    const unsub = await blueprint.tx
-    .new(endowment, gasLimit, initValue)
-    .signAndSend(alice, (result) => {
-      if (result.status.isInBlock || result.status.isFinalized) {
-        unsub();
-        resolve(result);
-      }
-    });    
   });
 }
 
@@ -74,8 +59,7 @@ export async function deployFlipper(api: ApiPromise): Promise<[Contract, IKeyrin
 
   const code = new CodePromise(api, abi, wasm);
 
-  const blueprint = await deployBlueprint(deployer, code);
-  const contract = (await deployContract(deployer, blueprint))['contract'] as Contract;
+  const contract = (await deployContract(deployer, code, 'new', true)) as Contract;
 
   const initialGetResponse = await getFlipValue(contract, deployer);
   expect(initialGetResponse).to.be.true;
@@ -128,8 +112,7 @@ export async function deployTransferContract(api: ApiPromise): Promise<[Contract
 
   const code = new CodePromise(api, abi, wasm);
 
-  const blueprint = await deployBlueprint(deployer, code);
-  const contract = (await instantiateTransferContract(deployer, blueprint))['contract'] as Contract;
+  const contract = await deployContract(deployer, code);
 
   return [contract, deployer];
 }

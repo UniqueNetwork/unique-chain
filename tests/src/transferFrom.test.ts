@@ -3,6 +3,7 @@
 // file 'LICENSE', which is part of this source code package.
 //
 import { ApiPromise } from '@polkadot/api';
+import { IKeyringPair } from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
@@ -18,17 +19,27 @@ import {
   transferFromExpectFail,
   transferFromExpectSuccess,
   burnItemExpectSuccess,
+  setCollectionLimitsExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 describe('Integration Test transferFrom(from, recipient, collection_id, item_id, value):', () => {
+  let Alice: IKeyringPair;
+  let Bob: IKeyringPair;
+  let Charlie: IKeyringPair;
+
+  before(async () => {
+    await usingApi(async (api) => {
+      Alice = privateKey('//Alice');
+      Bob = privateKey('//Bob');
+      Charlie = privateKey('//Charlie');
+    });
+  });
+
   it('Execute the extrinsic and check nftItemList - owner of token', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//Charlie');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
@@ -66,14 +77,30 @@ describe('Integration Test transferFrom(from, recipient, collection_id, item_id,
       expect((await getAllowance(fungibleCollectionId, newFungibleTokenId, alice.address, bob.address)).toString()).to.equal('0');
     });
   });
+
+  it('can be called by collection owner on non-owned item when OwnerCanTransfer == true', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Bob.address);
+
+    await transferFromExpectSuccess(collectionId, itemId, Alice, Bob, Charlie);
+  });
 });
 
 describe('Negative Integration Test transferFrom(from, recipient, collection_id, item_id, value):', () => {
+  let Alice: IKeyringPair;
+  let Bob: IKeyringPair;
+  let Charlie: IKeyringPair;
+
+  before(async () => {
+    await usingApi(async (api) => {
+      Alice = privateKey('//Alice');
+      Bob = privateKey('//Bob');
+      Charlie = privateKey('//Charlie');
+    });
+  });
+
   it('transferFrom for a collection that does not exist', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//Charlie');
       // nft
       const nftCollectionCount = await api.query.nft.createdCollectionCount() as unknown as number;
       await approveExpectFail(nftCollectionCount + 1, 1, Alice, Bob);
@@ -113,9 +140,6 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   it('transferFrom for not approved address', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//Charlie');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
@@ -137,9 +161,6 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   it('transferFrom incorrect token count', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//Charlie');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
@@ -164,9 +185,6 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   it('execute transferFrom from account that is not owner of collection', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//Charlie');
       const Dave = privateKey('//Dave');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
@@ -206,9 +224,6 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
   });
   it( 'transferFrom burnt token before approve NFT', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//Charlie');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
@@ -219,22 +234,16 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
   });
   it( 'transferFrom burnt token before approve Fungible', async () => {
     await usingApi(async (api: ApiPromise) => {
-    const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//Charlie');
       const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
       const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible');
       await burnItemExpectSuccess(Alice, fungibleCollectionId, 1, 10);
-      await approveExpectFail(fungibleCollectionId, newFungibleTokenId, Alice, Bob);
+      await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob);
       await transferFromExpectFail(fungibleCollectionId, newFungibleTokenId, Bob, Alice, Charlie, 1);
           
     });
   }); 
   it( 'transferFrom burnt token before approve ReFungible', async () => {
     await usingApi(async (api: ApiPromise) => {
-    const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//Charlie');
       const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 1);
@@ -246,9 +255,6 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
   
   it( 'transferFrom burnt token after approve NFT', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//Charlie');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
@@ -259,9 +265,6 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
   });
   it( 'transferFrom burnt token after approve Fungible', async () => {
     await usingApi(async (api: ApiPromise) => {
-    const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//Charlie');
       const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
       const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible');
       await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob);
@@ -272,9 +275,6 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
   }); 
   it( 'transferFrom burnt token after approve ReFungible', async () => {
     await usingApi(async (api: ApiPromise) => {
-    const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//Charlie');
       const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
@@ -282,5 +282,13 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       await transferFromExpectFail(reFungibleCollectionId, newReFungibleTokenId, Bob, Alice, Charlie, 1);
           
     });
-  }); 
+  });
+
+  it('fails when called by collection owner on non-owned item when OwnerCanTransfer == false', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Bob.address);
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { OwnerCanTransfer: false });
+
+    await transferFromExpectFail(collectionId, itemId, Alice, Bob, Charlie);
+  });
 });

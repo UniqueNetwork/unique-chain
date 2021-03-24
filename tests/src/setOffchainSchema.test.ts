@@ -36,7 +36,7 @@ describe('Integration Test setOffchainSchema', () => {
     await setOffchainSchemaExpectSuccess(alice, collectionId, DATA);
     const collection = await queryCollectionExpectSuccess(collectionId);
 
-    expect(Array.from(collection.OffchainSchema)).to.be.deep.equal(DATA);
+    expect(collection.OffchainSchema).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));
   });
 });
 
