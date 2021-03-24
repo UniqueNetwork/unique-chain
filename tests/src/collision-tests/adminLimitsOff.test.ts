@@ -68,6 +68,7 @@ describe('Admin limit exceeded collection: ', () => {
       expect(adminListAfterAddAdmin).to.be.contains(Eve.address);
       expect(adminListAfterAddAdmin).to.be.contains(Ferdie.address);
       expect(adminListAfterAddAdmin).not.to.be.contains(Alice.address);
+      await timeoutPromise(20000);
     });
   });
 });

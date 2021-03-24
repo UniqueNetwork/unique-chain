@@ -33,6 +33,7 @@ describe('Admin vs Owner changes token: ', () => {
       const collectionId = await createCollectionExpectSuccess();
       const changeAdminTxBob = api.tx.nft.addCollectionAdmin(collectionId, Bob.address);
       await submitTransactionAsync(Alice, changeAdminTxBob);
+      const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
       const changeAdminTxFerdie = api.tx.nft.addCollectionAdmin(collectionId, Ferdie.address);
       await submitTransactionAsync(Bob, changeAdminTxFerdie);
       const itemId = await createItemExpectSuccess(Ferdie, collectionId, 'NFT');
@@ -47,7 +48,8 @@ describe('Admin vs Owner changes token: ', () => {
         sendItem.signAndSend(Ferdie),
       ]);
       const itemBefore: any = await api.query.nft.nftItemList(collectionId, itemId);
-      expect(itemBefore.Owner.toString()).not.to.be.eq(Bob.address);
+      expect(itemBefore.Owner).not.to.be.eq(Bob.address);
+      await timeoutPromise(20000);
     });
   });
 });

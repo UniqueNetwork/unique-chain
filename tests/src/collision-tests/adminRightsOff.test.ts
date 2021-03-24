@@ -56,6 +56,7 @@ describe('Deprivation of admin rights: ', () => {
       expect(itemsListIndex.toNumber()).to.be.equal(0);
       const adminList: any = (await api.query.nft.adminList(collectionId));
       expect(adminList).not.to.be.contains(Bob.address);
+      await timeoutPromise(20000);
     });
   });
 });

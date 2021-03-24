@@ -44,11 +44,10 @@ describe('Sponsored with new owner ', () => {
         changeCollectionOwner.signAndSend(Alice),
       ]);
       await timeoutPromise(10000);
-      const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
-      expect(collection.Sponsor).to.be.eq(Bob.address);
-      // tslint:disable-next-line: no-unused-expression
-      expect(collection.SponsorConfirmed).to.be.true;
+      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collection.Sponsorship.Confirmed).to.be.eq(Bob.address);
       expect(collection.Owner).to.be.eq(Ferdie.address);
+      await timeoutPromise(20000);
     });
   });
 });

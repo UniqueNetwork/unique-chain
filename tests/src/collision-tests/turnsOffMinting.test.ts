@@ -29,6 +29,7 @@ describe('Turns off minting mode: ', () => {
   it('The collection owner turns off minting mode and there are minting transactions in the same block ', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
+      const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
       await setMintPermissionExpectSuccess(Alice, collectionId, true);
       await addToWhiteListExpectSuccess(Alice, collectionId, Ferdie.address);
       //
@@ -39,8 +40,11 @@ describe('Turns off minting mode: ', () => {
         mintItem.signAndSend(Ferdie),
         offMinting.signAndSend(Alice),
       ]);
-      const itemList: any = await api.query.nft.nftItemList(collectionId, mintItem);
-      expect(itemList.Owner.toString()).to.be.eq('5C4hrfjw9DjXZTzV3MwzrrAr9P1MJhSrvWGWqi1eSuyUpnhM');
+      let itemList: boolean = false;
+      itemList = (await (api.query.nft.nftItemList(collectionId, mintItem))).toJSON() as boolean;
+      // tslint:disable-next-line: no-unused-expression
+      expect(itemList).to.be.null;
+      await timeoutPromise(20000);
     });
   });
 });

@@ -77,7 +77,8 @@ describe('Token limit exceeded collection: ', () => {
       await timeoutPromise(10000);
       const itemsListIndexAfter = await api.query.nft.itemListIndex(collectionId) as unknown as BN;
       expect(itemsListIndexAfter.toNumber()).to.be.equal(3);
-      // TokenLimit = 4. The first transaction is successful. The second should fail. (bug: NFTPAR-367)
+      // TokenLimit = 4. The first transaction is successful. The second should fail.
+      await timeoutPromise(10000);
     });
   });
 });

@@ -55,6 +55,7 @@ describe('Deleting a collection while add address to whitelist: ', () => {
       whiteList = (await api.query.nft.whiteList(collectionId, Ferdie.address)).toJSON() as boolean;
       // tslint:disable-next-line: no-unused-expression
       expect(whiteList).to.be.false;
+      await timeoutPromise(20000);
     });
   });
 });
