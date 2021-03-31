@@ -39,6 +39,8 @@ pallet-balances = { default-features = false, version = '3.0.0', git = "https://
 pallet-contracts = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-contracts-primitives = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-contracts-rpc-runtime-api = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-evm = { default-features = false, version = "3.0.0", git = "https://github.com/PureStake/frontier.git", branch = "notlesh-substrate-8b3e5bc" }
+pallet-ethereum = { default-features = false, version = "0.1.0", git = "https://github.com/PureStake/frontier.git", branch = "notlesh-substrate-8b3e5bc" }
 pallet-grandpa = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-randomness-collective-flip = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-sudo = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
@@ -47,6 +49,7 @@ pallet-transaction-payment = { default-features = false, version = '3.0.0', git 
 pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-treasury = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-vesting = {  default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+fp-rpc = { default-features = false, version = "0.1.0", git = "https://github.com/PureStake/frontier.git", branch = "notlesh-substrate-8b3e5bc" }
 sp-arithmetic = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sp-api = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sp-block-builder = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
@@ -94,6 +97,7 @@ std = [
     'pallet-transaction-payment-rpc-runtime-api/std',
     'pallet-treasury/std',
     'pallet-vesting/std',
+    'pallet-evm/std',
 
     'pallet-nft/std',
     'sp-api/std',
