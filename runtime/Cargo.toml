@@ -28,37 +28,37 @@ serde = { features = ['derive'], optional = true, version = '1.0.119' }
 pallet-nft = { path = '../pallets/nft', default-features = false, version = '3.0.0' }
 
 # Substrate dependencies
-frame-benchmarking = { default-features = false, optional = true, version = '3.0.0' }
-frame-executive = { default-features = false, version = '3.0.0' }
-frame-support = { default-features = false, version = '3.0.0' }
-frame-system = { default-features = false, version = '3.0.0' }
-frame-system-benchmarking = { default-features = false, optional = true, version = '3.0.0' }
-frame-system-rpc-runtime-api = { default-features = false, version = '3.0.0' }
-pallet-aura = { default-features = false, version = '3.0.0' }
-pallet-balances = { default-features = false, version = '3.0.0' }
-pallet-contracts = { default-features = false, version = '3.0.0' }
-pallet-contracts-primitives = { default-features = false, version = '3.0.0' }
-pallet-contracts-rpc-runtime-api = { default-features = false, version = '3.0.0' }
-pallet-grandpa = { default-features = false, version = '3.0.0' }
-pallet-randomness-collective-flip = { default-features = false, version = '3.0.0' }
-pallet-sudo = { default-features = false, version = '3.0.0' }
-pallet-timestamp = { default-features = false, version = '3.0.0' }
-pallet-transaction-payment = { default-features = false, version = '3.0.0' }
-pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = '3.0.0' }
-pallet-treasury = { default-features = false, version = "3.0.0" }
-pallet-vesting = {  default-features = false, version = "3.0.0" }
-sp-arithmetic = { default-features = false, version = '3.0.0' }
-sp-api = { default-features = false, version = '3.0.0' }
-sp-block-builder = { default-features = false, version = '3.0.0' }
-sp-consensus-aura = { default-features = false, version = '0.9.0' }
-sp-core = { default-features = false, version = '3.0.0' }
-sp-inherents = { default-features = false, version = '3.0.0' }
-sp-offchain = { default-features = false, version = '3.0.0' }
-sp-runtime = { default-features = false, version = '3.0.0' }
-sp-session = { default-features = false, version = '3.0.0' }
-sp-std = { default-features = false, version = '3.0.0' }
-sp-transaction-pool = { default-features = false, version = '3.0.0' }
-sp-version = { default-features = false, version = '3.0.0' }
+frame-benchmarking = { default-features = false, optional = true, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+frame-executive = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+frame-support = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+frame-system = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+frame-system-benchmarking = { default-features = false, optional = true, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+frame-system-rpc-runtime-api = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-aura = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-balances = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-contracts = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-contracts-primitives = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-contracts-rpc-runtime-api = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-grandpa = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-randomness-collective-flip = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-sudo = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-timestamp = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-transaction-payment = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-treasury = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-vesting = {  default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-arithmetic = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-api = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-block-builder = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-consensus-aura = { default-features = false, version = '0.9.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-core = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-inherents = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-offchain = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-runtime = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-session = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-std = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-transaction-pool = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-version = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 smallvec = "1.4.1"
 
 [features]
