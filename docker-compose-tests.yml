@@ -23,6 +23,7 @@ services:
       dockerfile: Dockerfile-tests
     volumes:
       - ./tests/src/config_docker.ts:/nft_parachain/tests/src/config.ts
+      - /home/polkadot/mochawesome-report:/nft_parachain/tests/mochawesome-report
   #  command: bash -c 'while true; do sleep 20; df -h; done'
     networks:
       - node_test_network
