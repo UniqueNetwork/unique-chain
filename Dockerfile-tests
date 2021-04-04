@@ -26,7 +26,7 @@ RUN apt-get -y update && \
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd tests && \
-    npm install --global yarn && 
+    npm install --global yarn && \ 
     yarn add mochawesome && \
     yarn install && \
     yarn test --reporter mochawesome
