@@ -31,7 +31,7 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          # command_timeout: 200m
+          command_timeout: 240m
           script: |
             eval $(ssh-agent -s)
             ssh-add /home/polkadot/.ssh/git_hub
