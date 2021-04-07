@@ -18,6 +18,7 @@ import {
 } from './util/helpers';
 
 import { default as waitNewBlocks } from './substrate/wait-new-blocks';
+import { ApiPromise } from '@polkadot/api';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -30,6 +31,25 @@ const createCollectionDeposit = 100;
 let alice: IKeyringPair;
 let bob: IKeyringPair;
 
+// Skip the inflation block pauses if the block is close to inflation block 
+// until the inflation happens
+function skipInflationBlock(api: ApiPromise): Promise<void> {
+  const promise = new Promise<void>(async (resolve, reject) => {
+    const blockInterval = parseInt((await api.consts.inflation.inflationBlockInterval).toString());
+    const unsubscribe = await api.rpc.chain.subscribeNewHeads(head => {
+      const currentBlock = parseInt(head.number.toString());
+      if (currentBlock % blockInterval < blockInterval - 10) {
+        unsubscribe();
+        resolve();
+      } else {
+        console.log(`Skipping inflation block, current block: ${currentBlock}`);
+      }
+    });
+  });
+
+  return promise;
+}
+
 describe('integration test: Fees must be credited to Treasury:', () => {
   before(async () => {
     await usingApi(async (api) => {
@@ -40,6 +60,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('Total issuance does not change', async () => {
     await usingApi(async (api) => {
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const totalBefore = new BigNumber((await api.query.balances.totalIssuance()).toString());
@@ -59,6 +80,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('Sender balance decreased by fee+sent amount, Treasury balance increased by fee', async () => {
     await usingApi(async (api) => {
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const alicePrivateKey = privateKey('//Alice');
@@ -81,6 +103,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('Treasury balance increased by failed tx fee', async () => {
     await usingApi(async (api) => {
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const bobPrivateKey = privateKey('//Bob');
@@ -101,6 +124,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('NFT Transactions also send fees to Treasury', async () => {
     await usingApi(async (api) => {
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const treasuryBalanceBefore = new BigNumber((await api.query.system.account(Treasury)).data.free.toString());
@@ -119,6 +143,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('Fees are sane', async () => {
     await usingApi(async (api) => {
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const aliceBalanceBefore = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
@@ -135,6 +160,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('NFT Transfer fee is close to 0.1 Unique', async () => {
     await usingApi(async (api) => {
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const collectionId = await createCollectionExpectSuccess();
@@ -147,7 +173,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
       // console.log(fee.toString());
       const expectedTransferFee = 0.1;
-      const tolerance = 0.00001;
+      const tolerance = 0.001;
       expect(fee.dividedBy(1e15).minus(expectedTransferFee).abs().toNumber()).to.be.lessThan(tolerance);
     });
   });
