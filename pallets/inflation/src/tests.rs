@@ -189,4 +189,53 @@ mod tests {
 		});
 	}
 
+    #[test]
+	fn inflation_rate_by_year() {
+		new_test_ext().execute_with(|| {
+            let payouts: u64 = YEAR / InflationBlockInterval::get() as u64;
+
+            // Inflation starts at 10% and does down by 2/3% every year until year 9 (included), 
+            // then it is flat.
+            let payout_by_year: [u64; 11] = [
+                1000,
+                933,
+                867,
+                800,
+                733,
+                667,
+                600,
+                533,
+                467,
+                400,
+                400
+            ];
+
+            // For accuracy total issuance = payout0 * payouts * 10;
+            let initial_issuance: u64 = payout_by_year[0] * payouts * 10;
+            let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
+            assert_eq!(Balances::free_balance(1234), initial_issuance);
+
+            for year in 0..=10 {
+                // Year first block
+                Inflation::on_initialize(year*YEAR);
+                let mut actual_payout = Inflation::block_inflation();
+                assert_eq!(actual_payout, payout_by_year[year as usize]);
+
+                // Year second block
+                Inflation::on_initialize(year*YEAR+1);
+                actual_payout = Inflation::block_inflation();
+                assert_eq!(actual_payout, payout_by_year[year as usize]);
+
+                // Year middle block
+                Inflation::on_initialize(year*YEAR + YEAR/2);
+                actual_payout = Inflation::block_inflation();
+                assert_eq!(actual_payout, payout_by_year[year as usize]);
+
+                // Year last block
+                Inflation::on_initialize((year + 1)*YEAR-1);
+                actual_payout = Inflation::block_inflation();
+                assert_eq!(actual_payout, payout_by_year[year as usize]);
+            }
+		});
+	}
 }

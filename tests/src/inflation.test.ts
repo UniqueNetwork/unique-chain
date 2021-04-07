@@ -5,14 +5,10 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from "./substrate/substrate-api";
-import { alicesPublicKey, bobsPublicKey } from "./accounts";
+import { default as usingApi } from "./substrate/substrate-api";
 import privateKey from "./substrate/privateKey";
 import { BigNumber } from 'bignumber.js';
 import { IKeyringPair } from '@polkadot/types/types';
-import { 
-  getGenericResult,
-} from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -44,6 +40,4 @@ describe('integration test: Inflation', () => {
     });
   });
 
-
 });
-
