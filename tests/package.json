@@ -51,7 +51,8 @@
     "testSetOffchainSchema": "mocha --timeout 9999999 -r ts-node/register ./**/setOffchainSchema.test.ts",
     "testOverflow": "mocha --timeout 9999999 -r ts-node/register ./**/overflow.test.ts",
     "testSetVariableMetadataSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetadataSponsoringRateLimit.test.ts",
-    "testInflation": "mocha --timeout 9999999 -r ts-node/register ./**/inflation.test.ts"
+    "testInflation": "mocha --timeout 9999999 -r ts-node/register ./**/inflation.test.ts",
+    "testPalletPresence": "mocha --timeout 9999999 -r ts-node/register ./**/pallet-presence.test.ts"
   },
   "author": "",
   "license": "SEE LICENSE IN ../LICENSE",
