@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use std::collections::BTreeMap;
 use fc_rpc_core::types::{PendingTransactions, FilterPool};
-use nft_runtime::{Hash, AccountId, Index, opaque::Block, Balance};
+use nft_runtime::{Hash, AccountId, Index, opaque::Block, BlockNumber, Balance};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderMetadata, HeaderBackend};
 use sc_client_api::{
@@ -71,6 +71,7 @@ pub fn create_full<C, P, BE>(
 	C: Send + Sync + 'static,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: BlockBuilder<Block>,
+	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	P: TransactionPool<Block=Block> + 'static,
@@ -104,9 +105,9 @@ pub fn create_full<C, P, BE>(
 		TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone()))
 	);
 
-	// io.extend_with(
-	// 	ContractsApi::to_delegate(Contracts::new(client.clone()))
-	// );
+	io.extend_with(
+		pallet_contracts_rpc::ContractsApi::to_delegate(pallet_contracts_rpc::Contracts::new(client.clone()))
+	);
 
 	let mut signers = Vec::new();
 	if enable_dev_signer {
