@@ -801,7 +801,7 @@ decl_module! {
 
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
-            Self::check_owner_permissions(&collection, sender)?;
+            Self::check_owner_permissions(&collection, &sender)?;
             if !collection.limits.owner_can_destroy {
                 fail!(Error::<T>::NoPermission);
             }
@@ -849,7 +849,7 @@ decl_module! {
 
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&collection, sender)?;
+            Self::check_owner_or_admin_permissions(&collection, &sender)?;
 
             <WhiteList<T>>::insert(collection_id, address.as_sub(), true);
             
@@ -874,7 +874,7 @@ decl_module! {
 
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&collection, sender)?;
+            Self::check_owner_or_admin_permissions(&collection, &sender)?;
 
             <WhiteList<T>>::remove(collection_id, address.as_sub());
 
@@ -899,7 +899,7 @@ decl_module! {
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_permissions(&target_collection, sender)?;
+            Self::check_owner_permissions(&target_collection, &sender)?;
             target_collection.access = mode;
             Self::save_collection(target_collection);
 
@@ -926,7 +926,7 @@ decl_module! {
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_permissions(&target_collection, sender)?;
+            Self::check_owner_permissions(&target_collection, &sender)?;
             target_collection.mint_mode = mint_permission;
             Self::save_collection(target_collection);
 
@@ -950,7 +950,7 @@ decl_module! {
 
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_permissions(&target_collection, sender)?;
+            Self::check_owner_permissions(&target_collection, &sender)?;
             target_collection.owner = new_owner;
             Self::save_collection(target_collection);
 
@@ -973,10 +973,9 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::add_collection_admin()]
         #[transactional]
         pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin_id: T::CrossAccountId) -> DispatchResult {
-
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&collection, sender)?;
+            Self::check_owner_or_admin_permissions(&collection, &sender)?;
             let mut admin_arr = <AdminList<T>>::get(collection_id);
 
             match admin_arr.binary_search(&new_admin_id) {
@@ -1006,10 +1005,9 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::remove_collection_admin()]
         #[transactional]
         pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::CrossAccountId) -> DispatchResult {
-
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&collection, sender)?;
+            Self::check_owner_or_admin_permissions(&collection, &sender)?;
             let mut admin_arr = <AdminList<T>>::get(collection_id);
 
             match admin_arr.binary_search(&account_id) {
@@ -1083,7 +1081,7 @@ decl_module! {
             let sender = ensure_signed(origin)?;
 
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_permissions(&target_collection, sender)?;
+            Self::check_owner_permissions(&target_collection, &T::CrossAccountId::from_sub(sender))?;
 
             target_collection.sponsorship = SponsorshipState::Disabled;
             Self::save_collection(target_collection);
@@ -1361,7 +1359,7 @@ decl_module! {
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&target_collection, sender.clone())?;
+            Self::check_owner_or_admin_permissions(&target_collection, &sender)?;
             target_collection.schema_version = version;
             Self::save_collection(target_collection);
 
@@ -1389,7 +1387,7 @@ decl_module! {
         ) -> DispatchResult {
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&target_collection, sender)?;
+            Self::check_owner_or_admin_permissions(&target_collection, &sender)?;
 
             // check schema limit
             ensure!(schema.len() as u32 <= ChainLimit::get().offchain_schema_limit, "");
@@ -1421,7 +1419,7 @@ decl_module! {
         ) -> DispatchResult {
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&target_collection, sender)?;
+            Self::check_owner_or_admin_permissions(&target_collection, &sender)?;
 
             // check schema limit
             ensure!(schema.len() as u32 <= ChainLimit::get().const_on_chain_schema_limit, "");
@@ -1453,7 +1451,7 @@ decl_module! {
         ) -> DispatchResult {
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&target_collection, sender)?;
+            Self::check_owner_or_admin_permissions(&target_collection, &sender)?;
 
             // check schema limit
             ensure!(schema.len() as u32 <= ChainLimit::get().variable_on_chain_schema_limit, "");
@@ -1640,7 +1638,7 @@ decl_module! {
         ) -> DispatchResult {
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_permissions(&target_collection, sender.clone())?;
+            Self::check_owner_permissions(&target_collection, &sender)?;
             let old_limits = &target_collection.limits;
             let chain_limits = ChainLimit::get();
 
@@ -1675,8 +1673,8 @@ impl<T: Config> Module<T> {
         Self::is_correct_transfer(target_collection, &recipient)?;
 
         // Transfer permissions check
-        ensure!(Self::is_item_owner(sender.clone(), target_collection, item_id) ||
-            Self::is_owner_or_admin_permissions(target_collection, sender.clone()),
+        ensure!(Self::is_item_owner(&sender, target_collection, item_id) ||
+            Self::is_owner_or_admin_permissions(target_collection, &sender),
             Error::<T>::NoPermission);
 
         if target_collection.access == AccessMode::WhiteList {
@@ -1710,13 +1708,13 @@ impl<T: Config> Module<T> {
 		let bypasses_limits = collection.limits.owner_can_transfer &&
 			Self::is_owner_or_admin_permissions(
 				&collection,
-				sender.clone(),
+				&sender,
 			);
 
 		let allowance_limit = if bypasses_limits {
 			None
 		} else if let Some(amount) = Self::owned_amount(
-			sender.clone(),
+			&sender,
 			&collection,
 			item_id,
 		) {
@@ -1762,7 +1760,7 @@ impl<T: Config> Module<T> {
 			approval >= amount || 
 			(
 				collection.limits.owner_can_transfer &&
-				Self::is_owner_or_admin_permissions(&collection, sender.clone())
+				Self::is_owner_or_admin_permissions(&collection, &sender)
 			),
 			Error::<T>::NoPermission
 		);
@@ -1821,10 +1819,10 @@ impl<T: Config> Module<T> {
         value: u128,
     ) -> DispatchResult {
         ensure!(
-            Self::is_item_owner(sender.clone(), &collection, item_id) ||
+            Self::is_item_owner(&sender, &collection, item_id) ||
             (
                 collection.limits.owner_can_transfer &&
-                Self::is_owner_or_admin_permissions(&collection, sender.clone())
+                Self::is_owner_or_admin_permissions(&collection, &sender)
             ),
             Error::<T>::NoPermission
         );
@@ -1854,20 +1852,20 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn can_create_items_in_collection(collection: &CollectionHandle<T>, sender: &T::AccountId, owner: &T::AccountId, amount: u32) -> DispatchResult {
+    fn can_create_items_in_collection(collection: &CollectionHandle<T>, sender: &T::CrossAccountId, owner: &T::CrossAccountId, amount: u32) -> DispatchResult {
         let collection_id = collection.id;
 
         // check token limit and account token limit
         let total_items: u32 = ItemListIndex::get(collection_id)
             .checked_add(amount)
             .ok_or(Error::<T>::CollectionTokenLimitExceeded)?;
-        let account_items: u32 = (<AddressTokens<T>>::get(collection_id, owner).len() as u32)
+        let account_items: u32 = (<AddressTokens<T>>::get(collection_id, owner.as_sub()).len() as u32)
             .checked_add(amount)
             .ok_or(Error::<T>::AccountTokenLimitExceeded)?;
         ensure!(collection.limits.token_limit >= total_items,  Error::<T>::CollectionTokenLimitExceeded);
         ensure!(collection.limits.account_token_ownership_limit >= account_items,  Error::<T>::AccountTokenLimitExceeded);
 
-        if !Self::is_owner_or_admin_permissions(collection, sender.clone()) {
+        if !Self::is_owner_or_admin_permissions(collection, &sender) {
             ensure!(collection.mint_mode == true, Error::<T>::PublicMintingNotAllowed);
             Self::check_white_list(collection, owner)?;
             Self::check_white_list(collection, sender)?;
@@ -2121,22 +2119,23 @@ impl<T: Config> Module<T> {
         <CollectionById<T>>::insert(collection.id, collection.collection);
     }
 
-    fn check_owner_permissions(target_collection: &CollectionHandle<T>, subject: T::AccountId) -> DispatchResult {
+
+    fn check_owner_permissions(target_collection: &CollectionHandle<T>, subject: &T::CrossAccountId) -> DispatchResult {
         ensure!(
-            subject == target_collection.owner,
+            *subject == target_collection.owner,
             Error::<T>::NoPermission
         );
 
         Ok(())
     }
 
-    fn is_owner_or_admin_permissions(collection: &CollectionHandle<T>, subject: T::AccountId) -> bool {
-        subject == collection.owner || <AdminList<T>>::get(collection.id).contains(&subject)
+    fn is_owner_or_admin_permissions(collection: &CollectionHandle<T>, subject: &T::CrossAccountId) -> bool {
+        *subject == collection.owner || <AdminList<T>>::get(collection.id).contains(&subject)
     }
 
     fn check_owner_or_admin_permissions(
         collection: &CollectionHandle<T>,
-        subject: T::AccountId,
+        subject: &T::CrossAccountId,
     ) -> DispatchResult {
         ensure!(Self::is_owner_or_admin_permissions(collection, subject), Error::<T>::NoPermission);
 
@@ -2144,38 +2143,38 @@ impl<T: Config> Module<T> {
     }
 
     fn owned_amount(
-        subject: T::AccountId,
+        subject: &T::CrossAccountId,
         target_collection: &CollectionHandle<T>,
         item_id: TokenId,
     ) -> Option<u128> {
         let collection_id = target_collection.id;
 
         match target_collection.mode {
-            CollectionMode::NFT => (<NftItemList<T>>::get(collection_id, item_id)?.owner == subject)
+            CollectionMode::NFT => (<NftItemList<T>>::get(collection_id, item_id)?.owner == *subject)
                 .then(|| 1),
-            CollectionMode::Fungible(_) => Some(<FungibleItemList<T>>::get(collection_id, &subject)
+            CollectionMode::Fungible(_) => Some(<FungibleItemList<T>>::get(collection_id, &subject.as_sub())
                 .value),
             CollectionMode::ReFungible => <ReFungibleItemList<T>>::get(collection_id, item_id)?
                 .owner
                 .iter()
-                .find(|i| i.owner == subject)
+                .find(|i| i.owner == *subject)
                 .map(|i| i.fraction),
             CollectionMode::Invalid => None,
         }
     }
 
-    fn is_item_owner(subject: T::AccountId, target_collection: &CollectionHandle<T>, item_id: TokenId) -> bool {
+    fn is_item_owner(subject: &T::CrossAccountId, target_collection: &CollectionHandle<T>, item_id: TokenId) -> bool {
         match target_collection.mode {
             CollectionMode::Fungible(_) => true,
-            _ => Self::owned_amount(subject, target_collection, item_id).is_some(),
+            _ => Self::owned_amount(&subject, target_collection, item_id).is_some(),
         }
     }
 
-    fn check_white_list(collection: &CollectionHandle<T>, address: &T::AccountId) -> DispatchResult {
+    fn check_white_list(collection: &CollectionHandle<T>, address: &T::CrossAccountId) -> DispatchResult {
         let collection_id = collection.id;
 
         let mes = Error::<T>::AddresNotInWhiteList;
-        ensure!(<WhiteList<T>>::contains_key(collection_id, address), mes);
+        ensure!(<WhiteList<T>>::contains_key(collection_id, address.as_sub()), mes);
 
         Ok(())
     }
