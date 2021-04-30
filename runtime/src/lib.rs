@@ -578,6 +578,12 @@ parameter_types! {
 impl pallet_nft::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = nft_weights::WeightInfo;
+
+	type EvmWithdrawOrigin = EnsureAddressTruncated;
+	type EvmBackwardsAddressMapping = pallet_nft::MapBackwardsAddressTruncated;
+	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
+	type CrossAccountId = pallet_nft::BasicCrossAccountId<Self>;
+
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;

@@ -8,9 +8,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(feature = "std")]
-pub use std::*;
-
-#[cfg(feature = "std")]
 pub use serde::*;
 
 use core::ops::{Deref, DerefMut};
@@ -33,6 +30,7 @@ pub use frame_support::{
 };
 
 use frame_system::{self as system, ensure_signed, ensure_root};
+use sp_core::{H160, H256};
 use sp_runtime::sp_std::prelude::Vec;
 use sp_runtime::{
     traits::{
@@ -45,6 +43,7 @@ use sp_runtime::{
 };
 use sp_runtime::traits::StaticLookup;
 use pallet_contracts::chain_extension::UncheckedFrom;
+use pallet_evm::AddressMapping;
 use pallet_transaction_payment::OnChargeTransaction;
 
 #[cfg(test)]
@@ -54,6 +53,9 @@ mod mock;
 mod tests;
 
 mod default_weights;
+mod eth;
+
+pub use eth::account::*;
 
 pub const MAX_DECIMAL_POINTS: DecimalPoints = 30;
 pub const MAX_REFUNGIBLE_PIECES: u128 = 1_000_000_000_000_000_000_000;
@@ -164,7 +166,7 @@ impl<T> Default for SponsorshipState<T> {
 #[derive(Encode, Decode, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Collection<T: Config> {
-    pub owner: T::AccountId,
+    pub owner: T::CrossAccountId,
     pub mode: CollectionMode,
     pub access: AccessMode,
     pub decimal_points: DecimalPoints,
@@ -174,7 +176,7 @@ pub struct Collection<T: Config> {
     pub mint_mode: bool,
     pub offchain_schema: Vec<u8>,
     pub schema_version: SchemaVersion,
-    pub sponsorship: SponsorshipState<T::AccountId>,
+    pub sponsorship: SponsorshipState<T::CrossAccountId>,
     pub limits: CollectionLimits<T::BlockNumber>, // Collection private restrictions 
     pub variable_on_chain_schema: Vec<u8>, //
     pub const_on_chain_schema: Vec<u8>, //
@@ -461,6 +463,11 @@ pub trait Config: system::Config + Sized + pallet_transaction_payment::Config + 
     /// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 
+    type EvmAddressMapping: pallet_evm::AddressMapping<Self::AccountId>;
+    type EvmBackwardsAddressMapping: EvmBackwardsAddressMapping<Self::AccountId>;
+    type EvmWithdrawOrigin: pallet_evm::EnsureAddressOrigin<Self::Origin, Success = Self::AccountId>;
+
+	type CrossAccountId: CrossAccountId<Self::AccountId>;
     type Currency: Currency<Self::AccountId>;
     type CollectionCreationPrice: Get<<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance>;
     type TreasuryAccountId: Get<Self::AccountId>;
@@ -525,7 +532,7 @@ decl_storage! {
         pub CollectionById get(fn collection_id) config(): map hasher(blake2_128_concat) CollectionId => Option<Collection<T>> = None;
         /// List of collection admins
         /// Collection id (controlled?2)
-        pub AdminList get(fn admin_list_collection): map hasher(blake2_128_concat) CollectionId => Vec<T::AccountId>;
+        pub AdminList get(fn admin_list_collection): map hasher(blake2_128_concat) CollectionId => Vec<T::CrossAccountId>;
         /// Whitelisted collection users
         /// Collection id (controlled?2), user id (controlled?3)
         pub WhiteList get(fn white_list): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) T::AccountId => bool;
@@ -542,11 +549,11 @@ decl_storage! {
 
         //#region Item collections
         /// Collection id (controlled?2), token id (controlled?1)
-        pub NftItemList get(fn nft_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<NftItemType<T::AccountId>>;
+        pub NftItemList get(fn nft_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<NftItemType<T::CrossAccountId>>;
         /// Collection id (controlled?2), owner (controlled?2)
         pub FungibleItemList get(fn fungible_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) T::AccountId => FungibleItemType;
         /// Collection id (controlled?2), token id (controlled?1)
-        pub ReFungibleItemList get(fn refungible_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<ReFungibleItemType<T::AccountId>>;
+        pub ReFungibleItemList get(fn refungible_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<ReFungibleItemType<T::CrossAccountId>>;
         //#endregion
 
         //#region Index list
@@ -610,7 +617,7 @@ decl_storage! {
 decl_event!(
     pub enum Event<T>
     where
-        AccountId = <T as system::Config>::AccountId,
+        CrossAccountId = <T as Config>::CrossAccountId,
     {
         /// New collection was created
         /// 
@@ -621,7 +628,7 @@ decl_event!(
         /// * mode: [CollectionMode] converted into u8.
         /// 
         /// * account_id: Collection owner.
-        CollectionCreated(CollectionId, u8, AccountId),
+        CollectionCreated(CollectionId, u8, CrossAccountId),
 
         /// New item was created.
         /// 
@@ -632,7 +639,7 @@ decl_event!(
         /// * item_id: Id of an item. Unique within the collection.
         ///
         /// * recipient: Owner of newly created item 
-        ItemCreated(CollectionId, TokenId, AccountId),
+        ItemCreated(CollectionId, TokenId, CrossAccountId),
 
         /// Collection item was burned.
         /// 
@@ -654,7 +661,7 @@ decl_event!(
         /// * recipient: New owner of item
         ///
         /// * amount: Always 1 for NFT
-        Transfer(CollectionId, TokenId, AccountId, AccountId, u128),
+        Transfer(CollectionId, TokenId, CrossAccountId, CrossAccountId, u128),
 
         /// * collection_id
         ///
@@ -665,7 +672,7 @@ decl_event!(
         /// * spender
         ///
         /// * amount
-        Approved(CollectionId, TokenId, AccountId, AccountId, u128),
+        Approved(CollectionId, TokenId, CrossAccountId, CrossAccountId, u128),
     }
 );
 
