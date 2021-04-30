@@ -176,7 +176,7 @@ pub struct Collection<T: Config> {
     pub mint_mode: bool,
     pub offchain_schema: Vec<u8>,
     pub schema_version: SchemaVersion,
-    pub sponsorship: SponsorshipState<T::CrossAccountId>,
+    pub sponsorship: SponsorshipState<T::AccountId>,
     pub limits: CollectionLimits<T::BlockNumber>, // Collection private restrictions 
     pub variable_on_chain_schema: Vec<u8>, //
     pub const_on_chain_schema: Vec<u8>, //
@@ -845,13 +845,13 @@ decl_module! {
         /// * address.
         #[weight = <T as Config>::WeightInfo::add_to_white_list()]
         #[transactional]
-        pub fn add_to_white_list(origin, collection_id: CollectionId, address: T::AccountId) -> DispatchResult{
+        pub fn add_to_white_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
 
-            let sender = ensure_signed(origin)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
             Self::check_owner_or_admin_permissions(&collection, sender)?;
 
-            <WhiteList<T>>::insert(collection_id, address, true);
+            <WhiteList<T>>::insert(collection_id, address.as_sub(), true);
             
             Ok(())
         }
@@ -870,13 +870,13 @@ decl_module! {
         /// * address.
         #[weight = <T as Config>::WeightInfo::remove_from_white_list()]
         #[transactional]
-        pub fn remove_from_white_list(origin, collection_id: CollectionId, address: T::AccountId) -> DispatchResult{
+        pub fn remove_from_white_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
 
-            let sender = ensure_signed(origin)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
             Self::check_owner_or_admin_permissions(&collection, sender)?;
 
-            <WhiteList<T>>::remove(collection_id, address);
+            <WhiteList<T>>::remove(collection_id, address.as_sub());
 
             Ok(())
         }
@@ -896,7 +896,7 @@ decl_module! {
         #[transactional]
         pub fn set_public_access_mode(origin, collection_id: CollectionId, mode: AccessMode) -> DispatchResult
         {
-            let sender = ensure_signed(origin)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
             let mut target_collection = Self::get_collection(collection_id)?;
             Self::check_owner_permissions(&target_collection, sender)?;
@@ -923,7 +923,7 @@ decl_module! {
         #[transactional]
         pub fn set_mint_permission(origin, collection_id: CollectionId, mint_permission: bool) -> DispatchResult
         {
-            let sender = ensure_signed(origin)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
             let mut target_collection = Self::get_collection(collection_id)?;
             Self::check_owner_permissions(&target_collection, sender)?;
@@ -946,9 +946,9 @@ decl_module! {
         /// * new_owner.
         #[weight = <T as Config>::WeightInfo::change_collection_owner()]
         #[transactional]
-        pub fn change_collection_owner(origin, collection_id: CollectionId, new_owner: T::AccountId) -> DispatchResult {
+        pub fn change_collection_owner(origin, collection_id: CollectionId, new_owner: T::CrossAccountId) -> DispatchResult {
 
-            let sender = ensure_signed(origin)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let mut target_collection = Self::get_collection(collection_id)?;
             Self::check_owner_permissions(&target_collection, sender)?;
             target_collection.owner = new_owner;
@@ -972,9 +972,9 @@ decl_module! {
         /// * new_admin_id: Address of new admin to add.
         #[weight = <T as Config>::WeightInfo::add_collection_admin()]
         #[transactional]
-        pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin_id: T::AccountId) -> DispatchResult {
+        pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin_id: T::CrossAccountId) -> DispatchResult {
 
-            let sender = ensure_signed(origin)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
             Self::check_owner_or_admin_permissions(&collection, sender)?;
             let mut admin_arr = <AdminList<T>>::get(collection_id);
@@ -1005,9 +1005,9 @@ decl_module! {
         /// * account_id: Address of admin to remove.
         #[weight = <T as Config>::WeightInfo::remove_collection_admin()]
         #[transactional]
-        pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::AccountId) -> DispatchResult {
+        pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::CrossAccountId) -> DispatchResult {
 
-            let sender = ensure_signed(origin)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
             Self::check_owner_or_admin_permissions(&collection, sender)?;
             let mut admin_arr = <AdminList<T>>::get(collection_id);
@@ -1034,10 +1034,9 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::set_collection_sponsor()]
         #[transactional]
         pub fn set_collection_sponsor(origin, collection_id: CollectionId, new_sponsor: T::AccountId) -> DispatchResult {
-
-            let sender = ensure_signed(origin)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_permissions(&target_collection, sender)?;
+            Self::check_owner_permissions(&target_collection, &sender)?;
 
             target_collection.sponsorship = SponsorshipState::Unconfirmed(new_sponsor);
             Self::save_collection(target_collection);
@@ -1055,7 +1054,6 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::confirm_sponsorship()]
         #[transactional]
         pub fn confirm_sponsorship(origin, collection_id: CollectionId) -> DispatchResult {
-
             let sender = ensure_signed(origin)?;
 
             let mut target_collection = Self::get_collection(collection_id)?;
@@ -1082,7 +1080,6 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::remove_collection_sponsor()]
         #[transactional]
         pub fn remove_collection_sponsor(origin, collection_id: CollectionId) -> DispatchResult {
-
             let sender = ensure_signed(origin)?;
 
             let mut target_collection = Self::get_collection(collection_id)?;
@@ -1739,7 +1736,7 @@ decl_module! {
             collection_id: u32,
             new_limits: CollectionLimits<T::BlockNumber>,
         ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let mut target_collection = Self::get_collection(collection_id)?;
             Self::check_owner_permissions(&target_collection, sender.clone())?;
             let old_limits = &target_collection.limits;
