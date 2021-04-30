@@ -43,7 +43,7 @@ use sp_runtime::{
 };
 use sp_runtime::traits::StaticLookup;
 use pallet_contracts::chain_extension::UncheckedFrom;
-use pallet_evm::AddressMapping;
+use pallet_ethereum::EthereumTransactionSender;
 use pallet_transaction_payment::OnChargeTransaction;
 
 #[cfg(test)]
@@ -185,6 +185,23 @@ pub struct Collection<T: Config> {
 pub struct CollectionHandle<T: Config> {
     pub id: CollectionId,
     collection: Collection<T>,
+    logs: eth::log::LogRecorder,
+}
+impl<T: Config> CollectionHandle<T> {
+	pub fn get(id: CollectionId) -> Option<Self> {
+		<CollectionById<T>>::get(id)
+			.map(|collection| Self {
+				id,
+				collection,
+                logs: eth::log::LogRecorder::default(),
+			})
+	}
+    pub fn log(&self, topics: Vec<H256>, data: eth::abi::AbiWriter) {
+        self.logs.log(topics, data)
+    }
+    pub fn into_inner(self) -> Collection<T> {
+        self.collection.clone()
+    }
 }
 
 impl<T: Config> Deref for CollectionHandle<T> {
@@ -471,6 +488,9 @@ pub trait Config: system::Config + Sized + pallet_transaction_payment::Config + 
     type Currency: Currency<Self::AccountId>;
     type CollectionCreationPrice: Get<<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance>;
     type TreasuryAccountId: Get<Self::AccountId>;
+
+    type EthereumChainId: Get<u64>;
+    type EthereumTransactionSender: pallet_ethereum::EthereumTransactionSender;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -1125,6 +1145,7 @@ decl_module! {
             Self::validate_create_item_args(&target_collection, &data)?;
             Self::create_item_no_validation(&target_collection, owner, data)?;
 
+            Self::submit_logs(target_collection)?;
             Ok(())
         }
 
@@ -1158,6 +1179,7 @@ decl_module! {
 
             Self::create_multiple_items_internal(sender, &collection, owner, items_data)?;
 
+            Self::submit_logs(collection)?;
             Ok(())
         }
 
@@ -1183,6 +1205,7 @@ decl_module! {
 
             Self::burn_item_internal(&sender, &target_collection, item_id, value)?;
 
+            Self::submit_logs(target_collection)?;
             Ok(())
         }
 
@@ -1217,6 +1240,7 @@ decl_module! {
 
             Self::transfer_internal(sender, recipient, &collection, item_id, value)?;
 
+            Self::submit_logs(collection)?;
             Ok(())
         }
 
@@ -1244,6 +1268,7 @@ decl_module! {
 
             Self::approve_internal(sender, spender, &collection, item_id, amount)?;
 
+            Self::submit_logs(collection)?;
             Ok(())
         }
         
@@ -1275,6 +1300,7 @@ decl_module! {
 
             Self::transfer_from_internal(sender, from, recipient, &collection, item_id, value)?;
 
+            Self::submit_logs(collection)?;
             Ok(())
         }
 
@@ -1736,6 +1762,29 @@ impl<T: Config> Module<T> {
 		}
 		<Allowances<T>>::insert(collection.id, (item_id, sender.as_sub(), spender.as_sub()), allowance);
 
+		if matches!(collection.mode, CollectionMode::NFT) {
+			// TODO: NFT: only one owner may exist for token in ERC721
+			collection.log(
+				Vec::from([
+					eth::APPROVAL_NFT_TOPIC,
+					eth::address_to_topic(sender.as_eth()),
+					eth::address_to_topic(spender.as_eth()),
+				]),
+				abi_encode!(uint256(item_id.into())),
+			);
+		}
+
+		if matches!(collection.mode, CollectionMode::Fungible(_)) {
+			// TODO: NFT: only one owner may exist for token in ERC20
+			collection.log(
+				Vec::from([
+					eth::APPROVAL_FUNGIBLE_TOPIC,
+					eth::address_to_topic(sender.as_eth()),
+					eth::address_to_topic(spender.as_eth()),
+				]),
+				abi_encode!(uint256(allowance.into())),
+			);
+		}
 
 		Self::deposit_event(RawEvent::Approved(collection.id, item_id, sender, spender, allowance));
 		Ok(())
@@ -1790,6 +1839,17 @@ impl<T: Config> Module<T> {
 			}
 			_ => ()
 		};
+
+		if matches!(collection.mode, CollectionMode::Fungible(_)) {
+			collection.log(
+				Vec::from([
+					eth::APPROVAL_FUNGIBLE_TOPIC,
+					eth::address_to_topic(from.as_eth()),
+					eth::address_to_topic(sender.as_eth()),
+				]),
+				abi_encode!(uint256(allowance.into())),
+			);
+		}
 
 		Ok(())
 	}
@@ -2017,6 +2077,14 @@ impl<T: Config> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item_owner.as_sub(), new_balance);
 
+        collection.log(
+            Vec::from([
+                eth::TRANSFER_NFT_TOPIC,
+                eth::address_to_topic(&H160::default()),
+                eth::address_to_topic(item_owner.as_eth()),
+            ]),
+            abi_encode!(uint256(current_index.into())),
+        );
         Self::deposit_event(RawEvent::ItemCreated(collection_id, current_index, item_owner));
         Ok(())
     }
@@ -2103,22 +2171,32 @@ impl<T: Config> Module<T> {
             <FungibleItemList<T>>::remove(collection_id, owner.as_sub());
         }
 
+        collection.log(
+            Vec::from([
+                eth::TRANSFER_FUNGIBLE_TOPIC,
+                eth::address_to_topic(owner.as_eth()),
+                eth::address_to_topic(&H160::default()),
+            ]),
+            abi_encode!(uint256(value.into())),
+        );
         Ok(())
     }
 
     pub fn get_collection(collection_id: CollectionId) -> Result<CollectionHandle<T>, sp_runtime::DispatchError> {
-        Ok(<CollectionById<T>>::get(collection_id)
-            .map(|collection| CollectionHandle {
-                id: collection_id,
-                collection
-            })
+        Ok(<CollectionHandle<T>>::get(collection_id)
             .ok_or(Error::<T>::CollectionNotFound)?)
     }
 
     fn save_collection(collection: CollectionHandle<T>) {
-        <CollectionById<T>>::insert(collection.id, collection.collection);
+        <CollectionById<T>>::insert(collection.id, collection.into_inner());
     }
 
+    fn submit_logs(collection: CollectionHandle<T>) -> DispatchResult {
+        T::EthereumTransactionSender::submit_logs_transaction(
+            eth::generate_transaction(collection.id, T::EthereumChainId::get()),
+            collection.logs.retrieve_logs_for_contract(eth::collection_id_to_address(collection.id)),
+        )
+    }
 
     fn check_owner_permissions(target_collection: &CollectionHandle<T>, subject: &T::CrossAccountId) -> DispatchResult {
         ensure!(
@@ -2224,6 +2302,14 @@ impl<T: Config> Module<T> {
             <FungibleItemList<T>>::insert(collection_id, owner.as_sub(), balance);
         }
 
+        collection.log(
+            Vec::from([
+                eth::TRANSFER_FUNGIBLE_TOPIC,
+                eth::address_to_topic(owner.as_eth()),
+                eth::address_to_topic(recipient.as_eth()),
+            ]),
+            abi_encode!(uint256(value.into())),
+        );
         Self::deposit_event(RawEvent::Transfer(collection.id, 1, owner.clone(), recipient.clone(), value));
 
         Ok(())
@@ -2348,6 +2434,14 @@ impl<T: Config> Module<T> {
         // update index collection
         Self::move_token_index(collection_id, item_id, &old_owner, &new_owner)?;
 
+        collection.log(
+            Vec::from([
+                eth::TRANSFER_NFT_TOPIC,
+                eth::address_to_topic(sender.as_eth()),
+                eth::address_to_topic(new_owner.as_eth()),
+            ]),
+            abi_encode!(uint256(item_id.into())),
+        );
         Self::deposit_event(RawEvent::Transfer(collection.id, item_id, sender, new_owner, 1));
 
         Ok(())

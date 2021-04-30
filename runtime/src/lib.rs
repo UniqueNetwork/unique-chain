@@ -381,6 +381,7 @@ impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
 	type FindAuthor = EthereumFindAuthor<Aura>;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot;
+	type EvmSubmitLog = pallet_evm::Module<Runtime>;
 }
 
 impl pallet_grandpa::Config for Runtime {
@@ -588,6 +589,9 @@ impl pallet_nft::Config for Runtime {
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
+
+	type EthereumChainId = ChainId;
+	type EthereumTransactionSender = pallet_ethereum::Module<Runtime>;
 }
 
 construct_runtime!(
