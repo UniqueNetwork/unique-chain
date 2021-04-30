@@ -28,16 +28,17 @@ jsonrpc-core = '15.0.0'
 jsonrpc-pubsub = "15.0.0"
 
 # Substrate dependencies
+pallet-nft = { path = '../pallets/nft', version = '3.0.0' }
 nft-runtime = { path = '../runtime', version = '3.0.0' }
 frame-benchmarking = { version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 frame-benchmarking-cli = { version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-transaction-payment-rpc = { version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-fc-rpc-core = { version = "0.1.0", git = "https://github.com/PureStake/frontier.git", branch = "notlesh-substrate-8b3e5bc" }
-fc-consensus = { version = "0.1.0", git = "https://github.com/PureStake/frontier.git", branch = "notlesh-substrate-8b3e5bc" }
-fc-mapping-sync = { version = "0.1.0", git = "https://github.com/PureStake/frontier.git", branch = "notlesh-substrate-8b3e5bc" }
-fc-rpc = { version = "0.1.0", git = "https://github.com/PureStake/frontier.git", branch = "notlesh-substrate-8b3e5bc" }
-fc-db = { version = "0.1.0", git = "https://github.com/PureStake/frontier.git", branch = "notlesh-substrate-8b3e5bc" }
-fp-rpc = { version = "0.1.0", git = "https://github.com/PureStake/frontier.git", branch = "notlesh-substrate-8b3e5bc" }
+fc-rpc-core = { version = "1.1.0-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
+fc-consensus = { version = "1.0.0", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
+fc-mapping-sync = { version = "1.1.0-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
+fc-rpc = { version = "2.0.0-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
+fc-db = { version = "1.0.0", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
+fp-rpc = { version = "1.0.0", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
 sc-basic-authorship = { version = '0.9.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sc-cli = { version = '0.9.0', features = ['wasmtime'], git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sc-client-api = { version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
@@ -65,7 +66,7 @@ sp-transaction-pool = { version = '3.0.0', git = "https://github.com/paritytech/
 substrate-frame-rpc-system = { version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sc-network = { version = '0.9.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-contracts-rpc = { version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-pallet-ethereum = { version = "0.1.0", git = "https://github.com/PureStake/frontier.git", branch = "notlesh-substrate-8b3e5bc" }
+pallet-ethereum = { version = "1.0.1-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
 sc-telemetry = { version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 
 serde = { version = "1.0.102", features = ["derive"] }
