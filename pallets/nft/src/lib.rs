@@ -713,7 +713,7 @@ decl_module! {
                                  mode: CollectionMode) -> DispatchResult {
 
             // Anyone can create a collection
-            let who = ensure_signed(origin)?;
+            let who = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
             // Take a (non-refundable) deposit of collection creation
             let mut imbalance = <<<T as Config>::Currency as Currency<T::AccountId>>::PositiveImbalance>::zero();
@@ -722,7 +722,7 @@ decl_module! {
                 T::CollectionCreationPrice::get(),
             ));
             <T as Config>::Currency::settle(
-                &who,
+                who.as_sub(),
                 imbalance,
                 WithdrawReasons::TRANSFER,
                 ExistenceRequirement::KeepAlive,
@@ -781,7 +781,7 @@ decl_module! {
             <CollectionById<T>>::insert(next_id, new_collection);
 
             // call event
-            Self::deposit_event(RawEvent::CollectionCreated(next_id, mode.into(), who.clone()));
+            Self::deposit_event(RawEvent::CollectionCreated(next_id, mode.into(), who));
 
             Ok(())
         }
@@ -799,7 +799,7 @@ decl_module! {
         #[transactional]
         pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
 
-            let sender = ensure_signed(origin)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
             Self::check_owner_permissions(&collection, sender)?;
             if !collection.limits.owner_can_destroy {
