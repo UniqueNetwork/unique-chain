@@ -179,25 +179,7 @@ fn testnet_genesis(
 				.collect(),
 		},
 		pallet_nft: NftConfig {
-			collection_id: vec![(
-				1,
-				Collection {
-					owner: get_account_id_from_seed::<sr25519::Public>("Alice"),
-					mode: CollectionMode::NFT,
-					access: AccessMode::Normal,
-					decimal_points: 0,
-					name: vec![],
-					description: vec![],
-					token_prefix: vec![],
-					mint_mode: false,
-					offchain_schema: vec![],
-					schema_version: SchemaVersion::default(),
-					sponsorship: SponsorshipState::Confirmed(get_account_id_from_seed::<sr25519::Public>("Alice")),
-					const_on_chain_schema: vec![],
-					variable_on_chain_schema: vec![],
-					limits: CollectionLimits::default()
-				},
-			)],
+			collection_id: vec![],
 			nft_item_id: vec![],
 			fungible_item_id: vec![],
 			refungible_item_id: vec![],

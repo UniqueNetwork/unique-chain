@@ -604,7 +604,7 @@ decl_storage! {
             }
 
             for (collection_id, account_id, fungible_item) in &config.fungible_item_id {
-                <Module<T>>::init_fungible_token(*collection_id, account_id, fungible_item);
+                <Module<T>>::init_fungible_token(*collection_id, &T::CrossAccountId::from_sub(account_id.clone()), fungible_item);
             }
 
             for (_num, _c, _i) in &config.refungible_item_id {
@@ -2412,24 +2412,23 @@ impl<T: Config> Module<T> {
         CreatedCollectionCount::put(next_id);
     }
 
-    fn init_nft_token(collection_id: CollectionId, item: &NftItemType<T::AccountId>) {
+    fn init_nft_token(collection_id: CollectionId, item: &NftItemType<T::CrossAccountId>) {
         let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
             .unwrap();
 
-        let item_owner = item.owner.clone();
         Self::add_token_index(collection_id, current_index, &item.owner).unwrap();
 
         <ItemListIndex>::insert(collection_id, current_index);
 
         // Update balance
-        let new_balance = <Balance<T>>::get(collection_id, &item_owner)
+        let new_balance = <Balance<T>>::get(collection_id, item.owner.as_sub())
             .checked_add(1)
             .unwrap();
-        <Balance<T>>::insert(collection_id, item_owner.clone(), new_balance);
+        <Balance<T>>::insert(collection_id, item.owner.as_sub(), new_balance);
     }
 
-    fn init_fungible_token(collection_id: CollectionId, owner: &T::AccountId, item: &FungibleItemType) {
+    fn init_fungible_token(collection_id: CollectionId, owner: &T::CrossAccountId, item: &FungibleItemType) {
         let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
             .unwrap();
@@ -2439,13 +2438,13 @@ impl<T: Config> Module<T> {
         <ItemListIndex>::insert(collection_id, current_index);
 
         // Update balance
-        let new_balance = <Balance<T>>::get(collection_id, owner)
+        let new_balance = <Balance<T>>::get(collection_id, owner.as_sub())
             .checked_add(item.value)
             .unwrap();
-        <Balance<T>>::insert(collection_id, (*owner).clone(), new_balance);
+        <Balance<T>>::insert(collection_id, owner.as_sub(), new_balance);
     }
 
-    fn init_refungible_token(collection_id: CollectionId, item: &ReFungibleItemType<T::AccountId>) {
+    fn init_refungible_token(collection_id: CollectionId, item: &ReFungibleItemType<T::CrossAccountId>) {
         let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
             .unwrap();
@@ -2458,42 +2457,42 @@ impl<T: Config> Module<T> {
         <ItemListIndex>::insert(collection_id, current_index);
 
         // Update balance
-        let new_balance = <Balance<T>>::get(collection_id, &owner)
+        let new_balance = <Balance<T>>::get(collection_id, &owner.as_sub())
             .checked_add(value)
             .unwrap();
-        <Balance<T>>::insert(collection_id, owner.clone(), new_balance);
+        <Balance<T>>::insert(collection_id, owner.as_sub(), new_balance);
     }
 
-    fn add_token_index(collection_id: CollectionId, item_index: TokenId, owner: &T::AccountId) -> DispatchResult {
+    fn add_token_index(collection_id: CollectionId, item_index: TokenId, owner: &T::CrossAccountId) -> DispatchResult {
         // add to account limit
-        if <AccountItemCount<T>>::contains_key(owner) {
+        if <AccountItemCount<T>>::contains_key(owner.as_sub()) {
 
             // bound Owned tokens by a single address
-            let count = <AccountItemCount<T>>::get(owner);
+            let count = <AccountItemCount<T>>::get(owner.as_sub());
             ensure!(count < ChainLimit::get().account_token_ownership_limit, Error::<T>::AddressOwnershipLimitExceeded);
 
-            <AccountItemCount<T>>::insert(owner.clone(), count
+            <AccountItemCount<T>>::insert(owner.as_sub(), count
                 .checked_add(1)
                 .ok_or(Error::<T>::NumOverflow)?);
         }
         else {
-            <AccountItemCount<T>>::insert(owner.clone(), 1);
+            <AccountItemCount<T>>::insert(owner.as_sub(), 1);
         }
 
-        let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner);
+        let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner.as_sub());
         if list_exists {
-            let mut list = <AddressTokens<T>>::get(collection_id, owner);
+            let mut list = <AddressTokens<T>>::get(collection_id, owner.as_sub());
             let item_contains = list.contains(&item_index.clone());
 
             if !item_contains {
                 list.push(item_index.clone());
             }
 
-            <AddressTokens<T>>::insert(collection_id, owner.clone(), list);
+            <AddressTokens<T>>::insert(collection_id, owner.as_sub(), list);
         } else {
             let mut itm = Vec::new();
             itm.push(item_index.clone());
-            <AddressTokens<T>>::insert(collection_id, owner.clone(), itm);
+            <AddressTokens<T>>::insert(collection_id, owner.as_sub(), itm);
         }
 
         Ok(())
@@ -2502,24 +2501,24 @@ impl<T: Config> Module<T> {
     fn remove_token_index(
         collection_id: CollectionId,
         item_index: TokenId,
-        owner: &T::AccountId,
+        owner: &T::CrossAccountId,
     ) -> DispatchResult {
 
         // update counter
-        <AccountItemCount<T>>::insert(owner.clone(), 
-            <AccountItemCount<T>>::get(owner)
+        <AccountItemCount<T>>::insert(owner.as_sub(), 
+            <AccountItemCount<T>>::get(owner.as_sub())
             .checked_sub(1)
             .ok_or(Error::<T>::NumOverflow)?);
 
 
-        let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner);
+        let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner.as_sub());
         if list_exists {
-            let mut list = <AddressTokens<T>>::get(collection_id, owner);
+            let mut list = <AddressTokens<T>>::get(collection_id, owner.as_sub());
             let item_contains = list.contains(&item_index.clone());
 
             if item_contains {
                 list.retain(|&item| item != item_index);
-                <AddressTokens<T>>::insert(collection_id, owner.clone(), list);
+                <AddressTokens<T>>::insert(collection_id, owner.as_sub(), list);
             }
         }
 
@@ -2529,8 +2528,8 @@ impl<T: Config> Module<T> {
     fn move_token_index(
         collection_id: CollectionId,
         item_index: TokenId,
-        old_owner: &T::AccountId,
-        new_owner: &T::AccountId,
+        old_owner: &T::CrossAccountId,
+        new_owner: &T::CrossAccountId,
     ) -> DispatchResult {
         Self::remove_token_index(collection_id, item_index, old_owner)?;
         Self::add_token_index(collection_id, item_index, new_owner)?;
