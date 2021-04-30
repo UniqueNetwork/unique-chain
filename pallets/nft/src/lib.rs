@@ -1213,11 +1213,13 @@ decl_module! {
         ///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
         #[weight = <T as Config>::WeightInfo::transfer()]
         #[transactional]
-        pub fn transfer(origin, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
+        pub fn transfer(origin, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
 
-            Self::transfer_internal(sender, recipient, &collection, item_id, value)
+            Self::transfer_internal(sender, recipient, &collection, item_id, value)?;
+
+            Ok(())
         }
 
         /// Set, change, or remove approved address to transfer the ownership of the NFT.
@@ -1737,7 +1739,7 @@ decl_module! {
 
 impl<T: Config> Module<T> {
 
-    pub fn transfer_internal(sender: T::AccountId, recipient: T::AccountId, target_collection: &CollectionHandle<T>, item_id: TokenId, value: u128) -> DispatchResult {
+    pub fn transfer_internal(sender: T::CrossAccountId, recipient: T::CrossAccountId, target_collection: &CollectionHandle<T>, item_id: TokenId, value: u128) -> DispatchResult {
         // Limits check
         Self::is_correct_transfer(target_collection, &recipient)?;
 
@@ -1906,11 +1908,11 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn is_correct_transfer(collection: &CollectionHandle<T>, recipient: &T::AccountId) -> DispatchResult {
+    fn is_correct_transfer(collection: &CollectionHandle<T>, recipient: &T::CrossAccountId) -> DispatchResult {
         let collection_id = collection.id;
 
         // check token limit and account token limit
-        let account_items: u32 = <AddressTokens<T>>::get(collection_id, recipient).len() as u32;
+        let account_items: u32 = <AddressTokens<T>>::get(collection_id, recipient.as_sub()).len() as u32;
         ensure!(collection.limits.account_token_ownership_limit > account_items,  Error::<T>::AccountTokenLimitExceeded);
         
         Ok(())
@@ -2264,28 +2266,30 @@ impl<T: Config> Module<T> {
     fn transfer_fungible(
         collection: &CollectionHandle<T>,
         value: u128,
-        owner: &T::AccountId,
-        recipient: &T::AccountId,
+        owner: &T::CrossAccountId,
+        recipient: &T::CrossAccountId,
     ) -> DispatchResult {
         let collection_id = collection.id;
 
-        let mut balance = <FungibleItemList<T>>::get(collection_id, owner);
+        let mut balance = <FungibleItemList<T>>::get(collection_id, owner.as_sub());
         ensure!(balance.value >= value, Error::<T>::TokenValueTooLow);
 
         // Send balance to recipient (updates balanceOf of recipient)
         Self::add_fungible_item(collection, recipient, value)?;
 
         // update balanceOf of sender
-        <Balance<T>>::insert(collection_id, (*owner).clone(), balance.value - value);
+        <Balance<T>>::insert(collection_id, owner.as_sub(), balance.value - value);
 
         // Reduce or remove sender
         if balance.value == value {
-            <FungibleItemList<T>>::remove(collection_id, owner);
+            <FungibleItemList<T>>::remove(collection_id, owner.as_sub());
         }
         else {
             balance.value -= value;
-            <FungibleItemList<T>>::insert(collection_id, (*owner).clone(), balance);
+            <FungibleItemList<T>>::insert(collection_id, owner.as_sub(), balance);
         }
+
+        Self::deposit_event(RawEvent::Transfer(collection.id, 1, owner.clone(), recipient.clone(), value));
 
         Ok(())
     }
@@ -2294,8 +2298,8 @@ impl<T: Config> Module<T> {
         collection: &CollectionHandle<T>,
         item_id: TokenId,
         value: u128,
-        owner: T::AccountId,
-        new_owner: T::AccountId,
+        owner: T::CrossAccountId,
+        new_owner: T::CrossAccountId,
     ) -> DispatchResult {
         let collection_id = collection.id;
         let full_item = <ReFungibleItemList<T>>::get(collection_id, item_id)
@@ -2312,15 +2316,15 @@ impl<T: Config> Module<T> {
         ensure!(amount >= value, Error::<T>::TokenValueTooLow);
 
         // update balance
-        let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.clone())
+        let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.as_sub())
             .checked_sub(value)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(collection_id, item.owner.clone(), balance_old_owner);
+        <Balance<T>>::insert(collection_id, item.owner.as_sub(), balance_old_owner);
 
-        let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.clone())
+        let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.as_sub())
             .checked_add(value)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(collection_id, new_owner.clone(), balance_new_owner);
+        <Balance<T>>::insert(collection_id, new_owner.as_sub(), balance_new_owner);
 
         let old_owner = item.owner.clone();
         let new_owner_has_account = full_item.owner.iter().any(|i| i.owner == new_owner);
@@ -2370,14 +2374,16 @@ impl<T: Config> Module<T> {
             <ReFungibleItemList<T>>::insert(collection_id, item_id, new_full_item);
         }
 
+        Self::deposit_event(RawEvent::Transfer(collection.id, item_id, owner, new_owner, amount));
+
         Ok(())
     }
 
     fn transfer_nft(
         collection: &CollectionHandle<T>,
         item_id: TokenId,
-        sender: T::AccountId,
-        new_owner: T::AccountId,
+        sender: T::CrossAccountId,
+        new_owner: T::CrossAccountId,
     ) -> DispatchResult {
         let collection_id = collection.id;
         let mut item = <NftItemList<T>>::get(collection_id, item_id)
@@ -2389,15 +2395,15 @@ impl<T: Config> Module<T> {
         );
 
         // update balance
-        let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.clone())
+        let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.as_sub())
             .checked_sub(1)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(collection_id, item.owner.clone(), balance_old_owner);
+        <Balance<T>>::insert(collection_id, item.owner.as_sub(), balance_old_owner);
 
-        let balancenew_owner = <Balance<T>>::get(collection_id, new_owner.clone())
+        let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.as_sub())
             .checked_add(1)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(collection_id, new_owner.clone(), balancenew_owner);
+        <Balance<T>>::insert(collection_id, new_owner.as_sub(), balance_new_owner);
 
         // change owner
         let old_owner = item.owner.clone();
@@ -2406,6 +2412,8 @@ impl<T: Config> Module<T> {
 
         // update index collection
         Self::move_token_index(collection_id, item_id, &old_owner, &new_owner)?;
+
+        Self::deposit_event(RawEvent::Transfer(collection.id, item_id, sender, new_owner, 1));
 
         Ok(())
     }
