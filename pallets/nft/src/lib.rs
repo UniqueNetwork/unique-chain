@@ -1239,46 +1239,13 @@ decl_module! {
         /// * item_id: ID of the item.
         #[weight = <T as Config>::WeightInfo::approve()]
         #[transactional]
-        pub fn approve(origin, spender: T::AccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResult {
+        pub fn approve(origin, spender: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResult {
 
-            let sender = ensure_signed(origin)?;
-            let target_collection = Self::get_collection(collection_id)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+            let collection = Self::get_collection(collection_id)?;
 
-            Self::token_exists(&target_collection, item_id)?;
+            Self::approve_internal(sender, spender, &collection, item_id, amount)?;
 
-            // Transfer permissions check
-            let bypasses_limits = target_collection.limits.owner_can_transfer &&
-                Self::is_owner_or_admin_permissions(
-                    &target_collection,
-                    sender.clone(),
-                );
-
-            let allowance_limit = if bypasses_limits {
-                None
-            } else if let Some(amount) = Self::owned_amount(
-                sender.clone(),
-                &target_collection,
-                item_id,
-            ) {
-                Some(amount)
-            } else {
-                fail!(Error::<T>::NoPermission);
-            };
-
-            if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(&target_collection, &sender)?;
-                Self::check_white_list(&target_collection, &spender)?;
-            }
-
-            let allowance: u128 = amount
-                .checked_add(<Allowances<T>>::get(collection_id, (item_id, &sender, &spender)))
-                .ok_or(Error::<T>::NumOverflow)?;
-            if let Some(limit) = allowance_limit {
-                ensure!(limit >= allowance, Error::<T>::TokenValueTooLow);
-            }
-            <Allowances<T>>::insert(collection_id, (item_id, sender.clone(), spender.clone()), allowance);
-
-            Self::deposit_event(RawEvent::Approved(target_collection.id, item_id, sender, spender, allowance));
             Ok(())
         }
         
@@ -1303,49 +1270,13 @@ decl_module! {
         /// * value: Amount to transfer.
         #[weight = <T as Config>::WeightInfo::transfer_from()]
         #[transactional]
-        pub fn transfer_from(origin, from: T::AccountId, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResult {
+        pub fn transfer_from(origin, from: T::CrossAccountId, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResult {
 
-            let sender = ensure_signed(origin)?;
-            let target_collection = Self::get_collection(collection_id)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+            let collection = Self::get_collection(collection_id)?;
 
-            // Check approval
-            let approval: u128 = <Allowances<T>>::get(collection_id, (item_id, &from, &sender));
+            Self::transfer_from_internal(sender, from, recipient, &collection, item_id, value)?;
 
-            // Limits check
-            Self::is_correct_transfer(&target_collection, &recipient)?;
-
-            // Transfer permissions check         
-            ensure!(
-                approval >= value || 
-                (
-                    target_collection.limits.owner_can_transfer &&
-                    Self::is_owner_or_admin_permissions(&target_collection, sender.clone())
-                ),
-                Error::<T>::NoPermission
-            );
-
-            if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(&target_collection, &sender)?;
-                Self::check_white_list(&target_collection, &recipient)?;
-            }
-
-            // Reduce approval by transferred amount or remove if remaining approval drops to 0
-            if approval.saturating_sub(value) > 0 {
-                <Allowances<T>>::insert(collection_id, (item_id, &from, &sender), approval - value);
-            }
-            else {
-                <Allowances<T>>::remove(collection_id, (item_id, &from, &sender));
-            }
-
-            match target_collection.mode
-            {
-                CollectionMode::NFT => Self::transfer_nft(&target_collection, item_id, from.clone(), recipient.clone())?,
-                CollectionMode::Fungible(_)  => Self::transfer_fungible(&target_collection, value, &from, &recipient)?,
-                CollectionMode::ReFungible  => Self::transfer_refungible(&target_collection, item_id, value, from.clone(), recipient.clone())?,
-                _ => ()
-            };
-
-            Self::deposit_event(RawEvent::Transfer(target_collection.id, item_id, from, recipient, value));
             Ok(())
         }
 
@@ -1767,8 +1698,8 @@ impl<T: Config> Module<T> {
     }
 
 	pub fn approve_internal(
-		sender: T::AccountId,
-		spender: T::AccountId,
+		sender: T::CrossAccountId,
+		spender: T::CrossAccountId,
 		collection: &CollectionHandle<T>,
 		item_id: TokenId,
 		amount: u128
@@ -1800,27 +1731,28 @@ impl<T: Config> Module<T> {
 		}
 
 		let allowance: u128 = amount
-			.checked_add(<Allowances<T>>::get(collection.id, (item_id, &sender, &spender)))
+			.checked_add(<Allowances<T>>::get(collection.id, (item_id, sender.as_sub(), spender.as_sub())))
 			.ok_or(Error::<T>::NumOverflow)?;
 		if let Some(limit) = allowance_limit {
 			ensure!(limit >= allowance, Error::<T>::TokenValueTooLow);
 		}
-		<Allowances<T>>::insert(collection.id, (item_id, sender.clone(), spender.clone()), allowance);
+		<Allowances<T>>::insert(collection.id, (item_id, sender.as_sub(), spender.as_sub()), allowance);
+
 
 		Self::deposit_event(RawEvent::Approved(collection.id, item_id, sender, spender, allowance));
 		Ok(())
 	}
 
 	pub fn transfer_from_internal(
-		sender: T::AccountId,
-		from: T::AccountId,
-		recipient: T::AccountId,
+		sender: T::CrossAccountId,
+		from: T::CrossAccountId,
+		recipient: T::CrossAccountId,
 		collection: &CollectionHandle<T>,
 		item_id: TokenId,
 		amount: u128,
 	) -> DispatchResult {
 		// Check approval
-		let approval: u128 = <Allowances<T>>::get(collection.id, (item_id, &from, &sender));
+		let approval: u128 = <Allowances<T>>::get(collection.id, (item_id, from.as_sub(), sender.as_sub()));
 
 		// Limits check
 		Self::is_correct_transfer(&collection, &recipient)?;
@@ -1841,10 +1773,11 @@ impl<T: Config> Module<T> {
 		}
 
 		// Reduce approval by transferred amount or remove if remaining approval drops to 0
-		if approval.saturating_sub(amount) > 0 {
-			<Allowances<T>>::insert(collection.id, (item_id, &from, &sender), approval - amount);
+		let allowance = approval.saturating_sub(amount);
+		if allowance > 0 {
+			<Allowances<T>>::insert(collection.id, (item_id, from.as_sub(), sender.as_sub()), allowance);
 		} else {
-			<Allowances<T>>::remove(collection.id, (item_id, &from, &sender));
+			<Allowances<T>>::remove(collection.id, (item_id, from.as_sub(), sender.as_sub()));
 		}
 
 		match collection.mode {
@@ -1859,6 +1792,9 @@ impl<T: Config> Module<T> {
 			}
 			_ => ()
 		};
+
+		Ok(())
+	}
 
     pub fn create_multiple_items_internal(
         sender: T::CrossAccountId,
