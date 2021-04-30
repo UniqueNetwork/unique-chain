@@ -17,6 +17,7 @@ import {
   destroyCollectionExpectSuccess,
   enablePublicMintingExpectSuccess,
   enableWhiteListExpectSuccess,
+  normalizeAccountId,
 } from './util/helpers';
 import { utf16ToStr } from './util/util';
 
@@ -49,7 +50,7 @@ describe('Integration Test setPublicAccessMode(): ', () => {
       const collectionId = await createCollectionExpectSuccess();
       await enableWhiteListExpectSuccess(Alice, collectionId);
       await enablePublicMintingExpectSuccess(Alice, collectionId);
-      const tx = api.tx.nft.createItem(collectionId, Bob.address, 'NFT');
+      const tx = api.tx.nft.createItem(collectionId, normalizeAccountId(Bob.address), 'NFT');
       await expect(submitTransactionExpectFailAsync(Bob, tx)).to.be.rejected;
     });
   });

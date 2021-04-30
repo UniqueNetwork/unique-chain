@@ -10,7 +10,8 @@ import {
   createCollectionExpectSuccess, 
   createItemExpectSuccess,
   getGenericResult,
-  destroyCollectionExpectSuccess
+  destroyCollectionExpectSuccess,
+  normalizeAccountId
 } from './util/helpers';
 import { nullPublicKey } from "./accounts";
 
@@ -99,7 +100,7 @@ describe('integration test: ext. burnItem():', () => {
 
     await usingApi(async (api) => {
       // Transfer 1/100 of the token to Bob
-      const transfertx = api.tx.nft.transfer(bob.address, collectionId, tokenId, 1);
+      const transfertx = api.tx.nft.transfer(normalizeAccountId(bob.address), collectionId, tokenId, 1);
       const events1 = await submitTransactionAsync(alice, transfertx);
       const result1 = getGenericResult(events1);
 
@@ -119,9 +120,9 @@ describe('integration test: ext. burnItem():', () => {
       expect(result1.success).to.be.true;
       expect(balanceBefore).to.be.not.null;
       expect(balanceBefore.Owner.length).to.be.equal(2);
-      expect(balanceBefore.Owner[0].Owner).to.be.equal(alice.address);
+      expect(balanceBefore.Owner[0].Owner).to.be.deep.equal(normalizeAccountId(alice.address));
       expect(balanceBefore.Owner[0].Fraction).to.be.equal(99);
-      expect(balanceBefore.Owner[1].Owner).to.be.equal(bob.address);
+      expect(balanceBefore.Owner[1].Owner).to.be.deep.equal(normalizeAccountId(bob.address));
       expect(balanceBefore.Owner[1].Fraction).to.be.equal(1);
 
       // What to expect after burning
@@ -129,7 +130,7 @@ describe('integration test: ext. burnItem():', () => {
       expect(balance).to.be.not.null;
       expect(balance.Owner.length).to.be.equal(1);
       expect(balance.Owner[0].Fraction).to.be.equal(99);
-      expect(balance.Owner[0].Owner).to.be.equal(alice.address);
+      expect(balance.Owner[0].Owner).to.be.deep.equal(normalizeAccountId(alice.address));
     });
 
   });
@@ -203,7 +204,7 @@ describe('Negative integration test: ext. burnItem():', () => {
       const result1 = getGenericResult(events1);
       expect(result1.success).to.be.true;
   
-      const tx = api.tx.nft.transfer(bob.address, collectionId, tokenId, 0);
+      const tx = api.tx.nft.transfer(normalizeAccountId(bob.address), collectionId, tokenId, 0);
       const badTransaction = async function () { 
         await submitTransactionExpectFailAsync(alice, tx);
       };

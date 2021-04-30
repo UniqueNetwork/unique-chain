@@ -18,7 +18,8 @@ import {
 import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
-  getGenericResult
+  getGenericResult,
+  normalizeAccountId
 } from "./util/helpers";
 
 
@@ -66,15 +67,17 @@ describe('Contracts', () => {
       const tokenBefore: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap();
       
       // Transfer
+      console.log('transfer using contract');
       const transferTx = contract.tx.transfer(value, gasLimit, bob.address, collectionId, tokenId, 1);
       const events = await submitTransactionAsync(alice, transferTx);
+      console.log('done');
       const result = getGenericResult(events);
       const tokenAfter: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap();
 
       // tslint:disable-next-line:no-unused-expression
       expect(result.success).to.be.true;
-      expect(tokenBefore.Owner.toString()).to.be.equal(alice.address);
-      expect(tokenAfter.Owner.toString()).to.be.equal(bob.address);
+      expect(tokenBefore.Owner).to.be.deep.equal(normalizeAccountId(alice.address));
+      expect(tokenAfter.Owner).to.be.deep.equal(normalizeAccountId(bob.address));
     });
   });
 });

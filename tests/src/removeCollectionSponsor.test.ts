@@ -21,6 +21,7 @@ import {
   addToWhiteListExpectSuccess,
   removeCollectionSponsorExpectSuccess,
   removeCollectionSponsorExpectFailure,
+  normalizeAccountId,
 } from "./util/helpers";
 import { Keyring } from "@polkadot/api";
 import { IKeyringPair } from "@polkadot/types/types";
@@ -60,7 +61,7 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
 
       // Transfer this tokens from unused address to Alice - should fail
       const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
-      const zeroToAlice = api.tx.nft.transfer(alice.address, collectionId, itemId, 0);
+      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(alice.address), collectionId, itemId, 0);
       const badTransaction = async function () { 
         await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       };

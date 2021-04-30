@@ -9,7 +9,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
-import {createCollectionExpectSuccess, destroyCollectionExpectSuccess} from './util/helpers';
+import {createCollectionExpectSuccess, destroyCollectionExpectSuccess, normalizeAccountId} from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -22,13 +22,13 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
       const bob = privateKey('//Bob');
 
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Owner.toString()).to.be.eq(alice.address);
+      expect(collection.Owner).to.be.deep.eq(normalizeAccountId(alice.address));
 
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, bob.address);
+      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
       await submitTransactionAsync(alice, changeAdminTx);
 
       const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
-      expect(adminListAfterAddAdmin).to.be.contains(bob.address);
+      expect(adminListAfterAddAdmin).to.be.contains(normalizeAccountId(bob.address));
     });
   });
 
@@ -40,19 +40,19 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
       const Charlie = privateKey('//CHARLIE');
 
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Owner.toString()).to.be.eq(Alice.address);
+      expect(collection.Owner).to.be.deep.eq(normalizeAccountId(Alice.address));
 
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, Bob.address);
+      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx);
 
       const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
-      expect(adminListAfterAddAdmin).to.be.contains(Bob.address);
+      expect(adminListAfterAddAdmin).to.be.contains(normalizeAccountId(Bob.address));
 
-      const changeAdminTxCharlie = api.tx.nft.addCollectionAdmin(collectionId, Charlie.address);
+      const changeAdminTxCharlie = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Charlie.address));
       await submitTransactionAsync(Bob, changeAdminTxCharlie);
       const adminListAfterAddNewAdmin: any = (await api.query.nft.adminList(collectionId));
-      expect(adminListAfterAddNewAdmin).to.be.contains(Bob.address);
-      expect(adminListAfterAddNewAdmin).to.be.contains(Charlie.address);
+      expect(adminListAfterAddNewAdmin).to.be.contains(normalizeAccountId(Bob.address));
+      expect(adminListAfterAddNewAdmin).to.be.contains(normalizeAccountId(Charlie.address));
     });
   });
 });
@@ -64,11 +64,11 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
       const alice = privateKey('//Alice');
       const nonOwner = privateKey('//Bob_stash');
 
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, alice.address);
+      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(alice.address));
       await expect(submitTransactionExpectFailAsync(nonOwner, changeAdminTx)).to.be.rejected;
 
       const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
-      expect(adminListAfterAddAdmin).not.to.be.contains(alice.address);
+      expect(adminListAfterAddAdmin).not.to.be.contains(normalizeAccountId(alice.address));
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
       await createCollectionExpectSuccess();
@@ -81,7 +81,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
 
-      const changeOwnerTx = api.tx.nft.addCollectionAdmin(collectionId, bob.address);
+      const changeOwnerTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
       await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
@@ -95,7 +95,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
       await destroyCollectionExpectSuccess(collectionId);
-      const changeOwnerTx = api.tx.nft.addCollectionAdmin(collectionId, Bob.address);
+      const changeOwnerTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await expect(submitTransactionExpectFailAsync(Alice, changeOwnerTx)).to.be.rejected;
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
@@ -122,13 +122,13 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
       expect(chainAdminLimit).to.be.equal(5);
 
       for (let i = 0; i < chainAdminLimit; i++) {
-        const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, accounts[i]);
+        const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(accounts[i]));
         await submitTransactionAsync(Alice, changeAdminTx);
         const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
-        expect(adminListAfterAddAdmin).to.be.contains(accounts[i]);
+        expect(adminListAfterAddAdmin).to.be.contains(normalizeAccountId(accounts[i]));
       }
 
-      const tx = api.tx.nft.addCollectionAdmin(collectionId, accounts[chainAdminLimit]);
+      const tx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(accounts[chainAdminLimit]));
       await expect(submitTransactionExpectFailAsync(Alice, tx)).to.be.rejected;
     });
   });

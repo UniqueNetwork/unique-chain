@@ -7,7 +7,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from "./substrate/substrate-api";
-import { createCollectionExpectSuccess, createCollectionExpectFailure } from "./util/helpers";
+import { createCollectionExpectSuccess, createCollectionExpectFailure, normalizeAccountId } from "./util/helpers";
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -20,13 +20,13 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner):', ()
       const bob = privateKey('//Bob');
 
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Owner.toString()).to.be.eq(alice.address);
+      expect(collection.Owner).to.be.deep.eq(normalizeAccountId(alice.address));
 
-      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, normalizeAccountId(bob.address));
       await submitTransactionAsync(alice, changeOwnerTx);
 
       const collectionAfterOwnerChange: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collectionAfterOwnerChange.Owner.toString()).to.be.eq(bob.address);
+      expect(collectionAfterOwnerChange.Owner).to.be.deep.eq(normalizeAccountId(bob.address));
     });
   });
 });
@@ -38,11 +38,11 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
 
-      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, normalizeAccountId(bob.address));
       await expect(submitTransactionExpectFailAsync(bob, changeOwnerTx)).to.be.rejected;
 
       const collectionAfterOwnerChange: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collectionAfterOwnerChange.Owner.toString()).to.be.eq(alice.address);
+      expect(collectionAfterOwnerChange.Owner).to.be.deep.eq(normalizeAccountId(alice.address));
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
       await createCollectionExpectSuccess();
@@ -54,7 +54,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
 
-      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, normalizeAccountId(bob.address));
       await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)

@@ -11,6 +11,7 @@ import { default as usingApi, submitTransactionAsync, submitTransactionExpectFai
 import {
   createCollectionExpectSuccess,
   destroyCollectionExpectSuccess,
+  normalizeAccountId,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -37,7 +38,7 @@ describe('Integration Test ext. setConstOnChainSchema()', () => {
       await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Owner.toString()).to.be.eq(Alice.address);
+      expect(collection.Owner).to.be.deep.eq(normalizeAccountId(Alice.address));
       const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
       await submitTransactionAsync(Alice, setShema);
     });
@@ -87,7 +88,7 @@ describe('Negative Integration Test ext. setConstOnChainSchema()', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Owner.toString()).to.be.eq(Alice.address);
+      expect(collection.Owner).to.be.deep.eq(normalizeAccountId(Alice.address));
       const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
       await expect(submitTransactionExpectFailAsync(Bob, setShema)).to.be.rejected;
     });

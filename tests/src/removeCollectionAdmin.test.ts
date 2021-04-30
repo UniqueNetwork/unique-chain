@@ -8,7 +8,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
-import {createCollectionExpectSuccess, destroyCollectionExpectSuccess} from './util/helpers';
+import {createCollectionExpectSuccess, destroyCollectionExpectSuccess, normalizeAccountId} from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -20,20 +20,21 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Owner.toString()).to.be.eq(Alice.address);
+      expect(collection.Owner).to.be.deep.eq(normalizeAccountId(Alice.address));
       // first - add collection admin Bob
-      const addAdminTx = api.tx.nft.addCollectionAdmin(collectionId, Bob.address);
+      const addAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, addAdminTx);
 
-      const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
-      expect(adminListAfterAddAdmin).to.be.contains(Bob.address);
+      const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId)).toJSON();
+      console.log(adminListAfterAddAdmin);
+      expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(Bob.address));
 
       // then remove bob from admins of collection
-      const removeAdminTx = api.tx.nft.removeCollectionAdmin(collectionId, Bob.address);
+      const removeAdminTx = api.tx.nft.removeCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, removeAdminTx);
 
-      const adminListAfterRemoveAdmin: any = (await api.query.nft.adminList(collectionId));
-      expect(adminListAfterRemoveAdmin).not.to.be.contains(Bob.address);
+      const adminListAfterRemoveAdmin: any = (await api.query.nft.adminList(collectionId)).toJSON;
+      expect(adminListAfterRemoveAdmin).not.to.be.deep.contains(normalizeAccountId(Bob.address));
     });
   });
 
@@ -45,7 +46,7 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
       const adminListBeforeAddAdmin: any = (await api.query.nft.adminList(collectionId));
       expect(adminListBeforeAddAdmin).to.have.lengthOf(0);
 
-      const tx = api.tx.nft.removeCollectionAdmin(collectionId, Alice.address);
+      const tx = api.tx.nft.removeCollectionAdmin(collectionId, normalizeAccountId(Alice.address));
       await submitTransactionAsync(Alice, tx);
     });
   });
@@ -59,7 +60,7 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
 
-      const changeOwnerTx = api.tx.nft.removeCollectionAdmin(collectionId, bob.address);
+      const changeOwnerTx = api.tx.nft.removeCollectionAdmin(collectionId, normalizeAccountId(bob.address));
       await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
@@ -76,7 +77,7 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
 
       await destroyCollectionExpectSuccess(collectionId);
 
-      const changeOwnerTx = api.tx.nft.removeCollectionAdmin(collectionId, Bob.address);
+      const changeOwnerTx = api.tx.nft.removeCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await expect(submitTransactionExpectFailAsync(Alice, changeOwnerTx)).to.be.rejected;
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)

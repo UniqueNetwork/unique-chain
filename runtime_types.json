@@ -40,8 +40,8 @@
     "SponsorshipState": {
       "_enum": {
         "disabled": null,
-        "unconfirmed": "CrossAccountId",
-        "confirmed": "CrossAccountId"
+        "unconfirmed": "AccountId",
+        "confirmed": "AccountId"
       }
     },
     "Collection": {
