@@ -55,6 +55,7 @@ mod tests;
 mod default_weights;
 mod eth;
 
+pub use eth::NftErcSupport;
 pub use eth::account::*;
 
 pub const MAX_DECIMAL_POINTS: DecimalPoints = 30;
