@@ -1180,33 +1180,10 @@ decl_module! {
         #[transactional]
         pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
 
-            let sender = ensure_signed(origin)?;
-
-            // Transfer permissions check
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let target_collection = Self::get_collection(collection_id)?;
-            ensure!(
-                Self::is_item_owner(sender.clone(), &target_collection, item_id) ||
-                (
-                    target_collection.limits.owner_can_transfer &&
-                    Self::is_owner_or_admin_permissions(&target_collection, sender.clone())
-                ),
-                Error::<T>::NoPermission
-            );
 
-            if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(&target_collection, &sender)?;
-            }
-
-            match target_collection.mode
-            {
-                CollectionMode::NFT => Self::burn_nft_item(&target_collection, item_id)?,
-                CollectionMode::Fungible(_)  => Self::burn_fungible_item(&sender, &target_collection, value)?,
-                CollectionMode::ReFungible  => Self::burn_refungible_item(&target_collection, item_id, &sender)?,
-                _ => ()
-            };
-
-            // call event
-            Self::deposit_event(RawEvent::ItemDestroyed(target_collection.id, item_id));
+            Self::burn_item_internal(&sender, &target_collection, item_id, value)?;
 
             Ok(())
         }
@@ -1477,9 +1454,9 @@ decl_module! {
             collection_id: CollectionId,
             schema: Vec<u8>
         ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&target_collection, sender.clone())?;
+            Self::check_owner_or_admin_permissions(&target_collection, sender)?;
 
             // check schema limit
             ensure!(schema.len() as u32 <= ChainLimit::get().offchain_schema_limit, "");
@@ -1509,9 +1486,9 @@ decl_module! {
             collection_id: CollectionId,
             schema: Vec<u8>
         ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&target_collection, sender.clone())?;
+            Self::check_owner_or_admin_permissions(&target_collection, sender)?;
 
             // check schema limit
             ensure!(schema.len() as u32 <= ChainLimit::get().const_on_chain_schema_limit, "");
@@ -1541,9 +1518,9 @@ decl_module! {
             collection_id: CollectionId,
             schema: Vec<u8>
         ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
+            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&target_collection, sender.clone())?;
+            Self::check_owner_or_admin_permissions(&target_collection, sender)?;
 
             // check schema limit
             ensure!(schema.len() as u32 <= ChainLimit::get().variable_on_chain_schema_limit, "");
@@ -1899,6 +1876,36 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
+    pub fn burn_item_internal(
+        sender: &T::CrossAccountId,
+        collection: &CollectionHandle<T>,
+        item_id: TokenId,
+        value: u128,
+    ) -> DispatchResult {
+        ensure!(
+            Self::is_item_owner(sender.clone(), &collection, item_id) ||
+            (
+                collection.limits.owner_can_transfer &&
+                Self::is_owner_or_admin_permissions(&collection, sender.clone())
+            ),
+            Error::<T>::NoPermission
+        );
+
+        if collection.access == AccessMode::WhiteList {
+            Self::check_white_list(&collection, &sender)?;
+        }
+
+        match collection.mode
+        {
+            CollectionMode::NFT => Self::burn_nft_item(&collection, item_id)?,
+            CollectionMode::Fungible(_)  => Self::burn_fungible_item(&sender, &collection, value)?,
+            CollectionMode::ReFungible  => Self::burn_refungible_item(&collection, item_id, &sender)?,
+            _ => ()
+        };
+
+        Ok(())
+    }
+
     fn is_correct_transfer(collection: &CollectionHandle<T>, recipient: &T::AccountId) -> DispatchResult {
         let collection_id = collection.id;
 
@@ -2081,7 +2088,7 @@ impl<T: Config> Module<T> {
     fn burn_refungible_item(
         collection: &CollectionHandle<T>,
         item_id: TokenId,
-        owner: &T::AccountId,
+        owner: &T::CrossAccountId,
     ) -> DispatchResult {
         let collection_id = collection.id;
 
@@ -2095,10 +2102,10 @@ impl<T: Config> Module<T> {
         Self::remove_token_index(collection_id, item_id, owner)?;
 
         // update balance
-        let new_balance = <Balance<T>>::get(collection_id, rft_balance.owner.clone())
+        let new_balance = <Balance<T>>::get(collection_id, rft_balance.owner.as_sub())
             .checked_sub(rft_balance.fraction)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(collection_id, rft_balance.owner.clone(), new_balance);
+        <Balance<T>>::insert(collection_id, rft_balance.owner.as_sub(), new_balance);
 
         // Re-create owners list with sender removed
         let index = token
@@ -2129,34 +2136,35 @@ impl<T: Config> Module<T> {
         Self::remove_token_index(collection_id, item_id, &item.owner)?;
 
         // update balance
-        let new_balance = <Balance<T>>::get(collection_id, &item.owner)
+        let new_balance = <Balance<T>>::get(collection_id, item.owner.as_sub())
             .checked_sub(1)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(collection_id, item.owner.clone(), new_balance);
+        <Balance<T>>::insert(collection_id, item.owner.as_sub(), new_balance);
         <NftItemList<T>>::remove(collection_id, item_id);
         <VariableMetaDataBasket<T>>::remove(collection_id, item_id);
 
+        Self::deposit_event(RawEvent::ItemDestroyed(collection.id, item_id));
         Ok(())
     }
 
-    fn burn_fungible_item(owner: &T::AccountId, collection: &CollectionHandle<T>, value: u128) -> DispatchResult {
+    fn burn_fungible_item(owner: &T::CrossAccountId, collection: &CollectionHandle<T>, value: u128) -> DispatchResult {
         let collection_id = collection.id;
 
-        let mut balance = <FungibleItemList<T>>::get(collection_id, owner);
+        let mut balance = <FungibleItemList<T>>::get(collection_id, owner.as_sub());
         ensure!(balance.value >= value, Error::<T>::TokenValueNotEnough);
 
         // update balance
-        let new_balance = <Balance<T>>::get(collection_id, owner)
+        let new_balance = <Balance<T>>::get(collection_id, owner.as_sub())
             .checked_sub(value)
             .ok_or(Error::<T>::NumOverflow)?;
-        <Balance<T>>::insert(collection_id, (*owner).clone(), new_balance);
+        <Balance<T>>::insert(collection_id, owner.as_sub(), new_balance);
 
         if balance.value - value > 0 {
             balance.value -= value;
-            <FungibleItemList<T>>::insert(collection_id, (*owner).clone(), balance);
+            <FungibleItemList<T>>::insert(collection_id, owner.as_sub(), balance);
         }
         else {
-            <FungibleItemList<T>>::remove(collection_id, owner);
+            <FungibleItemList<T>>::remove(collection_id, owner.as_sub());
         }
 
         Ok(())
