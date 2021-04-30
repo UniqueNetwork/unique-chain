@@ -64,7 +64,7 @@ use sp_std::{prelude::*, marker::PhantomData};
 use sp_arithmetic::{traits::{BaseArithmetic, Unsigned}};
 use smallvec::smallvec;
 use codec::{Encode, Decode};
-use pallet_evm::{Account as EVMAccount, FeeCalculator};
+use pallet_evm::{Account as EVMAccount, FeeCalculator, OnMethodCall};
 use fp_rpc::TransactionStatus;
 use sp_core::H256;
 
@@ -344,14 +344,16 @@ parameter_types! {
 }
 
 impl pallet_evm::Config for Runtime {
+	type BlockGasLimit = BlockGasLimit;
 	type FeeCalculator = ();
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
-	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type AddressMapping = HashedAddressMapping<Self::Hashing>;
+	type Precompiles = ();
 	type Currency = Balances;
 	type Event = Event;
-	type Precompiles = ();
+	type OnMethodCall = pallet_nft::NftErcSupport<Self>;
 	type ChainId = ChainId;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type OnChargeTransaction = ();
@@ -379,7 +381,6 @@ impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
 	type FindAuthor = EthereumFindAuthor<Aura>;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot;
-	type BlockGasLimit = BlockGasLimit;
 }
 
 impl pallet_grandpa::Config for Runtime {
@@ -657,6 +658,13 @@ pub type Executive =
 	frame_executive::Executive<Runtime, Block, system::ChainContext<Runtime>, Runtime, AllModules>;
 
 impl_runtime_apis! {
+	impl pallet_nft::NftApi<Block>
+		for Runtime
+	{
+		fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
+			<pallet_nft::NftErcSupport<Runtime>>::get_code(&account)
+		}
+	}
 
 	impl pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber>
 		for Runtime

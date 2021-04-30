@@ -2890,3 +2890,10 @@ where
 }
 
 // #endregion
+
+sp_api::decl_runtime_apis! {
+    pub trait NftApi {
+        /// Used for ethereum integration
+        fn eth_contract_code(account: H160) -> Option<Vec<u8>>;
+    }
+}

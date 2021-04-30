@@ -237,6 +237,8 @@ pub fn new_full(
 		let pending = pending_transactions.clone();
 		let filter_pool = filter_pool.clone();
 		let frontier_backend = frontier_backend.clone();
+		// TODO: Tune
+		let max_past_logs = 10000;
 
 		Box::new(move |deny_unsafe, _| {
 			let deps = crate::rpc::FullDeps {
@@ -249,6 +251,7 @@ pub fn new_full(
 				pending_transactions: pending.clone(),
 				filter_pool: filter_pool.clone(),
 				backend: frontier_backend.clone(),
+				max_past_logs,
 			};
 			crate::rpc::create_full(
 				deps,

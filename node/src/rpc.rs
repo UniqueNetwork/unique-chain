@@ -4,10 +4,13 @@
 //! capabilities that are specific to this project's runtime configuration.
 
 use std::sync::Arc;
+use core::marker::PhantomData;
 
 use std::collections::BTreeMap;
+use fc_rpc::RuntimeApiStorageOverride;
+use fc_rpc::OverrideHandle;
 use fc_rpc_core::types::{PendingTransactions, FilterPool};
-use nft_runtime::{Hash, AccountId, Index, opaque::Block, BlockNumber, Balance};
+use nft_runtime::{Hash, AccountId, Index, opaque::Block, BlockNumber, Balance, NftApi};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderMetadata, HeaderBackend};
 use sc_client_api::{
@@ -56,6 +59,37 @@ pub struct FullDeps<C, P> {
 	pub filter_pool: Option<FilterPool>,
 	/// Backend.
 	pub backend: Arc<fc_db::Backend<Block>>,
+	/// Maximum number of logs in a query.
+	pub max_past_logs: u32,
+}
+
+struct AccountCodes<C, B> {
+	client: Arc<C>,
+	_marker: PhantomData<B>,
+}
+
+impl<C, Block> AccountCodes<C, Block>
+where
+	Block: sp_api::BlockT,
+	C: ProvideRuntimeApi<Block>,
+{
+	fn new(client: Arc<C>) -> Self {
+		Self {
+			client,
+			_marker: PhantomData,
+		}
+	}
+}
+
+impl<C, Block> fc_rpc::AccountCodeProvider<Block> for AccountCodes<C, Block>
+where
+	Block: sp_api::BlockT,
+	C: ProvideRuntimeApi<Block>,
+	C::Api: pallet_nft::NftApi<Block>,
+{
+	fn code(&self, block: &sp_api::BlockId<Block>, account: sp_core::H160) -> Option<Vec<u8>> {
+		self.client.runtime_api().eth_contract_code(block, account).ok().flatten()
+	}
 }
 
 /// Instantiate all full RPC extensions.
@@ -74,6 +108,7 @@ pub fn create_full<C, P, BE>(
 	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
+	C::Api: pallet_nft::NftApi<Block>,
 	P: TransactionPool<Block=Block> + 'static,
 {
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
@@ -95,6 +130,7 @@ pub fn create_full<C, P, BE>(
 		filter_pool,
 		backend,
 		enable_dev_signer,
+		max_past_logs,
 	} = deps;
 
 	io.extend_with(
@@ -113,11 +149,20 @@ pub fn create_full<C, P, BE>(
 	if enable_dev_signer {
 		signers.push(Box::new(EthDevSigner::new()) as Box<dyn EthSigner>);
 	}
-	let mut overrides = BTreeMap::new();
-	overrides.insert(
+	let mut overrides_map = BTreeMap::new();
+	overrides_map.insert(
 		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new(client.clone())) as Box<dyn StorageOverride<_> + Send + Sync>
+		Box::new(SchemaV1Override::new_with_code_provider(
+			client.clone(),
+			Arc::new(AccountCodes::<C, Block>::new(client.clone()))
+		)) as Box<dyn StorageOverride<_> + Send + Sync>
 	);
+
+	let overrides = Arc::new(OverrideHandle {
+		schemas: overrides_map,
+		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
+	});
+
 	io.extend_with(
 		EthApiServer::to_delegate(EthApi::new(
 			client.clone(),
@@ -126,9 +171,10 @@ pub fn create_full<C, P, BE>(
 			network.clone(),
 			pending_transactions.clone(),
 			signers,
-			overrides,
+			overrides.clone(),
 			backend,
 			is_authority,
+			max_past_logs,
 		))
 	);
 
@@ -138,6 +184,8 @@ pub fn create_full<C, P, BE>(
 				client.clone(),
 				filter_pool.clone(),
 				500 as usize, // max stored filters
+				overrides.clone(),
+				max_past_logs,
 			))
 		);
 	}
@@ -164,6 +212,7 @@ pub fn create_full<C, P, BE>(
 				HexEncodedIdProvider::default(),
 				Arc::new(subscription_task_executor)
 			),
+			overrides,
 		))
 	);
 
