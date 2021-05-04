@@ -2204,6 +2204,9 @@ impl<T: Config> Module<T> {
     }
 
     fn submit_logs(collection: CollectionHandle<T>) -> DispatchResult {
+        if collection.logs.is_empty() {
+            return Ok(())
+        }
         T::EthereumTransactionSender::submit_logs_transaction(
             eth::generate_transaction(collection.id, T::EthereumChainId::get()),
             collection.logs.retrieve_logs_for_contract(eth::collection_id_to_address(collection.id)),

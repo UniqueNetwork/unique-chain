@@ -7,6 +7,9 @@ use sp_core::{H160, H256};
 pub struct LogRecorder(RefCell<Vec<(Vec<H256>, Vec<u8>)>>);
 
 impl LogRecorder {
+    pub fn is_empty(&self) -> bool {
+        self.0.borrow().is_empty()
+    }
     pub fn log(&self, topics: Vec<H256>, data: super::abi::AbiWriter) {
         self.0.borrow_mut().push((topics, data.finish()));
     }
