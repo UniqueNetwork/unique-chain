@@ -62,7 +62,13 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
 
                 let collection = pallet_nft::Module::<Runtime>::get_collection(input.collection_id)?;
 
-                match pallet_nft::Module::<Runtime>::transfer_internal(sender, recipient, &collection, input.token_id, input.amount) {
+                match pallet_nft::Module::<Runtime>::transfer_internal(
+                    <Runtime as Config>::CrossAccountId::from_sub(sender),
+                    <Runtime as Config>::CrossAccountId::from_sub(recipient),
+                    &collection,
+                    input.token_id,
+                    input.amount,
+                ) {
                     Ok(_) => Ok(RetVal::Converging(func_id)),
                     _ => Err(DispatchError::Other("Transfer error"))
                 }
