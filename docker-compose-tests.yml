@@ -21,14 +21,16 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile-tests
-      volumes:
+    volumes:
       - ./tests/src/config_docker.ts:/nft_parachain/tests/src/config.ts
+      - /home/polkadot/mochawesome-report:/nft_parachain/tests/mochawesome-report
+  #  command: bash -c 'while true; do sleep 20; df -h; done'
     networks:
       - node_test_network
     depends_on:
       - node_validator1
 
-   unit_tests:
+  unit_tests:
     container_name: unit_test
     image: nft_unit_test
     build:

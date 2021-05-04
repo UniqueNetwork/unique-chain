@@ -21,6 +21,7 @@
     "test": "mocha --timeout 9999999 -r ts-node/register ./**/*.test.ts",
     "load": "mocha --timeout 9999999 -r ts-node/register ./**/*.load.ts",
     "loadTransfer": "ts-node src/transfer.nload.ts",
+    "testCollision": "mocha --timeout 9999999 -r ts-node/register ./src/collision-tests/*.test.ts", 
     "testAddCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/addCollectionAdmin.test.ts",
     "testSetSchemaVersion": "mocha --timeout 9999999 -r ts-node/register ./**/setSchemaVersion.test.ts",
     "testSetVariableMetaData": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetaData.test.ts",
@@ -49,7 +50,9 @@
     "testSetContractSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setContractSponsoringRateLimit.test.ts",
     "testSetOffchainSchema": "mocha --timeout 9999999 -r ts-node/register ./**/setOffchainSchema.test.ts",
     "testOverflow": "mocha --timeout 9999999 -r ts-node/register ./**/overflow.test.ts",
-    "testSetVariableMetadataSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetadataSponsoringRateLimit.test.ts"
+    "testSetVariableMetadataSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetadataSponsoringRateLimit.test.ts",
+    "testInflation": "mocha --timeout 9999999 -r ts-node/register ./**/inflation.test.ts",
+    "testPalletPresence": "mocha --timeout 9999999 -r ts-node/register ./**/pallet-presence.test.ts"
   },
   "author": "",
   "license": "SEE LICENSE IN ../LICENSE",

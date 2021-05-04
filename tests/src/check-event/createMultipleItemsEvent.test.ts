@@ -17,7 +17,7 @@ const expect = chai.expect;
 
 describe('Create Multiple Items Event event ', () => {
   let Alice: IKeyringPair;
-  const checkSection = 'ItemCreated (x3)';
+  const checkSection = 'ItemCreated';
   const checkTreasury = 'Deposit';
   const checkSystem = 'ExtrinsicSuccess';
   before(async () => {

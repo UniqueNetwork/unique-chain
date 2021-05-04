@@ -31,10 +31,10 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          # command_timeout: 200m
+          command_timeout: 240m
           script: |
             eval $(ssh-agent -s)
-            ssh-add /home/devops/.ssh/git_hub
+            ssh-add /home/polkadot/.ssh/git_hub
             git clone git@github.com:usetech-llc/nft_private.git
             cd nft_private
             git checkout develop

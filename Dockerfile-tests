@@ -20,11 +20,14 @@ RUN apt-get -y update && \
       [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
       nvm install v15.0.1 && \
       nvm use v15.0.1 && \
-      npm install --save @polkadot/api
+      npm install --save @polkadot/api && \ 
+      npm install --save-dev mochawesome
 
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd tests && \
-    npm install --global yarn && \
+    npm install --global yarn && \ 
+    yarn add mochawesome && \
     yarn install && \
-    yarn test
+    yarn test --reporter mochawesome
+   # yarn test

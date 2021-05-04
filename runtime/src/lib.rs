@@ -576,7 +576,7 @@ parameter_types! {
 	pub const CollectionCreationPrice: Balance = 100 * UNIQUE;
 }
 
-/// Used for the module nft in `./nft.rs`
+/// Used for the pallet nft in `./nft.rs`
 impl pallet_nft::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = nft_weights::WeightInfo;
@@ -592,6 +592,21 @@ impl pallet_nft::Config for Runtime {
 
 	type EthereumChainId = ChainId;
 	type EthereumTransactionSender = pallet_ethereum::Module<Runtime>;
+}
+
+/// Reimport pallet inflation
+extern crate pallet_inflation;
+pub use pallet_inflation::*;
+
+parameter_types! {
+	pub const InflationBlockInterval: BlockNumber = 100; // every time per how many blocks inflation is applied
+}
+
+/// Used for the pallet inflation
+impl pallet_inflation::Config for Runtime {
+	type Currency = Balances;
+	type TreasuryAccountId = TreasuryAccountId;
+	type InflationBlockInterval = InflationBlockInterval;
 }
 
 construct_runtime!(
@@ -611,6 +626,7 @@ construct_runtime!(
 		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Module, Storage},
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
+		Inflation: pallet_inflation::{Module, Call, Storage},
 		Nft: pallet_nft::{Module, Call, Config<T>, Storage, Event<T>},
 		Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
 		Vesting: pallet_vesting::{Module, Call, Config<T>, Storage, Event<T>},
@@ -954,6 +970,7 @@ impl_runtime_apis! {
 			let params = (&config, &whitelist);
 
 			add_benchmark!(params, batches, pallet_nft, Nft);
+			add_benchmark!(params, batches, pallet_inflation, Inflation);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

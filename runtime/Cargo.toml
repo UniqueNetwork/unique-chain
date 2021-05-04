@@ -26,6 +26,7 @@ serde = { features = ['derive'], optional = true, version = '1.0.119' }
 
 # local dependencies
 pallet-nft = { path = '../pallets/nft', default-features = false, version = '3.0.0' }
+pallet-inflation = { path = '../pallets/inflation', default-features = false, version = '3.0.0' }
 
 # Substrate dependencies
 frame-benchmarking = { default-features = false, optional = true, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
@@ -75,6 +76,7 @@ runtime-benchmarks = [
     'pallet-balances/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
     'pallet-nft/runtime-benchmarks',
+    'pallet-inflation/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
 ]
 std = [
@@ -100,6 +102,7 @@ std = [
     'pallet-evm/std',
     'pallet-ethereum/std',
 
+    'pallet-inflation/std',
     'pallet-nft/std',
     'fp-rpc/std',
     'sp-api/std',
