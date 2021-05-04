@@ -1114,16 +1114,8 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::create_item(data.len())]
         #[transactional]
         pub fn create_item(origin, collection_id: CollectionId, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
-
             let sender = ensure_signed(origin)?;
-
-            let target_collection = Self::get_collection(collection_id)?;
-
-            Self::can_create_items_in_collection(&target_collection, &sender, &owner, 1)?;
-            Self::validate_create_item_args(&target_collection, &data)?;
-            Self::create_item_no_validation(&target_collection, owner, data)?;
-
-            Ok(())
+            Self::create_item_internal(sender, collection_id, owner, data)
         }
 
         /// This method creates multiple items in a collection created with CreateCollection method.
@@ -1763,6 +1755,15 @@ decl_module! {
 }
 
 impl<T: Config> Module<T> {
+    pub fn create_item_internal(sender: T::AccountId, collection_id: CollectionId, owner: T::AccountId, data: CreateItemData) -> DispatchResult {
+        let target_collection = Self::get_collection(collection_id)?;
+
+        Self::can_create_items_in_collection(&target_collection, &sender, &owner, 1)?;
+        Self::validate_create_item_args(&target_collection, &data)?;
+        Self::create_item_no_validation(&target_collection, owner, data)?;
+
+        Ok(())
+    }
 
     pub fn transfer_internal(sender: T::AccountId, recipient: T::AccountId, target_collection: &CollectionHandle<T>, item_id: TokenId, value: u128) -> DispatchResult {
         // Limits check

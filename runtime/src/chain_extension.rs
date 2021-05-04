@@ -21,6 +21,14 @@ use crate::Runtime;
 use sp_runtime::AccountId32;
 use crate::Vec;
 
+/// Create item parameters
+#[derive(Debug, PartialEq, Encode, Decode)]
+pub struct NFTExtCreateItem<E: Ext> {
+    pub owner: <E::T as SysConfig>::AccountId,
+    pub collection_id: u32,
+    pub data: CreateItemData,
+}
+
 /// Transfer parameters
 #[derive(Debug, PartialEq, Encode, Decode)]
 pub struct NFTExtTransfer<E: Ext> {
@@ -67,8 +75,42 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                     _ => Err(DispatchError::Other("Transfer error"))
                 }
             },
-			_ => {
-				panic!("Passed unknown func_id to test chain extension: {}", func_id);
+            1 => {
+                // Create Item
+                let mut env = env.buf_in_buf_out();
+                let input: NFTExtCreateItem<E> = env.read_as()?;
+
+                // Contract address to AccountId32
+                let mut bytes_contract: [u8; 32] = [0; 32];
+                let addr_vec_contract: Vec<u8> = env.ext().address().encode();
+                for i in 0..32 {
+                    bytes_contract[i] = addr_vec_contract[i];
+                }
+                let sender = AccountId32::from(bytes_contract);
+
+                // Recipient to AccountId32
+                let mut bytes_rec: [u8; 32] = [0; 32];
+                let addr_vec_rec: Vec<u8> = input.owner.encode();
+                for i in 0..32 {
+                    bytes_rec[i] = addr_vec_rec[i];
+                }
+                let recipient = AccountId32::from(bytes_rec);
+
+                // Parse data
+                let cdata = input.data.encode();
+                let vdata: [u8; 0] = [0; 0];
+                let item_data = CreateItemData::NFT(CreateNftData{
+                    const_data: cdata,
+                    variable_data: vdata.to_vec()
+                });
+
+                match pallet_nft::Module::<Runtime>::create_item_internal(sender, input.collection_id, recipient, item_data) {
+                    Ok(_) => Ok(RetVal::Converging(func_id)),
+                    _ => Err(DispatchError::Other("CreateItem error"))
+                }
+            },
+            _ => {
+                panic!("Passed unknown func_id to test chain extension: {}", func_id);
             }
         }
     }
