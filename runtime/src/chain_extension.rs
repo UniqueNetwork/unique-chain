@@ -60,6 +60,13 @@ pub struct NFTExtTransferFrom<E: Ext> {
     pub amount: u128,
 }
 
+#[derive(Debug, PartialEq, Encode, Decode)]
+pub struct NFTExtSetVariableMetaData {
+    pub collection_id: u32,
+    pub item_id: u32,
+    pub data: Vec<u8>,   
+}
+
 /// The chain Extension of NFT pallet
 pub struct NFTExtension;
 
@@ -150,6 +157,21 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                     &collection,
                     input.item_id,
                     input.amount
+                )?;
+                Ok(RetVal::Converging(func_id))
+            },
+            5 => {
+                // Set variable metadata
+                let mut env = env.buf_in_buf_out();
+                let input: NFTExtSetVariableMetaData = env.read_as()?;
+
+                let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
+
+                pallet_nft::Module::<C>::set_variable_meta_data_internal(
+                    env.ext().address().clone(),
+                    &collection,
+                    input.item_id,
+                    input.data,
                 )?;
                 Ok(RetVal::Converging(func_id))
             },

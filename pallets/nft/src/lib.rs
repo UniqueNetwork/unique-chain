@@ -1334,23 +1334,9 @@ decl_module! {
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             
-            let target_collection = Self::get_collection(collection_id)?;
-            Self::token_exists(&target_collection, item_id)?;
+            let collection = Self::get_collection(collection_id)?;
 
-            ensure!(ChainLimit::get().custom_data_limit >= data.len() as u32, Error::<T>::TokenVariableDataLimitExceeded);
-
-            // Modify permissions check
-            ensure!(Self::is_item_owner(sender.clone(), &target_collection, item_id) ||
-                Self::is_owner_or_admin_permissions(&target_collection, sender.clone()),
-                Error::<T>::NoPermission);
-
-            match target_collection.mode
-            {
-                CollectionMode::NFT => Self::set_nft_variable_data(&target_collection, item_id, data)?,
-                CollectionMode::ReFungible  => Self::set_re_fungible_variable_data(&target_collection, item_id, data)?,
-                CollectionMode::Fungible(_) => fail!(Error::<T>::CantStoreMetadataInFungibleTokens),
-                _ => fail!(Error::<T>::UnexpectedCollectionType)
-            };
+            Self::set_variable_meta_data_internal(sender, &collection, item_id, data)?;
 
             Ok(())
         }
@@ -1820,6 +1806,32 @@ impl<T: Config> Module<T> {
 
 		Ok(())
 	}
+
+    pub fn set_variable_meta_data_internal(
+        sender: T::AccountId,
+        collection: &CollectionHandle<T>, 
+        item_id: TokenId,
+        data: Vec<u8>,
+    ) -> DispatchResult {
+        Self::token_exists(&collection, item_id)?;
+
+        ensure!(ChainLimit::get().custom_data_limit >= data.len() as u32, Error::<T>::TokenVariableDataLimitExceeded);
+
+        // Modify permissions check
+        ensure!(Self::is_item_owner(sender.clone(), &collection, item_id) ||
+            Self::is_owner_or_admin_permissions(&collection, sender.clone()),
+            Error::<T>::NoPermission);
+
+        match collection.mode
+        {
+            CollectionMode::NFT => Self::set_nft_variable_data(&collection, item_id, data)?,
+            CollectionMode::ReFungible  => Self::set_re_fungible_variable_data(&collection, item_id, data)?,
+            CollectionMode::Fungible(_) => fail!(Error::<T>::CantStoreMetadataInFungibleTokens),
+            _ => fail!(Error::<T>::UnexpectedCollectionType)
+        };
+
+        Ok(())
+    }
 
     pub fn create_multiple_items_internal(
         sender: T::AccountId,
