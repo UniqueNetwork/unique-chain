@@ -43,6 +43,23 @@ pub struct NFTExtCreateMultipleItems<E: Ext> {
     pub data: Vec<CreateItemData>,
 }
 
+#[derive(Debug, PartialEq, Encode, Decode)]
+pub struct NFTExtApprove<E: Ext> {
+    pub spender: <E::T as SysConfig>::AccountId,
+    pub collection_id: u32,
+    pub item_id: u32,
+    pub amount: u128,
+}
+
+#[derive(Debug, PartialEq, Encode, Decode)]
+pub struct NFTExtTransferFrom<E: Ext> {
+    pub owner: <E::T as SysConfig>::AccountId,
+    pub recipient: <E::T as SysConfig>::AccountId,
+    pub collection_id: u32,
+    pub item_id: u32,
+    pub amount: u128,
+}
+
 /// The chain Extension of NFT pallet
 pub struct NFTExtension;
 
@@ -102,6 +119,39 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                     Ok(_) => Ok(RetVal::Converging(func_id)),
                     _ => Err(DispatchError::Other("CreateMultipleItems error"))
                 }
+            },
+            3 => {
+                // Approve
+                let mut env = env.buf_in_buf_out();
+                let input: NFTExtApprove<E> = env.read_as()?;
+
+                let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
+
+                pallet_nft::Module::<C>::approve_internal(
+                    env.ext().address().clone(),
+                    input.spender,
+                    &collection,
+                    input.item_id,
+                    input.amount,
+                )?;
+                Ok(RetVal::Converging(func_id))
+            },
+            4 => {
+                // Transfer from
+                let mut env = env.buf_in_buf_out();
+                let input: NFTExtTransferFrom<E> = env.read_as()?;
+
+                let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
+
+                pallet_nft::Module::<C>::transfer_from_internal(
+                    env.ext().address().clone(),
+                    input.owner,
+                    input.recipient,
+                    &collection,
+                    input.item_id,
+                    input.amount
+                )?;
+                Ok(RetVal::Converging(func_id))
             },
             _ => {
                 panic!("Passed unknown func_id to test chain extension: {}", func_id);
