@@ -870,10 +870,14 @@ decl_module! {
 
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&collection, &sender)?;
 
-            <WhiteList<T>>::insert(collection_id, address.as_sub(), true);
-            
+            Self::toggle_white_list_internal(
+                &sender,
+                &collection,
+                &address,
+                true,
+            )?;
+
             Ok(())
         }
 
@@ -895,9 +899,13 @@ decl_module! {
 
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&collection, &sender)?;
 
-            <WhiteList<T>>::remove(collection_id, address.as_sub());
+            Self::toggle_white_list_internal(
+                &sender,
+                &collection,
+                &address,
+                false,
+            )?;
 
             Ok(())
         }
@@ -1137,16 +1145,12 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::create_item(data.len())]
         #[transactional]
         pub fn create_item(origin, collection_id: CollectionId, owner: T::CrossAccountId, data: CreateItemData) -> DispatchResult {
-
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+            let collection = Self::get_collection(collection_id)?;
 
-            let target_collection = Self::get_collection(collection_id)?;
+            Self::create_item_internal(&sender, &collection, &owner, data);
 
-            Self::can_create_items_in_collection(&target_collection, &sender, &owner, 1)?;
-            Self::validate_create_item_args(&target_collection, &data)?;
-            Self::create_item_no_validation(&target_collection, owner, data)?;
-
-            Self::submit_logs(target_collection)?;
+            Self::submit_logs(collection)?;
             Ok(())
         }
 
@@ -1178,7 +1182,7 @@ decl_module! {
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
 
-            Self::create_multiple_items_internal(sender, &collection, owner, items_data)?;
+            Self::create_multiple_items_internal(&sender, &collection, &owner, items_data)?;
 
             Self::submit_logs(collection)?;
             Ok(())
@@ -1239,7 +1243,7 @@ decl_module! {
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
 
-            Self::transfer_internal(sender, recipient, &collection, item_id, value)?;
+            Self::transfer_internal(&sender, &recipient, &collection, item_id, value)?;
 
             Self::submit_logs(collection)?;
             Ok(())
@@ -1263,11 +1267,10 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::approve()]
         #[transactional]
         pub fn approve(origin, spender: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResult {
-
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
 
-            Self::approve_internal(sender, spender, &collection, item_id, amount)?;
+            Self::approve_internal(&sender, &spender, &collection, item_id, amount)?;
 
             Self::submit_logs(collection)?;
             Ok(())
@@ -1295,19 +1298,15 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::transfer_from()]
         #[transactional]
         pub fn transfer_from(origin, from: T::CrossAccountId, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResult {
-
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
 
-            Self::transfer_from_internal(sender, from, recipient, &collection, item_id, value)?;
+            Self::transfer_from_internal(&sender, &from, &recipient, &collection, item_id, value)?;
 
             Self::submit_logs(collection)?;
             Ok(())
         }
-
         // #[weight = 0]
-        // pub fn safe_transfer_from(origin, collection_id: CollectionId, item_id: TokenId, new_owner: T::AccountId) -> DispatchResult {
-
         //     // let no_perm_mes = "You do not have permissions to modify this collection";
         //     // ensure!(<ApprovedList<T>>::contains_key((collection_id, item_id)), no_perm_mes);
         //     // let list_itm = <ApprovedList<T>>::get((collection_id, item_id));
@@ -1342,8 +1341,9 @@ decl_module! {
         ) -> DispatchResult {
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             
-            let target_collection = Self::get_collection(collection_id)?;
-            Self::set_variable_meta_data_internal(sender, &target_collection, item_id, data)?;
+            let collection = Self::get_collection(collection_id)?;
+
+            Self::set_variable_meta_data_internal(&sender, &collection, item_id, data)?;
 
             Ok(())
         }
@@ -1679,8 +1679,15 @@ decl_module! {
 }
 
 impl<T: Config> Module<T> {
+    pub fn create_item_internal(sender: &T::CrossAccountId, collection: &CollectionHandle<T>, owner: &T::CrossAccountId, data: CreateItemData) -> DispatchResult {
+        Self::can_create_items_in_collection(&collection, &sender, &owner, 1)?;
+        Self::validate_create_item_args(&collection, &data)?;
+        Self::create_item_no_validation(&collection, owner, data)?;
 
-    pub fn transfer_internal(sender: T::CrossAccountId, recipient: T::CrossAccountId, target_collection: &CollectionHandle<T>, item_id: TokenId, value: u128) -> DispatchResult {
+        Ok(())
+    }
+
+    pub fn transfer_internal(sender: &T::CrossAccountId, recipient: &T::CrossAccountId, target_collection: &CollectionHandle<T>, item_id: TokenId, value: u128) -> DispatchResult {
         // Limits check
         Self::is_correct_transfer(target_collection, &recipient)?;
 
@@ -1702,14 +1709,14 @@ impl<T: Config> Module<T> {
             _ => ()
         };
 
-        Self::deposit_event(RawEvent::Transfer(target_collection.id, item_id, sender, recipient, value));
+        Self::deposit_event(RawEvent::Transfer(target_collection.id, item_id, sender.clone(), recipient.clone(), value));
 
         Ok(())
     }
 
 	pub fn approve_internal(
-		sender: T::CrossAccountId,
-		spender: T::CrossAccountId,
+		sender: &T::CrossAccountId,
+		spender: &T::CrossAccountId,
 		collection: &CollectionHandle<T>,
 		item_id: TokenId,
 		amount: u128
@@ -1772,14 +1779,14 @@ impl<T: Config> Module<T> {
 			);
 		}
 
-		Self::deposit_event(RawEvent::Approved(collection.id, item_id, sender, spender, allowance));
+		Self::deposit_event(RawEvent::Approved(collection.id, item_id, sender.clone(), spender.clone(), allowance));
 		Ok(())
 	}
 
 	pub fn transfer_from_internal(
-		sender: T::CrossAccountId,
-		from: T::CrossAccountId,
-		recipient: T::CrossAccountId,
+		sender: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		recipient: &T::CrossAccountId,
 		collection: &CollectionHandle<T>,
 		item_id: TokenId,
 		amount: u128,
@@ -1841,7 +1848,7 @@ impl<T: Config> Module<T> {
 	}
 
     pub fn set_variable_meta_data_internal(
-        sender: T::CrossAccountId,
+        sender: &T::CrossAccountId,
         collection: &CollectionHandle<T>, 
         item_id: TokenId,
         data: Vec<u8>,
@@ -1867,9 +1874,9 @@ impl<T: Config> Module<T> {
     }
 
     pub fn create_multiple_items_internal(
-        sender: T::CrossAccountId,
+        sender: &T::CrossAccountId,
         collection: &CollectionHandle<T>,
-        owner: T::CrossAccountId,
+        owner: &T::CrossAccountId,
         items_data: Vec<CreateItemData>,
     ) -> DispatchResult {
         Self::can_create_items_in_collection(&collection, &sender, &owner, items_data.len() as u32)?;
@@ -1878,7 +1885,7 @@ impl<T: Config> Module<T> {
             Self::validate_create_item_args(&collection, data)?;
         }
         for data in &items_data {
-            Self::create_item_no_validation(&collection, owner.clone(), data.clone())?;
+            Self::create_item_no_validation(&collection, owner, data.clone())?;
         }
 
         Ok(())
@@ -1910,6 +1917,23 @@ impl<T: Config> Module<T> {
             CollectionMode::ReFungible  => Self::burn_refungible_item(&collection, item_id, &sender)?,
             _ => ()
         };
+
+        Ok(())
+    }
+
+    pub fn toggle_white_list_internal(
+        sender: &T::CrossAccountId,
+        collection: &CollectionHandle<T>,
+        address: &T::CrossAccountId,
+        whitelisted: bool,
+    ) -> DispatchResult {
+        Self::check_owner_or_admin_permissions(&collection, &sender)?;
+
+        if whitelisted {
+            <WhiteList<T>>::insert(collection.id, address.as_sub(), true);
+        } else {
+            <WhiteList<T>>::remove(collection.id, address.as_sub());
+        }
 
         Ok(())
     }
@@ -1984,7 +2008,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn create_item_no_validation(collection: &CollectionHandle<T>, owner: T::CrossAccountId, data: CreateItemData) -> DispatchResult {
+    fn create_item_no_validation(collection: &CollectionHandle<T>, owner: &T::CrossAccountId, data: CreateItemData) -> DispatchResult {
         match data
         {
             CreateItemData::NFT(data) => {

@@ -17,9 +17,16 @@ use frame_support::dispatch::DispatchError;
 
 extern crate pallet_nft;
 pub use pallet_nft::*;
-use crate::Runtime;
-use sp_runtime::AccountId32;
+use pallet_nft::CrossAccountId;
 use crate::Vec;
+
+/// Create item parameters
+#[derive(Debug, PartialEq, Encode, Decode)]
+pub struct NFTExtCreateItem<E: Ext> {
+    pub owner: <E::T as SysConfig>::AccountId,
+    pub collection_id: u32,
+    pub data: CreateItemData,
+}
 
 /// Transfer parameters
 #[derive(Debug, PartialEq, Encode, Decode)]
@@ -30,12 +37,51 @@ pub struct NFTExtTransfer<E: Ext> {
     pub amount: u128,
 }
 
+#[derive(Debug, PartialEq, Encode, Decode)]
+pub struct NFTExtCreateMultipleItems<E: Ext> {
+    pub owner: <E::T as SysConfig>::AccountId,
+    pub collection_id: u32,
+    pub data: Vec<CreateItemData>,
+}
+
+#[derive(Debug, PartialEq, Encode, Decode)]
+pub struct NFTExtApprove<E: Ext> {
+    pub spender: <E::T as SysConfig>::AccountId,
+    pub collection_id: u32,
+    pub item_id: u32,
+    pub amount: u128,
+}
+
+#[derive(Debug, PartialEq, Encode, Decode)]
+pub struct NFTExtTransferFrom<E: Ext> {
+    pub owner: <E::T as SysConfig>::AccountId,
+    pub recipient: <E::T as SysConfig>::AccountId,
+    pub collection_id: u32,
+    pub item_id: u32,
+    pub amount: u128,
+}
+
+#[derive(Debug, PartialEq, Encode, Decode)]
+pub struct NFTExtSetVariableMetaData {
+    pub collection_id: u32,
+    pub item_id: u32,
+    pub data: Vec<u8>,   
+}
+
+#[derive(Debug, PartialEq, Encode, Decode)]
+pub struct NFTExtToggleWhiteList<E: Ext> {
+    pub collection_id: u32,
+    pub address: <E::T as SysConfig>::AccountId,
+    pub whitelisted: bool,
+}
+
 /// The chain Extension of NFT pallet
 pub struct NFTExtension;
 
 impl<C: Config> ChainExtension<C> for NFTExtension {
     fn call<E: Ext>(func_id: u32, env: Environment<E, InitState>) -> Result<RetVal, DispatchError>
     where
+        E: Ext<T = C>,
         <E::T as SysConfig>::AccountId: UncheckedFrom<<E::T as SysConfig>::Hash> + AsRef<[u8]>,
     {
         // The memory of the vm stores buf in scale-codec
@@ -44,27 +90,11 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                 let mut env = env.buf_in_buf_out();
                 let input: NFTExtTransfer<E> = env.read_as()?;
 
-                // Sender to AccountId32
-                let mut bytes_sender: [u8; 32] = [0; 32];
-                let addr_vec_sender: Vec<u8> = env.ext().caller().encode();
-                for i in 0..32 {
-                    bytes_sender[i] = addr_vec_sender[i];
-                }
-                let sender = AccountId32::from(bytes_sender);
+                let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
 
-                // Recipient to AccountId32
-                let mut bytes_rec: [u8; 32] = [0; 32];
-                let addr_vec_rec: Vec<u8> = input.recipient.encode();
-                for i in 0..32 {
-                    bytes_rec[i] = addr_vec_rec[i];
-                }
-                let recipient = AccountId32::from(bytes_rec);
-
-                let collection = pallet_nft::Module::<Runtime>::get_collection(input.collection_id)?;
-
-                match pallet_nft::Module::<Runtime>::transfer_internal(
-                    <Runtime as Config>::CrossAccountId::from_sub(sender),
-                    <Runtime as Config>::CrossAccountId::from_sub(recipient),
+                match pallet_nft::Module::<C>::transfer_internal(
+                    &C::CrossAccountId::from_sub(env.ext().caller().clone()),
+                    &C::CrossAccountId::from_sub(input.recipient),
                     &collection,
                     input.token_id,
                     input.amount,
@@ -73,8 +103,105 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                     _ => Err(DispatchError::Other("Transfer error"))
                 }
             },
-			_ => {
-				panic!("Passed unknown func_id to test chain extension: {}", func_id);
+            1 => {
+                // Create Item
+                let mut env = env.buf_in_buf_out();
+                let input: NFTExtCreateItem<E> = env.read_as()?;
+
+                let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
+
+                match pallet_nft::Module::<C>::create_item_internal(
+                    &C::CrossAccountId::from_sub(env.ext().address().clone()),
+                    &collection,
+                    &C::CrossAccountId::from_sub(input.owner),
+                    input.data,
+                ) {
+                    Ok(_) => Ok(RetVal::Converging(func_id)),
+                    _ => Err(DispatchError::Other("CreateItem error"))
+                }
+            },
+            2 => {
+                // Create multiple items
+                let mut env = env.buf_in_buf_out();
+                let input: NFTExtCreateMultipleItems<E> = env.read_as()?;
+
+                let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
+
+                match pallet_nft::Module::<C>::create_multiple_items_internal(
+                    &C::CrossAccountId::from_sub(env.ext().address().clone()),
+                    &collection,
+                    &C::CrossAccountId::from_sub(input.owner),
+                    input.data,
+                ) {
+                    Ok(_) => Ok(RetVal::Converging(func_id)),
+                    _ => Err(DispatchError::Other("CreateMultipleItems error"))
+                }
+            },
+            3 => {
+                // Approve
+                let mut env = env.buf_in_buf_out();
+                let input: NFTExtApprove<E> = env.read_as()?;
+
+                let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
+
+                pallet_nft::Module::<C>::approve_internal(
+                    &C::CrossAccountId::from_sub(env.ext().address().clone()),
+                    &C::CrossAccountId::from_sub(input.spender),
+                    &collection,
+                    input.item_id,
+                    input.amount,
+                )?;
+                Ok(RetVal::Converging(func_id))
+            },
+            4 => {
+                // Transfer from
+                let mut env = env.buf_in_buf_out();
+                let input: NFTExtTransferFrom<E> = env.read_as()?;
+
+                let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
+
+                pallet_nft::Module::<C>::transfer_from_internal(
+                    &C::CrossAccountId::from_sub(env.ext().address().clone()),
+                    &C::CrossAccountId::from_sub(input.owner),
+                    &C::CrossAccountId::from_sub(input.recipient),
+                    &collection,
+                    input.item_id,
+                    input.amount
+                )?;
+                Ok(RetVal::Converging(func_id))
+            },
+            5 => {
+                // Set variable metadata
+                let mut env = env.buf_in_buf_out();
+                let input: NFTExtSetVariableMetaData = env.read_as()?;
+
+                let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
+
+                pallet_nft::Module::<C>::set_variable_meta_data_internal(
+                    &C::CrossAccountId::from_sub(env.ext().address().clone()),
+                    &collection,
+                    input.item_id,
+                    input.data,
+                )?;
+                Ok(RetVal::Converging(func_id))
+            },
+            6 => {
+                // Toggle whitelist
+                let mut env = env.buf_in_buf_out();
+                let input: NFTExtToggleWhiteList<E> = env.read_as()?;
+
+                let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
+
+                pallet_nft::Module::<C>::toggle_white_list_internal(
+                    &C::CrossAccountId::from_sub(env.ext().address().clone()),
+                    &collection,
+                    &C::CrossAccountId::from_sub(input.address),
+                    input.whitelisted,
+                )?;
+                Ok(RetVal::Converging(func_id))
+            }
+            _ => {
+                panic!("Passed unknown func_id to test chain extension: {}", func_id);
             }
         }
     }

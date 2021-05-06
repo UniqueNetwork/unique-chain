@@ -117,8 +117,8 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 			let recipient = T::CrossAccountId::from_eth(recipient);
 
 			<Module<T>>::transfer_internal(
-				sender,
-				recipient,
+				&sender,
+				&recipient,
 				&collection,
 				1,
 				amount,
@@ -143,8 +143,8 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 			let spender = T::CrossAccountId::from_eth(spender);
 
 			<Module<T>>::approve_internal(
-				sender,
-				spender,
+				&sender,
+				&spender,
 				&collection,
 				1,
 				amount,
@@ -160,8 +160,8 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 			let token_id = token_id.try_into().map_err(|_| "bad token id")?;
 
 			<Module<T>>::approve_internal(
-				sender,
-				approved,
+				&sender,
+				&approved,
 				&collection,
 				token_id,
 				1,
@@ -176,9 +176,9 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 			let recipient = T::CrossAccountId::from_eth(recipient);
 
 			<Module<T>>::transfer_from_internal(
-				sender,
-				from,
-				recipient,
+				&sender,
+				&from,
+				&recipient,
 				&collection,
 				1,
 				amount,
@@ -195,9 +195,9 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 			let token_id = token_id.try_into().map_err(|_| "bad token id")?;
 
 			<Module<T>>::transfer_from_internal(
-				sender,
-				from,
-				recipient,
+				&sender,
+				&from,
+				&recipient,
 				&collection,
 				token_id,
 				1,
