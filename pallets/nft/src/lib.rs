@@ -842,10 +842,14 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
             let collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&collection, sender)?;
 
-            <WhiteList<T>>::insert(collection_id, address, true);
-            
+            Self::toggle_white_list_internal(
+                &sender,
+                &collection,
+                &address,
+                true,
+            )?;
+
             Ok(())
         }
 
@@ -867,9 +871,13 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
             let collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&collection, sender)?;
 
-            <WhiteList<T>>::remove(collection_id, address);
+            Self::toggle_white_list_internal(
+                &sender,
+                &collection,
+                &address,
+                false,
+            )?;
 
             Ok(())
         }
@@ -1846,6 +1854,23 @@ impl<T: Config> Module<T> {
         }
         for data in &items_data {
             Self::create_item_no_validation(&collection, owner.clone(), data.clone())?;
+        }
+
+        Ok(())
+    }
+
+    pub fn toggle_white_list_internal(
+        sender: &T::AccountId,
+        collection: &CollectionHandle<T>,
+        address: &T::AccountId,
+        whitelisted: bool,
+    ) -> DispatchResult {
+        Self::check_owner_or_admin_permissions(&collection, sender.clone())?;
+
+        if whitelisted {
+            <WhiteList<T>>::insert(collection.id, address, true);
+        } else {
+            <WhiteList<T>>::remove(collection.id, address);
         }
 
         Ok(())

@@ -67,6 +67,13 @@ pub struct NFTExtSetVariableMetaData {
     pub data: Vec<u8>,   
 }
 
+#[derive(Debug, PartialEq, Encode, Decode)]
+pub struct NFTExtToggleWhiteList<E: Ext> {
+    pub collection_id: u32,
+    pub address: <E::T as SysConfig>::AccountId,
+    pub whitelisted: bool,
+}
+
 /// The chain Extension of NFT pallet
 pub struct NFTExtension;
 
@@ -175,6 +182,21 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                 )?;
                 Ok(RetVal::Converging(func_id))
             },
+            6 => {
+                // Toggle whitelist
+                let mut env = env.buf_in_buf_out();
+                let input: NFTExtToggleWhiteList<E> = env.read_as()?;
+
+                let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
+
+                pallet_nft::Module::<C>::toggle_white_list_internal(
+                    &env.ext().address().clone(),
+                    &collection,
+                    &input.address,
+                    input.whitelisted,
+                )?;
+                Ok(RetVal::Converging(func_id))
+            }
             _ => {
                 panic!("Passed unknown func_id to test chain extension: {}", func_id);
             }
