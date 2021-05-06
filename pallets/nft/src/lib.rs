@@ -1792,6 +1792,23 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
+    pub fn create_multiple_items_internal(
+        sender: T::AccountId,
+        collection: &CollectionHandle<T>,
+        owner: T::AccountId,
+        items_data: Vec<CreateItemData>,
+    ) -> DispatchResult {
+        Self::can_create_items_in_collection(&collection, &sender, &owner, items_data.len() as u32)?;
+
+        for data in &items_data {
+            Self::validate_create_item_args(&collection, data)?;
+        }
+        for data in &items_data {
+            Self::create_item_no_validation(&collection, owner.clone(), data.clone())?;
+        }
+
+        Ok(())
+    }
 
     fn is_correct_transfer(collection: &CollectionHandle<T>, recipient: &T::AccountId) -> DispatchResult {
         let collection_id = collection.id;

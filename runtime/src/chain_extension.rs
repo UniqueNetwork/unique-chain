@@ -17,8 +17,6 @@ use frame_support::dispatch::DispatchError;
 
 extern crate pallet_nft;
 pub use pallet_nft::*;
-use crate::Runtime;
-use sp_runtime::AccountId32;
 use crate::Vec;
 
 /// Create item parameters
@@ -36,6 +34,13 @@ pub struct NFTExtTransfer<E: Ext> {
     pub collection_id: u32,
     pub token_id: u32,
     pub amount: u128,
+}
+
+#[derive(Debug, PartialEq, Encode, Decode)]
+pub struct NFTExtCreateMultipleItems<E: Ext> {
+    pub owner: <E::T as SysConfig>::AccountId,
+    pub collection_id: u32,
+    pub data: Vec<CreateItemData>,
 }
 
 /// The chain Extension of NFT pallet
@@ -79,6 +84,23 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                 ) {
                     Ok(_) => Ok(RetVal::Converging(func_id)),
                     _ => Err(DispatchError::Other("CreateItem error"))
+                }
+            },
+            2 => {
+                // Create multiple items
+                let mut env = env.buf_in_buf_out();
+                let input: NFTExtCreateMultipleItems<E> = env.read_as()?;
+
+                let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
+
+                match pallet_nft::Module::<C>::create_multiple_items_internal(
+                    env.ext().address().clone(),
+                    &collection,
+                    input.owner,
+                    input.data,
+                ) {
+                    Ok(_) => Ok(RetVal::Converging(func_id)),
+                    _ => Err(DispatchError::Other("CreateMultipleItems error"))
                 }
             },
             _ => {
