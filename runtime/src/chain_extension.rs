@@ -92,16 +92,16 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
 
                 let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
 
-                match pallet_nft::Module::<C>::transfer_internal(
+                pallet_nft::Module::<C>::transfer_internal(
                     &C::CrossAccountId::from_sub(env.ext().caller().clone()),
                     &C::CrossAccountId::from_sub(input.recipient),
                     &collection,
                     input.token_id,
                     input.amount,
-                ) {
-                    Ok(_) => Ok(RetVal::Converging(func_id)),
-                    _ => Err(DispatchError::Other("Transfer error"))
-                }
+                )?;
+
+                pallet_nft::Module::<C>::submit_logs(collection)?;
+                Ok(RetVal::Converging(func_id))
             },
             1 => {
                 // Create Item
@@ -110,15 +110,15 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
 
                 let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
 
-                match pallet_nft::Module::<C>::create_item_internal(
+                pallet_nft::Module::<C>::create_item_internal(
                     &C::CrossAccountId::from_sub(env.ext().address().clone()),
                     &collection,
                     &C::CrossAccountId::from_sub(input.owner),
                     input.data,
-                ) {
-                    Ok(_) => Ok(RetVal::Converging(func_id)),
-                    _ => Err(DispatchError::Other("CreateItem error"))
-                }
+                )?;
+
+                pallet_nft::Module::<C>::submit_logs(collection)?;
+                Ok(RetVal::Converging(func_id))
             },
             2 => {
                 // Create multiple items
@@ -127,15 +127,15 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
 
                 let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
 
-                match pallet_nft::Module::<C>::create_multiple_items_internal(
+                pallet_nft::Module::<C>::create_multiple_items_internal(
                     &C::CrossAccountId::from_sub(env.ext().address().clone()),
                     &collection,
                     &C::CrossAccountId::from_sub(input.owner),
                     input.data,
-                ) {
-                    Ok(_) => Ok(RetVal::Converging(func_id)),
-                    _ => Err(DispatchError::Other("CreateMultipleItems error"))
-                }
+                )?;
+
+                pallet_nft::Module::<C>::submit_logs(collection)?;
+                Ok(RetVal::Converging(func_id))
             },
             3 => {
                 // Approve
@@ -151,6 +151,8 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                     input.item_id,
                     input.amount,
                 )?;
+
+                pallet_nft::Module::<C>::submit_logs(collection)?;
                 Ok(RetVal::Converging(func_id))
             },
             4 => {
@@ -168,6 +170,8 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                     input.item_id,
                     input.amount
                 )?;
+
+                pallet_nft::Module::<C>::submit_logs(collection)?;
                 Ok(RetVal::Converging(func_id))
             },
             5 => {
@@ -183,6 +187,8 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                     input.item_id,
                     input.data,
                 )?;
+
+                pallet_nft::Module::<C>::submit_logs(collection)?;
                 Ok(RetVal::Converging(func_id))
             },
             6 => {
@@ -198,6 +204,8 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                     &C::CrossAccountId::from_sub(input.address),
                     input.whitelisted,
                 )?;
+ 
+                pallet_nft::Module::<C>::submit_logs(collection)?;
                 Ok(RetVal::Converging(func_id))
             }
             _ => {
