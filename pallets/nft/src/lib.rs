@@ -1148,7 +1148,7 @@ decl_module! {
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let collection = Self::get_collection(collection_id)?;
 
-            Self::create_item_internal(&sender, &collection, &owner, data);
+            Self::create_item_internal(&sender, &collection, &owner, data)?;
 
             Self::submit_logs(collection)?;
             Ok(())
@@ -2227,7 +2227,7 @@ impl<T: Config> Module<T> {
         <CollectionById<T>>::insert(collection.id, collection.into_inner());
     }
 
-    fn submit_logs(collection: CollectionHandle<T>) -> DispatchResult {
+    pub fn submit_logs(collection: CollectionHandle<T>) -> DispatchResult {
         if collection.logs.is_empty() {
             return Ok(())
         }
