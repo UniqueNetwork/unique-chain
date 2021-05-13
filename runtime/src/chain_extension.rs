@@ -218,12 +218,12 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                     &C::CrossAccountId::from_sub(input.address),
                     input.whitelisted,
                 )?;
- 
+
                 pallet_nft::Module::<C>::submit_logs(collection)?;
                 Ok(RetVal::Converging(0))
             }
             _ => {
-                Err(DispatchError::Other("unknown chain_extension func_id"));
+                Err(DispatchError::Other("unknown chain_extension func_id"))
             }
         }
     }
