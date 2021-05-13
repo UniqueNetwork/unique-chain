@@ -77,10 +77,13 @@ pub struct NFTExtToggleWhiteList<E: Ext> {
 /// The chain Extension of NFT pallet
 pub struct NFTExtension;
 
+pub type NftWeightInfoOf<C> = <C as pallet_nft::Config>::WeightInfo;
+
 impl<C: Config> ChainExtension<C> for NFTExtension {
     fn call<E: Ext>(func_id: u32, env: Environment<E, InitState>) -> Result<RetVal, DispatchError>
     where
         E: Ext<T = C>,
+        C: pallet_nft::Config,
         <E::T as SysConfig>::AccountId: UncheckedFrom<<E::T as SysConfig>::Hash> + AsRef<[u8]>,
     {
         // The memory of the vm stores buf in scale-codec
@@ -88,6 +91,7 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
             0 => {
                 let mut env = env.buf_in_buf_out();
                 let input: NFTExtTransfer<E> = env.read_as()?;
+                env.charge_weight(NftWeightInfoOf::<C>::transfer())?;
 
                 let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
 
@@ -106,6 +110,7 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                 // Create Item
                 let mut env = env.buf_in_buf_out();
                 let input: NFTExtCreateItem<E> = env.read_as()?;
+                env.charge_weight(NftWeightInfoOf::<C>::create_item(input.data.len()))?;
 
                 match pallet_nft::Module::<C>::create_item_internal(
                     env.ext().address().clone(),
@@ -121,6 +126,11 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                 // Create multiple items
                 let mut env = env.buf_in_buf_out();
                 let input: NFTExtCreateMultipleItems<E> = env.read_as()?;
+                env.charge_weight(NftWeightInfoOf::<C>::create_item(
+                    input.data.iter()
+                        .map(|i| i.len())
+                        .sum()
+                ))?;
 
                 let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
 
@@ -138,6 +148,7 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                 // Approve
                 let mut env = env.buf_in_buf_out();
                 let input: NFTExtApprove<E> = env.read_as()?;
+                env.charge_weight(NftWeightInfoOf::<C>::approve())?;
 
                 let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
 
@@ -154,6 +165,7 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                 // Transfer from
                 let mut env = env.buf_in_buf_out();
                 let input: NFTExtTransferFrom<E> = env.read_as()?;
+                env.charge_weight(NftWeightInfoOf::<C>::transfer_from())?;
 
                 let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
 
@@ -171,6 +183,7 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                 // Set variable metadata
                 let mut env = env.buf_in_buf_out();
                 let input: NFTExtSetVariableMetaData = env.read_as()?;
+                env.charge_weight(NftWeightInfoOf::<C>::set_variable_meta_data())?;
 
                 let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
 
@@ -186,6 +199,7 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                 // Toggle whitelist
                 let mut env = env.buf_in_buf_out();
                 let input: NFTExtToggleWhiteList<E> = env.read_as()?;
+                env.charge_weight(NftWeightInfoOf::<C>::add_to_white_list())?;
 
                 let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
 
