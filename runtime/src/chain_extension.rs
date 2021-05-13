@@ -95,16 +95,15 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
 
                 let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
 
-                match pallet_nft::Module::<C>::transfer_internal(
+                pallet_nft::Module::<C>::transfer_internal(
                     env.ext().caller().clone(),
                     input.recipient,
                     &collection,
                     input.token_id,
                     input.amount,
-                ) {
-                    Ok(_) => Ok(RetVal::Converging(func_id)),
-                    _ => Err(DispatchError::Other("Transfer error"))
-                }
+                )?;
+                
+                Ok(RetVal::Converging(0))
             },
             1 => {
                 // Create Item
@@ -112,15 +111,14 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                 let input: NFTExtCreateItem<E> = env.read_as()?;
                 env.charge_weight(NftWeightInfoOf::<C>::create_item(input.data.len()))?;
 
-                match pallet_nft::Module::<C>::create_item_internal(
+                pallet_nft::Module::<C>::create_item_internal(
                     env.ext().address().clone(),
                     input.collection_id,
                     input.owner,
                     input.data,
-                ) {
-                    Ok(_) => Ok(RetVal::Converging(func_id)),
-                    _ => Err(DispatchError::Other("CreateItem error"))
-                }
+                )?;
+                
+                Ok(RetVal::Converging(0))
             },
             2 => {
                 // Create multiple items
@@ -134,15 +132,14 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
 
                 let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
 
-                match pallet_nft::Module::<C>::create_multiple_items_internal(
+                pallet_nft::Module::<C>::create_multiple_items_internal(
                     env.ext().address().clone(),
                     &collection,
                     input.owner,
                     input.data,
-                ) {
-                    Ok(_) => Ok(RetVal::Converging(func_id)),
-                    _ => Err(DispatchError::Other("CreateMultipleItems error"))
-                }
+                )?;
+                
+                Ok(RetVal::Converging(0))
             },
             3 => {
                 // Approve
@@ -159,7 +156,8 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                     input.item_id,
                     input.amount,
                 )?;
-                Ok(RetVal::Converging(func_id))
+
+                Ok(RetVal::Converging(0))
             },
             4 => {
                 // Transfer from
@@ -177,7 +175,8 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                     input.item_id,
                     input.amount
                 )?;
-                Ok(RetVal::Converging(func_id))
+
+                Ok(RetVal::Converging(0))
             },
             5 => {
                 // Set variable metadata
@@ -193,7 +192,8 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                     input.item_id,
                     input.data,
                 )?;
-                Ok(RetVal::Converging(func_id))
+
+                Ok(RetVal::Converging(0))
             },
             6 => {
                 // Toggle whitelist
@@ -209,10 +209,11 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                     &input.address,
                     input.whitelisted,
                 )?;
-                Ok(RetVal::Converging(func_id))
+
+                Ok(RetVal::Converging(0))
             }
             _ => {
-                panic!("Passed unknown func_id to test chain extension: {}", func_id);
+                Err(DispatchError::Other("unknown chain_extension func_id"))
             }
         }
     }
