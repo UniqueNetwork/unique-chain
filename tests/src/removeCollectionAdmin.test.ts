@@ -26,7 +26,6 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
       await submitTransactionAsync(Alice, addAdminTx);
 
       const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId)).toJSON();
-      console.log(adminListAfterAddAdmin);
       expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(Bob.address));
 
       // then remove bob from admins of collection
