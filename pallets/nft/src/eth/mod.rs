@@ -60,7 +60,7 @@ fn result_to_output(result: Result<AbiWriter, Option<&'static str>>, logs: Vec<P
 
 fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, method_id: u32, mut input: AbiReader) -> Result<AbiWriter, Option<&'static str>> {
 	let erc20 = matches!(collection.mode, CollectionMode::Fungible(_));
-	let erc721 = matches!(collection.mode, CollectionMode::ReFungible);
+	let erc721 = matches!(collection.mode, CollectionMode::NFT);
 
 	Ok(match method_id {
 		// function name() external view returns (string memory)
@@ -90,7 +90,7 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 			}			
 		}
 		// function totalSupply() external view returns (uint256)
-		0x18160ddd if erc20 => {
+		0x18160ddd if erc20 || erc721 => {
 			// TODO: can't be implemented, as we don't track total amount of fungibles
 			crate::abi_encode!(uint256(0))
 		}
