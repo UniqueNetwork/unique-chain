@@ -263,14 +263,20 @@ pub const TRANSFER_NFT_TOPIC: H256 = H256(hex_literal::hex!("ddf252ad1be2c89b69c
 pub const APPROVAL_NFT_TOPIC: H256 = H256(hex_literal::hex!("8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"));
 // TODO: event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
-/// event Transfer(address indexed from, address indexed to, uint256 indexed amount);
+/// event Transfer(address indexed from, address indexed to, uint256 amount);
 pub const TRANSFER_FUNGIBLE_TOPIC: H256 = H256(hex_literal::hex!("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"));
-/// event Approval(address indexed owner, address indexed approved, uint256 indexed amount);
+/// event Approval(address indexed owner, address indexed approved, uint256 amount);
 pub const APPROVAL_FUNGIBLE_TOPIC: H256 = H256(hex_literal::hex!("8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"));
 
 pub fn address_to_topic(address: &H160) -> H256 {
 	let mut output = [0; 32];
 	output[12..32].copy_from_slice(&address.0);
+	H256(output)
+}
+
+pub fn u32_to_topic(id: u32) -> H256 {
+	let mut output = [0; 32];
+	output[28..32].copy_from_slice(&id.to_be_bytes());
 	H256(output)
 }
 
