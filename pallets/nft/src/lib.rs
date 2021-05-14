@@ -1762,8 +1762,9 @@ impl<T: Config> Module<T> {
 					eth::APPROVAL_NFT_TOPIC,
 					eth::address_to_topic(sender.as_eth()),
 					eth::address_to_topic(spender.as_eth()),
+                    eth::u32_to_topic(item_id),
 				]),
-				abi_encode!(uint256(item_id.into())),
+				abi_encode!(),
 			);
 		}
 
@@ -2118,8 +2119,9 @@ impl<T: Config> Module<T> {
                 eth::TRANSFER_NFT_TOPIC,
                 eth::address_to_topic(&H160::default()),
                 eth::address_to_topic(item_owner.as_eth()),
+                eth::u32_to_topic(current_index),
             ]),
-            abi_encode!(uint256(current_index.into())),
+            abi_encode!(),
         );
         Self::deposit_event(RawEvent::ItemCreated(collection_id, current_index, item_owner));
         Ok(())
@@ -2478,8 +2480,9 @@ impl<T: Config> Module<T> {
                 eth::TRANSFER_NFT_TOPIC,
                 eth::address_to_topic(sender.as_eth()),
                 eth::address_to_topic(new_owner.as_eth()),
+                eth::u32_to_topic(item_id),
             ]),
-            abi_encode!(uint256(item_id.into())),
+            abi_encode!(),
         );
         Self::deposit_event(RawEvent::Transfer(collection.id, item_id, sender, new_owner, 1));
 
