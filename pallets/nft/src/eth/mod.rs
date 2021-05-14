@@ -125,6 +125,23 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 			).map_err(|_| "transfer error")?;
 
 			crate::abi_encode!(bool(true))
+		}		
+		// function transfer(address recipient, uint256 token) external returns (bool) {
+		0xa9059cbb if erc721 => {
+			crate::abi_decode!(input, recipient: address, token_id: uint256);
+			let sender = T::CrossAccountId::from_eth(sender);
+			let recipient = T::CrossAccountId::from_eth(recipient);
+			let token_id: u32 = token_id.try_into().map_err(|_| "bad token id")?;
+
+			<Module<T>>::transfer_internal(
+				&sender,
+				&recipient,
+				&collection,
+				token_id,
+				1,
+			).map_err(|_| "transfer error")?;
+
+			crate::abi_encode!(bool(true))
 		}
 		// function allowance(address owner, address spender) external view returns (uint256)
 		0xdd62ed3e if erc20 => {
