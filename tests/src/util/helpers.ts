@@ -4,10 +4,10 @@
 //
 
 import { ApiPromise, Keyring } from '@polkadot/api';
-import { Enum, Struct } from '@polkadot/types/codec';
 import type { AccountId, EventRecord } from '@polkadot/types/interfaces';
 import { u128 } from '@polkadot/types/primitive';
 import { IKeyringPair } from '@polkadot/types/types';
+import { evmToAddress } from '@polkadot/util-crypto';
 import { BigNumber } from 'bignumber.js';
 import BN from 'bn.js';
 import chai from 'chai';
@@ -21,15 +21,29 @@ import { hexToStr, strToUTF16, utf16ToStr } from './util';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-export type CrossAccountId = string | {
+export type CrossAccountId = {
   substrate: string,
 } | {
   ethereum: string,
 };
-export function normalizeAccountId(input: CrossAccountId): CrossAccountId {
+export function normalizeAccountId(input: string | CrossAccountId | IKeyringPair): CrossAccountId {
   if (typeof input === 'string')
     return { substrate: input };
+  if ('address' in input) {
+    return { substrate: input.address };
+  }
+  if ('ethereum' in input) {
+    input.ethereum = input.ethereum.toLowerCase();
+  }
   return input;
+}
+export function toSubstrateAddress(input: CrossAccountId): string {
+  input = normalizeAccountId(input);
+  if ('substrate' in input) {
+    return input.substrate;
+  } else {
+    return evmToAddress(input.ethereum);
+  }
 }
 
 export const U128_MAX = (1n << 128n) - 1n;
@@ -643,17 +657,18 @@ export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: n
 
 export async function
   approveExpectSuccess(collectionId: number,
-    tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number | bigint = 1) {
+    tokenId: number, owner: IKeyringPair, approved: IKeyringPair | CrossAccountId | string, amount: number | bigint = 1) {
   await usingApi(async (api: ApiPromise) => {
+    approved = normalizeAccountId(approved);
     const allowanceBefore =
-      await api.query.nft.allowances(collectionId, [tokenId, owner.address, approved.address]) as unknown as BN;
-    const approveNftTx = api.tx.nft.approve(normalizeAccountId(approved.address), collectionId, tokenId, amount);
+      await api.query.nft.allowances(collectionId, [tokenId, owner.address, toSubstrateAddress(approved)]) as unknown as BN;
+    const approveNftTx = api.tx.nft.approve(approved, collectionId, tokenId, amount);
     const events = await submitTransactionAsync(owner, approveNftTx);
     const result = getCreateItemResult(events);
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
     const allowanceAfter =
-      await api.query.nft.allowances(collectionId, [tokenId, owner.address, approved.address]) as unknown as BN;
+      await api.query.nft.allowances(collectionId, [tokenId, owner.address, toSubstrateAddress(approved)]) as unknown as BN;
     expect(allowanceAfter.sub(allowanceBefore).toString()).to.be.equal(amount.toString());
   });
 }
@@ -663,32 +678,33 @@ export async function
     tokenId: number,
     accountApproved: IKeyringPair,
     accountFrom: IKeyringPair,
-    accountTo: IKeyringPair,
+    accountTo: IKeyringPair | CrossAccountId,
     value: number | bigint = 1,
     type: string = 'NFT') {
   await usingApi(async (api: ApiPromise) => {
+    const to = normalizeAccountId(accountTo);
     let balanceBefore = new BN(0);
     if (type === 'Fungible') {
-      balanceBefore = await api.query.nft.balance(collectionId, accountTo.address) as unknown as BN;
+      balanceBefore = await api.query.nft.balance(collectionId, toSubstrateAddress(to)) as unknown as BN;
     }
     const transferFromTx = api.tx.nft.transferFrom(
-      normalizeAccountId(accountFrom.address), normalizeAccountId(accountTo.address), collectionId, tokenId, value);
+      normalizeAccountId(accountFrom.address), to, collectionId, tokenId, value);
     const events = await submitTransactionAsync(accountApproved, transferFromTx);
     const result = getCreateItemResult(events);
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
     if (type === 'NFT') {
       const nftItemData = (await api.query.nft.nftItemList(collectionId, tokenId) as any).toJSON() as ITokenDataType;
-      expect(nftItemData.Owner).to.be.deep.equal(normalizeAccountId(accountTo.address));
+      expect(nftItemData.Owner).to.be.deep.equal(to);
     }
     if (type === 'Fungible') {
-      const balanceAfter = (await api.query.nft.fungibleItemList(collectionId, accountTo.address) as any).Value as unknown as BN;
+      const balanceAfter = (await api.query.nft.fungibleItemList(collectionId, toSubstrateAddress(to)) as any).Value as unknown as BN;
       expect(balanceAfter.sub(balanceBefore).toString()).to.be.equal(value.toString());
     }
     if (type === 'ReFungible') {
       const nftItemData =
         (await api.query.nft.reFungibleItemList(collectionId, tokenId) as any).toJSON() as IReFungibleTokenDataType;
-      expect(nftItemData.Owner[0].Owner).to.be.deep.equal(normalizeAccountId(accountTo.address));
+      expect(nftItemData.Owner[0].Owner).to.be.deep.equal(normalizeAccountId(to));
       expect(nftItemData.Owner[0].Fraction).to.be.equal(value);
     }
   });
@@ -715,15 +731,17 @@ export async function
   transferExpectSuccess(collectionId: number,
     tokenId: number,
     sender: IKeyringPair,
-    recipient: IKeyringPair,
+    recipient: IKeyringPair | CrossAccountId,
     value: number | bigint = 1,
     type: string = 'NFT') {
   await usingApi(async (api: ApiPromise) => {
+    const to = normalizeAccountId(recipient);
+
     let balanceBefore = new BN(0);
     if (type === 'Fungible') {
-      balanceBefore = await api.query.nft.balance(collectionId, recipient.address) as unknown as BN;
+      balanceBefore = await api.query.nft.balance(collectionId, toSubstrateAddress(to)) as unknown as BN;
     }
-    const transferTx = api.tx.nft.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value);
+    const transferTx = api.tx.nft.transfer(to, collectionId, tokenId, value);
     const events = await submitTransactionAsync(sender, transferTx);
     const result = getTransferResult(events);
     // tslint:disable-next-line:no-unused-expression
@@ -731,20 +749,20 @@ export async function
     expect(result.collectionId).to.be.equal(collectionId);
     expect(result.itemId).to.be.equal(tokenId);
     expect(result.sender).to.be.deep.equal(normalizeAccountId(sender.address));
-    expect(result.recipient).to.be.deep.equal(normalizeAccountId(recipient.address));
+    expect(result.recipient).to.be.deep.equal(to);
     expect(result.value.toString()).to.be.equal(value.toString());
     if (type === 'NFT') {
       const nftItemData = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON() as unknown as ITokenDataType;
-      expect(nftItemData.Owner).to.be.deep.equal(normalizeAccountId(recipient.address));
+      expect(nftItemData.Owner).to.be.deep.equal(to);
     }
     if (type === 'Fungible') {
-      const balanceAfter = (await api.query.nft.fungibleItemList(collectionId, recipient.address) as any).Value as unknown as BN;
+      const balanceAfter = (await api.query.nft.fungibleItemList(collectionId, toSubstrateAddress(to)) as any).Value as unknown as BN;
       expect(balanceAfter.sub(balanceBefore).toString()).to.be.equal(value.toString());
     }
     if (type === 'ReFungible') {
       const nftItemData =
         (await api.query.nft.reFungibleItemList(collectionId, tokenId)).toJSON() as unknown as IReFungibleTokenDataType;
-      expect(nftItemData.Owner[0].Owner).to.be.deep.equal(normalizeAccountId(recipient.address));
+      expect(nftItemData.Owner[0].Owner).to.be.deep.equal(to);
       expect(nftItemData.Owner[0].Fraction.toString()).to.be.equal(value.toString());
     }
   });
@@ -794,7 +812,7 @@ export async function createFungibleItemExpectSuccess(
   sender: IKeyringPair,
   collectionId: number,
   data: CreateFungibleData,
-  owner: CrossAccountId = sender.address,
+  owner: CrossAccountId | string = sender.address,
 ) {
   return await usingApi(async (api) => {
     const tx = api.tx.nft.createItem(collectionId, normalizeAccountId(owner), { Fungible: data });
@@ -808,29 +826,30 @@ export async function createFungibleItemExpectSuccess(
 }
 
 export async function createItemExpectSuccess(
-  sender: IKeyringPair, collectionId: number, createMode: string, owner: string = sender.address) {
+  sender: IKeyringPair, collectionId: number, createMode: string, owner: CrossAccountId | string = sender.address) {
   let newItemId: number = 0;
   await usingApi(async (api) => {
+    const to = normalizeAccountId(owner);
     const AItemCount = parseInt((await api.query.nft.itemListIndex(collectionId)).toString(), 10);
-    const Aitem: any = (await api.query.nft.fungibleItemList(collectionId, owner)).toJSON();
+    const Aitem: any = (await api.query.nft.fungibleItemList(collectionId, toSubstrateAddress(to))).toJSON();
     const AItemBalance = new BigNumber(Aitem.Value);
 
     let tx;
     if (createMode === 'Fungible') {
       const createData = { fungible: { value: 10 } };
-      tx = api.tx.nft.createItem(collectionId, normalizeAccountId(owner), createData);
+      tx = api.tx.nft.createItem(collectionId, to, createData);
     } else if (createMode === 'ReFungible') {
       const createData = { refungible: { const_data: [], variable_data: [], pieces: 100 } };
-      tx = api.tx.nft.createItem(collectionId, normalizeAccountId(owner), createData);
+      tx = api.tx.nft.createItem(collectionId, to, createData);
     } else {
-      tx = api.tx.nft.createItem(collectionId, normalizeAccountId(owner), createMode);
+      tx = api.tx.nft.createItem(collectionId, to, createMode);
     }
 
     const events = await submitTransactionAsync(sender, tx);
     const result = getCreateItemResult(events);
 
     const BItemCount = parseInt((await api.query.nft.itemListIndex(collectionId)).toString(), 10);
-    const Bitem: any = (await api.query.nft.fungibleItemList(collectionId, owner)).toJSON();
+    const Bitem: any = (await api.query.nft.fungibleItemList(collectionId, toSubstrateAddress(to))).toJSON();
     const BItemBalance = new BigNumber(Bitem.Value);
 
     // What to expect
@@ -843,7 +862,7 @@ export async function createItemExpectSuccess(
     }
     expect(collectionId).to.be.equal(result.collectionId);
     expect(BItemCount.toString()).to.be.equal(result.itemId.toString());
-    expect(normalizeAccountId(owner)).to.be.deep.equal(result.recipient);
+    expect(to).to.be.deep.equal(result.recipient);
     newItemId = result.itemId;
   });
   return newItemId;
