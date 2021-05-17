@@ -194,6 +194,7 @@ pub fn create_full<C, P, BE>(
 		NetApiServer::to_delegate(NetApi::new(
 			client.clone(),
 			network.clone(),
+			true,
 		))
 	);
 

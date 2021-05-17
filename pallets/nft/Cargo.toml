@@ -23,13 +23,13 @@ serde = { version = "1.0.119" }
 frame-support = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 frame-system = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-balances = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-pallet-evm = { default-features = false, version = "3.0.0", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
+pallet-evm = { default-features = false, version = "3.0.1-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
 pallet-ethereum = { default-features = false, version = "1.0.1-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
 pallet-timestamp = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-randomness-collective-flip = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sp-std = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 frame-benchmarking = { default-features = false, version = '3.0.0', optional = true, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-fp-evm = { default-features = false, version = '1.0.0', git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
+fp-evm = { default-features = false, version = '1.0.1-dev', git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
 sp-core = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sp-io = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sp-api = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }

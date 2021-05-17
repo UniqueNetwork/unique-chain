@@ -40,7 +40,7 @@ pallet-balances = { default-features = false, version = '3.0.0', git = "https://
 pallet-contracts = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-contracts-primitives = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-contracts-rpc-runtime-api = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-pallet-evm = { default-features = false, version = "3.0.0", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
+pallet-evm = { default-features = false, version = "3.0.1-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
 pallet-ethereum = { default-features = false, version = "1.0.1-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
 pallet-grandpa = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-randomness-collective-flip = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
@@ -50,7 +50,7 @@ pallet-transaction-payment = { default-features = false, version = '3.0.0', git 
 pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-treasury = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-vesting = {  default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
-fp-rpc = { default-features = false, version = "1.0.0", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
+fp-rpc = { default-features = false, version = "1.0.1-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions" }
 sp-arithmetic = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sp-api = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 sp-block-builder = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
