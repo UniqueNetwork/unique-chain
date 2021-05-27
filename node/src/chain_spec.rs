@@ -3,19 +3,14 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-// use nft_runtime::{
-//     AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-//     SystemConfig, WASM_BINARY,
-// };
-// use nft_runtime::{ContractsConfig, ContractsSchedule, NftConfig, CollectionType};
 use nft_runtime::*;
+use nft_data_structs::*;
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use serde_json::map::Map;
-// use crate::chain_spec::api::chain_extension::*;
 
 // Note this is the URL for the telemetry server
 //const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -158,7 +153,7 @@ fn testnet_genesis(
             balances: endowed_accounts
                 .iter()
                 .cloned()
-                .map(|k| (k, 1 << 100))
+                .map(|k| (k, 1 << 70))
                 .collect(),
         }),
         pallet_aura: Some(AuraConfig {

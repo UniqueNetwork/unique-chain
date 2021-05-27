@@ -28,6 +28,7 @@ jsonrpc-core = '15.0.0'
 
 # Substrate dependencies
 nft-runtime = { path = '../runtime', version = '3.0.0' }
+nft-data-structs = { default-features = false, path="../primitives" }
 frame-benchmarking = '3.0.0'
 frame-benchmarking-cli = '3.0.0'
 pallet-transaction-payment-rpc = '3.0.0'

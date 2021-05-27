@@ -26,7 +26,11 @@ serde = { features = ['derive'], optional = true, version = '1.0.119' }
 
 # local dependencies
 pallet-nft = { path = '../pallets/nft', default-features = false, version = '3.0.0' }
+nft-data-structs = { path = '../primitives', default-features = false }
 pallet-inflation = { path = '../pallets/inflation', default-features = false, version = '3.0.0' }
+pallet-scheduler = { path = '../pallets/scheduler', default-features = false, version = '3.0.0' }
+pallet-nft-transaction-payment = { path = '../pallets/nft-transaction-payment', default-features = false, version = '3.0.0' }
+pallet-nft-charge-transaction = { path = '../pallets/nft-charge-transaction', default-features = false, version = '3.0.0' }
 
 # Substrate dependencies
 frame-benchmarking = { default-features = false, optional = true, version = '3.0.0' }
@@ -96,9 +100,12 @@ std = [
     'pallet-transaction-payment-rpc-runtime-api/std',
     'pallet-treasury/std',
     'pallet-vesting/std',
-
     'pallet-inflation/std',
     'pallet-nft/std',
+    'pallet-scheduler/std',
+    'pallet-nft-charge-transaction/std',
+    'pallet-nft-transaction-payment/std', 
+    'nft-data-structs/std',
     'sp-api/std',
     'sp-block-builder/std',
     'sp-consensus-aura/std',

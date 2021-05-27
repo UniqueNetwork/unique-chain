@@ -24,7 +24,7 @@ use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     traits::{
         Convert, ConvertInto, BlakeTwo256, Block as BlockT, IdentifyAccount, 
-        IdentityLookup, NumberFor, Verify, AccountIdConversion,
+		IdentityLookup, NumberFor, Verify, AccountIdConversion,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, MultiSignature,
@@ -51,16 +51,27 @@ pub use frame_support::{
         WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients
     },
 };
+use pallet_nft_transaction_payment::*;
+use pallet_nft_charge_transaction::*;
+use nft_data_structs::*;
 use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
 use frame_system::{
     self as system,
-    EnsureRoot, 
+    EnsureRoot, EnsureSigned,
 	limits::{BlockWeights, BlockLength},
 };
 use sp_std::{prelude::*, marker::PhantomData};
 use sp_arithmetic::{traits::{BaseArithmetic, Unsigned}};
 use smallvec::smallvec;
+
+use sp_runtime::{
+	traits::{ 
+		Dispatchable,
+	},
+};
+use pallet_contracts::chain_extension::UncheckedFrom;
+
 
 pub use pallet_timestamp::Call as TimestampCall;
 
@@ -175,43 +186,6 @@ pub fn native_version() -> NativeVersion {
     }
 }
 
-/// Provides a membership set with only the configured aura users
-pub struct ValiudatorsOnly<Runtime: pallet_aura::Config>(PhantomData<Runtime>);
-impl frame_support::traits::Contains<AccountId> for ValiudatorsOnly<Runtime> {
-	fn contains(t: &AccountId) -> bool {
-        let arr: [u8; 32] = *t.as_ref();
-        let raw_key: Vec<u8> = Vec::from(arr);
-
-        match pallet_aura::Module::<Runtime>::authorities().iter().find(|auth| auth.to_raw_vec() == raw_key) {
-            Some(_) => true,
-            None => false,
-        }  
-	}
-	fn sorted_members() -> Vec<AccountId> {
-        let mut members: Vec<AccountId> = Vec::new();
-        for auth in pallet_aura::Module::<Runtime>::authorities() {
-            let mut arr: [u8; 32] = Default::default(); 
-            let bor_arr = auth.clone().to_raw_vec();
-            let slice = bor_arr.as_slice();
-            arr.copy_from_slice(slice);
-            members.push(AccountId::from(arr));
-        }
-        members  
-	}
-	fn count() -> usize {
-        pallet_aura::Module::<Runtime>::authorities().len()
-	}
-}
-
-impl frame_support::traits::ContainsLengthBound for ValiudatorsOnly<Runtime> {
-	fn min_len() -> usize {
-		1
-	}
-	fn max_len() -> usize {
-		100
-	}
-}
-
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 pub struct DealWithFees;
@@ -229,21 +203,6 @@ impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 		}
 	}
 }
-
-// impl OnUnbalanced<NegativeImbalance> for DealWithFees {
-// 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item=NegativeImbalance>) {
-// 		if let Some(fees) = fees_then_tips.next() {
-// 			// for fees, 100% to treasury
-// 			let mut split = fees.ration(100, 0);
-// 			if let Some(tips) = fees_then_tips.next() {
-// 				// for tips, if any, 100% to treasury
-// 				tips.ration_merge_into(100, 0, &mut split);
-// 			}
-// 			Treasury::on_unbalanced(split.0);
-// 			// Author::on_unbalanced(split.1);
-// 		}
-// 	}
-// }
 
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.
@@ -549,6 +508,46 @@ impl pallet_inflation::Config for Runtime {
 	type InflationBlockInterval = InflationBlockInterval;
 }
 
+
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(50) *
+		RuntimeBlockWeights::get().max_block;
+	pub const MaxScheduledPerBlock: u32 = 50;
+}
+
+pub struct Sponsoring;
+impl SponsoringResolve<AccountId, Call> for Sponsoring {
+
+	fn resolve(who: &AccountId, call: &Call) -> Option<AccountId> 
+	where 
+		Call: Dispatchable<Info=DispatchInfo>,
+		Call: IsSubType<pallet_nft::Call<Runtime>>, 
+		Call: IsSubType<pallet_contracts::Call<Runtime>>,
+		AccountId: AsRef<[u8]>,
+		AccountId: UncheckedFrom<Hash>
+	{
+		pallet_nft_transaction_payment::Module::<Runtime>::withdraw_type(who, call)
+	}
+}
+
+impl pallet_scheduler::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type PalletsOrigin = OriginCaller;
+	type Call = Call;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureSigned<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type Sponsoring = Sponsoring;
+	type WeightInfo = ();
+}
+
+impl pallet_nft_transaction_payment::Config for Runtime {
+}
+
+impl pallet_nft_charge_transaction::Config for Runtime {
+}
+
 construct_runtime!(
     pub enum Runtime where
         Block = Block,
@@ -564,10 +563,13 @@ construct_runtime!(
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        Inflation: pallet_inflation::{Module, Call, Storage},
+		Inflation: pallet_inflation::{Module, Call, Storage},
+		Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>},
         Nft: pallet_nft::{Module, Call, Config<T>, Storage, Event<T>},
         Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
-        Vesting: pallet_vesting::{Module, Call, Config<T>, Storage, Event<T>},
+		Vesting: pallet_vesting::{Module, Call, Config<T>, Storage, Event<T>},
+		NftPayment: pallet_nft_transaction_payment::{Module, Call, Storage},
+		Charging: pallet_nft_charge_transaction::{Module, Call, Storage },
     }
 );
 
@@ -589,7 +591,7 @@ pub type SignedExtra = (
     system::CheckEra<Runtime>,
     system::CheckNonce<Runtime>,
     system::CheckWeight<Runtime>,
-    pallet_nft::ChargeTransactionPayment<Runtime>,
+    pallet_nft_charge_transaction::ChargeTransactionPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;

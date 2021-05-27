@@ -3556,6 +3556,7 @@ dependencies = [
  "futures 0.3.12",
  "jsonrpc-core",
  "log",
+ "nft-data-structs",
  "nft-runtime",
  "pallet-contracts-rpc",
  "pallet-transaction-payment-rpc",
@@ -3592,6 +3593,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "nft-data-structs"
+version = "0.9.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-contracts",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-runtime",
+]
+
+[[package]]
 name = "nft-runtime"
 version = "3.0.0"
 dependencies = [
@@ -3602,6 +3616,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "nft-data-structs",
  "pallet-aura",
  "pallet-balances",
  "pallet-contracts",
@@ -3610,7 +3625,10 @@ dependencies = [
  "pallet-grandpa",
  "pallet-inflation",
  "pallet-nft",
+ "pallet-nft-charge-transaction",
+ "pallet-nft-transaction-payment",
  "pallet-randomness-collective-flip",
+ "pallet-scheduler",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -3947,8 +3965,54 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "nft-data-structs",
  "pallet-balances",
  "pallet-contracts",
+ "pallet-randomness-collective-flip",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-nft-charge-transaction"
+version = "3.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "nft-data-structs",
+ "pallet-balances",
+ "pallet-contracts",
+ "pallet-nft",
+ "pallet-nft-transaction-payment",
+ "pallet-randomness-collective-flip",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-nft-transaction-payment"
+version = "3.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "nft-data-structs",
+ "pallet-balances",
+ "pallet-contracts",
+ "pallet-nft",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -3972,6 +4036,27 @@ dependencies = [
  "safe-mix",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-scheduler"
+version = "3.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "nft-data-structs",
+ "pallet-contracts",
+ "pallet-nft",
+ "pallet-nft-transaction-payment",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "substrate-test-utils",
 ]
 
 [[package]]
@@ -7316,6 +7401,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "substrate-test-utils"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f46809281d923956cdfdb2f95e07fa2437884f2a18096c4371a3fa48f8d082a"
+dependencies = [
+ "futures 0.3.12",
+ "substrate-test-utils-derive",
+ "tokio 0.2.25",
+]
+
+[[package]]
+name = "substrate-test-utils-derive"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "988016ca49cfc763fecf97dfa9dee7dbbff1a2145b003d07681278dddefd1a0e"
+dependencies = [
+ "proc-macro-crate",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "substrate-wasm-builder"
 version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7550,6 +7657,7 @@ dependencies = [
  "pin-project-lite 0.1.11",
  "signal-hook-registry",
  "slab",
+ "tokio-macros",
  "winapi 0.3.9",
 ]
 
@@ -7615,6 +7723,17 @@ dependencies = [
  "bytes 0.4.12",
  "futures 0.1.30",
  "log",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e44da00bfc73a25f814cd8d7e57a68a5c31b74b3152a0a1d1f590c97ed06265a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

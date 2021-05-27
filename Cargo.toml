@@ -2,6 +2,8 @@
 members = [
     'node',
     'pallets/nft',
+    'pallets/nft-transaction-payment',
+    'primitives',
     'runtime',
 ]
 [profile.release]
