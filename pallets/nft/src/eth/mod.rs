@@ -64,45 +64,45 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 
 	Ok(match method_id {
 		// function name() external view returns (string memory)
-		0x06fdde03 => {
+		fn_selector!(name()) => {
 			let name = collection.name.iter()
 				.map(|&e| e.try_into().ok() as Option<u8>)
 				.collect::<Option<Vec<u8>>>()
 				.ok_or(Some("non-ascii name"))?;
-			
+
 			crate::abi_encode!(memory(&name))
 		}
 		// function symbol() external view returns (string memory)
-		0x95d89b41 => {
+		fn_selector!(symbol()) => {
 			let name = collection.token_prefix.iter()
 				.map(|&e| e.is_ascii_uppercase().then(|| e))
 				.collect::<Option<Vec<u8>>>()
 				.ok_or(Some("non-uppercase prefix"))?;
-			
+
 			crate::abi_encode!(memory(&name))
 		}
 		// function decimals() external view returns (uint8 decimals)
-		0x313ce567 if erc20 => {
+		fn_selector!(decimals()) if erc20 => {
 			if let CollectionMode::Fungible(decimals) = &collection.mode {
 				crate::abi_encode!(uint8(*decimals))
 			} else {
 				unreachable!()
-			}			
+			}
 		}
 		// function totalSupply() external view returns (uint256)
-		0x18160ddd if erc20 || erc721 => {
+		fn_selector!(totalSupply()) if erc20 || erc721 => {
 			// TODO: can't be implemented, as we don't track total amount of fungibles
 			crate::abi_encode!(uint256(0))
 		}
 		// function balanceOf(address account) external view returns (uint256)
-		0x70a08231 if erc20 || erc721 => {
+		fn_selector!(balanceOf(address)) if erc20 || erc721 => {
 			crate::abi_decode!(input, account: address);
 			let account = T::EvmAddressMapping::into_account_id(account);
 			let balance = <Balance<T>>::get(collection.id, account);
 			crate::abi_encode!(uint256(balance))
 		}
 		// function ownerOf(uint256 tokenId) external view returns (address)
-		0x6352211e if erc721 => {
+		fn_selector!(ownerOf(uint256)) if erc721 => {
 			crate::abi_decode!(input, token_id: uint256);
 			let token_id: u32 = token_id.try_into().map_err(|_| "bad token id")?;
 
@@ -111,7 +111,7 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 			crate::abi_encode!(address(token.owner.as_eth().clone()))
 		}
 		// function transfer(address recipient, uint256 amount) external returns (bool) {
-		0xa9059cbb if erc20 => {
+		fn_selector!(transfer(address, uint256)) if erc20 => {
 			crate::abi_decode!(input, recipient: address, amount: uint256);
 			let sender = T::CrossAccountId::from_eth(sender);
 			let recipient = T::CrossAccountId::from_eth(recipient);
@@ -125,9 +125,9 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 			).map_err(|_| "transfer error")?;
 
 			crate::abi_encode!(bool(true))
-		}		
-		// function transfer(address recipient, uint256 token) external returns (bool) {
-		0xa9059cbb if erc721 => {
+		}
+
+		fn_selector!(transfer(address, uint256)) if erc721 => {
 			crate::abi_decode!(input, recipient: address, token_id: uint256);
 			let sender = T::CrossAccountId::from_eth(sender);
 			let recipient = T::CrossAccountId::from_eth(recipient);
@@ -143,8 +143,9 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 
 			crate::abi_encode!(bool(true))
 		}
+
 		// function allowance(address owner, address spender) external view returns (uint256)
-		0xdd62ed3e if erc20 => {
+		fn_selector!(allowance(address, address)) if erc20 => {
 			crate::abi_decode!(input, owner: address, spender: address);
 			let owner = T::EvmAddressMapping::into_account_id(owner);
 			let spender = T::EvmAddressMapping::into_account_id(spender);
@@ -154,7 +155,7 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 		// function approve(address spender, uint256 amount) external returns (bool)
 		// FIXME: All current implementations resets amount to specified value, ours - adds it
 		// FIXME: Our implementation doesn't handle resets (approve with zero amount)
-		0x095ea7b3 if erc20 => {
+		fn_selector!(approve(address, uint256)) if erc20 => {
 			crate::abi_decode!(input, spender: address, amount: uint256);
 			let sender = T::CrossAccountId::from_eth(sender);
 			let spender = T::CrossAccountId::from_eth(spender);
@@ -170,7 +171,7 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 			crate::abi_encode!(bool(true))
 		}
 		// function approve(address approved, uint256 tokenId) external payable
-		0x095ea7b3 if erc721 => {
+		fn_selector!(approve(address, uint256)) if erc721 => {
 			crate::abi_decode!(input, approved: address, token_id: uint256);
 			let sender = T::CrossAccountId::from_eth(sender);
 			let approved = T::CrossAccountId::from_eth(approved);
@@ -186,7 +187,7 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 			crate::abi_encode!()
 		}
 		// function transferFrom(address sender, address recipient, uint256 amount) external returns (bool)
-		0x23b872dd if erc20 => {
+		fn_selector!(transferFrom(address, address, uint256)) if erc20 => {
 			crate::abi_decode!(input, from: address, recipient: address, amount: uint256);
 			let sender = T::CrossAccountId::from_eth(sender);
 			let from = T::CrossAccountId::from_eth(from);
@@ -204,7 +205,7 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 			crate::abi_encode!(bool(true))
 		}
 		// function transferFrom(address from, address to, uint256 tokenId) external payable
-		0x23b872dd if erc721 => {
+		fn_selector!(transferFrom(address, address, uint256)) if erc721 => {
 			crate::abi_decode!(input, from: address, recipient: address, token_id: uint256);
 			let sender = T::CrossAccountId::from_eth(sender);
 			let from = T::CrossAccountId::from_eth(from);
@@ -223,7 +224,7 @@ fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, meth
 			crate::abi_encode!()
 		}
 		// function supportsInterface(bytes4 interfaceID) public pure returns (bool)
-		0x01ffc9a7 => {
+		fn_selector!(supportsInterface(bytes4)) => {
 			crate::abi_decode!(input, interface_id: uint32);
 			let supports = match interface_id {
 				// ERC165
@@ -274,16 +275,12 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 	}
 }
 
-/// event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-pub const TRANSFER_NFT_TOPIC: H256 = H256(hex_literal::hex!("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"));
-/// event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
-pub const APPROVAL_NFT_TOPIC: H256 = H256(hex_literal::hex!("8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"));
+pub const TRANSFER_NFT_TOPIC: H256 = event_topic!(Transfer(address, address, uint256));
+pub const APPROVAL_NFT_TOPIC: H256 = event_topic!(Approval(address, address, uint256));
 // TODO: event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
-/// event Transfer(address indexed from, address indexed to, uint256 amount);
-pub const TRANSFER_FUNGIBLE_TOPIC: H256 = H256(hex_literal::hex!("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"));
-/// event Approval(address indexed owner, address indexed approved, uint256 amount);
-pub const APPROVAL_FUNGIBLE_TOPIC: H256 = H256(hex_literal::hex!("8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"));
+pub const TRANSFER_FUNGIBLE_TOPIC: H256 = event_topic!(Transfer(address, address, uint256));
+pub const APPROVAL_FUNGIBLE_TOPIC: H256 = event_topic!(Approval(address, address, uint256));
 
 pub fn address_to_topic(address: &H160) -> H256 {
 	let mut output = [0; 32];
