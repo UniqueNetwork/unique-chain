@@ -29,7 +29,7 @@ const accountTokenOwnershipLimit = 0;
 const sponsoredDataSize = 0;
 const sponsoredMintSize = 0;
 const sponsorTimeout = 1;
-const tokenLimit = 1;
+const tokenLimit = 10;
 
 describe('setCollectionLimits positive', () => {
   let tx;
@@ -69,6 +69,45 @@ describe('setCollectionLimits positive', () => {
       expect(collectionInfo.Limits.OwnerCanDestroy).to.be.true;
     });
   });
+
+  it('Set the same token limit twice', async () => {
+    await usingApi(async (api: ApiPromise) => {
+
+      let collectionLimits = {
+        AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
+        SponsoredMintSize: sponsoredDataSize,
+        TokenLimit: tokenLimit,
+        SponsorTimeout: sponsorTimeout,
+        OwnerCanTransfer: true,
+        OwnerCanDestroy: true
+      };
+
+      // The first time
+      const tx1 = api.tx.nft.setCollectionLimits(
+        collectionIdForTesting,
+        collectionLimits,
+      );
+      const events1 = await submitTransactionAsync(alice, tx1);
+      const result1 = getCreateItemResult(events1);
+      const collectionInfo1 = await getDetailedCollectionInfo(api, collectionIdForTesting) as ICollectionInterface;
+
+      // The second time
+      const tx2 = api.tx.nft.setCollectionLimits(
+        collectionIdForTesting,
+        collectionLimits,
+      );
+      const events2 = await submitTransactionAsync(alice, tx2);
+      const result2 = getCreateItemResult(events2);
+      const collectionInfo2 = await getDetailedCollectionInfo(api, collectionIdForTesting) as ICollectionInterface;
+
+      // tslint:disable-next-line:no-unused-expression
+      expect(result1.success).to.be.true;
+      expect(collectionInfo1.Limits.TokenLimit).to.be.equal(tokenLimit);
+      expect(result2.success).to.be.true;
+      expect(collectionInfo2.Limits.TokenLimit).to.be.equal(tokenLimit);
+    });
+  });
+
 });
 
 describe('setCollectionLimits negative', () => {
@@ -165,4 +204,27 @@ describe('setCollectionLimits negative', () => {
       OwnerCanDestroy: true
     });
   });
+
+  it('Setting the higher token limit fails', async () => {
+    await usingApi(async (api: ApiPromise) => {
+
+      const collectionId = await createCollectionExpectSuccess();
+      let collectionLimits = {
+        AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
+        SponsoredMintSize: sponsoredDataSize,
+        TokenLimit: tokenLimit,
+        SponsorTimeout: sponsorTimeout,
+        OwnerCanTransfer: true,
+        OwnerCanDestroy: true
+      };
+
+      // The first time
+      await setCollectionLimitsExpectSuccess(alice, collectionId, collectionLimits);
+
+      // The second time - higher token limit
+      collectionLimits.TokenLimit += 1;
+      await setCollectionLimitsExpectFailure(alice, collectionId, collectionLimits);
+    });
+  });
+
 });
