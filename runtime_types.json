@@ -45,7 +45,7 @@
       }
     },
     "Collection": {
-      "Owner": "CrossAccountId",
+      "Owner": "AccountId",
       "Mode": "CollectionMode",
       "Access": "AccessMode",
       "DecimalPoints": "DecimalPoints",

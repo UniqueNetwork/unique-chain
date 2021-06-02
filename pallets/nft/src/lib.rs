@@ -167,7 +167,7 @@ impl<T> Default for SponsorshipState<T> {
 #[derive(Encode, Decode, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Collection<T: Config> {
-    pub owner: T::CrossAccountId,
+    pub owner: T::AccountId,
     pub mode: CollectionMode,
     pub access: AccessMode,
     pub decimal_points: DecimalPoints,
@@ -638,6 +638,7 @@ decl_storage! {
 decl_event!(
     pub enum Event<T>
     where
+        AccountId = <T as frame_system::Config>::AccountId,
         CrossAccountId = <T as Config>::CrossAccountId,
     {
         /// New collection was created
@@ -649,7 +650,7 @@ decl_event!(
         /// * mode: [CollectionMode] converted into u8.
         /// 
         /// * account_id: Collection owner.
-        CollectionCreated(CollectionId, u8, CrossAccountId),
+        CollectionCreated(CollectionId, u8, AccountId),
 
         /// New item was created.
         /// 
@@ -734,7 +735,7 @@ decl_module! {
                                  mode: CollectionMode) -> DispatchResult {
 
             // Anyone can create a collection
-            let who = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+            let who = ensure_signed(origin)?;
 
             // Take a (non-refundable) deposit of collection creation
             let mut imbalance = <<<T as Config>::Currency as Currency<T::AccountId>>::PositiveImbalance>::zero();
@@ -743,7 +744,7 @@ decl_module! {
                 T::CollectionCreationPrice::get(),
             ));
             <T as Config>::Currency::settle(
-                who.as_sub(),
+                &who,
                 imbalance,
                 WithdrawReasons::TRANSFER,
                 ExistenceRequirement::KeepAlive,
@@ -820,7 +821,7 @@ decl_module! {
         #[transactional]
         pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
 
-            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+            let sender = ensure_signed(origin)?;
             let collection = Self::get_collection(collection_id)?;
             Self::check_owner_permissions(&collection, &sender)?;
             if !collection.limits.owner_can_destroy {
@@ -925,7 +926,7 @@ decl_module! {
         #[transactional]
         pub fn set_public_access_mode(origin, collection_id: CollectionId, mode: AccessMode) -> DispatchResult
         {
-            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+            let sender = ensure_signed(origin)?;
 
             let mut target_collection = Self::get_collection(collection_id)?;
             Self::check_owner_permissions(&target_collection, &sender)?;
@@ -952,7 +953,7 @@ decl_module! {
         #[transactional]
         pub fn set_mint_permission(origin, collection_id: CollectionId, mint_permission: bool) -> DispatchResult
         {
-            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+            let sender = ensure_signed(origin)?;
 
             let mut target_collection = Self::get_collection(collection_id)?;
             Self::check_owner_permissions(&target_collection, &sender)?;
@@ -975,9 +976,9 @@ decl_module! {
         /// * new_owner.
         #[weight = <T as Config>::WeightInfo::change_collection_owner()]
         #[transactional]
-        pub fn change_collection_owner(origin, collection_id: CollectionId, new_owner: T::CrossAccountId) -> DispatchResult {
+        pub fn change_collection_owner(origin, collection_id: CollectionId, new_owner: T::AccountId) -> DispatchResult {
 
-            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+            let sender = ensure_signed(origin)?;
             let mut target_collection = Self::get_collection(collection_id)?;
             Self::check_owner_permissions(&target_collection, &sender)?;
             target_collection.owner = new_owner;
@@ -1061,7 +1062,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::set_collection_sponsor()]
         #[transactional]
         pub fn set_collection_sponsor(origin, collection_id: CollectionId, new_sponsor: T::AccountId) -> DispatchResult {
-            let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+            let sender = ensure_signed(origin)?;
             let mut target_collection = Self::get_collection(collection_id)?;
             Self::check_owner_permissions(&target_collection, &sender)?;
 
@@ -1110,7 +1111,7 @@ decl_module! {
             let sender = ensure_signed(origin)?;
 
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_permissions(&target_collection, &T::CrossAccountId::from_sub(sender))?;
+            Self::check_owner_permissions(&target_collection, &sender)?;
 
             target_collection.sponsorship = SponsorshipState::Disabled;
             Self::save_collection(target_collection);
@@ -1650,7 +1651,7 @@ decl_module! {
         ) -> DispatchResult {
             let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
             let mut target_collection = Self::get_collection(collection_id)?;
-            Self::check_owner_permissions(&target_collection, &sender)?;
+            Self::check_owner_permissions(&target_collection, &sender.as_sub())?;
             let old_limits = &target_collection.limits;
             let chain_limits = ChainLimit::get();
 
@@ -2239,7 +2240,7 @@ impl<T: Config> Module<T> {
         )
     }
 
-    fn check_owner_permissions(target_collection: &CollectionHandle<T>, subject: &T::CrossAccountId) -> DispatchResult {
+    fn check_owner_permissions(target_collection: &CollectionHandle<T>, subject: &T::AccountId) -> DispatchResult {
         ensure!(
             *subject == target_collection.owner,
             Error::<T>::NoPermission
@@ -2249,7 +2250,7 @@ impl<T: Config> Module<T> {
     }
 
     fn is_owner_or_admin_permissions(collection: &CollectionHandle<T>, subject: &T::CrossAccountId) -> bool {
-        *subject == collection.owner || <AdminList<T>>::get(collection.id).contains(&subject)
+        *subject.as_sub() == collection.owner || <AdminList<T>>::get(collection.id).contains(&subject)
     }
 
     fn check_owner_or_admin_permissions(

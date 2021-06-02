@@ -37,7 +37,7 @@ export function normalizeAccountId(input: string | CrossAccountId | IKeyringPair
   }
   return input;
 }
-export function toSubstrateAddress(input: CrossAccountId): string {
+export function toSubstrateAddress(input: string | CrossAccountId | IKeyringPair): string {
   input = normalizeAccountId(input);
   if ('substrate' in input) {
     return input.substrate;
@@ -273,7 +273,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     // tslint:disable-next-line:no-unused-expression
     expect(collection).to.be.not.null;
     expect(BcollectionCount).to.be.equal(AcollectionCount + 1, 'Error: NFT collection NOT created.');
-    expect(collection.Owner).to.be.deep.equal(normalizeAccountId(alicesPublicKey));
+    expect(collection.Owner).to.be.equal(toSubstrateAddress(alicesPublicKey));
     expect(utf16ToStr(collection.Name)).to.be.equal(name);
     expect(utf16ToStr(collection.Description)).to.be.equal(description);
     expect(hexToStr(collection.TokenPrefix)).to.be.equal(tokenPrefix);
