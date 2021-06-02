@@ -1,8 +1,7 @@
 #[cfg(feature = "std")]
 pub use std::*;
 
-#[cfg(feature = "std")]
-pub use serde::*;
+pub use serde::{Serealize, Deserialize};
 
 use codec::{Decode, Encode};
 

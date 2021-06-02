@@ -7,8 +7,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(feature = "std")]
-pub use serde::*;
+
+pub use serde::{Serialize, Deserialize};
 
 use core::ops::{Deref, DerefMut};
 use codec::{Decode, Encode};
@@ -71,7 +71,7 @@ pub type TokenId = u32;
 pub type DecimalPoints = u8;
 
 #[derive(Encode, Decode, Eq, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Serialize, Deserialize)]
 pub enum CollectionMode {
     Invalid,
     NFT,

@@ -10,8 +10,7 @@
 #[cfg(feature = "std")]
 pub use std::*;
 
-#[cfg(feature = "std")]
-pub use serde::*;
+pub use serde::{Serialize, Deserialize};
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;

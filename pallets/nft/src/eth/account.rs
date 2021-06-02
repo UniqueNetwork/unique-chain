@@ -2,7 +2,6 @@ use crate::Config;
 use codec::{Encode, EncodeLike, Decode};
 use sp_core::{H160, H256, crypto::AccountId32};
 use core::cmp::Ordering;
-#[cfg(feature = "std")]
 use serde::{Serialize, Deserialize};
 use pallet_evm::AddressMapping;
 use sp_std::vec::Vec;
@@ -21,7 +20,7 @@ pub trait CrossAccountId<AccountId>:
 }
 
 #[derive(Eq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Serialize, Deserialize)]
 pub struct BasicCrossAccountId<T: Config> {
     /// If true - then ethereum is canonical encoding
     from_ethereum: bool,

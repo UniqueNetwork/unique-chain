@@ -19,7 +19,7 @@ package = 'parity-scale-codec'
 version = '2.0.0'
 
 [dependencies]
-serde = { version = "1.0.119" }
+serde = { default-features = false, version = "1.0.119", features = ["derive"] }
 frame-support = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 frame-system = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 pallet-balances = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
