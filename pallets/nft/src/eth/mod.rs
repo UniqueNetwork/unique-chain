@@ -36,209 +36,63 @@ pub fn collection_id_to_address(id: u32) -> H160 {
 	H160(out)
 }
 
-fn result_to_output(result: Result<AbiWriter, Option<&'static str>>, logs: Vec<PrecompileLog>) -> PrecompileOutput {
-	sp_io::storage::start_transaction();
-	match result {
-		Ok(result) => {
-			sp_io::storage::commit_transaction();
-			// TODO: weight
-			PrecompileOutput(ExitReason::Succeed(ExitSucceed::Returned), result.finish(), 0, logs)
+fn call_internal<T: Config>(
+	collection: &mut CollectionHandle<T>,
+	caller: caller,
+	method_id: u32,
+	mut input: AbiReader,
+	value: U256,
+) -> Result<Option<AbiWriter>, evm_coder::abi::StringError> {
+	match collection.mode.clone() {
+		CollectionMode::Fungible(_) => {
+			#[cfg(feature = "std")]
+			{
+				println!("Parse fungible call {:x}", method_id);
+			}
+			let call = match UniqueFungibleCall::parse(method_id, &mut input)? {
+				Some(v) => v,
+				None => {
+					#[cfg(feature = "std")]
+					{
+						println!("Method not found");
+					}
+					return Ok(None);
+				}
+			};
+			#[cfg(feature = "std")]
+			{
+				dbg!(&call);
+			}
+			Ok(Some(<CollectionHandle<T> as UniqueFungible>::call(
+				collection,
+				Msg {
+					call,
+					caller,
+					value,
+				},
+			)?))
 		}
-		Err(Some(s)) => {
-			sp_io::storage::rollback_transaction();
-			// Error(string)
-			let mut out = AbiWriter::new_call(0x08c379a0);
-			out.string(&s);
-			PrecompileOutput(ExitReason::Revert(ExitRevert::Reverted), out.finish(), 0, Vec::new())
+		CollectionMode::NFT => {
+			let call = match UniqueNFTCall::parse(method_id, &mut input)? {
+				Some(v) => v,
+				None => return Ok(None),
+			};
+			Ok(Some(<CollectionHandle<T> as UniqueNFT>::call(
+				collection,
+				Msg {
+					call,
+					caller,
+					value,
+				},
+			)?))
 		}
-		Err(None) => {
-			sp_io::storage::rollback_transaction();
-			PrecompileOutput(ExitReason::Revert(ExitRevert::Reverted), Vec::new(), 0, Vec::new())
+		_ => {
+			return Err(StringError::from(
+				"erc calls only supported to fungible and nft collections for now",
+			)
+			.into())
 		}
 	}
-}
-
-fn call_internal<T: Config>(sender: H160, collection: &CollectionHandle<T>, method_id: u32, mut input: AbiReader) -> Result<AbiWriter, Option<&'static str>> {
-	let erc20 = matches!(collection.mode, CollectionMode::Fungible(_));
-	let erc721 = matches!(collection.mode, CollectionMode::NFT);
-
-	Ok(match method_id {
-		// function name() external view returns (string memory)
-		fn_selector!(name()) => {
-			let name = collection.name.iter()
-				.map(|&e| e.try_into().ok() as Option<u8>)
-				.collect::<Option<Vec<u8>>>()
-				.ok_or(Some("non-ascii name"))?;
-
-			crate::abi_encode!(memory(&name))
-		}
-		// function symbol() external view returns (string memory)
-		fn_selector!(symbol()) => {
-			let name = collection.token_prefix.iter()
-				.map(|&e| e.is_ascii_uppercase().then(|| e))
-				.collect::<Option<Vec<u8>>>()
-				.ok_or(Some("non-uppercase prefix"))?;
-
-			crate::abi_encode!(memory(&name))
-		}
-		// function decimals() external view returns (uint8 decimals)
-		fn_selector!(decimals()) if erc20 => {
-			if let CollectionMode::Fungible(decimals) = &collection.mode {
-				crate::abi_encode!(uint8(*decimals))
-			} else {
-				unreachable!()
-			}
-		}
-		// function totalSupply() external view returns (uint256)
-		fn_selector!(totalSupply()) if erc20 || erc721 => {
-			// TODO: can't be implemented, as we don't track total amount of fungibles
-			crate::abi_encode!(uint256(0))
-		}
-		// function balanceOf(address account) external view returns (uint256)
-		fn_selector!(balanceOf(address)) if erc20 || erc721 => {
-			crate::abi_decode!(input, account: address);
-			let account = T::EvmAddressMapping::into_account_id(account);
-			let balance = <Balance<T>>::get(collection.id, account);
-			crate::abi_encode!(uint256(balance))
-		}
-		// function ownerOf(uint256 tokenId) external view returns (address)
-		fn_selector!(ownerOf(uint256)) if erc721 => {
-			crate::abi_decode!(input, token_id: uint256);
-			let token_id: u32 = token_id.try_into().map_err(|_| "bad token id")?;
-
-			let token = <NftItemList<T>>::get(collection.id, token_id).ok_or("unknown token")?;
-
-			crate::abi_encode!(address(token.owner.as_eth().clone()))
-		}
-		// function transfer(address recipient, uint256 amount) external returns (bool) {
-		fn_selector!(transfer(address, uint256)) if erc20 => {
-			crate::abi_decode!(input, recipient: address, amount: uint256);
-			let sender = T::CrossAccountId::from_eth(sender);
-			let recipient = T::CrossAccountId::from_eth(recipient);
-
-			<Module<T>>::transfer_internal(
-				&sender,
-				&recipient,
-				&collection,
-				1,
-				amount,
-			).map_err(|_| "transfer error")?;
-
-			crate::abi_encode!(bool(true))
-		}
-
-		fn_selector!(transfer(address, uint256)) if erc721 => {
-			crate::abi_decode!(input, recipient: address, token_id: uint256);
-			let sender = T::CrossAccountId::from_eth(sender);
-			let recipient = T::CrossAccountId::from_eth(recipient);
-			let token_id: u32 = token_id.try_into().map_err(|_| "bad token id")?;
-
-			<Module<T>>::transfer_internal(
-				&sender,
-				&recipient,
-				&collection,
-				token_id,
-				1,
-			).map_err(|_| "transfer error")?;
-
-			crate::abi_encode!(bool(true))
-		}
-
-		// function allowance(address owner, address spender) external view returns (uint256)
-		fn_selector!(allowance(address, address)) if erc20 => {
-			crate::abi_decode!(input, owner: address, spender: address);
-			let owner = T::EvmAddressMapping::into_account_id(owner);
-			let spender = T::EvmAddressMapping::into_account_id(spender);
-			let allowance = <Allowances<T>>::get(collection.id, (1, &owner, &spender));
-			crate::abi_encode!(uint256(allowance))
-		}
-		// function approve(address spender, uint256 amount) external returns (bool)
-		// FIXME: All current implementations resets amount to specified value, ours - adds it
-		// FIXME: Our implementation doesn't handle resets (approve with zero amount)
-		fn_selector!(approve(address, uint256)) if erc20 => {
-			crate::abi_decode!(input, spender: address, amount: uint256);
-			let sender = T::CrossAccountId::from_eth(sender);
-			let spender = T::CrossAccountId::from_eth(spender);
-
-			<Module<T>>::approve_internal(
-				&sender,
-				&spender,
-				&collection,
-				1,
-				amount,
-			).map_err(|_| "approve error")?;
-
-			crate::abi_encode!(bool(true))
-		}
-		// function approve(address approved, uint256 tokenId) external payable
-		fn_selector!(approve(address, uint256)) if erc721 => {
-			crate::abi_decode!(input, approved: address, token_id: uint256);
-			let sender = T::CrossAccountId::from_eth(sender);
-			let approved = T::CrossAccountId::from_eth(approved);
-			let token_id = token_id.try_into().map_err(|_| "bad token id")?;
-
-			<Module<T>>::approve_internal(
-				&sender,
-				&approved,
-				&collection,
-				token_id,
-				1,
-			).map_err(|_| "approve error")?;
-			crate::abi_encode!()
-		}
-		// function transferFrom(address sender, address recipient, uint256 amount) external returns (bool)
-		fn_selector!(transferFrom(address, address, uint256)) if erc20 => {
-			crate::abi_decode!(input, from: address, recipient: address, amount: uint256);
-			let sender = T::CrossAccountId::from_eth(sender);
-			let from = T::CrossAccountId::from_eth(from);
-			let recipient = T::CrossAccountId::from_eth(recipient);
-
-			<Module<T>>::transfer_from_internal(
-				&sender,
-				&from,
-				&recipient,
-				&collection,
-				1,
-				amount,
-			).map_err(|_| "transfer_from error")?;
-
-			crate::abi_encode!(bool(true))
-		}
-		// function transferFrom(address from, address to, uint256 tokenId) external payable
-		fn_selector!(transferFrom(address, address, uint256)) if erc721 => {
-			crate::abi_decode!(input, from: address, recipient: address, token_id: uint256);
-			let sender = T::CrossAccountId::from_eth(sender);
-			let from = T::CrossAccountId::from_eth(from);
-			let recipient = T::CrossAccountId::from_eth(recipient);
-			let token_id = token_id.try_into().map_err(|_| "bad token id")?;
-
-			<Module<T>>::transfer_from_internal(
-				&sender,
-				&from,
-				&recipient,
-				&collection,
-				token_id,
-				1,
-			).map_err(|_| "transfer_from error")?;
-
-			crate::abi_encode!()
-		}
-		// function supportsInterface(bytes4 interfaceID) public pure returns (bool)
-		fn_selector!(supportsInterface(bytes4)) => {
-			crate::abi_decode!(input, interface_id: uint32);
-			let supports = match interface_id {
-				// ERC165
-				0x01ffc9a7 => true,
-				// ERC20
-				0x36372b07 if erc20 => true,
-				// ERC721
-				0x80ac58cd if erc721 => true,
-				_ => false,
-			};
-			crate::abi_encode!(bool(supports))
-		}
-		_ => return Err(None)
-	})
 }
 
 impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
@@ -265,35 +119,33 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 	fn call(
 		source: &H160,
 		target: &H160,
+		gas_limit: u64,
 		input: &[u8],
+		value: U256,
 	) -> Option<PrecompileOutput> {
-		let collection = map_eth_to_id(&target)
-			.and_then(<CollectionHandle<T>>::get)?;
+		let mut collection = map_eth_to_id(&target)
+			.and_then(|id| <CollectionHandle<T>>::get_with_gas_limit(id, gas_limit))?;
 		let (method_id, input) = AbiReader::new_call(input).unwrap();
-		let result = call_internal(*source, &collection, method_id, input);
-		Some(result_to_output(result, collection.logs.retrieve_logs_for_contract(*target)))
+		let result = call_internal(&mut collection, *source, method_id, input, value);
+		let cost = gas_limit - collection.gas_left();
+		let logs = collection.logs.retrieve_logs();
+		match result {
+			Ok(Some(v)) => Some(PrecompileOutput {
+				exit_status: ExitReason::Succeed(ExitSucceed::Returned),
+				cost,
+				logs,
+				output: v.finish(),
+			}),
+			Ok(None) => None,
+			Err(e) => Some(PrecompileOutput {
+				exit_status: ExitReason::Revert(ExitRevert::Reverted),
+				cost: 0,
+				logs: Default::default(),
+				output: AbiWriter::from(e).finish(),
+			}),
+		}
 	}
 }
-
-pub const TRANSFER_NFT_TOPIC: H256 = event_topic!(Transfer(address, address, uint256));
-pub const APPROVAL_NFT_TOPIC: H256 = event_topic!(Approval(address, address, uint256));
-// TODO: event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
-
-pub const TRANSFER_FUNGIBLE_TOPIC: H256 = event_topic!(Transfer(address, address, uint256));
-pub const APPROVAL_FUNGIBLE_TOPIC: H256 = event_topic!(Approval(address, address, uint256));
-
-pub fn address_to_topic(address: &H160) -> H256 {
-	let mut output = [0; 32];
-	output[12..32].copy_from_slice(&address.0);
-	H256(output)
-}
-
-pub fn u32_to_topic(id: u32) -> H256 {
-	let mut output = [0; 32];
-	output[28..32].copy_from_slice(&id.to_be_bytes());
-	H256(output)
-}
-
 
 // TODO: This function is slow, and output can be memoized
 pub fn generate_transaction(collection_id: u32, chain_id: u64) -> ethereum::Transaction {
