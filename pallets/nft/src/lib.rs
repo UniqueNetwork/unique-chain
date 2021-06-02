@@ -57,6 +57,7 @@ mod eth;
 
 pub use eth::NftErcSupport;
 pub use eth::account::*;
+use eth::erc::{ERC20Events, ERC721Events};
 
 pub const MAX_DECIMAL_POINTS: DecimalPoints = 30;
 pub const MAX_REFUNGIBLE_PIECES: u128 = 1_000_000_000_000_000_000_000;
@@ -197,8 +198,8 @@ impl<T: Config> CollectionHandle<T> {
                 logs: eth::log::LogRecorder::default(),
 			})
 	}
-    pub fn log(&self, topics: Vec<H256>, data: eth::abi::AbiWriter) {
-        self.logs.log(topics, data)
+    pub fn log(&self, log: impl evm_coder::ToLog) {
+        self.logs.log(log.to_log(self.evm_address))
     }
     pub fn into_inner(self) -> Collection<T> {
         self.collection.clone()
@@ -1758,27 +1759,20 @@ impl<T: Config> Module<T> {
 
 		if matches!(collection.mode, CollectionMode::NFT) {
 			// TODO: NFT: only one owner may exist for token in ERC721
-			collection.log(
-				Vec::from([
-					eth::APPROVAL_NFT_TOPIC,
-					eth::address_to_topic(sender.as_eth()),
-					eth::address_to_topic(spender.as_eth()),
-                    eth::u32_to_topic(item_id),
-				]),
-				abi_encode!(),
-			);
+			collection.log(ERC721Events::Approval {
+                owner: *sender.as_eth(),
+                approved: *spender.as_eth(),
+                token_id: item_id.into(),
+            });
 		}
 
 		if matches!(collection.mode, CollectionMode::Fungible(_)) {
 			// TODO: NFT: only one owner may exist for token in ERC20
-			collection.log(
-				Vec::from([
-					eth::APPROVAL_FUNGIBLE_TOPIC,
-					eth::address_to_topic(sender.as_eth()),
-					eth::address_to_topic(spender.as_eth()),
-				]),
-				abi_encode!(uint256(allowance.into())),
-			);
+			collection.log(ERC20Events::Approval {
+                owner: *sender.as_eth(),
+                spender: *spender.as_eth(),
+                value: allowance.into()
+            });
 		}
 
 		Self::deposit_event(RawEvent::Approved(collection.id, item_id, sender.clone(), spender.clone(), allowance));
@@ -1836,14 +1830,11 @@ impl<T: Config> Module<T> {
 		};
 
 		if matches!(collection.mode, CollectionMode::Fungible(_)) {
-			collection.log(
-				Vec::from([
-					eth::APPROVAL_FUNGIBLE_TOPIC,
-					eth::address_to_topic(from.as_eth()),
-					eth::address_to_topic(sender.as_eth()),
-				]),
-				abi_encode!(uint256(allowance.into())),
-			);
+			collection.log(ERC20Events::Approval {
+                owner: *from.as_eth(),
+                spender: *sender.as_eth(),
+                value: allowance.into()
+            });
 		}
 
 		Ok(())
@@ -2115,15 +2106,11 @@ impl<T: Config> Module<T> {
             .ok_or(Error::<T>::NumOverflow)?;
         <Balance<T>>::insert(collection_id, item_owner.as_sub(), new_balance);
 
-        collection.log(
-            Vec::from([
-                eth::TRANSFER_NFT_TOPIC,
-                eth::address_to_topic(&H160::default()),
-                eth::address_to_topic(item_owner.as_eth()),
-                eth::u32_to_topic(current_index),
-            ]),
-            abi_encode!(),
-        );
+        collection.log(ERC721Events::Transfer {
+            from: H160::default(),
+            to: *item_owner.as_eth(),
+            token_id: current_index.into(),
+        });
         Self::deposit_event(RawEvent::ItemCreated(collection_id, current_index, item_owner));
         Ok(())
     }
@@ -2210,14 +2197,11 @@ impl<T: Config> Module<T> {
             <FungibleItemList<T>>::remove(collection_id, owner.as_sub());
         }
 
-        collection.log(
-            Vec::from([
-                eth::TRANSFER_FUNGIBLE_TOPIC,
-                eth::address_to_topic(owner.as_eth()),
-                eth::address_to_topic(&H160::default()),
-            ]),
-            abi_encode!(uint256(value.into())),
-        );
+        collection.log(ERC20Events::Transfer {
+            from: *owner.as_eth(),
+            to: H160::default(),
+            value: value.into(),
+        });
         Ok(())
     }
 
@@ -2236,7 +2220,7 @@ impl<T: Config> Module<T> {
         }
         T::EthereumTransactionSender::submit_logs_transaction(
             eth::generate_transaction(collection.id, T::EthereumChainId::get()),
-            collection.logs.retrieve_logs_for_contract(eth::collection_id_to_address(collection.id)),
+            collection.logs.retrieve_logs(),
         )
     }
 
@@ -2344,14 +2328,11 @@ impl<T: Config> Module<T> {
             <FungibleItemList<T>>::insert(collection_id, owner.as_sub(), balance);
         }
 
-        collection.log(
-            Vec::from([
-                eth::TRANSFER_FUNGIBLE_TOPIC,
-                eth::address_to_topic(owner.as_eth()),
-                eth::address_to_topic(recipient.as_eth()),
-            ]),
-            abi_encode!(uint256(value.into())),
-        );
+        collection.log(ERC20Events::Transfer {
+            from: *owner.as_eth(),
+            to: *recipient.as_eth(),
+            value: value.into(),
+        });
         Self::deposit_event(RawEvent::Transfer(collection.id, 1, owner.clone(), recipient.clone(), value));
 
         Ok(())
@@ -2476,15 +2457,11 @@ impl<T: Config> Module<T> {
         // update index collection
         Self::move_token_index(collection_id, item_id, &old_owner, &new_owner)?;
 
-        collection.log(
-            Vec::from([
-                eth::TRANSFER_NFT_TOPIC,
-                eth::address_to_topic(sender.as_eth()),
-                eth::address_to_topic(new_owner.as_eth()),
-                eth::u32_to_topic(item_id),
-            ]),
-            abi_encode!(),
-        );
+        collection.log(ERC721Events::Transfer {
+            from: *sender.as_eth(),
+            to: *new_owner.as_eth(),
+            token_id: item_id.into(),
+        });
         Self::deposit_event(RawEvent::Transfer(collection.id, item_id, sender, new_owner, 1));
 
         Ok(())
