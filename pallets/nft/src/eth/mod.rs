@@ -1,25 +1,31 @@
 pub mod account;
-use account::CrossAccountId;
-pub mod abi;
-use abi::{AbiReader, AbiWriter};
+pub mod erc;
+mod erc_impl;
 pub mod log;
+pub mod sponsoring;
 
+use evm_coder::abi::AbiWriter;
+use evm_coder::abi::StringError;
+use sp_std::prelude::*;
 use sp_std::borrow::ToOwned;
 use sp_std::vec::Vec;
-use sp_std::convert::TryInto;
 
-use codec::{Decode, Encode};
-use pallet_evm::{AddressMapping, PrecompileLog, PrecompileOutput, ExitReason, ExitRevert, ExitSucceed};
-use sp_core::{H160, H256};
-use frame_support::storage::{StorageMap, StorageDoubleMap};
+use pallet_evm::{PrecompileOutput, ExitReason, ExitRevert, ExitSucceed};
+use sp_core::{H160, U256};
+use frame_support::storage::StorageMap;
 
-use crate::{Allowances, NftItemList, Module, Balance, Config, CollectionById, CollectionHandle, CollectionId, CollectionMode};
+use crate::{Config, CollectionById, CollectionHandle, CollectionId, CollectionMode};
+
+use erc::{UniqueFungible, UniqueFungibleCall, UniqueNFT, UniqueNFTCall};
+use evm_coder::{types::*, abi::AbiReader};
 
 pub struct NftErcSupport<T: Config>(core::marker::PhantomData<T>);
 
 // 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection
 // TODO: Unhardcode prefix
-const ETH_ACCOUNT_PREFIX: [u8; 16] = [0x17, 0xc4, 0xe6, 0x45, 0x3c, 0xc4, 0x9a, 0xaa, 0xae, 0xac, 0xa8, 0x94, 0xe6, 0xd9, 0x68, 0x3e];
+const ETH_ACCOUNT_PREFIX: [u8; 16] = [
+	0x17, 0xc4, 0xe6, 0x45, 0x3c, 0xc4, 0x9a, 0xaa, 0xae, 0xac, 0xa8, 0x94, 0xe6, 0xd9, 0x68, 0x3e,
+];
 
 fn map_eth_to_id(eth: &H160) -> Option<CollectionId> {
 	if &eth[0..16] != ETH_ACCOUNT_PREFIX {
@@ -113,7 +119,8 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 					CollectionMode::Fungible(_) => include_bytes!("stubs/ERC20.bin") as &[u8],
 					CollectionMode::ReFungible => include_bytes!("stubs/ERC1633.bin") as &[u8],
 					CollectionMode::Invalid => include_bytes!("stubs/Invalid.bin") as &[u8],
-				}.to_owned()
+				}
+				.to_owned()
 			})
 	}
 	fn call(
@@ -162,14 +169,17 @@ pub fn generate_transaction(collection_id: u32, chain_id: u64) -> ethereum::Tran
 			gas: 0.into(),
 			// zero selector, this transaction always have same sender, so all data should be acquired from logs
 			data: Vec::from([0, 0, 0, 0]),
-		}.sign(
+		}
+		.sign(
 			// TODO: move to pallet config
 			// 0xF70631E55faff9f3FD3681545aa6c724226a3853
 			// 9dbaef9b3ebc00e53f67c6a77bcfbf2c4f2aebe4d70d94af4f2df01744b7a91a
-			&hex_literal::hex!("9dbaef9b3ebc00e53f67c6a77bcfbf2c4f2aebe4d70d94af4f2df01744b7a91a").into(),
-			&chain_id
+			&hex_literal::hex!("9dbaef9b3ebc00e53f67c6a77bcfbf2c4f2aebe4d70d94af4f2df01744b7a91a")
+				.into(),
+			&chain_id,
 		);
-		rlp::decode::<ethereum::Transaction>(&signed).expect("transaction is just created, it can't be broken")
+		rlp::decode::<ethereum::Transaction>(&signed)
+			.expect("transaction is just created, it can't be broken")
 	}
 	#[cfg(not(feature = "std"))]
 	{

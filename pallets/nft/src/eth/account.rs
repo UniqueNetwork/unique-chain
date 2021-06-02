@@ -1,6 +1,7 @@
 use crate::Config;
 use codec::{Encode, EncodeLike, Decode};
-use sp_core::{H160, H256, crypto::AccountId32};
+use sp_core::crypto::AccountId32;
+use primitive_types::H160;
 use core::cmp::Ordering;
 use serde::{Serialize, Deserialize};
 use pallet_evm::AddressMapping;
