@@ -151,8 +151,7 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 pub fn generate_transaction(collection_id: u32, chain_id: u64) -> ethereum::Transaction {
 	let contract = collection_id_to_address(collection_id);
 
-	// TODO: Make it work without native runtime by forking ethereum_tx_sign, and
-	// switching to pure-rust implementation of secp256k1
+	// FIXME: Can be done on wasm runtime with https://github.com/paritytech/substrate/pull/8728
 	#[cfg(feature = "std")]
 	{
 		let signed = ethereum_tx_sign::RawTransaction {
