@@ -4,6 +4,8 @@ members = [
     'node',
     'pallets/nft',
     'runtime',
+    'crates/evm-coder',
+    'crates/evm-coder-macros',
 ]
 [profile.release]
 panic = 'unwind'
