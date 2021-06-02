@@ -7,10 +7,12 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
 
 pub use serde::{Serialize, Deserialize};
 
 use core::ops::{Deref, DerefMut};
+use core::cell::RefCell;
 use codec::{Decode, Encode};
 pub use frame_support::{
     construct_runtime, decl_event, decl_module, decl_storage, decl_error,
@@ -30,7 +32,7 @@ pub use frame_support::{
 };
 
 use frame_system::{self as system, ensure_signed, ensure_root};
-use sp_core::{H160, H256};
+use sp_core::H160;
 use sp_runtime::sp_std::prelude::Vec;
 use sp_runtime::{
     traits::{
@@ -188,16 +190,34 @@ pub struct CollectionHandle<T: Config> {
     pub id: CollectionId,
     collection: Collection<T>,
     logs: eth::log::LogRecorder,
+    evm_address: H160,
+    gas_limit: RefCell<u64>,
 }
 impl<T: Config> CollectionHandle<T> {
-	pub fn get(id: CollectionId) -> Option<Self> {
+	pub fn get_with_gas_limit(id: CollectionId, gas_limit: u64) -> Option<Self> {
 		<CollectionById<T>>::get(id)
 			.map(|collection| Self {
 				id,
 				collection,
                 logs: eth::log::LogRecorder::default(),
+                evm_address: eth::collection_id_to_address(id),
+                gas_limit: RefCell::new(gas_limit),
 			})
 	}
+    pub fn get(id: CollectionId) -> Option<Self> {
+        Self::get_with_gas_limit(id, u64::MAX)
+    }
+    pub fn gas_left(&self) -> u64 {
+        *self.gas_limit.borrow()
+    }
+    pub fn consume_gas(&self, gas: u64) -> DispatchResult {
+        let mut gas_limit = self.gas_limit.borrow_mut();
+        if *gas_limit < gas {
+            fail!(Error::<T>::OutOfGas);
+        }
+        *gas_limit -= gas;
+        Ok(())
+    }
     pub fn log(&self, log: impl evm_coder::ToLog) {
         self.logs.log(log.to_log(self.evm_address))
     }
@@ -473,6 +493,8 @@ decl_error! {
         WrongRefungiblePieces,
         /// createRefungible should be called with one owner
         BadCreateRefungibleCall,
+        /// Gas limit exceeded
+        OutOfGas,
 	}
 }
 
@@ -1690,6 +1712,7 @@ impl<T: Config> Module<T> {
     }
 
     pub fn transfer_internal(sender: &T::CrossAccountId, recipient: &T::CrossAccountId, target_collection: &CollectionHandle<T>, item_id: TokenId, value: u128) -> DispatchResult {
+        target_collection.consume_gas(2000000)?;
         // Limits check
         Self::is_correct_transfer(target_collection, &recipient)?;
 
@@ -1723,6 +1746,7 @@ impl<T: Config> Module<T> {
 		item_id: TokenId,
 		amount: u128
 	) -> DispatchResult {
+        collection.consume_gas(2000000)?;
 		Self::token_exists(&collection, item_id)?;
 
 		// Transfer permissions check
@@ -1787,6 +1811,7 @@ impl<T: Config> Module<T> {
 		item_id: TokenId,
 		amount: u128,
 	) -> DispatchResult {
+        collection.consume_gas(2000000)?;
 		// Check approval
 		let approval: u128 = <Allowances<T>>::get(collection.id, (item_id, from.as_sub(), sender.as_sub()));
 
