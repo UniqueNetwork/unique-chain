@@ -3,22 +3,18 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-// use nft_runtime::{
-//     AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-//     SystemConfig, WASM_BINARY,
-// };
-// use nft_runtime::{ContractsConfig, ContractsSchedule, NftConfig, CollectionType};
 use nft_runtime::*;
+
+use cumulus_primitives_core::ParaId;
+use parachain_runtime::{AccountId, Signature};
+use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use serde_json::map::Map;
-// use crate::chain_spec::api::chain_extension::*;
 
-// Note this is the URL for the telemetry server
-//const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
+use serde::{Deserialize, Serialize};
+use serde_json::map::Map;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
@@ -45,7 +41,7 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
     (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
 
-pub fn development_config() -> Result<ChainSpec, String> {
+pub fn development_config(id: ParaId) -> ChainSpec {
 	let wasm_binary = WASM_BINARY.ok_or("Development wasm binary not available".to_string())?;
 
 	let mut properties = Map::new();
@@ -53,12 +49,12 @@ pub fn development_config() -> Result<ChainSpec, String> {
 	properties.insert("tokenDecimals".into(), 15.into());
 	properties.insert("ss58Format".into(), 42.into()); // Generic Substrate wildcard (SS58 checksum preimage)
 
-	Ok(ChainSpec::from_genesis(
+	ChainSpec::from_genesis(
 		// Name
 		"Development",
 		// ID
 		"dev",
-		ChainType::Development,
+		ChainType::Local,
 		move || testnet_genesis(
 			wasm_binary,
 			// Initial PoA authorities
@@ -85,11 +81,14 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		// Properties
 		Some(properties),
 		// Extensions
-		None,
-	))
+		Extensions {
+			relay_chain: "rococo-dev".into(),
+			para_id: id.into(),
+		},
+	)
 }
 
-pub fn local_testnet_config() -> Result<ChainSpec, String> {
+pub fn local_testnet_config(id: ParaId) -> ChainSpec {
 	let wasm_binary = WASM_BINARY.ok_or("Development wasm binary not available".to_string())?;
 
 	Ok(ChainSpec::from_genesis(
@@ -133,7 +132,10 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		// Properties
 		None,
 		// Extensions
-		None,
+		Extensions {
+			relay_chain: "rococo-local".into(),
+			para_id: id.into(),
+		},
 	))
 }
 
@@ -161,15 +163,6 @@ fn testnet_genesis(
                 .map(|k| (k, 1 << 100))
                 .collect(),
         }),
-        pallet_aura: Some(AuraConfig {
-            authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
-        }),
-		pallet_grandpa: Some(GrandpaConfig {
-            authorities: initial_authorities
-                .iter()
-                .map(|x| (x.1.clone(), 1))
-                .collect(),
-		}),
 		pallet_treasury: Some(Default::default()),
 		pallet_sudo: Some(SudoConfig { key: root_key }),
 		pallet_vesting: Some(VestingConfig {
@@ -221,5 +214,6 @@ fn testnet_genesis(
                 ..Default::default()
             },
         }),
+		parachain_info: parachain_runtime::ParachainInfoConfig { parachain_id: id },
     }
 }

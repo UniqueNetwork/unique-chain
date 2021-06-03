@@ -677,7 +677,7 @@ decl_module! {
         fn deposit_event() = default;
         type Error = Error<T>;
 
-        fn on_initialize(now: T::BlockNumber) -> Weight {
+        fn on_initialize(_now: T::BlockNumber) -> Weight {
             0
         }
 
@@ -2575,7 +2575,7 @@ where
                 let collection = <CollectionById<T>>::get(collection_id)?;
 
                 // sponsor timeout
-                let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
+                let block_number = <system::Pallet<T>>::block_number() as T::BlockNumber;
 
                 let limit = collection.limits.sponsor_transfer_timeout;
                 if <CreateItemBasket<T>>::contains_key((collection_id, &who)) {
@@ -2605,7 +2605,7 @@ where
                     let collection_mode = collection.mode;
     
                     // sponsor timeout
-                    let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
+                    let block_number = <system::Pallet<T>>::block_number() as T::BlockNumber;
                     sponsor_transfer = match collection_mode {
                         CollectionMode::NFT => {
     
@@ -2639,7 +2639,7 @@ where
                                 ChainLimit::get().fungible_sponsor_transfer_timeout
                             };
     
-                            let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
+                            let block_number = <system::Pallet<T>>::block_number() as T::BlockNumber;
                             let mut sponsored = true;
                             if <FungibleTransferBasket<T>>::contains_key(collection_id, who) {
                                 let last_tx_block = <FungibleTransferBasket<T>>::get(collection_id, who);
@@ -2704,7 +2704,7 @@ where
                     data.len() <= collection.limits.sponsored_data_size as usize
                 {
                     if let Some(rate_limit) = collection.limits.sponsored_data_rate_limit {
-                        let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
+                        let block_number = <system::Pallet<T>>::block_number() as T::BlockNumber;
 
                         if <VariableMetaDataBasket<T>>::get(collection_id, item_id)
                             .map(|last_block| block_number - last_block > rate_limit)
@@ -2749,7 +2749,7 @@ where
             // On instantiation: set the contract owner
             Some(pallet_contracts::Call::instantiate(_endowment, _gas_limit, code_hash, _data, salt)) => {
 
-                let new_contract_address = <pallet_contracts::Module<T>>::contract_address(
+                let new_contract_address = <pallet_contracts::Pallet<T>>::contract_address(
                     &who,
                     code_hash,
                     salt,
@@ -2762,7 +2762,7 @@ where
             // On instantiation with code: set the contract owner
             Some(pallet_contracts::Call::instantiate_with_code(_endowment, _gas_limit, _code, _data, _salt))  => {
 
-                let new_contract_address = <pallet_contracts::Module<T>>::contract_address(
+                let new_contract_address = <pallet_contracts::Pallet<T>>::contract_address(
                     &who,
                     &T::Hashing::hash(&_code),
                     _salt,
@@ -2781,7 +2781,7 @@ where
                 let mut sponsor_transfer = false;
                 if <ContractSponsoringRateLimit<T>>::contains_key(called_contract.clone()) {
                     let last_tx_block = <ContractSponsorBasket<T>>::get((&called_contract, &who));
-                    let block_number = <system::Module<T>>::block_number() as T::BlockNumber;
+                    let block_number = <system::Pallet<T>>::block_number() as T::BlockNumber;
                     let rate_limit = <ContractSponsoringRateLimit<T>>::get(&called_contract);
                     let limit_time = last_tx_block + rate_limit;
 
