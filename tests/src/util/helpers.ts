@@ -634,17 +634,19 @@ export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: n
 
 export async function
 approveExpectSuccess(collectionId: number,
-                     tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number | bigint = 1) {
+                     tokenId: number, owner: IKeyringPair, approved: IKeyringPair | string, amount: number | bigint = 1) {
+  if (typeof approved !== 'string')
+    approved = approved.address;
   await usingApi(async (api: ApiPromise) => {
     const allowanceBefore =
-      await api.query.nft.allowances(collectionId, [tokenId, owner.address, approved.address]) as unknown as BN;
-    const approveNftTx = await api.tx.nft.approve(approved.address, collectionId, tokenId, amount);
+      await api.query.nft.allowances(collectionId, [tokenId, owner.address, approved] as any) as unknown as BN;
+    const approveNftTx = await api.tx.nft.approve(approved, collectionId, tokenId, amount);
     const events = await submitTransactionAsync(owner, approveNftTx);
     const result = getCreateItemResult(events);
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
     const allowanceAfter =
-      await api.query.nft.allowances(collectionId, [tokenId, owner.address, approved.address]) as unknown as BN;
+      await api.query.nft.allowances(collectionId, [tokenId, owner.address, approved] as any) as unknown as BN;
     expect(allowanceAfter.sub(allowanceBefore).toString()).to.be.equal(amount.toString());
   });
 }
@@ -653,17 +655,19 @@ export async function
 transferFromExpectSuccess(collectionId: number,
                           tokenId: number,
                           accountApproved: IKeyringPair,
-                          accountFrom: IKeyringPair,
+                          accountFrom: IKeyringPair | string,
                           accountTo: IKeyringPair,
                           value: number | bigint = 1,
                           type: string = 'NFT') {
+  if (typeof accountFrom !== 'string')
+    accountFrom = accountFrom.address;
   await usingApi(async (api: ApiPromise) => {
     let balanceBefore = new BN(0);
     if (type === 'Fungible') {
       balanceBefore = await api.query.nft.balance(collectionId, accountTo.address) as unknown as BN;
     }
     const transferFromTx = await api.tx.nft.transferFrom(
-      accountFrom.address, accountTo.address, collectionId, tokenId, value);
+      accountFrom, accountTo.address, collectionId, tokenId, value);
     const events = await submitTransactionAsync(accountApproved, transferFromTx);
     const result = getCreateItemResult(events);
     // tslint:disable-next-line:no-unused-expression
@@ -799,16 +803,12 @@ export async function createFungibleItemExpectSuccess(
 }
 
 export async function createItemExpectSuccess(
-  sender: IKeyringPair, collectionId: number, createMode: string, owner: string = '') {
+  sender: IKeyringPair, collectionId: number, createMode: string, owner: string | AccountId = sender.address) {
   let newItemId: number = 0;
   await usingApi(async (api) => {
     const AItemCount = parseInt((await api.query.nft.itemListIndex(collectionId)).toString(), 10);
     const Aitem: any = (await api.query.nft.fungibleItemList(collectionId, owner)).toJSON();
     const AItemBalance = new BigNumber(Aitem.Value);
-
-    if (owner === '') {
-      owner = sender.address;
-    }
 
     let tx;
     if (createMode === 'Fungible') {
@@ -837,7 +837,7 @@ export async function createItemExpectSuccess(
     }
     expect(collectionId).to.be.equal(result.collectionId);
     expect(BItemCount).to.be.equal(result.itemId);
-    expect(owner).to.be.equal(result.recipient);
+    expect(owner.toString()).to.be.equal(result.recipient);
     newItemId = result.itemId;
   });
   return newItemId;
@@ -924,7 +924,7 @@ export async function isWhitelisted(collectionId: number, address: string) {
   return whitelisted;
 }
 
-export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number, address: string) {
+export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number, address: string | AccountId) {
   await usingApi(async (api) => {
 
     const whiteListedBefore = (await api.query.nft.whiteList(collectionId, address)).toJSON();
