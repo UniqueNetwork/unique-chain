@@ -677,7 +677,7 @@ export async function
   transferFromExpectSuccess(collectionId: number,
     tokenId: number,
     accountApproved: IKeyringPair,
-    accountFrom: IKeyringPair,
+    accountFrom: IKeyringPair | CrossAccountId,
     accountTo: IKeyringPair | CrossAccountId,
     value: number | bigint = 1,
     type: string = 'NFT') {
@@ -688,7 +688,7 @@ export async function
       balanceBefore = await api.query.nft.balance(collectionId, toSubstrateAddress(to)) as unknown as BN;
     }
     const transferFromTx = api.tx.nft.transferFrom(
-      normalizeAccountId(accountFrom.address), to, collectionId, tokenId, value);
+      normalizeAccountId(accountFrom), to, collectionId, tokenId, value);
     const events = await submitTransactionAsync(accountApproved, transferFromTx);
     const result = getCreateItemResult(events);
     // tslint:disable-next-line:no-unused-expression
@@ -950,7 +950,7 @@ export async function isWhitelisted(collectionId: number, address: string) {
   return whitelisted;
 }
 
-export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number, address: string) {
+export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number, address: string | AccountId) {
   await usingApi(async (api) => {
 
     const whiteListedBefore = (await api.query.nft.whiteList(collectionId, address)).toJSON();

@@ -97,7 +97,7 @@ impl<C: Config> ChainExtension<C> for NFTExtension {
                 let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
 
                 pallet_nft::Module::<C>::transfer_internal(
-                    &C::CrossAccountId::from_sub(env.ext().caller().clone()),
+                    &C::CrossAccountId::from_sub(env.ext().address().clone()),
                     &C::CrossAccountId::from_sub(input.recipient),
                     &collection,
                     input.token_id,
