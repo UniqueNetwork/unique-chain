@@ -103,7 +103,7 @@ pub struct InterfaceInfo {
 	#[darling(default)]
 	inline_is: IsList,
 	#[darling(default)]
-	_events: IsList,
+	events: IsList,
 }
 
 #[derive(FromMeta)]

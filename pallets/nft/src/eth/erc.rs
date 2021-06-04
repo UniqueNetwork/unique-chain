@@ -117,7 +117,7 @@ pub trait ERC20 {
     fn allowance(&self, owner: address, spender: address) -> Result<uint256, Self::Error>;
 }
 
-#[solidity_interface(is(ERC165, ERC20, ERC20UniqueExtensions))]
+#[solidity_interface(is(ERC165, ERC20))]
 pub trait UniqueFungible {
     type Error;
 }
