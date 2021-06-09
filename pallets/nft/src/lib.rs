@@ -2328,6 +2328,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
+    #[allow(dead_code)]
     fn init_collection(item: &Collection<T>) {
         // check params
         assert!(
@@ -2355,6 +2356,7 @@ impl<T: Config> Module<T> {
         CreatedCollectionCount::put(next_id);
     }
 
+    #[allow(dead_code)]
     fn init_nft_token(collection_id: CollectionId, item: &NftItemType<T::AccountId>) {
         let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
@@ -2372,6 +2374,7 @@ impl<T: Config> Module<T> {
         <Balance<T>>::insert(collection_id, item_owner.clone(), new_balance);
     }
 
+    #[allow(dead_code)]
     fn init_fungible_token(collection_id: CollectionId, owner: &T::AccountId, item: &FungibleItemType) {
         let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
@@ -2388,6 +2391,7 @@ impl<T: Config> Module<T> {
         <Balance<T>>::insert(collection_id, (*owner).clone(), new_balance);
     }
 
+    #[allow(dead_code)]
     fn init_refungible_token(collection_id: CollectionId, item: &ReFungibleItemType<T::AccountId>) {
         let current_index = <ItemListIndex>::get(collection_id)
             .checked_add(1)
