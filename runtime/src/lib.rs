@@ -87,6 +87,10 @@ use crate::chain_extension::{ NFTExtension, Imbalance };
 extern crate pallet_nft;
 pub use pallet_nft::*;
 
+/// Reimport pallet inflation
+extern crate pallet_inflation;
+pub use pallet_inflation::*;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -130,7 +134,9 @@ pub mod opaque {
     pub type SessionHandlers = ();
 
 	impl_opaque_keys! {
-        pub struct SessionKeys {}
+        pub struct SessionKeys {
+			pub aura: Aura,
+		}
     }
 }
 
@@ -640,10 +646,6 @@ impl pallet_nft::Config for Runtime {
 	type TreasuryAccountId = TreasuryAccountId;
 }
 
-/// Reimport pallet inflation
-extern crate pallet_inflation;
-pub use pallet_inflation::*;
-
 parameter_types! {
 	pub const InflationBlockInterval: BlockNumber = 100; // every time per how many blocks inflation is applied
 }
@@ -903,3 +905,8 @@ impl_runtime_apis! {
 		}
 	}
 }
+
+cumulus_pallet_parachain_system::register_validate_block!(
+	Runtime,
+	cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
+);
