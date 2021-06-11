@@ -1547,9 +1547,10 @@ checksum = "f7531096570974c3a9dcf9e4b8e1cede1ec26cf5046219fb3b9d897503b9be59"
 
 [[package]]
 name = "evm"
-version = "0.26.0"
-source = "git+https://github.com/usetech-llc/evm.git?branch=precompile-output#e667bc507590bc67024e5d12c65241d4aef2a1b9"
+version = "0.27.0"
+source = "git+https://github.com/usetech-llc/evm.git?branch=precompile-output#081b56a17b8e587655bf45cacc1c823265530b50"
 dependencies = [
+ "environmental",
  "ethereum",
  "evm-core",
  "evm-gasometer",
@@ -1588,8 +1589,8 @@ dependencies = [
 
 [[package]]
 name = "evm-core"
-version = "0.26.0"
-source = "git+https://github.com/usetech-llc/evm.git?branch=precompile-output#e667bc507590bc67024e5d12c65241d4aef2a1b9"
+version = "0.27.1"
+source = "git+https://github.com/usetech-llc/evm.git?branch=precompile-output#081b56a17b8e587655bf45cacc1c823265530b50"
 dependencies = [
  "funty",
  "parity-scale-codec 2.1.1",
@@ -1599,9 +1600,10 @@ dependencies = [
 
 [[package]]
 name = "evm-gasometer"
-version = "0.26.0"
-source = "git+https://github.com/usetech-llc/evm.git?branch=precompile-output#e667bc507590bc67024e5d12c65241d4aef2a1b9"
+version = "0.27.0"
+source = "git+https://github.com/usetech-llc/evm.git?branch=precompile-output#081b56a17b8e587655bf45cacc1c823265530b50"
 dependencies = [
+ "environmental",
  "evm-core",
  "evm-runtime",
  "primitive-types 0.9.0",
@@ -1609,9 +1611,10 @@ dependencies = [
 
 [[package]]
 name = "evm-runtime"
-version = "0.26.0"
-source = "git+https://github.com/usetech-llc/evm.git?branch=precompile-output#e667bc507590bc67024e5d12c65241d4aef2a1b9"
+version = "0.27.0"
+source = "git+https://github.com/usetech-llc/evm.git?branch=precompile-output#081b56a17b8e587655bf45cacc1c823265530b50"
 dependencies = [
+ "environmental",
  "evm-core",
  "primitive-types 0.9.0",
  "sha3 0.8.2",
@@ -1671,8 +1674,8 @@ dependencies = [
 
 [[package]]
 name = "fc-consensus"
-version = "1.0.1-dev"
-source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7facf3dd69644e19d13e5622353d84d97080d1c4"
+version = "2.0.0-dev"
+source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7b3b742c4e95eb7ae6c5435137670365f17ae1fa"
 dependencies = [
  "derive_more",
  "fc-db",
@@ -1696,7 +1699,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "1.0.0"
-source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7facf3dd69644e19d13e5622353d84d97080d1c4"
+source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7b3b742c4e95eb7ae6c5435137670365f17ae1fa"
 dependencies = [
  "kvdb",
  "kvdb-rocksdb",
@@ -1709,8 +1712,8 @@ dependencies = [
 
 [[package]]
 name = "fc-mapping-sync"
-version = "1.1.0-dev"
-source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7facf3dd69644e19d13e5622353d84d97080d1c4"
+version = "2.0.0-dev"
+source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7b3b742c4e95eb7ae6c5435137670365f17ae1fa"
 dependencies = [
  "fc-consensus",
  "fc-db",
@@ -1728,7 +1731,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7facf3dd69644e19d13e5622353d84d97080d1c4"
+source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7b3b742c4e95eb7ae6c5435137670365f17ae1fa"
 dependencies = [
  "ethereum",
  "ethereum-types 0.11.0",
@@ -1769,7 +1772,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7facf3dd69644e19d13e5622353d84d97080d1c4"
+source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7b3b742c4e95eb7ae6c5435137670365f17ae1fa"
 dependencies = [
  "ethereum-types 0.11.0",
  "jsonrpc-core 15.1.0",
@@ -1901,7 +1904,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "1.0.0"
-source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7facf3dd69644e19d13e5622353d84d97080d1c4"
+source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7b3b742c4e95eb7ae6c5435137670365f17ae1fa"
 dependencies = [
  "ethereum",
  "parity-scale-codec 2.1.1",
@@ -1914,8 +1917,8 @@ dependencies = [
 
 [[package]]
 name = "fp-evm"
-version = "1.0.1-dev"
-source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7facf3dd69644e19d13e5622353d84d97080d1c4"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7b3b742c4e95eb7ae6c5435137670365f17ae1fa"
 dependencies = [
  "evm",
  "impl-trait-for-tuples 0.1.3",
@@ -1927,8 +1930,8 @@ dependencies = [
 
 [[package]]
 name = "fp-rpc"
-version = "1.0.1-dev"
-source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7facf3dd69644e19d13e5622353d84d97080d1c4"
+version = "2.0.0"
+source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7b3b742c4e95eb7ae6c5435137670365f17ae1fa"
 dependencies = [
  "ethereum",
  "ethereum-types 0.11.0",
@@ -1943,18 +1946,8 @@ dependencies = [
 
 [[package]]
 name = "fp-storage"
-version = "1.0.1-dev"
-source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7facf3dd69644e19d13e5622353d84d97080d1c4"
-dependencies = [
- "ethereum",
- "ethereum-types 0.11.0",
- "fp-evm",
- "parity-scale-codec 2.1.1",
- "sp-api",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
+version = "1.0.1"
+source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7b3b742c4e95eb7ae6c5435137670365f17ae1fa"
 
 [[package]]
 name = "frame-benchmarking"
@@ -4494,8 +4487,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-ethereum"
-version = "1.0.1-dev"
-source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7facf3dd69644e19d13e5622353d84d97080d1c4"
+version = "2.0.0-dev"
+source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7b3b742c4e95eb7ae6c5435137670365f17ae1fa"
 dependencies = [
  "ethereum",
  "ethereum-types 0.11.0",
@@ -4522,8 +4515,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm"
-version = "3.0.1-dev"
-source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7facf3dd69644e19d13e5622353d84d97080d1c4"
+version = "4.0.0-dev"
+source = "git+https://github.com/usetech-llc/frontier.git?branch=injected-transactions#7b3b742c4e95eb7ae6c5435137670365f17ae1fa"
 dependencies = [
  "evm",
  "evm-gasometer",
@@ -8559,7 +8552,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.7.3",
+ "rand 0.3.23",
  "static_assertions",
 ]
 
