@@ -32,10 +32,11 @@ pub use frame_support::{
 
 use frame_system::{self as system, ensure_signed, ensure_root};
 use sp_runtime::sp_std::prelude::Vec;
+use core::ops::{Deref, DerefMut};
 use nft_data_structs::{
     MAX_DECIMAL_POINTS, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, MAX_REFUNGIBLE_PIECES,
 	AccessMode, ChainLimits, Collection, CreateItemData, CollectionLimits,
-    CollectionId, CollectionMode, CollectionHandle, TokenId, 
+    CollectionId, CollectionMode, TokenId, 
     SchemaVersion, SponsorshipState, Ownership,
     NftItemType, FungibleItemType, ReFungibleItemType
 };
@@ -164,7 +165,25 @@ decl_error! {
 	}
 }
 
-// + pallet_transaction_payment::Config  + pallet_nft_transaction_payment::Config + pallet_contracts::Config
+pub struct CollectionHandle<T: frame_system::Config> {
+    pub id: CollectionId,
+    pub collection: Collection<T>,
+}
+
+impl<T: frame_system::Config> Deref for CollectionHandle<T> {
+    type Target = Collection<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.collection
+    }
+}
+
+impl<T: frame_system::Config> DerefMut for CollectionHandle<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.collection
+    }
+}
+
 
 
 pub trait Config: system::Config + Sized {

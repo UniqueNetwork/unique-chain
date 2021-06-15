@@ -102,7 +102,7 @@ pub trait Config: system::Config
 	/// Not strictly enforced, but used for weight estimation.
 	type MaxScheduledPerBlock: Get<u32>;
 
-	/// TODO
+	/// Sponsoring function
 	type Sponsoring: SponsoringResolve<Self::AccountId, <Self as Config>::Call>;
 
 	/// Weight information for extrinsics in this pallet.
@@ -230,8 +230,7 @@ decl_module! {
 		///     - Write: Agenda
 		/// - Will use base weight of 25 which should be good for up to 30 scheduled calls
 		/// # </weight>
-		// #[weight = <T as Config>::WeightInfo::schedule(T::MaxScheduledPerBlock::get())]
-		#[weight = 0]
+		#[weight = <T as Config>::WeightInfo::schedule(T::MaxScheduledPerBlock::get())]
 		fn schedule(origin,
 			when: T::BlockNumber,
 			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
@@ -367,7 +366,7 @@ decl_module! {
 			}
 			queued.sort_by_key(|(_, s)| s.priority);
 			let base_weight: Weight = T::DbWeight::get().reads_writes(1, 2); // Agenda + Agenda(next)
-			let mut total_weight: Weight = <T as Config>::WeightInfo::schedule(T::MaxScheduledPerBlock::get());
+			let mut total_weight: Weight = 0;
 			queued.into_iter()
 				.enumerate()
 				.scan(base_weight, |cumulative_weight, (order, (index, s))| {
@@ -407,7 +406,7 @@ decl_module! {
 						).into();
 						let sender = ensure_signed(origin).unwrap_or(T::AccountId::default());
 						let who_will_pay = T::Sponsoring::resolve(&sender, &s.call.clone()).unwrap_or(
-							T::AccountId::default());
+							sender);
 						let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay));
 						let r = s.call.clone().dispatch(sponsor.into());
 						let maybe_id = s.maybe_id.clone();

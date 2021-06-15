@@ -135,6 +135,13 @@ where
 			.map(|i| (fee, i));
         }
 
+        // check errors
+        let error = <pallet_nft_transaction_payment::Module<T>>::check_error(who, call);
+        match error {
+            Err(error) => return Err(error),
+            Ok(error) => {}
+        };
+
         // Determine who is paying transaction fee based on ecnomic model
 		// Parse call to extract collection ID and access collection sponsor	
 		let sponsor = <pallet_nft_transaction_payment::Module<T>>::withdraw_type(who, call);

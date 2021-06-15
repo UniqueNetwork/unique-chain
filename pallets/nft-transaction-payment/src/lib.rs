@@ -31,6 +31,9 @@ use sp_runtime::{
 	traits::{ 
 		Hash, Dispatchable,
 	},
+	transaction_validity::{
+        InvalidTransaction, TransactionValidityError,
+    },
 };
 use pallet_contracts::chain_extension::UncheckedFrom;
 use sp_std::prelude::*;
@@ -84,6 +87,36 @@ decl_module! {
 
 impl<T: Config> Module<T> 
 {
+
+	pub fn check_error(
+		who: &T::AccountId,
+		call: &T::Call
+	) -> Result<bool, TransactionValidityError> where 
+		T::Call: Dispatchable<Info=DispatchInfo>,
+		T::Call: IsSubType<pallet_nft::Call<T>>, 
+		T::Call: IsSubType<pallet_contracts::Call<T>>,
+		T::AccountId: AsRef<[u8]>,
+		T::AccountId: UncheckedFrom<T::Hash>
+		{
+
+			match IsSubType::<pallet_contracts::Call<T>>::is_sub_type(call) {
+				Some(pallet_contracts::Call::call(dest, _value, _gas_limit, _data)) => {
+	
+					let called_contract: T::AccountId = T::Lookup::lookup((*dest).clone()).unwrap_or(T::AccountId::default());
+	
+					let owned_contract = pallet_nft::ContractOwner::<T>::get(called_contract.clone()).as_ref() == Some(who);
+					let white_list_enabled = pallet_nft::ContractWhiteListEnabled::<T>::contains_key(called_contract.clone());
+					  
+					if !owned_contract && white_list_enabled {
+						if !pallet_nft::ContractWhiteList::<T>::contains_key(called_contract.clone(), who) {
+							return Err(InvalidTransaction::Call.into());
+						}
+					}
+					Ok(true)
+				},
+				_ => { Ok(true) },
+			}
+		}
 
 	pub fn withdraw_type(
 		who: &T::AccountId,
@@ -367,159 +400,3 @@ impl<T: Config> Module<T>
 		None
 	}
 }
-
-// type BalanceOf<T> = <<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::Balance;
-
-// /// Require the transactor pay for themselves and maybe include a tip to gain additional priority
-// /// in the queue.
-// #[derive(Encode, Decode, Clone, Eq, PartialEq)]
-// pub struct ChargeTransactionPayment<T: Config>(#[codec(compact)] BalanceOf<T>);
-
-// impl<T: Config + Send + Sync> sp_std::fmt::Debug 
-//     for ChargeTransactionPayment<T>
-// {
-// 	#[cfg(feature = "std")]
-// 	fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-// 		write!(f, "ChargeTransactionPayment<{:?}>", self.0)
-// 	}
-// 	#[cfg(not(feature = "std"))]
-// 	fn fmt(&self, _: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-// 		Ok(())
-// 	}
-// }
-
-// impl<T: Config> ChargeTransactionPayment<T>
-// where
-// 	T::Call: Dispatchable<Info=DispatchInfo, PostInfo=PostDispatchInfo> + IsSubType<pallet_nft::Call<T>> + IsSubType<pallet_contracts::Call<T>>,
-//     BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
-//     T::AccountId: AsRef<[u8]>,
-//     T::AccountId: UncheckedFrom<T::Hash>,
-// {
-//     fn traditional_fee(
-//         len: usize,
-//         info: &DispatchInfoOf<T::Call>,
-//         tip: BalanceOf<T>,
-//     ) -> BalanceOf<T>
-//     where
-//         T::Call: Dispatchable<Info = DispatchInfo>,
-//     {
-//         <pallet_transaction_payment::Module<T>>::compute_fee(len as u32, info, tip)
-//     }
-
-// 	fn get_priority(len: usize, info: &DispatchInfoOf<T::Call>, final_fee: BalanceOf<T>) -> TransactionPriority {
-//         let weight_saturation = T::BlockWeights::get().max_block / info.weight.max(1);
-//         let max_block_length = *T::BlockLength::get().max.get(DispatchClass::Normal);
-//         let len_saturation = max_block_length as u64 / (len as u64).max(1);
-//         let coefficient: BalanceOf<T> = weight_saturation
-//             .min(len_saturation)
-//             .saturated_into::<BalanceOf<T>>();
-//         final_fee
-//             .saturating_mul(coefficient)
-//             .saturated_into::<TransactionPriority>()
-//     }
-
-//     fn withdraw_fee(
-//         &self,
-//         who: &T::AccountId,
-//         call: &T::Call,
-//         info: &DispatchInfoOf<T::Call>,
-//         len: usize,
-// 	) -> Result<
-// 		(
-// 			BalanceOf<T>,
-// 			<<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::LiquidityInfo,
-// 		),
-// 		TransactionValidityError,
-// 	> {
-//         let tip = self.0;
-
-//         let fee = Self::traditional_fee(len, info, tip);
-
-//         // Only mess with balances if fee is not zero.
-//         if fee.is_zero() {
-//             return <<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::withdraw_fee(who, call, info, fee, tip)
-// 			.map(|i| (fee, i));
-//         }
-
-//         // Determine who is paying transaction fee based on ecnomic model
-// 		// Parse call to extract collection ID and access collection sponsor
-		
-// 		let sponsor = pallet_nft_transaction_payment::<T>::withdraw_type(who, call);
-// 		//let sponsor = Self::Module::<T>::withdraw_type(who, call);;
-// 		// <pallet_nft_transaction_payment::Module<T>>::withdraw_type(who, call);
-
-//         let who_pays_fee = sponsor.unwrap_or_else(|| who.clone());
-
-// 		<<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::withdraw_fee(&who_pays_fee, call, info, fee, tip)
-// 			.map(|i| (fee, i))
-//     }
-// }
-
-
-// impl<T: Config + Send + Sync> SignedExtension
-//     for ChargeTransactionPayment<T>
-// where
-//     BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
-// 	T::Call: Dispatchable<Info=DispatchInfo, PostInfo=PostDispatchInfo> + IsSubType<pallet_nft::Call<T>> + IsSubType<pallet_contracts::Call<T>>,
-//     T::AccountId: AsRef<[u8]>,
-//     T::AccountId: UncheckedFrom<T::Hash>,
-// {
-//     const IDENTIFIER: &'static str = "ChargeTransactionPayment";
-//     type AccountId = T::AccountId;
-//     type Call = T::Call;
-//     type AdditionalSigned = ();
-//     type Pre = (
-//         // tip
-//         BalanceOf<T>,
-//         // who pays fee
-//         Self::AccountId,
-// 		// imbalance resulting from withdrawing the fee
-// 		<<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::LiquidityInfo,
-//     );
-//     fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> {
-//         Ok(())
-//     }
-
-//     fn validate(
-//         &self,
-//         who: &Self::AccountId,
-//         call: &Self::Call,
-//         info: &DispatchInfoOf<Self::Call>,
-//         len: usize,
-//     ) -> TransactionValidity {
-// 		let (fee, _) = self.withdraw_fee(who, call, info, len)?;
-// 		Ok(ValidTransaction {
-// 			priority: Self::get_priority(len, info, fee),
-// 			..Default::default()
-// 		})
-//     }
-
-//     fn pre_dispatch(
-//         self,
-//         who: &Self::AccountId,
-//         call: &Self::Call,
-//         info: &DispatchInfoOf<Self::Call>,
-//         len: usize,
-//     ) -> Result<Self::Pre, TransactionValidityError> {
-//         let (_fee, imbalance) = self.withdraw_fee(who, call, info, len)?;
-//         Ok((self.0, who.clone(), imbalance))
-//     }
-
-//     fn post_dispatch(
-//         pre: Self::Pre,
-//         info: &DispatchInfoOf<Self::Call>,
-//         post_info: &PostDispatchInfoOf<Self::Call>,
-//         len: usize,
-//         _result: &DispatchResult,
-//     ) -> Result<(), TransactionValidityError> {
-// 		let (tip, who, imbalance) = pre;
-// 		let actual_fee = pallet_transaction_payment::Module::<T>::compute_actual_fee(
-// 			len as u32,
-// 			info,
-// 			post_info,
-// 			tip,
-// 		);
-// 		<T as pallet_transaction_payment::Config>::OnChargeTransaction::correct_and_deposit_fee(&who, info, post_info, actual_fee, tip, imbalance)?;
-// 		Ok(())
-//     }
-// }
