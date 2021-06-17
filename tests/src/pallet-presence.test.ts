@@ -18,7 +18,7 @@ const requiredPallets = [
 
 // Pallets that depend on consensus and governance configuration
 const consensusPallets = [
-  'sudo', 'grandpa', 'aura'
+  'sudo', 'aura'
 ];
 
 describe('Pallet presence', () => {

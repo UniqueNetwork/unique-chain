@@ -7,14 +7,14 @@ import usingApi from "./substrate/substrate-api";
 import { expect } from "chai";
 import { ApiPromise } from "@polkadot/api";
 
-const BlockTimeMs = 6000;
+const BlockTimeMs = 12000;
 const ToleranceMs = 1000;
 
 async function getBlocks(api: ApiPromise): Promise<number[]> {
   return new Promise<number[]>(async (resolve, reject) => {
     const blockNumbers: number[] = [];
     setTimeout(() => reject('Block production test failed due to timeout.'), BlockTimeMs + ToleranceMs);
-    const unsubscribe = await api.rpc.chain.subscribeNewHeads((head) => {
+    const unsubscribe = await api.rpc.chain.subscribeNewHeads((head: any) => {
       blockNumbers.push(head.number.toNumber());
       if(blockNumbers.length >= 2) {
         unsubscribe();
