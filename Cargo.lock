@@ -3433,7 +3433,7 @@ dependencies = [
  "pallet-proxy",
  "pallet-randomness-collective-flip",
  "pallet-recovery",
- "pallet-scheduler",
+ "pallet-scheduler 3.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.3)",
  "pallet-session",
  "pallet-society",
  "pallet-staking",
@@ -4517,6 +4517,7 @@ dependencies = [
  "futures 0.3.14",
  "jsonrpc-core",
  "log",
+ "nft-data-structs",
  "nft-runtime",
  "pallet-contracts",
  "pallet-contracts-rpc",
@@ -4568,6 +4569,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "nft-data-structs"
+version = "0.9.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-contracts",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-runtime",
+]
+
+[[package]]
 name = "nft-runtime"
 version = "3.0.0"
 dependencies = [
@@ -4585,6 +4599,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "nft-data-structs",
  "pallet-aura",
  "pallet-balances",
  "pallet-contracts",
@@ -4592,7 +4607,10 @@ dependencies = [
  "pallet-contracts-rpc-runtime-api",
  "pallet-inflation",
  "pallet-nft",
+ "pallet-nft-charge-transaction",
+ "pallet-nft-transaction-payment",
  "pallet-randomness-collective-flip",
+ "pallet-scheduler 3.0.0",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -5245,8 +5263,54 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "nft-data-structs",
  "pallet-balances",
  "pallet-contracts",
+ "pallet-randomness-collective-flip",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-nft-charge-transaction"
+version = "3.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "nft-data-structs",
+ "pallet-balances",
+ "pallet-contracts",
+ "pallet-nft",
+ "pallet-nft-transaction-payment",
+ "pallet-randomness-collective-flip",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-nft-transaction-payment"
+version = "3.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "nft-data-structs",
+ "pallet-balances",
+ "pallet-contracts",
+ "pallet-nft",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -5326,6 +5390,27 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-scheduler"
+version = "3.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "nft-data-structs",
+ "pallet-contracts",
+ "pallet-nft",
+ "pallet-nft-transaction-payment",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "substrate-test-utils",
 ]
 
 [[package]]
@@ -6639,7 +6724,7 @@ dependencies = [
  "pallet-offences",
  "pallet-proxy",
  "pallet-randomness-collective-flip",
- "pallet-scheduler",
+ "pallet-scheduler 3.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.3)",
  "pallet-session",
  "pallet-staking",
  "pallet-staking-reward-curve",
@@ -10141,6 +10226,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "substrate-test-utils"
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.3#c94e0cdfe5556680dca1996004751eeb114755d7"
+dependencies = [
+ "futures 0.3.14",
+ "substrate-test-utils-derive",
+ "tokio 0.2.25",
+]
+
+[[package]]
+name = "substrate-test-utils-derive"
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.3#c94e0cdfe5556680dca1996004751eeb114755d7"
+dependencies = [
+ "proc-macro-crate 1.0.0",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "substrate-wasm-builder"
 version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10404,6 +10509,7 @@ dependencies = [
  "pin-project-lite 0.1.12",
  "signal-hook-registry",
  "slab",
+ "tokio-macros",
  "winapi 0.3.9",
 ]
 
@@ -10469,6 +10575,17 @@ dependencies = [
  "bytes 0.4.12",
  "futures 0.1.31",
  "log",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e44da00bfc73a25f814cd8d7e57a68a5c31b74b3152a0a1d1f590c97ed06265a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -11476,7 +11593,7 @@ dependencies = [
  "pallet-proxy",
  "pallet-randomness-collective-flip",
  "pallet-recovery",
- "pallet-scheduler",
+ "pallet-scheduler 3.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.3)",
  "pallet-session",
  "pallet-society",
  "pallet-staking",
