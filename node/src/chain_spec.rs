@@ -5,6 +5,7 @@
 
 use cumulus_primitives_core::ParaId;
 use nft_runtime::*;
+use nft_data_structs::*;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use sp_core::{sr25519, Pair, Public};
@@ -161,7 +162,7 @@ fn testnet_genesis(
             balances: endowed_accounts
                 .iter()
                 .cloned()
-                .map(|k| (k, 1 << 100))
+                .map(|k| (k, 1 << 70))
                 .collect(),
         },
 		pallet_treasury: Default::default(),

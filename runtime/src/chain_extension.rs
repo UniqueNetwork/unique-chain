@@ -17,6 +17,7 @@ use frame_support::dispatch::DispatchError;
 
 extern crate pallet_nft;
 pub use pallet_nft::*;
+use nft_data_structs::*;
 
 /// Create item parameters
 #[derive(Debug, PartialEq, Encode, Decode)]
@@ -38,7 +39,7 @@ pub struct NFTExtTransfer<E: Ext> {
 /// The chain Extension of NFT pallet
 pub struct NFTExtension;
 
-impl<C: Config> ChainExtension<C> for NFTExtension {
+impl<C: Config + pallet_contracts::Config> ChainExtension<C> for NFTExtension {
     fn call<E: Ext>(func_id: u32, env: Environment<E, InitState>) -> Result<RetVal, DispatchError>
     where
         E: Ext<T = C>,

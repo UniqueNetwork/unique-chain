@@ -2,6 +2,7 @@
 members = [
     'node',
     'pallets/*',
+    'primitives',
     'runtime',
 ]
 resolver = "2"

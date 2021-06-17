@@ -5,7 +5,7 @@
 
 import { ApiPromise, Keyring } from '@polkadot/api';
 import { Enum, Struct } from '@polkadot/types/codec';
-import type { AccountId, EventRecord } from '@polkadot/types/interfaces';
+import type { AccountId, BlockNumber, Call, EventRecord } from '@polkadot/types/interfaces';
 import { u128 } from '@polkadot/types/primitive';
 import { IKeyringPair } from '@polkadot/types/types';
 import { BigNumber } from 'bignumber.js';
@@ -17,6 +17,8 @@ import privateKey from '../substrate/privateKey';
 import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from '../substrate/substrate-api';
 import { ICollectionInterface } from '../types';
 import { hexToStr, strToUTF16, utf16ToStr } from './util';
+import { Compact, Option, Raw, Vec } from '@polkadot/types/codec';
+// import { AccountId, AccountIdOf, AccountIndex, Address, AssetId, Balance, BalanceOf, Block, BlockNumber, Call, ChangesTrieConfiguration, Consensus, ConsensusEngineId, Digest, DigestItem, DispatchClass, DispatchInfo, DispatchInfoTo190, EcdsaSignature, Ed25519Signature, Extrinsic, ExtrinsicEra, ExtrinsicPayload, ExtrinsicPayloadUnknown, ExtrinsicPayloadV1, ExtrinsicPayloadV2, ExtrinsicPayloadV3, ExtrinsicPayloadV4, ExtrinsicSignatureV1, ExtrinsicSignatureV2, ExtrinsicSignatureV3, ExtrinsicSignatureV4, ExtrinsicUnknown, ExtrinsicV1, ExtrinsicV2, ExtrinsicV3, ExtrinsicV4, Hash, Header, ImmortalEra, Index, Justification, KeyTypeId, KeyValue, LockIdentifier, LookupSource, LookupTarget, Moment, MortalEra, MultiSignature, Origin, Perbill, Percent, Permill, Perquintill, Phantom, PhantomData, PreRuntime, Seal, SealV0, Signature, SignedBlock, SignerPayload, Sr25519Signature, ValidatorId, Weight, WeightMultiplier } from '@polkadot/types/interfaces/runtime';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -701,6 +703,54 @@ transferFromExpectFail(collectionId: number,
     expect(result.success).to.be.false;
   });
 }
+
+async function getBlockNumber(api: ApiPromise): Promise<number> {
+  return new Promise<number>(async (resolve, reject) => {
+    const unsubscribe = await api.rpc.chain.subscribeNewHeads((head) => {
+        unsubscribe();
+        resolve(head.number.toNumber());
+    });
+  });
+}
+
+export async function
+scheduleTransferExpectSuccess(collectionId: number,
+                      tokenId: number,
+                      sender: IKeyringPair,
+                      recipient: IKeyringPair,
+                      value: number | bigint = 1,
+                      type: string = 'NFT') {
+  await usingApi(async (api: ApiPromise) => {
+    let balanceBefore = new BN(0);
+
+
+    let blockNumber: number | undefined = await getBlockNumber(api);
+    let expectedBlockNumber = blockNumber + 2;
+
+    expect(blockNumber).to.be.greaterThan(0);
+    const transferTx = await api.tx.nft.transfer(recipient.address, collectionId, tokenId, value); 
+    const scheduleTx = await api.tx.scheduler.schedule(expectedBlockNumber, null, 0, transferTx);
+
+    const events = await submitTransactionAsync(sender, scheduleTx);
+
+    const sponsorBalanceBefore = new BigNumber((await api.query.system.account(sender.address)).data.free.toString());
+    const recipientBalanceBefore = new BigNumber((await api.query.system.account(recipient.address)).data.free.toString());
+
+    const nftItemDataBefore = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON() as unknown as ITokenDataType;
+    expect(nftItemDataBefore.Owner.toString()).to.be.equal(sender.address);
+
+    // sleep for 2 blocks
+    await new Promise(resolve => setTimeout(resolve, 6000 * 2));
+
+    const sponsorBalanceAfter = new BigNumber((await api.query.system.account(sender.address)).data.free.toString());
+    const recipientBalanceAfter = new BigNumber((await api.query.system.account(recipient.address)).data.free.toString());
+
+    const nftItemData = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON() as unknown as ITokenDataType;
+    expect(nftItemData.Owner.toString()).to.be.equal(recipient.address);
+    expect(recipientBalanceAfter.toNumber()).to.be.equal(recipientBalanceBefore.toNumber());
+  });
+}
+
 
 export async function
 transferExpectSuccess(collectionId: number,

@@ -13,7 +13,8 @@ function getModuleNames(api: ApiPromise): string[] {
 
 // Pallets that must always be present
 const requiredPallets = [
-  'nft', 'inflation', 'balances', 'contracts', 'randomnesscollectiveflip', 'system', 'timestamp', 'transactionpayment', 'treasury', 'vesting'
+  'nft', 'inflation', 'balances', 'contracts', 'randomnesscollectiveflip', 'system', 'timestamp', 'transactionpayment', 'treasury', 'vesting',
+  'scheduler', 'nftpayment', 'charging'
 ];
 
 // Pallets that depend on consensus and governance configuration

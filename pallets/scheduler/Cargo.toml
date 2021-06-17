@@ -1,0 +1,53 @@
+[package]
+name = "pallet-scheduler"
+version = "3.0.0"
+authors = ["Parity Technologies <admin@parity.io>"]
+edition = "2018"
+license = "Unlicense"
+homepage = "https://substrate.dev"
+repository = "https://github.com/paritytech/substrate/"
+description = "FRAME example pallet"
+readme = "README.md"
+
+[dependencies]
+serde = { version = "1.0.119" }
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
+frame-support = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
+frame-system = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
+pallet-contracts = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
+sp-runtime = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
+sp-std = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
+sp-io = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
+frame-benchmarking = { default-features = false, version = '3.0.0', optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
+
+pallet-nft-transaction-payment = { default-features = false, path = "../nft-transaction-payment" }
+pallet-nft = { default-features = false, path = "../nft" }
+nft-data-structs = { path = '../../primitives', default-features = false }
+log = { version = "0.4.14", default-features = false }
+
+[dev-dependencies]
+sp-core = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
+substrate-test-utils = { version = "3.0.0", git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
+
+[features]
+default = ["std"]
+std = [
+	"codec/std",
+	"sp-runtime/std",
+	"frame-benchmarking/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-nft-transaction-payment/std",
+	"pallet-nft/std",
+	"pallet-contracts/std",
+	"nft-data-structs/std",
+	"sp-io/std",
+	"sp-std/std",
+	"log/std",
+]
+runtime-benchmarks = [
+	"frame-benchmarking",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+]
+#try-runtime = ["frame-support/try-runtime"]
