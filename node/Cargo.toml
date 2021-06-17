@@ -283,6 +283,10 @@ branch = 'release-v0.9.3'
 path = '../runtime'
 version = '3.0.0'
 
+[dependencies.nft-data-structs]
+path="../primitives"
+default-features = false
+
 ################################################################################
 # Package 
 

@@ -27,6 +27,7 @@ std = [
     'pallet-contracts/std',
     'pallet-randomness-collective-flip/std',
     'pallet-transaction-payment/std',
+    'nft-data-structs/std',
     'sp-std/std',
     'sp-runtime/std',
     'frame-benchmarking/std',
@@ -118,3 +119,10 @@ git = 'https://github.com/paritytech/substrate.git'
 branch = 'polkadot-v0.9.3'
 version = '3.0.0'
 
+################################################################################
+# Local Dependencies
+
+[dependencies.nft-data-structs]
+default-features = false
+path = '../../primitives'
+version = '0.9.0'

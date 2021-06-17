@@ -7,7 +7,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
+#![recursion_limit = "1024"]
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
@@ -17,12 +17,14 @@ use sp_api::impl_runtime_apis;
 use sp_core::{ crypto::KeyTypeId, OpaqueMetadata };
 // #[cfg(any(feature = "std", test))]
 // pub use sp_runtime::BuildStorage;
-use sp_runtime::traits::{
-	AccountIdLookup, AccountIdConversion, BlakeTwo256, Block as BlockT, ConvertInto, IdentifyAccount, Verify,
-};
+
 use sp_runtime::{
     Permill, Perbill, Percent,
     create_runtime_str, generic, impl_opaque_keys,
+    traits::{
+        AccountIdLookup, Convert, ConvertInto, BlakeTwo256, Block as BlockT, IdentifyAccount, 
+		IdentityLookup, NumberFor, Verify, AccountIdConversion,
+    },
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, MultiSignature,
 };
@@ -51,15 +53,26 @@ pub use frame_support::{
         WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients
     },
 };
+use pallet_nft_transaction_payment::*;
+use pallet_nft_charge_transaction::*;
+use nft_data_structs::*;
 use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
 use frame_system::{
     self as system,
-    EnsureRoot, 
+    EnsureRoot, EnsureSigned,
 	limits::{BlockWeights, BlockLength},
 };
 use sp_arithmetic::{traits::{BaseArithmetic, Unsigned}};
 use smallvec::smallvec;
+
+use sp_runtime::{
+	traits::{ 
+		Dispatchable,
+	},
+};
+use pallet_contracts::chain_extension::UncheckedFrom;
+
 
 pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -192,21 +205,6 @@ impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 		}
 	}
 }
-
-// impl OnUnbalanced<NegativeImbalance> for DealWithFees {
-// 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item=NegativeImbalance>) {
-// 		if let Some(fees) = fees_then_tips.next() {
-// 			// for fees, 100% to treasury
-// 			let mut split = fees.ration(100, 0);
-// 			if let Some(tips) = fees_then_tips.next() {
-// 				// for tips, if any, 100% to treasury
-// 				tips.ration_merge_into(100, 0, &mut split);
-// 			}
-// 			Treasury::on_unbalanced(split.0);
-// 			// Author::on_unbalanced(split.1);
-// 		}
-// 	}
-// }
 
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.
@@ -657,6 +655,45 @@ impl pallet_inflation::Config for Runtime {
 	type InflationBlockInterval = InflationBlockInterval;
 }
 
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(50) *
+		RuntimeBlockWeights::get().max_block;
+	pub const MaxScheduledPerBlock: u32 = 50;
+}
+
+pub struct Sponsoring;
+impl SponsoringResolve<AccountId, Call> for Sponsoring {
+
+	fn resolve(who: &AccountId, call: &Call) -> Option<AccountId> 
+	where 
+		Call: Dispatchable<Info=DispatchInfo>,
+		Call: IsSubType<pallet_nft::Call<Runtime>>, 
+		Call: IsSubType<pallet_contracts::Call<Runtime>>,
+		AccountId: AsRef<[u8]>,
+		AccountId: UncheckedFrom<Hash>
+	{
+		pallet_nft_transaction_payment::Module::<Runtime>::withdraw_type(who, call)
+	}
+}
+
+impl pallet_scheduler::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type PalletsOrigin = OriginCaller;
+	type Call = Call;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureSigned<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type Sponsoring = Sponsoring;
+	type WeightInfo = ();
+}
+
+impl pallet_nft_transaction_payment::Config for Runtime {
+}
+
+impl pallet_nft_charge_transaction::Config for Runtime {
+}
+
 construct_runtime!(
     pub enum Runtime where
         Block = Block,
@@ -688,7 +725,10 @@ construct_runtime!(
 
 		// Unique Pallets
         Inflation: pallet_inflation::{Pallet, Call, Storage},
-        Nft: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>},
+		Nft: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>},
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
+		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage},
+		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage },
     }
 );
 
@@ -710,7 +750,7 @@ pub type SignedExtra = (
     system::CheckEra<Runtime>,
     system::CheckNonce<Runtime>,
     system::CheckWeight<Runtime>,
-    pallet_nft::ChargeTransactionPayment<Runtime>,
+    pallet_nft_charge_transaction::ChargeTransactionPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
