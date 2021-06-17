@@ -566,10 +566,14 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
             let collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&collection, sender)?;
 
-            <WhiteList<T>>::insert(collection_id, address, true);
-            
+            Self::toggle_white_list_internal(
+                &sender,
+                &collection,
+                &address,
+                true,
+            )?;
+
             Ok(())
         }
 
@@ -591,9 +595,13 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
             let collection = Self::get_collection(collection_id)?;
-            Self::check_owner_or_admin_permissions(&collection, sender)?;
 
-            <WhiteList<T>>::remove(collection_id, address);
+            Self::toggle_white_list_internal(
+                &sender,
+                &collection,
+                &address,
+                false,
+            )?;
 
             Ok(())
         }
@@ -983,43 +991,10 @@ decl_module! {
         pub fn approve(origin, spender: T::AccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            let target_collection = Self::get_collection(collection_id)?;
+            let collection = Self::get_collection(collection_id)?;
 
-            Self::token_exists(&target_collection, item_id)?;
+            Self::approve_internal(sender, spender, &collection, item_id, amount)?;
 
-            // Transfer permissions check
-            let bypasses_limits = target_collection.limits.owner_can_transfer &&
-                Self::is_owner_or_admin_permissions(
-                    &target_collection,
-                    sender.clone(),
-                );
-
-            let allowance_limit = if bypasses_limits {
-                None
-            } else if let Some(amount) = Self::owned_amount(
-                sender.clone(),
-                &target_collection,
-                item_id,
-            ) {
-                Some(amount)
-            } else {
-                fail!(Error::<T>::NoPermission);
-            };
-
-            if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(&target_collection, &sender)?;
-                Self::check_white_list(&target_collection, &spender)?;
-            }
-
-            let allowance: u128 = amount
-                .checked_add(<Allowances<T>>::get(collection_id, (item_id, &sender, &spender)))
-                .ok_or(Error::<T>::NumOverflow)?;
-            if let Some(limit) = allowance_limit {
-                ensure!(limit >= allowance, Error::<T>::TokenValueTooLow);
-            }
-            <Allowances<T>>::insert(collection_id, (item_id, sender.clone(), spender.clone()), allowance);
-
-            Self::deposit_event(RawEvent::Approved(target_collection.id, item_id, sender, spender, allowance));
             Ok(())
         }
         
@@ -1047,46 +1022,10 @@ decl_module! {
         pub fn transfer_from(origin, from: T::AccountId, recipient: T::AccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            let target_collection = Self::get_collection(collection_id)?;
+            let collection = Self::get_collection(collection_id)?;
 
-            // Check approval
-            let approval: u128 = <Allowances<T>>::get(collection_id, (item_id, &from, &sender));
+            Self::transfer_from_internal(sender, from, recipient, &collection, item_id, value)?;
 
-            // Limits check
-            Self::is_correct_transfer(&target_collection, &recipient)?;
-
-            // Transfer permissions check         
-            ensure!(
-                approval >= value || 
-                (
-                    target_collection.limits.owner_can_transfer &&
-                    Self::is_owner_or_admin_permissions(&target_collection, sender.clone())
-                ),
-                Error::<T>::NoPermission
-            );
-
-            if target_collection.access == AccessMode::WhiteList {
-                Self::check_white_list(&target_collection, &sender)?;
-                Self::check_white_list(&target_collection, &recipient)?;
-            }
-
-            // Reduce approval by transferred amount or remove if remaining approval drops to 0
-            if approval.saturating_sub(value) > 0 {
-                <Allowances<T>>::insert(collection_id, (item_id, &from, &sender), approval - value);
-            }
-            else {
-                <Allowances<T>>::remove(collection_id, (item_id, &from, &sender));
-            }
-
-            match target_collection.mode
-            {
-                CollectionMode::NFT => Self::transfer_nft(&target_collection, item_id, from.clone(), recipient.clone())?,
-                CollectionMode::Fungible(_)  => Self::transfer_fungible(&target_collection, value, &from, &recipient)?,
-                CollectionMode::ReFungible  => Self::transfer_refungible(&target_collection, item_id, value, from.clone(), recipient.clone())?,
-                _ => ()
-            };
-
-            Self::deposit_event(RawEvent::Transfer(target_collection.id, item_id, from, recipient, value));
             Ok(())
         }
 
@@ -1127,23 +1066,9 @@ decl_module! {
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             
-            let target_collection = Self::get_collection(collection_id)?;
-            Self::token_exists(&target_collection, item_id)?;
+            let collection = Self::get_collection(collection_id)?;
 
-            ensure!(ChainLimit::get().custom_data_limit >= data.len() as u32, Error::<T>::TokenVariableDataLimitExceeded);
-
-            // Modify permissions check
-            ensure!(Self::is_item_owner(sender.clone(), &target_collection, item_id) ||
-                Self::is_owner_or_admin_permissions(&target_collection, sender.clone()),
-                Error::<T>::NoPermission);
-
-            match target_collection.mode
-            {
-                CollectionMode::NFT => Self::set_nft_variable_data(&target_collection, item_id, data)?,
-                CollectionMode::ReFungible  => Self::set_re_fungible_variable_data(&target_collection, item_id, data)?,
-                CollectionMode::Fungible(_) => fail!(Error::<T>::CantStoreMetadataInFungibleTokens),
-                _ => fail!(Error::<T>::UnexpectedCollectionType)
-            };
+            Self::set_variable_meta_data_internal(sender, &collection, item_id, data)?;
 
             Ok(())
         }
@@ -1516,6 +1441,164 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
+	pub fn approve_internal(
+		sender: T::AccountId,
+		spender: T::AccountId,
+		collection: &CollectionHandle<T>,
+		item_id: TokenId,
+		amount: u128,
+	) -> DispatchResult {
+		Self::token_exists(&collection, item_id)?;
+
+		// Transfer permissions check
+		let bypasses_limits = collection.limits.owner_can_transfer &&
+			Self::is_owner_or_admin_permissions(
+				&collection,
+				sender.clone(),
+			);
+
+		let allowance_limit = if bypasses_limits {
+			None
+		} else if let Some(amount) = Self::owned_amount(
+			sender.clone(),
+			&collection,
+			item_id,
+		) {
+			Some(amount)
+		} else {
+			fail!(Error::<T>::NoPermission);
+		};
+
+		if collection.access == AccessMode::WhiteList {
+			Self::check_white_list(&collection, &sender)?;
+			Self::check_white_list(&collection, &spender)?;
+		}
+
+		let allowance: u128 = amount
+			.checked_add(<Allowances<T>>::get(collection.id, (item_id, &sender, &spender)))
+			.ok_or(Error::<T>::NumOverflow)?;
+		if let Some(limit) = allowance_limit {
+			ensure!(limit >= allowance, Error::<T>::TokenValueTooLow);
+		}
+		<Allowances<T>>::insert(collection.id, (item_id, &sender, &spender), allowance);
+
+		Self::deposit_event(RawEvent::Approved(collection.id, item_id, sender, spender, allowance));
+		Ok(())
+	}
+
+	pub fn transfer_from_internal(
+		sender: T::AccountId,
+		from: T::AccountId,
+		recipient: T::AccountId,
+		collection: &CollectionHandle<T>,
+		item_id: TokenId,
+		amount: u128,
+	) -> DispatchResult {
+		// Check approval
+		let approval: u128 = <Allowances<T>>::get(collection.id, (item_id, &from, &sender));
+
+		// Limits check
+		Self::is_correct_transfer(&collection, &recipient)?;
+
+		// Transfer permissions check
+		ensure!(
+			approval >= amount || 
+			(
+				collection.limits.owner_can_transfer &&
+				Self::is_owner_or_admin_permissions(&collection, sender.clone())
+			),
+			Error::<T>::NoPermission
+		);
+
+		if collection.access == AccessMode::WhiteList {
+			Self::check_white_list(&collection, &sender)?;
+			Self::check_white_list(&collection, &recipient)?;
+		}
+
+		// Reduce approval by transferred amount or remove if remaining approval drops to 0
+		let allowance = approval.saturating_sub(amount);
+		if allowance > 0 {
+			<Allowances<T>>::insert(collection.id, (item_id, &from, &sender), allowance);
+		} else {
+			<Allowances<T>>::remove(collection.id, (item_id, &from, &sender));
+		}
+
+		match collection.mode {
+			CollectionMode::NFT => {
+				Self::transfer_nft(&collection, item_id, from.clone(), recipient.clone())?
+			}
+			CollectionMode::Fungible(_) => {
+				Self::transfer_fungible(&collection, amount, &from, &recipient)?
+			}
+			CollectionMode::ReFungible => {
+				Self::transfer_refungible(&collection, item_id, amount, from.clone(), recipient.clone())?
+			}
+			_ => ()
+		};
+
+		Ok(())
+	}
+
+    pub fn set_variable_meta_data_internal(
+        sender: T::AccountId,
+        collection: &CollectionHandle<T>, 
+        item_id: TokenId,
+        data: Vec<u8>,
+    ) -> DispatchResult {
+        Self::token_exists(&collection, item_id)?;
+
+        ensure!(ChainLimit::get().custom_data_limit >= data.len() as u32, Error::<T>::TokenVariableDataLimitExceeded);
+
+        // Modify permissions check
+        ensure!(Self::is_item_owner(sender.clone(), &collection, item_id) ||
+            Self::is_owner_or_admin_permissions(&collection, sender.clone()),
+            Error::<T>::NoPermission);
+
+        match collection.mode
+        {
+            CollectionMode::NFT => Self::set_nft_variable_data(&collection, item_id, data)?,
+            CollectionMode::ReFungible  => Self::set_re_fungible_variable_data(&collection, item_id, data)?,
+            CollectionMode::Fungible(_) => fail!(Error::<T>::CantStoreMetadataInFungibleTokens),
+            _ => fail!(Error::<T>::UnexpectedCollectionType)
+        };
+
+        Ok(())
+    }
+
+    pub fn create_multiple_items_internal(
+        sender: T::AccountId,
+        collection: &CollectionHandle<T>,
+        owner: T::AccountId,
+        items_data: Vec<CreateItemData>,
+    ) -> DispatchResult {
+        Self::can_create_items_in_collection(&collection, &sender, &owner, items_data.len() as u32)?;
+
+        for data in &items_data {
+            Self::validate_create_item_args(&collection, data)?;
+        }
+        for data in &items_data {
+            Self::create_item_no_validation(&collection, owner.clone(), data.clone())?;
+        }
+
+        Ok(())
+    }
+
+    pub fn toggle_white_list_internal(
+        sender: &T::AccountId,
+        collection: &CollectionHandle<T>,
+        address: &T::AccountId,
+        whitelisted: bool,
+    ) -> DispatchResult {
+        Self::check_owner_or_admin_permissions(&collection, sender.clone())?;
+
+        if whitelisted {
+            <WhiteList<T>>::insert(collection.id, address, true);
+        } else {
+            <WhiteList<T>>::remove(collection.id, address);
+        }
+
+        Ok(())
+    }
 
     fn is_correct_transfer(collection: &CollectionHandle<T>, recipient: &T::AccountId) -> DispatchResult {
         let collection_id = collection.id;
