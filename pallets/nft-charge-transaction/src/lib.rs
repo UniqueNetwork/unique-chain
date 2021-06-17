@@ -135,10 +135,10 @@ where
         }
 
         // check errors
-        let error = <pallet_nft_transaction_payment::Module<T>>::check_error(who, call);
-        match error {
-            Err(error) => return Err(error),
-            Ok(error) => {}
+        let _error = <pallet_nft_transaction_payment::Module<T>>::check_error(who, call);
+        match _error {
+            Err(_error) => return Err(_error),
+            Ok(_error) => {}
         };
 
         // Determine who is paying transaction fee based on ecnomic model

@@ -18,10 +18,6 @@ use frame_support::dispatch::DispatchError;
 extern crate pallet_nft;
 pub use pallet_nft::*;
 use nft_data_structs::*;
-// use crate::Runtime;
-
-use sp_runtime::AccountId32;
-use crate::Vec;
 
 /// Create item parameters
 #[derive(Debug, PartialEq, Encode, Decode)]

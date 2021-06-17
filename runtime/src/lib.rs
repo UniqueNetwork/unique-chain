@@ -22,8 +22,8 @@ use sp_runtime::{
     Permill, Perbill, Percent,
     create_runtime_str, generic, impl_opaque_keys,
     traits::{
-        AccountIdLookup, Convert, ConvertInto, BlakeTwo256, Block as BlockT, IdentifyAccount, 
-		IdentityLookup, NumberFor, Verify, AccountIdConversion,
+        AccountIdLookup, ConvertInto, BlakeTwo256, Block as BlockT, IdentifyAccount, 
+		Verify, AccountIdConversion,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, MultiSignature,
@@ -53,8 +53,6 @@ pub use frame_support::{
         WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients
     },
 };
-use pallet_nft_transaction_payment::*;
-use pallet_nft_charge_transaction::*;
 use nft_data_structs::*;
 use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]

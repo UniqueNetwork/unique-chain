@@ -13,7 +13,6 @@ pub use std::*;
 #[cfg(feature = "std")]
 pub use serde::*;
 
-use codec::{Decode, Encode};
 pub use frame_support::{
     construct_runtime, decl_event, decl_module, decl_storage, decl_error,
     dispatch::DispatchResult,

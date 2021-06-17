@@ -140,7 +140,7 @@ impl<T: Config> Module<T>
             },
             Some(pallet_nft::Call::set_variable_meta_data(collection_id, item_id, data)) => {
 
-                Self::withdraw_set_variable_meta_data(who, collection_id, item_id, &data)
+                Self::withdraw_set_variable_meta_data(collection_id, item_id, &data)
 			},
 			_ => None,
         };
@@ -175,7 +175,7 @@ impl<T: Config> Module<T>
 		let collection = pallet_nft::CollectionById::<T>::get(collection_id)?;
 
 		// sponsor timeout
-		let block_number = <frame_system::Module<T>>::block_number() as T::BlockNumber;
+		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 
 		let limit = collection.limits.sponsor_transfer_timeout;
 		if pallet_nft::CreateItemBasket::<T>::contains_key((collection_id, &who)) {
@@ -212,7 +212,7 @@ impl<T: Config> Module<T>
 			let collection_mode = collection.mode.clone();
 
 			// sponsor timeout
-			let block_number = <frame_system::Module<T>>::block_number() as T::BlockNumber;
+			let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 			sponsor_transfer = match collection_mode {
 				CollectionMode::NFT => {
 
@@ -246,7 +246,7 @@ impl<T: Config> Module<T>
 						limits.fungible_sponsor_transfer_timeout
 					};
 
-					let block_number = <frame_system::Module<T>>::block_number() as T::BlockNumber;
+					let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 					let mut sponsored = true;
 					if pallet_nft::FungibleTransferBasket::<T>::contains_key(collection_id, who) {
 						let last_tx_block = pallet_nft::FungibleTransferBasket::<T>::get(collection_id, who);
@@ -299,7 +299,6 @@ impl<T: Config> Module<T>
 	}
 	
 	pub fn withdraw_set_variable_meta_data(
-		who: &T::AccountId,
 		collection_id: &CollectionId,
 		item_id: &TokenId,
 		data: &Vec<u8>,
@@ -317,7 +316,7 @@ impl<T: Config> Module<T>
 			data.len() <= collection.limits.sponsored_data_size as usize
 		{
 			if let Some(rate_limit) = collection.limits.sponsored_data_rate_limit {
-				let block_number = <frame_system::Module<T>>::block_number() as T::BlockNumber;
+				let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 
 				if pallet_nft::VariableMetaDataBasket::<T>::get(collection_id, item_id)
 					.map(|last_block| block_number - last_block > rate_limit)
@@ -358,7 +357,7 @@ impl<T: Config> Module<T>
 		let mut sponsor_transfer = false;
 		if pallet_nft::ContractSponsoringRateLimit::<T>::contains_key(called_contract.clone()) {
 			let last_tx_block = pallet_nft::ContractSponsorBasket::<T>::get((&called_contract, &who));
-			let block_number = <frame_system::Module<T>>::block_number() as T::BlockNumber;
+			let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 			let rate_limit = pallet_nft::ContractSponsoringRateLimit::<T>::get(&called_contract);
 			let limit_time = last_tx_block + rate_limit;
 
@@ -390,7 +389,7 @@ impl<T: Config> Module<T>
 	T::AccountId: UncheckedFrom<T::Hash>
 	{
 
-		let new_contract_address = <pallet_contracts::Module<T>>::contract_address(
+		let new_contract_address = <pallet_contracts::Pallet<T>>::contract_address(
 			&who,
 			code_hash,
 			salt,
