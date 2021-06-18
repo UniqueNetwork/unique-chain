@@ -63,13 +63,13 @@ describe('Contracts', () => {
       const collectionId = await createCollectionExpectSuccess();
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
       const [contract, deployer] = await deployTransferContract(api);
-      const tokenBefore: any = await api.query.nft.nftItemList(collectionId, tokenId);
+      const tokenBefore: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap();
       
       // Transfer
       const transferTx = contract.tx.transfer(value, gasLimit, bob.address, collectionId, tokenId, 1);
       const events = await submitTransactionAsync(alice, transferTx);
       const result = getGenericResult(events);
-      const tokenAfter: any = await api.query.nft.nftItemList(collectionId, tokenId);
+      const tokenAfter: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap();
 
       // tslint:disable-next-line:no-unused-expression
       expect(result.success).to.be.true;

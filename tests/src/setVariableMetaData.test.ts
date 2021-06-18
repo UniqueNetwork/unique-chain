@@ -41,7 +41,7 @@ describe('Integration Test setVariableMetaData', () => {
 
   it('verify data was set', async () => {
     await usingApi(async api => {
-      const item: any = await api.query.nft.nftItemList(collectionId, tokenId);
+      const item: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap();
 
       expect(Array.from(item.VariableData)).to.deep.equal(Array.from(data));
     });

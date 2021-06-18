@@ -14,19 +14,22 @@ import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
   destroyCollectionExpectSuccess,
+  setCollectionLimitsExpectSuccess,
   transferExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
 
-let Alice: IKeyringPair;
-let Bob: IKeyringPair;
+describe('Integration Test approve(spender, collection_id, item_id, amount):', () => {
+  let Alice: IKeyringPair;
+  let Bob: IKeyringPair;
+  let Charlie: IKeyringPair;
 
-describe.only('Integration Test approve(spender, collection_id, item_id, amount):', () => {
   before(async () => {
     await usingApi(async () => {
       Alice = privateKey('//Alice');
       Bob = privateKey('//Bob');
+      Charlie = privateKey('//Charlie');
     });
   });
 
@@ -64,13 +67,25 @@ describe.only('Integration Test approve(spender, collection_id, item_id, amount)
     await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob, 1);
     await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob, 0);
   });
+
+  it('can be called by collection owner on non-owned item when OwnerCanTransfer == true', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Bob.address);
+
+    await approveExpectSuccess(collectionId, itemId, Alice, Charlie);
+  });
 });
 
-describe.only('Negative Integration Test approve(spender, collection_id, item_id, amount):', () => {
+describe('Negative Integration Test approve(spender, collection_id, item_id, amount):', () => {
+  let Alice: IKeyringPair;
+  let Bob: IKeyringPair;
+  let Charlie: IKeyringPair;
+
   before(async () => {
     await usingApi(async (api) => {
       Alice = privateKey('//Alice');
       Bob = privateKey('//Bob');
+      Charlie = privateKey('//Charlie');
     });
   });
 
@@ -108,9 +123,6 @@ describe.only('Negative Integration Test approve(spender, collection_id, item_id
     // nft
     const nftCollectionId = await createCollectionExpectSuccess();
     await approveExpectFail(nftCollectionId, 2, Alice, Bob);
-    // fungible
-    const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    await approveExpectFail(fungibleCollectionId, 2, Alice, Bob);
     // reFungible
     const reFungibleCollectionId =
       await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
@@ -155,5 +167,13 @@ describe.only('Negative Integration Test approve(spender, collection_id, item_id
     await transferExpectSuccess(nftCollectionId, newNftTokenId, Alice, Bob, 10, 'Fungible');
     await approveExpectSuccess(nftCollectionId, newNftTokenId, Bob, Alice, 10);
     await approveExpectFail(nftCollectionId, newNftTokenId, Bob, Alice, 1);
+  });
+
+  it('fails when called by collection owner on non-owned item when OwnerCanTransfer == false', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Bob.address);
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { OwnerCanTransfer: false });
+
+    await approveExpectFail(collectionId, itemId, Alice, Charlie);
   });
 });

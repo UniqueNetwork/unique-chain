@@ -33,7 +33,7 @@ pub struct NFTExtTransfer<E: Ext> {
 /// The chain Extension of NFT pallet
 pub struct NFTExtension;
 
-impl ChainExtension for NFTExtension {
+impl<C: Config> ChainExtension<C> for NFTExtension {
     fn call<E: Ext>(func_id: u32, env: Environment<E, InitState>) -> Result<RetVal, DispatchError>
     where
         <E::T as SysConfig>::AccountId: UncheckedFrom<<E::T as SysConfig>::Hash> + AsRef<[u8]>,
@@ -60,7 +60,9 @@ impl ChainExtension for NFTExtension {
                 }
                 let recipient = AccountId32::from(bytes_rec);
 
-                match pallet_nft::Module::<Runtime>::transfer_internal(sender, recipient, input.collection_id, input.token_id, input.amount) {
+                let collection = pallet_nft::Module::<Runtime>::get_collection(input.collection_id)?;
+
+                match pallet_nft::Module::<Runtime>::transfer_internal(sender, recipient, &collection, input.token_id, input.amount) {
                     Ok(_) => Ok(RetVal::Converging(func_id)),
                     _ => Err(DispatchError::Other("Transfer error"))
                 }
@@ -71,4 +73,3 @@ impl ChainExtension for NFTExtension {
         }
     }
 }
-

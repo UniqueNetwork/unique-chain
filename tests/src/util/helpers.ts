@@ -63,10 +63,37 @@ interface IFungibleTokenDataType {
   Value: BN;
 }
 
+interface IGetMessage {
+  checkMsgNftMethod: string;
+  checkMsgTrsMethod: string;
+  checkMsgSysMethod: string;
+}
+
 export interface IReFungibleTokenDataType {
   Owner: IReFungibleOwner[];
   ConstData: number[];
   VariableData: number[];
+}
+
+export function nftEventMessage(events: EventRecord[]): IGetMessage {
+  let checkMsgNftMethod: string = '';
+  let checkMsgTrsMethod: string = '';
+  let checkMsgSysMethod: string = '';
+  events.forEach(({ event: { method, section } }) => {
+    if (section === 'nft') {
+      checkMsgNftMethod = method;
+    } else if (section === 'treasury') {
+      checkMsgTrsMethod = method;
+    } else if (section === 'system') {
+      checkMsgSysMethod = method;
+    } else { return null; }
+  });
+  const result: IGetMessage = {
+    checkMsgNftMethod,
+    checkMsgTrsMethod,
+    checkMsgSysMethod,
+  };
+  return result;
 }
 
 export function getGenericResult(events: EventRecord[]): GenericResult {
@@ -82,6 +109,8 @@ export function getGenericResult(events: EventRecord[]): GenericResult {
   return result;
 }
 
+
+
 export function getCreateCollectionResult(events: EventRecord[]): CreateCollectionResult {
   let success = false;
   let collectionId: number = 0;
@@ -89,7 +118,7 @@ export function getCreateCollectionResult(events: EventRecord[]): CreateCollecti
     // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
     if (method == 'ExtrinsicSuccess') {
       success = true;
-    } else if ((section == 'nft') && (method == 'Created')) {
+    } else if ((section == 'nft')  && (method == 'CollectionCreated')) {
       collectionId = parseInt(data[0].toString());
     }
   });
@@ -212,7 +241,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     const BcollectionCount = parseInt((await api.query.nft.createdCollectionCount()).toString(), 10);
 
     // Get the collection
-    const collection: any = (await api.query.nft.collection(result.collectionId)).toJSON();
+    const collection: any = (await api.query.nft.collectionById(result.collectionId)).toJSON();
 
     // What to expect
     // tslint:disable-next-line:no-unused-expression
@@ -324,12 +353,41 @@ export async function destroyCollectionExpectSuccess(collectionId: number, sende
     const result = getDestroyResult(events);
 
     // Get the collection
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+    const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
 
     // What to expect
     expect(result).to.be.true;
-    expect(collection).to.be.not.null;
-    expect(collection.Owner).to.be.equal(nullPublicKey);
+    expect(collection).to.be.null;
+  });
+}
+
+export async function queryCollectionLimits(collectionId: number) {
+  return await usingApi(async (api) => {
+    return ((await api.query.nft.collectionById(collectionId)).toJSON() as any).Limits;
+  });
+}
+
+export async function setCollectionLimitsExpectSuccess(sender: IKeyringPair, collectionId: number, limits: any) {
+  await usingApi(async (api) => {
+    const oldLimits = await queryCollectionLimits(collectionId);
+    const newLimits = { ...oldLimits as any, ...limits };
+    const tx = api.tx.nft.setCollectionLimits(collectionId, newLimits);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+}
+
+export async function setCollectionLimitsExpectFailure(sender: IKeyringPair, collectionId: number, limits: any) {
+  await usingApi(async (api) => {
+    const oldLimits = await queryCollectionLimits(collectionId);
+    const newLimits = { ...oldLimits as any, ...limits };
+    const tx = api.tx.nft.setCollectionLimits(collectionId, newLimits);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.false;
   });
 }
 
@@ -343,12 +401,13 @@ export async function setCollectionSponsorExpectSuccess(collectionId: number, sp
     const result = getGenericResult(events);
 
     // Get the collection
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+    const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
 
     // What to expect
     expect(result.success).to.be.true;
-    expect(collection.Sponsor.toString()).to.be.equal(sponsor.toString());
-    expect(collection.SponsorConfirmed).to.be.false;
+    expect(collection.Sponsorship).to.deep.equal({
+      Unconfirmed: sponsor.toString(),
+    });
   });
 }
 
@@ -362,12 +421,11 @@ export async function removeCollectionSponsorExpectSuccess(collectionId: number)
     const result = getGenericResult(events);
 
     // Get the collection
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+    const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
 
     // What to expect
     expect(result.success).to.be.true;
-    expect(collection.Sponsor).to.be.equal(nullPublicKey);
-    expect(collection.SponsorConfirmed).to.be.false;
+    expect(collection.Sponsorship).to.be.deep.equal({ Disabled: null });
   });
 }
 
@@ -401,12 +459,13 @@ export async function confirmSponsorshipExpectSuccess(collectionId: number, send
     const result = getGenericResult(events);
 
     // Get the collection
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+    const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
 
     // What to expect
     expect(result.success).to.be.true;
-    expect(collection.Sponsor).to.be.equal(sender.address);
-    expect(collection.SponsorConfirmed).to.be.true;
+    expect(collection.Sponsorship).to.be.deep.equal({
+      Confirmed: sender.address,
+    });
   });
 }
 
@@ -569,8 +628,7 @@ export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: n
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
     // tslint:disable-next-line:no-unused-expression
-    expect(item).to.be.not.null;
-    expect(item.Owner).to.be.equal(nullPublicKey);
+    expect(item).to.be.null;
   });
 }
 
@@ -611,16 +669,16 @@ transferFromExpectSuccess(collectionId: number,
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
     if (type === 'NFT') {
-      const nftItemData = await api.query.nft.nftItemList(collectionId, tokenId) as unknown as ITokenDataType;
+      const nftItemData = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap() as ITokenDataType;
       expect(nftItemData.Owner.toString()).to.be.equal(accountTo.address);
     }
     if (type === 'Fungible') {
-      const balanceAfter = await api.query.nft.balance(collectionId, accountTo.address) as unknown as BN;
+      const balanceAfter = (await api.query.nft.fungibleItemList(collectionId, accountTo.address) as any).Value as unknown as BN;
       expect(balanceAfter.sub(balanceBefore).toString()).to.be.equal(value.toString());
     }
     if (type === 'ReFungible') {
       const nftItemData =
-        await api.query.nft.reFungibleItemList(collectionId, tokenId) as unknown as IReFungibleTokenDataType;
+        (await api.query.nft.reFungibleItemList(collectionId, tokenId) as any).unwrap() as IReFungibleTokenDataType;
       expect(nftItemData.Owner[0].Owner.toString()).to.be.equal(accountTo.address);
       expect(nftItemData.Owner[0].Fraction.toNumber()).to.be.equal(value);
     }
@@ -667,18 +725,18 @@ transferExpectSuccess(collectionId: number,
     expect(result.recipient).to.be.equal(recipient.address);
     expect(result.value.toString()).to.be.equal(value.toString());
     if (type === 'NFT') {
-      const nftItemData = await api.query.nft.nftItemList(collectionId, tokenId) as unknown as ITokenDataType;
+      const nftItemData = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON() as unknown as ITokenDataType;
       expect(nftItemData.Owner.toString()).to.be.equal(recipient.address);
     }
     if (type === 'Fungible') {
-      const balanceAfter = await api.query.nft.balance(collectionId, recipient.address) as unknown as BN;
+      const balanceAfter = (await api.query.nft.fungibleItemList(collectionId, recipient.address) as any).Value as unknown as BN;
       expect(balanceAfter.sub(balanceBefore).toString()).to.be.equal(value.toString());
     }
     if (type === 'ReFungible') {
       const nftItemData =
-        await api.query.nft.reFungibleItemList(collectionId, tokenId) as unknown as IReFungibleTokenDataType;
+        (await api.query.nft.reFungibleItemList(collectionId, tokenId)).toJSON() as unknown as IReFungibleTokenDataType;
       expect(nftItemData.Owner[0].Owner.toString()).to.be.equal(recipient.address);
-      expect(nftItemData.Owner[0].Fraction.toNumber()).to.be.equal(value);
+      expect(nftItemData.Owner[0].Fraction.toString()).to.be.equal(value.toString());
     }
   });
 }
@@ -808,7 +866,7 @@ export async function setPublicAccessModeExpectSuccess(
     const result = getGenericResult(events);
 
     // Get the collection
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+    const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
 
     // What to expect
     // tslint:disable-next-line:no-unused-expression
@@ -834,7 +892,7 @@ export async function setMintPermissionExpectSuccess(sender: IKeyringPair, colle
     const result = getGenericResult(events);
 
     // Get the collection
-    const collection: any = (await api.query.nft.collection(collectionId)).toJSON();
+    const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
 
     // What to expect
     // tslint:disable-next-line:no-unused-expression
@@ -916,7 +974,7 @@ export async function removeFromWhiteListExpectFailure(sender: IKeyringPair, col
 
 export const getDetailedCollectionInfo = async (api: ApiPromise, collectionId: number)
   : Promise<ICollectionInterface | null> => {
-  return await api.query.nft.collection(collectionId) as unknown as ICollectionInterface;
+  return (await api.query.nft.collectionById(collectionId)).toJSON() as unknown as ICollectionInterface;
 };
 
 export const getCreatedCollectionCount = async (api: ApiPromise): Promise<number> => {
@@ -926,6 +984,6 @@ export const getCreatedCollectionCount = async (api: ApiPromise): Promise<number
 
 export async function queryCollectionExpectSuccess(collectionId: number): Promise<ICollectionInterface> {
   return await usingApi(async (api) => {
-    return (await api.query.nft.collection(collectionId)) as unknown as ICollectionInterface;
+    return (await api.query.nft.collectionById(collectionId)).toJSON() as unknown as ICollectionInterface;
   });
 }

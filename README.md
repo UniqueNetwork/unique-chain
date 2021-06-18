@@ -63,18 +63,17 @@ sudo apt-get install libssl-dev pkg-config libclang-dev clang
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
 
-3. Install stable toolchain 1.49.0 and make it default, install nightly 2021-01-27:
+3. Install install nightly 2021-04-23 and make it default:
 
 ```bash
-rustup toolchain install 1.49.0
-rustup toolchain install nightly-2020-01-27
-rustup default nightly-2021-01-27
+rustup toolchain install nightly-2021-04-23
+rustup default nightly-2021-04-23
 ```
 
 4. Add wasm target for nightly toolchain:
 
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2021-01-27
+rustup target add wasm32-unknown-unknown --toolchain nightly-2021-04-23
 ```
 
 5. Build:
@@ -134,6 +133,81 @@ cargo run -- \
 
 Additional CLI usage options are available and may be shown by running `cargo run -- --help`.
 
+## Building and Running as Parachain locally
+
+Rust toolchain: nightly-2021-04-23
+Note: checkout this project and polkadot project (see below) in the sibling folders (both under the same folder)
+
+### Parachain Code and Other Configurations
+
+Some changes need to be made in the parachain code depending on the relay chain it connects to
+
+1. Chain Spec (incl. chain_spec.rs)
+```
+Extensions {
+  relay_chain: "rococo".into(),
+  para_id: PARA_ID,
+}
+```
+
+2. All collators need to have at least existential balance
+
+
+
+
+### Build relay
+
+```
+git clone https://github.com/paritytech/polkadot.git
+cd polkadot
+git checkout aa386760
+cargo build --release
+```
+
+### Build parachain
+
+Run in the root of this project:
+```
+cargo --build
+```
+
+### Run 4-node Relay
+
+1. Download `rococo-custom-4.json` chain spec here: https://substrate.dev/cumulus-workshop/shared/chainspecs/rococo-custom-4.json
+2. Use these instructions to launch 4 nodes: https://substrate.dev/cumulus-workshop/#/en/2-relay-chain/1-launch
+
+Example (Run in polkadot folder. Replace `12D3KooWNLAmKcyee3oqSgTMthaQVXaAcXeo8RrGCzMfMVA3B5on` with output from Alice node):
+```
+./target/release/polkadot --alice --validator --base-path ./cumulus_relay0 --chain rococo-custom-4.json --port 50555 --ws-port 9944
+./target/release/polkadot --bob --validator --base-path ./cumulus_relay1 --chain rococo-custom-4.json --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWNLAmKcyee3oqSgTMthaQVXaAcXeo8RrGCzMfMVA3B5on --port 50556 --ws-port 9945
+./target/release/polkadot --charlie --validator --base-path ./cumulus_relay1 --chain rococo-custom-4.json --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWNLAmKcyee3oqSgTMthaQVXaAcXeo8RrGCzMfMVA3B5on --port 50557 --ws-port 9946
+./target/release/polkadot --dave --validator --base-path ./cumulus_relay1 --chain rococo-custom-4.json --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWNLAmKcyee3oqSgTMthaQVXaAcXeo8RrGCzMfMVA3B5on --port 50558 --ws-port 9947
+
+```
+
+3. Export genesis state and runtime wasm from NFT parachain:
+
+Run from this project root:
+```
+./target/release/nft export-genesis-state --parachain-id 2000 > ./resources/para-2000-genesis
+./target/release/nft export-genesis-wasm > ./resources/para-2000-wasm
+```
+
+4. Run two parachain nodes:
+
+Replace `12D3KooWN1ah2bFQSysEFnwZqcmcVpDDR8UedXyo6xfzV1zDNMNg` with Alice or Bob relay ID
+
+Run from this project root:
+```
+./target/release/nft --alice --collator --force-authoring --base-path ./tmp/parachain-alice --parachain-id 2000 --port 40333 --ws-port 9844  -- --execution wasm --chain ../polkadot/rococo-custom-4.json --port 30343 --ws-port 9977
+./target/release/nft --bob --collator --force-authoring --parachain-id 2000 --base-path ./tmp/parachain/bob --port 40334 --ws-port 9845 -- --execution wasm --chain ../polkadot/rococo-custom-4.json --port 30344 --ws-port 9978 --bootnodes /ip4/127.0.0.1/tcp/50556/p2p/12D3KooWN1ah2bFQSysEFnwZqcmcVpDDR8UedXyo6xfzV1zDNMNg
+```
+
+4. Reserve parachain ID as described here: https://substrate.dev/cumulus-workshop/#/en/2-relay-chain/2-reserve
+
+5. Register parachain in relay as described here: https://substrate.dev/cumulus-workshop/#/en/3-parachains/2-register
+
+
 ## Run Integration Tests
 
 1. Install all needed dependecies
@@ -152,12 +226,12 @@ yarn test
 
 First of all, add rust toolchain and make it default.
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2020-10-01
+rustup target add wasm32-unknown-unknown --toolchain nightly-2021-04-23
 ```
 
 Then in "/node/src" run build command below
 ```bash
-cargo +nightly-2020-10-01 build --release --features runtime-benchmarks
+cargo +nightly-2021-04-23 build --release --features runtime-benchmarks
 ```
 
 Run benchmark

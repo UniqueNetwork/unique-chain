@@ -13,10 +13,13 @@ export interface ICollectionInterface {
   Description: [BN, BN]; // utf16
   isReFungible: boolean;
   Limits: {
-    AccountTokenOwnershipLimit: BN;
-    SponsoredMintSize: BN;
-    TokenLimit: BN;
-    SponsorTimeout: BN;
+    AccountTokenOwnershipLimit: number;
+    SponsoredDataSize: number;
+    SponsoredDataRateLimit?: number,
+    TokenLimit: number;
+    SponsorTimeout: number;
+    OwnerCanTransfer: boolean;
+    OwnerCanDestroy: boolean;
   };
   MintMode: boolean;
   Mode: {
