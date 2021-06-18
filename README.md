@@ -63,17 +63,17 @@ sudo apt-get install libssl-dev pkg-config libclang-dev clang
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
 
-3. Install install nightly 2021-03-01 and make it default:
+3. Install install nightly 2021-04-23 and make it default:
 
 ```bash
-rustup toolchain install nightly-2021-03-01
-rustup default nightly-2021-03-01
+rustup toolchain install nightly-2021-04-23
+rustup default nightly-2021-04-23
 ```
 
 4. Add wasm target for nightly toolchain:
 
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2021-03-01
+rustup target add wasm32-unknown-unknown --toolchain nightly-2021-04-23
 ```
 
 5. Build:
@@ -226,12 +226,12 @@ yarn test
 
 First of all, add rust toolchain and make it default.
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2020-10-01
+rustup target add wasm32-unknown-unknown --toolchain nightly-2021-04-23
 ```
 
 Then in "/node/src" run build command below
 ```bash
-cargo +nightly-2020-10-01 build --release --features runtime-benchmarks
+cargo +nightly-2021-04-23 build --release --features runtime-benchmarks
 ```
 
 Run benchmark
