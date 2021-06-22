@@ -14,7 +14,7 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_api::impl_runtime_apis;
-use sp_core::{ crypto::KeyTypeId, OpaqueMetadata };
+use sp_core::{ crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160 };
 // #[cfg(any(feature = "std", test))]
 // pub use sp_runtime::BuildStorage;
 
@@ -45,8 +45,9 @@ pub use frame_support::{
 	PalletId,
     parameter_types,
     StorageValue,
+	ConsensusEngineId,
     traits::{
-        All, Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier, OnUnbalanced, Randomness
+        All, Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier, OnUnbalanced, Randomness, FindAuthor
     },
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -67,8 +68,7 @@ use smallvec::smallvec;
 use codec::{Encode, Decode};
 use pallet_evm::{Account as EVMAccount, FeeCalculator, OnMethodCall};
 use fp_rpc::TransactionStatus;
-use sp_core::H256;
-
+use sp_core::crypto::Public;
 use sp_runtime::{
 	traits::{ 
 		Dispatchable,
@@ -100,12 +100,12 @@ use crate::chain_extension::{ NFTExtension, Imbalance };
 
 /// Re-export a nft pallet
 /// TODO: Check this re-export. Is this safe and good style?
-extern crate pallet_nft;
-pub use pallet_nft::*;
+// extern crate pallet_nft;
+// pub use pallet_nft::*;
 
 /// Reimport pallet inflation
-extern crate pallet_inflation;
-pub use pallet_inflation::*;
+// extern crate pallet_inflation;
+// pub use pallet_inflation::*;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -267,7 +267,7 @@ impl pallet_evm::Config for Runtime {
 	type OnChargeTransaction = ();
 }
 
-pub struct EthereumFindAuthor<F>(PhantomData<F>);
+pub struct EthereumFindAuthor<F>(core::marker::PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F>
 {
 	fn find_author<'a, I>(digests: I) -> Option<H160> where
@@ -289,7 +289,7 @@ impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
 	type FindAuthor = EthereumFindAuthor<Aura>;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot;
-	type EvmSubmitLog = pallet_evm::Module<Runtime>;
+	type EvmSubmitLog = pallet_evm::Pallet<Runtime>;
 }
 
 impl system::Config for Runtime {
@@ -775,8 +775,8 @@ construct_runtime!(
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
 
 		// Frontier
-		EVM: pallet_evm::{Module, Config, Call, Storage, Event<T>},
-		Ethereum: pallet_ethereum::{Module, Config, Call, Storage, Event, ValidateUnsigned},
+		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
+		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, ValidateUnsigned},
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
@@ -850,6 +850,14 @@ impl_opaque_keys! {
 }
 
 impl_runtime_apis! {
+	impl pallet_nft::NftApi<Block>
+		for Runtime
+	{
+		fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
+			<pallet_nft::NftErcSupport<Runtime>>::get_code(&account)
+		}
+	}
+
     impl sp_api::Core<Block> for Runtime {
         fn version() -> RuntimeVersion {
             VERSION

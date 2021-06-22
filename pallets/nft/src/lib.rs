@@ -32,6 +32,7 @@ use frame_system::{self as system, ensure_signed, ensure_root};
 use sp_core::H160;
 use sp_runtime::sp_std::prelude::Vec;
 use core::ops::{Deref, DerefMut};
+use core::cell::RefCell;
 use nft_data_structs::{
     MAX_DECIMAL_POINTS, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, MAX_REFUNGIBLE_PIECES,
 	AccessMode, ChainLimits, Collection, CreateItemData, CollectionLimits,
@@ -39,6 +40,7 @@ use nft_data_structs::{
     SchemaVersion, SponsorshipState, Ownership,
     NftItemType, FungibleItemType, ReFungibleItemType
 };
+use pallet_ethereum::EthereumTransactionSender;
 
 #[cfg(test)]
 mod mock;
@@ -171,12 +173,46 @@ decl_error! {
 	}
 }
 
-pub struct CollectionHandle<T: system::Config> {
+pub struct CollectionHandle<T: Config> {
     pub id: CollectionId,
-    pub collection: Collection<T>,
+    collection: Collection<T>,
+    logs: eth::log::LogRecorder,
+    evm_address: H160,
+    gas_limit: RefCell<u64>,
 }
-
-impl<T: frame_system::Config> Deref for CollectionHandle<T> {
+impl<T: Config> CollectionHandle<T> {
+	pub fn get_with_gas_limit(id: CollectionId, gas_limit: u64) -> Option<Self> {
+		<CollectionById<T>>::get(id)
+			.map(|collection| Self {
+				id,
+				collection,
+                logs: eth::log::LogRecorder::default(),
+                evm_address: eth::collection_id_to_address(id),
+                gas_limit: RefCell::new(gas_limit),
+			})
+	}
+    pub fn get(id: CollectionId) -> Option<Self> {
+        Self::get_with_gas_limit(id, u64::MAX)
+    }
+    pub fn gas_left(&self) -> u64 {
+        *self.gas_limit.borrow()
+    }
+    pub fn consume_gas(&self, gas: u64) -> DispatchResult {
+        let mut gas_limit = self.gas_limit.borrow_mut();
+        if *gas_limit < gas {
+            fail!(Error::<T>::OutOfGas);
+        }
+        *gas_limit -= gas;
+        Ok(())
+    }
+    pub fn log(&self, log: impl evm_coder::ToLog) {
+        self.logs.log(log.to_log(self.evm_address))
+    }
+    pub fn into_inner(self) -> Collection<T> {
+        self.collection.clone()
+    }
+}
+impl<T: Config> Deref for CollectionHandle<T> {
     type Target = Collection<T>;
 
     fn deref(&self) -> &Self::Target {
@@ -184,7 +220,7 @@ impl<T: frame_system::Config> Deref for CollectionHandle<T> {
     }
 }
 
-impl<T: frame_system::Config> DerefMut for CollectionHandle<T> {
+impl<T: Config> DerefMut for CollectionHandle<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.collection
     }
@@ -2371,5 +2407,12 @@ impl<T: Config> Module<T> {
         ensure!(<ContractOwner<T>>::get(contract) == Some(account), Error::<T>::NoPermission);
 
         Ok(())
+    }
+}
+
+sp_api::decl_runtime_apis! {
+    pub trait NftApi {
+        /// Used for ethereum integration
+        fn eth_contract_code(account: H160) -> Option<Vec<u8>>;
     }
 }

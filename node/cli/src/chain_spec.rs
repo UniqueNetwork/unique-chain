@@ -10,6 +10,7 @@ use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 use serde_json::map::Map;

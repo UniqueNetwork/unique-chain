@@ -31,6 +31,7 @@ std = [
     'fp-evm/std',
     'nft-data-structs/std',
     'sp-std/std',
+    'sp-api/std',
     'sp-runtime/std',
     'frame-benchmarking/std',
     'ethereum/std',
@@ -106,6 +107,7 @@ branch = 'polkadot-v0.9.3'
 version = '3.0.0'
 
 [dependencies.serde]
+default-features = false
 features = ['derive']
 version = '1.0.119'
 
@@ -141,8 +143,12 @@ version = '0.9.0'
 ethereum-tx-sign = { version = "3.0.4", optional = true }
 ethereum = { default-features = false, version = "0.7.1" }
 rlp = { default-features = false, version = "0.5.0" }
+sp-api = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.3" }
 
 evm-coder = { default-features = false, path = "../../crates/evm-coder" }
 primitive-types = { version = "0.9.0", default-features = false, features = ["serde_no_std"] }
 
+pallet-evm = { default-features = false, version = "4.0.0-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
+pallet-ethereum = { default-features = false, version = "2.0.0-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
+fp-evm = { default-features = false, version = '2.0.0', git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
 hex-literal = "0.3.1"

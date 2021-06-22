@@ -19,7 +19,7 @@ package = 'parity-scale-codec'
 version = '2.0.0'
 
 [dependencies]
-serde = { version = "1.0.119" }
+serde = { version = "1.0.119", default-features = false }
 frame-support = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
 frame-system = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
 pallet-balances = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
