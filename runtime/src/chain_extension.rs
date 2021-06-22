@@ -18,6 +18,8 @@ use frame_support::dispatch::DispatchError;
 extern crate pallet_nft;
 pub use pallet_nft::*;
 use pallet_nft::CrossAccountId;
+use nft_data_structs::*;
+
 use crate::Vec;
 
 /// Create item parameters
@@ -80,7 +82,7 @@ pub struct NFTExtension;
 
 pub type NftWeightInfoOf<C> = <C as pallet_nft::Config>::WeightInfo;
 
-impl<C: Config> ChainExtension<C> for NFTExtension {
+impl<C: Config + pallet_contracts::Config> ChainExtension<C> for NFTExtension {
     fn call<E: Ext>(func_id: u32, env: Environment<E, InitState>) -> Result<RetVal, DispatchError>
     where
         E: Ext<T = C>,

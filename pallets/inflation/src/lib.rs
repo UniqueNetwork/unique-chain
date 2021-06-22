@@ -94,14 +94,14 @@ decl_module! {
 				let one_percent = Perbill::from_percent(1);
 
 				if current_year <= TOTAL_YEARS_UNTIL_FLAT {
-					let amount: BalanceOf<T> = Perbill::from_rational_approximation(
+					let amount: BalanceOf<T> = Perbill::from_rational(
 						block_interval * (START_INFLATION_PERCENT * TOTAL_YEARS_UNTIL_FLAT - current_year * (START_INFLATION_PERCENT - END_INFLATION_PERCENT)), 
 						YEAR * TOTAL_YEARS_UNTIL_FLAT
 					) * ( one_percent * T::Currency::total_issuance() );
 					<BlockInflation<T>>::put(amount);
 				}
 				else {
-					let amount: BalanceOf<T> = Perbill::from_rational_approximation(
+					let amount: BalanceOf<T> = Perbill::from_rational(
 						block_interval * END_INFLATION_PERCENT, 
 						YEAR
 					) * (one_percent * T::Currency::total_issuance());
