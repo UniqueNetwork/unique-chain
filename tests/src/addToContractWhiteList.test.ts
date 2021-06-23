@@ -11,7 +11,7 @@ import {
   deployFlipper
 } from "./util/contracthelpers";
 import {
-  getGenericResult
+  getGenericResult, normalizeAccountId
 } from "./util/helpers"
 
 chai.use(chaiAsPromised);

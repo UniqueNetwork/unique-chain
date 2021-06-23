@@ -23,6 +23,7 @@ import {
   enablePublicMintingExpectSuccess,
   enableWhiteListExpectSuccess,
   getGenericResult,
+  normalizeAccountId,
   isWhitelisted,
   transferFromExpectSuccess
 } from "./util/helpers";
@@ -74,18 +75,18 @@ describe.only('Chain extensions', () => {
       const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, contract.address);
       await submitTransactionAsync(alice, changeAdminTx);
 
-      const tokenBefore: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap();
+      const tokenBefore: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).toJSON();
       
       // Transfer
       const transferTx = contract.tx.transfer(value, gasLimit, bob.address, collectionId, tokenId, 1);
       const events = await submitTransactionAsync(alice, transferTx);
       const result = getGenericResult(events);
-      const tokenAfter: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap();
+      const tokenAfter: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).toJSON();
 
       // tslint:disable-next-line:no-unused-expression
       expect(result.success).to.be.true;
-      expect(tokenBefore.Owner.toString()).to.be.equal(alice.address);
-      expect(tokenAfter.Owner.toString()).to.be.equal(bob.address);
+      expect(tokenBefore.Owner).to.be.deep.equal(normalizeAccountId(alice.address));
+      expect(tokenAfter.Owner).to.be.deep.equal(normalizeAccountId(bob.address));
     });
   });
 
@@ -169,7 +170,7 @@ describe.only('Chain extensions', () => {
 
       const collectionId = await createCollectionExpectSuccess();
       const [contract, deployer] = await deployTransferContract(api);
-      const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', contract.address);
+      const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', contract.address.toString());
 
       const transferTx = contract.tx.approve(value, gasLimit, bob.address, collectionId, tokenId, 1);
       const events = await submitTransactionAsync(alice, transferTx);
@@ -207,7 +208,7 @@ describe.only('Chain extensions', () => {
 
       const collectionId = await createCollectionExpectSuccess();
       const [contract, deployer] = await deployTransferContract(api);
-      const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', contract.address);
+      const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', contract.address.toString());
 
       const transferTx = contract.tx.setVariableMetaData(value, gasLimit, collectionId, tokenId, '0x121314');
       const events = await submitTransactionAsync(alice, transferTx);

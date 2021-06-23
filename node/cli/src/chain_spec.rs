@@ -10,6 +10,7 @@ use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 use serde_json::map::Map;
@@ -19,9 +20,9 @@ pub type ChainSpec = sc_service::GenericChainSpec<nft_runtime::GenesisConfig, Ex
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
-    TPublic::Pair::from_string(&format!("//{}", seed), None)
-        .expect("static values are valid; qed")
-        .public()
+	TPublic::Pair::from_string(&format!("//{}", seed), None)
+		.expect("static values are valid; qed")
+		.public()
 }
 
 /// The extensions for the [`ChainSpec`].
@@ -46,9 +47,9 @@ type AccountPublic = <Signature as Verify>::Signer;
 /// Helper function to generate an account ID from seed
 pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
 where
-    AccountPublic: From<<TPublic::Pair as Pair>::Public>,
+	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
 {
-    AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
+	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
 pub fn development_config(id: ParaId) -> ChainSpec {
@@ -215,5 +216,9 @@ fn testnet_genesis(
 			authorities: initial_authorities,
 		},
 		cumulus_pallet_aura_ext: Default::default(),
+		pallet_evm: EVMConfig {
+			accounts: BTreeMap::new(),
+		},
+		pallet_ethereum: EthereumConfig {},
     }
 }

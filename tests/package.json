@@ -8,17 +8,18 @@
     "@polkadot/ts": "0.3.89",
     "@polkadot/typegen": "4.13.2-5",
     "@polkadot/util-crypto": "6.7.1",
-    "@types/chai": "^4.2.12",
+    "@types/chai": "^4.2.17",
     "@types/chai-as-promised": "^7.1.3",
-    "@types/mocha": "^8.0.3",
-    "chai": "^4.2.0",
-    "mocha": "^8.1.1",
-    "ts-node": "^9.0.0",
-    "tslint": "^5.20.1",
-    "typescript": "^3.9.7"
+    "@types/mocha": "^8.2.2",
+    "chai": "^4.3.4",
+    "mocha": "^8.3.2",
+    "ts-node": "^9.1.1",
+    "tslint": "^6.1.3",
+    "typescript": "^4.2.4"
   },
   "scripts": {
     "test": "mocha --timeout 9999999 -r ts-node/register ./**/*.test.ts",
+    "testEth": "mocha --timeout 9999999 -r ts-node/register ./**/eth/**/*.test.ts",
     "load": "mocha --timeout 9999999 -r ts-node/register ./**/*.load.ts",
     "loadTransfer": "ts-node src/transfer.nload.ts",
     "testCollision": "mocha --timeout 9999999 -r ts-node/register ./src/collision-tests/*.test.ts", 
@@ -61,8 +62,10 @@
   "dependencies": {
     "@polkadot/api": "4.13.2-5",
     "@polkadot/api-contract": "4.13.2-5",
-    "bignumber.js": "^9.0.0",
-    "chai-as-promised": "^7.1.1"
+    "@polkadot/util": "6.3.1",
+    "bignumber.js": "^9.0.1",
+    "chai-as-promised": "^7.1.1",
+    "web3": "^1.3.5"
   },
   "standard": {
     "globals": [

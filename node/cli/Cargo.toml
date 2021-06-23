@@ -280,11 +280,11 @@ branch = 'release-v0.9.3'
 # Local dependencies
 
 [dependencies.nft-runtime]
-path = '../runtime'
+path = '../../runtime'
 version = '3.0.0'
 
 [dependencies.nft-data-structs]
-path="../primitives"
+path="../../primitives"
 default-features = false
 
 ################################################################################
@@ -314,6 +314,17 @@ flexi_logger = "0.15.7"
 parking_lot = '0.10.0'
 structopt = '0.3.8'
 jsonrpc-core = '15.0.0'
+jsonrpc-pubsub = "15.0.0"
+
+fc-rpc-core = { version = "1.1.0-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
+fc-consensus = { version = "2.0.0-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
+fc-mapping-sync = { version = "2.0.0-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
+fc-rpc = { version = "2.0.0-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
+fc-db = { version = "1.0.0", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
+fp-rpc = { version = "2.0.0", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
+pallet-ethereum = { version = "2.0.0-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
+
+nft-rpc = { path = "../rpc" }
 
 [features]
 default = []

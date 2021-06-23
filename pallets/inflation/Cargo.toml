@@ -83,6 +83,7 @@ branch = 'polkadot-v0.9.3'
 version = '3.0.0'
 
 [dependencies.serde]
+default-features = false
 features = ['derive']
 version = '1.0.119'
 

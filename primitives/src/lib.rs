@@ -1,8 +1,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(feature = "std")]
-pub use serde::*;
+pub use serde::{Serialize, Deserialize};
 
 use frame_system;
 use sp_runtime::sp_std::prelude::Vec;

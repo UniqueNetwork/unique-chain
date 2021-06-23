@@ -19,6 +19,7 @@ import {
   enableWhiteListExpectSuccess,
   enablePublicMintingExpectSuccess,
   addToWhiteListExpectSuccess,
+  normalizeAccountId,
 } from "./util/helpers";
 import { Keyring } from "@polkadot/api";
 import { IKeyringPair } from "@polkadot/types/types";
@@ -76,7 +77,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', zeroBalance.address);
 
       // Transfer this tokens from unused address to Alice
-      const zeroToAlice = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 0);
+      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 0);
       const events = await submitTransactionAsync(zeroBalance, zeroToAlice);
       const result = getGenericResult(events);
 
@@ -103,7 +104,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', zeroBalance.address);
 
       // Transfer this tokens from unused address to Alice
-      const zeroToAlice = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 1);
+      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 1);
       const events1 = await submitTransactionAsync(zeroBalance, zeroToAlice);
       const result1 = getGenericResult(events1);
 
@@ -129,7 +130,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', zeroBalance.address);
 
       // Transfer this tokens from unused address to Alice
-      const zeroToAlice = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 1);
+      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 1);
       const events1 = await submitTransactionAsync(zeroBalance, zeroToAlice);
       const result1 = getGenericResult(events1);
 
@@ -184,13 +185,13 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
       // Transfer this token from Alice to unused address and back
       // Alice to Zero gets sponsored
-      const aliceToZero = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 0);
+      const aliceToZero = api.tx.nft.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 0);
       const events1 = await submitTransactionAsync(alice, aliceToZero);
       const result1 = getGenericResult(events1);
 
       // Second transfer should fail
       const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
-      const zeroToAlice = api.tx.nft.transfer(alice.address, collectionId, itemId, 0);
+      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(alice.address), collectionId, itemId, 0);
       const badTransaction = async function () { 
         await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       };
@@ -222,7 +223,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', zeroBalance.address);
 
       // Transfer this tokens in parts from unused address to Alice
-      const zeroToAlice = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 1);
+      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 1);
       const events1 = await submitTransactionAsync(zeroBalance, zeroToAlice);
       const result1 = getGenericResult(events1);
 
@@ -260,13 +261,13 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
       // Transfer this token from Alice to unused address and back
       // Alice to Zero gets sponsored
-      const aliceToZero = api.tx.nft.transfer(zeroBalance.address, collectionId, itemId, 1);
+      const aliceToZero = api.tx.nft.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 1);
       const events1 = await submitTransactionAsync(alice, aliceToZero);
       const result1 = getGenericResult(events1);
 
       // Second transfer should fail
       const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
-      const zeroToAlice = api.tx.nft.transfer(alice.address, collectionId, itemId, 1);
+      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(alice.address), collectionId, itemId, 1);
       const badTransaction = async function () { 
         await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       };

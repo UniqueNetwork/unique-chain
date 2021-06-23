@@ -53,6 +53,9 @@ std = [
     'pallet-transaction-payment-rpc-runtime-api/std',
     'pallet-treasury/std',
     'pallet-vesting/std',
+    'pallet-evm/std',
+    'pallet-ethereum/std',
+    'fp-rpc/std',
 	'parachain-info/std',
     'serde',
     'pallet-inflation/std',
@@ -130,6 +133,7 @@ optional = true
 version = '0.3.1'
 
 [dependencies.serde]
+default-features = false
 features = ['derive']
 optional = true
 version = '1.0.119'
@@ -373,9 +377,12 @@ pallet-scheduler = { path = '../pallets/scheduler', default-features = false, ve
 pallet-nft-transaction-payment = { path = '../pallets/nft-transaction-payment', default-features = false, version = '3.0.0' }
 pallet-nft-charge-transaction = { path = '../pallets/nft-charge-transaction', default-features = false, version = '3.0.0' }
 
+pallet-evm = { default-features = false, version = "4.0.0-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
+pallet-ethereum = { default-features = false, version = "2.0.0-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
+fp-rpc = { default-features = false, version = "2.0.0", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
+
 ################################################################################
 # Build Dependencies
 
 [build-dependencies]
 substrate-wasm-builder = '4.0.0'
-

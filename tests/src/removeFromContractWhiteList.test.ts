@@ -23,8 +23,8 @@ describe('Integration Test removeFromContractWhiteList', () => {
         await usingApi(async (api) => {
             const [flipper, deployer] = await deployFlipper(api);
 
-            await addToContractWhiteListExpectSuccess(deployer, flipper.address, bob.address);
-            await removeFromContractWhiteListExpectSuccess(deployer, flipper.address, bob.address);
+            await addToContractWhiteListExpectSuccess(deployer, flipper.address.toString(), bob.address);
+            await removeFromContractWhiteListExpectSuccess(deployer, flipper.address.toString(), bob.address);
 
             expect(await isWhitelistedInContract(flipper.address, bob.address)).to.be.false;
         });
@@ -33,12 +33,12 @@ describe('Integration Test removeFromContractWhiteList', () => {
     it('user can\'t execute contract after removal', async () => {
         await usingApi(async (api) => {
             const [flipper, deployer] = await deployFlipper(api);
-            await toggleContractWhitelistExpectSuccess(deployer, flipper.address, true);
+            await toggleContractWhitelistExpectSuccess(deployer, flipper.address.toString(), true);
 
-            await addToContractWhiteListExpectSuccess(deployer, flipper.address, bob.address);
+            await addToContractWhiteListExpectSuccess(deployer, flipper.address.toString(), bob.address);
             await toggleFlipValueExpectSuccess(bob, flipper);
 
-            await removeFromContractWhiteListExpectSuccess(deployer, flipper.address, bob.address);
+            await removeFromContractWhiteListExpectSuccess(deployer, flipper.address.toString(), bob.address);
             await toggleFlipValueExpectFailure(bob, flipper);
         });
     });
@@ -47,9 +47,9 @@ describe('Integration Test removeFromContractWhiteList', () => {
         await usingApi(async (api) => {
             const [flipper, deployer] = await deployFlipper(api);
 
-            await addToContractWhiteListExpectSuccess(deployer, flipper.address, bob.address);
-            await removeFromContractWhiteListExpectSuccess(deployer, flipper.address, bob.address);
-            await removeFromContractWhiteListExpectSuccess(deployer, flipper.address, bob.address);
+            await addToContractWhiteListExpectSuccess(deployer, flipper.address.toString(), bob.address);
+            await removeFromContractWhiteListExpectSuccess(deployer, flipper.address.toString(), bob.address);
+            await removeFromContractWhiteListExpectSuccess(deployer, flipper.address.toString(), bob.address);
         });
     });
 });
@@ -75,7 +75,7 @@ describe('Negative Integration Test removeFromContractWhiteList', () => {
         await usingApi(async (api) => {
             const [flipper, _] = await deployFlipper(api);
 
-            await removeFromContractWhiteListExpectFailure(alice, flipper.address, bob.address);
+            await removeFromContractWhiteListExpectFailure(alice, flipper.address.toString(), bob.address);
         });
     });
 });

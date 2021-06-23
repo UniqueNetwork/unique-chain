@@ -10,7 +10,7 @@ version = '0.9.0'
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ['derive'] }
-serde = { version = "1.0.119", optional = true, features = ['derive'] }
+serde = { version = "1.0.119", features = ['derive'], default-features = false }
 frame-support = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
 frame-system = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
 pallet-contracts = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
@@ -20,7 +20,7 @@ sp-runtime = { version = "3.0.0", default-features = false, git = 'https://githu
 [features]
 default = ["std"]
 std = [
-  "serde",
+  "serde/std",
   "codec/std",
   "frame-system/std",
   "frame-support/std",

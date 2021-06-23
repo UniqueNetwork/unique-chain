@@ -14,7 +14,7 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_api::impl_runtime_apis;
-use sp_core::{ crypto::KeyTypeId, OpaqueMetadata };
+use sp_core::{ crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160 };
 // #[cfg(any(feature = "std", test))]
 // pub use sp_runtime::BuildStorage;
 
@@ -37,6 +37,7 @@ use sp_version::RuntimeVersion;
 pub use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment, FeeDetails, RuntimeDispatchInfo};
 // A few exports that help ease life for downstream crates.
 pub use pallet_balances::Call as BalancesCall;
+pub use pallet_evm::{EnsureAddressTruncated, HashedAddressMapping, Runner};
 pub use frame_support::{
     construct_runtime,
 	match_type,
@@ -44,8 +45,9 @@ pub use frame_support::{
 	PalletId,
     parameter_types,
     StorageValue,
+	ConsensusEngineId,
     traits::{
-        All, Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier, OnUnbalanced, Randomness
+        All, Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier, OnUnbalanced, Randomness, FindAuthor
     },
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -63,7 +65,10 @@ use frame_system::{
 };
 use sp_arithmetic::{traits::{BaseArithmetic, Unsigned}};
 use smallvec::smallvec;
-
+use codec::{Encode, Decode};
+use pallet_evm::{Account as EVMAccount, FeeCalculator, OnMethodCall};
+use fp_rpc::TransactionStatus;
+use sp_core::crypto::Public;
 use sp_runtime::{
 	traits::{ 
 		Dispatchable,
@@ -95,12 +100,12 @@ use crate::chain_extension::{ NFTExtension, Imbalance };
 
 /// Re-export a nft pallet
 /// TODO: Check this re-export. Is this safe and good style?
-extern crate pallet_nft;
-pub use pallet_nft::*;
+// extern crate pallet_nft;
+// pub use pallet_nft::*;
 
 /// Reimport pallet inflation
-extern crate pallet_inflation;
-pub use pallet_inflation::*;
+// extern crate pallet_inflation;
+// pub use pallet_inflation::*;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -135,9 +140,9 @@ mod nft_weights;
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
 /// to even the core data structures.
 pub mod opaque {
-    use super::*;
+	use super::*;
 
-    pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 
     /// Opaque block type.
     pub type Block = generic::Block<Header, UncheckedExtrinsic>;
@@ -153,13 +158,13 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    spec_name: create_runtime_str!("nft"),
-    impl_name: create_runtime_str!("nft"),
-    authoring_version: 1,
-    spec_version: 3,
-    impl_version: 1,
-    apis: RUNTIME_API_VERSIONS,
-    transaction_version: 1,
+	spec_name: create_runtime_str!("nft"),
+	impl_name: create_runtime_str!("nft"),
+	authoring_version: 1,
+	spec_version: 3,
+	impl_version: 1,
+	apis: RUNTIME_API_VERSIONS,
+	transaction_version: 1,
 };
 
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
@@ -180,10 +185,10 @@ pub enum XCMPMessage<XAccountId, XBalance> {
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
-    NativeVersion {
-        runtime_version: VERSION,
-        can_author_with: Default::default(),
-    }
+	NativeVersion {
+		runtime_version: VERSION,
+		can_author_with: Default::default(),
+	}
 }
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
@@ -214,11 +219,11 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
 
 parameter_types! {
-    pub const BlockHashCount: BlockNumber = 2400;
+	pub const BlockHashCount: BlockNumber = 2400;
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
-    pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
-    pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
+	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
+	pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
 		.base_block(BlockExecutionWeight::get())
 		.for_class(DispatchClass::all(), |weights| {
@@ -237,8 +242,54 @@ parameter_types! {
 		})
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
-    pub const Version: RuntimeVersion = VERSION;
-    pub const SS58Prefix: u8 = 42;
+	pub const Version: RuntimeVersion = VERSION;
+	pub const SS58Prefix: u8 = 42;
+}
+
+
+parameter_types! {
+	pub const ChainId: u64 = 8888;
+}
+
+impl pallet_evm::Config for Runtime {
+	type BlockGasLimit = BlockGasLimit;
+	type FeeCalculator = ();
+	type GasWeightMapping = ();
+	type CallOrigin = EnsureAddressTruncated;
+	type WithdrawOrigin = EnsureAddressTruncated;
+	type AddressMapping = HashedAddressMapping<Self::Hashing>;
+	type Precompiles = ();
+	type Currency = Balances;
+	type Event = Event;
+	type OnMethodCall = pallet_nft::NftErcSupport<Self>;
+	type ChainId = ChainId;
+	type Runner = pallet_evm::runner::stack::Runner<Self>;
+	type OnChargeTransaction = ();
+}
+
+pub struct EthereumFindAuthor<F>(core::marker::PhantomData<F>);
+impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F>
+{
+	fn find_author<'a, I>(digests: I) -> Option<H160> where
+		I: 'a + IntoIterator<Item=(ConsensusEngineId, &'a [u8])>
+	{
+		if let Some(author_index) = F::find_author(digests) {
+			let authority_id = Aura::authorities()[author_index as usize].clone();
+			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]));
+		}
+		None
+	}
+}
+
+parameter_types! {
+	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+}
+
+impl pallet_ethereum::Config for Runtime {
+	type Event = Event;
+	type FindAuthor = EthereumFindAuthor<Aura>;
+	type StateRoot = pallet_ethereum::IntermediateStateRoot;
+	type EvmSubmitLog = pallet_evm::Pallet<Runtime>;
 }
 
 impl system::Config for Runtime {
@@ -290,7 +341,7 @@ impl system::Config for Runtime {
 }
 
 parameter_types! {
-    pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
+	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
 
 impl pallet_timestamp::Config for Runtime {
@@ -302,8 +353,8 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-    // pub const ExistentialDeposit: u128 = 500;
-    pub const ExistentialDeposit: u128 = 0;
+	// pub const ExistentialDeposit: u128 = 500;
+	pub const ExistentialDeposit: u128 = 0;
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -325,7 +376,7 @@ pub const CENTIUNIQUE: Balance = 10 * MILLIUNIQUE;
 pub const UNIQUE: Balance      = 100 * CENTIUNIQUE;
 
 pub const fn deposit(items: u32, bytes: u32) -> Balance {
-    items as Balance * 15 * CENTIUNIQUE + (bytes as Balance) * 6 * CENTIUNIQUE
+	items as Balance * 15 * CENTIUNIQUE + (bytes as Balance) * 6 * CENTIUNIQUE
 }
 
 parameter_types! {
@@ -341,7 +392,7 @@ parameter_types! {
 	pub const SignedClaimHandicap: u32 = 2;
 	pub const MaxDepth: u32 = 32;
 	pub const MaxValueSize: u32 = 16 * 1024;
-	pub const MaxCodeSize: u32 = 1024 * 1024 * 25; // 25 Mb 
+	pub const MaxCodeSize: u32 = 1024 * 1024 * 25; // 25 Mb
 	// The lazy deletion runs inside on_initialize.
 	pub DeletionWeightLimit: Weight = AVERAGE_ON_INITIALIZE_RATIO *
 		RuntimeBlockWeights::get().max_block;
@@ -380,10 +431,10 @@ impl pallet_contracts::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE; // Targeting 0.1 Unique per NFT transfer 
+	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE; // Targeting 0.1 Unique per NFT transfer
 }
 
-/// Linear implementor of `WeightToFeePolynomial` 
+/// Linear implementor of `WeightToFeePolynomial`
 pub struct LinearFee<T>(sp_std::marker::PhantomData<T>);
 
 impl<T> WeightToFeePolynomial for LinearFee<T> where
@@ -445,8 +496,8 @@ impl pallet_treasury::Config for Runtime {
 }
 
 impl pallet_sudo::Config for Runtime {
-    type Event = Event;
-    type Call = Call;
+	type Event = Event;
+	type Call = Call;
 }
 
 parameter_types! {
@@ -635,11 +686,20 @@ parameter_types! {
 
 /// Used for the pallet nft in `./nft.rs`
 impl pallet_nft::Config for Runtime {
-    type Event = Event;
-    type WeightInfo = nft_weights::WeightInfo;
+	type Event = Event;
+	type WeightInfo = nft_weights::WeightInfo;
+
+	type EvmWithdrawOrigin = EnsureAddressTruncated;
+	type EvmBackwardsAddressMapping = pallet_nft::MapBackwardsAddressTruncated;
+	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
+	type CrossAccountId = pallet_nft::BasicCrossAccountId<Self>;
+
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
+
+	type EthereumChainId = ChainId;
+	type EthereumTransactionSender = pallet_ethereum::Module<Runtime>;
 }
 
 parameter_types! {
@@ -714,6 +774,10 @@ construct_runtime!(
 		Aura: pallet_aura::{Pallet, Config<T>},
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
 
+		// Frontier
+		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
+		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, ValidateUnsigned},
+
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 51,
@@ -729,6 +793,22 @@ construct_runtime!(
 		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage },
     }
 );
+
+pub struct TransactionConverter;
+
+impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
+		UncheckedExtrinsic::new_unsigned(pallet_ethereum::Call::<Runtime>::transact(transaction).into())
+	}
+}
+
+impl fp_rpc::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> opaque::UncheckedExtrinsic {
+		let extrinsic = UncheckedExtrinsic::new_unsigned(pallet_ethereum::Call::<Runtime>::transact(transaction).into());
+		let encoded = extrinsic.encode();
+		opaque::UncheckedExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
+	}
+}
 
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
@@ -770,6 +850,14 @@ impl_opaque_keys! {
 }
 
 impl_runtime_apis! {
+	impl pallet_nft::NftApi<Block>
+		for Runtime
+	{
+		fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
+			<pallet_nft::NftErcSupport<Runtime>>::get_code(&account)
+		}
+	}
+
     impl sp_api::Core<Block> for Runtime {
         fn version() -> RuntimeVersion {
             VERSION
@@ -827,6 +915,116 @@ impl_runtime_apis! {
 	impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
 		fn offchain_worker(header: &<Block as BlockT>::Header) {
 			Executive::offchain_worker(header)
+		}
+	}
+
+	impl fp_rpc::EthereumRuntimeRPCApi<Block> for Runtime {
+		fn chain_id() -> u64 {
+			<Runtime as pallet_evm::Config>::ChainId::get()
+		}
+
+		fn account_basic(address: H160) -> EVMAccount {
+			EVM::account_basic(&address)
+		}
+
+		fn gas_price() -> U256 {
+			<Runtime as pallet_evm::Config>::FeeCalculator::min_gas_price()
+		}
+
+		fn account_code_at(address: H160) -> Vec<u8> {
+			EVM::account_codes(address)
+		}
+
+		fn author() -> H160 {
+			<pallet_ethereum::Module<Runtime>>::find_author()
+		}
+
+		fn storage_at(address: H160, index: U256) -> H256 {
+			let mut tmp = [0u8; 32];
+			index.to_big_endian(&mut tmp);
+			EVM::account_storages(address, H256::from_slice(&tmp[..]))
+		}
+
+		fn call(
+			from: H160,
+			to: H160,
+			data: Vec<u8>,
+			value: U256,
+			gas_limit: U256,
+			gas_price: Option<U256>,
+			nonce: Option<U256>,
+			estimate: bool,
+		) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
+			let config = if estimate {
+				let mut config = <Runtime as pallet_evm::Config>::config().clone();
+				config.estimate = true;
+				Some(config)
+			} else {
+				None
+			};
+
+			<Runtime as pallet_evm::Config>::Runner::call(
+				from,
+				to,
+				data,
+				value,
+				gas_limit.low_u64(),
+				gas_price,
+				nonce,
+				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
+			).map_err(|err| err.into())
+		}
+
+		fn create(
+			from: H160,
+			data: Vec<u8>,
+			value: U256,
+			gas_limit: U256,
+			gas_price: Option<U256>,
+			nonce: Option<U256>,
+			estimate: bool,
+		) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
+			let config = if estimate {
+				let mut config = <Runtime as pallet_evm::Config>::config().clone();
+				config.estimate = true;
+				Some(config)
+			} else {
+				None
+			};
+
+			<Runtime as pallet_evm::Config>::Runner::create(
+				from,
+				data,
+				value,
+				gas_limit.low_u64(),
+				gas_price,
+				nonce,
+				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
+			).map_err(|err| err.into())
+		}
+
+		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
+			Ethereum::current_transaction_statuses()
+		}
+
+		fn current_block() -> Option<pallet_ethereum::Block> {
+			Ethereum::current_block()
+		}
+
+		fn current_receipts() -> Option<Vec<pallet_ethereum::Receipt>> {
+			Ethereum::current_receipts()
+		}
+
+		fn current_all() -> (
+			Option<pallet_ethereum::Block>,
+			Option<Vec<pallet_ethereum::Receipt>>,
+			Option<Vec<TransactionStatus>>
+		) {
+			(
+				Ethereum::current_block(),
+				Ethereum::current_receipts(),
+				Ethereum::current_transaction_statuses()
+			)
 		}
 	}
 
@@ -930,7 +1128,7 @@ impl_runtime_apis! {
 				// hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
 				// // System Events
 				// hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
-            ];
+			];
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
