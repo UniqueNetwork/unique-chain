@@ -1,0 +1,58 @@
+{
+    "relaychain": {
+            "bin": "../polkadot/target/release/polkadot",
+            "chain": "rococo-local",
+            "nodes": [
+                    {
+                            "name": "alice",
+                            "wsPort": 9844,
+                            "port": 30444
+                    },
+                    {
+                            "name": "bob",
+                            "wsPort": 9855,
+                            "port": 30555
+                    },
+                    {
+                            "name": "charlie",
+                            "wsPort": 9866,
+                            "port": 30666
+                    },
+                    {
+                            "name": "dave",
+                            "wsPort": 9877,
+                            "port": 30777
+                    }
+            ],
+            "genesis": {
+                    "runtime": {
+                            "runtime_genesis_config": {
+                                    "parachainsConfiguration": {
+                                            "config": {
+                                                    "validation_upgrade_frequency": 1,
+                                                    "validation_upgrade_delay": 1
+                                            }
+                                    }
+                            }
+                    }
+            }
+    },
+    "parachains": [
+            {
+                    "bin": "../nft_private/target/release/nft",
+                    "id": "2000",
+                    "balance": "1000000000000000000000",
+                    "nodes": [
+                            {
+                                    "port": 31200,
+                                    "name": "alice",
+                                    "flags": []
+                            }
+                    ]
+            }
+    ],
+    "simpleParachains": [],
+    "hrmpChannels": [],
+    "types": "./runtime_types.json",
+    "finalization": false
+}
