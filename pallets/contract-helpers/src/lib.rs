@@ -227,4 +227,35 @@ pub mod pallet {
 		}
 	}
 
+	pub struct ContractSponsorshipHandler<T>(PhantomData<T>);
+	impl<T, C> SponsorshipHandler<T::AccountId, C> for ContractSponsorshipHandler<T>
+	where
+		T: Config,
+		C: IsSubType<pallet_contracts::Call<T>>,
+		T::AccountId: UncheckedFrom<T::Hash>,
+		T::AccountId: AsRef<[u8]>,
+	{
+		fn get_sponsor(who: &T::AccountId, call: &C) -> Option<T::AccountId> {
+			match IsSubType::<pallet_contracts::Call<T>>::is_sub_type(call) {
+				Some(pallet_contracts::Call::call(dest, _value, _gas_limit, _data)) => {
+					let called_contract: T::AccountId =
+						T::Lookup::lookup((*dest).clone()).unwrap_or_default();
+					if <SelfSponsoring<T>>::get(&called_contract) {
+						let last_tx_block = SponsorBasket::<T>::get(&called_contract, &who);
+						let block_number =
+							<frame_system::Pallet<T>>::block_number() as T::BlockNumber;
+						let rate_limit = SponsoringRateLimit::<T>::get(&called_contract);
+						let limit_time = last_tx_block + rate_limit;
+
+						if block_number >= limit_time {
+							SponsorBasket::<T>::insert(&called_contract, who, block_number);
+							return Some(called_contract);
+						}
+					}
+				}
+				_ => {}
+			}
+			None
+		}
+	}
 }
