@@ -5113,6 +5113,7 @@ dependencies = [
  "nft-data-structs",
  "pallet-aura",
  "pallet-balances",
+ "pallet-contract-helpers",
  "pallet-contracts",
  "pallet-contracts-primitives",
  "pallet-contracts-rpc-runtime-api",
@@ -5478,6 +5479,19 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-contract-helpers"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-contracts",
+ "parity-scale-codec 2.1.3",
+ "sp-runtime",
+ "sp-std",
+ "up-sponsorship",
 ]
 
 [[package]]
@@ -5871,6 +5885,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "up-sponsorship",
 ]
 
 [[package]]
@@ -5880,13 +5895,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "nft-data-structs",
  "pallet-balances",
- "pallet-contracts",
- "pallet-nft",
  "pallet-nft-transaction-payment",
- "pallet-randomness-collective-flip",
- "pallet-timestamp",
  "pallet-transaction-payment",
  "parity-scale-codec 2.1.3",
  "serde",
@@ -5903,12 +5913,6 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "nft-data-structs",
- "pallet-balances",
- "pallet-contracts",
- "pallet-nft",
- "pallet-randomness-collective-flip",
- "pallet-timestamp",
  "pallet-transaction-payment",
  "parity-scale-codec 2.1.3",
  "serde",
@@ -5916,6 +5920,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "up-sponsorship",
 ]
 
 [[package]]
@@ -5996,10 +6001,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "nft-data-structs",
- "pallet-contracts",
- "pallet-nft",
- "pallet-nft-transaction-payment",
  "parity-scale-codec 2.1.3",
  "serde",
  "sp-core",
@@ -6007,6 +6008,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "substrate-test-utils",
+ "up-sponsorship",
 ]
 
 [[package]]
@@ -11758,6 +11760,13 @@ name = "untrusted"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
+
+[[package]]
+name = "up-sponsorship"
+version = "0.1.0"
+dependencies = [
+ "impl-trait-for-tuples 0.2.1",
+]
 
 [[package]]
 name = "url"
