@@ -1,7 +1,6 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use super::*;
-use crate::Module as NftTransactionPayment;
 
 use sp_std::prelude::*;
 use frame_system::RawOrigin;

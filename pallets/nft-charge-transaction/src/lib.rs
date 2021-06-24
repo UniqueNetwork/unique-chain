@@ -14,16 +14,10 @@ pub use serde::*;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-#[cfg(test)]
-mod tests;
-
 use codec::{Decode, Encode};
-use frame_support::traits::{ Get};
+use frame_support::traits::Get;
 use frame_support::{
 	decl_module, decl_storage,
-	traits::{
-		IsSubType, 
-	},
 	weights::{
 		DispatchInfo, PostDispatchInfo, DispatchClass
 	}
@@ -37,7 +31,6 @@ use sp_runtime::{
 	},
 	FixedPointOperand, DispatchResult
 };
-use pallet_contracts::chain_extension::UncheckedFrom;
 use pallet_transaction_payment::OnChargeTransaction;
 use sp_std::prelude::*;
 
@@ -83,10 +76,8 @@ impl<T: Config + Send + Sync> sp_std::fmt::Debug
 
 impl<T: Config> ChargeTransactionPayment<T>
 where
-	T::Call: Dispatchable<Info=DispatchInfo, PostInfo=PostDispatchInfo> + IsSubType<pallet_nft::Call<T>> + IsSubType<pallet_contracts::Call<T>>,
+	T::Call: Dispatchable<Info=DispatchInfo, PostInfo=PostDispatchInfo>,
     BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
-    T::AccountId: AsRef<[u8]>,
-    T::AccountId: UncheckedFrom<T::Hash>,
 {
     fn traditional_fee(
         len: usize,
@@ -134,13 +125,6 @@ where
 			.map(|i| (fee, i));
         }
 
-        // check errors
-        let _error = <pallet_nft_transaction_payment::Module<T>>::check_error(who, call);
-        match _error {
-            Err(_error) => return Err(_error),
-            Ok(_error) => {}
-        };
-
         // Determine who is paying transaction fee based on ecnomic model
 		// Parse call to extract collection ID and access collection sponsor	
 		let sponsor = <pallet_nft_transaction_payment::Module<T>>::withdraw_type(who, call);
@@ -156,9 +140,7 @@ impl<T: Config + Send + Sync> SignedExtension
     for ChargeTransactionPayment<T>
 where
     BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
-	T::Call: Dispatchable<Info=DispatchInfo, PostInfo=PostDispatchInfo> + IsSubType<pallet_nft::Call<T>> + IsSubType<pallet_contracts::Call<T>>,
-    T::AccountId: AsRef<[u8]>,
-    T::AccountId: UncheckedFrom<T::Hash>,
+	T::Call: Dispatchable<Info=DispatchInfo, PostInfo=PostDispatchInfo>,
 {
     const IDENTIFIER: &'static str = "ChargeTransactionPayment";
     type AccountId = T::AccountId;
@@ -209,7 +191,7 @@ where
         _result: &DispatchResult,
     ) -> Result<(), TransactionValidityError> {
 		let (tip, who, imbalance) = pre;
-		let actual_fee = pallet_transaction_payment::Module::<T>::compute_actual_fee(
+		let actual_fee = pallet_transaction_payment::Pallet::<T>::compute_actual_fee(
 			len as u32,
 			info,
 			post_info,
