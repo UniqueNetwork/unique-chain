@@ -50,6 +50,8 @@ mod tests;
 
 mod default_weights;
 mod eth;
+mod sponsorship;
+pub use sponsorship::NftSponsorshipHandler;
 
 pub use eth::NftErcSupport;
 pub use eth::account::*;
@@ -2232,12 +2234,6 @@ impl<T: Config> Module<T> {
     ) -> DispatchResult {
         Self::remove_token_index(collection_id, item_index, old_owner)?;
         Self::add_token_index(collection_id, item_index, new_owner)?;
-
-        Ok(())
-    }
-    
-    fn ensure_contract_owned(account: T::AccountId, contract: &T::AccountId) -> DispatchResult {
-        ensure!(<ContractOwner<T>>::get(contract) == Some(account), Error::<T>::NoPermission);
 
         Ok(())
     }
