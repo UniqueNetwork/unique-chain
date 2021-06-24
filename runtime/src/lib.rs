@@ -734,6 +734,11 @@ impl SponsoringResolve<AccountId, Call> for Sponsoring {
 	}
 }
 
+type SponsorshipHandler = (
+	pallet_nft::NftSponsorshipHandler<Runtime>,
+    pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
+);
+
 impl pallet_scheduler::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
@@ -742,15 +747,17 @@ impl pallet_scheduler::Config for Runtime {
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureSigned<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type Sponsoring = Sponsoring;
+	type SponsorshipHandler = SponsorshipHandler;
 	type WeightInfo = ();
 }
 
 impl pallet_nft_transaction_payment::Config for Runtime {
+	type SponsorshipHandler = SponsorshipHandler;
 }
 
-impl pallet_nft_charge_transaction::Config for Runtime {
-}
+impl pallet_nft_charge_transaction::Config for Runtime {}
+
+impl pallet_contract_helpers::Config for Runtime {}
 
 construct_runtime!(
     pub enum Runtime where
@@ -791,6 +798,7 @@ construct_runtime!(
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
 		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage},
 		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage },
+		ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage},
     }
 );
 
@@ -829,6 +837,7 @@ pub type SignedExtra = (
     system::CheckNonce<Runtime>,
     system::CheckWeight<Runtime>,
     pallet_nft_charge_transaction::ChargeTransactionPayment<Runtime>,
+	pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
