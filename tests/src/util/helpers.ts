@@ -39,6 +39,9 @@ export function normalizeAccountId(input: string | AccountId | CrossAccountId | 
     input.ethereum = input.ethereum.toLowerCase();
     return input;
   }
+  if ('substrate' in input) {
+    return input;
+  }
 
   // AccountId
   return {substrate: input.toString()}
