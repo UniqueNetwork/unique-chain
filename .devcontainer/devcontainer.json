@@ -12,7 +12,8 @@
 		}
 	},
 	"extensions": [
-		"matklad.rust-analyzer"
+		"matklad.rust-analyzer",
+		"dbaeumer.vscode-eslint"
 	],
 	"remoteUser": "vscode"
 }
