@@ -30,6 +30,7 @@ std = [
     'pallet-transaction-payment/std',
     'fp-evm/std',
     'nft-data-structs/std',
+    'up-sponsorship/std',
     'sp-std/std',
     'sp-api/std',
     'sp-runtime/std',
@@ -135,8 +136,13 @@ version = '3.0.0'
 
 [dependencies.nft-data-structs]
 default-features = false
-path = '../../primitives'
+path = '../../primitives/nft'
 version = '0.9.0'
+
+[dependencies.up-sponsorship]
+default-features = false
+path = '../../primitives/sponsorship'
+version = '0.1.0'
 
 
 [dependencies]

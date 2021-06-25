@@ -64,10 +64,8 @@ use frame_support::{
 	weights::{GetDispatchInfo, Weight},
 };
 use frame_system::{self as system, ensure_signed};
-use pallet_nft::*;
-// use pallet_nft_transaction_payment::{self as nft_transaction_payment};
-use nft_data_structs::*;
 pub use weights::WeightInfo;
+use up_sponsorship::SponsorshipHandler;
 
 /// Our pallet's configuration trait. All our types and constants go in here. If the
 /// pallet is dependent on specific other pallets, then their configuration traits
@@ -103,7 +101,7 @@ pub trait Config: system::Config
 	type MaxScheduledPerBlock: Get<u32>;
 
 	/// Sponsoring function
-	type Sponsoring: SponsoringResolve<Self::AccountId, <Self as Config>::Call>;
+	type SponsorshipHandler: SponsorshipHandler<Self::AccountId, <Self as Config>::Call>;
 
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
@@ -405,8 +403,7 @@ decl_module! {
 							s.origin.clone()
 						).into();
 						let sender = ensure_signed(origin).unwrap_or(T::AccountId::default());
-						let who_will_pay = T::Sponsoring::resolve(&sender, &s.call.clone()).unwrap_or(
-							sender);
+						let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &s.call).unwrap_or(sender);
 						let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay));
 						let r = s.call.clone().dispatch(sponsor.into());
 						let maybe_id = s.maybe_id.clone();

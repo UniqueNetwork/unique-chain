@@ -3,7 +3,7 @@ resolver = "2"
 members = [
     'node/*',
     'pallets/*',
-    'primitives',
+    'primitives/*',
     'runtime',
     'crates/evm-coder',
     'crates/evm-coder-macros',

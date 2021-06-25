@@ -14,15 +14,12 @@ serde = { version = "1.0.119", default-features = false }
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
 frame-support = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
 frame-system = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
-pallet-contracts = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
 sp-runtime = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
 sp-std = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
 sp-io = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
 frame-benchmarking = { default-features = false, version = '3.0.0', optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.3' }
 
-pallet-nft-transaction-payment = { default-features = false, path = "../nft-transaction-payment" }
-pallet-nft = { default-features = false, path = "../nft" }
-nft-data-structs = { path = '../../primitives', default-features = false }
+up-sponsorship = { default-features = false, path = "../../primitives/sponsorship", version = "0.1.0" }
 log = { version = "0.4.14", default-features = false }
 
 [dev-dependencies]
@@ -37,10 +34,7 @@ std = [
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
-	"pallet-nft-transaction-payment/std",
-	"pallet-nft/std",
-	"pallet-contracts/std",
-	"nft-data-structs/std",
+	"up-sponsorship/std",
 	"sp-io/std",
 	"sp-std/std",
 	"log/std",

@@ -50,6 +50,8 @@ mod tests;
 
 mod default_weights;
 mod eth;
+mod sponsorship;
+pub use sponsorship::NftSponsorshipHandler;
 
 pub use eth::NftErcSupport;
 pub use eth::account::*;
@@ -343,21 +345,6 @@ decl_storage! {
         /// Variable metadata sponsoring
         /// Collection id (controlled?2), token id (controlled?2)
         pub VariableMetaDataBasket get(fn variable_meta_data_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber> = None;
-      
-        //#region Contract Sponsorship and Ownership
-        /// Contract address (real)
-        pub ContractOwner get(fn contract_owner): map hasher(twox_64_concat) T::AccountId => Option<T::AccountId>;
-        /// Contract address (real)
-        pub ContractSelfSponsoring get(fn contract_self_sponsoring): map hasher(twox_64_concat) T::AccountId => bool;
-        /// (Contract address(real), caller (real))
-        pub ContractSponsorBasket get(fn contract_sponsor_basket): map hasher(twox_64_concat) (T::AccountId, T::AccountId) => T::BlockNumber;
-        /// Contract address (real)
-        pub ContractSponsoringRateLimit get(fn contract_sponsoring_rate_limit): map hasher(twox_64_concat) T::AccountId => T::BlockNumber;
-        /// Contract address (real)
-        pub ContractWhiteListEnabled get(fn contract_white_list_enabled): map hasher(twox_64_concat) T::AccountId => bool; 
-        /// Contract address (real) => Whitelisted user (controlled?3)
-        pub ContractWhiteList get(fn contract_white_list): double_map hasher(twox_64_concat) T::AccountId, hasher(blake2_128_concat) T::AccountId => bool; 
-        //#endregion
     }
     add_extra_genesis {
         build(|config: &GenesisConfig<T>| {
@@ -1233,158 +1220,6 @@ decl_module! {
             ensure_root(origin)?;
 
             <ChainLimit>::put(limits);
-            Ok(())
-        }
-
-        /// Enable smart contract self-sponsoring.
-        /// 
-        /// # Permissions
-        /// 
-        /// * Contract Owner
-        /// 
-        /// # Arguments
-        /// 
-        /// * contract address
-        /// * enable flag
-        /// 
-        #[weight = <T as Config>::WeightInfo::enable_contract_sponsoring()]
-        #[transactional]
-        pub fn enable_contract_sponsoring(
-            origin,
-            contract_address: T::AccountId,
-            enable: bool
-        ) -> DispatchResult {
-
-            let sender = ensure_signed(origin)?;
-
-            #[cfg(feature = "runtime-benchmarks")]
-            <ContractOwner<T>>::insert(contract_address.clone(), sender.clone());
-
-            Self::ensure_contract_owned(sender, &contract_address)?;
-
-            <ContractSelfSponsoring<T>>::insert(contract_address, enable);
-            Ok(())
-        }
-
-        /// Set the rate limit for contract sponsoring to specified number of blocks.
-        /// 
-        /// If not set (has the default value of 0 blocks), the sponsoring will be disabled. 
-        /// If set to the number B (for blocks), the transactions will be sponsored with a rate 
-        /// limit of B, i.e. fees for every transaction sent to this smart contract will be paid 
-        /// from contract endowment if there are at least B blocks between such transactions. 
-        /// Nonetheless, if transactions are sent more frequently, the fees are paid by the sender.
-        /// 
-        /// # Permissions
-        /// 
-        /// * Contract Owner
-        /// 
-        /// # Arguments
-        /// 
-        /// -`contract_address`: Address of the contract to sponsor
-        /// -`rate_limit`: Number of blocks to wait until the next sponsored transaction is allowed
-        /// 
-        #[weight = <T as Config>::WeightInfo::set_contract_sponsoring_rate_limit()]
-        #[transactional]
-        pub fn set_contract_sponsoring_rate_limit(
-            origin,
-            contract_address: T::AccountId,
-            rate_limit: T::BlockNumber
-        ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
-
-            #[cfg(feature = "runtime-benchmarks")]
-            <ContractOwner<T>>::insert(contract_address.clone(), sender.clone());
-
-            Self::ensure_contract_owned(sender, &contract_address)?;
-            <ContractSponsoringRateLimit<T>>::insert(contract_address, rate_limit);
-            Ok(())
-        }
-
-        /// Enable the white list for a contract. Only addresses added to the white list with addToContractWhiteList will be able to call this smart contract.
-        /// 
-        /// # Permissions
-        /// 
-        /// * Address that deployed smart contract.
-        /// 
-        /// # Arguments
-        /// 
-        /// -`contract_address`: Address of the contract.
-        /// 
-        /// - `enable`: .  
-        #[weight = <T as Config>::WeightInfo::toggle_contract_white_list()]
-        #[transactional]
-        pub fn toggle_contract_white_list(
-            origin,
-            contract_address: T::AccountId,
-            enable: bool
-        ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
-
-            #[cfg(feature = "runtime-benchmarks")]
-            <ContractOwner<T>>::insert(contract_address.clone(), sender.clone());
-
-            Self::ensure_contract_owned(sender, &contract_address)?;
-            if enable {
-                <ContractWhiteListEnabled<T>>::insert(contract_address, true);
-            } else {
-                <ContractWhiteListEnabled<T>>::remove(contract_address);
-            }
-            Ok(())
-        }
-        
-        /// Add an address to smart contract white list.
-        /// 
-        /// # Permissions
-        /// 
-        /// * Address that deployed smart contract.
-        /// 
-        /// # Arguments
-        /// 
-        /// -`contract_address`: Address of the contract.
-        ///
-        /// -`account_address`: Address to add.
-        #[weight = <T as Config>::WeightInfo::add_to_contract_white_list()]
-        #[transactional]
-        pub fn add_to_contract_white_list(
-            origin,
-            contract_address: T::AccountId,
-            account_address: T::AccountId
-        ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
-
-            #[cfg(feature = "runtime-benchmarks")]
-            <ContractOwner<T>>::insert(contract_address.clone(), sender.clone());
-            
-            Self::ensure_contract_owned(sender, &contract_address)?;      
-            <ContractWhiteList<T>>::insert(contract_address, account_address, true);
-            Ok(())
-        }
-
-        /// Remove an address from smart contract white list.
-        /// 
-        /// # Permissions
-        /// 
-        /// * Address that deployed smart contract.
-        /// 
-        /// # Arguments
-        /// 
-        /// -`contract_address`: Address of the contract.
-        ///
-        /// -`account_address`: Address to remove.
-        #[weight = <T as Config>::WeightInfo::remove_from_contract_white_list()]
-        #[transactional]
-        pub fn remove_from_contract_white_list(
-            origin,
-            contract_address: T::AccountId,
-            account_address: T::AccountId
-        ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
-
-            #[cfg(feature = "runtime-benchmarks")]
-            <ContractOwner<T>>::insert(contract_address.clone(), sender.clone());
-
-            Self::ensure_contract_owned(sender, &contract_address)?;
-            <ContractWhiteList<T>>::remove(contract_address, account_address);
             Ok(())
         }
 
@@ -2399,12 +2234,6 @@ impl<T: Config> Module<T> {
     ) -> DispatchResult {
         Self::remove_token_index(collection_id, item_index, old_owner)?;
         Self::add_token_index(collection_id, item_index, new_owner)?;
-
-        Ok(())
-    }
-    
-    fn ensure_contract_owned(account: T::AccountId, contract: &T::AccountId) -> DispatchResult {
-        ensure!(<ContractOwner<T>>::get(contract) == Some(account), Error::<T>::NoPermission);
 
         Ok(())
     }
