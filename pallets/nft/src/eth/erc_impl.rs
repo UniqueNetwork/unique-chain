@@ -56,7 +56,7 @@ impl<T: Config> ERC721Enumerable for CollectionHandle<T> {
 		Ok(index)
 	}
 
-	fn token_of_owner_by_index(&self, owner: address, index: uint256) -> Result<uint256> {
+	fn token_of_owner_by_index(&self, _owner: address, _index: uint256) -> Result<uint256> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
@@ -77,7 +77,7 @@ impl<T: Config> ERC721 for CollectionHandle<T> {
 	fn owner_of(&self, token_id: uint256) -> Result<address> {
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		let token = <NftItemList<T>>::get(self.id, token_id).ok_or("unknown token")?;
-		Ok(token.owner.as_eth().clone())
+		Ok(*token.owner.as_eth())
 	}
 	fn safe_transfer_from_with_data(
 		&mut self,
@@ -170,7 +170,7 @@ impl<T: Config> ERC721UniqueExtensions for CollectionHandle<T> {
 		caller: caller,
 		to: address,
 		token_id: uint256,
-		value: value,
+		_value: value,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);

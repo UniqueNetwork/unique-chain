@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use quote::quote;
 use darling::FromMeta;
 use inflector::cases;
@@ -545,6 +547,7 @@ impl SolidityInterface {
 				#(
 					#call_inner
 				)*
+				#[allow(unreachable_code)] // In case of no inner calls
 				fn call(&mut self, c: Msg<#call_name>) -> ::core::result::Result<::evm_coder::abi::AbiWriter, Self::Error> {
 					use ::evm_coder::abi::AbiWrite;
 					type InternalCall = #call_name;

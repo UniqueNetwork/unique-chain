@@ -28,18 +28,15 @@ decl_storage! {
 }
 
 decl_module! {
-	pub struct Module<T: Config> for enum Call 
-    where 
+	pub struct Module<T: Config> for enum Call
+	where
 		origin: T::Origin,
-    {
+	{
 	}
 }
 
 impl<T: Config> Module<T> {
-	pub fn withdraw_type(
-		who: &T::AccountId,
-		call: &T::Call
-	) -> Option<T::AccountId> {
+	pub fn withdraw_type(who: &T::AccountId, call: &T::Call) -> Option<T::AccountId> {
 		T::SponsorshipHandler::get_sponsor(who, call)
 	}
 }

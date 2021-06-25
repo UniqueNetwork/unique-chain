@@ -1,4 +1,8 @@
-use crate::{Config, Call, CollectionById, CreateItemBasket, VariableMetaDataBasket, ReFungibleTransferBasket, FungibleTransferBasket, NftTransferBasket, ChainLimit, CreateItemData, CollectionMode};
+use crate::{
+	Config, Call, CollectionById, CreateItemBasket, VariableMetaDataBasket,
+	ReFungibleTransferBasket, FungibleTransferBasket, NftTransferBasket, ChainLimit,
+	CreateItemData, CollectionMode,
+};
 use core::marker::PhantomData;
 use up_sponsorship::SponsorshipHandler;
 use frame_support::{
@@ -6,7 +10,6 @@ use frame_support::{
 	storage::{StorageMap, StorageDoubleMap, StorageValue},
 };
 use nft_data_structs::{TokenId, CollectionId};
-use alloc::vec::Vec;
 
 pub struct NftSponsorshipHandler<T>(PhantomData<T>);
 impl<T: Config> NftSponsorshipHandler<T> {
@@ -15,7 +18,6 @@ impl<T: Config> NftSponsorshipHandler<T> {
 		collection_id: &CollectionId,
 		_properties: &CreateItemData,
 	) -> Option<T::AccountId> {
-	
 		let collection = CollectionById::<T>::get(collection_id)?;
 
 		// sponsor timeout
@@ -32,9 +34,8 @@ impl<T: Config> NftSponsorshipHandler<T> {
 		CreateItemBasket::<T>::insert((collection_id, who.clone()), block_number);
 
 		// check free create limit
-		if collection.limits.sponsored_data_size >= (_properties.len() as u32) {
-			collection.sponsorship.sponsor()
-				.cloned()
+		if collection.limits.sponsored_data_size >= (_properties.data_size() as u32) {
+			collection.sponsorship.sponsor().cloned()
 		} else {
 			None
 		}
@@ -45,13 +46,11 @@ impl<T: Config> NftSponsorshipHandler<T> {
 		collection_id: &CollectionId,
 		item_id: &TokenId,
 	) -> Option<T::AccountId> {
-
 		let collection = CollectionById::<T>::get(collection_id)?;
 		let limits = ChainLimit::get();
 
 		let mut sponsor_transfer = false;
 		if collection.sponsorship.confirmed() {
-
 			let collection_limits = collection.limits.clone();
 			let collection_mode = collection.mode.clone();
 
@@ -59,7 +58,6 @@ impl<T: Config> NftSponsorshipHandler<T> {
 			let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 			sponsor_transfer = match collection_mode {
 				CollectionMode::NFT => {
-
 					// get correct limit
 					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
 						collection_limits.sponsor_transfer_timeout
@@ -82,7 +80,6 @@ impl<T: Config> NftSponsorshipHandler<T> {
 					sponsored
 				}
 				CollectionMode::Fungible(_) => {
-
 					// get correct limit
 					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
 						collection_limits.sponsor_transfer_timeout
@@ -106,7 +103,6 @@ impl<T: Config> NftSponsorshipHandler<T> {
 					sponsored
 				}
 				CollectionMode::ReFungible => {
-
 					// get correct limit
 					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
 						collection_limits.sponsor_transfer_timeout
@@ -116,7 +112,8 @@ impl<T: Config> NftSponsorshipHandler<T> {
 
 					let mut sponsored = true;
 					if ReFungibleTransferBasket::<T>::contains_key(collection_id, item_id) {
-						let last_tx_block = ReFungibleTransferBasket::<T>::get(collection_id, item_id);
+						let last_tx_block =
+							ReFungibleTransferBasket::<T>::get(collection_id, item_id);
 						let limit_time = last_tx_block + limit.into();
 						if block_number <= limit_time {
 							sponsored = false;
@@ -128,32 +125,27 @@ impl<T: Config> NftSponsorshipHandler<T> {
 
 					sponsored
 				}
-				_ => {
-					false
-				},
+				_ => false,
 			};
 		}
 
 		if !sponsor_transfer {
 			None
 		} else {
-			collection.sponsorship.sponsor()
-				.cloned()
+			collection.sponsorship.sponsor().cloned()
 		}
 	}
-	
+
 	pub fn withdraw_set_variable_meta_data(
 		collection_id: &CollectionId,
 		item_id: &TokenId,
-		data: &Vec<u8>,
+		data: &[u8],
 	) -> Option<T::AccountId> {
-
 		let mut sponsor_metadata_changes = false;
 
 		let collection = CollectionById::<T>::get(collection_id)?;
 
-		if
-			collection.sponsorship.confirmed() &&
+		if collection.sponsorship.confirmed() &&
 			// Can't sponsor fungible collection, this tx will be rejected
 			// as invalid
 			!matches!(collection.mode, CollectionMode::Fungible(_)) &&
@@ -164,7 +156,7 @@ impl<T: Config> NftSponsorshipHandler<T> {
 
 				if VariableMetaDataBasket::<T>::get(collection_id, item_id)
 					.map(|last_block| block_number - last_block > rate_limit)
-					.unwrap_or(true) 
+					.unwrap_or(true)
 				{
 					sponsor_metadata_changes = true;
 					VariableMetaDataBasket::<T>::insert(collection_id, item_id, block_number);
@@ -177,27 +169,26 @@ impl<T: Config> NftSponsorshipHandler<T> {
 		} else {
 			collection.sponsorship.sponsor().cloned()
 		}
-
 	}
 }
 
 impl<T, C> SponsorshipHandler<T::AccountId, C> for NftSponsorshipHandler<T>
-where 
-    T: Config,
-    C: IsSubType<Call<T>>
+where
+	T: Config,
+	C: IsSubType<Call<T>>,
 {
-    fn get_sponsor(who: &T::AccountId, call: &C) -> Option<T::AccountId> {
-        match IsSubType::<Call<T>>::is_sub_type(call)? {
-            Call::create_item(collection_id, _owner, _properties) => {
-                Self::withdraw_create_item(who, collection_id, &_properties)
-            },
-            Call::transfer(_new_owner, collection_id, item_id, _value) => {
-                Self::withdraw_transfer(who, collection_id, item_id)
-            },
-            Call::set_variable_meta_data(collection_id, item_id, data) => {
-                Self::withdraw_set_variable_meta_data(collection_id, item_id, &data)
-			},
+	fn get_sponsor(who: &T::AccountId, call: &C) -> Option<T::AccountId> {
+		match IsSubType::<Call<T>>::is_sub_type(call)? {
+			Call::create_item(collection_id, _owner, _properties) => {
+				Self::withdraw_create_item(who, collection_id, &_properties)
+			}
+			Call::transfer(_new_owner, collection_id, item_id, _value) => {
+				Self::withdraw_transfer(who, collection_id, item_id)
+			}
+			Call::set_variable_meta_data(collection_id, item_id, data) => {
+				Self::withdraw_set_variable_meta_data(collection_id, item_id, &data)
+			}
 			_ => None,
-        }
-    }
+		}
+	}
 }

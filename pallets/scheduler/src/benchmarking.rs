@@ -31,7 +31,7 @@ use frame_system::Pallet as System;
 const BLOCK_NUMBER: u32 = 2;
 
 // Add `n` named items to the schedule
-fn fill_schedule<T: Config> (when: T::BlockNumber, n: u32) -> Result<(), &'static str> {
+fn fill_schedule<T: Config>(when: T::BlockNumber, n: u32) -> Result<(), &'static str> {
 	// Essentially a no-op call.
 	let call = frame_system::Call::set_storage(vec![]);
 	for i in 0..n {
@@ -47,7 +47,10 @@ fn fill_schedule<T: Config> (when: T::BlockNumber, n: u32) -> Result<(), &'stati
 			call.clone().into(),
 		)?;
 	}
-	ensure!(Agenda::<T>::get(when).len() == n as usize, "didn't fill schedule");
+	ensure!(
+		Agenda::<T>::get(when).len() == n as usize,
+		"didn't fill schedule"
+	);
 	Ok(())
 }
 
@@ -141,8 +144,4 @@ benchmarks! {
 	}
 }
 
-impl_benchmark_test_suite!(
-	Scheduler,
-	crate::tests::new_test_ext(),
-	crate::tests::Test,
-);
+impl_benchmark_test_suite!(Scheduler, crate::tests::new_test_ext(), crate::tests::Test,);

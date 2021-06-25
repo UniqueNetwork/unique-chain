@@ -1,22 +1,21 @@
+#![allow(clippy::from_over_into)]
+
 use crate as pallet_template;
 use sp_core::H256;
-use frame_support::{ 
-	parameter_types,
-	weights::IdentityFee,
-};
+use frame_support::{parameter_types, weights::IdentityFee};
 use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup}, 
-	testing::Header, 
+	traits::{BlakeTwo256, IdentityLookup},
+	testing::Header,
 	Perbill,
 };
-use pallet_transaction_payment::{ CurrencyAdapter};
+use pallet_transaction_payment::{CurrencyAdapter};
 use frame_system as system;
 use pallet_evm::AddressMapping;
 use crate::{EvmBackwardsAddressMapping, CrossAccountId};
 use codec::{Encode, Decode};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>; 
+type Block = frame_system::mocking::MockBlock<Test>;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -59,7 +58,7 @@ impl system::Config for Test {
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
-    type OnSetCode = ();
+	type OnSetCode = ();
 }
 
 parameter_types! {
@@ -68,10 +67,10 @@ parameter_types! {
 }
 //frame_system::Module<Test>;
 impl pallet_balances::Config for Test {
-    type AccountStore = System;
-    type Balance = u64;
-    type DustRemoval = ();
-    type Event = ();
+	type AccountStore = System;
+	type Balance = u64;
+	type DustRemoval = ();
+	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type WeightInfo = ();
 	type MaxLocks = MaxLocks;
@@ -132,70 +131,76 @@ impl pallet_contracts::Config for Test {
 	type ChainExtension = ();
 	type WeightPrice = ();
 	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
-    type Schedule = Schedule;
-    type CallStack = [pallet_contracts::Frame<Self>; 31];
+	type Schedule = Schedule;
+	type CallStack = [pallet_contracts::Frame<Self>; 31];
 }
 
 parameter_types! {
 	pub const CollectionCreationPrice: u32 = 0;
-    pub TreasuryAccountId: u64 = 1234;
-    pub EthereumChainId: u32 = 1111;
+	pub TreasuryAccountId: u64 = 1234;
+	pub EthereumChainId: u32 = 1111;
 }
 
 pub struct TestEvmAddressMapping;
 impl AddressMapping<u64> for TestEvmAddressMapping {
-    fn into_account_id(addr: sp_core::H160) -> u64 {
-        unimplemented!()
-    }
+	fn into_account_id(_addr: sp_core::H160) -> u64 {
+		unimplemented!()
+	}
 }
 
 pub struct TestEvmBackwardsAddressMapping;
 impl EvmBackwardsAddressMapping<u64> for TestEvmBackwardsAddressMapping {
-    fn from_account_id(account_id: u64) -> sp_core::H160 {
-        unimplemented!()
-    }
+	fn from_account_id(_account_id: u64) -> sp_core::H160 {
+		unimplemented!()
+	}
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct TestCrossAccountId(u64, sp_core::H160);
 impl CrossAccountId<u64> for TestCrossAccountId {
-    fn from_sub(sub: u64) -> Self {
-        let mut eth = [0; 20];
-        eth[12..20].copy_from_slice(&sub.to_be_bytes());
-        Self(sub, sp_core::H160(eth))
-    }
-    fn as_sub(&self) -> &u64 {
-        &self.0
-    }
-    fn from_eth(eth: sp_core::H160) -> Self {
-        unimplemented!()
-    }
-    fn as_eth(&self) -> &sp_core::H160 {
-        &self.1
-    }
+	fn from_sub(sub: u64) -> Self {
+		let mut eth = [0; 20];
+		eth[12..20].copy_from_slice(&sub.to_be_bytes());
+		Self(sub, sp_core::H160(eth))
+	}
+	fn as_sub(&self) -> &u64 {
+		&self.0
+	}
+	fn from_eth(_eth: sp_core::H160) -> Self {
+		unimplemented!()
+	}
+	fn as_eth(&self) -> &sp_core::H160 {
+		&self.1
+	}
 }
 
 pub struct TestEtheremTransactionSender;
 impl pallet_ethereum::EthereumTransactionSender for TestEtheremTransactionSender {
-    fn submit_logs_transaction(tx: pallet_ethereum::Transaction, logs: Vec<pallet_ethereum::Log>) -> Result<(), sp_runtime::DispatchError> {
-        Ok(())
-    }
+	fn submit_logs_transaction(
+		_tx: pallet_ethereum::Transaction,
+		_logs: Vec<pallet_ethereum::Log>,
+	) -> Result<(), sp_runtime::DispatchError> {
+		Ok(())
+	}
 }
 
 impl pallet_template::Config for Test {
 	type Event = ();
 	type WeightInfo = ();
 	type CollectionCreationPrice = CollectionCreationPrice;
-    type Currency = pallet_balances::Pallet<Test>;
-    type TreasuryAccountId = TreasuryAccountId;
-    type EvmAddressMapping = TestEvmAddressMapping;
-    type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
-    type CrossAccountId = TestCrossAccountId;
-    type EthereumChainId = EthereumChainId;
-    type EthereumTransactionSender = TestEtheremTransactionSender;
+	type Currency = pallet_balances::Pallet<Test>;
+	type TreasuryAccountId = TreasuryAccountId;
+	type EvmAddressMapping = TestEvmAddressMapping;
+	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
+	type CrossAccountId = TestCrossAccountId;
+	type EthereumChainId = EthereumChainId;
+	type EthereumTransactionSender = TestEtheremTransactionSender;
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap()
+		.into()
 }

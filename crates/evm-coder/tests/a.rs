@@ -1,3 +1,5 @@
+#![allow(dead_code)] // This test only checks that macros is not panicking
+
 use evm_coder::{solidity_interface, types::*, ToLog};
 use evm_coder_macros::solidity;
 

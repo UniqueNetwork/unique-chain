@@ -189,7 +189,7 @@ where
 		pool.clone(),
 		nft_runtime::TransactionConverter,
 		network.clone(),
-		pending_transactions.clone(),
+		pending_transactions,
 		signers,
 		overrides.clone(),
 		backend,
@@ -200,8 +200,8 @@ where
 	if let Some(filter_pool) = filter_pool {
 		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
 			client.clone(),
-			filter_pool.clone(),
-			500 as usize, // max stored filters
+			filter_pool,
+			500_usize, // max stored filters
 			overrides.clone(),
 			max_past_logs,
 		)));
@@ -217,9 +217,9 @@ where
 	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
 
 	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
-		pool.clone(),
-		client.clone(),
-		network.clone(),
+		pool,
+		client,
+		network,
 		SubscriptionManager::<HexEncodedIdProvider>::with_id_provider(
 			HexEncodedIdProvider::default(),
 			Arc::new(subscription_task_executor),
