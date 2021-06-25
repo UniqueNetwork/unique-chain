@@ -228,3 +228,21 @@ Moved to [runtime_types.json](./runtime_types.json).
 ## Running Integration Tests
 
 See [tests/README.md](./tests/README.md).
+
+## Code Formatting
+
+### Get formatter and linter settings into your branch (if you forked before they were introduced)
+```bash
+git cherry-pick -n 8ff77c21b0d30b2a4648fa35dbf61dfa9d3948a7
+```
+
+### Apply formatting and clippy fixes
+```bash
+cargo clippy --fix -Z unstable-options --allow-dirty --allow-staged
+cargo fmt
+```
+
+### Format tests
+```bash
+pushd tests && yarn fix ; popd
+```
