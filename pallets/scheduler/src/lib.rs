@@ -887,6 +887,7 @@ mod tests {
 		type ScheduleOrigin = EnsureOneOf<u64, EnsureRoot<u64>, EnsureSignedBy<One, u64>>;
 		type MaxScheduledPerBlock = MaxScheduledPerBlock;
 		type WeightInfo = ();
+        type SponsorshipHandler = ();
 	}
 
 	pub fn new_test_ext() -> sp_io::TestExternalities {

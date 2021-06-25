@@ -32,7 +32,7 @@ fn try_sponsor<T: Config>(caller: &H160, collection_id: u32, collection: &Collec
             match call {
                 UniqueNFTCall::ERC721UniqueExtensions(ERC721UniqueExtensionsCall::Transfer {token_id, ..}) | UniqueNFTCall::ERC721(ERC721Call::TransferFrom {token_id, ..})  => {
                     let token_id: u32 = token_id.try_into().map_err(|_| AnyError)?;
-                    let block_number = <frame_system::Module<T>>::block_number() as T::BlockNumber;
+                    let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
                     let collection_limits = &collection.limits;
                     let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
                         collection_limits.sponsor_transfer_timeout
@@ -68,7 +68,7 @@ fn try_sponsor<T: Config>(caller: &H160, collection_id: u32, collection: &Collec
                         ChainLimit::get().fungible_sponsor_transfer_timeout
                     };
 
-                    let block_number = <frame_system::Module<T>>::block_number() as T::BlockNumber;
+                    let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
                     let mut sponsored = true;
                     if <FungibleTransferBasket<T>>::contains_key(collection_id, who.as_sub()) {
                         let last_tx_block = <FungibleTransferBasket<T>>::get(collection_id, who.as_sub());

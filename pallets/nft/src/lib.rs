@@ -236,7 +236,6 @@ pub trait Config: system::Config + Sized {
 
     type EvmAddressMapping: pallet_evm::AddressMapping<Self::AccountId>;
     type EvmBackwardsAddressMapping: EvmBackwardsAddressMapping<Self::AccountId>;
-    type EvmWithdrawOrigin: pallet_evm::EnsureAddressOrigin<Self::Origin, Success = Self::AccountId>;
 
 	type CrossAccountId: CrossAccountId<Self::AccountId>;
     type Currency: Currency<Self::AccountId>;
