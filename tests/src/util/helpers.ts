@@ -29,7 +29,7 @@ export type CrossAccountId = {
 } | {
   ethereum: string,
 };
-export function normalizeAccountId(input: string | CrossAccountId | IKeyringPair): CrossAccountId {
+export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {
   if (typeof input === 'string')
     return { substrate: input };
   if ('address' in input) {
@@ -37,8 +37,14 @@ export function normalizeAccountId(input: string | CrossAccountId | IKeyringPair
   }
   if ('ethereum' in input) {
     input.ethereum = input.ethereum.toLowerCase();
+    return input;
   }
-  return input;
+  if ('substrate' in input) {
+    return input;
+  }
+
+  // AccountId
+  return {substrate: input.toString()}
 }
 export function toSubstrateAddress(input: string | CrossAccountId | IKeyringPair): string {
   input = normalizeAccountId(input);

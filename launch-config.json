@@ -45,7 +45,14 @@
                     "nodes": [
                             {
                                     "port": 31200,
+                                    "wsPort": "9944",
                                     "name": "alice",
+                                    "flags": []
+                            },
+                            {
+                                    "port": 31201,
+                                    "wsPort": "9945",
+                                    "name": "bob",
                                     "flags": []
                             }
                     ]
