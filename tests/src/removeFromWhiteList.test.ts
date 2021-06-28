@@ -16,7 +16,7 @@ import {
   findNotExistingCollection,
   removeFromWhiteListExpectFailure,
   disableWhiteListExpectSuccess,
-  normalizeAccountId
+  normalizeAccountId,
 } from './util/helpers';
 import { IKeyringPair } from '@polkadot/types/types';
 import privateKey from './substrate/privateKey';

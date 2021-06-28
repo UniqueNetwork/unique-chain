@@ -51,7 +51,7 @@ describe('Integration Test toggleContractWhiteList', () => {
       expect(flipValueAfter).to.be.eq(!flipValueBefore, 'Anyone can call new contract.');
 
       const deployerCanFlip = async () => {
-        let flipValueBefore = await getFlipValue(contract, deployer);
+        const flipValueBefore = await getFlipValue(contract, deployer);
         const deployerFlip = contract.tx.flip(value, gasLimit);
         await submitTransactionAsync(deployer, deployerFlip);
         const aliceFlip1Response = await getFlipValue(contract, deployer);

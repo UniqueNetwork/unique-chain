@@ -40,7 +40,7 @@ export function normalizeAccountId(input: string | AccountId | CrossAccountId | 
   }
 
   // AccountId
-  return {substrate: input.toString()}
+  return {substrate: input.toString()};
 }
 export function toSubstrateAddress(input: string | CrossAccountId | IKeyringPair): string {
   input = normalizeAccountId(input);
