@@ -5,25 +5,13 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { default as usingApi } from "./substrate/substrate-api";
-import privateKey from "./substrate/privateKey";
+import { default as usingApi } from './substrate/substrate-api';
 import { BigNumber } from 'bignumber.js';
-import { IKeyringPair } from '@polkadot/types/types';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-let alice: IKeyringPair;
-let bob: IKeyringPair;
-
 describe('integration test: Inflation', () => {
-  before(async () => {
-    await usingApi(async (api) => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-    });
-  });
-
   it('First year inflation is 10%', async () => {
     await usingApi(async (api) => {
 

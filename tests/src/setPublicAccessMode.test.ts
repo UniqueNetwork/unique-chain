@@ -4,7 +4,7 @@
 //
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setschemaversion
-import { ApiPromise, Keyring } from '@polkadot/api';
+import { ApiPromise } from '@polkadot/api';
 import { IKeyringPair } from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -19,7 +19,6 @@ import {
   enableWhiteListExpectSuccess,
   normalizeAccountId,
 } from './util/helpers';
-import { utf16ToStr } from './util/util';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -29,14 +28,14 @@ let Bob: IKeyringPair;
 
 describe('Integration Test setPublicAccessMode(): ', () => {
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       Alice = privateKey('//Alice');
       Bob = privateKey('//Bob');
     });
   });
 
   it('Run extrinsic with collection id parameters, set the whitelist mode for the collection', async () => {
-    await usingApi(async (api: ApiPromise) => {
+    await usingApi(async () => {
       const collectionId: number = await createCollectionExpectSuccess();
       await enableWhiteListExpectSuccess(Alice, collectionId);
       await enablePublicMintingExpectSuccess(Alice, collectionId);
@@ -77,7 +76,7 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
   });
 
   it('Re-set the list mode already set in quantity', async () => {
-    await usingApi(async (api: ApiPromise) => {
+    await usingApi(async () => {
       const collectionId: number = await createCollectionExpectSuccess();
       await enableWhiteListExpectSuccess(Alice, collectionId);
       await enableWhiteListExpectSuccess(Alice, collectionId);

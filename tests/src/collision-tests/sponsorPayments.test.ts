@@ -5,7 +5,6 @@ import { alicesPublicKey, bobsPublicKey } from '../accounts';
 import getBalance from '../substrate/get-balance';
 import privateKey from '../substrate/privateKey';
 import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
-import waitNewBlocks from '../substrate/wait-new-blocks';
 import {
   confirmSponsorshipExpectSuccess,
   createCollectionExpectSuccess,
@@ -17,13 +16,11 @@ chai.use(chaiAsPromised);
 const expect = chai.expect;
 let Alice: IKeyringPair;
 let Bob: IKeyringPair;
-let Ferdie: IKeyringPair;
 
 before(async () => {
   await usingApi(async () => {
     Alice = privateKey('//Alice');
     Bob = privateKey('//Bob');
-    Ferdie = privateKey('//Ferdie');
   });
 });
 
@@ -38,12 +35,11 @@ describe('Payment of commission if one block: ', () => {
       const itemId = await createItemExpectSuccess(Bob, collectionId, 'NFT');
       await setCollectionSponsorExpectSuccess(collectionId, Bob.address);
       await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
-      //
+
       const [alicesBalanceBefore, bobsBalanceBefore] = await getBalance(api, [alicesPublicKey, bobsPublicKey]);
       const sendItem = api.tx.nft.transfer(Alice.address, collectionId, itemId, 1);
       const revokeSponsor = api.tx.nft.removeCollectionSponsor(collectionId);
-      await Promise.all
-      ([
+      await Promise.all([
         sendItem.signAndSend(Bob),
         revokeSponsor.signAndSend(Alice),
       ]);

@@ -3,15 +3,15 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { WsProvider, ApiPromise } from "@polkadot/api";
+import { WsProvider, ApiPromise } from '@polkadot/api';
 import { EventRecord } from '@polkadot/types/interfaces/system/types';
 import { ExtrinsicStatus } from '@polkadot/types/interfaces/author/types';
-import { IKeyringPair } from "@polkadot/types/types";
+import { IKeyringPair } from '@polkadot/types/types';
 
-import config from "../config";
-import promisifySubstrate from "./promisify-substrate";
-import { ApiOptions, SubmittableExtrinsic, ApiTypes } from "@polkadot/api/types";
-import rtt from "../../../runtime_types.json";
+import config from '../config';
+import promisifySubstrate from './promisify-substrate';
+import { ApiOptions, SubmittableExtrinsic, ApiTypes } from '@polkadot/api/types';
+import rtt from '../../../runtime_types.json';
 
 function defaultApiOptions(): ApiOptions {
   const wsProvider = new WsProvider(config.substrateUrl);
@@ -20,15 +20,15 @@ function defaultApiOptions(): ApiOptions {
 
 export default async function usingApi<T = void>(action: (api: ApiPromise) => Promise<T>, settings: ApiOptions | undefined = undefined): Promise<T> {
   settings = settings || defaultApiOptions();
-  let api: ApiPromise = new ApiPromise(settings);
+  const api: ApiPromise = new ApiPromise(settings);
   let result: T = null as unknown as T;
 
   // TODO: Remove, this is temporary: Filter unneeded API output 
   // (Jaco promised it will be removed in the next version)
   const consoleErr = console.error;
   console.error = (message: string) => {
-    if (message.includes("StorageChangeSet:: WebSocket is not connected") || message.includes("2021-")) {}
-    else consoleErr(message);
+    if (!message.includes('StorageChangeSet:: WebSocket is not connected') || message.includes('2021-'))
+      consoleErr(message);
   };
 
   try {
@@ -72,6 +72,7 @@ function getTransactionStatus(events: EventRecord[], status: ExtrinsicStatus): T
 
 export function
 submitTransactionAsync(sender: IKeyringPair, transaction: SubmittableExtrinsic<ApiTypes>): Promise<EventRecord[]> {
+  /* eslint no-async-promise-executor: "off" */
   return new Promise(async (resolve, reject) => {
     try {
       await transaction.signAndSend(sender, ({ events = [], status }) => {
@@ -97,6 +98,7 @@ export function submitTransactionExpectFailAsync(sender: IKeyringPair, transacti
   console.error = () => {};
   console.log = () => {};
 
+  /* eslint no-async-promise-executor: "off" */
   return new Promise<EventRecord[]>(async function(res, rej) {
     const resolve = (rec: EventRecord[]) => {
       setTimeout(() => {

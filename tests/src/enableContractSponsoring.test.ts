@@ -81,7 +81,7 @@ describe('Negative Integration Test enableContractSponsoring', () => {
 
   it('fails when called by non-owning user', async () => {
     await usingApi(async (api) => {
-      const [flipper, _] = await deployFlipper(api);
+      const [flipper] = await deployFlipper(api);
 
       await enableContractSponsoringExpectFailure(alice, flipper.address, true);
     });

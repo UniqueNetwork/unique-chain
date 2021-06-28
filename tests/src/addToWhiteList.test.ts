@@ -27,7 +27,7 @@ let Bob: IKeyringPair;
 describe('Integration Test ext. addToWhiteList()', () => {
 
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       Alice = privateKey('//Alice');
       Bob = privateKey('//Bob');
     });

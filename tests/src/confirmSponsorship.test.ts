@@ -5,12 +5,11 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from "./substrate/substrate-api";
+import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
 import { 
   createCollectionExpectSuccess, 
   setCollectionSponsorExpectSuccess, 
   destroyCollectionExpectSuccess, 
-  setCollectionSponsorExpectFailure,
   confirmSponsorshipExpectSuccess,
   confirmSponsorshipExpectFailure,
   createItemExpectSuccess,
@@ -20,10 +19,9 @@ import {
   enablePublicMintingExpectSuccess,
   addToWhiteListExpectSuccess,
   normalizeAccountId,
-} from "./util/helpers";
-import { Keyring } from "@polkadot/api";
-import { IKeyringPair } from "@polkadot/types/types";
-import type { AccountId } from '@polkadot/types/interfaces';
+} from './util/helpers';
+import { Keyring } from '@polkadot/api';
+import { IKeyringPair } from '@polkadot/types/types';
 import { BigNumber } from 'bignumber.js';
 
 chai.use(chaiAsPromised);
@@ -36,11 +34,11 @@ let charlie: IKeyringPair;
 describe('integration test: ext. confirmSponsorship():', () => {
 
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
-      alice = keyring.addFromUri(`//Alice`);
-      bob = keyring.addFromUri(`//Bob`);
-      charlie = keyring.addFromUri(`//Charlie`);
+      alice = keyring.addFromUri('//Alice');
+      bob = keyring.addFromUri('//Bob');
+      charlie = keyring.addFromUri('//Charlie');
     });
   });
 
@@ -163,7 +161,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       await addToWhiteListExpectSuccess(alice, collectionId, zeroBalance.address);
 
       // Mint token using unused address as signer
-      const tokenId = await createItemExpectSuccess(zeroBalance, collectionId, 'NFT', zeroBalance.address);
+      await createItemExpectSuccess(zeroBalance, collectionId, 'NFT', zeroBalance.address);
 
       const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
 
@@ -195,7 +193,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const badTransaction = async function () { 
         await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       };
-      await expect(badTransaction()).to.be.rejectedWith("Inability to pay some fees");
+      await expect(badTransaction()).to.be.rejectedWith('Inability to pay some fees');
       const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
 
       // Try again after Zero gets some balance - now it should succeed
@@ -228,11 +226,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const result1 = getGenericResult(events1);
 
       const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
-
-      const badTransaction = async function () { 
-        await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
-      };
-
+      await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
 
       // Try again after Zero gets some balance - now it should succeed
@@ -271,7 +265,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const badTransaction = async function () { 
         await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       };
-      await expect(badTransaction()).to.be.rejectedWith("Inability to pay some fees");
+      await expect(badTransaction()).to.be.rejectedWith('Inability to pay some fees');
       const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
 
       // Try again after Zero gets some balance - now it should succeed
@@ -317,7 +311,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const badTransaction = async function () { 
         await createItemExpectSuccess(zeroBalance, collectionId, 'NFT', zeroBalance.address);
       };
-      await expect(badTransaction()).to.be.rejectedWith("Inability to pay some fees");
+      await expect(badTransaction()).to.be.rejectedWith('Inability to pay some fees');
       console.error = consoleError;
       console.log = consoleLog;
       const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
@@ -335,19 +329,19 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
 describe('(!negative test!) integration test: ext. removeCollectionSponsor():', () => {
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
-      alice = keyring.addFromUri(`//Alice`);
-      bob = keyring.addFromUri(`//Bob`);
-      charlie = keyring.addFromUri(`//Charlie`);
+      alice = keyring.addFromUri('//Alice');
+      bob = keyring.addFromUri('//Bob');
+      charlie = keyring.addFromUri('//Charlie');
     });
   });
 
   it('(!negative test!) Confirm sponsorship for a collection that never existed', async () => {
     // Find the collection that never existed
-    const collectionId = 0;
+    let collectionId = 0;
     await usingApi(async (api) => {
-      const collectionId = parseInt((await api.query.nft.createdCollectionCount()).toString()) + 1;
+      collectionId = parseInt((await api.query.nft.createdCollectionCount()).toString()) + 1;
     });
 
     await confirmSponsorshipExpectFailure(collectionId, '//Bob');

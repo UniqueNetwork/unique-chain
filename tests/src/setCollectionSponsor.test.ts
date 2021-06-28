@@ -5,22 +5,21 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { default as usingApi } from "./substrate/substrate-api";
-import { createCollectionExpectSuccess, setCollectionSponsorExpectSuccess, destroyCollectionExpectSuccess, setCollectionSponsorExpectFailure } from "./util/helpers";
-import { Keyring } from "@polkadot/api";
-import { IKeyringPair } from "@polkadot/types/types";
+import { default as usingApi } from './substrate/substrate-api';
+import { createCollectionExpectSuccess, setCollectionSponsorExpectSuccess, destroyCollectionExpectSuccess, setCollectionSponsorExpectFailure } from './util/helpers';
+import { Keyring } from '@polkadot/api';
+import { IKeyringPair } from '@polkadot/types/types';
 
 chai.use(chaiAsPromised);
-const expect = chai.expect;
 
 let bob: IKeyringPair;
 
 describe('integration test: ext. setCollectionSponsor():', () => {
 
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
-      bob = keyring.addFromUri(`//Bob`);
+      bob = keyring.addFromUri('//Bob');
     });
   });
 
@@ -46,7 +45,7 @@ describe('integration test: ext. setCollectionSponsor():', () => {
     const collectionId = await createCollectionExpectSuccess();
 
     const keyring = new Keyring({ type: 'sr25519' });
-    const charlie = keyring.addFromUri(`//Charlie`);
+    const charlie = keyring.addFromUri('//Charlie');
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await setCollectionSponsorExpectSuccess(collectionId, charlie.address);
   });
@@ -54,9 +53,9 @@ describe('integration test: ext. setCollectionSponsor():', () => {
 
 describe('(!negative test!) integration test: ext. setCollectionSponsor():', () => {
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
-      bob = keyring.addFromUri(`//Bob`);
+      bob = keyring.addFromUri('//Bob');
     });
   });
 
@@ -66,9 +65,9 @@ describe('(!negative test!) integration test: ext. setCollectionSponsor():', () 
   });
   it('(!negative test!) Add sponsor to a collection that never existed', async () => {
     // Find the collection that never existed
-    const collectionId = 0;
+    let collectionId = 0;
     await usingApi(async (api) => {
-      const collectionId = parseInt((await api.query.nft.createdCollectionCount()).toString()) + 1;
+      collectionId = parseInt((await api.query.nft.createdCollectionCount()).toString()) + 1;
     });
 
     await setCollectionSponsorExpectFailure(collectionId, bob.address);

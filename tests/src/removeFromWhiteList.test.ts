@@ -28,7 +28,7 @@ describe('Integration Test removeFromWhiteList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
     });
@@ -62,7 +62,7 @@ describe('Negative Integration Test removeFromWhiteList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
     });

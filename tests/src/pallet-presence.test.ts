@@ -3,9 +3,9 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { ApiPromise } from "@polkadot/api";
-import { expect } from "chai";
-import usingApi from "./substrate/substrate-api";
+import { ApiPromise } from '@polkadot/api';
+import { expect } from 'chai';
+import usingApi from './substrate/substrate-api';
 
 function getModuleNames(api: ApiPromise): string[] {
   return api.runtimeMetadata.asLatest.modules.map(m => m.name.toString().toLowerCase());
@@ -14,12 +14,12 @@ function getModuleNames(api: ApiPromise): string[] {
 // Pallets that must always be present
 const requiredPallets = [
   'nft', 'inflation', 'balances', 'contracts', 'randomnesscollectiveflip', 'system', 'timestamp', 'transactionpayment', 'treasury', 'vesting', 'evm', 'ethereum',
-  'scheduler', 'nftpayment', 'charging'
+  'scheduler', 'nftpayment', 'charging',
 ];
 
 // Pallets that depend on consensus and governance configuration
 const consensusPallets = [
-  'sudo', 'aura'
+  'sudo', 'aura',
 ];
 
 describe('Pallet presence', () => {

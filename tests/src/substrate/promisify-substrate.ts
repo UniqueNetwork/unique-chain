@@ -3,7 +3,7 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { ApiPromise } from "@polkadot/api";
+import { ApiPromise } from '@polkadot/api';
 
 type PromiseType<T> = T extends PromiseLike<infer TInner> ? TInner : T;
 

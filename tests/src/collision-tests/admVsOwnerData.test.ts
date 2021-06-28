@@ -1,28 +1,22 @@
 import { IKeyringPair } from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { alicesPublicKey, bobsPublicKey } from '../accounts';
-import getBalance from '../substrate/get-balance';
 import privateKey from '../substrate/privateKey';
 import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
-import waitNewBlocks from '../substrate/wait-new-blocks';
 import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
-  setCollectionSponsorExpectSuccess,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 let Alice: IKeyringPair;
 let Bob: IKeyringPair;
-let Ferdie: IKeyringPair;
 
 before(async () => {
   await usingApi(async () => {
     Alice = privateKey('//Alice');
     Bob = privateKey('//Bob');
-    Ferdie = privateKey('//Ferdie');
   });
 });
 
@@ -41,8 +35,7 @@ describe('Admin vs Owner changes the data in the token: ', () => {
       const AliceTx = api.tx.nft.setVariableMetaData(collectionId, itemId, AliceData.toString());
       // tslint:disable-next-line: max-line-length
       const BobTx = api.tx.nft.setVariableMetaData(collectionId, itemId, BobData.toString());
-      await Promise.all
-      ([
+      await Promise.all([
         AliceTx.signAndSend(Alice),
         BobTx.signAndSend(Bob),
       ]);

@@ -4,22 +4,18 @@
 //
 
 import { ApiPromise, Keyring } from '@polkadot/api';
-import { Enum, Struct } from '@polkadot/types/codec';
-import type { AccountId, BlockNumber, Call, EventRecord } from '@polkadot/types/interfaces';
-import { u128 } from '@polkadot/types/primitive';
+import type { AccountId, EventRecord } from '@polkadot/types/interfaces';
 import { IKeyringPair } from '@polkadot/types/types';
 import { evmToAddress } from '@polkadot/util-crypto';
 import { BigNumber } from 'bignumber.js';
 import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { alicesPublicKey, nullPublicKey } from '../accounts';
+import { alicesPublicKey } from '../accounts';
 import privateKey from '../substrate/privateKey';
 import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from '../substrate/substrate-api';
 import { ICollectionInterface } from '../types';
 import { hexToStr, strToUTF16, utf16ToStr } from './util';
-import { Compact, Option, Raw, Vec } from '@polkadot/types/codec';
-// import { AccountId, AccountIdOf, AccountIndex, Address, AssetId, Balance, BalanceOf, Block, BlockNumber, Call, ChangesTrieConfiguration, Consensus, ConsensusEngineId, Digest, DigestItem, DispatchClass, DispatchInfo, DispatchInfoTo190, EcdsaSignature, Ed25519Signature, Extrinsic, ExtrinsicEra, ExtrinsicPayload, ExtrinsicPayloadUnknown, ExtrinsicPayloadV1, ExtrinsicPayloadV2, ExtrinsicPayloadV3, ExtrinsicPayloadV4, ExtrinsicSignatureV1, ExtrinsicSignatureV2, ExtrinsicSignatureV3, ExtrinsicSignatureV4, ExtrinsicUnknown, ExtrinsicV1, ExtrinsicV2, ExtrinsicV3, ExtrinsicV4, Hash, Header, ImmortalEra, Index, Justification, KeyTypeId, KeyValue, LockIdentifier, LookupSource, LookupTarget, Moment, MortalEra, MultiSignature, Origin, Perbill, Percent, Permill, Perquintill, Phantom, PhantomData, PreRuntime, Seal, SealV0, Signature, SignedBlock, SignerPayload, Sr25519Signature, ValidatorId, Weight, WeightMultiplier } from '@polkadot/types/interfaces/runtime';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -87,10 +83,6 @@ interface ITokenDataType {
   VariableData: number[];
 }
 
-interface IFungibleTokenDataType {
-  Value: BN;
-}
-
 interface IGetMessage {
   checkMsgNftMethod: string;
   checkMsgTrsMethod: string;
@@ -104,9 +96,9 @@ export interface IReFungibleTokenDataType {
 }
 
 export function nftEventMessage(events: EventRecord[]): IGetMessage {
-  let checkMsgNftMethod: string = '';
-  let checkMsgTrsMethod: string = '';
-  let checkMsgSysMethod: string = '';
+  let checkMsgNftMethod = '';
+  let checkMsgTrsMethod = '';
+  let checkMsgSysMethod = '';
   events.forEach(({ event: { method, section } }) => {
     if (section === 'nft') {
       checkMsgNftMethod = method;
@@ -128,7 +120,7 @@ export function getGenericResult(events: EventRecord[]): GenericResult {
   const result: GenericResult = {
     success: false,
   };
-  events.forEach(({ phase, event: { data, method, section } }) => {
+  events.forEach(({ event: { method } }) => {
     // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
     if (method === 'ExtrinsicSuccess') {
       result.success = true;
@@ -141,8 +133,8 @@ export function getGenericResult(events: EventRecord[]): GenericResult {
 
 export function getCreateCollectionResult(events: EventRecord[]): CreateCollectionResult {
   let success = false;
-  let collectionId: number = 0;
-  events.forEach(({ phase, event: { data, method, section } }) => {
+  let collectionId = 0;
+  events.forEach(({ event: { data, method, section } }) => {
     // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
     if (method == 'ExtrinsicSuccess') {
       success = true;
@@ -159,10 +151,10 @@ export function getCreateCollectionResult(events: EventRecord[]): CreateCollecti
 
 export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
   let success = false;
-  let collectionId: number = 0;
-  let itemId: number = 0;
+  let collectionId = 0;
+  let itemId = 0;
   let recipient;
-  events.forEach(({ phase, event: { data, method, section } }) => {
+  events.forEach(({ event: { data, method, section } }) => {
     // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
     if (method == 'ExtrinsicSuccess') {
       success = true;
@@ -235,12 +227,12 @@ const defaultCreateCollectionParams: CreateCollectionParams = {
   mode: { type: 'NFT' },
   name: 'name',
   tokenPrefix: 'prefix',
-}
+};
 
 export async function createCollectionExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
   const { name, description, mode, tokenPrefix } = { ...defaultCreateCollectionParams, ...params };
 
-  let collectionId: number = 0;
+  let collectionId = 0;
   await usingApi(async (api) => {
     // Get number of collections before the transaction
     const AcollectionCount = parseInt((await api.query.nft.createdCollectionCount()).toString(), 10);
@@ -351,9 +343,8 @@ export async function findNotExistingCollection(api: ApiPromise): Promise<number
 }
 
 function getDestroyResult(events: EventRecord[]): boolean {
-  let success: boolean = false;
-  events.forEach(({ phase, event: { data, method, section } }) => {
-    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
+  let success = false;
+  events.forEach(({ event: { method } }) => {
     if (method == 'ExtrinsicSuccess') {
       success = true;
     }
@@ -361,7 +352,7 @@ function getDestroyResult(events: EventRecord[]): boolean {
   return success;
 }
 
-export async function destroyCollectionExpectFailure(collectionId: number, senderSeed: string = '//Alice') {
+export async function destroyCollectionExpectFailure(collectionId: number, senderSeed = '//Alice') {
   await usingApi(async (api) => {
     // Run the DestroyCollection transaction
     const alicePrivateKey = privateKey(senderSeed);
@@ -370,7 +361,7 @@ export async function destroyCollectionExpectFailure(collectionId: number, sende
   });
 }
 
-export async function destroyCollectionExpectSuccess(collectionId: number, senderSeed: string = '//Alice') {
+export async function destroyCollectionExpectSuccess(collectionId: number, senderSeed = '//Alice') {
   await usingApi(async (api) => {
     // Run the DestroyCollection transaction
     const alicePrivateKey = privateKey(senderSeed);
@@ -465,7 +456,7 @@ export async function removeCollectionSponsorExpectFailure(collectionId: number)
   });
 }
 
-export async function setCollectionSponsorExpectFailure(collectionId: number, sponsor: string, senderSeed: string = '//Alice') {
+export async function setCollectionSponsorExpectFailure(collectionId: number, sponsor: string, senderSeed = '//Alice') {
   await usingApi(async (api) => {
 
     // Run the transaction
@@ -475,7 +466,7 @@ export async function setCollectionSponsorExpectFailure(collectionId: number, sp
   });
 }
 
-export async function confirmSponsorshipExpectSuccess(collectionId: number, senderSeed: string = '//Alice') {
+export async function confirmSponsorshipExpectSuccess(collectionId: number, senderSeed = '//Alice') {
   await usingApi(async (api) => {
 
     // Run the transaction
@@ -496,7 +487,7 @@ export async function confirmSponsorshipExpectSuccess(collectionId: number, send
 }
 
 
-export async function confirmSponsorshipExpectFailure(collectionId: number, senderSeed: string = '//Alice') {
+export async function confirmSponsorshipExpectFailure(collectionId: number, senderSeed = '//Alice') {
   await usingApi(async (api) => {
 
     // Run the transaction
@@ -546,7 +537,7 @@ export async function setContractSponsoringRateLimitExpectFailure(sender: IKeyri
   });
 }
 
-export async function toggleContractWhitelistExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, enabled: boolean) {
+export async function toggleContractWhitelistExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string) {
   await usingApi(async (api) => {
     const tx = api.tx.nft.toggleContractWhiteList(contractAddress, true);
     const events = await submitTransactionAsync(sender, tx);
@@ -557,7 +548,7 @@ export async function toggleContractWhitelistExpectSuccess(sender: IKeyringPair,
 }
 
 export async function isWhitelistedInContract(contractAddress: AccountId | string, user: string) {
-  let whitelisted: boolean = false;
+  let whitelisted = false;
   await usingApi(async (api) => {
     whitelisted = (await api.query.nft.contractWhiteList(contractAddress, user)).toJSON() as boolean;
   });
@@ -659,8 +650,10 @@ export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: n
 }
 
 export async function
-  approveExpectSuccess(collectionId: number,
-    tokenId: number, owner: IKeyringPair, approved: IKeyringPair | CrossAccountId | string, amount: number | bigint = 1) {
+approveExpectSuccess(
+  collectionId: number,
+  tokenId: number, owner: IKeyringPair, approved: IKeyringPair | CrossAccountId | string, amount: number | bigint = 1,
+) {
   await usingApi(async (api: ApiPromise) => {
     approved = normalizeAccountId(approved);
     const allowanceBefore =
@@ -677,21 +670,22 @@ export async function
 }
 
 export async function
-  transferFromExpectSuccess(collectionId: number,
-    tokenId: number,
-    accountApproved: IKeyringPair,
-    accountFrom: IKeyringPair | CrossAccountId,
-    accountTo: IKeyringPair | CrossAccountId,
-    value: number | bigint = 1,
-    type: string = 'NFT') {
+transferFromExpectSuccess(
+  collectionId: number,
+  tokenId: number,
+  accountApproved: IKeyringPair,
+  accountFrom: IKeyringPair | CrossAccountId,
+  accountTo: IKeyringPair | CrossAccountId,
+  value: number | bigint = 1,
+  type = 'NFT',
+) {
   await usingApi(async (api: ApiPromise) => {
     const to = normalizeAccountId(accountTo);
     let balanceBefore = new BN(0);
     if (type === 'Fungible') {
       balanceBefore = await api.query.nft.balance(collectionId, toSubstrateAddress(to)) as unknown as BN;
     }
-    const transferFromTx = api.tx.nft.transferFrom(
-      normalizeAccountId(accountFrom), to, collectionId, tokenId, value);
+    const transferFromTx = api.tx.nft.transferFrom(normalizeAccountId(accountFrom), to, collectionId, tokenId, value);
     const events = await submitTransactionAsync(accountApproved, transferFromTx);
     const result = getCreateItemResult(events);
     // tslint:disable-next-line:no-unused-expression
@@ -714,15 +708,16 @@ export async function
 }
 
 export async function
-  transferFromExpectFail(collectionId: number,
-    tokenId: number,
-    accountApproved: IKeyringPair,
-    accountFrom: IKeyringPair,
-    accountTo: IKeyringPair,
-    value: number | bigint = 1) {
+transferFromExpectFail(
+  collectionId: number,
+  tokenId: number,
+  accountApproved: IKeyringPair,
+  accountFrom: IKeyringPair,
+  accountTo: IKeyringPair,
+  value: number | bigint = 1,
+) {
   await usingApi(async (api: ApiPromise) => {
-    const transferFromTx = api.tx.nft.transferFrom(
-      normalizeAccountId(accountFrom.address), normalizeAccountId(accountTo.address), collectionId, tokenId, value);
+    const transferFromTx = api.tx.nft.transferFrom(normalizeAccountId(accountFrom.address), normalizeAccountId(accountTo.address), collectionId, tokenId, value);
     const events = await expect(submitTransactionExpectFailAsync(accountApproved, transferFromTx)).to.be.rejected;
     const result = getCreateCollectionResult(events);
     // tslint:disable-next-line:no-unused-expression
@@ -730,36 +725,34 @@ export async function
   });
 }
 
+/* eslint no-async-promise-executor: "off" */
 async function getBlockNumber(api: ApiPromise): Promise<number> {
-  return new Promise<number>(async (resolve, reject) => {
+  return new Promise<number>(async (resolve) => {
     const unsubscribe = await api.rpc.chain.subscribeNewHeads((head) => {
-        unsubscribe();
-        resolve(head.number.toNumber());
+      unsubscribe();
+      resolve(head.number.toNumber());
     });
   });
 }
 
 export async function
-scheduleTransferExpectSuccess(collectionId: number,
-                      tokenId: number,
-                      sender: IKeyringPair,
-                      recipient: IKeyringPair,
-                      value: number | bigint = 1,
-                      type: string = 'NFT') {
+scheduleTransferExpectSuccess(
+  collectionId: number,
+  tokenId: number,
+  sender: IKeyringPair,
+  recipient: IKeyringPair,
+  value: number | bigint = 1,
+) {
   await usingApi(async (api: ApiPromise) => {
-    let balanceBefore = new BN(0);
-
-
-    let blockNumber: number | undefined = await getBlockNumber(api);
-    let expectedBlockNumber = blockNumber + 2;
+    const blockNumber: number | undefined = await getBlockNumber(api);
+    const expectedBlockNumber = blockNumber + 2;
 
     expect(blockNumber).to.be.greaterThan(0);
     const transferTx = await api.tx.nft.transfer(recipient.address, collectionId, tokenId, value); 
     const scheduleTx = await api.tx.scheduler.schedule(expectedBlockNumber, null, 0, transferTx);
 
-    const events = await submitTransactionAsync(sender, scheduleTx);
+    await submitTransactionAsync(sender, scheduleTx);
 
-    const sponsorBalanceBefore = new BigNumber((await api.query.system.account(sender.address)).data.free.toString());
     const recipientBalanceBefore = new BigNumber((await api.query.system.account(recipient.address)).data.free.toString());
 
     const nftItemDataBefore = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON() as unknown as ITokenDataType;
@@ -768,7 +761,6 @@ scheduleTransferExpectSuccess(collectionId: number,
     // sleep for 2 blocks
     await new Promise(resolve => setTimeout(resolve, 6000 * 2));
 
-    const sponsorBalanceAfter = new BigNumber((await api.query.system.account(sender.address)).data.free.toString());
     const recipientBalanceAfter = new BigNumber((await api.query.system.account(recipient.address)).data.free.toString());
 
     const nftItemData = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON() as unknown as ITokenDataType;
@@ -779,12 +771,14 @@ scheduleTransferExpectSuccess(collectionId: number,
 
 
 export async function
-  transferExpectSuccess(collectionId: number,
-    tokenId: number,
-    sender: IKeyringPair,
-    recipient: IKeyringPair | CrossAccountId,
-    value: number | bigint = 1,
-    type: string = 'NFT') {
+transferExpectSuccess(
+  collectionId: number,
+  tokenId: number,
+  sender: IKeyringPair,
+  recipient: IKeyringPair | CrossAccountId,
+  value: number | bigint = 1,
+  type = 'NFT',
+) {
   await usingApi(async (api: ApiPromise) => {
     const to = normalizeAccountId(recipient);
 
@@ -820,12 +814,13 @@ export async function
 }
 
 export async function
-  transferExpectFail(collectionId: number,
-    tokenId: number,
-    sender: IKeyringPair,
-    recipient: IKeyringPair,
-    value: number | bigint = 1,
-    type: string = 'NFT') {
+transferExpectFail(
+  collectionId: number,
+  tokenId: number,
+  sender: IKeyringPair,
+  recipient: IKeyringPair,
+  value: number | bigint = 1,
+) {
   await usingApi(async (api: ApiPromise) => {
     const transferTx = api.tx.nft.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value);
     const events = await expect(submitTransactionExpectFailAsync(sender, transferTx)).to.be.rejected;
@@ -838,8 +833,10 @@ export async function
 }
 
 export async function
-  approveExpectFail(collectionId: number,
-    tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number | bigint = 1) {
+approveExpectFail(
+  collectionId: number,
+  tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number | bigint = 1,
+) {
   await usingApi(async (api: ApiPromise) => {
     const approveNftTx = api.tx.nft.approve(normalizeAccountId(approved.address), collectionId, tokenId, amount);
     const events = await expect(submitTransactionExpectFailAsync(owner, approveNftTx)).to.be.rejected;
@@ -876,9 +873,8 @@ export async function createFungibleItemExpectSuccess(
   });
 }
 
-export async function createItemExpectSuccess(
-  sender: IKeyringPair, collectionId: number, createMode: string, owner: CrossAccountId | string = sender.address) {
-  let newItemId: number = 0;
+export async function createItemExpectSuccess(sender: IKeyringPair, collectionId: number, createMode: string, owner: CrossAccountId | string = sender.address) {
+  let newItemId = 0;
   await usingApi(async (api) => {
     const to = normalizeAccountId(owner);
     const AItemCount = parseInt((await api.query.nft.itemListIndex(collectionId)).toString(), 10);
@@ -919,8 +915,7 @@ export async function createItemExpectSuccess(
   return newItemId;
 }
 
-export async function createItemExpectFailure(
-  sender: IKeyringPair, collectionId: number, createMode: string, owner: string = sender.address) {
+export async function createItemExpectFailure(sender: IKeyringPair, collectionId: number, createMode: string, owner: string = sender.address) {
   await usingApi(async (api) => {
     const tx = api.tx.nft.createItem(collectionId, normalizeAccountId(owner), createMode);
     
@@ -994,7 +989,7 @@ export async function setMintPermissionExpectFailure(sender: IKeyringPair, colle
 }
 
 export async function isWhitelisted(collectionId: number, address: string) {
-  let whitelisted: boolean = false;
+  let whitelisted = false;
   await usingApi(async (api) => {
     whitelisted = (await api.query.nft.whiteList(collectionId, address)).toJSON() as unknown as boolean;
   });

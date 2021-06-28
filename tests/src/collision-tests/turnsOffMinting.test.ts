@@ -2,8 +2,7 @@ import { IKeyringPair } from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from '../substrate/privateKey';
-import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
-import waitNewBlocks from '../substrate/wait-new-blocks';
+import usingApi from '../substrate/substrate-api';
 import {
   addToWhiteListExpectSuccess,
   createCollectionExpectSuccess,
@@ -13,13 +12,11 @@ import {
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 let Alice: IKeyringPair;
-let Bob: IKeyringPair;
 let Ferdie: IKeyringPair;
 
 before(async () => {
   await usingApi(async () => {
     Alice = privateKey('//Alice');
-    Bob = privateKey('//Bob');
     Ferdie = privateKey('//Ferdie');
   });
 });
@@ -32,15 +29,14 @@ describe('Turns off minting mode: ', () => {
       const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
       await setMintPermissionExpectSuccess(Alice, collectionId, true);
       await addToWhiteListExpectSuccess(Alice, collectionId, Ferdie.address);
-      //
+
       const mintItem = api.tx.nft.createItem(collectionId, Ferdie.address, 'NFT');
       const offMinting = api.tx.nft.setMintPermission(collectionId, false);
-      await Promise.all
-      ([
+      await Promise.all([
         mintItem.signAndSend(Ferdie),
         offMinting.signAndSend(Alice),
       ]);
-      let itemList: boolean = false;
+      let itemList = false;
       itemList = (await (api.query.nft.nftItemList(collectionId, mintItem))).toJSON() as boolean;
       // tslint:disable-next-line: no-unused-expression
       expect(itemList).to.be.null;

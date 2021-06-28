@@ -82,7 +82,7 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
   let Charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       Alice = privateKey('//Alice');
       Bob = privateKey('//Bob');
       Charlie = privateKey('//Charlie');

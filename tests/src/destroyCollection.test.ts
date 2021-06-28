@@ -7,8 +7,8 @@ import { IKeyringPair } from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
-import { default as usingApi } from "./substrate/substrate-api";
-import { createCollectionExpectSuccess, destroyCollectionExpectSuccess, destroyCollectionExpectFailure, setCollectionLimitsExpectSuccess } from "./util/helpers";
+import { default as usingApi } from './substrate/substrate-api';
+import { createCollectionExpectSuccess, destroyCollectionExpectSuccess, destroyCollectionExpectFailure, setCollectionLimitsExpectSuccess } from './util/helpers';
 
 chai.use(chaiAsPromised);
 
@@ -31,7 +31,7 @@ describe('(!negative test!) integration test: ext. destroyCollection():', () => 
   let alice: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
     });
   });
