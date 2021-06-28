@@ -213,7 +213,7 @@ pub mod pallet {
 					Ok(Some((who.clone(), *code_hash, salt.clone())))
 				}
 				Some(pallet_contracts::Call::instantiate_with_code(_, _, code, _, salt)) => {
-					let code_hash = &T::Hashing::hash(&code);
+					let code_hash = &T::Hashing::hash(code);
 					Ok(Some((who.clone(), *code_hash, salt.clone())))
 				}
 				_ => Ok(None),
