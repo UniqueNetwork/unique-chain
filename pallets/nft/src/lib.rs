@@ -177,6 +177,8 @@ decl_error! {
 		OutOfGas,
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
+		/// Can't transfer tokens to ethereum zero address
+		AddressIsZero,
 	}
 }
 
@@ -1241,13 +1243,14 @@ impl<T: Config> Module<T> {
 		owner: &T::CrossAccountId,
 		data: CreateItemData,
 	) -> DispatchResult {
+		ensure!(
+			owner != &T::CrossAccountId::from_eth(H160([0; 20])),
+			Error::<T>::AddressIsZero
+		);
+
 		Self::can_create_items_in_collection(collection, sender, owner, 1)?;
 		Self::validate_create_item_args(collection, &data)?;
 		Self::create_item_no_validation(collection, owner, data)?;
-
-		Ok(())
-	}
-
 	pub fn transfer_internal(
 		sender: &T::CrossAccountId,
 		recipient: &T::CrossAccountId,
@@ -1255,6 +1258,11 @@ impl<T: Config> Module<T> {
 		item_id: TokenId,
 		value: u128,
 	) -> DispatchResult {
+		ensure!(
+			recipient != &T::CrossAccountId::from_eth(H160([0; 20])),
+			Error::<T>::AddressIsZero
+		);
+
 		target_collection.consume_gas(2000000)?;
 		// Limits check
 		Self::is_correct_transfer(target_collection, recipient)?;
