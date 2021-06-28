@@ -177,7 +177,7 @@ describe.only('Chain extensions', () => {
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
 
-      await transferFromExpectSuccess(collectionId, tokenId, bob, contract.address.toString(), charlie, 1, 'NFT');
+      await transferFromExpectSuccess(collectionId, tokenId, bob, normalizeAccountId(contract.address.toString()), charlie, 1, 'NFT');
     });
   });
 
