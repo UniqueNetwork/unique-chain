@@ -79,6 +79,9 @@ impl<'i> AbiReader<'i> {
 		}
 		Ok(subresult.buf[subresult.offset..subresult.offset + length].into())
 	}
+	pub fn string(&mut self) -> Result<string> {
+		string::from_utf8(self.bytes()?).map_err(|_| Error::Error(ExitError::InvalidRange))
+	}
 
 	pub fn uint32(&mut self) -> Result<u32> {
 		Ok(u32::from_be_bytes(self.read_padleft()?))
@@ -226,6 +229,7 @@ impl_abi_readable!(U256, uint256);
 impl_abi_readable!(H160, address);
 impl_abi_readable!(Vec<u8>, bytes);
 impl_abi_readable!(bool, bool);
+impl_abi_readable!(string, string);
 
 pub trait AbiWrite {
 	fn abi_write(&self, writer: &mut AbiWriter);
