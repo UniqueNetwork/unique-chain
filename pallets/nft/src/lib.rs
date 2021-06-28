@@ -1251,6 +1251,10 @@ impl<T: Config> Module<T> {
 		Self::can_create_items_in_collection(collection, sender, owner, 1)?;
 		Self::validate_create_item_args(collection, &data)?;
 		Self::create_item_no_validation(collection, owner, data)?;
+
+		Ok(())
+	}
+
 	pub fn transfer_internal(
 		sender: &T::CrossAccountId,
 		recipient: &T::CrossAccountId,
@@ -1819,6 +1823,11 @@ impl<T: Config> Module<T> {
 		<NftItemList<T>>::remove(collection_id, item_id);
 		<VariableMetaDataBasket<T>>::remove(collection_id, item_id);
 
+		collection.log(ERC721Events::Transfer {
+			from: *item.owner.as_eth(),
+			to: H160::default(),
+			token_id: item_id.into(),
+		})?;
 		Self::deposit_event(RawEvent::ItemDestroyed(collection.id, item_id));
 		Ok(())
 	}
