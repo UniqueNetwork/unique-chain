@@ -17,6 +17,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
+      - name: Install substrate dependencies
+        run: sudo apt-get install libssl-dev pkg-config libclang-dev clang
       - uses: icepuma/rust-action@master
         with:
           args: cargo clippy -- -Dwarnings
