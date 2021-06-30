@@ -132,10 +132,10 @@ where
 	) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
 		let mut who_pays_fee = *who;
 		if let WithdrawReason::Call { target, input } = &reason {
-			if let Some(collection_id) = crate::eth::map_eth_to_id(&target) {
+			if let Some(collection_id) = crate::eth::map_eth_to_id(target) {
 				if let Some(collection) = <CollectionById<T>>::get(collection_id) {
 					if let Some(sponsor) = collection.sponsorship.sponsor() {
-						if try_sponsor(who, collection_id, &collection, &input).is_ok() {
+						if try_sponsor(who, collection_id, &collection, input).is_ok() {
 							who_pays_fee =
 								T::EvmBackwardsAddressMapping::from_account_id(sponsor.clone());
 						}

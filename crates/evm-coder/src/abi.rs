@@ -104,7 +104,7 @@ impl<'i> AbiReader<'i> {
 	fn subresult(&mut self) -> Result<AbiReader<'i>> {
 		let offset = self.read_usize()?;
 		Ok(AbiReader {
-			buf: &self.buf,
+			buf: self.buf,
 			offset: offset + self.offset,
 		})
 	}
@@ -252,7 +252,7 @@ impl_abi_writeable!(bool, bool);
 impl_abi_writeable!(&str, string);
 impl AbiWrite for &string {
 	fn abi_write(&self, writer: &mut AbiWriter) {
-		writer.string(&self)
+		writer.string(self)
 	}
 }
 

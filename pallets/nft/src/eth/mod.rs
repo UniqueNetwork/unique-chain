@@ -108,7 +108,7 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 			.unwrap_or(false)
 	}
 	fn get_code(target: &H160) -> Option<Vec<u8>> {
-		map_eth_to_id(&target)
+		map_eth_to_id(target)
 			.and_then(<CollectionById<T>>::get)
 			.map(|collection| {
 				match collection.mode {
@@ -127,7 +127,7 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 		input: &[u8],
 		value: U256,
 	) -> Option<PrecompileOutput> {
-		let mut collection = map_eth_to_id(&target)
+		let mut collection = map_eth_to_id(target)
 			.and_then(|id| <CollectionHandle<T>>::get_with_gas_limit(id, gas_limit))?;
 		let (method_id, input) = AbiReader::new_call(input).unwrap();
 		let result = call_internal(&mut collection, *source, method_id, input, value);

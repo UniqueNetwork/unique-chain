@@ -8,9 +8,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - uses: icepuma/rust-action@master
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
         with:
-          args: cargo fmt -- --check
+            toolchain: nightly
+            default: true
+            target: wasm32-unknown-unknown
+            components: rustfmt, clippy
+      - name: Run cargo fmt
+        run: cargo fmt -- --check
 
   clippy:
     runs-on: ubuntu-20.04
@@ -19,6 +25,12 @@ jobs:
       - uses: actions/checkout@v1
       - name: Install substrate dependencies
         run: sudo apt-get install libssl-dev pkg-config libclang-dev clang
-      - uses: icepuma/rust-action@master
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
         with:
-          args: cargo clippy -- -Dwarnings
+            toolchain: nightly
+            default: true
+            target: wasm32-unknown-unknown
+            components: rustfmt, clippy
+      - name: Run cargo check
+        run: cargo clippy -- -Dwarnings

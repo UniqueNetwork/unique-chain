@@ -1232,7 +1232,7 @@ decl_module! {
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = Self::get_collection(collection_id)?;
-			Self::check_owner_permissions(&target_collection, &sender.as_sub())?;
+			Self::check_owner_permissions(&target_collection, sender.as_sub())?;
 			let old_limits = &target_collection.limits;
 			let chain_limits = ChainLimit::get();
 
@@ -1267,9 +1267,9 @@ impl<T: Config> Module<T> {
 		owner: &T::CrossAccountId,
 		data: CreateItemData,
 	) -> DispatchResult {
-		Self::can_create_items_in_collection(&collection, &sender, &owner, 1)?;
-		Self::validate_create_item_args(&collection, &data)?;
-		Self::create_item_no_validation(&collection, owner, data)?;
+		Self::can_create_items_in_collection(collection, sender, owner, 1)?;
+		Self::validate_create_item_args(collection, &data)?;
+		Self::create_item_no_validation(collection, owner, data)?;
 
 		Ok(())
 	}
@@ -1283,18 +1283,18 @@ impl<T: Config> Module<T> {
 	) -> DispatchResult {
 		target_collection.consume_gas(2000000)?;
 		// Limits check
-		Self::is_correct_transfer(target_collection, &recipient)?;
+		Self::is_correct_transfer(target_collection, recipient)?;
 
 		// Transfer permissions check
 		ensure!(
-			Self::is_item_owner(&sender, target_collection, item_id)
-				|| Self::is_owner_or_admin_permissions(target_collection, &sender),
+			Self::is_item_owner(sender, target_collection, item_id)
+				|| Self::is_owner_or_admin_permissions(target_collection, sender),
 			Error::<T>::NoPermission
 		);
 
 		if target_collection.access == AccessMode::WhiteList {
-			Self::check_white_list(target_collection, &sender)?;
-			Self::check_white_list(target_collection, &recipient)?;
+			Self::check_white_list(target_collection, sender)?;
+			Self::check_white_list(target_collection, recipient)?;
 		}
 
 		match target_collection.mode {
@@ -1305,7 +1305,7 @@ impl<T: Config> Module<T> {
 				recipient.clone(),
 			)?,
 			CollectionMode::Fungible(_) => {
-				Self::transfer_fungible(target_collection, value, &sender, &recipient)?
+				Self::transfer_fungible(target_collection, value, sender, recipient)?
 			}
 			CollectionMode::ReFungible => Self::transfer_refungible(
 				target_collection,
@@ -1336,23 +1336,23 @@ impl<T: Config> Module<T> {
 		amount: u128,
 	) -> DispatchResult {
 		collection.consume_gas(2000000)?;
-		Self::token_exists(&collection, item_id)?;
+		Self::token_exists(collection, item_id)?;
 
 		// Transfer permissions check
 		let bypasses_limits = collection.limits.owner_can_transfer
-			&& Self::is_owner_or_admin_permissions(&collection, &sender);
+			&& Self::is_owner_or_admin_permissions(collection, sender);
 
 		let allowance_limit = if bypasses_limits {
 			None
-		} else if let Some(amount) = Self::owned_amount(&sender, &collection, item_id) {
+		} else if let Some(amount) = Self::owned_amount(sender, collection, item_id) {
 			Some(amount)
 		} else {
 			fail!(Error::<T>::NoPermission);
 		};
 
 		if collection.access == AccessMode::WhiteList {
-			Self::check_white_list(&collection, &sender)?;
-			Self::check_white_list(&collection, &spender)?;
+			Self::check_white_list(collection, sender)?;
+			Self::check_white_list(collection, spender)?;
 		}
 
 		let allowance: u128 = amount
@@ -1412,19 +1412,19 @@ impl<T: Config> Module<T> {
 			<Allowances<T>>::get(collection.id, (item_id, from.as_sub(), sender.as_sub()));
 
 		// Limits check
-		Self::is_correct_transfer(&collection, &recipient)?;
+		Self::is_correct_transfer(collection, recipient)?;
 
 		// Transfer permissions check
 		ensure!(
 			approval >= amount
 				|| (collection.limits.owner_can_transfer
-					&& Self::is_owner_or_admin_permissions(&collection, &sender)),
+					&& Self::is_owner_or_admin_permissions(collection, sender)),
 			Error::<T>::NoPermission
 		);
 
 		if collection.access == AccessMode::WhiteList {
-			Self::check_white_list(&collection, &sender)?;
-			Self::check_white_list(&collection, &recipient)?;
+			Self::check_white_list(collection, sender)?;
+			Self::check_white_list(collection, recipient)?;
 		}
 
 		// Reduce approval by transferred amount or remove if remaining approval drops to 0
@@ -1441,13 +1441,13 @@ impl<T: Config> Module<T> {
 
 		match collection.mode {
 			CollectionMode::NFT => {
-				Self::transfer_nft(&collection, item_id, from.clone(), recipient.clone())?
+				Self::transfer_nft(collection, item_id, from.clone(), recipient.clone())?
 			}
 			CollectionMode::Fungible(_) => {
-				Self::transfer_fungible(&collection, amount, &from, &recipient)?
+				Self::transfer_fungible(collection, amount, from, recipient)?
 			}
 			CollectionMode::ReFungible => Self::transfer_refungible(
-				&collection,
+				collection,
 				item_id,
 				amount,
 				from.clone(),
@@ -1473,7 +1473,7 @@ impl<T: Config> Module<T> {
 		item_id: TokenId,
 		data: Vec<u8>,
 	) -> DispatchResult {
-		Self::token_exists(&collection, item_id)?;
+		Self::token_exists(collection, item_id)?;
 
 		ensure!(
 			ChainLimit::get().custom_data_limit >= data.len() as u32,
@@ -1482,15 +1482,15 @@ impl<T: Config> Module<T> {
 
 		// Modify permissions check
 		ensure!(
-			Self::is_item_owner(&sender, &collection, item_id)
-				|| Self::is_owner_or_admin_permissions(&collection, &sender),
+			Self::is_item_owner(sender, collection, item_id)
+				|| Self::is_owner_or_admin_permissions(collection, sender),
 			Error::<T>::NoPermission
 		);
 
 		match collection.mode {
-			CollectionMode::NFT => Self::set_nft_variable_data(&collection, item_id, data)?,
+			CollectionMode::NFT => Self::set_nft_variable_data(collection, item_id, data)?,
 			CollectionMode::ReFungible => {
-				Self::set_re_fungible_variable_data(&collection, item_id, data)?
+				Self::set_re_fungible_variable_data(collection, item_id, data)?
 			}
 			CollectionMode::Fungible(_) => fail!(Error::<T>::CantStoreMetadataInFungibleTokens),
 			_ => fail!(Error::<T>::UnexpectedCollectionType),
@@ -1505,18 +1505,13 @@ impl<T: Config> Module<T> {
 		owner: &T::CrossAccountId,
 		items_data: Vec<CreateItemData>,
 	) -> DispatchResult {
-		Self::can_create_items_in_collection(
-			&collection,
-			&sender,
-			&owner,
-			items_data.len() as u32,
-		)?;
+		Self::can_create_items_in_collection(collection, sender, owner, items_data.len() as u32)?;
 
 		for data in &items_data {
-			Self::validate_create_item_args(&collection, data)?;
+			Self::validate_create_item_args(collection, data)?;
 		}
 		for data in &items_data {
-			Self::create_item_no_validation(&collection, owner, data.clone())?;
+			Self::create_item_no_validation(collection, owner, data.clone())?;
 		}
 
 		Ok(())
@@ -1529,22 +1524,20 @@ impl<T: Config> Module<T> {
 		value: u128,
 	) -> DispatchResult {
 		ensure!(
-			Self::is_item_owner(&sender, &collection, item_id)
+			Self::is_item_owner(sender, collection, item_id)
 				|| (collection.limits.owner_can_transfer
-					&& Self::is_owner_or_admin_permissions(&collection, &sender)),
+					&& Self::is_owner_or_admin_permissions(collection, sender)),
 			Error::<T>::NoPermission
 		);
 
 		if collection.access == AccessMode::WhiteList {
-			Self::check_white_list(&collection, &sender)?;
+			Self::check_white_list(collection, sender)?;
 		}
 
 		match collection.mode {
-			CollectionMode::NFT => Self::burn_nft_item(&collection, item_id)?,
-			CollectionMode::Fungible(_) => Self::burn_fungible_item(&sender, &collection, value)?,
-			CollectionMode::ReFungible => {
-				Self::burn_refungible_item(&collection, item_id, &sender)?
-			}
+			CollectionMode::NFT => Self::burn_nft_item(collection, item_id)?,
+			CollectionMode::Fungible(_) => Self::burn_fungible_item(sender, collection, value)?,
+			CollectionMode::ReFungible => Self::burn_refungible_item(collection, item_id, sender)?,
 			_ => (),
 		};
 
@@ -1557,7 +1550,7 @@ impl<T: Config> Module<T> {
 		address: &T::CrossAccountId,
 		whitelisted: bool,
 	) -> DispatchResult {
-		Self::check_owner_or_admin_permissions(&collection, &sender)?;
+		Self::check_owner_or_admin_permissions(collection, sender)?;
 
 		if whitelisted {
 			<WhiteList<T>>::insert(collection.id, address.as_sub(), true);
@@ -1610,7 +1603,7 @@ impl<T: Config> Module<T> {
 			Error::<T>::AccountTokenLimitExceeded
 		);
 
-		if !Self::is_owner_or_admin_permissions(collection, &sender) {
+		if !Self::is_owner_or_admin_permissions(collection, sender) {
 			ensure!(collection.mint_mode, Error::<T>::PublicMintingNotAllowed);
 			Self::check_white_list(collection, owner)?;
 			Self::check_white_list(collection, sender)?;
@@ -1691,7 +1684,7 @@ impl<T: Config> Module<T> {
 				Self::add_nft_item(collection, item)?;
 			}
 			CreateItemData::Fungible(data) => {
-				Self::add_fungible_item(collection, &owner, data.value)?;
+				Self::add_fungible_item(collection, owner, data.value)?;
 			}
 			CreateItemData::ReFungible(data) => {
 				let owner_list = vec![Ownership {
@@ -1934,7 +1927,7 @@ impl<T: Config> Module<T> {
 		subject: &T::CrossAccountId,
 	) -> bool {
 		*subject.as_sub() == collection.owner
-			|| <AdminList<T>>::get(collection.id).contains(&subject)
+			|| <AdminList<T>>::get(collection.id).contains(subject)
 	}
 
 	fn check_owner_or_admin_permissions(
@@ -1979,7 +1972,7 @@ impl<T: Config> Module<T> {
 	) -> bool {
 		match target_collection.mode {
 			CollectionMode::Fungible(_) => true,
-			_ => Self::owned_amount(&subject, target_collection, item_id).is_some(),
+			_ => Self::owned_amount(subject, target_collection, item_id).is_some(),
 		}
 	}
 

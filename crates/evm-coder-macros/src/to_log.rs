@@ -41,7 +41,7 @@ struct Event {
 impl Event {
 	fn try_from(variant: &Variant) -> syn::Result<Self> {
 		let name = &variant.ident;
-		let name_screaming = snake_ident_to_screaming(&name);
+		let name_screaming = snake_ident_to_screaming(name);
 
 		let named = match &variant.fields {
 			Fields::Named(named) => named,
@@ -54,7 +54,7 @@ impl Event {
 		};
 		let mut fields = Vec::new();
 		for field in &named.named {
-			fields.push(EventField::try_from(&field)?);
+			fields.push(EventField::try_from(field)?);
 		}
 		let mut selector_str = format!("{}(", name);
 		for (i, arg) in fields.iter().enumerate() {
