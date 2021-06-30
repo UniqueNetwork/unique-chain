@@ -238,11 +238,16 @@ git cherry-pick -n 8ff77c21b0d30b2a4648fa35dbf61dfa9d3948a7
 
 ### Apply formatting and clippy fixes
 ```bash
-cargo clippy --fix -Z unstable-options --allow-dirty --allow-staged
+cargo clippy
 cargo fmt
 ```
 
 ### Format tests
 ```bash
 pushd tests && yarn fix ; popd
+```
+
+### Check code style in tests
+```bash
+cd tests && yarn eslint --ext .ts,.js src/
 ```
