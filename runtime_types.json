@@ -11,6 +11,10 @@
         "WhiteList"
       ]
     },
+    "CallSpec": {
+      "Module": "u32",
+      "Method": "u32"
+    },
     "DecimalPoints": "u8",
     "CollectionMode": {
       "_enum": {
