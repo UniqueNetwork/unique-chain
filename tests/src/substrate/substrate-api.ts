@@ -15,7 +15,14 @@ import rtt from '../../../runtime_types.json';
 
 function defaultApiOptions(): ApiOptions {
   const wsProvider = new WsProvider(config.substrateUrl);
-  return { provider: wsProvider, types: rtt };
+  return {
+    provider: wsProvider, types: rtt, signedExtensions: {
+      ContractHelpers: {
+        extrinsic: {},
+        payload: {},
+      },
+    },
+  };
 }
 
 export default async function usingApi<T = void>(action: (api: ApiPromise) => Promise<T>, settings: ApiOptions | undefined = undefined): Promise<T> {
