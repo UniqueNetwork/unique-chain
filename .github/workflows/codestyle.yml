@@ -19,6 +19,7 @@ jobs:
         run: cargo fmt -- --check
 
   clippy:
+    if: ${{ false }}
     runs-on: ubuntu-20.04
 
     steps:
