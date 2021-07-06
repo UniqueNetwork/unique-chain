@@ -160,23 +160,23 @@ fn testnet_genesis(
 				.to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		pallet_balances: BalancesConfig {
+		balances: BalancesConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
 				.map(|k| (k, 1 << 70))
 				.collect(),
 		},
-		pallet_treasury: Default::default(),
-		pallet_sudo: SudoConfig { key: root_key },
-		pallet_vesting: VestingConfig {
+		treasury: Default::default(),
+		sudo: SudoConfig { key: root_key },
+		vesting: VestingConfig {
 			vesting: vested_accounts
 				.iter()
 				.cloned()
 				.map(|k| (k, 1000, 100, 1 << 98))
 				.collect(),
 		},
-		pallet_nft: NftConfig {
+		nft: NftConfig {
 			collection_id: vec![(
 				1,
 				Collection {
@@ -215,13 +215,13 @@ fn testnet_genesis(
 			},
 		},
 		parachain_info: nft_runtime::ParachainInfoConfig { parachain_id: id },
-		pallet_aura: nft_runtime::AuraConfig {
+		aura: nft_runtime::AuraConfig {
 			authorities: initial_authorities,
 		},
-		cumulus_pallet_aura_ext: Default::default(),
-		pallet_evm: EVMConfig {
+		aura_ext: Default::default(),
+		evm: EVMConfig {
 			accounts: BTreeMap::new(),
 		},
-		pallet_ethereum: EthereumConfig {},
+		ethereum: EthereumConfig {},
 	}
 }

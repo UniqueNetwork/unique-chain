@@ -75,7 +75,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(0)]
-		fn toggle_sponsoring(
+		pub fn toggle_sponsoring(
 			origin: OriginFor<T>,
 			contract: T::AccountId,
 			sponsoring: bool,
@@ -95,7 +95,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(0)]
-		fn toggle_allowlist(
+		pub fn toggle_allowlist(
 			origin: OriginFor<T>,
 			contract: T::AccountId,
 			enabled: bool,
@@ -115,7 +115,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(0)]
-		fn toggle_allowed(
+		pub fn toggle_allowed(
 			origin: OriginFor<T>,
 			contract: T::AccountId,
 			user: T::AccountId,
@@ -136,7 +136,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(0)]
-		fn set_sponsoring_rate_limit(
+		pub fn set_sponsoring_rate_limit(
 			origin: OriginFor<T>,
 			contract: T::AccountId,
 			rate_limit: T::BlockNumber,
