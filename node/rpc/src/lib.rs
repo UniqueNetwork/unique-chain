@@ -121,7 +121,7 @@ where
 	C: BlockchainEvents<Block>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: BlockBuilder<Block>,
-	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
+	// C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: pallet_nft::NftApi<Block>,
@@ -135,7 +135,7 @@ where
 		EthPubSubApiServer, EthSigner, HexEncodedIdProvider, NetApi, NetApiServer, Web3Api,
 		Web3ApiServer,
 	};
-	use pallet_contracts_rpc::{Contracts, ContractsApi};
+	// use pallet_contracts_rpc::{Contracts, ContractsApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
 
@@ -164,7 +164,7 @@ where
 		client.clone(),
 	)));
 
-	io.extend_with(ContractsApi::to_delegate(Contracts::new(client.clone())));
+	// io.extend_with(ContractsApi::to_delegate(Contracts::new(client.clone())));
 
 	let mut signers = Vec::new();
 	if enable_dev_signer {

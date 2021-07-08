@@ -193,17 +193,6 @@ git = 'https://github.com/paritytech/substrate.git'
 branch = 'polkadot-v0.9.7'
 version = '3.0.0'
 
-[dependencies.pallet-contracts]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.7'
-version = '3.0.0'
-
-[dependencies.pallet-contracts-rpc]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.7'
-version = '3.0.0'
-
-
 [dependencies.sc-network]
 git = 'https://github.com/paritytech/substrate.git'
 branch = 'polkadot-v0.9.7'
