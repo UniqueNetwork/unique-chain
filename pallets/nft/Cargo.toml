@@ -25,7 +25,6 @@ std = [
     'pallet-balances/std',
     'pallet-evm/std',
     'pallet-timestamp/std',
-    'pallet-contracts/std',
     'pallet-randomness-collective-flip/std',
     'pallet-transaction-payment/std',
     'fp-evm/std',
@@ -90,12 +89,6 @@ branch = 'polkadot-v0.9.7'
 version = '3.0.0'
 
 [dependencies.sp-std]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.7'
-version = '3.0.0'
-
-[dependencies.pallet-contracts]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 branch = 'polkadot-v0.9.7'
