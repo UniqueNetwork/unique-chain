@@ -1,15 +1,11 @@
 import { IKeyringPair } from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { alicesPublicKey, bobsPublicKey } from '../accounts';
-import getBalance from '../substrate/get-balance';
 import privateKey from '../substrate/privateKey';
 import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
-import waitNewBlocks from '../substrate/wait-new-blocks';
 import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
-  setCollectionSponsorExpectSuccess,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -38,13 +34,12 @@ describe('Admin vs Owner take token: ', () => {
       //
       const sendItem = api.tx.nft.transfer(Ferdie.address, collectionId, itemId, 1);
       const burnItem = api.tx.nft.burnItem(collectionId, itemId, 1);
-      await Promise.all
-      ([
+      await Promise.all([
         sendItem.signAndSend(Bob),
         burnItem.signAndSend(Alice),
       ]);
       await timeoutPromise(10000);
-      let itemBurn: boolean = false;
+      let itemBurn = false;
       itemBurn = (await (api.query.nft.nftItemList(collectionId, itemId))).toJSON() as boolean;
       // tslint:disable-next-line: no-unused-expression
       expect(itemBurn).to.be.null;

@@ -14,14 +14,20 @@
     "mocha": "^8.3.2",
     "ts-node": "^9.1.1",
     "tslint": "^6.1.3",
-    "typescript": "^4.2.4"
+    "typescript": "^4.2.4",
+    "eslint": "^7.28.0",
+    "@types/node": "^14.14.12",
+    "@typescript-eslint/eslint-plugin": "^3.4.0",
+    "@typescript-eslint/parser": "^3.4.0"
   },
   "scripts": {
+    "lint": "eslint --ext .ts,.js src/",
+    "fix": "eslint --ext .ts,.js src/ --fix",
     "test": "mocha --timeout 9999999 -r ts-node/register ./**/*.test.ts",
     "testEth": "mocha --timeout 9999999 -r ts-node/register ./**/eth/**/*.test.ts",
     "load": "mocha --timeout 9999999 -r ts-node/register ./**/*.load.ts",
     "loadTransfer": "ts-node src/transfer.nload.ts",
-    "testCollision": "mocha --timeout 9999999 -r ts-node/register ./src/collision-tests/*.test.ts", 
+    "testCollision": "mocha --timeout 9999999 -r ts-node/register ./src/collision-tests/*.test.ts",
     "testAddCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/addCollectionAdmin.test.ts",
     "testSetSchemaVersion": "mocha --timeout 9999999 -r ts-node/register ./**/setSchemaVersion.test.ts",
     "testSetVariableMetaData": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetaData.test.ts",

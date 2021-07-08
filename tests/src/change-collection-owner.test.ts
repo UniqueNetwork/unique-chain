@@ -6,8 +6,8 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
-import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from "./substrate/substrate-api";
-import { createCollectionExpectSuccess, createCollectionExpectFailure, normalizeAccountId } from "./util/helpers";
+import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
+import { createCollectionExpectSuccess, normalizeAccountId } from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -32,7 +32,7 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner):', ()
 });
 
 describe('Negative Integration Test changeCollectionOwner(collection_id, new_owner):', () => {
-  it(`Not owner can't change owner.`, async () => {
+  it('Not owner can\'t change owner.', async () => {
     await usingApi(async api => {
       const collectionId = await createCollectionExpectSuccess();
       const alice = privateKey('//Alice');
@@ -48,7 +48,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
       await createCollectionExpectSuccess();
     });
   });
-  it(`Can't change owner of not existing collection.`, async () => {
+  it('Can\'t change owner of not existing collection.', async () => {
     await usingApi(async api => {
       const collectionId = (1<<32) - 1;
       const alice = privateKey('//Alice');

@@ -13,11 +13,6 @@ import {
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
-interface ITokenDataType {
-  Owner: number[];
-  ConstData: number[];
-  VariableData: number[];
-}
 let Alice: IKeyringPair;
 let Bob: IKeyringPair;
 let Ferdie: IKeyringPair;
@@ -63,14 +58,13 @@ describe('Token limit exceeded collection: ', () => {
       expect(subTxTesult.success).to.be.true;
       const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
       await timeoutPromise(10000);
-      //
+
       const args = [{ nft: ['0x31', '0x31'] }, { nft: ['0x32', '0x32'] }, { nft: ['0x33', '0x33'] }];
       const mintItemOne = api.tx.nft
         .createMultipleItems(collectionId, Ferdie.address, args);
       const mintItemTwo = api.tx.nft
         .createMultipleItems(collectionId, Bob.address, args);
-      await Promise.all
-      ([
+      await Promise.all([
         mintItemOne.signAndSend(Ferdie),
         mintItemTwo.signAndSend(Bob),
       ]);

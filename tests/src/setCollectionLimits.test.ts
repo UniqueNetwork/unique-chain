@@ -50,7 +50,7 @@ describe('setCollectionLimits positive', () => {
           TokenLimit: tokenLimit,
           SponsorTimeout: sponsorTimeout,
           OwnerCanTransfer: true,
-          OwnerCanDestroy: true
+          OwnerCanDestroy: true,
         },
       );
       const events = await submitTransactionAsync(alice, tx);
@@ -73,13 +73,13 @@ describe('setCollectionLimits positive', () => {
   it('Set the same token limit twice', async () => {
     await usingApi(async (api: ApiPromise) => {
 
-      let collectionLimits = {
+      const collectionLimits = {
         AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
         SponsoredMintSize: sponsoredDataSize,
         TokenLimit: tokenLimit,
         SponsorTimeout: sponsorTimeout,
         OwnerCanTransfer: true,
-        OwnerCanDestroy: true
+        OwnerCanDestroy: true,
       };
 
       // The first time
@@ -173,7 +173,7 @@ describe('setCollectionLimits negative', () => {
       TokenLimit: tokenLimit,
       SponsorTimeout: sponsorTimeout,
       OwnerCanTransfer: false,
-      OwnerCanDestroy: true
+      OwnerCanDestroy: true,
     });
     await setCollectionLimitsExpectFailure(alice, collectionId, { 
       AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
@@ -181,7 +181,7 @@ describe('setCollectionLimits negative', () => {
       TokenLimit: tokenLimit,
       SponsorTimeout: sponsorTimeout,
       OwnerCanTransfer: true,
-      OwnerCanDestroy: true
+      OwnerCanDestroy: true,
     });
   });
 
@@ -193,7 +193,7 @@ describe('setCollectionLimits negative', () => {
       TokenLimit: tokenLimit,
       SponsorTimeout: sponsorTimeout,
       OwnerCanTransfer: true,
-      OwnerCanDestroy: false
+      OwnerCanDestroy: false,
     });
     await setCollectionLimitsExpectFailure(alice, collectionId, { 
       AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
@@ -201,21 +201,21 @@ describe('setCollectionLimits negative', () => {
       TokenLimit: tokenLimit,
       SponsorTimeout: sponsorTimeout,
       OwnerCanTransfer: true,
-      OwnerCanDestroy: true
+      OwnerCanDestroy: true,
     });
   });
 
   it('Setting the higher token limit fails', async () => {
-    await usingApi(async (api: ApiPromise) => {
+    await usingApi(async () => {
 
       const collectionId = await createCollectionExpectSuccess();
-      let collectionLimits = {
+      const collectionLimits = {
         AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
         SponsoredMintSize: sponsoredDataSize,
         TokenLimit: tokenLimit,
         SponsorTimeout: sponsorTimeout,
         OwnerCanTransfer: true,
-        OwnerCanDestroy: true
+        OwnerCanDestroy: true,
       };
 
       // The first time

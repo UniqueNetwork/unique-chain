@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use darling::FromMeta;
 use inflector::cases;
 use proc_macro::TokenStream;

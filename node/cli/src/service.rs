@@ -15,18 +15,13 @@ use std::collections::HashMap;
 use nft_runtime::RuntimeApi;
 
 // Cumulus Imports
-use cumulus_client_consensus_aura::{
-	build_aura_consensus, BuildAuraConsensusParams, SlotProportion,
-};
+use cumulus_client_consensus_aura::{build_aura_consensus, BuildAuraConsensusParams, SlotProportion};
 use cumulus_client_consensus_common::ParachainConsensus;
 use cumulus_client_network::build_block_announce_validator;
 use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
 };
 use cumulus_primitives_core::ParaId;
-
-// Polkadot Imports
-use polkadot_primitives::v1::CollatorPair;
 
 // Substrate Imports
 use sc_client_api::ExecutorProvider;
@@ -59,20 +54,23 @@ native_executor_instance!(
 );
 
 pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backend<Block>>, String> {
-	let config_dir = config.base_path.as_ref()
+	let config_dir = config
+		.base_path
+		.as_ref()
 		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
 		.unwrap_or_else(|| {
-			BasePath::from_project("", "", "nft")
-				.config_dir(config.chain_spec.id())
+			BasePath::from_project("", "", "nft").config_dir(config.chain_spec.id())
 		});
 	let database_dir = config_dir.join("frontier").join("db");
 
-	Ok(Arc::new(fc_db::Backend::<Block>::new(&fc_db::DatabaseSettings {
-		source: fc_db::DatabaseSettingsSrc::RocksDb {
-			path: database_dir,
-			cache_size: 0,
-		}
-	})?))
+	Ok(Arc::new(fc_db::Backend::<Block>::new(
+		&fc_db::DatabaseSettings {
+			source: fc_db::DatabaseSettingsSrc::RocksDb {
+				path: database_dir,
+				cache_size: 0,
+			},
+		},
+	)?))
 }
 
 type Executor = ParachainRuntimeExecutor;
@@ -85,6 +83,7 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 ///
 /// Use this macro if you don't actually need the full service, but just the builder in order to
 /// be able to perform chain operations.
+#[allow(clippy::type_complexity)]
 pub fn new_partial<BIQ>(
 	config: &Configuration,
 	build_import_queue: BIQ,
@@ -95,7 +94,13 @@ pub fn new_partial<BIQ>(
 		FullSelectChain,
 		sp_consensus::DefaultImportQueue<Block, FullClient>,
 		sc_transaction_pool::FullPool<Block, FullClient>,
-		(Option<Telemetry>, PendingTransactions, Option<FilterPool>, Arc<fc_db::Backend<Block>>, Option<TelemetryWorkerHandle>),
+		(
+			Option<Telemetry>,
+			PendingTransactions,
+			Option<FilterPool>,
+			Arc<fc_db::Backend<Block>>,
+			Option<TelemetryWorkerHandle>,
+		),
 	>,
 	sc_service::Error,
 >
@@ -107,11 +112,19 @@ where
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
-	) -> Result<
-		sp_consensus::DefaultImportQueue<Block, FullClient>,
-		sc_service::Error,
-	>,
+	) -> Result<sp_consensus::DefaultImportQueue<Block, FullClient>, sc_service::Error>,
 {
+	let _telemetry = config
+		.telemetry_endpoints
+		.clone()
+		.filter(|x| !x.is_empty())
+		.map(|endpoints| -> Result<_, sc_telemetry::Error> {
+			let worker = TelemetryWorker::new(16)?;
+			let telemetry = worker.handle().new_telemetry(endpoints);
+			Ok((worker, telemetry))
+		})
+		.transpose()?;
+
 	let telemetry = config
 		.telemetry_endpoints
 		.clone()
@@ -123,18 +136,9 @@ where
 		})
 		.transpose()?;
 
-	let telemetry = config.telemetry_endpoints.clone()
-		.filter(|x| !x.is_empty())
-		.map(|endpoints| -> Result<_, sc_telemetry::Error> {
-			let worker = TelemetryWorker::new(16)?;
-			let telemetry = worker.handle().new_telemetry(endpoints);
-			Ok((worker, telemetry))
-		})
-		.transpose()?;
-
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(
-			&config,
+			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 		)?;
 	let client = Arc::new(client);
@@ -152,14 +156,13 @@ where
 		config.transaction_pool.clone(),
 		config.role.is_authority().into(),
 		config.prometheus_registry(),
-		task_manager.spawn_handle(),
+		task_manager.spawn_essential_handle(),
 		client.clone(),
 	);
 
 	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
 
-	let filter_pool: Option<FilterPool>
-		= Some(Arc::new(Mutex::new(BTreeMap::new())));
+	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 
 	let frontier_backend = open_frontier_backend(config)?;
 
@@ -178,7 +181,13 @@ where
 		task_manager,
 		transaction_pool,
 		select_chain,
-		other: (telemetry, pending_transactions, filter_pool, frontier_backend, telemetry_worker_handle),
+		other: (
+			telemetry,
+			pending_transactions,
+			filter_pool,
+			frontier_backend,
+			telemetry_worker_handle,
+		),
 	};
 
 	Ok(params)
@@ -190,7 +199,6 @@ where
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
 async fn start_node_impl<BIQ, BIC>(
 	parachain_config: Configuration,
-	collator_key: CollatorPair,
 	polkadot_config: Configuration,
 	id: ParaId,
 	build_import_queue: BIQ,
@@ -204,10 +212,7 @@ where
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
-	) -> Result<
-		sp_consensus::DefaultImportQueue<Block, FullClient>,
-		sc_service::Error,
-	>,
+	) -> Result<sp_consensus::DefaultImportQueue<Block, FullClient>, sc_service::Error>,
 	BIC: FnOnce(
 		Arc<FullClient>,
 		Option<&Registry>,
@@ -227,17 +232,20 @@ where
 	let parachain_config = prepare_node_config(parachain_config);
 
 	let params = new_partial::<BIQ>(&parachain_config, build_import_queue)?;
-	let (mut telemetry, pending_transactions, filter_pool, frontier_backend, telemetry_worker_handle) = params.other;
-
-	let relay_chain_full_node = cumulus_client_service::build_polkadot_full_node(
-		polkadot_config,
-		collator_key.clone(),
+	let (
+		mut telemetry,
+		pending_transactions,
+		filter_pool,
+		frontier_backend,
 		telemetry_worker_handle,
-	)
-	.map_err(|e| match e {
-		polkadot_service::Error::Sub(x) => x,
-		s => format!("{}", s).into(),
-	})?;
+	) = params.other;
+
+	let relay_chain_full_node =
+		cumulus_client_service::build_polkadot_full_node(polkadot_config, telemetry_worker_handle)
+			.map_err(|e| match e {
+				polkadot_service::Error::Sub(x) => x,
+				s => format!("{}", s).into(),
+			})?;
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
@@ -254,7 +262,7 @@ where
 	let transaction_pool = params.transaction_pool.clone();
 	let mut task_manager = params.task_manager;
 	let import_queue = cumulus_client_service::SharedImportQueue::new(params.import_queue);
-	let (network, network_status_sinks, system_rpc_tx, start_network) =
+	let (network, system_rpc_tx, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
 			client: client.clone(),
@@ -283,7 +291,7 @@ where
 			network: rpc_network.clone(),
 			pending_transactions: pending_transactions.clone(),
 			select_chain: select_chain.clone(),
-			is_authority: is_authority.clone(),
+			is_authority,
 			// TODO: Unhardcode
 			max_past_logs: 10000,
 		};
@@ -302,7 +310,6 @@ where
 		keystore: params.keystore_container.sync_keystore(),
 		backend: backend.clone(),
 		network: network.clone(),
-		network_status_sinks,
 		system_rpc_tx,
 		telemetry: telemetry.as_mut(),
 	})?;
@@ -333,7 +340,6 @@ where
 			announce_block,
 			client: client.clone(),
 			task_manager: &mut task_manager,
-			collator_key,
 			relay_chain_full_node,
 			spawner,
 			parachain_consensus,
@@ -364,15 +370,8 @@ pub fn parachain_build_import_queue(
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
-) -> Result<
-	sp_consensus::DefaultImportQueue<
-		Block,
-		FullClient,
-	>,
-	sc_service::Error,
-> {
+) -> Result<sp_consensus::DefaultImportQueue<Block, FullClient>, sc_service::Error> {
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
-
 
 	cumulus_client_consensus_aura::import_queue::<
 		sp_consensus_aura::sr25519::AuthorityPair,
@@ -383,7 +382,7 @@ pub fn parachain_build_import_queue(
 		_,
 		_,
 	>(cumulus_client_consensus_aura::ImportQueueParams {
-		block_import:  client.clone(),
+		block_import: client.clone(),
 		client: client.clone(),
 		create_inherent_data_providers: move |_, _| async move {
 			let time = sp_timestamp::InherentDataProvider::from_system_time();
@@ -396,7 +395,7 @@ pub fn parachain_build_import_queue(
 
 			Ok((time, slot))
 		},
-		registry: config.prometheus_registry().clone(),
+		registry: config.prometheus_registry(),
 		can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
 		spawner: &task_manager.spawn_essential_handle(),
 		telemetry,
@@ -407,13 +406,11 @@ pub fn parachain_build_import_queue(
 /// Start a normal parachain node.
 pub async fn start_node(
 	parachain_config: Configuration,
-	collator_key: CollatorPair,
 	polkadot_config: Configuration,
 	id: ParaId,
 ) -> sc_service::error::Result<(TaskManager, Arc<FullClient>)> {
 	start_node_impl::<_, _>(
 		parachain_config,
-		collator_key,
 		polkadot_config,
 		id,
 		parachain_build_import_queue,
@@ -432,7 +429,7 @@ pub async fn start_node(
 				task_manager.spawn_handle(),
 				client.clone(),
 				transaction_pool,
-				prometheus_registry.clone(),
+				prometheus_registry,
 				telemetry.clone(),
 			);
 
@@ -480,7 +477,7 @@ pub async fn start_node(
 				block_import: client.clone(),
 				relay_chain_client: relay_chain_node.client.clone(),
 				relay_chain_backend: relay_chain_node.backend.clone(),
-				para_client: client.clone(),
+				para_client: client,
 				backoff_authoring_blocks: Option::<()>::None,
 				sync_oracle,
 				keystore,

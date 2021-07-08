@@ -3,14 +3,15 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import usingApi from "./substrate/substrate-api";
-import { expect } from "chai";
-import { ApiPromise } from "@polkadot/api";
+import usingApi from './substrate/substrate-api';
+import { expect } from 'chai';
+import { ApiPromise } from '@polkadot/api';
 
 const BlockTimeMs = 12000;
 const ToleranceMs = 1000;
 
-async function getBlocks(api: ApiPromise): Promise<number[]> {
+/* eslint no-async-promise-executor: "off" */
+function getBlocks(api: ApiPromise): Promise<number[]> {
   return new Promise<number[]>(async (resolve, reject) => {
     const blockNumbers: number[] = [];
     setTimeout(() => reject('Block production test failed due to timeout.'), BlockTimeMs + ToleranceMs);
@@ -27,7 +28,7 @@ async function getBlocks(api: ApiPromise): Promise<number[]> {
 describe('Block Production smoke test', () => {
   it('Node produces new blocks', async () => {
     await usingApi(async (api) => {
-      let blocks: number[] | undefined = await getBlocks(api);
+      const blocks: number[] | undefined = await getBlocks(api);
       expect(blocks[0]).to.be.lessThan(blocks[1]);
     });
   });

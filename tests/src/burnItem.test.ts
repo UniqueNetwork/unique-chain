@@ -4,16 +4,15 @@
 //
 
 import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
-import { Keyring } from "@polkadot/api";
-import { IKeyringPair } from "@polkadot/types/types";
+import { Keyring } from '@polkadot/api';
+import { IKeyringPair } from '@polkadot/types/types';
 import { 
   createCollectionExpectSuccess, 
   createItemExpectSuccess,
   getGenericResult,
   destroyCollectionExpectSuccess,
-  normalizeAccountId
+  normalizeAccountId,
 } from './util/helpers';
-import { nullPublicKey } from "./accounts";
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -25,10 +24,10 @@ let bob: IKeyringPair;
 
 describe('integration test: ext. burnItem():', () => {
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
-      alice = keyring.addFromUri(`//Alice`);
-      bob = keyring.addFromUri(`//Bob`);
+      alice = keyring.addFromUri('//Alice');
+      bob = keyring.addFromUri('//Bob');
     });
   });
 
@@ -139,10 +138,10 @@ describe('integration test: ext. burnItem():', () => {
 
 describe('Negative integration test: ext. burnItem():', () => {
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
-      alice = keyring.addFromUri(`//Alice`);
-      bob = keyring.addFromUri(`//Bob`);
+      alice = keyring.addFromUri('//Alice');
+      bob = keyring.addFromUri('//Bob');
     });
   });
 

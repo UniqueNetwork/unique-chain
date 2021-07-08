@@ -28,7 +28,7 @@ const ETH_ACCOUNT_PREFIX: [u8; 16] = [
 ];
 
 fn map_eth_to_id(eth: &H160) -> Option<CollectionId> {
-	if &eth[0..16] != ETH_ACCOUNT_PREFIX {
+	if eth[0..16] != ETH_ACCOUNT_PREFIX {
 		return None;
 	}
 	let mut id_bytes = [0; 4];
@@ -92,12 +92,9 @@ fn call_internal<T: Config>(
 				},
 			)?))
 		}
-		_ => {
-			return Err(StringError::from(
-				"erc calls only supported to fungible and nft collections for now",
-			)
-			.into())
-		}
+		_ => Err(StringError::from(
+			"erc calls only supported to fungible and nft collections for now",
+		)),
 	}
 }
 
@@ -111,7 +108,7 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 			.unwrap_or(false)
 	}
 	fn get_code(target: &H160) -> Option<Vec<u8>> {
-		map_eth_to_id(&target)
+		map_eth_to_id(target)
 			.and_then(<CollectionById<T>>::get)
 			.map(|collection| {
 				match collection.mode {
@@ -130,7 +127,7 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 		input: &[u8],
 		value: U256,
 	) -> Option<PrecompileOutput> {
-		let mut collection = map_eth_to_id(&target)
+		let mut collection = map_eth_to_id(target)
 			.and_then(|id| <CollectionHandle<T>>::get_with_gas_limit(id, gas_limit))?;
 		let (method_id, input) = AbiReader::new_call(input).unwrap();
 		let result = call_internal(&mut collection, *source, method_id, input, value);
@@ -156,11 +153,10 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 
 // TODO: This function is slow, and output can be memoized
 pub fn generate_transaction(collection_id: u32, chain_id: u64) -> ethereum::Transaction {
-	let contract = collection_id_to_address(collection_id);
-
 	// FIXME: Can be done on wasm runtime with https://github.com/paritytech/substrate/pull/8728
 	#[cfg(feature = "std")]
 	{
+		let contract = collection_id_to_address(collection_id);
 		let signed = ethereum_tx_sign::RawTransaction {
 			nonce: 0.into(),
 			to: Some(contract.0.into()),
@@ -183,6 +179,6 @@ pub fn generate_transaction(collection_id: u32, chain_id: u64) -> ethereum::Tran
 	}
 	#[cfg(not(feature = "std"))]
 	{
-		panic!("transaction generation not yet supported by wasm runtime")
+		panic!("transaction generation not yet supported by wasm runtime while generating transaction for collection_id {}, chain_id {}", collection_id, chain_id)
 	}
 }

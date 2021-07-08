@@ -10,11 +10,6 @@ import {
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
-interface ITokenDataType {
-  Owner: number[];
-  ConstData: number[];
-  VariableData: number[];
-}
 let Alice: IKeyringPair;
 let Bob: IKeyringPair;
 let Ferdie: IKeyringPair;
@@ -51,11 +46,9 @@ describe('Admin limit exceeded collection: ', () => {
       await submitTransactionAsync(Alice, changeAdminTx3);
 
       const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
-      //
       const addAdmOne = api.tx.nft.addCollectionAdmin(collectionId, Ferdie.address);
       const addAdmTwo = api.tx.nft.addCollectionAdmin(collectionId, Charlie.address);
-      await Promise.all
-      ([
+      await Promise.all([
         addAdmOne.signAndSend(Bob),
         addAdmTwo.signAndSend(Alice),
       ]);

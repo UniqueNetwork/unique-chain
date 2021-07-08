@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use quote::quote;
 use darling::FromMeta;
 use inflector::cases;
@@ -262,7 +264,7 @@ impl Method {
 			ReturnType::Type(_, ty) => ty,
 			_ => return Err(syn::Error::new(value.sig.output.span(), "interface method should return Result<value>\nif there is no value to return - specify void (which is alias to unit)")),
 		};
-		let result = parse_result_ok(&result)?;
+		let result = parse_result_ok(result)?;
 
 		let camel_name = info
 			.rename_selector
@@ -283,8 +285,8 @@ impl Method {
 		Ok(Self {
 			name: ident.clone(),
 			camel_name,
-			pascal_name: snake_ident_to_pascal(&ident),
-			screaming_name: snake_ident_to_screaming(&ident),
+			pascal_name: snake_ident_to_pascal(ident),
+			screaming_name: snake_ident_to_screaming(ident),
 			selector_str,
 			selector,
 			args,
@@ -431,7 +433,7 @@ impl SolidityInterface {
 						found_error = true;
 					}
 				}
-				TraitItem::Method(method) => methods.push(Method::try_from(&method)?),
+				TraitItem::Method(method) => methods.push(Method::try_from(method)?),
 				_ => {}
 			}
 		}
@@ -545,6 +547,7 @@ impl SolidityInterface {
 				#(
 					#call_inner
 				)*
+				#[allow(unreachable_code)] // In case of no inner calls
 				fn call(&mut self, c: Msg<#call_name>) -> ::core::result::Result<::evm_coder::abi::AbiWriter, Self::Error> {
 					use ::evm_coder::abi::AbiWrite;
 					type InternalCall = #call_name;

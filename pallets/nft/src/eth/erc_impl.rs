@@ -56,7 +56,7 @@ impl<T: Config> ERC721Enumerable for CollectionHandle<T> {
 		Ok(index)
 	}
 
-	fn token_of_owner_by_index(&self, owner: address, index: uint256) -> Result<uint256> {
+	fn token_of_owner_by_index(&self, _owner: address, _index: uint256) -> Result<uint256> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
@@ -77,7 +77,7 @@ impl<T: Config> ERC721 for CollectionHandle<T> {
 	fn owner_of(&self, token_id: uint256) -> Result<address> {
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		let token = <NftItemList<T>>::get(self.id, token_id).ok_or("unknown token")?;
-		Ok(token.owner.as_eth().clone())
+		Ok(*token.owner.as_eth())
 	}
 	fn safe_transfer_from_with_data(
 		&mut self,
@@ -114,7 +114,7 @@ impl<T: Config> ERC721 for CollectionHandle<T> {
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id = token_id.try_into().map_err(|_| "token_id overflow")?;
 
-		<Module<T>>::transfer_from_internal(&caller, &from, &to, &self, token_id, 1)
+		<Module<T>>::transfer_from_internal(&caller, &from, &to, self, token_id, 1)
 			.map_err(|_| "transferFrom error")?;
 		Ok(())
 	}
@@ -130,7 +130,7 @@ impl<T: Config> ERC721 for CollectionHandle<T> {
 		let approved = T::CrossAccountId::from_eth(approved);
 		let token_id = token_id.try_into().map_err(|_| "token_id overflow")?;
 
-		<Module<T>>::approve_internal(&caller, &approved, &self, token_id, 1)
+		<Module<T>>::approve_internal(&caller, &approved, self, token_id, 1)
 			.map_err(|_| "approve internal")?;
 		Ok(())
 	}
@@ -170,13 +170,13 @@ impl<T: Config> ERC721UniqueExtensions for CollectionHandle<T> {
 		caller: caller,
 		to: address,
 		token_id: uint256,
-		value: value,
+		_value: value,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id = token_id.try_into().map_err(|_| "amount overflow")?;
 
-		<Module<T>>::transfer_internal(&caller, &to, &self, token_id, 1)
+		<Module<T>>::transfer_internal(&caller, &to, self, token_id, 1)
 			.map_err(|_| "transfer error")?;
 		Ok(())
 	}
@@ -226,7 +226,7 @@ impl<T: Config> ERC20 for CollectionHandle<T> {
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 
-		<Module<T>>::transfer_internal(&caller, &to, &self, 1, amount)
+		<Module<T>>::transfer_internal(&caller, &to, self, 1, amount)
 			.map_err(|_| "transfer error")?;
 		Ok(true)
 	}
@@ -242,7 +242,7 @@ impl<T: Config> ERC20 for CollectionHandle<T> {
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 
-		<Module<T>>::transfer_from_internal(&caller, &from, &to, &self, 1, amount)
+		<Module<T>>::transfer_from_internal(&caller, &from, &to, self, 1, amount)
 			.map_err(|_| "transferFrom error")?;
 		Ok(true)
 	}
@@ -251,7 +251,7 @@ impl<T: Config> ERC20 for CollectionHandle<T> {
 		let spender = T::CrossAccountId::from_eth(spender);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 
-		<Module<T>>::approve_internal(&caller, &spender, &self, 1, amount)
+		<Module<T>>::approve_internal(&caller, &spender, self, 1, amount)
 			.map_err(|_| "approve internal")?;
 		Ok(true)
 	}

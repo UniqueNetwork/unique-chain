@@ -16,7 +16,7 @@ import {
   findNotExistingCollection,
   removeFromWhiteListExpectFailure,
   disableWhiteListExpectSuccess,
-  normalizeAccountId
+  normalizeAccountId,
 } from './util/helpers';
 import { IKeyringPair } from '@polkadot/types/types';
 import privateKey from './substrate/privateKey';
@@ -29,7 +29,7 @@ describe('Integration Test removeFromWhiteList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
     });
@@ -63,7 +63,7 @@ describe('Negative Integration Test removeFromWhiteList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
     });

@@ -49,7 +49,7 @@ describe('Integration Test setVariableMetaData', () => {
 });
 
 describe('Negative Integration Test setVariableMetaData', () => {
-  let data = [1];
+  const data = [1];
 
   let alice: IKeyringPair;
   let bob: IKeyringPair;
@@ -69,7 +69,7 @@ describe('Negative Integration Test setVariableMetaData', () => {
 
   it('fails on not existing collection id', async () => {
     await usingApi(async api => {
-      let nonExistingCollectionId = await findNotExistingCollection(api);
+      const nonExistingCollectionId = await findNotExistingCollection(api);
       await setVariableMetaDataExpectFailure(alice, nonExistingCollectionId, 1, data);
     });
   });

@@ -64,20 +64,22 @@ pub fn development_config(id: ParaId) -> ChainSpec {
 		// ID
 		"dev",
 		ChainType::Local,
-		move || testnet_genesis(
-			// Sudo account
-			get_account_id_from_seed::<sr25519::Public>("Alice"),
-			vec![
-				get_from_seed::<AuraId>("Alice"),
-				get_from_seed::<AuraId>("Bob"),
-			],
-			// Pre-funded accounts
-			vec![
+		move || {
+			testnet_genesis(
+				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				get_account_id_from_seed::<sr25519::Public>("Bob"),
-			],
-			id,
-		),
+				vec![
+					get_from_seed::<AuraId>("Alice"),
+					get_from_seed::<AuraId>("Bob"),
+				],
+				// Pre-funded accounts
+				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+				],
+				id,
+			)
+		},
 		// Bootnodes
 		vec![],
 		// Telemetry
@@ -101,30 +103,32 @@ pub fn local_testnet_config(id: ParaId) -> ChainSpec {
 		// ID
 		"local_testnet",
 		ChainType::Local,
-		move || testnet_genesis(
-			// Sudo account
-			get_account_id_from_seed::<sr25519::Public>("Alice"),
-			vec![
-				get_from_seed::<AuraId>("Alice"),
-				get_from_seed::<AuraId>("Bob"),
-			],
-			// Pre-funded accounts
-			vec![
+		move || {
+			testnet_genesis(
+				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				get_account_id_from_seed::<sr25519::Public>("Bob"),
-				get_account_id_from_seed::<sr25519::Public>("Charlie"),
-				get_account_id_from_seed::<sr25519::Public>("Dave"),
-				get_account_id_from_seed::<sr25519::Public>("Eve"),
-				get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-			],
-			id,
-		),
+				vec![
+					get_from_seed::<AuraId>("Alice"),
+					get_from_seed::<AuraId>("Bob"),
+				],
+				// Pre-funded accounts
+				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<sr25519::Public>("Dave"),
+					get_account_id_from_seed::<sr25519::Public>("Eve"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+				],
+				id,
+			)
+		},
 		// Bootnodes
 		vec![],
 		// Telemetry
@@ -142,83 +146,82 @@ pub fn local_testnet_config(id: ParaId) -> ChainSpec {
 }
 
 fn testnet_genesis(
-    root_key: AccountId,
+	root_key: AccountId,
 	initial_authorities: Vec<AuraId>,
-    endowed_accounts: Vec<AccountId>,
+	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
 ) -> GenesisConfig {
+	let vested_accounts = vec![get_account_id_from_seed::<sr25519::Public>("Bob")];
 
-	let vested_accounts = vec![
-		get_account_id_from_seed::<sr25519::Public>("Bob"),
-	];
-
-    GenesisConfig {
+	GenesisConfig {
 		system: nft_runtime::SystemConfig {
 			code: nft_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 			changes_trie_config: Default::default(),
 		},
-        pallet_balances: BalancesConfig {
-            balances: endowed_accounts
-                .iter()
-                .cloned()
-                .map(|k| (k, 1 << 70))
-                .collect(),
-        },
-		pallet_treasury: Default::default(),
-		pallet_sudo: SudoConfig { key: root_key },
-		pallet_vesting: VestingConfig {
-            vesting: vested_accounts
-                .iter()
-                .cloned()
-                .map(|k| (k, 1000, 100, 1 << 98))
-                .collect(),
-        },
-        pallet_nft: NftConfig {
-            collection_id: vec![(
-                1,
-                Collection {
-                    owner: get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    mode: CollectionMode::NFT,
-                    access: AccessMode::Normal,
-                    decimal_points: 0,
-                    name: vec![],
-                    description: vec![],
-                    token_prefix: vec![],
-                    mint_mode: false,
+		balances: BalancesConfig {
+			balances: endowed_accounts
+				.iter()
+				.cloned()
+				.map(|k| (k, 1 << 70))
+				.collect(),
+		},
+		treasury: Default::default(),
+		sudo: SudoConfig { key: root_key },
+		vesting: VestingConfig {
+			vesting: vested_accounts
+				.iter()
+				.cloned()
+				.map(|k| (k, 1000, 100, 1 << 98))
+				.collect(),
+		},
+		nft: NftConfig {
+			collection_id: vec![(
+				1,
+				Collection {
+					owner: get_account_id_from_seed::<sr25519::Public>("Alice"),
+					mode: CollectionMode::NFT,
+					access: AccessMode::Normal,
+					decimal_points: 0,
+					name: vec![],
+					description: vec![],
+					token_prefix: vec![],
+					mint_mode: false,
 					offchain_schema: vec![],
 					schema_version: SchemaVersion::default(),
-                    sponsorship: SponsorshipState::Confirmed(get_account_id_from_seed::<sr25519::Public>("Alice")),
-                    const_on_chain_schema: vec![],
+					sponsorship: SponsorshipState::Confirmed(get_account_id_from_seed::<
+						sr25519::Public,
+					>("Alice")),
+					const_on_chain_schema: vec![],
 					variable_on_chain_schema: vec![],
-					limits: CollectionLimits::default()
-                },
-            )],
-            nft_item_id: vec![],
-            fungible_item_id: vec![],
-            refungible_item_id: vec![],
-            chain_limit: ChainLimits {
-                collection_numbers_limit: 100000,
-                account_token_ownership_limit: 1000000,
-                collections_admins_limit: 5,
-                custom_data_limit: 2048,
-                nft_sponsor_transfer_timeout: 15,
-                fungible_sponsor_transfer_timeout: 15,
+					limits: CollectionLimits::default(),
+				},
+			)],
+			nft_item_id: vec![],
+			fungible_item_id: vec![],
+			refungible_item_id: vec![],
+			chain_limit: ChainLimits {
+				collection_numbers_limit: 100000,
+				account_token_ownership_limit: 1000000,
+				collections_admins_limit: 5,
+				custom_data_limit: 2048,
+				nft_sponsor_transfer_timeout: 15,
+				fungible_sponsor_transfer_timeout: 15,
 				refungible_sponsor_transfer_timeout: 15,
 				offchain_schema_limit: 1024,
 				variable_on_chain_schema_limit: 1024,
 				const_on_chain_schema_limit: 1024,
-            },
-        },
+			},
+		},
 		parachain_info: nft_runtime::ParachainInfoConfig { parachain_id: id },
-		pallet_aura: nft_runtime::AuraConfig {
+		aura: nft_runtime::AuraConfig {
 			authorities: initial_authorities,
 		},
-		cumulus_pallet_aura_ext: Default::default(),
-		pallet_evm: EVMConfig {
+		aura_ext: Default::default(),
+		evm: EVMConfig {
 			accounts: BTreeMap::new(),
 		},
-		pallet_ethereum: EthereumConfig {},
-    }
+		ethereum: EthereumConfig {},
+	}
 }
