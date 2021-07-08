@@ -43,10 +43,10 @@ std = [
     'frame-system-rpc-runtime-api/std',
 	'pallet-aura/std',
     'pallet-balances/std',
-    'pallet-contracts/std',
-    'pallet-contracts-primitives/std',
-    'pallet-contracts-rpc-runtime-api/std',
-    'pallet-contract-helpers/std',
+    # 'pallet-contracts/std',
+    # 'pallet-contracts-primitives/std',
+    # 'pallet-contracts-rpc-runtime-api/std',
+    # 'pallet-contract-helpers/std',
     'pallet-randomness-collective-flip/std',
     'pallet-sudo/std',
     'pallet-timestamp/std',
@@ -152,23 +152,23 @@ branch = 'polkadot-v0.9.7'
 version = '3.0.0'
 
 # Contracts specific packages
-[dependencies.pallet-contracts]
-git = 'https://github.com/paritytech/substrate.git'
-default-features = false
-branch = 'polkadot-v0.9.7'
-version = '3.0.0'
+# [dependencies.pallet-contracts]
+# git = 'https://github.com/paritytech/substrate.git'
+# default-features = false
+# branch = 'polkadot-v0.9.7'
+# version = '3.0.0'
 
-[dependencies.pallet-contracts-primitives]
-git = 'https://github.com/paritytech/substrate.git'
-default-features = false
-branch = 'polkadot-v0.9.7'
-version = '3.0.0'
+# [dependencies.pallet-contracts-primitives]
+# git = 'https://github.com/paritytech/substrate.git'
+# default-features = false
+# branch = 'polkadot-v0.9.7'
+# version = '3.0.0'
 
-[dependencies.pallet-contracts-rpc-runtime-api]
-git = 'https://github.com/paritytech/substrate.git'
-default-features = false
-branch = 'polkadot-v0.9.7'
-version = '3.0.0'
+# [dependencies.pallet-contracts-rpc-runtime-api]
+# git = 'https://github.com/paritytech/substrate.git'
+# default-features = false
+# branch = 'polkadot-v0.9.7'
+# version = '3.0.0'
 
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
@@ -380,7 +380,7 @@ pallet-nft = { path = '../pallets/nft', default-features = false, version = '3.0
 pallet-inflation = { path = '../pallets/inflation', default-features = false, version = '3.0.0' }
 nft-data-structs = { path = '../primitives/nft', default-features = false,  version = '0.9.0' }
 pallet-scheduler = { path = '../pallets/scheduler', default-features = false, version = '3.0.0' }
-pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
+# pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
 pallet-nft-transaction-payment = { path = '../pallets/nft-transaction-payment', default-features = false, version = '3.0.0' }
 pallet-nft-charge-transaction = { path = '../pallets/nft-charge-transaction', default-features = false, version = '3.0.0' }
 

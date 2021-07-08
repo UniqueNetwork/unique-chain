@@ -55,7 +55,7 @@ pub use frame_support::{
 	},
 };
 use nft_data_structs::*;
-use pallet_contracts::weights::WeightInfo;
+// use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
 use frame_system::{
 	self as system, EnsureRoot, EnsureSigned,
@@ -72,9 +72,9 @@ use sp_core::crypto::Public;
 use sp_runtime::{
 	traits::{Dispatchable},
 };
-use pallet_contracts::chain_extension::UncheckedFrom;
+// use pallet_contracts::chain_extension::UncheckedFrom;
 
-pub use pallet_timestamp::Call as TimestampCall;
+// pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 
 // Polkadot imports
@@ -91,17 +91,8 @@ use xcm_builder::{
 };
 use xcm_executor::{Config, XcmExecutor};
 
-mod chain_extension;
-use crate::chain_extension::{NFTExtension, Imbalance};
-
-/// Re-export a nft pallet
-/// TODO: Check this re-export. Is this safe and good style?
-// extern crate pallet_nft;
-// pub use pallet_nft::*;
-
-/// Reimport pallet inflation
-// extern crate pallet_inflation;
-// pub use pallet_inflation::*;
+// mod chain_extension;
+// use crate::chain_extension::{NFTExtension, Imbalance};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -379,6 +370,7 @@ pub const fn deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 15 * CENTIUNIQUE + (bytes as Balance) * 6 * CENTIUNIQUE
 }
 
+/*
 parameter_types! {
 	pub TombstoneDeposit: Balance = deposit(
 		1,
@@ -418,17 +410,15 @@ impl pallet_contracts::Config for Runtime {
 	type DepositPerStorageItem = DepositPerStorageItem;
 	type RentFraction = RentFraction;
 	type SurchargeReward = SurchargeReward;
-	// type MaxDepth = MaxDepth;
-	// type MaxValueSize = MaxValueSize;
 	type WeightPrice = pallet_transaction_payment::Module<Self>;
 	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
 	type ChainExtension = NFTExtension;
 	type DeletionQueueDepth = DeletionQueueDepth;
 	type DeletionWeightLimit = DeletionWeightLimit;
-	// type MaxCodeSize = MaxCodeSize;
 	type Schedule = Schedule;
 	type CallStack = [pallet_contracts::Frame<Self>; 31];
 }
+*/
 
 parameter_types! {
 	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE; // Targeting 0.1 Unique per NFT transfer
@@ -724,10 +714,7 @@ impl SponsoringResolve<AccountId, Call> for Sponsoring {
 	fn resolve(who: &AccountId, call: &Call) -> Option<AccountId>
 	where
 		Call: Dispatchable<Info = DispatchInfo>,
-		Call: IsSubType<pallet_nft::Call<Runtime>>,
-		Call: IsSubType<pallet_contracts::Call<Runtime>>,
 		AccountId: AsRef<[u8]>,
-		AccountId: UncheckedFrom<Hash>,
 	{
 		pallet_nft_transaction_payment::Module::<Runtime>::withdraw_type(who, call)
 	}
@@ -735,7 +722,7 @@ impl SponsoringResolve<AccountId, Call> for Sponsoring {
 
 type SponsorshipHandler = (
 	pallet_nft::NftSponsorshipHandler<Runtime>,
-	pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
+	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
 );
 
 impl pallet_scheduler::Config for Runtime {
@@ -756,7 +743,7 @@ impl pallet_nft_transaction_payment::Config for Runtime {
 
 impl pallet_nft_charge_transaction::Config for Runtime {}
 
-impl pallet_contract_helpers::Config for Runtime {}
+// impl pallet_contract_helpers::Config for Runtime {}
 
 construct_runtime!(
 	pub enum Runtime where
@@ -765,7 +752,7 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
-		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
+		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
@@ -797,7 +784,7 @@ construct_runtime!(
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
 		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage},
 		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage },
-		ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage},
+		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage},
 	}
 );
 
@@ -844,7 +831,7 @@ pub type SignedExtra = (
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
 	pallet_nft_charge_transaction::ChargeTransactionPayment<Runtime>,
-	pallet_contract_helpers::ContractHelpersExtension<Runtime>,
+	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -1087,6 +1074,7 @@ impl_runtime_apis! {
 		}
 	}
 
+	/*
 	impl pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber, Hash>
 		for Runtime
 	{
@@ -1125,6 +1113,7 @@ impl_runtime_apis! {
 			Contracts::rent_projection(address)
 		}
 	}
+	*/
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
@@ -1177,7 +1166,7 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 			.create_inherent_data()
 			.expect("Could not create the timestamp inherent data");
 
-		inherent_data.check_extrinsics(&block)
+		inherent_data.check_extrinsics(block)
 	}
 }
 
