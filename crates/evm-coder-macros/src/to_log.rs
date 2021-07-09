@@ -56,6 +56,12 @@ impl Event {
 		for field in &named.named {
 			fields.push(EventField::try_from(field)?);
 		}
+		if fields.iter().filter(|f| f.indexed).count() > 3 {
+			return Err(syn::Error::new(
+				variant.fields.span(),
+				"events can have at most 4 indexed fields (1 indexed field is reserved for event signature)"
+			));
+		}
 		let mut selector_str = format!("{}(", name);
 		for (i, arg) in fields.iter().enumerate() {
 			if i != 0 {
