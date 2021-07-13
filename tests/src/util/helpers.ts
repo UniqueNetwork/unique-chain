@@ -543,9 +543,9 @@ export async function setContractSponsoringRateLimitExpectFailure(sender: IKeyri
   });
 }
 
-export async function toggleContractWhitelistExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string) {
+export async function toggleContractWhitelistExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, value: boolean = true) {
   await usingApi(async (api) => {
-    const tx = api.tx.nft.toggleContractWhiteList(contractAddress, true);
+    const tx = api.tx.nft.toggleContractWhiteList(contractAddress, value);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
 
@@ -820,7 +820,7 @@ transferExpectSuccess(
 }
 
 export async function
-transferExpectFail(
+transferExpectFailure(
   collectionId: number,
   tokenId: number,
   sender: IKeyringPair,
