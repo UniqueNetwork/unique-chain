@@ -74,6 +74,8 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type WeightInfo = ();
 	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 }
 
 parameter_types! {
@@ -100,40 +102,40 @@ impl pallet_timestamp::Config for Test {
 type Timestamp = pallet_timestamp::Pallet<Test>;
 type Randomness = pallet_randomness_collective_flip::Pallet<Test>;
 
-parameter_types! {
-	pub const TombstoneDeposit: u64 = 1;
-	pub const DepositPerContract: u64 = 1;
-	pub const DepositPerStorageByte: u64 = 1;
-	pub const DepositPerStorageItem: u64 = 1;
-	pub RentFraction: Perbill = Perbill::from_rational(1u32, 30 * 24 * 60 * 10);
-	pub const SurchargeReward: u64 = 1;
-	pub const SignedClaimHandicap: u32 = 2;
-	pub DeletionWeightLimit: u64 = u64::MAX;//Perbill::from_percent(10);
-	pub DeletionQueueDepth: u32 = 10;
-	pub Schedule: pallet_contracts::Schedule<Test> = Default::default();
-}
+// parameter_types! {
+// 	pub const TombstoneDeposit: u64 = 1;
+// 	pub const DepositPerContract: u64 = 1;
+// 	pub const DepositPerStorageByte: u64 = 1;
+// 	pub const DepositPerStorageItem: u64 = 1;
+// 	pub RentFraction: Perbill = Perbill::from_rational(1u32, 30 * 24 * 60 * 10);
+// 	pub const SurchargeReward: u64 = 1;
+// 	pub const SignedClaimHandicap: u32 = 2;
+// 	pub DeletionWeightLimit: u64 = u64::MAX;//Perbill::from_percent(10);
+// 	pub DeletionQueueDepth: u32 = 10;
+// 	pub Schedule: pallet_contracts::Schedule<Test> = Default::default();
+// }
 
-impl pallet_contracts::Config for Test {
-	type Time = Timestamp;
-	type Randomness = Randomness;
-	type Currency = pallet_balances::Pallet<Test>;
-	type Event = ();
-	type RentPayment = ();
-	type SignedClaimHandicap = SignedClaimHandicap;
-	type TombstoneDeposit = TombstoneDeposit;
-	type DepositPerContract = DepositPerContract;
-	type DepositPerStorageByte = DepositPerStorageByte;
-	type DepositPerStorageItem = DepositPerStorageItem;
-	type RentFraction = RentFraction;
-	type SurchargeReward = SurchargeReward;
-	type DeletionWeightLimit = DeletionWeightLimit;
-	type DeletionQueueDepth = DeletionQueueDepth;
-	type ChainExtension = ();
-	type WeightPrice = ();
-	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
-	type Schedule = Schedule;
-	type CallStack = [pallet_contracts::Frame<Self>; 31];
-}
+// impl pallet_contracts::Config for Test {
+// 	type Time = Timestamp;
+// 	type Randomness = Randomness;
+// 	type Currency = pallet_balances::Pallet<Test>;
+// 	type Event = ();
+// 	type RentPayment = ();
+// 	type SignedClaimHandicap = SignedClaimHandicap;
+// 	type TombstoneDeposit = TombstoneDeposit;
+// 	type DepositPerContract = DepositPerContract;
+// 	type DepositPerStorageByte = DepositPerStorageByte;
+// 	type DepositPerStorageItem = DepositPerStorageItem;
+// 	type RentFraction = RentFraction;
+// 	type SurchargeReward = SurchargeReward;
+// 	type DeletionWeightLimit = DeletionWeightLimit;
+// 	type DeletionQueueDepth = DeletionQueueDepth;
+// 	type ChainExtension = ();
+// 	type WeightPrice = ();
+// 	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
+// 	type Schedule = Schedule;
+// 	type CallStack = [pallet_contracts::Frame<Self>; 31];
+// }
 
 parameter_types! {
 	pub const CollectionCreationPrice: u32 = 0;

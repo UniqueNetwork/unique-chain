@@ -31,6 +31,8 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type WeightInfo = ();
 	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
+	type ReserveIdentifier = ();
 }
 
 frame_support::construct_runtime!(
