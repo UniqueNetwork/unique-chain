@@ -942,10 +942,10 @@ decl_module! {
 		#[transactional]
 		pub fn set_transfers_enabled_flag(origin, collection_id: CollectionId, value: bool) -> DispatchResult {
 
-			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let sender = ensure_signed(origin)?;
 			let mut target_collection = Self::get_collection(collection_id)?;
 
-			Self::check_owner_permissions(&target_collection, sender.as_sub())?;
+			Self::check_owner_permissions(&target_collection, &sender)?;
 			
 			target_collection.transfers_enabled = value;
 			Self::save_collection(target_collection);
