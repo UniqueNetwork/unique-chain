@@ -62,7 +62,8 @@
       "Sponsorship": "SponsorshipState",
       "Limits": "CollectionLimits",
       "VariableOnChainSchema": "Vec<u8>",
-      "ConstOnChainSchema": "Vec<u8>"
+      "ConstOnChainSchema": "Vec<u8>",
+      "MetaUpdatePermission": "MetaUpdatePermission"
     },
     "RawData": "Vec<u8>",
     "Address": "MultiAddress",
