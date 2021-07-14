@@ -84,7 +84,7 @@ interface IReFungibleOwner {
 }
 
 interface ITokenDataType {
-  Owner: number[];
+  Owner: IKeyringPair;
   ConstData: number[];
   VariableData: number[];
 }
@@ -748,29 +748,31 @@ scheduleTransferExpectSuccess(
   sender: IKeyringPair,
   recipient: IKeyringPair,
   value: number | bigint = 1,
+  blockTimeMs: number,
+  blockSchedule: number
 ) {
   await usingApi(async (api: ApiPromise) => {
     const blockNumber: number | undefined = await getBlockNumber(api);
-    const expectedBlockNumber = blockNumber + 2;
+    const expectedBlockNumber = blockNumber + blockSchedule;
 
     expect(blockNumber).to.be.greaterThan(0);
-    const transferTx = await api.tx.nft.transfer(recipient.address, collectionId, tokenId, value); 
+    const transferTx = await api.tx.nft.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value); 
     const scheduleTx = await api.tx.scheduler.schedule(expectedBlockNumber, null, 0, transferTx);
 
     await submitTransactionAsync(sender, scheduleTx);
 
     const recipientBalanceBefore = new BigNumber((await api.query.system.account(recipient.address)).data.free.toString());
 
-    const nftItemDataBefore = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON() as unknown as ITokenDataType;
-    expect(nftItemDataBefore.Owner.toString()).to.be.equal(sender.address);
+    const nftItemDataBefore = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON() as any as ITokenDataType;
+    expect(toSubstrateAddress(nftItemDataBefore.Owner)).to.be.equal(sender.address);
 
-    // sleep for 2 blocks
-    await new Promise(resolve => setTimeout(resolve, 6000 * 2));
+    // sleep for 4 blocks
+    await new Promise(resolve => setTimeout(resolve, blockTimeMs * (blockSchedule + 1)));
 
     const recipientBalanceAfter = new BigNumber((await api.query.system.account(recipient.address)).data.free.toString());
 
     const nftItemData = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON() as unknown as ITokenDataType;
-    expect(nftItemData.Owner.toString()).to.be.equal(recipient.address);
+    expect(toSubstrateAddress(nftItemData.Owner)).to.be.equal(recipient.address);
     expect(recipientBalanceAfter.toNumber()).to.be.equal(recipientBalanceBefore.toNumber());
   });
 }
