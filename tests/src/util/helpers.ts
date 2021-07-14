@@ -895,7 +895,8 @@ export async function createItemExpectSuccess(sender: IKeyringPair, collectionId
       const createData = { refungible: { const_data: [], variable_data: [], pieces: 100 } };
       tx = api.tx.nft.createItem(collectionId, to, createData);
     } else {
-      tx = api.tx.nft.createItem(collectionId, to, createMode);
+      const createData = { nft: { const_data: [], variable_data: [] } };
+      tx = api.tx.nft.createItem(collectionId, to, createData);
     }
 
     const events = await submitTransactionAsync(sender, tx);
