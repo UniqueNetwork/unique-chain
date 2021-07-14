@@ -93,6 +93,13 @@
         "Unique"
       ]
     },
+    "MetaUpdatePermission": {
+      "_enum": [
+        "ItemOwner",
+        "Admin",
+        "None"      
+      ]
+    },
     "CollectionId": "u32",
     "TokenId": "u32",
     "ChainLimits": {
