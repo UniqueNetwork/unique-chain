@@ -12,7 +12,7 @@ import { createCollectionExpectSuccess, normalizeAccountId } from './util/helper
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-describe.only('Integration Test changeCollectionOwner(collection_id, new_owner):', () => {
+describe('Integration Test changeCollectionOwner(collection_id, new_owner):', () => {
   it('Changing owner changes owner address', async () => {
     await usingApi(async api => {
       const collectionId = await createCollectionExpectSuccess();
@@ -31,7 +31,7 @@ describe.only('Integration Test changeCollectionOwner(collection_id, new_owner):
   });
 });
 
-describe.only('Negative Integration Test changeCollectionOwner(collection_id, new_owner):', () => {
+describe('Negative Integration Test changeCollectionOwner(collection_id, new_owner):', () => {
   it('Not owner can\'t change owner.', async () => {
     await usingApi(async api => {
       const collectionId = await createCollectionExpectSuccess();
