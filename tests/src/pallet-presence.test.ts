@@ -42,7 +42,7 @@ const consensusPallets = [
   'auraext'
 ];
 
-describe.only('Pallet presence', () => {
+describe('Pallet presence', () => {
   it('Required pallets are present', async () => {
     await usingApi(async api => {
       for (let i=0; i<requiredPallets.length; i++) {

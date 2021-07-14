@@ -28,7 +28,7 @@ const expect = chai.expect;
 let alice: IKeyringPair;
 let bob: IKeyringPair;
 
-describe('integration test: ext. removeCollectionSponsor():', () => {
+describe.only('integration test: ext. removeCollectionSponsor():', () => {
 
   before(async () => {
     await usingApi(async () => {
@@ -38,7 +38,7 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
     });
   });
 
-  it('Remove NFT collection sponsor stops sponsorship', async () => {
+  it('Removing NFT collection sponsor stops sponsorship', async () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
@@ -85,7 +85,7 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
 
 });
 
-describe('(!negative test!) integration test: ext. removeCollectionSponsor():', () => {
+describe.only('(!negative test!) integration test: ext. removeCollectionSponsor():', () => {
   before(async () => {
     await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
