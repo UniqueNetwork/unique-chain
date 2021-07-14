@@ -144,6 +144,7 @@ pub struct Collection<T: frame_system::Config> {
 	pub limits: CollectionLimits<T::BlockNumber>, // Collection private restrictions
 	pub variable_on_chain_schema: Vec<u8>,        //
 	pub const_on_chain_schema: Vec<u8>,           //
+	pub meta_update_permission: MetaUpdatePermission,
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq)]
@@ -237,6 +238,20 @@ pub struct CreateReFungibleData {
 	pub const_data: Vec<u8>,
 	pub variable_data: Vec<u8>,
 	pub pieces: u128,
+}
+
+#[derive(Encode, Decode, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum MetaUpdatePermission  {
+	ItemOwner,
+	Admin,
+	None,
+}
+
+impl Default for MetaUpdatePermission {
+	fn default() -> Self {
+		Self::ItemOwner
+	}
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq)]
