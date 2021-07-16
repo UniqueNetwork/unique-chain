@@ -503,6 +503,28 @@ export async function confirmSponsorshipExpectFailure(collectionId: number, send
   });
 }
 
+export async function setMetadataUpdatePermissionFlagExpectSuccess(sender: IKeyringPair, collectionId: number, flag: string) {
+
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.setMetaUpdatePermissionFlag(collectionId, flag); 
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  }); 
+}
+
+export async function setMetadataUpdatePermissionFlagExpectFailure(sender: IKeyringPair, collectionId: number, flag: string) {
+
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.setMetaUpdatePermissionFlag(collectionId, flag); 
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.false;
+  }); 
+}
+
 export async function enableContractSponsoringExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, enable: boolean) {
   await usingApi(async (api) => {
     const tx = api.tx.nft.enableContractSponsoring(contractAddress, enable);
@@ -984,6 +1006,15 @@ export async function setMintPermissionExpectSuccess(sender: IKeyringPair, colle
 
 export async function enablePublicMintingExpectSuccess(sender: IKeyringPair, collectionId: number) {
   await setMintPermissionExpectSuccess(sender, collectionId, true);
+}
+
+export async function addCollectionAdminExpectSuccess(sender: IKeyringPair, collectionId: number, address: IKeyringPair) {
+  await usingApi(async (api) => {
+    const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(address.address));
+    const events = await submitTransactionAsync(sender, changeAdminTx);
+    const result = getCreateCollectionResult(events);
+    expect(result.success).to.be.true;
+  });
 }
 
 export async function setMintPermissionExpectFailure(sender: IKeyringPair, collectionId: number, enabled: boolean) {
