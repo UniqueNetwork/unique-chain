@@ -38,7 +38,7 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
     });
   });
 
-  it('Remove NFT collection sponsor stops sponsorship', async () => {
+  it('Removing NFT collection sponsor stops sponsorship', async () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');

@@ -21,7 +21,7 @@ const expect = chai.expect;
 const value = 0;
 const gasLimit = 3000n * 1000000n;
 
-describe('Integration Test toggleContractWhiteList', () => {
+describe.skip('Integration Test toggleContractWhiteList', () => {
 
   it('Enable white list contract mode', async () => {
     await usingApi(async api => {
@@ -121,7 +121,7 @@ describe('Integration Test toggleContractWhiteList', () => {
 
 });
 
-describe('Negative Integration Test toggleContractWhiteList', () => {
+describe.skip('Negative Integration Test toggleContractWhiteList', () => {
 
   it('Enable white list for a non-contract', async () => {
     await usingApi(async api => {

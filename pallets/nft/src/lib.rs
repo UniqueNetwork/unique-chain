@@ -887,7 +887,7 @@ decl_module! {
 
 			Self::create_item_internal(&sender, &collection, &owner, data)?;
 
-			Self::submit_logs(collection)?;
+			// Self::submit_logs(collection)?;
 			Ok(())
 		}
 
@@ -921,7 +921,7 @@ decl_module! {
 
 			Self::create_multiple_items_internal(&sender, &collection, &owner, items_data)?;
 
-			Self::submit_logs(collection)?;
+			// Self::submit_logs(collection)?;
 			Ok(())
 		}
 
@@ -975,7 +975,7 @@ decl_module! {
 
 			Self::burn_item_internal(&sender, &target_collection, item_id, value)?;
 
-			Self::submit_logs(target_collection)?;
+			// Self::submit_logs(target_collection)?;
 			Ok(())
 		}
 
@@ -1010,7 +1010,7 @@ decl_module! {
 
 			Self::transfer_internal(&sender, &recipient, &collection, item_id, value)?;
 
-			Self::submit_logs(collection)?;
+			// Self::submit_logs(collection)?;
 			Ok(())
 		}
 
@@ -1037,7 +1037,7 @@ decl_module! {
 
 			Self::approve_internal(&sender, &spender, &collection, item_id, amount)?;
 
-			Self::submit_logs(collection)?;
+			// Self::submit_logs(collection)?;
 			Ok(())
 		}
 
@@ -1068,7 +1068,7 @@ decl_module! {
 
 			Self::transfer_from_internal(&sender, &from, &recipient, &collection, item_id, value)?;
 
-			Self::submit_logs(collection)?;
+			// Self::submit_logs(collection)?;
 			Ok(())
 		}
 		// #[weight = 0]
