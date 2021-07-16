@@ -13,13 +13,33 @@ function getModuleNames(api: ApiPromise): string[] {
 
 // Pallets that must always be present
 const requiredPallets = [
-  'nft', 'inflation', 'balances', 'contracts', 'randomnesscollectiveflip', 'system', 'timestamp', 'transactionpayment', 'treasury', 'vesting', 'evm', 'ethereum',
-  'scheduler', 'nftpayment', 'charging',
+  'balances',
+  'randomnesscollectiveflip',
+  'timestamp',
+  'transactionpayment',
+  'treasury',
+  'system',
+  'vesting',
+  'parachainsystem',
+  'parachaininfo',
+  'evm',
+  'ethereum',
+  'xcmpqueue',
+  'polkadotxcm',
+  'cumulusxcm',
+  'dmpqueue',
+  'inflation',
+  'nft',
+  'scheduler',
+  'nftpayment',
+  'charging'
 ];
 
 // Pallets that depend on consensus and governance configuration
 const consensusPallets = [
-  'sudo', 'aura',
+  'sudo',
+  'aura',
+  'auraext'
 ];
 
 describe('Pallet presence', () => {

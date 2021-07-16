@@ -226,7 +226,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const result1 = getGenericResult(events1);
 
       const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
-      await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
+      await expect(submitTransactionExpectFailAsync(zeroBalance, zeroToAlice)).to.be.rejected;
       const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
 
       // Try again after Zero gets some balance - now it should succeed
@@ -327,7 +327,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
 });
 
-describe('(!negative test!) integration test: ext. removeCollectionSponsor():', () => {
+describe('(!negative test!) integration test: ext. confirmSponsorship():', () => {
   before(async () => {
     await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });

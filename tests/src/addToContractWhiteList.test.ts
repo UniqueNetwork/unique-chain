@@ -17,7 +17,7 @@ import {
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-describe('Integration Test addToContractWhiteList', () => {
+describe.skip('Integration Test addToContractWhiteList', () => {
 
   it('Add an address to a contract white list', async () => {
     await usingApi(async api => {
@@ -56,7 +56,7 @@ describe('Integration Test addToContractWhiteList', () => {
   });
 });
 
-describe('Negative Integration Test addToContractWhiteList', () => {
+describe.skip('Negative Integration Test addToContractWhiteList', () => {
 
   it('Add an address to a white list of a non-contract', async () => {
     await usingApi(async api => {
