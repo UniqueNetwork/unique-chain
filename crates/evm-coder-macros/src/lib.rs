@@ -5,10 +5,7 @@ use inflector::cases;
 use proc_macro::TokenStream;
 use quote::quote;
 use sha3::{Digest, Keccak256};
-use syn::{
-	AttributeArgs, DeriveInput, GenericArgument, Ident, ItemTrait, Pat, Path, PathArguments,
-	PathSegment, Type, parse_macro_input, spanned::Spanned,
-};
+use syn::{AttributeArgs, DeriveInput, GenericArgument, Ident, ItemImpl, Pat, Path, PathArguments, PathSegment, Type, parse_macro_input, spanned::Spanned};
 
 mod solidity_interface;
 mod to_log;
@@ -189,16 +186,21 @@ pub fn solidity_interface(args: TokenStream, stream: TokenStream) -> TokenStream
 	let args = parse_macro_input!(args as AttributeArgs);
 	let args = solidity_interface::InterfaceInfo::from_list(&args).unwrap();
 
-	let input: ItemTrait = match syn::parse(stream) {
+	let input: ItemImpl = match syn::parse(stream) {
 		Ok(t) => t,
 		Err(e) => return e.to_compile_error().into(),
 	};
 
-	match solidity_interface::SolidityInterface::try_from(args, &input) {
+	let expanded = match solidity_interface::SolidityInterface::try_from(args, &input) {
 		Ok(v) => v.expand(),
 		Err(e) => e.to_compile_error(),
-	}
-	.into()
+	};
+
+    (quote! {
+        #input
+
+        #expanded
+    }).into()
 }
 
 #[proc_macro_attribute]

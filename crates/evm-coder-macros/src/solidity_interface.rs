@@ -4,7 +4,10 @@ use quote::quote;
 use darling::FromMeta;
 use inflector::cases;
 use std::fmt::Write;
-use syn::{FnArg, Ident, ItemTrait, Meta, NestedMeta, PatType, Path, ReturnType, TraitItem, TraitItemMethod, Type, Visibility, spanned::Spanned};
+use syn::{
+	FnArg, Ident, ImplItem, ImplItemMethod, ItemImpl, Meta, NestedMeta, PatType, Path, ReturnType,
+	Type, spanned::Spanned,
+};
 
 use crate::{
 	fn_selector_str, parse_ident_from_pat, parse_ident_from_path, parse_ident_from_type,
@@ -51,21 +54,13 @@ impl Is {
 
 	fn expand_variant_call(&self) -> proc_macro2::TokenStream {
 		let name = &self.name;
-		let snake_call_name = &self.snake_call_name;
+		let pascal_call_name = &self.pascal_call_name;
 		quote! {
-			InternalCall::#name(call) => return self.#snake_call_name(Msg {
+			InternalCall::#name(call) => return <Self as ::evm_coder::Callable<#pascal_call_name>>::call(self, Msg {
 				call,
 				caller: c.caller,
 				value: c.value,
 			})
-		}
-	}
-
-	fn expand_call_inner(&self) -> proc_macro2::TokenStream {
-		let snake_call_name = &self.snake_call_name;
-		let pascal_call_name = &self.pascal_call_name;
-		quote! {
-			fn #snake_call_name(&mut self, c: Msg<#pascal_call_name>) -> Result<::evm_coder::abi::AbiWriter>;
 		}
 	}
 
@@ -97,6 +92,7 @@ impl FromMeta for IsList {
 
 #[derive(FromMeta)]
 pub struct InterfaceInfo {
+	name: Ident,
 	#[darling(default)]
 	is: IsList,
 	#[darling(default)]
@@ -192,7 +188,7 @@ struct Method {
 	result: Type,
 }
 impl Method {
-	fn try_from(value: &TraitItemMethod) -> syn::Result<Self> {
+	fn try_from(value: &ImplItemMethod) -> syn::Result<Self> {
 		let mut info = MethodInfo {
 			rename_selector: None,
 		};
@@ -386,36 +382,31 @@ impl Method {
 }
 
 pub struct SolidityInterface {
-	vis: Visibility,
-	name: Ident,
+	name: Box<syn::Type>,
+	ident: Ident,
 	info: InterfaceInfo,
 	methods: Vec<Method>,
-	items: Vec<TraitItem>,
 }
 impl SolidityInterface {
-	pub fn try_from(info: InterfaceInfo, value: &ItemTrait) -> syn::Result<Self> {
+	pub fn try_from(info: InterfaceInfo, value: &ItemImpl) -> syn::Result<Self> {
 		let mut methods = Vec::new();
 
 		for item in &value.items {
-			match item {
-				TraitItem::Method(method) => methods.push(Method::try_from(method)?),
-				_ => {}
+			if let ImplItem::Method(method) = item {
+				methods.push(Method::try_from(method)?)
 			}
 		}
 		Ok(Self {
-			vis: value.vis.clone(),
-			name: value.ident.clone(),
+			name: value.self_ty.clone(),
+			ident: parse_ident_from_type(&value.self_ty)?.clone(),
 			info,
 			methods,
-			items: value.items.clone(),
 		})
 	}
 	pub fn expand(self) -> proc_macro2::TokenStream {
-		let vis = self.vis;
 		let name = self.name;
-		let items = self.items;
 
-		let call_name = pascal_ident_to_call(&name);
+		let call_name = pascal_ident_to_call(&self.info.name);
 
 		let call_sub = self
 			.info
@@ -424,13 +415,6 @@ impl SolidityInterface {
 			.iter()
 			.chain(self.info.is.0.iter())
 			.map(Is::expand_call_def);
-		let call_inner = self
-			.info
-			.inline_is
-			.0
-			.iter()
-			.chain(self.info.is.0.iter())
-			.map(Is::expand_call_inner);
 		let call_parse = self
 			.info
 			.inline_is
@@ -459,7 +443,7 @@ impl SolidityInterface {
 
 		quote! {
 			#[derive(Debug)]
-			#vis enum #call_name {
+			pub enum #call_name {
 				#(
 					#calls,
 				)*
@@ -486,7 +470,7 @@ impl SolidityInterface {
 					)
 				}
 			}
-            impl ::evm_coder::Call for #call_name {
+			impl ::evm_coder::Call for #call_name {
 				fn parse(method_id: u32, reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::execution::Result<Option<Self>> {
 					use ::evm_coder::abi::AbiRead;
 					match method_id {
@@ -500,17 +484,8 @@ impl SolidityInterface {
 					)else*
 					return Ok(None);
 				}
-            }
-			#vis trait #name {
-				#(
-					#items
-				)*
-				#(
-					#call_inner
-				)*
 			}
-            impl<T> ::evm_coder::Callable for T where T: #name {
-                type Call = #call_name;
+			impl ::evm_coder::Callable<#call_name> for #name {
 				#[allow(unreachable_code)] // In case of no inner calls
 				fn call(&mut self, c: Msg<#call_name>) -> Result<::evm_coder::abi::AbiWriter> {
 					use ::evm_coder::abi::AbiWrite;
@@ -530,7 +505,7 @@ impl SolidityInterface {
 					}
 					Ok(writer)
 				}
-            }
+			}
 		}
 	}
 }

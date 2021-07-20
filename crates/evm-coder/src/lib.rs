@@ -57,9 +57,8 @@ pub trait Call: Sized {
     fn parse(selector: u32, input: &mut AbiReader) -> execution::Result<Option<Self>>;
 }
 
-pub trait Callable {
-    type Call: Call;
-    fn call(&mut self, call: types::Msg<Self::Call>) -> execution::Result<AbiWriter>;
+pub trait Callable<C: Call> {
+    fn call(&mut self, call: types::Msg<C>) -> execution::Result<AbiWriter>;
 }
 
 #[cfg(test)]
