@@ -8,7 +8,7 @@ evm-coder-macros = { path = "../evm-coder-macros" }
 primitive-types = { version = "0.9", default-features = false }
 hex-literal = "0.3"
 ethereum = { version = "0.7.1", default-features = false }
-evm-core = { git = "https://github.com/usetech-llc/evm.git", branch="precompile-output-parachain" }
+evm-core = { default-features = false, git = "https://github.com/usetech-llc/evm.git", branch="precompile-output-parachain" }
 impl-trait-for-tuples = "0.2.1"
 
 [dev-dependencies]
@@ -16,4 +16,4 @@ hex = "0.4.3"
 
 [features]
 default = ["std"]
-std = ["ethereum/std", "primitive-types/std"]
+std = ["ethereum/std", "primitive-types/std", "evm-core/std"]
