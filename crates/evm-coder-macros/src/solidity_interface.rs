@@ -4,13 +4,10 @@ use quote::quote;
 use darling::FromMeta;
 use inflector::cases;
 use std::fmt::Write;
-use syn::{
-	FnArg, Ident, ItemTrait, Meta, NestedMeta, PatType, Path, ReturnType, TraitItem,
-	TraitItemMethod, Visibility, spanned::Spanned,
-};
+use syn::{FnArg, Ident, ItemTrait, Meta, NestedMeta, PatType, Path, ReturnType, TraitItem, TraitItemMethod, Type, Visibility, spanned::Spanned};
 
 use crate::{
-	fn_selector_str, format_ty, parse_ident_from_pat, parse_ident_from_path, parse_ident_from_type,
+	fn_selector_str, parse_ident_from_pat, parse_ident_from_path, parse_ident_from_type,
 	parse_result_ok, pascal_ident_to_call, pascal_ident_to_snake_call, snake_ident_to_pascal,
 	snake_ident_to_screaming,
 };
@@ -68,7 +65,7 @@ impl Is {
 		let snake_call_name = &self.snake_call_name;
 		let pascal_call_name = &self.pascal_call_name;
 		quote! {
-			fn #snake_call_name(&mut self, c: Msg<#pascal_call_name>) -> ::core::result::Result<::evm_coder::abi::AbiWriter, Self::Error>;
+			fn #snake_call_name(&mut self, c: Msg<#pascal_call_name>) -> Result<::evm_coder::abi::AbiWriter>;
 		}
 	}
 
@@ -173,11 +170,6 @@ impl MethodArg {
 			}
 		}
 	}
-
-	fn solidity_def(&self) -> String {
-		assert!(!self.is_special());
-		format!("{} {}", format_ty(&self.ty), self.name)
-	}
 }
 
 #[derive(PartialEq)]
@@ -197,7 +189,7 @@ struct Method {
 	args: Vec<MethodArg>,
 	has_normal_args: bool,
 	mutability: Mutability,
-	result: Ident,
+	result: Type,
 }
 impl Method {
 	fn try_from(value: &TraitItemMethod) -> syn::Result<Self> {
@@ -391,27 +383,6 @@ impl Method {
 			}
 		}
 	}
-
-	fn solidity_def(&self) -> String {
-		let mut out = format!("function {}(", self.camel_name);
-		for (i, arg) in self.args.iter().filter(|a| !a.is_special()).enumerate() {
-			if i != 0 {
-				out.push_str(", ");
-			}
-			out.push_str(&arg.solidity_def());
-		}
-		out.push(')');
-		match self.mutability {
-			Mutability::Mutable => {}
-			Mutability::View => write!(out, " view").unwrap(),
-			Mutability::Pure => write!(out, " pure").unwrap(),
-		}
-		if self.result != "void" {
-			write!(out, " returns ({})", format_ty(&self.result)).unwrap();
-		}
-		out.push(';');
-		out
-	}
 }
 
 pub struct SolidityInterface {
@@ -423,25 +394,13 @@ pub struct SolidityInterface {
 }
 impl SolidityInterface {
 	pub fn try_from(info: InterfaceInfo, value: &ItemTrait) -> syn::Result<Self> {
-		let mut found_error = false;
 		let mut methods = Vec::new();
 
 		for item in &value.items {
 			match item {
-				TraitItem::Type(ty) => {
-					if ty.ident == "Error" {
-						found_error = true;
-					}
-				}
 				TraitItem::Method(method) => methods.push(Method::try_from(method)?),
 				_ => {}
 			}
-		}
-		if !found_error {
-			return Err(syn::Error::new(
-				value.span(),
-				"expected associated type called Error, which should implement From<&str>",
-			));
 		}
 		Ok(Self {
 			vis: value.vis.clone(),
@@ -512,19 +471,6 @@ impl SolidityInterface {
 				#(
 					#consts
 				)*
-				pub fn parse(method_id: u32, reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::abi::Result<Option<Self>> {
-					use ::evm_coder::abi::AbiRead;
-					match method_id {
-						#(
-							#parsers,
-						)*
-						_ => {},
-					}
-					#(
-						#call_parse
-					)else*
-					return Ok(None);
-				}
 				pub const fn interface_id() -> u32 {
 					let mut interface_id = 0;
 					#(#interface_id)*
@@ -540,6 +486,21 @@ impl SolidityInterface {
 					)
 				}
 			}
+            impl ::evm_coder::Call for #call_name {
+				fn parse(method_id: u32, reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::execution::Result<Option<Self>> {
+					use ::evm_coder::abi::AbiRead;
+					match method_id {
+						#(
+							#parsers,
+						)*
+						_ => {},
+					}
+					#(
+						#call_parse
+					)else*
+					return Ok(None);
+				}
+            }
 			#vis trait #name {
 				#(
 					#items
@@ -547,8 +508,11 @@ impl SolidityInterface {
 				#(
 					#call_inner
 				)*
+			}
+            impl<T> ::evm_coder::Callable for T where T: #name {
+                type Call = #call_name;
 				#[allow(unreachable_code)] // In case of no inner calls
-				fn call(&mut self, c: Msg<#call_name>) -> ::core::result::Result<::evm_coder::abi::AbiWriter, Self::Error> {
+				fn call(&mut self, c: Msg<#call_name>) -> Result<::evm_coder::abi::AbiWriter> {
 					use ::evm_coder::abi::AbiWrite;
 					type InternalCall = #call_name;
 					match c.call {
@@ -566,7 +530,7 @@ impl SolidityInterface {
 					}
 					Ok(writer)
 				}
-			}
+            }
 		}
 	}
 }

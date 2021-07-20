@@ -127,7 +127,7 @@ fn parse_ident_from_type(ty: &Type) -> syn::Result<&Ident> {
 }
 
 // Gets T out of Result<T>
-fn parse_result_ok(ty: &Type) -> syn::Result<&Ident> {
+fn parse_result_ok(ty: &Type) -> syn::Result<&Type> {
 	let path = parse_path(ty)?;
 	let segment = parse_path_segment(path)?;
 
@@ -160,7 +160,7 @@ fn parse_result_ok(ty: &Type) -> syn::Result<&Ident> {
 		}
 	};
 
-	parse_ident_from_type(ty)
+	Ok(ty)
 }
 
 fn pascal_ident_to_call(ident: &Ident) -> Ident {
@@ -182,14 +182,6 @@ fn pascal_ident_to_snake_call(ident: &Ident) -> Ident {
 	let name = cases::snakecase::to_snake_case(&name);
 	let name = format!("call_{}", name);
 	Ident::new(&name, ident.span())
-}
-
-fn format_ty(ty: &Ident) -> String {
-	if ty == "string" {
-		format!("{} memory", ty)
-	} else {
-		ty.to_string()
-	}
 }
 
 #[proc_macro_attribute]
