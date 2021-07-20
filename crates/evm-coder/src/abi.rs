@@ -163,8 +163,6 @@ impl AbiWriter {
 		self.write_padleft(&u128::to_be_bytes(*value))
 	}
 
-	/// This method writes u128, and exists only for convenience, because there is
-	/// no u256 support in rust
 	pub fn uint256(&mut self, value: &U256) {
 		let mut out = [0; 32];
 		value.to_big_endian(&mut out);
@@ -258,28 +256,6 @@ impl AbiWrite for &string {
 
 impl AbiWrite for () {
 	fn abi_write(&self, _writer: &mut AbiWriter) {}
-}
-
-/// Error, which can be constructed from any ToString type
-/// Encoded to Abi as Error(string)
-#[derive(Debug)]
-pub struct StringError(String);
-
-impl<E> From<E> for StringError
-where
-	E: ToString,
-{
-	fn from(e: E) -> Self {
-		Self(e.to_string())
-	}
-}
-
-impl From<StringError> for AbiWriter {
-	fn from(v: StringError) -> Self {
-		let mut out = AbiWriter::new_call(crate::fn_selector!(Error(string)));
-		out.string(&v.0);
-		out
-	}
 }
 
 #[macro_export]
