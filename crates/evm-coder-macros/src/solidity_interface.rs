@@ -4,10 +4,7 @@ use quote::quote;
 use darling::FromMeta;
 use inflector::cases;
 use std::fmt::Write;
-use syn::{
-	FnArg, Ident, ImplItem, ImplItemMethod, ItemImpl, Meta, NestedMeta, PatType, Path, ReturnType,
-	Type, spanned::Spanned,
-};
+use syn::{FnArg, Generics, Ident, ImplItem, ImplItemMethod, ItemImpl, Meta, NestedMeta, PatType, Path, ReturnType, Type, spanned::Spanned};
 
 use crate::{
 	fn_selector_str, parse_ident_from_pat, parse_ident_from_path, parse_ident_from_type,
@@ -22,7 +19,7 @@ struct Is {
 }
 impl Is {
 	fn try_from(path: &Path) -> syn::Result<Self> {
-		let name = parse_ident_from_path(path)?.clone();
+		let name = parse_ident_from_path(path, false)?.clone();
 		Ok(Self {
 			pascal_call_name: pascal_ident_to_call(&name),
 			snake_call_name: pascal_ident_to_snake_call(&name),
@@ -115,7 +112,7 @@ impl MethodArg {
 	fn try_from(value: &PatType) -> syn::Result<Self> {
 		Ok(Self {
 			name: parse_ident_from_pat(&value.pat)?.clone(),
-			ty: parse_ident_from_type(&value.ty)?.clone(),
+			ty: parse_ident_from_type(&value.ty, false)?.clone(),
 		})
 	}
 	fn is_value(&self) -> bool {
@@ -193,7 +190,7 @@ impl Method {
 			rename_selector: None,
 		};
 		for attr in &value.attrs {
-			let ident = parse_ident_from_path(&attr.path)?;
+			let ident = parse_ident_from_path(&attr.path, false)?;
 			if ident == "solidity" {
 				let args = attr.parse_meta().unwrap();
 				info = MethodInfo::from_meta(&args).unwrap();
@@ -382,8 +379,8 @@ impl Method {
 }
 
 pub struct SolidityInterface {
+    generics: Generics,
 	name: Box<syn::Type>,
-	ident: Ident,
 	info: InterfaceInfo,
 	methods: Vec<Method>,
 }
@@ -397,8 +394,8 @@ impl SolidityInterface {
 			}
 		}
 		Ok(Self {
+            generics: value.generics.clone(),
 			name: value.self_ty.clone(),
-			ident: parse_ident_from_type(&value.self_ty)?.clone(),
 			info,
 			methods,
 		})
@@ -407,6 +404,7 @@ impl SolidityInterface {
 		let name = self.name;
 
 		let call_name = pascal_ident_to_call(&self.info.name);
+        let generics = self.generics;
 
 		let call_sub = self
 			.info
@@ -485,7 +483,7 @@ impl SolidityInterface {
 					return Ok(None);
 				}
 			}
-			impl ::evm_coder::Callable<#call_name> for #name {
+			impl #generics ::evm_coder::Callable<#call_name> for #name {
 				#[allow(unreachable_code)] // In case of no inner calls
 				fn call(&mut self, c: Msg<#call_name>) -> Result<::evm_coder::abi::AbiWriter> {
 					use ::evm_coder::abi::AbiWrite;

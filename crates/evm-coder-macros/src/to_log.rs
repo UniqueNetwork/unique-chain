@@ -13,10 +13,10 @@ struct EventField {
 impl EventField {
 	fn try_from(field: &Field) -> syn::Result<Self> {
 		let name = field.ident.as_ref().unwrap();
-		let ty = parse_ident_from_type(&field.ty)?;
+		let ty = parse_ident_from_type(&field.ty, false)?;
 		let mut indexed = false;
 		for attr in &field.attrs {
-			if let Ok(ident) = parse_ident_from_path(&attr.path) {
+			if let Ok(ident) = parse_ident_from_path(&attr.path, false) {
 				if ident == "indexed" {
 					indexed = true;
 				}

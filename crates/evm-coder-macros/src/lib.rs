@@ -103,8 +103,8 @@ fn parse_ident_from_pat(pat: &Pat) -> syn::Result<&Ident> {
 	}
 }
 
-fn parse_ident_from_segment(segment: &PathSegment) -> syn::Result<&Ident> {
-	if segment.arguments != PathArguments::None {
+fn parse_ident_from_segment(segment: &PathSegment, allow_generics: bool) -> syn::Result<&Ident> {
+	if segment.arguments != PathArguments::None && !allow_generics {
 		return Err(syn::Error::new(
 			segment.arguments.span(),
 			"unexpected generic type",
@@ -113,14 +113,14 @@ fn parse_ident_from_segment(segment: &PathSegment) -> syn::Result<&Ident> {
 	Ok(&segment.ident)
 }
 
-fn parse_ident_from_path(path: &Path) -> syn::Result<&Ident> {
+fn parse_ident_from_path(path: &Path, allow_generics: bool) -> syn::Result<&Ident> {
 	let segment = parse_path_segment(path)?;
-	parse_ident_from_segment(segment)
+	parse_ident_from_segment(segment, allow_generics)
 }
 
-fn parse_ident_from_type(ty: &Type) -> syn::Result<&Ident> {
+fn parse_ident_from_type(ty: &Type, allow_generics: bool) -> syn::Result<&Ident> {
 	let path = parse_path(ty)?;
-	parse_ident_from_path(path)
+	parse_ident_from_path(path, allow_generics)
 }
 
 // Gets T out of Result<T>
