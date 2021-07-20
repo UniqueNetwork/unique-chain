@@ -8,13 +8,13 @@ use alloc::{
 	string::{String, ToString},
 	vec::Vec,
 };
+use evm_core::ExitError;
 use primitive_types::{H160, U256};
 
-use crate::types::string;
+use crate::{execution::Error, types::string};
+use crate::execution::Result;
 
 const ABI_ALIGNMENT: usize = 32;
-
-pub type Result<T> = core::result::Result<T, &'static str>;
 
 #[derive(Clone)]
 pub struct AbiReader<'i> {
@@ -27,7 +27,7 @@ impl<'i> AbiReader<'i> {
 	}
 	pub fn new_call(buf: &'i [u8]) -> Result<(u32, Self)> {
 		if buf.len() < 4 {
-			return Err("missing method id");
+			return Err(Error::Error(ExitError::OutOfOffset));
 		}
 		let mut method_id = [0; 4];
 		method_id.copy_from_slice(&buf[0..4]);
@@ -37,7 +37,7 @@ impl<'i> AbiReader<'i> {
 
 	fn read_padleft<const S: usize>(&mut self) -> Result<[u8; S]> {
 		if self.buf.len() - self.offset < 32 {
-			return Err("missing padding");
+			return Err(Error::Error(ExitError::OutOfOffset));
 		}
 		let mut block = [0; S];
 		// Verify padding is empty
@@ -45,7 +45,7 @@ impl<'i> AbiReader<'i> {
 			.iter()
 			.all(|&v| v == 0)
 		{
-			return Err("non zero padding (wrong types?)");
+			return Err(Error::Error(ExitError::InvalidRange));
 		}
 		block.copy_from_slice(
 			&self.buf[self.offset + ABI_ALIGNMENT - S..self.offset + ABI_ALIGNMENT],
@@ -63,7 +63,7 @@ impl<'i> AbiReader<'i> {
 		match data[0] {
 			0 => Ok(false),
 			1 => Ok(true),
-			_ => Err("wrong bool value"),
+			_ => Err(Error::Error(ExitError::InvalidRange)),
 		}
 	}
 
@@ -75,7 +75,7 @@ impl<'i> AbiReader<'i> {
 		let mut subresult = self.subresult()?;
 		let length = subresult.read_usize()?;
 		if subresult.buf.len() <= subresult.offset + length {
-			return Err("bytes out of bounds");
+			return Err(Error::Error(ExitError::OutOfOffset));
 		}
 		Ok(subresult.buf[subresult.offset..subresult.offset + length].into())
 	}
