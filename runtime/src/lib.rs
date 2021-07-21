@@ -252,6 +252,7 @@ impl pallet_evm::Config for Runtime {
 	type ChainId = ChainId;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type OnChargeTransaction = ();
+	type FindAuthor = EthereumFindAuthor<Aura>;
 }
 
 pub struct EthereumFindAuthor<F>(core::marker::PhantomData<F>);
@@ -274,7 +275,6 @@ parameter_types! {
 
 impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
-	type FindAuthor = EthereumFindAuthor<Aura>;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot;
 	type EvmSubmitLog = pallet_evm::Pallet<Runtime>;
 }
@@ -687,9 +687,6 @@ impl pallet_nft::Config for Runtime {
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
-
-	type EthereumChainId = ChainId;
-	type EthereumTransactionSender = pallet_ethereum::Module<Runtime>;
 }
 
 parameter_types! {
@@ -753,7 +750,7 @@ construct_runtime!(
 	{
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
 		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
@@ -761,7 +758,7 @@ construct_runtime!(
 		System: system::{Pallet, Call, Storage, Config, Event<T>},
 		Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>},
 
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
+		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 20,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
 		Aura: pallet_aura::{Pallet, Config<T>},
@@ -910,8 +907,9 @@ impl_runtime_apis! {
 		fn validate_transaction(
 			source: TransactionSource,
 			tx: <Block as BlockT>::Extrinsic,
+			hash: <Block as BlockT>::Hash,
 		) -> TransactionValidity {
-			Executive::validate_transaction(source, tx)
+			Executive::validate_transaction(source, tx, hash)
 		}
 	}
 
@@ -939,7 +937,7 @@ impl_runtime_apis! {
 		}
 
 		fn author() -> H160 {
-			<pallet_ethereum::Module<Runtime>>::find_author()
+			<pallet_evm::Module<Runtime>>::find_author()
 		}
 
 		fn storage_at(address: H160, index: U256) -> H256 {
@@ -1028,6 +1026,13 @@ impl_runtime_apis! {
 				Ethereum::current_receipts(),
 				Ethereum::current_transaction_statuses()
 			)
+		}
+
+		fn extrinsic_filter(xts: Vec<<Block as sp_api::BlockT>::Extrinsic>) -> Vec<pallet_ethereum::Transaction> {
+			xts.into_iter().filter_map(|xt| match xt.function {
+				Call::Ethereum(pallet_ethereum::Call::transact(t)) => Some(t),
+				_ => None
+			}).collect()
 		}
 	}
 
