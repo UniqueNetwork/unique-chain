@@ -4,7 +4,10 @@ use quote::quote;
 use darling::FromMeta;
 use inflector::cases;
 use std::fmt::Write;
-use syn::{FnArg, Generics, Ident, ImplItem, ImplItemMethod, ItemImpl, Meta, NestedMeta, PatType, Path, ReturnType, Type, spanned::Spanned};
+use syn::{
+	FnArg, Generics, Ident, ImplItem, ImplItemMethod, ItemImpl, Meta, NestedMeta, PatType, Path,
+	ReturnType, Type, spanned::Spanned,
+};
 
 use crate::{
 	fn_selector_str, parse_ident_from_pat, parse_ident_from_path, parse_ident_from_type,
@@ -161,6 +164,14 @@ impl MethodArg {
 			quote! {
 				#name
 			}
+		}
+	}
+
+	fn expand_solidity_argument(&self) -> proc_macro2::TokenStream {
+		let name = &self.name.to_string();
+		let ty = &self.ty;
+		quote! {
+			<NamedArgument<#ty>>::new(#name)
 		}
 	}
 }
@@ -376,10 +387,35 @@ impl Method {
 			}
 		}
 	}
+
+	fn expand_solidity_function(&self) -> proc_macro2::TokenStream {
+		let camel_name = &self.camel_name;
+		let mutability = match self.mutability {
+			Mutability::Mutable => quote! {SolidityMutability::Mutable},
+			Mutability::View => quote! { SolidityMutability::View },
+			Mutability::Pure => quote! {SolidityMutability::Pure},
+		};
+		let result = &self.result;
+
+		let args = self.args.iter().map(MethodArg::expand_solidity_argument);
+
+		quote! {
+			SolidityFunction {
+				name: #camel_name,
+				mutability: #mutability,
+				args: (
+					#(
+						#args,
+					)*
+				),
+				result: <UnnamedArgument<#result>>::default(),
+			}
+		}
+	}
 }
 
 pub struct SolidityInterface {
-    generics: Generics,
+	generics: Generics,
 	name: Box<syn::Type>,
 	info: InterfaceInfo,
 	methods: Vec<Method>,
@@ -394,7 +430,7 @@ impl SolidityInterface {
 			}
 		}
 		Ok(Self {
-            generics: value.generics.clone(),
+			generics: value.generics.clone(),
 			name: value.self_ty.clone(),
 			info,
 			methods,
@@ -403,8 +439,9 @@ impl SolidityInterface {
 	pub fn expand(self) -> proc_macro2::TokenStream {
 		let name = self.name;
 
+		let solidity_name = self.info.name.to_string();
 		let call_name = pascal_ident_to_call(&self.info.name);
-        let generics = self.generics;
+		let generics = self.generics;
 
 		let call_sub = self
 			.info
@@ -436,6 +473,7 @@ impl SolidityInterface {
 		let interface_id = self.methods.iter().map(Method::expand_interface_id);
 		let parsers = self.methods.iter().map(Method::expand_parse);
 		let call_variants_this = self.methods.iter().map(Method::expand_variant_call);
+		let solidity_functions = self.methods.iter().map(Method::expand_solidity_function);
 
 		// let methods = self.methods.iter().map(Method::solidity_def);
 
@@ -466,6 +504,19 @@ impl SolidityInterface {
 							|| #supports_interface
 						)*
 					)
+				}
+				pub fn generate_solidity_interface() -> string {
+					use evm_coder::solidity::*;
+					use core::fmt::Write;
+					let interface = SolidityInterface {
+						name: #solidity_name,
+						functions: (#(
+							#solidity_functions,
+						)*),
+					};
+					let mut out = string::new();
+					let _ = interface.format(&mut out);
+					out
 				}
 			}
 			impl ::evm_coder::Call for #call_name {

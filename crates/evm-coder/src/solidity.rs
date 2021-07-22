@@ -1,3 +1,5 @@
+#[cfg(not(feature = "std"))]
+use alloc::{string::String};
 use core::{fmt, marker::PhantomData};
 use impl_trait_for_tuples::impl_for_tuples;
 use crate::types::*;
@@ -23,8 +25,13 @@ macro_rules! solidity_type_name {
 
 solidity_type_name! {
 	uint8 => "uint8",
+	uint32 => "uint32",
+	uint128 => "uint128",
+	uint256 => "uint256",
 	address => "address",
 	string => "memory string",
+	bytes => "memory bytes",
+	bool => "bool",
 }
 impl SolidityTypeName for void {
 	fn solidity_name(_writer: &mut impl fmt::Write) -> fmt::Result {
@@ -43,6 +50,7 @@ pub trait SolidityArguments {
 	fn len(&self) -> usize;
 }
 
+#[derive(Default)]
 pub struct UnnamedArgument<T>(PhantomData<*const T>);
 
 impl<T: SolidityTypeName> SolidityArguments for UnnamedArgument<T> {
@@ -63,6 +71,12 @@ impl<T: SolidityTypeName> SolidityArguments for UnnamedArgument<T> {
 }
 
 pub struct NamedArgument<T>(&'static str, PhantomData<*const T>);
+
+impl<T> NamedArgument<T> {
+	pub fn new(name: &'static str) -> Self {
+		Self(name, Default::default())
+	}
+}
 
 impl<T: SolidityTypeName> SolidityArguments for NamedArgument<T> {
 	fn solidity_name(&self, writer: &mut impl fmt::Write) -> fmt::Result {
@@ -96,10 +110,10 @@ impl SolidityArguments for Tuple {
 	for_tuples!( where #( Tuple: SolidityArguments ),* );
 
 	fn solidity_name(&self, writer: &mut impl fmt::Write) -> fmt::Result {
-		let mut first = false;
+		let mut first = true;
 		for_tuples!( #(
             if !Tuple.is_empty() {
-                if first {
+                if !first {
                     write!(writer, ", ")?;
                 }
                 first = false;
@@ -113,7 +127,7 @@ impl SolidityArguments for Tuple {
 	}
 }
 
-trait SolidityFunctions {
+pub trait SolidityFunctions {
 	fn solidity_name(&self, writer: &mut impl fmt::Write) -> fmt::Result;
 }
 
@@ -123,23 +137,23 @@ pub enum SolidityMutability {
 	Mutable,
 }
 pub struct SolidityFunction<A, R> {
-	name: &'static str,
-	args: A,
-	result: R,
-	mutability: SolidityMutability,
+	pub name: &'static str,
+	pub args: A,
+	pub result: R,
+	pub mutability: SolidityMutability,
 }
 impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityFunction<A, R> {
 	fn solidity_name(&self, writer: &mut impl fmt::Write) -> fmt::Result {
 		write!(writer, "function {}(", self.name)?;
 		self.args.solidity_name(writer)?;
-		write!(writer, ") public")?;
+		write!(writer, ") external")?;
 		match &self.mutability {
 			SolidityMutability::Pure => write!(writer, " pure")?,
 			SolidityMutability::View => write!(writer, " view")?,
 			SolidityMutability::Mutable => {}
 		}
 		if !self.result.is_empty() {
-			write!(writer, "returns (")?;
+			write!(writer, " returns (")?;
 			self.result.solidity_name(writer)?;
 			write!(writer, ")")?;
 		}
@@ -156,6 +170,20 @@ impl SolidityFunctions for Tuple {
 		for_tuples!( #(
             Tuple.solidity_name(writer)?;
         )* );
+		Ok(())
+	}
+}
+
+pub struct SolidityInterface<F: SolidityFunctions> {
+	pub name: &'static str,
+	pub functions: F,
+}
+
+impl<F: SolidityFunctions> SolidityInterface<F> {
+	pub fn format(&self, out: &mut impl fmt::Write) -> fmt::Result {
+		writeln!(out, "interface {} {{", self.name)?;
+		self.functions.solidity_name(out)?;
+		writeln!(out, "}}")?;
 		Ok(())
 	}
 }
