@@ -42,12 +42,12 @@ sc-transaction-graph = { version = "3.0", git = 'https://github.com/paritytech/s
 substrate-frame-rpc-system = { version = "3.0", git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
 tokio = { version = "0.2.13", features = ["macros", "sync"] }
 
-pallet-ethereum = { git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
-fc-rpc = { default-features = false, git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
-fp-rpc = { default-features = false, git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
-fc-rpc-core = { default-features = false, git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
-fc-db = { default-features = false, git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
-fc-mapping-sync = { default-features = false, git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
+pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
+fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
+fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
+fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
+fc-db = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
+fc-mapping-sync = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
 
 pallet-nft = { path = "../../pallets/nft" }
 nft-runtime = { path = "../../runtime" }

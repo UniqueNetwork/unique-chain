@@ -37,9 +37,9 @@ std = [
     'ethereum/std',
     'rlp/std',
 
-    'ethereum-tx-sign',
     'primitive-types/std',
     'evm-coder/std',
+    'evm-coder-substrate/std',
 ]
 
 ################################################################################
@@ -144,9 +144,10 @@ rlp = { default-features = false, version = "0.5.0" }
 sp-api = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
 
 evm-coder = { default-features = false, path = "../../crates/evm-coder" }
+evm-coder-substrate = { default-features = false, path = "../../crates/evm-coder-substrate" }
 primitive-types = { version = "0.9.0", default-features = false, features = ["serde_no_std"] }
 
-pallet-evm = { default-features = false, version = "5.0.0-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
-pallet-ethereum = { default-features = false, version = "3.0.0-dev", git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
-fp-evm = { default-features = false, version = '2.0.0', git = "https://github.com/usetech-llc/frontier.git", branch = "injected-transactions-parachain" }
+pallet-evm = { default-features = false, version = "5.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
+pallet-ethereum = { default-features = false, version = "3.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
+fp-evm = { default-features = false, version = '2.0.0', git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
 hex-literal = "0.3.1"
