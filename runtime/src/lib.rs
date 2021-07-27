@@ -248,7 +248,11 @@ impl pallet_evm::Config for Runtime {
 	type Precompiles = ();
 	type Currency = Balances;
 	type Event = Event;
-	type OnMethodCall = pallet_nft::NftErcSupport<Self>;
+	type OnMethodCall = (
+		pallet_nft::NftErcSupport<Self>,
+		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
+	);
+	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type OnChargeTransaction = ();
@@ -741,6 +745,18 @@ impl pallet_nft_transaction_payment::Config for Runtime {
 impl pallet_nft_charge_transaction::Config for Runtime {}
 
 // impl pallet_contract_helpers::Config for Runtime {}
+
+parameter_types! {
+	// 0x842899ECF380553E8a4de75bF534cdf6fBF64049
+	pub const HelpersContractAddress: H160 = H160([
+		0x84, 0x28, 0x99, 0xec, 0xf3, 0x80, 0x55, 0x3e, 0x8a, 0x4d, 0xe7, 0x5b, 0xf5, 0x34, 0xcd, 0xf6, 0xfb, 0xf6, 0x40, 0x49,
+	]);
+}
+
+impl pallet_evm_contract_helpers::Config for Runtime {
+	type Event = Event;
+	type ContractAddress = HelpersContractAddress;
+}
 
 construct_runtime!(
 	pub enum Runtime where
