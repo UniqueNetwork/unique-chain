@@ -23,7 +23,7 @@
   "scripts": {
     "lint": "eslint --ext .ts,.js src/",
     "fix": "eslint --ext .ts,.js src/ --fix",
-    "test": "mocha --timeout 9999999 -r ts-node/register ./**/*.test.ts",
+    "test": "mocha --timeout 9999999 -r ts-node/register ./**/*.test.ts ./**/eth/**/*.test.ts",
     "testEth": "mocha --timeout 9999999 -r ts-node/register ./**/eth/**/*.test.ts",
     "load": "mocha --timeout 9999999 -r ts-node/register ./**/*.load.ts",
     "loadTransfer": "ts-node src/transfer.nload.ts",
