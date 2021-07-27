@@ -104,13 +104,16 @@ fn inflation_works() {
 		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
 
-		// BlockInflation should be set after 1st block and 
+		// BlockInflation should be set after 1st block and
 		// first inflation deposit should be equal to BlockInflation
 		Inflation::on_initialize(1);
 
 		// SBP M2 review: Verify expected block inflation for year 1
 		assert_eq!(Inflation::block_inflation(), 1901);
-		assert_eq!(Balances::free_balance(1234) - initial_issuance, Inflation::block_inflation());
+		assert_eq!(
+			Balances::free_balance(1234) - initial_issuance,
+			Inflation::block_inflation()
+		);
 	});
 }
 
@@ -192,7 +195,6 @@ fn inflation_in_1_to_9_years() {
 			// Assert that next year inflation is less than previous year inflation
 			assert!(block_inflation_year_before > block_inflation_year_after);
 		}
-
 	});
 }
 
