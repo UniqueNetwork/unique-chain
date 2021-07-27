@@ -1,19 +1,21 @@
+#![allow(clippy::from_over_into)]
+
 use crate as pallet_template;
 use sp_core::H256;
-use frame_support::{ 
-	parameter_types,
-	weights::IdentityFee,
-};
+use frame_support::{parameter_types, weights::IdentityFee};
 use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup}, 
-	testing::Header, 
+	traits::{BlakeTwo256, IdentityLookup},
+	testing::Header,
 	Perbill,
 };
-use pallet_transaction_payment::{ CurrencyAdapter};
+use pallet_transaction_payment::{CurrencyAdapter};
 use frame_system as system;
+use pallet_evm::AddressMapping;
+use crate::{EvmBackwardsAddressMapping, CrossAccountId};
+use codec::{Encode, Decode};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>; 
+type Block = frame_system::mocking::MockBlock<Test>;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -22,9 +24,9 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Module, Call, Config, Storage, Event<T>},
-		TemplateModule: pallet_template::{Module, Call, Storage},
-		Balances: pallet_balances::{Module, Call, Storage},
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		TemplateModule: pallet_template::{Pallet, Call, Storage},
+		Balances: pallet_balances::{Pallet, Call, Storage},
 	}
 );
 
@@ -56,6 +58,7 @@ impl system::Config for Test {
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
+	type OnSetCode = ();
 }
 
 parameter_types! {
@@ -64,10 +67,10 @@ parameter_types! {
 }
 //frame_system::Module<Test>;
 impl pallet_balances::Config for Test {
-    type AccountStore = System;
-    type Balance = u64;
-    type DustRemoval = ();
-    type Event = ();
+	type AccountStore = System;
+	type Balance = u64;
+	type DustRemoval = ();
+	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type WeightInfo = ();
 	type MaxLocks = MaxLocks;
@@ -78,7 +81,7 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Test {
-	type OnChargeTransaction = CurrencyAdapter<pallet_balances::Module<Test>, ()>;
+	type OnChargeTransaction = CurrencyAdapter<pallet_balances::Pallet<Test>, ()>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<u64>;
 	type FeeMultiplierUpdate = ();
@@ -94,27 +97,26 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-type Timestamp = pallet_timestamp::Module<Test>;
-type Randomness = pallet_randomness_collective_flip::Module<Test>;
+type Timestamp = pallet_timestamp::Pallet<Test>;
+type Randomness = pallet_randomness_collective_flip::Pallet<Test>;
 
 parameter_types! {
 	pub const TombstoneDeposit: u64 = 1;
 	pub const DepositPerContract: u64 = 1;
 	pub const DepositPerStorageByte: u64 = 1;
 	pub const DepositPerStorageItem: u64 = 1;
-	pub RentFraction: Perbill = Perbill::from_rational_approximation(1u32, 30 * 24 * 60 * 10);
+	pub RentFraction: Perbill = Perbill::from_rational(1u32, 30 * 24 * 60 * 10);
 	pub const SurchargeReward: u64 = 1;
 	pub const SignedClaimHandicap: u32 = 2;
-	pub const MaxDepth: u32 = 32;
-	pub const MaxValueSize: u32 = 16 * 1024;
 	pub DeletionWeightLimit: u64 = u64::MAX;//Perbill::from_percent(10);
 	pub DeletionQueueDepth: u32 = 10;
+	pub Schedule: pallet_contracts::Schedule<Test> = Default::default();
 }
 
 impl pallet_contracts::Config for Test {
 	type Time = Timestamp;
 	type Randomness = Randomness;
-	type Currency = pallet_balances::Module<Test>;
+	type Currency = pallet_balances::Pallet<Test>;
 	type Event = ();
 	type RentPayment = ();
 	type SignedClaimHandicap = SignedClaimHandicap;
@@ -125,29 +127,80 @@ impl pallet_contracts::Config for Test {
 	type RentFraction = RentFraction;
 	type SurchargeReward = SurchargeReward;
 	type DeletionWeightLimit = DeletionWeightLimit;
-	type MaxDepth = MaxDepth;
 	type DeletionQueueDepth = DeletionQueueDepth;
-	type MaxValueSize = MaxValueSize;
 	type ChainExtension = ();
-	type MaxCodeSize = ();
 	type WeightPrice = ();
 	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
+	type Schedule = Schedule;
+	type CallStack = [pallet_contracts::Frame<Self>; 31];
 }
 
 parameter_types! {
 	pub const CollectionCreationPrice: u32 = 0;
-    pub TreasuryAccountId: u64 = 1234;
+	pub TreasuryAccountId: u64 = 1234;
+	pub EthereumChainId: u32 = 1111;
+}
+
+pub struct TestEvmAddressMapping;
+impl AddressMapping<u64> for TestEvmAddressMapping {
+	fn into_account_id(_addr: sp_core::H160) -> u64 {
+		unimplemented!()
+	}
+}
+
+pub struct TestEvmBackwardsAddressMapping;
+impl EvmBackwardsAddressMapping<u64> for TestEvmBackwardsAddressMapping {
+	fn from_account_id(_account_id: u64) -> sp_core::H160 {
+		unimplemented!()
+	}
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct TestCrossAccountId(u64, sp_core::H160);
+impl CrossAccountId<u64> for TestCrossAccountId {
+	fn from_sub(sub: u64) -> Self {
+		let mut eth = [0; 20];
+		eth[12..20].copy_from_slice(&sub.to_be_bytes());
+		Self(sub, sp_core::H160(eth))
+	}
+	fn as_sub(&self) -> &u64 {
+		&self.0
+	}
+	fn from_eth(_eth: sp_core::H160) -> Self {
+		unimplemented!()
+	}
+	fn as_eth(&self) -> &sp_core::H160 {
+		&self.1
+	}
+}
+
+pub struct TestEtheremTransactionSender;
+impl pallet_ethereum::EthereumTransactionSender for TestEtheremTransactionSender {
+	fn submit_logs_transaction(
+		_tx: pallet_ethereum::Transaction,
+		_logs: Vec<pallet_ethereum::Log>,
+	) -> Result<(), sp_runtime::DispatchError> {
+		Ok(())
+	}
 }
 
 impl pallet_template::Config for Test {
 	type Event = ();
 	type WeightInfo = ();
 	type CollectionCreationPrice = CollectionCreationPrice;
-    type Currency = pallet_balances::Module<Test>;
-    type TreasuryAccountId = TreasuryAccountId;
+	type Currency = pallet_balances::Pallet<Test>;
+	type TreasuryAccountId = TreasuryAccountId;
+	type EvmAddressMapping = TestEvmAddressMapping;
+	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
+	type CrossAccountId = TestCrossAccountId;
+	type EthereumChainId = EthereumChainId;
+	type EthereumTransactionSender = TestEtheremTransactionSender;
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap()
+		.into()
 }

@@ -1,0 +1,17 @@
+[package]
+name = "evm-coder"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+evm-coder-macros = { path = "../evm-coder-macros" }
+primitive-types = { version = "0.9", default-features = false }
+hex-literal = "0.3"
+ethereum = { version = "0.7.1", default-features = false }
+
+[dev-dependencies]
+hex = "0.4.3"
+
+[features]
+default = ["std"]
+std = ["ethereum/std", "primitive-types/std"]

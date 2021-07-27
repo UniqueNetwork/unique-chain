@@ -16,6 +16,7 @@ import {
   findNotExistingCollection,
   removeFromWhiteListExpectFailure,
   disableWhiteListExpectSuccess,
+  normalizeAccountId,
 } from './util/helpers';
 import { IKeyringPair } from '@polkadot/types/types';
 import privateKey from './substrate/privateKey';
@@ -28,7 +29,7 @@ describe('Integration Test removeFromWhiteList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
     });
@@ -40,7 +41,7 @@ describe('Integration Test removeFromWhiteList', () => {
       await enableWhiteListExpectSuccess(alice, collectionId);
       await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
 
-      await removeFromWhiteListExpectSuccess(alice, collectionId, bob.address);
+      await removeFromWhiteListExpectSuccess(alice, collectionId, normalizeAccountId(bob.address));
       expect(await isWhitelisted(collectionId, bob.address)).to.be.false;
     });
   });
@@ -52,7 +53,7 @@ describe('Integration Test removeFromWhiteList', () => {
       await addToWhiteListExpectSuccess(alice, collectionWithoutWhitelistId, bob.address);
       await disableWhiteListExpectSuccess(alice, collectionWithoutWhitelistId);
 
-      await removeFromWhiteListExpectSuccess(alice, collectionWithoutWhitelistId, bob.address);
+      await removeFromWhiteListExpectSuccess(alice, collectionWithoutWhitelistId, normalizeAccountId(bob.address));
     });
   });
 });
@@ -62,7 +63,7 @@ describe('Negative Integration Test removeFromWhiteList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
     });
@@ -72,7 +73,7 @@ describe('Negative Integration Test removeFromWhiteList', () => {
     await usingApi(async (api) => {
       const collectionId = await findNotExistingCollection(api);
 
-      await removeFromWhiteListExpectFailure(alice, collectionId, bob.address);
+      await removeFromWhiteListExpectFailure(alice, collectionId, normalizeAccountId(bob.address));
     });
   });
 
@@ -83,7 +84,7 @@ describe('Negative Integration Test removeFromWhiteList', () => {
       await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
       await destroyCollectionExpectSuccess(collectionId);
 
-      await removeFromWhiteListExpectFailure(alice, collectionId, bob.address);
+      await removeFromWhiteListExpectFailure(alice, collectionId, normalizeAccountId(bob.address));
     });
   });
 });

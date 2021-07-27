@@ -11,6 +11,7 @@ import { default as usingApi, submitTransactionAsync, submitTransactionExpectFai
 import {
   createCollectionExpectSuccess,
   destroyCollectionExpectSuccess,
+  normalizeAccountId,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -22,7 +23,7 @@ let Schema: any;
 let largeSchema: any;
 
 before(async () => {
-  await usingApi(async (api) => {
+  await usingApi(async () => {
     const keyring = new Keyring({ type: 'sr25519' });
     Alice = keyring.addFromUri('//Alice');
     Bob = keyring.addFromUri('//Bob');
@@ -34,22 +35,22 @@ before(async () => {
 describe('Integration Test ext. setVariableOnChainSchema()', () => {
 
   it('Run extrinsic with parameters of the collection id, set the scheme', async () => {
-      await usingApi(async (api) => {
+    await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Owner.toString()).to.be.eq(Alice.address);
+      expect(collection.Owner).to.be.deep.eq(normalizeAccountId(Alice.address));
       const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, Schema);
       await submitTransactionAsync(Alice, setSchema);
     });
   });
 
   it('Checking collection data using the setVariableOnChainSchema parameter', async () => {
-      await usingApi(async (api) => {
-        const collectionId = await createCollectionExpectSuccess();
-        const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, Schema);
-        await submitTransactionAsync(Alice, setSchema);
-        const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-        expect(collection.VariableOnChainSchema.toString()).to.be.eq(Schema);
+    await usingApi(async (api) => {
+      const collectionId = await createCollectionExpectSuccess();
+      const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, Schema);
+      await submitTransactionAsync(Alice, setSchema);
+      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collection.VariableOnChainSchema.toString()).to.be.eq(Schema);
 
     });
   });
@@ -87,7 +88,7 @@ describe('Negative Integration Test ext. setVariableOnChainSchema()', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Owner.toString()).to.be.eq(Alice.address);
+      expect(collection.Owner).to.be.deep.eq(normalizeAccountId(Alice.address));
       const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, Schema);
       await expect(submitTransactionExpectFailAsync(Bob, setSchema)).to.be.rejected;
     });

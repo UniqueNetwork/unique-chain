@@ -1,9 +1,19 @@
 {
+    "CrossAccountId": {
+      "_enum": {
+        "substrate": "AccountId",
+        "ethereum": "H160"
+      }
+    },
     "AccessMode": {
       "_enum": [
         "Normal",
         "WhiteList"
       ]
+    },
+    "CallSpec": {
+      "Module": "u32",
+      "Method": "u32"
     },
     "DecimalPoints": "u8",
     "CollectionMode": {
@@ -15,27 +25,27 @@
       }
     },
     "Ownership": {
-      "Owner": "AccountId",
+      "Owner": "CrossAccountId",
       "Fraction": "u128"
     },
     "FungibleItemType": {
       "Value": "u128"
     },
     "NftItemType": {
-      "Owner": "AccountId",
+      "Owner": "CrossAccountId",
       "ConstData": "Vec<u8>",
       "VariableData": "Vec<u8>"
     },
     "ReFungibleItemType": {
-      "Owner": "Vec<Ownership<AccountId>>",
+      "Owner": "Vec<Ownership<CrossAccountId>>",
       "ConstData": "Vec<u8>",
       "VariableData": "Vec<u8>"
     },
     "SponsorshipState": {
       "_enum": {
-        "Disabled": null,
-        "Unconfirmed": "AccountId",
-        "Confirmed": "AccountId"
+        "disabled": null,
+        "unconfirmed": "AccountId",
+        "confirmed": "AccountId"
       }
     },
     "Collection": {
@@ -55,8 +65,8 @@
       "ConstOnChainSchema": "Vec<u8>"
     },
     "RawData": "Vec<u8>",
-    "Address": "AccountId",
-    "LookupSource": "AccountId",
+    "Address": "MultiAddress",
+    "LookupSource": "MultiAddress",
     "Weight": "u64",
     "CreateNftData": {
       "const_data": "Vec<u8>",

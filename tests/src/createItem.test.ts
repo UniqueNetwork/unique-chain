@@ -4,20 +4,20 @@
 //
 
 import { default as usingApi } from './substrate/substrate-api';
-import { Keyring } from "@polkadot/api";
-import { IKeyringPair } from "@polkadot/types/types";
+import { Keyring } from '@polkadot/api';
+import { IKeyringPair } from '@polkadot/types/types';
 import { 
   createCollectionExpectSuccess, 
-  createItemExpectSuccess
+  createItemExpectSuccess,
 } from './util/helpers';
 
 let alice: IKeyringPair;
 
 describe('integration test: ext. createItem():', () => {
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
-      alice = keyring.addFromUri(`//Alice`);
+      alice = keyring.addFromUri('//Alice');
     });
   });
 

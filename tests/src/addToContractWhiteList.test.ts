@@ -3,25 +3,25 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import chai from "chai";
+import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import usingApi, { submitTransactionAsync, submitTransactionExpectFailAsync } from "./substrate/substrate-api";
-import privateKey from "./substrate/privateKey";
+import usingApi, { submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
+import privateKey from './substrate/privateKey';
 import {
-  deployFlipper
-} from "./util/contracthelpers";
+  deployFlipper,
+} from './util/contracthelpers';
 import {
-  getGenericResult
-} from "./util/helpers"
+  getGenericResult,
+} from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 describe('Integration Test addToContractWhiteList', () => {
 
-  it(`Add an address to a contract white list`, async () => {
+  it('Add an address to a contract white list', async () => {
     await usingApi(async api => {
-      const bob = privateKey("//Bob");
+      const bob = privateKey('//Bob');
       const [contract, deployer] = await deployFlipper(api);
 
       const whiteListedBefore = (await api.query.nft.contractWhiteList(contract.address, bob.address)).toJSON();
@@ -35,9 +35,9 @@ describe('Integration Test addToContractWhiteList', () => {
     });
   });
 
-  it(`Adding same address to white list repeatedly should not produce errors`, async () => {
+  it('Adding same address to white list repeatedly should not produce errors', async () => {
     await usingApi(async api => {
-      const bob = privateKey("//Bob");
+      const bob = privateKey('//Bob');
       const [contract, deployer] = await deployFlipper(api);
 
       const whiteListedBefore = (await api.query.nft.contractWhiteList(contract.address, bob.address)).toJSON();
@@ -58,11 +58,11 @@ describe('Integration Test addToContractWhiteList', () => {
 
 describe('Negative Integration Test addToContractWhiteList', () => {
 
-  it(`Add an address to a white list of a non-contract`, async () => {
+  it('Add an address to a white list of a non-contract', async () => {
     await usingApi(async api => {
-      const alice = privateKey("//Bob");
-      const bob = privateKey("//Bob");
-      const charlieGuineaPig = privateKey("//Charlie");
+      const alice = privateKey('//Bob');
+      const bob = privateKey('//Bob');
+      const charlieGuineaPig = privateKey('//Charlie');
 
       const whiteListedBefore = (await api.query.nft.contractWhiteList(charlieGuineaPig.address, bob.address)).toJSON();
       const addTx = api.tx.nft.addToContractWhiteList(charlieGuineaPig.address, bob.address);
@@ -74,10 +74,10 @@ describe('Negative Integration Test addToContractWhiteList', () => {
     });
   });
 
-  it(`Add to a contract white list using a non-owner address`, async () => {
+  it('Add to a contract white list using a non-owner address', async () => {
     await usingApi(async api => {
-      const bob = privateKey("//Bob");
-      const [contract, deployer] = await deployFlipper(api);
+      const bob = privateKey('//Bob');
+      const [contract] = await deployFlipper(api);
 
       const whiteListedBefore = (await api.query.nft.contractWhiteList(contract.address, bob.address)).toJSON();
       const addTx = api.tx.nft.addToContractWhiteList(contract.address, bob.address);

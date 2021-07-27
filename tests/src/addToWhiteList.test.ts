@@ -15,6 +15,7 @@ import {
   destroyCollectionExpectSuccess,
   enablePublicMintingExpectSuccess,
   enableWhiteListExpectSuccess,
+  normalizeAccountId,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -26,7 +27,7 @@ let Bob: IKeyringPair;
 describe('Integration Test ext. addToWhiteList()', () => {
 
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       Alice = privateKey('//Alice');
       Bob = privateKey('//Bob');
     });
@@ -54,7 +55,7 @@ describe('Negative Integration Test ext. addToWhiteList()', () => {
       const collectionId = parseInt((await api.query.nft.createdCollectionCount()).toString()) + 1;
       const Bob = privateKey('//Bob');
 
-      const tx = api.tx.nft.addToWhiteList(collectionId, Bob.address);
+      const tx = api.tx.nft.addToWhiteList(collectionId, normalizeAccountId(Bob.address));
       await expect(submitTransactionExpectFailAsync(Alice, tx)).to.be.rejected;
     });
   });
@@ -66,7 +67,7 @@ describe('Negative Integration Test ext. addToWhiteList()', () => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
       await destroyCollectionExpectSuccess(collectionId);
-      const tx = api.tx.nft.addToWhiteList(collectionId, Bob.address);
+      const tx = api.tx.nft.addToWhiteList(collectionId, normalizeAccountId(Bob.address));
       await expect(submitTransactionExpectFailAsync(Alice, tx)).to.be.rejected;
     });
   });
@@ -78,7 +79,7 @@ describe('Negative Integration Test ext. addToWhiteList()', () => {
       const collectionId = await createCollectionExpectSuccess();
       await enableWhiteListExpectSuccess(Alice, collectionId);
       await enablePublicMintingExpectSuccess(Alice, collectionId);
-      const tx = api.tx.nft.createItem(collectionId, Ferdie.address, 'NFT');
+      const tx = api.tx.nft.createItem(collectionId, normalizeAccountId(Ferdie.address), 'NFT');
       await expect(submitTransactionExpectFailAsync(Ferdie, tx)).to.be.rejected;
     });
   });

@@ -5,16 +5,16 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from "./substrate/substrate-api";
-import { alicesPublicKey, bobsPublicKey } from "./accounts";
-import privateKey from "./substrate/privateKey";
+import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
+import { alicesPublicKey, bobsPublicKey } from './accounts';
+import privateKey from './substrate/privateKey';
 import { BigNumber } from 'bignumber.js';
 import { IKeyringPair } from '@polkadot/types/types';
 import { 
   createCollectionExpectSuccess, 
   createItemExpectSuccess,
   getGenericResult,
-  transferExpectSuccess
+  transferExpectSuccess,
 } from './util/helpers';
 
 import { default as waitNewBlocks } from './substrate/wait-new-blocks';
@@ -23,7 +23,7 @@ import { ApiPromise } from '@polkadot/api';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-const Treasury = "5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z";
+const Treasury = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';
 const saneMinimumFee = 0.05;
 const saneMaximumFee = 0.5;
 const createCollectionDeposit = 100;
@@ -33,8 +33,9 @@ let bob: IKeyringPair;
 
 // Skip the inflation block pauses if the block is close to inflation block 
 // until the inflation happens
+/*eslint no-async-promise-executor: "off"*/
 function skipInflationBlock(api: ApiPromise): Promise<void> {
-  const promise = new Promise<void>(async (resolve, reject) => {
+  const promise = new Promise<void>(async (resolve) => {
     const blockInterval = parseInt((await api.consts.inflation.inflationBlockInterval).toString());
     const unsubscribe = await api.rpc.chain.subscribeNewHeads(head => {
       const currentBlock = parseInt(head.number.toString());
@@ -52,7 +53,7 @@ function skipInflationBlock(api: ApiPromise): Promise<void> {
 
 describe('integration test: Fees must be credited to Treasury:', () => {
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
     });

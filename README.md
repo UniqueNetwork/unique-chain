@@ -133,6 +133,64 @@ cargo run -- \
 
 Additional CLI usage options are available and may be shown by running `cargo run -- --help`.
 
+## Building and Running as Parachain locally
+
+Rust toolchain: nightly-2021-04-23
+Note: checkout this project and polkadot project (see below) in the sibling folders (both under the same folder)
+
+### Build relay
+
+```
+git clone https://github.com/paritytech/polkadot.git
+cd polkadot
+git checkout aa386760
+cargo build --release
+```
+
+### Build parachain
+
+Run in the root of this project:
+```
+cargo --build
+```
+
+### Run 4-node Relay
+
+1. Download `rococo-custom-4.json` chain spec here: https://substrate.dev/cumulus-workshop/shared/chainspecs/rococo-custom-4.json
+2. Use these instructions to launch 4 nodes: https://substrate.dev/cumulus-workshop/#/en/2-relay-chain/1-launch
+
+Example (Run in polkadot folder. Replace `12D3KooWNLAmKcyee3oqSgTMthaQVXaAcXeo8RrGCzMfMVA3B5on` with output from Alice node):
+```
+./target/release/polkadot --alice --validator --base-path ./cumulus_relay0 --chain rococo-custom-4.json --port 50555 --ws-port 9944
+./target/release/polkadot --bob --validator --base-path ./cumulus_relay1 --chain rococo-custom-4.json --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWNLAmKcyee3oqSgTMthaQVXaAcXeo8RrGCzMfMVA3B5on --port 50556 --ws-port 9945
+./target/release/polkadot --charlie --validator --base-path ./cumulus_relay1 --chain rococo-custom-4.json --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWNLAmKcyee3oqSgTMthaQVXaAcXeo8RrGCzMfMVA3B5on --port 50557 --ws-port 9946
+./target/release/polkadot --dave --validator --base-path ./cumulus_relay1 --chain rococo-custom-4.json --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWNLAmKcyee3oqSgTMthaQVXaAcXeo8RrGCzMfMVA3B5on --port 50558 --ws-port 9947
+
+```
+
+3. Export genesis state and runtime wasm from NFT parachain:
+
+Run from this project root:
+```
+./target/release/nft export-genesis-state --parachain-id 2000 > ./resources/para-2000-genesis
+./target/release/nft export-genesis-wasm > ./resources/para-2000-wasm
+```
+
+4. Run two parachain nodes:
+
+Replace `12D3KooWN1ah2bFQSysEFnwZqcmcVpDDR8UedXyo6xfzV1zDNMNg` with Alice or Bob relay ID
+
+Run from this project root:
+```
+./target/release/nft --alice --collator --force-authoring --base-path ./tmp/parachain-alice --parachain-id 2000 --port 40333 --ws-port 9844  -- --execution wasm --chain ../polkadot/rococo-custom-4.json --port 30343 --ws-port 9977
+./target/release/nft --bob --collator --force-authoring --parachain-id 2000 --base-path ./tmp/parachain/bob --port 40334 --ws-port 9845 -- --execution wasm --chain ../polkadot/rococo-custom-4.json --port 30344 --ws-port 9978 --bootnodes /ip4/127.0.0.1/tcp/50556/p2p/12D3KooWN1ah2bFQSysEFnwZqcmcVpDDR8UedXyo6xfzV1zDNMNg
+```
+
+4. Reserve parachain ID as described here: https://substrate.dev/cumulus-workshop/#/en/2-relay-chain/2-reserve
+
+5. Register parachain in relay as described here: https://substrate.dev/cumulus-workshop/#/en/3-parachains/2-register
+
+
 ## Run Integration Tests
 
 1. Install all needed dependecies
@@ -145,7 +203,6 @@ yarn install
 ```
 yarn test
 ```
-
 
 ## Benchmarks
 
@@ -171,3 +228,110 @@ Moved to [runtime_types.json](./runtime_types.json).
 ## Running Integration Tests
 
 See [tests/README.md](./tests/README.md).
+
+## Code Formatting
+
+### Get formatter and linter settings into your branch (if you forked before they were introduced)
+```bash
+git cherry-pick -n 8ff77c21b0d30b2a4648fa35dbf61dfa9d3948a7
+```
+
+### Apply formatting and clippy fixes
+```bash
+cargo clippy
+cargo fmt
+```
+
+### Format tests
+```bash
+pushd tests && yarn fix ; popd
+```
+
+### Check code style in tests
+```bash
+cd tests && yarn eslint --ext .ts,.js src/
+```
+
+## Re-Enabling Ink! Contracts
+
+Uncomment following lies:
+1. In node/rpc/Cargo.toml
+```
+# pallet-contracts-rpc = { version = "3.0", git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.7' }
+```
+
+2. In node/rpc/src/lib.rs
+```
+// C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
+...
+// use pallet_contracts_rpc::{Contracts, ContractsApi};
+...
+// io.extend_with(ContractsApi::to_delegate(Contracts::new(client.clone())));
+
+```
+
+3. In runtime/Cargo.toml
+```
+    # 'pallet-contracts/std',
+    # 'pallet-contracts-primitives/std',
+    # 'pallet-contracts-rpc-runtime-api/std',
+    # 'pallet-contract-helpers/std',
+...
+    # [dependencies.pallet-contracts]
+    # git = 'https://github.com/paritytech/substrate.git'
+    # default-features = false
+    # branch = 'polkadot-v0.9.7'
+    # version = '3.0.0'
+
+    # [dependencies.pallet-contracts-primitives]
+    # git = 'https://github.com/paritytech/substrate.git'
+    # default-features = false
+    # branch = 'polkadot-v0.9.7'
+    # version = '3.0.0'
+
+    # [dependencies.pallet-contracts-rpc-runtime-api]
+    # git = 'https://github.com/paritytech/substrate.git'
+    # default-features = false
+    # branch = 'polkadot-v0.9.7'
+    # version = '3.0.0'
+...
+    # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
+```
+
+4. runtime/src/lib.rs
+```
+// use pallet_contracts::weights::WeightInfo;
+...
+// use pallet_contracts::chain_extension::UncheckedFrom;
+...
+// pub use pallet_timestamp::Call as TimestampCall;
+...
+// mod chain_extension;
+// use crate::chain_extension::{NFTExtension, Imbalance};
+...
+/*
+parameter_types! {
+	pub TombstoneDeposit: Balance = deposit(
+  ...
+}
+*/
+...
+//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
+...
+// impl pallet_contract_helpers::Config for Runtime {}
+...
+// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
+...
+// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage},
+...
+//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
+...
+/*
+	impl pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber, Hash>
+		for Runtime
+	{
+    ...
+	}
+*/
+
+```

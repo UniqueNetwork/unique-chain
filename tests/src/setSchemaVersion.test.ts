@@ -103,7 +103,7 @@ describe('setSchemaVersion negative', () => {
   it('execute setSchemaVersion with not correct schema version', async () => {
     await usingApi(async (api: ApiPromise) => {
       const consoleError = console.error;
-      console.error = (message: string) => {};
+      console.error = () => {};
       try {
         tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'Test');
         await submitTransactionAsync(alice, tx);

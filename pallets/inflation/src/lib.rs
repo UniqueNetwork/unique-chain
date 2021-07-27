@@ -4,14 +4,12 @@
 //
 
 #![recursion_limit = "1024"]
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(feature = "std")]
 pub use std::*;
 
-#[cfg(feature = "std")]
-pub use serde::*;
+pub use serde::{Serialize, Deserialize};
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -20,8 +18,7 @@ mod benchmarking;
 mod tests;
 
 pub use frame_support::{
-	construct_runtime, decl_module, decl_storage,
-	ensure,
+	construct_runtime, decl_module, decl_storage, ensure,
 	traits::{
 		Currency, ExistenceRequirement, Get, Imbalance, KeyOwnerProofSystem, OnUnbalanced,
 		Randomness, IsSubType, WithdrawReasons,
@@ -31,8 +28,7 @@ pub use frame_support::{
 		DispatchInfo, GetDispatchInfo, IdentityFee, Pays, PostDispatchInfo, Weight,
 		WeightToFeePolynomial, DispatchClass,
 	},
-	StorageValue,
-	transactional,
+	StorageValue, transactional,
 };
 
 // #[cfg(feature = "runtime-benchmarks")]
@@ -40,7 +36,7 @@ pub use frame_support::dispatch::DispatchResult;
 
 use sp_runtime::{
 	Perbill,
-	traits::{Zero}
+	traits::{Zero},
 };
 use sp_std::convert::TryInto;
 
@@ -72,13 +68,13 @@ decl_storage! {
 }
 
 decl_module! {
-	pub struct Module<T: Config> for enum Call 
-	where 
+	pub struct Module<T: Config> for enum Call
+	where
 		origin: T::Origin,
 	{
 		const InflationBlockInterval: T::BlockNumber = T::InflationBlockInterval::get();
 
-		fn on_initialize(now: T::BlockNumber) -> Weight 
+		fn on_initialize(now: T::BlockNumber) -> Weight
 		{
 			let mut consumed_weight = 0;
 			let mut add_weight = |reads, writes, weight| {
@@ -95,15 +91,15 @@ decl_module! {
 				let one_percent = Perbill::from_percent(1);
 
 				if current_year <= TOTAL_YEARS_UNTIL_FLAT {
-					let amount: BalanceOf<T> = Perbill::from_rational_approximation(
-						block_interval * (START_INFLATION_PERCENT * TOTAL_YEARS_UNTIL_FLAT - current_year * (START_INFLATION_PERCENT - END_INFLATION_PERCENT)), 
+					let amount: BalanceOf<T> = Perbill::from_rational(
+						block_interval * (START_INFLATION_PERCENT * TOTAL_YEARS_UNTIL_FLAT - current_year * (START_INFLATION_PERCENT - END_INFLATION_PERCENT)),
 						YEAR * TOTAL_YEARS_UNTIL_FLAT
 					) * ( one_percent * T::Currency::total_issuance() );
 					<BlockInflation<T>>::put(amount);
 				}
 				else {
-					let amount: BalanceOf<T> = Perbill::from_rational_approximation(
-						block_interval * END_INFLATION_PERCENT, 
+					let amount: BalanceOf<T> = Perbill::from_rational(
+						block_interval * END_INFLATION_PERCENT,
 						YEAR
 					) * (one_percent * T::Currency::total_issuance());
 					<BlockInflation<T>>::put(amount);

@@ -1,20 +1,14 @@
 import { IKeyringPair } from '@polkadot/types/types';
-import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from '../substrate/privateKey';
-import usingApi, { submitTransactionAsync, submitTransactionExpectFailAsync } from '../substrate/substrate-api';
+import usingApi from '../substrate/substrate-api';
 import {
-  createCollectionExpectSuccess, createItemExpectSuccess, setCollectionSponsorExpectSuccess,
+  createCollectionExpectSuccess, setCollectionSponsorExpectSuccess,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
-interface ITokenDataType {
-  Owner: number[];
-  ConstData: number[];
-  VariableData: number[];
-}
 let Alice: IKeyringPair;
 let Bob: IKeyringPair;
 let Ferdie: IKeyringPair;
@@ -35,11 +29,9 @@ describe('Sponsored with new owner ', () => {
       await setCollectionSponsorExpectSuccess(collectionId, Bob.address);
       const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
       await timeoutPromise(10000);
-      //
       const confirmSponsorship = api.tx.nft.confirmSponsorship(collectionId);
       const changeCollectionOwner = api.tx.nft.changeCollectionOwner(collectionId, Ferdie.address);
-      await Promise.all
-      ([
+      await Promise.all([
         confirmSponsorship.signAndSend(Bob),
         changeCollectionOwner.signAndSend(Alice),
       ]);

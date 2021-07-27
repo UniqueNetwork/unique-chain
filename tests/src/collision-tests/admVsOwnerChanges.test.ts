@@ -1,15 +1,11 @@
 import { IKeyringPair } from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { alicesPublicKey, bobsPublicKey } from '../accounts';
-import getBalance from '../substrate/get-balance';
 import privateKey from '../substrate/privateKey';
 import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
-import waitNewBlocks from '../substrate/wait-new-blocks';
 import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
-  setCollectionSponsorExpectSuccess,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -41,8 +37,7 @@ describe('Admin vs Owner changes token: ', () => {
       const changeOwner = api.tx.nft.transferFrom(Ferdie.address, Bob.address, collectionId, itemId, 1);
       const approve = api.tx.nft.approve(Bob.address, collectionId, itemId, 1);
       const sendItem = api.tx.nft.transfer(Alice.address, collectionId, itemId, 1);
-      await Promise.all
-      ([
+      await Promise.all([
         changeOwner.signAndSend(Alice),
         approve.signAndSend(Bob),
         sendItem.signAndSend(Ferdie),

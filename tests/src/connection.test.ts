@@ -3,7 +3,7 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import usingApi from "./substrate/substrate-api";
+import usingApi from './substrate/substrate-api';
 import { WsProvider } from '@polkadot/api';
 import * as chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -29,7 +29,7 @@ describe('Connection smoke test', () => {
     const neverConnectProvider = new WsProvider('ws://255.255.255.255:9944');
     await expect((async () => {
       await usingApi(async api => {
-        const health = await api.rpc.system.health();
+        await api.rpc.system.health();
       }, { provider: neverConnectProvider });
     })()).to.be.eventually.rejected;
 
