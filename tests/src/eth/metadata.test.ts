@@ -4,9 +4,8 @@
 //
 
 import { expect } from 'chai';
-import privateKey from '../substrate/privateKey';
 import { createCollectionExpectSuccess } from '../util/helpers';
-import { collectionIdToAddress, createEthAccount, itWeb3, transferBalanceToEth } from './util/helpers';
+import { collectionIdToAddress, createEthAccountWithBalance, GAS_ARGS, itWeb3 } from './util/helpers';
 import fungibleMetadataAbi from './fungibleMetadataAbi.json';
 
 describe('Common metadata', () => {
@@ -15,12 +14,11 @@ describe('Common metadata', () => {
       name: 'token name',
       mode: { type: 'NFT' },
     });
-    const caller = createEthAccount(web3);
-    await transferBalanceToEth(api, privateKey('//Alice'), caller, 999999);
+    const caller = await createEthAccountWithBalance(api, web3);
 
     const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(fungibleMetadataAbi as any, address);
-    const name = await contract.methods.name().call({ from: caller });
+    const contract = new web3.eth.Contract(fungibleMetadataAbi as any, address, { from: caller, ...GAS_ARGS });
+    const name = await contract.methods.name().call();
 
     expect(name).to.equal('token name');
   });
@@ -30,12 +28,11 @@ describe('Common metadata', () => {
       tokenPrefix: 'TOK',
       mode: { type: 'NFT' },
     });
-    const caller = createEthAccount(web3);
-    await transferBalanceToEth(api, privateKey('//Alice'), caller, 999999);
+    const caller = await createEthAccountWithBalance(api, web3);
 
     const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(fungibleMetadataAbi as any, address);
-    const symbol = await contract.methods.symbol().call({ from: caller });
+    const contract = new web3.eth.Contract(fungibleMetadataAbi as any, address, { from: caller, ...GAS_ARGS });
+    const symbol = await contract.methods.symbol().call();
 
     expect(symbol).to.equal('TOK');
   });
@@ -46,12 +43,11 @@ describe('Fungible metadata', () => {
     const collection = await createCollectionExpectSuccess({
       mode: { type: 'Fungible', decimalPoints: 6 },
     });
-    const caller = createEthAccount(web3);
-    await transferBalanceToEth(api, privateKey('//Alice'), caller, 999999);
+    const caller = await createEthAccountWithBalance(api, web3);
 
     const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(fungibleMetadataAbi as any, address);
-    const decimals = await contract.methods.decimals().call({ from: caller });
+    const contract = new web3.eth.Contract(fungibleMetadataAbi as any, address, { from: caller, ...GAS_ARGS });
+    const decimals = await contract.methods.decimals().call();
 
     expect(+decimals).to.equal(6);
   });

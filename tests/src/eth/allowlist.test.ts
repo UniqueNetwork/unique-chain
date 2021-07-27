@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import waitNewBlocks from '../substrate/wait-new-blocks';
-import { setContractSponsoringRateLimitExpectFailure } from '../util/helpers';
 import { contractHelpers, createEthAccount, createEthAccountWithBalance, deployFlipper, itWeb3, usingWeb3Http } from './util/helpers';
 
 describe('EVM allowlist', () => {

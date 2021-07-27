@@ -9,7 +9,7 @@ import { collectionIdToAddress, createEthAccount, createEthAccountWithBalance, G
 import fungibleAbi from './fungibleAbi.json';
 import { expect } from 'chai';
 
-describe('Information getting', () => {
+describe('Fungible: Information getting', () => {
   itWeb3('totalSupply', async ({ api, web3 }) => {
     const collection = await createCollectionExpectSuccess({
       name: 'token name',
@@ -22,8 +22,8 @@ describe('Information getting', () => {
     await createFungibleItemExpectSuccess(alice, collection, { Value: 200n }, { substrate: alice.address });
 
     const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(fungibleAbi as any, address);
-    const totalSupply = await contract.methods.totalSupply().call({ from: caller, ...GAS_ARGS });
+    const contract = new web3.eth.Contract(fungibleAbi as any, address, {from: caller, ...GAS_ARGS});
+    const totalSupply = await contract.methods.totalSupply().call();
 
     // FIXME: always equals to 0, because this method is not implemented
     expect(totalSupply).to.equal('0');
@@ -41,14 +41,14 @@ describe('Information getting', () => {
     await createFungibleItemExpectSuccess(alice, collection, { Value: 200n }, { ethereum: caller });
 
     const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(fungibleAbi as any, address);
-    const balance = await contract.methods.balanceOf(caller).call({ from: caller, ...GAS_ARGS });
+    const contract = new web3.eth.Contract(fungibleAbi as any, address, {from: caller, ...GAS_ARGS});
+    const balance = await contract.methods.balanceOf(caller).call();
 
     expect(balance).to.equal('200');
   });
 });
 
-describe('Plain calls', () => {
+describe('Fungible: Plain calls', () => {
   itWeb3('Can perform approve()', async ({ web3, api }) => {
     const collection = await createCollectionExpectSuccess({
       name: 'token name',
@@ -192,7 +192,7 @@ describe('Plain calls', () => {
   });
 });
 
-describe('Substrate calls', () => {
+describe('Fungible: Substrate calls', () => {
   itWeb3('Events emitted for approve()', async ({ web3 }) => {
     const collection = await createCollectionExpectSuccess({
       mode: { type: 'Fungible', decimalPoints: 0 },

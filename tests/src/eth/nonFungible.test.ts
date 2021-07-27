@@ -5,63 +5,65 @@
 
 import privateKey from '../substrate/privateKey';
 import { approveExpectSuccess, createCollectionExpectSuccess, createItemExpectSuccess, transferExpectSuccess, transferFromExpectSuccess } from '../util/helpers';
-import { collectionIdToAddress, createEthAccount, itWeb3, normalizeEvents, recordEvents, subToEth, transferBalanceToEth } from './util/helpers';
+import { collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents, recordEvents, subToEth, transferBalanceToEth } from './util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import { expect } from 'chai';
+import waitNewBlocks from '../substrate/wait-new-blocks';
 
-describe('Information getting', () => {
-  itWeb3('totalSupply', async ({ web3 }) => {
+describe('NFT: Information getting', () => {
+  itWeb3('totalSupply', async ({ api, web3 }) => {
     const collection = await createCollectionExpectSuccess({
       mode: { type: 'NFT' },
     });
     const alice = privateKey('//Alice');
+    const caller = await createEthAccountWithBalance(api, web3);
 
     await createItemExpectSuccess(alice, collection, 'NFT', { substrate: alice.address });
 
     const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
     const totalSupply = await contract.methods.totalSupply().call();
 
     // FIXME: always equals to 0, because this method is not implemented
     expect(totalSupply).to.equal('0');
   });
 
-  itWeb3('balanceOf', async ({ web3 }) => {
+  itWeb3('balanceOf', async ({ api, web3 }) => {
     const collection = await createCollectionExpectSuccess({
       mode: { type: 'NFT' },
     });
     const alice = privateKey('//Alice');
 
-    const caller = createEthAccount(web3);
+    const caller = await createEthAccountWithBalance(api, web3);
     await createItemExpectSuccess(alice, collection, 'NFT', { ethereum: caller });
     await createItemExpectSuccess(alice, collection, 'NFT', { ethereum: caller });
     await createItemExpectSuccess(alice, collection, 'NFT', { ethereum: caller });
 
     const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
     const balance = await contract.methods.balanceOf(caller).call();
 
     expect(balance).to.equal('3');
   });
 
-  itWeb3('ownerOf', async ({ web3 }) => {
+  itWeb3('ownerOf', async ({ api, web3 }) => {
     const collection = await createCollectionExpectSuccess({
       mode: { type: 'NFT' },
     });
     const alice = privateKey('//Alice');
 
-    const caller = createEthAccount(web3);
+    const caller = await createEthAccountWithBalance(api, web3);
     const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', { ethereum: caller });
 
     const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
     const owner = await contract.methods.ownerOf(tokenId).call();
 
     expect(owner).to.equal(caller);
   });
 });
 
-describe('Plain calls', () => {
+describe('NFT: Plain calls', () => {
   itWeb3('Can perform approve()', async ({ web3, api }) => {
     const collection = await createCollectionExpectSuccess({
       mode: { type: 'NFT' },
@@ -113,12 +115,12 @@ describe('Plain calls', () => {
     const receiver = createEthAccount(web3);
 
     const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: owner, ...GAS_ARGS});
 
-    await contract.methods.approve(spender, tokenId).send({ from: owner, gas: '0x1000000', gasPrice: '0x01' });
+    await contract.methods.approve(spender, tokenId).send({ from: owner });
 
     {
-      const result = await contract.methods.transferFrom(owner, receiver, tokenId).send({ from: spender, gas: '0x1000000', gasPrice: '0x01' });
+      const result = await contract.methods.transferFrom(owner, receiver, tokenId).send({ from: spender });
       const events = normalizeEvents(result.events);
       expect(events).to.be.deep.equal([
         {
@@ -159,11 +161,11 @@ describe('Plain calls', () => {
     await transferBalanceToEth(api, alice, receiver, 999999999999999);
 
     const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: owner, ...GAS_ARGS});
 
     {
-      const result = await contract.methods.transfer(receiver, tokenId).send({ from: owner, gas: '0x1000000', gasPrice: '0x01' });
-      console.log(result);
+      const result = await contract.methods.transfer(receiver, tokenId).send({ from: owner });
+      await waitNewBlocks(api, 1);
       const events = normalizeEvents(result.events);
       expect(events).to.be.deep.equal([
         {
@@ -190,7 +192,7 @@ describe('Plain calls', () => {
   });
 });
 
-describe('Substrate calls', () => {
+describe('NFT: Substrate calls', () => {
   itWeb3('Events emitted for approve()', async ({ web3 }) => {
     const collection = await createCollectionExpectSuccess({
       mode: { type: 'NFT' },
