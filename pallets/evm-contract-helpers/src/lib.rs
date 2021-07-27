@@ -8,13 +8,10 @@ pub mod eth;
 pub mod pallet {
 	use evm_coder::execution::Result;
 	use frame_support::pallet_prelude::*;
-	use pallet_evm::RawEvent;
 	use sp_core::H160;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-
 		type ContractAddress: Get<H160>;
 	}
 
