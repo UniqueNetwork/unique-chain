@@ -13,6 +13,7 @@ import {
   transferExpectSuccess,
   transferExpectFailure,
   setTransferFlagExpectSuccess,
+  setTransferFlagExpectFailure,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -45,6 +46,19 @@ describe('Enable/Disable Transfers', () => {
       await setTransferFlagExpectSuccess(Alice, nftCollectionId, false);
 
       await transferExpectFailure(nftCollectionId, newNftTokenId, Alice, Bob, 1);
+    });
+  });
+});
+
+describe('Negative Enable/Disable Transfers', () => {
+  it('Non-owner cannot change transfer flag', async () => {
+    await usingApi(async () => {
+      const Bob = privateKey('//Bob');
+      // nft
+      const nftCollectionId = await createCollectionExpectSuccess();
+
+      // Change transfer flag
+      await setTransferFlagExpectFailure(Bob, nftCollectionId, false);
     });
   });
 });

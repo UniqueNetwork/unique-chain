@@ -535,6 +535,18 @@ export async function setTransferFlagExpectSuccess(sender: IKeyringPair, collect
   }); 
 }
 
+export async function setTransferFlagExpectFailure(sender: IKeyringPair, collectionId: number, enabled: boolean) {
+
+  await usingApi(async (api) => {
+
+    const tx = api.tx.nft.setTransfersEnabledFlag (collectionId, enabled);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.false;
+  }); 
+}
+
 export async function setContractSponsoringRateLimitExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, rateLimit: number) {
   await usingApi(async (api) => {
     const tx = api.tx.nft.setContractSponsoringRateLimit(contractAddress, rateLimit);

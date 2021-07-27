@@ -59,7 +59,8 @@
     "testSetVariableMetadataSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetadataSponsoringRateLimit.test.ts",
     "testInflation": "mocha --timeout 9999999 -r ts-node/register ./**/inflation.test.ts",
     "testPalletPresence": "mocha --timeout 9999999 -r ts-node/register ./**/pallet-presence.test.ts",
-    "testBlockProduction": "mocha --timeout 9999999 -r ts-node/register ./**/block-production.test.ts"
+    "testBlockProduction": "mocha --timeout 9999999 -r ts-node/register ./**/block-production.test.ts",
+    "testEnableDisableTransfers": "mocha --timeout 9999999 -r ts-node/register ./**/enableDisableTransfer.test.ts"
   },
   "author": "",
   "license": "SEE LICENSE IN ../LICENSE",
