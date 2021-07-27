@@ -8,7 +8,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
-import { approveExpectFail, approveExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, getAllowance, getFungibleBalance, transferExpectFail, transferExpectSuccess, transferFromExpectFail, transferFromExpectSuccess, U128_MAX } from './util/helpers';
+import { approveExpectFail, approveExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, getAllowance, getFungibleBalance, transferExpectFailure, transferExpectSuccess, transferFromExpectFail, transferFromExpectSuccess, U128_MAX } from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -33,7 +33,7 @@ describe('Integration Test fungible overflows', () => {
     await transferExpectSuccess(fungibleCollectionId, 0, alice, bob, U128_MAX, 'Fungible');
 
     await createFungibleItemExpectSuccess(alice, fungibleCollectionId, { Value: 1n });
-    await transferExpectFail(fungibleCollectionId, 0, alice, bob, 1, 'Fungible');
+    await transferExpectFailure(fungibleCollectionId, 0, alice, bob, 1);
 
     expect(await getFungibleBalance(fungibleCollectionId, alice.address)).to.equal(1n);
     expect(await getFungibleBalance(fungibleCollectionId, bob.address)).to.equal(U128_MAX);

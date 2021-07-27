@@ -10,7 +10,7 @@ import { addToContractWhiteListExpectSuccess, isWhitelistedInContract, removeFro
 import { IKeyringPair } from '@polkadot/types/types';
 import { expect } from 'chai';
 
-describe('Integration Test removeFromContractWhiteList', () => {
+describe.skip('Integration Test removeFromContractWhiteList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
@@ -54,7 +54,7 @@ describe('Integration Test removeFromContractWhiteList', () => {
   });
 });
 
-describe('Negative Integration Test removeFromContractWhiteList', () => {
+describe.skip('Negative Integration Test removeFromContractWhiteList', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 

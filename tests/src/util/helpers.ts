@@ -84,7 +84,7 @@ interface IReFungibleOwner {
 }
 
 interface ITokenDataType {
-  Owner: number[];
+  Owner: IKeyringPair;
   ConstData: number[];
   VariableData: number[];
 }
@@ -523,6 +523,30 @@ export async function enableContractSponsoringExpectFailure(sender: IKeyringPair
   });
 }
 
+export async function setTransferFlagExpectSuccess(sender: IKeyringPair, collectionId: number, enabled: boolean) {
+
+  await usingApi(async (api) => {
+
+    const tx = api.tx.nft.setTransfersEnabledFlag (collectionId, enabled);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  }); 
+}
+
+export async function setTransferFlagExpectFailure(sender: IKeyringPair, collectionId: number, enabled: boolean) {
+
+  await usingApi(async (api) => {
+
+    const tx = api.tx.nft.setTransfersEnabledFlag (collectionId, enabled);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.false;
+  }); 
+}
+
 export async function setContractSponsoringRateLimitExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, rateLimit: number) {
   await usingApi(async (api) => {
     const tx = api.tx.nft.setContractSponsoringRateLimit(contractAddress, rateLimit);
@@ -543,9 +567,9 @@ export async function setContractSponsoringRateLimitExpectFailure(sender: IKeyri
   });
 }
 
-export async function toggleContractWhitelistExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string) {
+export async function toggleContractWhitelistExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, value = true) {
   await usingApi(async (api) => {
-    const tx = api.tx.nft.toggleContractWhiteList(contractAddress, true);
+    const tx = api.tx.nft.toggleContractWhiteList(contractAddress, value);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
 
@@ -748,29 +772,31 @@ scheduleTransferExpectSuccess(
   sender: IKeyringPair,
   recipient: IKeyringPair,
   value: number | bigint = 1,
+  blockTimeMs: number,
+  blockSchedule: number,
 ) {
   await usingApi(async (api: ApiPromise) => {
     const blockNumber: number | undefined = await getBlockNumber(api);
-    const expectedBlockNumber = blockNumber + 2;
+    const expectedBlockNumber = blockNumber + blockSchedule;
 
     expect(blockNumber).to.be.greaterThan(0);
-    const transferTx = await api.tx.nft.transfer(recipient.address, collectionId, tokenId, value); 
+    const transferTx = await api.tx.nft.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value); 
     const scheduleTx = await api.tx.scheduler.schedule(expectedBlockNumber, null, 0, transferTx);
 
     await submitTransactionAsync(sender, scheduleTx);
 
     const recipientBalanceBefore = new BigNumber((await api.query.system.account(recipient.address)).data.free.toString());
 
-    const nftItemDataBefore = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON() as unknown as ITokenDataType;
-    expect(nftItemDataBefore.Owner.toString()).to.be.equal(sender.address);
+    const nftItemDataBefore = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON() as any as ITokenDataType;
+    expect(toSubstrateAddress(nftItemDataBefore.Owner)).to.be.equal(sender.address);
 
-    // sleep for 2 blocks
-    await new Promise(resolve => setTimeout(resolve, 6000 * 2));
+    // sleep for 4 blocks
+    await new Promise(resolve => setTimeout(resolve, blockTimeMs * (blockSchedule + 1)));
 
     const recipientBalanceAfter = new BigNumber((await api.query.system.account(recipient.address)).data.free.toString());
 
     const nftItemData = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON() as unknown as ITokenDataType;
-    expect(nftItemData.Owner.toString()).to.be.equal(recipient.address);
+    expect(toSubstrateAddress(nftItemData.Owner)).to.be.equal(recipient.address);
     expect(recipientBalanceAfter.toNumber()).to.be.equal(recipientBalanceBefore.toNumber());
   });
 }
@@ -820,7 +846,7 @@ transferExpectSuccess(
 }
 
 export async function
-transferExpectFail(
+transferExpectFailure(
   collectionId: number,
   tokenId: number,
   sender: IKeyringPair,
@@ -895,7 +921,8 @@ export async function createItemExpectSuccess(sender: IKeyringPair, collectionId
       const createData = { refungible: { const_data: [], variable_data: [], pieces: 100 } };
       tx = api.tx.nft.createItem(collectionId, to, createData);
     } else {
-      tx = api.tx.nft.createItem(collectionId, to, createMode);
+      const createData = { nft: { const_data: [], variable_data: [] } };
+      tx = api.tx.nft.createItem(collectionId, to, createData);
     }
 
     const events = await submitTransactionAsync(sender, tx);

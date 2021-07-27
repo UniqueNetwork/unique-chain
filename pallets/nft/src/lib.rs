@@ -174,6 +174,8 @@ decl_error! {
 		BadCreateRefungibleCall,
 		/// Gas limit exceeded
 		OutOfGas,
+		/// Collection settings not allowing items transferring
+		TransferNotAllowed,
 	}
 }
 
@@ -526,6 +528,7 @@ decl_module! {
 				variable_on_chain_schema: Vec::new(),
 				const_on_chain_schema: Vec::new(),
 				limits,
+				transfers_enabled: true,
 			};
 
 			// Add new collection to map
@@ -899,6 +902,32 @@ decl_module! {
 			Self::create_multiple_items_internal(&sender, &collection, &owner, items_data)?;
 
 			collection.submit_logs()
+		}
+
+		// TODO! transaction weight
+
+		/// Set transfers_enabled value for particular collection
+		///
+		/// # Permissions
+		///
+		/// * Collection Owner.
+		///
+		/// # Arguments
+		///
+		/// * collection_id: ID of the collection.
+		///
+		/// * value: New flag value.
+		#[weight = <T as Config>::WeightInfo::burn_item()]
+		#[transactional]
+		pub fn set_transfers_enabled_flag(origin, collection_id: CollectionId, value: bool) -> DispatchResult {
+
+			let sender = ensure_signed(origin)?;
+			let mut target_collection = Self::get_collection(collection_id)?;
+
+			Self::check_owner_permissions(&target_collection, &sender)?;
+
+			target_collection.transfers_enabled = value;
+			target_collection.save()
 		}
 
 		/// Destroys a concrete instance of NFT.
@@ -1540,6 +1569,9 @@ impl<T: Config> Module<T> {
 			collection.limits.account_token_ownership_limit > account_items,
 			Error::<T>::AccountTokenLimitExceeded
 		);
+
+		// preliminary transfer check
+		ensure!(collection.transfers_enabled, Error::<T>::TransferNotAllowed);
 
 		Ok(())
 	}

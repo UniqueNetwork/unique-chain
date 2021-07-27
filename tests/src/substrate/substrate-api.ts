@@ -33,10 +33,19 @@ export default async function usingApi<T = void>(action: (api: ApiPromise) => Pr
   // TODO: Remove, this is temporary: Filter unneeded API output 
   // (Jaco promised it will be removed in the next version)
   const consoleErr = console.error;
-  console.error = (message: string) => {
-    if (!message.includes('StorageChangeSet:: WebSocket is not connected') || message.includes('2021-'))
+  const consoleLog = console.log;
+  const consoleWarn = console.warn;
+
+  const outFn = (message: string) => {
+    if (!message.includes('StorageChangeSet:: WebSocket is not connected') && 
+        !message.includes('2021-') &&
+        !message.includes('StorageChangeSet:: Normal connection closure'))
       consoleErr(message);
   };
+
+  console.error = outFn;
+  console.log = outFn;
+  console.warn = outFn;
 
   try {
     await promisifySubstrate(api, async () => {
@@ -48,6 +57,8 @@ export default async function usingApi<T = void>(action: (api: ApiPromise) => Pr
   } finally {
     await api.disconnect();
     console.error = consoleErr;
+    console.log = consoleLog;
+    console.warn = consoleWarn;
   }
   return result as T;
 }
