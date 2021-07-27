@@ -10,6 +10,8 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
+use std::time::Duration;
+use futures::StreamExt;
 
 // Local Runtime Types
 use nft_runtime::RuntimeApi;
@@ -34,10 +36,12 @@ use sp_consensus::SlotData;
 use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
+use sc_client_api::BlockchainEvents;
 
 // Frontier Imports
 use fc_rpc_core::types::FilterPool;
 use fc_rpc_core::types::PendingTransactions;
+use fc_mapping_sync::MappingSyncWorker;
 
 // Runtime type overrides
 type BlockNumber = u32;
@@ -279,9 +283,11 @@ where
 	let select_chain = params.select_chain.clone();
 	let is_authority = parachain_config.role.clone().is_authority();
 	let rpc_network = network.clone();
+
+	let rpc_frontier_backend = frontier_backend.clone();
 	let rpc_extensions_builder = Box::new(move |deny_unsafe, _| {
 		let full_deps = nft_rpc::FullDeps {
-			backend: frontier_backend.clone(),
+			backend: rpc_frontier_backend.clone(),
 			deny_unsafe,
 			client: rpc_client.clone(),
 			pool: rpc_pool.clone(),
@@ -298,6 +304,17 @@ where
 
 		nft_rpc::create_full::<_, _, _, RuntimeApi, _>(full_deps, subscription_executor.clone())
 	});
+	
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-mapping-sync-worker",
+		MappingSyncWorker::new(
+			client.import_notification_stream(),
+			Duration::new(6, 0),
+			client.clone(),
+			backend.clone(),
+			frontier_backend.clone(),
+		).for_each(|()| futures::future::ready(()))
+	);
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		on_demand: None,

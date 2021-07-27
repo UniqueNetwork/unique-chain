@@ -273,7 +273,7 @@ path = '../../runtime'
 version = '3.0.0'
 
 [dependencies.nft-data-structs]
-path="../../primitives/nft"
+path = "../../primitives/nft"
 default-features = false
 
 ################################################################################
