@@ -31,18 +31,17 @@ runtime-benchmarks = [
 ]
 std = [
     'codec/std',
-	'cumulus-pallet-aura-ext/std',
-	'cumulus-pallet-parachain-system/std',
-	'cumulus-pallet-xcm/std',
-	'cumulus-pallet-xcmp-queue/std',
-	'cumulus-primitives-core/std',
-	'cumulus-primitives-utility/std',
-    'evm-coder-substrate/std',
+    'cumulus-pallet-aura-ext/std',
+    'cumulus-pallet-parachain-system/std',
+    'cumulus-pallet-xcm/std',
+    'cumulus-pallet-xcmp-queue/std',
+    'cumulus-primitives-core/std',
+    'cumulus-primitives-utility/std',
     'frame-executive/std',
     'frame-support/std',
     'frame-system/std',
     'frame-system-rpc-runtime-api/std',
-	'pallet-aura/std',
+    'pallet-aura/std',
     'pallet-balances/std',
     # 'pallet-contracts/std',
     # 'pallet-contracts-primitives/std',
@@ -56,31 +55,34 @@ std = [
     'pallet-treasury/std',
     'pallet-vesting/std',
     'pallet-evm/std',
+    'pallet-evm-contract-helpers/std',
+    'pallet-evm-transaction-payment/std',
+    'pallet-evm-coder-substrate/std',
     'pallet-ethereum/std',
     'fp-rpc/std',
-	'parachain-info/std',
+    'parachain-info/std',
     'serde',
     'pallet-inflation/std',
     'pallet-nft/std',
     'pallet-scheduler/std',
     'pallet-nft-charge-transaction/std',
-    'pallet-nft-transaction-payment/std', 
+    'pallet-nft-transaction-payment/std',
     'nft-data-structs/std',
     'sp-api/std',
     'sp-block-builder/std',
-	"sp-consensus-aura/std",
+    "sp-consensus-aura/std",
     'sp-core/std',
     'sp-inherents/std',
-	'sp-io/std',
+    'sp-io/std',
     'sp-offchain/std',
     'sp-runtime/std',
     'sp-session/std',
     'sp-std/std',
     'sp-transaction-pool/std',
     'sp-version/std',
-	'xcm/std',
-	'xcm-builder/std',
-	'xcm-executor/std',
+    'xcm/std',
+    'xcm-builder/std',
+    'xcm-executor/std',
 ]
 
 ################################################################################
@@ -372,19 +374,20 @@ branch = 'release-v0.9.8'
 default-features = false
 
 
-
 ################################################################################
 # local dependencies
 
 [dependencies]
 pallet-nft = { path = '../pallets/nft', default-features = false, version = '3.0.0' }
 pallet-inflation = { path = '../pallets/inflation', default-features = false, version = '3.0.0' }
-nft-data-structs = { path = '../primitives/nft', default-features = false,  version = '0.9.0' }
+nft-data-structs = { path = '../primitives/nft', default-features = false, version = '0.9.0' }
 pallet-scheduler = { path = '../pallets/scheduler', default-features = false, version = '3.0.0' }
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
 pallet-nft-transaction-payment = { path = '../pallets/nft-transaction-payment', default-features = false, version = '3.0.0' }
 pallet-nft-charge-transaction = { path = '../pallets/nft-charge-transaction', default-features = false, version = '3.0.0' }
-evm-coder-substrate = { default-features = false, path = "../crates/evm-coder-substrate" }
+pallet-evm-contract-helpers = { path = '../pallets/evm-contract-helpers', default-features = false }
+pallet-evm-transaction-payment = { path = '../pallets/evm-transaction-payment', default-features = false }
+pallet-evm-coder-substrate = { default-features = false, path = "../pallets/evm-coder-substrate" }
 
 pallet-evm = { default-features = false, version = "5.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
 pallet-ethereum = { default-features = false, version = "3.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }

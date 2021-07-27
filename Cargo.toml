@@ -5,8 +5,7 @@ members = [
     'pallets/*',
     'primitives/*',
     'runtime',
-    'crates/evm-coder',
-    'crates/evm-coder-macros',
+    'crates/*',
 ]
 [profile.release]
 panic = 'unwind'
