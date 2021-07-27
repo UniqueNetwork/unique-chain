@@ -304,7 +304,7 @@ where
 
 		nft_rpc::create_full::<_, _, _, RuntimeApi, _>(full_deps, subscription_executor.clone())
 	});
-	
+
 	task_manager.spawn_essential_handle().spawn(
 		"frontier-mapping-sync-worker",
 		MappingSyncWorker::new(
@@ -313,7 +313,8 @@ where
 			client.clone(),
 			backend.clone(),
 			frontier_backend.clone(),
-		).for_each(|()| futures::future::ready(()))
+		)
+		.for_each(|()| futures::future::ready(())),
 	);
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {

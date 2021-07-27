@@ -136,7 +136,7 @@ impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for HelpersContractSpo
 			let limit = <SponsoringRateLimit<T>>::get(&call.0);
 			if let Some(last_tx_block) = <SponsorBasket<T>>::get(&call.0, who) {
 				<SponsorBasket<T>>::insert(&call.0, who, block_number);
-				let limit_time = last_tx_block + limit.into();
+				let limit_time = last_tx_block + limit;
 				if block_number > limit_time {
 					return Some(call.0);
 				}

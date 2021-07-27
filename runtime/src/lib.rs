@@ -281,7 +281,7 @@ parameter_types! {
 impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot;
-	type EvmSubmitLog = pallet_evm::Pallet<Runtime>;
+	type EvmSubmitLog = pallet_evm::Pallet<Self>;
 }
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
@@ -329,7 +329,7 @@ impl system::Config for Runtime {
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = system::weights::SubstrateWeight<Runtime>;
+	type SystemWeightInfo = system::weights::SubstrateWeight<Self>;
 	/// Version of the runtime.
 	type Version = Version;
 }
@@ -363,7 +363,7 @@ impl pallet_balances::Config for Runtime {
 	type DustRemoval = Treasury;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 }
 
 pub const MICROUNIQUE: Balance = 1_000_000_000;
@@ -487,7 +487,7 @@ impl pallet_treasury::Config for Runtime {
 	type Burn = Burn;
 	type BurnDestination = ();
 	type SpendFunds = ();
-	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Self>;
 	type MaxApprovals = MaxApprovals;
 }
 
@@ -516,7 +516,7 @@ parameter_types! {
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
 	type OnValidationData = ();
-	type SelfParaId = parachain_info::Pallet<Runtime>;
+	type SelfParaId = parachain_info::Pallet<Self>;
 	// type DownwardMessageHandlers = cumulus_primitives_utility::UnqueuedDmpAsParent<
 	// 	MaxDownwardMessageWeight,
 	// 	XcmExecutor<XcmConfig>,

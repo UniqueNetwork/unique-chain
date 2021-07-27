@@ -5,7 +5,10 @@ use inflector::cases;
 use proc_macro::TokenStream;
 use quote::quote;
 use sha3::{Digest, Keccak256};
-use syn::{AttributeArgs, DeriveInput, GenericArgument, Ident, ItemImpl, Pat, Path, PathArguments, PathSegment, Type, parse_macro_input, spanned::Spanned};
+use syn::{
+	AttributeArgs, DeriveInput, GenericArgument, Ident, ItemImpl, Pat, Path, PathArguments,
+	PathSegment, Type, parse_macro_input, spanned::Spanned,
+};
 
 mod solidity_interface;
 mod to_log;
@@ -196,11 +199,12 @@ pub fn solidity_interface(args: TokenStream, stream: TokenStream) -> TokenStream
 		Err(e) => e.to_compile_error(),
 	};
 
-    (quote! {
-        #input
+	(quote! {
+		#input
 
-        #expanded
-    }).into()
+		#expanded
+	})
+	.into()
 }
 
 #[proc_macro_attribute]

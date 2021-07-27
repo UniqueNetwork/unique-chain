@@ -8,33 +8,38 @@ struct Impls;
 #[solidity_interface(name = "OurInterface")]
 impl Impls {
 	fn fn_a(&self, input: uint256) -> Result<bool> {
-        todo!()
-    }
+		todo!()
+	}
 }
 
 #[solidity_interface(name = "OurInterface1")]
 impl Impls {
 	fn fn_b(&self, input: uint128) -> Result<uint32> {
-        todo!()
-    }
+		todo!()
+	}
 }
 
-#[solidity_interface(name = "OurInterface2", is(OurInterface), inline_is(OurInterface1), events(ERC721Log))]
+#[solidity_interface(
+	name = "OurInterface2",
+	is(OurInterface),
+	inline_is(OurInterface1),
+	events(ERC721Log)
+)]
 impl Impls {
 	#[solidity(rename_selector = "fnK")]
 	fn fn_c(&self, input: uint32) -> Result<uint8> {
-        todo!()
-    }
+		todo!()
+	}
 	fn fn_d(&self, value: uint32) -> Result<uint32> {
-        todo!()
-    }
+		todo!()
+	}
 
 	fn caller_sensitive(&self, caller: caller) -> Result<uint8> {
-        todo!()
-    }
+		todo!()
+	}
 	fn payable(&mut self, value: value) -> Result<uint8> {
-        todo!()
-    }
+		todo!()
+	}
 }
 
 #[derive(ToLog)]
@@ -58,14 +63,14 @@ struct ERC20;
 #[solidity_interface(name = "ERC20")]
 impl ERC20 {
 	fn decimals(&self) -> Result<uint8> {
-        todo!()
-    }
+		todo!()
+	}
 	fn balance_of(&self, owner: address) -> Result<uint256> {
-        todo!()
-    }
+		todo!()
+	}
 	fn transfer(&mut self, caller: caller, to: address, value: uint256) -> Result<bool> {
-        todo!()
-    }
+		todo!()
+	}
 	fn transfer_from(
 		&mut self,
 		caller: caller,
@@ -73,12 +78,13 @@ impl ERC20 {
 		to: address,
 		value: uint256,
 	) -> Result<bool> {
-        todo!()
-    }
+		todo!()
+	}
 	fn approve(&mut self, caller: caller, spender: address, value: uint256) -> Result<bool> {
-        todo!()
-    }
+		todo!()
+	}
 	fn allowance(&self, owner: address, spender: address) -> Result<uint256> {
-        todo!()
-    }
+		todo!()
+	}
 }
+

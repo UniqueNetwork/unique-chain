@@ -54,11 +54,11 @@ pub mod types {
 }
 
 pub trait Call: Sized {
-    fn parse(selector: u32, input: &mut AbiReader) -> execution::Result<Option<Self>>;
+	fn parse(selector: u32, input: &mut AbiReader) -> execution::Result<Option<Self>>;
 }
 
 pub trait Callable<C: Call> {
-    fn call(&mut self, call: types::Msg<C>) -> execution::Result<AbiWriter>;
+	fn call(&mut self, call: types::Msg<C>) -> execution::Result<AbiWriter>;
 }
 
 #[cfg(test)]
