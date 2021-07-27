@@ -6,7 +6,6 @@ use frame_support::{parameter_types, weights::IdentityFee};
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	testing::Header,
-	Perbill,
 };
 use pallet_transaction_payment::{CurrencyAdapter};
 use frame_system as system;
@@ -99,9 +98,6 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-type Timestamp = pallet_timestamp::Pallet<Test>;
-type Randomness = pallet_randomness_collective_flip::Pallet<Test>;
-
 parameter_types! {
 	pub const CollectionCreationPrice: u32 = 0;
 	pub TreasuryAccountId: u64 = 1234;
@@ -151,6 +147,10 @@ impl pallet_ethereum::EthereumTransactionSender for TestEtheremTransactionSender
 	}
 }
 
+impl pallet_evm_coder_substrate::Config for Test {
+	type EthereumTransactionSender = TestEtheremTransactionSender;
+}
+
 impl pallet_template::Config for Test {
 	type Event = ();
 	type WeightInfo = ();
@@ -160,7 +160,6 @@ impl pallet_template::Config for Test {
 	type EvmAddressMapping = TestEvmAddressMapping;
 	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
 	type CrossAccountId = TestCrossAccountId;
-	type EthereumTransactionSender = TestEtheremTransactionSender;
 }
 
 // Build genesis storage according to the mock runtime.
