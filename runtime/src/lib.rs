@@ -642,6 +642,10 @@ pub type XcmRouter = (
 	XcmpQueue,
 );
 
+impl pallet_evm_coder_substrate::Config for Runtime {
+	type EthereumTransactionSender = pallet_ethereum::Module<Self>;
+}
+
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
