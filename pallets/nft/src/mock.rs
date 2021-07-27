@@ -193,7 +193,6 @@ impl pallet_template::Config for Test {
 	type EvmAddressMapping = TestEvmAddressMapping;
 	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
 	type CrossAccountId = TestCrossAccountId;
-	type EthereumChainId = EthereumChainId;
 	type EthereumTransactionSender = TestEtheremTransactionSender;
 }
 
