@@ -1,12 +1,12 @@
 {
-  "name": "NftTests",
+  "name": "nfttests",
   "version": "1.0.0",
   "description": "Substrate Nft tests",
   "main": "",
   "devDependencies": {
     "@polkadot/dev": "0.62.43",
     "@polkadot/ts": "0.3.89",
-    "@polkadot/typegen": "4.15.1",
+    "@polkadot/typegen": "5.0.1",
     "@types/chai": "^4.2.17",
     "@types/chai-as-promised": "^7.1.3",
     "@types/mocha": "^8.2.2",
@@ -59,15 +59,15 @@
     "testSetVariableMetadataSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetadataSponsoringRateLimit.test.ts",
     "testInflation": "mocha --timeout 9999999 -r ts-node/register ./**/inflation.test.ts",
     "testPalletPresence": "mocha --timeout 9999999 -r ts-node/register ./**/pallet-presence.test.ts",
-    "testBlockProduction": "mocha --timeout 9999999 -r ts-node/register ./**/block-production.test.ts"
+    "testBlockProduction": "mocha --timeout 9999999 -r ts-node/register ./**/block-production.test.ts",
+    "testEnableDisableTransfers": "mocha --timeout 9999999 -r ts-node/register ./**/enableDisableTransfer.test.ts"
   },
   "author": "",
   "license": "SEE LICENSE IN ../LICENSE",
   "homepage": "",
   "dependencies": {
-    "@polkadot/api": "4.15.1",
-    "@polkadot/api-contract": "4.15.1",
-    "@polkadot/util": "6.9.1",
+    "@polkadot/api": "5.0.1",
+    "@polkadot/api-contract": "5.0.1",
     "bignumber.js": "^9.0.1",
     "chai-as-promised": "^7.1.1",
     "web3": "^1.3.5"

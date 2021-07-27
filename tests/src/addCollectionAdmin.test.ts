@@ -22,7 +22,7 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
       const bob = privateKey('//Bob');
 
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Owner).to.be.deep.eq(normalizeAccountId(alice.address));
+      expect(collection.Owner).to.be.equal(alice.address);
 
       const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
       await submitTransactionAsync(alice, changeAdminTx);
@@ -40,7 +40,7 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
       const Charlie = privateKey('//CHARLIE');
 
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Owner).to.be.deep.eq(normalizeAccountId(Alice.address));
+      expect(collection.Owner).to.be.equal(Alice.address);
 
       const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx);

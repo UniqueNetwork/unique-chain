@@ -196,6 +196,7 @@ fn testnet_genesis(
 					const_on_chain_schema: vec![],
 					variable_on_chain_schema: vec![],
 					limits: CollectionLimits::default(),
+					transfers_enabled: true,
 				},
 			)],
 			nft_item_id: vec![],

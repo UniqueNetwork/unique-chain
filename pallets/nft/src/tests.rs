@@ -2351,3 +2351,62 @@ fn set_variable_meta_data_on_re_fungible_token_fails_for_big_data() {
 		);
 	});
 }
+
+#[test]
+fn collection_transfer_flag_works() {
+	new_test_ext().execute_with(|| {
+		default_limits();
+
+		let origin1 = Origin::signed(1);
+
+		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
+		assert_ok!(TemplateModule::set_transfers_enabled_flag(origin1, 1, true));
+
+		let data = default_nft_data();
+		create_test_item(collection_id, &data.into());
+		assert_eq!(TemplateModule::balance_count(1, 1), 1);
+		assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
+
+		let origin1 = Origin::signed(1);
+
+		// default scenario
+		assert_ok!(TemplateModule::transfer(origin1, account(2), 1, 1, 1000));
+		assert_eq!(TemplateModule::nft_item_id(1, 1).unwrap().owner, account(2));
+		assert_eq!(TemplateModule::balance_count(1, 1), 0);
+		assert_eq!(TemplateModule::balance_count(1, 2), 1);
+
+		assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
+	});
+}
+
+#[test]
+fn collection_transfer_flag_works_neg() {
+	new_test_ext().execute_with(|| {
+		default_limits();
+
+		let origin1 = Origin::signed(1);
+
+		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
+		assert_ok!(TemplateModule::set_transfers_enabled_flag(
+			origin1, 1, false
+		));
+
+		let data = default_nft_data();
+		create_test_item(collection_id, &data.into());
+		assert_eq!(TemplateModule::balance_count(1, 1), 1);
+		assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
+
+		let origin1 = Origin::signed(1);
+
+		// default scenario
+		assert_noop!(
+			TemplateModule::transfer(origin1, account(2), 1, 1, 1000),
+			Error::<Test>::TransferNotAllowed
+		);
+		assert_eq!(TemplateModule::nft_item_id(1, 1).unwrap().owner, account(1));
+		assert_eq!(TemplateModule::balance_count(1, 1), 1);
+		assert_eq!(TemplateModule::balance_count(1, 2), 0);
+
+		assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
+	});
+}

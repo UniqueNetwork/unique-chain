@@ -61,7 +61,7 @@ describe('Information getting', () => {
   });
 });
 
-describe.only('Plain calls', () => {
+describe('Plain calls', () => {
   itWeb3('Can perform approve()', async ({ web3, api }) => {
     const collection = await createCollectionExpectSuccess({
       mode: { type: 'NFT' },

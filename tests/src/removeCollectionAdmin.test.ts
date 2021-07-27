@@ -20,7 +20,7 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Owner).to.be.deep.eq(normalizeAccountId(Alice.address));
+      expect(collection.Owner).to.be.deep.eq(Alice.address);
       // first - add collection admin Bob
       const addAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, addAdminTx);

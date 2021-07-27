@@ -175,6 +175,8 @@ decl_error! {
 		BadCreateRefungibleCall,
 		/// Gas limit exceeded
 		OutOfGas,
+		/// Collection settings not allowing items transferring
+		TransferNotAllowed,
 	}
 }
 
@@ -533,6 +535,7 @@ decl_module! {
 				variable_on_chain_schema: Vec::new(),
 				const_on_chain_schema: Vec::new(),
 				limits,
+				transfers_enabled: true,
 			};
 
 			// Add new collection to map
@@ -884,7 +887,7 @@ decl_module! {
 
 			Self::create_item_internal(&sender, &collection, &owner, data)?;
 
-			Self::submit_logs(collection)?;
+			// Self::submit_logs(collection)?;
 			Ok(())
 		}
 
@@ -918,7 +921,35 @@ decl_module! {
 
 			Self::create_multiple_items_internal(&sender, &collection, &owner, items_data)?;
 
-			Self::submit_logs(collection)?;
+			// Self::submit_logs(collection)?;
+			Ok(())
+		}
+
+		// TODO! transaction weight
+
+		/// Set transfers_enabled value for particular collection
+		///
+		/// # Permissions
+		///
+		/// * Collection Owner.
+		///
+		/// # Arguments
+		///
+		/// * collection_id: ID of the collection.
+		///
+		/// * value: New flag value.
+		#[weight = <T as Config>::WeightInfo::burn_item()]
+		#[transactional]
+		pub fn set_transfers_enabled_flag(origin, collection_id: CollectionId, value: bool) -> DispatchResult {
+
+			let sender = ensure_signed(origin)?;
+			let mut target_collection = Self::get_collection(collection_id)?;
+
+			Self::check_owner_permissions(&target_collection, &sender)?;
+
+			target_collection.transfers_enabled = value;
+			Self::save_collection(target_collection);
+
 			Ok(())
 		}
 
@@ -944,7 +975,7 @@ decl_module! {
 
 			Self::burn_item_internal(&sender, &target_collection, item_id, value)?;
 
-			Self::submit_logs(target_collection)?;
+			// Self::submit_logs(target_collection)?;
 			Ok(())
 		}
 
@@ -979,7 +1010,7 @@ decl_module! {
 
 			Self::transfer_internal(&sender, &recipient, &collection, item_id, value)?;
 
-			Self::submit_logs(collection)?;
+			// Self::submit_logs(collection)?;
 			Ok(())
 		}
 
@@ -1006,7 +1037,7 @@ decl_module! {
 
 			Self::approve_internal(&sender, &spender, &collection, item_id, amount)?;
 
-			Self::submit_logs(collection)?;
+			// Self::submit_logs(collection)?;
 			Ok(())
 		}
 
@@ -1037,7 +1068,7 @@ decl_module! {
 
 			Self::transfer_from_internal(&sender, &from, &recipient, &collection, item_id, value)?;
 
-			Self::submit_logs(collection)?;
+			// Self::submit_logs(collection)?;
 			Ok(())
 		}
 		// #[weight = 0]
@@ -1574,6 +1605,9 @@ impl<T: Config> Module<T> {
 			collection.limits.account_token_ownership_limit > account_items,
 			Error::<T>::AccountTokenLimitExceeded
 		);
+
+		// preliminary transfer check
+		ensure!(collection.transfers_enabled, Error::<T>::TransferNotAllowed);
 
 		Ok(())
 	}

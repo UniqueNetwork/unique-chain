@@ -144,6 +144,7 @@ pub struct Collection<T: frame_system::Config> {
 	pub limits: CollectionLimits<T::BlockNumber>, // Collection private restrictions
 	pub variable_on_chain_schema: Vec<u8>,        //
 	pub const_on_chain_schema: Vec<u8>,           //
+	pub transfers_enabled: bool,
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq)]

@@ -19,7 +19,7 @@ import {
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-describe('Integration Test enableContractSponsoring', () => {
+describe.skip('Integration Test enableContractSponsoring', () => {
   it('ensure tx fee is paid from endowment', async () => {
     await usingApi(async (api) => {
       const user = await findUnusedAddress(api);
@@ -64,7 +64,7 @@ describe('Integration Test enableContractSponsoring', () => {
 
 });
 
-describe('Negative Integration Test enableContractSponsoring', () => {
+describe.skip('Negative Integration Test enableContractSponsoring', () => {
   let alice: IKeyringPair;
 
   before(async () => {

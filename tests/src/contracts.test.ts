@@ -36,7 +36,7 @@ const value = 0;
 const gasLimit = 9000n * 1000000n;
 const marketContractAddress = '5CYN9j3YvRkqxewoxeSvRbhAym4465C57uMmX5j4yz99L5H6';
 
-describe('Contracts', () => {
+describe.skip('Contracts', () => {
   it('Can deploy smart contract Flipper, instantiate it and call it\'s get and flip messages.', async () => {
     await usingApi(async api => {
       const [contract, deployer] = await deployFlipper(api);
@@ -62,7 +62,7 @@ describe('Contracts', () => {
   });
 });
 
-describe.only('Chain extensions', () => {
+describe.skip('Chain extensions', () => {
   it('Transfer CE', async () => {
     await usingApi(async api => {
       const alice = privateKey('//Alice');
