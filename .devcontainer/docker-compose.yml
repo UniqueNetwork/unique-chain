@@ -1,0 +1,23 @@
+version: '3'
+services:
+  nft_private:
+    build: 
+        context: .
+    environment:
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
+    volumes:
+      - ..:/workspaces/nft_private:cached
+      - ../../polkadot:/workspaces/polkadot:cached
+      - ../../polkadot-launch:/workspaces/polkadot-launch:cached
+      #- ../../frontier:/workspaces/frontier
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    command: /bin/sh -c "while sleep 1000; do :; done"
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686"
