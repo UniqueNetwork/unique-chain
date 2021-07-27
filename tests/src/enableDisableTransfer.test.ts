@@ -12,7 +12,7 @@ import {
   createCollectionExpectSuccess,
   transferExpectSuccess,
   transferExpectFailure,
-  setTransferFlagExpectSuccess
+  setTransferFlagExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);

@@ -2387,7 +2387,9 @@ fn collection_transfer_flag_works_neg() {
 		let origin1 = Origin::signed(1);
 
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
-		assert_ok!(TemplateModule::set_transfers_enabled_flag(origin1, 1, false));
+		assert_ok!(TemplateModule::set_transfers_enabled_flag(
+			origin1, 1, false
+		));
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());

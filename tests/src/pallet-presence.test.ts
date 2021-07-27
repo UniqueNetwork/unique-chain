@@ -32,14 +32,14 @@ const requiredPallets = [
   'nft',
   'scheduler',
   'nftpayment',
-  'charging'
+  'charging',
 ];
 
 // Pallets that depend on consensus and governance configuration
 const consensusPallets = [
   'sudo',
   'aura',
-  'auraext'
+  'auraext',
 ];
 
 describe('Pallet presence', () => {

@@ -946,7 +946,7 @@ decl_module! {
 			let mut target_collection = Self::get_collection(collection_id)?;
 
 			Self::check_owner_permissions(&target_collection, &sender)?;
-			
+
 			target_collection.transfers_enabled = value;
 			Self::save_collection(target_collection);
 
@@ -1607,10 +1607,7 @@ impl<T: Config> Module<T> {
 		);
 
 		// preliminary transfer check
-		ensure!(
-			collection.transfers_enabled,
-			Error::<T>::TransferNotAllowed
-		);
+		ensure!(collection.transfers_enabled, Error::<T>::TransferNotAllowed);
 
 		Ok(())
 	}

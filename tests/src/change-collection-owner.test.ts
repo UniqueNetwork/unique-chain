@@ -7,7 +7,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
-import { createCollectionExpectSuccess, normalizeAccountId } from './util/helpers';
+import { createCollectionExpectSuccess } from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

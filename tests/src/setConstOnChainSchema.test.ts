@@ -11,7 +11,6 @@ import { default as usingApi, submitTransactionAsync, submitTransactionExpectFai
 import {
   createCollectionExpectSuccess,
   destroyCollectionExpectSuccess,
-  normalizeAccountId,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
