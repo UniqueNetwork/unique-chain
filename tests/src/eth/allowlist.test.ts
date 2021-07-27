@@ -32,7 +32,7 @@ describe('EVM allowlist', () => {
     });
   });
 
-  itWeb3.only('Non-whitelisted user can\'t call contract with allowlist enabled', async ({ api }) => {
+  itWeb3('Non-whitelisted user can\'t call contract with allowlist enabled', async ({ api }) => {
     await usingWeb3Http(async web3Http => {
       const owner = await createEthAccountWithBalance(api, web3Http);
       const flipper = await deployFlipper(web3Http, owner);
