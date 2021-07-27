@@ -105,14 +105,11 @@ fn inflation_works() {
 		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
 
-		// BlockInflation should be set after 1st block and
+		// BlockInflation should be set after 1st block and 
 		// first inflation deposit should be equal to BlockInflation
 		Inflation::on_initialize(1);
 		assert!(Inflation::block_inflation() > 0);
-		assert_eq!(
-			Balances::free_balance(1234) - initial_issuance,
-			Inflation::block_inflation()
-		);
+		assert_eq!(Balances::free_balance(1234) - initial_issuance, Inflation::block_inflation());
 	});
 }
 
