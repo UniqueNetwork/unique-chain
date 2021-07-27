@@ -18,7 +18,7 @@ import {
 chai.use(chaiAsPromised);
 
 describe('Enable/Disable Transfers', () => {
-  it.only('User can transfer token with enabled transfer flag', async () => {
+  it('User can transfer token with enabled transfer flag', async () => {
     await usingApi(async () => {
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
@@ -33,7 +33,7 @@ describe('Enable/Disable Transfers', () => {
     });
   });
 
-  it.only('User can\'n transfer token with disabled transfer flag', async () => {
+  it('User can\'n transfer token with disabled transfer flag', async () => {
     await usingApi(async () => {
       const Alice = privateKey('//Alice');
       const Bob = privateKey('//Bob');
