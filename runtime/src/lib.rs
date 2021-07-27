@@ -767,7 +767,6 @@ parameter_types! {
 }
 
 impl pallet_evm_contract_helpers::Config for Runtime {
-	type Event = Event;
 	type ContractAddress = HelpersContractAddress;
 }
 
@@ -812,7 +811,7 @@ construct_runtime!(
 		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, ValidateUnsigned} = 101,
 
 		EvmCoderSubstrate: pallet_evm_coder_substrate::{Pallet, Storage} = 150,
-		EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage, Event<T>} = 151,
+		EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage} = 151,
 		EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
 	}
 );
