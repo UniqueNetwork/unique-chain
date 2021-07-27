@@ -89,7 +89,6 @@ impl pallet_inflation::Config for Test {
 	type InflationBlockInterval = InflationBlockInterval;
 }
 
-// Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
@@ -105,11 +104,16 @@ fn inflation_works() {
 		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
 
-		// BlockInflation should be set after 1st block and 
+		// BlockInflation should be set after 1st block and
 		// first inflation deposit should be equal to BlockInflation
 		Inflation::on_initialize(1);
-		assert!(Inflation::block_inflation() > 0);
-		assert_eq!(Balances::free_balance(1234) - initial_issuance, Inflation::block_inflation());
+
+		// SBP M2 review: Verify expected block inflation for year 1
+		assert_eq!(Inflation::block_inflation(), 1901);
+		assert_eq!(
+			Balances::free_balance(1234) - initial_issuance,
+			Inflation::block_inflation()
+		);
 	});
 }
 
@@ -152,11 +156,24 @@ fn inflation_in_1_year() {
 		Inflation::on_initialize(1);
 		let block_inflation_year_0 = Inflation::block_inflation();
 
+		// SBP M2 review: go through all the block inflations for year 1,
+		// total issuance will be updated accordingly
+		for block in (100..YEAR).step_by(100) {
+			Inflation::on_initialize(block);
+		}
+		assert_eq!(
+			initial_issuance + (1901 * (YEAR / 100)),
+			<Balances as Currency<_>>::total_issuance()
+		);
+
 		Inflation::on_initialize(YEAR);
 		let block_inflation_year_1 = Inflation::block_inflation();
+		// SBP M2 review: Verify expected block inflation for year 2
+		assert_eq!(block_inflation_year_1, 1952);
 
+		// SBP M2 review: this is actually not true
 		// Assert that year 1 inflation is less than year 0
-		assert!(block_inflation_year_0 > block_inflation_year_1);
+		// assert!(block_inflation_year_0 > block_inflation_year_1);
 	});
 }
 
@@ -174,6 +191,7 @@ fn inflation_in_1_to_9_years() {
 			Inflation::on_initialize(YEAR * year);
 			let block_inflation_year_after = Inflation::block_inflation();
 
+			// SBP M2 review: this is actually not true (not for the first few years)
 			// Assert that next year inflation is less than previous year inflation
 			assert!(block_inflation_year_before > block_inflation_year_after);
 		}
