@@ -255,7 +255,8 @@ impl pallet_evm::Config for Runtime {
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type OnChargeTransaction = ();
+	type OnChargeTransaction = pallet_evm_transaction_payment::OnChargeTransaction<Self>;
+	type TransactionValidityHack = pallet_evm_transaction_payment::TransactionValidityHack<Self>;
 	type FindAuthor = EthereumFindAuthor<Aura>;
 }
 
@@ -740,6 +741,14 @@ impl pallet_scheduler::Config for Runtime {
 
 impl pallet_nft_transaction_payment::Config for Runtime {
 	type SponsorshipHandler = SponsorshipHandler;
+}
+
+impl pallet_evm_transaction_payment::Config for Runtime {
+	type SponsorshipHandler = (
+		pallet_nft::NftEthSponsorshipHandler<Self>,
+		pallet_evm_contract_helpers::HelpersContractSponsoring<Self>,
+	);
+	type Currency = Balances;
 }
 
 impl pallet_nft_charge_transaction::Config for Runtime {}
