@@ -777,25 +777,21 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
-		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
-		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
-		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
-		System: system::{Pallet, Call, Storage, Config, Event<T>},
-		Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>},
-
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 20,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
-		Aura: pallet_aura::{Pallet, Config<T>},
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
+		Aura: pallet_aura::{Pallet, Config<T>} = 22,
+		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 23,
 
-		// Frontier
-		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
-		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, ValidateUnsigned},
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 31,
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 32,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 33,
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 34,
+		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
+		System: system::{Pallet, Call, Storage, Config, Event<T>} = 36,
+		Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
+		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
@@ -803,14 +799,21 @@ construct_runtime!(
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 
-
 		// Unique Pallets
-		Inflation: pallet_inflation::{Pallet, Call, Storage},
-		Nft: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>},
-		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
-		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage},
-		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage },
-		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage},
+		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
+		Nft: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>} = 61,
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
+		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage} = 63,
+		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage } = 64,
+		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
+
+		// Frontier
+		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
+		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, ValidateUnsigned} = 101,
+
+		EvmCoderSubstrate: pallet_evm_coder_substrate::{Pallet, Storage} = 150,
+		EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage, Event<T>} = 151,
+		EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
 	}
 );
 
