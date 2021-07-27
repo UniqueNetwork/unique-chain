@@ -16,7 +16,7 @@ export async function usingWeb3<T>(cb: (web3: Web3) => Promise<T> | T): Promise<
   if (web3Connected) throw new Error('do not nest usingWeb3 calls');
   web3Connected = true;
 
-  const provider = new Web3.providers.WebsocketProvider('http://localhost:9944');
+  const provider = new Web3.providers.WebsocketProvider(config.substrateUrl);
   const web3 = new Web3(provider);
 
   try {
@@ -45,7 +45,15 @@ export function createEthAccount(web3: Web3) {
   return account.address;
 }
 
-export async function transferBalanceToEth(api: ApiPromise, source: IKeyringPair, target: string, amount: number) {
+export async function createEthAccountWithBalance(api: ApiPromise, web3: Web3) {
+  const alice = privateKey('//Alice');
+  const account = createEthAccount(web3);
+  await transferBalanceToEth(api, alice, account);
+
+  return account;
+}
+
+export async function transferBalanceToEth(api: ApiPromise, source: IKeyringPair, target: string, amount = 999999999999999) {
   const tx = api.tx.balances.transfer(evmToAddress(target), amount);
   const events = await submitTransactionAsync(source, tx);
   const result = getGenericResult(events);
