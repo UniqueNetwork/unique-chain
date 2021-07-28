@@ -72,8 +72,17 @@ pub mod pallet {
 		Hasher2 = Twox128,
 		Key2 = T::AccountId,
 		Value = T::BlockNumber,
-		QueryKind = OptionQuery,
+		QueryKind = ValueQuery,
 	>;
+
+	impl<T: Config> Pallet<T> {
+		pub fn allowed(contract: T::AccountId, user: T::AccountId, default: bool) -> bool {
+			if !<AllowlistEnabled<T>>::get(&contract) {
+				return default;
+			}
+			<Allowlist<T>>::get(&contract, &user) || <Owner<T>>::get(contract) == user
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -194,10 +203,7 @@ pub mod pallet {
 			{
 				let called_contract: T::AccountId =
 					T::Lookup::lookup((*dest).clone()).unwrap_or_default();
-				if <AllowlistEnabled<T>>::get(&called_contract)
-					&& !<Allowlist<T>>::get(&called_contract, who)
-					&& &<Owner<T>>::get(&called_contract) != who
-				{
+				if !<Pallet<T>>::allowed(called_contract, who.clone(), true) {
 					return Err(transaction_validity::InvalidTransaction::Call.into());
 				}
 			}
@@ -254,7 +260,9 @@ pub mod pallet {
 			{
 				let called_contract: T::AccountId =
 					T::Lookup::lookup((*dest).clone()).unwrap_or_default();
-				if <SelfSponsoring<T>>::get(&called_contract) {
+				if <SelfSponsoring<T>>::get(&called_contract)
+					&& <Pallet<T>>::allowed(called_contract.clone(), who.clone(), false)
+				{
 					let last_tx_block = SponsorBasket::<T>::get(&called_contract, &who);
 					let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 					let rate_limit = SponsoringRateLimit::<T>::get(&called_contract);
