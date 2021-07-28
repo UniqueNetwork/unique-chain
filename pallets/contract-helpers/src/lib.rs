@@ -22,7 +22,9 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_contracts::Config {}
+	pub trait Config: frame_system::Config + pallet_contracts::Config {
+		type DefaultSponsoringRateLimit: Get<Self::BlockNumber>;
+	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -60,6 +62,7 @@ pub mod pallet {
 		Key = T::AccountId,
 		Value = T::BlockNumber,
 		QueryKind = ValueQuery,
+		OnEmpty = T::DefaultSponsoringRateLimit,
 	>;
 
 	#[pallet::storage]
@@ -69,7 +72,7 @@ pub mod pallet {
 		Hasher2 = Twox128,
 		Key2 = T::AccountId,
 		Value = T::BlockNumber,
-		QueryKind = ValueQuery,
+		QueryKind = OptionQuery,
 	>;
 
 	#[pallet::call]

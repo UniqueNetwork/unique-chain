@@ -13,6 +13,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config {
 		type ContractAddress: Get<H160>;
+		type DefaultSponsoringRateLimit: Get<Self::BlockNumber>;
 	}
 
 	#[pallet::error]
@@ -34,8 +35,13 @@ pub mod pallet {
 		StorageMap<Hasher = Twox128, Key = H160, Value = bool, QueryKind = ValueQuery>;
 
 	#[pallet::storage]
-	pub(super) type SponsoringRateLimit<T: Config> =
-		StorageMap<Hasher = Twox128, Key = H160, Value = T::BlockNumber, QueryKind = ValueQuery>;
+	pub(super) type SponsoringRateLimit<T: Config> = StorageMap<
+		Hasher = Twox128,
+		Key = H160,
+		Value = T::BlockNumber,
+		QueryKind = ValueQuery,
+		OnEmpty = T::DefaultSponsoringRateLimit,
+	>;
 
 	#[pallet::storage]
 	pub(super) type SponsorBasket<T: Config> = StorageDoubleMap<
