@@ -76,7 +76,7 @@ where
 	where
 		T::Call: Dispatchable<Info = DispatchInfo>,
 	{
-		<pallet_transaction_payment::Module<T>>::compute_fee(len as u32, info, tip)
+		<pallet_transaction_payment::Pallet<T>>::compute_fee(len as u32, info, tip)
 	}
 
 	fn get_priority(

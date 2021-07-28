@@ -154,7 +154,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	transaction_version: 1,
 };
 
-pub const MILLISECS_PER_BLOCK: u64 = 1200;
+pub const MILLISECS_PER_BLOCK: u64 = 12000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
@@ -162,6 +162,10 @@ pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
+
+parameter_types! {
+	pub const DefaultSponsoringRateLimit: BlockNumber = 1 * DAYS;
+}
 
 #[derive(codec::Encode, codec::Decode)]
 pub enum XCMPMessage<XAccountId, XBalance> {
@@ -248,10 +252,16 @@ impl pallet_evm::Config for Runtime {
 	type Precompiles = ();
 	type Currency = Balances;
 	type Event = Event;
-	type OnMethodCall = pallet_nft::NftErcSupport<Self>;
+	type OnMethodCall = (
+		pallet_nft::NftErcSupport<Self>,
+		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
+	);
+	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type OnChargeTransaction = ();
+	type OnChargeTransaction = pallet_evm_transaction_payment::OnChargeTransaction<Self>;
+	type TransactionValidityHack = pallet_evm_transaction_payment::TransactionValidityHack<Self>;
+	type FindAuthor = EthereumFindAuthor<Aura>;
 }
 
 pub struct EthereumFindAuthor<F>(core::marker::PhantomData<F>);
@@ -274,9 +284,8 @@ parameter_types! {
 
 impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
-	type FindAuthor = EthereumFindAuthor<Aura>;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot;
-	type EvmSubmitLog = pallet_evm::Pallet<Runtime>;
+	type EvmSubmitLog = pallet_evm::Pallet<Self>;
 }
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
@@ -324,7 +333,7 @@ impl system::Config for Runtime {
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = system::weights::SubstrateWeight<Runtime>;
+	type SystemWeightInfo = system::weights::SubstrateWeight<Self>;
 	/// Version of the runtime.
 	type Version = Version;
 }
@@ -358,7 +367,7 @@ impl pallet_balances::Config for Runtime {
 	type DustRemoval = Treasury;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 }
 
 pub const MICROUNIQUE: Balance = 1_000_000_000;
@@ -482,7 +491,7 @@ impl pallet_treasury::Config for Runtime {
 	type Burn = Burn;
 	type BurnDestination = ();
 	type SpendFunds = ();
-	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Self>;
 	type MaxApprovals = MaxApprovals;
 }
 
@@ -511,7 +520,7 @@ parameter_types! {
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
 	type OnValidationData = ();
-	type SelfParaId = parachain_info::Pallet<Runtime>;
+	type SelfParaId = parachain_info::Pallet<Self>;
 	// type DownwardMessageHandlers = cumulus_primitives_utility::UnqueuedDmpAsParent<
 	// 	MaxDownwardMessageWeight,
 	// 	XcmExecutor<XcmConfig>,
@@ -637,6 +646,10 @@ pub type XcmRouter = (
 	XcmpQueue,
 );
 
+impl pallet_evm_coder_substrate::Config for Runtime {
+	type EthereumTransactionSender = pallet_ethereum::Module<Self>;
+}
+
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
@@ -687,9 +700,6 @@ impl pallet_nft::Config for Runtime {
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
-
-	type EthereumChainId = ChainId;
-	type EthereumTransactionSender = pallet_ethereum::Module<Runtime>;
 }
 
 parameter_types! {
@@ -741,9 +751,31 @@ impl pallet_nft_transaction_payment::Config for Runtime {
 	type SponsorshipHandler = SponsorshipHandler;
 }
 
+impl pallet_evm_transaction_payment::Config for Runtime {
+	type SponsorshipHandler = (
+		pallet_nft::NftEthSponsorshipHandler<Self>,
+		pallet_evm_contract_helpers::HelpersContractSponsoring<Self>,
+	);
+	type Currency = Balances;
+}
+
 impl pallet_nft_charge_transaction::Config for Runtime {}
 
-// impl pallet_contract_helpers::Config for Runtime {}
+// impl pallet_contract_helpers::Config for Runtime {
+//	 type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
+// }
+
+parameter_types! {
+	// 0x842899ECF380553E8a4de75bF534cdf6fBF64049
+	pub const HelpersContractAddress: H160 = H160([
+		0x84, 0x28, 0x99, 0xec, 0xf3, 0x80, 0x55, 0x3e, 0x8a, 0x4d, 0xe7, 0x5b, 0xf5, 0x34, 0xcd, 0xf6, 0xfb, 0xf6, 0x40, 0x49,
+	]);
+}
+
+impl pallet_evm_contract_helpers::Config for Runtime {
+	type ContractAddress = HelpersContractAddress;
+	type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
+}
 
 construct_runtime!(
 	pub enum Runtime where
@@ -751,25 +783,21 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
-		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
-		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
-		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
-		System: system::{Pallet, Call, Storage, Config, Event<T>},
-		Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>},
-
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
+		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 20,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
-		Aura: pallet_aura::{Pallet, Config<T>},
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
+		Aura: pallet_aura::{Pallet, Config<T>} = 22,
+		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 23,
 
-		// Frontier
-		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
-		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, ValidateUnsigned},
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 31,
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 32,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 33,
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 34,
+		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
+		System: system::{Pallet, Call, Storage, Config, Event<T>} = 36,
+		Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
+		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
@@ -777,14 +805,21 @@ construct_runtime!(
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 
-
 		// Unique Pallets
-		Inflation: pallet_inflation::{Pallet, Call, Storage},
-		Nft: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>},
-		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
-		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage},
-		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage },
-		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage},
+		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
+		Nft: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>} = 61,
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
+		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage} = 63,
+		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage } = 64,
+		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
+
+		// Frontier
+		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
+		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, ValidateUnsigned} = 101,
+
+		EvmCoderSubstrate: pallet_evm_coder_substrate::{Pallet, Storage} = 150,
+		EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage} = 151,
+		EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
 	}
 );
 
@@ -910,8 +945,9 @@ impl_runtime_apis! {
 		fn validate_transaction(
 			source: TransactionSource,
 			tx: <Block as BlockT>::Extrinsic,
+			hash: <Block as BlockT>::Hash,
 		) -> TransactionValidity {
-			Executive::validate_transaction(source, tx)
+			Executive::validate_transaction(source, tx, hash)
 		}
 	}
 
@@ -939,7 +975,7 @@ impl_runtime_apis! {
 		}
 
 		fn author() -> H160 {
-			<pallet_ethereum::Module<Runtime>>::find_author()
+			<pallet_evm::Module<Runtime>>::find_author()
 		}
 
 		fn storage_at(address: H160, index: U256) -> H256 {
@@ -1028,6 +1064,13 @@ impl_runtime_apis! {
 				Ethereum::current_receipts(),
 				Ethereum::current_transaction_statuses()
 			)
+		}
+
+		fn extrinsic_filter(xts: Vec<<Block as sp_api::BlockT>::Extrinsic>) -> Vec<pallet_ethereum::Transaction> {
+			xts.into_iter().filter_map(|xt| match xt.function {
+				Call::Ethereum(pallet_ethereum::Call::transact(t)) => Some(t),
+				_ => None
+			}).collect()
 		}
 	}
 

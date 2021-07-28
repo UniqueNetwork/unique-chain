@@ -2,10 +2,13 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc;
 
+use abi::{AbiReader, AbiWriter};
 pub use evm_coder_macros::{event_topic, fn_selector, solidity_interface, solidity, ToLog};
 pub mod abi;
 pub mod events;
 pub use events::ToLog;
+pub mod execution;
+pub mod solidity;
 
 /// Solidity type definitions
 pub mod types {
@@ -48,6 +51,14 @@ pub mod types {
 		pub caller: H160,
 		pub value: U256,
 	}
+}
+
+pub trait Call: Sized {
+	fn parse(selector: u32, input: &mut AbiReader) -> execution::Result<Option<Self>>;
+}
+
+pub trait Callable<C: Call> {
+	fn call(&mut self, call: types::Msg<C>) -> execution::Result<AbiWriter>;
 }
 
 #[cfg(test)]

@@ -1,23 +1,15 @@
 pub mod account;
 pub mod erc;
-mod erc_impl;
-pub mod log;
 pub mod sponsoring;
 
-use evm_coder::abi::AbiWriter;
-use evm_coder::abi::StringError;
-use sp_std::prelude::*;
+use pallet_evm_coder_substrate::call_internal;
 use sp_std::borrow::ToOwned;
 use sp_std::vec::Vec;
-
-use pallet_evm::{PrecompileOutput, ExitReason, ExitRevert, ExitSucceed};
+use pallet_evm::{PrecompileOutput};
 use sp_core::{H160, U256};
 use frame_support::storage::StorageMap;
-
 use crate::{Config, CollectionById, CollectionHandle, CollectionId, CollectionMode};
-
-use erc::{UniqueFungible, UniqueFungibleCall, UniqueNFT, UniqueNFTCall};
-use evm_coder::{types::*, abi::AbiReader};
+use erc::{UniqueFungibleCall, UniqueNFTCall};
 
 pub struct NftErcSupport<T: Config>(core::marker::PhantomData<T>);
 
@@ -42,19 +34,17 @@ pub fn collection_id_to_address(id: u32) -> H160 {
 	H160(out)
 }
 
+/*
 fn call_internal<T: Config>(
 	collection: &mut CollectionHandle<T>,
 	caller: caller,
 	method_id: u32,
 	mut input: AbiReader,
 	value: U256,
-) -> Result<Option<AbiWriter>, evm_coder::abi::StringError> {
+) -> Result<Option<AbiWriter>> {
 	match collection.mode.clone() {
 		CollectionMode::Fungible(_) => {
-			#[cfg(feature = "std")]
-			{
-				println!("Parse fungible call {:x}", method_id);
-			}
+			call_internal();
 			let call = match UniqueFungibleCall::parse(method_id, &mut input)? {
 				Some(v) => v,
 				None => {
@@ -65,10 +55,6 @@ fn call_internal<T: Config>(
 					return Ok(None);
 				}
 			};
-			#[cfg(feature = "std")]
-			{
-				dbg!(&call);
-			}
 			Ok(Some(<CollectionHandle<T> as UniqueFungible>::call(
 				collection,
 				Msg {
@@ -92,11 +78,9 @@ fn call_internal<T: Config>(
 				},
 			)?))
 		}
-		_ => Err(StringError::from(
-			"erc calls only supported to fungible and nft collections for now",
-		)),
+		_ => Err("erc calls only supported to fungible and nft collections for now".into()),
 	}
-}
+}*/
 
 impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 	fn is_reserved(target: &H160) -> bool {
@@ -129,56 +113,15 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 	) -> Option<PrecompileOutput> {
 		let mut collection = map_eth_to_id(target)
 			.and_then(|id| <CollectionHandle<T>>::get_with_gas_limit(id, gas_limit))?;
-		let (method_id, input) = AbiReader::new_call(input).unwrap();
-		let result = call_internal(&mut collection, *source, method_id, input, value);
-		let cost = gas_limit - collection.gas_left();
-		let logs = collection.logs.retrieve_logs();
-		match result {
-			Ok(Some(v)) => Some(PrecompileOutput {
-				exit_status: ExitReason::Succeed(ExitSucceed::Returned),
-				cost,
-				logs,
-				output: v.finish(),
-			}),
-			Ok(None) => None,
-			Err(e) => Some(PrecompileOutput {
-				exit_status: ExitReason::Revert(ExitRevert::Reverted),
-				cost: 0,
-				logs: Default::default(),
-				output: AbiWriter::from(e).finish(),
-			}),
-		}
-	}
-}
-
-// TODO: This function is slow, and output can be memoized
-pub fn generate_transaction(collection_id: u32, chain_id: u64) -> ethereum::Transaction {
-	// FIXME: Can be done on wasm runtime with https://github.com/paritytech/substrate/pull/8728
-	#[cfg(feature = "std")]
-	{
-		let contract = collection_id_to_address(collection_id);
-		let signed = ethereum_tx_sign::RawTransaction {
-			nonce: 0.into(),
-			to: Some(contract.0.into()),
-			value: 0.into(),
-			gas_price: 0.into(),
-			gas: 0.into(),
-			// zero selector, this transaction always have same sender, so all data should be acquired from logs
-			data: Vec::from([0, 0, 0, 0]),
-		}
-		.sign(
-			// TODO: move to pallet config
-			// 0xF70631E55faff9f3FD3681545aa6c724226a3853
-			// 9dbaef9b3ebc00e53f67c6a77bcfbf2c4f2aebe4d70d94af4f2df01744b7a91a
-			&hex_literal::hex!("9dbaef9b3ebc00e53f67c6a77bcfbf2c4f2aebe4d70d94af4f2df01744b7a91a")
-				.into(),
-			&chain_id,
-		);
-		rlp::decode::<ethereum::Transaction>(&signed)
-			.expect("transaction is just created, it can't be broken")
-	}
-	#[cfg(not(feature = "std"))]
-	{
-		panic!("transaction generation not yet supported by wasm runtime while generating transaction for collection_id {}, chain_id {}", collection_id, chain_id)
+		let result = match collection.mode {
+			CollectionMode::NFT => {
+				call_internal::<UniqueNFTCall, _>(*source, &mut collection, value, input)
+			}
+			CollectionMode::Fungible(_) => {
+				call_internal::<UniqueFungibleCall, _>(*source, &mut collection, value, input)
+			}
+			_ => return None,
+		};
+		collection.recorder.evm_to_precompile_output(result)
 	}
 }

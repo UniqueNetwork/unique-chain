@@ -5,12 +5,12 @@ use darling::FromMeta;
 use inflector::cases;
 use std::fmt::Write;
 use syn::{
-	FnArg, Ident, ItemTrait, Meta, NestedMeta, PatType, Path, ReturnType, TraitItem,
-	TraitItemMethod, Visibility, spanned::Spanned,
+	FnArg, Generics, Ident, ImplItem, ImplItemMethod, ItemImpl, Meta, NestedMeta, PatType, Path,
+	ReturnType, Type, spanned::Spanned,
 };
 
 use crate::{
-	fn_selector_str, format_ty, parse_ident_from_pat, parse_ident_from_path, parse_ident_from_type,
+	fn_selector_str, parse_ident_from_pat, parse_ident_from_path, parse_ident_from_type,
 	parse_result_ok, pascal_ident_to_call, pascal_ident_to_snake_call, snake_ident_to_pascal,
 	snake_ident_to_screaming,
 };
@@ -22,7 +22,7 @@ struct Is {
 }
 impl Is {
 	fn try_from(path: &Path) -> syn::Result<Self> {
-		let name = parse_ident_from_path(path)?.clone();
+		let name = parse_ident_from_path(path, false)?.clone();
 		Ok(Self {
 			pascal_call_name: pascal_ident_to_call(&name),
 			snake_call_name: pascal_ident_to_snake_call(&name),
@@ -54,21 +54,13 @@ impl Is {
 
 	fn expand_variant_call(&self) -> proc_macro2::TokenStream {
 		let name = &self.name;
-		let snake_call_name = &self.snake_call_name;
+		let pascal_call_name = &self.pascal_call_name;
 		quote! {
-			InternalCall::#name(call) => return self.#snake_call_name(Msg {
+			InternalCall::#name(call) => return <Self as ::evm_coder::Callable<#pascal_call_name>>::call(self, Msg {
 				call,
 				caller: c.caller,
 				value: c.value,
 			})
-		}
-	}
-
-	fn expand_call_inner(&self) -> proc_macro2::TokenStream {
-		let snake_call_name = &self.snake_call_name;
-		let pascal_call_name = &self.pascal_call_name;
-		quote! {
-			fn #snake_call_name(&mut self, c: Msg<#pascal_call_name>) -> ::core::result::Result<::evm_coder::abi::AbiWriter, Self::Error>;
 		}
 	}
 
@@ -100,6 +92,7 @@ impl FromMeta for IsList {
 
 #[derive(FromMeta)]
 pub struct InterfaceInfo {
+	name: Ident,
 	#[darling(default)]
 	is: IsList,
 	#[darling(default)]
@@ -122,7 +115,7 @@ impl MethodArg {
 	fn try_from(value: &PatType) -> syn::Result<Self> {
 		Ok(Self {
 			name: parse_ident_from_pat(&value.pat)?.clone(),
-			ty: parse_ident_from_type(&value.ty)?.clone(),
+			ty: parse_ident_from_type(&value.ty, false)?.clone(),
 		})
 	}
 	fn is_value(&self) -> bool {
@@ -174,9 +167,12 @@ impl MethodArg {
 		}
 	}
 
-	fn solidity_def(&self) -> String {
-		assert!(!self.is_special());
-		format!("{} {}", format_ty(&self.ty), self.name)
+	fn expand_solidity_argument(&self) -> proc_macro2::TokenStream {
+		let name = &self.name.to_string();
+		let ty = &self.ty;
+		quote! {
+			<NamedArgument<#ty>>::new(#name)
+		}
 	}
 }
 
@@ -197,15 +193,15 @@ struct Method {
 	args: Vec<MethodArg>,
 	has_normal_args: bool,
 	mutability: Mutability,
-	result: Ident,
+	result: Type,
 }
 impl Method {
-	fn try_from(value: &TraitItemMethod) -> syn::Result<Self> {
+	fn try_from(value: &ImplItemMethod) -> syn::Result<Self> {
 		let mut info = MethodInfo {
 			rename_selector: None,
 		};
 		for attr in &value.attrs {
-			let ident = parse_ident_from_path(&attr.path)?;
+			let ident = parse_ident_from_path(&attr.path, false)?;
 			if ident == "solidity" {
 				let args = attr.parse_meta().unwrap();
 				info = MethodInfo::from_meta(&args).unwrap();
@@ -392,71 +388,60 @@ impl Method {
 		}
 	}
 
-	fn solidity_def(&self) -> String {
-		let mut out = format!("function {}(", self.camel_name);
-		for (i, arg) in self.args.iter().filter(|a| !a.is_special()).enumerate() {
-			if i != 0 {
-				out.push_str(", ");
+	fn expand_solidity_function(&self) -> proc_macro2::TokenStream {
+		let camel_name = &self.camel_name;
+		let mutability = match self.mutability {
+			Mutability::Mutable => quote! {SolidityMutability::Mutable},
+			Mutability::View => quote! { SolidityMutability::View },
+			Mutability::Pure => quote! {SolidityMutability::Pure},
+		};
+		let result = &self.result;
+
+		let args = self.args.iter().map(MethodArg::expand_solidity_argument);
+
+		quote! {
+			SolidityFunction {
+				name: #camel_name,
+				mutability: #mutability,
+				args: (
+					#(
+						#args,
+					)*
+				),
+				result: <UnnamedArgument<#result>>::default(),
 			}
-			out.push_str(&arg.solidity_def());
 		}
-		out.push(')');
-		match self.mutability {
-			Mutability::Mutable => {}
-			Mutability::View => write!(out, " view").unwrap(),
-			Mutability::Pure => write!(out, " pure").unwrap(),
-		}
-		if self.result != "void" {
-			write!(out, " returns ({})", format_ty(&self.result)).unwrap();
-		}
-		out.push(';');
-		out
 	}
 }
 
 pub struct SolidityInterface {
-	vis: Visibility,
-	name: Ident,
+	generics: Generics,
+	name: Box<syn::Type>,
 	info: InterfaceInfo,
 	methods: Vec<Method>,
-	items: Vec<TraitItem>,
 }
 impl SolidityInterface {
-	pub fn try_from(info: InterfaceInfo, value: &ItemTrait) -> syn::Result<Self> {
-		let mut found_error = false;
+	pub fn try_from(info: InterfaceInfo, value: &ItemImpl) -> syn::Result<Self> {
 		let mut methods = Vec::new();
 
 		for item in &value.items {
-			match item {
-				TraitItem::Type(ty) => {
-					if ty.ident == "Error" {
-						found_error = true;
-					}
-				}
-				TraitItem::Method(method) => methods.push(Method::try_from(method)?),
-				_ => {}
+			if let ImplItem::Method(method) = item {
+				methods.push(Method::try_from(method)?)
 			}
 		}
-		if !found_error {
-			return Err(syn::Error::new(
-				value.span(),
-				"expected associated type called Error, which should implement From<&str>",
-			));
-		}
 		Ok(Self {
-			vis: value.vis.clone(),
-			name: value.ident.clone(),
+			generics: value.generics.clone(),
+			name: value.self_ty.clone(),
 			info,
 			methods,
-			items: value.items.clone(),
 		})
 	}
 	pub fn expand(self) -> proc_macro2::TokenStream {
-		let vis = self.vis;
 		let name = self.name;
-		let items = self.items;
 
-		let call_name = pascal_ident_to_call(&name);
+		let solidity_name = self.info.name.to_string();
+		let call_name = pascal_ident_to_call(&self.info.name);
+		let generics = self.generics;
 
 		let call_sub = self
 			.info
@@ -465,13 +450,6 @@ impl SolidityInterface {
 			.iter()
 			.chain(self.info.is.0.iter())
 			.map(Is::expand_call_def);
-		let call_inner = self
-			.info
-			.inline_is
-			.0
-			.iter()
-			.chain(self.info.is.0.iter())
-			.map(Is::expand_call_inner);
 		let call_parse = self
 			.info
 			.inline_is
@@ -495,12 +473,13 @@ impl SolidityInterface {
 		let interface_id = self.methods.iter().map(Method::expand_interface_id);
 		let parsers = self.methods.iter().map(Method::expand_parse);
 		let call_variants_this = self.methods.iter().map(Method::expand_variant_call);
+		let solidity_functions = self.methods.iter().map(Method::expand_solidity_function);
 
 		// let methods = self.methods.iter().map(Method::solidity_def);
 
 		quote! {
 			#[derive(Debug)]
-			#vis enum #call_name {
+			pub enum #call_name {
 				#(
 					#calls,
 				)*
@@ -512,19 +491,6 @@ impl SolidityInterface {
 				#(
 					#consts
 				)*
-				pub fn parse(method_id: u32, reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::abi::Result<Option<Self>> {
-					use ::evm_coder::abi::AbiRead;
-					match method_id {
-						#(
-							#parsers,
-						)*
-						_ => {},
-					}
-					#(
-						#call_parse
-					)else*
-					return Ok(None);
-				}
 				pub const fn interface_id() -> u32 {
 					let mut interface_id = 0;
 					#(#interface_id)*
@@ -539,16 +505,38 @@ impl SolidityInterface {
 						)*
 					)
 				}
+				pub fn generate_solidity_interface() -> string {
+					use evm_coder::solidity::*;
+					use core::fmt::Write;
+					let interface = SolidityInterface {
+						name: #solidity_name,
+						functions: (#(
+							#solidity_functions,
+						)*),
+					};
+					let mut out = string::new();
+					let _ = interface.format(&mut out);
+					out
+				}
 			}
-			#vis trait #name {
-				#(
-					#items
-				)*
-				#(
-					#call_inner
-				)*
+			impl ::evm_coder::Call for #call_name {
+				fn parse(method_id: u32, reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::execution::Result<Option<Self>> {
+					use ::evm_coder::abi::AbiRead;
+					match method_id {
+						#(
+							#parsers,
+						)*
+						_ => {},
+					}
+					#(
+						#call_parse
+					)else*
+					return Ok(None);
+				}
+			}
+			impl #generics ::evm_coder::Callable<#call_name> for #name {
 				#[allow(unreachable_code)] // In case of no inner calls
-				fn call(&mut self, c: Msg<#call_name>) -> ::core::result::Result<::evm_coder::abi::AbiWriter, Self::Error> {
+				fn call(&mut self, c: Msg<#call_name>) -> Result<::evm_coder::abi::AbiWriter> {
 					use ::evm_coder::abi::AbiWrite;
 					type InternalCall = #call_name;
 					match c.call {

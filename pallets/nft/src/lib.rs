@@ -36,14 +36,12 @@ use sp_core::H160;
 use sp_std::vec;
 use sp_runtime::sp_std::prelude::Vec;
 use core::ops::{Deref, DerefMut};
-use core::cell::RefCell;
 use nft_data_structs::{
 	MAX_DECIMAL_POINTS, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, MAX_REFUNGIBLE_PIECES,
 	AccessMode, ChainLimits, Collection, CreateItemData, CollectionLimits, CollectionId,
 	CollectionMode, TokenId, SchemaVersion, SponsorshipState, Ownership, NftItemType,
 	FungibleItemType, ReFungibleItemType,
 };
-use pallet_ethereum::EthereumTransactionSender;
 
 #[cfg(test)]
 mod mock;
@@ -55,6 +53,7 @@ mod default_weights;
 mod eth;
 mod sponsorship;
 pub use sponsorship::NftSponsorshipHandler;
+pub use eth::sponsoring::NftEthSponsorshipHandler;
 
 pub use eth::NftErcSupport;
 pub use eth::account::*;
@@ -180,42 +179,39 @@ decl_error! {
 	}
 }
 
+#[must_use = "Should call submit_logs or save, otherwise some data will be lost for evm side"]
 pub struct CollectionHandle<T: Config> {
 	pub id: CollectionId,
 	collection: Collection<T>,
-	logs: eth::log::LogRecorder,
-	evm_address: H160,
-	gas_limit: RefCell<u64>,
+	recorder: pallet_evm_coder_substrate::SubstrateRecorder<T>,
 }
 impl<T: Config> CollectionHandle<T> {
 	pub fn get_with_gas_limit(id: CollectionId, gas_limit: u64) -> Option<Self> {
 		<CollectionById<T>>::get(id).map(|collection| Self {
 			id,
 			collection,
-			logs: eth::log::LogRecorder::default(),
-			evm_address: eth::collection_id_to_address(id),
-			gas_limit: RefCell::new(gas_limit),
+			recorder: pallet_evm_coder_substrate::SubstrateRecorder::new(
+				eth::collection_id_to_address(id),
+				gas_limit,
+			),
 		})
 	}
 	pub fn get(id: CollectionId) -> Option<Self> {
 		Self::get_with_gas_limit(id, u64::MAX)
 	}
-	pub fn gas_left(&self) -> u64 {
-		*self.gas_limit.borrow()
+	pub fn log(&self, log: impl evm_coder::ToLog) -> DispatchResult {
+		self.recorder.log_sub(log)
 	}
-	pub fn consume_gas(&self, gas: u64) -> DispatchResult {
-		let mut gas_limit = self.gas_limit.borrow_mut();
-		if *gas_limit < gas {
-			fail!(Error::<T>::OutOfGas);
-		}
-		*gas_limit -= gas;
+	fn consume_gas(&self, gas: u64) -> DispatchResult {
+		self.recorder.consume_gas_sub(gas)
+	}
+	pub fn submit_logs(self) -> DispatchResult {
+		self.recorder.submit_logs()
+	}
+	pub fn save(self) -> DispatchResult {
+		self.recorder.submit_logs()?;
+		<CollectionById<T>>::insert(self.id, self.collection);
 		Ok(())
-	}
-	pub fn log(&self, log: impl evm_coder::ToLog) {
-		self.logs.log(log.to_log(self.evm_address))
-	}
-	pub fn into_inner(self) -> Collection<T> {
-		self.collection
 	}
 }
 impl<T: Config> Deref for CollectionHandle<T> {
@@ -232,7 +228,7 @@ impl<T: Config> DerefMut for CollectionHandle<T> {
 	}
 }
 
-pub trait Config: system::Config + Sized {
+pub trait Config: system::Config + pallet_evm_coder_substrate::Config + Sized {
 	type Event: From<Event<Self>> + Into<<Self as system::Config>::Event>;
 
 	/// Weight information for extrinsics in this pallet.
@@ -247,9 +243,6 @@ pub trait Config: system::Config + Sized {
 		<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance,
 	>;
 	type TreasuryAccountId: Get<Self::AccountId>;
-
-	type EthereumChainId: Get<u64>;
-	type EthereumTransactionSender: pallet_ethereum::EthereumTransactionSender;
 }
 
 // # Used definitions
@@ -567,23 +560,23 @@ decl_module! {
 				fail!(Error::<T>::NoPermission);
 			}
 
-			<AddressTokens<T>>::remove_prefix(collection_id);
-			<Allowances<T>>::remove_prefix(collection_id);
-			<Balance<T>>::remove_prefix(collection_id);
+			<AddressTokens<T>>::remove_prefix(collection_id, None);
+			<Allowances<T>>::remove_prefix(collection_id, None);
+			<Balance<T>>::remove_prefix(collection_id, None);
 			<ItemListIndex>::remove(collection_id);
 			<AdminList<T>>::remove(collection_id);
 			<CollectionById<T>>::remove(collection_id);
-			<WhiteList<T>>::remove_prefix(collection_id);
+			<WhiteList<T>>::remove_prefix(collection_id, None);
 
-			<NftItemList<T>>::remove_prefix(collection_id);
-			<FungibleItemList<T>>::remove_prefix(collection_id);
-			<ReFungibleItemList<T>>::remove_prefix(collection_id);
+			<NftItemList<T>>::remove_prefix(collection_id, None);
+			<FungibleItemList<T>>::remove_prefix(collection_id, None);
+			<ReFungibleItemList<T>>::remove_prefix(collection_id, None);
 
-			<NftTransferBasket<T>>::remove_prefix(collection_id);
-			<FungibleTransferBasket<T>>::remove_prefix(collection_id);
-			<ReFungibleTransferBasket<T>>::remove_prefix(collection_id);
+			<NftTransferBasket<T>>::remove_prefix(collection_id, None);
+			<FungibleTransferBasket<T>>::remove_prefix(collection_id, None);
+			<ReFungibleTransferBasket<T>>::remove_prefix(collection_id, None);
 
-			<VariableMetaDataBasket<T>>::remove_prefix(collection_id);
+			<VariableMetaDataBasket<T>>::remove_prefix(collection_id, None);
 
 			DestroyedCollectionCount::put(DestroyedCollectionCount::get()
 				.checked_add(1)
@@ -670,9 +663,7 @@ decl_module! {
 			let mut target_collection = Self::get_collection(collection_id)?;
 			Self::check_owner_permissions(&target_collection, &sender)?;
 			target_collection.access = mode;
-			Self::save_collection(target_collection);
-
-			Ok(())
+			target_collection.save()
 		}
 
 		/// Allows Anyone to create tokens if:
@@ -697,9 +688,7 @@ decl_module! {
 			let mut target_collection = Self::get_collection(collection_id)?;
 			Self::check_owner_permissions(&target_collection, &sender)?;
 			target_collection.mint_mode = mint_permission;
-			Self::save_collection(target_collection);
-
-			Ok(())
+			target_collection.save()
 		}
 
 		/// Change the owner of the collection.
@@ -721,9 +710,7 @@ decl_module! {
 			let mut target_collection = Self::get_collection(collection_id)?;
 			Self::check_owner_permissions(&target_collection, &sender)?;
 			target_collection.owner = new_owner;
-			Self::save_collection(target_collection);
-
-			Ok(())
+			target_collection.save()
 		}
 
 		/// Adds an admin of the Collection.
@@ -803,9 +790,7 @@ decl_module! {
 			Self::check_owner_permissions(&target_collection, &sender)?;
 
 			target_collection.sponsorship = SponsorshipState::Unconfirmed(new_sponsor);
-			Self::save_collection(target_collection);
-
-			Ok(())
+			target_collection.save()
 		}
 
 		/// # Permissions
@@ -827,9 +812,7 @@ decl_module! {
 			);
 
 			target_collection.sponsorship = SponsorshipState::Confirmed(sender);
-			Self::save_collection(target_collection);
-
-			Ok(())
+			target_collection.save()
 		}
 
 		/// Switch back to pay-per-own-transaction model.
@@ -850,9 +833,7 @@ decl_module! {
 			Self::check_owner_permissions(&target_collection, &sender)?;
 
 			target_collection.sponsorship = SponsorshipState::Disabled;
-			Self::save_collection(target_collection);
-
-			Ok(())
+			target_collection.save()
 		}
 
 		/// This method creates a concrete instance of NFT Collection created with CreateCollection method.
@@ -887,8 +868,7 @@ decl_module! {
 
 			Self::create_item_internal(&sender, &collection, &owner, data)?;
 
-			// Self::submit_logs(collection)?;
-			Ok(())
+			collection.submit_logs()
 		}
 
 		/// This method creates multiple items in a collection created with CreateCollection method.
@@ -921,8 +901,7 @@ decl_module! {
 
 			Self::create_multiple_items_internal(&sender, &collection, &owner, items_data)?;
 
-			// Self::submit_logs(collection)?;
-			Ok(())
+			collection.submit_logs()
 		}
 
 		// TODO! transaction weight
@@ -948,9 +927,7 @@ decl_module! {
 			Self::check_owner_permissions(&target_collection, &sender)?;
 
 			target_collection.transfers_enabled = value;
-			Self::save_collection(target_collection);
-
-			Ok(())
+			target_collection.save()
 		}
 
 		/// Destroys a concrete instance of NFT.
@@ -975,8 +952,7 @@ decl_module! {
 
 			Self::burn_item_internal(&sender, &target_collection, item_id, value)?;
 
-			// Self::submit_logs(target_collection)?;
-			Ok(())
+			target_collection.submit_logs()
 		}
 
 		/// Change ownership of the token.
@@ -1010,8 +986,7 @@ decl_module! {
 
 			Self::transfer_internal(&sender, &recipient, &collection, item_id, value)?;
 
-			// Self::submit_logs(collection)?;
-			Ok(())
+			collection.submit_logs()
 		}
 
 		/// Set, change, or remove approved address to transfer the ownership of the NFT.
@@ -1037,8 +1012,7 @@ decl_module! {
 
 			Self::approve_internal(&sender, &spender, &collection, item_id, amount)?;
 
-			// Self::submit_logs(collection)?;
-			Ok(())
+			collection.submit_logs()
 		}
 
 		/// Change ownership of a NFT on behalf of the owner. See Approve method for additional information. After this method executes, the approval is removed so that the approved address will not be able to transfer this NFT again from this owner.
@@ -1068,8 +1042,7 @@ decl_module! {
 
 			Self::transfer_from_internal(&sender, &from, &recipient, &collection, item_id, value)?;
 
-			// Self::submit_logs(collection)?;
-			Ok(())
+			collection.submit_logs()
 		}
 		// #[weight = 0]
 		//     // let no_perm_mes = "You do not have permissions to modify this collection";
@@ -1138,9 +1111,7 @@ decl_module! {
 			let mut target_collection = Self::get_collection(collection_id)?;
 			Self::check_owner_or_admin_permissions(&target_collection, &sender)?;
 			target_collection.schema_version = version;
-			Self::save_collection(target_collection);
-
-			Ok(())
+			target_collection.save()
 		}
 
 		/// Set off-chain data schema.
@@ -1170,9 +1141,7 @@ decl_module! {
 			ensure!(schema.len() as u32 <= ChainLimit::get().offchain_schema_limit, "");
 
 			target_collection.offchain_schema = schema;
-			Self::save_collection(target_collection);
-
-			Ok(())
+			target_collection.save()
 		}
 
 		/// Set const on-chain data schema.
@@ -1202,9 +1171,7 @@ decl_module! {
 			ensure!(schema.len() as u32 <= ChainLimit::get().const_on_chain_schema_limit, "");
 
 			target_collection.const_on_chain_schema = schema;
-			Self::save_collection(target_collection);
-
-			Ok(())
+			target_collection.save()
 		}
 
 		/// Set variable on-chain data schema.
@@ -1234,9 +1201,7 @@ decl_module! {
 			ensure!(schema.len() as u32 <= ChainLimit::get().variable_on_chain_schema_limit, "");
 
 			target_collection.variable_on_chain_schema = schema;
-			Self::save_collection(target_collection);
-
-			Ok(())
+			target_collection.save()
 		}
 
 		// Sudo permissions function
@@ -1284,9 +1249,8 @@ decl_module! {
 			);
 
 			target_collection.limits = new_limits;
-			Self::save_collection(target_collection);
 
-			Ok(())
+			target_collection.save()
 		}
 	}
 }
@@ -1407,7 +1371,7 @@ impl<T: Config> Module<T> {
 				owner: *sender.as_eth(),
 				approved: *spender.as_eth(),
 				token_id: item_id.into(),
-			});
+			})?;
 		}
 
 		if matches!(collection.mode, CollectionMode::Fungible(_)) {
@@ -1416,7 +1380,7 @@ impl<T: Config> Module<T> {
 				owner: *sender.as_eth(),
 				spender: *spender.as_eth(),
 				value: allowance.into(),
-			});
+			})?;
 		}
 
 		Self::deposit_event(RawEvent::Approved(
@@ -1492,7 +1456,7 @@ impl<T: Config> Module<T> {
 				owner: *from.as_eth(),
 				spender: *sender.as_eth(),
 				value: allowance.into(),
-			});
+			})?;
 		}
 
 		Ok(())
@@ -1823,7 +1787,7 @@ impl<T: Config> Module<T> {
 			from: H160::default(),
 			to: *item_owner.as_eth(),
 			token_id: current_index.into(),
-		});
+		})?;
 		Self::deposit_event(RawEvent::ItemCreated(
 			collection_id,
 			current_index,
@@ -1920,7 +1884,7 @@ impl<T: Config> Module<T> {
 			from: *owner.as_eth(),
 			to: H160::default(),
 			value: value.into(),
-		});
+		})?;
 		Ok(())
 	}
 
@@ -1928,20 +1892,6 @@ impl<T: Config> Module<T> {
 		collection_id: CollectionId,
 	) -> Result<CollectionHandle<T>, sp_runtime::DispatchError> {
 		Ok(<CollectionHandle<T>>::get(collection_id).ok_or(Error::<T>::CollectionNotFound)?)
-	}
-
-	fn save_collection(collection: CollectionHandle<T>) {
-		<CollectionById<T>>::insert(collection.id, collection.into_inner());
-	}
-
-	pub fn submit_logs(collection: CollectionHandle<T>) -> DispatchResult {
-		if collection.logs.is_empty() {
-			return Ok(());
-		}
-		T::EthereumTransactionSender::submit_logs_transaction(
-			eth::generate_transaction(collection.id, T::EthereumChainId::get()),
-			collection.logs.retrieve_logs(),
-		)
 	}
 
 	fn check_owner_permissions(
@@ -2071,7 +2021,7 @@ impl<T: Config> Module<T> {
 			from: *owner.as_eth(),
 			to: *recipient.as_eth(),
 			value: value.into(),
-		});
+		})?;
 		Self::deposit_event(RawEvent::Transfer(
 			collection.id,
 			1,
@@ -2207,7 +2157,7 @@ impl<T: Config> Module<T> {
 			from: *sender.as_eth(),
 			to: *new_owner.as_eth(),
 			token_id: item_id.into(),
-		});
+		})?;
 		Self::deposit_event(RawEvent::Transfer(
 			collection.id,
 			item_id,
