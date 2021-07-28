@@ -18,7 +18,7 @@ import config from '../../config';
 import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
 
-export const GAS_ARGS = { gas: 0x10000000, gasPrice: '0x01' };
+export const GAS_ARGS = { gas: 0x1000000, gasPrice: '0x01' };
 
 let web3Connected = false;
 export async function usingWeb3<T>(cb: (web3: Web3) => Promise<T> | T): Promise<T> {

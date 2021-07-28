@@ -17,8 +17,15 @@ describe('EVM sponsoring', () => {
       await waitNewBlocks(api, 1);
       
       const helpers = contractHelpers(web3Http, owner);
+      await helpers.methods.toggleAllowlist(flipper.options.address, true).send({ from: owner });
+      await waitNewBlocks(api, 1);
+      await helpers.methods.toggleAllowed(flipper.options.address, caller, true).send({ from: owner });
+      await waitNewBlocks(api, 1);
+
       expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
       await helpers.methods.toggleSponsoring(flipper.options.address, true).send({from: owner});
+      await waitNewBlocks(api, 1);
+      await helpers.methods.setSponsoringRateLimit(flipper.options.address, 0).send({from: owner});
       await waitNewBlocks(api, 1);
       expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.true;
 
@@ -49,10 +56,17 @@ describe('EVM sponsoring', () => {
 
       const collector = await deployCollector(web3Http, owner);
       await waitNewBlocks(api, 1);
-      
+     
       const helpers = contractHelpers(web3Http, owner);
+      await helpers.methods.toggleAllowlist(collector.options.address, true).send({ from: owner });
+      await waitNewBlocks(api, 1);
+      await helpers.methods.toggleAllowed(collector.options.address, caller, true).send({ from: owner });
+      await waitNewBlocks(api, 1);
+
       expect(await helpers.methods.sponsoringEnabled(collector.options.address).call()).to.be.false;
-      await helpers.methods.toggleSponsoring(collector.options.address, true).send({from: owner});
+      await helpers.methods.toggleSponsoring(collector.options.address, true).send({ from: owner });
+      await waitNewBlocks(api, 1);
+      await helpers.methods.setSponsoringRateLimit(collector.options.address, 0).send({ from: owner });
       await waitNewBlocks(api, 1);
       expect(await helpers.methods.sponsoringEnabled(collector.options.address).call()).to.be.true;
 
