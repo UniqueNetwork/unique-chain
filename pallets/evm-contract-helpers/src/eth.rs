@@ -52,7 +52,7 @@ impl<T: Config> ContractHelpers<T> {
 
 	fn allowed(&self, contract: address, user: address) -> Result<bool> {
 		self.0.consume_sload()?;
-		Ok(<Pallet<T>>::allowed(contract, user))
+		Ok(<Pallet<T>>::allowed(contract, user, true))
 	}
 
 	fn allowlist_enabled(&self, contract: address) -> Result<bool> {
@@ -106,7 +106,7 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 		value: sp_core::U256,
 	) -> Option<PrecompileOutput> {
 		// TODO: Extract to another OnMethodCall handler
-		if !<Pallet<T>>::allowed(*target, *source) {
+		if !<Pallet<T>>::allowed(*target, *source, true) {
 			return Some(PrecompileOutput {
 				exit_status: ExitReason::Revert(ExitRevert::Reverted),
 				cost: 0,
@@ -144,13 +144,14 @@ impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 pub struct HelpersContractSponsoring<T: Config>(PhantomData<*const T>);
 impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for HelpersContractSponsoring<T> {
 	fn get_sponsor(who: &H160, call: &(H160, Vec<u8>)) -> Option<H160> {
-		if <SelfSponsoring<T>>::get(&call.0) {
+		if <SelfSponsoring<T>>::get(&call.0) && <Pallet<T>>::allowed(call.0, *who, false) {
 			let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
-			let limit = <SponsoringRateLimit<T>>::get(&call.0);
 			if let Some(last_tx_block) = <SponsorBasket<T>>::get(&call.0, who) {
-				<SponsorBasket<T>>::insert(&call.0, who, block_number);
-				let limit_time = last_tx_block + limit;
+				let rate_limit = <SponsoringRateLimit<T>>::get(&call.0);
+				let limit_time = last_tx_block + rate_limit;
+
 				if block_number > limit_time {
+					<SponsorBasket<T>>::insert(&call.0, who, block_number);
 					return Some(call.0);
 				}
 			} else {
