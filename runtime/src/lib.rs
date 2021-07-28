@@ -154,7 +154,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	transaction_version: 1,
 };
 
-pub const MILLISECS_PER_BLOCK: u64 = 1200;
+pub const MILLISECS_PER_BLOCK: u64 = 12000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
@@ -162,6 +162,10 @@ pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
+
+parameter_types! {
+	pub const DefaultSponsoringRateLimit: BlockNumber = 1 * DAYS;
+}
 
 #[derive(codec::Encode, codec::Decode)]
 pub enum XCMPMessage<XAccountId, XBalance> {
@@ -757,7 +761,9 @@ impl pallet_evm_transaction_payment::Config for Runtime {
 
 impl pallet_nft_charge_transaction::Config for Runtime {}
 
-// impl pallet_contract_helpers::Config for Runtime {}
+// impl pallet_contract_helpers::Config for Runtime {
+//	 type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
+// }
 
 parameter_types! {
 	// 0x842899ECF380553E8a4de75bF534cdf6fBF64049
@@ -768,6 +774,7 @@ parameter_types! {
 
 impl pallet_evm_contract_helpers::Config for Runtime {
 	type ContractAddress = HelpersContractAddress;
+	type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
 }
 
 construct_runtime!(
