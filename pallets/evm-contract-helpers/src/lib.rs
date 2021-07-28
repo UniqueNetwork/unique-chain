@@ -66,6 +66,10 @@ pub mod pallet {
 			<SelfSponsoring<T>>::insert(contract, enabled);
 		}
 
+		pub fn set_sponsoring_rate_limit(contract: H160, rate_limit: T::BlockNumber) {
+			<SponsoringRateLimit<T>>::insert(contract, rate_limit);
+		}
+
 		pub fn allowed(contract: H160, user: H160) -> bool {
 			if !<AllowlistEnabled<T>>::get(contract) {
 				return true;

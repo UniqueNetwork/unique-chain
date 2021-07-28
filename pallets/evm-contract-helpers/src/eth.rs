@@ -37,6 +37,19 @@ impl<T: Config> ContractHelpers<T> {
 		Ok(())
 	}
 
+	fn set_sponsoring_rate_limit(
+		&mut self,
+		caller: caller,
+		contract: address,
+		rate_limit: uint32,
+	) -> Result<void> {
+		self.0.consume_sload()?;
+		<Pallet<T>>::ensure_owner(contract, caller)?;
+		self.0.consume_sstore()?;
+		<Pallet<T>>::set_sponsoring_rate_limit(contract, rate_limit.into());
+		Ok(())
+	}
+
 	fn allowed(&self, contract: address, user: address) -> Result<bool> {
 		self.0.consume_sload()?;
 		Ok(<Pallet<T>>::allowed(contract, user))
