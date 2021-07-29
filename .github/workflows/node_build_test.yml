@@ -35,7 +35,8 @@ jobs:
           script: |
             eval $(ssh-agent -s)
             ssh-add /home/polkadot/.ssh/git_hub
-            git clone git@github.com:usetech-llc/nft_private.git
+           # git clone git@github.com:usetech-llc/nft_private.git
+	    git clone git@github.com:UniqueNetwork/nft_private.git
             cd nft_private
             git checkout develop
             # git pull --all
