@@ -431,13 +431,13 @@ export async function setCollectionLimitsExpectFailure(sender: IKeyringPair, col
   });
 }
 
-export async function setCollectionSponsorExpectSuccess(collectionId: number, sponsor: string) {
+export async function setCollectionSponsorExpectSuccess(collectionId: number, sponsor: string, sender = '//Alice') {
   await usingApi(async (api) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const senderPrivateKey = privateKey(sender);
     const tx = api.tx.nft.setCollectionSponsor(collectionId, sponsor);
-    const events = await submitTransactionAsync(alicePrivateKey, tx);
+    const events = await submitTransactionAsync(senderPrivateKey, tx);
     const result = getGenericResult(events);
 
     // Get the collection
@@ -451,11 +451,11 @@ export async function setCollectionSponsorExpectSuccess(collectionId: number, sp
   });
 }
 
-export async function removeCollectionSponsorExpectSuccess(collectionId: number) {
+export async function removeCollectionSponsorExpectSuccess(collectionId: number, sender = '//Alice') {
   await usingApi(async (api) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKey(sender);
     const tx = api.tx.nft.removeCollectionSponsor(collectionId);
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getGenericResult(events);
