@@ -242,7 +242,7 @@ pub struct CreateReFungibleData {
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum MetaUpdatePermission  {
+pub enum MetaUpdatePermission {
 	ItemOwner,
 	Admin,
 	None,

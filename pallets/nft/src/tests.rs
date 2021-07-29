@@ -2364,7 +2364,11 @@ fn set_variable_meta_data_on_nft_with_item_owner_permission_flag() {
 		let data = default_nft_data();
 		create_test_item(1, &data.into());
 
-		TemplateModule::set_meta_update_permission_flag(origin1.clone(), collection_id, MetaUpdatePermission::ItemOwner);
+		TemplateModule::set_meta_update_permission_flag(
+			origin1.clone(),
+			collection_id,
+			MetaUpdatePermission::ItemOwner,
+		);
 
 		let variable_data = b"test set_variable_meta_data method.".to_vec();
 		assert_ok!(TemplateModule::set_variable_meta_data(
@@ -2407,15 +2411,21 @@ fn set_variable_meta_data_on_nft_with_item_owner_permission_flag_neg() {
 		let data = default_nft_data();
 		create_test_item(1, &data.into());
 
-		TemplateModule::set_meta_update_permission_flag(origin2.clone(), collection_id, MetaUpdatePermission::ItemOwner);
+		TemplateModule::set_meta_update_permission_flag(
+			origin2.clone(),
+			collection_id,
+			MetaUpdatePermission::ItemOwner,
+		);
 
 		let variable_data = b"test set_variable_meta_data method.".to_vec();
-		assert_noop!(TemplateModule::set_variable_meta_data(
-			origin2,
-			collection_id,
-			1,
-			variable_data.clone()),
-		Error::<Test>::NoPermission
+		assert_noop!(
+			TemplateModule::set_variable_meta_data(
+				origin2,
+				collection_id,
+				1,
+				variable_data.clone()
+			),
+			Error::<Test>::NoPermission
 		);
 	});
 }
@@ -2450,7 +2460,11 @@ fn set_variable_meta_data_on_nft_with_admin_flag() {
 		let data = default_nft_data();
 		create_test_item(1, &data.into());
 
-		TemplateModule::set_meta_update_permission_flag(origin2.clone(), collection_id, MetaUpdatePermission::Admin);
+		TemplateModule::set_meta_update_permission_flag(
+			origin2.clone(),
+			collection_id,
+			MetaUpdatePermission::Admin,
+		);
 
 		let variable_data = b"test set_variable_meta_data method.".to_vec();
 		assert_ok!(TemplateModule::set_variable_meta_data(
@@ -2493,15 +2507,21 @@ fn set_variable_meta_data_on_nft_with_admin_flag_neg() {
 		let data = default_nft_data();
 		create_test_item(1, &data.into());
 
-		TemplateModule::set_meta_update_permission_flag(origin2.clone(), collection_id, MetaUpdatePermission::Admin);
+		TemplateModule::set_meta_update_permission_flag(
+			origin2.clone(),
+			collection_id,
+			MetaUpdatePermission::Admin,
+		);
 
 		let variable_data = b"test set_variable_meta_data method.".to_vec();
-		assert_noop!(TemplateModule::set_variable_meta_data(
-			origin1,
-			collection_id,
-			1,
-			variable_data.clone()),
-		Error::<Test>::NoPermission
+		assert_noop!(
+			TemplateModule::set_variable_meta_data(
+				origin1,
+				collection_id,
+				1,
+				variable_data.clone()
+			),
+			Error::<Test>::NoPermission
 		);
 	});
 }
@@ -2515,12 +2535,18 @@ fn set_variable_meta_flag_after_freeze() {
 
 		let origin2 = Origin::signed(2);
 
-		TemplateModule::set_meta_update_permission_flag(origin2.clone(), collection_id, MetaUpdatePermission::None);
-		assert_noop!(TemplateModule::set_meta_update_permission_flag(
+		TemplateModule::set_meta_update_permission_flag(
 			origin2.clone(),
 			collection_id,
-			MetaUpdatePermission::Admin),
-		Error::<Test>::MetadataFlagFrozen
+			MetaUpdatePermission::None,
+		);
+		assert_noop!(
+			TemplateModule::set_meta_update_permission_flag(
+				origin2.clone(),
+				collection_id,
+				MetaUpdatePermission::Admin
+			),
+			Error::<Test>::MetadataFlagFrozen
 		);
 	});
 }
@@ -2536,15 +2562,21 @@ fn set_variable_meta_data_on_nft_with_none_flag_neg() {
 		let data = default_nft_data();
 		create_test_item(1, &data.into());
 
-		TemplateModule::set_meta_update_permission_flag(origin1.clone(), collection_id, MetaUpdatePermission::None);
-
-		let variable_data = b"test set_variable_meta_data method.".to_vec();
-		assert_noop!(TemplateModule::set_variable_meta_data(
+		TemplateModule::set_meta_update_permission_flag(
 			origin1.clone(),
 			collection_id,
-			1,
-			variable_data.clone()),
-		Error::<Test>::MetadataUpdateDenied
+			MetaUpdatePermission::None,
+		);
+
+		let variable_data = b"test set_variable_meta_data method.".to_vec();
+		assert_noop!(
+			TemplateModule::set_variable_meta_data(
+				origin1.clone(),
+				collection_id,
+				1,
+				variable_data.clone()
+			),
+			Error::<Test>::MetadataUpdateDenied
 		);
 	});
 }

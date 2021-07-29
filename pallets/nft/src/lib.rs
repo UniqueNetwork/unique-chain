@@ -175,7 +175,7 @@ decl_error! {
 		BadCreateRefungibleCall,
 		/// Gas limit exceeded
 		OutOfGas,
-		/// Metadata update denied by collection settings 
+		/// Metadata update denied by collection settings
 		MetadataUpdateDenied,
 		/// Metadata update flag become unmutable with None option
 		MetadataFlagFrozen,
@@ -951,7 +951,7 @@ decl_module! {
 				Error::<T>::MetadataFlagFrozen
 			);
 			Self::check_owner_permissions(&target_collection, &sender)?;
-			
+
 			target_collection.meta_update_permission = value;
 			Self::save_collection(target_collection);
 
@@ -1531,27 +1531,27 @@ impl<T: Config> Module<T> {
 		Ok(())
 	}
 
-	pub fn meta_update_check(		
+	pub fn meta_update_check(
 		sender: &T::CrossAccountId,
 		collection: &CollectionHandle<T>,
-		item_id: TokenId) -> DispatchResult {
-
+		item_id: TokenId,
+	) -> DispatchResult {
 		match collection.meta_update_permission {
 			MetaUpdatePermission::ItemOwner => {
 				ensure!(
-					Self::is_item_owner(sender, collection, item_id), 
+					Self::is_item_owner(sender, collection, item_id),
 					Error::<T>::NoPermission
 				);
-			},
+			}
 			MetaUpdatePermission::Admin => {
 				ensure!(
-					Self::is_owner_or_admin_permissions(collection, sender), 
+					Self::is_owner_or_admin_permissions(collection, sender),
 					Error::<T>::NoPermission
 				);
-			},
+			}
 			MetaUpdatePermission::None => {
 				fail!(Error::<T>::MetadataUpdateDenied);
-			},
+			}
 		}
 
 		Ok(())

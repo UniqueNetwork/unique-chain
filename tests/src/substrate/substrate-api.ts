@@ -48,12 +48,12 @@ export default async function usingApi<T = void>(action: (api: ApiPromise) => Pr
   console.warn = outFn;
 
   try {
-   await promisifySubstrate(api, async () => {
+    await promisifySubstrate(api, async () => {
       if (api) {
         await api.isReadyOrError;
         result = await action(api);
       }
-   })();
+    })();
   } finally {
     await api.disconnect();
     console.error = consoleErr;
