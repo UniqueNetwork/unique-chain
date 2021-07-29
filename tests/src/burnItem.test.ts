@@ -12,6 +12,7 @@ import {
   getGenericResult,
   destroyCollectionExpectSuccess,
   normalizeAccountId,
+  addCollectionAdminExpectSuccess,
 } from './util/helpers';
 
 import chai from 'chai';
@@ -48,8 +49,8 @@ describe('integration test: ext. burnItem():', () => {
       // tslint:disable-next-line:no-unused-expression
       expect(item).to.be.null;
     });
-
   });
+
   it('Burn item in Fungible collection', async () => {
     const createMode = 'Fungible';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0 }});
@@ -70,8 +71,8 @@ describe('integration test: ext. burnItem():', () => {
       expect(balance).to.be.not.null;
       expect(balance.Value).to.be.equal(9);
     });
-
   });
+
   it('Burn item in ReFungible collection', async () => {
     const createMode = 'ReFungible';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode }});
@@ -89,7 +90,6 @@ describe('integration test: ext. burnItem():', () => {
       expect(result.success).to.be.true;
       expect(balance).to.be.null;
     });
-
   });
 
   it('Burn owned portion of item in ReFungible collection', async () => {
@@ -134,6 +134,36 @@ describe('integration test: ext. burnItem():', () => {
 
   });
 
+});
+
+describe('integration test: ext. burnItem() with admin permissions:', () => {
+  before(async () => {
+    await usingApi(async () => {
+      const keyring = new Keyring({ type: 'sr25519' });
+      alice = keyring.addFromUri('//Alice');
+      bob = keyring.addFromUri('//Bob');
+    });
+  });
+
+  it('Burn item in NFT collection', async () => {
+    const createMode = 'NFT';
+    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
+    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob);
+
+    await usingApi(async (api) => {
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 0);
+      const events = await submitTransactionAsync(bob, tx);
+      const result = getGenericResult(events);
+      // Get the item
+      const item: any = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON();
+      // What to expect
+      // tslint:disable-next-line:no-unused-expression
+      expect(result.success).to.be.true;
+      // tslint:disable-next-line:no-unused-expression
+      expect(item).to.be.null;
+    });
+  });
 });
 
 describe('Negative integration test: ext. burnItem():', () => {

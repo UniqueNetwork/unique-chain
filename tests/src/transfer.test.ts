@@ -18,6 +18,7 @@ import {
   getCreateItemResult,
   transferExpectFailure,
   transferExpectSuccess,
+  addCollectionAdminExpectSuccess,
 } from './util/helpers';
 
 let Alice: IKeyringPair;
@@ -84,6 +85,35 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
         newReFungibleTokenId,
         Alice,
         Bob,
+        100,
+        'ReFungible',
+      );
+    });
+  });
+
+  it('Collection admin can transfer owned token', async () => {
+    await usingApi(async () => {
+      const Alice = privateKey('//Alice');
+      const Bob = privateKey('//Bob');
+      // nft
+      const nftCollectionId = await createCollectionExpectSuccess();
+      await addCollectionAdminExpectSuccess(Alice, nftCollectionId, Bob);
+      const newNftTokenId = await createItemExpectSuccess(Bob, nftCollectionId, 'NFT', Bob.address);
+      await transferExpectSuccess(nftCollectionId, newNftTokenId, Bob, Alice, 1, 'NFT');
+      // fungible
+      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+      await addCollectionAdminExpectSuccess(Alice, fungibleCollectionId, Bob);
+      const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible', Bob.address);
+      await transferExpectSuccess(fungibleCollectionId, newFungibleTokenId, Bob, Alice, 1, 'Fungible');
+      // reFungible
+      const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+      await addCollectionAdminExpectSuccess(Alice, reFungibleCollectionId, Bob);
+      const newReFungibleTokenId = await createItemExpectSuccess(Bob, reFungibleCollectionId, 'ReFungible', Bob.address);
+      await transferExpectSuccess(
+        reFungibleCollectionId,
+        newReFungibleTokenId,
+        Bob,
+        Alice,
         100,
         'ReFungible',
       );

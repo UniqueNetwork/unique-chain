@@ -17,6 +17,7 @@ import {
   removeCollectionSponsorExpectSuccess,
   removeCollectionSponsorExpectFailure,
   normalizeAccountId,
+  addCollectionAdminExpectSuccess,
 } from './util/helpers';
 import { Keyring } from '@polkadot/api';
 import { IKeyringPair } from '@polkadot/types/types';
@@ -102,6 +103,13 @@ describe('(!negative test!) integration test: ext. removeCollectionSponsor():', 
     });
 
     await removeCollectionSponsorExpectFailure(collectionId);
+  });
+
+  it('(!negative test!) Remove sponsor for a collection with collection admin permissions', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob);
+    await removeCollectionSponsorExpectFailure(collectionId, '//Bob');
   });
 
   it('(!negative test!) Remove sponsor in a destroyed collection', async () => {

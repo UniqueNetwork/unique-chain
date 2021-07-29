@@ -83,4 +83,22 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
       await createCollectionExpectSuccess();
     });
   });
+
+  it('Regular user Can\'t remove collection admin', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const collectionId = await createCollectionExpectSuccess();
+      const Alice = privateKey('//Alice');
+      const Bob = privateKey('//Bob');
+      const Charlie = privateKey('//Charlie');
+
+      const addAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
+      await submitTransactionAsync(Alice, addAdminTx);
+
+      const changeOwnerTx = api.tx.nft.removeCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
+      await expect(submitTransactionExpectFailAsync(Charlie, changeOwnerTx)).to.be.rejected;
+
+      // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
+      await createCollectionExpectSuccess();
+    });
+  });
 });
