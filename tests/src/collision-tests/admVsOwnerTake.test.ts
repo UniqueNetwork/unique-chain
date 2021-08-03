@@ -6,6 +6,7 @@ import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
+  normalizeAccountId,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -33,7 +34,7 @@ describe('Admin vs Owner take token: ', () => {
       const itemId = await createItemExpectSuccess(Bob, collectionId, 'NFT');
       //
       const sendItem = api.tx.nft.transfer(Ferdie.address, collectionId, itemId, 1);
-      const burnItem = api.tx.nft.burnItem(collectionId, itemId, 1);
+      const burnItem = api.tx.nft.burnItem(collectionId, itemId, normalizeAccountId(Alice.address), 1);
       await Promise.all([
         sendItem.signAndSend(Bob),
         burnItem.signAndSend(Alice),

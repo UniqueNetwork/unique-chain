@@ -114,7 +114,7 @@ describe('Negative Integration Test setVariableMetaData', () => {
   it('fails on removed token', async () => {
     const removedTokenCollectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
     const removedTokenId = await createItemExpectSuccess(alice, removedTokenCollectionId, 'NFT');
-    await burnItemExpectSuccess(alice, removedTokenCollectionId, removedTokenId);
+    await burnItemExpectSuccess(alice, removedTokenCollectionId, removedTokenId, alice);
 
     await setVariableMetaDataExpectFailure(alice, removedTokenCollectionId, removedTokenId, data);
   });
