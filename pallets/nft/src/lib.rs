@@ -987,12 +987,12 @@ decl_module! {
 		/// * item_id: ID of NFT to burn.
 		#[weight = <SelfWeightOf<T>>::burn_item()]
 		#[transactional]
-		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
+		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, item_owner: T::CrossAccountId, value: u128) -> DispatchResult {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let target_collection = Self::get_collection(collection_id)?;
 
-			Self::burn_item_internal(&sender, &target_collection, item_id, value)?;
+			Self::burn_item_internal(&sender, &target_collection, item_id, &item_owner, value)?;
 
 			target_collection.submit_logs()
 		}
@@ -1596,6 +1596,7 @@ impl<T: Config> Module<T> {
 		sender: &T::CrossAccountId,
 		collection: &CollectionHandle<T>,
 		item_id: TokenId,
+		item_owner: &T::CrossAccountId,
 		value: u128,
 	) -> DispatchResult {
 		ensure!(
@@ -1611,8 +1612,11 @@ impl<T: Config> Module<T> {
 
 		match collection.mode {
 			CollectionMode::NFT => Self::burn_nft_item(collection, item_id)?,
-			CollectionMode::Fungible(_) => Self::burn_fungible_item(sender, collection, value)?,
-			CollectionMode::ReFungible => Self::burn_refungible_item(collection, item_id, sender)?,
+			CollectionMode::Fungible(_) => Self::burn_fungible_item(collection, item_owner, value)?,
+			CollectionMode::ReFungible => {
+				Self::burn_refungible_item(collection, item_id, item_owner)?
+			}
+			_ => (),
 		};
 
 		Ok(())
@@ -1947,8 +1951,8 @@ impl<T: Config> Module<T> {
 	}
 
 	fn burn_fungible_item(
-		owner: &T::CrossAccountId,
 		collection: &CollectionHandle<T>,
+		owner: &T::CrossAccountId,
 		value: u128,
 	) -> DispatchResult {
 		let collection_id = collection.id;

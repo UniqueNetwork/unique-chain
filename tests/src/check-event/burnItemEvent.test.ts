@@ -10,7 +10,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from '../substrate/privateKey';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
-import { createCollectionExpectSuccess, createItemExpectSuccess, nftEventMessage } from '../util/helpers';
+import { createCollectionExpectSuccess, createItemExpectSuccess, nftEventMessage, normalizeAccountId } from '../util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -29,7 +29,7 @@ describe('Burn Item event ', () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionID = await createCollectionExpectSuccess();
       const itemID = await createItemExpectSuccess(Alice, collectionID, 'NFT');
-      const burnItem = api.tx.nft.burnItem(collectionID, itemID, 1);
+      const burnItem = api.tx.nft.burnItem(collectionID, itemID, normalizeAccountId(Alice.address), 1);
       const events = await submitTransactionAsync(Alice, burnItem);
       const msg = JSON.stringify(nftEventMessage(events));
       expect(msg).to.be.contain(checkSection);
