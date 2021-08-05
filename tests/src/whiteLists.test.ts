@@ -36,7 +36,7 @@ let Alice: IKeyringPair;
 let Bob: IKeyringPair;
 let Charlie: IKeyringPair;
 
-describe.only('Integration Test ext. White list tests', () => {
+describe('Integration Test ext. White list tests', () => {
 
   before(async () => {
     await usingApi(async () => {
