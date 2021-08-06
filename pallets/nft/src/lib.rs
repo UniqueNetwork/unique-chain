@@ -2114,10 +2114,8 @@ impl<T: Config> Module<T> {
 			}
 
 			// remove zero record and decrement index (for full amount transfer)
-			if amount == value {		
-				new_full_item
-				.owner
-				.retain(|i| i.owner != old_owner);			
+			if amount == value {
+				new_full_item.owner.retain(|i| i.owner != old_owner);
 				Self::remove_token_index(collection_id, item_id, &old_owner)?;
 			}
 
