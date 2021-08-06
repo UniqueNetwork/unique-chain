@@ -4,8 +4,9 @@ pub use serde::{Serialize, Deserialize};
 
 use sp_runtime::sp_std::prelude::Vec;
 use codec::{Decode, Encode};
+use max_encoded_len::MaxEncodedLen;
 pub use frame_support::{
-	construct_runtime, decl_event, decl_module, decl_storage, decl_error,
+	BoundedVec, construct_runtime, decl_event, decl_module, decl_storage, decl_error,
 	dispatch::DispatchResult,
 	ensure, fail, parameter_types,
 	traits::{
@@ -19,18 +20,26 @@ pub use frame_support::{
 	},
 	StorageValue, transactional,
 };
+use derivative::Derivative;
 
 pub const MAX_DECIMAL_POINTS: DecimalPoints = 30;
 pub const MAX_REFUNGIBLE_PIECES: u128 = 1_000_000_000_000_000_000_000;
 pub const MAX_SPONSOR_TIMEOUT: u32 = 10_368_000;
 pub const MAX_TOKEN_OWNERSHIP: u32 = 10_000_000;
 
+// TODO: Somehow use ChainLimits for BoundedVec len calculation?
+// Do we need ChainLimits anyway, if we can change them via forkless upgrades?
+parameter_types! {
+pub const MaxDataSize: u32 = 2048;
+// TODO: This limit isn't checked for substrate create_multiple_items call
+pub const MaxItemsPerBatch: u32 = 200;
+}
+
 pub type CollectionId = u32;
 pub type TokenId = u32;
 pub type DecimalPoints = u8;
 
-#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum CollectionMode {
 	Invalid,
 	NFT,
@@ -60,8 +69,7 @@ pub trait SponsoringResolve<AccountId, Call> {
 	fn resolve(who: &AccountId, call: &Call) -> Option<AccountId>;
 }
 
-#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum AccessMode {
 	Normal,
 	WhiteList,
@@ -72,8 +80,7 @@ impl Default for AccessMode {
 	}
 }
 
-#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum SchemaVersion {
 	ImageURL,
 	Unique,
@@ -84,15 +91,13 @@ impl Default for SchemaVersion {
 	}
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Ownership<AccountId> {
 	pub owner: AccountId,
 	pub fraction: u128,
 }
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum SponsorshipState<AccountId> {
 	/// The fees are applied to the transaction sender
 	Disabled,
@@ -147,30 +152,26 @@ pub struct Collection<T: frame_system::Config> {
 	pub transfers_enabled: bool,
 }
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct NftItemType<AccountId> {
 	pub owner: AccountId,
 	pub const_data: Vec<u8>,
 	pub variable_data: Vec<u8>,
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FungibleItemType {
 	pub value: u128,
 }
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ReFungibleItemType<AccountId> {
 	pub owner: Vec<Ownership<AccountId>>,
 	pub const_data: Vec<u8>,
 	pub variable_data: Vec<u8>,
 }
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CollectionLimits<BlockNumber: Encode + Decode> {
 	pub account_token_ownership_limit: u32,
 	pub sponsored_data_size: u32,
@@ -200,8 +201,7 @@ impl<BlockNumber: Encode + Decode> Default for CollectionLimits<BlockNumber> {
 	}
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ChainLimits {
 	pub collection_numbers_limit: u32,
 	pub account_token_ownership_limit: u32,
@@ -219,29 +219,73 @@ pub struct ChainLimits {
 	pub const_on_chain_schema_limit: u32,
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct CreateNftData {
-	pub const_data: Vec<u8>,
-	pub variable_data: Vec<u8>,
+/// BoundedVec doesn't supports serde
+mod bounded_serde {
+	use core::convert::TryFrom;
+	use frame_support::{BoundedVec, traits::Get};
+	use serde::{
+		ser::{self, Serialize},
+		de::{self, Deserialize, Error},
+	};
+	use sp_std::vec::Vec;
+
+	pub fn serialize<D, V, S>(value: &BoundedVec<V, S>, serializer: D) -> Result<D::Ok, D::Error>
+	where
+		D: ser::Serializer,
+		V: Serialize,
+	{
+		let vec: &Vec<_> = &value;
+		vec.serialize(serializer)
+	}
+
+	pub fn deserialize<'de, D, V, S>(deserializer: D) -> Result<BoundedVec<V, S>, D::Error>
+	where
+		D: de::Deserializer<'de>,
+		V: de::Deserialize<'de>,
+		S: Get<u32>,
+	{
+		// TODO: Implement custom visitor, which will limit vec size at parse time? Will serde only be used by chainspec?
+		let vec = <Vec<V>>::deserialize(deserializer)?;
+		let len = vec.len();
+		TryFrom::try_from(vec).map_err(|_| D::Error::invalid_length(len, &"lesser size"))
+	}
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(
+	Encode, Decode, MaxEncodedLen, Default, Derivative, Clone, PartialEq, Serialize, Deserialize,
+)]
+#[derivative(Debug)]
+pub struct CreateNftData {
+	#[serde(with = "bounded_serde")]
+	#[derivative(Debug="ignore")]
+	pub const_data: BoundedVec<u8, MaxDataSize>,
+	#[serde(with = "bounded_serde")]
+	#[derivative(Debug="ignore")]
+	pub variable_data: BoundedVec<u8, MaxDataSize>,
+}
+
+#[derive(
+	Encode, Decode, MaxEncodedLen, Default, Debug, Clone, PartialEq, Serialize, Deserialize,
+)]
 pub struct CreateFungibleData {
 	pub value: u128,
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(
+	Encode, Decode, MaxEncodedLen, Default, Derivative, Clone, PartialEq, Serialize, Deserialize,
+)]
+#[derivative(Debug)]
 pub struct CreateReFungibleData {
-	pub const_data: Vec<u8>,
-	pub variable_data: Vec<u8>,
+	#[serde(with = "bounded_serde")]
+	#[derivative(Debug="ignore")]
+	pub const_data: BoundedVec<u8, MaxDataSize>,
+	#[serde(with = "bounded_serde")]
+	#[derivative(Debug="ignore")]
+	pub variable_data: BoundedVec<u8, MaxDataSize>,
 	pub pieces: u128,
 }
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, MaxEncodedLen, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum CreateItemData {
 	NFT(CreateNftData),
 	Fungible(CreateFungibleData),

@@ -1675,8 +1675,8 @@ impl<T: Config> Module<T> {
 			CreateItemData::NFT(data) => {
 				let item = NftItemType {
 					owner: owner.clone(),
-					const_data: data.const_data,
-					variable_data: data.variable_data,
+					const_data: data.const_data.into_inner(),
+					variable_data: data.variable_data.into_inner(),
 				};
 
 				Self::add_nft_item(collection, item)?;
@@ -1692,8 +1692,8 @@ impl<T: Config> Module<T> {
 
 				let item = ReFungibleItemType {
 					owner: owner_list,
-					const_data: data.const_data,
-					variable_data: data.variable_data,
+					const_data: data.const_data.into_inner(),
+					variable_data: data.variable_data.into_inner(),
 				};
 
 				Self::add_refungible_item(collection, item)?;
