@@ -98,71 +98,71 @@ pub trait WeightInfo {
 decl_error! {
 	/// Error for non-fungible-token module.
 	pub enum Error for Module<T: Config> {
-		/// Total collections bound exceeded.
+		/// Total collections bound exceeded. 1
 		TotalCollectionsLimitExceeded,
-		/// Decimal_points parameter must be lower than MAX_DECIMAL_POINTS constant, currently it is 30.
+		/// Decimal_points parameter must be lower than MAX_DECIMAL_POINTS constant, currently it is 30. 2
 		CollectionDecimalPointLimitExceeded,
-		/// Collection name can not be longer than 63 char.
+		/// Collection name can not be longer than 63 char. 3
 		CollectionNameLimitExceeded,
-		/// Collection description can not be longer than 255 char.
+		/// Collection description can not be longer than 255 char. 4
 		CollectionDescriptionLimitExceeded,
-		/// Token prefix can not be longer than 15 char.
+		/// Token prefix can not be longer than 15 char. 5
 		CollectionTokenPrefixLimitExceeded,
-		/// This collection does not exist.
+		/// This collection does not exist. 6
 		CollectionNotFound,
-		/// Item not exists.
+		/// Item not exists. 7
 		TokenNotFound,
-		/// Admin not found
+		/// Admin not found 8
 		AdminNotFound,
-		/// Arithmetic calculation overflow.
+		/// Arithmetic calculation overflow. 9
 		NumOverflow,
-		/// Account already has admin role.
+		/// Account already has admin role. 10
 		AlreadyAdmin,
-		/// You do not own this collection.
+		/// You do not own this collection. 11
 		NoPermission,
-		/// This address is not set as sponsor, use setCollectionSponsor first.
+		/// This address is not set as sponsor, use setCollectionSponsor first. 12
 		ConfirmUnsetSponsorFail,
-		/// Collection is not in mint mode.
+		/// Collection is not in mint mode. 13
 		PublicMintingNotAllowed,
-		/// Sender parameter and item owner must be equal.
+		/// Sender parameter and item owner must be equal. 14
 		MustBeTokenOwner,
-		/// Item balance not enough.
+		/// Item balance not enough. 15
 		TokenValueTooLow,
-		/// Size of item is too large.
+		/// Size of item is too large. 16
 		NftSizeLimitExceeded,
-		/// No approve found
+		/// No approve found 17
 		ApproveNotFound,
-		/// Requested value more than approved.
+		/// Requested value more than approved. 18
 		TokenValueNotEnough,
-		/// Only approved addresses can call this method.
+		/// Only approved addresses can call this method. 19
 		ApproveRequired,
-		/// Address is not in white list.
+		/// Address is not in white list. 20
 		AddresNotInWhiteList,
-		/// Number of collection admins bound exceeded.
+		/// Number of collection admins bound exceeded. 21
 		CollectionAdminsLimitExceeded,
-		/// Owned tokens by a single address bound exceeded.
+		/// Owned tokens by a single address bound exceeded. 22
 		AddressOwnershipLimitExceeded,
-		/// Length of items properties must be greater than 0.
+		/// Length of items properties must be greater than 0. 23
 		EmptyArgument,
-		/// const_data exceeded data limit.
+		/// const_data exceeded data limit. 24
 		TokenConstDataLimitExceeded,
-		/// variable_data exceeded data limit.
+		/// variable_data exceeded data limit. 25
 		TokenVariableDataLimitExceeded,
-		/// Not NFT item data used to mint in NFT collection.
+		/// Not NFT item data used to mint in NFT collection. 26
 		NotNftDataUsedToMintNftCollectionToken,
-		/// Not Fungible item data used to mint in Fungible collection.
+		/// Not Fungible item data used to mint in Fungible collection. 27
 		NotFungibleDataUsedToMintFungibleCollectionToken,
-		/// Not Re Fungible item data used to mint in Re Fungible collection.
+		/// Not Re Fungible item data used to mint in Re Fungible collection. 28
 		NotReFungibleDataUsedToMintReFungibleCollectionToken,
-		/// Unexpected collection type.
+		/// Unexpected collection type. 29
 		UnexpectedCollectionType,
-		/// Can't store metadata in fungible tokens.
+		/// Can't store metadata in fungible tokens. 30
 		CantStoreMetadataInFungibleTokens,
-		/// Collection token limit exceeded
+		/// Collection token limit exceeded 31
 		CollectionTokenLimitExceeded,
-		/// Account token limit exceeded per collection
+		/// Account token limit exceeded per collection 32
 		AccountTokenLimitExceeded,
-		/// Collection limit bounds per collection exceeded
+		/// Collection limit bounds per collection exceeded 33
 		CollectionLimitBoundsExceeded,
 		/// Tried to enable permissions which are only permitted to be disabled
 		OwnerPermissionsCantBeReverted,
@@ -559,6 +559,8 @@ decl_module! {
 			if !collection.limits.owner_can_destroy {
 				fail!(Error::<T>::NoPermission);
 			}
+
+			// TODO: !critical! burn all items
 
 			<AddressTokens<T>>::remove_prefix(collection_id, None);
 			<Allowances<T>>::remove_prefix(collection_id, None);
@@ -2109,6 +2111,14 @@ impl<T: Config> Module<T> {
 					fraction: value,
 				});
 				Self::add_token_index(collection_id, item_id, &new_owner)?;
+			}
+
+			// remove zero record and decrement index (for full amount transfer)
+			if amount == value {		
+				new_full_item
+				.owner
+				.retain(|i| i.owner != old_owner);			
+				Self::remove_token_index(collection_id, item_id, &old_owner)?;
 			}
 
 			<ReFungibleItemList<T>>::insert(collection_id, item_id, new_full_item);
