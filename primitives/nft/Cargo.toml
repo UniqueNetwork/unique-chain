@@ -10,7 +10,7 @@ version = '0.9.0'
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2.2.0", default-features = false, features = ['derive'] }
-serde = { version = "1.0.119", features = ['derive'], default-features = false }
+serde = { version = "1.0.119", features = ['derive'], default-features = false, optional = true }
 max-encoded-len = { default-features = false, features = ['derive'], version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
 frame-support = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
 frame-system = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
@@ -22,6 +22,7 @@ derivative = "2.2.0"
 [features]
 default = ["std"]
 std = [
+  "serde1",
   "serde/std",
   "codec/std",
   "max-encoded-len/std",
@@ -31,3 +32,4 @@ std = [
   "sp-core/std",
   "sp-std/std",
 ]
+serde1 = ["serde"]
