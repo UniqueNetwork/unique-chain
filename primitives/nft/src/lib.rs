@@ -257,10 +257,10 @@ mod bounded_serde {
 #[derivative(Debug)]
 pub struct CreateNftData {
 	#[serde(with = "bounded_serde")]
-	#[derivative(Debug="ignore")]
+	#[derivative(Debug = "ignore")]
 	pub const_data: BoundedVec<u8, MaxDataSize>,
 	#[serde(with = "bounded_serde")]
-	#[derivative(Debug="ignore")]
+	#[derivative(Debug = "ignore")]
 	pub variable_data: BoundedVec<u8, MaxDataSize>,
 }
 
@@ -277,10 +277,10 @@ pub struct CreateFungibleData {
 #[derivative(Debug)]
 pub struct CreateReFungibleData {
 	#[serde(with = "bounded_serde")]
-	#[derivative(Debug="ignore")]
+	#[derivative(Debug = "ignore")]
 	pub const_data: BoundedVec<u8, MaxDataSize>,
 	#[serde(with = "bounded_serde")]
-	#[derivative(Debug="ignore")]
+	#[derivative(Debug = "ignore")]
 	pub variable_data: BoundedVec<u8, MaxDataSize>,
 	pub pieces: u128,
 }
