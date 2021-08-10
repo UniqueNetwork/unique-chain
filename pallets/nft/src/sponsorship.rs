@@ -1,22 +1,25 @@
 use crate::{
 	Config, Call, CollectionById, CreateItemBasket, VariableMetaDataBasket,
-	ReFungibleTransferBasket, FungibleTransferBasket, NftTransferBasket,
-	CreateItemData, CollectionMode, limit,
+	ReFungibleTransferBasket, FungibleTransferBasket, NftTransferBasket, CreateItemData,
+	CollectionMode,
 };
 use core::marker::PhantomData;
 use up_sponsorship::SponsorshipHandler;
 use frame_support::{
-	traits::{IsSubType, Get},
+	traits::{IsSubType},
 	storage::{StorageMap, StorageDoubleMap},
 };
-use nft_data_structs::{TokenId, CollectionId};
+use nft_data_structs::{
+	TokenId, CollectionId, NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+};
 
 pub struct NftSponsorshipHandler<T>(PhantomData<T>);
 impl<T: Config> NftSponsorshipHandler<T> {
 	pub fn withdraw_create_item(
 		who: &T::AccountId,
 		collection_id: &CollectionId,
-		_properties: &CreateItemData<T::ChainLimits>,
+		_properties: &CreateItemData,
 	) -> Option<T::AccountId> {
 		let collection = CollectionById::<T>::get(collection_id)?;
 
@@ -61,7 +64,7 @@ impl<T: Config> NftSponsorshipHandler<T> {
 					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
 						collection_limits.sponsor_transfer_timeout
 					} else {
-						<limit!(T, NftSponsorTransferTimeout)>::get()
+						NFT_SPONSOR_TRANSFER_TIMEOUT
 					};
 
 					let mut sponsored = true;
@@ -83,7 +86,7 @@ impl<T: Config> NftSponsorshipHandler<T> {
 					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
 						collection_limits.sponsor_transfer_timeout
 					} else {
-						<limit!(T, FungibleSponsorTransferTimeout)>::get()
+						FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT
 					};
 
 					let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
@@ -106,7 +109,7 @@ impl<T: Config> NftSponsorshipHandler<T> {
 					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
 						collection_limits.sponsor_transfer_timeout
 					} else {
-						<limit!(T, ReFungibleSponsorTransferTimeout)>::get()
+						REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT
 					};
 
 					let mut sponsored = true;

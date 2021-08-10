@@ -2,12 +2,11 @@
 
 use crate::{
 	Collection, CollectionById, Config, FungibleTransferBasket, NftTransferBasket,
-	eth::{account::EvmBackwardsAddressMapping, map_eth_to_id}, limit,
+	eth::{account::EvmBackwardsAddressMapping, map_eth_to_id},
 };
 use evm_coder::{Call, abi::AbiReader};
 use frame_support::{
 	storage::{StorageMap, StorageDoubleMap},
-	traits::Get,
 };
 use sp_core::H160;
 use sp_std::prelude::*;
@@ -18,6 +17,7 @@ use super::{
 };
 use core::convert::TryInto;
 use core::marker::PhantomData;
+use nft_data_structs::{NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT};
 
 struct AnyError;
 
@@ -44,7 +44,7 @@ fn try_sponsor<T: Config>(
 					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
 						collection_limits.sponsor_transfer_timeout
 					} else {
-						<limit!(T, NftSponsorTransferTimeout)>::get()
+						NFT_SPONSOR_TRANSFER_TIMEOUT
 					};
 
 					let mut sponsor = true;
@@ -75,7 +75,7 @@ fn try_sponsor<T: Config>(
 					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
 						collection_limits.sponsor_transfer_timeout
 					} else {
-						<limit!(T, FungibleSponsorTransferTimeout)>::get()
+						FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT
 					};
 
 					let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
