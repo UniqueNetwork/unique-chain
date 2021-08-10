@@ -1,12 +1,13 @@
 //! Implements EVM sponsoring logic via OnChargeEVMTransaction
 
 use crate::{
-	ChainLimit, Collection, CollectionById, Config, FungibleTransferBasket, NftTransferBasket,
-	eth::{account::EvmBackwardsAddressMapping, map_eth_to_id},
+	Collection, CollectionById, Config, FungibleTransferBasket, NftTransferBasket,
+	eth::{account::EvmBackwardsAddressMapping, map_eth_to_id}, limit,
 };
 use evm_coder::{Call, abi::AbiReader};
 use frame_support::{
-	storage::{StorageMap, StorageDoubleMap, StorageValue},
+	storage::{StorageMap, StorageDoubleMap},
+	traits::Get,
 };
 use sp_core::H160;
 use sp_std::prelude::*;
@@ -43,7 +44,7 @@ fn try_sponsor<T: Config>(
 					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
 						collection_limits.sponsor_transfer_timeout
 					} else {
-						ChainLimit::get().nft_sponsor_transfer_timeout
+						<limit!(T, NftSponsorTransferTimeout)>::get()
 					};
 
 					let mut sponsor = true;
@@ -74,7 +75,7 @@ fn try_sponsor<T: Config>(
 					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
 						collection_limits.sponsor_transfer_timeout
 					} else {
-						ChainLimit::get().fungible_sponsor_transfer_timeout
+						<limit!(T, FungibleSponsorTransferTimeout)>::get()
 					};
 
 					let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;

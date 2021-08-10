@@ -28,14 +28,6 @@ pub const MAX_REFUNGIBLE_PIECES: u128 = 1_000_000_000_000_000_000_000;
 pub const MAX_SPONSOR_TIMEOUT: u32 = 10_368_000;
 pub const MAX_TOKEN_OWNERSHIP: u32 = 10_000_000;
 
-// TODO: Somehow use ChainLimits for BoundedVec len calculation?
-// Do we need ChainLimits anyway, if we can change them via forkless upgrades?
-parameter_types! {
-pub const MaxDataSize: u32 = 2048;
-// TODO: This limit isn't checked for substrate create_multiple_items call
-pub const MaxItemsPerBatch: u32 = 200;
-}
-
 pub type CollectionId = u32;
 pub type TokenId = u32;
 pub type DecimalPoints = u8;
@@ -211,23 +203,25 @@ impl<BlockNumber: Encode + Decode> Default for CollectionLimits<BlockNumber> {
 	}
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-pub struct ChainLimits {
-	pub collection_numbers_limit: u32,
-	pub account_token_ownership_limit: u32,
-	pub collections_admins_limit: u64,
-	pub custom_data_limit: u32,
+pub trait ChainLimits {
+	type CollectionNumberLimit: Get<u32>;
+	type AccountTokenOwnershipLimit: Get<u32>;
+	type CollectionAdminsLimit: Get<u64>;
+	type CustomDataLimit: Get<u32>;
 
 	// Timeouts for item types in passed blocks
-	pub nft_sponsor_transfer_timeout: u32,
-	pub fungible_sponsor_transfer_timeout: u32,
-	pub refungible_sponsor_transfer_timeout: u32,
+	type NftSponsorTransferTimeout: Get<u32>;
+	type FungibleSponsorTransferTimeout: Get<u32>;
+	type ReFungibleSponsorTransferTimeout: Get<u32>;
 
 	// Schema limits
-	pub offchain_schema_limit: u32,
-	pub variable_on_chain_schema_limit: u32,
-	pub const_on_chain_schema_limit: u32,
+	type OffchainSchemaLimit: Get<u32>;
+	type VariableOnChainSchemaLimit: Get<u32>;
+	type ConstOnChainSchemaLimit: Get<u32>;
+
+	/// How much items can be created per single
+	/// create_many call
+	type MaxItemsPerBatch: Get<u32>;
 }
 
 /// BoundedVec doesn't supports serde
@@ -263,16 +257,16 @@ mod bounded_serde {
 	}
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, Default, Derivative, Clone, PartialEq)]
+#[derive(Encode, Decode, MaxEncodedLen, Default, Derivative)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-#[derivative(Debug)]
-pub struct CreateNftData {
+#[derivative(Debug(bound = ""), PartialEq(bound = ""), Clone(bound = ""))]
+pub struct CreateNftData<T: ChainLimits> {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
 	#[derivative(Debug = "ignore")]
-	pub const_data: BoundedVec<u8, MaxDataSize>,
+	pub const_data: BoundedVec<u8, T::CustomDataLimit>,
 	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
 	#[derivative(Debug = "ignore")]
-	pub variable_data: BoundedVec<u8, MaxDataSize>,
+	pub variable_data: BoundedVec<u8, T::CustomDataLimit>,
 }
 
 #[derive(Encode, Decode, MaxEncodedLen, Default, Debug, Clone, PartialEq)]
@@ -281,28 +275,29 @@ pub struct CreateFungibleData {
 	pub value: u128,
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, Default, Derivative, Clone, PartialEq)]
+#[derive(Encode, Decode, MaxEncodedLen, Default, Derivative)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-#[derivative(Debug)]
-pub struct CreateReFungibleData {
+#[derivative(Debug(bound = ""), PartialEq(bound = ""), Clone(bound = ""))]
+pub struct CreateReFungibleData<T: ChainLimits> {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
 	#[derivative(Debug = "ignore")]
-	pub const_data: BoundedVec<u8, MaxDataSize>,
+	pub const_data: BoundedVec<u8, T::CustomDataLimit>,
 	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
 	#[derivative(Debug = "ignore")]
-	pub variable_data: BoundedVec<u8, MaxDataSize>,
+	pub variable_data: BoundedVec<u8, T::CustomDataLimit>,
 	pub pieces: u128,
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, MaxEncodedLen, Derivative)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-pub enum CreateItemData {
-	NFT(CreateNftData),
+#[derivative(Debug(bound = ""), PartialEq(bound = ""), Clone(bound = ""))]
+pub enum CreateItemData<T: ChainLimits> {
+	NFT(CreateNftData<T>),
 	Fungible(CreateFungibleData),
-	ReFungible(CreateReFungibleData),
+	ReFungible(CreateReFungibleData<T>),
 }
 
-impl CreateItemData {
+impl<T: ChainLimits> CreateItemData<T> {
 	pub fn data_size(&self) -> usize {
 		match self {
 			CreateItemData::NFT(data) => data.variable_data.len() + data.const_data.len(),
@@ -312,19 +307,19 @@ impl CreateItemData {
 	}
 }
 
-impl From<CreateNftData> for CreateItemData {
-	fn from(item: CreateNftData) -> Self {
+impl<T: ChainLimits> From<CreateNftData<T>> for CreateItemData<T> {
+	fn from(item: CreateNftData<T>) -> Self {
 		CreateItemData::NFT(item)
 	}
 }
 
-impl From<CreateReFungibleData> for CreateItemData {
-	fn from(item: CreateReFungibleData) -> Self {
+impl<T: ChainLimits> From<CreateReFungibleData<T>> for CreateItemData<T> {
+	fn from(item: CreateReFungibleData<T>) -> Self {
 		CreateItemData::ReFungible(item)
 	}
 }
 
-impl From<CreateFungibleData> for CreateItemData {
+impl<T: ChainLimits> From<CreateFungibleData> for CreateItemData<T> {
 	fn from(item: CreateFungibleData) -> Self {
 		CreateItemData::Fungible(item)
 	}

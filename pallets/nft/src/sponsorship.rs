@@ -1,13 +1,13 @@
 use crate::{
 	Config, Call, CollectionById, CreateItemBasket, VariableMetaDataBasket,
-	ReFungibleTransferBasket, FungibleTransferBasket, NftTransferBasket, ChainLimit,
-	CreateItemData, CollectionMode,
+	ReFungibleTransferBasket, FungibleTransferBasket, NftTransferBasket,
+	CreateItemData, CollectionMode, limit,
 };
 use core::marker::PhantomData;
 use up_sponsorship::SponsorshipHandler;
 use frame_support::{
-	traits::IsSubType,
-	storage::{StorageMap, StorageDoubleMap, StorageValue},
+	traits::{IsSubType, Get},
+	storage::{StorageMap, StorageDoubleMap},
 };
 use nft_data_structs::{TokenId, CollectionId};
 
@@ -16,7 +16,7 @@ impl<T: Config> NftSponsorshipHandler<T> {
 	pub fn withdraw_create_item(
 		who: &T::AccountId,
 		collection_id: &CollectionId,
-		_properties: &CreateItemData,
+		_properties: &CreateItemData<T::ChainLimits>,
 	) -> Option<T::AccountId> {
 		let collection = CollectionById::<T>::get(collection_id)?;
 
@@ -47,7 +47,6 @@ impl<T: Config> NftSponsorshipHandler<T> {
 		item_id: &TokenId,
 	) -> Option<T::AccountId> {
 		let collection = CollectionById::<T>::get(collection_id)?;
-		let limits = ChainLimit::get();
 
 		let mut sponsor_transfer = false;
 		if collection.sponsorship.confirmed() {
@@ -62,7 +61,7 @@ impl<T: Config> NftSponsorshipHandler<T> {
 					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
 						collection_limits.sponsor_transfer_timeout
 					} else {
-						limits.nft_sponsor_transfer_timeout
+						<limit!(T, NftSponsorTransferTimeout)>::get()
 					};
 
 					let mut sponsored = true;
@@ -84,7 +83,7 @@ impl<T: Config> NftSponsorshipHandler<T> {
 					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
 						collection_limits.sponsor_transfer_timeout
 					} else {
-						limits.fungible_sponsor_transfer_timeout
+						<limit!(T, FungibleSponsorTransferTimeout)>::get()
 					};
 
 					let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
@@ -107,7 +106,7 @@ impl<T: Config> NftSponsorshipHandler<T> {
 					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
 						collection_limits.sponsor_transfer_timeout
 					} else {
-						limits.refungible_sponsor_transfer_timeout
+						<limit!(T, ReFungibleSponsorTransferTimeout)>::get()
 					};
 
 					let mut sponsored = true;

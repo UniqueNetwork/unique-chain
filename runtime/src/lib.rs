@@ -683,6 +683,35 @@ impl pallet_aura::Config for Runtime {
 }
 
 parameter_types! {
+	pub const CollectionNumberLimit: u32 = 100000;
+	pub const AccountTokenOwnershipLimit: u32 = 1000000;
+	pub const CollectionAdminsLimit: u64 = 5;
+	pub const CustomDataLimit: u32 = 2048;
+	pub const NftSponsorTransferTimeout: u32 = 5;
+	pub const FungibleSponsorTransferTimeout: u32 = 5;
+	pub const ReFungibleSponsorTransferTimeout: u32 = 5;
+	pub const OffchainSchemaLimit: u32 = 1024;
+	pub const VariableOnChainSchemaLimit: u32 = 1024;
+	pub const ConstOnChainSchemaLimit: u32 = 1024;
+	pub const MaxItemsPerBatch: u32 = 200;
+}
+
+pub struct ChainLimits;
+impl nft_data_structs::ChainLimits for ChainLimits {
+    type CollectionNumberLimit = CollectionNumberLimit;
+    type AccountTokenOwnershipLimit = AccountTokenOwnershipLimit;
+    type CollectionAdminsLimit = CollectionAdminsLimit;
+    type CustomDataLimit = CustomDataLimit;
+    type NftSponsorTransferTimeout = NftSponsorTransferTimeout;
+    type FungibleSponsorTransferTimeout = FungibleSponsorTransferTimeout;
+    type ReFungibleSponsorTransferTimeout = ReFungibleSponsorTransferTimeout;
+    type OffchainSchemaLimit = OffchainSchemaLimit;
+    type VariableOnChainSchemaLimit = VariableOnChainSchemaLimit;
+    type ConstOnChainSchemaLimit = ConstOnChainSchemaLimit;
+    type MaxItemsPerBatch = MaxItemsPerBatch;
+}
+
+parameter_types! {
 	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account();
 	pub const CollectionCreationPrice: Balance = 100 * UNIQUE;
 }
@@ -699,6 +728,7 @@ impl pallet_nft::Config for Runtime {
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
+	type ChainLimits = ChainLimits;
 }
 
 parameter_types! {
