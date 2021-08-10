@@ -433,6 +433,7 @@ decl_module! {
 		origin: T::Origin
 	{
 		fn deposit_event() = default;
+		const CollectionAdminsLimit: u64 = COLLECTION_ADMINS_LIMIT;
 		type Error = Error<T>;
 
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
