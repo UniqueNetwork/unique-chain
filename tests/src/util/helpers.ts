@@ -129,7 +129,7 @@ export interface IReFungibleTokenDataType {
 }
 
 export function getDefaultChainLimits(): IChainLimits {
-  let l: IChainLimits = {
+  const l: IChainLimits = {
     CollectionNumbersLimit : 100000,
     AccountTokenOwnershipLimit: 1000000,
     CollectionAdminsLimit: 5,
@@ -143,10 +143,10 @@ export function getDefaultChainLimits(): IChainLimits {
   };
 
   return l;
-};
+}
 
 export function getDefaultCollectionLimits(): ICollectionLimits {
-  let l: ICollectionLimits = {
+  const l: ICollectionLimits = {
     AccountTokenOwnershipLimit: 10000000,
     OwnerCanDestroy: true,
     OwnerCanTransfer: true,
@@ -744,8 +744,7 @@ approveExpectSuccess(
 ) {
   await usingApi(async (api: ApiPromise) => {
     approved = normalizeAccountId(approved);
-    const allowanceBefore =
-      await api.query.nft.allowances(collectionId, [tokenId, owner.address, toSubstrateAddress(approved)]) as unknown as BN;
+    await api.query.nft.allowances(collectionId, [tokenId, owner.address, toSubstrateAddress(approved)]) as unknown as BN;
     const approveNftTx = api.tx.nft.approve(approved, collectionId, tokenId, amount);
     const events = await submitTransactionAsync(owner, approveNftTx);
     const result = getCreateItemResult(events);
@@ -789,8 +788,8 @@ transferFromExpectSuccess(
     if (type === 'ReFungible') {
       const nftItemData =
         (await api.query.nft.reFungibleItemList(collectionId, tokenId) as any).toJSON() as IReFungibleTokenDataType;
-      let expectedOwner = toSubstrateAddress(to);
-      let ownerIndex = nftItemData.Owner.findIndex(v => toSubstrateAddress(v.Owner as any as string) == expectedOwner);
+      const expectedOwner = toSubstrateAddress(to);
+      const ownerIndex = nftItemData.Owner.findIndex(v => toSubstrateAddress(v.Owner as any as string) == expectedOwner);
       expect(ownerIndex).to.not.equal(-1);
       expect(nftItemData.Owner[ownerIndex].Owner).to.be.deep.equal(normalizeAccountId(to));
       expect(nftItemData.Owner[ownerIndex].Fraction).to.be.greaterThanOrEqual(value as number);
