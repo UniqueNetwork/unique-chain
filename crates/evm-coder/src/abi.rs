@@ -19,11 +19,16 @@ const ABI_ALIGNMENT: usize = 32;
 #[derive(Clone)]
 pub struct AbiReader<'i> {
 	buf: &'i [u8],
+	subresult_offset: usize,
 	offset: usize,
 }
 impl<'i> AbiReader<'i> {
 	pub fn new(buf: &'i [u8]) -> Self {
-		Self { buf, offset: 0 }
+		Self {
+			buf,
+			subresult_offset: 0,
+			offset: 0,
+		}
 	}
 	pub fn new_call(buf: &'i [u8]) -> Result<(u32, Self)> {
 		if buf.len() < 4 {
@@ -32,11 +37,18 @@ impl<'i> AbiReader<'i> {
 		let mut method_id = [0; 4];
 		method_id.copy_from_slice(&buf[0..4]);
 
-		Ok((u32::from_be_bytes(method_id), Self { buf, offset: 4 }))
+		Ok((
+			u32::from_be_bytes(method_id),
+			Self {
+				buf,
+				subresult_offset: 4,
+				offset: 4,
+			},
+		))
 	}
 
 	fn read_padleft<const S: usize>(&mut self) -> Result<[u8; S]> {
-		if self.buf.len() - self.offset < 32 {
+		if self.buf.len() - self.offset < ABI_ALIGNMENT {
 			return Err(Error::Error(ExitError::OutOfOffset));
 		}
 		let mut block = [0; S];
@@ -106,9 +118,13 @@ impl<'i> AbiReader<'i> {
 
 	fn subresult(&mut self) -> Result<AbiReader<'i>> {
 		let offset = self.read_usize()?;
+		if offset + self.subresult_offset > self.buf.len() {
+			return Err(Error::Error(ExitError::InvalidRange));
+		}
 		Ok(AbiReader {
 			buf: self.buf,
-			offset: offset + self.offset,
+			subresult_offset: offset + self.subresult_offset,
+			offset: offset + self.subresult_offset,
 		})
 	}
 
@@ -199,7 +215,7 @@ impl AbiWriter {
 		for (static_offset, part) in self.dynamic_part {
 			let part_offset = self.static_part.len();
 
-			let encoded_dynamic_offset = usize::to_be_bytes(part_offset - static_offset);
+			let encoded_dynamic_offset = usize::to_be_bytes(part_offset);
 			self.static_part[static_offset + ABI_ALIGNMENT - encoded_dynamic_offset.len()
 				..static_offset + ABI_ALIGNMENT]
 				.copy_from_slice(&encoded_dynamic_offset);
@@ -288,4 +304,55 @@ macro_rules! abi_encode {
 		)*
 		writer
 	}}
+}
+
+#[cfg(test)]
+pub mod test {
+	use super::{AbiReader, AbiWriter};
+	use hex_literal::hex;
+
+	#[test]
+	fn dynamic_after_static() {
+		let mut encoder = AbiWriter::new();
+		encoder.bool(&true);
+		encoder.string("test");
+		let encoded = encoder.finish();
+
+		let mut encoder = AbiWriter::new();
+		encoder.bool(&true);
+		// Offset to subresult
+		encoder.uint32(&(32 * 2));
+		// Len of "test"
+		encoder.uint32(&4);
+		encoder.write_padright(&[b't', b'e', b's', b't']);
+		let alternative_encoded = encoder.finish();
+
+		assert_eq!(encoded, alternative_encoded);
+
+		let mut decoder = AbiReader::new(&encoded);
+		assert_eq!(decoder.bool().unwrap(), true);
+		assert_eq!(decoder.string().unwrap(), "test");
+	}
+
+	#[test]
+	fn mint_sample() {
+		let (call, mut decoder) = AbiReader::new_call(&hex!(
+			"
+				50bb4e7f
+				000000000000000000000000ad2c0954693c2b5404b7e50967d3481bea432374
+				0000000000000000000000000000000000000000000000000000000000000001
+				0000000000000000000000000000000000000000000000000000000000000060
+				0000000000000000000000000000000000000000000000000000000000000008
+				5465737420555249000000000000000000000000000000000000000000000000
+			"
+		))
+		.unwrap();
+		assert_eq!(call, 0x50bb4e7f);
+		assert_eq!(
+			format!("{:?}", decoder.address().unwrap()),
+			"0xad2c0954693c2b5404b7e50967d3481bea432374"
+		);
+		assert_eq!(decoder.uint32().unwrap(), 1);
+		assert_eq!(decoder.string().unwrap(), "Test URI");
+	}
 }
