@@ -14,7 +14,7 @@ import { createCollectionExpectSuccess,
   setCollectionLimitsExpectSuccess,
   addCollectionAdminExpectSuccess,
   ICollectionLimits,		
-	getDefaultCollectionLimits,
+  getDefaultCollectionLimits,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -69,7 +69,7 @@ describe('(!negative test!) integration test: ext. destroyCollection():', () => 
   });
   it('fails when OwnerCanDestroy == false', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+    const collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
     collectionLimits.OwnerCanDestroy = false;
     await setCollectionLimitsExpectSuccess(alice, collectionId, collectionLimits);
 

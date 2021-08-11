@@ -18,7 +18,7 @@ import {
   setCollectionLimitsExpectSuccess,
   addCollectionAdminExpectSuccess,
   ICollectionLimits,		
-	getDefaultCollectionLimits,
+  getDefaultCollectionLimits,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -186,7 +186,7 @@ describe('setCollectionLimits negative', () => {
   it('fails when trying to enable OwnerCanTransfer after it was disabled', async () => {
     const collectionId = await createCollectionExpectSuccess();
 
-    let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+    const collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
     collectionLimits.AccountTokenOwnershipLimit = accountTokenOwnershipLimit;
     collectionLimits.SponsoredDataSize = sponsoredDataSize;
     collectionLimits.TokenLimit = tokenLimit;
@@ -201,7 +201,7 @@ describe('setCollectionLimits negative', () => {
   it('fails when trying to enable OwnerCanDestroy after it was disabled', async () => {
     const collectionId = await createCollectionExpectSuccess();
 
-    let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+    const collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
     collectionLimits.AccountTokenOwnershipLimit = accountTokenOwnershipLimit;
     collectionLimits.SponsoredDataSize = sponsoredDataSize;
     collectionLimits.TokenLimit = tokenLimit;
@@ -217,7 +217,7 @@ describe('setCollectionLimits negative', () => {
     await usingApi(async () => {
 
       const collectionId = await createCollectionExpectSuccess();
-      let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+      const collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
       collectionLimits.AccountTokenOwnershipLimit = accountTokenOwnershipLimit;
       collectionLimits.SponsoredDataSize = sponsoredDataSize;
       collectionLimits.TokenLimit = tokenLimit;

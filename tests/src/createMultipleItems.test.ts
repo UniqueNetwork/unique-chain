@@ -19,7 +19,7 @@ import {
   setCollectionLimitsExpectSuccess,
   addCollectionAdminExpectSuccess,
   ICollectionLimits,		
-	getDefaultCollectionLimits,
+  getDefaultCollectionLimits,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -126,7 +126,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const alice = privateKey('//Alice');
 
       const collectionId = await createCollectionExpectSuccess();
-      let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+      const collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
       collectionLimits.TokenLimit = 2;
 
       await setCollectionLimitsExpectSuccess(alice, collectionId, collectionLimits);
@@ -381,7 +381,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
     await usingApi(async (api) => {
 
       const collectionId = await createCollectionExpectSuccess();
-      let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+      const collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
       collectionLimits.TokenLimit = 1;
       await setCollectionLimitsExpectSuccess(Alice, collectionId, collectionLimits);
       const args = [

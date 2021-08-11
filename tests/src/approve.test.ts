@@ -8,7 +8,6 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import { default as usingApi } from './substrate/substrate-api';
-import BN from 'bn.js';
 import {
   approveExpectFail,
   approveExpectSuccess,
@@ -104,13 +103,13 @@ describe('Normal user can approve other users to transfer:', () => {
   });
 
   it('Fungible up to an approved amount', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode:{ type: "Fungible", decimalPoints: 0 }});
+    const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'Fungible', decimalPoints: 0 }});
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'Fungible', Bob.address); 
     await approveExpectSuccess(collectionId, itemId, Bob, Charlie);
   });
 
   it('ReFungible up to an approved amount', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode:{ type: "ReFungible" } });
+    const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'ReFungible' } });
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'ReFungible', Bob.address);
     await approveExpectSuccess(collectionId, itemId, Bob, Charlie);
   });
@@ -137,14 +136,14 @@ describe('Approved users can transferFrom up to approved amount:', () => {
   });
 
   it('Fungible up to an approved amount', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode:{ type: "Fungible", decimalPoints: 0 }});
+    const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'Fungible', decimalPoints: 0 }});
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'Fungible', Bob.address); 
     await approveExpectSuccess(collectionId, itemId, Bob, Charlie);
     await transferFromExpectSuccess(collectionId, itemId, Charlie, Bob, Alice, 1, 'Fungible');
   });
 
   it('ReFungible up to an approved amount', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode:{ type: "ReFungible" } });
+    const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'ReFungible' } });
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'ReFungible', Bob.address);
     await approveExpectSuccess(collectionId, itemId, Bob, Charlie);
     await transferFromExpectSuccess(collectionId, itemId, Charlie, Bob, Alice, 1, 'ReFungible');
@@ -173,7 +172,7 @@ describe('Approved users cannot use transferFrom to repeat transfers if approved
   });
 
   it('Fungible up to an approved amount', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode:{ type: "Fungible", decimalPoints: 0 }});
+    const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'Fungible', decimalPoints: 0 }});
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'Fungible', Bob.address); 
     await approveExpectSuccess(collectionId, itemId, Bob, Charlie);
     await transferFromExpectSuccess(collectionId, itemId, Charlie, Bob, Alice, 1, 'Fungible');
@@ -181,7 +180,7 @@ describe('Approved users cannot use transferFrom to repeat transfers if approved
   });
 
   it('ReFungible up to an approved amount', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode:{ type: "ReFungible" } });
+    const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'ReFungible' } });
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'ReFungible', Bob.address);
     await approveExpectSuccess(collectionId, itemId, Bob, Charlie);
     await transferFromExpectSuccess(collectionId, itemId, Charlie, Bob, Alice, 1, 'ReFungible');
@@ -205,7 +204,7 @@ describe('Approved amount decreases by the transferred amount.:', () => {
   });  
 
   it('If a user B is approved to transfer 10 Fungible tokens from user A, they can transfer 2 tokens to user C, which will result in decreasing approval from 10 to 8. Then user B can transfer 8 tokens to user D.', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode:{ type: "Fungible", decimalPoints: 0 }});
+    const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'Fungible', decimalPoints: 0 }});
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'Fungible', Alice.address); 
     await approveExpectSuccess(collectionId, itemId, Alice, Bob, 10);
     await transferFromExpectSuccess(collectionId, itemId, Bob, Alice, Charlie, 2, 'Fungible');
@@ -308,7 +307,7 @@ describe('Administrator and collection owner do not need approval in order to ex
   });
 
   it('Fungible up to an approved amount', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode:{ type: "Fungible", decimalPoints: 0 }});
+    const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'Fungible', decimalPoints: 0 }});
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'Fungible', Charlie.address); 
     await transferFromExpectSuccess(collectionId, itemId, Alice, Charlie, Dave, 1, 'Fungible');
     await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
@@ -316,7 +315,7 @@ describe('Administrator and collection owner do not need approval in order to ex
   });
 
   it('ReFungible up to an approved amount', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode:{ type: "ReFungible" } });
+    const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'ReFungible' } });
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'ReFungible', Charlie.address);
     await transferFromExpectSuccess(collectionId, itemId, Alice, Charlie, Dave, 1, 'ReFungible');
     await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
@@ -340,7 +339,7 @@ describe('Repeated approvals add up', () => {
   });  
 
   it('Owned 10, approval 1: 1, approval 2: 1, resulting approved value: 2. Fungible', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode:{ type: "Fungible", decimalPoints: 0 }});
+    const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'Fungible', decimalPoints: 0 }});
     await createItemExpectSuccess(Alice, collectionId, 'Fungible', Alice.address);
     await approveExpectSuccess(collectionId, 0, Alice, Bob, 1);
     await approveExpectSuccess(collectionId, 0, Alice, Charlie, 1);
@@ -350,7 +349,7 @@ describe('Repeated approvals add up', () => {
   });
 
   it('Owned 10, approval 1: 1, approval 2: 1, resulting approved value: 2. ReFungible', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode:{ type: "ReFungible" } });
+    const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'ReFungible' } });
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'ReFungible', Alice.address);
     await approveExpectSuccess(collectionId, itemId, Alice, Bob, 1);
     await approveExpectSuccess(collectionId, itemId, Alice, Charlie, 1);
@@ -360,14 +359,14 @@ describe('Repeated approvals add up', () => {
   });
 
   it('Cannot approve for more than total user’s amount (owned: 10, approval 1: 5 - should succeed, approval 2: 6 - should fail). Fungible', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode:{ type: "Fungible", decimalPoints: 0 }});
+    const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'Fungible', decimalPoints: 0 }});
     await createItemExpectSuccess(Alice, collectionId, 'Fungible', Dave.address);
     await approveExpectSuccess(collectionId, 0, Dave, Bob, 5);
     await approveExpectFail(collectionId, 0, Dave, Charlie, 6);
   });
 
   it('Cannot approve for more than total user’s amount (owned: 100, approval 1: 50 - should succeed, approval 2: 51 - should fail). ReFungible', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode:{ type: "ReFungible" } });
+    const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'ReFungible' } });
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'ReFungible', Dave.address);
     await approveExpectSuccess(collectionId, itemId, Dave, Bob, 50);
     await approveExpectFail(collectionId, itemId, Dave, Charlie, 51);
@@ -471,7 +470,7 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
     const collectionId = await createCollectionExpectSuccess();
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Bob.address);
 
-    let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+    const collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
     collectionLimits.OwnerCanTransfer = false;
 
     await setCollectionLimitsExpectSuccess(Alice, collectionId, collectionLimits);

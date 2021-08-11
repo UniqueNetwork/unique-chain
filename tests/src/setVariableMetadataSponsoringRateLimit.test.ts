@@ -16,7 +16,7 @@ import {
   setVariableMetaDataExpectFailure,
   setVariableMetaDataExpectSuccess,
   ICollectionLimits,		
-	getDefaultCollectionLimits,
+  getDefaultCollectionLimits,
 } from './util/helpers';
 
 describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
@@ -34,7 +34,7 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
-    let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+    const collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
     collectionLimits.SponsoredDataRateLimit = 0;
     await setCollectionLimitsExpectSuccess(alice, collectionId, collectionLimits);
 
@@ -47,7 +47,7 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
-    let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+    const collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
     collectionLimits.SponsoredDataRateLimit = 10;
     await setCollectionLimitsExpectSuccess(alice, collectionId, collectionLimits);
 
@@ -60,7 +60,7 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
-    let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+    const collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
     collectionLimits.SponsoredDataRateLimit = 0;
     collectionLimits.SponsoredDataSize = 1;
     await setCollectionLimitsExpectSuccess(alice, collectionId, collectionLimits);
