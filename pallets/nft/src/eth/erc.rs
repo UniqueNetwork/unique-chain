@@ -2,7 +2,6 @@ use core::char::{decode_utf16, REPLACEMENT_CHARACTER};
 use evm_coder::{ToLog, execution::Result, solidity, solidity_interface, types::*};
 use nft_data_structs::{CreateItemData, CreateNftData};
 use core::convert::TryInto;
-use alloc::format;
 use crate::{
 	Allowances, Module, Balance, CollectionHandle, CollectionMode, Config, NftItemList,
 	ItemListIndex,
@@ -46,9 +45,15 @@ impl<T: Config> CollectionHandle<T> {
 
 #[solidity_interface(name = "ERC721Metadata", inline_is(InlineNameSymbol))]
 impl<T: Config> CollectionHandle<T> {
+	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
-		// TODO: We should standartize url prefix, maybe via offchain schema?
-		Ok(format!("unique.network/{}/{}", self.id, token_id))
+		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+		Ok(string::from_utf8_lossy(
+			&<NftItemList<T>>::get(self.id, token_id)
+				.ok_or("token not found")?
+				.const_data,
+		)
+		.into())
 	}
 }
 

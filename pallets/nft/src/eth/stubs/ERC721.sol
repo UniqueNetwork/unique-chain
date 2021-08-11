@@ -140,7 +140,7 @@ contract ERC721Enumerable is Dummy, InlineTotalSupply {
 }
 
 contract ERC721Metadata is Dummy, InlineNameSymbol {
-	function tokenUri(uint256 tokenId) public view returns (string memory) {
+	function tokenURI(uint256 tokenId) public view returns (string memory) {
 		require(false, stub_error);
 		tokenId;
 		dummy;
