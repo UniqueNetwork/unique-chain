@@ -116,7 +116,7 @@ decl_error! {
 		AdminNotFound,
 		/// Arithmetic calculation overflow.
 		NumOverflow,
-		/// Account already has admin role. 10
+		/// Account already has admin role.
 		AlreadyAdmin,
 		/// You do not own this collection.
 		NoPermission,
@@ -136,7 +136,7 @@ decl_error! {
 		TokenValueNotEnough,
 		/// Only approved addresses can call this method.
 		ApproveRequired,
-		/// Address is not in white list. 20
+		/// Address is not in white list.
 		AddresNotInWhiteList,
 		/// Number of collection admins bound exceeded.
 		CollectionAdminsLimitExceeded,
@@ -156,7 +156,7 @@ decl_error! {
 		NotReFungibleDataUsedToMintReFungibleCollectionToken,
 		/// Unexpected collection type.
 		UnexpectedCollectionType,
-		/// Can't store metadata in fungible tokens. 30
+		/// Can't store metadata in fungible tokens.
 		CantStoreMetadataInFungibleTokens,
 		/// Collection token limit exceeded
 		CollectionTokenLimitExceeded,
@@ -1336,7 +1336,8 @@ impl<T: Config> Module<T> {
 
 		let allowance_limit = if bypasses_limits {
 			None
-		} else if let Some(amount) = Self::owned_amount(sender, collection, item_id) {
+		} else if let Some(amount) = Self::owned_amount_except(sender, spender, collection, item_id)
+		{
 			Some(amount)
 		} else {
 			fail!(Error::<T>::NoPermission);
@@ -1918,6 +1919,58 @@ impl<T: Config> Module<T> {
 		);
 
 		Ok(())
+	}
+
+	fn already_approved_except(
+		subject: &T::AccountId,
+		excluded: &T::AccountId,
+		collection_id: CollectionId,
+		item_id: TokenId,
+	) -> u128 {
+		// ensure that not overwrite already existing approve for address
+		// find all approves then except "old" approve
+		<Allowances<T>>::iter_prefix(collection_id)
+			.filter(|i| i.0 .0 == item_id && i.0 .1 == *subject && i.0 .2 != *excluded)
+			.map(|i| i.1)
+			.sum()
+	}
+
+	fn owned_amount_except(
+		subject: &T::CrossAccountId,
+		excluded: &T::CrossAccountId,
+		target_collection: &CollectionHandle<T>,
+		item_id: TokenId,
+	) -> Option<u128> {
+		let collection_id = target_collection.id;
+
+		match target_collection.mode {
+			CollectionMode::NFT => {
+				(<NftItemList<T>>::get(collection_id, item_id)?.owner == *subject).then(|| 1)
+			}
+			CollectionMode::Fungible(_) => {
+				<FungibleItemList<T>>::get(collection_id, &subject.as_sub())
+					.value
+					.checked_sub(Self::already_approved_except(
+						subject.as_sub(),
+						excluded.as_sub(),
+						collection_id,
+						item_id,
+					))
+			}
+			CollectionMode::ReFungible => <ReFungibleItemList<T>>::get(collection_id, item_id)?
+				.owner
+				.iter()
+				.find(|i| i.owner == *subject)
+				.map(|i| i.fraction)
+				.unwrap_or(0)
+				.checked_sub(Self::already_approved_except(
+					subject.as_sub(),
+					excluded.as_sub(),
+					collection_id,
+					item_id,
+				)),
+			CollectionMode::Invalid => None,
+		}
 	}
 
 	fn owned_amount(
