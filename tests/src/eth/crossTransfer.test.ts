@@ -8,11 +8,10 @@ import { createCollectionExpectSuccess,
   createFungibleItemExpectSuccess, 
   transferExpectSuccess, 
   transferFromExpectSuccess, 
-  CrossAccountId,
-  createItemExpectSuccess,
-  normalizeAccountId } from '../util/helpers';
+  createItemExpectSuccess } from '../util/helpers';
 import { collectionIdToAddress, 
   createEthAccountWithBalance, 
+  subToEth,
   GAS_ARGS, itWeb3 } from './util/helpers';
 import fungibleAbi from './fungibleAbi.json';
 import nonFungibleAbi from './nonFungibleAbi.json';
@@ -26,10 +25,10 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
     const alice = privateKey('//Alice');
     const bob = privateKey('//Bob');
     const charlie = privateKey('//Charlie');
-    const ethAccountVariant: CrossAccountId = normalizeAccountId(charlie.address);
     await createFungibleItemExpectSuccess(alice, collection, { Value: 200n }, { substrate: alice.address });
-    await transferExpectSuccess(collection, 0, alice, ethAccountVariant , 200, 'Fungible');
-    await transferExpectSuccess(collection, 0, charlie, bob , 200, 'Fungible');
+    await transferExpectSuccess(collection, 0, alice, {ethereum: subToEth(charlie.address)} , 200, 'Fungible');
+    await transferFromExpectSuccess(collection, 0, alice, {ethereum: subToEth(charlie.address)}, charlie, 50, 'Fungible');
+    await transferExpectSuccess(collection, 0, charlie, bob, 50, 'Fungible');
   });
 
   itWeb3('The private key X create a EVM address. Alice sends a token to the substrate address corresponding to this EVM address, and X can send it to Bob in the EVM', async ({ api, web3 }) => {
@@ -54,7 +53,7 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
 });
 
 describe.only('Token transfer between substrate address and EVM address. NFT', () => {
-  itWeb3.skip('The private key X create a substrate address. Alice sends a token to the corresponding EVM address, and X can send it to Bob in the substrate', async () => {
+  itWeb3('The private key X create a substrate address. Alice sends a token to the corresponding EVM address, and X can send it to Bob in the substrate', async () => {
     const collection = await createCollectionExpectSuccess({
       name: 'token name',
       mode: { type: 'NFT' },
@@ -62,9 +61,9 @@ describe.only('Token transfer between substrate address and EVM address. NFT', (
     const alice = privateKey('//Alice');
     const bob = privateKey('//Bob');
     const charlie = privateKey('//Charlie');
-    const ethAccountVariant: CrossAccountId = normalizeAccountId(charlie.address);
     const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', { substrate: alice.address });
-    await transferExpectSuccess(collection, tokenId, alice, ethAccountVariant, 1, 'NFT');
+    await transferExpectSuccess(collection, tokenId, alice, { ethereum: subToEth(charlie.address) }, 1, 'NFT');
+    await transferFromExpectSuccess(collection, tokenId, alice, {ethereum: subToEth(charlie.address)}, charlie, 1, 'NFT');
     await transferExpectSuccess(collection, tokenId, charlie, bob, 1, 'NFT');
   });
 
