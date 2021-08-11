@@ -98,71 +98,71 @@ pub trait WeightInfo {
 decl_error! {
 	/// Error for non-fungible-token module.
 	pub enum Error for Module<T: Config> {
-		/// Total collections bound exceeded. 1
+		/// Total collections bound exceeded.
 		TotalCollectionsLimitExceeded,
-		/// Decimal_points parameter must be lower than MAX_DECIMAL_POINTS constant, currently it is 30. 2
+		/// Decimal_points parameter must be lower than MAX_DECIMAL_POINTS constant, currently it is 30.
 		CollectionDecimalPointLimitExceeded,
-		/// Collection name can not be longer than 63 char. 3
+		/// Collection name can not be longer than 63 char.
 		CollectionNameLimitExceeded,
-		/// Collection description can not be longer than 255 char. 4
+		/// Collection description can not be longer than 255 char.
 		CollectionDescriptionLimitExceeded,
-		/// Token prefix can not be longer than 15 char. 5
+		/// Token prefix can not be longer than 15 char.
 		CollectionTokenPrefixLimitExceeded,
-		/// This collection does not exist. 6
+		/// This collection does not exist.
 		CollectionNotFound,
-		/// Item not exists. 7
+		/// Item not exists.
 		TokenNotFound,
-		/// Admin not found 8
+		/// Admin not found
 		AdminNotFound,
-		/// Arithmetic calculation overflow. 9
+		/// Arithmetic calculation overflow.
 		NumOverflow,
 		/// Account already has admin role. 10
 		AlreadyAdmin,
-		/// You do not own this collection. 11
+		/// You do not own this collection.
 		NoPermission,
-		/// This address is not set as sponsor, use setCollectionSponsor first. 12
+		/// This address is not set as sponsor, use setCollectionSponsor first.
 		ConfirmUnsetSponsorFail,
-		/// Collection is not in mint mode. 13
+		/// Collection is not in mint mode.
 		PublicMintingNotAllowed,
-		/// Sender parameter and item owner must be equal. 14
+		/// Sender parameter and item owner must be equal.
 		MustBeTokenOwner,
-		/// Item balance not enough. 15
+		/// Item balance not enough.
 		TokenValueTooLow,
-		/// Size of item is too large. 16
+		/// Size of item is too large.
 		NftSizeLimitExceeded,
-		/// No approve found 17
+		/// No approve found
 		ApproveNotFound,
-		/// Requested value more than approved. 18
+		/// Requested value more than approved.
 		TokenValueNotEnough,
-		/// Only approved addresses can call this method. 19
+		/// Only approved addresses can call this method.
 		ApproveRequired,
 		/// Address is not in white list. 20
 		AddresNotInWhiteList,
-		/// Number of collection admins bound exceeded. 21
+		/// Number of collection admins bound exceeded.
 		CollectionAdminsLimitExceeded,
-		/// Owned tokens by a single address bound exceeded. 22
+		/// Owned tokens by a single address bound exceeded.
 		AddressOwnershipLimitExceeded,
-		/// Length of items properties must be greater than 0. 23
+		/// Length of items properties must be greater than 0.
 		EmptyArgument,
-		/// const_data exceeded data limit. 24
+		/// const_data exceeded data limit.
 		TokenConstDataLimitExceeded,
-		/// variable_data exceeded data limit. 25
+		/// variable_data exceeded data limit.
 		TokenVariableDataLimitExceeded,
-		/// Not NFT item data used to mint in NFT collection. 26
+		/// Not NFT item data used to mint in NFT collection.
 		NotNftDataUsedToMintNftCollectionToken,
-		/// Not Fungible item data used to mint in Fungible collection. 27
+		/// Not Fungible item data used to mint in Fungible collection.
 		NotFungibleDataUsedToMintFungibleCollectionToken,
-		/// Not Re Fungible item data used to mint in Re Fungible collection. 28
+		/// Not Re Fungible item data used to mint in Re Fungible collection.
 		NotReFungibleDataUsedToMintReFungibleCollectionToken,
-		/// Unexpected collection type. 29
+		/// Unexpected collection type.
 		UnexpectedCollectionType,
 		/// Can't store metadata in fungible tokens. 30
 		CantStoreMetadataInFungibleTokens,
-		/// Collection token limit exceeded 31
+		/// Collection token limit exceeded
 		CollectionTokenLimitExceeded,
-		/// Account token limit exceeded per collection 32
+		/// Account token limit exceeded per collection
 		AccountTokenLimitExceeded,
-		/// Collection limit bounds per collection exceeded 33
+		/// Collection limit bounds per collection exceeded
 		CollectionLimitBoundsExceeded,
 		/// Tried to enable permissions which are only permitted to be disabled
 		OwnerPermissionsCantBeReverted,
@@ -288,9 +288,6 @@ decl_storage! {
 		/// Amount of collections destroyed, used for total amount tracking with
 		/// CreatedCollectionCount
 		DestroyedCollectionCount: u32;
-		/// Total amount of account owned tokens (NFTs + RFTs + unique fungibles)
-		/// Account id (real)
-		pub AccountItemCount get(fn account_item_count): map hasher(twox_64_concat) T::AccountId => u32;
 		//#endregion
 
 		//#region Basic collections
@@ -559,8 +556,6 @@ decl_module! {
 			if !collection.limits.owner_can_destroy {
 				fail!(Error::<T>::NoPermission);
 			}
-
-			// TODO: !critical! burn all items
 
 			<AddressTokens<T>>::remove_prefix(collection_id, None);
 			<Allowances<T>>::remove_prefix(collection_id, None);
@@ -1352,19 +1347,13 @@ impl<T: Config> Module<T> {
 			Self::check_white_list(collection, spender)?;
 		}
 
-		let allowance: u128 = amount
-			.checked_add(<Allowances<T>>::get(
-				collection.id,
-				(item_id, sender.as_sub(), spender.as_sub()),
-			))
-			.ok_or(Error::<T>::NumOverflow)?;
 		if let Some(limit) = allowance_limit {
-			ensure!(limit >= allowance, Error::<T>::TokenValueTooLow);
+			ensure!(limit >= amount, Error::<T>::TokenValueTooLow);
 		}
 		<Allowances<T>>::insert(
 			collection.id,
 			(item_id, sender.as_sub(), spender.as_sub()),
-			allowance,
+			amount,
 		);
 
 		if matches!(collection.mode, CollectionMode::NFT) {
@@ -1381,7 +1370,7 @@ impl<T: Config> Module<T> {
 			collection.log(ERC20Events::Approval {
 				owner: *sender.as_eth(),
 				spender: *spender.as_eth(),
-				value: allowance.into(),
+				value: amount.into(),
 			})?;
 		}
 
@@ -1390,7 +1379,7 @@ impl<T: Config> Module<T> {
 			item_id,
 			sender.clone(),
 			spender.clone(),
-			allowance,
+			amount,
 		));
 		Ok(())
 	}
@@ -2298,22 +2287,6 @@ impl<T: Config> Module<T> {
 		item_index: TokenId,
 		owner: &T::CrossAccountId,
 	) -> DispatchResult {
-		// add to account limit
-		if <AccountItemCount<T>>::contains_key(owner.as_sub()) {
-			// bound Owned tokens by a single address
-			let count = <AccountItemCount<T>>::get(owner.as_sub());
-			ensure!(
-				count < ChainLimit::get().account_token_ownership_limit,
-				Error::<T>::AddressOwnershipLimitExceeded
-			);
-
-			<AccountItemCount<T>>::insert(
-				owner.as_sub(),
-				count.checked_add(1).ok_or(Error::<T>::NumOverflow)?,
-			);
-		} else {
-			<AccountItemCount<T>>::insert(owner.as_sub(), 1);
-		}
 
 		let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner.as_sub());
 		if list_exists {
@@ -2338,13 +2311,6 @@ impl<T: Config> Module<T> {
 		item_index: TokenId,
 		owner: &T::CrossAccountId,
 	) -> DispatchResult {
-		// update counter
-		<AccountItemCount<T>>::insert(
-			owner.as_sub(),
-			<AccountItemCount<T>>::get(owner.as_sub())
-				.checked_sub(1)
-				.ok_or(Error::<T>::NumOverflow)?,
-		);
 
 		let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner.as_sub());
 		if list_exists {
