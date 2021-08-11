@@ -2287,7 +2287,6 @@ impl<T: Config> Module<T> {
 		item_index: TokenId,
 		owner: &T::CrossAccountId,
 	) -> DispatchResult {
-
 		let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner.as_sub());
 		if list_exists {
 			let mut list = <AddressTokens<T>>::get(collection_id, owner.as_sub());
@@ -2311,7 +2310,6 @@ impl<T: Config> Module<T> {
 		item_index: TokenId,
 		owner: &T::CrossAccountId,
 	) -> DispatchResult {
-
 		let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner.as_sub());
 		if list_exists {
 			let mut list = <AddressTokens<T>>::get(collection_id, owner.as_sub());
