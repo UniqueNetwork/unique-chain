@@ -17,6 +17,8 @@ import {
   setCollectionLimitsExpectFailure,
   setCollectionLimitsExpectSuccess,
   addCollectionAdminExpectSuccess,
+  ICollectionLimits,		
+	getDefaultCollectionLimits,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -183,56 +185,45 @@ describe('setCollectionLimits negative', () => {
 
   it('fails when trying to enable OwnerCanTransfer after it was disabled', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await setCollectionLimitsExpectSuccess(alice, collectionId, { 
-      AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
-      SponsoredMintSize: sponsoredDataSize,
-      TokenLimit: tokenLimit,
-      SponsorTimeout: sponsorTimeout,
-      OwnerCanTransfer: false,
-      OwnerCanDestroy: true,
-    });
-    await setCollectionLimitsExpectFailure(alice, collectionId, { 
-      AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
-      SponsoredMintSize: sponsoredDataSize,
-      TokenLimit: tokenLimit,
-      SponsorTimeout: sponsorTimeout,
-      OwnerCanTransfer: true,
-      OwnerCanDestroy: true,
-    });
+
+    let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+    collectionLimits.AccountTokenOwnershipLimit = accountTokenOwnershipLimit;
+    collectionLimits.SponsoredDataSize = sponsoredDataSize;
+    collectionLimits.TokenLimit = tokenLimit;
+    collectionLimits.SponsorTimeout = sponsorTimeout;
+    collectionLimits.OwnerCanTransfer = false;
+    collectionLimits.OwnerCanDestroy = true;
+    await setCollectionLimitsExpectSuccess(alice, collectionId, collectionLimits);
+    collectionLimits.OwnerCanTransfer = true;
+    await setCollectionLimitsExpectFailure(alice, collectionId, collectionLimits);
   });
 
   it('fails when trying to enable OwnerCanDestroy after it was disabled', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {
-      AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
-      SponsoredMintSize: sponsoredDataSize,
-      TokenLimit: tokenLimit,
-      SponsorTimeout: sponsorTimeout,
-      OwnerCanTransfer: true,
-      OwnerCanDestroy: false,
-    });
-    await setCollectionLimitsExpectFailure(alice, collectionId, { 
-      AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
-      SponsoredMintSize: sponsoredDataSize,
-      TokenLimit: tokenLimit,
-      SponsorTimeout: sponsorTimeout,
-      OwnerCanTransfer: true,
-      OwnerCanDestroy: true,
-    });
+
+    let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+    collectionLimits.AccountTokenOwnershipLimit = accountTokenOwnershipLimit;
+    collectionLimits.SponsoredDataSize = sponsoredDataSize;
+    collectionLimits.TokenLimit = tokenLimit;
+    collectionLimits.SponsorTimeout = sponsorTimeout;
+    collectionLimits.OwnerCanTransfer = true;
+    collectionLimits.OwnerCanDestroy = false;
+    await setCollectionLimitsExpectSuccess(alice, collectionId, collectionLimits);
+    collectionLimits.OwnerCanDestroy = true;
+    await setCollectionLimitsExpectFailure(alice, collectionId, collectionLimits);
   });
 
   it('Setting the higher token limit fails', async () => {
     await usingApi(async () => {
 
       const collectionId = await createCollectionExpectSuccess();
-      const collectionLimits = {
-        AccountTokenOwnershipLimit: accountTokenOwnershipLimit,
-        SponsoredMintSize: sponsoredDataSize,
-        TokenLimit: tokenLimit,
-        SponsorTimeout: sponsorTimeout,
-        OwnerCanTransfer: true,
-        OwnerCanDestroy: true,
-      };
+      let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+      collectionLimits.AccountTokenOwnershipLimit = accountTokenOwnershipLimit;
+      collectionLimits.SponsoredDataSize = sponsoredDataSize;
+      collectionLimits.TokenLimit = tokenLimit;
+      collectionLimits.SponsorTimeout = sponsorTimeout;
+      collectionLimits.OwnerCanTransfer = true;
+      collectionLimits.OwnerCanDestroy = true;
 
       // The first time
       await setCollectionLimitsExpectSuccess(alice, collectionId, collectionLimits);

@@ -102,20 +102,61 @@ export interface IFungibleTokenDataType {
 export interface IChainLimits {
   CollectionNumbersLimit: number;
 	AccountTokenOwnershipLimit: number;
-	CollectionsAdminsLimit: number;
+	CollectionAdminsLimit: number;
 	CustomDataLimit: number;
-	NftSponsorTransferTimeout: number;
-	FungibleSponsorTransferTimeout: number;
-	RefungibleSponsorTransferTimeout: number;
+	NftSponsorTimeout: number;
+	FungibleSponsorTimeout: number;
+	RefungibleSponsorTimeout: number;
 	OffchainSchemaLimit: number;
 	VariableOnChainSchemaLimit: number;
 	ConstOnChainSchemaLimit: number;
+}
+
+export interface ICollectionLimits {
+  AccountTokenOwnershipLimit: number;
+  OwnerCanDestroy: boolean;
+  OwnerCanTransfer: boolean;
+  SponsoredDataRateLimit: number | null;
+  SponsoredDataSize: number;
+  SponsorTimeout: number;
+  TokenLimit: number;
 }
 
 export interface IReFungibleTokenDataType {
   Owner: IReFungibleOwner[];
   ConstData: number[];
   VariableData: number[];
+}
+
+export function getDefaultChainLimits(): IChainLimits {
+  let l: IChainLimits = {
+    CollectionNumbersLimit : 100000,
+    AccountTokenOwnershipLimit: 1000000,
+    CollectionAdminsLimit: 5,
+    CustomDataLimit: 2048,
+    NftSponsorTimeout: 15,
+    FungibleSponsorTimeout: 15,
+    RefungibleSponsorTimeout: 15,
+    OffchainSchemaLimit: 1024,
+    VariableOnChainSchemaLimit: 1024,
+    ConstOnChainSchemaLimit: 1024,
+  };
+
+  return l;
+};
+
+export function getDefaultCollectionLimits(): ICollectionLimits {
+  let l: ICollectionLimits = {
+    AccountTokenOwnershipLimit: 10000000,
+    OwnerCanDestroy: true,
+    OwnerCanTransfer: true,
+    SponsoredDataRateLimit: null,
+    SponsoredDataSize: 2048,
+    SponsorTimeout: 14400,
+    TokenLimit: 4294967295,
+  };
+
+  return l;
 }
 
 export function nftEventMessage(events: EventRecord[]): IGetMessage {
@@ -252,7 +293,7 @@ const defaultCreateCollectionParams: CreateCollectionParams = {
   tokenPrefix: 'prefix',
 };
 
-export async function createCollectionExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
+export async function createCollectionExpectSuccess(params: Partial<CreateCollectionParams> = {}, senderSeed = '//Alice'): Promise<number> {
   const { name, description, mode, tokenPrefix } = { ...defaultCreateCollectionParams, ...params };
 
   let collectionId = 0;
@@ -261,7 +302,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     const AcollectionCount = parseInt((await api.query.nft.createdCollectionCount()).toString(), 10);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKey(senderSeed);
 
     let modeprm = {};
     if (mode.type === 'NFT') {
@@ -291,7 +332,9 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     // tslint:disable-next-line:no-unused-expression
     expect(collection).to.be.not.null;
     expect(BcollectionCount).to.be.equal(AcollectionCount + 1, 'Error: NFT collection NOT created.');
-    expect(collection.Owner).to.be.equal(toSubstrateAddress(alicesPublicKey));
+    if (senderSeed == '//Alice') {
+      expect(collection.Owner).to.be.equal(toSubstrateAddress(alicesPublicKey));
+    }
     expect(utf16ToStr(collection.Name)).to.be.equal(name);
     expect(utf16ToStr(collection.Description)).to.be.equal(description);
     expect(hexToStr(collection.TokenPrefix)).to.be.equal(tokenPrefix);
@@ -407,11 +450,9 @@ export async function queryCollectionLimits(collectionId: number) {
   });
 }
 
-export async function setCollectionLimitsExpectSuccess(sender: IKeyringPair, collectionId: number, limits: any) {
+export async function setCollectionLimitsExpectSuccess(sender: IKeyringPair, collectionId: number, limits: ICollectionLimits) {
   await usingApi(async (api) => {
-    const oldLimits = await queryCollectionLimits(collectionId);
-    const newLimits = { ...oldLimits as any, ...limits };
-    const tx = api.tx.nft.setCollectionLimits(collectionId, newLimits);
+    const tx = api.tx.nft.setCollectionLimits(collectionId, limits);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
 
@@ -712,7 +753,7 @@ approveExpectSuccess(
     expect(result.success).to.be.true;
     const allowanceAfter =
       await api.query.nft.allowances(collectionId, [tokenId, owner.address, toSubstrateAddress(approved)]) as unknown as BN;
-    expect(allowanceAfter.sub(allowanceBefore).toString()).to.be.equal(amount.toString());
+    expect(allowanceAfter.toString()).to.be.equal(amount.toString());
   });
 }
 
@@ -748,8 +789,11 @@ transferFromExpectSuccess(
     if (type === 'ReFungible') {
       const nftItemData =
         (await api.query.nft.reFungibleItemList(collectionId, tokenId) as any).toJSON() as IReFungibleTokenDataType;
-      expect(nftItemData.Owner[0].Owner).to.be.deep.equal(normalizeAccountId(to));
-      expect(nftItemData.Owner[0].Fraction).to.be.equal(value);
+      let expectedOwner = toSubstrateAddress(to);
+      let ownerIndex = nftItemData.Owner.findIndex(v => toSubstrateAddress(v.Owner as any as string) == expectedOwner);
+      expect(ownerIndex).to.not.equal(-1);
+      expect(nftItemData.Owner[ownerIndex].Owner).to.be.deep.equal(normalizeAccountId(to));
+      expect(nftItemData.Owner[ownerIndex].Fraction).to.be.greaterThanOrEqual(value as number);
     }
   });
 }
@@ -1055,6 +1099,15 @@ export async function setChainLimitsExpectFailure(sender: IKeyringPair, limits: 
     const result = getCreateCollectionResult(events);
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.false;
+  });
+}
+
+export async function setChainLimitsExpectSuccess(sender: IKeyringPair, limits: IChainLimits) {
+  await usingApi(async (api) => {
+    // Run sudo transaction
+    const tx = api.tx.nft.setChainLimits(limits);
+    const tx2 = api.tx.sudo.sudo(tx);
+    await submitTransactionAsync(sender, tx2);
   });
 }
 

@@ -19,6 +19,8 @@ import {
   transferFromExpectSuccess,
   burnItemExpectSuccess,
   setCollectionLimitsExpectSuccess,
+  ICollectionLimits,		
+	getDefaultCollectionLimits,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -306,7 +308,9 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
   it('fails when called by collection owner on non-owned item when OwnerCanTransfer == false', async () => {
     const collectionId = await createCollectionExpectSuccess();
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Bob.address);
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { OwnerCanTransfer: false });
+    let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+    collectionLimits.OwnerCanTransfer = false;
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, collectionLimits);
 
     await transferFromExpectFail(collectionId, itemId, Alice, Bob, Charlie);
   });

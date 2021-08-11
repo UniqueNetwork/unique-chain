@@ -222,7 +222,7 @@ describe('Integration Test ext. White list tests', () => {
     await addToWhiteListExpectSuccess(Alice, collectionId, Alice.address);
     await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
     await approveExpectSuccess(collectionId, itemId, Alice, Charlie);
-    await transferFromExpectSuccess(collectionId, itemId, Alice, Alice, Charlie, 1, 'NFT');
+    await transferFromExpectSuccess(collectionId, itemId, Charlie, Alice, Charlie, 1, 'NFT');
   });
 
   it('If Public Access mode is set to WhiteList, tokens can be transferred from a whitelisted address with transfer', async () => {
@@ -241,7 +241,7 @@ describe('Integration Test ext. White list tests', () => {
     await addToWhiteListExpectSuccess(Alice, collectionId, Alice.address);
     await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
     await approveExpectSuccess(collectionId, itemId, Alice, Charlie);
-    await transferFromExpectSuccess(collectionId, itemId, Alice, Alice, Charlie, 1, 'NFT');
+    await transferFromExpectSuccess(collectionId, itemId, Charlie, Alice, Charlie, 1, 'NFT');
   });
 
   it('If Public Access mode is set to WhiteList, and Mint Permission is set to false, tokens can be created by owner', async () => {

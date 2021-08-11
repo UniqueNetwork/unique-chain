@@ -18,6 +18,8 @@ import {
   normalizeAccountId,
   setCollectionLimitsExpectSuccess,
   addCollectionAdminExpectSuccess,
+  ICollectionLimits,		
+	getDefaultCollectionLimits,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -124,9 +126,10 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const alice = privateKey('//Alice');
 
       const collectionId = await createCollectionExpectSuccess();
-      await setCollectionLimitsExpectSuccess(alice, collectionId, {
-        TokenLimit: 2,
-      });
+      let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+      collectionLimits.TokenLimit = 2;
+
+      await setCollectionLimitsExpectSuccess(alice, collectionId, collectionLimits);
       const args = [
         { nft: ['A', 'A'] },
         { nft: ['B', 'B'] },
@@ -378,9 +381,9 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
     await usingApi(async (api) => {
 
       const collectionId = await createCollectionExpectSuccess();
-      await setCollectionLimitsExpectSuccess(Alice, collectionId, {
-        TokenLimit: 1,
-      });
+      let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+      collectionLimits.TokenLimit = 1;
+      await setCollectionLimitsExpectSuccess(Alice, collectionId, collectionLimits);
       const args = [
         { nft: ['A', 'A'] },
         { nft: ['B', 'B'] },

@@ -15,6 +15,8 @@ import {
   setCollectionSponsorExpectSuccess,
   setVariableMetaDataExpectFailure,
   setVariableMetaDataExpectSuccess,
+  ICollectionLimits,		
+	getDefaultCollectionLimits,
 } from './util/helpers';
 
 describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
@@ -32,9 +34,9 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {
-      SponsoredDataRateLimit: 0,
-    });
+    let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+    collectionLimits.SponsoredDataRateLimit = 0;
+    await setCollectionLimitsExpectSuccess(alice, collectionId, collectionLimits);
 
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', userWithNoBalance.address);
     await setVariableMetaDataExpectSuccess(userWithNoBalance, collectionId, itemId, [1, 2, 3]);
@@ -45,9 +47,9 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {
-      SponsoredDataRateLimit: 10,
-    });
+    let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+    collectionLimits.SponsoredDataRateLimit = 10;
+    await setCollectionLimitsExpectSuccess(alice, collectionId, collectionLimits);
 
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', userWithNoBalance.address);
     await setVariableMetaDataExpectSuccess(userWithNoBalance, collectionId, itemId, [1, 2, 3]);
@@ -58,10 +60,10 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {
-      SponsoredDataRateLimit: 0,
-      SponsoredDataSize: 1,
-    });
+    let collectionLimits: ICollectionLimits = getDefaultCollectionLimits();
+    collectionLimits.SponsoredDataRateLimit = 0;
+    collectionLimits.SponsoredDataSize = 1;
+    await setCollectionLimitsExpectSuccess(alice, collectionId, collectionLimits);
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', userWithNoBalance.address);
 
     await setVariableMetaDataExpectSuccess(userWithNoBalance, collectionId, itemId, [1]);
