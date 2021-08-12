@@ -28,7 +28,9 @@ runtime-benchmarks = [
     'pallet-timestamp/runtime-benchmarks',
     'pallet-nft/runtime-benchmarks',
     'pallet-inflation/runtime-benchmarks',
+    'pallet-xcm/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
+    'xcm-builder/runtime-benchmarks',
 ]
 std = [
     'codec/std',
