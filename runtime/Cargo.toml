@@ -23,6 +23,7 @@ runtime-benchmarks = [
     'frame-support/runtime-benchmarks',
     'frame-system-benchmarking',
     'frame-system/runtime-benchmarks',
+    'pallet-evm-migration/runtime-benchmarks',
     'pallet-balances/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
     'pallet-nft/runtime-benchmarks',
@@ -56,6 +57,7 @@ std = [
     'pallet-treasury/std',
     'pallet-vesting/std',
     'pallet-evm/std',
+    'pallet-evm-migration/std',
     'pallet-evm-contract-helpers/std',
     'pallet-evm-transaction-payment/std',
     'pallet-evm-coder-substrate/std',
@@ -392,6 +394,7 @@ pallet-scheduler = { path = '../pallets/scheduler', default-features = false, ve
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
 pallet-nft-transaction-payment = { path = '../pallets/nft-transaction-payment', default-features = false, version = '3.0.0' }
 pallet-nft-charge-transaction = { path = '../pallets/nft-charge-transaction', default-features = false, version = '3.0.0' }
+pallet-evm-migration = { path = '../pallets/evm-migration', default-features = false }
 pallet-evm-contract-helpers = { path = '../pallets/evm-contract-helpers', default-features = false }
 pallet-evm-transaction-payment = { path = '../pallets/evm-transaction-payment', default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = "../pallets/evm-coder-substrate" }
