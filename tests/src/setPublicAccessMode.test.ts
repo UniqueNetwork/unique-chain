@@ -101,7 +101,7 @@ describe('Negative Integration Test ext. collection admin setPublicAccessMode():
       Bob = privateKey('//Bob');
     });
   });
-  it('Set the collection that has been deleted', async () => {
+  it('setPublicAccessMode by collection admin', async () => {
     await usingApi(async (api: ApiPromise) => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
