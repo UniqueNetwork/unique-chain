@@ -99,7 +99,7 @@ describe('Integration Test ext. addToWhiteList() with collection admin permissio
     });
   });
 
-  it('Add to the white list by regular user', async () => {
+  it('Negative. Add to the white list by regular user', async () => {
     const collectionId = await createCollectionExpectSuccess();
     await addToWhiteListExpectFail(Bob, collectionId, Charlie.address);
   });
