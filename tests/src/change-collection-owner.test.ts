@@ -21,6 +21,7 @@ import { createCollectionExpectSuccess,
   enableWhiteListExpectFail,
   setMintPermissionExpectFailure,
   destroyCollectionExpectFailure,
+  setPublicAccessModeExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -103,9 +104,35 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
       );
       await submitTransactionAsync(bob, tx1);
 
+      await setPublicAccessModeExpectSuccess(bob, collectionId, 'WhiteList');
       await enableWhiteListExpectSuccess(bob, collectionId);
       await setMintPermissionExpectSuccess(bob, collectionId, true);
       await destroyCollectionExpectSuccess(collectionId, '//Bob');
+    });
+  });
+
+  it('New collectionOwner has access to changeCollectionOwner', async () => {
+    await usingApi(async api => {
+      const collectionId = await createCollectionExpectSuccess();
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
+      const charlie = privateKey('//Charlie');
+  
+      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collection.Owner).to.be.deep.eq(alice.address);
+  
+      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      await submitTransactionAsync(alice, changeOwnerTx);
+  
+      const collectionAfterOwnerChange: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collectionAfterOwnerChange.Owner).to.be.deep.eq(bob.address);
+
+      const changeOwnerTx2 = api.tx.nft.changeCollectionOwner(collectionId, charlie.address);
+      await submitTransactionAsync(bob, changeOwnerTx2);
+  
+      // ownership lost
+      const collectionAfterOwnerChange2: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collectionAfterOwnerChange2.Owner).to.be.deep.eq(charlie.address);
     });
   });
 });
