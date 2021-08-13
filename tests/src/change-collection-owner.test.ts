@@ -15,6 +15,12 @@ import { createCollectionExpectSuccess,
   enableWhiteListExpectSuccess,
   setMintPermissionExpectSuccess,
   destroyCollectionExpectSuccess,
+  setCollectionSponsorExpectFailure,
+  confirmSponsorshipExpectFailure,
+  removeCollectionSponsorExpectFailure,
+  enableWhiteListExpectFail,
+  setMintPermissionExpectFailure,
+  destroyCollectionExpectFailure,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -53,7 +59,7 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
       await submitTransactionAsync(alice, changeOwnerTx);
 
       const badChangeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, alice.address);
-      await expect(submitTransactionAsync(alice, badChangeOwnerTx)).to.be.rejected;
+      await expect(submitTransactionExpectFailAsync(alice, badChangeOwnerTx)).to.be.rejected;
 
       const collectionAfterOwnerChange: any = (await api.query.nft.collectionById(collectionId)).toJSON();
       expect(collectionAfterOwnerChange.Owner).to.be.deep.eq(bob.address);
@@ -169,14 +175,14 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
       await submitTransactionAsync(alice, changeOwnerTx);
 
       const badChangeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, alice.address);
-      await expect(submitTransactionAsync(alice, badChangeOwnerTx)).to.be.rejected;
+      await expect(submitTransactionExpectFailAsync(alice, badChangeOwnerTx)).to.be.rejected;
 
       const collectionAfterOwnerChange: any = (await api.query.nft.collectionById(collectionId)).toJSON();
       expect(collectionAfterOwnerChange.Owner).to.be.deep.eq(bob.address);
 
-      await expect(setCollectionSponsorExpectSuccess(collectionId, charlie.address, '//Alice')).to.be.rejected;
-      await expect(confirmSponsorshipExpectSuccess(collectionId, '//Alice')).to.be.rejected;
-      await expect(removeCollectionSponsorExpectSuccess(collectionId, '//Alice')).to.be.rejected;
+      await setCollectionSponsorExpectFailure(collectionId, charlie.address, '//Alice');
+      await confirmSponsorshipExpectFailure(collectionId, '//Alice');
+      await removeCollectionSponsorExpectFailure(collectionId, '//Alice');
 
       const collectionLimits = {
         AccountTokenOwnershipLimit: 1,
@@ -190,11 +196,11 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
         collectionId,
         collectionLimits,
       );
-      await expect(submitTransactionAsync(alice, tx1)).to.be.rejected;
+      await expect(submitTransactionExpectFailAsync(alice, tx1)).to.be.rejected;
 
-      await expect(enableWhiteListExpectSuccess(alice, collectionId)).to.be.rejected;
-      await expect(setMintPermissionExpectSuccess(alice, collectionId, true)).to.be.rejected;
-      await expect(destroyCollectionExpectSuccess(collectionId, '//Alice')).to.be.rejected;
+      await enableWhiteListExpectFail(alice, collectionId);
+      await setMintPermissionExpectFailure(alice, collectionId, true);
+      await destroyCollectionExpectFailure(collectionId, '//Alice');
     });
   });
 });
