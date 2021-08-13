@@ -431,13 +431,13 @@ export async function setCollectionLimitsExpectFailure(sender: IKeyringPair, col
   });
 }
 
-export async function setCollectionSponsorExpectSuccess(collectionId: number, sponsor: string) {
+export async function setCollectionSponsorExpectSuccess(collectionId: number, sponsor: string, sender = '//Alice') {
   await usingApi(async (api) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const senderPrivateKey = privateKey(sender);
     const tx = api.tx.nft.setCollectionSponsor(collectionId, sponsor);
-    const events = await submitTransactionAsync(alicePrivateKey, tx);
+    const events = await submitTransactionAsync(senderPrivateKey, tx);
     const result = getGenericResult(events);
 
     // Get the collection
@@ -451,11 +451,11 @@ export async function setCollectionSponsorExpectSuccess(collectionId: number, sp
   });
 }
 
-export async function removeCollectionSponsorExpectSuccess(collectionId: number) {
+export async function removeCollectionSponsorExpectSuccess(collectionId: number, sender = '//Alice') {
   await usingApi(async (api) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKey(sender);
     const tx = api.tx.nft.removeCollectionSponsor(collectionId);
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getGenericResult(events);
@@ -1006,8 +1006,29 @@ export async function setPublicAccessModeExpectSuccess(
   });
 }
 
+export async function setPublicAccessModeExpectFail(
+  sender: IKeyringPair, collectionId: number,
+  accessMode: 'Normal' | 'WhiteList',
+) {
+  await usingApi(async (api) => {
+
+    // Run the transaction
+    const tx = api.tx.nft.setPublicAccessMode(collectionId, accessMode);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function enableWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number) {
   await setPublicAccessModeExpectSuccess(sender, collectionId, 'WhiteList');
+}
+
+export async function enableWhiteListExpectFail(sender: IKeyringPair, collectionId: number) {
+  await setPublicAccessModeExpectFail(sender, collectionId, 'WhiteList');
 }
 
 export async function disableWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number) {
