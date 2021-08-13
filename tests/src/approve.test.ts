@@ -16,6 +16,7 @@ import {
   destroyCollectionExpectSuccess,
   setCollectionLimitsExpectSuccess,
   transferExpectSuccess,
+  addCollectionAdminExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -175,5 +176,27 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
     await setCollectionLimitsExpectSuccess(Alice, collectionId, { OwnerCanTransfer: false });
 
     await approveExpectFail(collectionId, itemId, Alice, Charlie);
+  });
+});
+
+describe('Integration Test approve(spender, collection_id, item_id, amount) with collection admin permissions:', () => {
+  let Alice: IKeyringPair;
+  let Bob: IKeyringPair;
+  let Charlie: IKeyringPair;
+
+  before(async () => {
+    await usingApi(async () => {
+      Alice = privateKey('//Alice');
+      Bob = privateKey('//Bob');
+      Charlie = privateKey('//Charlie');
+    });
+  });
+
+  it('can be called by collection admin on non-owned item', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
+
+    await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
+    await approveExpectSuccess(collectionId, itemId, Bob, Charlie);
   });
 });

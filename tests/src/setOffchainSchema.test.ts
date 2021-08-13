@@ -15,6 +15,7 @@ import {
   queryCollectionExpectSuccess,
   setOffchainSchemaExpectFailure,
   setOffchainSchemaExpectSuccess,
+  addCollectionAdminExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -24,16 +25,27 @@ const DATA = [1, 2, 3, 4];
 
 describe('Integration Test setOffchainSchema', () => {
   let alice: IKeyringPair;
+  let bob: IKeyringPair;
 
   before(async () => {
     await usingApi(async () => {
       alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
     });
   });
 
   it('execute setOffchainSchema, verify data was set', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
     await setOffchainSchemaExpectSuccess(alice, collectionId, DATA);
+    const collection = await queryCollectionExpectSuccess(collectionId);
+
+    expect(collection.OffchainSchema).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));
+  });
+
+  it('execute setOffchainSchema (collection admin), verify data was set', async () => {
+    const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob);
+    await setOffchainSchemaExpectSuccess(bob, collectionId, DATA);
     const collection = await queryCollectionExpectSuccess(collectionId);
 
     expect(collection.OffchainSchema).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));

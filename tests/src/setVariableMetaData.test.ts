@@ -16,6 +16,7 @@ import {
   findNotExistingCollection,
   setVariableMetaDataExpectFailure,
   setVariableMetaDataExpectSuccess,
+  addCollectionAdminExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -37,6 +38,36 @@ describe('Integration Test setVariableMetaData', () => {
 
   it('execute setVariableMetaData', async () => {
     await setVariableMetaDataExpectSuccess(alice, collectionId, tokenId, data);
+  });
+
+  it('verify data was set', async () => {
+    await usingApi(async api => {
+      const item: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap();
+
+      expect(Array.from(item.VariableData)).to.deep.equal(Array.from(data));
+    });
+  });
+});
+
+describe('Integration Test collection admin setVariableMetaData', () => {
+  const data = [1, 2, 254, 255];
+
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let collectionId: number;
+  let tokenId: number;
+  before(async () => {
+    await usingApi(async () => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob);
+    });
+  });
+
+  it('execute setVariableMetaData', async () => {
+    await setVariableMetaDataExpectSuccess(bob, collectionId, tokenId, data);
   });
 
   it('verify data was set', async () => {

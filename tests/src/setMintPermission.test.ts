@@ -16,6 +16,7 @@ import {
   findNotExistingCollection,
   setMintPermissionExpectFailure,
   setMintPermissionExpectSuccess,
+  addCollectionAdminExpectSuccess,
 } from './util/helpers';
 
 describe('Integration Test setMintPermission', () => {
@@ -89,6 +90,14 @@ describe('Negative Integration Test setMintPermission', () => {
     const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
     await enableWhiteListExpectSuccess(alice, collectionId);
     await setMintPermissionExpectFailure(bob, collectionId, true);
+  });
+
+  it('Collection admin fails on set', async () => {
+    await usingApi(async () => {
+      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob);
+      await setMintPermissionExpectFailure(bob, collectionId, true);
+    });
   });
 
   it('ensure non-white-listed non-privileged address can\'t mint tokens', async () => {
