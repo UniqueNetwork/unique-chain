@@ -122,7 +122,6 @@ describe.only('Integration Test private minting', () => {
       const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
       await disableWhiteListExpectSuccess(alice, collectionId);
       await setMintPermissionExpectSuccess(alice, collectionId, false);
-      //await addCollectionAdminExpectSuccess(alice, collectionId, bob);
       await createItemExpectSuccess(alice, collectionId, 'NFT');
     });
   });
@@ -132,7 +131,6 @@ describe.only('Integration Test private minting', () => {
       const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
       await disableWhiteListExpectSuccess(alice, collectionId);
       await setMintPermissionExpectSuccess(alice, collectionId, false);
-      // await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
       await createItemExpectFailure(bob, collectionId, 'NFT');
     });
   });
