@@ -17,6 +17,7 @@ import {
   enableWhiteListExpectSuccess,
   normalizeAccountId,
   addCollectionAdminExpectSuccess,
+  addToWhiteListExpectFail,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -96,6 +97,11 @@ describe('Integration Test ext. addToWhiteList() with collection admin permissio
       Bob = privateKey('//Bob');
       Charlie = privateKey('//Charlie');
     });
+  });
+
+  it('Add to the white list by regular user', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await addToWhiteListExpectFail(Bob, collectionId, Charlie.address);
   });
 
   it('Execute the extrinsic with parameters: Collection ID and address to add to the white list', async () => {

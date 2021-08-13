@@ -1088,6 +1088,19 @@ export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collecti
   });
 }
 
+export async function addToWhiteListExpectFail(sender: IKeyringPair, collectionId: number, address: string | AccountId) {
+  await usingApi(async (api) => {
+    // Run the transaction
+    const tx = api.tx.nft.addToWhiteList(collectionId, normalizeAccountId(address));
+    const events = await expect(submitTransactionAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function removeFromWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number, address: CrossAccountId) {
   await usingApi(async (api) => {
     // Run the transaction
