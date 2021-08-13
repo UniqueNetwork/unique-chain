@@ -112,7 +112,7 @@ describe('Collection admin setSchemaVersion positive', () => {
   });
 });
 
-describe.only('setSchemaVersion negative', () => {
+describe('setSchemaVersion negative', () => {
   let tx;
   before(async () => {
     await usingApi(async () => {
