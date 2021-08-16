@@ -124,4 +124,13 @@ describe('Integration Test removeFromWhiteList with collection admin permissions
       await removeFromWhiteListExpectSuccess(bob, collectionWithoutWhitelistId, normalizeAccountId(charlie.address));
     });
   });
+
+  it('Regular user can`t remove from whitelist', async () => {
+    await usingApi(async () => {
+      const collectionWithoutWhitelistId = await createCollectionExpectSuccess();
+      await enableWhiteListExpectSuccess(alice, collectionWithoutWhitelistId);
+      await addToWhiteListExpectSuccess(alice, collectionWithoutWhitelistId, charlie.address);
+      await removeFromWhiteListExpectFailure(bob, collectionWithoutWhitelistId, normalizeAccountId(charlie.address));
+    });
+  });
 });

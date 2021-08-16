@@ -112,6 +112,12 @@ describe('(!negative test!) integration test: ext. removeCollectionSponsor():', 
     await removeCollectionSponsorExpectFailure(collectionId, '//Bob');
   });
 
+  it('(!negative test!) Remove sponsor for a collection by regular user', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await removeCollectionSponsorExpectFailure(collectionId, '//Bob');
+  });
+
   it('(!negative test!) Remove sponsor in a destroyed collection', async () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
