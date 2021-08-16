@@ -24,6 +24,7 @@ const expect = chai.expect;
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
+let charlie: IKeyringPair;
 let collectionIdForTesting: number;
 
 /*
@@ -117,6 +118,7 @@ describe('setSchemaVersion negative', () => {
     await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
       alice = keyring.addFromUri('//Alice');
+      charlie = keyring.addFromUri('//Charlie');
     });
   });
   it('execute setSchemaVersion for not exists collection', async () => {
@@ -127,7 +129,6 @@ describe('setSchemaVersion negative', () => {
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });
-
   it('execute setSchemaVersion with not correct schema version', async () => {
     await usingApi(async (api: ApiPromise) => {
       const consoleError = console.error;
@@ -143,12 +144,17 @@ describe('setSchemaVersion negative', () => {
       }
     });
   });
-
   it('execute setSchemaVersion for deleted collection', async () => {
     await usingApi(async (api: ApiPromise) => {
       await destroyCollectionExpectSuccess(collectionIdForTesting);
       tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'ImageURL');
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
+    });
+  });
+  it('Regular user can`t execute setSchemaVersion with image url and unique ', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'Unique');
+      await expect(submitTransactionAsync(charlie, tx)).to.be.rejected;
     });
   });
 });

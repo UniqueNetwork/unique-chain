@@ -1006,8 +1006,29 @@ export async function setPublicAccessModeExpectSuccess(
   });
 }
 
+export async function setPublicAccessModeExpectFail(
+  sender: IKeyringPair, collectionId: number,
+  accessMode: 'Normal' | 'WhiteList',
+) {
+  await usingApi(async (api) => {
+
+    // Run the transaction
+    const tx = api.tx.nft.setPublicAccessMode(collectionId, accessMode);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function enableWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number) {
   await setPublicAccessModeExpectSuccess(sender, collectionId, 'WhiteList');
+}
+
+export async function enableWhiteListExpectFail(sender: IKeyringPair, collectionId: number) {
+  await setPublicAccessModeExpectFail(sender, collectionId, 'WhiteList');
 }
 
 export async function disableWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number) {
