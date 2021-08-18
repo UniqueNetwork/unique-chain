@@ -38,12 +38,12 @@ export async function usingWeb3<T>(cb: (web3: Web3) => Promise<T> | T): Promise<
   }
 }
 
-type Web3HttpMarker = {web3Http: true};
-
-export async function usingWeb3Http<T>(cb: (web3: Web3 & Web3HttpMarker) => Promise<T> | T): Promise<T> {
+/**
+ * @deprecated Web3 update solved issue with deployment over ws provider
+ */
+export async function usingWeb3Http<T>(cb: (web3: Web3) => Promise<T> | T): Promise<T> {
   const provider = new Web3.providers.HttpProvider(config.frontierUrl);
-  const web3: Web3 & Web3HttpMarker = new Web3(provider) as any;
-  web3.web3Http = true;
+  const web3: Web3 = new Web3(provider);
 
   return await cb(web3);
 }
@@ -176,7 +176,7 @@ export function compileContract(name: string, src: string) {
   };
 }
 
-export async function deployFlipper(web3: Web3 & Web3HttpMarker, deployer: string) {
+export async function deployFlipper(web3: Web3, deployer: string) {
   const compiled = compileContract('Flipper', `
     contract Flipper {
       bool value = false;
@@ -198,7 +198,7 @@ export async function deployFlipper(web3: Web3 & Web3HttpMarker, deployer: strin
   return flipper;
 }
 
-export async function deployCollector(web3: Web3 & Web3HttpMarker, deployer: string) {
+export async function deployCollector(web3: Web3, deployer: string) {
   const compiled = compileContract('Collector', `
     contract Collector {
       uint256 collected;
