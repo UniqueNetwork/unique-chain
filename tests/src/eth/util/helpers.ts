@@ -197,15 +197,26 @@ export async function deployFlipper(web3: Web3 & Web3HttpMarker, deployer: strin
   return flipper;
 }
 
-export async function deployCollector(web3: Web3 & Web3HttpMarker, deployer: string) {
+export async function deployCollector(web3: Web3, deployer: string) {
   const compiled = compileContract('Collector', `
     contract Collector {
       uint256 collected;
+      fallback() external payable {
+        giveMoney();
+      }
       function giveMoney() public payable {
         collected += msg.value;
       }
       function getCollected() public view returns (uint256) {
         return collected;
+      }
+      function getUnaccounted() public view returns (uint256) {
+        return address(this).balance - collected;
+      }
+
+      function withdraw(address payable target) public {
+        target.transfer(collected);
+        collected = 0;
       }
     }
   `);
