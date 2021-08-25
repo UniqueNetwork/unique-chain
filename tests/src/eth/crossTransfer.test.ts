@@ -52,7 +52,7 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
   });
 });
 
-describe.only('Token transfer between substrate address and EVM address. NFT', () => {
+describe('Token transfer between substrate address and EVM address. NFT', () => {
   itWeb3('The private key X create a substrate address. Alice sends a token to the corresponding EVM address, and X can send it to Bob in the substrate', async () => {
     const collection = await createCollectionExpectSuccess({
       name: 'token name',
