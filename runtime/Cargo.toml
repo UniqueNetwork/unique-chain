@@ -85,6 +85,10 @@ std = [
     'xcm-builder/std',
     'xcm-executor/std',
 ]
+limit-testing = [
+    'pallet-nft/limit-testing',
+    'nft-data-structs/limit-testing',
+]
 
 ################################################################################
 # Substrate Dependencies

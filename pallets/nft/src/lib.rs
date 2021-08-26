@@ -88,7 +88,6 @@ pub trait WeightInfo {
 	fn set_variable_meta_data() -> Weight;
 	fn enable_contract_sponsoring() -> Weight;
 	fn set_schema_version() -> Weight;
-	fn set_chain_limits() -> Weight;
 	fn set_contract_sponsoring_rate_limit() -> Weight;
 	fn set_variable_meta_data_sponsoring_rate_limit() -> Weight;
 	fn toggle_contract_white_list() -> Weight;
@@ -1596,38 +1595,17 @@ impl<T: Config> Module<T> {
 	) -> DispatchResult {
 		match target_collection.mode {
 			CollectionMode::NFT => {
-				if let CreateItemData::NFT(data) = data {
-					// check sizes
-					ensure!(
-						CUSTOM_DATA_LIMIT >= data.const_data.len() as u32,
-						Error::<T>::TokenConstDataLimitExceeded
-					);
-					ensure!(
-						CUSTOM_DATA_LIMIT >= data.variable_data.len() as u32,
-						Error::<T>::TokenVariableDataLimitExceeded
-					);
-				} else {
+				if !matches!(data, CreateItemData::NFT(_)) {
 					fail!(Error::<T>::NotNftDataUsedToMintNftCollectionToken);
 				}
 			}
 			CollectionMode::Fungible(_) => {
-				if let CreateItemData::Fungible(_) = data {
-				} else {
+				if !matches!(data, CreateItemData::Fungible(_)) {
 					fail!(Error::<T>::NotFungibleDataUsedToMintFungibleCollectionToken);
 				}
 			}
 			CollectionMode::ReFungible => {
 				if let CreateItemData::ReFungible(data) = data {
-					// check sizes
-					ensure!(
-						CUSTOM_DATA_LIMIT >= data.const_data.len() as u32,
-						Error::<T>::TokenConstDataLimitExceeded
-					);
-					ensure!(
-						CUSTOM_DATA_LIMIT >= data.variable_data.len() as u32,
-						Error::<T>::TokenVariableDataLimitExceeded
-					);
-
 					// Check refungibility limits
 					ensure!(
 						data.pieces <= MAX_REFUNGIBLE_PIECES,

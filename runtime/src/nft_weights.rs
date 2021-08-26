@@ -123,11 +123,6 @@ impl pallet_nft::WeightInfo for WeightInfo {
 			.saturating_add(DbWeight::get().reads(2_u64))
 			.saturating_add(DbWeight::get().writes(1_u64))
 	}
-	fn set_chain_limits() -> Weight {
-		1_300_000_u64
-			.saturating_add(DbWeight::get().reads(0_u64))
-			.saturating_add(DbWeight::get().writes(1_u64))
-	}
 	fn set_contract_sponsoring_rate_limit() -> Weight {
 		3_500_000_u64
 			.saturating_add(DbWeight::get().reads(0_u64))

@@ -28,10 +28,10 @@ pub const MAX_REFUNGIBLE_PIECES: u128 = 1_000_000_000_000_000_000_000;
 pub const MAX_SPONSOR_TIMEOUT: u32 = 10_368_000;
 pub const MAX_TOKEN_OWNERSHIP: u32 = 10_000_000;
 
-pub const COLLECTION_NUMBER_LIMIT: u32 = 100000;
-pub const CUSTOM_DATA_LIMIT: u32 = 2048;
+pub const COLLECTION_NUMBER_LIMIT: u32 = if cfg!(not(feature = "limit-testing")) { 100000 } else { 10 };
+pub const CUSTOM_DATA_LIMIT: u32 = if cfg!(not(feature = "limit-testing")) { 2048 } else { 10 };
 pub const COLLECTION_ADMINS_LIMIT: u64 = 5;
-pub const ACCOUNT_TOKEN_OWNERSHIP_LIMIT: u32 = 1000000;
+pub const ACCOUNT_TOKEN_OWNERSHIP_LIMIT: u32 = if cfg!(not(feature = "limit-testing")) { 1000000 } else { 10 };
 
 // Timeouts for item types in passed blocks
 pub const NFT_SPONSOR_TRANSFER_TIMEOUT: u32 = 5;

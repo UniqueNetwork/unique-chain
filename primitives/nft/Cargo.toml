@@ -33,3 +33,4 @@ std = [
   "sp-std/std",
 ]
 serde1 = ["serde"]
+limit-testing = []
