@@ -227,8 +227,8 @@ impl<T: Config> CollectionHandle<T> {
 			&self,
 			&to,
 			CreateItemData::NFT(CreateNftData {
-				const_data: vec![],
-				variable_data: vec![],
+				const_data: vec![].try_into().unwrap(),
+				variable_data: vec![].try_into().unwrap(),
 			}),
 		)
 		.map_err(|_| "mint error")?;
@@ -259,8 +259,10 @@ impl<T: Config> CollectionHandle<T> {
 			&self,
 			&to,
 			CreateItemData::NFT(CreateNftData {
-				const_data: token_uri.into(),
-				variable_data: vec![],
+				const_data: Vec::<u8>::from(token_uri)
+					.try_into()
+					.map_err(|_| "token uri is too long")?,
+				variable_data: vec![].try_into().unwrap(),
 			}),
 		)
 		.map_err(|_| "mint error")?;
