@@ -1831,7 +1831,11 @@ fn collection_admins_bound_neg() {
 			));
 		}
 		assert_noop!(
-			TemplateModule::add_collection_admin(origin1, collection_id, account(3 + COLLECTION_ADMINS_LIMIT)),
+			TemplateModule::add_collection_admin(
+				origin1,
+				collection_id,
+				account(3 + COLLECTION_ADMINS_LIMIT)
+			),
 			Error::<Test>::CollectionAdminsLimitExceeded
 		);
 	});
