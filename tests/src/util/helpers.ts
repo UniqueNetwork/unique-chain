@@ -1163,3 +1163,7 @@ export async function queryCollectionExpectSuccess(collectionId: number): Promis
     return (await api.query.nft.collectionById(collectionId)).toJSON() as unknown as ICollectionInterface;
   });
 }
+
+export async function queryNftOwner(api: ApiPromise, collectionId: number, tokenId: number): Promise<CrossAccountId> {
+  return normalizeAccountId((await api.query.nft.nftItemList(collectionId, tokenId) as any).toJSON().Owner);
+}

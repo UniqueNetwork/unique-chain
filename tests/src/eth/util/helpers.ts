@@ -141,10 +141,13 @@ export async function recordEvents(contract: any, action: () => Promise<void>): 
   return normalizeEvents(out);
 }
 
-export function subToEth(eth: string): string {
+export function subToEthLowercase(eth: string): string {
   const bytes = addressToEvm(eth);
-  const string = '0x' + Buffer.from(bytes).toString('hex');
-  return Web3.utils.toChecksumAddress(string);
+  return '0x' + Buffer.from(bytes).toString('hex');
+}
+
+export function subToEth(eth: string): string {
+  return Web3.utils.toChecksumAddress(subToEthLowercase(eth));
 }
 
 export function compileContract(name: string, src: string) {
@@ -221,4 +224,18 @@ export async function deployCollector(web3: Web3 & Web3HttpMarker, deployer: str
 
 export function contractHelpers(web3: Web3, caller: string) {
   return new web3.eth.Contract(contractHelpersAbi as any, '0x842899ECF380553E8a4de75bF534cdf6fBF64049', {from: caller, ...GAS_ARGS});
+}
+
+export async function executeEthTxOnSub(api: ApiPromise, from: IKeyringPair, to: any, mkTx: (methods: any) => any, { value = 0 }: {value?: bigint | number} = { }) {
+  const tx = api.tx.evm.call(
+    subToEth(from.address),
+    to.options.address,
+    mkTx(to.methods).encodeABI(),
+    value,
+    GAS_ARGS.gas,
+    GAS_ARGS.gasPrice,
+    null,
+  );
+  const events = await submitTransactionAsync(from, tx);
+  expect(events.find(({ event: {section, method}})=>section === 'evm' && method === 'Executed')).to.be.not.undefined;
 }
