@@ -8,7 +8,7 @@ describe('Contract calls', () => {
     const deployer = await createEthAccountWithBalance(api, web3);
     const flipper = await deployFlipper(web3 as any, deployer);
 
-    const cost = await recordEthFee(api, deployer, () => flipper.methods.flip());
+    const cost = await recordEthFee(api, deployer, () => flipper.methods.flip().send({from: deployer}));
     expect(cost < BigInt(0.2 * Number(UNIQUE))).to.be.true;
   });
 
