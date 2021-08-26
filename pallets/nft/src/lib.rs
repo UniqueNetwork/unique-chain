@@ -1401,6 +1401,11 @@ impl<T: Config> Module<T> {
 		item_id: TokenId,
 		amount: u128,
 	) -> DispatchResult {
+		if sender == from {
+			// Transfer by `from`, because it is either equal to sender, or derived from him
+			return Self::transfer_internal(from, recipient, collection, item_id, amount);
+		}
+
 		collection.consume_gas(2000000)?;
 		// Check approval
 		let approval: u128 =
