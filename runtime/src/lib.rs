@@ -72,7 +72,6 @@ use sp_core::crypto::Public;
 use sp_runtime::{
 	traits::{Dispatchable},
 };
-// use pallet_contracts::chain_extension::UncheckedFrom;
 
 // pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -419,7 +418,7 @@ impl pallet_contracts::Config for Runtime {
 	type DepositPerStorageItem = DepositPerStorageItem;
 	type RentFraction = RentFraction;
 	type SurchargeReward = SurchargeReward;
-	type WeightPrice = pallet_transaction_payment::Module<Self>;
+	type WeightPrice = pallet_transaction_payment::Pallet<Self>;
 	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
 	type ChainExtension = NFTExtension;
 	type DeletionQueueDepth = DeletionQueueDepth;

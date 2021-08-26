@@ -31,14 +31,16 @@ pub use frame_support::{
 	StorageValue, transactional,
 };
 
-use frame_system::{self as system, ensure_signed, ensure_root};
+use frame_system::{self as system, ensure_signed};
 use sp_core::H160;
 use sp_std::vec;
 use sp_runtime::sp_std::prelude::Vec;
 use core::ops::{Deref, DerefMut};
 use nft_data_structs::{
 	MAX_DECIMAL_POINTS, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, MAX_REFUNGIBLE_PIECES,
-	AccessMode, ChainLimits, Collection, CreateItemData, CollectionLimits, CollectionId,
+	CUSTOM_DATA_LIMIT, COLLECTION_NUMBER_LIMIT, ACCOUNT_TOKEN_OWNERSHIP_LIMIT,
+	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, COLLECTION_ADMINS_LIMIT,
+	OFFCHAIN_SCHEMA_LIMIT, AccessMode, Collection, CreateItemData, CollectionLimits, CollectionId,
 	CollectionMode, TokenId, SchemaVersion, SponsorshipState, Ownership, NftItemType,
 	FungibleItemType, ReFungibleItemType,
 };
@@ -86,7 +88,6 @@ pub trait WeightInfo {
 	fn set_variable_meta_data() -> Weight;
 	fn enable_contract_sponsoring() -> Weight;
 	fn set_schema_version() -> Weight;
-	fn set_chain_limits() -> Weight;
 	fn set_contract_sponsoring_rate_limit() -> Weight;
 	fn set_variable_meta_data_sponsoring_rate_limit() -> Weight;
 	fn toggle_contract_white_list() -> Weight;
@@ -280,10 +281,6 @@ decl_storage! {
 		ItemListIndex: map hasher(blake2_128_concat) CollectionId => TokenId;
 		//#endregion
 
-		//#region Chain limits struct
-		pub ChainLimit get(fn chain_limit) config(): ChainLimits;
-		//#endregion
-
 		//#region Bound counters
 		/// Amount of collections destroyed, used for total amount tracking with
 		/// CreatedCollectionCount
@@ -435,6 +432,7 @@ decl_module! {
 		origin: T::Origin
 	{
 		fn deposit_event() = default;
+		const CollectionAdminsLimit: u64 = COLLECTION_ADMINS_LIMIT;
 		type Error = Error<T>;
 
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
@@ -486,13 +484,11 @@ decl_module! {
 				_ => 0
 			};
 
-			let chain_limit = ChainLimit::get();
-
 			let created_count = CreatedCollectionCount::get();
 			let destroyed_count = DestroyedCollectionCount::get();
 
 			// bound Total number of collections
-			ensure!(created_count - destroyed_count < chain_limit.collection_numbers_limit, Error::<T>::TotalCollectionsLimitExceeded);
+			ensure!(created_count - destroyed_count < COLLECTION_NUMBER_LIMIT, Error::<T>::TotalCollectionsLimitExceeded);
 
 			// check params
 			ensure!(decimal_points <= MAX_DECIMAL_POINTS, Error::<T>::CollectionDecimalPointLimitExceeded);
@@ -508,7 +504,7 @@ decl_module! {
 			CreatedCollectionCount::put(next_id);
 
 			let limits = CollectionLimits {
-				sponsored_data_size: chain_limit.custom_data_limit,
+				sponsored_data_size: CUSTOM_DATA_LIMIT,
 				..Default::default()
 			};
 
@@ -737,8 +733,7 @@ decl_module! {
 			match admin_arr.binary_search(&new_admin_id) {
 				Ok(_) => {},
 				Err(idx) => {
-					let limits = ChainLimit::get();
-					ensure!(admin_arr.len() < limits.collections_admins_limit as usize, Error::<T>::CollectionAdminsLimitExceeded);
+					ensure!(admin_arr.len() < COLLECTION_ADMINS_LIMIT as usize, Error::<T>::CollectionAdminsLimitExceeded);
 					admin_arr.insert(idx, new_admin_id);
 					<AdminList<T>>::insert(collection_id, admin_arr);
 				}
@@ -1138,7 +1133,7 @@ decl_module! {
 			Self::check_owner_or_admin_permissions(&target_collection, &sender)?;
 
 			// check schema limit
-			ensure!(schema.len() as u32 <= ChainLimit::get().offchain_schema_limit, "");
+			ensure!(schema.len() as u32 <= OFFCHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.offchain_schema = schema;
 			target_collection.save()
@@ -1168,7 +1163,7 @@ decl_module! {
 			Self::check_owner_or_admin_permissions(&target_collection, &sender)?;
 
 			// check schema limit
-			ensure!(schema.len() as u32 <= ChainLimit::get().const_on_chain_schema_limit, "");
+			ensure!(schema.len() as u32 <= CONST_ON_CHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.const_on_chain_schema = schema;
 			target_collection.save()
@@ -1198,25 +1193,10 @@ decl_module! {
 			Self::check_owner_or_admin_permissions(&target_collection, &sender)?;
 
 			// check schema limit
-			ensure!(schema.len() as u32 <= ChainLimit::get().variable_on_chain_schema_limit, "");
+			ensure!(schema.len() as u32 <= VARIABLE_ON_CHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.variable_on_chain_schema = schema;
 			target_collection.save()
-		}
-
-		// Sudo permissions function
-		#[weight = <T as Config>::WeightInfo::set_chain_limits()]
-		#[transactional]
-		pub fn set_chain_limits(
-			origin,
-			limits: ChainLimits
-		) -> DispatchResult {
-
-			#[cfg(not(feature = "runtime-benchmarks"))]
-			ensure_root(origin)?;
-
-			<ChainLimit>::put(limits);
-			Ok(())
 		}
 
 		#[weight = <T as Config>::WeightInfo::set_collection_limits()]
@@ -1230,12 +1210,11 @@ decl_module! {
 			let mut target_collection = Self::get_collection(collection_id)?;
 			Self::check_owner_permissions(&target_collection, sender.as_sub())?;
 			let old_limits = &target_collection.limits;
-			let chain_limits = ChainLimit::get();
 
 			// collection bounds
 			ensure!(new_limits.sponsor_transfer_timeout <= MAX_SPONSOR_TIMEOUT &&
 				new_limits.account_token_ownership_limit <= MAX_TOKEN_OWNERSHIP &&
-				new_limits.sponsored_data_size <= chain_limits.custom_data_limit,
+				new_limits.sponsored_data_size <= CUSTOM_DATA_LIMIT,
 				Error::<T>::CollectionLimitBoundsExceeded);
 
 			// token_limit   check  prev
@@ -1471,7 +1450,7 @@ impl<T: Config> Module<T> {
 		Self::token_exists(collection, item_id)?;
 
 		ensure!(
-			ChainLimit::get().custom_data_limit >= data.len() as u32,
+			CUSTOM_DATA_LIMIT >= data.len() as u32,
 			Error::<T>::TokenVariableDataLimitExceeded
 		);
 
@@ -1616,38 +1595,17 @@ impl<T: Config> Module<T> {
 	) -> DispatchResult {
 		match target_collection.mode {
 			CollectionMode::NFT => {
-				if let CreateItemData::NFT(data) = data {
-					// check sizes
-					ensure!(
-						ChainLimit::get().custom_data_limit >= data.const_data.len() as u32,
-						Error::<T>::TokenConstDataLimitExceeded
-					);
-					ensure!(
-						ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32,
-						Error::<T>::TokenVariableDataLimitExceeded
-					);
-				} else {
+				if !matches!(data, CreateItemData::NFT(_)) {
 					fail!(Error::<T>::NotNftDataUsedToMintNftCollectionToken);
 				}
 			}
 			CollectionMode::Fungible(_) => {
-				if let CreateItemData::Fungible(_) = data {
-				} else {
+				if !matches!(data, CreateItemData::Fungible(_)) {
 					fail!(Error::<T>::NotFungibleDataUsedToMintFungibleCollectionToken);
 				}
 			}
 			CollectionMode::ReFungible => {
 				if let CreateItemData::ReFungible(data) = data {
-					// check sizes
-					ensure!(
-						ChainLimit::get().custom_data_limit >= data.const_data.len() as u32,
-						Error::<T>::TokenConstDataLimitExceeded
-					);
-					ensure!(
-						ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32,
-						Error::<T>::TokenVariableDataLimitExceeded
-					);
-
 					// Check refungibility limits
 					ensure!(
 						data.pieces <= MAX_REFUNGIBLE_PIECES,
@@ -1675,8 +1633,8 @@ impl<T: Config> Module<T> {
 			CreateItemData::NFT(data) => {
 				let item = NftItemType {
 					owner: owner.clone(),
-					const_data: data.const_data,
-					variable_data: data.variable_data,
+					const_data: data.const_data.into_inner(),
+					variable_data: data.variable_data.into_inner(),
 				};
 
 				Self::add_nft_item(collection, item)?;
@@ -1692,8 +1650,8 @@ impl<T: Config> Module<T> {
 
 				let item = ReFungibleItemType {
 					owner: owner_list,
-					const_data: data.const_data,
-					variable_data: data.variable_data,
+					const_data: data.const_data.into_inner(),
+					variable_data: data.variable_data.into_inner(),
 				};
 
 				Self::add_refungible_item(collection, item)?;
@@ -2292,7 +2250,7 @@ impl<T: Config> Module<T> {
 			// bound Owned tokens by a single address
 			let count = <AccountItemCount<T>>::get(owner.as_sub());
 			ensure!(
-				count < ChainLimit::get().account_token_ownership_limit,
+				count < ACCOUNT_TOKEN_OWNERSHIP_LIMIT,
 				Error::<T>::AddressOwnershipLimitExceeded
 			);
 

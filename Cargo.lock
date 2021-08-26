@@ -4935,12 +4935,15 @@ dependencies = [
 name = "nft-data-structs"
 version = "0.9.0"
 dependencies = [
+ "derivative",
  "frame-support",
  "frame-system",
+ "max-encoded-len",
  "parity-scale-codec",
  "serde",
  "sp-core",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -4999,6 +5002,7 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
+ "derivative",
  "fp-rpc",
  "frame-benchmarking",
  "frame-executive",
@@ -5007,6 +5011,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "max-encoded-len",
  "nft-data-structs",
  "pallet-aura",
  "pallet-balances",
