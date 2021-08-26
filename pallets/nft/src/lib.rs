@@ -2026,24 +2026,38 @@ impl<T: Config> Module<T> {
 		let collection_id = collection.id;
 
 		collection.consume_sload()?;
+		collection.consume_sload()?;
+		let mut recipient_balance = <FungibleItemList<T>>::get(collection_id, recipient.as_sub());
 		let mut balance = <FungibleItemList<T>>::get(collection_id, owner.as_sub());
-		ensure!(balance.value >= value, Error::<T>::TokenValueTooLow);
 
-		// Send balance to recipient (updates balanceOf of recipient)
-		Self::add_fungible_item(collection, recipient, value)?;
+		recipient_balance.value = recipient_balance
+			.value
+			.checked_add(value)
+			.ok_or(Error::<T>::NumOverflow)?;
+		balance.value = balance
+			.value
+			.checked_sub(value)
+			.ok_or(Error::<T>::NumOverflow)?;
 
-		// update balanceOf of sender
+		// update balanceOf
 		collection.consume_sstore()?;
-		<Balance<T>>::insert(collection_id, owner.as_sub(), balance.value - value);
+		collection.consume_sstore()?;
+		if balance.value != 0 {
+			<Balance<T>>::insert(collection_id, owner.as_sub(), balance.value);
+		} else {
+			<Balance<T>>::remove(collection_id, owner.as_sub());
+		}
+		<Balance<T>>::insert(collection_id, recipient.as_sub(), recipient_balance.value);
 
 		// Reduce or remove sender
 		collection.consume_sstore()?;
-		if balance.value == value {
-			<FungibleItemList<T>>::remove(collection_id, owner.as_sub());
-		} else {
-			balance.value -= value;
+		collection.consume_sstore()?;
+		if balance.value != 0 {
 			<FungibleItemList<T>>::insert(collection_id, owner.as_sub(), balance);
+		} else {
+			<FungibleItemList<T>>::remove(collection_id, owner.as_sub());
 		}
+		<FungibleItemList<T>>::insert(collection_id, recipient.as_sub(), recipient_balance);
 
 		collection.log(ERC20Events::Transfer {
 			from: *owner.as_eth(),
