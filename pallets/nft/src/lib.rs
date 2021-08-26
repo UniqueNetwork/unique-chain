@@ -2037,7 +2037,7 @@ impl<T: Config> Module<T> {
 		balance.value = balance
 			.value
 			.checked_sub(value)
-			.ok_or(Error::<T>::NumOverflow)?;
+			.ok_or(Error::<T>::TokenValueTooLow)?;
 
 		// update balanceOf
 		collection.consume_sstore()?;
