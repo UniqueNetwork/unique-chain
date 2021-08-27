@@ -84,7 +84,6 @@ contract MarketPlaceUNQ {
         uint256 _idNFT,
         uint8 _active
     ) public {
-        IERC721(_idCollection).debug("ask");
         require(
             IERC721(_idCollection).ownerOf(_idNFT) == msg.sender,
             "Not right token owner"
