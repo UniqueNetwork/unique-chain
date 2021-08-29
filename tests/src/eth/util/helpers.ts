@@ -17,6 +17,7 @@ import * as solc from 'solc';
 import config from '../../config';
 import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
+import fs from 'fs';
 
 export const GAS_ARGS = { gas: 0x1000000, gasPrice: '0x01' };
 
@@ -173,6 +174,21 @@ export function compileContract(name: string, src: string) {
     abi: out.abi,
     object: '0x' + out.evm.bytecode.object,
   };
+}
+
+export async function deployFungibleContract(web3: Web3 & Web3HttpMarker, deployer: string) {
+
+  const sol = fs.readFileSync(__dirname + '/ERC721.sol').toString();
+
+  const compiled = compileContract('ERC721', sol);
+  const ERC721 = new web3.eth.Contract(compiled.abi, undefined, {
+    data: compiled.object,
+    from: deployer,
+    ...GAS_ARGS,
+  });
+  const fungible = await ERC721.deploy({ data: compiled.object }).send({from: deployer});
+
+  return fungible;
 }
 
 export async function deployFlipper(web3: Web3 & Web3HttpMarker, deployer: string) {
