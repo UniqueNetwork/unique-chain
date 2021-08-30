@@ -31,6 +31,7 @@ runtime-benchmarks = [
 ]
 std = [
     'codec/std',
+    'max-encoded-len/std',
     'cumulus-pallet-aura-ext/std',
     'cumulus-pallet-parachain-system/std',
     'cumulus-pallet-xcm/std',
@@ -83,6 +84,10 @@ std = [
     'xcm/std',
     'xcm-builder/std',
     'xcm-executor/std',
+]
+limit-testing = [
+    'pallet-nft/limit-testing',
+    'nft-data-structs/limit-testing',
 ]
 
 ################################################################################
@@ -378,6 +383,8 @@ default-features = false
 # local dependencies
 
 [dependencies]
+max-encoded-len = { default-features = false, features = ['derive'], version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
+derivative = "2.2.0"
 pallet-nft = { path = '../pallets/nft', default-features = false, version = '3.0.0' }
 pallet-inflation = { path = '../pallets/inflation', default-features = false, version = '3.0.0' }
 nft-data-structs = { path = '../primitives/nft', default-features = false, version = '0.9.0' }

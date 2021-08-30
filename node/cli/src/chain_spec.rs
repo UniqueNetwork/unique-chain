@@ -202,18 +202,6 @@ fn testnet_genesis(
 			nft_item_id: vec![],
 			fungible_item_id: vec![],
 			refungible_item_id: vec![],
-			chain_limit: ChainLimits {
-				collection_numbers_limit: 100000,
-				account_token_ownership_limit: 1000000,
-				collections_admins_limit: 5,
-				custom_data_limit: 2048,
-				nft_sponsor_transfer_timeout: 15,
-				fungible_sponsor_transfer_timeout: 15,
-				refungible_sponsor_transfer_timeout: 15,
-				offchain_schema_limit: 1024,
-				variable_on_chain_schema_limit: 1024,
-				const_on_chain_schema_limit: 1024,
-			},
 		},
 		parachain_info: nft_runtime::ParachainInfoConfig { parachain_id: id },
 		aura: nft_runtime::AuraConfig {

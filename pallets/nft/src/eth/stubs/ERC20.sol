@@ -1,69 +1,94 @@
 // SPDX-License-Identifier: OTHER
+// This code is automatically generated with `cargo test --package pallet-nft -- eth::erc::name --exact --nocapture --ignored`
 
 pragma solidity >=0.8.0 <0.9.0;
 
-contract ERC20 {
-	uint8 _dummy = 0;
-	string stub_error = "this contract does not exists, code for collections is implemented at pallet side";
+// Common stubs holder
+contract Dummy {
+	uint8 dummy;
+	string stub_error = "this contract is implemented in native";
+}
 
-	// 0x18160ddd
-	function totalSupply() external view returns (uint256) {
+// Inline
+contract ERC20Events {
+	event Transfer(address from, address to, uint256 value);
+	event Approval(address owner, address spender, uint256 value);
+}
+
+// Inline
+contract InlineNameSymbol is Dummy {
+	function name() public view returns (string memory) {
 		require(false, stub_error);
-		_dummy;
+		dummy;
+		return "";
+	}
+	function symbol() public view returns (string memory) {
+		require(false, stub_error);
+		dummy;
+		return "";
+	}
+}
+
+// Inline
+contract InlineTotalSupply is Dummy {
+	function totalSupply() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
 		return 0;
 	}
+}
 
-	// 0x70a08231
-	function balanceOf(address account) external view returns (uint256) {
+contract ERC165 is Dummy {
+	function supportsInterface(uint32 interfaceId) public view returns (bool) {
 		require(false, stub_error);
-		account;
-		_dummy;
-		return 0;
-	}
-
-	// 0xa9059cbb
-	function transfer(address recipient, uint256 amount) external returns (bool) {
-		require(false, stub_error);
-		recipient;
-		amount;
-		_dummy = 0;
+		interfaceId;
+		dummy;
 		return false;
 	}
+}
 
-	// 0xdd62ed3e
-	function allowance(address owner, address spender) external view returns (uint256) {
+contract ERC20 is Dummy, InlineNameSymbol, InlineTotalSupply, ERC20Events {
+	function decimals() public view returns (uint8) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+	function balanceOf(address owner) public view returns (uint256) {
+		require(false, stub_error);
+		owner;
+		dummy;
+		return 0;
+	}
+	function transfer(address to, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		to;
+		amount;
+		dummy = 0;
+		return false;
+	}
+	function transferFrom(address from, address to, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		from;
+		to;
+		amount;
+		dummy = 0;
+		return false;
+	}
+	function approve(address spender, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		spender;
+		amount;
+		dummy = 0;
+		return false;
+	}
+	function allowance(address owner, address spender) public view returns (uint256) {
 		require(false, stub_error);
 		owner;
 		spender;
-		return _dummy;
+		dummy;
+		return 0;
 	}
+}
 
-	// 0x095ea7b3
-	function approve(address spender, uint256 amount) external returns (bool) {
-		require(false, stub_error);
-		spender;
-		amount;
-		_dummy = 0;
-		return false;
-	}
-
-	// 0x23b872dd
-	function transferFrom(address sender, address recipient, uint256 amount) external returns (bool) {
-		require(false, stub_error);
-		sender;
-		recipient;
-		amount;
-		_dummy = 0;
-		return false;
-	}
-
-	// While ERC165 is not required by spec of ERC20, better implement it
-	// 0x01ffc9a7
-	function supportsInterface(bytes4 interfaceID) public pure returns (bool) {
-		return 
-			// ERC20
-			interfaceID == 0x36372b07 || 
-			// ERC165
-			interfaceID == 0x01ffc9a7;
-	}
+contract UniqueFungible is Dummy, ERC165, ERC20 {
 }
