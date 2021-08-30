@@ -10,5 +10,9 @@ _bench:
 bench-evm-migration:
 	make _bench PALLET=evm-migration
 
+.PHONY: bench-nft
+bench-nft:
+	make _bench PALLET=nft
+
 .PHONY: bench
-bench: bench-evm-migration
+bench: bench-evm-migration bench-nft

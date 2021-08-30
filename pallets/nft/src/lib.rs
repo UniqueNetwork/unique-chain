@@ -40,8 +40,9 @@ use nft_data_structs::{
 	MAX_DECIMAL_POINTS, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, MAX_REFUNGIBLE_PIECES,
 	CUSTOM_DATA_LIMIT, COLLECTION_NUMBER_LIMIT, ACCOUNT_TOKEN_OWNERSHIP_LIMIT,
 	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, COLLECTION_ADMINS_LIMIT,
-	OFFCHAIN_SCHEMA_LIMIT, AccessMode, Collection, CreateItemData, CollectionLimits, CollectionId,
-	CollectionMode, TokenId, SchemaVersion, SponsorshipState, Ownership, NftItemType,
+	OFFCHAIN_SCHEMA_LIMIT, MAX_TOKEN_PREFIX_LENGTH, MAX_COLLECTION_NAME_LENGTH,
+	MAX_COLLECTION_DESCRIPTION_LENGTH, AccessMode, Collection, CreateItemData, CollectionLimits,
+	CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState, Ownership, NftItemType,
 	FungibleItemType, ReFungibleItemType,
 };
 
@@ -51,7 +52,6 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-mod default_weights;
 mod eth;
 mod sponsorship;
 pub use sponsorship::NftSponsorshipHandler;
@@ -63,38 +63,8 @@ use eth::erc::{ERC20Events, ERC721Events};
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-
-pub trait WeightInfo {
-	fn create_collection() -> Weight;
-	fn destroy_collection() -> Weight;
-	fn add_to_white_list() -> Weight;
-	fn remove_from_white_list() -> Weight;
-	fn set_public_access_mode() -> Weight;
-	fn set_mint_permission() -> Weight;
-	fn change_collection_owner() -> Weight;
-	fn add_collection_admin() -> Weight;
-	fn remove_collection_admin() -> Weight;
-	fn set_collection_sponsor() -> Weight;
-	fn confirm_sponsorship() -> Weight;
-	fn remove_collection_sponsor() -> Weight;
-	fn create_item(s: usize) -> Weight;
-	fn burn_item() -> Weight;
-	fn transfer() -> Weight;
-	fn approve() -> Weight;
-	fn transfer_from() -> Weight;
-	fn set_offchain_schema() -> Weight;
-	fn set_const_on_chain_schema() -> Weight;
-	fn set_variable_on_chain_schema() -> Weight;
-	fn set_variable_meta_data() -> Weight;
-	fn enable_contract_sponsoring() -> Weight;
-	fn set_schema_version() -> Weight;
-	fn set_contract_sponsoring_rate_limit() -> Weight;
-	fn set_variable_meta_data_sponsoring_rate_limit() -> Weight;
-	fn toggle_contract_white_list() -> Weight;
-	fn add_to_contract_white_list() -> Weight;
-	fn remove_from_contract_white_list() -> Weight;
-	fn set_collection_limits() -> Weight;
-}
+pub mod weights;
+use weights::WeightInfo;
 
 decl_error! {
 	/// Error for non-fungible-token module.
@@ -245,6 +215,39 @@ pub trait Config: system::Config + pallet_evm_coder_substrate::Config + Sized {
 	>;
 	type TreasuryAccountId: Get<Self::AccountId>;
 }
+
+type SelfWeightOf<T> = <T as Config>::WeightInfo;
+
+trait WeightInfoHelpers: WeightInfo {
+	fn transfer() -> Weight {
+		Self::transfer_nft()
+			.max(Self::transfer_fungible())
+			.max(Self::transfer_refungible())
+	}
+	fn transfer_from() -> Weight {
+		Self::transfer_from_nft()
+			.max(Self::transfer_from_fungible())
+			.max(Self::transfer_from_refungible())
+	}
+	fn approve() -> Weight {
+		// TODO: refungible, fungible
+		Self::approve_nft()
+	}
+	fn set_variable_meta_data(data: u32) -> Weight {
+		// TODO: refungible
+		Self::set_variable_meta_data_nft(data)
+	}
+	fn create_item(data: u32) -> Weight {
+		Self::create_item_nft(data)
+			.max(Self::create_item_fungible())
+			.max(Self::create_item_refungible(data))
+	}
+	fn burn_item() -> Weight {
+		// TODO: refungible, fungible
+		Self::burn_item_nft()
+	}
+}
+impl<T: WeightInfo> WeightInfoHelpers for T {}
 
 // # Used definitions
 //
@@ -455,7 +458,7 @@ decl_module! {
 		///
 		/// * mode: [CollectionMode] collection type and type dependent data.
 		// returns collection ID
-		#[weight = <T as Config>::WeightInfo::create_collection()]
+		#[weight = <SelfWeightOf<T>>::create_collection()]
 		#[transactional]
 		pub fn create_collection(origin,
 								 collection_name: Vec<u16>,
@@ -492,9 +495,9 @@ decl_module! {
 
 			// check params
 			ensure!(decimal_points <= MAX_DECIMAL_POINTS, Error::<T>::CollectionDecimalPointLimitExceeded);
-			ensure!(collection_name.len() <= 64, Error::<T>::CollectionNameLimitExceeded);
-			ensure!(collection_description.len() <= 256, Error::<T>::CollectionDescriptionLimitExceeded);
-			ensure!(token_prefix.len() <= 16, Error::<T>::CollectionTokenPrefixLimitExceeded);
+			ensure!(collection_name.len() <= MAX_COLLECTION_NAME_LENGTH, Error::<T>::CollectionNameLimitExceeded);
+			ensure!(collection_description.len() <= MAX_COLLECTION_DESCRIPTION_LENGTH, Error::<T>::CollectionDescriptionLimitExceeded);
+			ensure!(token_prefix.len() <= MAX_TOKEN_PREFIX_LENGTH, Error::<T>::CollectionTokenPrefixLimitExceeded);
 
 			// Generate next collection ID
 			let next_id = created_count
@@ -545,7 +548,7 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id: collection to destroy.
-		#[weight = <T as Config>::WeightInfo::destroy_collection()]
+		#[weight = <SelfWeightOf<T>>::destroy_collection()]
 		#[transactional]
 		pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
 
@@ -593,7 +596,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * address.
-		#[weight = <T as Config>::WeightInfo::add_to_white_list()]
+		#[weight = <SelfWeightOf<T>>::add_to_white_list()]
 		#[transactional]
 		pub fn add_to_white_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
 
@@ -622,7 +625,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * address.
-		#[weight = <T as Config>::WeightInfo::remove_from_white_list()]
+		#[weight = <SelfWeightOf<T>>::remove_from_white_list()]
 		#[transactional]
 		pub fn remove_from_white_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
 
@@ -650,7 +653,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * mode: [AccessMode]
-		#[weight = <T as Config>::WeightInfo::set_public_access_mode()]
+		#[weight = <SelfWeightOf<T>>::set_public_access_mode()]
 		#[transactional]
 		pub fn set_public_access_mode(origin, collection_id: CollectionId, mode: AccessMode) -> DispatchResult
 		{
@@ -675,7 +678,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * mint_permission: Boolean parameter. If True, allows minting to Anyone with conditions above.
-		#[weight = <T as Config>::WeightInfo::set_mint_permission()]
+		#[weight = <SelfWeightOf<T>>::set_mint_permission()]
 		#[transactional]
 		pub fn set_mint_permission(origin, collection_id: CollectionId, mint_permission: bool) -> DispatchResult
 		{
@@ -698,7 +701,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * new_owner.
-		#[weight = <T as Config>::WeightInfo::change_collection_owner()]
+		#[weight = <SelfWeightOf<T>>::change_collection_owner()]
 		#[transactional]
 		pub fn change_collection_owner(origin, collection_id: CollectionId, new_owner: T::AccountId) -> DispatchResult {
 
@@ -722,7 +725,7 @@ decl_module! {
 		/// * collection_id: ID of the Collection to add admin for.
 		///
 		/// * new_admin_id: Address of new admin to add.
-		#[weight = <T as Config>::WeightInfo::add_collection_admin()]
+		#[weight = <SelfWeightOf<T>>::add_collection_admin()]
 		#[transactional]
 		pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin_id: T::CrossAccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -753,7 +756,7 @@ decl_module! {
 		/// * collection_id: ID of the Collection to remove admin for.
 		///
 		/// * account_id: Address of admin to remove.
-		#[weight = <T as Config>::WeightInfo::remove_collection_admin()]
+		#[weight = <SelfWeightOf<T>>::remove_collection_admin()]
 		#[transactional]
 		pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::CrossAccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -777,7 +780,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * new_sponsor.
-		#[weight = <T as Config>::WeightInfo::set_collection_sponsor()]
+		#[weight = <SelfWeightOf<T>>::set_collection_sponsor()]
 		#[transactional]
 		pub fn set_collection_sponsor(origin, collection_id: CollectionId, new_sponsor: T::AccountId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -795,7 +798,7 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		#[weight = <T as Config>::WeightInfo::confirm_sponsorship()]
+		#[weight = <SelfWeightOf<T>>::confirm_sponsorship()]
 		#[transactional]
 		pub fn confirm_sponsorship(origin, collection_id: CollectionId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -819,7 +822,7 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		#[weight = <T as Config>::WeightInfo::remove_collection_sponsor()]
+		#[weight = <SelfWeightOf<T>>::remove_collection_sponsor()]
 		#[transactional]
 		pub fn remove_collection_sponsor(origin, collection_id: CollectionId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -855,7 +858,7 @@ decl_module! {
 		// .saturating_add(RocksDbWeight::get().reads(10 as Weight))
 		// .saturating_add(RocksDbWeight::get().writes(8 as Weight))]
 
-		#[weight = <T as Config>::WeightInfo::create_item(data.data_size())]
+		#[weight = <SelfWeightOf<T>>::create_item(data.data_size() as u32)]
 		#[transactional]
 		pub fn create_item(origin, collection_id: CollectionId, owner: T::CrossAccountId, data: CreateItemData) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -884,8 +887,8 @@ decl_module! {
 		/// * itemsData: Array items properties. Each property is an array of bytes itself, see [create_item].
 		///
 		/// * owner: Address, initial owner of the NFT.
-		#[weight = <T as Config>::WeightInfo::create_item(items_data.iter()
-							   .map(|data| { data.data_size() })
+		#[weight = <SelfWeightOf<T>>::create_item(items_data.iter()
+							   .map(|data| { data.data_size() as u32 })
 							   .sum())]
 		#[transactional]
 		pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::CrossAccountId, items_data: Vec<CreateItemData>) -> DispatchResult {
@@ -912,7 +915,7 @@ decl_module! {
 		/// * collection_id: ID of the collection.
 		///
 		/// * value: New flag value.
-		#[weight = <T as Config>::WeightInfo::burn_item()]
+		#[weight = <SelfWeightOf<T>>::burn_item()]
 		#[transactional]
 		pub fn set_transfers_enabled_flag(origin, collection_id: CollectionId, value: bool) -> DispatchResult {
 
@@ -938,7 +941,7 @@ decl_module! {
 		/// * collection_id: ID of the collection.
 		///
 		/// * item_id: ID of NFT to burn.
-		#[weight = <T as Config>::WeightInfo::burn_item()]
+		#[weight = <SelfWeightOf<T>>::burn_item()]
 		#[transactional]
 		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
 
@@ -973,7 +976,7 @@ decl_module! {
 		///     * Non-Fungible Mode: Ignored
 		///     * Fungible Mode: Must specify transferred amount
 		///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
-		#[weight = <T as Config>::WeightInfo::transfer()]
+		#[weight = <SelfWeightOf<T>>::transfer()]
 		#[transactional]
 		pub fn transfer(origin, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -999,7 +1002,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * item_id: ID of the item.
-		#[weight = <T as Config>::WeightInfo::approve()]
+		#[weight = <SelfWeightOf<T>>::approve()]
 		#[transactional]
 		pub fn approve(origin, spender: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -1029,7 +1032,7 @@ decl_module! {
 		/// * item_id: ID of the item.
 		///
 		/// * value: Amount to transfer.
-		#[weight = <T as Config>::WeightInfo::transfer_from()]
+		#[weight = <SelfWeightOf<T>>::transfer_from()]
 		#[transactional]
 		pub fn transfer_from(origin, from: T::CrossAccountId, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -1064,7 +1067,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * schema: String representing the offchain data schema.
-		#[weight = <T as Config>::WeightInfo::set_variable_meta_data()]
+		#[weight = <SelfWeightOf<T>>::set_variable_meta_data(data.len() as u32)]
 		#[transactional]
 		pub fn set_variable_meta_data (
 			origin,
@@ -1095,7 +1098,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * schema: SchemaVersion: enum
-		#[weight = <T as Config>::WeightInfo::set_schema_version()]
+		#[weight = <SelfWeightOf<T>>::set_schema_version()]
 		#[transactional]
 		pub fn set_schema_version(
 			origin,
@@ -1121,7 +1124,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * schema: String representing the offchain data schema.
-		#[weight = <T as Config>::WeightInfo::set_offchain_schema()]
+		#[weight = <SelfWeightOf<T>>::set_offchain_schema(schema.len() as u32)]
 		#[transactional]
 		pub fn set_offchain_schema(
 			origin,
@@ -1151,7 +1154,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * schema: String representing the const on-chain data schema.
-		#[weight = <T as Config>::WeightInfo::set_const_on_chain_schema()]
+		#[weight = <SelfWeightOf<T>>::set_const_on_chain_schema(schema.len() as u32)]
 		#[transactional]
 		pub fn set_const_on_chain_schema (
 			origin,
@@ -1181,7 +1184,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * schema: String representing the variable on-chain data schema.
-		#[weight = <T as Config>::WeightInfo::set_const_on_chain_schema()]
+		#[weight = <SelfWeightOf<T>>::set_const_on_chain_schema(schema.len() as u32)]
 		#[transactional]
 		pub fn set_variable_on_chain_schema (
 			origin,
@@ -1199,7 +1202,7 @@ decl_module! {
 			target_collection.save()
 		}
 
-		#[weight = <T as Config>::WeightInfo::set_collection_limits()]
+		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
 		#[transactional]
 		pub fn set_collection_limits(
 			origin,
