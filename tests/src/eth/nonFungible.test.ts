@@ -6,7 +6,6 @@
 import privateKey from '../substrate/privateKey';
 import { approveExpectSuccess, burnItemExpectSuccess, createCollectionExpectSuccess, createItemExpectSuccess, transferExpectSuccess, transferFromExpectSuccess } from '../util/helpers';
 import { collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents, recordEvents, subToEth, transferBalanceToEth } from './util/helpers';
-import { evmToAddress } from '@polkadot/util-crypto';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import { expect } from 'chai';
 import waitNewBlocks from '../substrate/wait-new-blocks';
