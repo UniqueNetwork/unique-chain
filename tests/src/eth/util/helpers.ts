@@ -18,6 +18,7 @@ import config from '../../config';
 import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
 import getBalance from '../../substrate/get-balance';
+import waitNewBlocks from '../../substrate/wait-new-blocks';
 
 export const GAS_ARGS = { gas: 0x1000000, gasPrice: '0x01' };
 
@@ -232,6 +233,7 @@ export async function recordEthFee(api: ApiPromise, user: string, call: () => Pr
   const before = await ethBalanceViaSub(api, user);
 
   await call();
+  await waitNewBlocks(api, 1);
 
   const after = await ethBalanceViaSub(api, user);
 
