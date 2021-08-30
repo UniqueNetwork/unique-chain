@@ -1,5 +1,5 @@
 use core::marker::PhantomData;
-use evm_coder::{abi::AbiWriter, execution::Result, solidity_interface, types::*};
+use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
 use pallet_evm_coder_substrate::SubstrateRecorder;
 use pallet_evm::{ExitReason, ExitRevert, OnCreate, OnMethodCall, PrecompileOutput};
 use sp_core::H160;
@@ -14,76 +14,76 @@ struct ContractHelpers<T: Config>(SubstrateRecorder<T>);
 
 #[solidity_interface(name = "ContractHelpers")]
 impl<T: Config> ContractHelpers<T> {
-	fn contract_owner(&self, contract: address) -> Result<address> {
+	fn contract_owner(&self, contract_address: address) -> Result<address> {
 		self.0.consume_sload()?;
-		Ok(<Owner<T>>::get(contract))
+		Ok(<Owner<T>>::get(contract_address))
 	}
 
-	fn sponsoring_enabled(&self, contract: address) -> Result<bool> {
+	fn sponsoring_enabled(&self, contract_address: address) -> Result<bool> {
 		self.0.consume_sload()?;
-		Ok(<SelfSponsoring<T>>::get(contract))
+		Ok(<SelfSponsoring<T>>::get(contract_address))
 	}
 
 	fn toggle_sponsoring(
 		&mut self,
 		caller: caller,
-		contract: address,
+		contract_address: address,
 		enabled: bool,
 	) -> Result<void> {
 		self.0.consume_sload()?;
-		<Pallet<T>>::ensure_owner(contract, caller)?;
+		<Pallet<T>>::ensure_owner(contract_address, caller)?;
 		self.0.consume_sstore()?;
-		<Pallet<T>>::toggle_sponsoring(contract, enabled);
+		<Pallet<T>>::toggle_sponsoring(contract_address, enabled);
 		Ok(())
 	}
 
 	fn set_sponsoring_rate_limit(
 		&mut self,
 		caller: caller,
-		contract: address,
+		contract_address: address,
 		rate_limit: uint32,
 	) -> Result<void> {
 		self.0.consume_sload()?;
-		<Pallet<T>>::ensure_owner(contract, caller)?;
+		<Pallet<T>>::ensure_owner(contract_address, caller)?;
 		self.0.consume_sstore()?;
-		<Pallet<T>>::set_sponsoring_rate_limit(contract, rate_limit.into());
+		<Pallet<T>>::set_sponsoring_rate_limit(contract_address, rate_limit.into());
 		Ok(())
 	}
 
-	fn allowed(&self, contract: address, user: address) -> Result<bool> {
+	fn allowed(&self, contract_address: address, user: address) -> Result<bool> {
 		self.0.consume_sload()?;
-		Ok(<Pallet<T>>::allowed(contract, user, true))
+		Ok(<Pallet<T>>::allowed(contract_address, user, true))
 	}
 
-	fn allowlist_enabled(&self, contract: address) -> Result<bool> {
+	fn allowlist_enabled(&self, contract_address: address) -> Result<bool> {
 		self.0.consume_sload()?;
-		Ok(<AllowlistEnabled<T>>::get(contract))
+		Ok(<AllowlistEnabled<T>>::get(contract_address))
 	}
 
 	fn toggle_allowlist(
 		&mut self,
 		caller: caller,
-		contract: address,
+		contract_address: address,
 		enabled: bool,
 	) -> Result<void> {
 		self.0.consume_sload()?;
-		<Pallet<T>>::ensure_owner(contract, caller)?;
+		<Pallet<T>>::ensure_owner(contract_address, caller)?;
 		self.0.consume_sstore()?;
-		<Pallet<T>>::toggle_allowlist(contract, enabled);
+		<Pallet<T>>::toggle_allowlist(contract_address, enabled);
 		Ok(())
 	}
 
 	fn toggle_allowed(
 		&mut self,
 		caller: caller,
-		contract: address,
+		contract_address: address,
 		user: address,
 		allowed: bool,
 	) -> Result<void> {
 		self.0.consume_sload()?;
-		<Pallet<T>>::ensure_owner(contract, caller)?;
+		<Pallet<T>>::ensure_owner(contract_address, caller)?;
 		self.0.consume_sstore()?;
-		<Pallet<T>>::toggle_allowed(contract, user, allowed);
+		<Pallet<T>>::toggle_allowed(contract_address, user, allowed);
 		Ok(())
 	}
 }
@@ -130,7 +130,7 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 
 	fn get_code(contract: &sp_core::H160) -> Option<Vec<u8>> {
 		(contract == &T::ContractAddress::get())
-			.then(|| include_bytes!("./stubs/ContractHelpers.bin").to_vec())
+			.then(|| include_bytes!("./stubs/ContractHelpers.raw").to_vec())
 	}
 }
 
@@ -162,3 +162,6 @@ impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for HelpersContractSpo
 		None
 	}
 }
+
+generate_stubgen!(contract_helpers_impl, ContractHelpersCall, true);
+generate_stubgen!(contract_helpers_iface, ContractHelpersCall, false);

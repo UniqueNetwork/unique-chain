@@ -34,8 +34,9 @@ impl EventField {
 	fn expand_solidity_argument(&self) -> proc_macro2::TokenStream {
 		let camel_name = &self.camel_name;
 		let ty = &self.ty;
+		let indexed = self.indexed;
 		quote! {
-			<NamedArgument<#ty>>::new(#camel_name)
+			<SolidityEventArgument<#ty>>::new(#indexed, #camel_name)
 		}
 	}
 }

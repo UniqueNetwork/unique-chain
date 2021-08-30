@@ -9,22 +9,35 @@ interface Dummy {
 }
 
 interface ContractHelpers is Dummy {
-	function contractOwner(address contr) external view returns (address);
+	function contractOwner(address contractAddress)
+		external
+		view
+		returns (address);
 
-	function sponsoringEnabled(address contr) external view returns (bool);
+	function sponsoringEnabled(address contractAddress)
+		external
+		view
+		returns (bool);
 
-	function toggleSponsoring(address contr, bool enabled) external;
+	function toggleSponsoring(address contractAddress, bool enabled) external;
 
-	function setSponsoringRateLimit(address contr, uint32 rateLimit) external;
+	function setSponsoringRateLimit(address contractAddress, uint32 rateLimit)
+		external;
 
-	function allowed(address contr, address user) external view returns (bool);
+	function allowed(address contractAddress, address user)
+		external
+		view
+		returns (bool);
 
-	function allowlistEnabled(address contr) external view returns (bool);
+	function allowlistEnabled(address contractAddress)
+		external
+		view
+		returns (bool);
 
-	function toggleAllowlist(address contr, bool enabled) external;
+	function toggleAllowlist(address contractAddress, bool enabled) external;
 
 	function toggleAllowed(
-		address contr,
+		address contractAddress,
 		address user,
 		bool allowed
 	) external;

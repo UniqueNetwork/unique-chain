@@ -1,5 +1,5 @@
 use core::char::{decode_utf16, REPLACEMENT_CHARACTER};
-use evm_coder::{ToLog, execution::Result, solidity, solidity_interface, types::*};
+use evm_coder::{ToLog, execution::Result, generate_stubgen, solidity, solidity_interface, types::*};
 use nft_data_structs::{CreateItemData, CreateNftData};
 use core::convert::TryInto;
 use crate::{
@@ -403,31 +403,9 @@ impl<T: Config> CollectionHandle<T> {
 #[solidity_interface(name = "UniqueFungible", is(ERC165, ERC20))]
 impl<T: Config> CollectionHandle<T> {}
 
-macro_rules! generate_code {
-	($name:ident, $decl:ident, $is_impl:literal) => {
-		#[test]
-		#[ignore]
-		fn $name() {
-			use sp_std::collections::btree_set::BTreeSet;
-			let mut out = BTreeSet::new();
-			$decl::generate_solidity_interface(&mut out, $is_impl);
-			println!("=== SNIP START ===");
-			println!("// SPDX-License-Identifier: OTHER");
-			println!("// This code is automatically generated with `cargo test --package pallet-nft -- eth::erc::{} --exact --nocapture --ignored`", stringify!(name));
-			println!();
-			println!("pragma solidity >=0.8.0 <0.9.0;");
-			println!();
-			for b in out {
-				println!("{}", b);
-			}
-			println!("=== SNIP END ===");
-		}
-	};
-}
-
 // Not a tests, but code generators
-generate_code!(nft_impl, UniqueNFTCall, true);
-generate_code!(nft_iface, UniqueNFTCall, false);
+generate_stubgen!(nft_impl, UniqueNFTCall, true);
+generate_stubgen!(nft_iface, UniqueNFTCall, false);
 
-generate_code!(fungible_impl, UniqueFungibleCall, true);
-generate_code!(fungible_iface, UniqueFungibleCall, false);
+generate_stubgen!(fungible_impl, UniqueFungibleCall, true);
+generate_stubgen!(fungible_iface, UniqueFungibleCall, false);

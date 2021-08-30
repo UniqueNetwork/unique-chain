@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: OTHER
-// This code is automatically generated with `cargo test --package pallet-nft -- eth::erc::name --exact --nocapture --ignored`
+// This code is automatically generated
 
 pragma solidity >=0.8.0 <0.9.0;
 
@@ -11,8 +11,12 @@ contract Dummy {
 
 // Inline
 contract ERC20Events {
-	event Transfer(address from, address to, uint256 value);
-	event Approval(address owner, address spender, uint256 value);
+	event Transfer(address indexed from, address indexed to, uint256 value);
+	event Approval(
+		address indexed owner,
+		address indexed spender,
+		uint256 value
+	);
 }
 
 // Inline
@@ -22,6 +26,7 @@ contract InlineNameSymbol is Dummy {
 		dummy;
 		return "";
 	}
+
 	function symbol() public view returns (string memory) {
 		require(false, stub_error);
 		dummy;
@@ -53,12 +58,14 @@ contract ERC20 is Dummy, InlineNameSymbol, InlineTotalSupply, ERC20Events {
 		dummy;
 		return 0;
 	}
+
 	function balanceOf(address owner) public view returns (uint256) {
 		require(false, stub_error);
 		owner;
 		dummy;
 		return 0;
 	}
+
 	function transfer(address to, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		to;
@@ -66,7 +73,12 @@ contract ERC20 is Dummy, InlineNameSymbol, InlineTotalSupply, ERC20Events {
 		dummy = 0;
 		return false;
 	}
-	function transferFrom(address from, address to, uint256 amount) public returns (bool) {
+
+	function transferFrom(
+		address from,
+		address to,
+		uint256 amount
+	) public returns (bool) {
 		require(false, stub_error);
 		from;
 		to;
@@ -74,6 +86,7 @@ contract ERC20 is Dummy, InlineNameSymbol, InlineTotalSupply, ERC20Events {
 		dummy = 0;
 		return false;
 	}
+
 	function approve(address spender, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		spender;
@@ -81,7 +94,12 @@ contract ERC20 is Dummy, InlineNameSymbol, InlineTotalSupply, ERC20Events {
 		dummy = 0;
 		return false;
 	}
-	function allowance(address owner, address spender) public view returns (uint256) {
+
+	function allowance(address owner, address spender)
+		public
+		view
+		returns (uint256)
+	{
 		require(false, stub_error);
 		owner;
 		spender;
@@ -90,5 +108,4 @@ contract ERC20 is Dummy, InlineNameSymbol, InlineTotalSupply, ERC20Events {
 	}
 }
 
-contract UniqueFungible is Dummy, ERC165, ERC20 {
-}
+contract UniqueFungible is Dummy, ERC165, ERC20 {}
