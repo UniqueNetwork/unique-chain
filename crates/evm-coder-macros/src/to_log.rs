@@ -1,3 +1,4 @@
+use inflector::cases;
 use syn::{Data, DeriveInput, Field, Fields, Ident, Variant, spanned::Spanned};
 use std::fmt::Write;
 use quote::quote;
@@ -6,6 +7,7 @@ use crate::{parse_ident_from_path, parse_ident_from_type, snake_ident_to_screami
 
 struct EventField {
 	name: Ident,
+	camel_name: String,
 	ty: Ident,
 	indexed: bool,
 }
@@ -24,9 +26,17 @@ impl EventField {
 		}
 		Ok(Self {
 			name: name.to_owned(),
+			camel_name: cases::camelcase::to_camel_case(&name.to_string()),
 			ty: ty.to_owned(),
 			indexed,
 		})
+	}
+	fn expand_solidity_argument(&self) -> proc_macro2::TokenStream {
+		let camel_name = &self.camel_name;
+		let ty = &self.ty;
+		quote! {
+			<NamedArgument<#ty>>::new(#camel_name)
+		}
 	}
 }
 
@@ -116,6 +126,21 @@ impl Event {
 			)*];
 		}
 	}
+
+	fn expand_solidity_function(&self) -> proc_macro2::TokenStream {
+		let name = self.name.to_string();
+		let args = self.fields.iter().map(EventField::expand_solidity_argument);
+		quote! {
+			SolidityEvent {
+				name: #name,
+				args: (
+					#(
+						#args,
+					)*
+				),
+			}
+		}
+	}
 }
 
 pub struct Events {
@@ -144,12 +169,30 @@ impl Events {
 
 		let consts = self.events.iter().map(Event::expand_consts);
 		let serializers = self.events.iter().map(Event::expand_serializers);
+		let solidity_name = self.name.to_string();
+		let solidity_functions = self.events.iter().map(Event::expand_solidity_function);
 
 		quote! {
 			impl #name {
 				#(
 					#consts
 				)*
+
+				pub fn generate_solidity_interface(out_set: &mut sp_std::collections::btree_set::BTreeSet<string>, is_impl: bool) {
+					use evm_coder::solidity::*;
+					use core::fmt::Write;
+					let interface = SolidityInterface {
+						name: #solidity_name,
+						is: &[],
+						functions: (#(
+							#solidity_functions,
+						)*),
+					};
+					let mut out = string::new();
+					out.push_str("// Inline\n");
+					let _ = interface.format(is_impl, &mut out);
+					out_set.insert(out);
+				}
 			}
 
 			#[automatically_derived]

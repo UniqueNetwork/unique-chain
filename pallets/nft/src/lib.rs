@@ -177,6 +177,8 @@ decl_error! {
 		OutOfGas,
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
+		/// Can't transfer tokens to ethereum zero address
+		AddressIsZero,
 	}
 }
 
@@ -1248,6 +1250,11 @@ impl<T: Config> Module<T> {
 		owner: &T::CrossAccountId,
 		data: CreateItemData,
 	) -> DispatchResult {
+		ensure!(
+			owner != &T::CrossAccountId::from_eth(H160([0; 20])),
+			Error::<T>::AddressIsZero
+		);
+
 		Self::can_create_items_in_collection(collection, sender, owner, 1)?;
 		Self::validate_create_item_args(collection, &data)?;
 		Self::create_item_no_validation(collection, owner, data)?;
@@ -1262,6 +1269,11 @@ impl<T: Config> Module<T> {
 		item_id: TokenId,
 		value: u128,
 	) -> DispatchResult {
+		ensure!(
+			recipient != &T::CrossAccountId::from_eth(H160([0; 20])),
+			Error::<T>::AddressIsZero
+		);
+
 		// Limits check
 		Self::is_correct_transfer(target_collection, recipient)?;
 
@@ -1829,6 +1841,11 @@ impl<T: Config> Module<T> {
 		<NftItemList<T>>::remove(collection_id, item_id);
 		<VariableMetaDataBasket<T>>::remove(collection_id, item_id);
 
+		collection.log(ERC721Events::Transfer {
+			from: *item.owner.as_eth(),
+			to: H160::default(),
+			token_id: item_id.into(),
+		})?;
 		Self::deposit_event(RawEvent::ItemDestroyed(collection.id, item_id));
 		Ok(())
 	}

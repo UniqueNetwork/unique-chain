@@ -1,163 +1,194 @@
 // SPDX-License-Identifier: OTHER
+// This code is automatically generated with `cargo test --package pallet-nft -- eth::erc::name --exact --nocapture --ignored`
 
 pragma solidity >=0.8.0 <0.9.0;
 
-contract ERC721 {
-    uint8 _dummy = 0;
-    address _dummy_addr = 0x0000000000000000000000000000000000000000;
-    string _dummy_string = "";
-    string stub_error =
-        "this contract does not exists, code for collections is implemented at pallet side";
+// Common stubs holder
+contract Dummy {
+	uint8 dummy;
+	string stub_error = "this contract is implemented in native";
+}
 
-    event Transfer(
-        address indexed from,
-        address indexed to,
-        uint256 indexed tokenId
-    );
+// Inline
+contract ERC721Events {
+	event Transfer(address from, address to, uint256 tokenId);
+	event Approval(address owner, address approved, uint256 tokenId);
+	event ApprovalForAll(address owner, address operator, bool approved);
+}
 
-    event Approval(
-        address indexed owner,
-        address indexed approved,
-        uint256 indexed tokenId
-    );
+// Inline
+contract ERC721MintableEvents {
+	event MintingFinished();
+}
 
-    event ApprovalForAll(
-        address indexed owner,
-        address indexed operator,
-        bool approved
-    );
+// Inline
+contract InlineNameSymbol is Dummy {
+	function name() public view returns (string memory) {
+		require(false, stub_error);
+		dummy;
+		return "";
+	}
+	function symbol() public view returns (string memory) {
+		require(false, stub_error);
+		dummy;
+		return "";
+	}
+}
 
-	// 0x18160ddd
-    function totalSupply() external view returns (uint256) {
-        require(false, stub_error);
-        return 0;
-    }
-
-    function name() external view returns (string memory res_name) {
-        require(false, stub_error);
-        res_name = _dummy_string;
-    }
-
-    function symbol() external view returns (string memory res_symbol) {
-        require(false, stub_error);
-        res_symbol = _dummy_string;
-    }
-
-    function tokenURI(uint256 tokenId) external view returns (string memory) {
-        require(false, stub_error);
-        tokenId;
-        return _dummy_string;
-    }
-
-    function tokenByIndex(uint256 index) external view returns (uint256) {
-        require(false, stub_error);
-        index;
+// Inline
+contract InlineTotalSupply is Dummy {
+	function totalSupply() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
 		return 0;
-    }
+	}
+}
 
-    function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256) {
-        require(false, stub_error);
+contract ERC165 is Dummy {
+	function supportsInterface(uint32 interfaceId) public view returns (bool) {
+		require(false, stub_error);
+		interfaceId;
+		dummy;
+		return false;
+	}
+}
+
+contract ERC721 is Dummy, ERC165, ERC721Events {
+	function balanceOf(address owner) public view returns (uint256) {
+		require(false, stub_error);
+		owner;
+		dummy;
+		return 0;
+	}
+	function ownerOf(uint256 tokenId) public view returns (address) {
+		require(false, stub_error);
+		tokenId;
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+	function safeTransferFromWithData(address from, address to, uint256 tokenId, bytes memory data) public {
+		require(false, stub_error);
+		from;
+		to;
+		tokenId;
+		data;
+		dummy = 0;
+	}
+	function safeTransferFrom(address from, address to, uint256 tokenId) public {
+		require(false, stub_error);
+		from;
+		to;
+		tokenId;
+		dummy = 0;
+	}
+	function transferFrom(address from, address to, uint256 tokenId) public {
+		require(false, stub_error);
+		from;
+		to;
+		tokenId;
+		dummy = 0;
+	}
+	function approve(address approved, uint256 tokenId) public {
+		require(false, stub_error);
+		approved;
+		tokenId;
+		dummy = 0;
+	}
+	function setApprovalForAll(address operator, bool approved) public {
+		require(false, stub_error);
+		operator;
+		approved;
+		dummy = 0;
+	}
+	function getApproved(uint256 tokenId) public view returns (address) {
+		require(false, stub_error);
+		tokenId;
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+	function isApprovedForAll(address owner, address operator) public view returns (address) {
+		require(false, stub_error);
+		owner;
+		operator;
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+}
+
+contract ERC721Burnable is Dummy {
+	function burn(uint256 tokenId) public {
+		require(false, stub_error);
+		tokenId;
+		dummy = 0;
+	}
+}
+
+contract ERC721Enumerable is Dummy, InlineTotalSupply {
+	function tokenByIndex(uint256 index) public view returns (uint256) {
+		require(false, stub_error);
+		index;
+		dummy;
+		return 0;
+	}
+	function tokenOfOwnerByIndex(address owner, uint256 index) public view returns (uint256) {
+		require(false, stub_error);
 		owner;
 		index;
+		dummy;
 		return 0;
-    }
+	}
+}
 
-    // 0x70a08231
-    function balanceOf(address owner) external view returns (uint256) {
-        require(false, stub_error);
-        owner;
-        return 0;
-    }
+contract ERC721Metadata is Dummy, InlineNameSymbol {
+	function tokenURI(uint256 tokenId) public view returns (string memory) {
+		require(false, stub_error);
+		tokenId;
+		dummy;
+		return "";
+	}
+}
 
-    // 0x6352211e
-    function ownerOf(uint256 tokenId) external view returns (address) {
-        require(false, stub_error);
-        tokenId;
-        return _dummy_addr;
-    }
+contract ERC721Mintable is Dummy, ERC721MintableEvents {
+	function mintingFinished() public view returns (bool) {
+		require(false, stub_error);
+		dummy;
+		return false;
+	}
+	function mint(address to, uint256 tokenId) public returns (bool) {
+		require(false, stub_error);
+		to;
+		tokenId;
+		dummy = 0;
+		return false;
+	}
+	function mintWithTokenURI(address to, uint256 tokenId, string memory tokenUri) public returns (bool) {
+		require(false, stub_error);
+		to;
+		tokenId;
+		tokenUri;
+		dummy = 0;
+		return false;
+	}
+	function finishMinting() public returns (bool) {
+		require(false, stub_error);
+		dummy = 0;
+		return false;
+	}
+}
 
-    // 0xb88d4fde
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes calldata data
-    ) external payable {
-        require(false, stub_error);
-        from;
-        to;
-        tokenId;
-        data;
-    }
+contract ERC721UniqueExtensions is Dummy {
+	function transfer(address to, uint256 tokenId) public {
+		require(false, stub_error);
+		to;
+		tokenId;
+		dummy = 0;
+	}
+	function nextTokenId() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+}
 
-    // 0x42842e0e
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external payable {
-        require(false, stub_error);
-        from;
-        to;
-        tokenId;
-    }
-
-    // 0x23b872dd
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external payable {
-        require(false, stub_error);
-        from;
-        to;
-        tokenId;
-    }
-
-    // 0x095ea7b3
-    function approve(address approved, uint256 tokenId) external payable {
-        require(false, stub_error);
-        approved;
-        tokenId;
-    }
-
-    // 0xa22cb465
-    function setApprovalForAll(address operator, bool approved) external {
-        require(false, stub_error);
-        operator;
-        approved;
-        _dummy = 0;
-    }
-
-    // 0x081812fc
-    function getApproved(uint256 tokenId) external view returns (address) {
-        require(false, stub_error);
-        tokenId;
-        return _dummy_addr;
-    }
-
-    // 0xe985e9c5
-    function isApprovedForAll(address owner, address operator)
-        external
-        view
-        returns (bool)
-    {
-        require(false, stub_error);
-        owner;
-        operator;
-        return false;
-    }
-
-    // 0x01ffc9a7
-    function supportsInterface(bytes4 interfaceID) public pure returns (bool) {
-        return
-            // ERC721
-            interfaceID == 0x80ac58cd ||
-            // ERC721Metadata
-            interfaceID == 0x5b5e139f ||
-            // ERC721Enumerable
-            interfaceID == 0x780e9d63 ||
-            // ERC165
-            interfaceID == 0x01ffc9a7;
-    }
+contract UniqueNFT is Dummy, ERC165, ERC721, ERC721Metadata, ERC721Enumerable, ERC721UniqueExtensions, ERC721Mintable, ERC721Burnable {
 }

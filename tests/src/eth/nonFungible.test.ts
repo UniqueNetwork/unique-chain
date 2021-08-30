@@ -4,11 +4,13 @@
 //
 
 import privateKey from '../substrate/privateKey';
-import { approveExpectSuccess, createCollectionExpectSuccess, createItemExpectSuccess, transferExpectSuccess, transferFromExpectSuccess, UNIQUE } from '../util/helpers';
+import { approveExpectSuccess, burnItemExpectSuccess, createCollectionExpectSuccess, createItemExpectSuccess, transferExpectSuccess, transferFromExpectSuccess, UNIQUE } from '../util/helpers';
 import { collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, transferBalanceToEth } from './util/helpers';
+import { evmToAddress } from '@polkadot/util-crypto';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import { expect } from 'chai';
 import waitNewBlocks from '../substrate/wait-new-blocks';
+import { submitTransactionAsync } from '../substrate/substrate-api';
 
 describe('NFT: Information getting', () => {
   itWeb3('totalSupply', async ({ api, web3 }) => {
@@ -64,6 +66,78 @@ describe('NFT: Information getting', () => {
 });
 
 describe('NFT: Plain calls', () => {
+  itWeb3('Can perform mint()', async ({ web3, api }) => {
+    const collection = await createCollectionExpectSuccess({
+      mode: { type: 'NFT' },
+    });
+    const alice = privateKey('//Alice');
+
+    const caller = await createEthAccountWithBalance(api, web3);
+    const changeAdminTx = api.tx.nft.addCollectionAdmin(collection, { ethereum: caller });
+    await submitTransactionAsync(alice, changeAdminTx);
+    const receiver = createEthAccount(web3);
+
+    const address = collectionIdToAddress(collection);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
+
+    {
+      const nextTokenId = await contract.methods.nextTokenId().call();
+      expect(nextTokenId).to.be.equal('1');
+      const result = await contract.methods.mintWithTokenURI(
+        receiver,
+        nextTokenId,
+        'Test URI',
+      ).send({from: caller});
+      const events = normalizeEvents(result.events);
+
+      expect(events).to.be.deep.equal([
+        {
+          address,
+          event: 'Transfer',
+          args: {
+            from: '0x0000000000000000000000000000000000000000',
+            to: receiver,
+            tokenId: nextTokenId,
+          },
+        },
+      ]);
+
+      await waitNewBlocks(api, 1);
+      expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+    }
+  });
+
+  itWeb3('Can perform burn()', async ({ web3, api }) => {
+    const collection = await createCollectionExpectSuccess({
+      mode: {type: 'NFT'},
+    });
+    const alice = privateKey('//Alice');
+
+    const owner = await createEthAccountWithBalance(api, web3);
+
+    const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', { ethereum: owner });
+    
+    const address = collectionIdToAddress(collection);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: owner, ...GAS_ARGS});
+
+    {
+      const result = await contract.methods.burn(tokenId).send({ from: owner });
+      const events = normalizeEvents(result.events);
+      
+      expect(events).to.be.deep.equal([
+        {
+          address,
+          event: 'Transfer',
+          args: {
+            from: owner,
+            to: '0x0000000000000000000000000000000000000000',
+            tokenId: tokenId.toString(),
+          },
+        },
+      ]);
+    }
+  });
+
   itWeb3('Can perform approve()', async ({ web3, api }) => {
     const collection = await createCollectionExpectSuccess({
       mode: { type: 'NFT' },
@@ -251,6 +325,60 @@ describe('NFT: Fees', () => {
 });
 
 describe('NFT: Substrate calls', () => {
+  itWeb3('Events emitted for mint()', async ({ web3 }) => {
+    const collection = await createCollectionExpectSuccess({
+      mode: { type: 'NFT' },
+    });
+    const alice = privateKey('//Alice');
+
+    const address = collectionIdToAddress(collection);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address);
+
+    let tokenId: number;
+    const events = await recordEvents(contract, async () => {
+      tokenId = await createItemExpectSuccess(alice, collection, 'NFT');
+    });
+
+    expect(events).to.be.deep.equal([
+      {
+        address,
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: subToEth(alice.address),
+          tokenId: tokenId!.toString(),
+        },
+      },
+    ]);
+  });
+
+  itWeb3('Events emitted for burn()', async ({ web3 }) => {
+    const collection = await createCollectionExpectSuccess({
+      mode: { type: 'NFT' },
+    });
+    const alice = privateKey('//Alice');
+
+    const address = collectionIdToAddress(collection);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address);
+
+    const tokenId = await createItemExpectSuccess(alice, collection, 'NFT');
+    const events = await recordEvents(contract, async () => {
+      await burnItemExpectSuccess(alice, collection, tokenId);
+    });
+
+    expect(events).to.be.deep.equal([
+      {
+        address,
+        event: 'Transfer',
+        args: {
+          from: subToEth(alice.address),
+          to: '0x0000000000000000000000000000000000000000',
+          tokenId: tokenId.toString(),
+        },
+      },
+    ]);
+  });
+
   itWeb3('Events emitted for approve()', async ({ web3 }) => {
     const collection = await createCollectionExpectSuccess({
       mode: { type: 'NFT' },
