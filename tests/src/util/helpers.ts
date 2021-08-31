@@ -53,6 +53,11 @@ export function toSubstrateAddress(input: string | CrossAccountId | IKeyringPair
 
 export const U128_MAX = (1n << 128n) - 1n;
 
+const MICROUNIQUE = 1_000_000_000n;
+const MILLIUNIQUE = 1_000n * MICROUNIQUE;
+const CENTIUNIQUE = 10n * MILLIUNIQUE;
+export const UNIQUE = 100n * CENTIUNIQUE;
+
 type GenericResult = {
   success: boolean,
 };
@@ -93,6 +98,23 @@ interface IGetMessage {
   checkMsgNftMethod: string;
   checkMsgTrsMethod: string;
   checkMsgSysMethod: string;
+}
+
+export interface IFungibleTokenDataType {
+  Value: number;
+}
+
+export interface IChainLimits {
+  CollectionNumbersLimit: number;
+	AccountTokenOwnershipLimit: number;
+	CollectionsAdminsLimit: number;
+	CustomDataLimit: number;
+	NftSponsorTransferTimeout: number;
+	FungibleSponsorTransferTimeout: number;
+	RefungibleSponsorTransferTimeout: number;
+	OffchainSchemaLimit: number;
+	VariableOnChainSchemaLimit: number;
+	ConstOnChainSchemaLimit: number;
 }
 
 export interface IReFungibleTokenDataType {
@@ -414,13 +436,13 @@ export async function setCollectionLimitsExpectFailure(sender: IKeyringPair, col
   });
 }
 
-export async function setCollectionSponsorExpectSuccess(collectionId: number, sponsor: string) {
+export async function setCollectionSponsorExpectSuccess(collectionId: number, sponsor: string, sender = '//Alice') {
   await usingApi(async (api) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const senderPrivateKey = privateKey(sender);
     const tx = api.tx.nft.setCollectionSponsor(collectionId, sponsor);
-    const events = await submitTransactionAsync(alicePrivateKey, tx);
+    const events = await submitTransactionAsync(senderPrivateKey, tx);
     const result = getGenericResult(events);
 
     // Get the collection
@@ -434,11 +456,11 @@ export async function setCollectionSponsorExpectSuccess(collectionId: number, sp
   });
 }
 
-export async function removeCollectionSponsorExpectSuccess(collectionId: number) {
+export async function removeCollectionSponsorExpectSuccess(collectionId: number, sender = '//Alice') {
   await usingApi(async (api) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKey(sender);
     const tx = api.tx.nft.removeCollectionSponsor(collectionId);
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getGenericResult(events);
@@ -452,11 +474,11 @@ export async function removeCollectionSponsorExpectSuccess(collectionId: number)
   });
 }
 
-export async function removeCollectionSponsorExpectFailure(collectionId: number) {
+export async function removeCollectionSponsorExpectFailure(collectionId: number, senderSeed = '//Alice') {
   await usingApi(async (api) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKey(senderSeed);
     const tx = api.tx.nft.removeCollectionSponsor(collectionId);
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
@@ -543,6 +565,30 @@ export async function enableContractSponsoringExpectFailure(sender: IKeyringPair
 
     expect(result.success).to.be.false;
   });
+}
+
+export async function setTransferFlagExpectSuccess(sender: IKeyringPair, collectionId: number, enabled: boolean) {
+
+  await usingApi(async (api) => {
+
+    const tx = api.tx.nft.setTransfersEnabledFlag (collectionId, enabled);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  }); 
+}
+
+export async function setTransferFlagExpectFailure(sender: IKeyringPair, collectionId: number, enabled: boolean) {
+
+  await usingApi(async (api) => {
+
+    const tx = api.tx.nft.setTransfersEnabledFlag (collectionId, enabled);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.false;
+  }); 
 }
 
 export async function setContractSponsoringRateLimitExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, rateLimit: number) {
@@ -763,6 +809,15 @@ async function getBlockNumber(api: ApiPromise): Promise<number> {
   });
 }
 
+export async function addCollectionAdminExpectSuccess(sender: IKeyringPair, collectionId: number, address: IKeyringPair) {
+  await usingApi(async (api) => {
+    const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(address.address));
+    const events = await submitTransactionAsync(sender, changeAdminTx);
+    const result = getCreateCollectionResult(events);
+    expect(result.success).to.be.true;
+  });
+}
+
 export async function
 scheduleTransferExpectSuccess(
   collectionId: number,
@@ -978,8 +1033,29 @@ export async function setPublicAccessModeExpectSuccess(
   });
 }
 
+export async function setPublicAccessModeExpectFail(
+  sender: IKeyringPair, collectionId: number,
+  accessMode: 'Normal' | 'WhiteList',
+) {
+  await usingApi(async (api) => {
+
+    // Run the transaction
+    const tx = api.tx.nft.setPublicAccessMode(collectionId, accessMode);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function enableWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number) {
   await setPublicAccessModeExpectSuccess(sender, collectionId, 'WhiteList');
+}
+
+export async function enableWhiteListExpectFail(sender: IKeyringPair, collectionId: number) {
+  await setPublicAccessModeExpectFail(sender, collectionId, 'WhiteList');
 }
 
 export async function disableWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number) {
@@ -1028,6 +1104,17 @@ export async function setMintPermissionExpectFailure(sender: IKeyringPair, colle
   });
 }
 
+export async function setChainLimitsExpectFailure(sender: IKeyringPair, limits: IChainLimits) {
+  await usingApi(async (api) => {
+    // Run the transaction
+    const tx = api.tx.nft.setChainLimits(limits);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getCreateCollectionResult(events);
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function isWhitelisted(collectionId: number, address: string) {
   let whitelisted = false;
   await usingApi(async (api) => {
@@ -1055,6 +1142,19 @@ export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collecti
     expect(whiteListedBefore).to.be.false;
     // tslint:disable-next-line: no-unused-expression
     expect(whiteListedAfter).to.be.true;
+  });
+}
+
+export async function addToWhiteListExpectFail(sender: IKeyringPair, collectionId: number, address: string | AccountId) {
+  await usingApi(async (api) => {
+    // Run the transaction
+    const tx = api.tx.nft.addToWhiteList(collectionId, normalizeAccountId(address));
+    const events = await expect(submitTransactionAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.false;
   });
 }
 
@@ -1098,4 +1198,8 @@ export async function queryCollectionExpectSuccess(collectionId: number): Promis
   return await usingApi(async (api) => {
     return (await api.query.nft.collectionById(collectionId)).toJSON() as unknown as ICollectionInterface;
   });
+}
+
+export async function queryNftOwner(api: ApiPromise, collectionId: number, tokenId: number): Promise<CrossAccountId> {
+  return normalizeAccountId((await api.query.nft.nftItemList(collectionId, tokenId) as any).toJSON().Owner);
 }

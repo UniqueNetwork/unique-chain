@@ -63,7 +63,8 @@
       "Limits": "CollectionLimits",
       "VariableOnChainSchema": "Vec<u8>",
       "ConstOnChainSchema": "Vec<u8>",
-      "MetaUpdatePermission": "MetaUpdatePermission"
+      "MetaUpdatePermission": "MetaUpdatePermission",
+      "TransfersEnabled": "bool"
     },
     "RawData": "Vec<u8>",
     "Address": "MultiAddress",

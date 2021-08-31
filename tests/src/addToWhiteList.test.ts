@@ -16,6 +16,8 @@ import {
   enablePublicMintingExpectSuccess,
   enableWhiteListExpectSuccess,
   normalizeAccountId,
+  addCollectionAdminExpectSuccess,
+  addToWhiteListExpectFail,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -23,6 +25,7 @@ const expect = chai.expect;
 
 let Alice: IKeyringPair;
 let Bob: IKeyringPair;
+let Charlie: IKeyringPair;
 
 describe('Integration Test ext. addToWhiteList()', () => {
 
@@ -84,4 +87,38 @@ describe('Negative Integration Test ext. addToWhiteList()', () => {
     });
   });
 
+});
+
+describe('Integration Test ext. addToWhiteList() with collection admin permissions:', () => {
+
+  before(async () => {
+    await usingApi(async () => {
+      Alice = privateKey('//Alice');
+      Bob = privateKey('//Bob');
+      Charlie = privateKey('//Charlie');
+    });
+  });
+
+  it('Negative. Add to the white list by regular user', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await addToWhiteListExpectFail(Bob, collectionId, Charlie.address);
+  });
+
+  it('Execute the extrinsic with parameters: Collection ID and address to add to the white list', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
+    await addToWhiteListExpectSuccess(Bob, collectionId, Charlie.address);
+  });
+
+  it('Whitelisted minting: list restrictions', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
+    await addToWhiteListExpectSuccess(Bob, collectionId, Charlie.address);
+
+    // allowed only for collection owner
+    await enableWhiteListExpectSuccess(Alice, collectionId);
+    await enablePublicMintingExpectSuccess(Alice, collectionId);
+
+    await createItemExpectSuccess(Charlie, collectionId, 'NFT', Charlie.address);
+  });
 });

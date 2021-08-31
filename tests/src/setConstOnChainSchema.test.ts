@@ -11,6 +11,7 @@ import { default as usingApi, submitTransactionAsync, submitTransactionExpectFai
 import {
   createCollectionExpectSuccess,
   destroyCollectionExpectSuccess,
+  addCollectionAdminExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -40,6 +41,17 @@ describe('Integration Test ext. setConstOnChainSchema()', () => {
       expect(collection.Owner).to.be.eq(Alice.address);
       const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
       await submitTransactionAsync(Alice, setShema);
+    });
+  });
+
+  it('Collection admin can set the scheme', async () => {
+    await usingApi(async (api) => {
+      const collectionId = await createCollectionExpectSuccess();
+      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collection.Owner).to.be.eq(Alice.address);
+      await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
+      const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
+      await submitTransactionAsync(Bob, setShema);
     });
   });
 

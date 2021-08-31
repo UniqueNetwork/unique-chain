@@ -6,7 +6,6 @@ use frame_support::{parameter_types, weights::IdentityFee};
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	testing::Header,
-	Perbill,
 };
 use pallet_transaction_payment::{CurrencyAdapter};
 use frame_system as system;
@@ -99,9 +98,12 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+<<<<<<< HEAD
 type Timestamp = pallet_timestamp::Pallet<Test>;
 type Randomness = pallet_randomness_collective_flip::Pallet<Test>;
 
+=======
+>>>>>>> origin/develop
 parameter_types! {
 	pub const CollectionCreationPrice: u32 = 0;
 	pub TreasuryAccountId: u64 = 1234;
@@ -133,8 +135,11 @@ impl CrossAccountId<u64> for TestCrossAccountId {
 	fn as_sub(&self) -> &u64 {
 		&self.0
 	}
-	fn from_eth(_eth: sp_core::H160) -> Self {
-		unimplemented!()
+	fn from_eth(eth: sp_core::H160) -> Self {
+		let mut sub_raw = [0; 8];
+		sub_raw.copy_from_slice(&eth.0[0..8]);
+		let sub = u64::from_be_bytes(sub_raw);
+		Self(sub, eth)
 	}
 	fn as_eth(&self) -> &sp_core::H160 {
 		&self.1
@@ -151,6 +156,10 @@ impl pallet_ethereum::EthereumTransactionSender for TestEtheremTransactionSender
 	}
 }
 
+impl pallet_evm_coder_substrate::Config for Test {
+	type EthereumTransactionSender = TestEtheremTransactionSender;
+}
+
 impl pallet_template::Config for Test {
 	type Event = ();
 	type WeightInfo = ();
@@ -160,8 +169,6 @@ impl pallet_template::Config for Test {
 	type EvmAddressMapping = TestEvmAddressMapping;
 	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
 	type CrossAccountId = TestCrossAccountId;
-	type EthereumChainId = EthereumChainId;
-	type EthereumTransactionSender = TestEtheremTransactionSender;
 }
 
 // Build genesis storage according to the mock runtime.

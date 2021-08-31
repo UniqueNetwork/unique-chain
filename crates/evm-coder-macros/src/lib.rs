@@ -6,7 +6,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use sha3::{Digest, Keccak256};
 use syn::{
-	AttributeArgs, DeriveInput, GenericArgument, Ident, ItemTrait, Pat, Path, PathArguments,
+	AttributeArgs, DeriveInput, GenericArgument, Ident, ItemImpl, Pat, Path, PathArguments,
 	PathSegment, Type, parse_macro_input, spanned::Spanned,
 };
 
@@ -106,8 +106,8 @@ fn parse_ident_from_pat(pat: &Pat) -> syn::Result<&Ident> {
 	}
 }
 
-fn parse_ident_from_segment(segment: &PathSegment) -> syn::Result<&Ident> {
-	if segment.arguments != PathArguments::None {
+fn parse_ident_from_segment(segment: &PathSegment, allow_generics: bool) -> syn::Result<&Ident> {
+	if segment.arguments != PathArguments::None && !allow_generics {
 		return Err(syn::Error::new(
 			segment.arguments.span(),
 			"unexpected generic type",
@@ -116,18 +116,18 @@ fn parse_ident_from_segment(segment: &PathSegment) -> syn::Result<&Ident> {
 	Ok(&segment.ident)
 }
 
-fn parse_ident_from_path(path: &Path) -> syn::Result<&Ident> {
+fn parse_ident_from_path(path: &Path, allow_generics: bool) -> syn::Result<&Ident> {
 	let segment = parse_path_segment(path)?;
-	parse_ident_from_segment(segment)
+	parse_ident_from_segment(segment, allow_generics)
 }
 
-fn parse_ident_from_type(ty: &Type) -> syn::Result<&Ident> {
+fn parse_ident_from_type(ty: &Type, allow_generics: bool) -> syn::Result<&Ident> {
 	let path = parse_path(ty)?;
-	parse_ident_from_path(path)
+	parse_ident_from_path(path, allow_generics)
 }
 
 // Gets T out of Result<T>
-fn parse_result_ok(ty: &Type) -> syn::Result<&Ident> {
+fn parse_result_ok(ty: &Type) -> syn::Result<&Type> {
 	let path = parse_path(ty)?;
 	let segment = parse_path_segment(path)?;
 
@@ -160,7 +160,7 @@ fn parse_result_ok(ty: &Type) -> syn::Result<&Ident> {
 		}
 	};
 
-	parse_ident_from_type(ty)
+	Ok(ty)
 }
 
 fn pascal_ident_to_call(ident: &Ident) -> Ident {
@@ -184,28 +184,26 @@ fn pascal_ident_to_snake_call(ident: &Ident) -> Ident {
 	Ident::new(&name, ident.span())
 }
 
-fn format_ty(ty: &Ident) -> String {
-	if ty == "string" {
-		format!("{} memory", ty)
-	} else {
-		ty.to_string()
-	}
-}
-
 #[proc_macro_attribute]
 pub fn solidity_interface(args: TokenStream, stream: TokenStream) -> TokenStream {
 	let args = parse_macro_input!(args as AttributeArgs);
 	let args = solidity_interface::InterfaceInfo::from_list(&args).unwrap();
 
-	let input: ItemTrait = match syn::parse(stream) {
+	let input: ItemImpl = match syn::parse(stream) {
 		Ok(t) => t,
 		Err(e) => return e.to_compile_error().into(),
 	};
 
-	match solidity_interface::SolidityInterface::try_from(args, &input) {
+	let expanded = match solidity_interface::SolidityInterface::try_from(args, &input) {
 		Ok(v) => v.expand(),
 		Err(e) => e.to_compile_error(),
-	}
+	};
+
+	(quote! {
+		#input
+
+		#expanded
+	})
 	.into()
 }
 

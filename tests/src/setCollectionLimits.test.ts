@@ -16,6 +16,7 @@ import {
   getDetailedCollectionInfo,
   setCollectionLimitsExpectFailure,
   setCollectionLimitsExpectSuccess,
+  addCollectionAdminExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -137,6 +138,21 @@ describe('setCollectionLimits negative', () => {
     });
   });
   it('execute setCollectionLimits from user who is not owner of this collection', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      tx = api.tx.nft.setCollectionLimits(
+        collectionIdForTesting,
+        {
+          accountTokenOwnershipLimit,
+          sponsoredDataSize,
+          sponsoredMintSize,
+          tokenLimit,
+        },
+      );
+      await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
+    });
+  });
+  it('execute setCollectionLimits from admin collection', async () => {
+    await addCollectionAdminExpectSuccess(alice, collectionIdForTesting, bob);
     await usingApi(async (api: ApiPromise) => {
       tx = api.tx.nft.setCollectionLimits(
         collectionIdForTesting,

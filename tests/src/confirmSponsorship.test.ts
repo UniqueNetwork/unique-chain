@@ -19,6 +19,7 @@ import {
   enablePublicMintingExpectSuccess,
   addToWhiteListExpectSuccess,
   normalizeAccountId,
+  addCollectionAdminExpectSuccess,
 } from './util/helpers';
 import { Keyring } from '@polkadot/api';
 import { IKeyringPair } from '@polkadot/types/types';
@@ -363,6 +364,13 @@ describe('(!negative test!) integration test: ext. confirmSponsorship():', () =>
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectFailure(collectionId, '//Alice');
+  });
+
+  it('(!negative test!) Confirm sponsorship by collection admin', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await addCollectionAdminExpectSuccess(alice, collectionId, charlie);
+    await confirmSponsorshipExpectFailure(collectionId, '//Charlie');
   });
 
   it('(!negative test!) Confirm sponsorship without sponsor being set with setCollectionSponsor', async () => {

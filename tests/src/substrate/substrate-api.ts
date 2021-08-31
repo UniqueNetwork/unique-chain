@@ -37,6 +37,10 @@ export default async function usingApi<T = void>(action: (api: ApiPromise) => Pr
   const consoleWarn = console.warn;
 
   const outFn = (message: string) => {
+    if (typeof message !== 'string') {
+      consoleErr(message);
+      return;
+    }
     if (!message.includes('StorageChangeSet:: WebSocket is not connected') && 
         !message.includes('2021-') &&
         !message.includes('StorageChangeSet:: Normal connection closure'))

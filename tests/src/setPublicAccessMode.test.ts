@@ -18,6 +18,7 @@ import {
   enablePublicMintingExpectSuccess,
   enableWhiteListExpectSuccess,
   normalizeAccountId,
+  addCollectionAdminExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -87,6 +88,24 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
     await usingApi(async (api: ApiPromise) => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
+      const tx = api.tx.nft.setPublicAccessMode(collectionId, 'WhiteList');
+      await expect(submitTransactionExpectFailAsync(Bob, tx)).to.be.rejected;
+    });
+  });
+});
+
+describe('Negative Integration Test ext. collection admin setPublicAccessMode(): ', () => {
+  before(async () => {
+    await usingApi(async () => {
+      Alice = privateKey('//Alice');
+      Bob = privateKey('//Bob');
+    });
+  });
+  it('setPublicAccessMode by collection admin', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      // tslint:disable-next-line: no-bitwise
+      const collectionId = await createCollectionExpectSuccess();
+      await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
       const tx = api.tx.nft.setPublicAccessMode(collectionId, 'WhiteList');
       await expect(submitTransactionExpectFailAsync(Bob, tx)).to.be.rejected;
     });

@@ -8,36 +8,48 @@ use alloc::{
 	string::{String, ToString},
 	vec::Vec,
 };
+use evm_core::ExitError;
 use primitive_types::{H160, U256};
 
-use crate::types::string;
+use crate::{execution::Error, types::string};
+use crate::execution::Result;
 
 const ABI_ALIGNMENT: usize = 32;
-
-pub type Result<T> = core::result::Result<T, &'static str>;
 
 #[derive(Clone)]
 pub struct AbiReader<'i> {
 	buf: &'i [u8],
+	subresult_offset: usize,
 	offset: usize,
 }
 impl<'i> AbiReader<'i> {
 	pub fn new(buf: &'i [u8]) -> Self {
-		Self { buf, offset: 0 }
+		Self {
+			buf,
+			subresult_offset: 0,
+			offset: 0,
+		}
 	}
 	pub fn new_call(buf: &'i [u8]) -> Result<(u32, Self)> {
 		if buf.len() < 4 {
-			return Err("missing method id");
+			return Err(Error::Error(ExitError::OutOfOffset));
 		}
 		let mut method_id = [0; 4];
 		method_id.copy_from_slice(&buf[0..4]);
 
-		Ok((u32::from_be_bytes(method_id), Self { buf, offset: 4 }))
+		Ok((
+			u32::from_be_bytes(method_id),
+			Self {
+				buf,
+				subresult_offset: 4,
+				offset: 4,
+			},
+		))
 	}
 
 	fn read_padleft<const S: usize>(&mut self) -> Result<[u8; S]> {
-		if self.buf.len() - self.offset < 32 {
-			return Err("missing padding");
+		if self.buf.len() - self.offset < ABI_ALIGNMENT {
+			return Err(Error::Error(ExitError::OutOfOffset));
 		}
 		let mut block = [0; S];
 		// Verify padding is empty
@@ -45,7 +57,7 @@ impl<'i> AbiReader<'i> {
 			.iter()
 			.all(|&v| v == 0)
 		{
-			return Err("non zero padding (wrong types?)");
+			return Err(Error::Error(ExitError::InvalidRange));
 		}
 		block.copy_from_slice(
 			&self.buf[self.offset + ABI_ALIGNMENT - S..self.offset + ABI_ALIGNMENT],
@@ -63,7 +75,7 @@ impl<'i> AbiReader<'i> {
 		match data[0] {
 			0 => Ok(false),
 			1 => Ok(true),
-			_ => Err("wrong bool value"),
+			_ => Err(Error::Error(ExitError::InvalidRange)),
 		}
 	}
 
@@ -75,9 +87,12 @@ impl<'i> AbiReader<'i> {
 		let mut subresult = self.subresult()?;
 		let length = subresult.read_usize()?;
 		if subresult.buf.len() <= subresult.offset + length {
-			return Err("bytes out of bounds");
+			return Err(Error::Error(ExitError::OutOfOffset));
 		}
 		Ok(subresult.buf[subresult.offset..subresult.offset + length].into())
+	}
+	pub fn string(&mut self) -> Result<string> {
+		string::from_utf8(self.bytes()?).map_err(|_| Error::Error(ExitError::InvalidRange))
 	}
 
 	pub fn uint32(&mut self) -> Result<u32> {
@@ -103,9 +118,13 @@ impl<'i> AbiReader<'i> {
 
 	fn subresult(&mut self) -> Result<AbiReader<'i>> {
 		let offset = self.read_usize()?;
+		if offset + self.subresult_offset > self.buf.len() {
+			return Err(Error::Error(ExitError::InvalidRange));
+		}
 		Ok(AbiReader {
 			buf: self.buf,
-			offset: offset + self.offset,
+			subresult_offset: offset + self.subresult_offset,
+			offset: offset + self.subresult_offset,
 		})
 	}
 
@@ -163,8 +182,6 @@ impl AbiWriter {
 		self.write_padleft(&u128::to_be_bytes(*value))
 	}
 
-	/// This method writes u128, and exists only for convenience, because there is
-	/// no u256 support in rust
 	pub fn uint256(&mut self, value: &U256) {
 		let mut out = [0; 32];
 		value.to_big_endian(&mut out);
@@ -198,7 +215,7 @@ impl AbiWriter {
 		for (static_offset, part) in self.dynamic_part {
 			let part_offset = self.static_part.len();
 
-			let encoded_dynamic_offset = usize::to_be_bytes(part_offset - static_offset);
+			let encoded_dynamic_offset = usize::to_be_bytes(part_offset);
 			self.static_part[static_offset + ABI_ALIGNMENT - encoded_dynamic_offset.len()
 				..static_offset + ABI_ALIGNMENT]
 				.copy_from_slice(&encoded_dynamic_offset);
@@ -228,6 +245,7 @@ impl_abi_readable!(U256, uint256);
 impl_abi_readable!(H160, address);
 impl_abi_readable!(Vec<u8>, bytes);
 impl_abi_readable!(bool, bool);
+impl_abi_readable!(string, string);
 
 pub trait AbiWrite {
 	fn abi_write(&self, writer: &mut AbiWriter);
@@ -260,28 +278,6 @@ impl AbiWrite for () {
 	fn abi_write(&self, _writer: &mut AbiWriter) {}
 }
 
-/// Error, which can be constructed from any ToString type
-/// Encoded to Abi as Error(string)
-#[derive(Debug)]
-pub struct StringError(String);
-
-impl<E> From<E> for StringError
-where
-	E: ToString,
-{
-	fn from(e: E) -> Self {
-		Self(e.to_string())
-	}
-}
-
-impl From<StringError> for AbiWriter {
-	fn from(v: StringError) -> Self {
-		let mut out = AbiWriter::new_call(crate::fn_selector!(Error(string)));
-		out.string(&v.0);
-		out
-	}
-}
-
 #[macro_export]
 macro_rules! abi_decode {
 	($reader:expr, $($name:ident: $typ:ident),+ $(,)?) => {
@@ -308,4 +304,55 @@ macro_rules! abi_encode {
 		)*
 		writer
 	}}
+}
+
+#[cfg(test)]
+pub mod test {
+	use super::{AbiReader, AbiWriter};
+	use hex_literal::hex;
+
+	#[test]
+	fn dynamic_after_static() {
+		let mut encoder = AbiWriter::new();
+		encoder.bool(&true);
+		encoder.string("test");
+		let encoded = encoder.finish();
+
+		let mut encoder = AbiWriter::new();
+		encoder.bool(&true);
+		// Offset to subresult
+		encoder.uint32(&(32 * 2));
+		// Len of "test"
+		encoder.uint32(&4);
+		encoder.write_padright(&[b't', b'e', b's', b't']);
+		let alternative_encoded = encoder.finish();
+
+		assert_eq!(encoded, alternative_encoded);
+
+		let mut decoder = AbiReader::new(&encoded);
+		assert_eq!(decoder.bool().unwrap(), true);
+		assert_eq!(decoder.string().unwrap(), "test");
+	}
+
+	#[test]
+	fn mint_sample() {
+		let (call, mut decoder) = AbiReader::new_call(&hex!(
+			"
+				50bb4e7f
+				000000000000000000000000ad2c0954693c2b5404b7e50967d3481bea432374
+				0000000000000000000000000000000000000000000000000000000000000001
+				0000000000000000000000000000000000000000000000000000000000000060
+				0000000000000000000000000000000000000000000000000000000000000008
+				5465737420555249000000000000000000000000000000000000000000000000
+			"
+		))
+		.unwrap();
+		assert_eq!(call, 0x50bb4e7f);
+		assert_eq!(
+			format!("{:?}", decoder.address().unwrap()),
+			"0xad2c0954693c2b5404b7e50967d3481bea432374"
+		);
+		assert_eq!(decoder.uint32().unwrap(), 1);
+		assert_eq!(decoder.string().unwrap(), "Test URI");
+	}
 }

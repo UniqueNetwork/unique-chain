@@ -2,10 +2,13 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc;
 
+use abi::{AbiReader, AbiWriter};
 pub use evm_coder_macros::{event_topic, fn_selector, solidity_interface, solidity, ToLog};
 pub mod abi;
 pub mod events;
 pub use events::ToLog;
+pub mod execution;
+pub mod solidity;
 
 /// Solidity type definitions
 pub mod types {
@@ -48,6 +51,37 @@ pub mod types {
 		pub caller: H160,
 		pub value: U256,
 	}
+}
+
+pub trait Call: Sized {
+	fn parse(selector: u32, input: &mut AbiReader) -> execution::Result<Option<Self>>;
+}
+
+pub trait Callable<C: Call> {
+	fn call(&mut self, call: types::Msg<C>) -> execution::Result<AbiWriter>;
+}
+
+#[macro_export]
+macro_rules! generate_stubgen {
+	($name:ident, $decl:ident, $is_impl:literal) => {
+		#[test]
+		#[ignore]
+		fn $name() {
+			use sp_std::collections::btree_set::BTreeSet;
+			let mut out = BTreeSet::new();
+			$decl::generate_solidity_interface(&mut out, $is_impl);
+			println!("=== SNIP START ===");
+			println!("// SPDX-License-Identifier: OTHER");
+			println!("// This code is automatically generated");
+			println!();
+			println!("pragma solidity >=0.8.0 <0.9.0;");
+			println!();
+			for b in out {
+				println!("{}", b);
+			}
+			println!("=== SNIP END ===");
+		}
+	};
 }
 
 #[cfg(test)]

@@ -8,7 +8,12 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import { default as usingApi } from './substrate/substrate-api';
-import { createCollectionExpectSuccess, destroyCollectionExpectSuccess, destroyCollectionExpectFailure, setCollectionLimitsExpectSuccess } from './util/helpers';
+import { createCollectionExpectSuccess, 
+  destroyCollectionExpectSuccess, 
+  destroyCollectionExpectFailure, 
+  setCollectionLimitsExpectSuccess,
+  addCollectionAdminExpectSuccess,
+} from './util/helpers';
 
 chai.use(chaiAsPromised);
 
@@ -29,10 +34,12 @@ describe('integration test: ext. destroyCollection():', () => {
 
 describe('(!negative test!) integration test: ext. destroyCollection():', () => {
   let alice: IKeyringPair;
+  let bob: IKeyringPair;
 
   before(async () => {
     await usingApi(async () => {
       alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
     });
   });
 
@@ -52,6 +59,11 @@ describe('(!negative test!) integration test: ext. destroyCollection():', () => 
     const collectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectFailure(collectionId, '//Bob');
     await destroyCollectionExpectSuccess(collectionId, '//Alice');
+  });
+  it('(!negative test!) Destroy a collection using collection admin account', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob);
+    await destroyCollectionExpectFailure(collectionId, '//Bob');
   });
   it('fails when OwnerCanDestroy == false', async () => {
     const collectionId = await createCollectionExpectSuccess();

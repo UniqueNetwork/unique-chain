@@ -1,40 +1,18 @@
 // Tests to be written here
 use super::*;
 use crate::mock::*;
-use crate::{AccessMode, CollectionMode, Ownership, ChainLimits, CreateItemData};
+use crate::{AccessMode, CollectionMode, Ownership, CreateItemData};
 use nft_data_structs::{
 	CreateNftData, CreateFungibleData, CreateReFungibleData, CollectionId, TokenId,
 	MAX_DECIMAL_POINTS,
 };
 use frame_support::{assert_noop, assert_ok};
-use frame_system::{RawOrigin};
-
-fn default_collection_numbers_limit() -> u32 {
-	10
-}
-
-fn default_limits() {
-	assert_ok!(TemplateModule::set_chain_limits(
-		RawOrigin::Root.into(),
-		ChainLimits {
-			collection_numbers_limit: default_collection_numbers_limit(),
-			account_token_ownership_limit: 10,
-			collections_admins_limit: 5,
-			custom_data_limit: 2048,
-			nft_sponsor_transfer_timeout: 15,
-			fungible_sponsor_transfer_timeout: 15,
-			refungible_sponsor_transfer_timeout: 15,
-			const_on_chain_schema_limit: 1024,
-			offchain_schema_limit: 1024,
-			variable_on_chain_schema_limit: 1024,
-		}
-	));
-}
+use sp_std::convert::TryInto;
 
 fn default_nft_data() -> CreateNftData {
 	CreateNftData {
-		const_data: vec![1, 2, 3],
-		variable_data: vec![3, 2, 1],
+		const_data: vec![1, 2, 3].try_into().unwrap(),
+		variable_data: vec![3, 2, 1].try_into().unwrap(),
 	}
 }
 
@@ -44,8 +22,8 @@ fn default_fungible_data() -> CreateFungibleData {
 
 fn default_re_fungible_data() -> CreateReFungibleData {
 	CreateReFungibleData {
-		const_data: vec![1, 2, 3],
-		variable_data: vec![3, 2, 1],
+		const_data: vec![1, 2, 3].try_into().unwrap(),
+		variable_data: vec![3, 2, 1].try_into().unwrap(),
 		pieces: 1023,
 	}
 }
@@ -112,7 +90,6 @@ fn account(sub: u64) -> TestCrossAccountId {
 #[test]
 fn set_version_schema() {
 	new_test_ext().execute_with(|| {
-		default_limits();
 		let origin1 = Origin::signed(1);
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -133,8 +110,6 @@ fn set_version_schema() {
 #[test]
 fn create_fungible_collection_fails_with_large_decimal_numbers() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 		let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 		let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
@@ -156,14 +131,13 @@ fn create_fungible_collection_fails_with_large_decimal_numbers() {
 #[test]
 fn create_nft_item() {
 	new_test_ext().execute_with(|| {
-		default_limits();
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.clone().into());
 		let item = TemplateModule::nft_item_id(collection_id, 1).unwrap();
-		assert_eq!(item.const_data, data.const_data);
-		assert_eq!(item.variable_data, data.variable_data);
+		assert_eq!(item.const_data, data.const_data.into_inner());
+		assert_eq!(item.variable_data, data.variable_data.into_inner());
 	});
 }
 
@@ -172,8 +146,6 @@ fn create_nft_item() {
 #[test]
 fn create_nft_multiple_items() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -190,10 +162,10 @@ fn create_nft_multiple_items() {
 				.map(|d| { d.into() })
 				.collect()
 		));
-		for (index, data) in items_data.iter().enumerate() {
+		for (index, data) in items_data.into_iter().enumerate() {
 			let item = TemplateModule::nft_item_id(1, (index + 1) as TokenId).unwrap();
-			assert_eq!(item.const_data.to_vec(), data.const_data);
-			assert_eq!(item.variable_data.to_vec(), data.variable_data);
+			assert_eq!(item.const_data.to_vec(), data.const_data.into_inner());
+			assert_eq!(item.variable_data.to_vec(), data.variable_data.into_inner());
 		}
 	});
 }
@@ -201,14 +173,13 @@ fn create_nft_multiple_items() {
 #[test]
 fn create_refungible_item() {
 	new_test_ext().execute_with(|| {
-		default_limits();
 		let collection_id = create_test_collection(&CollectionMode::ReFungible, 1);
 
 		let data = default_re_fungible_data();
 		create_test_item(collection_id, &data.clone().into());
 		let item = TemplateModule::refungible_item_id(collection_id, 1).unwrap();
-		assert_eq!(item.const_data, data.const_data);
-		assert_eq!(item.variable_data, data.variable_data);
+		assert_eq!(item.const_data, data.const_data.into_inner());
+		assert_eq!(item.variable_data, data.variable_data.into_inner());
 		assert_eq!(
 			item.owner[0],
 			Ownership {
@@ -222,8 +193,6 @@ fn create_refungible_item() {
 #[test]
 fn create_multiple_refungible_items() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		create_test_collection(&CollectionMode::ReFungible, 1);
 
 		let origin1 = Origin::signed(1);
@@ -244,10 +213,10 @@ fn create_multiple_refungible_items() {
 				.map(|d| { d.into() })
 				.collect()
 		));
-		for (index, data) in items_data.iter().enumerate() {
+		for (index, data) in items_data.into_iter().enumerate() {
 			let item = TemplateModule::refungible_item_id(1, (index + 1) as TokenId).unwrap();
-			assert_eq!(item.const_data.to_vec(), data.const_data);
-			assert_eq!(item.variable_data.to_vec(), data.variable_data);
+			assert_eq!(item.const_data.to_vec(), data.const_data.into_inner());
+			assert_eq!(item.variable_data.to_vec(), data.variable_data.into_inner());
 			assert_eq!(
 				item.owner[0],
 				Ownership {
@@ -262,8 +231,6 @@ fn create_multiple_refungible_items() {
 #[test]
 fn create_fungible_item() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::Fungible(3), 1);
 
 		let data = default_fungible_data();
@@ -302,8 +269,6 @@ fn create_fungible_item() {
 #[test]
 fn transfer_fungible_item() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::Fungible(3), 1);
 
 		let origin1 = Origin::signed(1);
@@ -344,8 +309,6 @@ fn transfer_fungible_item() {
 #[test]
 fn transfer_refungible_item() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::ReFungible, 1);
 
 		let data = default_re_fungible_data();
@@ -355,8 +318,8 @@ fn transfer_refungible_item() {
 		let origin2 = Origin::signed(2);
 		{
 			let item = TemplateModule::refungible_item_id(collection_id, 1).unwrap();
-			assert_eq!(item.const_data, data.const_data);
-			assert_eq!(item.variable_data, data.variable_data);
+			assert_eq!(item.const_data, data.const_data.into_inner());
+			assert_eq!(item.variable_data, data.variable_data.into_inner());
 			assert_eq!(
 				item.owner[0],
 				Ownership {
@@ -441,8 +404,6 @@ fn transfer_refungible_item() {
 #[test]
 fn transfer_nft_item() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let data = default_nft_data();
@@ -464,8 +425,6 @@ fn transfer_nft_item() {
 #[test]
 fn nft_approve_and_transfer_from() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let data = default_nft_data();
@@ -503,8 +462,6 @@ fn nft_approve_and_transfer_from() {
 #[test]
 fn nft_approve_and_transfer_from_white_list() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -514,8 +471,8 @@ fn nft_approve_and_transfer_from_white_list() {
 		create_test_item(collection_id, &data.clone().into());
 
 		assert_eq!(
-			TemplateModule::nft_item_id(1, 1).unwrap().const_data,
-			data.const_data
+			&TemplateModule::nft_item_id(1, 1).unwrap().const_data,
+			&data.const_data.into_inner()
 		);
 		assert_eq!(TemplateModule::balance_count(1, 1), 1);
 		assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
@@ -573,8 +530,6 @@ fn nft_approve_and_transfer_from_white_list() {
 #[test]
 fn refungible_approve_and_transfer_from() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::ReFungible, 1);
 
 		let origin1 = Origin::signed(1);
@@ -636,8 +591,6 @@ fn refungible_approve_and_transfer_from() {
 #[test]
 fn fungible_approve_and_transfer_from() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::Fungible(3), 1);
 
 		let data = default_fungible_data();
@@ -710,8 +663,6 @@ fn fungible_approve_and_transfer_from() {
 #[test]
 fn change_collection_owner() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -730,8 +681,6 @@ fn change_collection_owner() {
 #[test]
 fn destroy_collection() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -742,8 +691,6 @@ fn destroy_collection() {
 #[test]
 fn burn_nft_item() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -773,8 +720,6 @@ fn burn_nft_item() {
 #[test]
 fn burn_fungible_item() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::Fungible(3), 1);
 
 		let origin1 = Origin::signed(1);
@@ -804,8 +749,6 @@ fn burn_fungible_item() {
 #[test]
 fn burn_refungible_item() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::ReFungible, 1);
 		let origin1 = Origin::signed(1);
 
@@ -851,8 +794,6 @@ fn burn_refungible_item() {
 #[test]
 fn add_collection_admin() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection1_id = create_test_collection_for_owner(&CollectionMode::NFT, 1, 1);
 		create_test_collection_for_owner(&CollectionMode::NFT, 2, 2);
 		create_test_collection_for_owner(&CollectionMode::NFT, 3, 3);
@@ -879,8 +820,6 @@ fn add_collection_admin() {
 #[test]
 fn remove_collection_admin() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection1_id = create_test_collection_for_owner(&CollectionMode::NFT, 1, 1);
 		create_test_collection_for_owner(&CollectionMode::NFT, 2, 2);
 		create_test_collection_for_owner(&CollectionMode::NFT, 3, 3);
@@ -916,8 +855,6 @@ fn remove_collection_admin() {
 #[test]
 fn balance_of() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let nft_collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let fungible_collection_id = create_test_collection(&CollectionMode::Fungible(3), 2);
 		let re_fungible_collection_id = create_test_collection(&CollectionMode::ReFungible, 3);
@@ -969,8 +906,6 @@ fn balance_of() {
 #[test]
 fn approve() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let data = default_nft_data();
@@ -987,8 +922,6 @@ fn approve() {
 #[test]
 fn transfer_from() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
@@ -1051,8 +984,6 @@ fn transfer_from() {
 #[test]
 fn owner_can_add_address_to_white_list() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1068,8 +999,6 @@ fn owner_can_add_address_to_white_list() {
 #[test]
 fn admin_can_add_address_to_white_list() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
@@ -1091,8 +1020,6 @@ fn admin_can_add_address_to_white_list() {
 #[test]
 fn nonprivileged_user_cannot_add_address_to_white_list() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin2 = Origin::signed(2);
@@ -1106,8 +1033,6 @@ fn nonprivileged_user_cannot_add_address_to_white_list() {
 #[test]
 fn nobody_can_add_address_to_white_list_of_nonexisting_collection() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let origin1 = Origin::signed(1);
 
 		assert_noop!(
@@ -1120,8 +1045,6 @@ fn nobody_can_add_address_to_white_list_of_nonexisting_collection() {
 #[test]
 fn nobody_can_add_address_to_white_list_of_deleted_collection() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1140,8 +1063,6 @@ fn nobody_can_add_address_to_white_list_of_deleted_collection() {
 #[test]
 fn address_is_already_added_to_white_list() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 
@@ -1162,8 +1083,6 @@ fn address_is_already_added_to_white_list() {
 #[test]
 fn owner_can_remove_address_from_white_list() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1184,8 +1103,6 @@ fn owner_can_remove_address_from_white_list() {
 #[test]
 fn admin_can_remove_address_from_white_list() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
@@ -1213,8 +1130,6 @@ fn admin_can_remove_address_from_white_list() {
 #[test]
 fn nonprivileged_user_cannot_remove_address_from_white_list() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
@@ -1235,7 +1150,6 @@ fn nonprivileged_user_cannot_remove_address_from_white_list() {
 #[test]
 fn nobody_can_remove_address_from_white_list_of_nonexisting_collection() {
 	new_test_ext().execute_with(|| {
-		default_limits();
 		let origin1 = Origin::signed(1);
 
 		assert_noop!(
@@ -1248,8 +1162,6 @@ fn nobody_can_remove_address_from_white_list_of_nonexisting_collection() {
 #[test]
 fn nobody_can_remove_address_from_white_list_of_deleted_collection() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
@@ -1272,8 +1184,6 @@ fn nobody_can_remove_address_from_white_list_of_deleted_collection() {
 #[test]
 fn address_is_already_removed_from_white_list() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 
@@ -1300,8 +1210,6 @@ fn address_is_already_removed_from_white_list() {
 #[test]
 fn white_list_test_1() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1330,8 +1238,6 @@ fn white_list_test_1() {
 #[test]
 fn white_list_test_2() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 
@@ -1381,8 +1287,6 @@ fn white_list_test_2() {
 #[test]
 fn white_list_test_3() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1411,8 +1315,6 @@ fn white_list_test_3() {
 #[test]
 fn white_list_test_4() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1463,8 +1365,6 @@ fn white_list_test_4() {
 #[test]
 fn white_list_test_5() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1488,8 +1388,6 @@ fn white_list_test_5() {
 #[test]
 fn white_list_test_6() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1516,8 +1414,6 @@ fn white_list_test_6() {
 #[test]
 fn white_list_test_7() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let data = default_nft_data();
@@ -1548,8 +1444,6 @@ fn white_list_test_7() {
 #[test]
 fn white_list_test_8() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let data = default_nft_data();
@@ -1598,8 +1492,6 @@ fn white_list_test_8() {
 #[test]
 fn white_list_test_9() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 
@@ -1623,8 +1515,6 @@ fn white_list_test_9() {
 #[test]
 fn white_list_test_10() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1660,8 +1550,6 @@ fn white_list_test_10() {
 #[test]
 fn white_list_test_11() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1694,8 +1582,6 @@ fn white_list_test_11() {
 #[test]
 fn white_list_test_12() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1723,8 +1609,6 @@ fn white_list_test_12() {
 #[test]
 fn white_list_test_13() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1749,8 +1633,6 @@ fn white_list_test_13() {
 #[test]
 fn white_list_test_14() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1786,8 +1668,6 @@ fn white_list_test_14() {
 #[test]
 fn white_list_test_15() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1815,8 +1695,6 @@ fn white_list_test_15() {
 #[test]
 fn white_list_test_16() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1851,8 +1729,6 @@ fn white_list_test_16() {
 #[test]
 fn total_number_collections_bound() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		create_test_collection(&CollectionMode::NFT, 1);
 	});
 }
@@ -1861,11 +1737,9 @@ fn total_number_collections_bound() {
 #[test]
 fn total_number_collections_bound_neg() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let origin1 = Origin::signed(1);
 
-		for i in 0..default_collection_numbers_limit() {
+		for i in 0..COLLECTION_NUMBER_LIMIT {
 			create_test_collection(&CollectionMode::NFT, i + 1);
 		}
 
@@ -1891,8 +1765,6 @@ fn total_number_collections_bound_neg() {
 #[test]
 fn owned_tokens_bound() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let data = default_nft_data();
@@ -1905,28 +1777,16 @@ fn owned_tokens_bound() {
 #[test]
 fn owned_tokens_bound_neg() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(TemplateModule::set_chain_limits(
-			RawOrigin::Root.into(),
-			ChainLimits {
-				collection_numbers_limit: 10,
-				account_token_ownership_limit: 1,
-				collections_admins_limit: 5,
-				custom_data_limit: 2048,
-				nft_sponsor_transfer_timeout: 15,
-				fungible_sponsor_transfer_timeout: 15,
-				refungible_sponsor_transfer_timeout: 15,
-				const_on_chain_schema_limit: 1024,
-				offchain_schema_limit: 1024,
-				variable_on_chain_schema_limit: 1024,
-			}
-		));
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
-		let data = default_nft_data();
-		create_test_item(collection_id, &data.clone().into());
 
+		for _ in 0..ACCOUNT_TOKEN_OWNERSHIP_LIMIT {
+			let data = default_nft_data();
+			create_test_item(collection_id, &data.clone().into());
+		}
+
+		let data = default_nft_data();
 		assert_noop!(
 			TemplateModule::create_item(origin1, 1, account(1), data.into()),
 			Error::<Test>::AddressOwnershipLimitExceeded
@@ -1938,22 +1798,6 @@ fn owned_tokens_bound_neg() {
 #[test]
 fn collection_admins_bound() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(TemplateModule::set_chain_limits(
-			RawOrigin::Root.into(),
-			ChainLimits {
-				collection_numbers_limit: 10,
-				account_token_ownership_limit: 10,
-				collections_admins_limit: 2,
-				custom_data_limit: 2048,
-				nft_sponsor_transfer_timeout: 15,
-				fungible_sponsor_transfer_timeout: 15,
-				refungible_sponsor_transfer_timeout: 15,
-				const_on_chain_schema_limit: 1024,
-				offchain_schema_limit: 1024,
-				variable_on_chain_schema_limit: 1024,
-			}
-		));
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -1975,174 +1819,24 @@ fn collection_admins_bound() {
 #[test]
 fn collection_admins_bound_neg() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(TemplateModule::set_chain_limits(
-			RawOrigin::Root.into(),
-			ChainLimits {
-				collection_numbers_limit: 10,
-				account_token_ownership_limit: 1,
-				collections_admins_limit: 1,
-				custom_data_limit: 2048,
-				nft_sponsor_transfer_timeout: 15,
-				fungible_sponsor_transfer_timeout: 15,
-				refungible_sponsor_transfer_timeout: 15,
-				const_on_chain_schema_limit: 1024,
-				offchain_schema_limit: 1024,
-				variable_on_chain_schema_limit: 1024,
-			}
-		));
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
 
-		assert_ok!(TemplateModule::add_collection_admin(
-			origin1.clone(),
-			collection_id,
-			account(2)
-		));
+		for i in 0..COLLECTION_ADMINS_LIMIT {
+			assert_ok!(TemplateModule::add_collection_admin(
+				origin1.clone(),
+				collection_id,
+				account(2 + i)
+			));
+		}
 		assert_noop!(
-			TemplateModule::add_collection_admin(origin1, collection_id, account(3)),
+			TemplateModule::add_collection_admin(
+				origin1,
+				collection_id,
+				account(3 + COLLECTION_ADMINS_LIMIT)
+			),
 			Error::<Test>::CollectionAdminsLimitExceeded
-		);
-	});
-}
-
-// NFT custom data size. Negative test const_data.
-#[test]
-fn custom_data_size_nft_const_data_bound_neg() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(TemplateModule::set_chain_limits(
-			RawOrigin::Root.into(),
-			ChainLimits {
-				collection_numbers_limit: 10,
-				account_token_ownership_limit: 10,
-				collections_admins_limit: 5,
-				custom_data_limit: 2,
-				nft_sponsor_transfer_timeout: 15,
-				fungible_sponsor_transfer_timeout: 15,
-				refungible_sponsor_transfer_timeout: 15,
-				const_on_chain_schema_limit: 1024,
-				offchain_schema_limit: 1024,
-				variable_on_chain_schema_limit: 1024,
-			}
-		));
-
-		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
-
-		let origin1 = Origin::signed(1);
-		let too_big_const_data = CreateItemData::NFT(CreateNftData {
-			const_data: vec![1, 2, 3, 4],
-			variable_data: vec![],
-		});
-
-		assert_noop!(
-			TemplateModule::create_item(origin1, collection_id, account(1), too_big_const_data),
-			Error::<Test>::TokenConstDataLimitExceeded
-		);
-	});
-}
-
-// NFT custom data size. Negative test variable_data.
-#[test]
-fn custom_data_size_nft_variable_data_bound_neg() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(TemplateModule::set_chain_limits(
-			RawOrigin::Root.into(),
-			ChainLimits {
-				collection_numbers_limit: 10,
-				account_token_ownership_limit: 10,
-				collections_admins_limit: 5,
-				custom_data_limit: 2,
-				nft_sponsor_transfer_timeout: 15,
-				fungible_sponsor_transfer_timeout: 15,
-				refungible_sponsor_transfer_timeout: 15,
-				const_on_chain_schema_limit: 1024,
-				offchain_schema_limit: 1024,
-				variable_on_chain_schema_limit: 1024,
-			}
-		));
-
-		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
-
-		let origin1 = Origin::signed(1);
-		let too_big_const_data = CreateItemData::NFT(CreateNftData {
-			const_data: vec![],
-			variable_data: vec![1, 2, 3, 4],
-		});
-
-		assert_noop!(
-			TemplateModule::create_item(origin1, collection_id, account(1), too_big_const_data),
-			Error::<Test>::TokenVariableDataLimitExceeded
-		);
-	});
-}
-
-// Re fungible custom data size. Negative test const_data.
-#[test]
-fn custom_data_size_re_fungible_const_data_bound_neg() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(TemplateModule::set_chain_limits(
-			RawOrigin::Root.into(),
-			ChainLimits {
-				collection_numbers_limit: 10,
-				account_token_ownership_limit: 10,
-				collections_admins_limit: 5,
-				custom_data_limit: 2,
-				nft_sponsor_transfer_timeout: 15,
-				fungible_sponsor_transfer_timeout: 15,
-				refungible_sponsor_transfer_timeout: 15,
-				const_on_chain_schema_limit: 1024,
-				offchain_schema_limit: 1024,
-				variable_on_chain_schema_limit: 1024,
-			}
-		));
-
-		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
-
-		let origin1 = Origin::signed(1);
-		let too_big_const_data = CreateItemData::NFT(CreateNftData {
-			const_data: vec![1, 2, 3, 4],
-			variable_data: vec![],
-		});
-
-		assert_noop!(
-			TemplateModule::create_item(origin1, collection_id, account(1), too_big_const_data),
-			Error::<Test>::TokenConstDataLimitExceeded
-		);
-	});
-}
-
-// Re fungible custom data size. Negative test variable_data.
-#[test]
-fn custom_data_size_re_fungible_variable_data_bound_neg() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(TemplateModule::set_chain_limits(
-			RawOrigin::Root.into(),
-			ChainLimits {
-				collection_numbers_limit: 10,
-				account_token_ownership_limit: 10,
-				collections_admins_limit: 5,
-				custom_data_limit: 2,
-				nft_sponsor_transfer_timeout: 15,
-				fungible_sponsor_transfer_timeout: 15,
-				refungible_sponsor_transfer_timeout: 15,
-				const_on_chain_schema_limit: 1024,
-				offchain_schema_limit: 1024,
-				variable_on_chain_schema_limit: 1024,
-			}
-		));
-
-		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
-
-		let origin1 = Origin::signed(1);
-		let too_big_const_data = CreateItemData::NFT(CreateNftData {
-			const_data: vec![],
-			variable_data: vec![1, 2, 3, 4],
-		});
-
-		assert_noop!(
-			TemplateModule::create_item(origin1, collection_id, account(1), too_big_const_data),
-			Error::<Test>::TokenVariableDataLimitExceeded
 		);
 	});
 }
@@ -2151,8 +1845,6 @@ fn custom_data_size_re_fungible_variable_data_bound_neg() {
 #[test]
 fn set_const_on_chain_schema() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -2180,8 +1872,6 @@ fn set_const_on_chain_schema() {
 #[test]
 fn set_variable_on_chain_schema() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -2209,8 +1899,6 @@ fn set_variable_on_chain_schema() {
 #[test]
 fn set_variable_meta_data_on_nft_token_stores_variable_meta_data() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -2218,7 +1906,7 @@ fn set_variable_meta_data_on_nft_token_stores_variable_meta_data() {
 		let data = default_nft_data();
 		create_test_item(1, &data.into());
 
-		let variable_data = b"test set_variable_meta_data method.".to_vec();
+		let variable_data = b"test data".to_vec();
 		assert_ok!(TemplateModule::set_variable_meta_data(
 			origin1,
 			collection_id,
@@ -2238,8 +1926,6 @@ fn set_variable_meta_data_on_nft_token_stores_variable_meta_data() {
 #[test]
 fn set_variable_meta_data_on_re_fungible_token_stores_variable_meta_data() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::ReFungible, 1);
 
 		let origin1 = Origin::signed(1);
@@ -2247,7 +1933,7 @@ fn set_variable_meta_data_on_re_fungible_token_stores_variable_meta_data() {
 		let data = default_re_fungible_data();
 		create_test_item(1, &data.into());
 
-		let variable_data = b"test set_variable_meta_data method.".to_vec();
+		let variable_data = b"test data".to_vec();
 		assert_ok!(TemplateModule::set_variable_meta_data(
 			origin1,
 			collection_id,
@@ -2267,8 +1953,6 @@ fn set_variable_meta_data_on_re_fungible_token_stores_variable_meta_data() {
 #[test]
 fn set_variable_meta_data_on_fungible_token_fails() {
 	new_test_ext().execute_with(|| {
-		default_limits();
-
 		let collection_id = create_test_collection(&CollectionMode::Fungible(3), 1);
 
 		let origin1 = Origin::signed(1);
@@ -2276,7 +1960,7 @@ fn set_variable_meta_data_on_fungible_token_fails() {
 		let data = default_fungible_data();
 		create_test_item(1, &data.into());
 
-		let variable_data = b"test set_variable_meta_data method.".to_vec();
+		let variable_data = b"test data".to_vec();
 		assert_noop!(
 			TemplateModule::set_variable_meta_data(origin1, collection_id, 1, variable_data),
 			Error::<Test>::CantStoreMetadataInFungibleTokens
@@ -2287,22 +1971,6 @@ fn set_variable_meta_data_on_fungible_token_fails() {
 #[test]
 fn set_variable_meta_data_on_nft_token_fails_for_big_data() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(TemplateModule::set_chain_limits(
-			RawOrigin::Root.into(),
-			ChainLimits {
-				collection_numbers_limit: default_collection_numbers_limit(),
-				account_token_ownership_limit: 10,
-				collections_admins_limit: 5,
-				custom_data_limit: 10,
-				nft_sponsor_transfer_timeout: 15,
-				fungible_sponsor_transfer_timeout: 15,
-				refungible_sponsor_transfer_timeout: 15,
-				const_on_chain_schema_limit: 1024,
-				offchain_schema_limit: 1024,
-				variable_on_chain_schema_limit: 1024,
-			}
-		));
-
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
@@ -2321,22 +1989,6 @@ fn set_variable_meta_data_on_nft_token_fails_for_big_data() {
 #[test]
 fn set_variable_meta_data_on_re_fungible_token_fails_for_big_data() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(TemplateModule::set_chain_limits(
-			RawOrigin::Root.into(),
-			ChainLimits {
-				collection_numbers_limit: default_collection_numbers_limit(),
-				account_token_ownership_limit: 10,
-				collections_admins_limit: 5,
-				custom_data_limit: 10,
-				nft_sponsor_transfer_timeout: 15,
-				fungible_sponsor_transfer_timeout: 15,
-				refungible_sponsor_transfer_timeout: 15,
-				const_on_chain_schema_limit: 1024,
-				offchain_schema_limit: 1024,
-				variable_on_chain_schema_limit: 1024,
-			}
-		));
-
 		let collection_id = create_test_collection(&CollectionMode::ReFungible, 1);
 
 		let origin1 = Origin::signed(1);
@@ -2427,6 +2079,29 @@ fn set_variable_meta_data_on_nft_with_item_owner_permission_flag_neg() {
 			),
 			Error::<Test>::NoPermission
 		);
+
+#[test]
+fn collection_transfer_flag_works() {
+	new_test_ext().execute_with(|| {
+		let origin1 = Origin::signed(1);
+
+		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
+		assert_ok!(TemplateModule::set_transfers_enabled_flag(origin1, 1, true));
+
+		let data = default_nft_data();
+		create_test_item(collection_id, &data.into());
+		assert_eq!(TemplateModule::balance_count(1, 1), 1);
+		assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
+
+		let origin1 = Origin::signed(1);
+
+		// default scenario
+		assert_ok!(TemplateModule::transfer(origin1, account(2), 1, 1, 1000));
+		assert_eq!(TemplateModule::nft_item_id(1, 1).unwrap().owner, account(2));
+		assert_eq!(TemplateModule::balance_count(1, 1), 0);
+		assert_eq!(TemplateModule::balance_count(1, 2), 1);
+
+		assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
 	});
 }
 
@@ -2578,5 +2253,33 @@ fn set_variable_meta_data_on_nft_with_none_flag_neg() {
 			),
 			Error::<Test>::MetadataUpdateDenied
 		);
+
+#[test]
+fn collection_transfer_flag_works_neg() {
+	new_test_ext().execute_with(|| {
+		let origin1 = Origin::signed(1);
+
+		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
+		assert_ok!(TemplateModule::set_transfers_enabled_flag(
+			origin1, 1, false
+		));
+
+		let data = default_nft_data();
+		create_test_item(collection_id, &data.into());
+		assert_eq!(TemplateModule::balance_count(1, 1), 1);
+		assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
+
+		let origin1 = Origin::signed(1);
+
+		// default scenario
+		assert_noop!(
+			TemplateModule::transfer(origin1, account(2), 1, 1, 1000),
+			Error::<Test>::TransferNotAllowed
+		);
+		assert_eq!(TemplateModule::nft_item_id(1, 1).unwrap().owner, account(1));
+		assert_eq!(TemplateModule::balance_count(1, 1), 1);
+		assert_eq!(TemplateModule::balance_count(1, 2), 0);
+
+		assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 	});
 }

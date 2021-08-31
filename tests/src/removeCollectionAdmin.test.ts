@@ -37,6 +37,33 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
     });
   });
 
+  it('Remove collection admin by admin.', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const collectionId = await createCollectionExpectSuccess();
+      const Alice = privateKey('//Alice');
+      const Bob = privateKey('//Bob');
+      const Charlie = privateKey('//Charlie');
+      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collection.Owner).to.be.deep.eq(Alice.address);
+      // first - add collection admin Bob
+      const addAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
+      await submitTransactionAsync(Alice, addAdminTx);
+
+      const addAdminTx2 = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Charlie.address));
+      await submitTransactionAsync(Alice, addAdminTx2);
+
+      const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId)).toJSON();
+      expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(Bob.address));
+
+      // then remove bob from admins of collection
+      const removeAdminTx = api.tx.nft.removeCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
+      await submitTransactionAsync(Charlie, removeAdminTx);
+
+      const adminListAfterRemoveAdmin: any = (await api.query.nft.adminList(collectionId)).toJSON;
+      expect(adminListAfterRemoveAdmin).not.to.be.deep.contains(normalizeAccountId(Bob.address));
+    });
+  });
+
   it('Remove admin from collection that has no admins', async () => {
     await usingApi(async (api: ApiPromise) => {
       const Alice = privateKey('//Alice');
@@ -78,6 +105,24 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
 
       const changeOwnerTx = api.tx.nft.removeCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await expect(submitTransactionExpectFailAsync(Alice, changeOwnerTx)).to.be.rejected;
+
+      // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
+      await createCollectionExpectSuccess();
+    });
+  });
+
+  it('Regular user Can\'t remove collection admin', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const collectionId = await createCollectionExpectSuccess();
+      const Alice = privateKey('//Alice');
+      const Bob = privateKey('//Bob');
+      const Charlie = privateKey('//Charlie');
+
+      const addAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
+      await submitTransactionAsync(Alice, addAdminTx);
+
+      const changeOwnerTx = api.tx.nft.removeCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
+      await expect(submitTransactionExpectFailAsync(Charlie, changeOwnerTx)).to.be.rejected;
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
       await createCollectionExpectSuccess();

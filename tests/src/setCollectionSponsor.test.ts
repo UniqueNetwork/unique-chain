@@ -6,19 +6,27 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { default as usingApi } from './substrate/substrate-api';
-import { createCollectionExpectSuccess, setCollectionSponsorExpectSuccess, destroyCollectionExpectSuccess, setCollectionSponsorExpectFailure } from './util/helpers';
+import { createCollectionExpectSuccess, 
+  setCollectionSponsorExpectSuccess, 
+  destroyCollectionExpectSuccess, 
+  setCollectionSponsorExpectFailure,
+  addCollectionAdminExpectSuccess,
+} from './util/helpers';
 import { Keyring } from '@polkadot/api';
 import { IKeyringPair } from '@polkadot/types/types';
 
 chai.use(chaiAsPromised);
 
+let alice: IKeyringPair;
 let bob: IKeyringPair;
+let charlie: IKeyringPair;
 
 describe('integration test: ext. setCollectionSponsor():', () => {
 
   before(async () => {
     await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
+      alice = keyring.addFromUri('//Alice');
       bob = keyring.addFromUri('//Bob');
     });
   });
@@ -55,7 +63,9 @@ describe('(!negative test!) integration test: ext. setCollectionSponsor():', () 
   before(async () => {
     await usingApi(async () => {
       const keyring = new Keyring({ type: 'sr25519' });
+      alice = keyring.addFromUri('//Alice');
       bob = keyring.addFromUri('//Bob');
+      charlie = keyring.addFromUri('//Charlie');
     });
   });
 
@@ -76,5 +86,10 @@ describe('(!negative test!) integration test: ext. setCollectionSponsor():', () 
     const collectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectSuccess(collectionId);
     await setCollectionSponsorExpectFailure(collectionId, bob.address);
+  });
+  it('(!negative test!) Collection admin add sponsor', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob);
+    await setCollectionSponsorExpectFailure(collectionId, charlie.address, '//Bob');
   });
 });

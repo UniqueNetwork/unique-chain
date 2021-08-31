@@ -34,8 +34,7 @@ describe('Admin limit exceeded collection: ', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
 
-      const chainLimit = await api.query.nft.chainLimit() as unknown as { CollectionAdminsLimit: BN };
-      const chainAdminLimit = chainLimit.CollectionAdminsLimit.toNumber();
+      const chainAdminLimit = (api.consts.nft.collectionAdminsLimit as any).toNumber();
       expect(chainAdminLimit).to.be.equal(5);
 
       const changeAdminTx1 = api.tx.nft.addCollectionAdmin(collectionId, Eve.address);

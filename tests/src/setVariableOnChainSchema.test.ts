@@ -11,6 +11,7 @@ import { default as usingApi, submitTransactionAsync, submitTransactionExpectFai
 import {
   createCollectionExpectSuccess,
   destroyCollectionExpectSuccess,
+  addCollectionAdminExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -48,6 +49,32 @@ describe('Integration Test ext. setVariableOnChainSchema()', () => {
       const collectionId = await createCollectionExpectSuccess();
       const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, Schema);
       await submitTransactionAsync(Alice, setSchema);
+      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collection.VariableOnChainSchema.toString()).to.be.eq(Schema);
+
+    });
+  });
+});
+
+describe('Integration Test ext. collection admin setVariableOnChainSchema()', () => {
+
+  it('Run extrinsic with parameters of the collection id, set the scheme', async () => {
+    await usingApi(async (api) => {
+      const collectionId = await createCollectionExpectSuccess();
+      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collection.Owner).to.be.eq(Alice.address);
+      await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
+      const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, Schema);
+      await submitTransactionAsync(Bob, setSchema);
+    });
+  });
+
+  it('Checking collection data using the setVariableOnChainSchema parameter', async () => {
+    await usingApi(async (api) => {
+      const collectionId = await createCollectionExpectSuccess();
+      await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
+      const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, Schema);
+      await submitTransactionAsync(Bob, setSchema);
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
       expect(collection.VariableOnChainSchema.toString()).to.be.eq(Schema);
 
