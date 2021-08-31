@@ -317,4 +317,7 @@ nft-rpc = { path = "../rpc" }
 
 [features]
 default = []
-runtime-benchmarks = ['nft-runtime/runtime-benchmarks']
+runtime-benchmarks = [
+    'nft-runtime/runtime-benchmarks',
+    'polkadot-service/runtime-benchmarks',
+]
