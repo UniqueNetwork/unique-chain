@@ -162,6 +162,16 @@ benchmarks! {
 		});
 	}: create_item(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(caller.clone()), data)
 
+	create_multiple_items_nft {
+		// TODO: Take item data size into account. As create_item_nft bench shows, this parameter has no effect on execution time,
+		// but it may if we increase CUSTOM_DATA_LIMIT
+		let b in 1..1000;
+
+		let caller: T::AccountId = account("caller", 0, SEED);
+		let collection = create_nft_collection::<T>(caller.clone())?;
+		let data = (0..b).map(|_| default_nft_data()).collect();
+	}: create_multiple_items(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(caller.clone()), data)
+
 	// fungible item
 	create_item_fungible {
 		let caller: T::AccountId = account("caller", 0, SEED);
@@ -170,6 +180,14 @@ benchmarks! {
 			value: 1000,
 		});
 	}: create_item(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(caller.clone()), data)
+
+	create_multiple_items_fungible {
+		let b in 1..1000;
+
+		let caller: T::AccountId = account("caller", 0, SEED);
+		let collection = create_fungible_collection::<T>(caller.clone())?;
+		let data = (0..b).map(|_| default_fungible_data()).collect();
+	}: create_multiple_items(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(caller.clone()), data)
 
 	// refungible item
 	create_item_refungible {
@@ -183,6 +201,16 @@ benchmarks! {
 			pieces: 1000,
 		});
 	}: create_item(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(caller.clone()), data)
+
+	create_multiple_items_refungible {
+		// TODO: Take item data size into account. As create_item_nft bench shows, this parameter has no effect on execution time,
+		// but it may if we increase CUSTOM_DATA_LIMIT
+		let b in 1..1000;
+
+		let caller: T::AccountId = account("caller", 0, SEED);
+		let collection = create_refungible_collection::<T>(caller.clone())?;
+		let data = (0..b).map(|_| default_re_fungible_data()).collect();
+	}: create_multiple_items(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(caller.clone()), data)
 
 	burn_item_nft {
 		let caller: T::AccountId = account("caller", 0, SEED);
@@ -214,6 +242,11 @@ benchmarks! {
 		let data = default_re_fungible_data();
 		<Pallet<T>>::create_item(RawOrigin::Signed(caller.clone()).into(), collection, T::CrossAccountId::from_sub(caller.clone()), data)?;
 	}: transfer(RawOrigin::Signed(caller.clone()), T::CrossAccountId::from_sub(recipient.clone()), collection, 1, 1)
+
+	set_transfers_enabled_flag {
+		let caller: T::AccountId = account("caller", 0, SEED);
+		let collection = create_nft_collection::<T>(caller.clone())?;
+	}: _(RawOrigin::Signed(caller.clone()), collection, false)
 
 	approve_nft {
 		let caller: T::AccountId = account("caller", 0, SEED);
