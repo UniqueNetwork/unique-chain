@@ -1084,15 +1084,6 @@ export async function enablePublicMintingExpectSuccess(sender: IKeyringPair, col
   await setMintPermissionExpectSuccess(sender, collectionId, true);
 }
 
-export async function addCollectionAdminExpectSuccess(sender: IKeyringPair, collectionId: number, address: IKeyringPair) {
-  await usingApi(async (api) => {
-    const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(address.address));
-    const events = await submitTransactionAsync(sender, changeAdminTx);
-    const result = getCreateCollectionResult(events);
-    expect(result.success).to.be.true;
-  });
-}
-
 export async function setMintPermissionExpectFailure(sender: IKeyringPair, collectionId: number, enabled: boolean) {
   await usingApi(async (api) => {
     // Run the transaction

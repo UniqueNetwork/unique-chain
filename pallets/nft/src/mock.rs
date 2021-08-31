@@ -98,12 +98,6 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-<<<<<<< HEAD
-type Timestamp = pallet_timestamp::Pallet<Test>;
-type Randomness = pallet_randomness_collective_flip::Pallet<Test>;
-
-=======
->>>>>>> origin/develop
 parameter_types! {
 	pub const CollectionCreationPrice: u32 = 0;
 	pub TreasuryAccountId: u64 = 1234;
