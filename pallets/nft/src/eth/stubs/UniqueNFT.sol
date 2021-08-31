@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: OTHER
-// This code is automatically generated with `cargo test --package pallet-nft -- eth::erc::name --exact --nocapture --ignored`
+// This code is automatically generated
 
 pragma solidity >=0.8.0 <0.9.0;
 
@@ -11,9 +11,21 @@ contract Dummy {
 
 // Inline
 contract ERC721Events {
-	event Transfer(address from, address to, uint256 tokenId);
-	event Approval(address owner, address approved, uint256 tokenId);
-	event ApprovalForAll(address owner, address operator, bool approved);
+	event Transfer(
+		address indexed from,
+		address indexed to,
+		uint256 indexed tokenId
+	);
+	event Approval(
+		address indexed owner,
+		address indexed approved,
+		uint256 indexed tokenId
+	);
+	event ApprovalForAll(
+		address indexed owner,
+		address indexed operator,
+		bool approved
+	);
 }
 
 // Inline
@@ -28,6 +40,7 @@ contract InlineNameSymbol is Dummy {
 		dummy;
 		return "";
 	}
+
 	function symbol() public view returns (string memory) {
 		require(false, stub_error);
 		dummy;
@@ -60,13 +73,20 @@ contract ERC721 is Dummy, ERC165, ERC721Events {
 		dummy;
 		return 0;
 	}
+
 	function ownerOf(uint256 tokenId) public view returns (address) {
 		require(false, stub_error);
 		tokenId;
 		dummy;
 		return 0x0000000000000000000000000000000000000000;
 	}
-	function safeTransferFromWithData(address from, address to, uint256 tokenId, bytes memory data) public {
+
+	function safeTransferFromWithData(
+		address from,
+		address to,
+		uint256 tokenId,
+		bytes memory data
+	) public {
 		require(false, stub_error);
 		from;
 		to;
@@ -74,39 +94,57 @@ contract ERC721 is Dummy, ERC165, ERC721Events {
 		data;
 		dummy = 0;
 	}
-	function safeTransferFrom(address from, address to, uint256 tokenId) public {
+
+	function safeTransferFrom(
+		address from,
+		address to,
+		uint256 tokenId
+	) public {
 		require(false, stub_error);
 		from;
 		to;
 		tokenId;
 		dummy = 0;
 	}
-	function transferFrom(address from, address to, uint256 tokenId) public {
+
+	function transferFrom(
+		address from,
+		address to,
+		uint256 tokenId
+	) public {
 		require(false, stub_error);
 		from;
 		to;
 		tokenId;
 		dummy = 0;
 	}
+
 	function approve(address approved, uint256 tokenId) public {
 		require(false, stub_error);
 		approved;
 		tokenId;
 		dummy = 0;
 	}
+
 	function setApprovalForAll(address operator, bool approved) public {
 		require(false, stub_error);
 		operator;
 		approved;
 		dummy = 0;
 	}
+
 	function getApproved(uint256 tokenId) public view returns (address) {
 		require(false, stub_error);
 		tokenId;
 		dummy;
 		return 0x0000000000000000000000000000000000000000;
 	}
-	function isApprovedForAll(address owner, address operator) public view returns (address) {
+
+	function isApprovedForAll(address owner, address operator)
+		public
+		view
+		returns (address)
+	{
 		require(false, stub_error);
 		owner;
 		operator;
@@ -130,7 +168,12 @@ contract ERC721Enumerable is Dummy, InlineTotalSupply {
 		dummy;
 		return 0;
 	}
-	function tokenOfOwnerByIndex(address owner, uint256 index) public view returns (uint256) {
+
+	function tokenOfOwnerByIndex(address owner, uint256 index)
+		public
+		view
+		returns (uint256)
+	{
 		require(false, stub_error);
 		owner;
 		index;
@@ -154,6 +197,7 @@ contract ERC721Mintable is Dummy, ERC721MintableEvents {
 		dummy;
 		return false;
 	}
+
 	function mint(address to, uint256 tokenId) public returns (bool) {
 		require(false, stub_error);
 		to;
@@ -161,7 +205,12 @@ contract ERC721Mintable is Dummy, ERC721MintableEvents {
 		dummy = 0;
 		return false;
 	}
-	function mintWithTokenURI(address to, uint256 tokenId, string memory tokenUri) public returns (bool) {
+
+	function mintWithTokenURI(
+		address to,
+		uint256 tokenId,
+		string memory tokenUri
+	) public returns (bool) {
 		require(false, stub_error);
 		to;
 		tokenId;
@@ -169,6 +218,7 @@ contract ERC721Mintable is Dummy, ERC721MintableEvents {
 		dummy = 0;
 		return false;
 	}
+
 	function finishMinting() public returns (bool) {
 		require(false, stub_error);
 		dummy = 0;
@@ -183,6 +233,7 @@ contract ERC721UniqueExtensions is Dummy {
 		tokenId;
 		dummy = 0;
 	}
+
 	function nextTokenId() public view returns (uint256) {
 		require(false, stub_error);
 		dummy;
@@ -190,5 +241,13 @@ contract ERC721UniqueExtensions is Dummy {
 	}
 }
 
-contract UniqueNFT is Dummy, ERC165, ERC721, ERC721Metadata, ERC721Enumerable, ERC721UniqueExtensions, ERC721Mintable, ERC721Burnable {
-}
+contract UniqueNFT is
+	Dummy,
+	ERC165,
+	ERC721,
+	ERC721Metadata,
+	ERC721Enumerable,
+	ERC721UniqueExtensions,
+	ERC721Mintable,
+	ERC721Burnable
+{}

@@ -1,3 +1,28 @@
+.PHONY: _eth_codegen
+_eth_codegen:
+
+.PHONY: regenerate_solidity
+regenerate_solidity:
+	PACKAGE=pallet-nft NAME=eth::erc::fungible_iface OUTPUT=./tests/src/eth/api/UniqueFungible.sol ./.maintain/scripts/generate_api.sh
+	PACKAGE=pallet-nft NAME=eth::erc::nft_iface OUTPUT=./tests/src/eth/api/UniqueNFT.sol ./.maintain/scripts/generate_api.sh
+	PACKAGE=pallet-evm-contract-helpers NAME=eth::contract_helpers_iface OUTPUT=./tests/src/eth/api/ContractHelpers.sol ./.maintain/scripts/generate_api.sh
+
+	PACKAGE=pallet-nft NAME=eth::erc::fungible_impl OUTPUT=./pallets/nft/src/eth/stubs/UniqueFungible.sol ./.maintain/scripts/generate_api.sh
+	PACKAGE=pallet-nft NAME=eth::erc::nft_impl OUTPUT=./pallets/nft/src/eth/stubs/UniqueNFT.sol ./.maintain/scripts/generate_api.sh
+	PACKAGE=pallet-evm-contract-helpers NAME=eth::contract_helpers_impl OUTPUT=./pallets/evm-contract-helpers/src/stubs/ContractHelpers.sol ./.maintain/scripts/generate_api.sh
+
+NFT_EVM_STUBS=./pallets/nft/src/eth/stubs
+CONTRACT_HELPERS_STUBS=./pallets/evm-contract-helpers/src/stubs/
+
+$(NFT_EVM_STUBS)/UniqueFungible.raw: $(NFT_EVM_STUBS)/UniqueFungible.sol
+	INPUT=$< OUTPUT=$@ ./.maintain/scripts/compile_stub.sh
+$(NFT_EVM_STUBS)/UniqueNFT.raw: $(NFT_EVM_STUBS)/UniqueNFT.sol
+	INPUT=$< OUTPUT=$@ ./.maintain/scripts/compile_stub.sh
+$(CONTRACT_HELPERS_STUBS)/ContractHelpers.raw: $(CONTRACT_HELPERS_STUBS)/ContractHelpers.sol
+	INPUT=$< OUTPUT=$@ ./.maintain/scripts/compile_stub.sh
+
+evm_stubs: $(NFT_EVM_STUBS)/UniqueFungible.raw $(NFT_EVM_STUBS)/UniqueNFT.raw $(CONTRACT_HELPERS_STUBS)/ContractHelpers.raw
+
 .PHONY: _bench
 _bench:
 	cargo run --release --features runtime-benchmarks -- \

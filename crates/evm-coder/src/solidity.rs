@@ -117,6 +117,41 @@ impl<T: SolidityTypeName> SolidityArguments for NamedArgument<T> {
 	}
 }
 
+pub struct SolidityEventArgument<T>(pub bool, &'static str, PhantomData<*const T>);
+
+impl<T> SolidityEventArgument<T> {
+	pub fn new(indexed: bool, name: &'static str) -> Self {
+		Self(indexed, name, Default::default())
+	}
+}
+
+impl<T: SolidityTypeName> SolidityArguments for SolidityEventArgument<T> {
+	fn solidity_name(&self, writer: &mut impl fmt::Write) -> fmt::Result {
+		if !T::is_void() {
+			T::solidity_name(writer)?;
+			if self.0 {
+				write!(writer, " indexed")?;
+			}
+			write!(writer, " {}", self.1)
+		} else {
+			Ok(())
+		}
+	}
+	fn solidity_get(&self, writer: &mut impl fmt::Write) -> fmt::Result {
+		writeln!(writer, "\t\t{};", self.1)
+	}
+	fn solidity_default(&self, writer: &mut impl fmt::Write) -> fmt::Result {
+		T::solidity_default(writer)
+	}
+	fn len(&self) -> usize {
+		if T::is_void() {
+			0
+		} else {
+			1
+		}
+	}
+}
+
 impl SolidityArguments for () {
 	fn solidity_name(&self, _writer: &mut impl fmt::Write) -> fmt::Result {
 		Ok(())
