@@ -252,6 +252,7 @@ impl pallet_evm::Config for Runtime {
 	type Currency = Balances;
 	type Event = Event;
 	type OnMethodCall = (
+		pallet_evm_migration::OnMethodCall<Self>,
 		pallet_nft::NftErcSupport<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
 	);
@@ -261,6 +262,10 @@ impl pallet_evm::Config for Runtime {
 	type OnChargeTransaction = pallet_evm_transaction_payment::OnChargeTransaction<Self>;
 	type TransactionValidityHack = pallet_evm_transaction_payment::TransactionValidityHack<Self>;
 	type FindAuthor = EthereumFindAuthor<Aura>;
+}
+
+impl pallet_evm_migration::Config for Runtime {
+	type WeightInfo = pallet_evm_migration::weights::SubstrateWeight<Self>;
 }
 
 pub struct EthereumFindAuthor<F>(core::marker::PhantomData<F>);
@@ -819,6 +824,7 @@ construct_runtime!(
 		EvmCoderSubstrate: pallet_evm_coder_substrate::{Pallet, Storage} = 150,
 		EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage} = 151,
 		EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
+		EvmMigration: pallet_evm_migration::{Pallet, Call, Storage} = 153,
 	}
 );
 
@@ -1180,6 +1186,7 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
+			add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
 			add_benchmark!(params, batches, pallet_nft, Nft);
 			add_benchmark!(params, batches, pallet_inflation, Inflation);
 
