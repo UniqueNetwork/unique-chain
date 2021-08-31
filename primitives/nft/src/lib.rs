@@ -55,6 +55,10 @@ pub const OFFCHAIN_SCHEMA_LIMIT: u32 = 1024;
 pub const VARIABLE_ON_CHAIN_SCHEMA_LIMIT: u32 = 1024;
 pub const CONST_ON_CHAIN_SCHEMA_LIMIT: u32 = 1024;
 
+pub const MAX_COLLECTION_NAME_LENGTH: usize = 64;
+pub const MAX_COLLECTION_DESCRIPTION_LENGTH: usize = 256;
+pub const MAX_TOKEN_PREFIX_LENGTH: usize = 16;
+
 /// How much items can be created per single
 /// create_many call
 pub const MAX_ITEMS_PER_BATCH: u32 = 200;
