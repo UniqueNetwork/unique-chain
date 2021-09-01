@@ -247,6 +247,51 @@ impl_abi_readable!(Vec<u8>, bytes);
 impl_abi_readable!(bool, bool);
 impl_abi_readable!(string, string);
 
+mod sealed {
+	/// Not all types can be placed in vec, i.e `Vec<u8>` is restricted, `bytes` should be used instead
+	pub trait CanBePlacedInVec {}
+}
+
+impl sealed::CanBePlacedInVec for U256 {}
+impl sealed::CanBePlacedInVec for string {}
+impl sealed::CanBePlacedInVec for H160 {}
+
+impl<R: sealed::CanBePlacedInVec> AbiRead<Vec<R>> for AbiReader<'_>
+where
+	Self: AbiRead<R>,
+{
+	fn abi_read(&mut self) -> Result<Vec<R>> {
+		todo!()
+	}
+}
+
+macro_rules! impl_tuples {
+	($($ident:ident)+) => {
+		impl<$($ident),+> sealed::CanBePlacedInVec for ($($ident,)+) {}
+		impl<$($ident),+> AbiRead<($($ident,)+)> for AbiReader<'_>
+		where
+			$(Self: AbiRead<$ident>),+
+		{
+			fn abi_read(&mut self) -> Result<($($ident,)+)> {
+				Ok((
+					$(<Self as AbiRead<$ident>>::abi_read(self)?,)+
+				))
+			}
+		}
+	};
+}
+
+impl_tuples! {A}
+impl_tuples! {A B}
+impl_tuples! {A B C}
+impl_tuples! {A B C D}
+impl_tuples! {A B C D E}
+impl_tuples! {A B C D E F}
+impl_tuples! {A B C D E F G}
+impl_tuples! {A B C D E F G H}
+impl_tuples! {A B C D E F G H I}
+impl_tuples! {A B C D E F G H I J}
+
 pub trait AbiWrite {
 	fn abi_write(&self, writer: &mut AbiWriter);
 }

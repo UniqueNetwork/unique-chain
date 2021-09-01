@@ -67,8 +67,8 @@ macro_rules! generate_stubgen {
 		#[test]
 		#[ignore]
 		fn $name() {
-			use sp_std::collections::btree_set::BTreeSet;
-			let mut out = BTreeSet::new();
+			use evm_coder::solidity::TypeCollector;
+			let mut out = TypeCollector::new();
 			$decl::generate_solidity_interface(&mut out, $is_impl);
 			println!("=== SNIP START ===");
 			println!("// SPDX-License-Identifier: OTHER");
@@ -76,7 +76,7 @@ macro_rules! generate_stubgen {
 			println!();
 			println!("pragma solidity >=0.8.0 <0.9.0;");
 			println!();
-			for b in out {
+			for b in out.finish() {
 				println!("{}", b);
 			}
 			println!("=== SNIP END ===");
