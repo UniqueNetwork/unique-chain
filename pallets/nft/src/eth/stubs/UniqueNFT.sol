@@ -3,6 +3,12 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
+// Anonymous struct
+struct Tuple0 {
+	uint256 field_0;
+	string field_1;
+}
+
 // Common stubs holder
 contract Dummy {
 	uint8 dummy;
@@ -238,6 +244,50 @@ contract ERC721UniqueExtensions is Dummy {
 		require(false, stub_error);
 		dummy;
 		return 0;
+	}
+
+	// Selector: setVariableMetadata(uint256,bytes) d4eac26d
+	function setVariableMetadata(uint256 tokenId, bytes memory data) public {
+		require(false, stub_error);
+		tokenId;
+		data;
+		dummy = 0;
+	}
+
+	// Selector: getVariableMetadata(uint256) e6c5ce6f
+	function getVariableMetadata(uint256 tokenId)
+		public
+		view
+		returns (bytes memory)
+	{
+		require(false, stub_error);
+		tokenId;
+		dummy;
+		return hex"";
+	}
+
+	// Selector: mintBulk(address,uint256[]) 44a9945e
+	function mintBulk(address to, uint256[] memory tokenIds)
+		public
+		returns (bool)
+	{
+		require(false, stub_error);
+		to;
+		tokenIds;
+		dummy = 0;
+		return false;
+	}
+
+	// Selector: mintBulkWithTokenURI(address,(uint256,string)[]) 36543006
+	function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
+		public
+		returns (bool)
+	{
+		require(false, stub_error);
+		to;
+		tokens;
+		dummy = 0;
+		return false;
 	}
 }
 

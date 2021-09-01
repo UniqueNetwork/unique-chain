@@ -3,6 +3,12 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
+// Anonymous struct
+struct Tuple0 {
+	uint256 field_0;
+	string field_1;
+}
+
 // Common stubs holder
 interface Dummy {
 
@@ -119,6 +125,25 @@ interface ERC721UniqueExtensions is Dummy {
 	function transfer(address to, uint256 tokenId) external;
 
 	function nextTokenId() external view returns (uint256);
+
+	// Selector: setVariableMetadata(uint256,bytes) d4eac26d
+	function setVariableMetadata(uint256 tokenId, bytes memory data) external;
+
+	// Selector: getVariableMetadata(uint256) e6c5ce6f
+	function getVariableMetadata(uint256 tokenId)
+		external
+		view
+		returns (bytes memory);
+
+	// Selector: mintBulk(address,uint256[]) 44a9945e
+	function mintBulk(address to, uint256[] memory tokenIds)
+		external
+		returns (bool);
+
+	// Selector: mintBulkWithTokenURI(address,(uint256,string)[]) 36543006
+	function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
+		external
+		returns (bool);
 }
 
 interface UniqueNFT is
