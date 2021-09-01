@@ -971,9 +971,8 @@ decl_module! {
 			Self::check_owner_permissions(&target_collection, &sender)?;
 
 			target_collection.meta_update_permission = value;
-			<CollectionById<T>>::insert(target_collection.id, target_collection.collection);
 
-			Ok(())
+			target_collection.save()
 		}
 
 		/// Destroys a concrete instance of NFT.
