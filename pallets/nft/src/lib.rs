@@ -43,7 +43,7 @@ use nft_data_structs::{
 	OFFCHAIN_SCHEMA_LIMIT, MAX_TOKEN_PREFIX_LENGTH, MAX_COLLECTION_NAME_LENGTH,
 	MAX_COLLECTION_DESCRIPTION_LENGTH, AccessMode, Collection, CreateItemData, CollectionLimits,
 	CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState, Ownership, NftItemType,
-	FungibleItemType, ReFungibleItemType,
+	MetaUpdatePermission, FungibleItemType, ReFungibleItemType,
 };
 
 #[cfg(test)]
@@ -971,7 +971,7 @@ decl_module! {
 			Self::check_owner_permissions(&target_collection, &sender)?;
 
 			target_collection.meta_update_permission = value;
-			Self::save_collection(target_collection);
+			<CollectionById<T>>::insert(target_collection.id, target_collection.collection);
 
 			Ok(())
 		}
@@ -1546,21 +1546,15 @@ impl<T: Config> Module<T> {
 		item_id: TokenId,
 	) -> DispatchResult {
 		match collection.meta_update_permission {
-			MetaUpdatePermission::ItemOwner => {
-				ensure!(
-					Self::is_item_owner(sender, collection, item_id),
-					Error::<T>::NoPermission
-				);
-			}
-			MetaUpdatePermission::Admin => {
-				ensure!(
-					Self::is_owner_or_admin_permissions(collection, sender),
-					Error::<T>::NoPermission
-				);
-			}
-			MetaUpdatePermission::None => {
-				fail!(Error::<T>::MetadataUpdateDenied);
-			}
+			MetaUpdatePermission::ItemOwner => ensure!(
+				Self::is_item_owner(sender, collection, item_id)?,
+				Error::<T>::NoPermission
+			),
+			MetaUpdatePermission::Admin => ensure!(
+				Self::is_owner_or_admin_permissions(collection, sender)?,
+				Error::<T>::NoPermission
+			),
+			MetaUpdatePermission::None => fail!(Error::<T>::MetadataUpdateDenied),
 		}
 
 		Ok(())
