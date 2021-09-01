@@ -96,10 +96,14 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 			.and_then(<CollectionById<T>>::get)
 			.map(|collection| {
 				match collection.mode {
-					CollectionMode::NFT => include_bytes!("stubs/ERC721.bin") as &[u8],
-					CollectionMode::Fungible(_) => include_bytes!("stubs/ERC20.bin") as &[u8],
-					CollectionMode::ReFungible => include_bytes!("stubs/ERC1633.bin") as &[u8],
-					CollectionMode::Invalid => include_bytes!("stubs/Invalid.bin") as &[u8],
+					CollectionMode::NFT => include_bytes!("stubs/UniqueNFT.raw") as &[u8],
+					CollectionMode::Fungible(_) => {
+						include_bytes!("stubs/UniqueFungible.raw") as &[u8]
+					}
+					CollectionMode::ReFungible => {
+						include_bytes!("stubs/UniqueRefungible.raw") as &[u8]
+					}
+					CollectionMode::Invalid => include_bytes!("stubs/UniqueInvalid.raw") as &[u8],
 				}
 				.to_owned()
 			})

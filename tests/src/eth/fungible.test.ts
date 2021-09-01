@@ -4,8 +4,8 @@
 //
 
 import privateKey from '../substrate/privateKey';
-import { approveExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, transferExpectSuccess, transferFromExpectSuccess } from '../util/helpers';
-import { collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents, recordEvents, subToEth, transferBalanceToEth } from './util/helpers';
+import { approveExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, transferExpectSuccess, transferFromExpectSuccess, UNIQUE } from '../util/helpers';
+import { collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, transferBalanceToEth } from './util/helpers';
 import fungibleAbi from './fungibleAbi.json';
 import { expect } from 'chai';
 
@@ -189,6 +189,64 @@ describe('Fungible: Plain calls', () => {
       const balance = await contract.methods.balanceOf(receiver).call();
       expect(+balance).to.equal(50);
     }
+  });
+});
+
+describe('Fungible: Fees', () => {
+  itWeb3('approve() call fee is less than 0.2UNQ', async ({ web3, api }) => {
+    const collection = await createCollectionExpectSuccess({
+      mode: { type: 'Fungible', decimalPoints: 0 },
+    });
+    const alice = privateKey('//Alice');
+
+    const owner = await createEthAccountWithBalance(api, web3);
+    const spender = createEthAccount(web3);
+
+    await createFungibleItemExpectSuccess(alice, collection, { Value: 200n }, { ethereum: owner });
+
+    const address = collectionIdToAddress(collection);
+    const contract = new web3.eth.Contract(fungibleAbi as any, address, { from: owner, ...GAS_ARGS });
+
+    const cost = await recordEthFee(api, owner, () => contract.methods.approve(spender, 100).send({ from: owner }));
+    expect(cost < BigInt(0.2 * Number(UNIQUE)));
+  });
+
+  itWeb3('transferFrom() call fee is less than 0.2UNQ', async ({ web3, api }) => {
+    const collection = await createCollectionExpectSuccess({
+      mode: {type: 'Fungible', decimalPoints: 0},
+    });
+    const alice = privateKey('//Alice');
+  
+    const owner = await createEthAccountWithBalance(api, web3);
+    const spender = await createEthAccountWithBalance(api, web3);
+
+    await createFungibleItemExpectSuccess(alice, collection, { Value: 200n }, { ethereum: owner });
+
+    const address = collectionIdToAddress(collection);
+    const contract = new web3.eth.Contract(fungibleAbi as any, address, { from: owner, ...GAS_ARGS });
+
+    await contract.methods.approve(spender, 100).send({ from: owner });
+
+    const cost = await recordEthFee(api, spender, () => contract.methods.transferFrom(owner, spender, 100).send({ from: spender }));
+    expect(cost < BigInt(0.2 * Number(UNIQUE)));
+  });
+
+  itWeb3('transfer() call fee is less than 0.2UNQ', async ({ web3, api }) => {
+    const collection = await createCollectionExpectSuccess({
+      mode: { type: 'Fungible', decimalPoints: 0 },
+    });
+    const alice = privateKey('//Alice');
+
+    const owner = await createEthAccountWithBalance(api, web3);
+    const receiver = createEthAccount(web3);
+
+    await createFungibleItemExpectSuccess(alice, collection, { Value: 200n }, { ethereum: owner });
+
+    const address = collectionIdToAddress(collection);
+    const contract = new web3.eth.Contract(fungibleAbi as any, address, { from: owner, ...GAS_ARGS });
+
+    const cost = await recordEthFee(api, owner, () => contract.methods.transfer(receiver, 100).send({ from: owner }));
+    expect(cost < BigInt(0.2 * Number(UNIQUE)));
   });
 });
 

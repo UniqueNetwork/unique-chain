@@ -117,8 +117,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
       ];
       const collectionId = await createCollectionExpectSuccess();
 
-      const chainLimit = await api.query.nft.chainLimit() as unknown as { CollectionAdminsLimit: BN };
-      const chainAdminLimit = chainLimit.CollectionAdminsLimit.toNumber();
+      const chainAdminLimit = (api.consts.nft.collectionAdminsLimit as any).toNumber();
       expect(chainAdminLimit).to.be.equal(5);
 
       for (let i = 0; i < chainAdminLimit; i++) {

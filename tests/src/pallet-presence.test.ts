@@ -23,6 +23,10 @@ const requiredPallets = [
   'parachainsystem',
   'parachaininfo',
   'evm',
+  'evmcodersubstrate',
+  'evmcontracthelpers',
+  'evmmigration',
+  'evmtransactionpayment',
   'ethereum',
   'xcmpqueue',
   'polkadotxcm',
@@ -59,7 +63,7 @@ describe('Pallet presence', () => {
   });
   it('No extra pallets are included', async () => {
     await usingApi(async api => {
-      expect(getModuleNames(api).length).to.be.equal(requiredPallets.length + consensusPallets.length);
+      expect(getModuleNames(api).sort()).to.be.deep.equal([...requiredPallets, ...consensusPallets].sort());
     });
   });
 });

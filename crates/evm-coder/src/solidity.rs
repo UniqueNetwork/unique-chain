@@ -1,40 +1,104 @@
 #[cfg(not(feature = "std"))]
-use alloc::{string::String};
-use core::{fmt, marker::PhantomData};
+use alloc::{
+	string::String,
+	vec::Vec,
+	collections::{BTreeSet, BTreeMap},
+	format,
+};
+#[cfg(feature = "std")]
+use std::collections::{BTreeSet, BTreeMap};
+use core::{
+	fmt::{self, Write},
+	marker::PhantomData,
+	cell::{Cell, RefCell},
+};
 use impl_trait_for_tuples::impl_for_tuples;
 use crate::types::*;
 
+#[derive(Default)]
+pub struct TypeCollector {
+	structs: RefCell<BTreeSet<string>>,
+	anonymous: RefCell<BTreeMap<Vec<string>, usize>>,
+	id: Cell<usize>,
+}
+impl TypeCollector {
+	pub fn new() -> Self {
+		Self::default()
+	}
+	pub fn collect(&self, item: string) {
+		self.structs.borrow_mut().insert(item);
+	}
+	pub fn next_id(&self) -> usize {
+		let v = self.id.get();
+		self.id.set(v + 1);
+		v
+	}
+	pub fn collect_tuple<T: SolidityTupleType>(&self) -> String {
+		let names = T::names(self);
+		if let Some(id) = self.anonymous.borrow().get(&names).cloned() {
+			return format!("Tuple{}", id);
+		}
+		let id = self.next_id();
+		let mut str = String::new();
+		writeln!(str, "// Anonymous struct").unwrap();
+		writeln!(str, "struct Tuple{} {{", id).unwrap();
+		for (i, name) in names.iter().enumerate() {
+			writeln!(str, "\t{} field_{};", name, i).unwrap();
+		}
+		writeln!(str, "}}").unwrap();
+		self.collect(str);
+		self.anonymous.borrow_mut().insert(names, id);
+		format!("Tuple{}", id)
+	}
+	pub fn finish(self) -> BTreeSet<string> {
+		self.structs.into_inner()
+	}
+}
+
 pub trait SolidityTypeName: 'static {
-	fn solidity_name(writer: &mut impl fmt::Write) -> fmt::Result;
+	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
+	fn is_simple() -> bool;
+	fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
 	fn is_void() -> bool {
 		false
 	}
 }
-
 macro_rules! solidity_type_name {
-    ($($ty:ident => $name:expr),* $(,)?) => {
+    ($($ty:ty => $name:literal $simple:literal = $default:literal),* $(,)?) => {
         $(
             impl SolidityTypeName for $ty {
-                fn solidity_name(writer: &mut impl core::fmt::Write) -> core::fmt::Result {
+                fn solidity_name(writer: &mut impl core::fmt::Write, _tc: &TypeCollector) -> core::fmt::Result {
                     write!(writer, $name)
                 }
+				fn is_simple() -> bool {
+					$simple
+				}
+				fn solidity_default(writer: &mut impl core::fmt::Write, _tc: &TypeCollector) -> core::fmt::Result {
+					write!(writer, $default)
+				}
             }
         )*
     };
 }
 
 solidity_type_name! {
-	uint8 => "uint8",
-	uint32 => "uint32",
-	uint128 => "uint128",
-	uint256 => "uint256",
-	address => "address",
-	string => "memory string",
-	bytes => "memory bytes",
-	bool => "bool",
+	uint8 => "uint8" true = "0",
+	uint32 => "uint32" true = "0",
+	uint128 => "uint128" true = "0",
+	uint256 => "uint256" true = "0",
+	address => "address" true = "0x0000000000000000000000000000000000000000",
+	string => "string" false = "\"\"",
+	bytes => "bytes" false = "hex\"\"",
+	bool => "bool" true = "false",
 }
 impl SolidityTypeName for void {
-	fn solidity_name(_writer: &mut impl fmt::Write) -> fmt::Result {
+	fn solidity_name(_writer: &mut impl fmt::Write, _tc: &TypeCollector) -> fmt::Result {
+		Ok(())
+	}
+	fn is_simple() -> bool {
+		true
+	}
+	fn solidity_default(_writer: &mut impl fmt::Write, _tc: &TypeCollector) -> fmt::Result {
 		Ok(())
 	}
 	fn is_void() -> bool {
@@ -42,8 +106,88 @@ impl SolidityTypeName for void {
 	}
 }
 
+mod sealed {
+	pub trait CanBePlacedInVec {}
+}
+
+impl sealed::CanBePlacedInVec for uint256 {}
+impl sealed::CanBePlacedInVec for string {}
+impl sealed::CanBePlacedInVec for address {}
+
+impl<T: SolidityTypeName + sealed::CanBePlacedInVec> SolidityTypeName for Vec<T> {
+	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		T::solidity_name(writer, tc)?;
+		write!(writer, "[]")
+	}
+	fn is_simple() -> bool {
+		false
+	}
+	fn solidity_default(writer: &mut impl fmt::Write, _tc: &TypeCollector) -> fmt::Result {
+		write!(writer, "[]")
+	}
+}
+
+pub trait SolidityTupleType {
+	fn names(tc: &TypeCollector) -> Vec<String>;
+	fn len() -> usize;
+}
+
+macro_rules! count {
+    () => (0usize);
+    ( $x:tt $($xs:tt)* ) => (1usize + count!($($xs)*));
+}
+
+macro_rules! impl_tuples {
+	($($ident:ident)+) => {
+		impl<$($ident),+> sealed::CanBePlacedInVec for ($($ident,)+) {}
+		impl<$($ident: SolidityTypeName + 'static),+> SolidityTupleType for ($($ident,)+) {
+			fn names(tc: &TypeCollector) -> Vec<string> {
+				let mut collected = Vec::with_capacity(Self::len());
+				$({
+					let mut out = string::new();
+					$ident::solidity_name(&mut out, tc).expect("no fmt error");
+					collected.push(out);
+				})*;
+				collected
+			}
+
+			fn len() -> usize {
+				count!($($ident)*)
+			}
+		}
+		impl<$($ident: SolidityTypeName + 'static),+> SolidityTypeName for ($($ident,)+) {
+			fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+				write!(writer, "{}", tc.collect_tuple::<Self>())
+			}
+			fn is_simple() -> bool {
+				false
+			}
+			fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+				write!(writer, "{}(", tc.collect_tuple::<Self>())?;
+				$(
+					<$ident>::solidity_default(writer, tc)?;
+				)*
+				write!(writer, ")")
+			}
+		}
+	};
+}
+
+impl_tuples! {A}
+impl_tuples! {A B}
+impl_tuples! {A B C}
+impl_tuples! {A B C D}
+impl_tuples! {A B C D E}
+impl_tuples! {A B C D E F}
+impl_tuples! {A B C D E F G}
+impl_tuples! {A B C D E F G H}
+impl_tuples! {A B C D E F G H I}
+impl_tuples! {A B C D E F G H I J}
+
 pub trait SolidityArguments {
-	fn solidity_name(&self, writer: &mut impl fmt::Write) -> fmt::Result;
+	fn solidity_name(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
+	fn solidity_get(&self, writer: &mut impl fmt::Write) -> fmt::Result;
+	fn solidity_default(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
 	fn is_empty(&self) -> bool {
 		self.len() == 0
 	}
@@ -54,12 +198,22 @@ pub trait SolidityArguments {
 pub struct UnnamedArgument<T>(PhantomData<*const T>);
 
 impl<T: SolidityTypeName> SolidityArguments for UnnamedArgument<T> {
-	fn solidity_name(&self, writer: &mut impl fmt::Write) -> fmt::Result {
+	fn solidity_name(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
 		if !T::is_void() {
-			T::solidity_name(writer)
+			T::solidity_name(writer, tc)?;
+			if !T::is_simple() {
+				write!(writer, " memory")?;
+			}
+			Ok(())
 		} else {
 			Ok(())
 		}
+	}
+	fn solidity_get(&self, _writer: &mut impl fmt::Write) -> fmt::Result {
+		Ok(())
+	}
+	fn solidity_default(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		T::solidity_default(writer, tc)
 	}
 	fn len(&self) -> usize {
 		if T::is_void() {
@@ -79,13 +233,57 @@ impl<T> NamedArgument<T> {
 }
 
 impl<T: SolidityTypeName> SolidityArguments for NamedArgument<T> {
-	fn solidity_name(&self, writer: &mut impl fmt::Write) -> fmt::Result {
+	fn solidity_name(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
 		if !T::is_void() {
-			T::solidity_name(writer)?;
+			T::solidity_name(writer, tc)?;
+			if !T::is_simple() {
+				write!(writer, " memory")?;
+			}
 			write!(writer, " {}", self.0)
 		} else {
 			Ok(())
 		}
+	}
+	fn solidity_get(&self, writer: &mut impl fmt::Write) -> fmt::Result {
+		writeln!(writer, "\t\t{};", self.0)
+	}
+	fn solidity_default(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		T::solidity_default(writer, tc)
+	}
+	fn len(&self) -> usize {
+		if T::is_void() {
+			0
+		} else {
+			1
+		}
+	}
+}
+
+pub struct SolidityEventArgument<T>(pub bool, &'static str, PhantomData<*const T>);
+
+impl<T> SolidityEventArgument<T> {
+	pub fn new(indexed: bool, name: &'static str) -> Self {
+		Self(indexed, name, Default::default())
+	}
+}
+
+impl<T: SolidityTypeName> SolidityArguments for SolidityEventArgument<T> {
+	fn solidity_name(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		if !T::is_void() {
+			T::solidity_name(writer, tc)?;
+			if self.0 {
+				write!(writer, " indexed")?;
+			}
+			write!(writer, " {}", self.1)
+		} else {
+			Ok(())
+		}
+	}
+	fn solidity_get(&self, writer: &mut impl fmt::Write) -> fmt::Result {
+		writeln!(writer, "\t\t{};", self.1)
+	}
+	fn solidity_default(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		T::solidity_default(writer, tc)
 	}
 	fn len(&self) -> usize {
 		if T::is_void() {
@@ -97,7 +295,13 @@ impl<T: SolidityTypeName> SolidityArguments for NamedArgument<T> {
 }
 
 impl SolidityArguments for () {
-	fn solidity_name(&self, _writer: &mut impl fmt::Write) -> fmt::Result {
+	fn solidity_name(&self, _writer: &mut impl fmt::Write, _tc: &TypeCollector) -> fmt::Result {
+		Ok(())
+	}
+	fn solidity_get(&self, _writer: &mut impl fmt::Write) -> fmt::Result {
+		Ok(())
+	}
+	fn solidity_default(&self, _writer: &mut impl fmt::Write, _tc: &TypeCollector) -> fmt::Result {
 		Ok(())
 	}
 	fn len(&self) -> usize {
@@ -109,7 +313,7 @@ impl SolidityArguments for () {
 impl SolidityArguments for Tuple {
 	for_tuples!( where #( Tuple: SolidityArguments ),* );
 
-	fn solidity_name(&self, writer: &mut impl fmt::Write) -> fmt::Result {
+	fn solidity_name(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
 		let mut first = true;
 		for_tuples!( #(
             if !Tuple.is_empty() {
@@ -117,10 +321,40 @@ impl SolidityArguments for Tuple {
                     write!(writer, ", ")?;
                 }
                 first = false;
-                Tuple.solidity_name(writer)?;
+                Tuple.solidity_name(writer, tc)?;
             }
         )* );
 		Ok(())
+	}
+	fn solidity_get(&self, writer: &mut impl fmt::Write) -> fmt::Result {
+		for_tuples!( #(
+            Tuple.solidity_get(writer)?;
+        )* );
+		Ok(())
+	}
+	fn solidity_default(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		if self.is_empty() {
+			Ok(())
+		} else if self.len() == 1 {
+			for_tuples!( #(
+				Tuple.solidity_default(writer, tc)?;
+			)* );
+			Ok(())
+		} else {
+			write!(writer, "(")?;
+			let mut first = true;
+			for_tuples!( #(
+				if !Tuple.is_empty() {
+					if !first {
+						write!(writer, ", ")?;
+					}
+					first = false;
+					Tuple.solidity_default(writer, tc)?;
+				}
+			)* );
+			write!(writer, ")")?;
+			Ok(())
+		}
 	}
 	fn len(&self) -> usize {
 		for_tuples!( #( Tuple.len() )+* )
@@ -128,7 +362,12 @@ impl SolidityArguments for Tuple {
 }
 
 pub trait SolidityFunctions {
-	fn solidity_name(&self, writer: &mut impl fmt::Write) -> fmt::Result;
+	fn solidity_name(
+		&self,
+		is_impl: bool,
+		writer: &mut impl fmt::Write,
+		tc: &TypeCollector,
+	) -> fmt::Result;
 }
 
 pub enum SolidityMutability {
@@ -137,16 +376,28 @@ pub enum SolidityMutability {
 	Mutable,
 }
 pub struct SolidityFunction<A, R> {
+	pub selector: &'static str,
 	pub name: &'static str,
 	pub args: A,
 	pub result: R,
 	pub mutability: SolidityMutability,
 }
 impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityFunction<A, R> {
-	fn solidity_name(&self, writer: &mut impl fmt::Write) -> fmt::Result {
-		write!(writer, "function {}(", self.name)?;
-		self.args.solidity_name(writer)?;
-		write!(writer, ") external")?;
+	fn solidity_name(
+		&self,
+		is_impl: bool,
+		writer: &mut impl fmt::Write,
+		tc: &TypeCollector,
+	) -> fmt::Result {
+		writeln!(writer, "\t// Selector: {}", self.selector)?;
+		write!(writer, "\tfunction {}(", self.name)?;
+		self.args.solidity_name(writer, tc)?;
+		write!(writer, ")")?;
+		if is_impl {
+			write!(writer, " public")?;
+		} else {
+			write!(writer, " external")?;
+		}
 		match &self.mutability {
 			SolidityMutability::Pure => write!(writer, " pure")?,
 			SolidityMutability::View => write!(writer, " view")?,
@@ -154,10 +405,28 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		}
 		if !self.result.is_empty() {
 			write!(writer, " returns (")?;
-			self.result.solidity_name(writer)?;
+			self.result.solidity_name(writer, tc)?;
 			write!(writer, ")")?;
 		}
-		writeln!(writer, ";")
+		if is_impl {
+			writeln!(writer, " {{")?;
+			writeln!(writer, "\t\trequire(false, stub_error);")?;
+			self.args.solidity_get(writer)?;
+			match &self.mutability {
+				SolidityMutability::Pure => {}
+				SolidityMutability::View => writeln!(writer, "\t\tdummy;")?,
+				SolidityMutability::Mutable => writeln!(writer, "\t\tdummy = 0;")?,
+			}
+			if !self.result.is_empty() {
+				write!(writer, "\t\treturn ")?;
+				self.result.solidity_default(writer, tc)?;
+				writeln!(writer, ";")?;
+			}
+			writeln!(writer, "\t}}")?;
+		} else {
+			writeln!(writer, ";")?;
+		}
+		Ok(())
 	}
 }
 
@@ -165,10 +434,15 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 impl SolidityFunctions for Tuple {
 	for_tuples!( where #( Tuple: SolidityFunctions ),* );
 
-	fn solidity_name(&self, writer: &mut impl fmt::Write) -> fmt::Result {
+	fn solidity_name(
+		&self,
+		is_impl: bool,
+		writer: &mut impl fmt::Write,
+		tc: &TypeCollector,
+	) -> fmt::Result {
 		let mut first = false;
 		for_tuples!( #(
-            Tuple.solidity_name(writer)?;
+            Tuple.solidity_name(is_impl, writer, tc)?;
         )* );
 		Ok(())
 	}
@@ -176,14 +450,53 @@ impl SolidityFunctions for Tuple {
 
 pub struct SolidityInterface<F: SolidityFunctions> {
 	pub name: &'static str,
+	pub is: &'static [&'static str],
 	pub functions: F,
 }
 
 impl<F: SolidityFunctions> SolidityInterface<F> {
-	pub fn format(&self, out: &mut impl fmt::Write) -> fmt::Result {
-		writeln!(out, "interface {} {{", self.name)?;
-		self.functions.solidity_name(out)?;
+	pub fn format(
+		&self,
+		is_impl: bool,
+		out: &mut impl fmt::Write,
+		tc: &TypeCollector,
+	) -> fmt::Result {
+		if is_impl {
+			write!(out, "contract ")?;
+		} else {
+			write!(out, "interface ")?;
+		}
+		write!(out, "{}", self.name)?;
+		if !self.is.is_empty() {
+			write!(out, " is")?;
+			for (i, n) in self.is.iter().enumerate() {
+				if i != 0 {
+					write!(out, ",")?;
+				}
+				write!(out, " {}", n)?;
+			}
+		}
+		writeln!(out, " {{")?;
+		self.functions.solidity_name(is_impl, out, tc)?;
 		writeln!(out, "}}")?;
 		Ok(())
+	}
+}
+
+pub struct SolidityEvent<A> {
+	pub name: &'static str,
+	pub args: A,
+}
+
+impl<A: SolidityArguments> SolidityFunctions for SolidityEvent<A> {
+	fn solidity_name(
+		&self,
+		_is_impl: bool,
+		writer: &mut impl fmt::Write,
+		tc: &TypeCollector,
+	) -> fmt::Result {
+		write!(writer, "\tevent {}(", self.name)?;
+		self.args.solidity_name(writer, tc)?;
+		writeln!(writer, ");")
 	}
 }

@@ -53,6 +53,11 @@ export function toSubstrateAddress(input: string | CrossAccountId | IKeyringPair
 
 export const U128_MAX = (1n << 128n) - 1n;
 
+const MICROUNIQUE = 1_000_000_000n;
+const MILLIUNIQUE = 1_000n * MICROUNIQUE;
+const CENTIUNIQUE = 10n * MILLIUNIQUE;
+export const UNIQUE = 100n * CENTIUNIQUE;
+
 type GenericResult = {
   success: boolean,
 };
@@ -1006,8 +1011,29 @@ export async function setPublicAccessModeExpectSuccess(
   });
 }
 
+export async function setPublicAccessModeExpectFail(
+  sender: IKeyringPair, collectionId: number,
+  accessMode: 'Normal' | 'WhiteList',
+) {
+  await usingApi(async (api) => {
+
+    // Run the transaction
+    const tx = api.tx.nft.setPublicAccessMode(collectionId, accessMode);
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function enableWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number) {
   await setPublicAccessModeExpectSuccess(sender, collectionId, 'WhiteList');
+}
+
+export async function enableWhiteListExpectFail(sender: IKeyringPair, collectionId: number) {
+  await setPublicAccessModeExpectFail(sender, collectionId, 'WhiteList');
 }
 
 export async function disableWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number) {
@@ -1088,6 +1114,19 @@ export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collecti
   });
 }
 
+export async function addToWhiteListExpectFail(sender: IKeyringPair, collectionId: number, address: string | AccountId) {
+  await usingApi(async (api) => {
+    // Run the transaction
+    const tx = api.tx.nft.addToWhiteList(collectionId, normalizeAccountId(address));
+    const events = await expect(submitTransactionAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function removeFromWhiteListExpectSuccess(sender: IKeyringPair, collectionId: number, address: CrossAccountId) {
   await usingApi(async (api) => {
     // Run the transaction
@@ -1128,4 +1167,8 @@ export async function queryCollectionExpectSuccess(collectionId: number): Promis
   return await usingApi(async (api) => {
     return (await api.query.nft.collectionById(collectionId)).toJSON() as unknown as ICollectionInterface;
   });
+}
+
+export async function queryNftOwner(api: ApiPromise, collectionId: number, tokenId: number): Promise<CrossAccountId> {
+  return normalizeAccountId((await api.query.nft.nftItemList(collectionId, tokenId) as any).toJSON().Owner);
 }

@@ -23,14 +23,18 @@ runtime-benchmarks = [
     'frame-support/runtime-benchmarks',
     'frame-system-benchmarking',
     'frame-system/runtime-benchmarks',
+    'pallet-evm-migration/runtime-benchmarks',
     'pallet-balances/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
     'pallet-nft/runtime-benchmarks',
     'pallet-inflation/runtime-benchmarks',
+    'pallet-xcm/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
+    'xcm-builder/runtime-benchmarks',
 ]
 std = [
     'codec/std',
+    'max-encoded-len/std',
     'cumulus-pallet-aura-ext/std',
     'cumulus-pallet-parachain-system/std',
     'cumulus-pallet-xcm/std',
@@ -55,6 +59,7 @@ std = [
     'pallet-treasury/std',
     'pallet-vesting/std',
     'pallet-evm/std',
+    'pallet-evm-migration/std',
     'pallet-evm-contract-helpers/std',
     'pallet-evm-transaction-payment/std',
     'pallet-evm-coder-substrate/std',
@@ -83,6 +88,10 @@ std = [
     'xcm/std',
     'xcm-builder/std',
     'xcm-executor/std',
+]
+limit-testing = [
+    'pallet-nft/limit-testing',
+    'nft-data-structs/limit-testing',
 ]
 
 ################################################################################
@@ -378,6 +387,8 @@ default-features = false
 # local dependencies
 
 [dependencies]
+max-encoded-len = { default-features = false, features = ['derive'], version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
+derivative = "2.2.0"
 pallet-nft = { path = '../pallets/nft', default-features = false, version = '3.0.0' }
 pallet-inflation = { path = '../pallets/inflation', default-features = false, version = '3.0.0' }
 nft-data-structs = { path = '../primitives/nft', default-features = false, version = '0.9.0' }
@@ -385,6 +396,7 @@ pallet-scheduler = { path = '../pallets/scheduler', default-features = false, ve
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
 pallet-nft-transaction-payment = { path = '../pallets/nft-transaction-payment', default-features = false, version = '3.0.0' }
 pallet-nft-charge-transaction = { path = '../pallets/nft-charge-transaction', default-features = false, version = '3.0.0' }
+pallet-evm-migration = { path = '../pallets/evm-migration', default-features = false }
 pallet-evm-contract-helpers = { path = '../pallets/evm-contract-helpers', default-features = false }
 pallet-evm-transaction-payment = { path = '../pallets/evm-transaction-payment', default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = "../pallets/evm-coder-substrate" }
