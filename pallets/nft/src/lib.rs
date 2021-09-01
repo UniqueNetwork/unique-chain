@@ -1501,10 +1501,21 @@ impl<T: Config> Module<T> {
 		Ok(())
 	}
 
-	pub fn get_variable_metadata(collection: &CollectionHandle<T>, item_id: TokenId) -> Result<Vec<u8>, DispatchError> {
+	pub fn get_variable_metadata(
+		collection: &CollectionHandle<T>,
+		item_id: TokenId,
+	) -> Result<Vec<u8>, DispatchError> {
 		Ok(match collection.mode {
-			CollectionMode::NFT => <NftItemList<T>>::get(collection.id, item_id).ok_or(Error::<T>::TokenNotFound)?.variable_data,
-			CollectionMode::ReFungible => <ReFungibleItemList<T>>::get(collection.id, item_id).ok_or(Error::<T>::TokenNotFound)?.variable_data,
+			CollectionMode::NFT => {
+				<NftItemList<T>>::get(collection.id, item_id)
+					.ok_or(Error::<T>::TokenNotFound)?
+					.variable_data
+			}
+			CollectionMode::ReFungible => {
+				<ReFungibleItemList<T>>::get(collection.id, item_id)
+					.ok_or(Error::<T>::TokenNotFound)?
+					.variable_data
+			}
 			_ => fail!(Error::<T>::UnexpectedCollectionType),
 		})
 	}
