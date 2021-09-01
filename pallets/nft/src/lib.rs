@@ -251,6 +251,11 @@ trait WeightInfoHelpers: WeightInfo {
 			.max(Self::create_item_fungible())
 			.max(Self::create_item_refungible(data))
 	}
+	fn create_multiple_items(amount: u32) -> Weight {
+		Self::create_multiple_items_nft(amount)
+			.max(Self::create_multiple_items_fungible(amount))
+			.max(Self::create_multiple_items_refungible(amount))
+	}
 	fn burn_item() -> Weight {
 		// TODO: refungible, fungible
 		Self::burn_item_nft()
@@ -896,9 +901,7 @@ decl_module! {
 		/// * itemsData: Array items properties. Each property is an array of bytes itself, see [create_item].
 		///
 		/// * owner: Address, initial owner of the NFT.
-		#[weight = <SelfWeightOf<T>>::create_item(items_data.iter()
-							   .map(|data| { data.data_size() as u32 })
-							   .sum())]
+		#[weight = <SelfWeightOf<T>>::create_multiple_items(items_data.len() as u32)]
 		#[transactional]
 		pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::CrossAccountId, items_data: Vec<CreateItemData>) -> DispatchResult {
 
@@ -924,7 +927,7 @@ decl_module! {
 		/// * collection_id: ID of the collection.
 		///
 		/// * value: New flag value.
-		#[weight = <SelfWeightOf<T>>::burn_item()]
+		#[weight = <SelfWeightOf<T>>::set_transfers_enabled_flag()]
 		#[transactional]
 		pub fn set_transfers_enabled_flag(origin, collection_id: CollectionId, value: bool) -> DispatchResult {
 
@@ -1499,6 +1502,25 @@ impl<T: Config> Module<T> {
 		};
 
 		Ok(())
+	}
+
+	pub fn get_variable_metadata(
+		collection: &CollectionHandle<T>,
+		item_id: TokenId,
+	) -> Result<Vec<u8>, DispatchError> {
+		Ok(match collection.mode {
+			CollectionMode::NFT => {
+				<NftItemList<T>>::get(collection.id, item_id)
+					.ok_or(Error::<T>::TokenNotFound)?
+					.variable_data
+			}
+			CollectionMode::ReFungible => {
+				<ReFungibleItemList<T>>::get(collection.id, item_id)
+					.ok_or(Error::<T>::TokenNotFound)?
+					.variable_data
+			}
+			_ => fail!(Error::<T>::UnexpectedCollectionType),
+		})
 	}
 
 	pub fn create_multiple_items_internal(

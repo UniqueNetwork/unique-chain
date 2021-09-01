@@ -1,16 +1,16 @@
 #![allow(dead_code)]
 
 use quote::quote;
-use darling::FromMeta;
+use darling::{FromMeta, ToTokens};
 use inflector::cases;
 use std::fmt::Write;
 use syn::{
-	FnArg, Generics, Ident, ImplItem, ImplItemMethod, ItemImpl, Meta, NestedMeta, PatType, Path,
-	ReturnType, Type, spanned::Spanned,
+	Expr, FnArg, GenericArgument, Generics, Ident, ImplItem, ImplItemMethod, ItemImpl, Lit, Meta,
+	NestedMeta, PatType, Path, PathArguments, ReturnType, Type, spanned::Spanned,
 };
 
 use crate::{
-	fn_selector_str, parse_ident_from_pat, parse_ident_from_path, parse_ident_from_type,
+	fn_selector_str, parse_ident_from_pat, parse_ident_from_path, parse_path, parse_path_segment,
 	parse_result_ok, pascal_ident_to_call, pascal_ident_to_snake_call, snake_ident_to_pascal,
 	snake_ident_to_screaming,
 };
@@ -77,14 +77,14 @@ impl Is {
 	fn expand_generator(&self) -> proc_macro2::TokenStream {
 		let pascal_call_name = &self.pascal_call_name;
 		quote! {
-			#pascal_call_name::generate_solidity_interface(out_set, is_impl);
+			#pascal_call_name::generate_solidity_interface(tc, is_impl);
 		}
 	}
 
 	fn expand_event_generator(&self) -> proc_macro2::TokenStream {
 		let name = &self.name;
 		quote! {
-			#name::generate_solidity_interface(out_set, is_impl);
+			#name::generate_solidity_interface(tc, is_impl);
 		}
 	}
 }
@@ -121,10 +121,161 @@ struct MethodInfo {
 	rename_selector: Option<String>,
 }
 
+enum AbiType {
+	// type
+	Plain(Ident),
+	// (type1,type2)
+	Tuple(Vec<AbiType>),
+	// type[]
+	Vec(Box<AbiType>),
+	// type[20]
+	Array(Box<AbiType>, usize),
+}
+impl AbiType {
+	fn try_from(value: &Type) -> syn::Result<Self> {
+		let value = Self::try_maybe_special_from(value)?;
+		if value.is_special() {
+			return Err(syn::Error::new(value.span(), "unexpected special type"));
+		}
+		Ok(value)
+	}
+	fn try_maybe_special_from(value: &Type) -> syn::Result<Self> {
+		match value {
+			Type::Array(arr) => {
+				let wrapped = AbiType::try_from(&arr.elem)?;
+				match &arr.len {
+					Expr::Lit(l) => match &l.lit {
+						Lit::Int(i) => {
+							let num = i.base10_parse::<usize>()?;
+							Ok(AbiType::Array(Box::new(wrapped), num as usize))
+						}
+						_ => Err(syn::Error::new(arr.len.span(), "should be int literal")),
+					},
+					_ => Err(syn::Error::new(arr.len.span(), "should be literal")),
+				}
+			}
+			Type::Path(_) => {
+				let path = parse_path(value)?;
+				let segment = parse_path_segment(path)?;
+				if segment.ident == "Vec" {
+					let args = match &segment.arguments {
+						PathArguments::AngleBracketed(e) => e,
+						_ => {
+							return Err(syn::Error::new(
+								segment.arguments.span(),
+								"missing Vec generic",
+							))
+						}
+					};
+					let args = &args.args;
+					if args.len() != 1 {
+						return Err(syn::Error::new(
+							args.span(),
+							"expected only one generic for vec",
+						));
+					}
+					let arg = args.first().unwrap();
+
+					let ty = match arg {
+						GenericArgument::Type(ty) => ty,
+						_ => {
+							return Err(syn::Error::new(
+								arg.span(),
+								"expected first generic to be type",
+							))
+						}
+					};
+
+					let wrapped = AbiType::try_from(ty)?;
+					Ok(Self::Vec(Box::new(wrapped)))
+				} else {
+					if !segment.arguments.is_empty() {
+						return Err(syn::Error::new(
+							segment.arguments.span(),
+							"unexpected generic arguments for non-vec type",
+						));
+					}
+					Ok(Self::Plain(segment.ident.clone()))
+				}
+			}
+			Type::Tuple(t) => {
+				let mut out = Vec::with_capacity(t.elems.len());
+				for el in t.elems.iter() {
+					out.push(AbiType::try_from(el)?)
+				}
+				Ok(Self::Tuple(out))
+			}
+			_ => Err(syn::Error::new(
+				value.span(),
+				"unexpected type, only arrays, plain types and tuples are supported",
+			)),
+		}
+	}
+	fn is_value(&self) -> bool {
+		match self {
+			Self::Plain(v) if v == "value" => true,
+			_ => false,
+		}
+	}
+	fn is_caller(&self) -> bool {
+		match self {
+			Self::Plain(v) if v == "caller" => true,
+			_ => false,
+		}
+	}
+	fn is_special(&self) -> bool {
+		self.is_caller() || self.is_value()
+	}
+	fn selector_ty_buf(&self, buf: &mut String) -> std::fmt::Result {
+		match self {
+			AbiType::Plain(t) => {
+				write!(buf, "{}", t)
+			}
+			AbiType::Tuple(t) => {
+				write!(buf, "(")?;
+				for (i, t) in t.iter().enumerate() {
+					if i != 0 {
+						write!(buf, ",")?;
+					}
+					t.selector_ty_buf(buf)?;
+				}
+				write!(buf, ")")
+			}
+			AbiType::Vec(v) => {
+				v.selector_ty_buf(buf)?;
+				write!(buf, "[]")
+			}
+			AbiType::Array(v, len) => {
+				v.selector_ty_buf(buf)?;
+				write!(buf, "[{}]", len)
+			}
+		}
+	}
+	fn selector_ty(&self) -> String {
+		let mut out = String::new();
+		self.selector_ty_buf(&mut out).expect("no fmt error");
+		out
+	}
+}
+impl ToTokens for AbiType {
+	fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+		match self {
+			AbiType::Plain(t) => tokens.extend(quote! {#t}),
+			AbiType::Tuple(t) => {
+				tokens.extend(quote! {(
+					#(#t),*
+				)});
+			}
+			AbiType::Vec(v) => tokens.extend(quote! {Vec<#v>}),
+			AbiType::Array(v, l) => tokens.extend(quote! {[#v; #l]}),
+		}
+	}
+}
+
 struct MethodArg {
 	name: Ident,
 	camel_name: String,
-	ty: Ident,
+	ty: AbiType,
 }
 impl MethodArg {
 	fn try_from(value: &PatType) -> syn::Result<Self> {
@@ -132,21 +283,21 @@ impl MethodArg {
 		Ok(Self {
 			camel_name: cases::camelcase::to_camel_case(&name.to_string()),
 			name,
-			ty: parse_ident_from_type(&value.ty, false)?.clone(),
+			ty: AbiType::try_maybe_special_from(&value.ty)?,
 		})
 	}
 	fn is_value(&self) -> bool {
-		self.ty == "value"
+		self.ty.is_value()
 	}
 	fn is_caller(&self) -> bool {
-		self.ty == "caller"
+		self.ty.is_caller()
 	}
 	fn is_special(&self) -> bool {
-		self.is_value() || self.is_caller()
+		self.ty.is_special()
 	}
-	fn selector_ty(&self) -> &Ident {
+	fn selector_ty(&self) -> String {
 		assert!(!self.is_special());
-		&self.ty
+		self.ty.selector_ty()
 	}
 
 	fn expand_call_def(&self) -> proc_macro2::TokenStream {
@@ -419,9 +570,11 @@ impl Method {
 			.iter()
 			.filter(|a| !a.is_special())
 			.map(MethodArg::expand_solidity_argument);
+		let selector = format!("{} {:0>8x}", self.selector_str, self.selector);
 
 		quote! {
 			SolidityFunction {
+				selector: #selector,
 				name: #camel_name,
 				mutability: #mutability,
 				args: (
@@ -544,7 +697,7 @@ impl SolidityInterface {
 						)*
 					)
 				}
-				pub fn generate_solidity_interface(out_set: &mut sp_std::collections::btree_set::BTreeSet<string>, is_impl: bool) {
+				pub fn generate_solidity_interface(tc: &evm_coder::solidity::TypeCollector, is_impl: bool) {
 					use evm_coder::solidity::*;
 					use core::fmt::Write;
 					let interface = SolidityInterface {
@@ -559,9 +712,9 @@ impl SolidityInterface {
 						)*),
 					};
 					if is_impl {
-						out_set.insert("// Common stubs holder\ncontract Dummy {\n\tuint8 dummy;\n\tstring stub_error = \"this contract is implemented in native\";\n}\n".into());
+						tc.collect("// Common stubs holder\ncontract Dummy {\n\tuint8 dummy;\n\tstring stub_error = \"this contract is implemented in native\";\n}\n".into());
 					} else {
-						out_set.insert("// Common stubs holder\ninterface Dummy {\n}\n".into());
+						tc.collect("// Common stubs holder\ninterface Dummy {\n}\n".into());
 					}
 					#(
 						#solidity_generators
@@ -576,8 +729,8 @@ impl SolidityInterface {
 					if #solidity_name.starts_with("Inline") {
 						out.push_str("// Inline\n");
 					}
-					let _ = interface.format(is_impl, &mut out);
-					out_set.insert(out);
+					let _ = interface.format(is_impl, &mut out, tc);
+					tc.collect(out);
 				}
 			}
 			impl ::evm_coder::Call for #call_name {
