@@ -1557,7 +1557,7 @@ impl<T: Config> Module<T> {
 		}
 
 		Ok(())
-  }
+	}
 
 	pub fn get_variable_metadata(
 		collection: &CollectionHandle<T>,
