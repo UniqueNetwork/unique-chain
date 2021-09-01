@@ -31,15 +31,18 @@ pub use frame_support::{
 	StorageValue, transactional,
 };
 
-use frame_system::{self as system, ensure_signed, ensure_root};
+use frame_system::{self as system, ensure_signed};
 use sp_core::H160;
 use sp_std::vec;
-use sp_runtime::sp_std::prelude::Vec;
+use sp_runtime::{DispatchError, sp_std::prelude::Vec};
 use core::ops::{Deref, DerefMut};
 use nft_data_structs::{
 	MAX_DECIMAL_POINTS, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, MAX_REFUNGIBLE_PIECES,
-	AccessMode, ChainLimits, Collection, CreateItemData, CollectionLimits, CollectionId,
-	CollectionMode, TokenId, SchemaVersion, SponsorshipState, Ownership, NftItemType,
+	CUSTOM_DATA_LIMIT, COLLECTION_NUMBER_LIMIT, ACCOUNT_TOKEN_OWNERSHIP_LIMIT,
+	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, COLLECTION_ADMINS_LIMIT,
+	OFFCHAIN_SCHEMA_LIMIT, MAX_TOKEN_PREFIX_LENGTH, MAX_COLLECTION_NAME_LENGTH,
+	MAX_COLLECTION_DESCRIPTION_LENGTH, AccessMode, Collection, CreateItemData, CollectionLimits,
+	CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState, Ownership, NftItemType,
 	FungibleItemType, ReFungibleItemType,
 };
 
@@ -49,7 +52,6 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-mod default_weights;
 mod eth;
 mod sponsorship;
 pub use sponsorship::NftSponsorshipHandler;
@@ -61,39 +63,8 @@ use eth::erc::{ERC20Events, ERC721Events};
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-
-pub trait WeightInfo {
-	fn create_collection() -> Weight;
-	fn destroy_collection() -> Weight;
-	fn add_to_white_list() -> Weight;
-	fn remove_from_white_list() -> Weight;
-	fn set_public_access_mode() -> Weight;
-	fn set_mint_permission() -> Weight;
-	fn change_collection_owner() -> Weight;
-	fn add_collection_admin() -> Weight;
-	fn remove_collection_admin() -> Weight;
-	fn set_collection_sponsor() -> Weight;
-	fn confirm_sponsorship() -> Weight;
-	fn remove_collection_sponsor() -> Weight;
-	fn create_item(s: usize) -> Weight;
-	fn burn_item() -> Weight;
-	fn transfer() -> Weight;
-	fn approve() -> Weight;
-	fn transfer_from() -> Weight;
-	fn set_offchain_schema() -> Weight;
-	fn set_const_on_chain_schema() -> Weight;
-	fn set_variable_on_chain_schema() -> Weight;
-	fn set_variable_meta_data() -> Weight;
-	fn enable_contract_sponsoring() -> Weight;
-	fn set_schema_version() -> Weight;
-	fn set_chain_limits() -> Weight;
-	fn set_contract_sponsoring_rate_limit() -> Weight;
-	fn set_variable_meta_data_sponsoring_rate_limit() -> Weight;
-	fn toggle_contract_white_list() -> Weight;
-	fn add_to_contract_white_list() -> Weight;
-	fn remove_from_contract_white_list() -> Weight;
-	fn set_collection_limits() -> Weight;
-}
+pub mod weights;
+use weights::WeightInfo;
 
 decl_error! {
 	/// Error for non-fungible-token module.
@@ -176,6 +147,8 @@ decl_error! {
 		OutOfGas,
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
+		/// Can't transfer tokens to ethereum zero address
+		AddressIsZero,
 	}
 }
 
@@ -202,8 +175,15 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn log(&self, log: impl evm_coder::ToLog) -> DispatchResult {
 		self.recorder.log_sub(log)
 	}
+	#[allow(dead_code)]
 	fn consume_gas(&self, gas: u64) -> DispatchResult {
 		self.recorder.consume_gas_sub(gas)
+	}
+	fn consume_sload(&self) -> DispatchResult {
+		self.recorder.consume_sload_sub()
+	}
+	fn consume_sstore(&self) -> DispatchResult {
+		self.recorder.consume_sstore_sub()
 	}
 	pub fn submit_logs(self) -> DispatchResult {
 		self.recorder.submit_logs()
@@ -245,6 +225,39 @@ pub trait Config: system::Config + pallet_evm_coder_substrate::Config + Sized {
 	type TreasuryAccountId: Get<Self::AccountId>;
 }
 
+type SelfWeightOf<T> = <T as Config>::WeightInfo;
+
+trait WeightInfoHelpers: WeightInfo {
+	fn transfer() -> Weight {
+		Self::transfer_nft()
+			.max(Self::transfer_fungible())
+			.max(Self::transfer_refungible())
+	}
+	fn transfer_from() -> Weight {
+		Self::transfer_from_nft()
+			.max(Self::transfer_from_fungible())
+			.max(Self::transfer_from_refungible())
+	}
+	fn approve() -> Weight {
+		// TODO: refungible, fungible
+		Self::approve_nft()
+	}
+	fn set_variable_meta_data(data: u32) -> Weight {
+		// TODO: refungible
+		Self::set_variable_meta_data_nft(data)
+	}
+	fn create_item(data: u32) -> Weight {
+		Self::create_item_nft(data)
+			.max(Self::create_item_fungible())
+			.max(Self::create_item_refungible(data))
+	}
+	fn burn_item() -> Weight {
+		// TODO: refungible, fungible
+		Self::burn_item_nft()
+	}
+}
+impl<T: WeightInfo> WeightInfoHelpers for T {}
+
 // # Used definitions
 //
 // ## User control levels
@@ -278,10 +291,6 @@ decl_storage! {
 		/// Id of last collection token
 		/// Collection id (controlled?1)
 		ItemListIndex: map hasher(blake2_128_concat) CollectionId => TokenId;
-		//#endregion
-
-		//#region Chain limits struct
-		pub ChainLimit get(fn chain_limit) config(): ChainLimits;
 		//#endregion
 
 		//#region Bound counters
@@ -435,6 +444,7 @@ decl_module! {
 		origin: T::Origin
 	{
 		fn deposit_event() = default;
+		const CollectionAdminsLimit: u64 = COLLECTION_ADMINS_LIMIT;
 		type Error = Error<T>;
 
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
@@ -457,7 +467,7 @@ decl_module! {
 		///
 		/// * mode: [CollectionMode] collection type and type dependent data.
 		// returns collection ID
-		#[weight = <T as Config>::WeightInfo::create_collection()]
+		#[weight = <SelfWeightOf<T>>::create_collection()]
 		#[transactional]
 		pub fn create_collection(origin,
 								 collection_name: Vec<u16>,
@@ -486,19 +496,17 @@ decl_module! {
 				_ => 0
 			};
 
-			let chain_limit = ChainLimit::get();
-
 			let created_count = CreatedCollectionCount::get();
 			let destroyed_count = DestroyedCollectionCount::get();
 
 			// bound Total number of collections
-			ensure!(created_count - destroyed_count < chain_limit.collection_numbers_limit, Error::<T>::TotalCollectionsLimitExceeded);
+			ensure!(created_count - destroyed_count < COLLECTION_NUMBER_LIMIT, Error::<T>::TotalCollectionsLimitExceeded);
 
 			// check params
 			ensure!(decimal_points <= MAX_DECIMAL_POINTS, Error::<T>::CollectionDecimalPointLimitExceeded);
-			ensure!(collection_name.len() <= 64, Error::<T>::CollectionNameLimitExceeded);
-			ensure!(collection_description.len() <= 256, Error::<T>::CollectionDescriptionLimitExceeded);
-			ensure!(token_prefix.len() <= 16, Error::<T>::CollectionTokenPrefixLimitExceeded);
+			ensure!(collection_name.len() <= MAX_COLLECTION_NAME_LENGTH, Error::<T>::CollectionNameLimitExceeded);
+			ensure!(collection_description.len() <= MAX_COLLECTION_DESCRIPTION_LENGTH, Error::<T>::CollectionDescriptionLimitExceeded);
+			ensure!(token_prefix.len() <= MAX_TOKEN_PREFIX_LENGTH, Error::<T>::CollectionTokenPrefixLimitExceeded);
 
 			// Generate next collection ID
 			let next_id = created_count
@@ -508,7 +516,7 @@ decl_module! {
 			CreatedCollectionCount::put(next_id);
 
 			let limits = CollectionLimits {
-				sponsored_data_size: chain_limit.custom_data_limit,
+				sponsored_data_size: CUSTOM_DATA_LIMIT,
 				..Default::default()
 			};
 
@@ -549,7 +557,7 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id: collection to destroy.
-		#[weight = <T as Config>::WeightInfo::destroy_collection()]
+		#[weight = <SelfWeightOf<T>>::destroy_collection()]
 		#[transactional]
 		pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
 
@@ -597,7 +605,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * address.
-		#[weight = <T as Config>::WeightInfo::add_to_white_list()]
+		#[weight = <SelfWeightOf<T>>::add_to_white_list()]
 		#[transactional]
 		pub fn add_to_white_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
 
@@ -626,7 +634,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * address.
-		#[weight = <T as Config>::WeightInfo::remove_from_white_list()]
+		#[weight = <SelfWeightOf<T>>::remove_from_white_list()]
 		#[transactional]
 		pub fn remove_from_white_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
 
@@ -654,7 +662,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * mode: [AccessMode]
-		#[weight = <T as Config>::WeightInfo::set_public_access_mode()]
+		#[weight = <SelfWeightOf<T>>::set_public_access_mode()]
 		#[transactional]
 		pub fn set_public_access_mode(origin, collection_id: CollectionId, mode: AccessMode) -> DispatchResult
 		{
@@ -679,7 +687,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * mint_permission: Boolean parameter. If True, allows minting to Anyone with conditions above.
-		#[weight = <T as Config>::WeightInfo::set_mint_permission()]
+		#[weight = <SelfWeightOf<T>>::set_mint_permission()]
 		#[transactional]
 		pub fn set_mint_permission(origin, collection_id: CollectionId, mint_permission: bool) -> DispatchResult
 		{
@@ -702,7 +710,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * new_owner.
-		#[weight = <T as Config>::WeightInfo::change_collection_owner()]
+		#[weight = <SelfWeightOf<T>>::change_collection_owner()]
 		#[transactional]
 		pub fn change_collection_owner(origin, collection_id: CollectionId, new_owner: T::AccountId) -> DispatchResult {
 
@@ -726,7 +734,7 @@ decl_module! {
 		/// * collection_id: ID of the Collection to add admin for.
 		///
 		/// * new_admin_id: Address of new admin to add.
-		#[weight = <T as Config>::WeightInfo::add_collection_admin()]
+		#[weight = <SelfWeightOf<T>>::add_collection_admin()]
 		#[transactional]
 		pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin_id: T::CrossAccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -737,8 +745,7 @@ decl_module! {
 			match admin_arr.binary_search(&new_admin_id) {
 				Ok(_) => {},
 				Err(idx) => {
-					let limits = ChainLimit::get();
-					ensure!(admin_arr.len() < limits.collections_admins_limit as usize, Error::<T>::CollectionAdminsLimitExceeded);
+					ensure!(admin_arr.len() < COLLECTION_ADMINS_LIMIT as usize, Error::<T>::CollectionAdminsLimitExceeded);
 					admin_arr.insert(idx, new_admin_id);
 					<AdminList<T>>::insert(collection_id, admin_arr);
 				}
@@ -758,7 +765,7 @@ decl_module! {
 		/// * collection_id: ID of the Collection to remove admin for.
 		///
 		/// * account_id: Address of admin to remove.
-		#[weight = <T as Config>::WeightInfo::remove_collection_admin()]
+		#[weight = <SelfWeightOf<T>>::remove_collection_admin()]
 		#[transactional]
 		pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::CrossAccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -782,7 +789,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * new_sponsor.
-		#[weight = <T as Config>::WeightInfo::set_collection_sponsor()]
+		#[weight = <SelfWeightOf<T>>::set_collection_sponsor()]
 		#[transactional]
 		pub fn set_collection_sponsor(origin, collection_id: CollectionId, new_sponsor: T::AccountId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -800,7 +807,7 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		#[weight = <T as Config>::WeightInfo::confirm_sponsorship()]
+		#[weight = <SelfWeightOf<T>>::confirm_sponsorship()]
 		#[transactional]
 		pub fn confirm_sponsorship(origin, collection_id: CollectionId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -824,7 +831,7 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		#[weight = <T as Config>::WeightInfo::remove_collection_sponsor()]
+		#[weight = <SelfWeightOf<T>>::remove_collection_sponsor()]
 		#[transactional]
 		pub fn remove_collection_sponsor(origin, collection_id: CollectionId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -860,7 +867,7 @@ decl_module! {
 		// .saturating_add(RocksDbWeight::get().reads(10 as Weight))
 		// .saturating_add(RocksDbWeight::get().writes(8 as Weight))]
 
-		#[weight = <T as Config>::WeightInfo::create_item(data.data_size())]
+		#[weight = <SelfWeightOf<T>>::create_item(data.data_size() as u32)]
 		#[transactional]
 		pub fn create_item(origin, collection_id: CollectionId, owner: T::CrossAccountId, data: CreateItemData) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -889,8 +896,8 @@ decl_module! {
 		/// * itemsData: Array items properties. Each property is an array of bytes itself, see [create_item].
 		///
 		/// * owner: Address, initial owner of the NFT.
-		#[weight = <T as Config>::WeightInfo::create_item(items_data.iter()
-							   .map(|data| { data.data_size() })
+		#[weight = <SelfWeightOf<T>>::create_item(items_data.iter()
+							   .map(|data| { data.data_size() as u32 })
 							   .sum())]
 		#[transactional]
 		pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::CrossAccountId, items_data: Vec<CreateItemData>) -> DispatchResult {
@@ -917,7 +924,7 @@ decl_module! {
 		/// * collection_id: ID of the collection.
 		///
 		/// * value: New flag value.
-		#[weight = <T as Config>::WeightInfo::burn_item()]
+		#[weight = <SelfWeightOf<T>>::burn_item()]
 		#[transactional]
 		pub fn set_transfers_enabled_flag(origin, collection_id: CollectionId, value: bool) -> DispatchResult {
 
@@ -943,7 +950,7 @@ decl_module! {
 		/// * collection_id: ID of the collection.
 		///
 		/// * item_id: ID of NFT to burn.
-		#[weight = <T as Config>::WeightInfo::burn_item()]
+		#[weight = <SelfWeightOf<T>>::burn_item()]
 		#[transactional]
 		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
 
@@ -978,7 +985,7 @@ decl_module! {
 		///     * Non-Fungible Mode: Ignored
 		///     * Fungible Mode: Must specify transferred amount
 		///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
-		#[weight = <T as Config>::WeightInfo::transfer()]
+		#[weight = <SelfWeightOf<T>>::transfer()]
 		#[transactional]
 		pub fn transfer(origin, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -1004,7 +1011,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * item_id: ID of the item.
-		#[weight = <T as Config>::WeightInfo::approve()]
+		#[weight = <SelfWeightOf<T>>::approve()]
 		#[transactional]
 		pub fn approve(origin, spender: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -1034,7 +1041,7 @@ decl_module! {
 		/// * item_id: ID of the item.
 		///
 		/// * value: Amount to transfer.
-		#[weight = <T as Config>::WeightInfo::transfer_from()]
+		#[weight = <SelfWeightOf<T>>::transfer_from()]
 		#[transactional]
 		pub fn transfer_from(origin, from: T::CrossAccountId, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -1069,7 +1076,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * schema: String representing the offchain data schema.
-		#[weight = <T as Config>::WeightInfo::set_variable_meta_data()]
+		#[weight = <SelfWeightOf<T>>::set_variable_meta_data(data.len() as u32)]
 		#[transactional]
 		pub fn set_variable_meta_data (
 			origin,
@@ -1100,7 +1107,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * schema: SchemaVersion: enum
-		#[weight = <T as Config>::WeightInfo::set_schema_version()]
+		#[weight = <SelfWeightOf<T>>::set_schema_version()]
 		#[transactional]
 		pub fn set_schema_version(
 			origin,
@@ -1126,7 +1133,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * schema: String representing the offchain data schema.
-		#[weight = <T as Config>::WeightInfo::set_offchain_schema()]
+		#[weight = <SelfWeightOf<T>>::set_offchain_schema(schema.len() as u32)]
 		#[transactional]
 		pub fn set_offchain_schema(
 			origin,
@@ -1138,7 +1145,7 @@ decl_module! {
 			Self::check_owner_or_admin_permissions(&target_collection, &sender)?;
 
 			// check schema limit
-			ensure!(schema.len() as u32 <= ChainLimit::get().offchain_schema_limit, "");
+			ensure!(schema.len() as u32 <= OFFCHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.offchain_schema = schema;
 			target_collection.save()
@@ -1156,7 +1163,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * schema: String representing the const on-chain data schema.
-		#[weight = <T as Config>::WeightInfo::set_const_on_chain_schema()]
+		#[weight = <SelfWeightOf<T>>::set_const_on_chain_schema(schema.len() as u32)]
 		#[transactional]
 		pub fn set_const_on_chain_schema (
 			origin,
@@ -1168,7 +1175,7 @@ decl_module! {
 			Self::check_owner_or_admin_permissions(&target_collection, &sender)?;
 
 			// check schema limit
-			ensure!(schema.len() as u32 <= ChainLimit::get().const_on_chain_schema_limit, "");
+			ensure!(schema.len() as u32 <= CONST_ON_CHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.const_on_chain_schema = schema;
 			target_collection.save()
@@ -1186,7 +1193,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * schema: String representing the variable on-chain data schema.
-		#[weight = <T as Config>::WeightInfo::set_const_on_chain_schema()]
+		#[weight = <SelfWeightOf<T>>::set_const_on_chain_schema(schema.len() as u32)]
 		#[transactional]
 		pub fn set_variable_on_chain_schema (
 			origin,
@@ -1198,28 +1205,13 @@ decl_module! {
 			Self::check_owner_or_admin_permissions(&target_collection, &sender)?;
 
 			// check schema limit
-			ensure!(schema.len() as u32 <= ChainLimit::get().variable_on_chain_schema_limit, "");
+			ensure!(schema.len() as u32 <= VARIABLE_ON_CHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.variable_on_chain_schema = schema;
 			target_collection.save()
 		}
 
-		// Sudo permissions function
-		#[weight = <T as Config>::WeightInfo::set_chain_limits()]
-		#[transactional]
-		pub fn set_chain_limits(
-			origin,
-			limits: ChainLimits
-		) -> DispatchResult {
-
-			#[cfg(not(feature = "runtime-benchmarks"))]
-			ensure_root(origin)?;
-
-			<ChainLimit>::put(limits);
-			Ok(())
-		}
-
-		#[weight = <T as Config>::WeightInfo::set_collection_limits()]
+		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
 		#[transactional]
 		pub fn set_collection_limits(
 			origin,
@@ -1230,12 +1222,11 @@ decl_module! {
 			let mut target_collection = Self::get_collection(collection_id)?;
 			Self::check_owner_permissions(&target_collection, sender.as_sub())?;
 			let old_limits = &target_collection.limits;
-			let chain_limits = ChainLimit::get();
 
 			// collection bounds
 			ensure!(new_limits.sponsor_transfer_timeout <= MAX_SPONSOR_TIMEOUT &&
 				new_limits.account_token_ownership_limit <= MAX_TOKEN_OWNERSHIP &&
-				new_limits.sponsored_data_size <= chain_limits.custom_data_limit,
+				new_limits.sponsored_data_size <= CUSTOM_DATA_LIMIT,
 				Error::<T>::CollectionLimitBoundsExceeded);
 
 			// token_limit   check  prev
@@ -1262,6 +1253,11 @@ impl<T: Config> Module<T> {
 		owner: &T::CrossAccountId,
 		data: CreateItemData,
 	) -> DispatchResult {
+		ensure!(
+			owner != &T::CrossAccountId::from_eth(H160([0; 20])),
+			Error::<T>::AddressIsZero
+		);
+
 		Self::can_create_items_in_collection(collection, sender, owner, 1)?;
 		Self::validate_create_item_args(collection, &data)?;
 		Self::create_item_no_validation(collection, owner, data)?;
@@ -1276,14 +1272,18 @@ impl<T: Config> Module<T> {
 		item_id: TokenId,
 		value: u128,
 	) -> DispatchResult {
-		target_collection.consume_gas(2000000)?;
+		ensure!(
+			recipient != &T::CrossAccountId::from_eth(H160([0; 20])),
+			Error::<T>::AddressIsZero
+		);
+
 		// Limits check
 		Self::is_correct_transfer(target_collection, recipient)?;
 
 		// Transfer permissions check
 		ensure!(
-			Self::is_item_owner(sender, target_collection, item_id)
-				|| Self::is_owner_or_admin_permissions(target_collection, sender),
+			Self::is_item_owner(sender, target_collection, item_id)?
+				|| Self::is_owner_or_admin_permissions(target_collection, sender)?,
 			Error::<T>::NoPermission
 		);
 
@@ -1330,16 +1330,15 @@ impl<T: Config> Module<T> {
 		item_id: TokenId,
 		amount: u128,
 	) -> DispatchResult {
-		collection.consume_gas(2000000)?;
 		Self::token_exists(collection, item_id)?;
 
 		// Transfer permissions check
 		let bypasses_limits = collection.limits.owner_can_transfer
-			&& Self::is_owner_or_admin_permissions(collection, sender);
+			&& Self::is_owner_or_admin_permissions(collection, sender)?;
 
 		let allowance_limit = if bypasses_limits {
 			None
-		} else if let Some(amount) = Self::owned_amount(sender, collection, item_id) {
+		} else if let Some(amount) = Self::owned_amount(sender, collection, item_id)? {
 			Some(amount)
 		} else {
 			fail!(Error::<T>::NoPermission);
@@ -1350,6 +1349,7 @@ impl<T: Config> Module<T> {
 			Self::check_white_list(collection, spender)?;
 		}
 
+		collection.consume_sload()?;
 		let allowance: u128 = amount
 			.checked_add(<Allowances<T>>::get(
 				collection.id,
@@ -1359,6 +1359,7 @@ impl<T: Config> Module<T> {
 		if let Some(limit) = allowance_limit {
 			ensure!(limit >= allowance, Error::<T>::TokenValueTooLow);
 		}
+		collection.consume_sstore()?;
 		<Allowances<T>>::insert(
 			collection.id,
 			(item_id, sender.as_sub(), spender.as_sub()),
@@ -1401,8 +1402,13 @@ impl<T: Config> Module<T> {
 		item_id: TokenId,
 		amount: u128,
 	) -> DispatchResult {
-		collection.consume_gas(2000000)?;
+		if sender == from {
+			// Transfer by `from`, because it is either equal to sender, or derived from him
+			return Self::transfer_internal(from, recipient, collection, item_id, amount);
+		}
+
 		// Check approval
+		collection.consume_sload()?;
 		let approval: u128 =
 			<Allowances<T>>::get(collection.id, (item_id, from.as_sub(), sender.as_sub()));
 
@@ -1413,7 +1419,7 @@ impl<T: Config> Module<T> {
 		ensure!(
 			approval >= amount
 				|| (collection.limits.owner_can_transfer
-					&& Self::is_owner_or_admin_permissions(collection, sender)),
+					&& Self::is_owner_or_admin_permissions(collection, sender)?),
 			Error::<T>::NoPermission
 		);
 
@@ -1424,6 +1430,7 @@ impl<T: Config> Module<T> {
 
 		// Reduce approval by transferred amount or remove if remaining approval drops to 0
 		let allowance = approval.saturating_sub(amount);
+		collection.consume_sstore()?;
 		if allowance > 0 {
 			<Allowances<T>>::insert(
 				collection.id,
@@ -1471,14 +1478,14 @@ impl<T: Config> Module<T> {
 		Self::token_exists(collection, item_id)?;
 
 		ensure!(
-			ChainLimit::get().custom_data_limit >= data.len() as u32,
+			CUSTOM_DATA_LIMIT >= data.len() as u32,
 			Error::<T>::TokenVariableDataLimitExceeded
 		);
 
 		// Modify permissions check
 		ensure!(
-			Self::is_item_owner(sender, collection, item_id)
-				|| Self::is_owner_or_admin_permissions(collection, sender),
+			Self::is_item_owner(sender, collection, item_id)?
+				|| Self::is_owner_or_admin_permissions(collection, sender)?,
 			Error::<T>::NoPermission
 		);
 
@@ -1519,9 +1526,9 @@ impl<T: Config> Module<T> {
 		value: u128,
 	) -> DispatchResult {
 		ensure!(
-			Self::is_item_owner(sender, collection, item_id)
+			Self::is_item_owner(sender, collection, item_id)?
 				|| (collection.limits.owner_can_transfer
-					&& Self::is_owner_or_admin_permissions(collection, sender)),
+					&& Self::is_owner_or_admin_permissions(collection, sender)?),
 			Error::<T>::NoPermission
 		);
 
@@ -1563,6 +1570,7 @@ impl<T: Config> Module<T> {
 		let collection_id = collection.id;
 
 		// check token limit and account token limit
+		collection.consume_sload()?;
 		let account_items: u32 =
 			<AddressTokens<T>>::get(collection_id, recipient.as_sub()).len() as u32;
 		ensure!(
@@ -1601,7 +1609,7 @@ impl<T: Config> Module<T> {
 			Error::<T>::AccountTokenLimitExceeded
 		);
 
-		if !Self::is_owner_or_admin_permissions(collection, sender) {
+		if !Self::is_owner_or_admin_permissions(collection, sender)? {
 			ensure!(collection.mint_mode, Error::<T>::PublicMintingNotAllowed);
 			Self::check_white_list(collection, owner)?;
 			Self::check_white_list(collection, sender)?;
@@ -1616,38 +1624,17 @@ impl<T: Config> Module<T> {
 	) -> DispatchResult {
 		match target_collection.mode {
 			CollectionMode::NFT => {
-				if let CreateItemData::NFT(data) = data {
-					// check sizes
-					ensure!(
-						ChainLimit::get().custom_data_limit >= data.const_data.len() as u32,
-						Error::<T>::TokenConstDataLimitExceeded
-					);
-					ensure!(
-						ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32,
-						Error::<T>::TokenVariableDataLimitExceeded
-					);
-				} else {
+				if !matches!(data, CreateItemData::NFT(_)) {
 					fail!(Error::<T>::NotNftDataUsedToMintNftCollectionToken);
 				}
 			}
 			CollectionMode::Fungible(_) => {
-				if let CreateItemData::Fungible(_) = data {
-				} else {
+				if !matches!(data, CreateItemData::Fungible(_)) {
 					fail!(Error::<T>::NotFungibleDataUsedToMintFungibleCollectionToken);
 				}
 			}
 			CollectionMode::ReFungible => {
 				if let CreateItemData::ReFungible(data) = data {
-					// check sizes
-					ensure!(
-						ChainLimit::get().custom_data_limit >= data.const_data.len() as u32,
-						Error::<T>::TokenConstDataLimitExceeded
-					);
-					ensure!(
-						ChainLimit::get().custom_data_limit >= data.variable_data.len() as u32,
-						Error::<T>::TokenVariableDataLimitExceeded
-					);
-
 					// Check refungibility limits
 					ensure!(
 						data.pieces <= MAX_REFUNGIBLE_PIECES,
@@ -1675,8 +1662,8 @@ impl<T: Config> Module<T> {
 			CreateItemData::NFT(data) => {
 				let item = NftItemType {
 					owner: owner.clone(),
-					const_data: data.const_data,
-					variable_data: data.variable_data,
+					const_data: data.const_data.into_inner(),
+					variable_data: data.variable_data.into_inner(),
 				};
 
 				Self::add_nft_item(collection, item)?;
@@ -1692,8 +1679,8 @@ impl<T: Config> Module<T> {
 
 				let item = ReFungibleItemType {
 					owner: owner_list,
-					const_data: data.const_data,
-					variable_data: data.variable_data,
+					const_data: data.const_data.into_inner(),
+					variable_data: data.variable_data.into_inner(),
 				};
 
 				Self::add_refungible_item(collection, item)?;
@@ -1711,20 +1698,29 @@ impl<T: Config> Module<T> {
 		let collection_id = collection.id;
 
 		// Does new owner already have an account?
+		collection.consume_sload()?;
 		let balance: u128 = <FungibleItemList<T>>::get(collection_id, owner.as_sub()).value;
 
 		// Mint
 		let item = FungibleItemType {
 			value: balance.checked_add(value).ok_or(Error::<T>::NumOverflow)?,
 		};
+		collection.consume_sstore()?;
 		<FungibleItemList<T>>::insert(collection_id, owner.as_sub(), item);
 
 		// Update balance
+		collection.consume_sload()?;
 		let new_balance = <Balance<T>>::get(collection_id, owner.as_sub())
 			.checked_add(value)
 			.ok_or(Error::<T>::NumOverflow)?;
+		collection.consume_sstore()?;
 		<Balance<T>>::insert(collection_id, owner.as_sub(), new_balance);
 
+		collection.log(ERC20Events::Transfer {
+			from: H160::default(),
+			to: *owner.as_eth(),
+			value: value.into(),
+		})?;
 		Self::deposit_event(RawEvent::ItemCreated(collection_id, 0, owner.clone()));
 		Ok(())
 	}
@@ -1746,7 +1742,7 @@ impl<T: Config> Module<T> {
 		let value = item_owner.fraction;
 		let owner = item_owner.owner.clone();
 
-		Self::add_token_index(collection_id, current_index, &owner)?;
+		Self::add_token_index(collection, current_index, &owner)?;
 
 		<ItemListIndex>::insert(collection_id, current_index);
 		<ReFungibleItemList<T>>::insert(collection_id, current_index, itemcopy);
@@ -1772,7 +1768,7 @@ impl<T: Config> Module<T> {
 			.ok_or(Error::<T>::NumOverflow)?;
 
 		let item_owner = item.owner.clone();
-		Self::add_token_index(collection_id, current_index, &item.owner)?;
+		Self::add_token_index(collection, current_index, &item.owner)?;
 
 		<ItemListIndex>::insert(collection_id, current_index);
 		<NftItemList<T>>::insert(collection_id, current_index, item);
@@ -1810,7 +1806,7 @@ impl<T: Config> Module<T> {
 			.iter()
 			.find(|&i| i.owner == *owner)
 			.ok_or(Error::<T>::TokenNotFound)?;
-		Self::remove_token_index(collection_id, item_id, owner)?;
+		Self::remove_token_index(collection, item_id, owner)?;
 
 		// update balance
 		let new_balance = <Balance<T>>::get(collection_id, rft_balance.owner.as_sub())
@@ -1843,7 +1839,7 @@ impl<T: Config> Module<T> {
 
 		let item =
 			<NftItemList<T>>::get(collection_id, item_id).ok_or(Error::<T>::TokenNotFound)?;
-		Self::remove_token_index(collection_id, item_id, &item.owner)?;
+		Self::remove_token_index(collection, item_id, &item.owner)?;
 
 		// update balance
 		let new_balance = <Balance<T>>::get(collection_id, item.owner.as_sub())
@@ -1853,6 +1849,11 @@ impl<T: Config> Module<T> {
 		<NftItemList<T>>::remove(collection_id, item_id);
 		<VariableMetaDataBasket<T>>::remove(collection_id, item_id);
 
+		collection.log(ERC721Events::Transfer {
+			from: *item.owner.as_eth(),
+			to: H160::default(),
+			token_id: item_id.into(),
+		})?;
 		Self::deposit_event(RawEvent::ItemDestroyed(collection.id, item_id));
 		Ok(())
 	}
@@ -1909,9 +1910,10 @@ impl<T: Config> Module<T> {
 	fn is_owner_or_admin_permissions(
 		collection: &CollectionHandle<T>,
 		subject: &T::CrossAccountId,
-	) -> bool {
-		*subject.as_sub() == collection.owner
-			|| <AdminList<T>>::get(collection.id).contains(subject)
+	) -> Result<bool, DispatchError> {
+		collection.consume_sload()?;
+		Ok(*subject.as_sub() == collection.owner
+			|| <AdminList<T>>::get(collection.id).contains(subject))
 	}
 
 	fn check_owner_or_admin_permissions(
@@ -1919,7 +1921,7 @@ impl<T: Config> Module<T> {
 		subject: &T::CrossAccountId,
 	) -> DispatchResult {
 		ensure!(
-			Self::is_owner_or_admin_permissions(collection, subject),
+			Self::is_owner_or_admin_permissions(collection, subject)?,
 			Error::<T>::NoPermission
 		);
 
@@ -1927,6 +1929,15 @@ impl<T: Config> Module<T> {
 	}
 
 	fn owned_amount(
+		subject: &T::CrossAccountId,
+		collection: &CollectionHandle<T>,
+		item_id: TokenId,
+	) -> Result<Option<u128>, DispatchError> {
+		collection.consume_sload()?;
+		Ok(Self::owned_amount_unchecked(subject, collection, item_id))
+	}
+
+	fn owned_amount_unchecked(
 		subject: &T::CrossAccountId,
 		target_collection: &CollectionHandle<T>,
 		item_id: TokenId,
@@ -1953,25 +1964,22 @@ impl<T: Config> Module<T> {
 		subject: &T::CrossAccountId,
 		target_collection: &CollectionHandle<T>,
 		item_id: TokenId,
-	) -> bool {
-		match target_collection.mode {
+	) -> Result<bool, DispatchError> {
+		Ok(match target_collection.mode {
 			CollectionMode::Fungible(_) => true,
-			_ => Self::owned_amount(subject, target_collection, item_id).is_some(),
-		}
+			_ => Self::owned_amount(subject, target_collection, item_id)?.is_some(),
+		})
 	}
 
 	fn check_white_list(
 		collection: &CollectionHandle<T>,
 		address: &T::CrossAccountId,
 	) -> DispatchResult {
-		let collection_id = collection.id;
-
-		let mes = Error::<T>::AddresNotInWhiteList;
+		collection.consume_sload()?;
 		ensure!(
-			<WhiteList<T>>::contains_key(collection_id, address.as_sub()),
-			mes
+			<WhiteList<T>>::contains_key(collection.id, address.as_sub()),
+			Error::<T>::AddresNotInWhiteList,
 		);
-
 		Ok(())
 	}
 
@@ -2000,22 +2008,39 @@ impl<T: Config> Module<T> {
 	) -> DispatchResult {
 		let collection_id = collection.id;
 
+		collection.consume_sload()?;
+		collection.consume_sload()?;
+		let mut recipient_balance = <FungibleItemList<T>>::get(collection_id, recipient.as_sub());
 		let mut balance = <FungibleItemList<T>>::get(collection_id, owner.as_sub());
-		ensure!(balance.value >= value, Error::<T>::TokenValueTooLow);
 
-		// Send balance to recipient (updates balanceOf of recipient)
-		Self::add_fungible_item(collection, recipient, value)?;
+		recipient_balance.value = recipient_balance
+			.value
+			.checked_add(value)
+			.ok_or(Error::<T>::NumOverflow)?;
+		balance.value = balance
+			.value
+			.checked_sub(value)
+			.ok_or(Error::<T>::TokenValueTooLow)?;
 
-		// update balanceOf of sender
-		<Balance<T>>::insert(collection_id, owner.as_sub(), balance.value - value);
+		// update balanceOf
+		collection.consume_sstore()?;
+		collection.consume_sstore()?;
+		if balance.value != 0 {
+			<Balance<T>>::insert(collection_id, owner.as_sub(), balance.value);
+		} else {
+			<Balance<T>>::remove(collection_id, owner.as_sub());
+		}
+		<Balance<T>>::insert(collection_id, recipient.as_sub(), recipient_balance.value);
 
 		// Reduce or remove sender
-		if balance.value == value {
-			<FungibleItemList<T>>::remove(collection_id, owner.as_sub());
-		} else {
-			balance.value -= value;
+		collection.consume_sstore()?;
+		collection.consume_sstore()?;
+		if balance.value != 0 {
 			<FungibleItemList<T>>::insert(collection_id, owner.as_sub(), balance);
+		} else {
+			<FungibleItemList<T>>::remove(collection_id, owner.as_sub());
 		}
+		<FungibleItemList<T>>::insert(collection_id, recipient.as_sub(), recipient_balance);
 
 		collection.log(ERC20Events::Transfer {
 			from: *owner.as_eth(),
@@ -2041,6 +2066,7 @@ impl<T: Config> Module<T> {
 		new_owner: T::CrossAccountId,
 	) -> DispatchResult {
 		let collection_id = collection.id;
+		collection.consume_sload()?;
 		let full_item = <ReFungibleItemList<T>>::get(collection_id, item_id)
 			.ok_or(Error::<T>::TokenNotFound)?;
 
@@ -2053,15 +2079,19 @@ impl<T: Config> Module<T> {
 
 		ensure!(amount >= value, Error::<T>::TokenValueTooLow);
 
+		collection.consume_sload()?;
 		// update balance
 		let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.as_sub())
 			.checked_sub(value)
 			.ok_or(Error::<T>::NumOverflow)?;
+		collection.consume_sstore()?;
 		<Balance<T>>::insert(collection_id, item.owner.as_sub(), balance_old_owner);
 
+		collection.consume_sload()?;
 		let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.as_sub())
 			.checked_add(value)
 			.ok_or(Error::<T>::NumOverflow)?;
+		collection.consume_sstore()?;
 		<Balance<T>>::insert(collection_id, new_owner.as_sub(), balance_new_owner);
 
 		let old_owner = item.owner.clone();
@@ -2078,10 +2108,11 @@ impl<T: Config> Module<T> {
 				.find(|i| i.owner == owner)
 				.expect("old owner does present in refungible")
 				.owner = new_owner.clone();
+			collection.consume_sstore()?;
 			<ReFungibleItemList<T>>::insert(collection_id, item_id, new_full_item);
 
 			// update index collection
-			Self::move_token_index(collection_id, item_id, &old_owner, &new_owner)?;
+			Self::move_token_index(collection, item_id, &old_owner, &new_owner)?;
 		} else {
 			new_full_item
 				.owner
@@ -2105,9 +2136,10 @@ impl<T: Config> Module<T> {
 					owner: new_owner.clone(),
 					fraction: value,
 				});
-				Self::add_token_index(collection_id, item_id, &new_owner)?;
+				Self::add_token_index(collection, item_id, &new_owner)?;
 			}
 
+			collection.consume_sstore()?;
 			<ReFungibleItemList<T>>::insert(collection_id, item_id, new_full_item);
 		}
 
@@ -2129,29 +2161,35 @@ impl<T: Config> Module<T> {
 		new_owner: T::CrossAccountId,
 	) -> DispatchResult {
 		let collection_id = collection.id;
+		collection.consume_sload()?;
 		let mut item =
 			<NftItemList<T>>::get(collection_id, item_id).ok_or(Error::<T>::TokenNotFound)?;
 
 		ensure!(sender == item.owner, Error::<T>::MustBeTokenOwner);
 
+		collection.consume_sload()?;
 		// update balance
 		let balance_old_owner = <Balance<T>>::get(collection_id, item.owner.as_sub())
 			.checked_sub(1)
 			.ok_or(Error::<T>::NumOverflow)?;
+		collection.consume_sstore()?;
 		<Balance<T>>::insert(collection_id, item.owner.as_sub(), balance_old_owner);
 
+		collection.consume_sload()?;
 		let balance_new_owner = <Balance<T>>::get(collection_id, new_owner.as_sub())
 			.checked_add(1)
 			.ok_or(Error::<T>::NumOverflow)?;
+		collection.consume_sstore()?;
 		<Balance<T>>::insert(collection_id, new_owner.as_sub(), balance_new_owner);
 
 		// change owner
 		let old_owner = item.owner.clone();
 		item.owner = new_owner.clone();
+		collection.consume_sstore()?;
 		<NftItemList<T>>::insert(collection_id, item_id, item);
 
 		// update index collection
-		Self::move_token_index(collection_id, item_id, &old_owner, &new_owner)?;
+		Self::move_token_index(collection, item_id, &old_owner, &new_owner)?;
 
 		collection.log(ERC721Events::Transfer {
 			from: *sender.as_eth(),
@@ -2231,7 +2269,12 @@ impl<T: Config> Module<T> {
 	fn init_nft_token(collection_id: CollectionId, item: &NftItemType<T::CrossAccountId>) {
 		let current_index = <ItemListIndex>::get(collection_id).checked_add(1).unwrap();
 
-		Self::add_token_index(collection_id, current_index, &item.owner).unwrap();
+		Self::add_token_index(
+			&CollectionHandle::get(collection_id).unwrap(),
+			current_index,
+			&item.owner,
+		)
+		.unwrap();
 
 		<ItemListIndex>::insert(collection_id, current_index);
 
@@ -2250,7 +2293,12 @@ impl<T: Config> Module<T> {
 	) {
 		let current_index = <ItemListIndex>::get(collection_id).checked_add(1).unwrap();
 
-		Self::add_token_index(collection_id, current_index, owner).unwrap();
+		Self::add_token_index(
+			&CollectionHandle::get(collection_id).unwrap(),
+			current_index,
+			owner,
+		)
+		.unwrap();
 
 		<ItemListIndex>::insert(collection_id, current_index);
 
@@ -2271,7 +2319,12 @@ impl<T: Config> Module<T> {
 		let value = item.owner.first().unwrap().fraction;
 		let owner = item.owner.first().unwrap().owner.clone();
 
-		Self::add_token_index(collection_id, current_index, &owner).unwrap();
+		Self::add_token_index(
+			&CollectionHandle::get(collection_id).unwrap(),
+			current_index,
+			&owner,
+		)
+		.unwrap();
 
 		<ItemListIndex>::insert(collection_id, current_index);
 
@@ -2283,51 +2336,61 @@ impl<T: Config> Module<T> {
 	}
 
 	fn add_token_index(
-		collection_id: CollectionId,
+		collection: &CollectionHandle<T>,
 		item_index: TokenId,
 		owner: &T::CrossAccountId,
 	) -> DispatchResult {
 		// add to account limit
+		collection.consume_sload()?;
 		if <AccountItemCount<T>>::contains_key(owner.as_sub()) {
 			// bound Owned tokens by a single address
+			collection.consume_sload()?;
 			let count = <AccountItemCount<T>>::get(owner.as_sub());
 			ensure!(
-				count < ChainLimit::get().account_token_ownership_limit,
+				count < ACCOUNT_TOKEN_OWNERSHIP_LIMIT,
 				Error::<T>::AddressOwnershipLimitExceeded
 			);
 
+			collection.consume_sstore()?;
 			<AccountItemCount<T>>::insert(
 				owner.as_sub(),
 				count.checked_add(1).ok_or(Error::<T>::NumOverflow)?,
 			);
 		} else {
+			collection.consume_sstore()?;
 			<AccountItemCount<T>>::insert(owner.as_sub(), 1);
 		}
 
-		let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner.as_sub());
+		collection.consume_sload()?;
+		let list_exists = <AddressTokens<T>>::contains_key(collection.id, owner.as_sub());
 		if list_exists {
-			let mut list = <AddressTokens<T>>::get(collection_id, owner.as_sub());
+			collection.consume_sload()?;
+			let mut list = <AddressTokens<T>>::get(collection.id, owner.as_sub());
 			let item_contains = list.contains(&item_index.clone());
 
 			if !item_contains {
 				list.push(item_index);
 			}
 
-			<AddressTokens<T>>::insert(collection_id, owner.as_sub(), list);
+			collection.consume_sstore()?;
+			<AddressTokens<T>>::insert(collection.id, owner.as_sub(), list);
 		} else {
 			let itm = vec![item_index];
-			<AddressTokens<T>>::insert(collection_id, owner.as_sub(), itm);
+			collection.consume_sstore()?;
+			<AddressTokens<T>>::insert(collection.id, owner.as_sub(), itm);
 		}
 
 		Ok(())
 	}
 
 	fn remove_token_index(
-		collection_id: CollectionId,
+		collection: &CollectionHandle<T>,
 		item_index: TokenId,
 		owner: &T::CrossAccountId,
 	) -> DispatchResult {
 		// update counter
+		collection.consume_sload()?;
+		collection.consume_sstore()?;
 		<AccountItemCount<T>>::insert(
 			owner.as_sub(),
 			<AccountItemCount<T>>::get(owner.as_sub())
@@ -2335,14 +2398,17 @@ impl<T: Config> Module<T> {
 				.ok_or(Error::<T>::NumOverflow)?,
 		);
 
-		let list_exists = <AddressTokens<T>>::contains_key(collection_id, owner.as_sub());
+		collection.consume_sload()?;
+		let list_exists = <AddressTokens<T>>::contains_key(collection.id, owner.as_sub());
 		if list_exists {
-			let mut list = <AddressTokens<T>>::get(collection_id, owner.as_sub());
+			collection.consume_sload()?;
+			let mut list = <AddressTokens<T>>::get(collection.id, owner.as_sub());
 			let item_contains = list.contains(&item_index.clone());
 
 			if item_contains {
 				list.retain(|&item| item != item_index);
-				<AddressTokens<T>>::insert(collection_id, owner.as_sub(), list);
+				collection.consume_sstore()?;
+				<AddressTokens<T>>::insert(collection.id, owner.as_sub(), list);
 			}
 		}
 
@@ -2350,13 +2416,13 @@ impl<T: Config> Module<T> {
 	}
 
 	fn move_token_index(
-		collection_id: CollectionId,
+		collection: &CollectionHandle<T>,
 		item_index: TokenId,
 		old_owner: &T::CrossAccountId,
 		new_owner: &T::CrossAccountId,
 	) -> DispatchResult {
-		Self::remove_token_index(collection_id, item_index, old_owner)?;
-		Self::add_token_index(collection_id, item_index, new_owner)?;
+		Self::remove_token_index(collection, item_index, old_owner)?;
+		Self::add_token_index(collection, item_index, new_owner)?;
 
 		Ok(())
 	}

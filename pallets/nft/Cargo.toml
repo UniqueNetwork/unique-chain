@@ -41,6 +41,7 @@ std = [
     'evm-coder/std',
     'pallet-evm-coder-substrate/std',
 ]
+limit-testing = ["nft-data-structs/limit-testing"]
 
 ################################################################################
 # Substrate Dependencies

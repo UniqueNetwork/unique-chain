@@ -1,12 +1,15 @@
 use core::char::{decode_utf16, REPLACEMENT_CHARACTER};
-use evm_coder::{ToLog, execution::Result, solidity, solidity_interface, types::*};
+use evm_coder::{ToLog, execution::Result, generate_stubgen, solidity, solidity_interface, types::*};
+use nft_data_structs::{CreateItemData, CreateNftData};
 use core::convert::TryInto;
-use alloc::format;
-use crate::{Allowances, Module, Balance, CollectionHandle, CollectionMode, Config, NftItemList};
-use frame_support::storage::StorageDoubleMap;
+use crate::{
+	Allowances, Module, Balance, CollectionHandle, CollectionMode, Config, NftItemList,
+	ItemListIndex,
+};
+use frame_support::storage::{StorageMap, StorageDoubleMap};
 use pallet_evm::AddressMapping;
 use super::account::CrossAccountId;
-use sp_std::vec::Vec;
+use sp_std::{vec, vec::Vec};
 
 #[solidity_interface(name = "ERC165")]
 impl<T: Config> CollectionHandle<T> {
@@ -42,9 +45,15 @@ impl<T: Config> CollectionHandle<T> {
 
 #[solidity_interface(name = "ERC721Metadata", inline_is(InlineNameSymbol))]
 impl<T: Config> CollectionHandle<T> {
+	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
-		// TODO: We should standartize url prefix, maybe via offchain schema?
-		Ok(format!("unique.network/{}/{}", self.id, token_id))
+		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+		Ok(string::from_utf8_lossy(
+			&<NftItemList<T>>::get(self.id, token_id)
+				.ok_or("token not found")?
+				.const_data,
+		)
+		.into())
 	}
 }
 
@@ -178,6 +187,93 @@ impl<T: Config> CollectionHandle<T> {
 	}
 }
 
+#[solidity_interface(name = "ERC721Burnable")]
+impl<T: Config> CollectionHandle<T> {
+	fn burn(&mut self, caller: caller, token_id: uint256) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let token_id = token_id.try_into().map_err(|_| "amount overflow")?;
+
+		<Module<T>>::burn_item_internal(&caller, &self, token_id, 1).map_err(|_| "burn error")?;
+		Ok(())
+	}
+}
+
+#[derive(ToLog)]
+pub enum ERC721MintableEvents {
+	#[allow(dead_code)]
+	MintingFinished {},
+}
+
+#[solidity_interface(name = "ERC721Mintable", events(ERC721MintableEvents))]
+impl<T: Config> CollectionHandle<T> {
+	fn minting_finished(&self) -> Result<bool> {
+		Ok(false)
+	}
+
+	fn mint(&mut self, caller: caller, to: address, token_id: uint256) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = T::CrossAccountId::from_eth(to);
+		let token_id: u32 = token_id.try_into().map_err(|_| "amount overflow")?;
+		if <ItemListIndex>::get(self.id)
+			.checked_add(1)
+			.ok_or("item id overflow")?
+			!= token_id
+		{
+			return Err("item id should be next".into());
+		}
+
+		<Module<T>>::create_item_internal(
+			&caller,
+			&self,
+			&to,
+			CreateItemData::NFT(CreateNftData {
+				const_data: vec![].try_into().unwrap(),
+				variable_data: vec![].try_into().unwrap(),
+			}),
+		)
+		.map_err(|_| "mint error")?;
+		Ok(true)
+	}
+
+	#[solidity(rename_selector = "mintWithTokenURI")]
+	fn mint_with_token_uri(
+		&mut self,
+		caller: caller,
+		to: address,
+		token_id: uint256,
+		token_uri: string,
+	) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = T::CrossAccountId::from_eth(to);
+		let token_id: u32 = token_id.try_into().map_err(|_| "amount overflow")?;
+		if <ItemListIndex>::get(self.id)
+			.checked_add(1)
+			.ok_or("item id overflow")?
+			!= token_id
+		{
+			return Err("item id should be next".into());
+		}
+
+		<Module<T>>::create_item_internal(
+			&caller,
+			&self,
+			&to,
+			CreateItemData::NFT(CreateNftData {
+				const_data: Vec::<u8>::from(token_uri)
+					.try_into()
+					.map_err(|_| "token uri is too long")?,
+				variable_data: vec![].try_into().unwrap(),
+			}),
+		)
+		.map_err(|_| "mint error")?;
+		Ok(true)
+	}
+
+	fn finish_minting(&mut self, _caller: caller) -> Result<bool> {
+		Err("not implementable".into())
+	}
+}
+
 #[solidity_interface(name = "ERC721UniqueExtensions")]
 impl<T: Config> CollectionHandle<T> {
 	#[solidity(rename_selector = "transfer")]
@@ -196,6 +292,13 @@ impl<T: Config> CollectionHandle<T> {
 			.map_err(|_| "transfer error")?;
 		Ok(())
 	}
+
+	fn next_token_id(&self) -> Result<uint256> {
+		Ok(ItemListIndex::get(self.id)
+			.checked_add(1)
+			.ok_or("item id overflow")?
+			.into())
+	}
 }
 
 #[solidity_interface(
@@ -205,7 +308,9 @@ impl<T: Config> CollectionHandle<T> {
 		ERC721,
 		ERC721Metadata,
 		ERC721Enumerable,
-		ERC721UniqueExtensions
+		ERC721UniqueExtensions,
+		ERC721Mintable,
+		ERC721Burnable,
 	)
 )]
 impl<T: Config> CollectionHandle<T> {}
@@ -297,3 +402,10 @@ impl<T: Config> CollectionHandle<T> {
 
 #[solidity_interface(name = "UniqueFungible", is(ERC165, ERC20))]
 impl<T: Config> CollectionHandle<T> {}
+
+// Not a tests, but code generators
+generate_stubgen!(nft_impl, UniqueNFTCall, true);
+generate_stubgen!(nft_iface, UniqueNFTCall, false);
+
+generate_stubgen!(fungible_impl, UniqueFungibleCall, true);
+generate_stubgen!(fungible_iface, UniqueFungibleCall, false);

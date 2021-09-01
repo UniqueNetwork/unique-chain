@@ -17,6 +17,8 @@ import * as solc from 'solc';
 import config from '../../config';
 import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
+import getBalance from '../../substrate/get-balance';
+import waitNewBlocks from '../../substrate/wait-new-blocks';
 
 export const GAS_ARGS = { gas: 0x1000000, gasPrice: '0x01' };
 
@@ -37,12 +39,12 @@ export async function usingWeb3<T>(cb: (web3: Web3) => Promise<T> | T): Promise<
   }
 }
 
-type Web3HttpMarker = {web3Http: true};
-
-export async function usingWeb3Http<T>(cb: (web3: Web3 & Web3HttpMarker) => Promise<T> | T): Promise<T> {
+/**
+ * @deprecated Web3 update solved issue with deployment over ws provider
+ */
+export async function usingWeb3Http<T>(cb: (web3: Web3) => Promise<T> | T): Promise<T> {
   const provider = new Web3.providers.HttpProvider(config.frontierUrl);
-  const web3: Web3 & Web3HttpMarker = new Web3(provider) as any;
-  web3.web3Http = true;
+  const web3: Web3 = new Web3(provider);
 
   return await cb(web3);
 }
@@ -141,10 +143,13 @@ export async function recordEvents(contract: any, action: () => Promise<void>): 
   return normalizeEvents(out);
 }
 
-export function subToEth(eth: string): string {
+export function subToEthLowercase(eth: string): string {
   const bytes = addressToEvm(eth);
-  const string = '0x' + Buffer.from(bytes).toString('hex');
-  return Web3.utils.toChecksumAddress(string);
+  return '0x' + Buffer.from(bytes).toString('hex');
+}
+
+export function subToEth(eth: string): string {
+  return Web3.utils.toChecksumAddress(subToEthLowercase(eth));
 }
 
 export function compileContract(name: string, src: string) {
@@ -175,22 +180,7 @@ export function compileContract(name: string, src: string) {
   };
 }
 
-// export async function deployFungibleContract(web3: Web3 & Web3HttpMarker, deployer: string) {
-
-//   const sol = fs.readFileSync(__dirname + '/ERC721.sol').toString();
-
-//   const compiled = compileContract('ERC721', sol);
-//   const ERC721 = new web3.eth.Contract(compiled.abi, undefined, {
-//     data: compiled.object,
-//     from: deployer,
-//     ...GAS_ARGS,
-//   });
-//   const fungible = await ERC721.deploy({ data: compiled.object }).send({from: deployer});
-
-//   return fungible;
-// }
-
-export async function deployFlipper(web3: Web3 & Web3HttpMarker, deployer: string) {
+export async function deployFlipper(web3: Web3, deployer: string) {
   const compiled = compileContract('Flipper', `
     contract Flipper {
       bool value = false;
@@ -212,15 +202,26 @@ export async function deployFlipper(web3: Web3 & Web3HttpMarker, deployer: strin
   return flipper;
 }
 
-export async function deployCollector(web3: Web3 & Web3HttpMarker, deployer: string) {
+export async function deployCollector(web3: Web3, deployer: string) {
   const compiled = compileContract('Collector', `
     contract Collector {
       uint256 collected;
+      fallback() external payable {
+        giveMoney();
+      }
       function giveMoney() public payable {
         collected += msg.value;
       }
       function getCollected() public view returns (uint256) {
         return collected;
+      }
+      function getUnaccounted() public view returns (uint256) {
+        return address(this).balance - collected;
+      }
+
+      function withdraw(address payable target) public {
+        target.transfer(collected);
+        collected = 0;
       }
     }
   `);
@@ -236,4 +237,36 @@ export async function deployCollector(web3: Web3 & Web3HttpMarker, deployer: str
 
 export function contractHelpers(web3: Web3, caller: string) {
   return new web3.eth.Contract(contractHelpersAbi as any, '0x842899ECF380553E8a4de75bF534cdf6fBF64049', {from: caller, ...GAS_ARGS});
+}
+
+export async function executeEthTxOnSub(api: ApiPromise, from: IKeyringPair, to: any, mkTx: (methods: any) => any, { value = 0 }: {value?: bigint | number} = { }) {
+  const tx = api.tx.evm.call(
+    subToEth(from.address),
+    to.options.address,
+    mkTx(to.methods).encodeABI(),
+    value,
+    GAS_ARGS.gas,
+    GAS_ARGS.gasPrice,
+    null,
+  );
+  const events = await submitTransactionAsync(from, tx);
+  expect(events.find(({ event: {section, method}})=>section === 'evm' && method === 'Executed')).to.be.not.undefined;
+}
+
+export async function ethBalanceViaSub(api: ApiPromise, address: string): Promise<bigint> {
+  return (await getBalance(api, [evmToAddress(address)]))[0];
+}
+
+export async function recordEthFee(api: ApiPromise, user: string, call: () => Promise<any>): Promise<bigint> {
+  const before = await ethBalanceViaSub(api, user);
+
+  await call();
+  await waitNewBlocks(api, 1);
+
+  const after = await ethBalanceViaSub(api, user);
+
+  // Can't use .to.be.less, because chai doesn't supports bigint
+  expect(after < before).to.be.true;
+
+  return before - after;
 }

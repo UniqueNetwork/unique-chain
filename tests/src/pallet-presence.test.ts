@@ -25,6 +25,7 @@ const requiredPallets = [
   'evm',
   'evmcodersubstrate',
   'evmcontracthelpers',
+  'evmmigration',
   'evmtransactionpayment',
   'ethereum',
   'xcmpqueue',

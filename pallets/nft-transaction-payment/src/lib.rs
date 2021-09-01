@@ -11,9 +11,6 @@ pub use std::*;
 #[cfg(feature = "std")]
 pub use serde::*;
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
-
 use frame_support::{decl_module, decl_storage};
 use sp_std::prelude::*;
 use up_sponsorship::SponsorshipHandler;

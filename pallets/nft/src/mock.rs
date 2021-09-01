@@ -129,8 +129,11 @@ impl CrossAccountId<u64> for TestCrossAccountId {
 	fn as_sub(&self) -> &u64 {
 		&self.0
 	}
-	fn from_eth(_eth: sp_core::H160) -> Self {
-		unimplemented!()
+	fn from_eth(eth: sp_core::H160) -> Self {
+		let mut sub_raw = [0; 8];
+		sub_raw.copy_from_slice(&eth.0[0..8]);
+		let sub = u64::from_be_bytes(sub_raw);
+		Self(sub, eth)
 	}
 	fn as_eth(&self) -> &sp_core::H160 {
 		&self.1

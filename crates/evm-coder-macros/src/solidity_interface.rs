@@ -73,6 +73,20 @@ impl Is {
 			}
 		}
 	}
+
+	fn expand_generator(&self) -> proc_macro2::TokenStream {
+		let pascal_call_name = &self.pascal_call_name;
+		quote! {
+			#pascal_call_name::generate_solidity_interface(out_set, is_impl);
+		}
+	}
+
+	fn expand_event_generator(&self) -> proc_macro2::TokenStream {
+		let name = &self.name;
+		quote! {
+			#name::generate_solidity_interface(out_set, is_impl);
+		}
+	}
 }
 
 #[derive(Default)]
@@ -109,12 +123,15 @@ struct MethodInfo {
 
 struct MethodArg {
 	name: Ident,
+	camel_name: String,
 	ty: Ident,
 }
 impl MethodArg {
 	fn try_from(value: &PatType) -> syn::Result<Self> {
+		let name = parse_ident_from_pat(&value.pat)?.clone();
 		Ok(Self {
-			name: parse_ident_from_pat(&value.pat)?.clone(),
+			camel_name: cases::camelcase::to_camel_case(&name.to_string()),
+			name,
 			ty: parse_ident_from_type(&value.ty, false)?.clone(),
 		})
 	}
@@ -168,10 +185,10 @@ impl MethodArg {
 	}
 
 	fn expand_solidity_argument(&self) -> proc_macro2::TokenStream {
-		let name = &self.name.to_string();
+		let camel_name = &self.camel_name.to_string();
 		let ty = &self.ty;
 		quote! {
-			<NamedArgument<#ty>>::new(#name)
+			<NamedArgument<#ty>>::new(#camel_name)
 		}
 	}
 }
@@ -397,7 +414,11 @@ impl Method {
 		};
 		let result = &self.result;
 
-		let args = self.args.iter().map(MethodArg::expand_solidity_argument);
+		let args = self
+			.args
+			.iter()
+			.filter(|a| !a.is_special())
+			.map(MethodArg::expand_solidity_argument);
 
 		quote! {
 			SolidityFunction {
@@ -475,6 +496,24 @@ impl SolidityInterface {
 		let call_variants_this = self.methods.iter().map(Method::expand_variant_call);
 		let solidity_functions = self.methods.iter().map(Method::expand_solidity_function);
 
+		// TODO: Inline inline_is
+		let solidity_is = self
+			.info
+			.is
+			.0
+			.iter()
+			.chain(self.info.inline_is.0.iter())
+			.map(|is| is.name.to_string());
+		let solidity_events_is = self.info.events.0.iter().map(|is| is.name.to_string());
+		let solidity_generators = self
+			.info
+			.is
+			.0
+			.iter()
+			.chain(self.info.inline_is.0.iter())
+			.map(Is::expand_generator);
+		let solidity_event_generators = self.info.events.0.iter().map(Is::expand_event_generator);
+
 		// let methods = self.methods.iter().map(Method::solidity_def);
 
 		quote! {
@@ -505,18 +544,40 @@ impl SolidityInterface {
 						)*
 					)
 				}
-				pub fn generate_solidity_interface() -> string {
+				pub fn generate_solidity_interface(out_set: &mut sp_std::collections::btree_set::BTreeSet<string>, is_impl: bool) {
 					use evm_coder::solidity::*;
 					use core::fmt::Write;
 					let interface = SolidityInterface {
 						name: #solidity_name,
+						is: &["Dummy", #(
+							#solidity_is,
+						)* #(
+							#solidity_events_is,
+						)* ],
 						functions: (#(
 							#solidity_functions,
 						)*),
 					};
+					if is_impl {
+						out_set.insert("// Common stubs holder\ncontract Dummy {\n\tuint8 dummy;\n\tstring stub_error = \"this contract is implemented in native\";\n}\n".into());
+					} else {
+						out_set.insert("// Common stubs holder\ninterface Dummy {\n}\n".into());
+					}
+					#(
+						#solidity_generators
+					)*
+					#(
+						#solidity_event_generators
+					)*
+
 					let mut out = string::new();
-					let _ = interface.format(&mut out);
-					out
+					// In solidity interface usage (is) should be preceeded by interface definition
+					// This comment helps to sort it in a set
+					if #solidity_name.starts_with("Inline") {
+						out.push_str("// Inline\n");
+					}
+					let _ = interface.format(is_impl, &mut out);
+					out_set.insert(out);
 				}
 			}
 			impl ::evm_coder::Call for #call_name {

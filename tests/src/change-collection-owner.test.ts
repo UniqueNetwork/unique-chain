@@ -7,7 +7,22 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
-import { createCollectionExpectSuccess, addCollectionAdminExpectSuccess } from './util/helpers';
+import { createCollectionExpectSuccess, 
+  addCollectionAdminExpectSuccess,
+  setCollectionSponsorExpectSuccess,
+  confirmSponsorshipExpectSuccess,
+  removeCollectionSponsorExpectSuccess,
+  enableWhiteListExpectSuccess,
+  setMintPermissionExpectSuccess,
+  destroyCollectionExpectSuccess,
+  setCollectionSponsorExpectFailure,
+  confirmSponsorshipExpectFailure,
+  removeCollectionSponsorExpectFailure,
+  enableWhiteListExpectFail,
+  setMintPermissionExpectFailure,
+  destroyCollectionExpectFailure,
+  setPublicAccessModeExpectSuccess,
+} from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -27,6 +42,97 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner):', ()
 
       const collectionAfterOwnerChange: any = (await api.query.nft.collectionById(collectionId)).toJSON();
       expect(collectionAfterOwnerChange.Owner).to.be.deep.eq(bob.address);
+    });
+  });
+});
+
+describe('Integration Test changeCollectionOwner(collection_id, new_owner) special checks for exOwner:', () => {
+  it('Changing the owner of the collection is not allowed for the former owner', async () => {
+    await usingApi(async api => {
+      const collectionId = await createCollectionExpectSuccess();
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
+
+      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collection.Owner).to.be.deep.eq(alice.address);
+
+      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      await submitTransactionAsync(alice, changeOwnerTx);
+
+      const badChangeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, alice.address);
+      await expect(submitTransactionExpectFailAsync(alice, badChangeOwnerTx)).to.be.rejected;
+
+      const collectionAfterOwnerChange: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collectionAfterOwnerChange.Owner).to.be.deep.eq(bob.address);
+    });
+  });
+
+  it('New collectionOwner has access to sponsorship management operations in the collection', async () => {
+    await usingApi(async api => {
+      const collectionId = await createCollectionExpectSuccess();
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
+      const charlie = privateKey('//Charlie');
+
+      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collection.Owner).to.be.deep.eq(alice.address);
+
+      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      await submitTransactionAsync(alice, changeOwnerTx);
+
+      const collectionAfterOwnerChange: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collectionAfterOwnerChange.Owner).to.be.deep.eq(bob.address);
+
+      // After changing the owner of the collection, all privileged methods are available to the new owner
+      // The new owner of the collection has access to sponsorship management operations in the collection
+      await setCollectionSponsorExpectSuccess(collectionId, charlie.address, '//Bob');
+      await confirmSponsorshipExpectSuccess(collectionId, '//Charlie');
+      await removeCollectionSponsorExpectSuccess(collectionId, '//Bob');
+
+      // The new owner of the collection has access to operations for managing the collection parameters
+      const collectionLimits = {
+        AccountTokenOwnershipLimit: 1,
+        SponsoredMintSize: 1,
+        TokenLimit: 1,
+        SponsorTimeout: 1,
+        OwnerCanTransfer: true,
+        OwnerCanDestroy: true,
+      };
+      const tx1 = api.tx.nft.setCollectionLimits(
+        collectionId,
+        collectionLimits,
+      );
+      await submitTransactionAsync(bob, tx1);
+
+      await setPublicAccessModeExpectSuccess(bob, collectionId, 'WhiteList');
+      await enableWhiteListExpectSuccess(bob, collectionId);
+      await setMintPermissionExpectSuccess(bob, collectionId, true);
+      await destroyCollectionExpectSuccess(collectionId, '//Bob');
+    });
+  });
+
+  it('New collectionOwner has access to changeCollectionOwner', async () => {
+    await usingApi(async api => {
+      const collectionId = await createCollectionExpectSuccess();
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
+      const charlie = privateKey('//Charlie');
+  
+      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collection.Owner).to.be.deep.eq(alice.address);
+  
+      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      await submitTransactionAsync(alice, changeOwnerTx);
+  
+      const collectionAfterOwnerChange: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collectionAfterOwnerChange.Owner).to.be.deep.eq(bob.address);
+
+      const changeOwnerTx2 = api.tx.nft.changeCollectionOwner(collectionId, charlie.address);
+      await submitTransactionAsync(bob, changeOwnerTx2);
+  
+      // ownership lost
+      const collectionAfterOwnerChange2: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collectionAfterOwnerChange2.Owner).to.be.deep.eq(charlie.address);
     });
   });
 });
@@ -79,6 +185,49 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
       await createCollectionExpectSuccess();
+    });
+  });
+
+  it('Former collectionOwner not allowed to sponsorship management operations in the collection', async () => {
+    await usingApi(async api => {
+      const collectionId = await createCollectionExpectSuccess();
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
+      const charlie = privateKey('//Charlie');
+
+      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collection.Owner).to.be.deep.eq(alice.address);
+
+      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      await submitTransactionAsync(alice, changeOwnerTx);
+
+      const badChangeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, alice.address);
+      await expect(submitTransactionExpectFailAsync(alice, badChangeOwnerTx)).to.be.rejected;
+
+      const collectionAfterOwnerChange: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      expect(collectionAfterOwnerChange.Owner).to.be.deep.eq(bob.address);
+
+      await setCollectionSponsorExpectFailure(collectionId, charlie.address, '//Alice');
+      await confirmSponsorshipExpectFailure(collectionId, '//Alice');
+      await removeCollectionSponsorExpectFailure(collectionId, '//Alice');
+
+      const collectionLimits = {
+        AccountTokenOwnershipLimit: 1,
+        SponsoredMintSize: 1,
+        TokenLimit: 1,
+        SponsorTimeout: 1,
+        OwnerCanTransfer: true,
+        OwnerCanDestroy: true,
+      };
+      const tx1 = api.tx.nft.setCollectionLimits(
+        collectionId,
+        collectionLimits,
+      );
+      await expect(submitTransactionExpectFailAsync(alice, tx1)).to.be.rejected;
+
+      await enableWhiteListExpectFail(alice, collectionId);
+      await setMintPermissionExpectFailure(alice, collectionId, true);
+      await destroyCollectionExpectFailure(collectionId, '//Alice');
     });
   });
 });
