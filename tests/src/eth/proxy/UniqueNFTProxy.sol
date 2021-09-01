@@ -156,4 +156,36 @@ contract UniqueNFTProxy is UniqueNFT {
     {
         return proxied.supportsInterface(interfaceId);
     }
+
+    function setVariableMetadata(uint256 tokenId, bytes memory data)
+        external
+        override
+    {
+        return proxied.setVariableMetadata(tokenId, data);
+    }
+
+    function getVariableMetadata(uint256 tokenId)
+        external
+        view
+        override
+        returns (bytes memory)
+    {
+        return proxied.getVariableMetadata(tokenId);
+    }
+
+    function mintBulk(address to, uint256[] memory tokenIds)
+        external
+        override
+        returns (bool)
+    {
+        return proxied.mintBulk(to, tokenIds);
+    }
+
+    function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
+        external
+        override
+        returns (bool)
+    {
+        return proxied.mintBulkWithTokenURI(to, tokens);
+    }
 }
