@@ -376,6 +376,7 @@ pub enum SolidityMutability {
 	Mutable,
 }
 pub struct SolidityFunction<A, R> {
+	pub selector: &'static str,
 	pub name: &'static str,
 	pub args: A,
 	pub result: R,
@@ -388,6 +389,7 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		writer: &mut impl fmt::Write,
 		tc: &TypeCollector,
 	) -> fmt::Result {
+		writeln!(writer, "\t// Selector: {}", self.selector)?;
 		write!(writer, "\tfunction {}(", self.name)?;
 		self.args.solidity_name(writer, tc)?;
 		write!(writer, ")")?;

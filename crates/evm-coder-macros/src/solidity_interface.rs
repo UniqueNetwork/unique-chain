@@ -570,9 +570,11 @@ impl Method {
 			.iter()
 			.filter(|a| !a.is_special())
 			.map(MethodArg::expand_solidity_argument);
+		let selector = format!("{} {:0>8x}", self.selector_str, self.selector);
 
 		quote! {
 			SolidityFunction {
+				selector: #selector,
 				name: #camel_name,
 				mutability: #mutability,
 				args: (
