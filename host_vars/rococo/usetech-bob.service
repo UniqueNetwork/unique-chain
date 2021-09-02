@@ -1,0 +1,22 @@
+[Unit]
+Description=Usetech Bob
+
+[Service]
+ExecStart=/opt/usetech/nft \
+        --bob \
+        --collator \
+        --force-authoring \
+        --base-path /var/local/usetech/nft-parachain/bob \
+        --parachain-id 2101 \
+        --port 40333 \
+        --ws-port 9944 \
+	--bootnodes /ip4/44.194.186.186/tcp/40333/p2p/12D3KooWN1B45AcEzBwuZf3XB2eVXZcDWX7qVtDu6CMWY8BrB36w \
+        -- --execution wasm \
+        --chain /opt/usetech/rococo.json \
+        --port 30333
+
+Restart=always
+RestartSec=120
+
+[Install]
+WantedBy=multi-user.target
