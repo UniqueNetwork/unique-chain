@@ -1,0 +1,22 @@
+[Unit]
+Description=Usetech Alice
+
+[Service]
+ExecStart=/opt/usetech/nft \
+    --alice \
+    --collator \
+    --force-authoring \
+    --base-path /var/local/usetech/nft-parachain/alice \
+    --parachain-id 2101 \
+    --port 40333 \
+#    --rpc-port 9933 \
+    --ws-port 9944 \
+    -- --execution wasm \
+    --chain /opt/usetech/rococo.json \
+    --port 30333 
+    
+Restart=always
+RestartSec=120
+
+[Install]
+WantedBy=multi-user.target
