@@ -1,5 +1,10 @@
-.PHONY: _eth_codegen
-_eth_codegen:
+.PHONY: _help
+_help:
+	@echo "regenerate_solidity - generate stubs/interfaces for contracts defined in native (via evm-coder)"
+	@echo "evm_stubs - recompile contract stubs"
+	@echo "bench - run frame-benchmarking"
+	@echo "  bench-evm-migration"
+	@echo "  bench-nft"
 
 .PHONY: regenerate_solidity
 regenerate_solidity:
