@@ -3,15 +3,22 @@ Description=Usetech Charlie
 
 [Service]
 ExecStart=/opt/usetech/nft \
-        --bob \
+        --charlie \
         --collator \
         --force-authoring \
-        --base-path /var/local/usetech/nft-parachain/charlie \
+        --base-path /var/local/usetech/nft-parachain/rococo/charlie \
         --parachain-id 2101 \
         --port 40333 \
         --ws-port 9944 \
+	--unsafe-ws-external \
+	--rpc-cors=all \
+	--no-mdns \
         --bootnodes /ip4/44.194.186.186/tcp/40333/p2p/12D3KooWN1B45AcEzBwuZf3XB2eVXZcDWX7qVtDu6CMWY8BrB36w \
-        -- --execution wasm \
+	--execution wasm \
+	--wasm-execution compiled \
+	-- --execution wasm \
+	--wasm-execution compiled \
+	--no-mdns \
         --chain /opt/usetech/rococo.json \
         --port 30333
 
