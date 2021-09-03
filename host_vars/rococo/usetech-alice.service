@@ -6,12 +6,19 @@ ExecStart=/opt/usetech/nft \
     --alice \
     --collator \
     --force-authoring \
-    --base-path /var/local/usetech/nft-parachain/alice \
+    --base-path /var/local/usetech/nft-parachain/rococo/alice \
     --parachain-id 2101 \
     --port 40333 \
-#    --rpc-port 9933 \
     --ws-port 9944 \
+    --unsafe-ws-external \
+    --rpc-cors=all \
+    --no-mdns \
+    --bootnodes /ip4/3.120.102.123/tcp/30333/ws/p2p/12D3KooWQqM93oYoJX8i67KX1897KR5oDdbRWU5BrD85jYmcuJsR \
+    --execution wasm \
+    --wasm-execution compiled \
     -- --execution wasm \
+    --wasm-execution compiled \
+    --no-mdns \
     --chain /opt/usetech/rococo.json \
     --port 30333 
     
