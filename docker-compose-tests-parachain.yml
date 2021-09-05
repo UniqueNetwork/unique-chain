@@ -6,6 +6,7 @@ services:
     container_name: validator1_test
     ports:
       - 9944:9944
+      - 9844:9844
     build:
       context: ./
       dockerfile: Dockerfile-parachain
