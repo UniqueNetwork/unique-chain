@@ -1,0 +1,95 @@
+# ===== BUILD ======
+#docker pull phusion/baseimage:focal-1.0.0
+FROM phusion/baseimage:focal-1.0.0 as builder
+LABEL maintainer="Unique.Network"
+
+ENV WASM_TOOLCHAIN=nightly-2021-06-17
+# ENV NATIVE_TOOLCHAIN=1.50.0
+
+ARG PROFILE=release
+
+RUN apt-get update && \
+	apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
+	apt-get install -y cmake pkg-config libssl-dev git clang
+
+# Get project and run it
+#RUN git clone https://github.com/usetech-llc/nft_parachain /nft_parachain
+RUN mkdir nft_parachain
+WORKDIR /nft_parachain
+COPY . .
+
+RUN export CARGO_HOME="/cargo-home" && curl https://sh.rustup.rs -sSf | sh -s -- -y
+RUN export PATH="/cargo-home/bin:$PATH" && \
+    export CARGO_HOME="/cargo-home" && \
+	cargo fetch
+
+RUN export PATH="/cargo-home/bin:$PATH" && \
+    export CARGO_HOME="/cargo-home" && \
+	rustup toolchain uninstall $(rustup toolchain list) && \
+	# rustup toolchain install $NATIVE_TOOLCHAIN && \
+	rustup toolchain install $WASM_TOOLCHAIN && \
+	rustup target add wasm32-unknown-unknown --toolchain $WASM_TOOLCHAIN && \
+	rustup default $WASM_TOOLCHAIN && \
+	rustup target list --installed && \
+        rustup show
+
+RUN export PATH="/cargo-home/bin:$PATH" && \
+    export CARGO_HOME="/cargo-home" && \
+	cargo build "--$PROFILE"
+	# && \
+	# cargo test
+
+RUN git clone -b v0.9.8 --depth 1 https://github.com/paritytech/polkadot.git && cd polkadot && \
+	export PATH="/cargo-home/bin:$PATH" && \
+	export CARGO_HOME="/cargo-home" && \
+	cargo build --release
+
+# ===== RUN ======
+
+# FROM phusion/baseimage:18.04-1.0.0
+FROM phusion/baseimage:focal-1.0.0
+
+ARG PROFILE=release
+
+COPY --from=builder /nft_parachain/target/$PROFILE/nft /nft_private/target/$PROFILE/
+COPY --from=builder /nft_parachain/polkadot/target/$PROFILE/polkadot /polkadot/target/$PROFILE/
+
+RUN apt-get update && \
+        apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
+        apt-get install -y cmake pkg-config libssl-dev git clang
+
+RUN git clone https://github.com/paritytech/polkadot-launch.git
+
+RUN apt-get -y update && \
+      apt-get -y upgrade && \
+      apt-get -y install curl && \
+      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
+      export NVM_DIR="$HOME/.nvm" && \
+      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+      nvm install v15.5.0 && \
+      nvm use v15.5.0
+#      npm install --save @polkadot/api && \
+#      npm install --save-dev mochawesome
+
+
+CMD export NVM_DIR="$HOME/.nvm" && \
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+    cd /polkadot-launch && \
+    npm install --global yarn && \
+    yarn install && \
+    yarn build && \
+    yarn start launch-config.json
+   # yarn test
+
+
+
+#COPY --from=builder /nft_parachain/launch-config.json /usr/local/bin
+#COPY --from=builder /nft_parachain/runtime_types.json /usr/local/bin
+
+EXPOSE 9944
+#VOLUME ["/chain-data"]
+
+# Copy and run start script
+#COPY ["./run.sh", "./run.sh"]
+#RUN chmod +x ./run.sh
+#CMD ["bash", "-c", "./run.sh"]
