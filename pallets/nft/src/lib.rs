@@ -1520,10 +1520,11 @@ impl<T: Config> Module<T> {
 			Error::<T>::TokenVariableDataLimitExceeded
 		);
 
-		// Modify permissions check
 		ensure!(
-			Self::is_item_owner(sender, collection, item_id)?
-				|| Self::is_owner_or_admin_permissions(collection, sender)?,
+			(Self::is_item_owner(sender, collection, item_id)?
+				&& collection.meta_update_permission == MetaUpdatePermission::ItemOwner)
+				|| (Self::is_owner_or_admin_permissions(collection, sender)?
+					&& collection.meta_update_permission == MetaUpdatePermission::Admin),
 			Error::<T>::NoPermission
 		);
 
