@@ -28,6 +28,12 @@ interface ContractHelpers is Dummy {
 	function setSponsoringRateLimit(address contractAddress, uint32 rateLimit)
 		external;
 
+	// Selector: getSponsoringRateLimit(address) 610cfabd
+	function getSponsoringRateLimit(address contractAddress)
+		external
+		view
+		returns (uint32);
+
 	// Selector: allowed(address,address) 5c658165
 	function allowed(address contractAddress, address user)
 		external
