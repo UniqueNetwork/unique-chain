@@ -23,7 +23,7 @@ RUN apt-get -y update && \
       npm install --save @polkadot/api && \ 
       npm install --save-dev mochawesome
 
-RUN sleep 60
+CMD sleep 60
 
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \

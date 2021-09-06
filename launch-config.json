@@ -66,7 +66,9 @@
                     "name": "alice",
                     "flags": [
                         "--rpc-cors=all",
-                        "--rpc-port=9933"
+                        "--rpc-port=9933",
+			"--ws-external",
+			"--rpc-external"
                     ]
                 },
                 {
@@ -76,7 +78,9 @@
                     "name": "bob",
                     "flags": [
                         "--rpc-cors=all",
-                        "--rpc-port=9934"
+                        "--rpc-port=9934",
+			"--ws-external",
+                        "--rpc-external"
                     ]
                 }
             ]
