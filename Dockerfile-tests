@@ -31,5 +31,6 @@ CMD export NVM_DIR="$HOME/.nvm" && \
     npm install --global yarn && \ 
     yarn add mochawesome && \
     yarn install && \
+    sleep 120 &&\
     yarn test --reporter mochawesome
    # yarn test

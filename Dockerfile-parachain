@@ -81,5 +81,4 @@ CMD export NVM_DIR="$HOME/.nvm" && \
     npm install --global yarn && \
     yarn install && \
     yarn build && \
-    sleep 120 &&\
     yarn start launch-config.json
