@@ -3,31 +3,12 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "contract",
-                "type": "address"
-            }
-        ],
-        "name": "allowlistEnabled",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "target",
+                "name": "contractAddress",
                 "type": "address"
             },
             {
                 "internalType": "address",
-                "name": "caller",
+                "name": "user",
                 "type": "address"
             }
         ],
@@ -46,7 +27,26 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "target",
+                "name": "contractAddress",
+                "type": "address"
+            }
+        ],
+        "name": "allowlistEnabled",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "contractAddress",
                 "type": "address"
             }
         ],
@@ -65,7 +65,44 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "target",
+                "name": "contractAddress",
+                "type": "address"
+            }
+        ],
+        "name": "getSponsoringRateLimit",
+        "outputs": [
+            {
+                "internalType": "uint32",
+                "name": "",
+                "type": "uint32"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "contractAddress",
+                "type": "address"
+            },
+            {
+                "internalType": "uint32",
+                "name": "rateLimit",
+                "type": "uint32"
+            }
+        ],
+        "name": "setSponsoringRateLimit",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "contractAddress",
                 "type": "address"
             }
         ],
@@ -84,7 +121,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "target",
+                "name": "contractAddress",
                 "type": "address"
             },
             {
@@ -94,7 +131,7 @@
             },
             {
                 "internalType": "bool",
-                "name": "isAllowed",
+                "name": "allowed",
                 "type": "bool"
             }
         ],
@@ -107,7 +144,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "target",
+                "name": "contractAddress",
                 "type": "address"
             },
             {
@@ -125,7 +162,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "target",
+                "name": "contractAddress",
                 "type": "address"
             },
             {
@@ -135,24 +172,6 @@
             }
         ],
         "name": "toggleSponsoring",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "target",
-                "type": "address"
-            },
-            {
-                "internalType": "uint32",
-                "name": "limit",
-                "type": "uint32"
-            }
-        ],
-        "name": "setSponsoringRateLimit",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
