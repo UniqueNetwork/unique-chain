@@ -7,7 +7,7 @@ pub mod pallet {
 	use frame_support::sp_runtime::traits::StaticLookup;
 	use frame_support::{pallet_prelude::*, traits::IsSubType};
 	use frame_system::pallet_prelude::*;
-    use frame_system::Config as SysConfig;
+	use frame_system::Config as SysConfig;
 	use pallet_contracts::chain_extension::UncheckedFrom;
 	use sp_runtime::{
 		traits::{DispatchInfoOf, Hash, PostDispatchInfoOf, SignedExtension},

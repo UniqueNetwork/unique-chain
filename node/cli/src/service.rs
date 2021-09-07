@@ -276,7 +276,7 @@ where
 			import_queue: import_queue.clone(),
 			on_demand: None,
 			block_announce_validator_builder: Some(Box::new(|_| block_announce_validator)),
-            warp_sync: None,
+			warp_sync: None,
 		})?;
 
 	let subscription_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
@@ -304,7 +304,10 @@ where
 			max_past_logs: 10000,
 		};
 
-		Ok(nft_rpc::create_full::<_, _, _, RuntimeApi, _>(full_deps, subscription_executor.clone()))
+		Ok(nft_rpc::create_full::<_, _, _, RuntimeApi, _>(
+			full_deps,
+			subscription_executor.clone(),
+		))
 	});
 
 	task_manager.spawn_essential_handle().spawn(

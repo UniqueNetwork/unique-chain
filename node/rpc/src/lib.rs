@@ -200,7 +200,7 @@ where
 	if let Some(filter_pool) = filter_pool {
 		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
 			client.clone(),
-            backend,
+			backend,
 			filter_pool,
 			500_usize, // max stored filters
 			overrides.clone(),
