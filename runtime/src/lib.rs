@@ -45,7 +45,7 @@ pub use frame_support::{
 	dispatch::DispatchResult,
 	PalletId, parameter_types, StorageValue, ConsensusEngineId,
 	traits::{
-		All, Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier,
+		Nothing, Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier,
 		OnUnbalanced, Randomness, FindAuthor,
 	},
 	weights::{
@@ -54,6 +54,7 @@ pub use frame_support::{
 		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients,
 	},
 };
+use xcm_executor::traits::InvertLocation;
 use nft_data_structs::*;
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
@@ -242,7 +243,7 @@ impl pallet_evm::Config for Runtime {
 	type BlockGasLimit = BlockGasLimit;
 	type FeeCalculator = ();
 	type GasWeightMapping = ();
-	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping;
+	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = HashedAddressMapping<Self::Hashing>;
@@ -611,7 +612,7 @@ match_type! {
 
 pub type Barrier = (
 	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<All<MultiLocation>>,
+	AllowTopLevelPaidExecutionFrom<Nothing>,
 	AllowUnpaidExecutionFrom<ParentOrParentsUnitPlurality>,
 	// ^^^ Parent & its unit plurality gets free execution
 );
@@ -649,7 +650,7 @@ pub type XcmRouter = (
 );
 
 impl pallet_evm_coder_substrate::Config for Runtime {
-	type EthereumTransactionSender = pallet_ethereum::Module<Self>;
+	type EthereumTransactionSender = pallet_ethereum::Pallet<Self>;
 }
 
 impl pallet_xcm::Config for Runtime {
@@ -657,11 +658,12 @@ impl pallet_xcm::Config for Runtime {
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type XcmExecuteFilter = All<(MultiLocation, Xcm<Call>)>;
+	type XcmExecuteFilter = Nothing;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = All<(MultiLocation, Vec<MultiAsset>)>;
+	type XcmTeleportFilter = Nothing;
 	type XcmReserveTransferFilter = ();
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
+    type LocationInverter = LocationInverter<Ancestry>;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -683,6 +685,7 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
+    type DisabledValidators = ();
 }
 
 parameter_types! {
@@ -978,7 +981,7 @@ impl_runtime_apis! {
 		}
 
 		fn author() -> H160 {
-			<pallet_evm::Module<Runtime>>::find_author()
+			<pallet_evm::Pallet<Runtime>>::find_author()
 		}
 
 		fn storage_at(address: H160, index: U256) -> H256 {

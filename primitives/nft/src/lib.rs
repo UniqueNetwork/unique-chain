@@ -4,8 +4,7 @@
 pub use serde::{Serialize, Deserialize};
 
 use sp_runtime::sp_std::prelude::Vec;
-use codec::{Decode, Encode};
-use max_encoded_len::MaxEncodedLen;
+use codec::{Decode, Encode, MaxEncodedLen};
 pub use frame_support::{
 	BoundedVec, construct_runtime, decl_event, decl_module, decl_storage, decl_error,
 	dispatch::DispatchResult,
