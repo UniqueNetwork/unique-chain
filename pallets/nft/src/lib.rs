@@ -302,9 +302,6 @@ decl_storage! {
 		/// Amount of collections destroyed, used for total amount tracking with
 		/// CreatedCollectionCount
 		DestroyedCollectionCount: u32;
-		/// Total amount of account owned tokens (NFTs + RFTs + unique fungibles)
-		/// Account id (real)
-		pub AccountItemCount get(fn account_item_count): map hasher(twox_64_concat) T::AccountId => u32;
 		//#endregion
 
 		//#region Basic collections
@@ -1595,10 +1592,18 @@ impl<T: Config> Module<T> {
 		collection.consume_sload()?;
 		let account_items: u32 =
 			<AddressTokens<T>>::get(collection_id, recipient.as_sub()).len() as u32;
-		ensure!(
-			collection.limits.account_token_ownership_limit > account_items,
-			Error::<T>::AccountTokenLimitExceeded
-		);
+
+		// zero limit means collection limit is disabled
+		// otherwise get lower value
+		let limit = if collection.limits.account_token_ownership_limit == 0
+			|| collection.limits.account_token_ownership_limit > ACCOUNT_TOKEN_OWNERSHIP_LIMIT
+		{
+			ACCOUNT_TOKEN_OWNERSHIP_LIMIT
+		} else {
+			collection.limits.account_token_ownership_limit
+		};
+
+		ensure!(limit > account_items, Error::<T>::AccountTokenLimitExceeded);
 
 		// preliminary transfer check
 		ensure!(collection.transfers_enabled, Error::<T>::TransferNotAllowed);
@@ -1622,12 +1627,23 @@ impl<T: Config> Module<T> {
 			as u32)
 			.checked_add(amount)
 			.ok_or(Error::<T>::AccountTokenLimitExceeded)?;
+
+		// zero limit means collection limit is disabled
+		// otherwise get lower value
+		let account_token_limit = if collection.limits.account_token_ownership_limit == 0
+			|| collection.limits.account_token_ownership_limit > ACCOUNT_TOKEN_OWNERSHIP_LIMIT
+		{
+			ACCOUNT_TOKEN_OWNERSHIP_LIMIT
+		} else {
+			collection.limits.account_token_ownership_limit
+		};
+
 		ensure!(
 			collection.limits.token_limit >= total_items,
 			Error::<T>::CollectionTokenLimitExceeded
 		);
 		ensure!(
-			collection.limits.account_token_ownership_limit >= account_items,
+			account_token_limit >= account_items,
 			Error::<T>::AccountTokenLimitExceeded
 		);
 
@@ -2362,32 +2378,19 @@ impl<T: Config> Module<T> {
 		item_index: TokenId,
 		owner: &T::CrossAccountId,
 	) -> DispatchResult {
-		// add to account limit
-		collection.consume_sload()?;
-		if <AccountItemCount<T>>::contains_key(owner.as_sub()) {
-			// bound Owned tokens by a single address
-			collection.consume_sload()?;
-			let count = <AccountItemCount<T>>::get(owner.as_sub());
-			ensure!(
-				count < ACCOUNT_TOKEN_OWNERSHIP_LIMIT,
-				Error::<T>::AddressOwnershipLimitExceeded
-			);
-
-			collection.consume_sstore()?;
-			<AccountItemCount<T>>::insert(
-				owner.as_sub(),
-				count.checked_add(1).ok_or(Error::<T>::NumOverflow)?,
-			);
-		} else {
-			collection.consume_sstore()?;
-			<AccountItemCount<T>>::insert(owner.as_sub(), 1);
-		}
-
 		collection.consume_sload()?;
 		let list_exists = <AddressTokens<T>>::contains_key(collection.id, owner.as_sub());
 		if list_exists {
 			collection.consume_sload()?;
 			let mut list = <AddressTokens<T>>::get(collection.id, owner.as_sub());
+
+			// bound Owned tokens by a single address in collection
+			let account_items: u32 = list.len() as u32;
+			ensure!(
+				account_items < ACCOUNT_TOKEN_OWNERSHIP_LIMIT,
+				Error::<T>::AddressOwnershipLimitExceeded
+			);
+
 			let item_contains = list.contains(&item_index.clone());
 
 			if !item_contains {
@@ -2410,16 +2413,6 @@ impl<T: Config> Module<T> {
 		item_index: TokenId,
 		owner: &T::CrossAccountId,
 	) -> DispatchResult {
-		// update counter
-		collection.consume_sload()?;
-		collection.consume_sstore()?;
-		<AccountItemCount<T>>::insert(
-			owner.as_sub(),
-			<AccountItemCount<T>>::get(owner.as_sub())
-				.checked_sub(1)
-				.ok_or(Error::<T>::NumOverflow)?,
-		);
-
 		collection.consume_sload()?;
 		let list_exists = <AddressTokens<T>>::contains_key(collection.id, owner.as_sub());
 		if list_exists {

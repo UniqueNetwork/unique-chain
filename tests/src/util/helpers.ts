@@ -797,6 +797,17 @@ export async function addCollectionAdminExpectSuccess(sender: IKeyringPair, coll
 }
 
 export async function
+getFreeBalance(account: IKeyringPair) : Promise<BigNumber>
+{
+  let balance = new BigNumber(0) ;
+  await usingApi(async (api) => { 
+    balance = new BigNumber((await api.query.system.account(account.address)).data.free.toString());  
+  });
+
+  return balance;
+}
+
+export async function
 scheduleTransferExpectSuccess(
   collectionId: number,
   tokenId: number,
@@ -870,8 +881,11 @@ transferExpectSuccess(
     if (type === 'ReFungible') {
       const nftItemData =
         (await api.query.nft.reFungibleItemList(collectionId, tokenId)).toJSON() as unknown as IReFungibleTokenDataType;
-      expect(nftItemData.Owner[0].Owner).to.be.deep.equal(to);
-      expect(nftItemData.Owner[0].Fraction.toString()).to.be.equal(value.toString());
+      const expectedOwner = toSubstrateAddress(to);
+      const ownerIndex = nftItemData.Owner.findIndex(v => toSubstrateAddress(v.Owner as any as string) == expectedOwner);
+      expect(ownerIndex).to.not.equal(-1);
+      expect(nftItemData.Owner[ownerIndex].Owner).to.be.deep.equal(normalizeAccountId(to));
+      expect(nftItemData.Owner[ownerIndex].Fraction).to.be.greaterThanOrEqual(value as number);
     }
   });
 }
@@ -1171,4 +1185,21 @@ export async function queryCollectionExpectSuccess(collectionId: number): Promis
 
 export async function queryNftOwner(api: ApiPromise, collectionId: number, tokenId: number): Promise<CrossAccountId> {
   return normalizeAccountId((await api.query.nft.nftItemList(collectionId, tokenId) as any).toJSON().Owner);
+}
+
+export async function waitNewBlocks(blocksCount = 1): Promise<void> {
+  await usingApi(async (api) => {
+    const promise = new Promise<void>(async (resolve) => {
+      
+      const unsubscribe = await api.rpc.chain.subscribeNewHeads(() => {
+        if (blocksCount > 0) {
+          blocksCount--;
+        } else {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+    return promise;
+  });
 }
