@@ -53,6 +53,11 @@ export function toSubstrateAddress(input: string | CrossAccountId | IKeyringPair
 
 export const U128_MAX = (1n << 128n) - 1n;
 
+const MICROUNIQUE = 1_000_000_000n;
+const MILLIUNIQUE = 1_000n * MICROUNIQUE;
+const CENTIUNIQUE = 10n * MILLIUNIQUE;
+export const UNIQUE = 100n * CENTIUNIQUE;
+
 type GenericResult = {
   success: boolean,
 };
@@ -1185,4 +1190,8 @@ export async function queryCollectionExpectSuccess(collectionId: number): Promis
   return await usingApi(async (api) => {
     return (await api.query.nft.collectionById(collectionId)).toJSON() as unknown as ICollectionInterface;
   });
+}
+
+export async function queryNftOwner(api: ApiPromise, collectionId: number, tokenId: number): Promise<CrossAccountId> {
+  return normalizeAccountId((await api.query.nft.nftItemList(collectionId, tokenId) as any).toJSON().Owner);
 }

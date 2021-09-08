@@ -13,7 +13,7 @@ import {
   IChainLimits,
 } from './util/helpers';
 
-describe('Negative Integration Test setChainLimits', () => {
+describe.skip('Negative Integration Test setChainLimits', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let dave: IKeyringPair;
