@@ -870,8 +870,8 @@ mod tests {
 
 	// Scheduler must dispatch with root and no filter, this tests base filter is indeed not used.
 	pub struct BaseFilter;
-	impl Filter<Call> for BaseFilter {
-		fn filter(call: &Call) -> bool {
+	impl Contains<Call> for BaseFilter {
+		fn contains(call: &Call) -> bool {
 			!matches!(call, Call::Logger(logger::Call::log(_, _)))
 		}
 	}
