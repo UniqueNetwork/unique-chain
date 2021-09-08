@@ -1,9 +1,9 @@
 version: "3.5"
 
 services:
-  node_validator1:
-    image: nft_node_test
-    container_name: validator1_test
+  blockchain_nodes:
+    image: blockchain_nodes
+    container_name: blockchain_nodes
     ports:
       - 9944:9944
       - 9844:9844
@@ -11,28 +11,25 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile-parachain
+      args:
+        - RUST_TOOLCHAIN=${RUST_TOOLCHAIN:?err}
+        - RUST_C=${RUST_C:?err}
+        - POLKA_VERSION=${POLKA_VERSION:?err}
+        - NFT_BRANCH=${NFT_BRANCH:?err}
     volumes:
 #      - ./chain-data:/chain-data
       - ./launch-config.json:/polkadot-launch/launch-config.json
       - ./runtime_types.json:/polkadot-launch/runtime_types.json
-    environment:
-      - WASM_TOOLCHAIN=${WASM_TOOLCHAIN}
-      - POLKA_VERSION=${POLKA_VERSION}
-      - NFT_BRANCH=${NFT_BRANCH}
     env_file:
-      - ./.env-parachain
+      - ./.env
     networks:
       - node_test_network
     #command: bash -c "yarn --cwd polkadot-launch start"
     #command: bash -c 'while true; do sleep 60; df -h; done'
 
   integration_tests:
-    container_name: integration_test
-#    ports:
-#      - 9944:9944
-#      - 9844:9844
-#      - 9933:9933
-    image: int_test
+    container_name: integration_tests
+    image: integration_tests
     build:
       context: ./
       dockerfile: Dockerfile-tests
@@ -43,7 +40,7 @@ services:
     networks:
       - node_test_network
     depends_on:
-      - node_validator1
+      - blockchain_nodes
 
 #  unit_tests:
 #    container_name: unit_test

@@ -2,17 +2,35 @@
 FROM phusion/baseimage:focal-1.0.0 as builder
 LABEL maintainer="Unique.Network"
 
-ENV WASM_TOOLCHAIN=nightly-2021-06-17
-ENV POLKA_VERSION=v0.9.8
-ENV NFT_BRANCH=develop
-#ENV USER=***
-#ENV PASS=***
+
+
+ARG RUST_TOOLCHAIN=nightly-2021-06-17
+ARG RUST_C=1.55.0-nightly
+ARG POLKA_VERSION=v0.9.8
+ARG NFT_BRANCH=develop
+
+#ARG USER=***
+#ARG PASS=***
+
+
+ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
+ENV RUST_C $RUST_C
+ENV POLKA_VERSION $POLKA_VERSION
+ENV NFT_BRANCH $NFT_BRANCH
+
+
+RUN echo $RUST_TOOLCHAIN
+RUN echo $RUST_C
+RUN echo $POLKA_VERSION
+RUN echo $NFT_BRANCH
+
+
 
 ARG PROFILE=release
 
 RUN apt-get update && \
-	apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
-	apt-get install -y cmake pkg-config libssl-dev git clang
+    apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
+    apt-get install -y cmake pkg-config libssl-dev git clang
 
 # Get project and run it
 
@@ -23,27 +41,33 @@ RUN mkdir nft_parachain
 WORKDIR /nft_parachain
 COPY . .
 
+
 RUN export CARGO_HOME="/cargo-home" && curl https://sh.rustup.rs -sSf | sh -s -- -y
 RUN export PATH="/cargo-home/bin:$PATH" && \
     export CARGO_HOME="/cargo-home" && \
-	cargo fetch
+    cargo fetch
 
 RUN export PATH="/cargo-home/bin:$PATH" && \
     export CARGO_HOME="/cargo-home" && \
-	rustup toolchain uninstall $(rustup toolchain list) && \
-	rustup toolchain install $WASM_TOOLCHAIN && \
-	rustup target add wasm32-unknown-unknown --toolchain $WASM_TOOLCHAIN && \
-	rustup default $WASM_TOOLCHAIN && \
-	rustup target list --installed && \
-        rustup show
+    rustup toolchain uninstall $(rustup toolchain list) && \
+    rustup toolchain install $RUST_TOOLCHAIN && \
+    rustup toolchain install $RUST_C && \
+    rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN && \
+    rustup default $RUST_TOOLCHAIN && \
+    rustup target list --installed && \
+    rustup show
 
 RUN export PATH="/cargo-home/bin:$PATH" && \
     export CARGO_HOME="/cargo-home" && \
-	cargo build "--$PROFILE"
-	# && \
-	# cargo test
+    cargo build "--$PROFILE"
+   # && \
+   # cargo test
 
-RUN git clone -b $POLKA_VERSION --depth 1 https://github.com/paritytech/polkadot.git && cd polkadot && \
+
+
+RUN git clone -b $POLKA_VERSION --depth 1 https://github.com/paritytech/polkadot.git && \
+    cd polkadot && \
+    git tag -n && \
 	export PATH="/cargo-home/bin:$PATH" && \
 	export CARGO_HOME="/cargo-home" && \
 	cargo build --release
