@@ -53,8 +53,7 @@ describe('Admin limit exceeded collection: ', () => {
       ]);
       await timeoutPromise(10000);
       const changeAdminTx4 = api.tx.nft.addCollectionAdmin(collectionId, Alice.address);
-      // tslint:disable-next-line: no-unused-expression
-      expect(submitTransactionExpectFailAsync(Alice, changeAdminTx4)).to.be.rejected;
+      await expect(submitTransactionExpectFailAsync(Alice, changeAdminTx4)).to.be.rejected;
 
       const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
       expect(adminListAfterAddAdmin).to.be.contains(Eve.address);

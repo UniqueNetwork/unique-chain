@@ -40,8 +40,7 @@ describe('(!negative test!) integration test: ext. createCollection():', () => {
       const badTransaction = async () => {
         await createCollectionExpectSuccess({mode: {type: 'Invalid'}});
       };
-      // tslint:disable-next-line:no-unused-expression
-      expect(badTransaction()).to.be.rejected;
+      await expect(badTransaction()).to.be.rejected;
 
       const BcollectionCount = parseInt((await api.query.nft.createdCollectionCount()).toString(), 10);
       expect(BcollectionCount).to.be.equal(AcollectionCount, 'Error: Incorrect collection created.');

@@ -55,7 +55,6 @@ pub mod pallet {
 			address: H160,
 			data: Vec<(H256, H256)>,
 		) -> DispatchResult {
-			use frame_support::StorageDoubleMap;
 			ensure_root(origin)?;
 			ensure!(
 				<MigrationPending<T>>::get(&address),
@@ -63,7 +62,7 @@ pub mod pallet {
 			);
 
 			for (k, v) in data {
-				pallet_evm::AccountStorages::insert(&address, k, v);
+				<pallet_evm::AccountStorages<T>>::insert(&address, k, v);
 			}
 			Ok(())
 		}
@@ -71,14 +70,13 @@ pub mod pallet {
 		#[pallet::weight(<SelfWeightOf<T>>::finish(code.len() as u32))]
 		#[transactional]
 		pub fn finish(origin: OriginFor<T>, address: H160, code: Vec<u8>) -> DispatchResult {
-			use frame_support::StorageMap;
 			ensure_root(origin)?;
 			ensure!(
 				<MigrationPending<T>>::get(&address),
 				<Error<T>>::AccountIsNotMigrating,
 			);
 
-			pallet_evm::AccountCodes::insert(&address, code);
+			<pallet_evm::AccountCodes<T>>::insert(&address, code);
 			<MigrationPending<T>>::remove(address);
 			Ok(())
 		}

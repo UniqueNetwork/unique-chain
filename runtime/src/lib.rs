@@ -45,8 +45,8 @@ pub use frame_support::{
 	dispatch::DispatchResult,
 	PalletId, parameter_types, StorageValue, ConsensusEngineId,
 	traits::{
-		All, Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier,
-		OnUnbalanced, Randomness, FindAuthor,
+		Everything, Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem,
+		LockIdentifier, OnUnbalanced, Randomness, FindAuthor,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -79,8 +79,7 @@ pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 // Polkadot imports
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use xcm::v0::Xcm;
-use xcm::v0::{BodyId, Junction::*, MultiAsset, MultiLocation, MultiLocation::*, NetworkId};
+use xcm::v0::{BodyId, Junction::*, MultiLocation, MultiLocation::*, NetworkId};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
 	EnsureXcmOrigin, FixedWeightBounds, IsConcrete, LocationInverter, NativeAsset,
@@ -242,7 +241,7 @@ impl pallet_evm::Config for Runtime {
 	type BlockGasLimit = BlockGasLimit;
 	type FeeCalculator = ();
 	type GasWeightMapping = ();
-	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping;
+	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = HashedAddressMapping<Self::Hashing>;
@@ -298,7 +297,7 @@ impl system::Config for Runtime {
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
 	/// The maximum length of a block (in bytes).
@@ -611,7 +610,7 @@ match_type! {
 
 pub type Barrier = (
 	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<All<MultiLocation>>,
+	AllowTopLevelPaidExecutionFrom<Everything>,
 	AllowUnpaidExecutionFrom<ParentOrParentsUnitPlurality>,
 	// ^^^ Parent & its unit plurality gets free execution
 );
@@ -624,7 +623,7 @@ impl Config for XcmConfig {
 	type AssetTransactor = LocalAssetTransactor;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = NativeAsset;
-	type IsTeleporter = NativeAsset; // <- should be enough to allow teleportation of ROC
+	type IsTeleporter = (); // Teleportation is disabled
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
@@ -649,7 +648,7 @@ pub type XcmRouter = (
 );
 
 impl pallet_evm_coder_substrate::Config for Runtime {
-	type EthereumTransactionSender = pallet_ethereum::Module<Self>;
+	type EthereumTransactionSender = pallet_ethereum::Pallet<Self>;
 }
 
 impl pallet_xcm::Config for Runtime {
@@ -657,11 +656,12 @@ impl pallet_xcm::Config for Runtime {
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type XcmExecuteFilter = All<(MultiLocation, Xcm<Call>)>;
+	type XcmExecuteFilter = Everything;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = All<(MultiLocation, Vec<MultiAsset>)>;
+	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = ();
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
+	type LocationInverter = LocationInverter<Ancestry>;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -683,6 +683,7 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
+	type DisabledValidators = ();
 }
 
 parameter_types! {
@@ -785,7 +786,7 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 20,
+		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
 		Aura: pallet_aura::{Pallet, Config<T>} = 22,
@@ -978,7 +979,7 @@ impl_runtime_apis! {
 		}
 
 		fn author() -> H160 {
-			<pallet_evm::Module<Runtime>>::find_author()
+			<pallet_evm::Pallet<Runtime>>::find_author()
 		}
 
 		fn storage_at(address: H160, index: U256) -> H256 {
