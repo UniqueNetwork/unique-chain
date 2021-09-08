@@ -794,8 +794,8 @@ mod tests {
 	use super::*;
 
 	use frame_support::{
-		parameter_types, assert_ok, ord_parameter_types, assert_noop, assert_err, Hashable,
-		traits::{OnInitialize, OnFinalize, Filter},
+		Hashable, assert_err, assert_noop, assert_ok, ord_parameter_types, parameter_types,
+		traits::{Contains, Filter, OnFinalize, OnInitialize},
 		weights::constants::RocksDbWeight,
 	};
 	use sp_core::H256;
