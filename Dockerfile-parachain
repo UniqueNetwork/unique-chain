@@ -5,7 +5,7 @@ LABEL maintainer="Unique.Network"
 
 
 ARG RUST_TOOLCHAIN=nightly-2021-06-17
-ARG RUST_C=1.55.0-nightly
+#ARG RUST_C=1.55.0-nightly
 ARG POLKA_VERSION=v0.9.8
 ARG NFT_BRANCH=develop
 
@@ -14,15 +14,15 @@ ARG NFT_BRANCH=develop
 
 
 ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
-ENV RUST_C $RUST_C
+#ENV RUST_C $RUST_C
 ENV POLKA_VERSION $POLKA_VERSION
 ENV NFT_BRANCH $NFT_BRANCH
 
 
-RUN echo $RUST_TOOLCHAIN
-RUN echo $RUST_C
-RUN echo $POLKA_VERSION
-RUN echo $NFT_BRANCH
+#RUN echo $RUST_TOOLCHAIN
+#RUN echo $RUST_C
+#RUN echo $POLKA_VERSION
+#RUN echo $NFT_BRANCH
 
 
 
@@ -51,7 +51,7 @@ RUN export PATH="/cargo-home/bin:$PATH" && \
     export CARGO_HOME="/cargo-home" && \
     rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
-    rustup toolchain install $RUST_C && \
+#    rustup toolchain install $RUST_C && \
     rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN && \
     rustup default $RUST_TOOLCHAIN && \
     rustup target list --installed && \
