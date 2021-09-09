@@ -10,7 +10,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from '../substrate/privateKey';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
-import { createCollectionExpectSuccess, nftEventMessage } from '../util/helpers';
+import { createCollectionExpectSuccess, nftEventMessage, normalizeAccountId } from '../util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -28,7 +28,7 @@ describe('Create Item event ', () => {
   it('Check event from createItem(): ', async () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionID = await createCollectionExpectSuccess();
-      const createItem = api.tx.nft.createItem(collectionID, Alice.address, 'NFT');
+      const createItem = api.tx.nft.createItem(collectionID, normalizeAccountId(Alice.address), 'NFT');
       const events = await submitTransactionAsync(Alice, createItem);
       const msg = JSON.stringify(nftEventMessage(events));
       expect(msg).to.be.contain(checkSection);
