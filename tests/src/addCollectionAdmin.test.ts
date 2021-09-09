@@ -4,7 +4,6 @@
 //
 
 import { ApiPromise } from '@polkadot/api';
-import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';

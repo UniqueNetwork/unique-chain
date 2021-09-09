@@ -460,7 +460,7 @@ describe('NFT: Substrate calls', () => {
 
     const tokenId = await createItemExpectSuccess(alice, collection, 'NFT');
     const events = await recordEvents(contract, async () => {
-      await burnItemExpectSuccess(alice, collection, tokenId);
+      await burnItemExpectSuccess(alice, collection, tokenId, alice);
     });
 
     expect(events).to.be.deep.equal([

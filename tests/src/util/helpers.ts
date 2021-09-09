@@ -686,10 +686,10 @@ export type CreateItemData = {
   ReFungible: CreateReFungibleData;
 };
 
-export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: number, tokenId: number, value = 0) {
+export async function burnItemExpectSuccess(sender: IKeyringPair, collectionId: number, tokenId: number, owner: IKeyringPair, value = 0) {
   await usingApi(async (api) => {
-    const tx = api.tx.nft.burnItem(collectionId, tokenId, value);
-    const events = await submitTransactionAsync(owner, tx);
+    const tx = api.tx.nft.burnItem(collectionId, tokenId, normalizeAccountId(owner.address), value);
+    const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
     // Get the item
     const item: any = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON();
@@ -708,16 +708,14 @@ approveExpectSuccess(
 ) {
   await usingApi(async (api: ApiPromise) => {
     approved = normalizeAccountId(approved);
-    const allowanceBefore =
-      await api.query.nft.allowances(collectionId, [tokenId, owner.address, toSubstrateAddress(approved)]) as unknown as BN;
     const approveNftTx = api.tx.nft.approve(approved, collectionId, tokenId, amount);
     const events = await submitTransactionAsync(owner, approveNftTx);
     const result = getCreateItemResult(events);
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
     const allowanceAfter =
-      await api.query.nft.allowances(collectionId, [tokenId, owner.address, toSubstrateAddress(approved)]) as unknown as BN;
-    expect(allowanceAfter.sub(allowanceBefore).toString()).to.be.equal(amount.toString());
+    await api.query.nft.allowances(collectionId, [tokenId, owner.address, toSubstrateAddress(approved)]) as unknown as BN;
+    expect(allowanceAfter.toString()).to.be.equal(amount.toString());
   });
 }
 
@@ -753,8 +751,11 @@ transferFromExpectSuccess(
     if (type === 'ReFungible') {
       const nftItemData =
         (await api.query.nft.reFungibleItemList(collectionId, tokenId) as any).toJSON() as IReFungibleTokenDataType;
-      expect(nftItemData.Owner[0].Owner).to.be.deep.equal(normalizeAccountId(to));
-      expect(nftItemData.Owner[0].Fraction).to.be.equal(value);
+      const expectedOwner = toSubstrateAddress(to);
+      const ownerIndex = nftItemData.Owner.findIndex(v => toSubstrateAddress(v.Owner as any as string) == expectedOwner);
+      expect(ownerIndex).to.not.equal(-1);
+      expect(nftItemData.Owner[ownerIndex].Owner).to.be.deep.equal(normalizeAccountId(to));
+      expect(nftItemData.Owner[ownerIndex].Fraction).to.be.greaterThanOrEqual(value as number);
     }
   });
 }
@@ -1128,11 +1129,34 @@ export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collecti
   });
 }
 
-export async function addToWhiteListExpectFail(sender: IKeyringPair, collectionId: number, address: string | AccountId) {
+export async function addToWhiteListAgainExpectSuccess(sender: IKeyringPair, collectionId: number, address: string | AccountId) {
   await usingApi(async (api) => {
+
+    const whiteListedBefore = (await api.query.nft.whiteList(collectionId, address)).toJSON();
+
     // Run the transaction
     const tx = api.tx.nft.addToWhiteList(collectionId, normalizeAccountId(address));
-    const events = await expect(submitTransactionAsync(sender, tx)).to.be.rejected;
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    const whiteListedAfter = (await api.query.nft.whiteList(collectionId, address)).toJSON();
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.true;
+    // tslint:disable-next-line: no-unused-expression
+    expect(whiteListedBefore).to.be.true;
+    // tslint:disable-next-line: no-unused-expression
+    expect(whiteListedAfter).to.be.true;
+  });
+}
+
+export async function addToWhiteListExpectFail(sender: IKeyringPair, collectionId: number, address: string | AccountId) {
+  await usingApi(async (api) => {
+    
+    // Run the transaction
+    const tx = api.tx.nft.addToWhiteList(collectionId, normalizeAccountId(address));
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
     const result = getGenericResult(events);
 
     // What to expect

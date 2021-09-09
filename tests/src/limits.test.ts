@@ -305,7 +305,7 @@ describe('Collection zero limits (NFT)', () => {
   });
 });
 
-describe.only('Collection zero limits (Fungible)', () => {
+describe('Collection zero limits (Fungible)', () => {
   let Alice: IKeyringPair;
   let Bob: IKeyringPair;
   let Charlie: IKeyringPair;
@@ -336,7 +336,7 @@ describe.only('Collection zero limits (Fungible)', () => {
   });
 });
 
-describe.only('Collection zero limits (ReFungible)', () => {
+describe('Collection zero limits (ReFungible)', () => {
   let Alice: IKeyringPair;
   let Bob: IKeyringPair;
   let Charlie: IKeyringPair;

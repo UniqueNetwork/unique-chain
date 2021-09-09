@@ -87,7 +87,7 @@ decl_error! {
 		AdminNotFound,
 		/// Arithmetic calculation overflow.
 		NumOverflow,
-		/// Account already has admin role.
+		/// Account already has admin role. 10
 		AlreadyAdmin,
 		/// You do not own this collection.
 		NoPermission,
@@ -107,7 +107,7 @@ decl_error! {
 		TokenValueNotEnough,
 		/// Only approved addresses can call this method.
 		ApproveRequired,
-		/// Address is not in white list.
+		/// Address is not in white list. 20
 		AddresNotInWhiteList,
 		/// Number of collection admins bound exceeded.
 		CollectionAdminsLimitExceeded,
@@ -127,7 +127,7 @@ decl_error! {
 		NotReFungibleDataUsedToMintReFungibleCollectionToken,
 		/// Unexpected collection type.
 		UnexpectedCollectionType,
-		/// Can't store metadata in fungible tokens.
+		/// Can't store metadata in fungible tokens. 30
 		CantStoreMetadataInFungibleTokens,
 		/// Collection token limit exceeded
 		CollectionTokenLimitExceeded,
@@ -952,12 +952,12 @@ decl_module! {
 		/// * item_id: ID of NFT to burn.
 		#[weight = <SelfWeightOf<T>>::burn_item()]
 		#[transactional]
-		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
+		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, item_owner: T::CrossAccountId, value: u128) -> DispatchResult {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let target_collection = Self::get_collection(collection_id)?;
 
-			Self::burn_item_internal(&sender, &target_collection, item_id, value)?;
+			Self::burn_item_internal(&sender, &target_collection, item_id, &item_owner, value)?;
 
 			target_collection.submit_logs()
 		}
@@ -1349,21 +1349,14 @@ impl<T: Config> Module<T> {
 			Self::check_white_list(collection, spender)?;
 		}
 
-		collection.consume_sload()?;
-		let allowance: u128 = amount
-			.checked_add(<Allowances<T>>::get(
-				collection.id,
-				(item_id, sender.as_sub(), spender.as_sub()),
-			))
-			.ok_or(Error::<T>::NumOverflow)?;
 		if let Some(limit) = allowance_limit {
-			ensure!(limit >= allowance, Error::<T>::TokenValueTooLow);
+			ensure!(limit >= amount, Error::<T>::TokenValueTooLow);
 		}
 		collection.consume_sstore()?;
 		<Allowances<T>>::insert(
 			collection.id,
 			(item_id, sender.as_sub(), spender.as_sub()),
-			allowance,
+			amount,
 		);
 
 		if matches!(collection.mode, CollectionMode::NFT) {
@@ -1380,7 +1373,7 @@ impl<T: Config> Module<T> {
 			collection.log(ERC20Events::Approval {
 				owner: *sender.as_eth(),
 				spender: *spender.as_eth(),
-				value: allowance.into(),
+				value: amount.into(),
 			})?;
 		}
 
@@ -1389,7 +1382,7 @@ impl<T: Config> Module<T> {
 			item_id,
 			sender.clone(),
 			spender.clone(),
-			allowance,
+			amount,
 		));
 		Ok(())
 	}
@@ -1542,6 +1535,7 @@ impl<T: Config> Module<T> {
 		sender: &T::CrossAccountId,
 		collection: &CollectionHandle<T>,
 		item_id: TokenId,
+		item_owner: &T::CrossAccountId,
 		value: u128,
 	) -> DispatchResult {
 		ensure!(
@@ -1557,8 +1551,10 @@ impl<T: Config> Module<T> {
 
 		match collection.mode {
 			CollectionMode::NFT => Self::burn_nft_item(collection, item_id)?,
-			CollectionMode::Fungible(_) => Self::burn_fungible_item(sender, collection, value)?,
-			CollectionMode::ReFungible => Self::burn_refungible_item(collection, item_id, sender)?,
+			CollectionMode::Fungible(_) => Self::burn_fungible_item(collection, item_owner, value)?,
+			CollectionMode::ReFungible => {
+				Self::burn_refungible_item(collection, item_id, item_owner)?
+			}
 			_ => (),
 		};
 
@@ -1897,8 +1893,8 @@ impl<T: Config> Module<T> {
 	}
 
 	fn burn_fungible_item(
-		owner: &T::CrossAccountId,
 		collection: &CollectionHandle<T>,
+		owner: &T::CrossAccountId,
 		value: u128,
 	) -> DispatchResult {
 		let collection_id = collection.id;
