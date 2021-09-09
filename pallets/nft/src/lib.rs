@@ -43,7 +43,7 @@ use nft_data_structs::{
 	OFFCHAIN_SCHEMA_LIMIT, MAX_TOKEN_PREFIX_LENGTH, MAX_COLLECTION_NAME_LENGTH,
 	MAX_COLLECTION_DESCRIPTION_LENGTH, AccessMode, Collection, CreateItemData, CollectionLimits,
 	CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState, Ownership, NftItemType,
-	FungibleItemType, ReFungibleItemType,
+	MetaUpdatePermission, FungibleItemType, ReFungibleItemType,
 };
 
 #[cfg(test)]
@@ -145,6 +145,10 @@ decl_error! {
 		BadCreateRefungibleCall,
 		/// Gas limit exceeded
 		OutOfGas,
+		/// Metadata update denied by collection settings
+		MetadataUpdateDenied,
+		/// Metadata update flag become unmutable with None option
+		MetadataFlagFrozen,
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
 		/// Can't transfer tokens to ethereum zero address
@@ -541,6 +545,7 @@ decl_module! {
 				variable_on_chain_schema: Vec::new(),
 				const_on_chain_schema: Vec::new(),
 				limits,
+				meta_update_permission: MetaUpdatePermission::default(),
 				transfers_enabled: true,
 			};
 
@@ -937,6 +942,36 @@ decl_module! {
 			Self::check_owner_permissions(&target_collection, &sender)?;
 
 			target_collection.transfers_enabled = value;
+			target_collection.save()
+		}
+
+		// TODO! transaction weight
+		/// Set meta_update_permission value for particular collection
+		///
+		/// # Permissions
+		///
+		/// * Collection Owner.
+		///
+		/// # Arguments
+		///
+		/// * collection_id: ID of the collection.
+		///
+		/// * value: New flag value.
+		#[weight = <T as Config>::WeightInfo::burn_item()]
+		#[transactional]
+		pub fn set_meta_update_permission_flag(origin, collection_id: CollectionId, value: MetaUpdatePermission) -> DispatchResult {
+
+			let sender = ensure_signed(origin)?;
+			let mut target_collection = Self::get_collection(collection_id)?;
+
+			ensure!(
+				target_collection.meta_update_permission != MetaUpdatePermission::None,
+				Error::<T>::MetadataFlagFrozen
+			);
+			Self::check_owner_permissions(&target_collection, &sender)?;
+
+			target_collection.meta_update_permission = value;
+
 			target_collection.save()
 		}
 
@@ -1485,10 +1520,11 @@ impl<T: Config> Module<T> {
 			Error::<T>::TokenVariableDataLimitExceeded
 		);
 
-		// Modify permissions check
 		ensure!(
-			Self::is_item_owner(sender, collection, item_id)?
-				|| Self::is_owner_or_admin_permissions(collection, sender)?,
+			(Self::is_item_owner(sender, collection, item_id)?
+				&& collection.meta_update_permission == MetaUpdatePermission::ItemOwner)
+				|| (Self::is_owner_or_admin_permissions(collection, sender)?
+					&& collection.meta_update_permission == MetaUpdatePermission::Admin),
 			Error::<T>::NoPermission
 		);
 
@@ -1500,6 +1536,26 @@ impl<T: Config> Module<T> {
 			CollectionMode::Fungible(_) => fail!(Error::<T>::CantStoreMetadataInFungibleTokens),
 			_ => fail!(Error::<T>::UnexpectedCollectionType),
 		};
+
+		Ok(())
+	}
+
+	pub fn meta_update_check(
+		sender: &T::CrossAccountId,
+		collection: &CollectionHandle<T>,
+		item_id: TokenId,
+	) -> DispatchResult {
+		match collection.meta_update_permission {
+			MetaUpdatePermission::ItemOwner => ensure!(
+				Self::is_item_owner(sender, collection, item_id)?,
+				Error::<T>::NoPermission
+			),
+			MetaUpdatePermission::Admin => ensure!(
+				Self::is_owner_or_admin_permissions(collection, sender)?,
+				Error::<T>::NoPermission
+			),
+			MetaUpdatePermission::None => fail!(Error::<T>::MetadataUpdateDenied),
+		}
 
 		Ok(())
 	}
