@@ -1,0 +1,30 @@
+[Unit]
+Description=Westend Dave
+
+[Service]
+ExecStart=/opt/parity/polkadot \
+	--dave \
+	--validator \
+#        --ws-external \
+#        --rpc-external \
+#        --rpc-cors all \
+	--no-telemetry \
+        --base-path /var/local/westend/dave \
+        --chain /opt/parity/westend-local.json \
+        --execution Wasm \
+#       --listen-addr /ip4/127.0.0.1/tcp/9944/ws \
+#        --public-addr /ip4/92.53.69.98 \
+#	--discover-local \
+	--no-mdns \
+        --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWHp7JuDmdrv79mgdPxPa59PYLiXW2AkwXqAXQa71i1gje \
+                /ip4/127.0.0.1/tcp/30335/p2p/12D3KooWRqnBJPpKntaKmqoDJLxgGR11tconzYLewaeGz2saiXhw \
+                /ip4/127.0.0.1/tcp/30334/p2p/12D3KooWRydSwsbQbfBN71DFXxmYt5GHmrVebRmUv9mPU91U3FPE \
+	--port 30336 \
+	--rpc-port 9876 \
+	--ws-port 9877
+
+Restart=always
+RestartSec=120
+
+[Install]
+WantedBy=multi-user.target

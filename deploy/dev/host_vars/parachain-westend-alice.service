@@ -1,0 +1,31 @@
+[Unit]
+Description=Parachain Alice @ Westend Local
+
+[Service]
+ExecStart=/opt/usetech/nft \
+    --alice \
+    --collator \
+    --force-authoring \
+    --base-path /var/local/nft-parachain/westend/alice \
+    --parachain-id 2000 \
+    --port 40333 \
+    --rpc-port 9933 \
+    --ws-port 9944 \
+    --chain westend-local \
+    --discover-local \
+    -- --execution wasm \
+    --chain /opt/parity/westend-local.json \
+    --port 31200 \
+#    --rpc-port 9933 \
+#    --ws-port 9944 \
+    --no-mdns \
+    --bootnodes /ip4/127.0.0.1/tcp/30336/p2p/12D3KooWR76geqit8nMJtQYuLXNy4oHDVJZdsPLNjTmWhL4TeijW \
+                /ip4/127.0.0.1/tcp/30335/p2p/12D3KooWRqnBJPpKntaKmqoDJLxgGR11tconzYLewaeGz2saiXhw \
+                /ip4/127.0.0.1/tcp/30334/p2p/12D3KooWRydSwsbQbfBN71DFXxmYt5GHmrVebRmUv9mPU91U3FPE \
+		/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWHp7JuDmdrv79mgdPxPa59PYLiXW2AkwXqAXQa71i1gje 
+    
+Restart=always
+RestartSec=120
+
+[Install]
+WantedBy=multi-user.target

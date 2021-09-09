@@ -1,0 +1,30 @@
+[Unit]
+Description=Westend Charlie
+
+[Service]
+ExecStart=/opt/parity/polkadot \
+	--charlie \
+	--validator \
+#        --ws-external \
+#        --rpc-external \
+#        --rpc-cors all \
+	--no-telemetry \
+        --base-path /var/local/westend/charlie \
+        --chain /opt/parity/westend-local.json \
+        --execution Wasm \
+#       --listen-addr /ip4/127.0.0.1/tcp/9944/ws \
+#        --public-addr /ip4/92.53.69.98 \
+#	--discover-local \
+	--no-mdns \
+	--bootnodes /ip4/127.0.0.1/tcp/30336/p2p/12D3KooWR76geqit8nMJtQYuLXNy4oHDVJZdsPLNjTmWhL4TeijW \
+                /ip4/127.0.0.1/tcp/30334/p2p/12D3KooWRydSwsbQbfBN71DFXxmYt5GHmrVebRmUv9mPU91U3FPE \
+                /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWHp7JuDmdrv79mgdPxPa59PYLiXW2AkwXqAXQa71i1gje \
+	--port 30335 \
+	--rpc-port 9865 \
+	--ws-port 9866
+
+Restart=always
+RestartSec=120
+
+[Install]
+WantedBy=multi-user.target
