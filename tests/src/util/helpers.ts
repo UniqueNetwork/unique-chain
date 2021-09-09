@@ -1194,3 +1194,20 @@ export async function queryCollectionExpectSuccess(collectionId: number): Promis
 export async function queryNftOwner(api: ApiPromise, collectionId: number, tokenId: number): Promise<CrossAccountId> {
   return normalizeAccountId((await api.query.nft.nftItemList(collectionId, tokenId) as any).toJSON().Owner);
 }
+
+export async function waitNewBlocks(blocksCount = 1): Promise<void> {
+  await usingApi(async (api) => {
+    const promise = new Promise<void>(async (resolve) => {
+
+      const unsubscribe = await api.rpc.chain.subscribeNewHeads(() => {
+        if (blocksCount > 0) {
+          blocksCount--;
+        } else {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+    return promise;
+  });
+}

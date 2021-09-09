@@ -5,6 +5,8 @@ import privateKey from '../substrate/privateKey';
 import usingApi, { submitTransactionAsync, submitTransactionExpectFailAsync } from '../substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
+  normalizeAccountId,
+  waitNewBlocks,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -36,29 +38,28 @@ describe('Admin limit exceeded collection: ', () => {
       const chainAdminLimit = (api.consts.nft.collectionAdminsLimit as any).toNumber();
       expect(chainAdminLimit).to.be.equal(5);
 
-      const changeAdminTx1 = api.tx.nft.addCollectionAdmin(collectionId, Eve.address);
+      const changeAdminTx1 = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Eve.address));
       await submitTransactionAsync(Alice, changeAdminTx1);
-      const changeAdminTx2 = api.tx.nft.addCollectionAdmin(collectionId, Dave.address);
+      const changeAdminTx2 = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Dave.address));
       await submitTransactionAsync(Alice, changeAdminTx2);
-      const changeAdminTx3 = api.tx.nft.addCollectionAdmin(collectionId, Bob.address);
+      const changeAdminTx3 = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx3);
 
-      const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
-      const addAdmOne = api.tx.nft.addCollectionAdmin(collectionId, Ferdie.address);
-      const addAdmTwo = api.tx.nft.addCollectionAdmin(collectionId, Charlie.address);
+      const addAdmOne = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Ferdie.address));
+      const addAdmTwo = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Charlie.address));
       await Promise.all([
         addAdmOne.signAndSend(Bob),
         addAdmTwo.signAndSend(Alice),
       ]);
-      await timeoutPromise(10000);
-      const changeAdminTx4 = api.tx.nft.addCollectionAdmin(collectionId, Alice.address);
+      await waitNewBlocks(2);
+      const changeAdminTx4 = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Alice.address));
       await expect(submitTransactionExpectFailAsync(Alice, changeAdminTx4)).to.be.rejected;
 
       const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
-      expect(adminListAfterAddAdmin).to.be.contains(Eve.address);
-      expect(adminListAfterAddAdmin).to.be.contains(Ferdie.address);
-      expect(adminListAfterAddAdmin).not.to.be.contains(Alice.address);
-      await timeoutPromise(20000);
+      expect(adminListAfterAddAdmin).to.be.contains(normalizeAccountId(Eve.address));
+      expect(adminListAfterAddAdmin).to.be.contains(normalizeAccountId(Ferdie.address));
+      expect(adminListAfterAddAdmin).not.to.be.contains(normalizeAccountId(Alice.address));
+      await waitNewBlocks(2);
     });
   });
 });
