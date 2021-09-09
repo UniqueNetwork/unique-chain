@@ -96,12 +96,12 @@ pub fn development_config(id: ParaId) -> ChainSpec {
 	)
 }
 
-pub fn local_testnet_config(id: ParaId) -> ChainSpec {
+pub fn rococo_local_testnet_config(id: ParaId) -> ChainSpec {
 	ChainSpec::from_genesis(
 		// Name
-		"Local Testnet",
+		"Unique Testnet @ Rococo Local",
 		// ID
-		"local_testnet",
+		"unique_testnet_rococo",
 		ChainType::Local,
 		move || {
 			testnet_genesis(
@@ -140,6 +140,63 @@ pub fn local_testnet_config(id: ParaId) -> ChainSpec {
 		// Extensions
 		Extensions {
 			relay_chain: "rococo-local".into(),
+			para_id: id.into(),
+		},
+	)
+}
+
+pub fn westend_local_testnet_config(id: ParaId) -> ChainSpec {
+	let mut properties = Map::new();
+	properties.insert("tokenSymbol".into(), "OPLW".into());
+	properties.insert("tokenDecimals".into(), 15.into());
+	properties.insert("ss58Format".into(), 42.into()); // Generic Substrate wildcard (SS58 checksum preimage)
+	
+	ChainSpec::from_genesis(
+		// Name
+		"Unique Testnet @ Westend Local",
+		// ID
+		"unique_testnet_westend",
+		ChainType::Local,
+		move || {
+			testnet_genesis(
+				// Sudo account
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				vec![
+					get_from_seed::<AuraId>("Alice"),
+					get_from_seed::<AuraId>("Bob"),
+					get_from_seed::<AuraId>("Charlie"),
+					get_from_seed::<AuraId>("Dave"),
+					get_from_seed::<AuraId>("Eve"),
+				],
+				// Pre-funded accounts
+				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<sr25519::Public>("Dave"),
+					get_account_id_from_seed::<sr25519::Public>("Eve"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+				],
+				id,
+			)
+		},
+		// Bootnodes
+		vec![],
+		// Telemetry
+		None,
+		// Protocol ID
+		None,
+		// Properties
+		Some(properties),
+		// Extensions
+		Extensions {
+			relay_chain: "westend-local".into(),
 			para_id: id.into(),
 		},
 	)
