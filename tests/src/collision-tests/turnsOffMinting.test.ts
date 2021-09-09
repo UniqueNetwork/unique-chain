@@ -8,6 +8,7 @@ import {
   createCollectionExpectSuccess,
   setMintPermissionExpectSuccess,
   normalizeAccountId,
+  waitNewBlocks,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -27,7 +28,6 @@ describe('Turns off minting mode: ', () => {
   it('The collection owner turns off minting mode and there are minting transactions in the same block ', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
       await setMintPermissionExpectSuccess(Alice, collectionId, true);
       await addToWhiteListExpectSuccess(Alice, collectionId, Ferdie.address);
 
@@ -41,7 +41,7 @@ describe('Turns off minting mode: ', () => {
       itemList = (await (api.query.nft.nftItemList(collectionId, mintItem))).toJSON() as boolean;
       // tslint:disable-next-line: no-unused-expression
       expect(itemList).to.be.null;
-      await timeoutPromise(20000);
+      await waitNewBlocks(2);
     });
   });
 });

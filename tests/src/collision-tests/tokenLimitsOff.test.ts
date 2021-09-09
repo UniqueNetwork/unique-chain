@@ -10,6 +10,7 @@ import {
   getCreateItemResult,
   setMintPermissionExpectSuccess,
   normalizeAccountId,
+  waitNewBlocks,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -57,8 +58,7 @@ describe('Token limit exceeded collection: ', () => {
       const subTxTesult = getCreateItemResult(subTx);
       // tslint:disable-next-line:no-unused-expression
       expect(subTxTesult.success).to.be.true;
-      const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
-      await timeoutPromise(20000);
+      await waitNewBlocks(2);
 
       const args = [{ nft: ['0x31', '0x31'] }, { nft: ['0x32', '0x32'] }, { nft: ['0x33', '0x33'] }];
       const mintItemOne = api.tx.nft
@@ -69,11 +69,11 @@ describe('Token limit exceeded collection: ', () => {
         mintItemOne.signAndSend(Ferdie),
         mintItemTwo.signAndSend(Bob),
       ]);
-      await timeoutPromise(20000);
+      await waitNewBlocks(2);
       const itemsListIndexAfter = await api.query.nft.itemListIndex(collectionId) as unknown as BN;
       expect(itemsListIndexAfter.toNumber()).to.be.equal(3);
       // TokenLimit = 4. The first transaction is successful. The second should fail.
-      await timeoutPromise(20000);
+      await waitNewBlocks(2);
     });
   });
 });

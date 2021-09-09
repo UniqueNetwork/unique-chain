@@ -7,6 +7,7 @@ import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
   normalizeAccountId,
+  waitNewBlocks,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -28,8 +29,7 @@ describe('Deprivation of admin rights: ', () => {
       const collectionId = await createCollectionExpectSuccess();
       const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx);
-      const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
-      await timeoutPromise(10000);
+      await waitNewBlocks(1);
       const args = [{ nft: ['0x31', '0x31'] }, { nft: ['0x32', '0x32'] }, { nft: ['0x33', '0x33'] }];
       const addItemAdm = api.tx.nft.createMultipleItems(collectionId, normalizeAccountId(Bob.address), args);
       const removeAdm = api.tx.nft.removeCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
@@ -37,12 +37,12 @@ describe('Deprivation of admin rights: ', () => {
         addItemAdm.signAndSend(Bob),
         removeAdm.signAndSend(Alice),
       ]);
-      await timeoutPromise(20000);
+      await waitNewBlocks(2);
       const itemsListIndex = await api.query.nft.itemListIndex(collectionId) as unknown as BN;
       expect(itemsListIndex.toNumber()).to.be.equal(0);
       const adminList: any = (await api.query.nft.adminList(collectionId));
       expect(adminList).not.to.be.contains(normalizeAccountId(Bob.address));
-      await timeoutPromise(20000);
+      await waitNewBlocks(2);
     });
   });
 });

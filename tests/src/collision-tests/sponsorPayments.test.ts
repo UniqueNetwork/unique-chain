@@ -11,6 +11,7 @@ import {
   createItemExpectSuccess,
   setCollectionSponsorExpectSuccess,
   normalizeAccountId,
+  waitNewBlocks,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -32,7 +33,6 @@ describe('Payment of commission if one block: ', () => {
       const collectionId = await createCollectionExpectSuccess();
       const changeAdminTxBob = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTxBob);
-      const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
       const itemId = await createItemExpectSuccess(Bob, collectionId, 'NFT');
       await setCollectionSponsorExpectSuccess(collectionId, Bob.address);
       await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
@@ -49,7 +49,7 @@ describe('Payment of commission if one block: ', () => {
       expect(alicesBalanceAfter === alicesBalanceBefore).to.be.true;
       // tslint:disable-next-line:no-unused-expression
       expect(bobsBalanceAfter === bobsBalanceBefore).to.be.true;
-      await timeoutPromise(20000);
+      await waitNewBlocks(2);
     });
   });
 });
