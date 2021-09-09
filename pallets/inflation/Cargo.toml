@@ -43,44 +43,44 @@ version = '2.0.0'
 default-features = false
 optional = true
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.9'
+version = '4.0.0-dev'
 
 [dependencies.frame-support]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.9'
+version = '4.0.0-dev'
 
 [dependencies.frame-system]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.9'
+version = '4.0.0-dev'
 
 [dependencies.pallet-balances]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.9'
+version = '4.0.0-dev'
 
 [dependencies.pallet-timestamp]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.9'
+version = '4.0.0-dev'
 
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.9'
+version = '4.0.0-dev'
 
 [dependencies.sp-std]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.9'
+version = '4.0.0-dev'
 
 [dependencies.serde]
 default-features = false
@@ -90,18 +90,17 @@ version = '1.0.119'
 [dependencies.sp-runtime]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.9'
+version = '4.0.0-dev'
 
 [dependencies.sp-core]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.9'
+version = '4.0.0-dev'
 
 [dependencies.sp-io]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
-
+branch = 'polkadot-v0.9.9'
+version = '4.0.0-dev'

@@ -8,7 +8,7 @@ use crate::{
 };
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
-use sp_std::vec::Vec;
+use sp_std::{convert::TryInto, vec::Vec};
 
 struct ContractHelpers<T: Config>(SubstrateRecorder<T>);
 
@@ -48,6 +48,13 @@ impl<T: Config> ContractHelpers<T> {
 		self.0.consume_sstore()?;
 		<Pallet<T>>::set_sponsoring_rate_limit(contract_address, rate_limit.into());
 		Ok(())
+	}
+
+	fn get_sponsoring_rate_limit(&self, contract_address: address) -> Result<uint32> {
+		self.0.consume_sload()?;
+		Ok(<SponsoringRateLimit<T>>::get(contract_address)
+			.try_into()
+			.map_err(|_| "rate limit > u32::MAX")?)
 	}
 
 	fn allowed(&self, contract_address: address, user: address) -> Result<bool> {
