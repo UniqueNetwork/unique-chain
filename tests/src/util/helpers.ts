@@ -525,6 +525,28 @@ export async function confirmSponsorshipExpectFailure(collectionId: number, send
   });
 }
 
+export async function setMetadataUpdatePermissionFlagExpectSuccess(sender: IKeyringPair, collectionId: number, flag: string) {
+
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.setMetaUpdatePermissionFlag(collectionId, flag); 
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  }); 
+}
+
+export async function setMetadataUpdatePermissionFlagExpectFailure(sender: IKeyringPair, collectionId: number, flag: string) {
+
+  await usingApi(async (api) => {
+    const tx = api.tx.nft.setMetaUpdatePermissionFlag(collectionId, flag); 
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.false;
+  }); 
+}
+
 export async function enableContractSponsoringExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, enable: boolean) {
   await usingApi(async (api) => {
     const tx = api.tx.nft.enableContractSponsoring(contractAddress, enable);
@@ -1171,4 +1193,21 @@ export async function queryCollectionExpectSuccess(collectionId: number): Promis
 
 export async function queryNftOwner(api: ApiPromise, collectionId: number, tokenId: number): Promise<CrossAccountId> {
   return normalizeAccountId((await api.query.nft.nftItemList(collectionId, tokenId) as any).toJSON().Owner);
+}
+
+export async function waitNewBlocks(blocksCount = 1): Promise<void> {
+  await usingApi(async (api) => {
+    const promise = new Promise<void>(async (resolve) => {
+
+      const unsubscribe = await api.rpc.chain.subscribeNewHeads(() => {
+        if (blocksCount > 0) {
+          blocksCount--;
+        } else {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+    return promise;
+  });
 }

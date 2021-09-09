@@ -257,7 +257,7 @@ cd tests && yarn eslint --ext .ts,.js src/
 Uncomment following lies:
 1. In node/rpc/Cargo.toml
 ```
-# pallet-contracts-rpc = { version = "3.0", git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
+# pallet-contracts-rpc = { version = "3.0", git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.9' }
 ```
 
 2. In node/rpc/src/lib.rs
@@ -280,19 +280,19 @@ Uncomment following lies:
     # [dependencies.pallet-contracts]
     # git = 'https://github.com/paritytech/substrate.git'
     # default-features = false
-    # branch = 'polkadot-v0.9.8'
+    # branch = 'polkadot-v0.9.9'
     # version = '3.0.0'
 
     # [dependencies.pallet-contracts-primitives]
     # git = 'https://github.com/paritytech/substrate.git'
     # default-features = false
-    # branch = 'polkadot-v0.9.8'
+    # branch = 'polkadot-v0.9.9'
     # version = '3.0.0'
 
     # [dependencies.pallet-contracts-rpc-runtime-api]
     # git = 'https://github.com/paritytech/substrate.git'
     # default-features = false
-    # branch = 'polkadot-v0.9.8'
+    # branch = 'polkadot-v0.9.9'
     # version = '3.0.0'
 ...
     # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }

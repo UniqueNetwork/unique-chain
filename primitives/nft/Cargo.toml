@@ -9,14 +9,17 @@ repository = 'https://github.com/clover-network/clover'
 version = '0.9.0'
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "2.2.0", default-features = false, features = ['derive'] }
-serde = { version = "1.0.119", features = ['derive'], default-features = false, optional = true }
-max-encoded-len = { default-features = false, features = ['derive'], version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
-frame-support = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
-frame-system = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
-sp-core = { version = "3.0.0", default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
-sp-std = { version = "3.0.0", default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
-sp-runtime = { version = "3.0.0", default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
+codec = { package = "parity-scale-codec", version = "2.2.0", default-features = false, features = [
+  'derive',
+] }
+serde = { version = "1.0.119", features = [
+  'derive',
+], default-features = false, optional = true }
+frame-support = { default-features = false, version = '4.0.0-dev', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.9' }
+frame-system = { default-features = false, version = '4.0.0-dev', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.9' }
+sp-core = { version = "4.0.0-dev", default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.9' }
+sp-std = { version = "4.0.0-dev", default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.9' }
+sp-runtime = { version = "4.0.0-dev", default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.9' }
 derivative = "2.2.0"
 
 [features]
@@ -25,7 +28,6 @@ std = [
   "serde1",
   "serde/std",
   "codec/std",
-  "max-encoded-len/std",
   "frame-system/std",
   "frame-support/std",
   "sp-runtime/std",
