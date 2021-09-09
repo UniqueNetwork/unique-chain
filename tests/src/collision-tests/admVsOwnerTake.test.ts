@@ -7,6 +7,7 @@ import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
   normalizeAccountId,
+  waitNewBlocks,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -30,7 +31,6 @@ describe('Admin vs Owner take token: ', () => {
       const collectionId = await createCollectionExpectSuccess();
       const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx);
-      const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
       const itemId = await createItemExpectSuccess(Bob, collectionId, 'NFT');
       //
       const sendItem = api.tx.nft.transfer(normalizeAccountId(Ferdie.address), collectionId, itemId, 1);
@@ -39,12 +39,12 @@ describe('Admin vs Owner take token: ', () => {
         sendItem.signAndSend(Bob),
         burnItem.signAndSend(Alice),
       ]);
-      await timeoutPromise(20000);
+      await waitNewBlocks(2);
       let itemBurn = false;
       itemBurn = (await (api.query.nft.nftItemList(collectionId, itemId))).toJSON() as boolean;
       // tslint:disable-next-line: no-unused-expression
       expect(itemBurn).to.be.null;
-      await timeoutPromise(20000);
+      await waitNewBlocks(2);
     });
   });
 });

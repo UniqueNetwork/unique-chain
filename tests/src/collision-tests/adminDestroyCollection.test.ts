@@ -6,6 +6,7 @@ import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
   normalizeAccountId,
+  waitNewBlocks,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -29,8 +30,7 @@ describe('Deleting a collection while add address to whitelist: ', () => {
       const collectionId = await createCollectionExpectSuccess();
       const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx);
-      const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
-      await timeoutPromise(10000);
+      await waitNewBlocks(1);
       //
       const addWhitelistAdm = api.tx.nft.addToWhiteList(collectionId, normalizeAccountId(Ferdie.address));
       const destroyCollection = api.tx.nft.destroyCollection(collectionId);
@@ -38,12 +38,12 @@ describe('Deleting a collection while add address to whitelist: ', () => {
         addWhitelistAdm.signAndSend(Bob),
         destroyCollection.signAndSend(Alice),
       ]);
-      await timeoutPromise(10000);
+      await waitNewBlocks(1);
       let whiteList = false;
       whiteList = (await api.query.nft.whiteList(collectionId, Ferdie.address)).toJSON() as boolean;
       // tslint:disable-next-line: no-unused-expression
       expect(whiteList).to.be.false;
-      await timeoutPromise(20000);
+      await waitNewBlocks(2);
     });
   });
 });

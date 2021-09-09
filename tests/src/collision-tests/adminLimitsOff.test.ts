@@ -7,6 +7,7 @@ import usingApi, { submitTransactionAsync, submitTransactionExpectFailAsync } fr
 import {
   createCollectionExpectSuccess,
   normalizeAccountId,
+  waitNewBlocks,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -45,14 +46,13 @@ describe('Admin limit exceeded collection: ', () => {
       const changeAdminTx3 = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx3);
 
-      const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
       const addAdmOne = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Ferdie.address));
       const addAdmTwo = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Charlie.address));
       await Promise.all([
         addAdmOne.signAndSend(Bob),
         addAdmTwo.signAndSend(Alice),
       ]);
-      await timeoutPromise(20000);
+      await waitNewBlocks(2);
       const changeAdminTx4 = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Alice.address));
       await expect(submitTransactionExpectFailAsync(Alice, changeAdminTx4)).to.be.rejected;
 
@@ -60,7 +60,7 @@ describe('Admin limit exceeded collection: ', () => {
       expect(adminListAfterAddAdmin).to.be.contains(normalizeAccountId(Eve.address));
       expect(adminListAfterAddAdmin).to.be.contains(normalizeAccountId(Ferdie.address));
       expect(adminListAfterAddAdmin).not.to.be.contains(normalizeAccountId(Alice.address));
-      await timeoutPromise(20000);
+      await waitNewBlocks(2);
     });
   });
 });
