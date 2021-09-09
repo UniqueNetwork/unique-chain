@@ -63,6 +63,7 @@
       "Limits": "CollectionLimits",
       "VariableOnChainSchema": "Vec<u8>",
       "ConstOnChainSchema": "Vec<u8>",
+      "MetaUpdatePermission": "MetaUpdatePermission",
       "TransfersEnabled": "bool"
     },
     "RawData": "Vec<u8>",
@@ -92,6 +93,13 @@
       "_enum": [
         "ImageURL",
         "Unique"
+      ]
+    },
+    "MetaUpdatePermission": {
+      "_enum": [
+        "ItemOwner",
+        "Admin",
+        "None"      
       ]
     },
     "CollectionId": "u32",
