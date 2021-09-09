@@ -5,6 +5,7 @@ import privateKey from '../substrate/privateKey';
 import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
+  normalizeAccountId,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -26,12 +27,12 @@ describe('Deleting a collection while add address to whitelist: ', () => {
   it('Adding an address to the collection whitelist in a block by the admin, and deleting the collection by the owner ', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, Bob.address);
+      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx);
       const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
       await timeoutPromise(10000);
       //
-      const addWhitelistAdm = api.tx.nft.addToWhiteList(collectionId, Ferdie.address);
+      const addWhitelistAdm = api.tx.nft.addToWhiteList(collectionId, normalizeAccountId(Ferdie.address));
       const destroyCollection = api.tx.nft.destroyCollection(collectionId);
       await Promise.all([
         addWhitelistAdm.signAndSend(Bob),

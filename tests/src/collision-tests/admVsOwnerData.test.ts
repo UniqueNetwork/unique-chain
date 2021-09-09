@@ -6,6 +6,7 @@ import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
+  normalizeAccountId,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -26,7 +27,7 @@ describe('Admin vs Owner changes the data in the token: ', () => {
       const AliceData = 1;
       const BobData = 2;
       const collectionId = await createCollectionExpectSuccess();
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, Bob.address);
+      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx);
       const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
       const itemId = await createItemExpectSuccess(Bob, collectionId, 'NFT');

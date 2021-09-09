@@ -7,6 +7,7 @@ import {
   addToWhiteListExpectSuccess,
   createCollectionExpectSuccess,
   setMintPermissionExpectSuccess,
+  normalizeAccountId,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -30,7 +31,7 @@ describe('Turns off minting mode: ', () => {
       await setMintPermissionExpectSuccess(Alice, collectionId, true);
       await addToWhiteListExpectSuccess(Alice, collectionId, Ferdie.address);
 
-      const mintItem = api.tx.nft.createItem(collectionId, Ferdie.address, 'NFT');
+      const mintItem = api.tx.nft.createItem(collectionId, normalizeAccountId(Ferdie.address), 'NFT');
       const offMinting = api.tx.nft.setMintPermission(collectionId, false);
       await Promise.all([
         mintItem.signAndSend(Ferdie),

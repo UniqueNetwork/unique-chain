@@ -6,6 +6,7 @@ import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
+  normalizeAccountId,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -27,18 +28,18 @@ describe('Admin vs Owner take token: ', () => {
   it('The collection admin burns the token and in the same block the token owner performs a transaction on it ', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, Bob.address);
+      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx);
       const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
       const itemId = await createItemExpectSuccess(Bob, collectionId, 'NFT');
       //
-      const sendItem = api.tx.nft.transfer(Ferdie.address, collectionId, itemId, 1);
+      const sendItem = api.tx.nft.transfer(normalizeAccountId(Ferdie.address), collectionId, itemId, 1);
       const burnItem = api.tx.nft.burnItem(collectionId, itemId, 1);
       await Promise.all([
         sendItem.signAndSend(Bob),
         burnItem.signAndSend(Alice),
       ]);
-      await timeoutPromise(10000);
+      await timeoutPromise(20000);
       let itemBurn = false;
       itemBurn = (await (api.query.nft.nftItemList(collectionId, itemId))).toJSON() as boolean;
       // tslint:disable-next-line: no-unused-expression

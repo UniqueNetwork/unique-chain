@@ -4,8 +4,13 @@ import chaiAsPromised from 'chai-as-promised';
 import privateKey from '../substrate/privateKey';
 import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
 import {
+  addCollectionAdminExpectSuccess,
+  approveExpectSuccess,
   createCollectionExpectSuccess,
   createItemExpectSuccess,
+  transferFromExpectSuccess,
+  transferExpectSuccess,
+  normalizeAccountId,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -25,18 +30,19 @@ before(async () => {
 describe('Admin vs Owner changes token: ', () => {
   // tslint:disable-next-line: max-line-length
   it('The collection admin changes the owner of the token and in the same block the current owner transfers the token to another address ', async () => {
+    
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const changeAdminTxBob = api.tx.nft.addCollectionAdmin(collectionId, Bob.address);
+      const changeAdminTxBob = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTxBob);
       const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
-      const changeAdminTxFerdie = api.tx.nft.addCollectionAdmin(collectionId, Ferdie.address);
+      const changeAdminTxFerdie = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Ferdie.address));
       await submitTransactionAsync(Bob, changeAdminTxFerdie);
       const itemId = await createItemExpectSuccess(Ferdie, collectionId, 'NFT');
-      //
-      const changeOwner = api.tx.nft.transferFrom(Ferdie.address, Bob.address, collectionId, itemId, 1);
-      const approve = api.tx.nft.approve(Bob.address, collectionId, itemId, 1);
-      const sendItem = api.tx.nft.transfer(Alice.address, collectionId, itemId, 1);
+      
+      const changeOwner = api.tx.nft.transferFrom(normalizeAccountId(Ferdie.address), normalizeAccountId(Bob.address), collectionId, itemId, 1);
+      const approve = api.tx.nft.approve(normalizeAccountId(Bob.address), collectionId, itemId, 1);
+      const sendItem = api.tx.nft.transfer(normalizeAccountId(Alice.address), collectionId, itemId, 1);
       await Promise.all([
         changeOwner.signAndSend(Alice),
         approve.signAndSend(Bob),
