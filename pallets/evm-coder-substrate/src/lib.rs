@@ -60,9 +60,9 @@ pub mod pallet {
 			.saturating_add((topics as u64).saturating_mul(G_LOGTOPIC))
 	}
 
-	pub fn generate_transaction() -> ethereum::Transaction {
-		use ethereum::{Transaction, TransactionAction, TransactionSignature};
-		Transaction {
+	pub fn generate_transaction() -> ethereum::TransactionV0 {
+		use ethereum::{TransactionV0, TransactionAction, TransactionSignature};
+		TransactionV0 {
 			nonce: 0.into(),
 			gas_price: 0.into(),
 			gas_limit: 0.into(),

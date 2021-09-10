@@ -41,7 +41,7 @@ use sc_client_api::BlockchainEvents;
 // Frontier Imports
 use fc_rpc_core::types::FilterPool;
 use fc_rpc_core::types::PendingTransactions;
-use fc_mapping_sync::MappingSyncWorker;
+use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
 // Runtime type overrides
 type BlockNumber = u32;
@@ -96,7 +96,7 @@ pub fn new_partial<BIQ>(
 		FullClient,
 		FullBackend,
 		FullSelectChain,
-		sp_consensus::DefaultImportQueue<Block, FullClient>,
+		sc_consensus::DefaultImportQueue<Block, FullClient>,
 		sc_transaction_pool::FullPool<Block, FullClient>,
 		(
 			Option<Telemetry>,
@@ -116,7 +116,7 @@ where
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
-	) -> Result<sp_consensus::DefaultImportQueue<Block, FullClient>, sc_service::Error>,
+	) -> Result<sc_consensus::DefaultImportQueue<Block, FullClient>, sc_service::Error>,
 {
 	let _telemetry = config
 		.telemetry_endpoints
@@ -216,7 +216,7 @@ where
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
-	) -> Result<sp_consensus::DefaultImportQueue<Block, FullClient>, sc_service::Error>,
+	) -> Result<sc_consensus::DefaultImportQueue<Block, FullClient>, sc_service::Error>,
 	BIC: FnOnce(
 		Arc<FullClient>,
 		Option<&Registry>,
@@ -266,6 +266,7 @@ where
 	let transaction_pool = params.transaction_pool.clone();
 	let mut task_manager = params.task_manager;
 	let import_queue = cumulus_client_service::SharedImportQueue::new(params.import_queue);
+
 	let (network, system_rpc_tx, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
@@ -275,6 +276,7 @@ where
 			import_queue: import_queue.clone(),
 			on_demand: None,
 			block_announce_validator_builder: Some(Box::new(|_| block_announce_validator)),
+			warp_sync: None,
 		})?;
 
 	let subscription_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
@@ -302,7 +304,10 @@ where
 			max_past_logs: 10000,
 		};
 
-		nft_rpc::create_full::<_, _, _, RuntimeApi, _>(full_deps, subscription_executor.clone())
+		Ok(nft_rpc::create_full::<_, _, _, RuntimeApi, _>(
+			full_deps,
+			subscription_executor.clone(),
+		))
 	});
 
 	task_manager.spawn_essential_handle().spawn(
@@ -313,6 +318,7 @@ where
 			client.clone(),
 			backend.clone(),
 			frontier_backend.clone(),
+			SyncStrategy::Normal,
 		)
 		.for_each(|()| futures::future::ready(())),
 	);
@@ -388,7 +394,7 @@ pub fn parachain_build_import_queue(
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
-) -> Result<sp_consensus::DefaultImportQueue<Block, FullClient>, sc_service::Error> {
+) -> Result<sc_consensus::DefaultImportQueue<Block, FullClient>, sc_service::Error> {
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
 	cumulus_client_consensus_aura::import_queue::<
