@@ -13,7 +13,7 @@ import {
   itWeb3 } from './util/helpers';
 import waitNewBlocks from '../substrate/wait-new-blocks';
 
-describe.only('Sponsoring EVM contracts', () => {
+describe('Sponsoring EVM contracts', () => {
   itWeb3('Sponsoring can be set by the address that has deployed the contract', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
     const flipper = await deployFlipper(web3, owner);
@@ -186,7 +186,8 @@ describe.only('Sponsoring EVM contracts', () => {
     expect(await web3.eth.getBalance(caller)).to.be.not.equals(originalCallerBalance);
   });
 
-  itWeb3('Sponsoring can be set by the address that has deployed the contract', async ({api, web3}) => {
+  // TODO: Find a way to calculate default rate limit 
+  itWeb3('Default rate limit equals 7200', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
     const flipper = await deployFlipper(web3, owner);
     await waitNewBlocks(api, 1);
