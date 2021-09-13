@@ -1122,6 +1122,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
 			let collection = Self::get_collection(collection_id)?;
+			Self::meta_update_check(&sender, &collection, item_id)?;
 
 			Self::set_variable_meta_data_internal(&sender, &collection, item_id, data)?;
 

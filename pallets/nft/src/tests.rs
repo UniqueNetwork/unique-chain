@@ -1789,7 +1789,7 @@ fn owned_tokens_bound_neg() {
 		let data = default_nft_data();
 		assert_noop!(
 			TemplateModule::create_item(origin1, 1, account(1), data.into()),
-			Error::<Test>::AddressOwnershipLimitExceeded
+			Error::<Test>::AccountTokenLimitExceeded
 		);
 	});
 }
@@ -2016,11 +2016,11 @@ fn set_variable_meta_data_on_nft_with_item_owner_permission_flag() {
 		let data = default_nft_data();
 		create_test_item(1, &data.into());
 
-		TemplateModule::set_meta_update_permission_flag(
+		assert_ok!(TemplateModule::set_meta_update_permission_flag(
 			origin1.clone(),
 			collection_id,
 			MetaUpdatePermission::ItemOwner,
-		);
+		));
 
 		let variable_data = b"ten chars.".to_vec();
 		assert_ok!(TemplateModule::set_variable_meta_data(
@@ -2041,6 +2041,124 @@ fn set_variable_meta_data_on_nft_with_item_owner_permission_flag() {
 
 #[test]
 fn set_variable_meta_data_on_nft_with_item_owner_permission_flag_neg() {
+	new_test_ext().execute_with(|| {
+		let collection_id = create_test_collection_for_owner(&CollectionMode::NFT, 1, 1);
+
+		let origin1 = Origin::signed(1);
+
+		assert_ok!(TemplateModule::set_mint_permission(
+			origin1.clone(),
+			collection_id,
+			true
+		));
+		assert_ok!(TemplateModule::add_to_white_list(
+			origin1.clone(),
+			collection_id,
+			account(1)
+		));
+
+		let data = default_nft_data();
+		create_test_item(1, &data.into());
+
+		assert_ok!(TemplateModule::set_meta_update_permission_flag(
+			origin1.clone(),
+			collection_id,
+			MetaUpdatePermission::ItemOwner,
+		));
+
+		let variable_data = b"1234567890123".to_vec();
+		assert_noop!(
+			TemplateModule::set_variable_meta_data(
+				origin1,
+				collection_id,
+				1,
+				variable_data.clone()
+			),
+			Error::<Test>::TokenVariableDataLimitExceeded
+		);
+	})
+}
+
+#[test]
+fn collection_transfer_flag_works() {
+	new_test_ext().execute_with(|| {
+		let origin1 = Origin::signed(1);
+
+		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
+		assert_ok!(TemplateModule::set_transfers_enabled_flag(origin1, 1, true));
+
+		let data = default_nft_data();
+		create_test_item(collection_id, &data.into());
+		assert_eq!(TemplateModule::balance_count(1, 1), 1);
+		assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
+
+		let origin1 = Origin::signed(1);
+
+		// default scenario
+		assert_ok!(TemplateModule::transfer(origin1, account(2), 1, 1, 1000));
+		assert_eq!(TemplateModule::nft_item_id(1, 1).unwrap().owner, account(2));
+		assert_eq!(TemplateModule::balance_count(1, 1), 0);
+		assert_eq!(TemplateModule::balance_count(1, 2), 1);
+
+		assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
+	});
+}
+
+#[test]
+fn set_variable_meta_data_on_nft_with_admin_flag() {
+	new_test_ext().execute_with(|| {
+		// default_limits();
+
+		let collection_id = create_test_collection_for_owner(&CollectionMode::NFT, 2, 1);
+
+		let origin1 = Origin::signed(1);
+		let origin2 = Origin::signed(2);
+
+		assert_ok!(TemplateModule::set_mint_permission(
+			origin2.clone(),
+			collection_id,
+			true
+		));
+		assert_ok!(TemplateModule::add_to_white_list(
+			origin2.clone(),
+			collection_id,
+			account(1)
+		));
+
+		assert_ok!(TemplateModule::add_collection_admin(
+			origin2.clone(),
+			collection_id,
+			account(1)
+		));
+
+		let data = default_nft_data();
+		create_test_item(1, &data.into());
+
+		assert_ok!(TemplateModule::set_meta_update_permission_flag(
+			origin2.clone(),
+			collection_id,
+			MetaUpdatePermission::Admin,
+		));
+
+		let variable_data = b"test.".to_vec();
+		assert_ok!(TemplateModule::set_variable_meta_data(
+			origin1,
+			collection_id,
+			1,
+			variable_data.clone()
+		));
+
+		assert_eq!(
+			TemplateModule::nft_item_id(collection_id, 1)
+				.unwrap()
+				.variable_data,
+			variable_data
+		);
+	});
+}
+
+#[test]
+fn set_variable_meta_data_on_nft_with_admin_flag_neg() {
 	new_test_ext().execute_with(|| {
 		// default_limits();
 
@@ -2066,224 +2184,103 @@ fn set_variable_meta_data_on_nft_with_item_owner_permission_flag_neg() {
 		assert_ok!(TemplateModule::set_meta_update_permission_flag(
 			origin2.clone(),
 			collection_id,
-			MetaUpdatePermission::ItemOwner,
+			MetaUpdatePermission::Admin,
 		));
 
-		let variable_data = b"ten chars.++".to_vec();
+		let variable_data = b"test.".to_vec();
 		assert_noop!(
 			TemplateModule::set_variable_meta_data(
-				origin2,
+				origin1,
 				collection_id,
 				1,
 				variable_data.clone()
 			),
-			Error::<Test>::TokenVariableDataLimitExceeded
+			Error::<Test>::NoPermission
 		);
+	});
+}
 
-		#[test]
-		fn collection_transfer_flag_works() {
-			new_test_ext().execute_with(|| {
-				let origin1 = Origin::signed(1);
+#[test]
+fn set_variable_meta_flag_after_freeze() {
+	new_test_ext().execute_with(|| {
+		// default_limits();
 
-				let collection_id = create_test_collection(&CollectionMode::NFT, 1);
-				assert_ok!(TemplateModule::set_transfers_enabled_flag(origin1, 1, true));
+		let collection_id = create_test_collection_for_owner(&CollectionMode::NFT, 2, 1);
 
-				let data = default_nft_data();
-				create_test_item(collection_id, &data.into());
-				assert_eq!(TemplateModule::balance_count(1, 1), 1);
-				assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
+		let origin2 = Origin::signed(2);
 
-				let origin1 = Origin::signed(1);
+		assert_ok!(TemplateModule::set_meta_update_permission_flag(
+			origin2.clone(),
+			collection_id,
+			MetaUpdatePermission::None,
+		));
+		assert_noop!(
+			TemplateModule::set_meta_update_permission_flag(
+				origin2.clone(),
+				collection_id,
+				MetaUpdatePermission::Admin
+			),
+			Error::<Test>::MetadataFlagFrozen
+		);
+	});
+}
 
-				// default scenario
-				assert_ok!(TemplateModule::transfer(origin1, account(2), 1, 1, 1000));
-				assert_eq!(TemplateModule::nft_item_id(1, 1).unwrap().owner, account(2));
-				assert_eq!(TemplateModule::balance_count(1, 1), 0);
-				assert_eq!(TemplateModule::balance_count(1, 2), 1);
+#[test]
+fn set_variable_meta_data_on_nft_with_none_flag_neg() {
+	new_test_ext().execute_with(|| {
+		// default_limits();
 
-				assert_eq!(TemplateModule::address_tokens(1, 2), [1]);
-			});
-		}
+		let collection_id = create_test_collection_for_owner(&CollectionMode::NFT, 1, 1);
+		let origin1 = Origin::signed(1);
 
-		#[test]
-		fn set_variable_meta_data_on_nft_with_admin_flag() {
-			new_test_ext().execute_with(|| {
-				// default_limits();
+		let data = default_nft_data();
+		create_test_item(1, &data.into());
 
-				let collection_id = create_test_collection_for_owner(&CollectionMode::NFT, 2, 1);
+		assert_ok!(TemplateModule::set_meta_update_permission_flag(
+			origin1.clone(),
+			collection_id,
+			MetaUpdatePermission::None,
+		));
 
-				let origin1 = Origin::signed(1);
-				let origin2 = Origin::signed(2);
+		let variable_data = b"test.".to_vec();
+		assert_noop!(
+			TemplateModule::set_variable_meta_data(
+				origin1.clone(),
+				collection_id,
+				1,
+				variable_data.clone()
+			),
+			Error::<Test>::MetadataUpdateDenied
+		);
+	});
+}
 
-				assert_ok!(TemplateModule::set_mint_permission(
-					origin2.clone(),
-					collection_id,
-					true
-				));
-				assert_ok!(TemplateModule::add_to_white_list(
-					origin2.clone(),
-					collection_id,
-					account(1)
-				));
+#[test]
+fn collection_transfer_flag_works_neg() {
+	new_test_ext().execute_with(|| {
+		let origin1 = Origin::signed(1);
 
-				assert_ok!(TemplateModule::add_collection_admin(
-					origin2.clone(),
-					collection_id,
-					account(1)
-				));
+		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
+		assert_ok!(TemplateModule::set_transfers_enabled_flag(
+			origin1, 1, false
+		));
 
-				let data = default_nft_data();
-				create_test_item(1, &data.into());
+		let data = default_nft_data();
+		create_test_item(collection_id, &data.into());
+		assert_eq!(TemplateModule::balance_count(1, 1), 1);
+		assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
-				assert_ok!(TemplateModule::set_meta_update_permission_flag(
-					origin2.clone(),
-					collection_id,
-					MetaUpdatePermission::Admin,
-				));
+		let origin1 = Origin::signed(1);
 
-				let variable_data = b"test set_variable_meta_data method.".to_vec();
-				assert_ok!(TemplateModule::set_variable_meta_data(
-					origin1,
-					collection_id,
-					1,
-					variable_data.clone()
-				));
+		// default scenario
+		assert_noop!(
+			TemplateModule::transfer(origin1, account(2), 1, 1, 1000),
+			Error::<Test>::TransferNotAllowed
+		);
+		assert_eq!(TemplateModule::nft_item_id(1, 1).unwrap().owner, account(1));
+		assert_eq!(TemplateModule::balance_count(1, 1), 1);
+		assert_eq!(TemplateModule::balance_count(1, 2), 0);
 
-				assert_eq!(
-					TemplateModule::nft_item_id(collection_id, 1)
-						.unwrap()
-						.variable_data,
-					variable_data
-				);
-			});
-		}
-
-		#[test]
-		fn set_variable_meta_data_on_nft_with_admin_flag_neg() {
-			new_test_ext().execute_with(|| {
-				// default_limits();
-
-				let collection_id = create_test_collection_for_owner(&CollectionMode::NFT, 2, 1);
-
-				let origin1 = Origin::signed(1);
-				let origin2 = Origin::signed(2);
-
-				assert_ok!(TemplateModule::set_mint_permission(
-					origin2.clone(),
-					collection_id,
-					true
-				));
-				assert_ok!(TemplateModule::add_to_white_list(
-					origin2.clone(),
-					collection_id,
-					account(1)
-				));
-
-				let data = default_nft_data();
-				create_test_item(1, &data.into());
-
-				assert_ok!(TemplateModule::set_meta_update_permission_flag(
-					origin2.clone(),
-					collection_id,
-					MetaUpdatePermission::Admin,
-				));
-
-				let variable_data = b"test set_variable_meta_data method.".to_vec();
-				assert_noop!(
-					TemplateModule::set_variable_meta_data(
-						origin1,
-						collection_id,
-						1,
-						variable_data.clone()
-					),
-					Error::<Test>::NoPermission
-				);
-			});
-		}
-
-		#[test]
-		fn set_variable_meta_flag_after_freeze() {
-			new_test_ext().execute_with(|| {
-				// default_limits();
-
-				let collection_id = create_test_collection_for_owner(&CollectionMode::NFT, 2, 1);
-
-				let origin2 = Origin::signed(2);
-
-				assert_ok!(TemplateModule::set_meta_update_permission_flag(
-					origin2.clone(),
-					collection_id,
-					MetaUpdatePermission::None,
-				));
-				assert_noop!(
-					TemplateModule::set_meta_update_permission_flag(
-						origin2.clone(),
-						collection_id,
-						MetaUpdatePermission::Admin
-					),
-					Error::<Test>::MetadataFlagFrozen
-				);
-			});
-		}
-
-		#[test]
-		fn set_variable_meta_data_on_nft_with_none_flag_neg() {
-			new_test_ext().execute_with(|| {
-				// default_limits();
-
-				let collection_id = create_test_collection_for_owner(&CollectionMode::NFT, 1, 1);
-				let origin1 = Origin::signed(1);
-
-				let data = default_nft_data();
-				create_test_item(1, &data.into());
-
-				assert_ok!(TemplateModule::set_meta_update_permission_flag(
-					origin1.clone(),
-					collection_id,
-					MetaUpdatePermission::None,
-				));
-
-				let variable_data = b"test set_variable_meta_data method.".to_vec();
-				assert_noop!(
-					TemplateModule::set_variable_meta_data(
-						origin1.clone(),
-						collection_id,
-						1,
-						variable_data.clone()
-					),
-					Error::<Test>::MetadataUpdateDenied
-				);
-			});
-		}
-
-		#[test]
-		fn collection_transfer_flag_works_neg() {
-			new_test_ext().execute_with(|| {
-				let origin1 = Origin::signed(1);
-
-				let collection_id = create_test_collection(&CollectionMode::NFT, 1);
-				assert_ok!(TemplateModule::set_transfers_enabled_flag(
-					origin1, 1, false
-				));
-
-				let data = default_nft_data();
-				create_test_item(collection_id, &data.into());
-				assert_eq!(TemplateModule::balance_count(1, 1), 1);
-				assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
-
-				let origin1 = Origin::signed(1);
-
-				// default scenario
-				assert_noop!(
-					TemplateModule::transfer(origin1, account(2), 1, 1, 1000),
-					Error::<Test>::TransferNotAllowed
-				);
-				assert_eq!(TemplateModule::nft_item_id(1, 1).unwrap().owner, account(1));
-				assert_eq!(TemplateModule::balance_count(1, 1), 1);
-				assert_eq!(TemplateModule::balance_count(1, 2), 0);
-
-				assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
-			});
-		}
+		assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 	});
 }
