@@ -1,19 +1,50 @@
-version: "3.5"
+version: "3.7"
+
+networks:
+  unique.network:
+    driver: bridge
+    name: ${DOCKER_NETWORK:-unique.network}
+    attachable: true
 
 services:
-  node:
-    image: nft-parachain
-    ports:
-      - 9944:9944
+# Blockchain
+  unique.substrate:
+    container_name: ${DOCKER_NAME:-unique.substrate.latest}
+    image: ${DOCKER_IMAGE:-unique.substrate:latest}
     build:
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile-parachain
+      args:
+        - RUST_TOOLCHAIN=${RUST_TOOLCHAIN:?err}
+        - RUST_C=${RUST_C:?err}
+        - POLKA_VERSION=${POLKA_VERSION:?err}
+        - NFT_BRANCH=${NFT_BRANCH:?err}
+    init: true
+    tty: true
+    stdin_open: true
+    ports:
+      - 9944:9944
+      - 9844:9844
+      - 9933:9933
+    networks:
+      - ${DOCKER_NETWORK:-unique.network}
     volumes:
-      - ./chain-data:/chain-data
-    networks: 
-      - substrate_network
+      - ${DOCKER_DATA_PATH:-/opt/unique.network/substrate}/launch-config.json:/polkadot-launch/launch-config.json
+      - ${DOCKER_DATA_PATH:-/opt/unique.network/substrate}/runtime_types.json:/polkadot-launch/runtime_types.json
+    env_file:
+      - ${DOCKER_DATA_PATH:-/opt/unique.network/substrate}/.env
 
-networks: 
-  substrate_network:
-    driver: bridge
-    name: substrate_network
+# Tests
+  unique.substrate.tests:
+    container_name: ${DOCKER_NAME:-unique.substrate.tests}
+    image: ${DOCKER_IMAGE:-unique.substrate:tests}
+    build:
+      context: ./
+      dockerfile: Dockerfile-tests
+    networks:
+      - ${DOCKER_NETWORK:-unique.network}
+    volumes:
+      - ${DOCKER_DATA_PATH:-/opt/unique.network/substrate}/tests/src/config_docker.ts:/nft_parachain/tests/src/config.ts
+      - ${DOCKER_DATA_PATH:-/opt/unique.network/substrate}/mochawesome-report:/nft_parachain/tests/mochawesome-report
+    # depends_on:
+    #   - unique.substrate
