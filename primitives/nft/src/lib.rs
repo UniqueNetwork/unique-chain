@@ -73,23 +73,15 @@ pub type DecimalPoints = u8;
 #[derive(Encode, Decode, Eq, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum CollectionMode {
-	Invalid,
 	NFT,
 	// decimal points
 	Fungible(DecimalPoints),
 	ReFungible,
 }
 
-impl Default for CollectionMode {
-	fn default() -> Self {
-		Self::Invalid
-	}
-}
-
 impl CollectionMode {
 	pub fn id(&self) -> u8 {
 		match self {
-			CollectionMode::Invalid => 0,
 			CollectionMode::NFT => 1,
 			CollectionMode::Fungible(_) => 2,
 			CollectionMode::ReFungible => 3,

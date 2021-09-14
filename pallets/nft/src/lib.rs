@@ -1347,7 +1347,6 @@ impl<T: Config> Module<T> {
 				sender.clone(),
 				recipient.clone(),
 			)?,
-			_ => (),
 		};
 
 		Self::deposit_event(RawEvent::Transfer(
@@ -1493,7 +1492,6 @@ impl<T: Config> Module<T> {
 				from.clone(),
 				recipient.clone(),
 			)?,
-			_ => (),
 		};
 
 		if matches!(collection.mode, CollectionMode::Fungible(_)) {
@@ -1534,7 +1532,6 @@ impl<T: Config> Module<T> {
 				Self::set_re_fungible_variable_data(collection, item_id, data)?
 			}
 			CollectionMode::Fungible(_) => fail!(Error::<T>::CantStoreMetadataInFungibleTokens),
-			_ => fail!(Error::<T>::UnexpectedCollectionType),
 		};
 
 		Ok(())
@@ -1618,7 +1615,6 @@ impl<T: Config> Module<T> {
 			CollectionMode::NFT => Self::burn_nft_item(collection, item_id)?,
 			CollectionMode::Fungible(_) => Self::burn_fungible_item(sender, collection, value)?,
 			CollectionMode::ReFungible => Self::burn_refungible_item(collection, item_id, sender)?,
-			_ => (),
 		};
 
 		Ok(())
@@ -1722,9 +1718,6 @@ impl<T: Config> Module<T> {
 				} else {
 					fail!(Error::<T>::NotReFungibleDataUsedToMintReFungibleCollectionToken);
 				}
-			}
-			_ => {
-				fail!(Error::<T>::UnexpectedCollectionType);
 			}
 		};
 
@@ -2034,7 +2027,6 @@ impl<T: Config> Module<T> {
 				.iter()
 				.find(|i| i.owner == *subject)
 				.map(|i| i.fraction),
-			CollectionMode::Invalid => None,
 		}
 	}
 
@@ -2071,7 +2063,6 @@ impl<T: Config> Module<T> {
 			CollectionMode::ReFungible => {
 				<ReFungibleItemList<T>>::contains_key(collection_id, item_id)
 			}
-			_ => false,
 		};
 
 		ensure!(exists, Error::<T>::TokenNotFound);
