@@ -224,10 +224,6 @@ export function getTransferResult(events: EventRecord[]): TransferResult {
   return result;
 }
 
-interface Invalid {
-  type: 'Invalid';
-}
-
 interface Nft {
   type: 'NFT';
 }
@@ -241,7 +237,7 @@ interface ReFungible {
   type: 'ReFungible';
 }
 
-type CollectionMode = Nft | Fungible | ReFungible | Invalid;
+type CollectionMode = Nft | Fungible | ReFungible;
 
 export type CreateCollectionParams = {
   mode: CollectionMode,
@@ -275,8 +271,6 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
       modeprm = { fungible: mode.decimalPoints };
     } else if (mode.type === 'ReFungible') {
       modeprm = { refungible: null };
-    } else if (mode.type === 'Invalid') {
-      modeprm = { invalid: null };
     }
 
     const tx = api.tx.nft.createCollection(strToUTF16(name), strToUTF16(description), strToUTF16(tokenPrefix), modeprm);
@@ -317,8 +311,6 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
     modeprm = { fungible: mode.decimalPoints };
   } else if (mode.type === 'ReFungible') {
     modeprm = { refungible: null };
-  } else if (mode.type === 'Invalid') {
-    modeprm = { invalid: null };
   }
 
   await usingApi(async (api) => {
@@ -528,23 +520,23 @@ export async function confirmSponsorshipExpectFailure(collectionId: number, send
 export async function setMetadataUpdatePermissionFlagExpectSuccess(sender: IKeyringPair, collectionId: number, flag: string) {
 
   await usingApi(async (api) => {
-    const tx = api.tx.nft.setMetaUpdatePermissionFlag(collectionId, flag); 
+    const tx = api.tx.nft.setMetaUpdatePermissionFlag(collectionId, flag);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
 
     expect(result.success).to.be.true;
-  }); 
+  });
 }
 
 export async function setMetadataUpdatePermissionFlagExpectFailure(sender: IKeyringPair, collectionId: number, flag: string) {
 
   await usingApi(async (api) => {
-    const tx = api.tx.nft.setMetaUpdatePermissionFlag(collectionId, flag); 
+    const tx = api.tx.nft.setMetaUpdatePermissionFlag(collectionId, flag);
     const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
     const result = getGenericResult(events);
 
     expect(result.success).to.be.false;
-  }); 
+  });
 }
 
 export async function enableContractSponsoringExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, enable: boolean) {
@@ -576,7 +568,7 @@ export async function setTransferFlagExpectSuccess(sender: IKeyringPair, collect
     const result = getGenericResult(events);
 
     expect(result.success).to.be.true;
-  }); 
+  });
 }
 
 export async function setTransferFlagExpectFailure(sender: IKeyringPair, collectionId: number, enabled: boolean) {
@@ -588,7 +580,7 @@ export async function setTransferFlagExpectFailure(sender: IKeyringPair, collect
     const result = getGenericResult(events);
 
     expect(result.success).to.be.false;
-  }); 
+  });
 }
 
 export async function setContractSponsoringRateLimitExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, rateLimit: number) {
@@ -833,7 +825,7 @@ scheduleTransferExpectSuccess(
     const expectedBlockNumber = blockNumber + blockSchedule;
 
     expect(blockNumber).to.be.greaterThan(0);
-    const transferTx = await api.tx.nft.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value); 
+    const transferTx = await api.tx.nft.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value);
     const scheduleTx = await api.tx.scheduler.schedule(expectedBlockNumber, null, 0, transferTx);
 
     await submitTransactionAsync(sender, scheduleTx);
@@ -1004,7 +996,7 @@ export async function createItemExpectSuccess(sender: IKeyringPair, collectionId
 export async function createItemExpectFailure(sender: IKeyringPair, collectionId: number, createMode: string, owner: string = sender.address) {
   await usingApi(async (api) => {
     const tx = api.tx.nft.createItem(collectionId, normalizeAccountId(owner), createMode);
-    
+
     const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
     const result = getCreateItemResult(events);
 
