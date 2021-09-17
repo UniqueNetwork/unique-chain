@@ -3,25 +3,25 @@ Description=Westend Alice
 
 [Service]
 ExecStart=/opt/parity/polkadot \
-	--alice \
-	--validator \
-#        --ws-external \
-#        --rpc-external \
-#        --rpc-cors all \
-	--no-telemetry \
+        --alice \
+        --validator \
         --base-path /var/local/westend/alice \
-        --chain /opt/parity/westend-local.json \
+        --chain /opt/parity/chain-specs/westend-local-v0.9.9.json \
+	--node-key-file /opt/parity/keys/relay-westend-alice-node-key \
         --execution Wasm \
-#       --listen-addr /ip4/127.0.0.1/tcp/9944/ws \
-#        --public-addr /ip4/92.53.69.98 \
-#	--discover-local \
-	--no-mdns \
-	--bootnodes /ip4/127.0.0.1/tcp/30336/p2p/12D3KooWR76geqit8nMJtQYuLXNy4oHDVJZdsPLNjTmWhL4TeijW \
-		/ip4/127.0.0.1/tcp/30335/p2p/12D3KooWRqnBJPpKntaKmqoDJLxgGR11tconzYLewaeGz2saiXhw \
-		/ip4/127.0.0.1/tcp/30334/p2p/12D3KooWRydSwsbQbfBN71DFXxmYt5GHmrVebRmUv9mPU91U3FPE \
-	--port 30333 \
-	--rpc-port 9843 \
-	--ws-port 9844
+	--no-prometheus \
+	--no-telemetry \
+        --no-mdns \
+        --bootnodes /ip4/127.0.0.1/tcp/30331/p2p/12D3KooWMkSKwDEKHsxW11YtKNnpeLQiYMZvKUy4XFpF2foZfspb \
+		/ip4/127.0.0.1/tcp/30332/p2p/12D3KooWAK674KrVuH469qro6F9VupJjf3y4NztzAR76Pdn63G1x \
+		/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWAE4pU99aVYJBr2YorMfpnjg6hgf1By1z2TeLS6xivnkX \
+		/ip4/127.0.0.1/tcp/30334/p2p/12D3KooWFLkdZQ2sTsjazSotfkFY8HhHXVvT4Wp6xWcAm6aXH5qk \
+		/ip4/127.0.0.1/tcp/30335/p2p/12D3KooWKAkFyAD94wDdhb1k9DgDEWNgDftzTZV7t88K1rm6wcXn \
+        --port 30330 \
+        --rpc-port 9843 \
+        --ws-port 9844 \
+	--unsafe-ws-external \
+	--rpc-cors=all
 
 Restart=always
 RestartSec=120
