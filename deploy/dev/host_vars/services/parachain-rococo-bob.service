@@ -13,6 +13,8 @@ ExecStart=/opt/usetech/nft \
     --port 40331 \
     --rpc-port 9953 \
     --ws-port 9954 \
+    --unsafe-ws-external \
+    --rpc-cors=all \
     --no-prometheus \
     --no-mdns \
     --no-telemetry \

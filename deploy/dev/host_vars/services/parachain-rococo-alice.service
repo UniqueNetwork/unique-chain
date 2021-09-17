@@ -11,8 +11,11 @@ ExecStart=/opt/usetech/nft \
     --chain /opt/usetech/chain-specs/nft-rococo-local-v0.9.9.json \
     --node-key-file /opt/usetech/keys/nft-rococo-alice-node-key \
     --port 40330 \
-    --rpc-port 9943 \
+    --rpc-port 9933 \
     --ws-port 9944 \
+    --unsafe-ws-external \
+    --rpc-cors=all \
+    --log evm=trace \
     --no-prometheus \
     --no-mdns \
     --no-telemetry \

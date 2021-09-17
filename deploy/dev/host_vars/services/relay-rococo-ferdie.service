@@ -19,7 +19,9 @@ ExecStart=/opt/parity/polkadot \
 		/ip4/127.0.0.1/tcp/30334/p2p/12D3KooWSQY8Ektq89TxqkJhhhaUSChZAKBsWybyd8iX98yiBALR \
         --port 30335 \
         --rpc-port 9893 \
-        --ws-port 9894
+        --ws-port 9894 \
+	--unsafe-ws-external \
+	--rpc-cors=all
 
 Restart=always
 RestartSec=120
