@@ -1,5 +1,5 @@
 #!/bin/bash 
-curl http://127.0.0.1:9943 -H "Content-Type:application/json;charset=utf-8" -d "@/opt/usetech/keys/nft-rococo-alice-aura-key.json"
+curl http://127.0.0.1:9933 -H "Content-Type:application/json;charset=utf-8" -d "@/opt/usetech/keys/nft-rococo-alice-aura-key.json"
 curl http://127.0.0.1:9953 -H "Content-Type:application/json;charset=utf-8" -d "@/opt/usetech/keys/nft-rococo-bob-aura-key.json"
 curl http://127.0.0.1:9963 -H "Content-Type:application/json;charset=utf-8" -d "@/opt/usetech/keys/nft-rococo-charlie-aura-key.json"
 curl http://127.0.0.1:9973 -H "Content-Type:application/json;charset=utf-8" -d "@/opt/usetech/keys/nft-rococo-dave-aura-key.json"
