@@ -3,27 +3,43 @@ Description=Parachain Alice @ Westend Local
 
 [Service]
 ExecStart=/opt/usetech/nft \
-    --alice \
+    --name c1-westend \
     --collator \
     --force-authoring \
     --base-path /var/local/nft-parachain/westend/alice \
-    --parachain-id 2000 \
-    --port 40333 \
+    --chain /opt/usetech/chain-specs/nft-westend-local-v0.9.9.json \
+    --node-key-file /opt/usetech/keys/nft-westend-alice-node-key \
+    --port 40330 \
     --rpc-port 9933 \
     --ws-port 9944 \
-    --chain westend-local \
-    --discover-local \
-    -- --execution wasm \
-    --chain /opt/parity/westend-local.json \
-    --port 31200 \
-#    --rpc-port 9933 \
-#    --ws-port 9944 \
+    --unsafe-ws-external \
+    --rpc-cors=all \
+    --log evm=trace \
+    --no-prometheus \
     --no-mdns \
-    --bootnodes /ip4/127.0.0.1/tcp/30336/p2p/12D3KooWR76geqit8nMJtQYuLXNy4oHDVJZdsPLNjTmWhL4TeijW \
-                /ip4/127.0.0.1/tcp/30335/p2p/12D3KooWRqnBJPpKntaKmqoDJLxgGR11tconzYLewaeGz2saiXhw \
-                /ip4/127.0.0.1/tcp/30334/p2p/12D3KooWRydSwsbQbfBN71DFXxmYt5GHmrVebRmUv9mPU91U3FPE \
-		/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWHp7JuDmdrv79mgdPxPa59PYLiXW2AkwXqAXQa71i1gje 
-    
+    --no-telemetry \
+    --bootnodes /ip4/127.0.0.1/tcp/40331/p2p/12D3KooWMjwdMxrrFX8BJLCq9TtzfjQeWfrUFfAMjeFYoWvftuC1 \
+        /ip4/127.0.0.1/tcp/40332/p2p/12D3KooWGVUDoB2RQM5X9QLGyvpZXm6gReTjePD1ghG49cu5QqTJ \
+        /ip4/127.0.0.1/tcp/40333/p2p/12D3KooWEcHpv5dqWmragGdwfpUJBEnjMqPy9t4663fE9JKQhZTx \
+        /ip4/127.0.0.1/tcp/40334/p2p/12D3KooWHaroVaRGh7848ZXD41ErGoa4a97kcRUzoxNLtVRXfPa8 \
+        /ip4/127.0.0.1/tcp/40335/p2p/12D3KooWE7sSJtYy46aQw43GPwreg4RbZyx6iP9wkxSZwtskyeLN \
+        /ip4/127.0.0.1/tcp/40336/p2p/12D3KooWC6XcucJKR3yhW7t38M4CqXqnwv3kmqjWyqyVp6wBzWkP \
+    -- --execution wasm \
+    --chain /opt/parity/chain-specs/westend-local-v0.9.9.json \
+    --port 31200 \
+    --rpc-port 9743 \
+    --ws-port 9744 \
+    --no-prometheus \
+    --no-mdns \
+    --no-telemetry \
+    --bootnodes /ip4/127.0.0.1/tcp/30330/p2p/12D3KooWFeip5gL9ZUKWbD4tUE1mE7hGu7m2R2eoBqeSkLa2xrVp \
+                /ip4/127.0.0.1/tcp/30331/p2p/12D3KooWMkSKwDEKHsxW11YtKNnpeLQiYMZvKUy4XFpF2foZfspb \
+                /ip4/127.0.0.1/tcp/30332/p2p/12D3KooWAK674KrVuH469qro6F9VupJjf3y4NztzAR76Pdn63G1x \
+                /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWAE4pU99aVYJBr2YorMfpnjg6hgf1By1z2TeLS6xivnkX \
+                /ip4/127.0.0.1/tcp/30334/p2p/12D3KooWFLkdZQ2sTsjazSotfkFY8HhHXVvT4Wp6xWcAm6aXH5qk \
+                /ip4/127.0.0.1/tcp/30335/p2p/12D3KooWKAkFyAD94wDdhb1k9DgDEWNgDftzTZV7t88K1rm6wcXn
+		
+
 Restart=always
 RestartSec=120
 
