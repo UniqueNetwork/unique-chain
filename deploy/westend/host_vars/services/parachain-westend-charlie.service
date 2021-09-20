@@ -1,0 +1,40 @@
+[Unit]
+Description=Parachain Charlie @ Westend
+
+[Service]
+ExecStart=/opt/usetech/nft \
+    --name c3-kr \
+    --collator \
+    --force-authoring \
+    --base-path /var/local/nft-parachain/westend/charlie \
+    --chain /opt/usetech/chain-specs/nft-westend-v0.9.9.json \
+    --node-key-file /opt/usetech/keys/nft-westend-charlie-node-key \
+    --port 40332 \
+    --rpc-port 9963 \
+    --ws-port 9964 \
+    --unsafe-ws-external \
+    --rpc-cors=all \
+    --no-prometheus \
+    --no-mdns \
+    --no-telemetry \
+    --bootnodes /ip4/54.216.209.53/tcp/40330/p2p/12D3KooWRtQanRkAipLcc7Jx7LoUibFXF7NbzSwnqFXH6BhATuTh \
+        /ip4/13.52.252.79/tcp/40331/p2p/12D3KooWPY9ot6Vxbpx37o1Cjb4C3Yrms1QhuvBh7KDHcjTZBTyj \
+        /ip4/54.216.209.53/tcp/40333/p2p/12D3KooWHXobmSZ97XyNSFmBXaHijuMCHqBGMEHWXc1Z1Wo9SnXP \
+        /ip4/13.52.252.79/tcp/40334/p2p/12D3KooWBC8uBCJUpg1XY23Cq56EpEhipZ62LD6mCJq5tGZUupzG \
+        /ip4/3.38.43.147/tcp/40335/p2p/12D3KooWD7aFwtNvZ3P5H5cpFtgYScpbSL7z1keQiB3sSChDvAqZ \
+#        /ip4/127.0.0.1/tcp/40336/p2p/ \
+    -- --execution wasm \
+    --chain /opt/usetech/chain-specs/westend-v0.9.9.json \
+    --port 30332 \
+    --rpc-port 9763 \
+    --ws-port 9764 \
+    --no-prometheus \
+    --no-mdns \
+    --no-telemetry
+		
+
+Restart=always
+RestartSec=120
+
+[Install]
+WantedBy=multi-user.target
