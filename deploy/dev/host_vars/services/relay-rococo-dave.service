@@ -1,0 +1,30 @@
+[Unit]
+Description=Rococo Dave
+
+[Service]
+ExecStart=/opt/parity/polkadot \
+        --dave \
+        --validator \
+        --base-path /var/local/rococo/dave \
+        --chain /opt/parity/chain-specs/rococo-local-v0.9.9.json \
+	--node-key-file /opt/parity/keys/relay-rococo-dave-node-key \
+        --execution Wasm \
+	--no-prometheus \
+	--no-telemetry \
+        --no-mdns \
+        --bootnodes /ip4/127.0.0.1/tcp/30330/p2p/12D3KooWRS4RKn7Hj3vTpksweCwtmggRK2eYfdRKXUdvkZnQyHV8 \
+                /ip4/127.0.0.1/tcp/30331/p2p/12D3KooWG2HkpixZCTFLYHH3kHvn6cLp3FzWwDKpZ65jDLg8ADob \
+		/ip4/127.0.0.1/tcp/30332/p2p/12D3KooW9tfKtLhA4Hc4YdmACpNiHu3tfPF4RoAP1NiirKwsQN45 \
+		/ip4/127.0.0.1/tcp/30334/p2p/12D3KooWSQY8Ektq89TxqkJhhhaUSChZAKBsWybyd8iX98yiBALR \
+		/ip4/127.0.0.1/tcp/30335/p2p/12D3KooWRwEC5Mdr6V1akrgK9uwm2eo95YyuupsbrrmwoFZYv7DA \
+        --port 30333 \
+        --rpc-port 9873 \
+        --ws-port 9874 \
+	--unsafe-ws-external \
+	--rpc-cors=all
+
+Restart=always
+RestartSec=120
+
+[Install]
+WantedBy=multi-user.target
