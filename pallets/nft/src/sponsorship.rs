@@ -143,7 +143,6 @@ impl<T: Config> NftSponsorshipHandler<T> {
 
 					sponsored
 				}
-				_ => false,
 			};
 		}
 
