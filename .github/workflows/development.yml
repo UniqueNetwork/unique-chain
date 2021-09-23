@@ -9,7 +9,8 @@ on:
 
 jobs:
   build-and-publish:
-    runs-on: ["self-hosted", "spot", "builder"]
+ #   runs-on: ["self-hosted", "spot", "builder"]
+     runs-on: ["hetzner"]
     name: Build & Publish
     environment: development
     strategy:
