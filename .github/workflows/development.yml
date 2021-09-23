@@ -10,6 +10,7 @@ on:
 jobs:
   build-and-publish:
  #   runs-on: ["self-hosted", "spot", "builder"]
+ # self-hosted  Linux  X64  hetzner
      runs-on: ["hetzner"]
     name: Build & Publish
     environment: development
