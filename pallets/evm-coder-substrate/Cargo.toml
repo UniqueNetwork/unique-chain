@@ -8,8 +8,8 @@ sp-std = { default-features = false, version = '4.0.0-dev', git = 'https://githu
 sp-core = { default-features = false, version = '4.0.0-dev', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
 ethereum = { default-features = false, version = "0.9.0" }
 evm-coder = { default-features = false, path = "../../crates/evm-coder" }
-pallet-ethereum = { default-features = false, version = "4.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-pallet-evm = { default-features = false, version = "6.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
+pallet-ethereum = { default-features = false, version = "4.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+pallet-evm = { default-features = false, version = "6.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
 frame-support = { default-features = false, version = '4.0.0-dev', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
 frame-system = { default-features = false, version = '4.0.0-dev', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
 

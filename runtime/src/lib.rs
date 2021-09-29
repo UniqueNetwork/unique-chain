@@ -237,9 +237,16 @@ parameter_types! {
 	pub const ChainId: u64 = 8888;
 }
 
+pub struct FixedFee;
+impl FeeCalculator for FixedFee {
+    fn min_gas_price() -> U256 {
+        1.into()
+    }
+}
+
 impl pallet_evm::Config for Runtime {
 	type BlockGasLimit = BlockGasLimit;
-	type FeeCalculator = ();
+	type FeeCalculator = FixedFee;
 	type GasWeightMapping = ();
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;

@@ -150,7 +150,7 @@ primitive-types = { version = "0.10.1", default-features = false, features = [
     "serde_no_std",
 ] }
 
-pallet-evm = { default-features = false, version = "6.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-pallet-ethereum = { default-features = false, version = "4.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-fp-evm = { default-features = false, version = '3.0.0-dev', git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
+pallet-evm = { default-features = false, version = "6.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+pallet-ethereum = { default-features = false, version = "4.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+fp-evm = { default-features = false, version = '3.0.0-dev', git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
 hex-literal = "0.3.3"

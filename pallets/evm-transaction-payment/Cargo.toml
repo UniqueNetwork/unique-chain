@@ -10,9 +10,9 @@ sp-runtime = { default-features = false, version = '4.0.0-dev', git = 'https://g
 sp-std = { default-features = false, version = '4.0.0-dev', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
 sp-io = { default-features = false, version = '4.0.0-dev', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
 sp-core = { default-features = false, version = '4.0.0-dev', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
-pallet-evm = { default-features = false, version = "6.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-fp-evm = { default-features = false, version = "3.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-pallet-ethereum = { default-features = false, version = "4.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
+pallet-evm = { default-features = false, version = "6.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+fp-evm = { default-features = false, version = "3.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+pallet-ethereum = { default-features = false, version = "4.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
 up-sponsorship = { default-features = false, path = '../../primitives/sponsorship' }
 
 [dependencies.codec]

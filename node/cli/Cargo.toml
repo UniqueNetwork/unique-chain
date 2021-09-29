@@ -305,13 +305,13 @@ structopt = '0.3.23'
 jsonrpc-core = '15.1.0'
 jsonrpc-pubsub = "15.1.0"
 
-fc-rpc-core = { version = "1.1.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-fc-consensus = { version = "2.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-fc-mapping-sync = { version = "2.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-fc-rpc = { version = "2.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-fc-db = { version = "2.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-fp-rpc = { version = "3.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-pallet-ethereum = { version = "4.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
+fc-rpc-core = { version = "1.1.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+fc-consensus = { version = "2.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+fc-mapping-sync = { version = "2.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+fc-rpc = { version = "2.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+fc-db = { version = "2.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+fp-rpc = { version = "3.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+pallet-ethereum = { version = "4.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
 
 nft-rpc = { path = "../rpc" }
 

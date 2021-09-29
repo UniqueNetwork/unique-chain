@@ -396,9 +396,9 @@ pallet-evm-contract-helpers = { path = '../pallets/evm-contract-helpers', defaul
 pallet-evm-transaction-payment = { path = '../pallets/evm-transaction-payment', default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = "../pallets/evm-coder-substrate" }
 
-pallet-evm = { default-features = false, version = "6.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-pallet-ethereum = { default-features = false, version = "4.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-fp-rpc = { default-features = false, version = "3.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
+pallet-evm = { default-features = false, version = "6.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+pallet-ethereum = { default-features = false, version = "4.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+fp-rpc = { default-features = false, version = "3.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
 
 ################################################################################
 # Build Dependencies
