@@ -239,9 +239,9 @@ parameter_types! {
 
 pub struct FixedFee;
 impl FeeCalculator for FixedFee {
-    fn min_gas_price() -> U256 {
-        1.into()
-    }
+	fn min_gas_price() -> U256 {
+		1.into()
+	}
 }
 
 impl pallet_evm::Config for Runtime {
@@ -637,7 +637,7 @@ impl Config for XcmConfig {
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
 	type Trader = UsingComponents<IdentityFee<Balance>, RelayLocation, AccountId, Balances, ()>;
 	type ResponseHandler = (); // Don't handle responses for now.
-    type SubscriptionService = PolkadotXcm;
+	type SubscriptionService = PolkadotXcm;
 }
 
 // parameter_types! {
@@ -682,7 +682,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;
-    type VersionWrapper = ();
+	type VersionWrapper = ();
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
