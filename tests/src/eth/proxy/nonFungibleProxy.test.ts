@@ -4,7 +4,7 @@
 //
 
 import privateKey from '../../substrate/privateKey';
-import { createCollectionExpectSuccess, createItemExpectSuccess, setVariableMetaDataExpectSuccess } from '../../util/helpers';
+import { createCollectionExpectSuccess, createItemExpectSuccess, setVariableMetaDataExpectSuccess, setMetadataUpdatePermissionFlagExpectSuccess } from '../../util/helpers';
 import { collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents } from '../util/helpers';
 import nonFungibleAbi from '../nonFungibleAbi.json';
 import { expect } from 'chai';
@@ -339,6 +339,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const address = collectionIdToAddress(collection);
     const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, { from: caller, ...GAS_ARGS }));
     const item = await createItemExpectSuccess(alice, collection, 'NFT', { ethereum: contract.options.address });
+    await setMetadataUpdatePermissionFlagExpectSuccess(alice, collection, 'Admin');
     await setVariableMetaDataExpectSuccess(alice, collection, item, [1, 2, 3]);
     
     expect(await contract.methods.getVariableMetadata(item).call()).to.be.equal('0x010203');

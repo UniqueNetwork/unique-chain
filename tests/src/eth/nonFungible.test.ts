@@ -4,7 +4,7 @@
 //
 
 import privateKey from '../substrate/privateKey';
-import { approveExpectSuccess, burnItemExpectSuccess, createCollectionExpectSuccess, createItemExpectSuccess, setVariableMetaDataExpectSuccess, transferExpectSuccess, transferFromExpectSuccess, UNIQUE } from '../util/helpers';
+import { approveExpectSuccess, burnItemExpectSuccess, createCollectionExpectSuccess, createItemExpectSuccess, setVariableMetaDataExpectSuccess, transferExpectSuccess, transferFromExpectSuccess, UNIQUE, setMetadataUpdatePermissionFlagExpectSuccess } from '../util/helpers';
 import { collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, transferBalanceToEth } from './util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import { expect } from 'chai';
@@ -336,6 +336,7 @@ describe('NFT: Plain calls', () => {
     const owner = await createEthAccountWithBalance(api, web3);
 
     const item = await createItemExpectSuccess(alice, collection, 'NFT', { ethereum: owner });
+    await setMetadataUpdatePermissionFlagExpectSuccess(alice, collection, 'Admin');
     await setVariableMetaDataExpectSuccess(alice, collection, item, [1, 2, 3]);
 
     const address = collectionIdToAddress(collection);
