@@ -6,7 +6,7 @@ ExecStart=/opt/parity/polkadot \
         --ferdie \
         --validator \
         --base-path /var/local/rococo/ferdie \
-        --chain /opt/parity/chain-specs/rococo-local-v0.9.9.json \
+        --chain /opt/parity/chain-specs/rococo-local.json \
 	--node-key-file /opt/parity/keys/relay-rococo-ferdie-node-key \
         --execution Wasm \
 	--no-prometheus \

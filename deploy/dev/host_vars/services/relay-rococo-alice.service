@@ -6,7 +6,7 @@ ExecStart=/opt/parity/polkadot \
         --alice \
         --validator \
         --base-path /var/local/rococo/alice \
-        --chain /opt/parity/chain-specs/rococo-local-v0.9.9.json \
+        --chain /opt/parity/chain-specs/rococo-local.json \
 	--node-key-file /opt/parity/keys/relay-rococo-alice-node-key \
         --execution Wasm \
 	--no-prometheus \
