@@ -11,7 +11,7 @@ jobs:
   build-and-publish:
  #   runs-on: ["self-hosted", "spot", "builder"]
  # self-hosted  Linux  X64  hetzner
-     runs-on: ["hetzner"]
+     runs-on: ["hetzner", "self-hosted", "spot", "builder"]
     name: Build & Publish
     environment: development
     strategy:
@@ -58,7 +58,8 @@ jobs:
 
 
   deploy:
-    runs-on: ["self-hosted", "spot", "builder"]
+    #runs-on: ["self-hosted", "spot", "builder"]
+    runs-on: ["hetzner", "self-hosted", "spot", "builder"]
     name: Deploy
     needs: build-and-publish
     environment: development
@@ -98,7 +99,8 @@ jobs:
         run: docker ps --all --latest --size
  
   notify:
-    runs-on: ["self-hosted", "spot", "builder"]
+    #runs-on: ["self-hosted", "spot", "builder"]
+     runs-on: 
     name: Notification
     needs: deploy
     environment: development
