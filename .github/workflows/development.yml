@@ -11,7 +11,7 @@ jobs:
   build-and-publish:
  #   runs-on: ["self-hosted", "spot", "builder"]
  # self-hosted  Linux  X64  hetzner
-     runs-on: ["hetzner", "self-hosted", "spot", "builder"]
+    runs-on: ["hetzner", "self-hosted", "spot", "builder"]
     name: Build & Publish
     environment: development
     strategy:
