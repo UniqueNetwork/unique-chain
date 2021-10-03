@@ -100,7 +100,7 @@ jobs:
  
   notify:
     #runs-on: ["self-hosted", "spot", "builder"]
-     runs-on: 
+    runs-on: ["hetzner", "self-hosted", "spot", "builder"]
     name: Notification
     needs: deploy
     environment: development
