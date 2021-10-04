@@ -33,19 +33,6 @@ describe('integration test: ext. createCollection():', () => {
 });
 
 describe('(!negative test!) integration test: ext. createCollection():', () => {
-  it('(!negative test!) create new NFT collection whith incorrect data (mode)', async () => {
-    await usingApi(async (api) => {
-      const AcollectionCount = parseInt((await api.query.nft.createdCollectionCount()).toString(), 10);
-
-      const badTransaction = async () => {
-        await createCollectionExpectSuccess({mode: {type: 'Invalid'}});
-      };
-      await expect(badTransaction()).to.be.rejected;
-
-      const BcollectionCount = parseInt((await api.query.nft.createdCollectionCount()).toString(), 10);
-      expect(BcollectionCount).to.be.equal(AcollectionCount, 'Error: Incorrect collection created.');
-    });
-  });
   it('(!negative test!) create new NFT collection whith incorrect data (collection_name)', async () => {
     await createCollectionExpectFailure({ name: 'A'.repeat(65), mode: {type: 'NFT'}});
   });

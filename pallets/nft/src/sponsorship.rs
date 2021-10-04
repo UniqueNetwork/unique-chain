@@ -61,10 +61,15 @@ impl<T: Config> NftSponsorshipHandler<T> {
 			sponsor_transfer = match collection_mode {
 				CollectionMode::NFT => {
 					// get correct limit
-					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
-						collection_limits.sponsor_transfer_timeout
+					let limit: u32 = if collection_limits.sponsor_transfer_timeout != 0 {
+						if collection_limits.sponsor_transfer_timeout > NFT_SPONSOR_TRANSFER_TIMEOUT
+						{
+							collection_limits.sponsor_transfer_timeout
+						} else {
+							NFT_SPONSOR_TRANSFER_TIMEOUT
+						}
 					} else {
-						NFT_SPONSOR_TRANSFER_TIMEOUT
+						0
 					};
 
 					let mut sponsored = true;
@@ -83,13 +88,18 @@ impl<T: Config> NftSponsorshipHandler<T> {
 				}
 				CollectionMode::Fungible(_) => {
 					// get correct limit
-					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
-						collection_limits.sponsor_transfer_timeout
+					let limit: u32 = if collection_limits.sponsor_transfer_timeout != 0 {
+						if collection_limits.sponsor_transfer_timeout
+							> FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT
+						{
+							collection_limits.sponsor_transfer_timeout
+						} else {
+							FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT
+						}
 					} else {
-						FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT
+						0
 					};
 
-					let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 					let mut sponsored = true;
 					if FungibleTransferBasket::<T>::contains_key(collection_id, who) {
 						let last_tx_block = FungibleTransferBasket::<T>::get(collection_id, who);
@@ -106,10 +116,16 @@ impl<T: Config> NftSponsorshipHandler<T> {
 				}
 				CollectionMode::ReFungible => {
 					// get correct limit
-					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
-						collection_limits.sponsor_transfer_timeout
+					let limit: u32 = if collection_limits.sponsor_transfer_timeout != 0 {
+						if collection_limits.sponsor_transfer_timeout
+							> REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT
+						{
+							collection_limits.sponsor_transfer_timeout
+						} else {
+							REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT
+						}
 					} else {
-						REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT
+						0
 					};
 
 					let mut sponsored = true;
@@ -127,7 +143,6 @@ impl<T: Config> NftSponsorshipHandler<T> {
 
 					sponsored
 				}
-				_ => false,
 			};
 		}
 

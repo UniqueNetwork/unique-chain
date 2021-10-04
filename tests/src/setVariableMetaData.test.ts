@@ -17,6 +17,7 @@ import {
   setVariableMetaDataExpectFailure,
   setVariableMetaDataExpectSuccess,
   addCollectionAdminExpectSuccess,
+  setMetadataUpdatePermissionFlagExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -62,6 +63,7 @@ describe('Integration Test collection admin setVariableMetaData', () => {
       bob = privateKey('//Bob');
       collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
       tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
+      await setMetadataUpdatePermissionFlagExpectSuccess(alice, collectionId, 'Admin');
       await addCollectionAdminExpectSuccess(alice, collectionId, bob);
     });
   });

@@ -1,4 +1,5 @@
 {
+    "AccountInfo": "AccountInfoWithTripleRefCount",
     "CrossAccountId": {
       "_enum": {
         "substrate": "AccountId",
@@ -18,7 +19,6 @@
     "DecimalPoints": "u8",
     "CollectionMode": {
       "_enum": {
-        "Invalid": null,
         "NFT": null,
         "Fungible": "DecimalPoints",
         "ReFungible": null

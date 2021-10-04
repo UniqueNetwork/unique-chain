@@ -5,10 +5,10 @@
 1. Checkout polkadot in sibling folder with this project
 ```bash
 git clone https://github.com/paritytech/polkadot.git && cd polkadot
-git checkout aa3867609
+git checkout release-v0.9.9
 ```
 
-2. Build with nightly-2021-04-23
+2. Build with nightly-2021-06-28
 ```bash
 cargo build --release
 ```

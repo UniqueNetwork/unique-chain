@@ -103,7 +103,6 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 					CollectionMode::ReFungible => {
 						include_bytes!("stubs/UniqueRefungible.raw") as &[u8]
 					}
-					CollectionMode::Invalid => include_bytes!("stubs/UniqueInvalid.raw") as &[u8],
 				}
 				.to_owned()
 			})

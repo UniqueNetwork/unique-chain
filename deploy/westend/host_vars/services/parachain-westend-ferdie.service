@@ -1,0 +1,40 @@
+[Unit]
+Description=Parachain Ferdie @ Westend
+
+[Service]
+ExecStart=/opt/usetech/nft \
+    --name c6-kr \
+    --collator \
+    --force-authoring \
+    --base-path /var/local/nft-parachain/westend/ferdie \
+    --chain /opt/usetech/chain-specs/nft-westend-v0.9.9.json \
+    --node-key-file /opt/usetech/keys/nft-westend-ferdie-node-key \
+    --port 40335 \
+    --rpc-port 9993 \
+    --ws-port 9994 \
+    --unsafe-ws-external \
+    --rpc-cors=all \
+    --no-prometheus \
+    --no-mdns \
+    --no-telemetry \
+    --bootnodes /ip4/54.216.209.53/tcp/40330/p2p/12D3KooWRtQanRkAipLcc7Jx7LoUibFXF7NbzSwnqFXH6BhATuTh \
+        /ip4/13.52.252.79/tcp/40331/p2p/12D3KooWPY9ot6Vxbpx37o1Cjb4C3Yrms1QhuvBh7KDHcjTZBTyj \
+        /ip4/3.38.43.147/tcp/40332/p2p/12D3KooWFfH3jGmvbmvfL9W4iWSbY7PUJ6cHfWpSnSGWXe4Gh73L \
+        /ip4/54.216.209.53/tcp/40333/p2p/12D3KooWHXobmSZ97XyNSFmBXaHijuMCHqBGMEHWXc1Z1Wo9SnXP \
+        /ip4/13.52.252.79/tcp/40334/p2p/12D3KooWBC8uBCJUpg1XY23Cq56EpEhipZ62LD6mCJq5tGZUupzG \
+#        /ip4/127.0.0.1/tcp/40336/p2p/ \
+    -- --execution wasm \
+    --chain /opt/usetech/chain-specs/westend-v0.9.9.json \
+    --port 30335 \
+    --rpc-port 9793 \
+    --ws-port 9794 \
+    --no-prometheus \
+    --no-mdns \
+    --no-telemetry 
+		
+
+Restart=always
+RestartSec=120
+
+[Install]
+WantedBy=multi-user.target
