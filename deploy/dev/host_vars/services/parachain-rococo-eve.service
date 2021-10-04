@@ -8,7 +8,7 @@ ExecStart=/opt/usetech/nft \
     --force-authoring \
     --base-path /var/local/nft-parachain/rococo/eve \
 #    --parachain-id 2000 \
-    --chain /opt/usetech/chain-specs/nft-rococo-local-v0.9.9.json \
+    --chain /opt/usetech/chain-specs/nft-rococo-local.json \
     --node-key-file /opt/usetech/keys/nft-rococo-eve-node-key \
     --port 40334 \
     --rpc-port 9983 \
@@ -25,7 +25,7 @@ ExecStart=/opt/usetech/nft \
         /ip4/127.0.0.1/tcp/40335/p2p/12D3KooWNASZWo1RJacaiaB7XLZDKnKkYxK8deQx7cwoqAH3GCYq \
         /ip4/127.0.0.1/tcp/40336/p2p/12D3KooWBBoQSsMQkDurje3WdjRAbCReGCXrytJp81TjkSnVk5pz \
     -- --execution wasm \
-    --chain /opt/parity/chain-specs/rococo-local-v0.9.9.json \
+    --chain /opt/parity/chain-specs/rococo-local.json \
     --port 31204 \
     --rpc-port 9783 \
     --ws-port 9784 \

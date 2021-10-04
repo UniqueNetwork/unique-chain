@@ -8,7 +8,7 @@ ExecStart=/opt/usetech/nft \
     --force-authoring \
     --base-path /var/local/nft-parachain/rococo/greg \
 #    --parachain-id 2000 \
-    --chain /opt/usetech/chain-specs/nft-rococo-local-v0.9.9.json \
+    --chain /opt/usetech/chain-specs/nft-rococo-local.json \
     --node-key-file /opt/usetech/keys/nft-rococo-greg-node-key \
     --port 40336 \
     --rpc-port 9903 \
@@ -25,7 +25,7 @@ ExecStart=/opt/usetech/nft \
         /ip4/127.0.0.1/tcp/40334/p2p/12D3KooWLHqtH7BUBby4mf8hgYXALggZqwRkLMUyRAoCkf1vyoD7 \
         /ip4/127.0.0.1/tcp/40335/p2p/12D3KooWNASZWo1RJacaiaB7XLZDKnKkYxK8deQx7cwoqAH3GCYq \
     -- --execution wasm \
-    --chain /opt/parity/chain-specs/rococo-local-v0.9.9.json \
+    --chain /opt/parity/chain-specs/rococo-local.json \
     --port 31206 \
     --rpc-port 9703 \
     --ws-port 9704 \
