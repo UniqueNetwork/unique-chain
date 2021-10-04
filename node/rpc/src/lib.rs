@@ -18,7 +18,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus::SelectChain;
-use sp_transaction_pool::TransactionPool;
+use sc_service::TransactionPool;
 use std::{collections::BTreeMap, marker::PhantomData, sync::Arc};
 
 /// Public io handler for exporting into other modules
@@ -192,7 +192,7 @@ where
 		pending_transactions,
 		signers,
 		overrides.clone(),
-		backend,
+		backend.clone(),
 		is_authority,
 		max_past_logs,
 	)));
@@ -200,6 +200,7 @@ where
 	if let Some(filter_pool) = filter_pool {
 		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
 			client.clone(),
+			backend,
 			filter_pool,
 			500_usize, // max stored filters
 			overrides.clone(),

@@ -4,8 +4,7 @@
 pub use serde::{Serialize, Deserialize};
 
 use sp_runtime::sp_std::prelude::Vec;
-use codec::{Decode, Encode};
-use max_encoded_len::MaxEncodedLen;
+use codec::{Decode, Encode, MaxEncodedLen};
 pub use frame_support::{
 	BoundedVec, construct_runtime, decl_event, decl_module, decl_storage, decl_error,
 	dispatch::DispatchResult,
@@ -74,23 +73,15 @@ pub type DecimalPoints = u8;
 #[derive(Encode, Decode, Eq, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum CollectionMode {
-	Invalid,
 	NFT,
 	// decimal points
 	Fungible(DecimalPoints),
 	ReFungible,
 }
 
-impl Default for CollectionMode {
-	fn default() -> Self {
-		Self::Invalid
-	}
-}
-
 impl CollectionMode {
 	pub fn id(&self) -> u8 {
 		match self {
-			CollectionMode::Invalid => 0,
 			CollectionMode::NFT => 1,
 			CollectionMode::Fungible(_) => 2,
 			CollectionMode::ReFungible => 3,
@@ -186,6 +177,7 @@ pub struct Collection<T: frame_system::Config> {
 	pub limits: CollectionLimits<T::BlockNumber>, // Collection private restrictions
 	pub variable_on_chain_schema: Vec<u8>,        //
 	pub const_on_chain_schema: Vec<u8>,           //
+	pub meta_update_permission: MetaUpdatePermission,
 	pub transfers_enabled: bool,
 }
 
@@ -304,6 +296,20 @@ pub struct CreateReFungibleData {
 	#[derivative(Debug = "ignore")]
 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 	pub pieces: u128,
+}
+
+#[derive(Encode, Decode, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum MetaUpdatePermission {
+	ItemOwner,
+	Admin,
+	None,
+}
+
+impl Default for MetaUpdatePermission {
+	fn default() -> Self {
+		Self::ItemOwner
+	}
 }
 
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug)]

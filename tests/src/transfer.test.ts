@@ -60,7 +60,7 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
         // tslint:disable-next-line:no-unused-expression
         expect(result.success).to.be.false;
       };
-      expect(badTransaction()).to.be.rejectedWith('Inability to pay some fees , e.g. account balance too low');
+      await expect(badTransaction()).to.be.rejectedWith('Inability to pay some fees , e.g. account balance too low');
     });
   });
 

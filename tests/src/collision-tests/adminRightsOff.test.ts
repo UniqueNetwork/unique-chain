@@ -6,6 +6,8 @@ import privateKey from '../substrate/privateKey';
 import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
+  normalizeAccountId,
+  waitNewBlocks,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -25,23 +27,22 @@ describe('Deprivation of admin rights: ', () => {
   it('In the block, the collection admin adds a token or changes data, and the collection owner deprives the admin of rights ', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, Bob.address);
+      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx);
-      const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
-      await timeoutPromise(10000);
+      await waitNewBlocks(1);
       const args = [{ nft: ['0x31', '0x31'] }, { nft: ['0x32', '0x32'] }, { nft: ['0x33', '0x33'] }];
-      const addItemAdm = api.tx.nft.createMultipleItems(collectionId, Bob.address, args);
-      const removeAdm = api.tx.nft.removeCollectionAdmin(collectionId, Bob.address);
+      const addItemAdm = api.tx.nft.createMultipleItems(collectionId, normalizeAccountId(Bob.address), args);
+      const removeAdm = api.tx.nft.removeCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await Promise.all([
         addItemAdm.signAndSend(Bob),
         removeAdm.signAndSend(Alice),
       ]);
-      await timeoutPromise(10000);
+      await waitNewBlocks(2);
       const itemsListIndex = await api.query.nft.itemListIndex(collectionId) as unknown as BN;
       expect(itemsListIndex.toNumber()).to.be.equal(0);
       const adminList: any = (await api.query.nft.adminList(collectionId));
-      expect(adminList).not.to.be.contains(Bob.address);
-      await timeoutPromise(20000);
+      expect(adminList).not.to.be.contains(normalizeAccountId(Bob.address));
+      await waitNewBlocks(2);
     });
   });
 });

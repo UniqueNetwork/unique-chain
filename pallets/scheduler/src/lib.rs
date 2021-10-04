@@ -794,8 +794,8 @@ mod tests {
 	use super::*;
 
 	use frame_support::{
-		parameter_types, assert_ok, ord_parameter_types, assert_noop, assert_err, Hashable,
-		traits::{OnInitialize, OnFinalize, Filter},
+		Hashable, assert_err, assert_noop, assert_ok, ord_parameter_types, parameter_types,
+		traits::{Contains, Filter, OnFinalize, OnInitialize},
 		weights::constants::RocksDbWeight,
 	};
 	use sp_core::H256;
@@ -870,8 +870,8 @@ mod tests {
 
 	// Scheduler must dispatch with root and no filter, this tests base filter is indeed not used.
 	pub struct BaseFilter;
-	impl Filter<Call> for BaseFilter {
-		fn filter(call: &Call) -> bool {
+	impl Contains<Call> for BaseFilter {
+		fn contains(call: &Call) -> bool {
 			!matches!(call, Call::Logger(logger::Call::log(_, _)))
 		}
 	}

@@ -10,6 +10,7 @@ contract Dummy {
 }
 
 contract ContractHelpers is Dummy {
+	// Selector: contractOwner(address) 5152b14c
 	function contractOwner(address contractAddress)
 		public
 		view
@@ -21,6 +22,7 @@ contract ContractHelpers is Dummy {
 		return 0x0000000000000000000000000000000000000000;
 	}
 
+	// Selector: sponsoringEnabled(address) 6027dc61
 	function sponsoringEnabled(address contractAddress)
 		public
 		view
@@ -32,6 +34,7 @@ contract ContractHelpers is Dummy {
 		return false;
 	}
 
+	// Selector: toggleSponsoring(address,bool) fcac6d86
 	function toggleSponsoring(address contractAddress, bool enabled) public {
 		require(false, stub_error);
 		contractAddress;
@@ -39,6 +42,7 @@ contract ContractHelpers is Dummy {
 		dummy = 0;
 	}
 
+	// Selector: setSponsoringRateLimit(address,uint32) 77b6c908
 	function setSponsoringRateLimit(address contractAddress, uint32 rateLimit)
 		public
 	{
@@ -48,6 +52,19 @@ contract ContractHelpers is Dummy {
 		dummy = 0;
 	}
 
+	// Selector: getSponsoringRateLimit(address) 610cfabd
+	function getSponsoringRateLimit(address contractAddress)
+		public
+		view
+		returns (uint32)
+	{
+		require(false, stub_error);
+		contractAddress;
+		dummy;
+		return 0;
+	}
+
+	// Selector: allowed(address,address) 5c658165
 	function allowed(address contractAddress, address user)
 		public
 		view
@@ -60,6 +77,7 @@ contract ContractHelpers is Dummy {
 		return false;
 	}
 
+	// Selector: allowlistEnabled(address) c772ef6c
 	function allowlistEnabled(address contractAddress)
 		public
 		view
@@ -71,6 +89,7 @@ contract ContractHelpers is Dummy {
 		return false;
 	}
 
+	// Selector: toggleAllowlist(address,bool) 36de20f5
 	function toggleAllowlist(address contractAddress, bool enabled) public {
 		require(false, stub_error);
 		contractAddress;
@@ -78,6 +97,7 @@ contract ContractHelpers is Dummy {
 		dummy = 0;
 	}
 
+	// Selector: toggleAllowed(address,address,bool) 4706cc1c
 	function toggleAllowed(
 		address contractAddress,
 		address user,

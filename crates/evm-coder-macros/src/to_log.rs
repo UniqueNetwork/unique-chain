@@ -179,7 +179,7 @@ impl Events {
 					#consts
 				)*
 
-				pub fn generate_solidity_interface(out_set: &mut sp_std::collections::btree_set::BTreeSet<string>, is_impl: bool) {
+				pub fn generate_solidity_interface(tc: &evm_coder::solidity::TypeCollector, is_impl: bool) {
 					use evm_coder::solidity::*;
 					use core::fmt::Write;
 					let interface = SolidityInterface {
@@ -191,8 +191,8 @@ impl Events {
 					};
 					let mut out = string::new();
 					out.push_str("// Inline\n");
-					let _ = interface.format(is_impl, &mut out);
-					out_set.insert(out);
+					let _ = interface.format(is_impl, &mut out, tc);
+					tc.collect(out);
 				}
 			}
 

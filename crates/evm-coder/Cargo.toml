@@ -5,9 +5,9 @@ edition = "2018"
 
 [dependencies]
 evm-coder-macros = { path = "../evm-coder-macros" }
-primitive-types = { version = "0.9", default-features = false }
-hex-literal = "0.3"
-ethereum = { version = "0.7.1", default-features = false }
+primitive-types = { version = "0.10.1", default-features = false }
+hex-literal = "0.3.3"
+ethereum = { version = "0.9.0", default-features = false }
 evm-core = { default-features = false, git = "https://github.com/uniquenetwork/evm.git", branch="precompile-output-parachain" }
 impl-trait-for-tuples = "0.2.1"
 

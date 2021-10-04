@@ -50,79 +50,79 @@ limit-testing = ["nft-data-structs/limit-testing"]
 default-features = false
 features = ['derive']
 package = 'parity-scale-codec'
-version = '2.0.0'
+version = '2.3.0'
 
 [dependencies.frame-benchmarking]
 default-features = false
 optional = true
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.10'
+version = '4.0.0-dev'
 
 [dependencies.frame-support]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.10'
+version = '4.0.0-dev'
 
 [dependencies.frame-system]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.10'
+version = '4.0.0-dev'
 
 [dependencies.pallet-balances]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.10'
+version = '4.0.0-dev'
 
 [dependencies.pallet-timestamp]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.10'
+version = '4.0.0-dev'
 
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.10'
+version = '4.0.0-dev'
 
 [dependencies.sp-std]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.10'
+version = '4.0.0-dev'
 
 [dependencies.pallet-transaction-payment]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.10'
+version = '4.0.0-dev'
 
 [dependencies.serde]
 default-features = false
 features = ['derive']
-version = '1.0.119'
+version = '1.0.130'
 
 [dependencies.sp-runtime]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.10'
+version = '4.0.0-dev'
 
 [dependencies.sp-core]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.10'
+version = '4.0.0-dev'
 
 [dependencies.sp-io]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.8'
-version = '3.0.0'
+branch = 'polkadot-v0.9.10'
+version = '4.0.0-dev'
 
 
 ################################################################################
@@ -140,17 +140,17 @@ version = '0.1.0'
 
 
 [dependencies]
-ethereum = { default-features = false, version = "0.7.1" }
+ethereum = { default-features = false, version = "0.9.0" }
 rlp = { default-features = false, version = "0.5.0" }
-sp-api = { default-features = false, version = '3.0.0', git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.8" }
+sp-api = { default-features = false, version = '4.0.0-dev', git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 
 evm-coder = { default-features = false, path = "../../crates/evm-coder" }
 pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }
-primitive-types = { version = "0.9.0", default-features = false, features = [
+primitive-types = { version = "0.10.1", default-features = false, features = [
     "serde_no_std",
 ] }
 
-pallet-evm = { default-features = false, version = "5.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-pallet-ethereum = { default-features = false, version = "3.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-fp-evm = { default-features = false, version = '2.0.0', git = "https://github.com/uniquenetwork/frontier.git", branch = "injected-transactions-parachain" }
-hex-literal = "0.3.1"
+pallet-evm = { default-features = false, version = "6.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+pallet-ethereum = { default-features = false, version = "4.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+fp-evm = { default-features = false, version = '3.0.0-dev', git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
+hex-literal = "0.3.3"

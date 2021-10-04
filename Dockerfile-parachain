@@ -4,9 +4,9 @@ LABEL maintainer="Unique.Network"
 
 
 
-ARG RUST_TOOLCHAIN=nightly-2021-06-17
+ARG RUST_TOOLCHAIN=nightly-2021-06-28
 #ARG RUST_C=1.55.0-nightly
-ARG POLKA_VERSION=v0.9.8
+ARG POLKA_VERSION=v0.9.10
 ARG NFT_BRANCH=develop
 
 #ARG USER=***
@@ -34,7 +34,7 @@ RUN apt-get update && \
 
 # Get project and run it
 
-#RUN git clone -b $NFT_BRANCH https://$USER:$PASS@github.com/UniqueNetwork/nft_private.git  /nft_parachain
+#RUN git clone -b $NFT_BRANCH https://$USER:$PASS@github.com/UniqueNetwork/unique-chain.git  /nft_parachain
 
 
 RUN mkdir nft_parachain
