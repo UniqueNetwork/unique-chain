@@ -29,7 +29,7 @@ describe('Number of tokens per address (NFT)', () => {
     });
   });
 
-  it('Collection limits allow greater number than chain limits, chain limits are enforced', async () => {
+  it.skip('Collection limits allow greater number than chain limits, chain limits are enforced', async () => {
       
     const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
     await setCollectionLimitsExpectSuccess(Alice, collectionId, { AccountTokenOwnershipLimit: 20 });
@@ -59,7 +59,7 @@ describe('Number of tokens per address (ReFungible)', () => {
     });
   });
 
-  it('Collection limits allow greater number than chain limits, chain limits are enforced', async () => {   
+  it.skip('Collection limits allow greater number than chain limits, chain limits are enforced', async () => {   
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible' }});
     await setCollectionLimitsExpectSuccess(Alice, collectionId, { AccountTokenOwnershipLimit: 20 });
     for(let i = 0; i < 10; i++){
@@ -278,7 +278,7 @@ describe('Collection zero limits (NFT)', () => {
     });
   });
 
-  it('Limits have 0 in tokens per address field, the chain limits are applied', async () => {  
+  it.skip('Limits have 0 in tokens per address field, the chain limits are applied', async () => {  
     const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
     await setCollectionLimitsExpectSuccess(Alice, collectionId, { AccountTokenOwnershipLimit: 0 });
     for(let i = 0; i < 10; i++){
@@ -305,7 +305,7 @@ describe('Collection zero limits (NFT)', () => {
   });
 });
 
-describe.only('Collection zero limits (Fungible)', () => {
+describe('Collection zero limits (Fungible)', () => {
   let Alice: IKeyringPair;
   let Bob: IKeyringPair;
   let Charlie: IKeyringPair;
@@ -336,7 +336,7 @@ describe.only('Collection zero limits (Fungible)', () => {
   });
 });
 
-describe.only('Collection zero limits (ReFungible)', () => {
+describe('Collection zero limits (ReFungible)', () => {
   let Alice: IKeyringPair;
   let Bob: IKeyringPair;
   let Charlie: IKeyringPair;
@@ -349,7 +349,7 @@ describe.only('Collection zero limits (ReFungible)', () => {
     });
   });
 
-  it('Limits have 0 in tokens per address field, the chain limits are applied', async () => {  
+  it.skip('Limits have 0 in tokens per address field, the chain limits are applied', async () => {  
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible' }});
     await setCollectionLimitsExpectSuccess(Alice, collectionId, { AccountTokenOwnershipLimit: 0 });
     for(let i = 0; i < 10; i++){
