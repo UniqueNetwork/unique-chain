@@ -211,6 +211,10 @@ impl AbiWriter {
 		self.memory(value.as_bytes())
 	}
 
+	pub fn bytes(&mut self, value: &[u8]) {
+		self.memory(value)
+	}
+
 	pub fn finish(mut self) -> Vec<u8> {
 		for (static_offset, part) in self.dynamic_part {
 			let part_offset = self.static_part.len();
@@ -247,6 +251,59 @@ impl_abi_readable!(Vec<u8>, bytes);
 impl_abi_readable!(bool, bool);
 impl_abi_readable!(string, string);
 
+mod sealed {
+	/// Not all types can be placed in vec, i.e `Vec<u8>` is restricted, `bytes` should be used instead
+	pub trait CanBePlacedInVec {}
+}
+
+impl sealed::CanBePlacedInVec for U256 {}
+impl sealed::CanBePlacedInVec for string {}
+impl sealed::CanBePlacedInVec for H160 {}
+
+impl<R: sealed::CanBePlacedInVec> AbiRead<Vec<R>> for AbiReader<'_>
+where
+	Self: AbiRead<R>,
+{
+	fn abi_read(&mut self) -> Result<Vec<R>> {
+		let mut sub = self.subresult()?;
+		let size = sub.read_usize()?;
+		sub.subresult_offset = sub.offset;
+		let mut out = Vec::with_capacity(size);
+		for _ in 0..size {
+			out.push(<Self as AbiRead<R>>::abi_read(&mut sub)?);
+		}
+		Ok(out)
+	}
+}
+
+macro_rules! impl_tuples {
+	($($ident:ident)+) => {
+		impl<$($ident),+> sealed::CanBePlacedInVec for ($($ident,)+) {}
+		impl<$($ident),+> AbiRead<($($ident,)+)> for AbiReader<'_>
+		where
+			$(Self: AbiRead<$ident>),+
+		{
+			fn abi_read(&mut self) -> Result<($($ident,)+)> {
+				let mut subresult = self.subresult()?;
+				Ok((
+					$(<Self as AbiRead<$ident>>::abi_read(&mut subresult)?,)+
+				))
+			}
+		}
+	};
+}
+
+impl_tuples! {A}
+impl_tuples! {A B}
+impl_tuples! {A B C}
+impl_tuples! {A B C D}
+impl_tuples! {A B C D E}
+impl_tuples! {A B C D E F}
+impl_tuples! {A B C D E F G}
+impl_tuples! {A B C D E F G H}
+impl_tuples! {A B C D E F G H I}
+impl_tuples! {A B C D E F G H I J}
+
 pub trait AbiWrite {
 	fn abi_write(&self, writer: &mut AbiWriter);
 }
@@ -271,6 +328,11 @@ impl_abi_writeable!(&str, string);
 impl AbiWrite for &string {
 	fn abi_write(&self, writer: &mut AbiWriter) {
 		writer.string(self)
+	}
+}
+impl AbiWrite for &Vec<u8> {
+	fn abi_write(&self, writer: &mut AbiWriter) {
+		writer.bytes(self)
 	}
 }
 
@@ -308,6 +370,11 @@ macro_rules! abi_encode {
 
 #[cfg(test)]
 pub mod test {
+	use crate::{
+		abi::AbiRead,
+		types::{string, uint256},
+	};
+
 	use super::{AbiReader, AbiWriter};
 	use hex_literal::hex;
 
@@ -354,5 +421,49 @@ pub mod test {
 		);
 		assert_eq!(decoder.uint32().unwrap(), 1);
 		assert_eq!(decoder.string().unwrap(), "Test URI");
+	}
+
+	#[test]
+	fn mint_bulk() {
+		let (call, mut decoder) = AbiReader::new_call(&hex!(
+			"
+				36543006
+				00000000000000000000000053744e6da587ba10b32a2554d2efdcd985bc27a3 // address
+				0000000000000000000000000000000000000000000000000000000000000040 // offset of (uint256, string)[]
+				0000000000000000000000000000000000000000000000000000000000000003 // length of (uint256, string)[]
+
+				0000000000000000000000000000000000000000000000000000000000000060 // offset of first elem
+				00000000000000000000000000000000000000000000000000000000000000e0 // offset of second elem
+				0000000000000000000000000000000000000000000000000000000000000160 // offset of third elem
+
+				0000000000000000000000000000000000000000000000000000000000000001 // first token id?   					#60
+				0000000000000000000000000000000000000000000000000000000000000040 // offset of string
+				000000000000000000000000000000000000000000000000000000000000000a // size of string
+				5465737420555249203000000000000000000000000000000000000000000000 // string
+
+				000000000000000000000000000000000000000000000000000000000000000b // second token id? Why ==11?			#e0
+				0000000000000000000000000000000000000000000000000000000000000040 // offset of string
+				000000000000000000000000000000000000000000000000000000000000000a // size of string
+				5465737420555249203100000000000000000000000000000000000000000000 // string
+
+				000000000000000000000000000000000000000000000000000000000000000c // third token id?  Why ==12?			#160
+				0000000000000000000000000000000000000000000000000000000000000040 // offset of string
+				000000000000000000000000000000000000000000000000000000000000000a // size of string
+				5465737420555249203200000000000000000000000000000000000000000000 // string
+			"
+		))
+		.unwrap();
+		assert_eq!(call, 0x36543006);
+		let _ = decoder.address().unwrap();
+		let data =
+			<AbiReader<'_> as AbiRead<Vec<(uint256, string)>>>::abi_read(&mut decoder).unwrap();
+		assert_eq!(
+			data,
+			vec![
+				(1.into(), "Test URI 0".to_string()),
+				(11.into(), "Test URI 1".to_string()),
+				(12.into(), "Test URI 2".to_string())
+			]
+		);
 	}
 }

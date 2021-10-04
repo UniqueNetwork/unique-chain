@@ -8,6 +8,7 @@ use crate::{
 };
 use frame_support::storage::{StorageMap, StorageDoubleMap};
 use pallet_evm::AddressMapping;
+use pallet_evm_coder_substrate::dispatch_to_evm;
 use super::account::CrossAccountId;
 use sp_std::{vec, vec::Vec};
 
@@ -298,6 +299,90 @@ impl<T: Config> CollectionHandle<T> {
 			.checked_add(1)
 			.ok_or("item id overflow")?
 			.into())
+	}
+
+	fn set_variable_metadata(
+		&mut self,
+		caller: caller,
+		token_id: uint256,
+		data: bytes,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let token_id = token_id.try_into().map_err(|_| "token id overflow")?;
+
+		<Module<T>>::set_variable_meta_data_internal(&caller, self, token_id, data)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	fn get_variable_metadata(&self, token_id: uint256) -> Result<bytes> {
+		let token_id = token_id.try_into().map_err(|_| "token id overflow")?;
+
+		<Module<T>>::get_variable_metadata(self, token_id).map_err(dispatch_to_evm::<T>)
+	}
+
+	fn mint_bulk(&mut self, caller: caller, to: address, token_ids: Vec<uint256>) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = T::CrossAccountId::from_eth(to);
+		let mut expected_index = <ItemListIndex>::get(self.id)
+			.checked_add(1)
+			.ok_or("item id overflow")?;
+
+		let total_tokens = token_ids.len();
+		for id in token_ids.into_iter() {
+			let id: u32 = id.try_into().map_err(|_| "token id overflow")?;
+			if id != expected_index {
+				return Err("item id should be next".into());
+			}
+			expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
+		}
+
+		let data = (0..total_tokens)
+			.map(|_| {
+				CreateItemData::NFT(CreateNftData {
+					const_data: vec![].try_into().unwrap(),
+					variable_data: vec![].try_into().unwrap(),
+				})
+			})
+			.collect();
+
+		<Module<T>>::create_multiple_items_internal(&caller, self, &to, data)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+
+	#[solidity(rename_selector = "mintBulkWithTokenURI")]
+	fn mint_bulk_with_token_uri(
+		&mut self,
+		caller: caller,
+		to: address,
+		tokens: Vec<(uint256, string)>,
+	) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = T::CrossAccountId::from_eth(to);
+		let mut expected_index = <ItemListIndex>::get(self.id)
+			.checked_add(1)
+			.ok_or("item id overflow")?;
+
+		let mut data = Vec::with_capacity(tokens.len());
+		for (id, token_uri) in tokens {
+			let id: u32 = id.try_into().map_err(|_| "token id overflow")?;
+			if id != expected_index {
+				panic!("item id should be next ({}) but got {}", expected_index, id);
+			}
+			expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
+
+			data.push(CreateItemData::NFT(CreateNftData {
+				const_data: Vec::<u8>::from(token_uri)
+					.try_into()
+					.map_err(|_| "token uri is too long")?,
+				variable_data: vec![].try_into().unwrap(),
+			}));
+		}
+
+		<Module<T>>::create_multiple_items_internal(&caller, self, &to, data)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
 	}
 }
 

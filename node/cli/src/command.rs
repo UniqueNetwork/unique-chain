@@ -51,17 +51,18 @@ fn load_spec(
 }
 
 impl SubstrateCli for Cli {
+	// TODO use args
 	fn impl_name() -> String {
-		"Parachain Collator Template".into()
+		"Opal Node".into()
 	}
 
 	fn impl_version() -> String {
 		env!("SUBSTRATE_CLI_IMPL_VERSION").into()
 	}
-
+	// TODO use args
 	fn description() -> String {
 		format!(
-			"Parachain Collator Template\n\nThe command-line arguments provided first will be \
+			"Opal Node\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
 		{} [parachain-args] -- [relaychain-args]",
@@ -73,12 +74,13 @@ impl SubstrateCli for Cli {
 		env!("CARGO_PKG_AUTHORS").into()
 	}
 
+	//TODO use args
 	fn support_url() -> String {
-		"https://github.com/substrate-developer-hub/substrate-parachain-template/issues/new".into()
+		"mailto:support@unique.network".into()
 	}
 
 	fn copyright_start_year() -> i32 {
-		2017
+		2021
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -91,16 +93,17 @@ impl SubstrateCli for Cli {
 }
 
 impl SubstrateCli for RelayChainCli {
+	// TODO use args
 	fn impl_name() -> String {
-		"Parachain Collator Template".into()
+		"Opal Node".into()
 	}
 
 	fn impl_version() -> String {
 		env!("SUBSTRATE_CLI_IMPL_VERSION").into()
 	}
-
+	// TODO use args
 	fn description() -> String {
-		"Parachain Collator Template\n\nThe command-line arguments provided first will be \
+		"Opal Node\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
 		parachain-collator [parachain-args] -- [relaychain-args]"
@@ -110,13 +113,13 @@ impl SubstrateCli for RelayChainCli {
 	fn author() -> String {
 		env!("CARGO_PKG_AUTHORS").into()
 	}
-
+	// TODO use args
 	fn support_url() -> String {
-		"https://github.com/substrate-developer-hub/substrate-parachain-template/issues/new".into()
+		"mailto:support@unique.network".into()
 	}
 
 	fn copyright_start_year() -> i32 {
-		2017
+		2021
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {

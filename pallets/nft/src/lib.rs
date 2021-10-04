@@ -43,7 +43,7 @@ use nft_data_structs::{
 	OFFCHAIN_SCHEMA_LIMIT, MAX_TOKEN_PREFIX_LENGTH, MAX_COLLECTION_NAME_LENGTH,
 	MAX_COLLECTION_DESCRIPTION_LENGTH, AccessMode, Collection, CreateItemData, CollectionLimits,
 	CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState, Ownership, NftItemType,
-	FungibleItemType, ReFungibleItemType,
+	MetaUpdatePermission, FungibleItemType, ReFungibleItemType,
 };
 
 #[cfg(test)]
@@ -145,6 +145,10 @@ decl_error! {
 		BadCreateRefungibleCall,
 		/// Gas limit exceeded
 		OutOfGas,
+		/// Metadata update denied by collection settings
+		MetadataUpdateDenied,
+		/// Metadata update flag become unmutable with None option
+		MetadataFlagFrozen,
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
 		/// Can't transfer tokens to ethereum zero address
@@ -250,6 +254,11 @@ trait WeightInfoHelpers: WeightInfo {
 		Self::create_item_nft(data)
 			.max(Self::create_item_fungible())
 			.max(Self::create_item_refungible(data))
+	}
+	fn create_multiple_items(amount: u32) -> Weight {
+		Self::create_multiple_items_nft(amount)
+			.max(Self::create_multiple_items_fungible(amount))
+			.max(Self::create_multiple_items_refungible(amount))
 	}
 	fn burn_item() -> Weight {
 		// TODO: refungible, fungible
@@ -536,6 +545,7 @@ decl_module! {
 				variable_on_chain_schema: Vec::new(),
 				const_on_chain_schema: Vec::new(),
 				limits,
+				meta_update_permission: MetaUpdatePermission::default(),
 				transfers_enabled: true,
 			};
 
@@ -896,9 +906,7 @@ decl_module! {
 		/// * itemsData: Array items properties. Each property is an array of bytes itself, see [create_item].
 		///
 		/// * owner: Address, initial owner of the NFT.
-		#[weight = <SelfWeightOf<T>>::create_item(items_data.iter()
-							   .map(|data| { data.data_size() as u32 })
-							   .sum())]
+		#[weight = <SelfWeightOf<T>>::create_multiple_items(items_data.len() as u32)]
 		#[transactional]
 		pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::CrossAccountId, items_data: Vec<CreateItemData>) -> DispatchResult {
 
@@ -924,7 +932,7 @@ decl_module! {
 		/// * collection_id: ID of the collection.
 		///
 		/// * value: New flag value.
-		#[weight = <SelfWeightOf<T>>::burn_item()]
+		#[weight = <SelfWeightOf<T>>::set_transfers_enabled_flag()]
 		#[transactional]
 		pub fn set_transfers_enabled_flag(origin, collection_id: CollectionId, value: bool) -> DispatchResult {
 
@@ -934,6 +942,36 @@ decl_module! {
 			Self::check_owner_permissions(&target_collection, &sender)?;
 
 			target_collection.transfers_enabled = value;
+			target_collection.save()
+		}
+
+		// TODO! transaction weight
+		/// Set meta_update_permission value for particular collection
+		///
+		/// # Permissions
+		///
+		/// * Collection Owner.
+		///
+		/// # Arguments
+		///
+		/// * collection_id: ID of the collection.
+		///
+		/// * value: New flag value.
+		#[weight = <T as Config>::WeightInfo::burn_item()]
+		#[transactional]
+		pub fn set_meta_update_permission_flag(origin, collection_id: CollectionId, value: MetaUpdatePermission) -> DispatchResult {
+
+			let sender = ensure_signed(origin)?;
+			let mut target_collection = Self::get_collection(collection_id)?;
+
+			ensure!(
+				target_collection.meta_update_permission != MetaUpdatePermission::None,
+				Error::<T>::MetadataFlagFrozen
+			);
+			Self::check_owner_permissions(&target_collection, &sender)?;
+
+			target_collection.meta_update_permission = value;
+
 			target_collection.save()
 		}
 
@@ -1309,7 +1347,6 @@ impl<T: Config> Module<T> {
 				sender.clone(),
 				recipient.clone(),
 			)?,
-			_ => (),
 		};
 
 		Self::deposit_event(RawEvent::Transfer(
@@ -1455,7 +1492,6 @@ impl<T: Config> Module<T> {
 				from.clone(),
 				recipient.clone(),
 			)?,
-			_ => (),
 		};
 
 		if matches!(collection.mode, CollectionMode::Fungible(_)) {
@@ -1482,10 +1518,11 @@ impl<T: Config> Module<T> {
 			Error::<T>::TokenVariableDataLimitExceeded
 		);
 
-		// Modify permissions check
 		ensure!(
-			Self::is_item_owner(sender, collection, item_id)?
-				|| Self::is_owner_or_admin_permissions(collection, sender)?,
+			(Self::is_item_owner(sender, collection, item_id)?
+				&& collection.meta_update_permission == MetaUpdatePermission::ItemOwner)
+				|| (Self::is_owner_or_admin_permissions(collection, sender)?
+					&& collection.meta_update_permission == MetaUpdatePermission::Admin),
 			Error::<T>::NoPermission
 		);
 
@@ -1495,10 +1532,48 @@ impl<T: Config> Module<T> {
 				Self::set_re_fungible_variable_data(collection, item_id, data)?
 			}
 			CollectionMode::Fungible(_) => fail!(Error::<T>::CantStoreMetadataInFungibleTokens),
-			_ => fail!(Error::<T>::UnexpectedCollectionType),
 		};
 
 		Ok(())
+	}
+
+	pub fn meta_update_check(
+		sender: &T::CrossAccountId,
+		collection: &CollectionHandle<T>,
+		item_id: TokenId,
+	) -> DispatchResult {
+		match collection.meta_update_permission {
+			MetaUpdatePermission::ItemOwner => ensure!(
+				Self::is_item_owner(sender, collection, item_id)?,
+				Error::<T>::NoPermission
+			),
+			MetaUpdatePermission::Admin => ensure!(
+				Self::is_owner_or_admin_permissions(collection, sender)?,
+				Error::<T>::NoPermission
+			),
+			MetaUpdatePermission::None => fail!(Error::<T>::MetadataUpdateDenied),
+		}
+
+		Ok(())
+	}
+
+	pub fn get_variable_metadata(
+		collection: &CollectionHandle<T>,
+		item_id: TokenId,
+	) -> Result<Vec<u8>, DispatchError> {
+		Ok(match collection.mode {
+			CollectionMode::NFT => {
+				<NftItemList<T>>::get(collection.id, item_id)
+					.ok_or(Error::<T>::TokenNotFound)?
+					.variable_data
+			}
+			CollectionMode::ReFungible => {
+				<ReFungibleItemList<T>>::get(collection.id, item_id)
+					.ok_or(Error::<T>::TokenNotFound)?
+					.variable_data
+			}
+			_ => fail!(Error::<T>::UnexpectedCollectionType),
+		})
 	}
 
 	pub fn create_multiple_items_internal(
@@ -1540,7 +1615,6 @@ impl<T: Config> Module<T> {
 			CollectionMode::NFT => Self::burn_nft_item(collection, item_id)?,
 			CollectionMode::Fungible(_) => Self::burn_fungible_item(sender, collection, value)?,
 			CollectionMode::ReFungible => Self::burn_refungible_item(collection, item_id, sender)?,
-			_ => (),
 		};
 
 		Ok(())
@@ -1644,9 +1718,6 @@ impl<T: Config> Module<T> {
 				} else {
 					fail!(Error::<T>::NotReFungibleDataUsedToMintReFungibleCollectionToken);
 				}
-			}
-			_ => {
-				fail!(Error::<T>::UnexpectedCollectionType);
 			}
 		};
 
@@ -1956,7 +2027,6 @@ impl<T: Config> Module<T> {
 				.iter()
 				.find(|i| i.owner == *subject)
 				.map(|i| i.fraction),
-			CollectionMode::Invalid => None,
 		}
 	}
 
@@ -1993,7 +2063,6 @@ impl<T: Config> Module<T> {
 			CollectionMode::ReFungible => {
 				<ReFungibleItemList<T>>::contains_key(collection_id, item_id)
 			}
-			_ => false,
 		};
 
 		ensure!(exists, Error::<T>::TokenNotFound);

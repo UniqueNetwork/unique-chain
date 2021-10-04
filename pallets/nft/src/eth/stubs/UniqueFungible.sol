@@ -21,12 +21,14 @@ contract ERC20Events {
 
 // Inline
 contract InlineNameSymbol is Dummy {
+	// Selector: name() 06fdde03
 	function name() public view returns (string memory) {
 		require(false, stub_error);
 		dummy;
 		return "";
 	}
 
+	// Selector: symbol() 95d89b41
 	function symbol() public view returns (string memory) {
 		require(false, stub_error);
 		dummy;
@@ -36,6 +38,7 @@ contract InlineNameSymbol is Dummy {
 
 // Inline
 contract InlineTotalSupply is Dummy {
+	// Selector: totalSupply() 18160ddd
 	function totalSupply() public view returns (uint256) {
 		require(false, stub_error);
 		dummy;
@@ -44,6 +47,7 @@ contract InlineTotalSupply is Dummy {
 }
 
 contract ERC165 is Dummy {
+	// Selector: supportsInterface(bytes4) 01ffc9a7
 	function supportsInterface(uint32 interfaceId) public view returns (bool) {
 		require(false, stub_error);
 		interfaceId;
@@ -53,12 +57,14 @@ contract ERC165 is Dummy {
 }
 
 contract ERC20 is Dummy, InlineNameSymbol, InlineTotalSupply, ERC20Events {
+	// Selector: decimals() 313ce567
 	function decimals() public view returns (uint8) {
 		require(false, stub_error);
 		dummy;
 		return 0;
 	}
 
+	// Selector: balanceOf(address) 70a08231
 	function balanceOf(address owner) public view returns (uint256) {
 		require(false, stub_error);
 		owner;
@@ -66,6 +72,7 @@ contract ERC20 is Dummy, InlineNameSymbol, InlineTotalSupply, ERC20Events {
 		return 0;
 	}
 
+	// Selector: transfer(address,uint256) a9059cbb
 	function transfer(address to, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		to;
@@ -74,6 +81,7 @@ contract ERC20 is Dummy, InlineNameSymbol, InlineTotalSupply, ERC20Events {
 		return false;
 	}
 
+	// Selector: transferFrom(address,address,uint256) 23b872dd
 	function transferFrom(
 		address from,
 		address to,
@@ -87,6 +95,7 @@ contract ERC20 is Dummy, InlineNameSymbol, InlineTotalSupply, ERC20Events {
 		return false;
 	}
 
+	// Selector: approve(address,uint256) 095ea7b3
 	function approve(address spender, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		spender;
@@ -95,6 +104,7 @@ contract ERC20 is Dummy, InlineNameSymbol, InlineTotalSupply, ERC20Events {
 		return false;
 	}
 
+	// Selector: allowance(address,address) dd62ed3e
 	function allowance(address owner, address spender)
 		public
 		view
