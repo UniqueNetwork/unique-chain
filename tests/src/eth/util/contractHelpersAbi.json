@@ -159,38 +159,21 @@
     },
     {
         "inputs": [
-        "inputs": [
-            {
             {
                 "internalType": "address",
-                "internalType": "address",
-                "name": "target",
                 "name": "contractAddress",
                 "type": "address"
-                "type": "address"
-            }
             }
         ],
-        ],
-        "name": "sponsoringEnabled",
         "name": "getSponsoringRateLimit",
         "outputs": [
-        "outputs": [
             {
-            {
-                "internalType": "bool",
                 "internalType": "uint32",
                 "name": "",
-                "name": "",
-                "type": "bool"
                 "type": "uint32"
             }
-            }
-        ],
         ],
         "stateMutability": "view",
-        "stateMutability": "view",
-        "type": "function"
         "type": "function"
     }
 ]
