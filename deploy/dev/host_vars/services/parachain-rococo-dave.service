@@ -1,0 +1,47 @@
+[Unit]
+Description=Parachain Dave @ Rococo Local
+
+[Service]
+ExecStart=/opt/usetech/nft \
+    --name c4 \
+    --collator \
+    --force-authoring \
+    --base-path /var/local/nft-parachain/rococo/dave \
+#    --parachain-id 2000 \
+    --chain /opt/usetech/chain-specs/nft-rococo-local.json \
+    --node-key-file /opt/usetech/keys/nft-rococo-dave-node-key \
+    --port 40333 \
+    --rpc-port 9973 \
+    --ws-port 9974 \
+    --unsafe-ws-external \
+    --rpc-cors=all \
+    --no-prometheus \
+    --no-mdns \
+    --no-telemetry \
+    --bootnodes /ip4/127.0.0.1/tcp/40330/p2p/12D3KooWPRWVk79jY9HRC9ToMuaAEaByJW8UAEBZgAYkGtD1Akz3 \
+        /ip4/127.0.0.1/tcp/40331/p2p/12D3KooWGkFdKUuCPZ1GsDF4UX3fMpUw88EYBdtSccKe6CtPBM5L \
+        /ip4/127.0.0.1/tcp/40332/p2p/12D3KooWNSachE8aHptritQ1LhBsh54teWZ8zUwzZAyZPa78Hz3s \
+        /ip4/127.0.0.1/tcp/40334/p2p/12D3KooWLHqtH7BUBby4mf8hgYXALggZqwRkLMUyRAoCkf1vyoD7 \
+        /ip4/127.0.0.1/tcp/40335/p2p/12D3KooWNASZWo1RJacaiaB7XLZDKnKkYxK8deQx7cwoqAH3GCYq \
+        /ip4/127.0.0.1/tcp/40336/p2p/12D3KooWBBoQSsMQkDurje3WdjRAbCReGCXrytJp81TjkSnVk5pz \
+    -- --execution wasm \
+    --chain /opt/parity/chain-specs/rococo-local.json \
+    --port 31203 \
+    --rpc-port 9773 \
+    --ws-port 9774 \
+    --no-prometheus \
+    --no-mdns \
+    --no-telemetry \
+    --bootnodes /ip4/127.0.0.1/tcp/30330/p2p/12D3KooWRS4RKn7Hj3vTpksweCwtmggRK2eYfdRKXUdvkZnQyHV8 \
+                /ip4/127.0.0.1/tcp/30331/p2p/12D3KooWG2HkpixZCTFLYHH3kHvn6cLp3FzWwDKpZ65jDLg8ADob \
+                /ip4/127.0.0.1/tcp/30332/p2p/12D3KooW9tfKtLhA4Hc4YdmACpNiHu3tfPF4RoAP1NiirKwsQN45 \
+                /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWL7SKYJ4rZ4nLrk83cbJHcwLw9EXKGdbSMM49ZTUJbmof \
+                /ip4/127.0.0.1/tcp/30334/p2p/12D3KooWSQY8Ektq89TxqkJhhhaUSChZAKBsWybyd8iX98yiBALR \
+                /ip4/127.0.0.1/tcp/30335/p2p/12D3KooWRwEC5Mdr6V1akrgK9uwm2eo95YyuupsbrrmwoFZYv7DA 
+		
+
+Restart=always
+RestartSec=120
+
+[Install]
+WantedBy=multi-user.target

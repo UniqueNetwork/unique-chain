@@ -1,0 +1,10 @@
+{
+    "jsonrpc":"2.0",
+    "id":1,
+    "method":"author_insertKey",
+    "params": [
+      "aura",
+      "pretty forward scale stuff drama spread casual response fade culture super initial",
+      "0xc6e3af683585c567e6f209c1c0690105ab0ad8bed247f27bbf2aed8d6d1d076c"
+    ]
+  }

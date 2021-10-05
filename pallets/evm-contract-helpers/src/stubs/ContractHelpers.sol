@@ -52,6 +52,18 @@ contract ContractHelpers is Dummy {
 		dummy = 0;
 	}
 
+	// Selector: getSponsoringRateLimit(address) 610cfabd
+	function getSponsoringRateLimit(address contractAddress)
+		public
+		view
+		returns (uint32)
+	{
+		require(false, stub_error);
+		contractAddress;
+		dummy;
+		return 0;
+	}
+
 	// Selector: allowed(address,address) 5c658165
 	function allowed(address contractAddress, address user)
 		public

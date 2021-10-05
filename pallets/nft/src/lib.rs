@@ -43,7 +43,7 @@ use nft_data_structs::{
 	OFFCHAIN_SCHEMA_LIMIT, MAX_TOKEN_PREFIX_LENGTH, MAX_COLLECTION_NAME_LENGTH,
 	MAX_COLLECTION_DESCRIPTION_LENGTH, AccessMode, Collection, CreateItemData, CollectionLimits,
 	CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState, Ownership, NftItemType,
-	FungibleItemType, ReFungibleItemType,
+	MetaUpdatePermission, FungibleItemType, ReFungibleItemType,
 };
 
 #[cfg(test)]
@@ -145,6 +145,10 @@ decl_error! {
 		BadCreateRefungibleCall,
 		/// Gas limit exceeded
 		OutOfGas,
+		/// Metadata update denied by collection settings
+		MetadataUpdateDenied,
+		/// Metadata update flag become unmutable with None option
+		MetadataFlagFrozen,
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
 		/// Can't transfer tokens to ethereum zero address
@@ -302,9 +306,6 @@ decl_storage! {
 		/// Amount of collections destroyed, used for total amount tracking with
 		/// CreatedCollectionCount
 		DestroyedCollectionCount: u32;
-		/// Total amount of account owned tokens (NFTs + RFTs + unique fungibles)
-		/// Account id (real)
-		pub AccountItemCount get(fn account_item_count): map hasher(twox_64_concat) T::AccountId => u32;
 		//#endregion
 
 		//#region Basic collections
@@ -541,6 +542,7 @@ decl_module! {
 				variable_on_chain_schema: Vec::new(),
 				const_on_chain_schema: Vec::new(),
 				limits,
+				meta_update_permission: MetaUpdatePermission::default(),
 				transfers_enabled: true,
 			};
 
@@ -940,6 +942,36 @@ decl_module! {
 			target_collection.save()
 		}
 
+		// TODO! transaction weight
+		/// Set meta_update_permission value for particular collection
+		///
+		/// # Permissions
+		///
+		/// * Collection Owner.
+		///
+		/// # Arguments
+		///
+		/// * collection_id: ID of the collection.
+		///
+		/// * value: New flag value.
+		#[weight = <T as Config>::WeightInfo::burn_item()]
+		#[transactional]
+		pub fn set_meta_update_permission_flag(origin, collection_id: CollectionId, value: MetaUpdatePermission) -> DispatchResult {
+
+			let sender = ensure_signed(origin)?;
+			let mut target_collection = Self::get_collection(collection_id)?;
+
+			ensure!(
+				target_collection.meta_update_permission != MetaUpdatePermission::None,
+				Error::<T>::MetadataFlagFrozen
+			);
+			Self::check_owner_permissions(&target_collection, &sender)?;
+
+			target_collection.meta_update_permission = value;
+
+			target_collection.save()
+		}
+
 		/// Destroys a concrete instance of NFT.
 		///
 		/// # Permissions
@@ -1090,6 +1122,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
 			let collection = Self::get_collection(collection_id)?;
+			Self::meta_update_check(&sender, &collection, item_id)?;
 
 			Self::set_variable_meta_data_internal(&sender, &collection, item_id, data)?;
 
@@ -1312,7 +1345,6 @@ impl<T: Config> Module<T> {
 				sender.clone(),
 				recipient.clone(),
 			)?,
-			_ => (),
 		};
 
 		Self::deposit_event(RawEvent::Transfer(
@@ -1458,7 +1490,6 @@ impl<T: Config> Module<T> {
 				from.clone(),
 				recipient.clone(),
 			)?,
-			_ => (),
 		};
 
 		if matches!(collection.mode, CollectionMode::Fungible(_)) {
@@ -1485,10 +1516,11 @@ impl<T: Config> Module<T> {
 			Error::<T>::TokenVariableDataLimitExceeded
 		);
 
-		// Modify permissions check
 		ensure!(
-			Self::is_item_owner(sender, collection, item_id)?
-				|| Self::is_owner_or_admin_permissions(collection, sender)?,
+			(Self::is_item_owner(sender, collection, item_id)?
+				&& collection.meta_update_permission == MetaUpdatePermission::ItemOwner)
+				|| (Self::is_owner_or_admin_permissions(collection, sender)?
+					&& collection.meta_update_permission == MetaUpdatePermission::Admin),
 			Error::<T>::NoPermission
 		);
 
@@ -1498,8 +1530,27 @@ impl<T: Config> Module<T> {
 				Self::set_re_fungible_variable_data(collection, item_id, data)?
 			}
 			CollectionMode::Fungible(_) => fail!(Error::<T>::CantStoreMetadataInFungibleTokens),
-			_ => fail!(Error::<T>::UnexpectedCollectionType),
 		};
+
+		Ok(())
+	}
+
+	pub fn meta_update_check(
+		sender: &T::CrossAccountId,
+		collection: &CollectionHandle<T>,
+		item_id: TokenId,
+	) -> DispatchResult {
+		match collection.meta_update_permission {
+			MetaUpdatePermission::ItemOwner => ensure!(
+				Self::is_item_owner(sender, collection, item_id)?,
+				Error::<T>::NoPermission
+			),
+			MetaUpdatePermission::Admin => ensure!(
+				Self::is_owner_or_admin_permissions(collection, sender)?,
+				Error::<T>::NoPermission
+			),
+			MetaUpdatePermission::None => fail!(Error::<T>::MetadataUpdateDenied),
+		}
 
 		Ok(())
 	}
@@ -1562,7 +1613,6 @@ impl<T: Config> Module<T> {
 			CollectionMode::NFT => Self::burn_nft_item(collection, item_id)?,
 			CollectionMode::Fungible(_) => Self::burn_fungible_item(sender, collection, value)?,
 			CollectionMode::ReFungible => Self::burn_refungible_item(collection, item_id, sender)?,
-			_ => (),
 		};
 
 		Ok(())
@@ -1595,10 +1645,18 @@ impl<T: Config> Module<T> {
 		collection.consume_sload()?;
 		let account_items: u32 =
 			<AddressTokens<T>>::get(collection_id, recipient.as_sub()).len() as u32;
-		ensure!(
-			collection.limits.account_token_ownership_limit > account_items,
-			Error::<T>::AccountTokenLimitExceeded
-		);
+
+		// zero limit means collection limit is disabled
+		// otherwise get lower value
+		let limit = if collection.limits.account_token_ownership_limit == 0
+			|| collection.limits.account_token_ownership_limit > ACCOUNT_TOKEN_OWNERSHIP_LIMIT
+		{
+			ACCOUNT_TOKEN_OWNERSHIP_LIMIT
+		} else {
+			collection.limits.account_token_ownership_limit
+		};
+
+		ensure!(limit > account_items, Error::<T>::AccountTokenLimitExceeded);
 
 		// preliminary transfer check
 		ensure!(collection.transfers_enabled, Error::<T>::TransferNotAllowed);
@@ -1622,12 +1680,23 @@ impl<T: Config> Module<T> {
 			as u32)
 			.checked_add(amount)
 			.ok_or(Error::<T>::AccountTokenLimitExceeded)?;
+
+		// zero limit means collection limit is disabled
+		// otherwise get lower value
+		let account_token_limit = if collection.limits.account_token_ownership_limit == 0
+			|| collection.limits.account_token_ownership_limit > ACCOUNT_TOKEN_OWNERSHIP_LIMIT
+		{
+			ACCOUNT_TOKEN_OWNERSHIP_LIMIT
+		} else {
+			collection.limits.account_token_ownership_limit
+		};
+
 		ensure!(
 			collection.limits.token_limit >= total_items,
 			Error::<T>::CollectionTokenLimitExceeded
 		);
 		ensure!(
-			collection.limits.account_token_ownership_limit >= account_items,
+			account_token_limit >= account_items,
 			Error::<T>::AccountTokenLimitExceeded
 		);
 
@@ -1666,9 +1735,6 @@ impl<T: Config> Module<T> {
 				} else {
 					fail!(Error::<T>::NotReFungibleDataUsedToMintReFungibleCollectionToken);
 				}
-			}
-			_ => {
-				fail!(Error::<T>::UnexpectedCollectionType);
 			}
 		};
 
@@ -1978,7 +2044,6 @@ impl<T: Config> Module<T> {
 				.iter()
 				.find(|i| i.owner == *subject)
 				.map(|i| i.fraction),
-			CollectionMode::Invalid => None,
 		}
 	}
 
@@ -2015,7 +2080,6 @@ impl<T: Config> Module<T> {
 			CollectionMode::ReFungible => {
 				<ReFungibleItemList<T>>::contains_key(collection_id, item_id)
 			}
-			_ => false,
 		};
 
 		ensure!(exists, Error::<T>::TokenNotFound);
@@ -2362,32 +2426,19 @@ impl<T: Config> Module<T> {
 		item_index: TokenId,
 		owner: &T::CrossAccountId,
 	) -> DispatchResult {
-		// add to account limit
-		collection.consume_sload()?;
-		if <AccountItemCount<T>>::contains_key(owner.as_sub()) {
-			// bound Owned tokens by a single address
-			collection.consume_sload()?;
-			let count = <AccountItemCount<T>>::get(owner.as_sub());
-			ensure!(
-				count < ACCOUNT_TOKEN_OWNERSHIP_LIMIT,
-				Error::<T>::AddressOwnershipLimitExceeded
-			);
-
-			collection.consume_sstore()?;
-			<AccountItemCount<T>>::insert(
-				owner.as_sub(),
-				count.checked_add(1).ok_or(Error::<T>::NumOverflow)?,
-			);
-		} else {
-			collection.consume_sstore()?;
-			<AccountItemCount<T>>::insert(owner.as_sub(), 1);
-		}
-
 		collection.consume_sload()?;
 		let list_exists = <AddressTokens<T>>::contains_key(collection.id, owner.as_sub());
 		if list_exists {
 			collection.consume_sload()?;
 			let mut list = <AddressTokens<T>>::get(collection.id, owner.as_sub());
+
+			// bound Owned tokens by a single address in collection
+			let account_items: u32 = list.len() as u32;
+			ensure!(
+				account_items < ACCOUNT_TOKEN_OWNERSHIP_LIMIT,
+				Error::<T>::AddressOwnershipLimitExceeded
+			);
+
 			let item_contains = list.contains(&item_index.clone());
 
 			if !item_contains {
@@ -2410,16 +2461,6 @@ impl<T: Config> Module<T> {
 		item_index: TokenId,
 		owner: &T::CrossAccountId,
 	) -> DispatchResult {
-		// update counter
-		collection.consume_sload()?;
-		collection.consume_sstore()?;
-		<AccountItemCount<T>>::insert(
-			owner.as_sub(),
-			<AccountItemCount<T>>::get(owner.as_sub())
-				.checked_sub(1)
-				.ok_or(Error::<T>::NumOverflow)?,
-		);
-
 		collection.consume_sload()?;
 		let list_exists = <AddressTokens<T>>::contains_key(collection.id, owner.as_sub());
 		if list_exists {
