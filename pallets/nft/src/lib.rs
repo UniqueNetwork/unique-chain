@@ -1888,31 +1888,42 @@ impl<T: Config> Module<T> {
 		collection: &CollectionHandle<T>,
 		item_id: TokenId,
 		owner: &T::CrossAccountId,
+		value: u128,
 	) -> DispatchResult {
 		let collection_id = collection.id;
 
 		let mut token = <ReFungibleItemList<T>>::get(collection_id, item_id)
 			.ok_or(Error::<T>::TokenNotFound)?;
-		let rft_balance = token
+		let mut rft_balance = token
 			.owner
 			.iter()
 			.find(|&i| i.owner == *owner)
-			.ok_or(Error::<T>::TokenNotFound)?;
+			.ok_or(Error::<T>::TokenNotFound)?
+			.clone();
 		Self::remove_token_index(collection, item_id, owner)?;
 
 		// update balance
 		let new_balance = <Balance<T>>::get(collection_id, rft_balance.owner.as_sub())
-			.checked_sub(rft_balance.fraction)
+			.checked_sub(value)
 			.ok_or(Error::<T>::NumOverflow)?;
 		<Balance<T>>::insert(collection_id, rft_balance.owner.as_sub(), new_balance);
 
-		// Re-create owners list with sender removed
+		rft_balance.fraction = (rft_balance.fraction)
+			.checked_sub(value)
+			.ok_or(Error::<T>::NumOverflow)?;
+
 		let index = token
 			.owner
 			.iter()
 			.position(|i| i.owner == *owner)
 			.expect("owned item is exists");
-		token.owner.remove(index);
+		if rft_balance.fraction == 0 {
+			// Re-create owners list with sender removed
+			token.owner.remove(index);
+		} else {
+			token.owner[index] = rft_balance;
+		}
+
 		let owner_count = token.owner.len();
 
 		// Burn the token completely if this was the last (only) owner
