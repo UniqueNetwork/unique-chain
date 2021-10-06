@@ -194,7 +194,8 @@ impl<T: Config> CollectionHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id = token_id.try_into().map_err(|_| "amount overflow")?;
 
-		<Module<T>>::burn_item_internal(&caller, &self, token_id, &caller, 1).map_err(|_| "burn error")?;
+		<Module<T>>::burn_item_internal(&caller, &self, token_id, 1, true)
+			.map_err(|_| "burn error")?;
 		Ok(())
 	}
 }
