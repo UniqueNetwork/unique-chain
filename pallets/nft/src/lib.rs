@@ -1354,6 +1354,10 @@ decl_module! {
                 Self::check_white_list(&target_collection, &recipient)?;
             }
 
+            if value == 0 {
+                return Ok(())
+            }
+
             // Reduce approval by transferred amount or remove if remaining approval drops to 0
             if approval.saturating_sub(value) > 0 {
                 <Allowances<T>>::insert(collection_id, (item_id, &from, &sender), approval - value);
