@@ -1611,11 +1611,13 @@ impl<T: Config> Module<T> {
 		}
 
 		match collection.mode {
-			CollectionMode::NFT => Self::burn_nft_item(collection, item_id)?,
-			CollectionMode::Fungible(_) => Self::burn_fungible_item(collection, item_owner, value)?,
-			CollectionMode::ReFungible => {
-				Self::burn_refungible_item(collection, item_id, item_owner)?
-			}
+			CollectionMode::NFT => match value {
+				1 => Self::burn_nft_item(collection, item_id)?,
+				0 => (),
+				_ => fail!(<Error<T>>::TokenValueTooLow),
+			},
+			CollectionMode::Fungible(_) => Self::burn_fungible_item(collection, owner, value)?,
+			CollectionMode::ReFungible => Self::burn_refungible_item(collection, item_id, owner, value)?,
 			_ => (),
 		};
 
