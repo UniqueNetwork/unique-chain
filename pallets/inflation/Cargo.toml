@@ -43,43 +43,43 @@ version = '2.3.0'
 default-features = false
 optional = true
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.10'
+branch = 'polkadot-v0.9.11'
 version = '4.0.0-dev'
 
 [dependencies.frame-support]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.10'
+branch = 'polkadot-v0.9.11'
 version = '4.0.0-dev'
 
 [dependencies.frame-system]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.10'
+branch = 'polkadot-v0.9.11'
 version = '4.0.0-dev'
 
 [dependencies.pallet-balances]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.10'
+branch = 'polkadot-v0.9.11'
 version = '4.0.0-dev'
 
 [dependencies.pallet-timestamp]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.10'
+branch = 'polkadot-v0.9.11'
 version = '4.0.0-dev'
 
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.10'
+branch = 'polkadot-v0.9.11'
 version = '4.0.0-dev'
 
 [dependencies.sp-std]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.10'
+branch = 'polkadot-v0.9.11'
 version = '4.0.0-dev'
 
 [dependencies.serde]
@@ -90,17 +90,20 @@ version = '1.0.130'
 [dependencies.sp-runtime]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.10'
+branch = 'polkadot-v0.9.11'
 version = '4.0.0-dev'
 
 [dependencies.sp-core]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.10'
+branch = 'polkadot-v0.9.11'
 version = '4.0.0-dev'
 
 [dependencies.sp-io]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.10'
+branch = 'polkadot-v0.9.11'
 version = '4.0.0-dev'
+
+[dependencies]
+scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
