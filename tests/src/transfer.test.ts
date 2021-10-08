@@ -184,22 +184,22 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
       1,
     );
   });
-  it('Transfer with deleted item_id', async () => {
+  it.only('Transfer with deleted item_id', async () => {
     // nft
     const nftCollectionId = await createCollectionExpectSuccess();
     const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
-    await burnItemExpectSuccess(Alice, nftCollectionId, newNftTokenId, Alice, 1);
+    await burnItemExpectSuccess(Alice, nftCollectionId, newNftTokenId, 1);
     await transferExpectFailure(nftCollectionId, newNftTokenId, Alice, Bob, 1);
     // fungible
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible');
-    await burnItemExpectSuccess(Alice, fungibleCollectionId, newFungibleTokenId, Alice, 10);
+    await burnItemExpectSuccess(Alice, fungibleCollectionId, newFungibleTokenId, 10);
     await transferExpectFailure(fungibleCollectionId, newFungibleTokenId, Alice, Bob, 1);
     // reFungible
     const reFungibleCollectionId = await
     createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
-    await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, Alice, 1);
+    await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 1);
     await transferExpectFailure(
       reFungibleCollectionId,
       newReFungibleTokenId,

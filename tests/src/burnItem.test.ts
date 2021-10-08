@@ -38,7 +38,7 @@ describe('integration test: ext. burnItem():', () => {
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, normalizeAccountId(alice.address), 0);
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 0);
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
       // Get the item
@@ -59,7 +59,7 @@ describe('integration test: ext. burnItem():', () => {
 
     await usingApi(async (api) => {
       // Destroy 1 of 10
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, normalizeAccountId(alice.address), 1);
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
   
@@ -79,7 +79,7 @@ describe('integration test: ext. burnItem():', () => {
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, normalizeAccountId(alice.address), 1);
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
   
@@ -92,7 +92,7 @@ describe('integration test: ext. burnItem():', () => {
     });
   });
 
-  it('Burn owned portion of item in ReFungible collection', async () => {
+  it.only('Burn owned portion of item in ReFungible collection', async () => {
     const createMode = 'ReFungible';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
@@ -107,7 +107,7 @@ describe('integration test: ext. burnItem():', () => {
       const balanceBefore: any = (await api.query.nft.reFungibleItemList(collectionId, tokenId)).toJSON();
 
       // Bob burns his portion
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, normalizeAccountId(bob.address), 0);
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 0);
       const events2 = await submitTransactionAsync(bob, tx);
       const result2 = getGenericResult(events2);
 
@@ -152,7 +152,7 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
     await addCollectionAdminExpectSuccess(alice, collectionId, bob);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, normalizeAccountId(alice.address), 0);
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 0);
       const events = await submitTransactionAsync(bob, tx);
       const result = getGenericResult(events);
       // Get the item
@@ -166,7 +166,7 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
   });
 
 
-  it('Burn item in Fungible collection', async () => {
+  it.only('Burn item in Fungible collection', async () => {
     const createMode = 'Fungible';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0 }});
     await createItemExpectSuccess(alice, collectionId, createMode); // Helper creates 10 fungible tokens
@@ -175,7 +175,7 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
 
     await usingApi(async (api) => {
       // Destroy 1 of 10
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, normalizeAccountId(alice.address), 1);
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
       const events = await submitTransactionAsync(bob, tx);
       const result = getGenericResult(events);
   
@@ -189,14 +189,14 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
     });
   });
   
-  it('Burn item in ReFungible collection', async () => {
+  it.only('Burn item in ReFungible collection', async () => {
     const createMode = 'ReFungible';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode }});
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
     await addCollectionAdminExpectSuccess(alice, collectionId, bob);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, normalizeAccountId(alice.address), 1);
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
       const events = await submitTransactionAsync(bob, tx);
       const result = getGenericResult(events);
       // Get alice balance 
@@ -225,7 +225,7 @@ describe('Negative integration test: ext. burnItem():', () => {
     await destroyCollectionExpectSuccess(collectionId);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, normalizeAccountId(alice.address), 0);
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 0);
       const badTransaction = async function () { 
         await submitTransactionExpectFailAsync(alice, tx);
       };
@@ -240,7 +240,7 @@ describe('Negative integration test: ext. burnItem():', () => {
     const tokenId = 10;
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, normalizeAccountId(alice.address), 0);
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 0);
       const badTransaction = async function () { 
         await submitTransactionExpectFailAsync(alice, tx);
       };
@@ -255,7 +255,7 @@ describe('Negative integration test: ext. burnItem():', () => {
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, normalizeAccountId(alice.address), 0);
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 0);
       const badTransaction = async function () { 
         await submitTransactionExpectFailAsync(bob, tx);
       };
@@ -271,7 +271,7 @@ describe('Negative integration test: ext. burnItem():', () => {
 
     await usingApi(async (api) => {
 
-      const burntx = api.tx.nft.burnItem(collectionId, tokenId, normalizeAccountId(alice.address), 0);
+      const burntx = api.tx.nft.burnItem(collectionId, tokenId, 0);
       const events1 = await submitTransactionAsync(alice, burntx);
       const result1 = getGenericResult(events1);
       expect(result1.success).to.be.true;
@@ -294,7 +294,7 @@ describe('Negative integration test: ext. burnItem():', () => {
 
     await usingApi(async (api) => {
       // Destroy 11 of 10
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, normalizeAccountId(alice.address), 11);
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 11);
       const badTransaction = async function () { 
         await submitTransactionExpectFailAsync(alice, tx);
       };
