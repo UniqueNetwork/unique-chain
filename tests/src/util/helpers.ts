@@ -1142,11 +1142,34 @@ export async function addToWhiteListExpectSuccess(sender: IKeyringPair, collecti
   });
 }
 
-export async function addToWhiteListExpectFail(sender: IKeyringPair, collectionId: number, address: string | AccountId) {
+export async function addToWhiteListAgainExpectSuccess(sender: IKeyringPair, collectionId: number, address: string | AccountId) {
   await usingApi(async (api) => {
+
+    const whiteListedBefore = (await api.query.nft.whiteList(collectionId, address)).toJSON();
+
     // Run the transaction
     const tx = api.tx.nft.addToWhiteList(collectionId, normalizeAccountId(address));
-    const events = await expect(submitTransactionAsync(sender, tx)).to.be.rejected;
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    const whiteListedAfter = (await api.query.nft.whiteList(collectionId, address)).toJSON();
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.true;
+    // tslint:disable-next-line: no-unused-expression
+    expect(whiteListedBefore).to.be.true;
+    // tslint:disable-next-line: no-unused-expression
+    expect(whiteListedAfter).to.be.true;
+  });
+}
+
+export async function addToWhiteListExpectFail(sender: IKeyringPair, collectionId: number, address: string | AccountId) {
+  await usingApi(async (api) => {
+    
+    // Run the transaction
+    const tx = api.tx.nft.addToWhiteList(collectionId, normalizeAccountId(address));
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
     const result = getGenericResult(events);
 
     // What to expect
