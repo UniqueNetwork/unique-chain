@@ -76,7 +76,7 @@
                     "name": "bob",
                     "flags": [
                         "--rpc-cors=all",
-                        "--rpc-port=9934"
+                        "--rpc-port=9934", "--unsafe-rpc-external"
                     ]
                 }
             ]
