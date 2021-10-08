@@ -7,7 +7,7 @@ services:
     ports:
       - 9944:9944
       - 9844:9844
-      - 9933:9933
+      - 9933:9934
     build:
       context: ./
       dockerfile: Dockerfile-parachain
