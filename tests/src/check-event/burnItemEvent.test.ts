@@ -10,7 +10,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from '../substrate/privateKey';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
-import { createCollectionExpectSuccess, createItemExpectSuccess, nftEventMessage, normalizeAccountId } from '../util/helpers';
+import { createCollectionExpectSuccess, createItemExpectSuccess, nftEventMessage } from '../util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
