@@ -796,7 +796,7 @@ mod tests {
 
 	use frame_support::{
 		Hashable, assert_err, assert_noop, assert_ok, ord_parameter_types, parameter_types,
-		traits::{Contains, Filter, OnFinalize, OnInitialize},
+		traits::{Contains, OnFinalize, OnInitialize},
 		weights::constants::RocksDbWeight,
 	};
 	use sp_core::H256;
@@ -873,7 +873,7 @@ mod tests {
 	pub struct BaseFilter;
 	impl Contains<Call> for BaseFilter {
 		fn contains(call: &Call) -> bool {
-			!matches!(call, Call::Logger(logger::Call::log(_, _)))
+			!matches!(call, Call::Logger(logger::Call::log { .. }))
 		}
 	}
 

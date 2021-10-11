@@ -2,7 +2,7 @@
 
 use crate as pallet_template;
 use sp_core::H256;
-use frame_support::{parameter_types, weights::IdentityFee};
+use frame_support::{parameter_types, traits::Everything, weights::IdentityFee};
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	testing::Header,
@@ -12,6 +12,7 @@ use frame_system as system;
 use pallet_evm::AddressMapping;
 use crate::{EvmBackwardsAddressMapping, CrossAccountId};
 use codec::{Encode, Decode};
+use scale_info::TypeInfo;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -35,7 +36,7 @@ parameter_types! {
 }
 
 impl system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -79,6 +80,7 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
 	pub const TransactionByteFee: u64 = 1;
+	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
 impl pallet_transaction_payment::Config for Test {
@@ -86,6 +88,7 @@ impl pallet_transaction_payment::Config for Test {
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<u64>;
 	type FeeMultiplierUpdate = ();
+	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 
 parameter_types! {
@@ -118,7 +121,7 @@ impl EvmBackwardsAddressMapping<u64> for TestEvmBackwardsAddressMapping {
 	}
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, TypeInfo)]
 pub struct TestCrossAccountId(u64, sp_core::H160);
 impl CrossAccountId<u64> for TestCrossAccountId {
 	fn from_sub(sub: u64) -> Self {
