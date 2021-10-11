@@ -184,7 +184,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
       1,
     );
   });
-  it.only('Transfer with deleted item_id', async () => {
+  it('Transfer with deleted item_id', async () => {
     // nft
     const nftCollectionId = await createCollectionExpectSuccess();
     const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
@@ -199,7 +199,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
     const reFungibleCollectionId = await
     createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
-    await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 1);
+    await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 100);
     await transferExpectFailure(
       reFungibleCollectionId,
       newReFungibleTokenId,
