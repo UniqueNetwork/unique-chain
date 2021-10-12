@@ -27,6 +27,10 @@ std = [
     'pallet-timestamp/std',
     'pallet-randomness-collective-flip/std',
     'pallet-transaction-payment/std',
+    'pallet-common/std',
+    'pallet-fungible/std',
+    'pallet-nonfungible/std',
+    'pallet-refungible/std',
     'fp-evm/std',
     'nft-data-structs/std',
     'up-sponsorship/std',
@@ -154,3 +158,8 @@ pallet-evm = { default-features = false, version = "6.0.0-dev", git = "https://g
 pallet-ethereum = { default-features = false, version = "4.0.0-dev", git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
 fp-evm = { default-features = false, version = '3.0.0-dev', git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.10" }
 hex-literal = "0.3.3"
+
+pallet-common = { default-features = false, path = "../common" }
+pallet-fungible = { default-features = false, path = "../fungible" }
+pallet-nonfungible = { default-features = false, path = "../nonfungible" }
+pallet-refungible = { default-features = false, path = "../refungible" }
