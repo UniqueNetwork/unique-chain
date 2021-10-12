@@ -1,0 +1,37 @@
+[package]
+name = "pallet-nonfungible"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies.codec]
+default-features = false
+features = ['derive']
+package = 'parity-scale-codec'
+version = '2.0.0'
+
+[dependencies]
+frame-support = { default-features = false, version = '4.0.0-dev', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
+frame-system = { default-features = false, version = '4.0.0-dev', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
+sp-runtime = { default-features = false, version = '4.0.0-dev', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
+sp-std = { default-features = false, version = '4.0.0-dev', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
+sp-core = { default-features = false, version = '4.0.0-dev', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
+pallet-common = { default-features = false, path = '../common' }
+nft-data-structs = { default-features = false, path = '../../primitives/nft' }
+evm-coder = { default-features = false, path = '../../crates/evm-coder' }
+pallet-evm-coder-substrate = { default-features = false, path = '../evm-coder-substrate' }
+ethereum = { default-features = false, version = "0.9.0" }
+
+[features]
+default = ["std"]
+std = [
+    "frame-support/std",
+    "frame-system/std",
+    "sp-runtime/std",
+    "sp-std/std",
+    "nft-data-structs/std",
+    "pallet-common/std",
+    "evm-coder/std",
+    "ethereum/std",
+    "pallet-evm-coder-substrate/std",
+]
+runtime-benchmarks = []
