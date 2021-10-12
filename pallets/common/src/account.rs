@@ -1,7 +1,7 @@
 use crate::Config;
 use codec::{Encode, EncodeLike, Decode};
+use sp_core::H160;
 use sp_core::crypto::AccountId32;
-use primitive_types::H160;
 use core::cmp::Ordering;
 use serde::{Serialize, Deserialize};
 use pallet_evm::AddressMapping;
@@ -9,7 +9,7 @@ use sp_std::vec::Vec;
 use sp_std::clone::Clone;
 
 pub trait CrossAccountId<AccountId>:
-	Encode + EncodeLike + Decode + Clone + PartialEq + Ord + core::fmt::Debug
+	Encode + EncodeLike + Decode + Clone + PartialEq + Ord + core::fmt::Debug + Default
 // +
 // Serialize + Deserialize<'static>
 {
@@ -26,6 +26,12 @@ pub struct BasicCrossAccountId<T: Config> {
 	from_ethereum: bool,
 	substrate: T::AccountId,
 	ethereum: H160,
+}
+
+impl<T: Config> Default for BasicCrossAccountId<T> {
+	fn default() -> Self {
+		Self::from_sub(T::AccountId::default())
+	}
 }
 
 impl<T: Config> core::fmt::Debug for BasicCrossAccountId<T> {

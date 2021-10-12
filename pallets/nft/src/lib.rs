@@ -69,164 +69,29 @@ use weights::WeightInfo;
 decl_error! {
 	/// Error for non-fungible-token module.
 	pub enum Error for Module<T: Config> {
-		/// Total collections bound exceeded.
-		TotalCollectionsLimitExceeded,
 		/// Decimal_points parameter must be lower than MAX_DECIMAL_POINTS constant, currently it is 30.
 		CollectionDecimalPointLimitExceeded,
-		/// Collection name can not be longer than 63 char.
-		CollectionNameLimitExceeded,
-		/// Collection description can not be longer than 255 char.
-		CollectionDescriptionLimitExceeded,
-		/// Token prefix can not be longer than 15 char.
-		CollectionTokenPrefixLimitExceeded,
-		/// This collection does not exist.
-		CollectionNotFound,
-		/// Item not exists.
-		TokenNotFound,
-		/// Admin not found
-		AdminNotFound,
-		/// Arithmetic calculation overflow.
-		NumOverflow,
-		/// Account already has admin role.
-		AlreadyAdmin,
-		/// You do not own this collection.
-		NoPermission,
 		/// This address is not set as sponsor, use setCollectionSponsor first.
 		ConfirmUnsetSponsorFail,
-		/// Collection is not in mint mode.
-		PublicMintingNotAllowed,
-		/// Sender parameter and item owner must be equal.
-		MustBeTokenOwner,
-		/// Item balance not enough.
-		TokenValueTooLow,
-		/// Size of item is too large.
-		NftSizeLimitExceeded,
-		/// No approve found
-		ApproveNotFound,
-		/// Requested value more than approved.
-		TokenValueNotEnough,
-		/// Only approved addresses can call this method.
-		ApproveRequired,
-		/// Address is not in white list.
-		AddresNotInWhiteList,
-		/// Number of collection admins bound exceeded.
-		CollectionAdminsLimitExceeded,
-		/// Owned tokens by a single address bound exceeded.
-		AddressOwnershipLimitExceeded,
 		/// Length of items properties must be greater than 0.
 		EmptyArgument,
-		/// const_data exceeded data limit.
-		TokenConstDataLimitExceeded,
-		/// variable_data exceeded data limit.
-		TokenVariableDataLimitExceeded,
-		/// Not NFT item data used to mint in NFT collection.
-		NotNftDataUsedToMintNftCollectionToken,
-		/// Not Fungible item data used to mint in Fungible collection.
-		NotFungibleDataUsedToMintFungibleCollectionToken,
-		/// Not Re Fungible item data used to mint in Re Fungible collection.
-		NotReFungibleDataUsedToMintReFungibleCollectionToken,
-		/// Unexpected collection type.
-		UnexpectedCollectionType,
-		/// Can't store metadata in fungible tokens.
-		CantStoreMetadataInFungibleTokens,
-		/// Collection token limit exceeded
-		CollectionTokenLimitExceeded,
-		/// Account token limit exceeded per collection
-		AccountTokenLimitExceeded,
 		/// Collection limit bounds per collection exceeded
 		CollectionLimitBoundsExceeded,
 		/// Tried to enable permissions which are only permitted to be disabled
 		OwnerPermissionsCantBeReverted,
-		/// Schema data size limit bound exceeded
-		SchemaDataLimitExceeded,
-		/// Maximum refungibility exceeded
-		WrongRefungiblePieces,
-		/// createRefungible should be called with one owner
-		BadCreateRefungibleCall,
-		/// Gas limit exceeded
-		OutOfGas,
-		/// Metadata update denied by collection settings
-		MetadataUpdateDenied,
-		/// Metadata update flag become unmutable with None option
-		MetadataFlagFrozen,
-		/// Collection settings not allowing items transferring
-		TransferNotAllowed,
-		/// Can't transfer tokens to ethereum zero address
-		AddressIsZero,
 	}
 }
-
-#[must_use = "Should call submit_logs or save, otherwise some data will be lost for evm side"]
-pub struct CollectionHandle<T: Config> {
-	pub id: CollectionId,
-	collection: Collection<T>,
-	recorder: pallet_evm_coder_substrate::SubstrateRecorder<T>,
-}
-impl<T: Config> CollectionHandle<T> {
-	pub fn get_with_gas_limit(id: CollectionId, gas_limit: u64) -> Option<Self> {
-		<CollectionById<T>>::get(id).map(|collection| Self {
-			id,
-			collection,
-			recorder: pallet_evm_coder_substrate::SubstrateRecorder::new(
-				eth::collection_id_to_address(id),
-				gas_limit,
-			),
-		})
-	}
-	pub fn get(id: CollectionId) -> Option<Self> {
-		Self::get_with_gas_limit(id, u64::MAX)
-	}
-	pub fn log(&self, log: impl evm_coder::ToLog) -> DispatchResult {
-		self.recorder.log_sub(log)
-	}
-	#[allow(dead_code)]
-	fn consume_gas(&self, gas: u64) -> DispatchResult {
-		self.recorder.consume_gas_sub(gas)
-	}
-	fn consume_sload(&self) -> DispatchResult {
-		self.recorder.consume_sload_sub()
-	}
-	fn consume_sstore(&self) -> DispatchResult {
-		self.recorder.consume_sstore_sub()
-	}
-	pub fn submit_logs(self) -> DispatchResult {
-		self.recorder.submit_logs()
-	}
-	pub fn save(self) -> DispatchResult {
-		self.recorder.submit_logs()?;
-		<CollectionById<T>>::insert(self.id, self.collection);
-		Ok(())
-	}
-}
-impl<T: Config> Deref for CollectionHandle<T> {
-	type Target = Collection<T>;
-
-	fn deref(&self) -> &Self::Target {
-		&self.collection
-	}
-}
-
-impl<T: Config> DerefMut for CollectionHandle<T> {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		&mut self.collection
-	}
-}
-
-pub trait Config: system::Config + pallet_evm_coder_substrate::Config + Sized {
-	type Event: From<Event<Self>> + Into<<Self as system::Config>::Event>;
-
+pub trait Config:
+	system::Config
+	+ pallet_evm_coder_substrate::Config
+	+ pallet_common::Config
+	+ pallet_nonfungible::Config
+	+ pallet_refungible::Config
+	+ pallet_fungible::Config
+	+ Sized
+{
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
-
-	type EvmAddressMapping: pallet_evm::AddressMapping<Self::AccountId>;
-	type EvmBackwardsAddressMapping: EvmBackwardsAddressMapping<Self::AccountId>;
-
-	type CrossAccountId: CrossAccountId<Self::AccountId>;
-	type Currency: Currency<Self::AccountId>;
-	type CollectionCreationPrice: Get<
-		<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance,
-	>;
-	type TreasuryAccountId: Get<Self::AccountId>;
 }
 
 type SelfWeightOf<T> = <T as Config>::WeightInfo;
@@ -293,54 +158,8 @@ decl_storage! {
 	trait Store for Module<T: Config> as Nft {
 
 		//#region Private members
-		/// Id of next collection
-		CreatedCollectionCount: u32;
 		/// Used for migrations
 		ChainVersion: u64;
-		/// Id of last collection token
-		/// Collection id (controlled?1)
-		ItemListIndex: map hasher(blake2_128_concat) CollectionId => TokenId;
-		//#endregion
-
-		//#region Bound counters
-		/// Amount of collections destroyed, used for total amount tracking with
-		/// CreatedCollectionCount
-		DestroyedCollectionCount: u32;
-		//#endregion
-
-		//#region Basic collections
-		/// Collection info
-		/// Collection id (controlled?1)
-		pub CollectionById get(fn collection_id) config(): map hasher(blake2_128_concat) CollectionId => Option<Collection<T>> = None;
-		/// List of collection admins
-		/// Collection id (controlled?2)
-		pub AdminList get(fn admin_list_collection): map hasher(blake2_128_concat) CollectionId => Vec<T::CrossAccountId>;
-		/// Whitelisted collection users
-		/// Collection id (controlled?2), user id (controlled?3)
-		pub WhiteList get(fn white_list): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) T::AccountId => bool;
-		//#endregion
-
-		/// How many of collection items user have
-		/// Collection id (controlled?2), account id (real)
-		pub Balance get(fn balance_count): double_map hasher(blake2_128_concat) CollectionId, hasher(twox_64_concat) T::AccountId => u128;
-
-		/// Amount of items which spender can transfer out of owners account (via transferFrom)
-		/// Collection id (controlled?2), (token id (controlled ?2) + owner account id (real) + spender account id (controlled?3))
-		/// TODO: Off chain worker should remove from this map when token gets removed
-		pub Allowances get(fn approved): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) (TokenId, T::AccountId, T::AccountId) => u128;
-
-		//#region Item collections
-		/// Collection id (controlled?2), token id (controlled?1)
-		pub NftItemList get(fn nft_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<NftItemType<T::CrossAccountId>>;
-		/// Collection id (controlled?2), owner (controlled?2)
-		pub FungibleItemList get(fn fungible_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) T::AccountId => FungibleItemType;
-		/// Collection id (controlled?2), token id (controlled?1)
-		pub ReFungibleItemList get(fn refungible_item_id) config(): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<ReFungibleItemType<T::CrossAccountId>>;
-		//#endregion
-
-		//#region Index list
-		/// Collection id (controlled?2), tokens owner (controlled?2)
-		pub AddressTokens get(fn address_tokens): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) T::AccountId => Vec<TokenId>;
 		//#endregion
 
 		//#region Tokens transfer rate limit baskets
@@ -359,97 +178,13 @@ decl_storage! {
 		/// Collection id (controlled?2), token id (controlled?2)
 		pub VariableMetaDataBasket get(fn variable_meta_data_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber> = None;
 	}
-	add_extra_genesis {
-		build(|config: &GenesisConfig<T>| {
-			// Modification of storage
-			for (_num, _c) in &config.collection_id {
-				<Module<T>>::init_collection(_c);
-			}
-
-			for (_num, _c, _i) in &config.nft_item_id {
-				<Module<T>>::init_nft_token(*_c, _i);
-			}
-
-			for (collection_id, account_id, fungible_item) in &config.fungible_item_id {
-				<Module<T>>::init_fungible_token(*collection_id, &T::CrossAccountId::from_sub(account_id.clone()), fungible_item);
-			}
-
-			for (_num, _c, _i) in &config.refungible_item_id {
-				<Module<T>>::init_refungible_token(*_c, _i);
-			}
-		})
-	}
 }
-
-decl_event!(
-	pub enum Event<T>
-	where
-		AccountId = <T as frame_system::Config>::AccountId,
-		CrossAccountId = <T as Config>::CrossAccountId,
-	{
-		/// New collection was created
-		///
-		/// # Arguments
-		///
-		/// * collection_id: Globally unique identifier of newly created collection.
-		///
-		/// * mode: [CollectionMode] converted into u8.
-		///
-		/// * account_id: Collection owner.
-		CollectionCreated(CollectionId, u8, AccountId),
-
-		/// New item was created.
-		///
-		/// # Arguments
-		///
-		/// * collection_id: Id of the collection where item was created.
-		///
-		/// * item_id: Id of an item. Unique within the collection.
-		///
-		/// * recipient: Owner of newly created item
-		ItemCreated(CollectionId, TokenId, CrossAccountId),
-
-		/// Collection item was burned.
-		///
-		/// # Arguments
-		///
-		/// collection_id.
-		///
-		/// item_id: Identifier of burned NFT.
-		ItemDestroyed(CollectionId, TokenId),
-
-		/// Item was transferred
-		///
-		/// * collection_id: Id of collection to which item is belong
-		///
-		/// * item_id: Id of an item
-		///
-		/// * sender: Original owner of item
-		///
-		/// * recipient: New owner of item
-		///
-		/// * amount: Always 1 for NFT
-		Transfer(CollectionId, TokenId, CrossAccountId, CrossAccountId, u128),
-
-		/// * collection_id
-		///
-		/// * item_id
-		///
-		/// * sender
-		///
-		/// * spender
-		///
-		/// * amount
-		Approved(CollectionId, TokenId, CrossAccountId, CrossAccountId, u128),
-	}
-);
 
 decl_module! {
 	pub struct Module<T: Config> for enum Call
 	where
 		origin: T::Origin
 	{
-		fn deposit_event() = default;
 		const CollectionAdminsLimit: u64 = COLLECTION_ADMINS_LIMIT;
 		type Error = Error<T>;
 
