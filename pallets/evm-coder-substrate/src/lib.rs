@@ -106,6 +106,10 @@ pub mod pallet {
 			self.logs.borrow_mut().push(log);
 			Ok(())
 		}
+		/// Doesn't consumes any gas, should be used after consume_log_sub
+		pub fn log_infallible(&self, log: impl ToLog) {
+			self.logs.borrow_mut().push(log.to_log(self.contract));
+		}
 		pub fn retrieve_logs(self) -> Vec<Log> {
 			self.logs.into_inner()
 		}
@@ -118,6 +122,9 @@ pub mod pallet {
 		}
 		pub fn consume_sstore_sub(&self) -> DispatchResult {
 			self.consume_gas_sub(G_SSTORE_WORD)
+		}
+		pub fn consume_log_sub(&self, topics: usize, data: usize) -> DispatchResult {
+			self.consume_gas_sub(log_price(data, topics))
 		}
 		pub fn consume_gas_sub(&self, gas: u64) -> DispatchResult {
 			ensure!(gas != u64::MAX, Error::<T>::OutOfGas);
