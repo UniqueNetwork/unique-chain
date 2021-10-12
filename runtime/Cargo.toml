@@ -26,6 +26,10 @@ runtime-benchmarks = [
     'pallet-evm-migration/runtime-benchmarks',
     'pallet-balances/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
+    'pallet-common/runtime-benchmarks',
+    'pallet-fungible/runtime-benchmarks',
+    'pallet-refungible/runtime-benchmarks',
+    'pallet-nonfungible/runtime-benchmarks',
     'pallet-nft/runtime-benchmarks',
     'pallet-inflation/runtime-benchmarks',
     'pallet-xcm/runtime-benchmarks',
@@ -67,6 +71,10 @@ std = [
     'parachain-info/std',
     'serde',
     'pallet-inflation/std',
+    'pallet-common/std',
+    'pallet-fungible/std',
+    'pallet-refungible/std',
+    'pallet-nonfungible/std',
     'pallet-nft/std',
     'pallet-scheduler/std',
     'pallet-nft-charge-transaction/std',
@@ -163,19 +171,19 @@ version = '4.0.0-dev'
 # [dependencies.pallet-contracts]
 # git = 'https://github.com/paritytech/substrate.git'
 # default-features = false
-# branch = 'polkadot-v0.9.9'
+# branch = 'polkadot-v0.9.10'
 # version = '4.0.0-dev'
 
 # [dependencies.pallet-contracts-primitives]
 # git = 'https://github.com/paritytech/substrate.git'
 # default-features = false
-# branch = 'polkadot-v0.9.9'
+# branch = 'polkadot-v0.9.10'
 # version = '4.0.0-dev'
 
 # [dependencies.pallet-contracts-rpc-runtime-api]
 # git = 'https://github.com/paritytech/substrate.git'
 # default-features = false
-# branch = 'polkadot-v0.9.9'
+# branch = 'polkadot-v0.9.10'
 # version = '4.0.0-dev'
 
 [dependencies.pallet-randomness-collective-flip]
@@ -385,9 +393,14 @@ default-features = false
 [dependencies]
 derivative = "2.2.0"
 pallet-nft = { path = '../pallets/nft', default-features = false, version = '3.0.0' }
+up-rpc = { path = "../primitives/rpc", default-features = false }
 pallet-inflation = { path = '../pallets/inflation', default-features = false, version = '3.0.0' }
 nft-data-structs = { path = '../primitives/nft', default-features = false, version = '0.9.0' }
 pallet-scheduler = { path = '../pallets/scheduler', default-features = false, version = '3.0.0' }
+pallet-common = { default-features = false, path = "../pallets/common" }
+pallet-fungible = { default-features = false, path = "../pallets/fungible" }
+pallet-refungible = { default-features = false, path = "../pallets/refungible" }
+pallet-nonfungible = { default-features = false, path = "../pallets/nonfungible" }
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
 pallet-nft-transaction-payment = { path = '../pallets/nft-transaction-payment', default-features = false, version = '3.0.0' }
 pallet-nft-charge-transaction = { path = '../pallets/nft-charge-transaction', default-features = false, version = '3.0.0' }

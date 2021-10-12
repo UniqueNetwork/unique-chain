@@ -102,6 +102,8 @@ pub type Signature = MultiSignature;
 /// to the public key of our transaction signing scheme.
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
+pub type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
+
 /// The type for looking up accounts. We don't expect more than 4 billion of them, but you
 /// never know...
 pub type AccountIndex = u32;
@@ -701,18 +703,30 @@ parameter_types! {
 	pub const CollectionCreationPrice: Balance = 100 * UNIQUE;
 }
 
-/// Used for the pallet nft in `./nft.rs`
-impl pallet_nft::Config for Runtime {
+impl pallet_common::Config for Runtime {
 	type Event = Event;
-	type WeightInfo = pallet_nft::weights::SubstrateWeight<Self>;
-
-	type EvmBackwardsAddressMapping = pallet_nft::MapBackwardsAddressTruncated;
+	type EvmBackwardsAddressMapping = pallet_common::account::MapBackwardsAddressTruncated;
 	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type CrossAccountId = pallet_nft::BasicCrossAccountId<Self>;
+	type CrossAccountId = pallet_common::account::BasicCrossAccountId<Self>;
 
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
+}
+
+impl pallet_fungible::Config for Runtime {
+	type WeightInfo = pallet_fungible::weights::SubstrateWeight<Self>;
+}
+impl pallet_refungible::Config for Runtime {
+	type WeightInfo = pallet_refungible::weights::SubstrateWeight<Self>;
+}
+impl pallet_nonfungible::Config for Runtime {
+	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
+}
+
+/// Used for the pallet nft in `./nft.rs`
+impl pallet_nft::Config for Runtime {
+	type WeightInfo = pallet_nft::weights::SubstrateWeight<Self>;
 }
 
 parameter_types! {
@@ -820,11 +834,15 @@ construct_runtime!(
 
 		// Unique Pallets
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
-		Nft: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>} = 61,
+		Nft: pallet_nft::{Pallet, Call, Storage} = 61,
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage} = 63,
 		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage } = 64,
 		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
+		Common: pallet_common::{Pallet, Storage, Event<T>} = 66,
+		Fungible: pallet_fungible::{Pallet, Storage} = 67,
+		Refungible: pallet_refungible::{Pallet, Storage} = 68,
+		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
@@ -901,10 +919,56 @@ impl_opaque_keys! {
 	}
 }
 
+macro_rules! dispatch_nft_runtime {
+	($collection:ident.$method:ident($($name:ident),*)) => {{
+		use pallet_nft::dispatch::Dispatched;
+
+		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::new($collection).unwrap());
+		let dispatch = collection.as_dyn();
+
+		dispatch.$method($($name),*)
+	}};
+}
+
 impl_runtime_apis! {
-	impl pallet_nft::NftApi<Block>
+	impl up_rpc::NftApi<Block, CrossAccountId, AccountId>
 		for Runtime
 	{
+		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Vec<TokenId> {
+			dispatch_nft_runtime!(collection.account_tokens(account))
+		}
+		fn token_exists(collection: CollectionId, token: TokenId) -> bool {
+			dispatch_nft_runtime!(collection.token_exists(token))
+		}
+
+		fn token_owner(collection: CollectionId, token: TokenId) -> CrossAccountId {
+			dispatch_nft_runtime!(collection.token_owner(token))
+		}
+		fn const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8> {
+			dispatch_nft_runtime!(collection.const_metadata(token))
+		}
+		fn variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8> {
+			dispatch_nft_runtime!(collection.variable_metadata(token))
+		}
+
+		fn collection_tokens(collection: CollectionId) -> u32 {
+			dispatch_nft_runtime!(collection.collection_tokens())
+		}
+		fn account_balance(collection: CollectionId, account: CrossAccountId) -> u32 {
+			dispatch_nft_runtime!(collection.account_balance(account))
+		}
+		fn balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> u128 {
+			dispatch_nft_runtime!(collection.balance(account, token))
+		}
+		fn allowance(
+			collection: CollectionId,
+			sender: CrossAccountId,
+			spender: CrossAccountId,
+			token: TokenId,
+		) -> u128 {
+			dispatch_nft_runtime!(collection.allowance(sender, spender, token))
+		}
+
 		fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
 			<pallet_nft::NftErcSupport<Runtime>>::get_code(&account)
 		}
