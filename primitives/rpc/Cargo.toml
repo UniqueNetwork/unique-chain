@@ -1,0 +1,25 @@
+[package]
+name = "up-rpc"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+pallet-common = { default-features = false, path = '../../pallets/common' }
+nft-data-structs = { default-features = false, path = '../nft' }
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+sp-core = { default-features = false, version = "4.0.0-dev", git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
+sp-std = { default-features = false, version = "4.0.0-dev", git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
+sp-api = { default-features = false, version = "4.0.0-dev", git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
+sp-runtime = { default-features = false, version = '4.0.0-dev', git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
+
+[features]
+default = ["std"]
+std = [
+	"codec/std",
+	"sp-core/std",
+	"sp-std/std",
+	"sp-api/std",
+	"sp-runtime/std",
+	"pallet-common/std",
+	"nft-data-structs/std",
+]
