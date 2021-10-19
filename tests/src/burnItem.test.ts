@@ -38,7 +38,7 @@ describe('integration test: ext. burnItem():', () => {
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, 0);
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
       // Get the item
@@ -79,7 +79,7 @@ describe('integration test: ext. burnItem():', () => {
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 100);
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
   
@@ -166,16 +166,15 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
   });
 
 
-  it('Burn item in Fungible collection', async () => {
+  it.only('Burn item in Fungible collection', async () => {
     const createMode = 'Fungible';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0 }});
-    await createItemExpectSuccess(alice, collectionId, createMode); // Helper creates 10 fungible tokens
+    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode); // Helper creates 10 fungible tokens
     await addCollectionAdminExpectSuccess(alice, collectionId, bob);
-    const tokenId = 0; // ignored
 
     await usingApi(async (api) => {
       // Destroy 1 of 10
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
+      const tx = api.tx.nft.burnFrom(collectionId, alice.address, tokenId, 1);
       const events = await submitTransactionAsync(bob, tx);
       const result = getGenericResult(events);
 
@@ -189,14 +188,14 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
     });
   });
 
-  it('Burn item in ReFungible collection', async () => {
+  it.only('Burn item in ReFungible collection', async () => {
     const createMode = 'ReFungible';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode }});
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
     await addCollectionAdminExpectSuccess(alice, collectionId, bob);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, 100);
+      const tx = api.tx.nft.burnFrom(collectionId, alice.address, tokenId, 100);
       const events = await submitTransactionAsync(bob, tx);
       const result = getGenericResult(events);
       // Get alice balance
