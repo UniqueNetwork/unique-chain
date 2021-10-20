@@ -68,7 +68,7 @@ std = [
     'serde',
     'pallet-inflation/std',
     'pallet-nft/std',
-    'pallet-scheduler/std',
+    'pallet-unq-scheduler/std',
     'pallet-nft-charge-transaction/std',
     'pallet-nft-transaction-payment/std',
     'nft-data-structs/std',
@@ -387,7 +387,7 @@ derivative = "2.2.0"
 pallet-nft = { path = '../pallets/nft', default-features = false, version = '3.0.0' }
 pallet-inflation = { path = '../pallets/inflation', default-features = false, version = '3.0.0' }
 nft-data-structs = { path = '../primitives/nft', default-features = false, version = '0.9.0' }
-pallet-scheduler = { path = '../pallets/scheduler', default-features = false, version = '3.0.0' }
+pallet-unq-scheduler = { path = '../pallets/scheduler', default-features = false, version = '3.0.0' }
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
 pallet-nft-transaction-payment = { path = '../pallets/nft-transaction-payment', default-features = false, version = '3.0.0' }
 pallet-nft-charge-transaction = { path = '../pallets/nft-charge-transaction', default-features = false, version = '3.0.0' }

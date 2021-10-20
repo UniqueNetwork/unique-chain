@@ -10,26 +10,29 @@ RUN apt -y update; apt -y upgrade; apt -y install curl
 RUN mkdir nft_parachain
 WORKDIR /nft_parachain
 
-COPY . .
-
 RUN apt-get -y update && \
       apt-get -y upgrade && \
-      apt-get -y install curl && \
+      apt-get -y install curl jq && \
       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
       export NVM_DIR="$HOME/.nvm" && \
       [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
       nvm install v15.5.0 && \
-      nvm use v15.5.0 && \
-      npm install --save @polkadot/api && \ 
-      npm install --save-dev mochawesome
+      nvm alias default v15.5.0 && \
+      nvm use default
 
-CMD sleep 60
+ENV YARN_CACHE_FOLDER ~/.yarn
+
+COPY package.json yarn.lock ./
+
+RUN export NVM_DIR="$HOME/.nvm" && \
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+    npm install --global yarn && \ 
+    yarn add mochawesome && \
+    yarn --pure-lockfile
+
+COPY . .
 
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
-    cd tests && \
-    npm install --global yarn && \ 
-    yarn add mochawesome && \
-    yarn install && \
-    sleep 120 && \
+    ./scripts/wait_for_first_block.sh && \
     NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
