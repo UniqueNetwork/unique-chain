@@ -3952,7 +3952,7 @@ dependencies = [
  "pallet-offences-benchmarking",
  "pallet-proxy",
  "pallet-recovery",
- "pallet-scheduler 4.0.0-dev",
+ "pallet-scheduler",
  "pallet-session",
  "pallet-session-benchmarking",
  "pallet-society",
@@ -5306,12 +5306,12 @@ dependencies = [
  "pallet-nft-charge-transaction",
  "pallet-nft-transaction-payment",
  "pallet-randomness-collective-flip",
- "pallet-scheduler 3.0.0",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-unq-scheduler",
  "pallet-vesting",
  "pallet-xcm",
  "parachain-info",
@@ -6286,24 +6286,6 @@ dependencies = [
 
 [[package]]
 name = "pallet-scheduler"
-version = "3.0.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "substrate-test-utils",
- "up-sponsorship",
-]
-
-[[package]]
-name = "pallet-scheduler"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.10#420db18eaa1a1f5ce9ba40dd6ccb69f7b3dd9bb7"
 dependencies = [
@@ -6514,6 +6496,24 @@ dependencies = [
  "serde",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-unq-scheduler"
+version = "3.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "substrate-test-utils",
+ "up-sponsorship",
 ]
 
 [[package]]
@@ -7772,7 +7772,7 @@ dependencies = [
  "pallet-offences",
  "pallet-offences-benchmarking",
  "pallet-proxy",
- "pallet-scheduler 4.0.0-dev",
+ "pallet-scheduler",
  "pallet-session",
  "pallet-session-benchmarking",
  "pallet-staking",
@@ -12787,7 +12787,7 @@ dependencies = [
  "pallet-offences-benchmarking",
  "pallet-proxy",
  "pallet-recovery",
- "pallet-scheduler 4.0.0-dev",
+ "pallet-scheduler",
  "pallet-session",
  "pallet-session-benchmarking",
  "pallet-society",

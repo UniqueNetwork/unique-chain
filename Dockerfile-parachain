@@ -1,8 +1,6 @@
-# ===== BUILD ======
-FROM phusion/baseimage:focal-1.0.0 as builder
+# ===== Rust builder =====
+FROM phusion/baseimage:focal-1.0.0 as rust-builder
 LABEL maintainer="Unique.Network"
-
-
 
 ARG RUST_TOOLCHAIN=nightly-2021-06-28
 #ARG RUST_C=1.55.0-nightly
@@ -24,52 +22,58 @@ ENV NFT_BRANCH $NFT_BRANCH
 #RUN echo $POLKA_VERSION
 #RUN echo $NFT_BRANCH
 
-
-
 ARG PROFILE=release
+
+ENV CARGO_HOME="/cargo-home"
+ENV PATH="/cargo-home/bin:$PATH"
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 RUN apt-get update && \
     apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
     apt-get install -y cmake pkg-config libssl-dev git clang
 
-# Get project and run it
-
-#RUN git clone -b $NFT_BRANCH https://$USER:$PASS@github.com/UniqueNetwork/unique-chain.git  /nft_parachain
-
-
-RUN mkdir nft_parachain
-WORKDIR /nft_parachain
-COPY . .
-
-
-RUN export CARGO_HOME="/cargo-home" && curl https://sh.rustup.rs -sSf | sh -s -- -y
-RUN export PATH="/cargo-home/bin:$PATH" && \
-    export CARGO_HOME="/cargo-home" && \
-    cargo fetch
-
-RUN export PATH="/cargo-home/bin:$PATH" && \
-    export CARGO_HOME="/cargo-home" && \
-    rustup toolchain uninstall $(rustup toolchain list) && \
+RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
-#    rustup toolchain install $RUST_C && \
-    rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN && \
     rustup default $RUST_TOOLCHAIN && \
     rustup target list --installed && \
     rustup show
+RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
-RUN export PATH="/cargo-home/bin:$PATH" && \
-    export CARGO_HOME="/cargo-home" && \
-    cargo build "--$PROFILE"
+RUN cargo install cargo-chef
+
+RUN mkdir nft_parachain
+WORKDIR /nft_parachain
+
+# ===== Chef =====
+FROM rust-builder as chef
+
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+# ===== BUILD ======
+FROM rust-builder as builder
+
+RUN mkdir nft_parachain
+WORKDIR /nft_parachain
+
+COPY --from=chef /nft_parachain/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
+
+COPY . .
+RUN cargo build "--$PROFILE"
    # && \
    # cargo test
 
+# ===== BUILD POLKADOT =====
+FROM rust-builder as builder-polkadot
 
+RUN mkdir nft_parachain
+WORKDIR /nft_parachain
 
 RUN git clone -b $POLKA_VERSION --depth 1 https://github.com/paritytech/polkadot.git && \
     cd polkadot && \
     git tag -n && \
-	export PATH="/cargo-home/bin:$PATH" && \
-	export CARGO_HOME="/cargo-home" && \
 	cargo build --release
 
 # ===== RUN ======
@@ -78,31 +82,27 @@ FROM phusion/baseimage:focal-1.0.0
 
 ARG PROFILE=release
 
-COPY --from=builder /nft_parachain/target/$PROFILE/nft /nft_private/target/$PROFILE/
-COPY --from=builder /nft_parachain/polkadot/target/$PROFILE/polkadot /polkadot/target/$PROFILE/
-
-RUN apt-get update && \
-        apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
-        apt-get install -y cmake pkg-config libssl-dev git clang
-
-RUN git clone https://github.com/paritytech/polkadot-launch.git
-
 RUN apt-get -y update && \
       apt-get -y upgrade && \
-      apt-get -y install curl && \
+      apt-get -y install curl git && \
       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
       export NVM_DIR="$HOME/.nvm" && \
       [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
       nvm install v15.5.0 && \
       nvm use v15.5.0
-#      npm install --save @polkadot/api && \
-#      npm install --save-dev mochawesome
 
+RUN git clone https://github.com/paritytech/polkadot-launch.git
+
+RUN export NVM_DIR="$HOME/.nvm" && \
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+    cd /polkadot-launch && \
+    npm install --global yarn && \
+    yarn
+
+COPY --from=builder /nft_parachain/target/$PROFILE/nft /nft_private/target/$PROFILE/
+COPY --from=builder-polkadot /nft_parachain/polkadot/target/$PROFILE/polkadot /polkadot/target/$PROFILE/
 
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd /polkadot-launch && \
-    npm install --global yarn && \
-    yarn install && \
-    yarn build && \
     yarn start launch-config.json
