@@ -44,5 +44,17 @@ bench-evm-migration:
 bench-nft:
 	make _bench PALLET=nft
 
+.PHONY: bench-fungible
+bench-fungible:
+	make _bench PALLET=fungible
+
+.PHONY: bench-refungible
+bench-refungible:
+	make _bench PALLET=refungible
+
+.PHONY: bench-nonfungible
+bench-nonfungible:
+	make _bench PALLET=nonfungible
+
 .PHONY: bench
-bench: bench-evm-migration bench-nft
+bench: bench-evm-migration bench-nft bench-fungible bench-refungible bench-nonfungible
