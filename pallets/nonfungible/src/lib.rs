@@ -16,6 +16,7 @@ use sp_std::collections::btree_map::BTreeMap;
 use codec::{Encode, Decode};
 
 pub use pallet::*;
+#[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod common;
 pub mod erc;

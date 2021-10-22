@@ -9,8 +9,8 @@ use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
 
 use crate::{
-	AccountBalance, Allowance, Config, CreateItemData, DataKind, Error, NonfungibleHandle, Owned,
-	Owner, Pallet, SelfWeightOf, TokenData, weights::WeightInfo,
+	AccountBalance, Allowance, Config, CreateItemData, Error, NonfungibleHandle, Owned, Pallet,
+	SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted,
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
@@ -39,8 +39,8 @@ impl<T: Config> CommonWeightInfo for CommonWeights<T> {
 		<SelfWeightOf<T>>::transfer_from()
 	}
 
-	fn set_variable_metadata(_bytes: u32) -> Weight {
-		<SelfWeightOf<T>>::set_variable_metadata()
+	fn set_variable_metadata(bytes: u32) -> Weight {
+		<SelfWeightOf<T>>::set_variable_metadata(bytes)
 	}
 }
 
@@ -67,7 +67,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		with_weight(
 			<Pallet<T>>::create_item(self, &sender, map_create_data(data, &to)?),
-			<SelfWeightOf<T>>::create_item(),
+			<CommonWeights<T>>::create_item(),
 		)
 	}
 
@@ -85,7 +85,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		let amount = data.len();
 		with_weight(
 			<Pallet<T>>::create_multiple_items(self, &sender, data),
-			<SelfWeightOf<T>>::create_multiple_items(amount as u32),
+			<CommonWeights<T>>::create_multiple_items(amount as u32),
 		)
 	}
 
@@ -99,7 +99,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		if amount == 1 {
 			with_weight(
 				<Pallet<T>>::burn(&self, &sender, token),
-				<SelfWeightOf<T>>::burn_item(),
+				<CommonWeights<T>>::burn_item(),
 			)
 		} else {
 			Ok(().into())
@@ -117,7 +117,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		if amount == 1 {
 			with_weight(
 				<Pallet<T>>::transfer(&self, &from, &to, token),
-				<SelfWeightOf<T>>::transfer(),
+				<CommonWeights<T>>::transfer(),
 			)
 		} else {
 			Ok(().into())
@@ -139,7 +139,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			} else {
 				<Pallet<T>>::set_allowance(&self, &sender, token, None)
 			},
-			<SelfWeightOf<T>>::approve(),
+			<CommonWeights<T>>::approve(),
 		)
 	}
 
@@ -156,7 +156,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		if amount == 1 {
 			with_weight(
 				<Pallet<T>>::transfer_from(&self, &sender, &from, &to, token),
-				<SelfWeightOf<T>>::transfer_from(),
+				<CommonWeights<T>>::transfer_from(),
 			)
 		} else {
 			Ok(().into())
@@ -169,9 +169,10 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		token: TokenId,
 		data: Vec<u8>,
 	) -> DispatchResultWithPostInfo {
+		let len = data.len();
 		with_weight(
 			<Pallet<T>>::set_variable_metadata(&self, &sender, token, data),
-			<SelfWeightOf<T>>::set_variable_metadata(),
+			<CommonWeights<T>>::set_variable_metadata(len as u32),
 		)
 	}
 
