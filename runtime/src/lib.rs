@@ -972,6 +972,15 @@ impl_runtime_apis! {
 		fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
 			<pallet_nft::NftErcSupport<Runtime>>::get_code(&account)
 		}
+		fn adminlist(collection: CollectionId) -> Vec<AccountId> {
+			<pallet_nft::Pallet<Runtime>>::adminlist(collection)
+		}
+		fn allowlist(collection: CollectionId) -> Vec<AccountId> {
+			<pallet_nft::Pallet<Runtime>>::allowlist(collection)
+		}
+		fn last_token_id(collection: CollectionId) -> TokenId {
+			dispatch_nft_runtime!(collection.last_token_id())
+		}
 	}
 
 	impl sp_api::Core<Block> for Runtime {

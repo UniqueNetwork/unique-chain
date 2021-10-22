@@ -177,6 +177,10 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		token == TokenId::default()
 	}
 
+	fn last_token_id(&self) -> TokenId {
+		TokenId::default()
+	}
+
 	fn token_owner(&self, _token: TokenId) -> T::CrossAccountId {
 		T::CrossAccountId::default()
 	}

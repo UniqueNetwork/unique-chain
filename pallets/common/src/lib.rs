@@ -109,12 +109,12 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn ignores_owned_amount(&self, user: &T::CrossAccountId) -> Result<bool, DispatchError> {
 		Ok(self.limits.owner_can_transfer && self.is_owner_or_admin(user)?)
 	}
-	pub fn check_whitelist(&self, user: &T::CrossAccountId) -> DispatchResult {
+	pub fn check_allowlist(&self, user: &T::CrossAccountId) -> DispatchResult {
 		self.consume_sload()?;
 
 		ensure!(
-			<WhiteList<T>>::get((self.id, user.as_sub())),
-			<Error<T>>::AddressNotInWhiteList
+			<Allowlist<T>>::get((self.id, user.as_sub())),
+			<Error<T>>::AddressNotInAllowlist
 		);
 		Ok(())
 	}
@@ -252,7 +252,7 @@ pub mod pallet {
 		/// Collection is not in mint mode.
 		PublicMintingNotAllowed,
 		/// Address is not in white list.
-		AddressNotInWhiteList,
+		AddressNotInAllowlist,
 
 		/// Collection name can not be longer than 63 char.
 		CollectionNameLimitExceeded,
@@ -315,9 +315,9 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Whitelisted collection users
+	/// Allowlisted collection users
 	#[pallet::storage]
-	pub type WhiteList<T: Config> = StorageNMap<
+	pub type Allowlist<T: Config> = StorageNMap<
 		Key = (
 			Key<Blake2_128Concat, CollectionId>,
 			Key<Blake2_128Concat, T::AccountId>,
@@ -398,6 +398,7 @@ impl<T: Config> Pallet<T> {
 		<CollectionById<T>>::insert(id, data);
 		Ok(id)
 	}
+
 	pub fn destroy_collection(
 		collection: CollectionHandle<T>,
 		sender: &T::CrossAccountId,
@@ -417,11 +418,11 @@ impl<T: Config> Pallet<T> {
 		<DestroyedCollectionCount<T>>::put(destroyed_collections);
 		<CollectionById<T>>::remove(collection.id);
 		<IsAdmin<T>>::remove_prefix((collection.id,), None);
-		<WhiteList<T>>::remove_prefix((collection.id,), None);
+		<Allowlist<T>>::remove_prefix((collection.id,), None);
 		Ok(())
 	}
 
-	pub fn toggle_whitelist(
+	pub fn toggle_allowlist(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		user: &T::CrossAccountId,
@@ -432,9 +433,9 @@ impl<T: Config> Pallet<T> {
 		// =========
 
 		if allowed {
-			<WhiteList<T>>::insert((collection.id, user.as_sub()), true);
+			<Allowlist<T>>::insert((collection.id, user.as_sub()), true);
 		} else {
-			<WhiteList<T>>::remove((collection.id, user.as_sub()));
+			<Allowlist<T>>::remove((collection.id, user.as_sub()));
 		}
 
 		Ok(())
@@ -511,6 +512,7 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId>;
 	fn token_exists(&self, token: TokenId) -> bool;
+	fn last_token_id(&self) -> TokenId;
 
 	fn token_owner(&self, token: TokenId) -> T::CrossAccountId;
 	fn const_metadata(&self, token: TokenId) -> Vec<u8>;

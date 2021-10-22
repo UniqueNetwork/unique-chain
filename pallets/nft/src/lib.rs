@@ -41,7 +41,7 @@ use nft_data_structs::{
 };
 use pallet_common::{
 	account::CrossAccountId, CollectionHandle, IsAdmin, Pallet as PalletCommon,
-	Error as CommonError, CommonWeightInfo,
+	Error as CommonError, CommonWeightInfo, Allowlist,
 };
 use pallet_refungible::{Pallet as PalletRefungible, RefungibleHandle};
 use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
@@ -311,7 +311,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 
-			<PalletCommon<T>>::toggle_whitelist(
+			<PalletCommon<T>>::toggle_allowlist(
 				&collection,
 				&sender,
 				&address,
@@ -340,7 +340,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 
-			<PalletCommon<T>>::toggle_whitelist(
+			<PalletCommon<T>>::toggle_allowlist(
 				&collection,
 				&sender,
 				&address,
@@ -921,5 +921,19 @@ decl_module! {
 
 			target_collection.save()
 		}
+	}
+}
+
+// TODO: limit returned entries?
+impl<T: Config> Pallet<T> {
+	pub fn adminlist(collection: CollectionId) -> Vec<T::AccountId> {
+		<IsAdmin<T>>::iter_prefix((collection,))
+			.map(|(a, _)| a)
+			.collect()
+	}
+	pub fn allowlist(collection: CollectionId) -> Vec<T::AccountId> {
+		<Allowlist<T>>::iter_prefix((collection,))
+			.map(|(a, _)| a)
+			.collect()
 	}
 }

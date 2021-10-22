@@ -185,6 +185,10 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		<Pallet<T>>::token_exists(self, token)
 	}
 
+	fn last_token_id(&self) -> TokenId {
+		TokenId(<TokensMinted<T>>::get(self.id))
+	}
+
 	fn token_owner(&self, token: TokenId) -> T::CrossAccountId {
 		<Owner<T>>::get((self.id, token))
 	}

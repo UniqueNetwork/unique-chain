@@ -198,7 +198,7 @@ impl<T: Config> Pallet<T> {
 		);
 
 		if collection.access == AccessMode::WhiteList {
-			collection.check_whitelist(sender)?;
+			collection.check_allowlist(sender)?;
 		}
 
 		let burnt = <TokensBurnt<T>>::get(collection.id)
@@ -246,8 +246,8 @@ impl<T: Config> Pallet<T> {
 		);
 
 		if collection.access == AccessMode::WhiteList {
-			collection.check_whitelist(from)?;
-			collection.check_whitelist(to)?;
+			collection.check_allowlist(from)?;
+			collection.check_allowlist(to)?;
 		}
 		<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
@@ -314,10 +314,10 @@ impl<T: Config> Pallet<T> {
 				collection.mint_mode,
 				<CommonError<T>>::PublicMintingNotAllowed
 			);
-			collection.check_whitelist(sender)?;
+			collection.check_allowlist(sender)?;
 
 			for item in data.iter() {
-				collection.check_whitelist(&item.owner)?;
+				collection.check_allowlist(&item.owner)?;
 			}
 		}
 
@@ -453,9 +453,9 @@ impl<T: Config> Pallet<T> {
 		spender: Option<&T::CrossAccountId>,
 	) -> DispatchResult {
 		if collection.access == AccessMode::WhiteList {
-			collection.check_whitelist(&sender)?;
+			collection.check_allowlist(&sender)?;
 			if let Some(spender) = spender {
-				collection.check_whitelist(&spender)?;
+				collection.check_allowlist(&spender)?;
 			}
 		}
 
@@ -488,7 +488,7 @@ impl<T: Config> Pallet<T> {
 		}
 		if collection.access == AccessMode::WhiteList {
 			// `from`, `to` checked in [`transfer`]
-			collection.check_whitelist(spender)?;
+			collection.check_allowlist(spender)?;
 		}
 
 		if <Allowance<T>>::get((collection.id, token)).as_ref() != Some(spender) {

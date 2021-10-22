@@ -123,7 +123,7 @@ impl<T: Config> Pallet<T> {
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 
 		if collection.access == AccessMode::WhiteList {
-			collection.check_whitelist(owner)?;
+			collection.check_allowlist(owner)?;
 		}
 
 		// =========
@@ -161,8 +161,8 @@ impl<T: Config> Pallet<T> {
 		);
 
 		if collection.access == AccessMode::WhiteList {
-			collection.check_whitelist(from)?;
-			collection.check_whitelist(to)?;
+			collection.check_allowlist(from)?;
+			collection.check_allowlist(to)?;
 		}
 		<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
@@ -222,10 +222,10 @@ impl<T: Config> Pallet<T> {
 				collection.mint_mode,
 				<CommonError<T>>::PublicMintingNotAllowed
 			);
-			collection.check_whitelist(sender)?;
+			collection.check_allowlist(sender)?;
 
 			for (owner, _) in data.iter() {
-				collection.check_whitelist(owner)?;
+				collection.check_allowlist(owner)?;
 			}
 		}
 
@@ -305,8 +305,8 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 	) -> DispatchResult {
 		if collection.access == AccessMode::WhiteList {
-			collection.check_whitelist(&owner)?;
-			collection.check_whitelist(&spender)?;
+			collection.check_allowlist(&owner)?;
+			collection.check_allowlist(&spender)?;
 		}
 
 		if <Balance<T>>::get((collection.id, owner.as_sub())) < amount {
@@ -334,7 +334,7 @@ impl<T: Config> Pallet<T> {
 		}
 		if collection.access == AccessMode::WhiteList {
 			// `from`, `to` checked in [`transfer`]
-			collection.check_whitelist(spender)?;
+			collection.check_allowlist(spender)?;
 		}
 
 		let allowance = <Allowance<T>>::get((collection.id, from.as_sub(), spender.as_sub()))
