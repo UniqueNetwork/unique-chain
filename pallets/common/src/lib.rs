@@ -17,6 +17,7 @@ pub use pallet::*;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 pub mod account;
+#[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod erc;
 pub mod eth;

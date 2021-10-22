@@ -16,7 +16,10 @@ targets = ['x86_64-unknown-linux-gnu']
 
 [features]
 default = ['std']
-runtime-benchmarks = ['frame-benchmarking']
+runtime-benchmarks = [
+    'frame-benchmarking',
+    'pallet-common/runtime-benchmarks',
+]
 std = [
     'codec/std',
     'serde/std',
