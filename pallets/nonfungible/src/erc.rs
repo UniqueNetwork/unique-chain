@@ -13,8 +13,7 @@ use pallet_evm_coder_substrate::call_internal;
 use pallet_common::erc::PrecompileOutput;
 
 use crate::{
-	AccountBalance, Config, CreateItemData, DataKind, NonfungibleHandle, Owner, Pallet, TokenData,
-	TokensMinted,
+	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
 };
 
 #[derive(ToLog)]
@@ -65,11 +64,11 @@ impl<T: Config> NonfungibleHandle<T> {
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
-		Ok(string::from_utf8_lossy(&<TokenData<T>>::get((
-			self.id,
-			token_id,
-			DataKind::Constant,
-		)))
+		Ok(string::from_utf8_lossy(
+			&<TokenData<T>>::get((self.id, token_id))
+				.ok_or("token not found")?
+				.const_data,
+		)
 		.into())
 	}
 }
@@ -99,7 +98,10 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 	fn owner_of(&self, token_id: uint256) -> Result<address> {
 		let token: TokenId = token_id.try_into()?;
-		Ok(*<Owner<T>>::get((self.id, token)).as_eth())
+		Ok(*<TokenData<T>>::get((self.id, token))
+			.ok_or("token not found")?
+			.owner
+			.as_eth())
 	}
 	fn safe_transfer_from_with_data(
 		&mut self,
@@ -302,7 +304,9 @@ impl<T: Config> NonfungibleHandle<T> {
 	fn get_variable_metadata(&self, token_id: uint256) -> Result<bytes> {
 		let token: TokenId = token_id.try_into()?;
 
-		Ok(<TokenData<T>>::get((self.id, token, DataKind::Variable)))
+		Ok(<TokenData<T>>::get((self.id, token))
+			.ok_or("token not found")?
+			.variable_data)
 	}
 
 	fn mint_bulk(&mut self, caller: caller, to: address, token_ids: Vec<uint256>) -> Result<bool> {

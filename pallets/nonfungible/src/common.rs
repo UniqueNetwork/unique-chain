@@ -190,13 +190,19 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 	}
 
 	fn token_owner(&self, token: TokenId) -> T::CrossAccountId {
-		<Owner<T>>::get((self.id, token))
+		<TokenData<T>>::get((self.id, token))
+			.map(|t| t.owner)
+			.unwrap_or_default()
 	}
 	fn const_metadata(&self, token: TokenId) -> Vec<u8> {
-		<TokenData<T>>::get((self.id, token, DataKind::Constant))
+		<TokenData<T>>::get((self.id, token))
+			.map(|t| t.const_data.clone())
+			.unwrap_or_default()
 	}
 	fn variable_metadata(&self, token: TokenId) -> Vec<u8> {
-		<TokenData<T>>::get((self.id, token, DataKind::Variable))
+		<TokenData<T>>::get((self.id, token))
+			.map(|t| t.variable_data.clone())
+			.unwrap_or_default()
 	}
 
 	fn collection_tokens(&self) -> u32 {
@@ -208,7 +214,10 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 	}
 
 	fn balance(&self, account: T::CrossAccountId, token: TokenId) -> u128 {
-		if <Owner<T>>::get((self.id, token)) == account {
+		if <TokenData<T>>::get((self.id, token))
+			.map(|a| a.owner == account)
+			.unwrap_or(false)
+		{
 			1
 		} else {
 			0
@@ -221,7 +230,10 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		spender: T::CrossAccountId,
 		token: TokenId,
 	) -> u128 {
-		if <Owner<T>>::get((self.id, token)) != sender {
+		if <TokenData<T>>::get((self.id, token))
+			.map(|a| a.owner == sender)
+			.unwrap_or(false)
+		{
 			0
 		} else if <Allowance<T>>::get((self.id, token)) == Some(spender) {
 			1

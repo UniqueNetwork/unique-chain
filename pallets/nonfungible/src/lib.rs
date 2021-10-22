@@ -13,6 +13,7 @@ use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{vec::Vec, vec};
 use core::ops::Deref;
 use sp_std::collections::btree_map::BTreeMap;
+use codec::{Encode, Decode};
 
 pub use pallet::*;
 pub mod benchmarking;
@@ -27,10 +28,17 @@ pub struct CreateItemData<T: Config> {
 }
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
+#[derive(Encode, Decode)]
+pub struct ItemData<T: Config> {
+	pub const_data: Vec<u8>,
+	pub variable_data: Vec<u8>,
+	pub owner: T::CrossAccountId,
+}
+
 #[frame_support::pallet]
 pub mod pallet {
+	use super::*;
 	use frame_support::{Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key};
-	use sp_std::vec::Vec;
 	use nft_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;
 
@@ -58,29 +66,13 @@ pub mod pallet {
 	pub(super) type TokensBurnt<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
 
-	#[derive(Encode, Decode)]
-	pub enum DataKind {
-		Constant,
-		Variable,
-	}
-
 	#[pallet::storage]
 	pub(super) type TokenData<T: Config> = StorageNMap<
-		Key = (
-			Key<Twox64Concat, CollectionId>,
-			Key<Twox64Concat, TokenId>,
-			Key<Identity, DataKind>,
-		),
-		Value = Vec<u8>,
-		QueryKind = ValueQuery,
+		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
+		Value = ItemData<T>,
+		QueryKind = OptionQuery,
 	>;
 
-	#[pallet::storage]
-	pub(super) type Owner<T: Config> = StorageNMap<
-		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
-		Value = T::CrossAccountId,
-		QueryKind = ValueQuery,
-	>;
 	/// Used to enumerate tokens owned by account
 	#[pallet::storage]
 	pub(super) type Owned<T: Config> = StorageNMap<
@@ -133,29 +125,7 @@ impl<T: Config> Pallet<T> {
 		<TokensMinted<T>>::get(collection.id) - <TokensBurnt<T>>::get(collection.id)
 	}
 	pub fn token_exists(collection: &NonfungibleHandle<T>, token: TokenId) -> bool {
-		<Owner<T>>::contains_key((collection.id, token))
-	}
-	pub fn ensure_owner(
-		collection: &NonfungibleHandle<T>,
-		token: TokenId,
-		sender: &T::CrossAccountId,
-	) -> DispatchResult {
-		ensure!(
-			&<Owner<T>>::get((collection.id, token)) == sender,
-			<CommonError<T>>::NoPermission
-		);
-		Ok(())
-	}
-	pub fn item_owner(
-		collection: &NonfungibleHandle<T>,
-		token: TokenId,
-	) -> Result<T::CrossAccountId, DispatchError> {
-		let owner = <Owner<T>>::get((collection.id, token));
-		ensure!(
-			owner != T::CrossAccountId::default(),
-			<CommonError<T>>::TokenNotFound
-		);
-		Ok(owner)
+		<TokenData<T>>::contains_key((collection.id, token))
 	}
 }
 
@@ -174,11 +144,10 @@ impl<T: Config> Pallet<T> {
 
 		PalletCommon::destroy_collection(collection.0, sender)?;
 
-		<Owner<T>>::remove_prefix((id,), None);
+		<TokenData<T>>::remove_prefix((id,), None);
 		<Owned<T>>::remove_prefix((id,), None);
 		<TokensMinted<T>>::remove(id);
 		<TokensBurnt<T>>::remove(id);
-		<TokenData<T>>::remove_prefix((id,), None);
 		<Allowance<T>>::remove_prefix((id,), None);
 		<AccountBalance<T>>::remove_prefix((id,), None);
 		Ok(())
@@ -189,9 +158,10 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token: TokenId,
 	) -> DispatchResult {
-		let token_owner = <Pallet<T>>::item_owner(collection, token)?;
+		let token_data = <TokenData<T>>::get((collection.id, token))
+			.ok_or_else(|| <CommonError<T>>::TokenNotFound)?;
 		ensure!(
-			&token_owner == sender
+			&token_data.owner == sender
 				|| (collection.limits.owner_can_transfer
 					&& collection.is_owner_or_admin(sender)?),
 			<CommonError<T>>::NoPermission
@@ -207,21 +177,30 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		<Owner<T>>::remove((collection.id, token));
-		<Owned<T>>::remove((collection.id, token_owner.as_sub(), token));
+		<Owned<T>>::remove((collection.id, token_data.owner.as_sub(), token));
 		<TokensBurnt<T>>::insert(collection.id, burnt);
-		<TokenData<T>>::remove_prefix((collection.id, token), None);
-		<Allowance<T>>::remove((collection.id, token));
+		<TokenData<T>>::remove((collection.id, token));
+		let old_spender = <Allowance<T>>::take((collection.id, token));
+
+		if let Some(old_spender) = old_spender {
+			<PalletCommon<T>>::deposit_event(CommonEvent::Approved(
+				collection.id,
+				token,
+				sender.clone(),
+				old_spender.clone(),
+				0,
+			));
+		}
 
 		collection.log_infallible(ERC721Events::Transfer {
-			from: *token_owner.as_eth(),
+			from: *token_data.owner.as_eth(),
 			to: H160::default(),
 			token_id: token.into(),
 		});
 		<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
 			collection.id,
 			token,
-			token_owner,
+			token_data.owner,
 			1,
 		));
 		return Ok(());
@@ -238,9 +217,10 @@ impl<T: Config> Pallet<T> {
 			<CommonError<T>>::TransferNotAllowed
 		);
 
-		let token_owner = <Pallet<T>>::item_owner(collection, token)?;
+		let token_data = <TokenData<T>>::get((collection.id, token))
+			.ok_or_else(|| <CommonError<T>>::TokenNotFound)?;
 		ensure!(
-			&token_owner == from
+			&token_data.owner == from
 				|| (collection.limits.owner_can_transfer && collection.is_owner_or_admin(from)?),
 			<CommonError<T>>::NoPermission
 		);
@@ -274,6 +254,14 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
+		<TokenData<T>>::insert(
+			(collection.id, token),
+			ItemData {
+				owner: to.clone(),
+				..token_data
+			},
+		);
+
 		if let Some(balance_to) = balance_to {
 			// from != to
 			if balance_from == 0 {
@@ -286,7 +274,6 @@ impl<T: Config> Pallet<T> {
 			<Owned<T>>::insert((collection.id, to.as_sub(), token), true);
 		}
 		Self::set_allowance_unchecked(collection, from, token, None);
-		<Owner<T>>::insert((collection.id, token), &to);
 
 		collection.log_infallible(ERC721Events::Transfer {
 			from: *from.as_eth(),
@@ -364,18 +351,16 @@ impl<T: Config> Pallet<T> {
 			<AccountBalance<T>>::insert((collection.id, account), balance);
 		}
 		for (i, data) in data.into_iter().enumerate() {
-			let token = first_token + i as u32;
+			let token = first_token + i as u32 + 1;
 
-			if !data.const_data.is_empty() {
-				<TokenData<T>>::insert((collection.id, token, DataKind::Constant), data.const_data);
-			}
-			if !data.variable_data.is_empty() {
-				<TokenData<T>>::insert(
-					(collection.id, token, DataKind::Variable),
-					data.variable_data,
-				);
-			}
-			<Owner<T>>::insert((collection.id, token), &data.owner);
+			<TokenData<T>>::insert(
+				(collection.id, token),
+				ItemData {
+					const_data: data.const_data.into(),
+					variable_data: data.variable_data.into(),
+					owner: data.owner.clone(),
+				},
+			);
 			<Owned<T>>::insert((collection.id, data.owner.as_sub(), token), true);
 
 			collection.log_infallible(ERC721Events::Transfer {
@@ -383,6 +368,12 @@ impl<T: Config> Pallet<T> {
 				to: *data.owner.as_eth(),
 				token_id: token.into(),
 			});
+			<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
+				collection.id,
+				TokenId(token),
+				data.owner.clone(),
+				1,
+			));
 		}
 		Ok(())
 	}
@@ -462,8 +453,9 @@ impl<T: Config> Pallet<T> {
 		if let Some(spender) = spender {
 			<PalletCommon<T>>::ensure_correct_receiver(spender)?;
 		}
-		let token_owner = Self::item_owner(collection, token)?;
-		if &token_owner != sender {
+		let token_data =
+			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
+		if &token_data.owner != sender {
 			ensure!(
 				collection.ignores_owned_amount(sender)?,
 				<CommonError<T>>::CantApproveMoreThanOwned
@@ -515,14 +507,21 @@ impl<T: Config> Pallet<T> {
 			data.len() as u32 <= CUSTOM_DATA_LIMIT,
 			<CommonError<T>>::TokenVariableDataLimitExceeded
 		);
-		let item_owner = Self::item_owner(collection, token)?;
-		collection.check_can_update_meta(sender, &item_owner)?;
+		let token_data =
+			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
+		collection.check_can_update_meta(sender, &token_data.owner)?;
 
 		collection.consume_sstore()?;
 
 		// =========
 
-		<TokenData<T>>::insert((collection.id, token, DataKind::Variable), data);
+		<TokenData<T>>::insert(
+			(collection.id, token),
+			ItemData {
+				variable_data: data,
+				..token_data
+			},
+		);
 		Ok(())
 	}
 
