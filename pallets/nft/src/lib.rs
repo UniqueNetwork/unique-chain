@@ -100,38 +100,6 @@ pub trait Config:
 
 type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
-trait WeightInfoHelpers: WeightInfo {
-	fn transfer() -> Weight {
-		Self::transfer_nft()
-			.max(Self::transfer_fungible())
-			.max(Self::transfer_refungible())
-	}
-	fn transfer_from() -> Weight {
-		Self::transfer_from_nft()
-			.max(Self::transfer_from_fungible())
-			.max(Self::transfer_from_refungible())
-	}
-	fn approve() -> Weight {
-		// TODO: refungible, fungible
-		Self::approve_nft()
-	}
-	fn set_variable_meta_data(data: u32) -> Weight {
-		// TODO: refungible
-		Self::set_variable_meta_data_nft(data)
-	}
-	fn create_item(data: u32) -> Weight {
-		Self::create_item_nft(data)
-			.max(Self::create_item_fungible())
-			.max(Self::create_item_refungible(data))
-	}
-	fn create_multiple_items(amount: u32) -> Weight {
-		Self::create_multiple_items_nft(amount)
-			.max(Self::create_multiple_items_fungible(amount))
-			.max(Self::create_multiple_items_refungible(amount))
-	}
-}
-impl<T: WeightInfo> WeightInfoHelpers for T {}
-
 // # Used definitions
 //
 // ## User control levels
@@ -754,7 +722,7 @@ decl_module! {
 		/// * collection_id: ID of the collection.
 		///
 		/// * value: New flag value.
-		#[weight = <SelfWeightOf<T>>::set_variable_meta_data(0)]
+		#[weight = <SelfWeightOf<T>>::set_meta_update_permission_flag()]
 		#[transactional]
 		pub fn set_meta_update_permission_flag(origin, collection_id: CollectionId, value: MetaUpdatePermission) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
