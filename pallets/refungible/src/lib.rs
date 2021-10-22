@@ -11,6 +11,7 @@ use pallet_common::{
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use core::ops::Deref;
+use codec::{Encode, Decode};
 
 pub use pallet::*;
 pub mod benchmarking;
@@ -24,10 +25,16 @@ pub struct CreateItemData<T: Config> {
 }
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
+#[derive(Encode, Decode, Default)]
+pub struct ItemData {
+	pub const_data: Vec<u8>,
+	pub variable_data: Vec<u8>,
+}
+
 #[frame_support::pallet]
 pub mod pallet {
+	use super::*;
 	use frame_support::{Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key};
-	use sp_std::vec::Vec;
 	use nft_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;
 
@@ -55,20 +62,10 @@ pub mod pallet {
 	pub(super) type TokensBurnt<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
 
-	#[derive(Encode, Decode)]
-	pub enum DataKind {
-		Constant,
-		Variable,
-	}
-
 	#[pallet::storage]
 	pub(super) type TokenData<T: Config> = StorageNMap<
-		Key = (
-			Key<Twox64Concat, CollectionId>,
-			Key<Twox64Concat, TokenId>,
-			Key<Identity, DataKind>,
-		),
-		Value = Vec<u8>,
+		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
+		Value = ItemData,
 		QueryKind = ValueQuery,
 	>;
 
@@ -185,7 +182,7 @@ impl<T: Config> Pallet<T> {
 			.ok_or(ArithmeticError::Overflow)?;
 
 		<TokensBurnt<T>>::insert(collection.id, burnt);
-		<TokenData<T>>::remove_prefix((collection.id, token_id), None);
+		<TokenData<T>>::remove((collection.id, token_id));
 		<TotalSupply<T>>::remove((collection.id, token_id));
 		<Balance<T>>::remove_prefix((collection.id, token_id), None);
 		<Allowance<T>>::remove_prefix((collection.id, token_id), None);
@@ -210,10 +207,15 @@ impl<T: Config> Pallet<T> {
 				<Balance<T>>::get((collection.id, token, owner.as_sub())) == amount,
 				<CommonError<T>>::TokenValueTooLow
 			);
+			let account_balance = <AccountBalance<T>>::get((collection.id, owner.as_sub()))
+				.checked_sub(1)
+				// Should not occur
+				.ok_or(ArithmeticError::Underflow)?;
 
 			// =========
 
 			<Owned<T>>::remove((collection.id, owner.as_sub(), token));
+			<AccountBalance<T>>::insert((collection.id, owner.as_sub()), account_balance);
 			Self::burn_token(collection, token)?;
 			<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
 				collection.id,
@@ -239,6 +241,7 @@ impl<T: Config> Pallet<T> {
 		// =========
 
 		if balance == 0 {
+			<Owned<T>>::remove((collection.id, owner.as_sub(), token));
 			<Balance<T>>::remove((collection.id, token, owner.as_sub()));
 			<AccountBalance<T>>::insert((collection.id, owner.as_sub()), account_balance);
 		} else {
@@ -330,13 +333,12 @@ impl<T: Config> Pallet<T> {
 			<Balance<T>>::insert((collection.id, token, to.as_sub()), balance_to);
 			if let Some(account_balance_from) = account_balance_from {
 				<AccountBalance<T>>::insert((collection.id, from.as_sub()), account_balance_from);
+				<Owned<T>>::remove((collection.id, from.as_sub(), token));
 			}
 			if let Some(account_balance_to) = account_balance_to {
 				<AccountBalance<T>>::insert((collection.id, to.as_sub()), account_balance_to);
+				<Owned<T>>::insert((collection.id, to.as_sub(), token), true);
 			}
-
-			<Owned<T>>::remove((collection.id, from.as_sub(), token));
-			<Owned<T>>::insert((collection.id, to.as_sub(), token), true);
 		}
 
 		// TODO: ERC20 transfer event
@@ -426,21 +428,16 @@ impl<T: Config> Pallet<T> {
 			<AccountBalance<T>>::insert((collection.id, account), balance);
 		}
 		for (i, token) in data.into_iter().enumerate() {
-			let token_id = first_token_id + i as u32;
+			let token_id = first_token_id + i as u32 + 1;
 			<TotalSupply<T>>::insert((collection.id, token_id), totals[i]);
 
-			if !token.const_data.is_empty() {
-				<TokenData<T>>::insert(
-					(collection.id, token_id, DataKind::Constant),
-					token.const_data,
-				);
-			}
-			if !token.variable_data.is_empty() {
-				<TokenData<T>>::insert(
-					(collection.id, token_id, DataKind::Variable),
-					token.variable_data,
-				);
-			}
+			<TokenData<T>>::insert(
+				(collection.id, token_id),
+				ItemData {
+					const_data: token.const_data.into(),
+					variable_data: token.variable_data.into(),
+				},
+			);
 			for (user, amount) in token.users.into_iter() {
 				if amount == 0 {
 					continue;
@@ -554,10 +551,17 @@ impl<T: Config> Pallet<T> {
 		)?;
 
 		collection.consume_sstore()?;
+		let token_data = <TokenData<T>>::get((collection.id, token));
 
 		// =========
 
-		<TokenData<T>>::insert((collection.id, token, DataKind::Variable), data);
+		<TokenData<T>>::insert(
+			(collection.id, token),
+			ItemData {
+				variable_data: data,
+				..token_data
+			},
+		);
 		Ok(())
 	}
 

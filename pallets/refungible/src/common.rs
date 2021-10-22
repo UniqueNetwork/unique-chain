@@ -10,8 +10,8 @@ use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
 
 use crate::{
-	AccountBalance, Allowance, Balance, Config, CreateItemData, DataKind, Error, Owned, Pallet,
-	RefungibleHandle, SelfWeightOf, TokenData, weights::WeightInfo,
+	AccountBalance, Allowance, Balance, Config, CreateItemData, Error, Owned, Pallet,
+	RefungibleHandle, SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted,
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
@@ -168,14 +168,18 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		<Pallet<T>>::token_exists(self, token)
 	}
 
+	fn last_token_id(&self) -> TokenId {
+		TokenId(<TokensMinted<T>>::get(self.id))
+	}
+
 	fn token_owner(&self, _token: TokenId) -> T::CrossAccountId {
 		T::CrossAccountId::default()
 	}
 	fn const_metadata(&self, token: TokenId) -> Vec<u8> {
-		<TokenData<T>>::get((self.id, token, DataKind::Constant))
+		<TokenData<T>>::get((self.id, token)).const_data
 	}
 	fn variable_metadata(&self, token: TokenId) -> Vec<u8> {
-		<TokenData<T>>::get((self.id, token, DataKind::Variable))
+		<TokenData<T>>::get((self.id, token)).variable_data
 	}
 
 	fn collection_tokens(&self) -> u32 {
