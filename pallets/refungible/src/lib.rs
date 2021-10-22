@@ -14,6 +14,7 @@ use core::ops::Deref;
 use codec::{Encode, Decode};
 
 pub use pallet::*;
+#[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod common;
 pub mod erc;

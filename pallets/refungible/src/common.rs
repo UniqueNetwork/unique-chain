@@ -14,6 +14,15 @@ use crate::{
 	RefungibleHandle, SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted,
 };
 
+macro_rules! max_weight_of {
+	($($method:ident ($($args:tt)*)),*) => {
+		0
+		$(
+			.max(<SelfWeightOf<T>>::$method($($args)*))
+		)*
+	};
+}
+
 pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo for CommonWeights<T> {
 	fn create_item() -> Weight {
@@ -25,11 +34,16 @@ impl<T: Config> CommonWeightInfo for CommonWeights<T> {
 	}
 
 	fn burn_item() -> Weight {
-		<SelfWeightOf<T>>::burn_item()
+		max_weight_of!(burn_item_partial(), burn_item_fully())
 	}
 
 	fn transfer() -> Weight {
-		<SelfWeightOf<T>>::transfer()
+		max_weight_of!(
+			transfer_normal(),
+			transfer_creating(),
+			transfer_removing(),
+			transfer_creating_removing()
+		)
 	}
 
 	fn approve() -> Weight {
@@ -37,11 +51,16 @@ impl<T: Config> CommonWeightInfo for CommonWeights<T> {
 	}
 
 	fn transfer_from() -> Weight {
-		<SelfWeightOf<T>>::transfer_from()
+		max_weight_of!(
+			transfer_from_normal(),
+			transfer_from_creating(),
+			transfer_from_removing(),
+			transfer_from_creating_removing()
+		)
 	}
 
-	fn set_variable_metadata(_bytes: u32) -> Weight {
-		<SelfWeightOf<T>>::set_variable_metadata()
+	fn set_variable_metadata(bytes: u32) -> Weight {
+		<SelfWeightOf<T>>::set_variable_metadata(bytes)
 	}
 }
 
@@ -72,7 +91,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		with_weight(
 			<Pallet<T>>::create_item(self, &sender, map_create_data(data, &to)?),
-			<SelfWeightOf<T>>::create_item(),
+			<CommonWeights<T>>::create_item(),
 		)
 	}
 
@@ -90,7 +109,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		let amount = data.len();
 		with_weight(
 			<Pallet<T>>::create_multiple_items(self, &sender, data),
-			<SelfWeightOf<T>>::create_multiple_items(amount as u32),
+			<CommonWeights<T>>::create_multiple_items(amount as u32),
 		)
 	}
 
@@ -102,7 +121,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		with_weight(
 			<Pallet<T>>::burn(self, &sender, token, amount),
-			<SelfWeightOf<T>>::burn_item(),
+			<CommonWeights<T>>::burn_item(),
 		)
 	}
 
@@ -115,7 +134,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		with_weight(
 			<Pallet<T>>::transfer(&self, &from, &to, token, amount),
-			<SelfWeightOf<T>>::transfer(),
+			<CommonWeights<T>>::transfer(),
 		)
 	}
 
@@ -128,7 +147,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		with_weight(
 			<Pallet<T>>::set_allowance(&self, &sender, &spender, token, amount),
-			<SelfWeightOf<T>>::approve(),
+			<CommonWeights<T>>::approve(),
 		)
 	}
 
@@ -142,7 +161,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		with_weight(
 			<Pallet<T>>::transfer_from(&self, &sender, &from, &to, token, amount),
-			<SelfWeightOf<T>>::approve(),
+			<CommonWeights<T>>::approve(),
 		)
 	}
 
@@ -152,9 +171,10 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		token: TokenId,
 		data: Vec<u8>,
 	) -> DispatchResultWithPostInfo {
+		let len = data.len();
 		with_weight(
 			<Pallet<T>>::set_variable_metadata(&self, &sender, token, data),
-			<SelfWeightOf<T>>::set_variable_metadata(),
+			<CommonWeights<T>>::set_variable_metadata(len as u32),
 		)
 	}
 
