@@ -54,7 +54,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		match data {
 			nft_data_structs::CreateItemData::Fungible(data) => with_weight(
 				<Pallet<T>>::create_item(self, &sender, (to, data.value)),
-				<SelfWeightOf<T>>::create_item(),
+				<CommonWeights<T>>::create_item(),
 			),
 			_ => fail!(<Error<T>>::NotFungibleDataUsedToMintFungibleCollectionToken),
 		}
@@ -80,7 +80,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 		with_weight(
 			<Pallet<T>>::create_item(self, &sender, (to, sum)),
-			<SelfWeightOf<T>>::create_item(),
+			<CommonWeights<T>>::create_item(),
 		)
 	}
 
@@ -97,7 +97,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 		with_weight(
 			<Pallet<T>>::burn(self, &sender, amount),
-			<SelfWeightOf<T>>::burn_item(),
+			<CommonWeights<T>>::burn_item(),
 		)
 	}
 
@@ -115,7 +115,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 		with_weight(
 			<Pallet<T>>::transfer(&self, &from, &to, amount),
-			<SelfWeightOf<T>>::transfer(),
+			<CommonWeights<T>>::transfer(),
 		)
 	}
 
@@ -133,7 +133,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 		with_weight(
 			<Pallet<T>>::set_allowance(&self, &sender, &spender, amount),
-			<SelfWeightOf<T>>::approve(),
+			<CommonWeights<T>>::approve(),
 		)
 	}
 
@@ -152,7 +152,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 		with_weight(
 			<Pallet<T>>::transfer_from(&self, &sender, &from, &to, amount),
-			<SelfWeightOf<T>>::transfer_from(),
+			<CommonWeights<T>>::transfer_from(),
 		)
 	}
 

@@ -13,6 +13,7 @@ use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 pub use pallet::*;
 
 use crate::erc::ERC20Events;
+#[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod common;
 pub mod erc;

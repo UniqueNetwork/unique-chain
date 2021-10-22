@@ -20,6 +20,7 @@ nft-data-structs = { default-features = false, path = '../../primitives/nft' }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 ethereum = { default-features = false, version = "0.9.0" }
 pallet-evm-coder-substrate = { default-features = false, path = '../evm-coder-substrate' }
+frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
 
 [features]
 default = ["std"]
@@ -32,5 +33,9 @@ std = [
     "pallet-common/std",
     "evm-coder/std",
     "ethereum/std",
+    'frame-benchmarking/std',
 ]
-runtime-benchmarks = []
+runtime-benchmarks = [
+    'frame-benchmarking',
+    'pallet-common/runtime-benchmarks',
+]
