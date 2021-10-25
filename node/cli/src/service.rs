@@ -9,7 +9,6 @@
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::collections::BTreeMap;
-use std::collections::HashMap;
 use std::time::Duration;
 use futures::StreamExt;
 
@@ -40,7 +39,6 @@ use sc_client_api::BlockchainEvents;
 
 // Frontier Imports
 use fc_rpc_core::types::FilterPool;
-use fc_rpc_core::types::PendingTransactions;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
 // Runtime type overrides
@@ -108,7 +106,6 @@ pub fn new_partial<BIQ>(
 		sc_transaction_pool::FullPool<Block, FullClient>,
 		(
 			Option<Telemetry>,
-			PendingTransactions,
 			Option<FilterPool>,
 			Arc<fc_db::Backend<Block>>,
 			Option<TelemetryWorkerHandle>,
@@ -179,8 +176,6 @@ where
 		client.clone(),
 	);
 
-	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
-
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 
 	let frontier_backend = open_frontier_backend(config)?;
@@ -202,7 +197,6 @@ where
 		select_chain,
 		other: (
 			telemetry,
-			pending_transactions,
 			filter_pool,
 			frontier_backend,
 			telemetry_worker_handle,
@@ -251,13 +245,7 @@ where
 	let parachain_config = prepare_node_config(parachain_config);
 
 	let params = new_partial::<BIQ>(&parachain_config, build_import_queue)?;
-	let (
-		mut telemetry,
-		pending_transactions,
-		filter_pool,
-		frontier_backend,
-		telemetry_worker_handle,
-	) = params.other;
+	let (mut telemetry, filter_pool, frontier_backend, telemetry_worker_handle) = params.other;
 
 	let relay_chain_full_node =
 		cumulus_client_service::build_polkadot_full_node(polkadot_config, telemetry_worker_handle)
@@ -308,18 +296,18 @@ where
 			deny_unsafe,
 			client: rpc_client.clone(),
 			pool: rpc_pool.clone(),
+			graph: rpc_pool.pool().clone(),
 			// TODO: Unhardcode
 			enable_dev_signer: false,
 			filter_pool: filter_pool.clone(),
 			network: rpc_network.clone(),
-			pending_transactions: pending_transactions.clone(),
 			select_chain: select_chain.clone(),
 			is_authority,
 			// TODO: Unhardcode
 			max_past_logs: 10000,
 		};
 
-		Ok(nft_rpc::create_full::<_, _, _, RuntimeApi, _>(
+		Ok(nft_rpc::create_full::<_, _, _, _, RuntimeApi, _>(
 			full_deps,
 			subscription_executor.clone(),
 		))
