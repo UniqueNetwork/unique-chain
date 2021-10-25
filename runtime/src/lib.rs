@@ -764,7 +764,7 @@ type SponsorshipHandler = (
 	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
 );
 
-impl pallet_scheduler::Config for Runtime {
+impl pallet_unq_scheduler::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
 	type PalletsOrigin = OriginCaller;
@@ -837,7 +837,7 @@ construct_runtime!(
 		// Unique Pallets
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
 		Nft: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>} = 61,
-		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
+		Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage} = 63,
 		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage } = 64,
 		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
