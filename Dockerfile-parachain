@@ -22,8 +22,6 @@ ENV NFT_BRANCH $NFT_BRANCH
 #RUN echo $POLKA_VERSION
 #RUN echo $NFT_BRANCH
 
-ARG PROFILE=release
-
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 
@@ -58,7 +56,8 @@ RUN mkdir nft_parachain
 WORKDIR /nft_parachain
 
 COPY --from=chef /nft_parachain/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json
+ARG PROFILE=release
+RUN cargo chef cook "--$PROFILE" --recipe-path recipe.json
 
 COPY . .
 RUN cargo build "--$PROFILE"
