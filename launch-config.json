@@ -88,6 +88,5 @@
     ],
     "simpleParachains": [],
     "hrmpChannels": [],
-    "types": "./runtime_types.json",
     "finalization": false
 }
