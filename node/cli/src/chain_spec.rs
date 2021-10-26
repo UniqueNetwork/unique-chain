@@ -151,8 +151,6 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
 ) -> GenesisConfig {
-	let vested_accounts = vec![get_account_id_from_seed::<sr25519::Public>("Bob")];
-
 	GenesisConfig {
 		system: nft_runtime::SystemConfig {
 			code: nft_runtime::WASM_BINARY
@@ -169,13 +167,7 @@ fn testnet_genesis(
 		},
 		treasury: Default::default(),
 		sudo: SudoConfig { key: root_key },
-		vesting: VestingConfig {
-			vesting: vested_accounts
-				.iter()
-				.cloned()
-				.map(|k| (k, 1000, 100, 1 << 98))
-				.collect(),
-		},
+		vesting: VestingConfig { vesting: vec![] },
 		nft: NftConfig {
 			collection_id: vec![(
 				1,
