@@ -1,5 +1,5 @@
 ################################################################################
-# Package 
+# Package
 
 [package]
 authors = ['Unique Network <support@uniquenetwork.io>']
@@ -68,6 +68,7 @@ std = [
     'pallet-evm-coder-substrate/std',
     'pallet-ethereum/std',
     'fp-rpc/std',
+    'up-rpc/std',
     'parachain-info/std',
     'serde',
     'pallet-inflation/std',
