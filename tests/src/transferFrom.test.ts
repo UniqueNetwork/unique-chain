@@ -265,7 +265,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     await usingApi(async () => {
       const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
-      await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 1);
+      await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 100);
       await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
       await transferFromExpectFail(reFungibleCollectionId, newReFungibleTokenId, Bob, Alice, Charlie, 1);
 
@@ -297,7 +297,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
-      await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 1);
+      await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 100);
       await transferFromExpectFail(reFungibleCollectionId, newReFungibleTokenId, Bob, Alice, Charlie, 1);
 
     });
