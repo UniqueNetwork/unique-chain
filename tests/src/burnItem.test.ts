@@ -239,7 +239,7 @@ describe('Negative integration test: ext. burnItem():', () => {
     const tokenId = 10;
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, 0);
+      const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
       const badTransaction = async function () { 
         await submitTransactionExpectFailAsync(alice, tx);
       };
@@ -270,7 +270,7 @@ describe('Negative integration test: ext. burnItem():', () => {
 
     await usingApi(async (api) => {
 
-      const burntx = api.tx.nft.burnItem(collectionId, tokenId, 0);
+      const burntx = api.tx.nft.burnItem(collectionId, tokenId, 1);
       const events1 = await submitTransactionAsync(alice, burntx);
       const result1 = getGenericResult(events1);
       expect(result1.success).to.be.true;
