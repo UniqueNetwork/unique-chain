@@ -3,7 +3,7 @@
 
 [build-dependencies.substrate-build-script-utils]
 git = 'https://github.com/paritytech/substrate.git'
-bbranch = 'polkadot-v0.9.12'
+branch = 'polkadot-v0.9.12'
 
 ################################################################################
 # Substrate Dependecies
