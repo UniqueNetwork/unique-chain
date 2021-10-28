@@ -166,20 +166,6 @@ describe('setCollectionLimits negative', () => {
       await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
     });
   });
-  it('execute setCollectionLimits with incorrect limits', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      tx = api.tx.nft.setCollectionLimits(
-        collectionIdForTesting,
-        {
-          accountTokenOwnershipLimit: 'awdawd',
-          sponsorTransferTimeout: 'awd',
-          sponsoredDataSize: '12312312312312312',
-          tokenLimit: '-100',
-        },
-      );
-      await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
-    });
-  });
 
   it('fails when trying to enable OwnerCanTransfer after it was disabled', async () => {
     const collectionId = await createCollectionExpectSuccess();
