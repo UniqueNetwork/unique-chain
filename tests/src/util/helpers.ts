@@ -700,10 +700,10 @@ export type CreateItemData = {
   ReFungible: CreateReFungibleData;
 };
 
-export async function burnItemExpectSuccess(owner: IKeyringPair, collectionId: number, tokenId: number, value = 0) {
+export async function burnItemExpectSuccess(sender: IKeyringPair, collectionId: number, tokenId: number, value = 1) {
   await usingApi(async (api) => {
     const tx = api.tx.nft.burnItem(collectionId, tokenId, value);
-    const events = await submitTransactionAsync(owner, tx);
+    const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
     // Get the item
     const item: any = (await api.query.nft.nftItemList(collectionId, tokenId)).toJSON();
