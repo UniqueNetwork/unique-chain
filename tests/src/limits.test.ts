@@ -98,18 +98,18 @@ describe('Sponsor timeout (NFT)', () => {
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob);
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 5, fail
     await waitNewBlocks(5);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie);
-    const aliceBalanceAfterUnsponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterUnsponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterUnsponsoredTransaction).to.be.equals(aliceBalanceBefore);
 
     // check setting SponsorTimeout = 7, success
     await waitNewBlocks(2); // 5 + 2
     await transferExpectSuccess(collectionId, tokenId, Charlie, Bob);
-    const aliceBalanceAfterSponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
     await destroyCollectionExpectSuccess(collectionId);
   });
@@ -122,18 +122,18 @@ describe('Sponsor timeout (NFT)', () => {
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob);
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 1, fail
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie);
-    const aliceBalanceAfterUnsponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterUnsponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterUnsponsoredTransaction).to.be.equals(aliceBalanceBefore);
 
     // check setting SponsorTimeout = 5, success
     await waitNewBlocks(4);
     await transferExpectSuccess(collectionId, tokenId, Charlie, Bob);
-    const aliceBalanceAfterSponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
     await destroyCollectionExpectSuccess(collectionId);
   });
@@ -160,18 +160,18 @@ describe('Sponsor timeout (Fungible)', () => {
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob, 10, 'Fungible');
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 5, fail
     await waitNewBlocks(5);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
-    const aliceBalanceAfterUnsponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterUnsponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterUnsponsoredTransaction).to.be.equals(aliceBalanceBefore);
 
     // check setting SponsorTimeout = 7, success
     await waitNewBlocks(2); // 5 + 2
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
-    const aliceBalanceAfterSponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
 
     await destroyCollectionExpectSuccess(collectionId);
@@ -186,18 +186,18 @@ describe('Sponsor timeout (Fungible)', () => {
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob, 10, 'Fungible');
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 1, fail
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
-    const aliceBalanceAfterUnsponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterUnsponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterUnsponsoredTransaction).to.be.equals(aliceBalanceBefore);
 
     // check setting SponsorTimeout = 5, success
     await waitNewBlocks(4);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
-    const aliceBalanceAfterSponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
 
     await destroyCollectionExpectSuccess(collectionId);
@@ -224,18 +224,18 @@ describe('Sponsor timeout (ReFungible)', () => {
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob, 100, 'ReFungible');
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 5, fail
     await waitNewBlocks(5);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 20, 'ReFungible');
-    const aliceBalanceAfterUnsponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterUnsponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterUnsponsoredTransaction).to.be.equals(aliceBalanceBefore);
 
     // check setting SponsorTimeout = 7, success
     await waitNewBlocks(2); // 5 + 2
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 20, 'ReFungible');
-    const aliceBalanceAfterSponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
     await destroyCollectionExpectSuccess(collectionId);
   });
@@ -248,18 +248,18 @@ describe('Sponsor timeout (ReFungible)', () => {
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob);
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 1, fail
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie);
-    const aliceBalanceAfterUnsponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterUnsponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterUnsponsoredTransaction).to.be.equals(aliceBalanceBefore);
 
     // check setting SponsorTimeout = 5, success
     await waitNewBlocks(4);
     await transferExpectSuccess(collectionId, tokenId, Charlie, Bob);
-    const aliceBalanceAfterSponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
     await destroyCollectionExpectSuccess(collectionId);
   });
@@ -295,12 +295,12 @@ describe('Collection zero limits (NFT)', () => {
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob);
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 0, success with next block
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie);
-    const aliceBalanceAfterSponsoredTransaction1 = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterSponsoredTransaction1 = await getFreeBalance(Alice);
     expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
   });
 });
@@ -325,13 +325,13 @@ describe('Collection zero limits (Fungible)', () => {
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob, 10, 'Fungible');
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
 
     // check setting SponsorTimeout = 0, success with next block
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
-    const aliceBalanceAfterSponsoredTransaction1 = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterSponsoredTransaction1 = await getFreeBalance(Alice);
     expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
   });
 });
@@ -367,12 +367,12 @@ describe('Collection zero limits (ReFungible)', () => {
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob, 100, 'ReFungible');
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 20, 'ReFungible');
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 0, success with next block
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 20, 'ReFungible');
-    const aliceBalanceAfterSponsoredTransaction1 = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterSponsoredTransaction1 = await getFreeBalance(Alice);
     expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
   });
 });

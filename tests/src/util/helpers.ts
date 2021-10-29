@@ -811,11 +811,11 @@ export async function addCollectionAdminExpectSuccess(sender: IKeyringPair, coll
 }
 
 export async function
-getFreeBalance(account: IKeyringPair) : Promise<BigNumber>
+getFreeBalance(account: IKeyringPair) : Promise<bigint>
 {
-  let balance = new BigNumber(0) ;
+  let balance = 0n;
   await usingApi(async (api) => {
-    balance = new BigNumber((await api.query.system.account(account.address)).data.free.toString());
+    balance = BigInt((await api.query.system.account(account.address)).data.free.toString());
   });
 
   return balance;
