@@ -184,7 +184,7 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
       // What to expect
       expect(result.success).to.be.true;
       expect(balance).to.be.not.null;
-      expect(balance.Value).to.be.equal(9);
+      expect(balance.value).to.be.equal(9);
     });
   });
 
@@ -240,7 +240,7 @@ describe('Negative integration test: ext. burnItem():', () => {
 
     await usingApi(async (api) => {
       const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
-      const badTransaction = async function () { 
+      const badTransaction = async function () {
         await submitTransactionExpectFailAsync(alice, tx);
       };
       await expect(badTransaction()).to.be.rejected;
