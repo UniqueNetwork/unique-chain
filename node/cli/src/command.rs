@@ -76,11 +76,11 @@ impl SubstrateCli for Cli {
 
 	//TODO use args
 	fn support_url() -> String {
-		"mailto:support@unique.network".into()
+		"support@unique.network".into()
 	}
 
 	fn copyright_start_year() -> i32 {
-		2021
+		2019
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -115,11 +115,11 @@ impl SubstrateCli for RelayChainCli {
 	}
 	// TODO use args
 	fn support_url() -> String {
-		"mailto:support@unique.network".into()
+		"support@unique.network".into()
 	}
 
 	fn copyright_start_year() -> i32 {
-		2021
+		2019
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
