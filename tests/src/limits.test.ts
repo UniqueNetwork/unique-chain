@@ -110,7 +110,8 @@ describe('Sponsor timeout (NFT)', () => {
     await waitNewBlocks(2); // 5 + 2
     await transferExpectSuccess(collectionId, tokenId, Charlie, Bob);
     const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
-    expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
+    expect(aliceBalanceAfterSponsoredTransaction < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
     await destroyCollectionExpectSuccess(collectionId);
   });
 
@@ -134,7 +135,8 @@ describe('Sponsor timeout (NFT)', () => {
     await waitNewBlocks(4);
     await transferExpectSuccess(collectionId, tokenId, Charlie, Bob);
     const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
-    expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
+    expect(aliceBalanceAfterSponsoredTransaction < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
     await destroyCollectionExpectSuccess(collectionId);
   });
 });
@@ -172,7 +174,8 @@ describe('Sponsor timeout (Fungible)', () => {
     await waitNewBlocks(2); // 5 + 2
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
     const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
-    expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
+    expect(aliceBalanceAfterSponsoredTransaction < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
 
     await destroyCollectionExpectSuccess(collectionId);
   });
@@ -198,7 +201,8 @@ describe('Sponsor timeout (Fungible)', () => {
     await waitNewBlocks(4);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
     const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
-    expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
+    expect(aliceBalanceAfterSponsoredTransaction < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
 
     await destroyCollectionExpectSuccess(collectionId);
   });
@@ -236,7 +240,8 @@ describe('Sponsor timeout (ReFungible)', () => {
     await waitNewBlocks(2); // 5 + 2
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 20, 'ReFungible');
     const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
-    expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
+    expect(aliceBalanceAfterSponsoredTransaction < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
     await destroyCollectionExpectSuccess(collectionId);
   });
 
@@ -260,7 +265,8 @@ describe('Sponsor timeout (ReFungible)', () => {
     await waitNewBlocks(4);
     await transferExpectSuccess(collectionId, tokenId, Charlie, Bob);
     const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
-    expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
+    expect(aliceBalanceAfterSponsoredTransaction < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
     await destroyCollectionExpectSuccess(collectionId);
   });
 });
@@ -301,7 +307,8 @@ describe('Collection zero limits (NFT)', () => {
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie);
     const aliceBalanceAfterSponsoredTransaction1 = await getFreeBalance(Alice);
-    expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
+    expect(aliceBalanceAfterSponsoredTransaction1 < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
   });
 });
 
@@ -332,7 +339,8 @@ describe('Collection zero limits (Fungible)', () => {
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
     const aliceBalanceAfterSponsoredTransaction1 = await getFreeBalance(Alice);
-    expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
+    expect(aliceBalanceAfterSponsoredTransaction1 < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
   });
 });
 
@@ -373,6 +381,7 @@ describe('Collection zero limits (ReFungible)', () => {
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 20, 'ReFungible');
     const aliceBalanceAfterSponsoredTransaction1 = await getFreeBalance(Alice);
-    expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
+    expect(aliceBalanceAfterSponsoredTransaction1 < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
   });
 });
