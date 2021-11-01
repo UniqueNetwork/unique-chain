@@ -38,7 +38,7 @@ describe('Integration Test ext. setConstOnChainSchema()', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Owner).to.be.eq(Alice.address);
+      expect(collection.owner).to.be.eq(Alice.address);
       const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
       await submitTransactionAsync(Alice, setShema);
     });
@@ -48,7 +48,7 @@ describe('Integration Test ext. setConstOnChainSchema()', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Owner).to.be.eq(Alice.address);
+      expect(collection.owner).to.be.eq(Alice.address);
       await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
       const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
       await submitTransactionAsync(Bob, setShema);
@@ -61,7 +61,7 @@ describe('Integration Test ext. setConstOnChainSchema()', () => {
       const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
       await submitTransactionAsync(Alice, setShema);
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.ConstOnChainSchema.toString()).to.be.eq(Shema);
+      expect(collection.constOnChainSchema.toString()).to.be.eq(Shema);
 
     });
   });
@@ -99,7 +99,7 @@ describe('Negative Integration Test ext. setConstOnChainSchema()', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Owner).to.be.eq(Alice.address);
+      expect(collection.owner).to.be.eq(Alice.address);
       const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
       await expect(submitTransactionExpectFailAsync(Bob, setShema)).to.be.rejected;
     });

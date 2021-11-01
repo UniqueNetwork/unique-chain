@@ -150,8 +150,6 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
 ) -> GenesisConfig {
-	let vested_accounts = vec![get_account_id_from_seed::<sr25519::Public>("Bob")];
-
 	GenesisConfig {
 		system: nft_runtime::SystemConfig {
 			code: nft_runtime::WASM_BINARY

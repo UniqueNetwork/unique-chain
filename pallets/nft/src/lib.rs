@@ -31,6 +31,7 @@ pub use frame_support::{
 	StorageValue, transactional,
 	pallet_prelude::DispatchResultWithPostInfo,
 };
+use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{sp_std::prelude::Vec};
 use nft_data_structs::{
@@ -93,6 +94,7 @@ pub trait Config:
 	+ pallet_refungible::Config
 	+ pallet_fungible::Config
 	+ Sized
+	+ TypeInfo
 {
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
@@ -604,6 +606,31 @@ decl_module! {
 
 			dispatch_call::<T, _>(collection_id, |d| d.burn_item(sender, item_id, value))
 		}
+
+		/// Destroys a concrete instance of NFT on behalf of the owner
+		/// See also: [`approve`]
+		///
+		/// # Permissions
+		///
+		/// * Collection Owner.
+		/// * Collection Admin.
+		/// * Current NFT Owner.
+		///
+		/// # Arguments
+		///
+		/// * collection_id: ID of the collection.
+		///
+		/// * item_id: ID of NFT to burn.
+		///
+		/// * from: owner of item
+		// #[weight = 0]
+		// #[transactional]
+		// pub fn burn_from(origin, collection_id: CollectionId, from: T::CrossAccountId, item_id: TokenId, value: u128) -> PostDispatchInfo {
+		// 	let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+
+		// 	// dispatch_call::<T, _>(collection_id, |d| d.burn_from(sender, from, item_id, value))
+		// 	todo!()
+		// }
 
 		/// Change ownership of the token.
 		///

@@ -8,9 +8,9 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import { default as usingApi } from './substrate/substrate-api';
-import { createCollectionExpectSuccess, 
-  destroyCollectionExpectSuccess, 
-  destroyCollectionExpectFailure, 
+import { createCollectionExpectSuccess,
+  destroyCollectionExpectSuccess,
+  destroyCollectionExpectFailure,
   setCollectionLimitsExpectSuccess,
   addCollectionAdminExpectSuccess,
 } from './util/helpers';
@@ -67,7 +67,7 @@ describe('(!negative test!) integration test: ext. destroyCollection():', () => 
   });
   it('fails when OwnerCanDestroy == false', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await setCollectionLimitsExpectSuccess(alice, collectionId, { OwnerCanDestroy: false });
+    await setCollectionLimitsExpectSuccess(alice, collectionId, { ownerCanDestroy: false });
 
     await destroyCollectionExpectFailure(collectionId, '//Alice');
   });

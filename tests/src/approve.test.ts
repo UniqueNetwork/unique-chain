@@ -173,7 +173,7 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
   it('fails when called by collection owner on non-owned item when OwnerCanTransfer == false', async () => {
     const collectionId = await createCollectionExpectSuccess();
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Bob.address);
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { OwnerCanTransfer: false });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { ownerCanTransfer: false });
 
     await approveExpectFail(collectionId, itemId, Alice, Charlie);
   });

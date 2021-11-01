@@ -1,6 +1,8 @@
-use nft_runtime::{AccountId, Balance, BlockNumber, CrossAccountId, Hash, Index, opaque::Block};
-use fc_rpc::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
-use fc_rpc_core::types::{FilterPool, PendingTransactions};
+use nft_runtime::{Hash, AccountId, CrossAccountId, Index, opaque::Block, BlockNumber, Balance};
+use fc_rpc::{
+	EthBlockDataCache, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride,
+};
+use fc_rpc_core::types::FilterPool;
 use jsonrpc_pubsub::manager::SubscriptionManager;
 use pallet_ethereum::EthereumStorageSchema;
 use sc_client_api::{
@@ -13,6 +15,7 @@ use sc_finality_grandpa::{
 use sc_network::NetworkService;
 use sc_rpc::SubscriptionTaskExecutor;
 pub use sc_rpc_api::DenyUnsafe;
+use sc_transaction_pool::{ChainApi, Pool};
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
@@ -50,11 +53,13 @@ pub struct GrandpaDeps<B> {
 }
 
 /// Full client dependencies.
-pub struct FullDeps<C, P, SC> {
+pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
+	/// Graph pool instance.
+	pub graph: Arc<Pool<CA>>,
 	/// The SelectChain Strategy
 	pub select_chain: SC,
 	/// The Node authority flag
@@ -65,8 +70,6 @@ pub struct FullDeps<C, P, SC> {
 	pub network: Arc<NetworkService<Block, Hash>>,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: DenyUnsafe,
-	/// Ethereum pending transactions.
-	pub pending_transactions: PendingTransactions,
 	/// EthFilterApi pool.
 	pub filter_pool: Option<FilterPool>,
 	/// Backend.
@@ -110,8 +113,8 @@ where
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, SC, A, B>(
-	deps: FullDeps<C, P, SC>,
+pub fn create_full<C, P, SC, CA, A, B>(
+	deps: FullDeps<C, P, SC, CA>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 ) -> jsonrpc_core::IoHandler<sc_rpc_api::Metadata>
 where
@@ -125,10 +128,11 @@ where
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: up_rpc::NftApi<Block, CrossAccountId, AccountId>,
-	P: TransactionPool<Block = Block> + 'static,
-	SC: SelectChain<Block> + 'static,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
+	SC: SelectChain<Block> + 'static,
+	P: TransactionPool<Block = Block> + 'static,
+	CA: ChainApi<Block = Block> + 'static,
 {
 	use fc_rpc::{
 		EthApi, EthApiServer, EthDevSigner, EthFilterApi, EthFilterApiServer, EthPubSubApi,
@@ -144,12 +148,12 @@ where
 	let FullDeps {
 		client,
 		pool,
+		graph,
 		select_chain: _,
 		enable_dev_signer,
 		is_authority,
 		network,
 		deny_unsafe,
-		pending_transactions,
 		filter_pool,
 		backend,
 		max_past_logs,
@@ -185,17 +189,20 @@ where
 		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
 	});
 
+	let block_data_cache = Arc::new(EthBlockDataCache::new(50, 50));
+
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
+		graph,
 		nft_runtime::TransactionConverter,
 		network.clone(),
-		pending_transactions,
 		signers,
 		overrides.clone(),
 		backend.clone(),
 		is_authority,
 		max_past_logs,
+		block_data_cache.clone(),
 	)));
 	io.extend_with(NftApi::to_delegate(Nft::new(client.clone())));
 
@@ -207,6 +214,7 @@ where
 			500_usize, // max stored filters
 			overrides.clone(),
 			max_past_logs,
+			block_data_cache.clone(),
 		)));
 	}
 

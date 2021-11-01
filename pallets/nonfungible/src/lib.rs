@@ -14,6 +14,7 @@ use sp_std::{vec::Vec, vec};
 use core::ops::Deref;
 use sp_std::collections::btree_map::BTreeMap;
 use codec::{Encode, Decode};
+use scale_info::TypeInfo;
 
 pub use pallet::*;
 #[cfg(feature = "runtime-benchmarks")]
@@ -29,7 +30,7 @@ pub struct CreateItemData<T: Config> {
 }
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, TypeInfo)]
 pub struct ItemData<T: Config> {
 	pub const_data: Vec<u8>,
 	pub variable_data: Vec<u8>,

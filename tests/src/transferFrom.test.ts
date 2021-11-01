@@ -248,7 +248,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
       await burnItemExpectSuccess(Alice, nftCollectionId, newNftTokenId, 1);
       await approveExpectFail(nftCollectionId, newNftTokenId, Alice, Bob);
-      await transferFromExpectFail(nftCollectionId, newNftTokenId, Bob, Alice, Charlie, 1);      
+      await transferFromExpectFail(nftCollectionId, newNftTokenId, Bob, Alice, Charlie, 1);
     });
   });
   it( 'transferFrom burnt token before approve Fungible', async () => {
@@ -258,20 +258,20 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       await burnItemExpectSuccess(Alice, fungibleCollectionId, 1, 10);
       await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob);
       await transferFromExpectFail(fungibleCollectionId, newFungibleTokenId, Bob, Alice, Charlie, 1);
-          
+
     });
-  }); 
+  });
   it( 'transferFrom burnt token before approve ReFungible', async () => {
     await usingApi(async () => {
       const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
-      await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 1);
+      await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 100);
       await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
       await transferFromExpectFail(reFungibleCollectionId, newReFungibleTokenId, Bob, Alice, Charlie, 1);
-          
+
     });
   });
-  
+
   it( 'transferFrom burnt token after approve NFT', async () => {
     await usingApi(async () => {
       // nft
@@ -279,7 +279,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
       await approveExpectSuccess(nftCollectionId, newNftTokenId, Alice, Bob);
       await burnItemExpectSuccess(Alice, nftCollectionId, newNftTokenId, 1);
-      await transferFromExpectFail(nftCollectionId, newNftTokenId, Bob, Alice, Charlie, 1);      
+      await transferFromExpectFail(nftCollectionId, newNftTokenId, Bob, Alice, Charlie, 1);
     });
   });
   it( 'transferFrom burnt token after approve Fungible', async () => {
@@ -289,24 +289,24 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob);
       await burnItemExpectSuccess(Alice, fungibleCollectionId, 1, 10);
       await transferFromExpectFail(fungibleCollectionId, newFungibleTokenId, Bob, Alice, Charlie, 1);
-          
+
     });
-  }); 
+  });
   it( 'transferFrom burnt token after approve ReFungible', async () => {
     await usingApi(async () => {
       const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
-      await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 1);
+      await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 100);
       await transferFromExpectFail(reFungibleCollectionId, newReFungibleTokenId, Bob, Alice, Charlie, 1);
-          
+
     });
   });
 
   it('fails when called by collection owner on non-owned item when OwnerCanTransfer == false', async () => {
     const collectionId = await createCollectionExpectSuccess();
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Bob.address);
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { OwnerCanTransfer: false });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { ownerCanTransfer: false });
 
     await transferFromExpectFail(collectionId, itemId, Alice, Bob, Charlie);
   });

@@ -144,9 +144,10 @@ pub mod pallet {
 	use account::{EvmBackwardsAddressMapping, CrossAccountId};
 	use frame_support::traits::Currency;
 	use nft_data_structs::TokenId;
+	use scale_info::TypeInfo;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config {
+	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config + TypeInfo {
 		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
 
 		type CrossAccountId: CrossAccountId<Self::AccountId>;

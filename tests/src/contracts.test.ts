@@ -76,7 +76,7 @@ describe.skip('Chain extensions', () => {
       await submitTransactionAsync(alice, changeAdminTx);
 
       const tokenBefore: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).toJSON();
-      
+
       // Transfer
       const transferTx = contract.tx.transfer(value, gasLimit, bob.address, collectionId, tokenId, 1);
       const events = await submitTransactionAsync(alice, transferTx);
@@ -85,8 +85,8 @@ describe.skip('Chain extensions', () => {
 
       // tslint:disable-next-line:no-unused-expression
       expect(result.success).to.be.true;
-      expect(tokenBefore.Owner).to.be.deep.equal(normalizeAccountId(alice.address));
-      expect(tokenAfter.Owner).to.be.deep.equal(normalizeAccountId(bob.address));
+      expect(tokenBefore.owner).to.be.deep.equal(normalizeAccountId(alice.address));
+      expect(tokenAfter.owner).to.be.deep.equal(normalizeAccountId(bob.address));
     });
   });
 
@@ -141,7 +141,7 @@ describe.skip('Chain extensions', () => {
 
       const tokensAfter: any = (await api.query.nft.nftItemList.entries(collectionId) as any)
         .map((kv: any) => kv[1].toJSON())
-        .sort((a: any, b: any) => a.ConstData.localeCompare(b.ConstData));
+        .sort((a: any, b: any) => a.constData.localeCompare(b.constData));
       expect(tokensAfter).to.be.deep.equal([
         {
           Owner: bob.address,
@@ -198,7 +198,7 @@ describe.skip('Chain extensions', () => {
       expect(result.success).to.be.true;
 
       const token: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap();
-      expect(token.Owner.toString()).to.be.equal(charlie.address);
+      expect(token.owner.toString()).to.be.equal(charlie.address);
     });
   });
 
@@ -216,7 +216,7 @@ describe.skip('Chain extensions', () => {
       expect(result.success).to.be.true;
 
       const token: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap();
-      expect(token.VariableData.toString()).to.be.equal('0x121314');
+      expect(token.variableData.toString()).to.be.equal('0x121314');
     });
   });
 
@@ -228,7 +228,7 @@ describe.skip('Chain extensions', () => {
       const collectionId = await createCollectionExpectSuccess();
       const [contract] = await deployTransferContract(api);
       const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, contract.address);
-      await submitTransactionAsync(alice, changeAdminTx);      
+      await submitTransactionAsync(alice, changeAdminTx);
 
       expect(await isWhitelisted(collectionId, bob.address)).to.be.false;
 

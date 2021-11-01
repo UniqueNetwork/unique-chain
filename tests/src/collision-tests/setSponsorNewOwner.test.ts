@@ -4,7 +4,7 @@ import chaiAsPromised from 'chai-as-promised';
 import privateKey from '../substrate/privateKey';
 import usingApi from '../substrate/substrate-api';
 import {
-  createCollectionExpectSuccess, 
+  createCollectionExpectSuccess,
   setCollectionSponsorExpectSuccess,
   waitNewBlocks,
 } from '../util/helpers';
@@ -38,8 +38,8 @@ describe('Sponsored with new owner ', () => {
       ]);
       await waitNewBlocks(2);
       const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Sponsorship.confirmed).to.be.eq(Bob.address);
-      expect(collection.Owner).to.be.eq(Ferdie.address);
+      expect(collection.sponsorship.confirmed).to.be.eq(Bob.address);
+      expect(collection.owner).to.be.eq(Ferdie.address);
       await waitNewBlocks(2);
     });
   });

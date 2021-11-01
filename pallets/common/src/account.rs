@@ -1,6 +1,7 @@
 use crate::Config;
 use codec::{Encode, EncodeLike, Decode};
 use sp_core::H160;
+use scale_info::{Type, TypeInfo};
 use sp_core::crypto::AccountId32;
 use core::cmp::Ordering;
 use serde::{Serialize, Deserialize};
@@ -9,7 +10,7 @@ use sp_std::vec::Vec;
 use sp_std::clone::Clone;
 
 pub trait CrossAccountId<AccountId>:
-	Encode + EncodeLike + Decode + Clone + PartialEq + Ord + core::fmt::Debug + Default
+	Encode + EncodeLike + Decode + TypeInfo + Clone + PartialEq + Ord + core::fmt::Debug + Default
 // +
 // Serialize + Deserialize<'static>
 {
@@ -20,7 +21,7 @@ pub trait CrossAccountId<AccountId>:
 	fn from_eth(account: H160) -> Self;
 }
 
-#[derive(Encode, Decode, Serialize, Deserialize)]
+#[derive(Encode, Decode, Serialize, Deserialize, TypeInfo)]
 #[serde(rename_all = "camelCase")]
 enum BasicCrossAccountIdRepr<AccountId> {
 	Substrate(AccountId),
@@ -33,6 +34,14 @@ pub struct BasicCrossAccountId<T: Config> {
 	from_ethereum: bool,
 	substrate: T::AccountId,
 	ethereum: H160,
+}
+
+impl<T: Config> TypeInfo for BasicCrossAccountId<T> {
+	type Identity = Self;
+
+	fn type_info() -> Type {
+		<BasicCrossAccountIdRepr<T::AccountId>>::type_info()
+	}
 }
 
 impl<T: Config> Default for BasicCrossAccountId<T> {

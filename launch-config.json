@@ -66,7 +66,9 @@
                     "name": "alice",
                     "flags": [
                         "--rpc-cors=all",
-                        "--rpc-port=9933", "--unsafe-ws-external"
+                        "--rpc-port=9933",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external"
                     ]
                 },
                 {
@@ -76,7 +78,9 @@
                     "name": "bob",
                     "flags": [
                         "--rpc-cors=all",
-                        "--rpc-port=9934"
+                        "--rpc-port=9934",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external"
                     ]
                 }
             ]
@@ -84,6 +88,5 @@
     ],
     "simpleParachains": [],
     "hrmpChannels": [],
-    "types": "./runtime_types.json",
     "finalization": false
 }

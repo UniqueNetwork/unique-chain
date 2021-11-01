@@ -11,12 +11,11 @@ import { IKeyringPair } from '@polkadot/types/types';
 import config from '../config';
 import promisifySubstrate from './promisify-substrate';
 import { ApiOptions, SubmittableExtrinsic, ApiTypes } from '@polkadot/api/types';
-import rtt from '../../../runtime_types.json';
 
 function defaultApiOptions(): ApiOptions {
   const wsProvider = new WsProvider(config.substrateUrl);
   return {
-    provider: wsProvider, types: rtt, signedExtensions: {
+    provider: wsProvider, signedExtensions: {
       ContractHelpers: {
         extrinsic: {},
         payload: {},
@@ -30,7 +29,7 @@ export default async function usingApi<T = void>(action: (api: ApiPromise) => Pr
   const api: ApiPromise = new ApiPromise(settings);
   let result: T = null as unknown as T;
 
-  // TODO: Remove, this is temporary: Filter unneeded API output 
+  // TODO: Remove, this is temporary: Filter unneeded API output
   // (Jaco promised it will be removed in the next version)
   const consoleErr = console.error;
   const consoleLog = console.log;
@@ -41,7 +40,7 @@ export default async function usingApi<T = void>(action: (api: ApiPromise) => Pr
       consoleErr(message);
       return;
     }
-    if (!message.includes('StorageChangeSet:: WebSocket is not connected') && 
+    if (!message.includes('StorageChangeSet:: WebSocket is not connected') &&
         !message.includes('2021-') &&
         !message.includes('StorageChangeSet:: Normal connection closure'))
       consoleErr(message);
@@ -79,7 +78,7 @@ function getTransactionStatus(events: EventRecord[], status: ExtrinsicStatus): T
   }
   if (status.isBroadcast) {
     return TransactionStatus.NotReady;
-  } 
+  }
   if (status.isInBlock || status.isFinalized) {
     if(events.filter(e => e.event.data.method === 'ExtrinsicFailed').length > 0) {
       return TransactionStatus.Fail;

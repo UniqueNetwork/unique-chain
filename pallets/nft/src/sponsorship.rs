@@ -180,15 +180,21 @@ where
 {
 	fn get_sponsor(who: &T::AccountId, call: &C) -> Option<T::AccountId> {
 		match IsSubType::<Call<T>>::is_sub_type(call)? {
-			Call::create_item(collection_id, _owner, properties) => {
-				Self::withdraw_create_item(who, collection_id, properties)
-			}
-			Call::transfer(_new_owner, collection_id, item_id, _value) => {
-				Self::withdraw_transfer(who, collection_id, item_id)
-			}
-			Call::set_variable_meta_data(collection_id, item_id, data) => {
-				Self::withdraw_set_variable_meta_data(collection_id, item_id, data)
-			}
+			Call::create_item {
+				collection_id,
+				data,
+				..
+			} => Self::withdraw_create_item(who, collection_id, data),
+			Call::transfer {
+				collection_id,
+				item_id,
+				..
+			} => Self::withdraw_transfer(who, collection_id, item_id),
+			Call::set_variable_meta_data {
+				collection_id,
+				item_id,
+				data,
+			} => Self::withdraw_set_variable_meta_data(collection_id, item_id, data),
 			_ => None,
 		}
 	}
