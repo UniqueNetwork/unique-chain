@@ -741,12 +741,7 @@ fn burn_fungible_item() {
 		assert_eq!(TemplateModule::balance_count(1, 1), 5);
 
 		// burn item
-		assert_ok!(TemplateModule::burn_item(
-			origin1.clone(),
-			1,
-			1,
-			5
-		));
+		assert_ok!(TemplateModule::burn_item(origin1.clone(), 1, 1, 5));
 		assert_noop!(
 			TemplateModule::burn_item(origin1, 1, 1, 5),
 			Error::<Test>::TokenValueNotEnough
@@ -791,12 +786,7 @@ fn burn_refungible_item() {
 		assert_eq!(TemplateModule::balance_count(1, 1), 1023);
 
 		// burn item
-		assert_ok!(TemplateModule::burn_item(
-			origin1.clone(),
-			1,
-			1,
-			1023
-		));
+		assert_ok!(TemplateModule::burn_item(origin1.clone(), 1, 1, 1023));
 		assert_noop!(
 			TemplateModule::burn_item(origin1, 1, 1, 1023),
 			Error::<Test>::TokenNotFound
