@@ -21,7 +21,7 @@ evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 ethereum = { git = "https://github.com/purestake/ethereum", branch = "joshy-scale-info", default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = '../evm-coder-substrate' }
 frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
-scale-info = { default-features = false, features = [
+scale-info = { version = "1.0.0", default-features = false, features = [
     "derive",
 ] }
 

@@ -166,13 +166,7 @@ fn testnet_genesis(
 		},
 		treasury: Default::default(),
 		sudo: SudoConfig { key: root_key },
-		vesting: VestingConfig {
-			vesting: vested_accounts
-				.iter()
-				.cloned()
-				.map(|k| (k, 1000, 100, 1 << 98))
-				.collect(),
-		},
+		vesting: VestingConfig { vesting: vec![] },
 		parachain_info: nft_runtime::ParachainInfoConfig { parachain_id: id },
 		aura: nft_runtime::AuraConfig {
 			authorities: initial_authorities,
