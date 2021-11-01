@@ -63,7 +63,7 @@ pub trait NftApi<BlockHash, CrossAccountId, AccountId> {
 		account: CrossAccountId,
 		token: TokenId,
 		at: Option<BlockHash>,
-	) -> Result<u128>;
+	) -> Result<String>;
 	#[rpc(name = "nft_allowance")]
 	fn allowance(
 		&self,
@@ -72,7 +72,7 @@ pub trait NftApi<BlockHash, CrossAccountId, AccountId> {
 		spender: CrossAccountId,
 		token: TokenId,
 		at: Option<BlockHash>,
-	) -> Result<u128>;
+	) -> Result<String>;
 
 	#[rpc(name = "nft_adminlist")]
 	fn adminlist(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<Vec<AccountId>>;
@@ -109,7 +109,7 @@ impl From<Error> for i64 {
 }
 
 macro_rules! pass_method {
-	($method_name:ident($($name:ident: $ty:ty),* $(,)?) -> $result:ty) => {
+	($method_name:ident($($name:ident: $ty:ty),* $(,)?) -> $result:ty $(=> $mapper:expr)?) => {
 		fn $method_name(
 			&self,
 			$(
@@ -124,7 +124,9 @@ macro_rules! pass_method {
 				code: ErrorCode::ServerError(Error::RuntimeError.into()),
 				message: "Unable to query".into(),
 				data: Some(format!("{:?}", e).into()),
-			})
+			}) $(
+				.map($mapper)
+			)?
 		}
 	};
 }
@@ -145,8 +147,8 @@ where
 	pass_method!(variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
 	pass_method!(collection_tokens(collection: CollectionId) -> u32);
 	pass_method!(account_balance(collection: CollectionId, account: CrossAccountId) -> u32);
-	pass_method!(balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> u128);
-	pass_method!(allowance(collection: CollectionId, sender: CrossAccountId, spender: CrossAccountId, token: TokenId) -> u128);
+	pass_method!(balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> String => |v| v.to_string());
+	pass_method!(allowance(collection: CollectionId, sender: CrossAccountId, spender: CrossAccountId, token: TokenId) -> String => |v| v.to_string());
 
 	pass_method!(adminlist(collection: CollectionId) -> Vec<AccountId>);
 	pass_method!(allowlist(collection: CollectionId) -> Vec<AccountId>);

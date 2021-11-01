@@ -20,7 +20,14 @@ pub trait CrossAccountId<AccountId>:
 	fn from_eth(account: H160) -> Self;
 }
 
-#[derive(Eq, Serialize, Deserialize)]
+#[derive(Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+enum BasicCrossAccountIdRepr<AccountId> {
+	Substrate(AccountId),
+	Ethereum(H160),
+}
+
+#[derive(Eq)]
 pub struct BasicCrossAccountId<T: Config> {
 	/// If true - then ethereum is canonical encoding
 	from_ethereum: bool,
@@ -84,12 +91,7 @@ impl<T: Config> Clone for BasicCrossAccountId<T> {
 }
 impl<T: Config> Encode for BasicCrossAccountId<T> {
 	fn encode(&self) -> Vec<u8> {
-		let as_result = if !self.from_ethereum {
-			Ok(self.substrate.clone())
-		} else {
-			Err(self.ethereum)
-		};
-		as_result.encode()
+		BasicCrossAccountIdRepr::from(self.clone()).encode()
 	}
 }
 impl<T: Config> EncodeLike for BasicCrossAccountId<T> {}
@@ -98,10 +100,32 @@ impl<T: Config> Decode for BasicCrossAccountId<T> {
 	where
 		I: codec::Input,
 	{
-		Ok(match <Result<T::AccountId, H160>>::decode(input)? {
-			Ok(s) => Self::from_sub(s),
-			Err(e) => Self::from_eth(e),
-		})
+		Ok(BasicCrossAccountIdRepr::decode(input)?.into())
+	}
+}
+impl<T> Serialize for BasicCrossAccountId<T>
+where
+	T: Config,
+	T::AccountId: Serialize,
+{
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: serde::Serializer,
+	{
+		let repr = BasicCrossAccountIdRepr::from(self.clone());
+		(&repr).serialize(serializer)
+	}
+}
+impl<'de, T> Deserialize<'de> for BasicCrossAccountId<T>
+where
+	T: Config,
+	T::AccountId: Deserialize<'de>,
+{
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: serde::Deserializer<'de>,
+	{
+		Ok(BasicCrossAccountIdRepr::deserialize(deserializer)?.into())
 	}
 }
 impl<T: Config> CrossAccountId<T::AccountId> for BasicCrossAccountId<T> {
@@ -123,6 +147,23 @@ impl<T: Config> CrossAccountId<T::AccountId> for BasicCrossAccountId<T> {
 			ethereum,
 			substrate: T::EvmAddressMapping::into_account_id(ethereum),
 			from_ethereum: true,
+		}
+	}
+}
+impl<T: Config> From<BasicCrossAccountIdRepr<T::AccountId>> for BasicCrossAccountId<T> {
+	fn from(repr: BasicCrossAccountIdRepr<T::AccountId>) -> Self {
+		match repr {
+			BasicCrossAccountIdRepr::Substrate(s) => Self::from_sub(s),
+			BasicCrossAccountIdRepr::Ethereum(e) => Self::from_eth(e),
+		}
+	}
+}
+impl<T: Config> From<BasicCrossAccountId<T>> for BasicCrossAccountIdRepr<T::AccountId> {
+	fn from(v: BasicCrossAccountId<T>) -> Self {
+		if v.from_ethereum {
+			BasicCrossAccountIdRepr::Ethereum(*v.as_eth())
+		} else {
+			BasicCrossAccountIdRepr::Substrate(v.as_sub().clone())
 		}
 	}
 }
