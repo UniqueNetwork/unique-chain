@@ -970,7 +970,7 @@ impl_runtime_apis! {
 		for Runtime
 	{
 		fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
-			<pallet_nft::NftErcSupport<Runtime>>::get_code(&account)
+			<pallet_nft::NftErcSupport<Runtime>>::get_code(&account).or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account)).or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
 		}
 	}
 
