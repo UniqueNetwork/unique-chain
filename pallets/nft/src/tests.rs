@@ -709,12 +709,12 @@ fn burn_nft_item() {
 		// burn item
 		assert_ok!(TemplateModule::burn_item(
 			origin1.clone(),
+			collection_id,
 			1,
-			1,
-			5
+			1
 		));
 		assert_noop!(
-			TemplateModule::burn_item(origin1, 1, 1, 5),
+			TemplateModule::burn_item(origin1, collection_id, 1, 1),
 			Error::<Test>::TokenNotFound
 		);
 
