@@ -8,7 +8,7 @@ function submitTransaction(sender, transaction) {
       const unsub = await transaction
       .signAndSend(sender, (result) => {
         console.log(`Current tx status is ${result.status}`);
-    
+
         if (result.status.isInBlock) {
           console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
           resolve();
@@ -33,7 +33,7 @@ async function createCollectionAsync(api, alice) {
   const description = [67, 111, 108, 108, 101, 99, 116, 105, 111, 110, 32, 111, 102, 32, 112, 104, 111, 116, 111, 115];
   // ART
   const tokenPrefix = [65, 82, 84];
-  
+
   // Mode: Re-Fungible
   const tx = api.tx.nft.createCollection(name, description, tokenPrefix, {"ReFungible": [config.collectionDataSize, config.decimalPoints]});
   await submitTransaction(alice, tx);
@@ -45,18 +45,15 @@ async function createCollectionAsync(api, alice) {
 async function main() {
   // Initialise the provider to connect to the node
   const wsProvider = new WsProvider(config.wsEndpoint);
-  const rtt = JSON.parse(fs.readFileSync("runtime_types.json"));
-
   // Create the API and wait until ready
-  const api = await ApiPromise.create({ 
+  const api = await ApiPromise.create({
     provider: wsProvider,
-    types: rtt
   });
 
   // Owners's keypair
   const keyring = new Keyring({ type: 'sr25519' });
   const owner = keyring.addFromUri(config.ownerSeed);
-  console.log("Collection owner address: ", owner.address);  
+  console.log("Collection owner address: ", owner.address);
 
   // Create collection as owner
   console.log("=== Create collection ===");

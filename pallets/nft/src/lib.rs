@@ -30,7 +30,7 @@ pub use frame_support::{
 	},
 	StorageValue, transactional,
 };
-
+use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
 use sp_core::H160;
 use sp_std::vec;
@@ -212,7 +212,7 @@ impl<T: Config> DerefMut for CollectionHandle<T> {
 	}
 }
 
-pub trait Config: system::Config + pallet_evm_coder_substrate::Config + Sized {
+pub trait Config: system::Config + pallet_evm_coder_substrate::Config + Sized + TypeInfo {
 	type Event: From<Event<Self>> + Into<<Self as system::Config>::Event>;
 
 	/// Weight information for extrinsics in this pallet.

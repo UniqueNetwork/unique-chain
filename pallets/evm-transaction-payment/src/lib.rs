@@ -87,8 +87,8 @@ pub mod pallet {
 			who: &H160,
 			corrected_fee: U256,
 			already_withdrawn: Self::LiquidityInfo,
-		) -> core::result::Result<(), pallet_evm::Error<T>> {
-			EVMCurrencyAdapter::<<T as Config>::Currency, ()>::correct_and_deposit_fee(
+		) {
+			<EVMCurrencyAdapter<<T as Config>::Currency, ()> as pallet_evm::OnChargeEVMTransaction<T>>::correct_and_deposit_fee(
 				&already_withdrawn.as_ref().map(|e| e.who).unwrap_or(*who),
 				corrected_fee,
 				already_withdrawn.map(|e| e.negative_imbalance),

@@ -19,12 +19,12 @@ let Alice: IKeyringPair;
 let Bob: IKeyringPair;
 let Ferdie: IKeyringPair;
 
-const AccountTokenOwnershipLimit = 4;
-const SponsoredMintSize = 4294967295;
-const TokenLimit = 4;
-const SponsorTimeout = 14400;
-const OwnerCanTransfer = false;
-const OwnerCanDestroy = false;
+const accountTokenOwnershipLimit = 4;
+const sponsoredMintSize = 4294967295;
+const tokenLimit = 4;
+const sponsorTimeout = 14400;
+const ownerCanTransfer = false;
+const ownerCanDestroy = false;
 
 before(async () => {
   await usingApi(async () => {
@@ -45,13 +45,13 @@ describe('Token limit exceeded collection: ', () => {
       const setCollectionLim = api.tx.nft.setCollectionLimits(
         collectionId,
         {
-          AccountTokenOwnershipLimit,
-          SponsoredMintSize,
-          TokenLimit,
+          accountTokenOwnershipLimit,
+          sponsoredMintSize,
+          tokenLimit,
           // tslint:disable-next-line: object-literal-sort-keys
-          SponsorTimeout,
-          OwnerCanTransfer,
-          OwnerCanDestroy,
+          sponsorTimeout,
+          ownerCanTransfer,
+          ownerCanDestroy,
         },
       );
       const subTx = await submitTransactionAsync(Alice, setCollectionLim);

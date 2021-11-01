@@ -7,7 +7,7 @@ services:
     ports:
       - 9944:9944
       - 9844:9844
-      - 9933:9934
+      - 9933:9933
     build:
       context: ./
       dockerfile: Dockerfile-parachain
@@ -19,7 +19,6 @@ services:
     volumes:
 #      - ./chain-data:/chain-data
       - ./launch-config.json:/polkadot-launch/launch-config.json
-      - ./runtime_types.json:/polkadot-launch/runtime_types.json
     env_file:
       - ./.env
     networks:
@@ -34,11 +33,10 @@ services:
       context: tests/
       dockerfile: Dockerfile-tests
     environment:
-      RPC_URL: http://blockchain_nodes:9934/
+      RPC_URL: http://blockchain_nodes:9933/
     volumes:
       - ./tests/src/config_docker.ts:/nft_parachain/src/config.ts
       - /home/ubuntu/mochawesome-report:/nft_parachain/mochawesome-report
-      - ./runtime_types.json:/runtime_types.json
 #    command: bash -c 'while true; do sleep 20; df -h; done'
     networks:
       - node_test_network

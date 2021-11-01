@@ -13,8 +13,8 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | b
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     nvm install v16.2.0 && \
     npm install -g yarn && \
-    rustup toolchain install nightly-2021-05-20 && \
-    rustup default nightly-2021-05-20 && \
+    rustup toolchain install nightly-2021-06-28 && \
+    rustup default nightly-2021-06-28 && \
     rustup target add wasm32-unknown-unknown && \
     rustup component add rustfmt clippy && \
     cargo install cargo-expand cargo-edit cargo-contract

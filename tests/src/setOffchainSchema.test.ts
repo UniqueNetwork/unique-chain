@@ -39,7 +39,7 @@ describe('Integration Test setOffchainSchema', () => {
     await setOffchainSchemaExpectSuccess(alice, collectionId, DATA);
     const collection = await queryCollectionExpectSuccess(collectionId);
 
-    expect(collection.OffchainSchema).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));
+    expect(collection.offchainSchema).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));
   });
 
   it('execute setOffchainSchema (collection admin), verify data was set', async () => {
@@ -48,7 +48,7 @@ describe('Integration Test setOffchainSchema', () => {
     await setOffchainSchemaExpectSuccess(bob, collectionId, DATA);
     const collection = await queryCollectionExpectSuccess(collectionId);
 
-    expect(collection.OffchainSchema).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));
+    expect(collection.offchainSchema).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));
   });
 });
 

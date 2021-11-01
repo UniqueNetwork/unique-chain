@@ -17,7 +17,7 @@ import {
   transferExpectSuccess,
   getFreeBalance,
   waitNewBlocks,
-} from './util/helpers'; 
+} from './util/helpers';
 import { expect } from 'chai';
 
 describe('Number of tokens per address (NFT)', () => {
@@ -30,9 +30,9 @@ describe('Number of tokens per address (NFT)', () => {
   });
 
   it.skip('Collection limits allow greater number than chain limits, chain limits are enforced', async () => {
-      
+
     const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { AccountTokenOwnershipLimit: 20 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { accountTokenOwnershipLimit: 20 });
     for(let i = 0; i < 10; i++){
       await createItemExpectSuccess(Alice, collectionId, 'NFT');
     }
@@ -43,7 +43,7 @@ describe('Number of tokens per address (NFT)', () => {
   it('Collection limits allow lower number than chain limits, collection limits are enforced', async () => {
 
     const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { AccountTokenOwnershipLimit: 1 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { accountTokenOwnershipLimit: 1 });
     await createItemExpectSuccess(Alice, collectionId, 'NFT');
     await createItemExpectFailure(Alice, collectionId, 'NFT');
     await destroyCollectionExpectSuccess(collectionId);
@@ -59,9 +59,9 @@ describe('Number of tokens per address (ReFungible)', () => {
     });
   });
 
-  it.skip('Collection limits allow greater number than chain limits, chain limits are enforced', async () => {   
+  it.skip('Collection limits allow greater number than chain limits, chain limits are enforced', async () => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible' }});
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { AccountTokenOwnershipLimit: 20 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { accountTokenOwnershipLimit: 20 });
     for(let i = 0; i < 10; i++){
       await createItemExpectSuccess(Alice, collectionId, 'ReFungible');
     }
@@ -71,7 +71,7 @@ describe('Number of tokens per address (ReFungible)', () => {
 
   it('Collection limits allow lower number than chain limits, collection limits are enforced', async () => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible' }});
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { AccountTokenOwnershipLimit: 1 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { accountTokenOwnershipLimit: 1 });
     await createItemExpectSuccess(Alice, collectionId, 'ReFungible');
     await createItemExpectFailure(Alice, collectionId, 'ReFungible');
     await destroyCollectionExpectSuccess(collectionId);
@@ -91,50 +91,52 @@ describe('Sponsor timeout (NFT)', () => {
     });
   });
 
-  it('Collection limits have greater timeout value than chain limits, collection limits are enforced', async () => {  
+  it('Collection limits have greater timeout value than chain limits, collection limits are enforced', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { SponsorTimeout: 7 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { sponsorTimeout: 7 });
     const tokenId = await createItemExpectSuccess(Alice, collectionId, 'NFT');
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob);
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 5, fail
     await waitNewBlocks(5);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie);
-    const aliceBalanceAfterUnsponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterUnsponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterUnsponsoredTransaction).to.be.equals(aliceBalanceBefore);
 
     // check setting SponsorTimeout = 7, success
     await waitNewBlocks(2); // 5 + 2
     await transferExpectSuccess(collectionId, tokenId, Charlie, Bob);
-    const aliceBalanceAfterSponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
-    expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
+    const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
+    expect(aliceBalanceAfterSponsoredTransaction < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
     await destroyCollectionExpectSuccess(collectionId);
   });
 
   it('Collection limits have lower timeout value than chain limits, chain limits are enforced', async () => {
 
     const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { SponsorTimeout: 1 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { sponsorTimeout: 1 });
     const tokenId = await createItemExpectSuccess(Alice, collectionId, 'NFT');
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob);
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 1, fail
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie);
-    const aliceBalanceAfterUnsponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterUnsponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterUnsponsoredTransaction).to.be.equals(aliceBalanceBefore);
 
     // check setting SponsorTimeout = 5, success
     await waitNewBlocks(4);
     await transferExpectSuccess(collectionId, tokenId, Charlie, Bob);
-    const aliceBalanceAfterSponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
-    expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
+    const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
+    expect(aliceBalanceAfterSponsoredTransaction < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
     await destroyCollectionExpectSuccess(collectionId);
   });
 });
@@ -152,27 +154,28 @@ describe('Sponsor timeout (Fungible)', () => {
     });
   });
 
-  it('Collection limits have greater timeout value than chain limits, collection limits are enforced', async () => {  
+  it('Collection limits have greater timeout value than chain limits, collection limits are enforced', async () => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { SponsorTimeout: 7 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { sponsorTimeout: 7 });
     const tokenId = await createItemExpectSuccess(Alice, collectionId, 'Fungible');
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob, 10, 'Fungible');
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 5, fail
     await waitNewBlocks(5);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
-    const aliceBalanceAfterUnsponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterUnsponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterUnsponsoredTransaction).to.be.equals(aliceBalanceBefore);
 
     // check setting SponsorTimeout = 7, success
     await waitNewBlocks(2); // 5 + 2
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
-    const aliceBalanceAfterSponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
-    expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
+    const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
+    expect(aliceBalanceAfterSponsoredTransaction < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
 
     await destroyCollectionExpectSuccess(collectionId);
   });
@@ -180,25 +183,26 @@ describe('Sponsor timeout (Fungible)', () => {
   it('Collection limits have lower timeout value than chain limits, chain limits are enforced', async () => {
 
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { SponsorTimeout: 1 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { sponsorTimeout: 1 });
     const tokenId = await createItemExpectSuccess(Alice, collectionId, 'Fungible');
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob, 10, 'Fungible');
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 1, fail
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
-    const aliceBalanceAfterUnsponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterUnsponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterUnsponsoredTransaction).to.be.equals(aliceBalanceBefore);
 
     // check setting SponsorTimeout = 5, success
     await waitNewBlocks(4);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
-    const aliceBalanceAfterSponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
-    expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
+    const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
+    expect(aliceBalanceAfterSponsoredTransaction < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
 
     await destroyCollectionExpectSuccess(collectionId);
   });
@@ -217,50 +221,52 @@ describe('Sponsor timeout (ReFungible)', () => {
     });
   });
 
-  it('Collection limits have greater timeout value than chain limits, collection limits are enforced', async () => {  
+  it('Collection limits have greater timeout value than chain limits, collection limits are enforced', async () => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible' }});
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { SponsorTimeout: 7 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { sponsorTimeout: 7 });
     const tokenId = await createItemExpectSuccess(Alice, collectionId, 'ReFungible');
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob, 100, 'ReFungible');
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 5, fail
     await waitNewBlocks(5);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 20, 'ReFungible');
-    const aliceBalanceAfterUnsponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterUnsponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterUnsponsoredTransaction).to.be.equals(aliceBalanceBefore);
 
     // check setting SponsorTimeout = 7, success
     await waitNewBlocks(2); // 5 + 2
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 20, 'ReFungible');
-    const aliceBalanceAfterSponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
-    expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
+    const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
+    expect(aliceBalanceAfterSponsoredTransaction < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
     await destroyCollectionExpectSuccess(collectionId);
   });
 
   it('Collection limits have lower timeout value than chain limits, chain limits are enforced', async () => {
 
     const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { SponsorTimeout: 1 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { sponsorTimeout: 1 });
     const tokenId = await createItemExpectSuccess(Alice, collectionId, 'NFT');
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob);
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 1, fail
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie);
-    const aliceBalanceAfterUnsponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceAfterUnsponsoredTransaction = await getFreeBalance(Alice);
     expect(aliceBalanceAfterUnsponsoredTransaction).to.be.equals(aliceBalanceBefore);
 
     // check setting SponsorTimeout = 5, success
     await waitNewBlocks(4);
     await transferExpectSuccess(collectionId, tokenId, Charlie, Bob);
-    const aliceBalanceAfterSponsoredTransaction = (await getFreeBalance(Alice)).toNumber();
-    expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
+    const aliceBalanceAfterSponsoredTransaction = await getFreeBalance(Alice);
+    expect(aliceBalanceAfterSponsoredTransaction < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
     await destroyCollectionExpectSuccess(collectionId);
   });
 });
@@ -278,9 +284,9 @@ describe('Collection zero limits (NFT)', () => {
     });
   });
 
-  it.skip('Limits have 0 in tokens per address field, the chain limits are applied', async () => {  
+  it.skip('Limits have 0 in tokens per address field, the chain limits are applied', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { AccountTokenOwnershipLimit: 0 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { accountTokenOwnershipLimit: 0 });
     for(let i = 0; i < 10; i++){
       await createItemExpectSuccess(Alice, collectionId, 'NFT');
     }
@@ -290,18 +296,19 @@ describe('Collection zero limits (NFT)', () => {
   it('Limits have 0 in sponsor timeout, no limits are applied', async () => {
 
     const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { SponsorTimeout: 0 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { sponsorTimeout: 0 });
     const tokenId = await createItemExpectSuccess(Alice, collectionId, 'NFT');
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob);
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 0, success with next block
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie);
-    const aliceBalanceAfterSponsoredTransaction1 = (await getFreeBalance(Alice)).toNumber();
-    expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
+    const aliceBalanceAfterSponsoredTransaction1 = await getFreeBalance(Alice);
+    expect(aliceBalanceAfterSponsoredTransaction1 < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
   });
 });
 
@@ -320,19 +327,20 @@ describe('Collection zero limits (Fungible)', () => {
 
   it('Limits have 0 in sponsor timeout, no limits are applied', async () => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { SponsorTimeout: 0 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { sponsorTimeout: 0 });
     const tokenId = await createItemExpectSuccess(Alice, collectionId, 'Fungible');
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob, 10, 'Fungible');
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
 
     // check setting SponsorTimeout = 0, success with next block
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 2, 'Fungible');
-    const aliceBalanceAfterSponsoredTransaction1 = (await getFreeBalance(Alice)).toNumber();
-    expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
+    const aliceBalanceAfterSponsoredTransaction1 = await getFreeBalance(Alice);
+    expect(aliceBalanceAfterSponsoredTransaction1 < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
   });
 });
 
@@ -349,9 +357,9 @@ describe('Collection zero limits (ReFungible)', () => {
     });
   });
 
-  it.skip('Limits have 0 in tokens per address field, the chain limits are applied', async () => {  
+  it.skip('Limits have 0 in tokens per address field, the chain limits are applied', async () => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible' }});
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { AccountTokenOwnershipLimit: 0 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { accountTokenOwnershipLimit: 0 });
     for(let i = 0; i < 10; i++){
       await createItemExpectSuccess(Alice, collectionId, 'ReFungible');
     }
@@ -361,18 +369,19 @@ describe('Collection zero limits (ReFungible)', () => {
   it('Limits have 0 in sponsor timeout, no limits are applied', async () => {
 
     const collectionId = await createCollectionExpectSuccess({ mode: { type: 'ReFungible' } });
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, { SponsorTimeout: 0 });
+    await setCollectionLimitsExpectSuccess(Alice, collectionId, { sponsorTimeout: 0 });
     const tokenId = await createItemExpectSuccess(Alice, collectionId, 'ReFungible');
     await setCollectionSponsorExpectSuccess(collectionId, Alice.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
     await transferExpectSuccess(collectionId, tokenId, Alice, Bob, 100, 'ReFungible');
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 20, 'ReFungible');
-    const aliceBalanceBefore = (await getFreeBalance(Alice)).toNumber();
+    const aliceBalanceBefore = await getFreeBalance(Alice);
 
     // check setting SponsorTimeout = 0, success with next block
     await waitNewBlocks(1);
     await transferExpectSuccess(collectionId, tokenId, Bob, Charlie, 20, 'ReFungible');
-    const aliceBalanceAfterSponsoredTransaction1 = (await getFreeBalance(Alice)).toNumber();
-    expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
+    const aliceBalanceAfterSponsoredTransaction1 = await getFreeBalance(Alice);
+    expect(aliceBalanceAfterSponsoredTransaction1 < aliceBalanceBefore).to.be.true;
+    //expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
   });
 });

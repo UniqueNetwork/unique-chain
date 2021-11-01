@@ -17,7 +17,7 @@ function mintAsync(api, admin) {
       .createItem(collectionId, "0x", admin.address)
       .signAndSend(admin, (result) => {
         console.log(`Current tx status is ${result.status}`);
-    
+
         if (result.status.isInBlock) {
           console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
           resolve();
@@ -34,12 +34,10 @@ function mintAsync(api, admin) {
 async function main() {
   // Initialise the provider to connect to the node
   const wsProvider = new WsProvider(config.wsEndpoint);
-  const rtt = require("./runtime_types.json");
 
   // Create the API and wait until ready
-  const api = await ApiPromise.create({ 
+  const api = await ApiPromise.create({
     provider: wsProvider,
-    types: rtt
   });
 
   // Retrieve the chain & node information information via rpc calls
@@ -53,7 +51,7 @@ async function main() {
   console.log(`You are connected to chain ${chain} using ${nodeName} v${nodeVersion}`);
   console.log(`Collection: ${collection}`);
 
-  if (checkOwner(collection.Owner.toString())) {
+  if (checkOwner(collection.owner.toString())) {
     // Import account from mnemonic phrase in config file
     const keyring = new Keyring({ type: 'sr25519' });
     const owner = keyring.addFromUri(config.ownerSeed);

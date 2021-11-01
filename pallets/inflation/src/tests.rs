@@ -6,7 +6,9 @@ use frame_support::{
 	traits::{Currency},
 	parameter_types,
 };
-use frame_support::{traits::OnInitialize};
+use frame_support::{
+	traits::{OnInitialize, Everything},
+};
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
@@ -55,7 +57,7 @@ parameter_types! {
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
