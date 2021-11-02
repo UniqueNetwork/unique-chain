@@ -7,6 +7,7 @@ pub mod pallet {
 	use frame_support::sp_runtime::traits::StaticLookup;
 	use frame_support::{pallet_prelude::*, traits::IsSubType};
 	use frame_system::pallet_prelude::*;
+	use frame_system::Config as SysConfig;
 	use pallet_contracts::chain_extension::UncheckedFrom;
 	use sp_runtime::{
 		traits::{DispatchInfoOf, Hash, PostDispatchInfoOf, SignedExtension},
@@ -164,26 +165,26 @@ pub mod pallet {
 		}
 	}
 
-	#[derive(Encode, Decode, Clone, PartialEq, Eq)]
-	pub struct ContractHelpersExtension<T>(PhantomData<T>);
-	impl<T> core::fmt::Debug for ContractHelpersExtension<T> {
+	#[derive(Encode, Decode, Clone, PartialEq, Eq, scale_info::TypeInfo)]
+	pub struct ContractHelpersExtension<T: scale_info::TypeInfo>(PhantomData<T>);
+	impl<T: scale_info::TypeInfo> core::fmt::Debug for ContractHelpersExtension<T> {
 		fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
 			fmt.debug_struct("ContractHelpersExtension").finish()
 		}
 	}
 
 	type CodeHash<T> = <T as frame_system::Config>::Hash;
-	impl<T> SignedExtension for ContractHelpersExtension<T>
+	impl<T: scale_info::TypeInfo> SignedExtension for ContractHelpersExtension<T>
 	where
 		T: Config + Send + Sync,
-		T::Call: sp_runtime::traits::Dispatchable,
-		T::Call: IsSubType<pallet_contracts::Call<T>>,
+		<T as SysConfig>::Call: sp_runtime::traits::Dispatchable,
+		<T as SysConfig>::Call: IsSubType<pallet_contracts::Call<T>>,
 		T::AccountId: UncheckedFrom<T::Hash>,
 		T::AccountId: AsRef<[u8]>,
 	{
 		const IDENTIFIER: &'static str = "ContractHelpers";
 		type AccountId = T::AccountId;
-		type Call = T::Call;
+		type Call = <T as SysConfig>::Call;
 		type AdditionalSigned = ();
 		type Pre = Option<(Self::AccountId, CodeHash<T>, Vec<u8>)>;
 
@@ -198,8 +199,12 @@ pub mod pallet {
 			_info: &DispatchInfoOf<Self::Call>,
 			_len: usize,
 		) -> transaction_validity::TransactionValidity {
-			if let Some(pallet_contracts::Call::call(dest, _value, _gas_limit, _data)) =
-				IsSubType::<pallet_contracts::Call<T>>::is_sub_type(call)
+			if let Some(pallet_contracts::Call::call {
+				dest,
+				value: _value,
+				gas_limit: _gas_limit,
+				data: _data,
+			}) = IsSubType::<pallet_contracts::Call<T>>::is_sub_type(call)
 			{
 				let called_contract: T::AccountId =
 					T::Lookup::lookup((*dest).clone()).unwrap_or_default();
@@ -218,10 +223,10 @@ pub mod pallet {
 			_len: usize,
 		) -> Result<Self::Pre, TransactionValidityError> {
 			match IsSubType::<pallet_contracts::Call<T>>::is_sub_type(call) {
-				Some(pallet_contracts::Call::instantiate(_, _, code_hash, _, salt)) => {
-					Ok(Some((who.clone(), *code_hash, salt.clone())))
-				}
-				Some(pallet_contracts::Call::instantiate_with_code(_, _, code, _, salt)) => {
+				Some(pallet_contracts::Call::instantiate {
+					code_hash, salt, ..
+				}) => Ok(Some((who.clone(), *code_hash, salt.clone()))),
+				Some(pallet_contracts::Call::instantiate_with_code { code, salt, .. }) => {
 					let code_hash = &T::Hashing::hash(code);
 					Ok(Some((who.clone(), *code_hash, salt.clone())))
 				}
@@ -255,7 +260,7 @@ pub mod pallet {
 		T::AccountId: AsRef<[u8]>,
 	{
 		fn get_sponsor(who: &T::AccountId, call: &C) -> Option<T::AccountId> {
-			if let Some(pallet_contracts::Call::call(dest, _value, _gas_limit, _data)) =
+			if let Some(pallet_contracts::Call::call { dest, .. }) =
 				IsSubType::<pallet_contracts::Call<T>>::is_sub_type(call)
 			{
 				let called_contract: T::AccountId =

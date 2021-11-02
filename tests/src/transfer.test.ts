@@ -199,7 +199,11 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
     const reFungibleCollectionId = await
     createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
+<<<<<<< HEAD
     await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, Alice, 1);
+=======
+    await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 100);
+>>>>>>> develop
     await transferExpectFailure(
       reFungibleCollectionId,
       newReFungibleTokenId,

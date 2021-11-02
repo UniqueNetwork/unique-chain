@@ -28,7 +28,7 @@ describe('Integration Test public minting', () => {
     });
   });
 
-  it('If the public minting mode is enabled and the whitelist mode is enabled, then the address added to the whitelist and not the owner or administrator can create tokens', async () => {
+  it('If the AllowList mode is enabled, then the address added to the whitelist and not the owner or administrator can create tokens', async () => {
     await usingApi(async () => {
       const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
       await enableWhiteListExpectSuccess(alice, collectionId);
@@ -39,39 +39,7 @@ describe('Integration Test public minting', () => {
     });
   });
 
-  it('Public minting mode is disabled then the address that is user cannot create tokens', async () => {
-    await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-      await disableWhiteListExpectSuccess(alice, collectionId);
-      await setMintPermissionExpectSuccess(alice, collectionId, false);
-      await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
-      await createItemExpectFailure(bob, collectionId, 'NFT');
-    });
-  });
-
-  it('Public minting mode is disabled then the address that is admin can create tokens', async () => {
-    await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-      await disableWhiteListExpectSuccess(alice, collectionId);
-      await setMintPermissionExpectSuccess(alice, collectionId, false);
-      await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob);
-      await createItemExpectSuccess(bob, collectionId, 'NFT');
-    });
-  });
-
-  it('Public minting mode is disabled then the address that is collection owner can create tokens', async () => {
-    await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-      await disableWhiteListExpectSuccess(alice, collectionId);
-      await setMintPermissionExpectSuccess(alice, collectionId, false);
-      await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
-      await createItemExpectSuccess(alice, collectionId, 'NFT');
-    });
-  });
-
-
-  it('Public minting mode is enabled and address not included in whitelist that is user cannot create tokens', async () => {
+  it('If the AllowList mode is enabled, address not included in whitelist that is regular user cannot create tokens', async () => {
     await usingApi(async () => {
       const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
       await enableWhiteListExpectSuccess(alice, collectionId);
@@ -80,7 +48,7 @@ describe('Integration Test public minting', () => {
     });
   });
 
-  it('Public minting mode is enabled and address not included in whitelist that is admin can create tokens', async () => {
+  it('If the AllowList mode is enabled, address not included in whitelist that is admin can create tokens', async () => {
     await usingApi(async () => {
       const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
       await enableWhiteListExpectSuccess(alice, collectionId);
@@ -90,7 +58,7 @@ describe('Integration Test public minting', () => {
     });
   });
 
-  it('Public minting mode is enabled and address not included in whitelist that is owner can create tokens', async () => {
+  it('If the AllowList mode is enabled, address not included in whitelist that is owner can create tokens', async () => {
     await usingApi(async () => {
       const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
       await enableWhiteListExpectSuccess(alice, collectionId);
@@ -99,6 +67,33 @@ describe('Integration Test public minting', () => {
     });
   });
 
+  it('If the AllowList mode is disabled, owner can create tokens', async () => {
+    await usingApi(async () => {
+      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      await disableWhiteListExpectSuccess(alice, collectionId);
+      await setMintPermissionExpectSuccess(alice, collectionId, true);
+      await createItemExpectSuccess(alice, collectionId, 'NFT');
+    });
+  });
+
+  it('If the AllowList mode is disabled, collection admin can create tokens', async () => {
+    await usingApi(async () => {
+      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      await disableWhiteListExpectSuccess(alice, collectionId);
+      await setMintPermissionExpectSuccess(alice, collectionId, true);
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob);
+      await createItemExpectSuccess(bob, collectionId, 'NFT');
+    });
+  });
+
+  it('If the AllowList mode is disabled, regular user can`t create tokens', async () => {
+    await usingApi(async () => {
+      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      await disableWhiteListExpectSuccess(alice, collectionId);
+      await setMintPermissionExpectSuccess(alice, collectionId, true);
+      await createItemExpectFailure(bob, collectionId, 'NFT');
+    });
+  });
 });
 
 describe('Integration Test private minting', () => {
@@ -112,15 +107,32 @@ describe('Integration Test private minting', () => {
     });
   });
 
-  it('If the private minting mode is enabled then the address that is the owner or admin cannot create tokens', async () => {
+  it('Address that is the not owner or not admin cannot create tokens', async () => {
     await usingApi(async () => {
       const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
       await enableWhiteListExpectSuccess(alice, collectionId);
       await setMintPermissionExpectSuccess(alice, collectionId, false);
       await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
-
       await createItemExpectFailure(bob, collectionId, 'NFT');
     });
   });
 
+  it('Address that is collection owner can create tokens', async () => {
+    await usingApi(async () => {
+      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      await disableWhiteListExpectSuccess(alice, collectionId);
+      await setMintPermissionExpectSuccess(alice, collectionId, false);
+      await createItemExpectSuccess(alice, collectionId, 'NFT');
+    });
+  });
+
+  it('Address that is admin can create tokens', async () => {
+    await usingApi(async () => {
+      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      await disableWhiteListExpectSuccess(alice, collectionId);
+      await setMintPermissionExpectSuccess(alice, collectionId, false);
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob);
+      await createItemExpectSuccess(bob, collectionId, 'NFT');
+    });
+  });
 });

@@ -74,6 +74,7 @@ use frame_support::{
 use frame_system::{self as system, ensure_signed};
 pub use weights::WeightInfo;
 use up_sponsorship::SponsorshipHandler;
+use scale_info::TypeInfo;
 
 /// Our pallet's configuration trait. All our types and constants go in here. If the
 /// pallet is dependent on specific other pallets, then their configuration traits
@@ -91,7 +92,7 @@ pub trait Config: system::Config {
 		+ IsType<<Self as system::Config>::Origin>;
 
 	/// The caller origin, overarching type of all pallets origins.
-	type PalletsOrigin: From<system::RawOrigin<Self::AccountId>> + Codec + Clone + Eq;
+	type PalletsOrigin: From<system::RawOrigin<Self::AccountId>> + Codec + TypeInfo + Clone + Eq;
 
 	/// The aggregated call type.
 	type Call: Parameter
@@ -135,7 +136,7 @@ struct ScheduledV1<Call, BlockNumber> {
 
 /// Information regarding an item to be executed in the future.
 #[cfg_attr(any(feature = "std", test), derive(PartialEq, Eq))]
-#[derive(Clone, RuntimeDebug, Encode, Decode)]
+#[derive(Clone, RuntimeDebug, Encode, Decode, TypeInfo)]
 pub struct ScheduledV2<Call, BlockNumber, PalletsOrigin, AccountId> {
 	/// The unique identity for this task, if there is one.
 	maybe_id: Option<Vec<u8>>,
@@ -157,7 +158,7 @@ pub type Scheduled<Call, BlockNumber, PalletsOrigin, AccountId> =
 // A value placed in storage that represents the current version of the Scheduler storage.
 // This value is used by the `on_runtime_upgrade` logic to determine whether we run
 // storage migration logic.
-#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug)]
+#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 enum Releases {
 	V1,
 	V2,
@@ -169,7 +170,7 @@ impl Default for Releases {
 	}
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct CallSpec {
 	module: u32,
 	method: u32,
@@ -794,8 +795,8 @@ mod tests {
 	use super::*;
 
 	use frame_support::{
-		parameter_types, assert_ok, ord_parameter_types, assert_noop, assert_err, Hashable,
-		traits::{OnInitialize, OnFinalize, Filter},
+		Hashable, assert_err, assert_noop, assert_ok, ord_parameter_types, parameter_types,
+		traits::{Contains, OnFinalize, OnInitialize},
 		weights::constants::RocksDbWeight,
 	};
 	use sp_core::H256;
@@ -870,9 +871,9 @@ mod tests {
 
 	// Scheduler must dispatch with root and no filter, this tests base filter is indeed not used.
 	pub struct BaseFilter;
-	impl Filter<Call> for BaseFilter {
-		fn filter(call: &Call) -> bool {
-			!matches!(call, Call::Logger(logger::Call::log(_, _)))
+	impl Contains<Call> for BaseFilter {
+		fn contains(call: &Call) -> bool {
+			!matches!(call, Call::Logger(logger::Call::log { .. }))
 		}
 	}
 

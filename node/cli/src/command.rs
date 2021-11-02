@@ -51,17 +51,18 @@ fn load_spec(
 }
 
 impl SubstrateCli for Cli {
+	// TODO use args
 	fn impl_name() -> String {
-		"Parachain Collator Template".into()
+		"Opal Node".into()
 	}
 
 	fn impl_version() -> String {
 		env!("SUBSTRATE_CLI_IMPL_VERSION").into()
 	}
-
+	// TODO use args
 	fn description() -> String {
 		format!(
-			"Parachain Collator Template\n\nThe command-line arguments provided first will be \
+			"Opal Node\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
 		{} [parachain-args] -- [relaychain-args]",
@@ -73,12 +74,13 @@ impl SubstrateCli for Cli {
 		env!("CARGO_PKG_AUTHORS").into()
 	}
 
+	//TODO use args
 	fn support_url() -> String {
-		"https://github.com/substrate-developer-hub/substrate-parachain-template/issues/new".into()
+		"support@unique.network".into()
 	}
 
 	fn copyright_start_year() -> i32 {
-		2017
+		2019
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -91,16 +93,17 @@ impl SubstrateCli for Cli {
 }
 
 impl SubstrateCli for RelayChainCli {
+	// TODO use args
 	fn impl_name() -> String {
-		"Parachain Collator Template".into()
+		"Opal Node".into()
 	}
 
 	fn impl_version() -> String {
 		env!("SUBSTRATE_CLI_IMPL_VERSION").into()
 	}
-
+	// TODO use args
 	fn description() -> String {
-		"Parachain Collator Template\n\nThe command-line arguments provided first will be \
+		"Opal Node\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
 		parachain-collator [parachain-args] -- [relaychain-args]"
@@ -110,13 +113,13 @@ impl SubstrateCli for RelayChainCli {
 	fn author() -> String {
 		env!("CARGO_PKG_AUTHORS").into()
 	}
-
+	// TODO use args
 	fn support_url() -> String {
-		"https://github.com/substrate-developer-hub/substrate-parachain-template/issues/new".into()
+		"support@unique.network".into()
 	}
 
 	fn copyright_start_year() -> i32 {
-		2017
+		2019
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -197,7 +200,7 @@ pub fn run() -> Result<()> {
 				let polkadot_config = SubstrateCli::create_configuration(
 					&polkadot_cli,
 					&polkadot_cli,
-					config.task_executor.clone(),
+					config.tokio_handle.clone(),
 				)
 				.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
@@ -286,10 +289,12 @@ pub fn run() -> Result<()> {
 					generate_genesis_block(&config.chain_spec).map_err(|e| format!("{:?}", e))?;
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
 
-				let task_executor = config.task_executor.clone();
-				let polkadot_config =
-					SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, task_executor)
-						.map_err(|err| format!("Relay chain argument error: {}", err))?;
+				let polkadot_config = SubstrateCli::create_configuration(
+					&polkadot_cli,
+					&polkadot_cli,
+					config.tokio_handle.clone(),
+				)
+				.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
 				info!("Parachain id: {:?}", id);
 				info!("Parachain Account: {}", parachain_account);
@@ -406,10 +411,6 @@ impl CliConfiguration<Self> for RelayChainCli {
 
 	fn rpc_cors(&self, is_dev: bool) -> Result<Option<Vec<String>>> {
 		self.base.base.rpc_cors(is_dev)
-	}
-
-	fn telemetry_external_transport(&self) -> Result<Option<sc_service::config::ExtTransport>> {
-		self.base.base.telemetry_external_transport()
 	}
 
 	fn default_heap_pages(&self) -> Result<Option<u64>> {

@@ -6,6 +6,8 @@ import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
+  normalizeAccountId,
+  waitNewBlocks,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -26,9 +28,8 @@ describe('Admin vs Owner changes the data in the token: ', () => {
       const AliceData = 1;
       const BobData = 2;
       const collectionId = await createCollectionExpectSuccess();
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, Bob.address);
+      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx);
-      const timeoutPromise = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
       const itemId = await createItemExpectSuccess(Bob, collectionId, 'NFT');
       //
       // tslint:disable-next-line: max-line-length
@@ -40,8 +41,8 @@ describe('Admin vs Owner changes the data in the token: ', () => {
         BobTx.signAndSend(Bob),
       ]);
       const item: any = await api.query.nft.nftItemList(collectionId, itemId);
-      expect(item.VariableData).not.to.be.eq(null); // Pseudo-random selection of one of two values
-      await timeoutPromise(20000);
+      expect(item.variableData).not.to.be.eq(null); // Pseudo-random selection of one of two values
+      await waitNewBlocks(2);
     });
   });
 });

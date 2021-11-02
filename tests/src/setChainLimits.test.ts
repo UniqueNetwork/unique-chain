@@ -25,16 +25,16 @@ describe.skip('Negative Integration Test setChainLimits', () => {
       bob = privateKey('//Bob');
       dave = privateKey('//Dave');
       limits = {
-        CollectionNumbersLimit : 1,
-        AccountTokenOwnershipLimit: 1,
-        CollectionsAdminsLimit: 1,
-        CustomDataLimit: 1,
-        NftSponsorTransferTimeout: 1,
-        FungibleSponsorTransferTimeout: 1,
-        RefungibleSponsorTransferTimeout: 1,
-        OffchainSchemaLimit: 1,
-        VariableOnChainSchemaLimit: 1,
-        ConstOnChainSchemaLimit: 1,
+        collectionNumbersLimit : 1,
+        accountTokenOwnershipLimit: 1,
+        collectionsAdminsLimit: 1,
+        customDataLimit: 1,
+        nftSponsorTransferTimeout: 1,
+        fungibleSponsorTransferTimeout: 1,
+        refungibleSponsorTransferTimeout: 1,
+        offchainSchemaLimit: 1,
+        variableOnChainSchemaLimit: 1,
+        constOnChainSchemaLimit: 1,
       };
     });
   });

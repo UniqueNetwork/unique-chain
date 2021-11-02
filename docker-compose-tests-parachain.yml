@@ -1,0 +1,61 @@
+version: "3.5"
+
+services:
+  blockchain_nodes:
+    image: blockchain_nodes
+    container_name: blockchain_nodes
+    ports:
+      - 9944:9944
+      - 9844:9844
+      - 9933:9933
+    build:
+      context: ./
+      dockerfile: Dockerfile-parachain
+      args:
+        - RUST_TOOLCHAIN=${RUST_TOOLCHAIN:?err}
+        - RUST_C=${RUST_C:?err}
+        - POLKA_VERSION=${POLKA_VERSION:?err}
+        - NFT_BRANCH=${NFT_BRANCH:?err}
+    volumes:
+#      - ./chain-data:/chain-data
+      - ./launch-config.json:/polkadot-launch/launch-config.json
+    env_file:
+      - ./.env
+    networks:
+      - node_test_network
+    #command: bash -c "yarn --cwd polkadot-launch start"
+    #command: bash -c 'while true; do sleep 60; df -h; done'
+
+  integration_tests:
+    container_name: integration_tests
+    image: integration_tests
+    build:
+      context: tests/
+      dockerfile: Dockerfile-tests
+    environment:
+      RPC_URL: http://blockchain_nodes:9933/
+    volumes:
+      - ./tests/src/config_docker.ts:/nft_parachain/src/config.ts
+      - /home/ubuntu/mochawesome-report:/nft_parachain/mochawesome-report
+#    command: bash -c 'while true; do sleep 20; df -h; done'
+    networks:
+      - node_test_network
+    depends_on:
+      - blockchain_nodes
+
+#  unit_tests:
+#    container_name: unit_test
+#    image: nft_unit_test
+#    build:
+#      context: ./
+#      dockerfile: Dockerfile-unit
+#    container_name: unit_test
+#    networks:
+#      - node_test_network
+   # command: bash -c 'while true; do sleep 20; df -h; done'
+#    command: bash -c 'cargo test'
+
+networks:
+  node_test_network:
+    name: node_test_network
+    driver: bridge

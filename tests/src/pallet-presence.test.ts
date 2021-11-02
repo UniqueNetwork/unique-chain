@@ -8,7 +8,7 @@ import { expect } from 'chai';
 import usingApi from './substrate/substrate-api';
 
 function getModuleNames(api: ApiPromise): string[] {
-  return api.runtimeMetadata.asLatest.modules.map(m => m.name.toString().toLowerCase());
+  return api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
 }
 
 // Pallets that must always be present

@@ -45,8 +45,8 @@ pub use frame_support::{
 	dispatch::DispatchResult,
 	PalletId, parameter_types, StorageValue, ConsensusEngineId,
 	traits::{
-		All, Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier,
-		OnUnbalanced, Randomness, FindAuthor,
+		Everything, Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem,
+		LockIdentifier, OnUnbalanced, Randomness, FindAuthor,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -70,7 +70,8 @@ use pallet_evm::{Account as EVMAccount, FeeCalculator, OnMethodCall};
 use fp_rpc::TransactionStatus;
 use sp_core::crypto::Public;
 use sp_runtime::{
-	traits::{Dispatchable},
+	traits::{Dispatchable, PostDispatchInfoOf},
+	transaction_validity::TransactionValidityError,
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
@@ -79,8 +80,7 @@ pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 // Polkadot imports
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use xcm::v0::Xcm;
-use xcm::v0::{BodyId, Junction::*, MultiAsset, MultiLocation, MultiLocation::*, NetworkId};
+use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
 	EnsureXcmOrigin, FixedWeightBounds, IsConcrete, LocationInverter, NativeAsset,
@@ -142,10 +142,10 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("nft"),
-	impl_name: create_runtime_str!("nft"),
+	spec_name: create_runtime_str!("opal"),
+	impl_name: create_runtime_str!("opal"),
 	authoring_version: 1,
-	spec_version: 3,
+	spec_version: 912200,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -238,11 +238,18 @@ parameter_types! {
 	pub const ChainId: u64 = 8888;
 }
 
+pub struct FixedFee;
+impl FeeCalculator for FixedFee {
+	fn min_gas_price() -> U256 {
+		1.into()
+	}
+}
+
 impl pallet_evm::Config for Runtime {
 	type BlockGasLimit = BlockGasLimit;
-	type FeeCalculator = ();
+	type FeeCalculator = FixedFee;
 	type GasWeightMapping = ();
-	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping;
+	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = HashedAddressMapping<Self::Hashing>;
@@ -298,7 +305,7 @@ impl system::Config for Runtime {
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
 	/// The maximum length of a block (in bytes).
@@ -433,6 +440,9 @@ impl pallet_contracts::Config for Runtime {
 
 parameter_types! {
 	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE; // Targeting 0.1 Unique per NFT transfer
+	/// This value increases the priority of `Operational` transactions by adding
+	/// a "virtual tip" that's equal to the `OperationalFeeMultiplier * final_fee`.
+	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
 /// Linear implementor of `WeightToFeePolynomial`
@@ -457,6 +467,7 @@ where
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees>;
 	type TransactionByteFee = TransactionByteFee;
+	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = LinearFee<Balance>;
 	type FeeMultiplierUpdate = ();
 }
@@ -512,6 +523,7 @@ impl pallet_vesting::Config for Runtime {
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = ();
+	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 
 parameter_types! {
@@ -540,10 +552,10 @@ impl parachain_info::Config for Runtime {}
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
-	pub const RelayLocation: MultiLocation = X1(Parent);
+	pub const RelayLocation: MultiLocation = MultiLocation::parent();
 	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	pub RelayOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
-	pub Ancestry: MultiLocation = X1(Parachain(ParachainInfo::parachain_id().into()));
+	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
@@ -600,18 +612,21 @@ parameter_types! {
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
 	pub UnitWeightCost: Weight = 1_000_000;
 	// 1200 UNIQUEs buy 1 second of weight.
-	pub const WeightPrice: (MultiLocation, u128) = (X1(Parent), 1_200 * UNIQUE);
+	pub const WeightPrice: (MultiLocation, u128) = (MultiLocation::parent(), 1_200 * UNIQUE);
+	pub const MaxInstructions: u32 = 100;
+	pub const MaxAuthorities: u32 = 100_000;
 }
 
 match_type! {
 	pub type ParentOrParentsUnitPlurality: impl Contains<MultiLocation> = {
-		X1(Parent) | X2(Parent, Plurality { id: BodyId::Unit, .. })
+		MultiLocation { parents: 1, interior: Here } |
+		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Unit, .. }) }
 	};
 }
 
 pub type Barrier = (
 	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<All<MultiLocation>>,
+	AllowTopLevelPaidExecutionFrom<Everything>,
 	AllowUnpaidExecutionFrom<ParentOrParentsUnitPlurality>,
 	// ^^^ Parent & its unit plurality gets free execution
 );
@@ -624,12 +639,16 @@ impl Config for XcmConfig {
 	type AssetTransactor = LocalAssetTransactor;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = NativeAsset;
-	type IsTeleporter = NativeAsset; // <- should be enough to allow teleportation of ROC
+	type IsTeleporter = (); // Teleportation is disabled
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type Trader = UsingComponents<IdentityFee<Balance>, RelayLocation, AccountId, Balances, ()>;
 	type ResponseHandler = (); // Don't handle responses for now.
+	type SubscriptionService = PolkadotXcm;
+
+	type AssetTrap = PolkadotXcm;
+	type AssetClaims = PolkadotXcm;
 }
 
 // parameter_types! {
@@ -643,13 +662,13 @@ pub type LocalOriginToLocation = (SignedToAccountId32<Origin, AccountId, RelayNe
 /// queues.
 pub type XcmRouter = (
 	// Two routers - use UMP to communicate with the relay chain:
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem>,
+	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, ()>,
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
 );
 
 impl pallet_evm_coder_substrate::Config for Runtime {
-	type EthereumTransactionSender = pallet_ethereum::Module<Self>;
+	type EthereumTransactionSender = pallet_ethereum::Pallet<Self>;
 }
 
 impl pallet_xcm::Config for Runtime {
@@ -657,11 +676,16 @@ impl pallet_xcm::Config for Runtime {
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type XcmExecuteFilter = All<(MultiLocation, Xcm<Call>)>;
+	type XcmExecuteFilter = Everything;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = All<(MultiLocation, Vec<MultiAsset>)>;
-	type XcmReserveTransferFilter = ();
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
+	type XcmTeleportFilter = Everything;
+	type XcmReserveTransferFilter = Everything;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+	type LocationInverter = LocationInverter<Ancestry>;
+	type Origin = Origin;
+	type Call = Call;
+	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
+	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -673,6 +697,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;
+	type VersionWrapper = ();
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
@@ -683,6 +708,8 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
+	type DisabledValidators = ();
+	type MaxAuthorities = MaxAuthorities;
 }
 
 parameter_types! {
@@ -737,7 +764,7 @@ type SponsorshipHandler = (
 	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
 );
 
-impl pallet_scheduler::Config for Runtime {
+impl pallet_unq_scheduler::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
 	type PalletsOrigin = OriginCaller;
@@ -761,7 +788,9 @@ impl pallet_evm_transaction_payment::Config for Runtime {
 	type Currency = Balances;
 }
 
-impl pallet_nft_charge_transaction::Config for Runtime {}
+impl pallet_nft_charge_transaction::Config for Runtime {
+	type SponsorshipHandler = pallet_nft::NftSponsorshipHandler<Runtime>;
+}
 
 // impl pallet_contract_helpers::Config for Runtime {
 //	 type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
@@ -785,7 +814,7 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 20,
+		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
 		Aura: pallet_aura::{Pallet, Config<T>} = 22,
@@ -810,14 +839,14 @@ construct_runtime!(
 		// Unique Pallets
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
 		Nft: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>} = 61,
-		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
+		Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage} = 63,
 		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage } = 64,
 		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
-		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, ValidateUnsigned} = 101,
+		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, Origin} = 101,
 
 		EvmCoderSubstrate: pallet_evm_coder_substrate::{Pallet, Storage} = 150,
 		EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage} = 151,
@@ -831,7 +860,7 @@ pub struct TransactionConverter;
 impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
 		UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact(transaction).into(),
+			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
 		)
 	}
 }
@@ -842,7 +871,7 @@ impl fp_rpc::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConve
 		transaction: pallet_ethereum::Transaction,
 	) -> opaque::UncheckedExtrinsic {
 		let extrinsic = UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact(transaction).into(),
+			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
 		);
 		let encoded = extrinsic.encode();
 		opaque::UncheckedExtrinsic::decode(&mut &encoded[..])
@@ -872,9 +901,10 @@ pub type SignedExtra = (
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic =
+	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
+pub type CheckedExtrinsic = fp_self_contained::CheckedExtrinsic<AccountId, Call, SignedExtra, H160>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -887,6 +917,53 @@ pub type Executive = frame_executive::Executive<
 impl_opaque_keys! {
 	pub struct SessionKeys {
 		pub aura: Aura,
+	}
+}
+
+impl fp_self_contained::SelfContainedCall for Call {
+	type SignedInfo = H160;
+
+	fn is_self_contained(&self) -> bool {
+		match self {
+			Call::Ethereum(call) => call.is_self_contained(),
+			_ => false,
+		}
+	}
+
+	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.check_self_contained(),
+			_ => None,
+		}
+	}
+
+	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
+		match self {
+			Call::Ethereum(call) => call.validate_self_contained(info),
+			_ => None,
+		}
+	}
+
+	fn pre_dispatch_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+	) -> Option<Result<(), TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.pre_dispatch_self_contained(info),
+			_ => None,
+		}
+	}
+
+	fn apply_self_contained(
+		self,
+		info: Self::SignedInfo,
+	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
+		match self {
+			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
+				Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
+			)),
+			_ => None,
+		}
 	}
 }
 
@@ -915,7 +992,7 @@ impl_runtime_apis! {
 
 	impl sp_api::Metadata<Block> for Runtime {
 		fn metadata() -> OpaqueMetadata {
-			Runtime::metadata().into()
+			OpaqueMetadata::new(Runtime::metadata().into())
 		}
 	}
 
@@ -978,7 +1055,7 @@ impl_runtime_apis! {
 		}
 
 		fn author() -> H160 {
-			<pallet_evm::Module<Runtime>>::find_author()
+			<pallet_evm::Pallet<Runtime>>::find_author()
 		}
 
 		fn storage_at(address: H160, index: U256) -> H256 {
@@ -1070,8 +1147,8 @@ impl_runtime_apis! {
 		}
 
 		fn extrinsic_filter(xts: Vec<<Block as sp_api::BlockT>::Extrinsic>) -> Vec<pallet_ethereum::Transaction> {
-			xts.into_iter().filter_map(|xt| match xt.function {
-				Call::Ethereum(pallet_ethereum::Call::transact(t)) => Some(t),
+			xts.into_iter().filter_map(|xt| match xt.0.function {
+				Call::Ethereum(pallet_ethereum::Call::transact { transaction }) => Some(transaction),
 				_ => None
 			}).collect()
 		}
@@ -1095,7 +1172,7 @@ impl_runtime_apis! {
 		}
 
 		fn authorities() -> Vec<AuraId> {
-			Aura::authorities()
+			Aura::authorities().to_vec()
 		}
 	}
 

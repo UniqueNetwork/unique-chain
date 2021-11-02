@@ -17,6 +17,7 @@ import {
   setVariableMetaDataExpectFailure,
   setVariableMetaDataExpectSuccess,
   addCollectionAdminExpectSuccess,
+  setMetadataUpdatePermissionFlagExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -44,7 +45,7 @@ describe('Integration Test setVariableMetaData', () => {
     await usingApi(async api => {
       const item: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap();
 
-      expect(Array.from(item.VariableData)).to.deep.equal(Array.from(data));
+      expect(Array.from(item.variableData)).to.deep.equal(Array.from(data));
     });
   });
 });
@@ -62,6 +63,7 @@ describe('Integration Test collection admin setVariableMetaData', () => {
       bob = privateKey('//Bob');
       collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
       tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
+      await setMetadataUpdatePermissionFlagExpectSuccess(alice, collectionId, 'Admin');
       await addCollectionAdminExpectSuccess(alice, collectionId, bob);
     });
   });
@@ -74,7 +76,7 @@ describe('Integration Test collection admin setVariableMetaData', () => {
     await usingApi(async api => {
       const item: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap();
 
-      expect(Array.from(item.VariableData)).to.deep.equal(Array.from(data));
+      expect(Array.from(item.variableData)).to.deep.equal(Array.from(data));
     });
   });
 });

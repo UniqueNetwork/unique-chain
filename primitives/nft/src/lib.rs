@@ -4,8 +4,7 @@
 pub use serde::{Serialize, Deserialize};
 
 use sp_runtime::sp_std::prelude::Vec;
-use codec::{Decode, Encode};
-use max_encoded_len::MaxEncodedLen;
+use codec::{Decode, Encode, MaxEncodedLen};
 pub use frame_support::{
 	BoundedVec, construct_runtime, decl_event, decl_module, decl_storage, decl_error,
 	dispatch::DispatchResult,
@@ -22,6 +21,7 @@ pub use frame_support::{
 	StorageValue, transactional,
 };
 use derivative::Derivative;
+use scale_info::TypeInfo;
 
 pub const MAX_DECIMAL_POINTS: DecimalPoints = 30;
 pub const MAX_REFUNGIBLE_PIECES: u128 = 1_000_000_000_000_000_000_000;
@@ -71,26 +71,18 @@ pub type CollectionId = u32;
 pub type TokenId = u32;
 pub type DecimalPoints = u8;
 
-#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum CollectionMode {
-	Invalid,
 	NFT,
 	// decimal points
 	Fungible(DecimalPoints),
 	ReFungible,
 }
 
-impl Default for CollectionMode {
-	fn default() -> Self {
-		Self::Invalid
-	}
-}
-
 impl CollectionMode {
 	pub fn id(&self) -> u8 {
 		match self {
-			CollectionMode::Invalid => 0,
 			CollectionMode::NFT => 1,
 			CollectionMode::Fungible(_) => 2,
 			CollectionMode::ReFungible => 3,
@@ -102,7 +94,7 @@ pub trait SponsoringResolve<AccountId, Call> {
 	fn resolve(who: &AccountId, call: &Call) -> Option<AccountId>;
 }
 
-#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum AccessMode {
 	Normal,
@@ -114,7 +106,7 @@ impl Default for AccessMode {
 	}
 }
 
-#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum SchemaVersion {
 	ImageURL,
@@ -126,14 +118,14 @@ impl Default for SchemaVersion {
 	}
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Default, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct Ownership<AccountId> {
 	pub owner: AccountId,
 	pub fraction: u128,
 }
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum SponsorshipState<AccountId> {
 	/// The fees are applied to the transaction sender
@@ -169,7 +161,7 @@ impl<T> Default for SponsorshipState<T> {
 	}
 }
 
-#[derive(Encode, Decode, Clone, PartialEq)]
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct Collection<T: frame_system::Config> {
 	pub owner: T::AccountId,
@@ -186,10 +178,11 @@ pub struct Collection<T: frame_system::Config> {
 	pub limits: CollectionLimits<T::BlockNumber>, // Collection private restrictions
 	pub variable_on_chain_schema: Vec<u8>,        //
 	pub const_on_chain_schema: Vec<u8>,           //
+	pub meta_update_permission: MetaUpdatePermission,
 	pub transfers_enabled: bool,
 }
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct NftItemType<AccountId> {
 	pub owner: AccountId,
@@ -197,13 +190,13 @@ pub struct NftItemType<AccountId> {
 	pub variable_data: Vec<u8>,
 }
 
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Default, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct FungibleItemType {
 	pub value: u128,
 }
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct ReFungibleItemType<AccountId> {
 	pub owner: Vec<Ownership<AccountId>>,
@@ -211,7 +204,7 @@ pub struct ReFungibleItemType<AccountId> {
 	pub variable_data: Vec<u8>,
 }
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionLimits<BlockNumber: Encode + Decode> {
 	pub account_token_ownership_limit: u32,
@@ -275,7 +268,7 @@ mod bounded_serde {
 	}
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, Default, PartialEq, Clone, Derivative)]
+#[derive(Encode, Decode, MaxEncodedLen, Default, PartialEq, Clone, Derivative, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 #[derivative(Debug)]
 pub struct CreateNftData {
@@ -287,13 +280,13 @@ pub struct CreateNftData {
 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CreateFungibleData {
 	pub value: u128,
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, Default, PartialEq, Clone, Derivative)]
+#[derive(Encode, Decode, MaxEncodedLen, Default, PartialEq, Clone, Derivative, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 #[derivative(Debug)]
 pub struct CreateReFungibleData {
@@ -306,7 +299,21 @@ pub struct CreateReFungibleData {
 	pub pieces: u128,
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum MetaUpdatePermission {
+	ItemOwner,
+	Admin,
+	None,
+}
+
+impl Default for MetaUpdatePermission {
+	fn default() -> Self {
+		Self::ItemOwner
+	}
+}
+
+#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum CreateItemData {
 	NFT(CreateNftData),

@@ -6,29 +6,29 @@
 import BN from 'bn.js';
 
 export interface ICollectionInterface {
-  Access: string;
+  access: string;
   id: number;
-  DecimalPoints: BN;
+  decimalPoints: BN;
   // constOnChainSchema
-  Description: [BN, BN]; // utf16
+  description: [BN, BN]; // utf16
   isReFungible: boolean;
-  Limits: {
-    AccountTokenOwnershipLimit: number;
-    SponsoredDataSize: number;
-    SponsoredDataRateLimit?: number,
-    TokenLimit: number;
-    SponsorTimeout: number;
-    OwnerCanTransfer: boolean;
-    OwnerCanDestroy: boolean;
+  limits: {
+    accountTokenOwnershipLimit: number;
+    sponsoredDataSize: number;
+    sponsoredDataRateLimit?: number,
+    tokenLimit: number;
+    sponsorTimeout: number;
+    ownerCanTransfer: boolean;
+    ownerCanDestroy: boolean;
   };
-  MintMode: boolean;
-  Mode: {
-    Nft: null;
+  mintMode: boolean;
+  mode: {
+    nft: null;
   };
-  Name: [BN, BN]; // utf16
-  OffchainSchema: [Uint8Array];
-  Owner: [Uint8Array];
-  SchemaVersion: string;
+  name: [BN, BN]; // utf16
+  offchainSchema: [Uint8Array];
+  owner: [Uint8Array];
+  schemaVersion: string;
   // prefix
   // sponsor
   // tokenPrefix
