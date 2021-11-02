@@ -363,7 +363,7 @@ nft-data-structs = { path = '../primitives/nft', default-features = false, versi
 pallet-unq-scheduler = { path = '../pallets/scheduler', default-features = false, version = '3.0.0' }
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
 pallet-nft-transaction-payment = { path = '../pallets/nft-transaction-payment', default-features = false, version = '3.0.0' }
-pallet-nft-charge-transaction = { path = '../pallets/nft-charge-transaction', default-features = false, version = '3.0.0' }
+pallet-nft-charge-transaction = {git = "https://github.com/UniqueNetwork/pallet-sponsoring", package = "pallet-template-charge-transaction", default-features = false, version = '3.0.0' }
 pallet-evm-migration = { path = '../pallets/evm-migration', default-features = false }
 pallet-evm-contract-helpers = { path = '../pallets/evm-contract-helpers', default-features = false }
 pallet-evm-transaction-payment = { path = '../pallets/evm-transaction-payment', default-features = false }

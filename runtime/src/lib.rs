@@ -788,7 +788,9 @@ impl pallet_evm_transaction_payment::Config for Runtime {
 	type Currency = Balances;
 }
 
-impl pallet_nft_charge_transaction::Config for Runtime {}
+impl pallet_nft_charge_transaction::Config for Runtime {
+	type SponsorshipHandler = pallet_nft::NftSponsorshipHandler<Runtime>;
+}
 
 // impl pallet_contract_helpers::Config for Runtime {
 //	 type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
