@@ -7,7 +7,7 @@ import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
   normalizeAccountId,
-  waitNewBlocks
+  waitNewBlocks,
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);

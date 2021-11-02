@@ -5,11 +5,9 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { default as usingApi } from './substrate/substrate-api';
 import { createCollectionExpectFailure, createCollectionExpectSuccess } from './util/helpers';
 
 chai.use(chaiAsPromised);
-const expect = chai.expect;
 
 describe('integration test: ext. createCollection():', () => {
   it('Create new NFT collection', async () => {

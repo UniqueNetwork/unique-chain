@@ -700,15 +700,9 @@ export type CreateItemData = {
   ReFungible: CreateReFungibleData;
 };
 
-<<<<<<< HEAD
 export async function burnItemExpectSuccess(sender: IKeyringPair, collectionId: number, tokenId: number, owner: IKeyringPair, value = 0) {
   await usingApi(async (api) => {
     const tx = api.tx.nft.burnItem(collectionId, tokenId, normalizeAccountId(owner.address), value);
-=======
-export async function burnItemExpectSuccess(sender: IKeyringPair, collectionId: number, tokenId: number, value = 1) {
-  await usingApi(async (api) => {
-    const tx = api.tx.nft.burnItem(collectionId, tokenId, value);
->>>>>>> develop
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
     // Get the item
@@ -771,16 +765,11 @@ transferFromExpectSuccess(
     if (type === 'ReFungible') {
       const nftItemData =
         (await api.query.nft.reFungibleItemList(collectionId, tokenId) as any).toJSON() as IReFungibleTokenDataType;
-<<<<<<< HEAD
       const expectedOwner = toSubstrateAddress(to);
       const ownerIndex = nftItemData.Owner.findIndex(v => toSubstrateAddress(v.Owner as any as string) == expectedOwner);
       expect(ownerIndex).to.not.equal(-1);
       expect(nftItemData.Owner[ownerIndex].Owner).to.be.deep.equal(normalizeAccountId(to));
       expect(nftItemData.Owner[ownerIndex].Fraction).to.be.greaterThanOrEqual(value as number);
-=======
-      expect(nftItemData.owner[0].owner).to.be.deep.equal(normalizeAccountId(to));
-      expect(nftItemData.owner[0].fraction).to.be.equal(value);
->>>>>>> develop
     }
   });
 }
@@ -1178,11 +1167,6 @@ export async function addToWhiteListAgainExpectSuccess(sender: IKeyringPair, col
 
 export async function addToWhiteListExpectFail(sender: IKeyringPair, collectionId: number, address: string | AccountId) {
   await usingApi(async (api) => {
-<<<<<<< HEAD
-    
-=======
-
->>>>>>> develop
     // Run the transaction
     const tx = api.tx.nft.addToWhiteList(collectionId, normalizeAccountId(address));
     const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
