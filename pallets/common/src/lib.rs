@@ -459,6 +459,7 @@ pub trait CommonWeightInfo {
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
+	fn burn_from() -> Weight;
 	fn set_variable_metadata(bytes: u32) -> Weight;
 }
 
@@ -501,6 +502,13 @@ pub trait CommonCollectionOperations<T: Config> {
 		sender: T::CrossAccountId,
 		from: T::CrossAccountId,
 		to: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo;
+	fn burn_from(
+		&self,
+		sender: T::CrossAccountId,
+		from: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResultWithPostInfo;

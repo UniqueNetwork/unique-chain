@@ -39,6 +39,10 @@ impl<T: Config> CommonWeightInfo for CommonWeights<T> {
 		<SelfWeightOf<T>>::transfer_from()
 	}
 
+	fn burn_from() -> Weight {
+		0
+	}
+
 	fn set_variable_metadata(bytes: u32) -> Weight {
 		<SelfWeightOf<T>>::set_variable_metadata(bytes)
 	}
@@ -157,6 +161,25 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			with_weight(
 				<Pallet<T>>::transfer_from(&self, &sender, &from, &to, token),
 				<CommonWeights<T>>::transfer_from(),
+			)
+		} else {
+			Ok(().into())
+		}
+	}
+
+	fn burn_from(
+		&self,
+		sender: T::CrossAccountId,
+		from: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo {
+		ensure!(amount <= 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
+
+		if amount == 1 {
+			with_weight(
+				<Pallet<T>>::burn_from(&self, &sender, &from, token),
+				<CommonWeights<T>>::burn_from(),
 			)
 		} else {
 			Ok(().into())

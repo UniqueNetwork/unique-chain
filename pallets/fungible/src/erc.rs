@@ -96,6 +96,18 @@ impl<T: Config> FungibleHandle<T> {
 	}
 }
 
+#[solidity_interface(name = "ERC20UniqueExtensions")]
+impl<T: Config> FungibleHandle<T> {
+	fn burn_from(&mut self, caller: caller, from: address, amount: uint256) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = T::CrossAccountId::from_eth(from);
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+
+		<Pallet<T>>::burn_from(self, &caller, &from, amount).map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+}
+
 #[solidity_interface(name = "UniqueFungible", is(ERC20))]
 impl<T: Config> FungibleHandle<T> {}
 

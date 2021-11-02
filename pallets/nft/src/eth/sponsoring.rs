@@ -35,9 +35,10 @@ fn try_sponsor<T: Config>(
 				.map_err(|_| AnyError)?
 				.ok_or(AnyError)?;
 			match call {
-				UniqueNFTCall::ERC721UniqueExtensions(
-					ERC721UniqueExtensionsCall::TransferNft { token_id, .. },
-				)
+				UniqueNFTCall::ERC721UniqueExtensions(ERC721UniqueExtensionsCall::Transfer {
+					token_id,
+					..
+				})
 				| UniqueNFTCall::ERC721(ERC721Call::TransferFrom { token_id, .. }) => {
 					let token_id: u32 = token_id.try_into().map_err(|_| AnyError)?;
 					let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;

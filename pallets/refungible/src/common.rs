@@ -59,6 +59,10 @@ impl<T: Config> CommonWeightInfo for CommonWeights<T> {
 		)
 	}
 
+	fn burn_from() -> Weight {
+		0
+	}
+
 	fn set_variable_metadata(bytes: u32) -> Weight {
 		<SelfWeightOf<T>>::set_variable_metadata(bytes)
 	}
@@ -161,7 +165,20 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		with_weight(
 			<Pallet<T>>::transfer_from(&self, &sender, &from, &to, token, amount),
-			<CommonWeights<T>>::approve(),
+			<CommonWeights<T>>::transfer_from(),
+		)
+	}
+
+	fn burn_from(
+		&self,
+		sender: T::CrossAccountId,
+		from: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo {
+		with_weight(
+			<Pallet<T>>::burn_from(&self, &sender, &from, token, amount),
+			<CommonWeights<T>>::burn_from(),
 		)
 	}
 

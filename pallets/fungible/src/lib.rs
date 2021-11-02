@@ -356,6 +356,38 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	pub fn burn_from(
+		collection: &FungibleHandle<T>,
+		spender: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		amount: u128,
+	) -> DispatchResult {
+		if spender == from {
+			return Self::burn(collection, from, amount);
+		}
+		if collection.access == AccessMode::WhiteList {
+			// `from` checked in [`burn`]
+			collection.check_allowlist(spender)?;
+		}
+
+		let allowance = <Allowance<T>>::get((collection.id, from.as_sub(), spender.as_sub()))
+			.checked_sub(amount);
+		if allowance.is_none() {
+			ensure!(
+				collection.ignores_allowance(spender)?,
+				<CommonError<T>>::TokenValueNotEnough
+			);
+		}
+
+		// =========
+
+		Self::burn(collection, from, amount)?;
+		if let Some(allowance) = allowance {
+			Self::set_allowance_unchecked(collection, from, spender, allowance);
+		}
+		Ok(())
+	}
+
 	/// Delegated to `create_multiple_items`
 	pub fn create_item(
 		collection: &FungibleHandle<T>,

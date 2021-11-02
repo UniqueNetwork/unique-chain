@@ -537,6 +537,39 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	pub fn burn_from(
+		collection: &RefungibleHandle<T>,
+		spender: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResult {
+		if spender == from {
+			return Self::burn(collection, from, token, amount);
+		}
+		if collection.access == AccessMode::WhiteList {
+			// `from` checked in [`burn`]
+			collection.check_allowlist(spender)?;
+		}
+
+		let allowance = <Allowance<T>>::get((collection.id, token, from.as_sub(), &spender))
+			.checked_sub(amount);
+		if allowance.is_none() {
+			ensure!(
+				collection.ignores_allowance(spender)?,
+				<CommonError<T>>::TokenValueNotEnough
+			);
+		}
+
+		// =========
+
+		Self::burn(collection, from, token, amount)?;
+		if let Some(allowance) = allowance {
+			Self::set_allowance_unchecked(collection, from, spender, token, allowance);
+		}
+		Ok(())
+	}
+
 	pub fn set_variable_metadata(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,

@@ -38,6 +38,10 @@ impl<T: Config> CommonWeightInfo for CommonWeights<T> {
 		<SelfWeightOf<T>>::transfer_from()
 	}
 
+	fn burn_from() -> Weight {
+		0
+	}
+
 	fn set_variable_metadata(_bytes: u32) -> Weight {
 		// Error
 		0
@@ -153,6 +157,24 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		with_weight(
 			<Pallet<T>>::transfer_from(&self, &sender, &from, &to, amount),
 			<CommonWeights<T>>::transfer_from(),
+		)
+	}
+
+	fn burn_from(
+		&self,
+		sender: T::CrossAccountId,
+		from: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo {
+		ensure!(
+			token == TokenId::default(),
+			<Error<T>>::FungibleItemsHaveNoId
+		);
+
+		with_weight(
+			<Pallet<T>>::burn_from(&self, &sender, &from, amount),
+			<CommonWeights<T>>::burn_from(),
 		)
 	}
 

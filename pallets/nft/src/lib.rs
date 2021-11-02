@@ -623,14 +623,13 @@ decl_module! {
 		/// * item_id: ID of NFT to burn.
 		///
 		/// * from: owner of item
-		// #[weight = 0]
-		// #[transactional]
-		// pub fn burn_from(origin, collection_id: CollectionId, from: T::CrossAccountId, item_id: TokenId, value: u128) -> PostDispatchInfo {
-		// 	let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+		#[weight = <CommonWeights<T>>::burn_from()]
+		#[transactional]
+		pub fn burn_from(origin, collection_id: CollectionId, from: T::CrossAccountId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-		// 	// dispatch_call::<T, _>(collection_id, |d| d.burn_from(sender, from, item_id, value))
-		// 	todo!()
-		// }
+			dispatch_call::<T, _>(collection_id, |d| d.burn_from(sender, from, item_id, value))
+		}
 
 		/// Change ownership of the token.
 		///

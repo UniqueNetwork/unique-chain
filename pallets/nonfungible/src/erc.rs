@@ -264,8 +264,7 @@ impl<T: Config> NonfungibleHandle<T> {
 
 #[solidity_interface(name = "ERC721UniqueExtensions")]
 impl<T: Config> NonfungibleHandle<T> {
-	#[solidity(rename_selector = "transfer")]
-	fn transfer_nft(
+	fn transfer(
 		&mut self,
 		caller: caller,
 		to: address,
@@ -277,6 +276,21 @@ impl<T: Config> NonfungibleHandle<T> {
 		let token = token_id.try_into()?;
 
 		<Pallet<T>>::transfer(self, &caller, &to, token).map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	fn burn_from(
+		&mut self,
+		caller: caller,
+		from: address,
+		token_id: uint256,
+		_value: value,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = T::CrossAccountId::from_eth(from);
+		let token = token_id.try_into()?;
+
+		<Pallet<T>>::burn_from(self, &caller, &from, token).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
