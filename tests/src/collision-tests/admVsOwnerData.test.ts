@@ -41,7 +41,7 @@ describe('Admin vs Owner changes the data in the token: ', () => {
         BobTx.signAndSend(Bob),
       ]);
       const item: any = await api.query.nft.nftItemList(collectionId, itemId);
-      expect(item.VariableData).not.to.be.eq(null); // Pseudo-random selection of one of two values
+      expect(item.variableData).not.to.be.eq(null); // Pseudo-random selection of one of two values
       await waitNewBlocks(2);
     });
   });

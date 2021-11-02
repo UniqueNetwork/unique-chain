@@ -1,5 +1,7 @@
 use crate::Config;
 use codec::{Encode, EncodeLike, Decode};
+use scale_info::build::{FieldsBuilder, UnnamedFields, Variants};
+use scale_info::{Path, Type, TypeInfo};
 use sp_core::crypto::AccountId32;
 use primitive_types::H160;
 use core::cmp::Ordering;
@@ -9,7 +11,7 @@ use sp_std::vec::Vec;
 use sp_std::clone::Clone;
 
 pub trait CrossAccountId<AccountId>:
-	Encode + EncodeLike + Decode + Clone + PartialEq + Ord + core::fmt::Debug
+	Encode + EncodeLike + Decode + TypeInfo + Clone + PartialEq + Ord + core::fmt::Debug
 // +
 // Serialize + Deserialize<'static>
 {
@@ -26,6 +28,36 @@ pub struct BasicCrossAccountId<T: Config> {
 	from_ethereum: bool,
 	substrate: T::AccountId,
 	ethereum: H160,
+}
+
+impl<T: Config> TypeInfo for BasicCrossAccountId<T> {
+	type Identity = Self;
+
+	fn type_info() -> Type {
+		Type::builder()
+			.path(Path::new("BasicCrossAccountId", "pallet_nft::eth::account"))
+			// At runtime side this type has no type parameters, as AccountId is inlined?
+			// .type_params([TypeParameter::new(
+			// 	"AccountId",
+			// 	Some(scale_info::meta_type::<T::AccountId>()),
+			// )])
+			.variant(
+				Variants::new()
+					.variant("Substrate", |t| {
+						t.fields(
+							<FieldsBuilder<UnnamedFields>>::default()
+								.field(|f| f.ty::<T::AccountId>()),
+						)
+						.index(0)
+					})
+					.variant("Ethereum", |t| {
+						t.fields(
+							<FieldsBuilder<UnnamedFields>>::default().field(|f| f.ty::<H160>()),
+						)
+						.index(1)
+					}),
+			)
+	}
 }
 
 impl<T: Config> core::fmt::Debug for BasicCrossAccountId<T> {

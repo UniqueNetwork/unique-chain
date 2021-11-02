@@ -66,7 +66,7 @@ describe('setSchemaVersion positive', () => {
       // tslint:disable-next-line:no-unused-expression
       expect(collectionInfo).to.be.exist;
       // tslint:disable-next-line:no-unused-expression
-      expect(collectionInfo ? collectionInfo.SchemaVersion.toString() : '').to.be.equal('Unique');
+      expect(collectionInfo ? collectionInfo.schemaVersion.toString() : '').to.be.equal('Unique');
     });
   });
 });
@@ -92,7 +92,7 @@ describe('Collection admin setSchemaVersion positive', () => {
       // tslint:disable-next-line:no-unused-expression
       expect(collectionInfo).to.be.exist;
       // tslint:disable-next-line:no-unused-expression
-      expect(collectionInfo ? collectionInfo.SchemaVersion.toString() : '').to.be.equal('Unique');
+      expect(collectionInfo ? collectionInfo.schemaVersion.toString() : '').to.be.equal('Unique');
     });
   });
 
@@ -107,7 +107,7 @@ describe('Collection admin setSchemaVersion positive', () => {
       // tslint:disable-next-line:no-unused-expression
       expect(collectionInfo).to.be.exist;
       // tslint:disable-next-line:no-unused-expression
-      expect(collectionInfo ? collectionInfo.SchemaVersion.toString() : '').to.be.equal('ImageURL');
+      expect(collectionInfo ? collectionInfo.schemaVersion.toString() : '').to.be.equal('ImageURL');
     });
   });
 });

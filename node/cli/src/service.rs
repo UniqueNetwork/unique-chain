@@ -9,7 +9,6 @@
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::collections::BTreeMap;
-use std::collections::HashMap;
 use std::time::Duration;
 use futures::StreamExt;
 
@@ -27,8 +26,8 @@ use cumulus_primitives_core::ParaId;
 
 // Substrate Imports
 use sc_client_api::ExecutorProvider;
-pub use sc_executor::NativeExecutor;
-use sc_executor::native_executor_instance;
+use sc_executor::NativeElseWasmExecutor;
+use sc_executor::NativeExecutionDispatch;
 use sc_network::NetworkService;
 use sc_service::{BasePath, Configuration, PartialComponents, Role, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
@@ -40,7 +39,6 @@ use sc_client_api::BlockchainEvents;
 
 // Frontier Imports
 use fc_rpc_core::types::FilterPool;
-use fc_rpc_core::types::PendingTransactions;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
 // Runtime type overrides
@@ -49,13 +47,20 @@ type Header = sp_runtime::generic::Header<BlockNumber, sp_runtime::traits::Blake
 pub type Block = sp_runtime::generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
 type Hash = sp_core::H256;
 
-// Native executor instance.
-native_executor_instance!(
-	pub ParachainRuntimeExecutor,
-	nft_runtime::api::dispatch,
-	nft_runtime::native_version,
-	frame_benchmarking::benchmarking::HostFunctions,
-);
+/// Native executor instance.
+pub struct ParachainRuntimeExecutor;
+
+impl NativeExecutionDispatch for ParachainRuntimeExecutor {
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		nft_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		nft_runtime::native_version()
+	}
+}
 
 pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backend<Block>>, String> {
 	let config_dir = config
@@ -77,9 +82,10 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backen
 	)?))
 }
 
-type Executor = ParachainRuntimeExecutor;
+type ExecutorDispatch = ParachainRuntimeExecutor;
 
-type FullClient = sc_service::TFullClient<Block, RuntimeApi, Executor>;
+type FullClient =
+	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
@@ -100,7 +106,6 @@ pub fn new_partial<BIQ>(
 		sc_transaction_pool::FullPool<Block, FullClient>,
 		(
 			Option<Telemetry>,
-			PendingTransactions,
 			Option<FilterPool>,
 			Arc<fc_db::Backend<Block>>,
 			Option<TelemetryWorkerHandle>,
@@ -110,7 +115,7 @@ pub fn new_partial<BIQ>(
 >
 where
 	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
-	Executor: sc_executor::NativeExecutionDispatch + 'static,
+	ExecutorDispatch: NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
 		Arc<FullClient>,
 		&Configuration,
@@ -140,10 +145,17 @@ where
 		})
 		.transpose()?;
 
+	let executor = NativeElseWasmExecutor::<ExecutorDispatch>::new(
+		config.wasm_method,
+		config.default_heap_pages,
+		config.max_runtime_instances,
+	);
+
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(
+		sc_service::new_full_parts::<Block, RuntimeApi, _>(
 			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
+			executor,
 		)?;
 	let client = Arc::new(client);
 
@@ -163,8 +175,6 @@ where
 		task_manager.spawn_essential_handle(),
 		client.clone(),
 	);
-
-	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
 
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 
@@ -187,7 +197,6 @@ where
 		select_chain,
 		other: (
 			telemetry,
-			pending_transactions,
 			filter_pool,
 			frontier_backend,
 			telemetry_worker_handle,
@@ -210,7 +219,7 @@ async fn start_node_impl<BIQ, BIC>(
 ) -> sc_service::error::Result<(TaskManager, Arc<FullClient>)>
 where
 	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
-	Executor: sc_executor::NativeExecutionDispatch + 'static,
+	ExecutorDispatch: NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
 		Arc<FullClient>,
 		&Configuration,
@@ -236,13 +245,7 @@ where
 	let parachain_config = prepare_node_config(parachain_config);
 
 	let params = new_partial::<BIQ>(&parachain_config, build_import_queue)?;
-	let (
-		mut telemetry,
-		pending_transactions,
-		filter_pool,
-		frontier_backend,
-		telemetry_worker_handle,
-	) = params.other;
+	let (mut telemetry, filter_pool, frontier_backend, telemetry_worker_handle) = params.other;
 
 	let relay_chain_full_node =
 		cumulus_client_service::build_polkadot_full_node(polkadot_config, telemetry_worker_handle)
@@ -293,18 +296,18 @@ where
 			deny_unsafe,
 			client: rpc_client.clone(),
 			pool: rpc_pool.clone(),
+			graph: rpc_pool.pool().clone(),
 			// TODO: Unhardcode
 			enable_dev_signer: false,
 			filter_pool: filter_pool.clone(),
 			network: rpc_network.clone(),
-			pending_transactions: pending_transactions.clone(),
 			select_chain: select_chain.clone(),
 			is_authority,
 			// TODO: Unhardcode
 			max_past_logs: 10000,
 		};
 
-		Ok(nft_rpc::create_full::<_, _, _, RuntimeApi, _>(
+		Ok(nft_rpc::create_full::<_, _, _, _, RuntimeApi, _>(
 			full_deps,
 			subscription_executor.clone(),
 		))
