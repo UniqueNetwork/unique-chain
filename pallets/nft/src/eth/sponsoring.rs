@@ -1,29 +1,30 @@
 //! Implements EVM sponsoring logic via OnChargeEVMTransaction
 
-use crate::{
-	Collection, CollectionById, Config, FungibleTransferBasket, NftTransferBasket,
-	eth::{account::EvmBackwardsAddressMapping, map_eth_to_id},
-};
+use crate::{Collection, Config, FungibleTransferBasket, NftTransferBasket};
 use evm_coder::{Call, abi::AbiReader};
 use frame_support::{
-	storage::{StorageMap, StorageDoubleMap},
+	storage::{StorageDoubleMap},
 };
+use pallet_common::eth::map_eth_to_id;
 use sp_core::H160;
 use sp_std::prelude::*;
 use up_sponsorship::SponsorshipHandler;
-use super::{
-	account::CrossAccountId,
-	erc::{UniqueFungibleCall, UniqueNFTCall, ERC721Call, ERC20Call, ERC721UniqueExtensionsCall},
-};
-use core::convert::TryInto;
 use core::marker::PhantomData;
-use nft_data_structs::{NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT};
+use core::convert::TryInto;
+use nft_data_structs::{CollectionId, NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT};
+use pallet_common::{
+	CollectionById,
+	account::{CrossAccountId, EvmBackwardsAddressMapping},
+};
+
+use pallet_nonfungible::erc::{UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721Call};
+use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};
 
 struct AnyError;
 
 fn try_sponsor<T: Config>(
 	caller: &H160,
-	collection_id: u32,
+	collection_id: CollectionId,
 	collection: &Collection<T>,
 	call: &[u8],
 ) -> Result<(), AnyError> {
@@ -34,9 +35,10 @@ fn try_sponsor<T: Config>(
 				.map_err(|_| AnyError)?
 				.ok_or(AnyError)?;
 			match call {
-				UniqueNFTCall::ERC721UniqueExtensions(
-					ERC721UniqueExtensionsCall::TransferNft { token_id, .. },
-				)
+				UniqueNFTCall::ERC721UniqueExtensions(ERC721UniqueExtensionsCall::Transfer {
+					token_id,
+					..
+				})
 				| UniqueNFTCall::ERC721(ERC721Call::TransferFrom { token_id, .. }) => {
 					let token_id: u32 = token_id.try_into().map_err(|_| AnyError)?;
 					let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;

@@ -8,6 +8,10 @@ interface Dummy {
 
 }
 
+interface ERC165 is Dummy {
+	function supportsInterface(bytes4 interfaceID) external view returns (bool);
+}
+
 // Inline
 interface ERC20Events {
 	event Transfer(address indexed from, address indexed to, uint256 value);
@@ -18,27 +22,16 @@ interface ERC20Events {
 	);
 }
 
-// Inline
-interface InlineNameSymbol is Dummy {
+interface ERC20 is Dummy, ERC165, ERC20Events {
 	// Selector: name() 06fdde03
 	function name() external view returns (string memory);
 
 	// Selector: symbol() 95d89b41
 	function symbol() external view returns (string memory);
-}
 
-// Inline
-interface InlineTotalSupply is Dummy {
 	// Selector: totalSupply() 18160ddd
 	function totalSupply() external view returns (uint256);
-}
 
-interface ERC165 is Dummy {
-	// Selector: supportsInterface(bytes4) 01ffc9a7
-	function supportsInterface(uint32 interfaceId) external view returns (bool);
-}
-
-interface ERC20 is Dummy, InlineNameSymbol, InlineTotalSupply, ERC20Events {
 	// Selector: decimals() 313ce567
 	function decimals() external view returns (uint8);
 

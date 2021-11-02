@@ -14,6 +14,10 @@ interface Dummy {
 
 }
 
+interface ERC165 is Dummy {
+	function supportsInterface(bytes4 interfaceID) external view returns (bool);
+}
+
 // Inline
 interface ERC721Events {
 	event Transfer(
@@ -36,26 +40,6 @@ interface ERC721Events {
 // Inline
 interface ERC721MintableEvents {
 	event MintingFinished();
-}
-
-// Inline
-interface InlineNameSymbol is Dummy {
-	// Selector: name() 06fdde03
-	function name() external view returns (string memory);
-
-	// Selector: symbol() 95d89b41
-	function symbol() external view returns (string memory);
-}
-
-// Inline
-interface InlineTotalSupply is Dummy {
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() external view returns (uint256);
-}
-
-interface ERC165 is Dummy {
-	// Selector: supportsInterface(bytes4) 01ffc9a7
-	function supportsInterface(uint32 interfaceId) external view returns (bool);
 }
 
 interface ERC721 is Dummy, ERC165, ERC721Events {
@@ -103,12 +87,12 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 		returns (address);
 }
 
-interface ERC721Burnable is Dummy {
+interface ERC721Burnable is Dummy, ERC165 {
 	// Selector: burn(uint256) 42966c68
 	function burn(uint256 tokenId) external;
 }
 
-interface ERC721Enumerable is Dummy, InlineTotalSupply {
+interface ERC721Enumerable is Dummy, ERC165 {
 	// Selector: tokenByIndex(uint256) 4f6ccce7
 	function tokenByIndex(uint256 index) external view returns (uint256);
 
@@ -117,14 +101,23 @@ interface ERC721Enumerable is Dummy, InlineTotalSupply {
 		external
 		view
 		returns (uint256);
+
+	// Selector: totalSupply() 18160ddd
+	function totalSupply() external view returns (uint256);
 }
 
-interface ERC721Metadata is Dummy, InlineNameSymbol {
+interface ERC721Metadata is Dummy, ERC165 {
+	// Selector: name() 06fdde03
+	function name() external view returns (string memory);
+
+	// Selector: symbol() 95d89b41
+	function symbol() external view returns (string memory);
+
 	// Selector: tokenURI(uint256) c87b56dd
 	function tokenURI(uint256 tokenId) external view returns (string memory);
 }
 
-interface ERC721Mintable is Dummy, ERC721MintableEvents {
+interface ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 	// Selector: mintingFinished() 05d2035b
 	function mintingFinished() external view returns (bool);
 
@@ -142,9 +135,12 @@ interface ERC721Mintable is Dummy, ERC721MintableEvents {
 	function finishMinting() external returns (bool);
 }
 
-interface ERC721UniqueExtensions is Dummy {
+interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// Selector: transfer(address,uint256) a9059cbb
 	function transfer(address to, uint256 tokenId) external;
+
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 tokenId) external;
 
 	// Selector: nextTokenId() 75794a3c
 	function nextTokenId() external view returns (uint256);

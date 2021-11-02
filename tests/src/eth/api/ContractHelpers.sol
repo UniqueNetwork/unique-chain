@@ -8,7 +8,11 @@ interface Dummy {
 
 }
 
-interface ContractHelpers is Dummy {
+interface ERC165 is Dummy {
+	function supportsInterface(bytes4 interfaceID) external view returns (bool);
+}
+
+interface ContractHelpers is Dummy, ERC165 {
 	// Selector: contractOwner(address) 5152b14c
 	function contractOwner(address contractAddress)
 		external
