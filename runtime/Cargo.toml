@@ -10,7 +10,7 @@ homepage = 'https://unique.network'
 license = 'All Rights Reserved'
 name = 'nft-runtime'
 repository = 'https://github.com/usetech-llc/nft_private/'
-version = '3.0.0'
+version = '0.9.12'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']

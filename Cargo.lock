@@ -4925,7 +4925,7 @@ dependencies = [
 
 [[package]]
 name = "nft"
-version = "3.0.0"
+version = "0.9.12"
 dependencies = [
  "cumulus-client-cli",
  "cumulus-client-collator",
@@ -5059,7 +5059,7 @@ dependencies = [
 
 [[package]]
 name = "nft-runtime"
-version = "3.0.0"
+version = "0.9.12"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
