@@ -7,10 +7,7 @@ import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
   normalizeAccountId,
-<<<<<<< HEAD
-=======
-  waitNewBlocks,
->>>>>>> develop
+  waitNewBlocks
 } from '../util/helpers';
 
 chai.use(chaiAsPromised);
@@ -36,13 +33,8 @@ describe('Admin vs Owner take token: ', () => {
       await submitTransactionAsync(Alice, changeAdminTx);
       const itemId = await createItemExpectSuccess(Bob, collectionId, 'NFT');
       //
-<<<<<<< HEAD
       const sendItem = api.tx.nft.transfer(Ferdie.address, collectionId, itemId, 1);
       const burnItem = api.tx.nft.burnItem(collectionId, itemId, normalizeAccountId(Alice.address), 1);
-=======
-      const sendItem = api.tx.nft.transfer(normalizeAccountId(Ferdie.address), collectionId, itemId, 1);
-      const burnItem = api.tx.nft.burnItem(collectionId, itemId, 1);
->>>>>>> develop
       await Promise.all([
         sendItem.signAndSend(Bob),
         burnItem.signAndSend(Alice),

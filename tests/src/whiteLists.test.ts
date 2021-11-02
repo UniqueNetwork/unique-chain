@@ -67,11 +67,7 @@ describe('Integration Test ext. White list tests', () => {
     await addToWhiteListExpectFail(Alice, collectionId, Bob.address);
   });
 
-<<<<<<< HEAD
   it('Nobody can add address to white list of non-existing collection', async () => {
-=======
-  it('Nobody can add address to white list of destroyed collection', async () => {
->>>>>>> develop
     const collectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectSuccess(collectionId, '//Alice');
     await addToWhiteListExpectFail(Alice, collectionId, Bob.address);
@@ -89,11 +85,7 @@ describe('Integration Test ext. White list tests', () => {
     await removeFromWhiteListExpectSuccess(Alice, collectionId, normalizeAccountId(Bob));
   });  
 
-<<<<<<< HEAD
   it('Owner can remove address from white list', async () => {
-=======
-  it('Admin can remove address from white list', async () => {
->>>>>>> develop
     const collectionId = await createCollectionExpectSuccess();
     await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
     await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
@@ -164,11 +156,7 @@ describe('Integration Test ext. White list tests', () => {
     const collectionId = await createCollectionExpectSuccess();
     const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
     await enableWhiteListExpectSuccess(Alice, collectionId);
-<<<<<<< HEAD
     await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
-=======
-    await addToWhiteListExpectSuccess(Alice, collectionId, Alice.address);
->>>>>>> develop
 
     await transferExpectFailure(
       collectionId,
@@ -186,11 +174,7 @@ describe('Integration Test ext. White list tests', () => {
     await addToWhiteListExpectSuccess(Alice, collectionId, Alice.address);
     await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
     await approveExpectSuccess(collectionId, itemId, Alice, Charlie);
-<<<<<<< HEAD
     await removeFromWhiteListExpectSuccess(Alice, collectionId, normalizeAccountId(Charlie));
-=======
-    await removeFromWhiteListExpectSuccess(Alice, collectionId, normalizeAccountId(Alice));
->>>>>>> develop
 
     await transferExpectFailure(
       collectionId,
@@ -207,11 +191,7 @@ describe('Integration Test ext. White list tests', () => {
     await enableWhiteListExpectSuccess(Alice, collectionId);
 
     await usingApi(async (api) => {
-<<<<<<< HEAD
       const tx = api.tx.nft.burnItem(collectionId, itemId, normalizeAccountId(Alice.address), 11);
-=======
-      const tx = api.tx.nft.burnItem(collectionId, itemId, /*normalizeAccountId(Alice.address),*/ 11);
->>>>>>> develop
       const badTransaction = async function () { 
         await submitTransactionExpectFailAsync(Alice, tx);
       };
@@ -279,11 +259,7 @@ describe('Integration Test ext. White list tests', () => {
     await createItemExpectSuccess(Bob, collectionId, 'NFT', Bob.address);
   });
 
-<<<<<<< HEAD
   it('If Public Access mode is set to WhiteList, and Mint Permission is set to false, tokens cannot be created by non-privileged and white listed address', async () => {
-=======
-  it('If Public Access mode is set to WhiteList, and Mint Permission is set to false, tokens cannot be created by non-privileged and white-listed address', async () => {
->>>>>>> develop
     const collectionId = await createCollectionExpectSuccess();
     await enableWhiteListExpectSuccess(Alice, collectionId);
     await setMintPermissionExpectSuccess(Alice, collectionId, false);

@@ -265,11 +265,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     await usingApi(async () => {
       const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
-<<<<<<< HEAD
       await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, Alice, 1);
-=======
-      await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 100);
->>>>>>> develop
       await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
       await transferFromExpectFail(reFungibleCollectionId, newReFungibleTokenId, Bob, Alice, Charlie, 1);
 
@@ -282,13 +278,8 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
       await approveExpectSuccess(nftCollectionId, newNftTokenId, Alice, Bob);
-<<<<<<< HEAD
       await burnItemExpectSuccess(Alice, nftCollectionId, newNftTokenId, Alice, 1);
       await transferFromExpectFail(nftCollectionId, newNftTokenId, Bob, Alice, Charlie, 1);      
-=======
-      await burnItemExpectSuccess(Alice, nftCollectionId, newNftTokenId, 1);
-      await transferFromExpectFail(nftCollectionId, newNftTokenId, Bob, Alice, Charlie, 1);
->>>>>>> develop
     });
   });
   it( 'transferFrom burnt token after approve Fungible', async () => {
@@ -306,11 +297,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
       const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
       await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob);
-<<<<<<< HEAD
       await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, Alice, 1);
-=======
-      await burnItemExpectSuccess(Alice, reFungibleCollectionId, newReFungibleTokenId, 100);
->>>>>>> develop
       await transferFromExpectFail(reFungibleCollectionId, newReFungibleTokenId, Bob, Alice, Charlie, 1);
 
     });
