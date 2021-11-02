@@ -111,7 +111,7 @@ impl<T: Config> FungibleHandle<T> {
 #[solidity_interface(name = "UniqueFungible", is(ERC20))]
 impl<T: Config> FungibleHandle<T> {}
 
-generate_stubgen!(get_impl, UniqueFungibleCall, true);
+generate_stubgen!(gen_impl, UniqueFungibleCall, true);
 generate_stubgen!(gen_iface, UniqueFungibleCall, false);
 
 impl<T: Config> CommonEvmHandler for FungibleHandle<T> {

@@ -714,9 +714,9 @@ impl SolidityInterface {
 						)*),
 					};
 					if is_impl {
-						tc.collect("// Common stubs holder\ncontract Dummy {\n\tuint8 dummy;\n\tstring stub_error = \"this contract is implemented in native\";\n}\ninterface ERC165 {\n\tfunction supportsInterface(bytes4 interfaceID) external view returns (bool) {\n\t\trequire(false, stub_error);\n\t\tinterfaceID;\n\t\treturn true;\n\t}\n}\n".into());
+						tc.collect("// Common stubs holder\ncontract Dummy {\n\tuint8 dummy;\n\tstring stub_error = \"this contract is implemented in native\";\n}\ncontract ERC165 is Dummy {\n\tfunction supportsInterface(bytes4 interfaceID) external view returns (bool) {\n\t\trequire(false, stub_error);\n\t\tinterfaceID;\n\t\treturn true;\n\t}\n}\n".into());
 					} else {
-						tc.collect("// Common stubs holder\ninterface Dummy {\n}\ninterface ERC165 {\n\tfunction supportsInterface(bytes4 interfaceID) external view returns (bool);\n}\n".into());
+						tc.collect("// Common stubs holder\ninterface Dummy {\n}\ninterface ERC165 is Dummy {\n\tfunction supportsInterface(bytes4 interfaceID) external view returns (bool);\n}\n".into());
 					}
 					#(
 						#solidity_generators

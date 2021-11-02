@@ -18,8 +18,8 @@ sp-core = { default-features = false, git = 'https://github.com/paritytech/subst
 pallet-common = { default-features = false, path = '../common' }
 nft-data-structs = { default-features = false, path = '../../primitives/nft' }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
-ethereum = { git = "https://github.com/purestake/ethereum", branch = "joshy-scale-info", default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = '../evm-coder-substrate' }
+ethereum = { git = "https://github.com/purestake/ethereum", branch = "joshy-scale-info", default-features = false }
 frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
 scale-info = { version = "1.0.0", default-features = false, features = [
     "derive",
@@ -36,6 +36,7 @@ std = [
     "pallet-common/std",
     "evm-coder/std",
     "ethereum/std",
+    "pallet-evm-coder-substrate/std",
     'frame-benchmarking/std',
 ]
 runtime-benchmarks = ['frame-benchmarking', 'pallet-common/runtime-benchmarks']
