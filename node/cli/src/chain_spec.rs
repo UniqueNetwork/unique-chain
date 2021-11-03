@@ -5,7 +5,6 @@
 
 use cumulus_primitives_core::ParaId;
 use nft_runtime::*;
-use nft_data_structs::*;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use sp_core::{sr25519, Pair, Public};
@@ -168,34 +167,6 @@ fn testnet_genesis(
 		treasury: Default::default(),
 		sudo: SudoConfig { key: root_key },
 		vesting: VestingConfig { vesting: vec![] },
-		nft: NftConfig {
-			collection_id: vec![(
-				1,
-				Collection {
-					owner: get_account_id_from_seed::<sr25519::Public>("Alice"),
-					mode: CollectionMode::NFT,
-					access: AccessMode::Normal,
-					decimal_points: 0,
-					name: vec![],
-					description: vec![],
-					token_prefix: vec![],
-					mint_mode: false,
-					offchain_schema: vec![],
-					schema_version: SchemaVersion::default(),
-					sponsorship: SponsorshipState::Confirmed(get_account_id_from_seed::<
-						sr25519::Public,
-					>("Alice")),
-					const_on_chain_schema: vec![],
-					variable_on_chain_schema: vec![],
-					limits: CollectionLimits::default(),
-					meta_update_permission: MetaUpdatePermission::ItemOwner,
-					transfers_enabled: true,
-				},
-			)],
-			nft_item_id: vec![],
-			fungible_item_id: vec![],
-			refungible_item_id: vec![],
-		},
 		parachain_info: nft_runtime::ParachainInfoConfig { parachain_id: id },
 		aura: nft_runtime::AuraConfig {
 			authorities: initial_authorities,

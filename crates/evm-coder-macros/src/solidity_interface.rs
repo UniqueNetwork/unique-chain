@@ -672,6 +672,7 @@ impl SolidityInterface {
 		quote! {
 			#[derive(Debug)]
 			pub enum #call_name {
+				ERC165Call(::evm_coder::ERC165Call),
 				#(
 					#calls,
 				)*
@@ -691,6 +692,7 @@ impl SolidityInterface {
 				}
 				pub fn supports_interface(interface_id: u32) -> bool {
 					interface_id != 0xffffff && (
+						interface_id == ::evm_coder::ERC165Call::INTERFACE_ID ||
 						interface_id == Self::interface_id()
 						#(
 							|| #supports_interface
@@ -702,7 +704,7 @@ impl SolidityInterface {
 					use core::fmt::Write;
 					let interface = SolidityInterface {
 						name: #solidity_name,
-						is: &["Dummy", #(
+						is: &["Dummy", "ERC165", #(
 							#solidity_is,
 						)* #(
 							#solidity_events_is,
@@ -712,9 +714,9 @@ impl SolidityInterface {
 						)*),
 					};
 					if is_impl {
-						tc.collect("// Common stubs holder\ncontract Dummy {\n\tuint8 dummy;\n\tstring stub_error = \"this contract is implemented in native\";\n}\n".into());
+						tc.collect("// Common stubs holder\ncontract Dummy {\n\tuint8 dummy;\n\tstring stub_error = \"this contract is implemented in native\";\n}\ncontract ERC165 is Dummy {\n\tfunction supportsInterface(bytes4 interfaceID) external view returns (bool) {\n\t\trequire(false, stub_error);\n\t\tinterfaceID;\n\t\treturn true;\n\t}\n}\n".into());
 					} else {
-						tc.collect("// Common stubs holder\ninterface Dummy {\n}\n".into());
+						tc.collect("// Common stubs holder\ninterface Dummy {\n}\ninterface ERC165 is Dummy {\n\tfunction supportsInterface(bytes4 interfaceID) external view returns (bool);\n}\n".into());
 					}
 					#(
 						#solidity_generators
@@ -737,6 +739,7 @@ impl SolidityInterface {
 				fn parse(method_id: u32, reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::execution::Result<Option<Self>> {
 					use ::evm_coder::abi::AbiRead;
 					match method_id {
+						::evm_coder::ERC165Call::INTERFACE_ID => return Ok(::evm_coder::ERC165Call::parse(method_id, reader)?.map(Self::ERC165Call)),
 						#(
 							#parsers,
 						)*
@@ -757,6 +760,11 @@ impl SolidityInterface {
 						#(
 							#call_variants,
 						)*
+						InternalCall::ERC165Call(::evm_coder::ERC165Call::SupportsInterface {interface_id}) => {
+							let mut writer = ::evm_coder::abi::AbiWriter::default();
+							writer.bool(&InternalCall::supports_interface(interface_id));
+							return Ok(writer);
+						}
 						_ => {},
 					}
 					let mut writer = ::evm_coder::abi::AbiWriter::default();

@@ -15,6 +15,18 @@ contract Dummy {
 	string stub_error = "this contract is implemented in native";
 }
 
+contract ERC165 is Dummy {
+	function supportsInterface(bytes4 interfaceID)
+		external
+		view
+		returns (bool)
+	{
+		require(false, stub_error);
+		interfaceID;
+		return true;
+	}
+}
+
 // Inline
 contract ERC721Events {
 	event Transfer(
@@ -37,43 +49,6 @@ contract ERC721Events {
 // Inline
 contract ERC721MintableEvents {
 	event MintingFinished();
-}
-
-// Inline
-contract InlineNameSymbol is Dummy {
-	// Selector: name() 06fdde03
-	function name() public view returns (string memory) {
-		require(false, stub_error);
-		dummy;
-		return "";
-	}
-
-	// Selector: symbol() 95d89b41
-	function symbol() public view returns (string memory) {
-		require(false, stub_error);
-		dummy;
-		return "";
-	}
-}
-
-// Inline
-contract InlineTotalSupply is Dummy {
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() public view returns (uint256) {
-		require(false, stub_error);
-		dummy;
-		return 0;
-	}
-}
-
-contract ERC165 is Dummy {
-	// Selector: supportsInterface(bytes4) 01ffc9a7
-	function supportsInterface(uint32 interfaceId) public view returns (bool) {
-		require(false, stub_error);
-		interfaceId;
-		dummy;
-		return false;
-	}
 }
 
 contract ERC721 is Dummy, ERC165, ERC721Events {
@@ -172,7 +147,7 @@ contract ERC721 is Dummy, ERC165, ERC721Events {
 	}
 }
 
-contract ERC721Burnable is Dummy {
+contract ERC721Burnable is Dummy, ERC165 {
 	// Selector: burn(uint256) 42966c68
 	function burn(uint256 tokenId) public {
 		require(false, stub_error);
@@ -181,7 +156,7 @@ contract ERC721Burnable is Dummy {
 	}
 }
 
-contract ERC721Enumerable is Dummy, InlineTotalSupply {
+contract ERC721Enumerable is Dummy, ERC165 {
 	// Selector: tokenByIndex(uint256) 4f6ccce7
 	function tokenByIndex(uint256 index) public view returns (uint256) {
 		require(false, stub_error);
@@ -202,9 +177,30 @@ contract ERC721Enumerable is Dummy, InlineTotalSupply {
 		dummy;
 		return 0;
 	}
+
+	// Selector: totalSupply() 18160ddd
+	function totalSupply() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
 }
 
-contract ERC721Metadata is Dummy, InlineNameSymbol {
+contract ERC721Metadata is Dummy, ERC165 {
+	// Selector: name() 06fdde03
+	function name() public view returns (string memory) {
+		require(false, stub_error);
+		dummy;
+		return "";
+	}
+
+	// Selector: symbol() 95d89b41
+	function symbol() public view returns (string memory) {
+		require(false, stub_error);
+		dummy;
+		return "";
+	}
+
 	// Selector: tokenURI(uint256) c87b56dd
 	function tokenURI(uint256 tokenId) public view returns (string memory) {
 		require(false, stub_error);
@@ -214,7 +210,7 @@ contract ERC721Metadata is Dummy, InlineNameSymbol {
 	}
 }
 
-contract ERC721Mintable is Dummy, ERC721MintableEvents {
+contract ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 	// Selector: mintingFinished() 05d2035b
 	function mintingFinished() public view returns (bool) {
 		require(false, stub_error);
@@ -253,11 +249,19 @@ contract ERC721Mintable is Dummy, ERC721MintableEvents {
 	}
 }
 
-contract ERC721UniqueExtensions is Dummy {
+contract ERC721UniqueExtensions is Dummy, ERC165 {
 	// Selector: transfer(address,uint256) a9059cbb
 	function transfer(address to, uint256 tokenId) public {
 		require(false, stub_error);
 		to;
+		tokenId;
+		dummy = 0;
+	}
+
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 tokenId) public {
+		require(false, stub_error);
+		from;
 		tokenId;
 		dummy = 0;
 	}

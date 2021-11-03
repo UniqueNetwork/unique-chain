@@ -4925,7 +4925,7 @@ dependencies = [
 
 [[package]]
 name = "nft"
-version = "3.0.0"
+version = "0.9.12"
 dependencies = [
  "cumulus-client-cli",
  "cumulus-client-collator",
@@ -5059,7 +5059,7 @@ dependencies = [
 
 [[package]]
 name = "nft-runtime"
-version = "3.0.0"
+version = "0.9.12"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -5090,10 +5090,10 @@ dependencies = [
  "pallet-evm-transaction-payment",
  "pallet-inflation",
  "pallet-nft",
- "pallet-nft-charge-transaction",
  "pallet-nft-transaction-payment",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
+ "pallet-template-charge-transaction",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -6013,25 +6013,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-nft-charge-transaction"
-version = "3.0.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-nft-transaction-payment",
- "pallet-transaction-payment",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-nft-transaction-payment"
 version = "3.0.0"
 dependencies = [
@@ -6268,6 +6249,26 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-template-charge-transaction"
+version = "3.0.0"
+source = "git+https://github.com/UniqueNetwork/pallet-sponsoring#e5d3354ab68face1b2ef709dc7f629803f56598d"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "up-sponsorship",
 ]
 
 [[package]]
@@ -11597,7 +11598,7 @@ version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f559b464de2e2bdabcac6a210d12e9b5a5973c251e102c44c585c71d51bd78e"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "rand 0.8.4",
  "static_assertions",
 ]
@@ -11717,6 +11718,7 @@ checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 [[package]]
 name = "up-sponsorship"
 version = "0.1.0"
+source = "git+https://github.com/UniqueNetwork/pallet-sponsoring#e5d3354ab68face1b2ef709dc7f629803f56598d"
 dependencies = [
  "impl-trait-for-tuples 0.2.1",
 ]

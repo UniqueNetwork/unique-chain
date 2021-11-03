@@ -9,6 +9,18 @@ contract Dummy {
 	string stub_error = "this contract is implemented in native";
 }
 
+contract ERC165 is Dummy {
+	function supportsInterface(bytes4 interfaceID)
+		external
+		view
+		returns (bool)
+	{
+		require(false, stub_error);
+		interfaceID;
+		return true;
+	}
+}
+
 // Inline
 contract ERC20Events {
 	event Transfer(address indexed from, address indexed to, uint256 value);
@@ -19,8 +31,7 @@ contract ERC20Events {
 	);
 }
 
-// Inline
-contract InlineNameSymbol is Dummy {
+contract ERC20 is Dummy, ERC165, ERC20Events {
 	// Selector: name() 06fdde03
 	function name() public view returns (string memory) {
 		require(false, stub_error);
@@ -34,29 +45,14 @@ contract InlineNameSymbol is Dummy {
 		dummy;
 		return "";
 	}
-}
 
-// Inline
-contract InlineTotalSupply is Dummy {
 	// Selector: totalSupply() 18160ddd
 	function totalSupply() public view returns (uint256) {
 		require(false, stub_error);
 		dummy;
 		return 0;
 	}
-}
 
-contract ERC165 is Dummy {
-	// Selector: supportsInterface(bytes4) 01ffc9a7
-	function supportsInterface(uint32 interfaceId) public view returns (bool) {
-		require(false, stub_error);
-		interfaceId;
-		dummy;
-		return false;
-	}
-}
-
-contract ERC20 is Dummy, InlineNameSymbol, InlineTotalSupply, ERC20Events {
 	// Selector: decimals() 313ce567
 	function decimals() public view returns (uint8) {
 		require(false, stub_error);

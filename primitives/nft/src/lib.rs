@@ -1,10 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use core::convert::{TryFrom, TryInto};
+
 #[cfg(feature = "serde")]
 pub use serde::{Serialize, Deserialize};
 
-use sp_runtime::sp_std::prelude::Vec;
-use codec::{Decode, Encode, MaxEncodedLen};
+use sp_core::U256;
+use sp_runtime::{ArithmeticError, sp_std::prelude::Vec};
+use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
 pub use frame_support::{
 	BoundedVec, construct_runtime, decl_event, decl_module, decl_storage, decl_error,
 	dispatch::DispatchResult,
@@ -67,8 +70,48 @@ parameter_types! {
 	pub const CustomDataLimit: u32 = CUSTOM_DATA_LIMIT;
 }
 
-pub type CollectionId = u32;
-pub type TokenId = u32;
+#[derive(Encode, Decode, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug, Default, TypeInfo)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub struct CollectionId(pub u32);
+impl EncodeLike<u32> for CollectionId {}
+impl EncodeLike<CollectionId> for u32 {}
+
+#[derive(Encode, Decode, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug, Default, TypeInfo)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub struct TokenId(pub u32);
+impl EncodeLike<u32> for TokenId {}
+impl EncodeLike<TokenId> for u32 {}
+
+impl TokenId {
+	pub fn try_next(self) -> Result<TokenId, ArithmeticError> {
+		self.0
+			.checked_add(1)
+			.ok_or(ArithmeticError::Overflow)
+			.map(Self)
+	}
+}
+
+impl From<TokenId> for U256 {
+	fn from(t: TokenId) -> Self {
+		t.0.into()
+	}
+}
+
+impl TryFrom<U256> for TokenId {
+	type Error = &'static str;
+
+	fn try_from(value: U256) -> Result<Self, Self::Error> {
+		Ok(TokenId(value.try_into().map_err(|_| "too large token id")?))
+	}
+}
+
+pub struct OverflowError;
+impl From<OverflowError> for &'static str {
+	fn from(_: OverflowError) -> Self {
+		"overflow occured"
+	}
+}
+
 pub type DecimalPoints = u8;
 
 #[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo)]
@@ -167,7 +210,6 @@ pub struct Collection<T: frame_system::Config> {
 	pub owner: T::AccountId,
 	pub mode: CollectionMode,
 	pub access: AccessMode,
-	pub decimal_points: DecimalPoints,
 	pub name: Vec<u16>,        // 64 include null escape char
 	pub description: Vec<u16>, // 256 include null escape char
 	pub token_prefix: Vec<u8>, // 16 include null escape char
@@ -207,7 +249,7 @@ pub struct ReFungibleItemType<AccountId> {
 #[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionLimits<BlockNumber: Encode + Decode> {
-	pub account_token_ownership_limit: u32,
+	pub account_token_ownership_limit: Option<u32>,
 	pub sponsored_data_size: u32,
 	/// None - setVariableMetadata is not sponsored
 	/// Some(v) - setVariableMetadata is sponsored
@@ -221,10 +263,18 @@ pub struct CollectionLimits<BlockNumber: Encode + Decode> {
 	pub owner_can_destroy: bool,
 }
 
+impl<BlockNumber: Encode + Decode> CollectionLimits<BlockNumber> {
+	pub fn account_token_ownership_limit(&self) -> u32 {
+		self.account_token_ownership_limit
+			.unwrap_or(ACCOUNT_TOKEN_OWNERSHIP_LIMIT)
+			.min(ACCOUNT_TOKEN_OWNERSHIP_LIMIT)
+	}
+}
+
 impl<BlockNumber: Encode + Decode> Default for CollectionLimits<BlockNumber> {
 	fn default() -> Self {
 		Self {
-			account_token_ownership_limit: 10_000_000,
+			account_token_ownership_limit: Some(10_000_000),
 			token_limit: u32::max_value(),
 			sponsored_data_size: u32::MAX,
 			sponsored_data_rate_limit: None,

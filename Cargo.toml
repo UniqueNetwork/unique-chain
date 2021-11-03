@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     'node/*',
     'pallets/*',
+    'client/*',
     'primitives/*',
     'runtime',
     'crates/*',
