@@ -446,7 +446,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_owner_or_admin(&sender)?;
+			target_collection.check_is_owner(&sender)?;
 
 			target_collection.sponsorship = SponsorshipState::Unconfirmed(new_sponsor);
 			target_collection.save()
