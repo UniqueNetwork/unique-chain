@@ -3,14 +3,14 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { WsProvider, ApiPromise } from '@polkadot/api';
-import { EventRecord } from '@polkadot/types/interfaces/system/types';
-import { ExtrinsicStatus } from '@polkadot/types/interfaces/author/types';
-import { IKeyringPair } from '@polkadot/types/types';
+import {WsProvider, ApiPromise} from '@polkadot/api';
+import {EventRecord} from '@polkadot/types/interfaces/system/types';
+import {ExtrinsicStatus} from '@polkadot/types/interfaces/author/types';
+import {IKeyringPair} from '@polkadot/types/types';
 
 import config from '../config';
 import promisifySubstrate from './promisify-substrate';
-import { ApiOptions, SubmittableExtrinsic, ApiTypes } from '@polkadot/api/types';
+import {ApiOptions, SubmittableExtrinsic, ApiTypes} from '@polkadot/api/types';
 import * as defs from '../interfaces/definitions';
 
 
@@ -40,20 +40,19 @@ export default async function usingApi<T = void>(action: (api: ApiPromise) => Pr
   const consoleLog = console.log;
   const consoleWarn = console.warn;
 
-  const outFn = (message: any, ...rest: any[]) => {
-    if (typeof message !== 'string') {
-      consoleErr(message, ...rest);
-      return;
+  const outFn = (printer: any) => (...args: any[]) => {
+    for (const arg of args) {
+      if (typeof arg !== 'string')
+        continue;
+      if (arg.includes('1000:: Normal connection closure' || arg === 'Normal connection closure'))
+        return;
     }
-    if (!message.includes('StorageChangeSet:: WebSocket is not connected') &&
-        !message.includes('2021-') &&
-        !message.includes('StorageChangeSet:: Normal connection closure'))
-      consoleErr(message, ...rest);
+    printer(...args);
   };
 
-  console.error = outFn;
-  console.log = outFn;
-  console.warn = outFn;
+  console.error = outFn(consoleErr.bind(console));
+  console.log = outFn(consoleLog.bind(console));
+  console.warn = outFn(consoleWarn.bind(console));
 
   try {
     await promisifySubstrate(api, async () => {
@@ -101,7 +100,7 @@ submitTransactionAsync(sender: IKeyringPair, transaction: SubmittableExtrinsic<A
   /* eslint no-async-promise-executor: "off" */
   return new Promise(async (resolve, reject) => {
     try {
-      await transaction.signAndSend(sender, ({ events = [], status }) => {
+      await transaction.signAndSend(sender, ({events = [], status}) => {
         const transactionStatus = getTransactionStatus(events, status);
 
         if (transactionStatus === TransactionStatus.Success) {
@@ -119,8 +118,6 @@ submitTransactionAsync(sender: IKeyringPair, transaction: SubmittableExtrinsic<A
 }
 
 export function submitTransactionExpectFailAsync(sender: IKeyringPair, transaction: SubmittableExtrinsic<ApiTypes>): Promise<EventRecord[]> {
-  const consoleError = console.error;
-  const consoleLog = console.log;
   console.error = () => {};
   console.log = () => {};
 
@@ -129,19 +126,15 @@ export function submitTransactionExpectFailAsync(sender: IKeyringPair, transacti
     const resolve = (rec: EventRecord[]) => {
       setTimeout(() => {
         res(rec);
-        console.error = consoleError;
-        console.log = consoleLog;
       });
     };
     const reject = (errror: any) => {
       setTimeout(() => {
         rej(errror);
-        console.error = consoleError;
-        console.log = consoleLog;
       });
     };
     try {
-      await transaction.signAndSend(sender, ({ events = [], status }) => {
+      await transaction.signAndSend(sender, ({events = [], status}) => {
         const transactionStatus = getTransactionStatus(events, status);
 
         // console.log('transactionStatus', transactionStatus, 'events', events);

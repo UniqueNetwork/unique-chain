@@ -3,12 +3,12 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { IKeyringPair } from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
-import { default as usingApi } from './substrate/substrate-api';
-import { createCollectionExpectSuccess,
+import {default as usingApi} from './substrate/substrate-api';
+import {createCollectionExpectSuccess,
   destroyCollectionExpectSuccess,
   destroyCollectionExpectFailure,
   setCollectionLimitsExpectSuccess,
@@ -46,7 +46,7 @@ describe('(!negative test!) integration test: ext. destroyCollection():', () => 
   it('(!negative test!) Destroy a collection that never existed', async () => {
     await usingApi(async (api) => {
       // Find the collection that never existed
-      const collectionId = parseInt((await api.query.nft.createdCollectionCount()).toString()) + 1;
+      const collectionId = (await api.query.common.createdCollectionCount()).toNumber() + 1;
       await destroyCollectionExpectFailure(collectionId);
     });
   });
@@ -62,12 +62,12 @@ describe('(!negative test!) integration test: ext. destroyCollection():', () => 
   });
   it('(!negative test!) Destroy a collection using collection admin account', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob);
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
     await destroyCollectionExpectFailure(collectionId, '//Bob');
   });
   it('fails when OwnerCanDestroy == false', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await setCollectionLimitsExpectSuccess(alice, collectionId, { ownerCanDestroy: false });
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanDestroy: false});
 
     await destroyCollectionExpectFailure(collectionId, '//Alice');
   });

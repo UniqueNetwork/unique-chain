@@ -3,7 +3,7 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { IKeyringPair } from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import {
@@ -32,7 +32,7 @@ describe('Integration Test setMintPermission', () => {
 
   it('ensure white-listed non-privileged address can mint tokens', async () => {
     await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await enableWhiteListExpectSuccess(alice, collectionId);
       await setMintPermissionExpectSuccess(alice, collectionId, true);
       await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
@@ -43,7 +43,7 @@ describe('Integration Test setMintPermission', () => {
 
   it('can be enabled twice', async () => {
     await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await setMintPermissionExpectSuccess(alice, collectionId, true);
       await setMintPermissionExpectSuccess(alice, collectionId, true);
     });
@@ -51,7 +51,7 @@ describe('Integration Test setMintPermission', () => {
 
   it('can be disabled twice', async () => {
     await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await setMintPermissionExpectSuccess(alice, collectionId, true);
       await setMintPermissionExpectSuccess(alice, collectionId, false);
       await setMintPermissionExpectSuccess(alice, collectionId, false);
@@ -79,7 +79,7 @@ describe('Negative Integration Test setMintPermission', () => {
 
   it('fails on removed collection', async () => {
     await usingApi(async () => {
-      const removedCollectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      const removedCollectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await destroyCollectionExpectSuccess(removedCollectionId);
 
       await setMintPermissionExpectFailure(alice, removedCollectionId, true);
@@ -87,22 +87,22 @@ describe('Negative Integration Test setMintPermission', () => {
   });
 
   it('fails when not collection owner tries to set mint status', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await enableWhiteListExpectSuccess(alice, collectionId);
     await setMintPermissionExpectFailure(bob, collectionId, true);
   });
 
   it('Collection admin fails on set', async () => {
     await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob);
+      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
       await setMintPermissionExpectFailure(bob, collectionId, true);
     });
   });
 
   it('ensure non-white-listed non-privileged address can\'t mint tokens', async () => {
     await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await enableWhiteListExpectSuccess(alice, collectionId);
       await setMintPermissionExpectSuccess(alice, collectionId, true);
 
