@@ -235,7 +235,9 @@ impl<T: Config> Pallet<T> {
 		let total_supply = data
 			.iter()
 			.map(|u| u.1)
-			.try_fold(0u128, |acc, v| acc.checked_add(v))
+			.try_fold(<TotalSupply<T>>::get(collection.id), |acc, v| {
+				acc.checked_add(v)
+			})
 			.ok_or(ArithmeticError::Overflow)?;
 
 		for (user, amount) in data.into_iter() {
