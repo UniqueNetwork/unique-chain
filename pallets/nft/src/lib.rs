@@ -36,8 +36,8 @@ use frame_system::{self as system, ensure_signed};
 use sp_runtime::{sp_std::prelude::Vec};
 use nft_data_structs::{
 	MAX_DECIMAL_POINTS, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, CUSTOM_DATA_LIMIT,
-	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, COLLECTION_ADMINS_LIMIT,
-	OFFCHAIN_SCHEMA_LIMIT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT,
+	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 	NFT_SPONSOR_TRANSFER_TIMEOUT, AccessMode, Collection, CreateItemData, CollectionLimits,
 	CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
 };
@@ -156,7 +156,6 @@ decl_module! {
 	where
 		origin: T::Origin
 	{
-		const CollectionAdminsLimit: u64 = COLLECTION_ADMINS_LIMIT;
 		type Error = Error<T>;
 
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
@@ -406,12 +405,9 @@ decl_module! {
 		#[transactional]
 		pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin_id: T::CrossAccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			collection.check_is_owner_or_admin(&sender)?;
 
-			<IsAdmin<T>>::insert((collection_id, new_admin_id.as_sub()), true);
-			Ok(())
+			<PalletCommon<T>>::toggle_admin(&collection, &sender, &new_admin_id, true)
 		}
 
 		/// Remove admin address of the Collection. An admin address can remove itself. List of admins may become empty, in which case only Collection Owner will be able to add an Admin.
@@ -430,12 +426,9 @@ decl_module! {
 		#[transactional]
 		pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::CrossAccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			collection.check_is_owner_or_admin(&sender)?;
 
-			<IsAdmin<T>>::remove((collection_id, account_id.as_sub()));
-			Ok(())
+			<PalletCommon<T>>::toggle_admin(&collection, &sender, &account_id, false)
 		}
 
 		/// # Permissions

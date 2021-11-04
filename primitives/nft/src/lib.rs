@@ -41,7 +41,7 @@ pub const CUSTOM_DATA_LIMIT: u32 = if cfg!(not(feature = "limit-testing")) {
 } else {
 	10
 };
-pub const COLLECTION_ADMINS_LIMIT: u64 = 5;
+pub const COLLECTION_ADMINS_LIMIT: u32 = 5;
 pub const COLLECTION_TOKEN_LIMIT: u32 = u32::MAX;
 pub const ACCOUNT_TOKEN_OWNERSHIP_LIMIT: u32 = if cfg!(not(feature = "limit-testing")) {
 	1000000

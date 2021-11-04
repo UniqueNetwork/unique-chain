@@ -11,7 +11,8 @@ use frame_support::{
 use nft_data_structs::{
 	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, ExistenceRequirement,
 	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	MetaUpdatePermission, Pays, PostDispatchInfo, TokenId, Weight, WithdrawReasons,
+	COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, Pays, PostDispatchInfo, TokenId, Weight,
+	WithdrawReasons,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -165,6 +166,13 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	#[pallet::extra_constants]
+	impl<T: Config> Pallet<T> {
+		pub fn collection_admins_limit() -> u32 {
+			COLLECTION_ADMINS_LIMIT
+		}
+	}
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -265,6 +273,8 @@ pub mod pallet {
 		TotalCollectionsLimitExceeded,
 		/// variable_data exceeded data limit.
 		TokenVariableDataLimitExceeded,
+		/// Exceeded max admin amount
+		CollectionAdminAmountExceeded,
 
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
@@ -303,6 +313,14 @@ pub mod pallet {
 		Key = CollectionId,
 		Value = Collection<T>,
 		QueryKind = OptionQuery,
+	>;
+
+	#[pallet::storage]
+	pub type AdminAmount<T> = StorageMap<
+		Hasher = Blake2_128Concat,
+		Key = CollectionId,
+		Value = u32,
+		QueryKind = ValueQuery,
 	>;
 
 	/// List of collection admins
@@ -419,6 +437,7 @@ impl<T: Config> Pallet<T> {
 
 		<DestroyedCollectionCount<T>>::put(destroyed_collections);
 		<CollectionById<T>>::remove(collection.id);
+		<AdminAmount<T>>::remove(collection.id);
 		<IsAdmin<T>>::remove_prefix((collection.id,), None);
 		<Allowlist<T>>::remove_prefix((collection.id,), None);
 		Ok(())
@@ -435,9 +454,44 @@ impl<T: Config> Pallet<T> {
 		// =========
 
 		if allowed {
-			<Allowlist<T>>::insert((collection.id, user.as_sub()), true);
+			<Allowlist<T>>::insert((collection.id, user), true);
 		} else {
-			<Allowlist<T>>::remove((collection.id, user.as_sub()));
+			<Allowlist<T>>::remove((collection.id, user));
+		}
+
+		Ok(())
+	}
+
+	pub fn toggle_admin(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		user: &T::CrossAccountId,
+		admin: bool,
+	) -> DispatchResult {
+		collection.check_is_owner_or_admin(&sender)?;
+
+		let was_admin = <IsAdmin<T>>::get((collection.id, user));
+		if was_admin == admin {
+			return Ok(());
+		}
+		let amount = <AdminAmount<T>>::get(collection.id);
+
+		if admin {
+			let amount = amount
+				.checked_add(1)
+				.ok_or(<Error<T>>::CollectionAdminAmountExceeded)?;
+			ensure!(
+				amount <= Self::collection_admins_limit(),
+				<Error<T>>::CollectionAdminAmountExceeded,
+			);
+
+			// =========
+
+			<AdminAmount<T>>::insert(collection.id, amount);
+			<IsAdmin<T>>::insert((collection.id, user), true);
+		} else {
+			<AdminAmount<T>>::insert(collection.id, amount.saturating_sub(1));
+			<IsAdmin<T>>::remove((collection.id, user));
 		}
 
 		Ok(())
