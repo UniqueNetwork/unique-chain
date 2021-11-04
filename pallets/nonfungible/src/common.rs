@@ -255,8 +255,8 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		token: TokenId,
 	) -> u128 {
 		if <TokenData<T>>::get((self.id, token))
-			.map(|a| a.owner == sender)
-			.unwrap_or(false)
+			.map(|a| a.owner != sender)
+			.unwrap_or(true)
 		{
 			0
 		} else if <Allowance<T>>::get((self.id, token)) == Some(spender) {
