@@ -492,7 +492,7 @@ impl<T: Config> Pallet<T> {
 
 		if <Balance<T>>::get((collection.id, token, sender.as_sub())) < amount {
 			ensure!(
-				collection.ignores_owned_amount(sender)?,
+				collection.ignores_owned_amount(sender)? && Self::token_exists(collection, token),
 				<CommonError<T>>::CantApproveMoreThanOwned
 			);
 		}
