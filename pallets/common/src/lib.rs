@@ -105,10 +105,10 @@ impl<T: Config> CollectionHandle<T> {
 		Ok(())
 	}
 	pub fn ignores_allowance(&self, user: &T::CrossAccountId) -> Result<bool, DispatchError> {
-		Ok(self.limits.owner_can_transfer && self.is_owner_or_admin(user)?)
+		Ok(self.limits.owner_can_transfer() && self.is_owner_or_admin(user)?)
 	}
 	pub fn ignores_owned_amount(&self, user: &T::CrossAccountId) -> Result<bool, DispatchError> {
-		Ok(self.limits.owner_can_transfer && self.is_owner_or_admin(user)?)
+		Ok(self.limits.owner_can_transfer() && self.is_owner_or_admin(user)?)
 	}
 	pub fn check_allowlist(&self, user: &T::CrossAccountId) -> DispatchResult {
 		self.consume_sload()?;
@@ -405,9 +405,10 @@ impl<T: Config> Pallet<T> {
 		collection: CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 	) -> DispatchResult {
-		if !collection.limits.owner_can_destroy {
-			fail!(Error::<T>::NoPermission);
-		}
+		ensure!(
+			collection.limits.owner_can_destroy(),
+			<Error<T>>::NoPermission,
+		);
 		collection.check_is_owner(&sender)?;
 
 		let destroyed_collections = <DestroyedCollectionCount<T>>::get()

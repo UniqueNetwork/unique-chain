@@ -268,7 +268,7 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 	) -> DispatchResult {
 		ensure!(
-			collection.transfers_enabled,
+			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed
 		);
 
@@ -404,7 +404,7 @@ impl<T: Config> Pallet<T> {
 			.checked_add(data.len() as u32)
 			.ok_or(ArithmeticError::Overflow)?;
 		ensure!(
-			tokens_minted < collection.limits.token_limit,
+			tokens_minted < collection.limits.token_limit(),
 			<CommonError<T>>::CollectionTokenLimitExceeded
 		);
 

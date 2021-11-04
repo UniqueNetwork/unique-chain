@@ -157,8 +157,8 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 	) -> DispatchResult {
 		ensure!(
-			collection.transfers_enabled,
-			<CommonError<T>>::TransferNotAllowed
+			collection.limits.transfers_enabled(),
+			<CommonError<T>>::TransferNotAllowed,
 		);
 
 		if collection.access == AccessMode::WhiteList {

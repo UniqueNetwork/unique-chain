@@ -37,8 +37,9 @@ use sp_runtime::{sp_std::prelude::Vec};
 use nft_data_structs::{
 	MAX_DECIMAL_POINTS, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, CUSTOM_DATA_LIMIT,
 	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, COLLECTION_ADMINS_LIMIT,
-	OFFCHAIN_SCHEMA_LIMIT, AccessMode, Collection, CreateItemData, CollectionLimits, CollectionId,
-	CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
+	OFFCHAIN_SCHEMA_LIMIT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	NFT_SPONSOR_TRANSFER_TIMEOUT, AccessMode, Collection, CreateItemData, CollectionLimits,
+	CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
 };
 use pallet_common::{
 	account::CrossAccountId, CollectionHandle, IsAdmin, Pallet as PalletCommon,
@@ -189,11 +190,6 @@ decl_module! {
 			// Anyone can create a collection
 			let who = ensure_signed(origin)?;
 
-			let limits = CollectionLimits::<T::BlockNumber> {
-				sponsored_data_size: CUSTOM_DATA_LIMIT,
-				..Default::default()
-			};
-
 			// Create new collection
 			let new_collection = Collection::<T> {
 				owner: who.clone(),
@@ -208,8 +204,7 @@ decl_module! {
 				sponsorship: SponsorshipState::Disabled,
 				variable_on_chain_schema: Vec::new(),
 				const_on_chain_schema: Vec::new(),
-				limits,
-				transfers_enabled: true,
+				limits: Default::default(),
 				meta_update_permission: Default::default(),
 			};
 
@@ -582,7 +577,7 @@ decl_module! {
 
 			// =========
 
-			target_collection.transfers_enabled = value;
+			target_collection.limits.transfers_enabled = Some(value);
 			target_collection.save()
 		}
 
@@ -888,30 +883,63 @@ decl_module! {
 		pub fn set_collection_limits(
 			origin,
 			collection_id: CollectionId,
-			new_limits: CollectionLimits<T::BlockNumber>,
+			new_limit: CollectionLimits,
 		) -> DispatchResult {
+			let mut new_limit = new_limit;
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner(&sender)?;
-			let old_limits = &target_collection.limits;
+			let old_limit = &target_collection.limits;
 
-			// collection bounds
-			ensure!(new_limits.sponsor_transfer_timeout <= MAX_SPONSOR_TIMEOUT &&
-				new_limits.account_token_ownership_limit.unwrap_or(0) <= MAX_TOKEN_OWNERSHIP &&
-				new_limits.sponsored_data_size <= CUSTOM_DATA_LIMIT,
-				Error::<T>::CollectionLimitBoundsExceeded);
+			macro_rules! limit_default {
+				($old:ident, $new:ident, $($field:ident $(($arg:expr))? => $check:expr),* $(,)?) => {{
+					$(
+						if let Some($new) = $new.$field {
+							let $old = $old.$field($($arg)?);
+							let _ = $new;
+							let _ = $old;
+							$check
+						} else {
+							$new.$field = $old.$field
+						}
+					)*
+				}};
+			}
 
-			// token_limit   check  prev
-			ensure!(old_limits.token_limit >= new_limits.token_limit, <CommonError<T>>::CollectionTokenLimitExceeded);
-			ensure!(new_limits.token_limit > 0, <CommonError<T>>::CollectionTokenLimitExceeded);
-
-			ensure!(
-				(old_limits.owner_can_transfer || !new_limits.owner_can_transfer) &&
-				(old_limits.owner_can_destroy || !new_limits.owner_can_destroy),
-				Error::<T>::OwnerPermissionsCantBeReverted,
+			limit_default!(old_limit, new_limit,
+				account_token_ownership_limit => ensure!(
+					new_limit <= MAX_TOKEN_OWNERSHIP,
+					<Error<T>>::CollectionLimitBoundsExceeded,
+				),
+				sponsor_transfer_timeout(match target_collection.mode {
+					CollectionMode::NFT => NFT_SPONSOR_TRANSFER_TIMEOUT,
+					CollectionMode::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+					CollectionMode::ReFungible => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+				}) => ensure!(
+					new_limit <= MAX_SPONSOR_TIMEOUT,
+					<Error<T>>::CollectionLimitBoundsExceeded,
+				),
+				sponsored_data_size => ensure!(
+					new_limit <= CUSTOM_DATA_LIMIT,
+					<Error<T>>::CollectionLimitBoundsExceeded,
+				),
+				token_limit => ensure!(
+					old_limit >= new_limit && new_limit > 0,
+					<CommonError<T>>::CollectionTokenLimitExceeded
+				),
+				owner_can_transfer => ensure!(
+					old_limit || !new_limit,
+					<Error<T>>::OwnerPermissionsCantBeReverted,
+				),
+				owner_can_destroy => ensure!(
+					old_limit || !new_limit,
+					<Error<T>>::OwnerPermissionsCantBeReverted,
+				),
+				sponsored_data_rate_limit => {},
+				transfers_enabled => {},
 			);
 
-			target_collection.limits = new_limits;
+			target_collection.limits = new_limit;
 
 			target_collection.save()
 		}

@@ -164,7 +164,7 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| <CommonError<T>>::TokenNotFound)?;
 		ensure!(
 			&token_data.owner == sender
-				|| (collection.limits.owner_can_transfer
+				|| (collection.limits.owner_can_transfer()
 					&& collection.is_owner_or_admin(sender)?),
 			<CommonError<T>>::NoPermission
 		);
@@ -215,7 +215,7 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 	) -> DispatchResult {
 		ensure!(
-			collection.transfers_enabled,
+			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed
 		);
 
@@ -223,7 +223,8 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| <CommonError<T>>::TokenNotFound)?;
 		ensure!(
 			&token_data.owner == from
-				|| (collection.limits.owner_can_transfer && collection.is_owner_or_admin(from)?),
+				|| (collection.limits.owner_can_transfer()
+					&& collection.is_owner_or_admin(from)?),
 			<CommonError<T>>::NoPermission
 		);
 
@@ -327,7 +328,7 @@ impl<T: Config> Pallet<T> {
 			.checked_add(data.len() as u32)
 			.ok_or(ArithmeticError::Overflow)?;
 		ensure!(
-			tokens_minted < collection.limits.token_limit,
+			tokens_minted < collection.limits.token_limit(),
 			<CommonError<T>>::CollectionTokenLimitExceeded
 		);
 		collection.consume_sstore()?;
