@@ -275,7 +275,7 @@ impl<T: Config> Pallet<T> {
 			<Owned<T>>::remove((collection.id, from.as_sub(), token));
 			<Owned<T>>::insert((collection.id, to.as_sub(), token), true);
 		}
-		Self::set_allowance_unchecked(collection, from, token, None);
+		Self::set_allowance_unchecked(collection, from, token, None, true);
 
 		collection.log_infallible(ERC721Events::Transfer {
 			from: *from.as_eth(),
@@ -385,6 +385,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token: TokenId,
 		spender: Option<&T::CrossAccountId>,
+		assume_implicit_eth: bool,
 	) {
 		if let Some(spender) = spender {
 			let old_spender = <Allowance<T>>::get((collection.id, token));
@@ -418,13 +419,15 @@ impl<T: Config> Pallet<T> {
 			}
 		} else {
 			let old_spender = <Allowance<T>>::take((collection.id, token));
-			// In ERC721 there is only one possible approved user of token, so we set
-			// approved user to zero address
-			collection.log_infallible(ERC721Events::Approval {
-				owner: *sender.as_eth(),
-				approved: H160::default(),
-				token_id: token.into(),
-			});
+			if !assume_implicit_eth {
+				// In ERC721 there is only one possible approved user of token, so we set
+				// approved user to zero address
+				collection.log_infallible(ERC721Events::Approval {
+					owner: *sender.as_eth(),
+					approved: H160::default(),
+					token_id: token.into(),
+				});
+			}
 			// In Unique chain, any token can have any amount of approved users, so we need to
 			// set allowance of old owner to 0
 			if let Some(old_spender) = old_spender {
@@ -466,7 +469,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		Self::set_allowance_unchecked(collection, sender, token, spender);
+		Self::set_allowance_unchecked(collection, sender, token, spender, false);
 		Ok(())
 	}
 
