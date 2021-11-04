@@ -948,12 +948,12 @@ decl_module! {
 
 // TODO: limit returned entries?
 impl<T: Config> Pallet<T> {
-	pub fn adminlist(collection: CollectionId) -> Vec<T::AccountId> {
+	pub fn adminlist(collection: CollectionId) -> Vec<T::CrossAccountId> {
 		<IsAdmin<T>>::iter_prefix((collection,))
 			.map(|(a, _)| a)
 			.collect()
 	}
-	pub fn allowlist(collection: CollectionId) -> Vec<T::AccountId> {
+	pub fn allowlist(collection: CollectionId) -> Vec<T::CrossAccountId> {
 		<Allowlist<T>>::iter_prefix((collection,))
 			.map(|(a, _)| a)
 			.collect()

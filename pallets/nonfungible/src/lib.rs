@@ -80,7 +80,7 @@ pub mod pallet {
 	pub(super) type Owned<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
-			Key<Blake2_128Concat, T::AccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
 			Key<Twox64Concat, TokenId>,
 		),
 		Value = bool,
@@ -91,7 +91,7 @@ pub mod pallet {
 	pub(super) type AccountBalance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
-			Key<Blake2_128Concat, T::AccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
 		),
 		Value = u32,
 		QueryKind = ValueQuery,
@@ -179,7 +179,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		<Owned<T>>::remove((collection.id, token_data.owner.as_sub(), token));
+		<Owned<T>>::remove((collection.id, &token_data.owner, token));
 		<TokensBurnt<T>>::insert(collection.id, burnt);
 		<TokenData<T>>::remove((collection.id, token));
 		let old_spender = <Allowance<T>>::take((collection.id, token));
@@ -234,11 +234,11 @@ impl<T: Config> Pallet<T> {
 		}
 		<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
-		let balance_from = <AccountBalance<T>>::get((collection.id, from.as_sub()))
+		let balance_from = <AccountBalance<T>>::get((collection.id, from))
 			.checked_sub(1)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 		let balance_to = if from != to {
-			let balance_to = <AccountBalance<T>>::get((collection.id, to.as_sub()))
+			let balance_to = <AccountBalance<T>>::get((collection.id, to))
 				.checked_add(1)
 				.ok_or(ArithmeticError::Overflow)?;
 
@@ -268,13 +268,13 @@ impl<T: Config> Pallet<T> {
 		if let Some(balance_to) = balance_to {
 			// from != to
 			if balance_from == 0 {
-				<AccountBalance<T>>::remove((collection.id, from.as_sub()));
+				<AccountBalance<T>>::remove((collection.id, from));
 			} else {
-				<AccountBalance<T>>::insert((collection.id, from.as_sub()), balance_from);
+				<AccountBalance<T>>::insert((collection.id, from), balance_from);
 			}
-			<AccountBalance<T>>::insert((collection.id, to.as_sub()), balance_to);
-			<Owned<T>>::remove((collection.id, from.as_sub(), token));
-			<Owned<T>>::insert((collection.id, to.as_sub(), token), true);
+			<AccountBalance<T>>::insert((collection.id, to), balance_to);
+			<Owned<T>>::remove((collection.id, from, token));
+			<Owned<T>>::insert((collection.id, to, token), true);
 		}
 		Self::set_allowance_unchecked(collection, from, token, None, true);
 
@@ -336,8 +336,8 @@ impl<T: Config> Pallet<T> {
 		let mut balances = BTreeMap::new();
 		for data in &data {
 			let balance = balances
-				.entry(data.owner.as_sub())
-				.or_insert_with(|| <AccountBalance<T>>::get((collection.id, data.owner.as_sub())));
+				.entry(&data.owner)
+				.or_insert_with(|| <AccountBalance<T>>::get((collection.id, &data.owner)));
 			*balance = balance.checked_add(1).ok_or(ArithmeticError::Overflow)?;
 
 			ensure!(
@@ -364,7 +364,7 @@ impl<T: Config> Pallet<T> {
 					owner: data.owner.clone(),
 				},
 			);
-			<Owned<T>>::insert((collection.id, data.owner.as_sub(), token), true);
+			<Owned<T>>::insert((collection.id, &data.owner, token), true);
 
 			collection.log_infallible(ERC721Events::Transfer {
 				from: H160::default(),
@@ -481,7 +481,7 @@ impl<T: Config> Pallet<T> {
 		to: &T::CrossAccountId,
 		token: TokenId,
 	) -> DispatchResult {
-		if spender == from {
+		if spender.conv_eq(from) {
 			return Self::transfer(collection, from, to, token);
 		}
 		if collection.access == AccessMode::WhiteList {
@@ -509,7 +509,7 @@ impl<T: Config> Pallet<T> {
 		from: &T::CrossAccountId,
 		token: TokenId,
 	) -> DispatchResult {
-		if spender == from {
+		if spender.conv_eq(from) {
 			return Self::burn(collection, from, token);
 		}
 		if collection.access == AccessMode::WhiteList {

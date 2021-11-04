@@ -98,7 +98,7 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn is_owner_or_admin(&self, subject: &T::CrossAccountId) -> Result<bool, DispatchError> {
 		self.consume_sload()?;
 
-		Ok(*subject.as_sub() == self.owner || <IsAdmin<T>>::get((self.id, subject.as_sub())))
+		Ok(*subject.as_sub() == self.owner || <IsAdmin<T>>::get((self.id, subject)))
 	}
 	pub fn check_is_owner_or_admin(&self, subject: &T::CrossAccountId) -> DispatchResult {
 		ensure!(self.is_owner_or_admin(subject)?, <Error<T>>::NoPermission);
@@ -114,7 +114,7 @@ impl<T: Config> CollectionHandle<T> {
 		self.consume_sload()?;
 
 		ensure!(
-			<Allowlist<T>>::get((self.id, user.as_sub())),
+			<Allowlist<T>>::get((self.id, user)),
 			<Error<T>>::AddressNotInAllowlist
 		);
 		Ok(())
@@ -139,8 +139,7 @@ impl<T: Config> CollectionHandle<T> {
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{pallet_prelude::*};
-	use frame_support::{Blake2_128Concat, storage::Key};
+	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key};
 	use account::{EvmBackwardsAddressMapping, CrossAccountId};
 	use frame_support::traits::Currency;
 	use nft_data_structs::TokenId;
@@ -311,7 +310,7 @@ pub mod pallet {
 	pub type IsAdmin<T: Config> = StorageNMap<
 		Key = (
 			Key<Blake2_128Concat, CollectionId>,
-			Key<Blake2_128Concat, T::AccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
 		),
 		Value = bool,
 		QueryKind = ValueQuery,
@@ -322,7 +321,7 @@ pub mod pallet {
 	pub type Allowlist<T: Config> = StorageNMap<
 		Key = (
 			Key<Blake2_128Concat, CollectionId>,
-			Key<Blake2_128Concat, T::AccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
 		),
 		Value = bool,
 		QueryKind = ValueQuery,
