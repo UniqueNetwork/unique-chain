@@ -11,6 +11,8 @@ import { IKeyringPair } from '@polkadot/types/types';
 import config from '../config';
 import promisifySubstrate from './promisify-substrate';
 import { ApiOptions, SubmittableExtrinsic, ApiTypes } from '@polkadot/api/types';
+import * as defs from '../interfaces/definitions';
+
 
 function defaultApiOptions(): ApiOptions {
   const wsProvider = new WsProvider(config.substrateUrl);
@@ -20,6 +22,9 @@ function defaultApiOptions(): ApiOptions {
         extrinsic: {},
         payload: {},
       },
+    },
+    rpc: {
+      nft: defs.nft.rpc,
     },
   };
 }
@@ -35,15 +40,15 @@ export default async function usingApi<T = void>(action: (api: ApiPromise) => Pr
   const consoleLog = console.log;
   const consoleWarn = console.warn;
 
-  const outFn = (message: string) => {
+  const outFn = (message: any, ...rest: any[]) => {
     if (typeof message !== 'string') {
-      consoleErr(message);
+      consoleErr(message, ...rest);
       return;
     }
     if (!message.includes('StorageChangeSet:: WebSocket is not connected') &&
         !message.includes('2021-') &&
         !message.includes('StorageChangeSet:: Normal connection closure'))
-      consoleErr(message);
+      consoleErr(message, ...rest);
   };
 
   console.error = outFn;
