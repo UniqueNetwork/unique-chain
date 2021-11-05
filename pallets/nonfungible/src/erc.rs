@@ -61,6 +61,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		Ok(string::from_utf8_lossy(&self.token_prefix).into())
 	}
 
+	/// Returns token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -79,6 +80,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		Ok(index)
 	}
 
+	/// Not implemented
 	fn token_of_owner_by_index(&self, _owner: address, _index: uint256) -> Result<uint256> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
@@ -103,6 +105,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			.owner
 			.as_eth())
 	}
+	/// Not implemented
 	fn safe_transfer_from_with_data(
 		&mut self,
 		_from: address,
@@ -114,6 +117,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
+	/// Not implemented
 	fn safe_transfer_from(
 		&mut self,
 		_from: address,
@@ -159,6 +163,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		Ok(())
 	}
 
+	/// Not implemented
 	fn set_approval_for_all(
 		&mut self,
 		_caller: caller,
@@ -169,11 +174,13 @@ impl<T: Config> NonfungibleHandle<T> {
 		Err("not implemented".into())
 	}
 
+	/// Not implemented
 	fn get_approved(&self, _token_id: uint256) -> Result<address> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
 
+	/// Not implemented
 	fn is_approved_for_all(&self, _owner: address, _operator: address) -> Result<address> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
@@ -197,6 +204,8 @@ impl<T: Config> NonfungibleHandle<T> {
 		Ok(false)
 	}
 
+	/// `token_id` should be obtained with `next_token_id` method,
+	/// unlike standard, you can't specify it manually
 	fn mint(&mut self, caller: caller, to: address, token_id: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
@@ -223,6 +232,8 @@ impl<T: Config> NonfungibleHandle<T> {
 		Ok(true)
 	}
 
+	/// `token_id` should be obtained with `next_token_id` method,
+	/// unlike standard, you can't specify it manually
 	#[solidity(rename_selector = "mintWithTokenURI")]
 	fn mint_with_token_uri(
 		&mut self,
@@ -257,6 +268,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		Ok(true)
 	}
 
+	/// Not implemented
 	fn finish_minting(&mut self, _caller: caller) -> Result<bool> {
 		Err("not implementable".into())
 	}

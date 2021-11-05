@@ -6,7 +6,7 @@ use inflector::cases;
 use std::fmt::Write;
 use syn::{
 	Expr, FnArg, GenericArgument, Generics, Ident, ImplItem, ImplItemMethod, ItemImpl, Lit, Meta,
-	NestedMeta, PatType, Path, PathArguments, ReturnType, Type, spanned::Spanned,
+	MetaNameValue, NestedMeta, PatType, Path, PathArguments, ReturnType, Type, spanned::Spanned,
 };
 
 use crate::{
@@ -362,19 +362,28 @@ struct Method {
 	has_normal_args: bool,
 	mutability: Mutability,
 	result: Type,
+	docs: Vec<String>,
 }
 impl Method {
 	fn try_from(value: &ImplItemMethod) -> syn::Result<Self> {
 		let mut info = MethodInfo {
 			rename_selector: None,
 		};
+		let mut docs = Vec::new();
 		for attr in &value.attrs {
 			let ident = parse_ident_from_path(&attr.path, false)?;
 			if ident == "solidity" {
 				let args = attr.parse_meta().unwrap();
 				info = MethodInfo::from_meta(&args).unwrap();
 			} else if ident == "doc" {
-				// TODO: Add docs to evm interfaces
+				let args = attr.parse_meta().unwrap();
+				let value = match args {
+					Meta::NameValue(MetaNameValue {
+						lit: Lit::Str(str), ..
+					}) => str.value(),
+					_ => unreachable!(),
+				};
+				docs.push(value);
 			}
 		}
 		let ident = &value.sig.ident;
@@ -457,6 +466,7 @@ impl Method {
 			has_normal_args,
 			mutability,
 			result: result.clone(),
+			docs,
 		})
 	}
 	fn expand_call_def(&self) -> proc_macro2::TokenStream {
@@ -570,10 +580,12 @@ impl Method {
 			.iter()
 			.filter(|a| !a.is_special())
 			.map(MethodArg::expand_solidity_argument);
+		let docs = self.docs.iter();
 		let selector = format!("{} {:0>8x}", self.selector_str, self.selector);
 
 		quote! {
 			SolidityFunction {
+				docs: &[#(#docs),*],
 				selector: #selector,
 				name: #camel_name,
 				mutability: #mutability,
@@ -704,6 +716,7 @@ impl SolidityInterface {
 					use core::fmt::Write;
 					let interface = SolidityInterface {
 						name: #solidity_name,
+						selector: Self::interface_id(),
 						is: &["Dummy", "ERC165", #(
 							#solidity_is,
 						)* #(
