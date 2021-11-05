@@ -1327,6 +1327,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_fungible, Fungible);
 			list_benchmark!(list, extra, pallet_refungible, Refungible);
 			list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
+			// list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1360,6 +1361,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_fungible, Fungible);
 			add_benchmark!(params, batches, pallet_refungible, Refungible);
 			add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
+			// add_benchmark!(params, batches, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

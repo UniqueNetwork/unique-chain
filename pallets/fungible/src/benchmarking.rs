@@ -58,4 +58,13 @@ benchmarks! {
 		<Pallet<T>>::create_item(&collection, &owner, (sender.clone(), 200))?;
 		<Pallet<T>>::set_allowance(&collection, &sender, &spender, 200)?;
 	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, 100)?}
+
+	burn_from {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub; sender: cross_sub; burner: cross_sub;
+		};
+		<Pallet<T>>::create_item(&collection, &owner, (sender.clone(), 200))?;
+		<Pallet<T>>::set_allowance(&collection, &sender, &burner, 200)?;
+	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, 100)?}
 }

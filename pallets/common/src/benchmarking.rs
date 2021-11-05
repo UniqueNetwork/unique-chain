@@ -54,7 +54,6 @@ pub fn create_collection_raw<T: Config, R>(
 		variable_on_chain_schema,
 		const_on_chain_schema,
 		meta_update_permission: Default::default(),
-		transfers_enabled: true,
 	})
 	.and_then(CollectionHandle::try_get)
 	.map(cast)

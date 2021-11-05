@@ -75,6 +75,14 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+	// Storage: Fungible Allowance (r:1 w:1)
+	// Storage: Fungible TotalSupply (r:1 w:1)
+	// Storage: Fungible Balance (r:1 w:1)
+	fn burn_from() -> Weight {
+		(55_874_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+	}
 }
 
 // For backwards compatibility and tests
@@ -110,6 +118,14 @@ impl WeightInfo for () {
 	// Storage: Fungible Balance (r:2 w:2)
 	fn transfer_from() -> Weight {
 		(21_462_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+	}
+	// Storage: Fungible Allowance (r:1 w:1)
+	// Storage: Fungible TotalSupply (r:1 w:1)
+	// Storage: Fungible Balance (r:1 w:1)
+	fn burn_from() -> Weight {
+		(55_874_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}

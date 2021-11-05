@@ -98,6 +98,15 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
+	// Storage: Nonfungible Allowance (r:1 w:1)
+	// Storage: Nonfungible TokenData (r:1 w:1)
+	// Storage: Nonfungible TokensBurnt (r:1 w:1)
+	// Storage: Nonfungible Owned (r:0 w:1)
+	fn burn_from() -> Weight {
+		(53_429_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
 	// Storage: Nonfungible TokenData (r:1 w:1)
 	fn set_variable_metadata(_b: u32, ) -> Weight {
 		(6_380_000 as Weight)
@@ -162,6 +171,15 @@ impl WeightInfo for () {
 		(28_001_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+	}
+	// Storage: Nonfungible Allowance (r:1 w:1)
+	// Storage: Nonfungible TokenData (r:1 w:1)
+	// Storage: Nonfungible TokensBurnt (r:1 w:1)
+	// Storage: Nonfungible Owned (r:0 w:1)
+	fn burn_from() -> Weight {
+		(53_429_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
 	// Storage: Nonfungible TokenData (r:1 w:1)
 	fn set_variable_metadata(_b: u32, ) -> Weight {

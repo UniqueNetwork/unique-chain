@@ -37,7 +37,7 @@ impl<T: Config> CommonWeightInfo for CommonWeights<T> {
 	}
 
 	fn burn_from() -> Weight {
-		0
+		<SelfWeightOf<T>>::burn_from()
 	}
 
 	fn set_variable_metadata(_bytes: u32) -> Weight {
