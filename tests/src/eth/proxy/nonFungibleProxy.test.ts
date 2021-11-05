@@ -224,7 +224,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: contract.options.address});
 
     {
-      const result = await contract.methods.approve(spender, tokenId).send({from: caller, gas: '0x1000000', gasPrice: '0x01'});
+      const result = await contract.methods.approve(spender, tokenId).send({from: caller, ...GAS_ARGS});
       const events = normalizeEvents(result.events);
 
       expect(events).to.be.deep.equal([

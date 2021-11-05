@@ -32,7 +32,7 @@ describe('EVM payable contracts', () => {
         contract.methods.giveMoney().encodeABI(),
         '10000',
         GAS_ARGS.gas,
-        GAS_ARGS.gasPrice,
+        await web3.eth.getGasPrice(),
         null,
       );
       const events = await submitTransactionAsync(alice, tx);

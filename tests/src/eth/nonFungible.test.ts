@@ -203,7 +203,7 @@ describe('NFT: Plain calls', () => {
     const alice = privateKey('//Alice');
 
     const owner = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, owner, 999999999999999);
+    await transferBalanceToEth(api, alice, owner);
 
     const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: owner});
 
@@ -213,7 +213,7 @@ describe('NFT: Plain calls', () => {
     const contract = new web3.eth.Contract(nonFungibleAbi as any, address);
 
     {
-      const result = await contract.methods.approve(spender, tokenId).send({from: owner, gas: '0x1000000', gasPrice: '0x01'});
+      const result = await contract.methods.approve(spender, tokenId).send({from: owner, ...GAS_ARGS});
       const events = normalizeEvents(result.events);
 
       expect(events).to.be.deep.equal([
@@ -237,12 +237,12 @@ describe('NFT: Plain calls', () => {
     const alice = privateKey('//Alice');
 
     const owner = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, owner, 999999999999999);
+    await transferBalanceToEth(api, alice, owner);
 
     const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: owner});
 
     const spender = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, spender, 999999999999999);
+    await transferBalanceToEth(api, alice, spender);
 
     const receiver = createEthAccount(web3);
 
@@ -285,12 +285,12 @@ describe('NFT: Plain calls', () => {
     const alice = privateKey('//Alice');
 
     const owner = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, owner, 999999999999999);
+    await transferBalanceToEth(api, alice, owner);
 
     const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: owner});
 
     const receiver = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, receiver, 999999999999999);
+    await transferBalanceToEth(api, alice, receiver);
 
     const address = collectionIdToAddress(collection);
     const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: owner, ...GAS_ARGS});

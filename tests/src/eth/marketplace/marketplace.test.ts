@@ -38,8 +38,8 @@ describe('Matcher contract usage', () => {
 
     // Ask
     {
-      await executeEthTxOnSub(api, seller, evmCollection, m => m.approve(matcher.options.address, tokenId));
-      await executeEthTxOnSub(api, seller, matcher, m => m.setAsk(PRICE, '0x0000000000000000000000000000000000000000', evmCollection.options.address, tokenId, 1));
+      await executeEthTxOnSub(web3, api, seller, evmCollection, m => m.approve(matcher.options.address, tokenId));
+      await executeEthTxOnSub(web3, api, seller, matcher, m => m.setAsk(PRICE, '0x0000000000000000000000000000000000000000', evmCollection.options.address, tokenId, 1));
     }
 
     // Token is transferred to matcher
@@ -49,7 +49,7 @@ describe('Matcher contract usage', () => {
     {
       const sellerBalanceBeforePurchase = await getBalanceSingle(api, seller.address);
       // There is two functions named 'buy', so we should provide full signature
-      await executeEthTxOnSub(api, alice, matcher, m => m['buy(address,uint256)'](evmCollection.options.address, tokenId), {value: PRICE});
+      await executeEthTxOnSub(web3, api, alice, matcher, m => m['buy(address,uint256)'](evmCollection.options.address, tokenId), {value: PRICE});
       expect(await getBalanceSingle(api, seller.address) - sellerBalanceBeforePurchase === PRICE);
     }
 
@@ -95,8 +95,8 @@ describe('Matcher contract usage', () => {
 
     // Ask
     {
-      await executeEthTxOnSub(api, seller, evmCollection, m => m.approve(matcher.options.address, tokenId));
-      await executeEthTxOnSub(api, seller, matcher, m => m.setAsk(PRICE, evmFungible.options.address, evmCollection.options.address, tokenId, 1));
+      await executeEthTxOnSub(web3, api, seller, evmCollection, m => m.approve(matcher.options.address, tokenId));
+      await executeEthTxOnSub(web3, api, seller, matcher, m => m.setAsk(PRICE, evmFungible.options.address, evmCollection.options.address, tokenId, 1));
     }
 
     // Token is transferred to matcher
@@ -107,9 +107,9 @@ describe('Matcher contract usage', () => {
       const sellerBalanceBeforePurchase = BigInt(await evmFungible.methods.balanceOf(subToEth(seller.address)).call());
       const buyerBalanceBeforePurchase = BigInt(await evmFungible.methods.balanceOf(subToEth(alice.address)).call());
 
-      await executeEthTxOnSub(api, alice, evmFungible, m => m.approve(matcher.options.address, PRICE));
+      await executeEthTxOnSub(web3, api, alice, evmFungible, m => m.approve(matcher.options.address, PRICE));
       // There is two functions named 'buy', so we should provide full signature
-      await executeEthTxOnSub(api, alice, matcher, m =>
+      await executeEthTxOnSub(web3, api, alice, matcher, m =>
         m['buy(address,uint256,address,uint256)'](evmCollection.options.address, tokenId, evmFungible.options.address, PRICE));
 
       // Approved price is removed from buyer balance, and added to seller
@@ -158,8 +158,8 @@ describe('Matcher contract usage', () => {
 
     // Ask
     {
-      await executeEthTxOnSub(api, seller, evmCollection, m => m.approve(matcher.options.address, tokenId));
-      await executeEthTxOnSub(api, seller, matcher, m => m.setAsk(PRICE, ksmToken, evmCollection.options.address, tokenId, 1));
+      await executeEthTxOnSub(web3, api, seller, evmCollection, m => m.approve(matcher.options.address, tokenId));
+      await executeEthTxOnSub(web3, api, seller, matcher, m => m.setAsk(PRICE, ksmToken, evmCollection.options.address, tokenId, 1));
     }
 
     // Token is transferred to matcher
@@ -173,7 +173,7 @@ describe('Matcher contract usage', () => {
       expect(await matcher.methods.escrowBalance(ksmToken, subToEth(seller.address)).call()).to.be.equal('0');
       expect(await matcher.methods.escrowBalance(ksmToken, subToEth(alice.address)).call()).to.be.equal(PRICE.toString());
 
-      await executeEthTxOnSub(api, alice, matcher, m => m.buy(evmCollection.options.address, tokenId));
+      await executeEthTxOnSub(web3, api, alice, matcher, m => m.buy(evmCollection.options.address, tokenId));
 
       // Price is removed from buyer balance, and added to seller
       expect(await matcher.methods.escrowBalance(ksmToken, subToEth(alice.address)).call()).to.be.equal('0');
