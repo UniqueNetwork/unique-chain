@@ -11,7 +11,10 @@ use alloc::{
 use evm_core::ExitError;
 use primitive_types::{H160, U256};
 
-use crate::{execution::Error, types::string};
+use crate::{
+	execution::{Error, ResultWithPostInfo, WithPostDispatchInfo},
+	types::string,
+};
 use crate::execution::Result;
 
 const ABI_ALIGNMENT: usize = 32;
@@ -244,6 +247,7 @@ macro_rules! impl_abi_readable {
 }
 
 impl_abi_readable!(u32, uint32);
+impl_abi_readable!(u64, uint64);
 impl_abi_readable!(u128, uint128);
 impl_abi_readable!(U256, uint256);
 impl_abi_readable!(H160, address);
@@ -306,6 +310,36 @@ impl_tuples! {A B C D E F G H I J}
 
 pub trait AbiWrite {
 	fn abi_write(&self, writer: &mut AbiWriter);
+	fn into_result(&self) -> ResultWithPostInfo<AbiWriter> {
+		let mut writer = AbiWriter::new();
+		self.abi_write(&mut writer);
+		Ok(writer.into())
+	}
+}
+
+impl<T: AbiWrite> AbiWrite for ResultWithPostInfo<T> {
+	// this particular AbiWrite implementation should be split to another trait,
+	// which only implements [`into_result`]
+	//
+	// But due to lack of specialization feature in stable Rust, we can't have
+	// blanket impl of this trait `for T where T: AbiWrite`, so here we abusing
+	// default trait methods for it
+	fn abi_write(&self, _writer: &mut AbiWriter) {
+		debug_assert!(false, "shouldn't be called, see comment")
+	}
+	fn into_result(&self) -> ResultWithPostInfo<AbiWriter> {
+		match self {
+			Ok(v) => Ok(WithPostDispatchInfo {
+				post_info: v.post_info.clone(),
+				data: {
+					let mut out = AbiWriter::new();
+					v.data.abi_write(&mut out);
+					out
+				},
+			}),
+			Err(e) => Err(e.clone()),
+		}
+	}
 }
 
 macro_rules! impl_abi_writeable {

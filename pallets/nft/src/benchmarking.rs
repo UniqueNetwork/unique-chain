@@ -155,12 +155,13 @@ benchmarks! {
 
 		let cl = CollectionLimits {
 			account_token_ownership_limit: Some(0),
-			sponsored_data_size: 0,
-			token_limit: 1,
-			sponsor_transfer_timeout: 0,
-			owner_can_destroy: true,
-			owner_can_transfer: true,
+			sponsored_data_size: Some(0),
+			token_limit: Some(1),
+			sponsor_transfer_timeout: Some(0),
+			owner_can_destroy: Some(true),
+			owner_can_transfer: Some(true),
 			sponsored_data_rate_limit: None,
+			transfers_enabled: Some(true),
 		};
 	}: set_collection_limits(RawOrigin::Signed(caller.clone()), collection, cl)
 

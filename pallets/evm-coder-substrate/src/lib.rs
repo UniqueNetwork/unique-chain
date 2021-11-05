@@ -2,6 +2,8 @@
 
 #[cfg(not(feature = "std"))]
 extern crate alloc;
+// #[cfg(feature = "runtime-benchmarks")]
+// pub mod benchmarking;
 
 pub use pallet::*;
 
@@ -17,7 +19,10 @@ pub mod pallet {
 		types::{Msg, value},
 	};
 	use frame_support::{ensure};
-	use pallet_evm::{ExitError, ExitReason, ExitRevert, ExitSucceed, PrecompileOutput};
+	use pallet_evm::{
+		ExitError, ExitReason, ExitRevert, ExitSucceed, PrecompileOutput, GasWeightMapping,
+	};
+	use frame_system::ensure_signed;
 	pub use frame_support::dispatch::DispatchResult;
 	use pallet_ethereum::EthereumTransactionSender;
 	use sp_std::cell::RefCell;
@@ -25,6 +30,7 @@ pub mod pallet {
 	use sp_core::{H160, H256};
 	use ethereum::Log;
 	use frame_support::{pallet_prelude::*, traits::PalletInfo};
+	use frame_system::pallet_prelude::*;
 
 	/// DispatchError is opaque, but we need to somehow extract correct error in case of OutOfGas failure
 	/// So we have this pallet, which defines OutOfGas error, and knews its own id to check if DispatchError
@@ -40,25 +46,24 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type EthereumTransactionSender: pallet_ethereum::EthereumTransactionSender;
+		type GasWeightMapping: pallet_evm::GasWeightMapping;
 	}
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
-	// FIXME: those items are defined as private in evm_gasometer::consts, and we can't directly use it
-	pub const G_LOG: u64 = 375;
-	pub const G_LOGDATA: u64 = 8;
-	pub const G_LOGTOPIC: u64 = 375;
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		#[pallet::weight(0)]
+		pub fn empty_call(origin: OriginFor<T>) -> DispatchResult {
+			let _sender = ensure_signed(origin)?;
+			Ok(())
+		}
+	}
 
 	// From instabul hardfork configuration: https://github.com/rust-blockchain/evm/blob/fd4fd6acc0ca3208d6770fdb3ba407c94cdf97c6/runtime/src/lib.rs#L284
 	pub const G_SLOAD_WORD: u64 = 800;
 	pub const G_SSTORE_WORD: u64 = 20000;
-
-	fn log_price(data: usize, topics: usize) -> u64 {
-		G_LOG
-			.saturating_add((data as u64).saturating_mul(G_LOGDATA))
-			.saturating_add((topics as u64).saturating_mul(G_LOGTOPIC))
-	}
 
 	pub fn generate_transaction() -> ethereum::TransactionV0 {
 		use ethereum::{TransactionV0, TransactionAction, TransactionSignature};
@@ -98,16 +103,10 @@ pub mod pallet {
 		pub fn is_empty(&self) -> bool {
 			self.logs.borrow().is_empty()
 		}
-		pub fn log_sub(&self, log: impl ToLog) -> DispatchResult {
-			self.log_raw_sub(log.to_log(self.contract))
-		}
-		pub fn log_raw_sub(&self, log: Log) -> DispatchResult {
-			self.consume_gas_sub(log_price(log.data.len(), log.topics.len()))?;
-			self.logs.borrow_mut().push(log);
-			Ok(())
-		}
+		// TODO: Replace with real storage in pallet-ethereum,
+		// same way as it is done with frame_system's Events
 		/// Doesn't consumes any gas, should be used after consume_log_sub
-		pub fn log_infallible(&self, log: impl ToLog) {
+		pub fn log(&self, log: impl ToLog) {
 			self.logs.borrow_mut().push(log.to_log(self.contract));
 		}
 		pub fn retrieve_logs(self) -> Vec<Log> {
@@ -125,9 +124,6 @@ pub mod pallet {
 		}
 		pub fn consume_sstore_sub(&self) -> DispatchResult {
 			self.consume_gas_sub(G_SSTORE_WORD)
-		}
-		pub fn consume_log_sub(&self, topics: usize, data: usize) -> DispatchResult {
-			self.consume_gas_sub(log_price(data, topics))
 		}
 		pub fn consume_gas_sub(&self, gas: u64) -> DispatchResult {
 			ensure!(gas != u64::MAX, Error::<T>::OutOfGas);
@@ -153,6 +149,10 @@ pub mod pallet {
 			}
 			*gas_limit -= gas;
 			Ok(())
+		}
+		pub fn return_gas(&self, gas: u64) {
+			let mut gas_limit = self.gas_limit.borrow_mut();
+			*gas_limit += gas;
 		}
 
 		pub fn evm_to_precompile_output(
@@ -181,12 +181,16 @@ pub mod pallet {
 			})
 		}
 
-		pub fn submit_logs(self) -> DispatchResult {
+		pub fn submit_logs(self) {
 			let logs = self.retrieve_logs();
 			if logs.is_empty() {
-				return Ok(());
+				return;
 			}
-			T::EthereumTransactionSender::submit_logs_transaction(generate_transaction(), logs)
+			T::EthereumTransactionSender::submit_logs_transaction(
+				Default::default(),
+				generate_transaction(),
+				logs,
+			)
 		}
 	}
 
@@ -215,7 +219,31 @@ pub mod pallet {
 		}
 	}
 
-	pub fn call_internal<C: evm_coder::Call, E: evm_coder::Callable<C>>(
+	pub trait WithRecorder<T: Config> {
+		fn recorder(&self) -> &SubstrateRecorder<T>;
+		fn into_recorder(self) -> SubstrateRecorder<T>;
+	}
+
+	/// Helper to simplify implementing bridge between evm-coder definitions and pallet-evm
+	pub fn call<
+		T: Config,
+		C: evm_coder::Call + evm_coder::Weighted,
+		E: evm_coder::Callable<C> + WithRecorder<T>,
+	>(
+		caller: H160,
+		mut e: E,
+		value: value,
+		input: &[u8],
+	) -> Option<PrecompileOutput> {
+		let result = call_internal(caller, &mut e, value, input);
+		e.into_recorder().evm_to_precompile_output(result)
+	}
+
+	fn call_internal<
+		T: Config,
+		C: evm_coder::Call + evm_coder::Weighted,
+		E: evm_coder::Callable<C> + WithRecorder<T>,
+	>(
 		caller: H160,
 		e: &mut E,
 		value: value,
@@ -227,11 +255,28 @@ pub mod pallet {
 			return Ok(None);
 		}
 		let call = call.unwrap();
-		e.call(Msg {
+
+		let dispatch_info = call.weight();
+		e.recorder()
+			.consume_gas(T::GasWeightMapping::weight_to_gas(dispatch_info.weight))?;
+
+		match e.call(Msg {
 			call,
 			caller,
 			value,
-		})
-		.map(Some)
+		}) {
+			Ok(v) => {
+				let unspent = v.post_info.calc_unspent(&dispatch_info);
+				e.recorder()
+					.return_gas(T::GasWeightMapping::weight_to_gas(unspent));
+				Ok(Some(v.data))
+			}
+			Err(v) => {
+				let unspent = v.post_info.calc_unspent(&dispatch_info);
+				e.recorder()
+					.return_gas(T::GasWeightMapping::weight_to_gas(unspent));
+				Err(v.data)
+			}
+		}
 	}
 }

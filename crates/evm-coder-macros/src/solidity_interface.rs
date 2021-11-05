@@ -30,11 +30,11 @@ impl Is {
 		})
 	}
 
-	fn expand_call_def(&self) -> proc_macro2::TokenStream {
+	fn expand_call_def(&self, gen_ref: &proc_macro2::TokenStream) -> proc_macro2::TokenStream {
 		let name = &self.name;
 		let pascal_call_name = &self.pascal_call_name;
 		quote! {
-			#name(#pascal_call_name)
+			#name(#pascal_call_name #gen_ref)
 		}
 	}
 
@@ -45,18 +45,32 @@ impl Is {
 		}
 	}
 
-	fn expand_supports_interface(&self) -> proc_macro2::TokenStream {
+	fn expand_supports_interface(
+		&self,
+		generics: &proc_macro2::TokenStream,
+	) -> proc_macro2::TokenStream {
 		let pascal_call_name = &self.pascal_call_name;
 		quote! {
-			#pascal_call_name::supports_interface(interface_id)
+			<#pascal_call_name #generics>::supports_interface(interface_id)
 		}
 	}
 
-	fn expand_variant_call(&self) -> proc_macro2::TokenStream {
+	fn expand_variant_weight(&self) -> proc_macro2::TokenStream {
+		let name = &self.name;
+		quote! {
+			Self::#name(call) => call.weight()
+		}
+	}
+
+	fn expand_variant_call(
+		&self,
+		call_name: &proc_macro2::Ident,
+		generics: &proc_macro2::TokenStream,
+	) -> proc_macro2::TokenStream {
 		let name = &self.name;
 		let pascal_call_name = &self.pascal_call_name;
 		quote! {
-			InternalCall::#name(call) => return <Self as ::evm_coder::Callable<#pascal_call_name>>::call(self, Msg {
+			#call_name::#name(call) => return <Self as ::evm_coder::Callable<#pascal_call_name #generics>>::call(self, Msg {
 				call,
 				caller: c.caller,
 				value: c.value,
@@ -64,20 +78,20 @@ impl Is {
 		}
 	}
 
-	fn expand_parse(&self) -> proc_macro2::TokenStream {
+	fn expand_parse(&self, generics: &proc_macro2::TokenStream) -> proc_macro2::TokenStream {
 		let name = &self.name;
 		let pascal_call_name = &self.pascal_call_name;
 		quote! {
-			if let Some(parsed_call) = #pascal_call_name::parse(method_id, reader)? {
+			if let Some(parsed_call) = <#pascal_call_name #generics>::parse(method_id, reader)? {
 				return Ok(Some(Self::#name(parsed_call)))
 			}
 		}
 	}
 
-	fn expand_generator(&self) -> proc_macro2::TokenStream {
+	fn expand_generator(&self, generics: &proc_macro2::TokenStream) -> proc_macro2::TokenStream {
 		let pascal_call_name = &self.pascal_call_name;
 		quote! {
-			#pascal_call_name::generate_solidity_interface(tc, is_impl);
+			<#pascal_call_name #generics>::generate_solidity_interface(tc, is_impl);
 		}
 	}
 
@@ -351,6 +365,25 @@ enum Mutability {
 	Pure,
 }
 
+pub struct WeightAttr(syn::Expr);
+
+mod keyword {
+	syn::custom_keyword!(weight);
+}
+
+impl syn::parse::Parse for WeightAttr {
+	fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+		input.parse::<syn::Token![#]>()?;
+		let content;
+		syn::bracketed!(content in input);
+		content.parse::<keyword::weight>()?;
+
+		let weight_content;
+		syn::parenthesized!(weight_content in content);
+		Ok(WeightAttr(weight_content.parse::<syn::Expr>()?))
+	}
+}
+
 struct Method {
 	name: Ident,
 	camel_name: String,
@@ -362,6 +395,7 @@ struct Method {
 	has_normal_args: bool,
 	mutability: Mutability,
 	result: Type,
+	weight: Option<Expr>,
 	docs: Vec<String>,
 }
 impl Method {
@@ -370,6 +404,7 @@ impl Method {
 			rename_selector: None,
 		};
 		let mut docs = Vec::new();
+		let mut weight = None;
 		for attr in &value.attrs {
 			let ident = parse_ident_from_path(&attr.path, false)?;
 			if ident == "solidity" {
@@ -384,6 +419,8 @@ impl Method {
 					_ => unreachable!(),
 				};
 				docs.push(value);
+			} else if ident == "weight" {
+				weight = Some(syn::parse2::<WeightAttr>(attr.to_token_stream())?.0);
 			}
 		}
 		let ident = &value.sig.ident;
@@ -466,6 +503,7 @@ impl Method {
 			has_normal_args,
 			mutability,
 			result: result.clone(),
+			weight,
 			docs,
 		})
 	}
@@ -528,7 +566,7 @@ impl Method {
 		}
 	}
 
-	fn expand_variant_call(&self) -> proc_macro2::TokenStream {
+	fn expand_variant_call(&self, call_name: &proc_macro2::Ident) -> proc_macro2::TokenStream {
 		let pascal_name = &self.pascal_name;
 		let name = &self.name;
 
@@ -555,13 +593,46 @@ impl Method {
 		let args = self.args.iter().map(|a| a.expand_call_arg());
 
 		quote! {
-			InternalCall::#pascal_name #matcher => {
+			#call_name::#pascal_name #matcher => {
 				let result = #receiver #name(
 					#(
 						#args,
 					)*
 				)?;
-				(&result).abi_write(&mut writer);
+				(&result).into_result()
+			}
+		}
+	}
+
+	fn expand_variant_weight(&self) -> proc_macro2::TokenStream {
+		let pascal_name = &self.pascal_name;
+		if let Some(weight) = &self.weight {
+			let matcher = if self.has_normal_args {
+				let names = self
+					.args
+					.iter()
+					.filter(|a| !a.is_special())
+					.map(|a| &a.name);
+
+				quote! {{
+					#(
+						#names,
+					)*
+				}}
+			} else {
+				quote! {}
+			};
+			quote! {
+				Self::#pascal_name #matcher => (#weight).into()
+			}
+		} else {
+			let matcher = if self.has_normal_args {
+				quote! {{..}}
+			} else {
+				quote! {}
+			};
+			quote! {
+				Self::#pascal_name #matcher => ().into()
 			}
 		}
 	}
@@ -600,6 +671,42 @@ impl Method {
 	}
 }
 
+fn generics_list(gen: &Generics) -> proc_macro2::TokenStream {
+	if gen.params.is_empty() {
+		return quote! {};
+	}
+	let params = gen.params.iter().map(|p| match p {
+		syn::GenericParam::Type(id) => {
+			let v = &id.ident;
+			quote! {#v}
+		}
+		syn::GenericParam::Lifetime(lt) => {
+			let v = &lt.lifetime;
+			quote! {#v}
+		}
+		syn::GenericParam::Const(c) => {
+			let i = &c.ident;
+			quote! {#i}
+		}
+	});
+	quote! { #(#params),* }
+}
+fn generics_reference(gen: &Generics) -> proc_macro2::TokenStream {
+	if gen.params.is_empty() {
+		return quote! {};
+	}
+	let list = generics_list(gen);
+	quote! { <#list> }
+}
+fn generics_data(gen: &Generics) -> proc_macro2::TokenStream {
+	let list = generics_list(gen);
+	if gen.params.len() == 1 {
+		quote! {#list}
+	} else {
+		quote! { (#list) }
+	}
+}
+
 pub struct SolidityInterface {
 	generics: Generics,
 	name: Box<syn::Type>,
@@ -628,6 +735,8 @@ impl SolidityInterface {
 		let solidity_name = self.info.name.to_string();
 		let call_name = pascal_ident_to_call(&self.info.name);
 		let generics = self.generics;
+		let gen_ref = generics_reference(&generics);
+		let gen_data = generics_data(&generics);
 
 		let call_sub = self
 			.info
@@ -635,30 +744,46 @@ impl SolidityInterface {
 			.0
 			.iter()
 			.chain(self.info.is.0.iter())
-			.map(Is::expand_call_def);
+			.map(|c| Is::expand_call_def(c, &gen_ref));
 		let call_parse = self
 			.info
 			.inline_is
 			.0
 			.iter()
 			.chain(self.info.is.0.iter())
-			.map(Is::expand_parse);
+			.map(|is| Is::expand_parse(is, &gen_ref));
 		let call_variants = self
 			.info
 			.inline_is
 			.0
 			.iter()
 			.chain(self.info.is.0.iter())
-			.map(Is::expand_variant_call);
+			.map(|c| Is::expand_variant_call(c, &call_name, &gen_ref));
+		let weight_variants = self
+			.info
+			.inline_is
+			.0
+			.iter()
+			.chain(self.info.is.0.iter())
+			.map(Is::expand_variant_weight);
 
 		let inline_interface_id = self.info.inline_is.0.iter().map(Is::expand_interface_id);
-		let supports_interface = self.info.is.0.iter().map(Is::expand_supports_interface);
+		let supports_interface = self
+			.info
+			.is
+			.0
+			.iter()
+			.map(|is| Is::expand_supports_interface(is, &gen_ref));
 
 		let calls = self.methods.iter().map(Method::expand_call_def);
 		let consts = self.methods.iter().map(Method::expand_const);
 		let interface_id = self.methods.iter().map(Method::expand_interface_id);
 		let parsers = self.methods.iter().map(Method::expand_parse);
-		let call_variants_this = self.methods.iter().map(Method::expand_variant_call);
+		let call_variants_this = self
+			.methods
+			.iter()
+			.map(|m| Method::expand_variant_call(m, &call_name));
+		let weight_variants_this = self.methods.iter().map(Method::expand_variant_weight);
 		let solidity_functions = self.methods.iter().map(Method::expand_solidity_function);
 
 		// TODO: Inline inline_is
@@ -676,15 +801,15 @@ impl SolidityInterface {
 			.0
 			.iter()
 			.chain(self.info.inline_is.0.iter())
-			.map(Is::expand_generator);
+			.map(|is| Is::expand_generator(is, &gen_ref));
 		let solidity_event_generators = self.info.events.0.iter().map(Is::expand_event_generator);
 
 		// let methods = self.methods.iter().map(Method::solidity_def);
 
 		quote! {
 			#[derive(Debug)]
-			pub enum #call_name {
-				ERC165Call(::evm_coder::ERC165Call),
+			pub enum #call_name #gen_ref {
+				ERC165Call(::evm_coder::ERC165Call, ::core::marker::PhantomData<#gen_data>),
 				#(
 					#calls,
 				)*
@@ -692,11 +817,11 @@ impl SolidityInterface {
 					#call_sub,
 				)*
 			}
-			impl #call_name {
+			impl #gen_ref #call_name #gen_ref {
 				#(
 					#consts
 				)*
-				pub const fn interface_id() -> u32 {
+				pub fn interface_id() -> u32 {
 					let mut interface_id = 0;
 					#(#interface_id)*
 					#(#inline_interface_id)*
@@ -748,11 +873,14 @@ impl SolidityInterface {
 					tc.collect(out);
 				}
 			}
-			impl ::evm_coder::Call for #call_name {
+			impl #gen_ref ::evm_coder::Call for #call_name #gen_ref {
 				fn parse(method_id: u32, reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::execution::Result<Option<Self>> {
 					use ::evm_coder::abi::AbiRead;
 					match method_id {
-						::evm_coder::ERC165Call::INTERFACE_ID => return Ok(::evm_coder::ERC165Call::parse(method_id, reader)?.map(Self::ERC165Call)),
+						::evm_coder::ERC165Call::INTERFACE_ID => return Ok(
+							::evm_coder::ERC165Call::parse(method_id, reader)?
+							.map(|c| Self::ERC165Call(c, ::core::marker::PhantomData))
+						),
 						#(
 							#parsers,
 						)*
@@ -764,19 +892,33 @@ impl SolidityInterface {
 					return Ok(None);
 				}
 			}
-			impl #generics ::evm_coder::Callable<#call_name> for #name {
+			impl #generics ::evm_coder::Weighted for #call_name #gen_ref {
+				#[allow(unused_variables)]
+				fn weight(&self) -> ::evm_coder::execution::DispatchInfo {
+					match self {
+						#(
+							#weight_variants,
+						)*
+						// TODO: It should be very cheap, but not free
+						Self::ERC165Call(::evm_coder::ERC165Call::SupportsInterface {..}, _) => 100u64.into(),
+						#(
+							#weight_variants_this,
+						)*
+					}
+				}
+			}
+			impl #generics ::evm_coder::Callable<#call_name #gen_ref> for #name {
 				#[allow(unreachable_code)] // In case of no inner calls
-				fn call(&mut self, c: Msg<#call_name>) -> Result<::evm_coder::abi::AbiWriter> {
+				fn call(&mut self, c: Msg<#call_name #gen_ref>) -> ::evm_coder::execution::ResultWithPostInfo<::evm_coder::abi::AbiWriter> {
 					use ::evm_coder::abi::AbiWrite;
-					type InternalCall = #call_name;
 					match c.call {
 						#(
 							#call_variants,
 						)*
-						InternalCall::ERC165Call(::evm_coder::ERC165Call::SupportsInterface {interface_id}) => {
+						#call_name::ERC165Call(::evm_coder::ERC165Call::SupportsInterface {interface_id}, _) => {
 							let mut writer = ::evm_coder::abi::AbiWriter::default();
-							writer.bool(&InternalCall::supports_interface(interface_id));
-							return Ok(writer);
+							writer.bool(&<#call_name #gen_ref>::supports_interface(interface_id));
+							return Ok(writer.into());
 						}
 						_ => {},
 					}
@@ -787,7 +929,6 @@ impl SolidityInterface {
 						)*
 						_ => unreachable!()
 					}
-					Ok(writer)
 				}
 			}
 		}

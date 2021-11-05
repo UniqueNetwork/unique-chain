@@ -66,7 +66,7 @@ use sp_arithmetic::{
 };
 use smallvec::smallvec;
 use codec::{Encode, Decode};
-use pallet_evm::{Account as EVMAccount, FeeCalculator, OnMethodCall};
+use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
 use fp_rpc::TransactionStatus;
 use sp_core::crypto::Public;
 use sp_runtime::{
@@ -247,10 +247,37 @@ impl FeeCalculator for FixedFee {
 	}
 }
 
+// Assuming slowest ethereum opcode is SSTORE, with gas price of 20000 as our worst case
+// (contract, which only writes a lot of data),
+// approximating on top of our real store write weight
+parameter_types! {
+	pub const WritesPerSecond: u64 = WEIGHT_PER_SECOND / <Runtime as frame_system::Config>::DbWeight::get().write;
+	pub const GasPerSecond: u64 = WritesPerSecond::get() * 20000;
+	pub const WeightPerGas: u64 = WEIGHT_PER_SECOND / GasPerSecond::get();
+}
+
+/// Limiting EVM execution to 50% of block for substrate users and management tasks
+/// EVM transaction consumes more weight than substrate's, so we can't rely on them being
+/// scheduled fairly
+const EVM_DISPATCH_RATIO: Perbill = Perbill::from_percent(50);
+parameter_types! {
+	pub BlockGasLimit: U256 = U256::from(NORMAL_DISPATCH_RATIO * EVM_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WeightPerGas::get());
+}
+
+pub enum FixedGasWeightMapping {}
+impl GasWeightMapping for FixedGasWeightMapping {
+	fn gas_to_weight(gas: u64) -> Weight {
+		gas.saturating_mul(WeightPerGas::get())
+	}
+	fn weight_to_gas(weight: Weight) -> u64 {
+		weight / WeightPerGas::get()
+	}
+}
+
 impl pallet_evm::Config for Runtime {
 	type BlockGasLimit = BlockGasLimit;
 	type FeeCalculator = FixedFee;
-	type GasWeightMapping = ();
+	type GasWeightMapping = FixedGasWeightMapping;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
@@ -289,14 +316,9 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	}
 }
 
-parameter_types! {
-	pub BlockGasLimit: U256 = U256::from(u32::max_value());
-}
-
 impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot;
-	type EvmSubmitLog = pallet_evm::Pallet<Self>;
 }
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
@@ -671,6 +693,7 @@ pub type XcmRouter = (
 
 impl pallet_evm_coder_substrate::Config for Runtime {
 	type EthereumTransactionSender = pallet_ethereum::Pallet<Self>;
+	type GasWeightMapping = FixedGasWeightMapping;
 }
 
 impl pallet_xcm::Config for Runtime {

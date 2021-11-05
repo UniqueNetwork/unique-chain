@@ -6,6 +6,7 @@ use nft_data_structs::{AccessMode, Collection, CollectionId, TokenId};
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
 };
+use pallet_evm_coder_substrate::WithRecorder;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
@@ -82,6 +83,14 @@ impl<T: Config> FungibleHandle<T> {
 		self.0
 	}
 }
+impl<T: Config> WithRecorder<T> for FungibleHandle<T> {
+	fn recorder(&self) -> &pallet_evm_coder_substrate::SubstrateRecorder<T> {
+		self.0.recorder()
+	}
+	fn into_recorder(self) -> pallet_evm_coder_substrate::SubstrateRecorder<T> {
+		self.0.into_recorder()
+	}
+}
 impl<T: Config> Deref for FungibleHandle<T> {
 	type Target = pallet_common::CollectionHandle<T>;
 
@@ -136,7 +145,7 @@ impl<T: Config> Pallet<T> {
 		}
 		<TotalSupply<T>>::insert(collection.id, total_supply);
 
-		collection.log_infallible(ERC20Events::Transfer {
+		collection.log(ERC20Events::Transfer {
 			from: *owner.as_eth(),
 			to: H160::default(),
 			value: amount.into(),
@@ -180,11 +189,6 @@ impl<T: Config> Pallet<T> {
 			None
 		};
 
-		collection.consume_sstore()?;
-		collection.consume_sstore()?;
-		collection.consume_log(2, 32)?;
-		collection.consume_sstore()?;
-
 		// =========
 
 		if let Some(balance_to) = balance_to {
@@ -197,7 +201,7 @@ impl<T: Config> Pallet<T> {
 			<Balance<T>>::insert((collection.id, to), balance_to);
 		}
 
-		collection.log_infallible(ERC20Events::Transfer {
+		collection.log(ERC20Events::Transfer {
 			from: *from.as_eth(),
 			to: *to.as_eth(),
 			value: amount.into(),
@@ -217,8 +221,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		data: Vec<CreateItemData<T>>,
 	) -> DispatchResult {
-		let unrestricted_minting = collection.is_owner_or_admin(sender)?;
-		if !unrestricted_minting {
+		if !collection.is_owner_or_admin(sender) {
 			ensure!(
 				collection.mint_mode,
 				<CommonError<T>>::PublicMintingNotAllowed
@@ -241,7 +244,6 @@ impl<T: Config> Pallet<T> {
 			.ok_or(ArithmeticError::Overflow)?;
 
 		for (user, amount) in data.into_iter() {
-			collection.consume_sload()?;
 			let balance = balances
 				.entry(user.clone())
 				.or_insert_with(|| <Balance<T>>::get((collection.id, user)));
@@ -250,20 +252,13 @@ impl<T: Config> Pallet<T> {
 				.ok_or(ArithmeticError::Overflow)?;
 		}
 
-		collection.consume_sstore()?;
-		for _ in &balances {
-			collection.consume_sstore()?;
-			collection.consume_log(2, 32)?;
-			collection.consume_sstore()?;
-		}
-
 		// =========
 
 		<TotalSupply<T>>::insert(collection.id, total_supply);
 		for (user, amount) in balances {
 			<Balance<T>>::insert((collection.id, &user), amount);
 
-			collection.log_infallible(ERC20Events::Transfer {
+			collection.log(ERC20Events::Transfer {
 				from: H160::default(),
 				to: *user.as_eth(),
 				value: amount.into(),
@@ -287,7 +282,7 @@ impl<T: Config> Pallet<T> {
 	) {
 		<Allowance<T>>::insert((collection.id, owner, spender), amount);
 
-		collection.log_infallible(ERC20Events::Approval {
+		collection.log(ERC20Events::Approval {
 			owner: *owner.as_eth(),
 			spender: *spender.as_eth(),
 			value: amount.into(),
@@ -314,7 +309,7 @@ impl<T: Config> Pallet<T> {
 
 		if <Balance<T>>::get((collection.id, owner)) < amount {
 			ensure!(
-				collection.ignores_owned_amount(owner)?,
+				collection.ignores_owned_amount(owner),
 				<CommonError<T>>::CantApproveMoreThanOwned
 			);
 		}
@@ -343,7 +338,7 @@ impl<T: Config> Pallet<T> {
 		let allowance = <Allowance<T>>::get((collection.id, from, spender)).checked_sub(amount);
 		if allowance.is_none() {
 			ensure!(
-				collection.ignores_allowance(spender)?,
+				collection.ignores_allowance(spender),
 				<CommonError<T>>::TokenValueNotEnough
 			);
 		}
@@ -374,7 +369,7 @@ impl<T: Config> Pallet<T> {
 		let allowance = <Allowance<T>>::get((collection.id, from, spender)).checked_sub(amount);
 		if allowance.is_none() {
 			ensure!(
-				collection.ignores_allowance(spender)?,
+				collection.ignores_allowance(spender),
 				<CommonError<T>>::TokenValueNotEnough
 			);
 		}

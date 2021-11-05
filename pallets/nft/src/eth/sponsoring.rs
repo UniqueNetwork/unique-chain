@@ -31,7 +31,7 @@ fn try_sponsor<T: Config>(
 	let (method_id, mut reader) = AbiReader::new_call(call).map_err(|_| AnyError)?;
 	match &collection.mode {
 		crate::CollectionMode::NFT => {
-			let call: UniqueNFTCall = UniqueNFTCall::parse(method_id, &mut reader)
+			let call = <UniqueNFTCall<T>>::parse(method_id, &mut reader)
 				.map_err(|_| AnyError)?
 				.ok_or(AnyError)?;
 			match call {
@@ -63,7 +63,7 @@ fn try_sponsor<T: Config>(
 			}
 		}
 		crate::CollectionMode::Fungible(_) => {
-			let call: UniqueFungibleCall = UniqueFungibleCall::parse(method_id, &mut reader)
+			let call = <UniqueFungibleCall<T>>::parse(method_id, &mut reader)
 				.map_err(|_| AnyError)?
 				.ok_or(AnyError)?;
 			#[allow(clippy::single_match)]

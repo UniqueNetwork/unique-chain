@@ -19,7 +19,7 @@ nft-data-structs = { default-features = false, path = '../../primitives/nft' }
 pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12-weights" }
 serde = { version = "1.0.130", default-features = false }
 scale-info = { version = "1.0.0", default-features = false, features = [
     "derive",

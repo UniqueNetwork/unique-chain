@@ -8,6 +8,7 @@ use nft_data_structs::{
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, account::CrossAccountId,
 };
+use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{vec::Vec, vec};
@@ -114,6 +115,14 @@ impl<T: Config> NonfungibleHandle<T> {
 		self.0
 	}
 }
+impl<T: Config> WithRecorder<T> for NonfungibleHandle<T> {
+	fn recorder(&self) -> &SubstrateRecorder<T> {
+		self.0.recorder()
+	}
+	fn into_recorder(self) -> SubstrateRecorder<T> {
+		self.0.into_recorder()
+	}
+}
 impl<T: Config> Deref for NonfungibleHandle<T> {
 	type Target = pallet_common::CollectionHandle<T>;
 
@@ -164,8 +173,7 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| <CommonError<T>>::TokenNotFound)?;
 		ensure!(
 			&token_data.owner == sender
-				|| (collection.limits.owner_can_transfer()
-					&& collection.is_owner_or_admin(sender)?),
+				|| (collection.limits.owner_can_transfer() && collection.is_owner_or_admin(sender)),
 			<CommonError<T>>::NoPermission
 		);
 
@@ -194,7 +202,7 @@ impl<T: Config> Pallet<T> {
 			));
 		}
 
-		collection.log_infallible(ERC721Events::Transfer {
+		collection.log(ERC721Events::Transfer {
 			from: *token_data.owner.as_eth(),
 			to: H160::default(),
 			token_id: token.into(),
@@ -223,8 +231,7 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| <CommonError<T>>::TokenNotFound)?;
 		ensure!(
 			&token_data.owner == from
-				|| (collection.limits.owner_can_transfer()
-					&& collection.is_owner_or_admin(from)?),
+				|| (collection.limits.owner_can_transfer() && collection.is_owner_or_admin(from)),
 			<CommonError<T>>::NoPermission
 		);
 
@@ -252,9 +259,6 @@ impl<T: Config> Pallet<T> {
 			None
 		};
 
-		collection.consume_sstores(4)?;
-		collection.consume_log(3, 0)?;
-
 		// =========
 
 		<TokenData<T>>::insert(
@@ -278,7 +282,7 @@ impl<T: Config> Pallet<T> {
 		}
 		Self::set_allowance_unchecked(collection, from, token, None, true);
 
-		collection.log_infallible(ERC721Events::Transfer {
+		collection.log(ERC721Events::Transfer {
 			from: *from.as_eth(),
 			to: *to.as_eth(),
 			token_id: token.into(),
@@ -298,8 +302,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		data: Vec<CreateItemData<T>>,
 	) -> DispatchResult {
-		let unrestricted_minting = collection.is_owner_or_admin(sender)?;
-		if !unrestricted_minting {
+		if !collection.is_owner_or_admin(sender) {
 			ensure!(
 				collection.mint_mode,
 				<CommonError<T>>::PublicMintingNotAllowed
@@ -313,14 +316,6 @@ impl<T: Config> Pallet<T> {
 
 		for data in data.iter() {
 			<PalletCommon<T>>::ensure_correct_receiver(&data.owner)?;
-			if !data.const_data.is_empty() {
-				collection.consume_sstore()?;
-			}
-			if !data.variable_data.is_empty() {
-				collection.consume_sstore()?;
-			}
-			collection.consume_sstore()?;
-			collection.consume_log(3, 0)?;
 		}
 
 		let first_token = <TokensMinted<T>>::get(collection.id);
@@ -331,7 +326,6 @@ impl<T: Config> Pallet<T> {
 			tokens_minted < collection.limits.token_limit(),
 			<CommonError<T>>::CollectionTokenLimitExceeded
 		);
-		collection.consume_sstore()?;
 
 		let mut balances = BTreeMap::new();
 		for data in &data {
@@ -345,7 +339,6 @@ impl<T: Config> Pallet<T> {
 				<CommonError<T>>::AccountTokenLimitExceeded,
 			);
 		}
-		collection.consume_sstores(balances.len())?;
 
 		// =========
 
@@ -366,7 +359,7 @@ impl<T: Config> Pallet<T> {
 			);
 			<Owned<T>>::insert((collection.id, &data.owner, token), true);
 
-			collection.log_infallible(ERC721Events::Transfer {
+			collection.log(ERC721Events::Transfer {
 				from: H160::default(),
 				to: *data.owner.as_eth(),
 				token_id: token.into(),
@@ -393,7 +386,7 @@ impl<T: Config> Pallet<T> {
 			<Allowance<T>>::insert((collection.id, token), spender);
 			// In ERC721 there is only one possible approved user of token, so we set
 			// approved user to spender
-			collection.log_infallible(ERC721Events::Approval {
+			collection.log(ERC721Events::Approval {
 				owner: *sender.as_eth(),
 				approved: *spender.as_eth(),
 				token_id: token.into(),
@@ -423,7 +416,7 @@ impl<T: Config> Pallet<T> {
 			if !assume_implicit_eth {
 				// In ERC721 there is only one possible approved user of token, so we set
 				// approved user to zero address
-				collection.log_infallible(ERC721Events::Approval {
+				collection.log(ERC721Events::Approval {
 					owner: *sender.as_eth(),
 					approved: H160::default(),
 					token_id: token.into(),
@@ -463,7 +456,7 @@ impl<T: Config> Pallet<T> {
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
 		if &token_data.owner != sender {
 			ensure!(
-				collection.ignores_owned_amount(sender)?,
+				collection.ignores_owned_amount(sender),
 				<CommonError<T>>::CantApproveMoreThanOwned
 			);
 		}
@@ -491,7 +484,7 @@ impl<T: Config> Pallet<T> {
 
 		if <Allowance<T>>::get((collection.id, token)).as_ref() != Some(spender) {
 			ensure!(
-				collection.ignores_allowance(spender)?,
+				collection.ignores_allowance(spender),
 				<CommonError<T>>::TokenValueNotEnough
 			);
 		}
@@ -519,7 +512,7 @@ impl<T: Config> Pallet<T> {
 
 		if <Allowance<T>>::get((collection.id, token)).as_ref() != Some(spender) {
 			ensure!(
-				collection.ignores_allowance(spender)?,
+				collection.ignores_allowance(spender),
 				<CommonError<T>>::TokenValueNotEnough
 			);
 		}
@@ -542,8 +535,6 @@ impl<T: Config> Pallet<T> {
 		let token_data =
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
 		collection.check_can_update_meta(sender, &token_data.owner)?;
-
-		collection.consume_sstore()?;
 
 		// =========
 

@@ -359,8 +359,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		data: Vec<CreateItemData<T>>,
 	) -> DispatchResult {
-		let unrestricted_minting = collection.is_owner_or_admin(sender)?;
-		if !unrestricted_minting {
+		if !collection.is_owner_or_admin(sender) {
 			ensure!(
 				collection.mint_mode,
 				<CommonError<T>>::PublicMintingNotAllowed
@@ -492,7 +491,7 @@ impl<T: Config> Pallet<T> {
 
 		if <Balance<T>>::get((collection.id, token, sender)) < amount {
 			ensure!(
-				collection.ignores_owned_amount(sender)? && Self::token_exists(collection, token),
+				collection.ignores_owned_amount(sender) && Self::token_exists(collection, token),
 				<CommonError<T>>::CantApproveMoreThanOwned
 			);
 		}
@@ -523,7 +522,7 @@ impl<T: Config> Pallet<T> {
 			<Allowance<T>>::get((collection.id, token, from, &spender)).checked_sub(amount);
 		if allowance.is_none() {
 			ensure!(
-				collection.ignores_allowance(spender)?,
+				collection.ignores_allowance(spender),
 				<CommonError<T>>::TokenValueNotEnough
 			);
 		}
@@ -556,7 +555,7 @@ impl<T: Config> Pallet<T> {
 			<Allowance<T>>::get((collection.id, token, from, &spender)).checked_sub(amount);
 		if allowance.is_none() {
 			ensure!(
-				collection.ignores_allowance(spender)?,
+				collection.ignores_allowance(spender),
 				<CommonError<T>>::TokenValueNotEnough
 			);
 		}
@@ -585,7 +584,6 @@ impl<T: Config> Pallet<T> {
 			&T::CrossAccountId::from_sub(collection.owner.clone()),
 		)?;
 
-		collection.consume_sstore()?;
 		let token_data = <TokenData<T>>::get((collection.id, token));
 
 		// =========

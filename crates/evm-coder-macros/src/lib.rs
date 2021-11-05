@@ -211,6 +211,10 @@ pub fn solidity_interface(args: TokenStream, stream: TokenStream) -> TokenStream
 pub fn solidity(_args: TokenStream, stream: TokenStream) -> TokenStream {
 	stream
 }
+#[proc_macro_attribute]
+pub fn weight(_args: TokenStream, stream: TokenStream) -> TokenStream {
+	stream
+}
 
 #[proc_macro_derive(ToLog, attributes(indexed))]
 pub fn to_log(value: TokenStream) -> TokenStream {

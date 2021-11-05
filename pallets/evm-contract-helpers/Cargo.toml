@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
+scale-info = { version = "1.0.0", default-features = false, features = [
+    "derive",
+] }
 frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
 frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
 sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
@@ -12,7 +14,7 @@ sp-std = { default-features = false, git = 'https://github.com/paritytech/substr
 sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12-weights" }
 up-sponsorship = { default-features = false, path = '../../primitives/sponsorship' }
 log = "0.4.14"
 

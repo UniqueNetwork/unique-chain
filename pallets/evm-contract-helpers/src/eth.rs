@@ -1,6 +1,6 @@
 use core::marker::PhantomData;
 use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
-use pallet_evm_coder_substrate::SubstrateRecorder;
+use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{ExitReason, ExitRevert, OnCreate, OnMethodCall, PrecompileOutput};
 use sp_core::H160;
 use crate::{
@@ -11,16 +11,23 @@ use up_sponsorship::SponsorshipHandler;
 use sp_std::{convert::TryInto, vec::Vec};
 
 struct ContractHelpers<T: Config>(SubstrateRecorder<T>);
+impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
+	fn recorder(&self) -> &SubstrateRecorder<T> {
+		&self.0
+	}
+
+	fn into_recorder(self) -> SubstrateRecorder<T> {
+		self.0
+	}
+}
 
 #[solidity_interface(name = "ContractHelpers")]
 impl<T: Config> ContractHelpers<T> {
 	fn contract_owner(&self, contract_address: address) -> Result<address> {
-		self.0.consume_sload()?;
 		Ok(<Owner<T>>::get(contract_address))
 	}
 
 	fn sponsoring_enabled(&self, contract_address: address) -> Result<bool> {
-		self.0.consume_sload()?;
 		Ok(<SelfSponsoring<T>>::get(contract_address))
 	}
 
@@ -30,9 +37,7 @@ impl<T: Config> ContractHelpers<T> {
 		contract_address: address,
 		enabled: bool,
 	) -> Result<void> {
-		self.0.consume_sload()?;
 		<Pallet<T>>::ensure_owner(contract_address, caller)?;
-		self.0.consume_sstore()?;
 		<Pallet<T>>::toggle_sponsoring(contract_address, enabled);
 		Ok(())
 	}
@@ -43,27 +48,22 @@ impl<T: Config> ContractHelpers<T> {
 		contract_address: address,
 		rate_limit: uint32,
 	) -> Result<void> {
-		self.0.consume_sload()?;
 		<Pallet<T>>::ensure_owner(contract_address, caller)?;
-		self.0.consume_sstore()?;
 		<Pallet<T>>::set_sponsoring_rate_limit(contract_address, rate_limit.into());
 		Ok(())
 	}
 
 	fn get_sponsoring_rate_limit(&self, contract_address: address) -> Result<uint32> {
-		self.0.consume_sload()?;
 		Ok(<SponsoringRateLimit<T>>::get(contract_address)
 			.try_into()
 			.map_err(|_| "rate limit > u32::MAX")?)
 	}
 
 	fn allowed(&self, contract_address: address, user: address) -> Result<bool> {
-		self.0.consume_sload()?;
 		Ok(<Pallet<T>>::allowed(contract_address, user, true))
 	}
 
 	fn allowlist_enabled(&self, contract_address: address) -> Result<bool> {
-		self.0.consume_sload()?;
 		Ok(<AllowlistEnabled<T>>::get(contract_address))
 	}
 
@@ -73,9 +73,7 @@ impl<T: Config> ContractHelpers<T> {
 		contract_address: address,
 		enabled: bool,
 	) -> Result<void> {
-		self.0.consume_sload()?;
 		<Pallet<T>>::ensure_owner(contract_address, caller)?;
-		self.0.consume_sstore()?;
 		<Pallet<T>>::toggle_allowlist(contract_address, enabled);
 		Ok(())
 	}
@@ -87,9 +85,7 @@ impl<T: Config> ContractHelpers<T> {
 		user: address,
 		allowed: bool,
 	) -> Result<void> {
-		self.0.consume_sload()?;
 		<Pallet<T>>::ensure_owner(contract_address, caller)?;
-		self.0.consume_sstore()?;
 		<Pallet<T>>::toggle_allowed(contract_address, user, allowed);
 		Ok(())
 	}
@@ -130,9 +126,8 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 			return None;
 		}
 
-		let mut helpers = ContractHelpers::<T>(SubstrateRecorder::<T>::new(*target, gas_left));
-		let result = pallet_evm_coder_substrate::call_internal(*source, &mut helpers, value, input);
-		helpers.0.evm_to_precompile_output(result)
+		let helpers = ContractHelpers::<T>(SubstrateRecorder::<T>::new(*target, gas_left));
+		pallet_evm_coder_substrate::call(*source, helpers, value, input)
 	}
 
 	fn get_code(contract: &sp_core::H160) -> Option<Vec<u8>> {
@@ -170,5 +165,5 @@ impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for HelpersContractSpo
 	}
 }
 
-generate_stubgen!(contract_helpers_impl, ContractHelpersCall, true);
-generate_stubgen!(contract_helpers_iface, ContractHelpersCall, false);
+generate_stubgen!(contract_helpers_impl, ContractHelpersCall<()>, true);
+generate_stubgen!(contract_helpers_iface, ContractHelpersCall<()>, false);

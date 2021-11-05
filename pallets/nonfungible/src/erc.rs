@@ -2,18 +2,19 @@ use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
 };
-use evm_coder::{ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*};
+use evm_coder::{ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
 use frame_support::BoundedVec;
 use nft_data_structs::TokenId;
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_core::{H160, U256};
 use sp_std::{vec::Vec, vec};
 use pallet_common::{account::CrossAccountId, erc::CommonEvmHandler};
-use pallet_evm_coder_substrate::call_internal;
+use pallet_evm_coder_substrate::call;
 use pallet_common::erc::PrecompileOutput;
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
+	SelfWeightOf, weights::WeightInfo,
 };
 
 #[derive(ToLog)]
@@ -64,6 +65,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// Returns token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
+		self.consume_store_reads(1)?;
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		Ok(string::from_utf8_lossy(
 			&<TokenData<T>>::get((self.id, token_id))
@@ -87,6 +89,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 
 	fn total_supply(&self) -> Result<uint256> {
+		self.consume_store_reads(1)?;
 		Ok(<Pallet<T>>::total_supply(self).into())
 	}
 }
@@ -94,11 +97,13 @@ impl<T: Config> NonfungibleHandle<T> {
 #[solidity_interface(name = "ERC721", events(ERC721Events))]
 impl<T: Config> NonfungibleHandle<T> {
 	fn balance_of(&self, owner: address) -> Result<uint256> {
+		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
 		let balance = <AccountBalance<T>>::get((self.id, owner));
 		Ok(balance.into())
 	}
 	fn owner_of(&self, token_id: uint256) -> Result<address> {
+		self.consume_store_reads(1)?;
 		let token: TokenId = token_id.try_into()?;
 		Ok(*<TokenData<T>>::get((self.id, token))
 			.ok_or("token not found")?
@@ -129,6 +134,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		Err("not implemented".into())
 	}
 
+	#[weight(<SelfWeightOf<T>>::transfer_from())]
 	fn transfer_from(
 		&mut self,
 		caller: caller,
@@ -147,6 +153,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		Ok(())
 	}
 
+	#[weight(<SelfWeightOf<T>>::approve())]
 	fn approve(
 		&mut self,
 		caller: caller,
@@ -189,6 +196,7 @@ impl<T: Config> NonfungibleHandle<T> {
 
 #[solidity_interface(name = "ERC721Burnable")]
 impl<T: Config> NonfungibleHandle<T> {
+	#[weight(<SelfWeightOf<T>>::burn_item())]
 	fn burn(&mut self, caller: caller, token_id: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token = token_id.try_into()?;
@@ -206,6 +214,7 @@ impl<T: Config> NonfungibleHandle<T> {
 
 	/// `token_id` should be obtained with `next_token_id` method,
 	/// unlike standard, you can't specify it manually
+	#[weight(<SelfWeightOf<T>>::create_item())]
 	fn mint(&mut self, caller: caller, to: address, token_id: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
@@ -235,6 +244,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// `token_id` should be obtained with `next_token_id` method,
 	/// unlike standard, you can't specify it manually
 	#[solidity(rename_selector = "mintWithTokenURI")]
+	#[weight(<SelfWeightOf<T>>::create_item())]
 	fn mint_with_token_uri(
 		&mut self,
 		caller: caller,
@@ -276,6 +286,7 @@ impl<T: Config> NonfungibleHandle<T> {
 
 #[solidity_interface(name = "ERC721UniqueExtensions")]
 impl<T: Config> NonfungibleHandle<T> {
+	#[weight(<SelfWeightOf<T>>::transfer())]
 	fn transfer(
 		&mut self,
 		caller: caller,
@@ -291,6 +302,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		Ok(())
 	}
 
+	#[weight(<SelfWeightOf<T>>::burn_from())]
 	fn burn_from(
 		&mut self,
 		caller: caller,
@@ -307,12 +319,14 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 
 	fn next_token_id(&self) -> Result<uint256> {
+		self.consume_store_reads(1)?;
 		Ok(<TokensMinted<T>>::get(self.id)
 			.checked_add(1)
 			.ok_or("item id overflow")?
 			.into())
 	}
 
+	#[weight(<SelfWeightOf<T>>::set_variable_metadata(data.len() as u32))]
 	fn set_variable_metadata(
 		&mut self,
 		caller: caller,
@@ -328,6 +342,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 
 	fn get_variable_metadata(&self, token_id: uint256) -> Result<bytes> {
+		self.consume_store_reads(1)?;
 		let token: TokenId = token_id.try_into()?;
 
 		Ok(<TokenData<T>>::get((self.id, token))
@@ -335,6 +350,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			.variable_data)
 	}
 
+	#[weight(<SelfWeightOf<T>>::create_multiple_items(token_ids.len() as u32))]
 	fn mint_bulk(&mut self, caller: caller, to: address, token_ids: Vec<uint256>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
@@ -363,6 +379,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 
 	#[solidity(rename_selector = "mintBulkWithTokenURI")]
+	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32))]
 	fn mint_bulk_with_token_uri(
 		&mut self,
 		caller: caller,
@@ -411,16 +428,13 @@ impl<T: Config> NonfungibleHandle<T> {
 impl<T: Config> NonfungibleHandle<T> {}
 
 // Not a tests, but code generators
-generate_stubgen!(gen_impl, UniqueNFTCall, true);
-generate_stubgen!(gen_iface, UniqueNFTCall, false);
-
-pub const CODE: &[u8] = include_bytes!("./stubs/UniqueNFT.raw");
+generate_stubgen!(gen_impl, UniqueNFTCall<()>, true);
+generate_stubgen!(gen_iface, UniqueNFTCall<()>, false);
 
 impl<T: Config> CommonEvmHandler for NonfungibleHandle<T> {
 	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueNFT.raw");
 
-	fn call(mut self, source: &H160, input: &[u8], value: U256) -> Option<PrecompileOutput> {
-		let result = call_internal::<UniqueNFTCall, _>(*source, &mut self, value, input);
-		self.0.recorder.evm_to_precompile_output(result)
+	fn call(self, source: &H160, input: &[u8], value: U256) -> Option<PrecompileOutput> {
+		call::<T, UniqueNFTCall<T>, _>(*source, self, value, input)
 	}
 }

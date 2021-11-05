@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use core::ops::{Deref, DerefMut};
+use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_std::vec::Vec;
 use account::CrossAccountId;
 use frame_support::{
@@ -8,6 +9,7 @@ use frame_support::{
 	ensure, fail,
 	traits::{Imbalance, Get, Currency},
 };
+use pallet_evm::GasWeightMapping;
 use nft_data_structs::{
 	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, ExistenceRequirement,
 	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
@@ -27,17 +29,22 @@ pub mod eth;
 pub struct CollectionHandle<T: Config> {
 	pub id: CollectionId,
 	collection: Collection<T>,
-	pub recorder: pallet_evm_coder_substrate::SubstrateRecorder<T>,
+	pub recorder: SubstrateRecorder<T>,
+}
+impl<T: Config> WithRecorder<T> for CollectionHandle<T> {
+	fn recorder(&self) -> &SubstrateRecorder<T> {
+		&self.recorder
+	}
+	fn into_recorder(self) -> SubstrateRecorder<T> {
+		self.recorder
+	}
 }
 impl<T: Config> CollectionHandle<T> {
 	pub fn new_with_gas_limit(id: CollectionId, gas_limit: u64) -> Option<Self> {
 		<CollectionById<T>>::get(id).map(|collection| Self {
 			id,
 			collection,
-			recorder: pallet_evm_coder_substrate::SubstrateRecorder::new(
-				eth::collection_id_to_address(id),
-				gas_limit,
-			),
+			recorder: SubstrateRecorder::new(eth::collection_id_to_address(id), gas_limit),
 		})
 	}
 	pub fn new(id: CollectionId) -> Option<Self> {
@@ -46,33 +53,30 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn try_get(id: CollectionId) -> Result<Self, DispatchError> {
 		Ok(Self::new(id).ok_or_else(|| <Error<T>>::CollectionNotFound)?)
 	}
-	pub fn log(&self, log: impl evm_coder::ToLog) -> DispatchResult {
-		self.recorder.log_sub(log)
+	pub fn log(&self, log: impl evm_coder::ToLog) {
+		self.recorder.log(log)
 	}
-	pub fn log_infallible(&self, log: impl evm_coder::ToLog) {
-		self.recorder.log_infallible(log)
+	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
+		self.recorder
+			.consume_gas(T::GasWeightMapping::weight_to_gas(
+				<T as frame_system::Config>::DbWeight::get()
+					.read
+					.saturating_mul(reads),
+			))
 	}
-	#[allow(dead_code)]
-	fn consume_gas(&self, gas: u64) -> DispatchResult {
-		self.recorder.consume_gas_sub(gas)
+	pub fn consume_store_writes(&self, writes: u64) -> evm_coder::execution::Result<()> {
+		self.recorder
+			.consume_gas(T::GasWeightMapping::weight_to_gas(
+				<T as frame_system::Config>::DbWeight::get()
+					.write
+					.saturating_mul(writes),
+			))
 	}
-	pub fn consume_sload(&self) -> DispatchResult {
-		self.recorder.consume_sload_sub()
-	}
-	pub fn consume_sstores(&self, amount: usize) -> DispatchResult {
-		self.recorder.consume_sstores_sub(amount)
-	}
-	pub fn consume_sstore(&self) -> DispatchResult {
-		self.recorder.consume_sstore_sub()
-	}
-	pub fn consume_log(&self, topics: usize, data: usize) -> DispatchResult {
-		self.recorder.consume_log_sub(topics, data)
-	}
-	pub fn submit_logs(self) -> DispatchResult {
+	pub fn submit_logs(self) {
 		self.recorder.submit_logs()
 	}
 	pub fn save(self) -> DispatchResult {
-		self.recorder.submit_logs()?;
+		self.recorder.submit_logs();
 		<CollectionById<T>>::insert(self.id, self.collection);
 		Ok(())
 	}
@@ -96,24 +100,20 @@ impl<T: Config> CollectionHandle<T> {
 		ensure!(*subject.as_sub() == self.owner, <Error<T>>::NoPermission);
 		Ok(())
 	}
-	pub fn is_owner_or_admin(&self, subject: &T::CrossAccountId) -> Result<bool, DispatchError> {
-		self.consume_sload()?;
-
-		Ok(*subject.as_sub() == self.owner || <IsAdmin<T>>::get((self.id, subject)))
+	pub fn is_owner_or_admin(&self, subject: &T::CrossAccountId) -> bool {
+		*subject.as_sub() == self.owner || <IsAdmin<T>>::get((self.id, subject))
 	}
 	pub fn check_is_owner_or_admin(&self, subject: &T::CrossAccountId) -> DispatchResult {
-		ensure!(self.is_owner_or_admin(subject)?, <Error<T>>::NoPermission);
+		ensure!(self.is_owner_or_admin(subject), <Error<T>>::NoPermission);
 		Ok(())
 	}
-	pub fn ignores_allowance(&self, user: &T::CrossAccountId) -> Result<bool, DispatchError> {
-		Ok(self.limits.owner_can_transfer() && self.is_owner_or_admin(user)?)
+	pub fn ignores_allowance(&self, user: &T::CrossAccountId) -> bool {
+		self.limits.owner_can_transfer() && self.is_owner_or_admin(user)
 	}
-	pub fn ignores_owned_amount(&self, user: &T::CrossAccountId) -> Result<bool, DispatchError> {
-		Ok(self.limits.owner_can_transfer() && self.is_owner_or_admin(user)?)
+	pub fn ignores_owned_amount(&self, user: &T::CrossAccountId) -> bool {
+		self.limits.owner_can_transfer() && self.is_owner_or_admin(user)
 	}
 	pub fn check_allowlist(&self, user: &T::CrossAccountId) -> DispatchResult {
-		self.consume_sload()?;
-
 		ensure!(
 			<Allowlist<T>>::get((self.id, user)),
 			<Error<T>>::AddressNotInAllowlist
