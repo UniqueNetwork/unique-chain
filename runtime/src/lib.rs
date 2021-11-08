@@ -147,7 +147,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("opal"),
 	impl_name: create_runtime_str!("opal"),
 	authoring_version: 1,
-	spec_version: 912200,
+	spec_version: 912202,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -802,7 +802,9 @@ impl pallet_evm_transaction_payment::Config for Runtime {
 	type Currency = Balances;
 }
 
-impl pallet_nft_charge_transaction::Config for Runtime {}
+impl pallet_nft_charge_transaction::Config for Runtime {
+	type SponsorshipHandler = pallet_nft::NftSponsorshipHandler<Runtime>;
+}
 
 // impl pallet_contract_helpers::Config for Runtime {
 //	 type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
