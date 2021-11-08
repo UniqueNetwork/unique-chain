@@ -123,7 +123,7 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 
-		if collection.access == AccessMode::WhiteList {
+		if collection.access == AccessMode::AllowList {
 			collection.check_allowlist(owner)?;
 		}
 
@@ -161,7 +161,7 @@ impl<T: Config> Pallet<T> {
 			<CommonError<T>>::TransferNotAllowed
 		);
 
-		if collection.access == AccessMode::WhiteList {
+		if collection.access == AccessMode::AllowList {
 			collection.check_allowlist(from)?;
 			collection.check_allowlist(to)?;
 		}
@@ -305,7 +305,7 @@ impl<T: Config> Pallet<T> {
 		spender: &T::CrossAccountId,
 		amount: u128,
 	) -> DispatchResult {
-		if collection.access == AccessMode::WhiteList {
+		if collection.access == AccessMode::AllowList {
 			collection.check_allowlist(&owner)?;
 			collection.check_allowlist(&spender)?;
 		}
@@ -333,7 +333,7 @@ impl<T: Config> Pallet<T> {
 		if spender == from {
 			return Self::transfer(collection, from, to, amount);
 		}
-		if collection.access == AccessMode::WhiteList {
+		if collection.access == AccessMode::AllowList {
 			// `from`, `to` checked in [`transfer`]
 			collection.check_allowlist(spender)?;
 		}
@@ -365,7 +365,7 @@ impl<T: Config> Pallet<T> {
 		if spender == from {
 			return Self::burn(collection, from, amount);
 		}
-		if collection.access == AccessMode::WhiteList {
+		if collection.access == AccessMode::AllowList {
 			// `from` checked in [`burn`]
 			collection.check_allowlist(spender)?;
 		}

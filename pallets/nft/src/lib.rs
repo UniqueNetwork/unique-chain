@@ -274,9 +274,9 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * address.
-		#[weight = <SelfWeightOf<T>>::add_to_white_list()]
+		#[weight = <SelfWeightOf<T>>::add_to_allow_list()]
 		#[transactional]
-		pub fn add_to_white_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
+		pub fn add_to_allow_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
@@ -303,9 +303,9 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * address.
-		#[weight = <SelfWeightOf<T>>::remove_from_white_list()]
+		#[weight = <SelfWeightOf<T>>::remove_from_allow_list()]
 		#[transactional]
-		pub fn remove_from_white_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
+		pub fn remove_from_allow_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;

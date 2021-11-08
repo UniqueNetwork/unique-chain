@@ -485,19 +485,19 @@ fn nft_approve_and_transfer_from_white_list() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			1,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(2)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(3)
@@ -549,19 +549,19 @@ fn refungible_approve_and_transfer_from() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			1,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(2)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(3)
@@ -609,19 +609,19 @@ fn fungible_approve_and_transfer_from() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			1,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(2)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(3)
@@ -765,9 +765,9 @@ fn burn_refungible_item() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
@@ -952,19 +952,19 @@ fn transfer_from() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			1,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(2)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(origin1, 1, account(3)));
+		assert_ok!(TemplateModule::add_to_allow_list(origin1, 1, account(3)));
 
 		assert_ok!(TemplateModule::transfer_from(
 			origin2,
@@ -992,7 +992,7 @@ fn owner_can_add_address_to_white_list() {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1,
 			collection_id,
 			account(2)
@@ -1013,7 +1013,7 @@ fn admin_can_add_address_to_white_list() {
 			collection_id,
 			account(2)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin2,
 			collection_id,
 			account(3)
@@ -1029,7 +1029,7 @@ fn nonprivileged_user_cannot_add_address_to_white_list() {
 
 		let origin2 = Origin::signed(2);
 		assert_noop!(
-			TemplateModule::add_to_white_list(origin2, collection_id, account(3)),
+			TemplateModule::add_to_allow_list(origin2, collection_id, account(3)),
 			Error::<Test>::NoPermission
 		);
 	});
@@ -1041,7 +1041,7 @@ fn nobody_can_add_address_to_white_list_of_nonexisting_collection() {
 		let origin1 = Origin::signed(1);
 
 		assert_noop!(
-			TemplateModule::add_to_white_list(origin1, 1, account(2)),
+			TemplateModule::add_to_allow_list(origin1, 1, account(2)),
 			Error::<Test>::CollectionNotFound
 		);
 	});
@@ -1058,7 +1058,7 @@ fn nobody_can_add_address_to_white_list_of_deleted_collection() {
 			collection_id
 		));
 		assert_noop!(
-			TemplateModule::add_to_white_list(origin1, collection_id, account(2)),
+			TemplateModule::add_to_allow_list(origin1, collection_id, account(2)),
 			Error::<Test>::CollectionNotFound
 		);
 	});
@@ -1071,12 +1071,12 @@ fn address_is_already_added_to_white_list() {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1,
 			collection_id,
 			account(2)
@@ -1091,12 +1091,12 @@ fn owner_can_remove_address_from_white_list() {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
 		));
-		assert_ok!(TemplateModule::remove_from_white_list(
+		assert_ok!(TemplateModule::remove_from_allow_list(
 			origin1,
 			collection_id,
 			account(2)
@@ -1118,12 +1118,12 @@ fn admin_can_remove_address_from_white_list() {
 			account(2)
 		));
 
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1,
 			collection_id,
 			account(3)
 		));
-		assert_ok!(TemplateModule::remove_from_white_list(
+		assert_ok!(TemplateModule::remove_from_allow_list(
 			origin2,
 			collection_id,
 			account(3)
@@ -1139,13 +1139,13 @@ fn nonprivileged_user_cannot_remove_address_from_white_list() {
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1,
 			collection_id,
 			account(2)
 		));
 		assert_noop!(
-			TemplateModule::remove_from_white_list(origin2, collection_id, account(2)),
+			TemplateModule::remove_from_allow_list(origin2, collection_id, account(2)),
 			Error::<Test>::NoPermission
 		);
 		assert!(TemplateModule::white_list(collection_id, 2));
@@ -1158,7 +1158,7 @@ fn nobody_can_remove_address_from_white_list_of_nonexisting_collection() {
 		let origin1 = Origin::signed(1);
 
 		assert_noop!(
-			TemplateModule::remove_from_white_list(origin1, 1, account(2)),
+			TemplateModule::remove_from_allow_list(origin1, 1, account(2)),
 			Error::<Test>::CollectionNotFound
 		);
 	});
@@ -1171,14 +1171,14 @@ fn nobody_can_remove_address_from_white_list_of_deleted_collection() {
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
 		));
 		assert_ok!(TemplateModule::destroy_collection(origin1, collection_id));
 		assert_noop!(
-			TemplateModule::remove_from_white_list(origin2, collection_id, account(2)),
+			TemplateModule::remove_from_allow_list(origin2, collection_id, account(2)),
 			Error::<Test>::CollectionNotFound
 		);
 		assert!(!TemplateModule::white_list(collection_id, 2));
@@ -1192,17 +1192,17 @@ fn address_is_already_removed_from_white_list() {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
 		));
-		assert_ok!(TemplateModule::remove_from_white_list(
+		assert_ok!(TemplateModule::remove_from_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
 		));
-		assert_ok!(TemplateModule::remove_from_white_list(
+		assert_ok!(TemplateModule::remove_from_allow_list(
 			origin1,
 			collection_id,
 			account(2)
@@ -1225,9 +1225,9 @@ fn white_list_test_1() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
@@ -1252,14 +1252,14 @@ fn white_list_test_2() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(2)
@@ -1275,7 +1275,7 @@ fn white_list_test_2() {
 		));
 		assert_eq!(TemplateModule::approved(1, (1, 1, 1)), 1);
 
-		assert_ok!(TemplateModule::remove_from_white_list(
+		assert_ok!(TemplateModule::remove_from_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
@@ -1302,9 +1302,9 @@ fn white_list_test_3() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
@@ -1330,14 +1330,14 @@ fn white_list_test_4() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
@@ -1353,7 +1353,7 @@ fn white_list_test_4() {
 		));
 		assert_eq!(TemplateModule::approved(1, (1, 1, 1)), 1);
 
-		assert_ok!(TemplateModule::remove_from_white_list(
+		assert_ok!(TemplateModule::remove_from_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
@@ -1380,7 +1380,7 @@ fn white_list_test_5() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_noop!(
 			TemplateModule::burn_item(origin1.clone(), 1, 1, 5),
@@ -1403,7 +1403,7 @@ fn white_list_test_6() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 
 		// do approve
@@ -1429,14 +1429,14 @@ fn white_list_test_7() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
@@ -1459,14 +1459,14 @@ fn white_list_test_8() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
@@ -1503,7 +1503,7 @@ fn white_list_test_9() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1,
@@ -1528,7 +1528,7 @@ fn white_list_test_10() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1.clone(),
@@ -1563,14 +1563,14 @@ fn white_list_test_11() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1.clone(),
 			collection_id,
 			false
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1,
 			collection_id,
 			account(2)
@@ -1595,7 +1595,7 @@ fn white_list_test_12() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1,
@@ -1621,7 +1621,7 @@ fn white_list_test_13() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1,
@@ -1646,7 +1646,7 @@ fn white_list_test_14() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1.clone(),
@@ -1681,7 +1681,7 @@ fn white_list_test_15() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1,
@@ -1708,14 +1708,14 @@ fn white_list_test_16() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1.clone(),
 			collection_id,
 			true
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1,
 			collection_id,
 			account(2)
@@ -2056,7 +2056,7 @@ fn set_variable_meta_data_on_nft_with_item_owner_permission_flag_neg() {
 			collection_id,
 			true
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(1)
@@ -2124,7 +2124,7 @@ fn set_variable_meta_data_on_nft_with_admin_flag() {
 			collection_id,
 			true
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin2.clone(),
 			collection_id,
 			account(1)
@@ -2177,7 +2177,7 @@ fn set_variable_meta_data_on_nft_with_admin_flag_neg() {
 			collection_id,
 			true
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin2.clone(),
 			collection_id,
 			account(1)
