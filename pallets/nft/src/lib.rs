@@ -603,7 +603,6 @@ decl_module! {
 		#[transactional]
 		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, item_owner: T::CrossAccountId, value: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let target_collection = Self::get_collection(collection_id)?;
 
 			dispatch_call::<T, _>(collection_id, |d| d.burn_item(sender, item_id, value))
 		}
