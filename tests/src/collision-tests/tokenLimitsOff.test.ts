@@ -1,4 +1,7 @@
-/* obsolete
+/* broken by design
+// substrate transactions are sequential, not parallel
+// the order of execution is indeterminate
+
 import { IKeyringPair } from '@polkadot/types/types';
 import BN from 'bn.js';
 import chai from 'chai';

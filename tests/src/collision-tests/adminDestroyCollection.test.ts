@@ -1,3 +1,7 @@
+/* broken by design
+// substrate transactions are sequential, not parallel
+// the order of execution is indeterminate
+
 import { IKeyringPair } from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -47,3 +51,4 @@ describe('Deleting a collection while add address to whitelist: ', () => {
     });
   });
 });
+*/
