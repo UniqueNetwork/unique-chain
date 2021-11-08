@@ -1,19 +1,17 @@
-import { expect } from 'chai';
+import {expect} from 'chai';
 import privateKey from '../substrate/privateKey';
-import { submitTransactionAsync } from '../substrate/substrate-api';
-import waitNewBlocks from '../substrate/wait-new-blocks';
-import { createEthAccountWithBalance, deployCollector, GAS_ARGS, itWeb3, subToEth } from './util/helpers';
+import {submitTransactionAsync} from '../substrate/substrate-api';
+import {createEthAccountWithBalance, deployCollector, GAS_ARGS, itWeb3, subToEth} from './util/helpers';
 import {evmToAddress} from '@polkadot/util-crypto';
-import { getGenericResult } from '../util/helpers';
-import { getBalanceSingle, transferBalanceExpectSuccess } from '../substrate/get-balance';
+import {getGenericResult} from '../util/helpers';
+import {getBalanceSingle, transferBalanceExpectSuccess} from '../substrate/get-balance';
 
-describe('EVM payable contracts', ()=>{
+describe('EVM payable contracts', () => {
   itWeb3('Evm contract can receive wei from eth account', async ({api, web3}) => {
     const deployer = await createEthAccountWithBalance(api, web3);
     const contract = await deployCollector(web3, deployer);
 
     await web3.eth.sendTransaction({from: deployer, to: contract.options.address, value: '10000', ...GAS_ARGS});
-    await waitNewBlocks(api, 1);
 
     expect(await contract.methods.getCollected().call()).to.be.equal('10000');
   });
@@ -52,7 +50,7 @@ describe('EVM payable contracts', ()=>{
     const alice = privateKey('//Alice');
 
     await transferBalanceExpectSuccess(api, alice, evmToAddress(contract.options.address), '10000');
-  
+
     expect(await contract.methods.getUnaccounted().call()).to.be.equal('10000');
   });
 
@@ -65,7 +63,6 @@ describe('EVM payable contracts', ()=>{
     const alice = privateKey('//Alice');
 
     await web3.eth.sendTransaction({from: deployer, to: contract.options.address, value: CONTRACT_BALANCE.toString(), ...GAS_ARGS});
-    await waitNewBlocks(api, 1);
 
     const receiver = privateKey(`//Receiver${Date.now()}`);
 

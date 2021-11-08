@@ -2,9 +2,7 @@ use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use nft_data_structs::TokenId;
-use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, account::CrossAccountId, with_weight,
-};
+use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::ArithmeticError;
 use sp_std::{vec::Vec, vec};
 
@@ -188,7 +186,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	}
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId> {
-		if <Balance<T>>::get((self.id, account.as_sub())) != 0 {
+		if <Balance<T>>::get((self.id, account)) != 0 {
 			vec![TokenId::default()]
 		} else {
 			vec![]
@@ -218,7 +216,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	}
 
 	fn account_balance(&self, account: T::CrossAccountId) -> u32 {
-		if <Balance<T>>::get((self.id, account.as_sub())) != 0 {
+		if <Balance<T>>::get((self.id, account)) != 0 {
 			1
 		} else {
 			0
@@ -229,7 +227,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		if token != TokenId::default() {
 			return 0;
 		}
-		<Balance<T>>::get((self.id, account.as_sub()))
+		<Balance<T>>::get((self.id, account))
 	}
 
 	fn allowance(
@@ -241,6 +239,6 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		if token != TokenId::default() {
 			return 0;
 		}
-		<Allowance<T>>::get((self.id, sender.as_sub(), spender.as_sub()))
+		<Allowance<T>>::get((self.id, sender, spender))
 	}
 }

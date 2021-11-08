@@ -93,7 +93,7 @@ impl<T: Config> NonfungibleHandle<T> {
 impl<T: Config> NonfungibleHandle<T> {
 	fn balance_of(&self, owner: address) -> Result<uint256> {
 		let owner = T::CrossAccountId::from_eth(owner);
-		let balance = <AccountBalance<T>>::get((self.id, owner.as_sub()));
+		let balance = <AccountBalance<T>>::get((self.id, owner));
 		Ok(balance.into())
 	}
 	fn owner_of(&self, token_id: uint256) -> Result<address> {

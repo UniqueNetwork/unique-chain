@@ -3,11 +3,11 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { Keyring } from '@polkadot/api';
-import { IKeyringPair } from '@polkadot/types/types';
+import {Keyring} from '@polkadot/api';
+import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
+import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
   destroyCollectionExpectSuccess,
@@ -17,17 +17,17 @@ import {
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-let Alice: IKeyringPair;
-let Bob: IKeyringPair;
-let Shema: any;
+let alice: IKeyringPair;
+let bob: IKeyringPair;
+let shema: any;
 let largeShema: any;
 
 before(async () => {
   await usingApi(async () => {
-    const keyring = new Keyring({ type: 'sr25519' });
-    Alice = keyring.addFromUri('//Alice');
-    Bob = keyring.addFromUri('//Bob');
-    Shema = '0x31';
+    const keyring = new Keyring({type: 'sr25519'});
+    alice = keyring.addFromUri('//Alice');
+    bob = keyring.addFromUri('//Bob');
+    shema = '0x31';
     largeShema = new Array(4097).fill(0xff);
 
   });
@@ -37,32 +37,31 @@ describe('Integration Test ext. setConstOnChainSchema()', () => {
   it('Run extrinsic with parameters of the collection id, set the scheme', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.owner).to.be.eq(Alice.address);
-      const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
-      await submitTransactionAsync(Alice, setShema);
+      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      expect(collection.owner.toString()).to.be.eq(alice.address);
+      const setShema = api.tx.nft.setConstOnChainSchema(collectionId, shema);
+      await submitTransactionAsync(alice, setShema);
     });
   });
 
   it('Collection admin can set the scheme', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.owner).to.be.eq(Alice.address);
-      await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
-      const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
-      await submitTransactionAsync(Bob, setShema);
+      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      expect(collection.owner.toString()).to.be.eq(alice.address);
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+      const setShema = api.tx.nft.setConstOnChainSchema(collectionId, shema);
+      await submitTransactionAsync(bob, setShema);
     });
   });
 
   it('Checking collection data using the ConstOnChainSchema parameter', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
-      await submitTransactionAsync(Alice, setShema);
-      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.constOnChainSchema.toString()).to.be.eq(Shema);
-
+      const setShema = api.tx.nft.setConstOnChainSchema(collectionId, shema);
+      await submitTransactionAsync(alice, setShema);
+      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      expect(collection.constOnChainSchema.toString()).to.be.eq(shema);
     });
   });
 });
@@ -72,9 +71,9 @@ describe('Negative Integration Test ext. setConstOnChainSchema()', () => {
   it('Set a non-existent collection', async () => {
     await usingApi(async (api) => {
       // tslint:disable-next-line: radix
-      const collectionId = parseInt((await api.query.nft.createdCollectionCount()).toString()) + 1;
-      const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
-      await expect(submitTransactionExpectFailAsync(Alice, setShema)).to.be.rejected;
+      const collectionId = (await api.query.common.createdCollectionCount()).toNumber() + 1;
+      const setShema = api.tx.nft.setConstOnChainSchema(collectionId, shema);
+      await expect(submitTransactionExpectFailAsync(alice, setShema)).to.be.rejected;
     });
   });
 
@@ -82,8 +81,8 @@ describe('Negative Integration Test ext. setConstOnChainSchema()', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       await destroyCollectionExpectSuccess(collectionId);
-      const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
-      await expect(submitTransactionExpectFailAsync(Alice, setShema)).to.be.rejected;
+      const setShema = api.tx.nft.setConstOnChainSchema(collectionId, shema);
+      await expect(submitTransactionExpectFailAsync(alice, setShema)).to.be.rejected;
     });
   });
 
@@ -91,17 +90,17 @@ describe('Negative Integration Test ext. setConstOnChainSchema()', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       const setShema = api.tx.nft.setConstOnChainSchema(collectionId, largeShema);
-      await expect(submitTransactionExpectFailAsync(Alice, setShema)).to.be.rejected;
+      await expect(submitTransactionExpectFailAsync(alice, setShema)).to.be.rejected;
     });
   });
 
   it('Execute method not on behalf of the collection owner', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.owner).to.be.eq(Alice.address);
-      const setShema = api.tx.nft.setConstOnChainSchema(collectionId, Shema);
-      await expect(submitTransactionExpectFailAsync(Bob, setShema)).to.be.rejected;
+      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      expect(collection.owner.toString()).to.be.eq(alice.address);
+      const setShema = api.tx.nft.setConstOnChainSchema(collectionId, shema);
+      await expect(submitTransactionExpectFailAsync(bob, setShema)).to.be.rejected;
     });
   });
 

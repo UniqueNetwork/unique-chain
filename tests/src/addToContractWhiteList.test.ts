@@ -5,7 +5,7 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import usingApi, { submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
+import usingApi, {submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import privateKey from './substrate/privateKey';
 import {
   deployFlipper,

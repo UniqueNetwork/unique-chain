@@ -20,15 +20,15 @@ chai.use(chaiAsPromised);
 describe('Integration Test scheduler base transaction', () => {
   it('User can transfer owned token with delay (scheduler)', async () => {
     await usingApi(async () => {
-      const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
-      const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
-      await setCollectionSponsorExpectSuccess(nftCollectionId, Alice.address);
+      const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
+      await setCollectionSponsorExpectSuccess(nftCollectionId, alice.address);
       await confirmSponsorshipExpectSuccess(nftCollectionId);
 
-      await scheduleTransferExpectSuccess(nftCollectionId, newNftTokenId, Alice, Bob, 1, 12000, 4);
+      await scheduleTransferExpectSuccess(nftCollectionId, newNftTokenId, alice, bob, 1, 4);
     });
   });
 });

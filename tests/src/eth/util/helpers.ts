@@ -6,21 +6,20 @@
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="helpers.d.ts" />
 
-import { ApiPromise } from '@polkadot/api';
-import { addressToEvm, evmToAddress } from '@polkadot/util-crypto';
+import {ApiPromise} from '@polkadot/api';
+import {addressToEvm, evmToAddress} from '@polkadot/util-crypto';
 import Web3 from 'web3';
-import usingApi, { submitTransactionAsync } from '../../substrate/substrate-api';
-import { IKeyringPair } from '@polkadot/types/types';
-import { expect } from 'chai';
-import { getGenericResult } from '../../util/helpers';
+import usingApi, {submitTransactionAsync} from '../../substrate/substrate-api';
+import {IKeyringPair} from '@polkadot/types/types';
+import {expect} from 'chai';
+import {getGenericResult} from '../../util/helpers';
 import * as solc from 'solc';
 import config from '../../config';
 import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
 import getBalance from '../../substrate/get-balance';
-import waitNewBlocks from '../../substrate/wait-new-blocks';
 
-export const GAS_ARGS = { gas: 0x1000000, gasPrice: '0x01' };
+export const GAS_ARGS = {gas: 0x1000000, gasPrice: '0x01'};
 
 let web3Connected = false;
 export async function usingWeb3<T>(cb: (web3: Web3) => Promise<T> | T): Promise<T> {
@@ -37,16 +36,6 @@ export async function usingWeb3<T>(cb: (web3: Web3) => Promise<T> | T): Promise<
     provider.connection.close();
     web3Connected = false;
   }
-}
-
-/**
- * @deprecated Web3 update solved issue with deployment over ws provider
- */
-export async function usingWeb3Http<T>(cb: (web3: Web3) => Promise<T> | T): Promise<T> {
-  const provider = new Web3.providers.HttpProvider(config.frontierUrl);
-  const web3: Web3 = new Web3(provider);
-
-  return await cb(web3);
 }
 
 export function collectionIdToAddress(address: number): string {
@@ -88,13 +77,13 @@ export async function itWeb3(name: string, cb: (apis: { web3: Web3, api: ApiProm
   i(name, async () => {
     await usingApi(async api => {
       await usingWeb3(async web3 => {
-        await cb({ api, web3 });
+        await cb({api, web3});
       });
     });
   });
 }
-itWeb3.only = (name: string, cb: (apis: { web3: Web3, api: ApiPromise }) => any) => itWeb3(name, cb, { only: true });
-itWeb3.skip = (name: string, cb: (apis: { web3: Web3, api: ApiPromise }) => any) => itWeb3(name, cb, { skip: true });
+itWeb3.only = (name: string, cb: (apis: { web3: Web3, api: ApiPromise }) => any) => itWeb3(name, cb, {only: true});
+itWeb3.skip = (name: string, cb: (apis: { web3: Web3, api: ApiPromise }) => any) => itWeb3(name, cb, {skip: true});
 
 export async function generateSubstrateEthPair(web3: Web3) {
   const account = web3.eth.accounts.create();
@@ -119,7 +108,7 @@ export function normalizeEvents(events: any): NormalizedEvent[] {
     }
   }
   output.sort((a, b) => a.logIndex - b.logIndex);
-  return output.map(({ address, event, returnValues }) => {
+  return output.map(({address, event, returnValues}) => {
     const args: { [key: string]: string } = {};
     for (const key of Object.keys(returnValues)) {
       if (!key.match(/^[0-9]+$/)) {
@@ -192,12 +181,12 @@ export async function deployFlipper(web3: Web3, deployer: string) {
       }
     }
   `);
-  const Flipper = new web3.eth.Contract(compiled.abi, undefined, {
+  const flipperContract = new web3.eth.Contract(compiled.abi, undefined, {
     data: compiled.object,
     from: deployer,
     ...GAS_ARGS,
   });
-  const flipper = await Flipper.deploy({ data: compiled.object }).send({from: deployer});
+  const flipper = await flipperContract.deploy({data: compiled.object}).send({from: deployer});
 
   return flipper;
 }
@@ -225,12 +214,12 @@ export async function deployCollector(web3: Web3, deployer: string) {
       }
     }
   `);
-  const Collector = new web3.eth.Contract(compiled.abi, undefined, {
+  const collectorContract = new web3.eth.Contract(compiled.abi, undefined, {
     data: compiled.object,
     from: deployer,
     ...GAS_ARGS,
   });
-  const collector = await Collector.deploy({ data: compiled.object }).send({ from: deployer });
+  const collector = await collectorContract.deploy({data: compiled.object}).send({from: deployer});
 
   return collector;
 }
@@ -239,7 +228,7 @@ export function contractHelpers(web3: Web3, caller: string) {
   return new web3.eth.Contract(contractHelpersAbi as any, '0x842899ECF380553E8a4de75bF534cdf6fBF64049', {from: caller, ...GAS_ARGS});
 }
 
-export async function executeEthTxOnSub(api: ApiPromise, from: IKeyringPair, to: any, mkTx: (methods: any) => any, { value = 0 }: {value?: bigint | number} = { }) {
+export async function executeEthTxOnSub(api: ApiPromise, from: IKeyringPair, to: any, mkTx: (methods: any) => any, {value = 0}: {value?: bigint | number} = { }) {
   const tx = api.tx.evm.call(
     subToEth(from.address),
     to.options.address,
@@ -250,7 +239,7 @@ export async function executeEthTxOnSub(api: ApiPromise, from: IKeyringPair, to:
     null,
   );
   const events = await submitTransactionAsync(from, tx);
-  expect(events.find(({ event: {section, method}})=>section === 'evm' && method === 'Executed')).to.be.not.undefined;
+  expect(events.some(({event: {section, method}}) => section == 'evm' && method == 'Executed')).to.be.true;
 }
 
 export async function ethBalanceViaSub(api: ApiPromise, address: string): Promise<bigint> {
@@ -261,7 +250,6 @@ export async function recordEthFee(api: ApiPromise, user: string, call: () => Pr
   const before = await ethBalanceViaSub(api, user);
 
   await call();
-  await waitNewBlocks(api, 1);
 
   const after = await ethBalanceViaSub(api, user);
 

@@ -5,9 +5,9 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import usingApi, { submitTransactionAsync } from './substrate/substrate-api';
+import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
 import fs from 'fs';
-import { Abi, ContractPromise as Contract } from '@polkadot/api-contract';
+import {Abi, ContractPromise as Contract} from '@polkadot/api-contract';
 import privateKey from './substrate/privateKey';
 import {
   deployFlipper,
@@ -26,6 +26,7 @@ import {
   normalizeAccountId,
   isWhitelisted,
   transferFromExpectSuccess,
+  getTokenOwner,
 } from './util/helpers';
 
 
@@ -75,18 +76,15 @@ describe.skip('Chain extensions', () => {
       const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, contract.address);
       await submitTransactionAsync(alice, changeAdminTx);
 
-      const tokenBefore: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).toJSON();
+      expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(alice.address));
 
       // Transfer
       const transferTx = contract.tx.transfer(value, gasLimit, bob.address, collectionId, tokenId, 1);
       const events = await submitTransactionAsync(alice, transferTx);
       const result = getGenericResult(events);
-      const tokenAfter: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).toJSON();
-
-      // tslint:disable-next-line:no-unused-expression
       expect(result.success).to.be.true;
-      expect(tokenBefore.owner).to.be.deep.equal(normalizeAccountId(alice.address));
-      expect(tokenAfter.owner).to.be.deep.equal(normalizeAccountId(bob.address));
+
+      expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(bob.address));
     });
   });
 
@@ -102,17 +100,17 @@ describe.skip('Chain extensions', () => {
       await addToWhiteListExpectSuccess(alice, collectionId, contract.address);
       await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
 
-      const transferTx = contract.tx.createItem(value, gasLimit, bob.address, collectionId, { Nft: {const_data: '0x010203', variable_data: '0x020304' }});
+      const transferTx = contract.tx.createItem(value, gasLimit, bob.address, collectionId, {Nft: {const_data: '0x010203', variable_data: '0x020304'}});
       const events = await submitTransactionAsync(alice, transferTx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
 
-      const tokensAfter: any = (await api.query.nft.nftItemList.entries(collectionId) as any).map((kv: any) => kv[1].toJSON());
+      const tokensAfter = (await api.query.nft.nftItemList.entries(collectionId)).map((kv: any) => kv[1].toJSON());
       expect(tokensAfter).to.be.deep.equal([
         {
-          Owner: bob.address,
-          ConstData: '0x010203',
-          VariableData: '0x020304',
+          owner: bob.address,
+          constData: '0x010203',
+          variableData: '0x020304',
         },
       ]);
     });
@@ -131,9 +129,9 @@ describe.skip('Chain extensions', () => {
       await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
 
       const transferTx = contract.tx.createMultipleItems(value, gasLimit, bob.address, collectionId, [
-        { Nft: { const_data: '0x010203', variable_data: '0x020304' } },
-        { Nft: { const_data: '0x010204', variable_data: '0x020305' } },
-        { Nft: { const_data: '0x010205', variable_data: '0x020306' } },
+        {Nft: {const_data: '0x010203', variable_data: '0x020304'}},
+        {Nft: {const_data: '0x010204', variable_data: '0x020305'}},
+        {Nft: {const_data: '0x010205', variable_data: '0x020306'}},
       ]);
       const events = await submitTransactionAsync(alice, transferTx);
       const result = getGenericResult(events);

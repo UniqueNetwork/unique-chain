@@ -3,12 +3,12 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { ApiPromise } from '@polkadot/api';
+import {ApiPromise} from '@polkadot/api';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
-import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from './substrate/substrate-api';
-import {createCollectionExpectSuccess, destroyCollectionExpectSuccess, normalizeAccountId} from './util/helpers';
+import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
+import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, destroyCollectionExpectSuccess, getAdminList, normalizeAccountId} from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -20,38 +20,38 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
 
-      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.owner).to.be.equal(alice.address);
+      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      expect(collection.owner.toString()).to.be.equal(alice.address);
 
       const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
       await submitTransactionAsync(alice, changeAdminTx);
 
-      const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
-      expect(adminListAfterAddAdmin).to.be.contains(normalizeAccountId(bob.address));
+      const adminListAfterAddAdmin = await getAdminList(api, collectionId);
+      expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
     });
   });
 
   it('Add admin using added collection admin.', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
-      const Charlie = privateKey('//CHARLIE');
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
+      const charlie = privateKey('//CHARLIE');
 
-      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.owner).to.be.equal(Alice.address);
+      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      expect(collection.owner.toString()).to.be.equal(alice.address);
 
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
-      await submitTransactionAsync(Alice, changeAdminTx);
+      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
+      await submitTransactionAsync(alice, changeAdminTx);
 
-      const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
-      expect(adminListAfterAddAdmin).to.be.contains(normalizeAccountId(Bob.address));
+      const adminListAfterAddAdmin = await getAdminList(api, collectionId);
+      expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
 
-      const changeAdminTxCharlie = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Charlie.address));
-      await submitTransactionAsync(Bob, changeAdminTxCharlie);
-      const adminListAfterAddNewAdmin: any = (await api.query.nft.adminList(collectionId));
-      expect(adminListAfterAddNewAdmin).to.be.contains(normalizeAccountId(Bob.address));
-      expect(adminListAfterAddNewAdmin).to.be.contains(normalizeAccountId(Charlie.address));
+      const changeAdminTxCharlie = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(charlie.address));
+      await submitTransactionAsync(bob, changeAdminTxCharlie);
+      const adminListAfterAddNewAdmin = await getAdminList(api, collectionId);
+      expect(adminListAfterAddNewAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
+      expect(adminListAfterAddNewAdmin).to.be.deep.contains(normalizeAccountId(charlie.address));
     });
   });
 });
@@ -66,8 +66,8 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
       const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(alice.address));
       await expect(submitTransactionExpectFailAsync(nonOwner, changeAdminTx)).to.be.rejected;
 
-      const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
-      expect(adminListAfterAddAdmin).not.to.be.contains(normalizeAccountId(alice.address));
+      const adminListAfterAddAdmin = await getAdminList(api, collectionId);
+      expect(adminListAfterAddAdmin).not.to.be.deep.contains(normalizeAccountId(alice.address));
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
       await createCollectionExpectSuccess();
@@ -91,11 +91,11 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
   it("Can't add an admin to a destroyed collection.", async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
       await destroyCollectionExpectSuccess(collectionId);
-      const changeOwnerTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
-      await expect(submitTransactionExpectFailAsync(Alice, changeOwnerTx)).to.be.rejected;
+      const changeOwnerTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
+      await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
       await createCollectionExpectSuccess();
@@ -104,30 +104,29 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
 
   it('Add an admin to a collection that has reached the maximum number of admins limit', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const Alice = privateKey('//Alice');
+      const alice = privateKey('//Alice');
       const accounts = [
-        'GsvVmjr1CBHwQHw84pPHMDxgNY3iBLz6Qn7qS3CH8qPhrHz',
-        'FoQJpPyadYccjavVdTWxpxU7rUEaYhfLCPwXgkfD6Zat9QP',
-        'JKspFU6ohf1Grg3Phdzj2pSgWvsYWzSfKghhfzMbdhNBWs5',
-        'Fr4NzY1udSFFLzb2R3qxVQkwz9cZraWkyfH4h3mVVk7BK7P',
-        'DfnTB4z7eUvYRqcGtTpFsLC69o6tvBSC1pEv8vWPZFtCkaK',
-        'HnMAUz7r2G8G3hB27SYNyit5aJmh2a5P4eMdDtACtMFDbam',
-        'DE14BzQ1bDXWPKeLoAqdLAm1GpyAWaWF1knF74cEZeomTBM',
+        privateKey('//AdminTest/1').address,
+        privateKey('//AdminTest/2').address,
+        privateKey('//AdminTest/3').address,
+        privateKey('//AdminTest/4').address,
+        privateKey('//AdminTest/5').address,
+        privateKey('//AdminTest/6').address,
+        privateKey('//AdminTest/7').address,
       ];
       const collectionId = await createCollectionExpectSuccess();
 
-      const chainAdminLimit = (api.consts.nft.collectionAdminsLimit as any).toNumber();
+      const chainAdminLimit = api.consts.common.collectionAdminsLimit.toNumber();
       expect(chainAdminLimit).to.be.equal(5);
 
       for (let i = 0; i < chainAdminLimit; i++) {
-        const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(accounts[i]));
-        await submitTransactionAsync(Alice, changeAdminTx);
-        const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
-        expect(adminListAfterAddAdmin).to.be.contains(normalizeAccountId(accounts[i]));
+        await addCollectionAdminExpectSuccess(alice, collectionId, accounts[i]);
+        const adminListAfterAddAdmin = await getAdminList(api, collectionId);
+        expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(accounts[i]));
       }
 
       const tx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(accounts[chainAdminLimit]));
-      await expect(submitTransactionExpectFailAsync(Alice, tx)).to.be.rejected;
+      await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });
 });
