@@ -1,3 +1,4 @@
+/* obsolete
 import { IKeyringPair } from '@polkadot/types/types';
 import BN from 'bn.js';
 import chai from 'chai';
@@ -77,3 +78,4 @@ describe('Token limit exceeded collection: ', () => {
     });
   });
 });
+*/
