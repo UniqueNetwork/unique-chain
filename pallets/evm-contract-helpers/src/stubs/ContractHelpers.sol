@@ -9,7 +9,19 @@ contract Dummy {
 	string stub_error = "this contract is implemented in native";
 }
 
-contract ContractHelpers is Dummy {
+contract ERC165 is Dummy {
+	function supportsInterface(bytes4 interfaceID)
+		external
+		view
+		returns (bool)
+	{
+		require(false, stub_error);
+		interfaceID;
+		return true;
+	}
+}
+
+contract ContractHelpers is Dummy, ERC165 {
 	// Selector: contractOwner(address) 5152b14c
 	function contractOwner(address contractAddress)
 		public

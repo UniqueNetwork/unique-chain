@@ -103,6 +103,8 @@ pub type Signature = MultiSignature;
 /// to the public key of our transaction signing scheme.
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
+pub type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
+
 /// The type for looking up accounts. We don't expect more than 4 billion of them, but you
 /// never know...
 pub type AccountIndex = u32;
@@ -145,7 +147,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("opal"),
 	impl_name: create_runtime_str!("opal"),
 	authoring_version: 1,
-	spec_version: 912200,
+	spec_version: 912202,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -717,18 +719,30 @@ parameter_types! {
 	pub const CollectionCreationPrice: Balance = 100 * UNIQUE;
 }
 
-/// Used for the pallet nft in `./nft.rs`
-impl pallet_nft::Config for Runtime {
+impl pallet_common::Config for Runtime {
 	type Event = Event;
-	type WeightInfo = pallet_nft::weights::SubstrateWeight<Self>;
-
-	type EvmBackwardsAddressMapping = pallet_nft::MapBackwardsAddressTruncated;
+	type EvmBackwardsAddressMapping = pallet_common::account::MapBackwardsAddressTruncated;
 	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type CrossAccountId = pallet_nft::BasicCrossAccountId<Self>;
+	type CrossAccountId = pallet_common::account::BasicCrossAccountId<Self>;
 
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
+}
+
+impl pallet_fungible::Config for Runtime {
+	type WeightInfo = pallet_fungible::weights::SubstrateWeight<Self>;
+}
+impl pallet_refungible::Config for Runtime {
+	type WeightInfo = pallet_refungible::weights::SubstrateWeight<Self>;
+}
+impl pallet_nonfungible::Config for Runtime {
+	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
+}
+
+/// Used for the pallet nft in `./nft.rs`
+impl pallet_nft::Config for Runtime {
+	type WeightInfo = pallet_nft::weights::SubstrateWeight<Self>;
 }
 
 parameter_types! {
@@ -838,11 +852,15 @@ construct_runtime!(
 
 		// Unique Pallets
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
-		Nft: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>} = 61,
+		Nft: pallet_nft::{Pallet, Call, Storage} = 61,
 		Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage} = 63,
 		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage } = 64,
 		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
+		Common: pallet_common::{Pallet, Storage, Event<T>} = 66,
+		Fungible: pallet_fungible::{Pallet, Storage} = 67,
+		Refungible: pallet_refungible::{Pallet, Storage} = 68,
+		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
@@ -967,12 +985,66 @@ impl fp_self_contained::SelfContainedCall for Call {
 	}
 }
 
+macro_rules! dispatch_nft_runtime {
+	($collection:ident.$method:ident($($name:ident),*)) => {{
+		use pallet_nft::dispatch::Dispatched;
+
+		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::new($collection).unwrap());
+		let dispatch = collection.as_dyn();
+
+		dispatch.$method($($name),*)
+	}};
+}
 impl_runtime_apis! {
-	impl pallet_nft::NftApi<Block>
+	impl up_rpc::NftApi<Block, CrossAccountId, AccountId>
 		for Runtime
 	{
+		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Vec<TokenId> {
+			dispatch_nft_runtime!(collection.account_tokens(account))
+		}
+		fn token_exists(collection: CollectionId, token: TokenId) -> bool {
+			dispatch_nft_runtime!(collection.token_exists(token))
+		}
+
+		fn token_owner(collection: CollectionId, token: TokenId) -> CrossAccountId {
+			dispatch_nft_runtime!(collection.token_owner(token))
+		}
+		fn const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8> {
+			dispatch_nft_runtime!(collection.const_metadata(token))
+		}
+		fn variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8> {
+			dispatch_nft_runtime!(collection.variable_metadata(token))
+		}
+
+		fn collection_tokens(collection: CollectionId) -> u32 {
+			dispatch_nft_runtime!(collection.collection_tokens())
+		}
+		fn account_balance(collection: CollectionId, account: CrossAccountId) -> u32 {
+			dispatch_nft_runtime!(collection.account_balance(account))
+		}
+		fn balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> u128 {
+			dispatch_nft_runtime!(collection.balance(account, token))
+		}
+		fn allowance(
+			collection: CollectionId,
+			sender: CrossAccountId,
+			spender: CrossAccountId,
+			token: TokenId,
+		) -> u128 {
+			dispatch_nft_runtime!(collection.allowance(sender, spender, token))
+		}
+
 		fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
-			<pallet_nft::NftErcSupport<Runtime>>::get_code(&account)
+			<pallet_nft::NftErcSupport<Runtime>>::get_code(&account).or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account)).or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
+		}
+		fn adminlist(collection: CollectionId) -> Vec<AccountId> {
+			<pallet_nft::Pallet<Runtime>>::adminlist(collection)
+		}
+		fn allowlist(collection: CollectionId) -> Vec<AccountId> {
+			<pallet_nft::Pallet<Runtime>>::allowlist(collection)
+		}
+		fn last_token_id(collection: CollectionId) -> TokenId {
+			dispatch_nft_runtime!(collection.last_token_id())
 		}
 	}
 
@@ -1240,22 +1312,43 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
+		fn benchmark_metadata(extra: bool) -> (
+			Vec<frame_benchmarking::BenchmarkList>,
+			Vec<frame_support::traits::StorageInfo>,
+		) {
+			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_support::traits::StorageInfoTrait;
+
+			let mut list = Vec::<BenchmarkList>::new();
+
+			list_benchmark!(list, extra, pallet_evm_migration, EvmMigration);
+			list_benchmark!(list, extra, pallet_nft, Nft);
+			list_benchmark!(list, extra, pallet_inflation, Inflation);
+			list_benchmark!(list, extra, pallet_fungible, Fungible);
+			list_benchmark!(list, extra, pallet_refungible, Refungible);
+			list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
+
+			let storage_info = AllPalletsWithSystem::storage_info();
+
+			return (list, storage_info)
+		}
+
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
 			let whitelist: Vec<TrackedStorageKey> = vec![
-				// Alice account
-				hex_literal::hex!("d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d").to_vec().into(),
-				// // Total Issuance
-				// hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
-				// // Execution Phase
-				// hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
-				// // Event Count
-				// hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
-				// // System Events
-				// hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
+				// Block Number
+				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
+				// Total Issuance
+				hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
+				// Execution Phase
+				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
+				// Event Count
+				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
+				// System Events
+				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
 			];
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
@@ -1264,6 +1357,9 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
 			add_benchmark!(params, batches, pallet_nft, Nft);
 			add_benchmark!(params, batches, pallet_inflation, Inflation);
+			add_benchmark!(params, batches, pallet_fungible, Fungible);
+			add_benchmark!(params, batches, pallet_refungible, Refungible);
+			add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

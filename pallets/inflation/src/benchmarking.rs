@@ -3,8 +3,6 @@
 use super::*;
 use crate::Module as Inflation;
 
-use sp_std::prelude::*;
-use frame_system::RawOrigin;
 use frame_benchmarking::{benchmarks};
 use frame_support::traits::OnInitialize;
 

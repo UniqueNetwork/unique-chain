@@ -1,86 +1,21 @@
-pub mod account;
-pub mod erc;
 pub mod sponsoring;
 
-use pallet_evm_coder_substrate::call_internal;
+use pallet_common::{
+	CollectionById,
+	erc::CommonEvmHandler,
+	eth::{map_eth_to_id, map_eth_to_token_id},
+};
+use pallet_fungible::FungibleHandle;
+use pallet_nonfungible::NonfungibleHandle;
+use pallet_refungible::{RefungibleHandle, erc::RefungibleTokenHandle};
 use sp_std::borrow::ToOwned;
 use sp_std::vec::Vec;
 use pallet_evm::{PrecompileOutput};
 use sp_core::{H160, U256};
-use frame_support::storage::StorageMap;
-use crate::{Config, CollectionById, CollectionHandle, CollectionId, CollectionMode};
-use erc::{UniqueFungibleCall, UniqueNFTCall};
+use crate::{CollectionMode, Config, dispatch::Dispatched};
+use pallet_common::CollectionHandle;
 
 pub struct NftErcSupport<T: Config>(core::marker::PhantomData<T>);
-
-// 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection
-// TODO: Unhardcode prefix
-const ETH_ACCOUNT_PREFIX: [u8; 16] = [
-	0x17, 0xc4, 0xe6, 0x45, 0x3c, 0xc4, 0x9a, 0xaa, 0xae, 0xac, 0xa8, 0x94, 0xe6, 0xd9, 0x68, 0x3e,
-];
-
-fn map_eth_to_id(eth: &H160) -> Option<CollectionId> {
-	if eth[0..16] != ETH_ACCOUNT_PREFIX {
-		return None;
-	}
-	let mut id_bytes = [0; 4];
-	id_bytes.copy_from_slice(&eth[16..20]);
-	Some(u32::from_be_bytes(id_bytes))
-}
-pub fn collection_id_to_address(id: u32) -> H160 {
-	let mut out = [0; 20];
-	out[0..16].copy_from_slice(&ETH_ACCOUNT_PREFIX);
-	out[16..20].copy_from_slice(&u32::to_be_bytes(id));
-	H160(out)
-}
-
-/*
-fn call_internal<T: Config>(
-	collection: &mut CollectionHandle<T>,
-	caller: caller,
-	method_id: u32,
-	mut input: AbiReader,
-	value: U256,
-) -> Result<Option<AbiWriter>> {
-	match collection.mode.clone() {
-		CollectionMode::Fungible(_) => {
-			call_internal();
-			let call = match UniqueFungibleCall::parse(method_id, &mut input)? {
-				Some(v) => v,
-				None => {
-					#[cfg(feature = "std")]
-					{
-						println!("Method not found");
-					}
-					return Ok(None);
-				}
-			};
-			Ok(Some(<CollectionHandle<T> as UniqueFungible>::call(
-				collection,
-				Msg {
-					call,
-					caller,
-					value,
-				},
-			)?))
-		}
-		CollectionMode::NFT => {
-			let call = match UniqueNFTCall::parse(method_id, &mut input)? {
-				Some(v) => v,
-				None => return Ok(None),
-			};
-			Ok(Some(<CollectionHandle<T> as UniqueNFT>::call(
-				collection,
-				Msg {
-					call,
-					caller,
-					value,
-				},
-			)?))
-		}
-		_ => Err("erc calls only supported to fungible and nft collections for now".into()),
-	}
-}*/
 
 impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 	fn is_reserved(target: &H160) -> bool {
@@ -92,20 +27,26 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 			.unwrap_or(false)
 	}
 	fn get_code(target: &H160) -> Option<Vec<u8>> {
-		map_eth_to_id(target)
-			.and_then(<CollectionById<T>>::get)
-			.map(|collection| {
+		if let Some(collection_id) = map_eth_to_id(target) {
+			let collection = <CollectionById<T>>::get(collection_id)?;
+			Some(
 				match collection.mode {
-					CollectionMode::NFT => include_bytes!("stubs/UniqueNFT.raw") as &[u8],
-					CollectionMode::Fungible(_) => {
-						include_bytes!("stubs/UniqueFungible.raw") as &[u8]
-					}
-					CollectionMode::ReFungible => {
-						include_bytes!("stubs/UniqueRefungible.raw") as &[u8]
-					}
+					CollectionMode::NFT => <NonfungibleHandle<T>>::CODE,
+					CollectionMode::Fungible(_) => <FungibleHandle<T>>::CODE,
+					CollectionMode::ReFungible => <RefungibleHandle<T>>::CODE,
 				}
-				.to_owned()
-			})
+				.to_owned(),
+			)
+		} else if let Some((collection_id, _token_id)) = map_eth_to_token_id(target) {
+			let collection = <CollectionById<T>>::get(collection_id)?;
+			if collection.mode != CollectionMode::ReFungible {
+				return None;
+			}
+			// TODO: check token existence
+			Some(<RefungibleTokenHandle<T>>::CODE.to_owned())
+		} else {
+			None
+		}
 	}
 	fn call(
 		source: &H160,
@@ -114,17 +55,26 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 		input: &[u8],
 		value: U256,
 	) -> Option<PrecompileOutput> {
-		let mut collection = map_eth_to_id(target)
-			.and_then(|id| <CollectionHandle<T>>::get_with_gas_limit(id, gas_limit))?;
-		let result = match collection.mode {
-			CollectionMode::NFT => {
-				call_internal::<UniqueNFTCall, _>(*source, &mut collection, value, input)
+		if let Some(collection_id) = map_eth_to_id(target) {
+			let collection = <CollectionHandle<T>>::new_with_gas_limit(collection_id, gas_limit)?;
+			let dispatched = Dispatched::dispatch(collection);
+
+			match dispatched {
+				Dispatched::Fungible(h) => h.call(source, input, value),
+				Dispatched::Nonfungible(h) => h.call(source, input, value),
+				Dispatched::Refungible(h) => h.call(source, input, value),
 			}
-			CollectionMode::Fungible(_) => {
-				call_internal::<UniqueFungibleCall, _>(*source, &mut collection, value, input)
+		} else if let Some((collection_id, token_id)) = map_eth_to_token_id(target) {
+			let collection = <CollectionHandle<T>>::new_with_gas_limit(collection_id, gas_limit)?;
+			if collection.mode != CollectionMode::ReFungible {
+				return None;
 			}
-			_ => return None,
-		};
-		collection.recorder.evm_to_precompile_output(result)
+
+			let handle = RefungibleHandle::cast(collection);
+			// TODO: check token existence
+			RefungibleTokenHandle(handle, token_id).call(source, input, value)
+		} else {
+			None
+		}
 	}
 }

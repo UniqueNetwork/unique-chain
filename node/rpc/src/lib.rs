@@ -1,4 +1,4 @@
-use nft_runtime::{Hash, AccountId, Index, opaque::Block, BlockNumber, Balance};
+use nft_runtime::{Hash, AccountId, CrossAccountId, Index, opaque::Block, BlockNumber, Balance};
 use fc_rpc::{
 	EthBlockDataCache, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride,
 };
@@ -9,7 +9,6 @@ use sc_client_api::{
 	backend::{AuxStore, StorageProvider},
 	client::BlockchainEvents,
 };
-use pallet_nft::NftApi;
 use sc_finality_grandpa::{
 	FinalityProofProvider, GrandpaJustificationStream, SharedAuthoritySet, SharedVoterState,
 };
@@ -101,9 +100,10 @@ impl<C, Block> fc_rpc::AccountCodeProvider<Block> for AccountCodes<C, Block>
 where
 	Block: sp_api::BlockT,
 	C: ProvideRuntimeApi<Block>,
-	C::Api: pallet_nft::NftApi<Block>,
+	C::Api: up_rpc::NftApi<Block, CrossAccountId, AccountId>,
 {
 	fn code(&self, block: &sp_api::BlockId<Block>, account: sp_core::H160) -> Option<Vec<u8>> {
+		use up_rpc::NftApi;
 		self.client
 			.runtime_api()
 			.eth_contract_code(block, account)
@@ -127,7 +127,7 @@ where
 	// C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
-	C::Api: pallet_nft::NftApi<Block>,
+	C::Api: up_rpc::NftApi<Block, CrossAccountId, AccountId>,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
 	SC: SelectChain<Block> + 'static,
@@ -139,6 +139,7 @@ where
 		EthPubSubApiServer, EthSigner, HexEncodedIdProvider, NetApi, NetApiServer, Web3Api,
 		Web3ApiServer,
 	};
+	use uc_rpc::{NftApi, Nft};
 	// use pallet_contracts_rpc::{Contracts, ContractsApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
@@ -203,6 +204,7 @@ where
 		max_past_logs,
 		block_data_cache.clone(),
 	)));
+	io.extend_with(NftApi::to_delegate(Nft::new(client.clone())));
 
 	if let Some(filter_pool) = filter_pool {
 		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
