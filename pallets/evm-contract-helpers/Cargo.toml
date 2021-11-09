@@ -15,7 +15,7 @@ sp-core = { default-features = false, git = 'https://github.com/paritytech/subst
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12-weights" }
-up-sponsorship = { default-features = false, path = '../../primitives/sponsorship' }
+up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring" } 
 log = "0.4.14"
 
 [dependencies.codec]

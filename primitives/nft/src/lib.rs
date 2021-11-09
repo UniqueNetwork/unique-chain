@@ -142,7 +142,7 @@ pub trait SponsoringResolve<AccountId, Call> {
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum AccessMode {
 	Normal,
-	WhiteList,
+	AllowList,
 }
 impl Default for AccessMode {
 	fn default() -> Self {

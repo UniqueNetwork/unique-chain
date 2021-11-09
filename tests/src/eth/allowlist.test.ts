@@ -24,7 +24,7 @@ describe('EVM allowlist', () => {
     expect(await helpers.methods.allowed(flipper.options.address, randomUser).call()).to.be.true;
   });
 
-  itWeb3('Non-whitelisted user can\'t call contract with allowlist enabled', async ({api, web3}) => {
+  itWeb3('Non-allowlisted user can\'t call contract with allowlist enabled', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
     const flipper = await deployFlipper(web3, owner);
     const caller = await createEthAccountWithBalance(api, web3);
@@ -35,7 +35,7 @@ describe('EVM allowlist', () => {
     await flipper.methods.flip().send({from: caller});
     expect(await flipper.methods.getValue().call()).to.be.true;
 
-    // Tx will be reverted if user is not in whitelist
+    // Tx will be reverted if user is not in allowlist
     await helpers.methods.toggleAllowlist(flipper.options.address, true).send({from: owner});
     await expect(flipper.methods.flip().send({from: caller})).to.rejected;
     expect(await flipper.methods.getValue().call()).to.be.true;

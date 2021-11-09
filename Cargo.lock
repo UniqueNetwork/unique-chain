@@ -4940,7 +4940,7 @@ dependencies = [
 
 [[package]]
 name = "nft"
-version = "3.0.0"
+version = "0.9.12"
 dependencies = [
  "cumulus-client-cli",
  "cumulus-client-collator",
@@ -5076,7 +5076,7 @@ dependencies = [
 
 [[package]]
 name = "nft-runtime"
-version = "3.0.0"
+version = "0.9.12"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -5109,12 +5109,12 @@ dependencies = [
  "pallet-fungible",
  "pallet-inflation",
  "pallet-nft",
- "pallet-nft-charge-transaction",
  "pallet-nft-transaction-payment",
  "pallet-nonfungible",
  "pallet-randomness-collective-flip",
  "pallet-refungible",
  "pallet-sudo",
+ "pallet-template-transaction-payment",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -6077,25 +6077,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-nft-charge-transaction"
-version = "3.0.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-nft-transaction-payment",
- "pallet-transaction-payment",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-nft-transaction-payment"
 version = "3.0.0"
 dependencies = [
@@ -6367,6 +6348,26 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-template-transaction-payment"
+version = "3.0.0"
+source = "git+https://github.com/UniqueNetwork/pallet-sponsoring#ab8b91e9350a31133f3a3e4f52a84c6de4108e95"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "up-sponsorship",
 ]
 
 [[package]]
@@ -11847,6 +11848,7 @@ dependencies = [
 [[package]]
 name = "up-sponsorship"
 version = "0.1.0"
+source = "git+https://github.com/UniqueNetwork/pallet-sponsoring#ab8b91e9350a31133f3a3e4f52a84c6de4108e95"
 dependencies = [
  "impl-trait-for-tuples 0.2.1",
 ]

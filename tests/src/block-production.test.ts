@@ -7,8 +7,8 @@ import usingApi from './substrate/substrate-api';
 import {expect} from 'chai';
 import {ApiPromise} from '@polkadot/api';
 
-const BLOCK_TIME_MS = 3000;
-const TOLERANCE_MS = 1000;
+const BLOCK_TIME_MS = 12000;
+const TOLERANCE_MS = 3000;
 
 /* eslint no-async-promise-executor: "off" */
 function getBlocks(api: ApiPromise): Promise<number[]> {

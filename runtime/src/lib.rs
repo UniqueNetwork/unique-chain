@@ -147,7 +147,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("opal"),
 	impl_name: create_runtime_str!("opal"),
 	authoring_version: 1,
-	spec_version: 912200,
+	spec_version: 912202,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -826,7 +826,9 @@ impl pallet_evm_transaction_payment::Config for Runtime {
 	type Currency = Balances;
 }
 
-impl pallet_nft_charge_transaction::Config for Runtime {}
+impl pallet_nft_charge_transaction::Config for Runtime {
+	type SponsorshipHandler = pallet_nft::NftSponsorshipHandler<Runtime>;
+}
 
 // impl pallet_contract_helpers::Config for Runtime {
 //	 type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
@@ -1363,7 +1365,7 @@ impl_runtime_apis! {
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
-			let whitelist: Vec<TrackedStorageKey> = vec![
+			let allowlist: Vec<TrackedStorageKey> = vec![
 				// Block Number
 				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
 				// Total Issuance
@@ -1377,7 +1379,7 @@ impl_runtime_apis! {
 			];
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
-			let params = (&config, &whitelist);
+			let params = (&config, &allowlist);
 
 			add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
 			add_benchmark!(params, batches, pallet_nft, Nft);

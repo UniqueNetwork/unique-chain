@@ -233,7 +233,7 @@ branch = 'release-v0.9.12'
 
 [dependencies.nft-runtime]
 path = '../../runtime'
-version = '3.0.0'
+version = '0.9.12'
 
 [dependencies.nft-data-structs]
 path = "../../primitives/nft"
@@ -251,7 +251,7 @@ homepage = 'https://unique.network'
 license = 'All Rights Reserved'
 name = 'nft'
 repository = 'https://github.com/usetech-llc/nft_private/'
-version = '3.0.0'
+version = '0.9.12'
 
 [[bin]]
 name = 'nft'

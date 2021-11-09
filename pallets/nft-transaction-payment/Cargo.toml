@@ -30,7 +30,7 @@ sp-core = { default-features = false, git = 'https://github.com/paritytech/subst
 sp-io = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
 sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
 
-up-sponsorship = { default-features = false, path = "../../primitives/sponsorship", version = "0.1.0" }
+up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring" } 
 
 [features]
 default = ['std']
