@@ -908,8 +908,8 @@ transferExpectFailure(
     const result = getGenericResult(events);
     // if (events && Array.isArray(events)) {
     //   const result = getCreateCollectionResult(events);
-      // tslint:disable-next-line:no-unused-expression
-      expect(result.success).to.be.false;
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.false;
     //}
   });
 }

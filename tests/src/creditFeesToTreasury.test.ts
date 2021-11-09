@@ -175,7 +175,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       const expectedTransferFee = 0.1;
       const toleranceMaxBound = 0.0012;
       const toleranceMinBound = -0.0012;
-      let fact = Number(fee) / 1e15 - expectedTransferFee;
+      const fact = Number(fee) / 1e15 - expectedTransferFee;
       expect(fact).to.be.lessThan(toleranceMaxBound);
       expect(fact).to.be.greaterThan(toleranceMinBound);
     });
