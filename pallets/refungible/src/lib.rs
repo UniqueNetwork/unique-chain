@@ -272,7 +272,7 @@ impl<T: Config> Pallet<T> {
 			<CommonError<T>>::TransferNotAllowed
 		);
 
-		if collection.access == AccessMode::WhiteList {
+		if collection.access == AccessMode::AllowList {
 			collection.check_allowlist(from)?;
 			collection.check_allowlist(to)?;
 		}
@@ -483,7 +483,7 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult {
-		if collection.access == AccessMode::WhiteList {
+		if collection.access == AccessMode::AllowList {
 			collection.check_allowlist(&sender)?;
 			collection.check_allowlist(&spender)?;
 		}
@@ -514,7 +514,7 @@ impl<T: Config> Pallet<T> {
 		if spender.conv_eq(from) {
 			return Self::transfer(collection, from, to, token, amount);
 		}
-		if collection.access == AccessMode::WhiteList {
+		if collection.access == AccessMode::AllowList {
 			// `from`, `to` checked in [`transfer`]
 			collection.check_allowlist(spender)?;
 		}
@@ -547,7 +547,7 @@ impl<T: Config> Pallet<T> {
 		if spender.conv_eq(from) {
 			return Self::burn(collection, from, token, amount);
 		}
-		if collection.access == AccessMode::WhiteList {
+		if collection.access == AccessMode::AllowList {
 			// `from` checked in [`burn`]
 			collection.check_allowlist(spender)?;
 		}

@@ -7,12 +7,12 @@ import {IKeyringPair} from '@polkadot/types/types';
 import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import {
-  addToWhiteListExpectSuccess,
+  addToAllowListExpectSuccess,
   createCollectionExpectSuccess,
   createItemExpectFailure,
   createItemExpectSuccess,
   destroyCollectionExpectSuccess,
-  enableWhiteListExpectSuccess,
+  enableAllowListExpectSuccess,
   findNotExistingCollection,
   setMintPermissionExpectFailure,
   setMintPermissionExpectSuccess,
@@ -30,12 +30,12 @@ describe('Integration Test setMintPermission', () => {
     });
   });
 
-  it('ensure white-listed non-privileged address can mint tokens', async () => {
+  it('ensure allow-listed non-privileged address can mint tokens', async () => {
     await usingApi(async () => {
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await enableWhiteListExpectSuccess(alice, collectionId);
+      await enableAllowListExpectSuccess(alice, collectionId);
       await setMintPermissionExpectSuccess(alice, collectionId, true);
-      await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
+      await addToAllowListExpectSuccess(alice, collectionId, bob.address);
 
       await createItemExpectSuccess(bob, collectionId, 'NFT');
     });
@@ -88,7 +88,7 @@ describe('Negative Integration Test setMintPermission', () => {
 
   it('fails when not collection owner tries to set mint status', async () => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-    await enableWhiteListExpectSuccess(alice, collectionId);
+    await enableAllowListExpectSuccess(alice, collectionId);
     await setMintPermissionExpectFailure(bob, collectionId, true);
   });
 
@@ -100,10 +100,10 @@ describe('Negative Integration Test setMintPermission', () => {
     });
   });
 
-  it('ensure non-white-listed non-privileged address can\'t mint tokens', async () => {
+  it('ensure non-allow-listed non-privileged address can\'t mint tokens', async () => {
     await usingApi(async () => {
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await enableWhiteListExpectSuccess(alice, collectionId);
+      await enableAllowListExpectSuccess(alice, collectionId);
       await setMintPermissionExpectSuccess(alice, collectionId, true);
 
       await createItemExpectFailure(bob, collectionId, 'NFT');

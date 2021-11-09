@@ -16,15 +16,15 @@ import {
 } from './util/contracthelpers';
 
 import {
-  addToWhiteListExpectSuccess,
+  addToAllowListExpectSuccess,
   approveExpectSuccess,
   createCollectionExpectSuccess,
   createItemExpectSuccess,
   enablePublicMintingExpectSuccess,
-  enableWhiteListExpectSuccess,
+  enableAllowListExpectSuccess,
   getGenericResult,
   normalizeAccountId,
-  isWhitelisted,
+  isAllowlisted,
   transferFromExpectSuccess,
   getTokenOwner,
 } from './util/helpers';
@@ -96,9 +96,9 @@ describe.skip('Chain extensions', () => {
       const collectionId = await createCollectionExpectSuccess();
       const [contract] = await deployTransferContract(api);
       await enablePublicMintingExpectSuccess(alice, collectionId);
-      await enableWhiteListExpectSuccess(alice, collectionId);
-      await addToWhiteListExpectSuccess(alice, collectionId, contract.address);
-      await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
+      await enableAllowListExpectSuccess(alice, collectionId);
+      await addToAllowListExpectSuccess(alice, collectionId, contract.address);
+      await addToAllowListExpectSuccess(alice, collectionId, bob.address);
 
       const transferTx = contract.tx.createItem(value, gasLimit, bob.address, collectionId, {Nft: {const_data: '0x010203', variable_data: '0x020304'}});
       const events = await submitTransactionAsync(alice, transferTx);
@@ -124,9 +124,9 @@ describe.skip('Chain extensions', () => {
       const collectionId = await createCollectionExpectSuccess();
       const [contract] = await deployTransferContract(api);
       await enablePublicMintingExpectSuccess(alice, collectionId);
-      await enableWhiteListExpectSuccess(alice, collectionId);
-      await addToWhiteListExpectSuccess(alice, collectionId, contract.address);
-      await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
+      await enableAllowListExpectSuccess(alice, collectionId);
+      await addToAllowListExpectSuccess(alice, collectionId, contract.address);
+      await addToAllowListExpectSuccess(alice, collectionId, bob.address);
 
       const transferTx = contract.tx.createMultipleItems(value, gasLimit, bob.address, collectionId, [
         {Nft: {const_data: '0x010203', variable_data: '0x020304'}},
@@ -218,7 +218,7 @@ describe.skip('Chain extensions', () => {
     });
   });
 
-  it('ToggleWhiteList CE', async () => {
+  it('ToggleAllowList CE', async () => {
     await usingApi(async api => {
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
@@ -228,23 +228,23 @@ describe.skip('Chain extensions', () => {
       const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, contract.address);
       await submitTransactionAsync(alice, changeAdminTx);
 
-      expect(await isWhitelisted(collectionId, bob.address)).to.be.false;
+      expect(await isAllowlisted(collectionId, bob.address)).to.be.false;
 
       {
-        const transferTx = contract.tx.toggleWhiteList(value, gasLimit, collectionId, bob.address, true);
+        const transferTx = contract.tx.toggleAllowList(value, gasLimit, collectionId, bob.address, true);
         const events = await submitTransactionAsync(alice, transferTx);
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
 
-        expect(await isWhitelisted(collectionId, bob.address)).to.be.true;
+        expect(await isAllowlisted(collectionId, bob.address)).to.be.true;
       }
       {
-        const transferTx = contract.tx.toggleWhiteList(value, gasLimit, collectionId, bob.address, false);
+        const transferTx = contract.tx.toggleAllowList(value, gasLimit, collectionId, bob.address, false);
         const events = await submitTransactionAsync(alice, transferTx);
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
 
-        expect(await isWhitelisted(collectionId, bob.address)).to.be.false;
+        expect(await isAllowlisted(collectionId, bob.address)).to.be.false;
       }
     });
   });

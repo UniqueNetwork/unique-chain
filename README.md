@@ -41,7 +41,7 @@ During the Kusama Hackaphon the following changes were made:
     -   Re-Fungible Token Mode
     -   Off-Chain Schema to store token image URLs
     -   Alternative economic model
-    -   White Lists and Public Mint Permission
+    -   Allow Lists and Public Mint Permission
 -   Use example: [SubstraPunks Game](https://github.com/usetech-llc/substrapunks), fully hosted on IPFS and NFT Testnet
     Blockchain.
 

@@ -75,7 +75,7 @@ pub trait NftChainExtension {
     #[ink(extension = 5, returns_result = false)]
     fn set_variable_meta_data(collection_id: u32, item_id: u32, data: Vec<u8>);
     #[ink(extension = 6, returns_result = false)]
-    fn toggle_white_list(collection_id: u32, address: DefaultAccountId, whitelisted: bool);
+    fn toggle_allow_list(collection_id: u32, address: DefaultAccountId, allowlisted: bool);
 }
 
 #[ink::contract(env = crate::NftEnvironment, dynamic_storage_allocator = true)]
@@ -135,10 +135,10 @@ mod nft_transfer {
                 .set_variable_meta_data(collection_id, item_id, data);
         }
         #[ink(message)]
-        pub fn toggle_white_list(&mut self, collection_id: u32, address: AccountId, whitelisted: bool) {
+        pub fn toggle_allow_list(&mut self, collection_id: u32, address: AccountId, allowlisted: bool) {
             let _ = self.env()
                 .extension()
-                .toggle_white_list(collection_id, address, whitelisted);
+                .toggle_allow_list(collection_id, address, allowlisted);
         }
 
     }
