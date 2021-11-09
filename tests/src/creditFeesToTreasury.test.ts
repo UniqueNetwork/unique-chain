@@ -173,8 +173,11 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
       // console.log(fee.toString());
       const expectedTransferFee = 0.1;
-      const tolerance = 0.001;
-      expect(Number(fee) / 1e15 - expectedTransferFee).to.be.lessThan(tolerance);
+      const toleranceMaxBound = 0.0012;
+      const toleranceMinBound = -0.0012;
+      let fact = Number(fee) / 1e15 - expectedTransferFee;
+      expect(fact).to.be.lessThan(toleranceMaxBound);
+      expect(fact).to.be.greaterThan(toleranceMinBound);
     });
   });
 
