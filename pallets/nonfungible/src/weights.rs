@@ -33,6 +33,7 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn create_item() -> Weight;
 	fn create_multiple_items(b: u32, ) -> Weight;
+	fn burn_from() -> Weight;
 	fn burn_item() -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;

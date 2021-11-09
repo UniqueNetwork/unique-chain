@@ -32,6 +32,7 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for pallet_fungible.
 pub trait WeightInfo {
 	fn create_item() -> Weight;
+	fn burn_from() -> Weight;
 	fn burn_item() -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
