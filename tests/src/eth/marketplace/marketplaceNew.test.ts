@@ -18,7 +18,7 @@ describe('Matcher contract usage', () => {
       from: matcherOwner,
       ...GAS_ARGS,
     });
-    const matcher = await matcherContract.deploy({data: (matcherJSON.bytecode).toString()}).send({from: matcherOwner});
+    const matcher = await matcherContract.deploy({data: (matcherJSON.bytecode).toString(), arguments:[matcherOwner]}).send({from: matcherOwner});
 
     const alice = privateKey('//Alice');
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
@@ -138,7 +138,8 @@ describe('Matcher contract usage', () => {
       from: matcherOwner,
       ...GAS_ARGS,
     });
-    const matcher = await matcherContract.deploy({data: (matcherJSON.bytecode).toString()}).send({from: matcherOwner});
+    const matcher = await matcherContract.deploy({data: (matcherJSON.bytecode).toString(), arguments:[escrow]}).send({from: matcherOwner});
+
 
     const ksmToken = 11;
 
