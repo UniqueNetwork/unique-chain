@@ -12,13 +12,13 @@ import {createCollectionExpectSuccess,
   setCollectionSponsorExpectSuccess,
   confirmSponsorshipExpectSuccess,
   removeCollectionSponsorExpectSuccess,
-  enableWhiteListExpectSuccess,
+  enableAllowListExpectSuccess,
   setMintPermissionExpectSuccess,
   destroyCollectionExpectSuccess,
   setCollectionSponsorExpectFailure,
   confirmSponsorshipExpectFailure,
   removeCollectionSponsorExpectFailure,
-  enableWhiteListExpectFail,
+  enableAllowListExpectFail,
   setMintPermissionExpectFailure,
   destroyCollectionExpectFailure,
   setPublicAccessModeExpectSuccess,
@@ -104,8 +104,8 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
       );
       await submitTransactionAsync(bob, tx1);
 
-      await setPublicAccessModeExpectSuccess(bob, collectionId, 'WhiteList');
-      await enableWhiteListExpectSuccess(bob, collectionId);
+      await setPublicAccessModeExpectSuccess(bob, collectionId, 'AllowList');
+      await enableAllowListExpectSuccess(bob, collectionId);
       await setMintPermissionExpectSuccess(bob, collectionId, true);
       await destroyCollectionExpectSuccess(collectionId, '//Bob');
     });
@@ -225,7 +225,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
       );
       await expect(submitTransactionExpectFailAsync(alice, tx1)).to.be.rejected;
 
-      await enableWhiteListExpectFail(alice, collectionId);
+      await enableAllowListExpectFail(alice, collectionId);
       await setMintPermissionExpectFailure(alice, collectionId, true);
       await destroyCollectionExpectFailure(collectionId, '//Alice');
     });

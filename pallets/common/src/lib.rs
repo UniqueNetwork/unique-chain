@@ -260,7 +260,7 @@ pub mod pallet {
 		NoPermission,
 		/// Collection is not in mint mode.
 		PublicMintingNotAllowed,
-		/// Address is not in white list.
+		/// Address is not in allow list.
 		AddressNotInAllowlist,
 
 		/// Collection name can not be longer than 63 char.

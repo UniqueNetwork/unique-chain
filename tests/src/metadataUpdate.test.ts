@@ -12,11 +12,11 @@ import {
   createItemExpectSuccess,
   createCollectionExpectSuccess,
   enablePublicMintingExpectSuccess,
-  enableWhiteListExpectSuccess,
+  enableAllowListExpectSuccess,
   setMetadataUpdatePermissionFlagExpectSuccess,
   setVariableMetaDataExpectSuccess,
   setMintPermissionExpectSuccess,
-  addToWhiteListExpectSuccess,
+  addToAllowListExpectSuccess,
   addCollectionAdminExpectSuccess,
   setVariableMetaDataExpectFailure,
   setMetadataUpdatePermissionFlagExpectFailure,
@@ -53,7 +53,7 @@ describe('Metadata update permissions with ItemOwner flag', () => {
       await setMetadataUpdatePermissionFlagExpectSuccess(alice, nftCollectionId, 'ItemOwner');
 
       await setMintPermissionExpectSuccess(alice, nftCollectionId, true);
-      await addToWhiteListExpectSuccess(alice, nftCollectionId, bob.address);
+      await addToAllowListExpectSuccess(alice, nftCollectionId, bob.address);
       await addCollectionAdminExpectSuccess(alice, nftCollectionId, bob.address);
 
       await setVariableMetaDataExpectFailure(bob, nftCollectionId, newNftTokenId, data);
@@ -92,7 +92,7 @@ describe('Metadata update permissions with Admin flag', () => {
       await setMetadataUpdatePermissionFlagExpectSuccess(alice, nftCollectionId, 'Admin');
 
       await setMintPermissionExpectSuccess(alice, nftCollectionId, true);
-      await addToWhiteListExpectSuccess(alice, nftCollectionId, bob.address);
+      await addToAllowListExpectSuccess(alice, nftCollectionId, bob.address);
       await addCollectionAdminExpectSuccess(alice, nftCollectionId, bob.address);
 
       await setVariableMetaDataExpectSuccess(bob, nftCollectionId, newNftTokenId, data);
@@ -112,7 +112,7 @@ describe('Metadata update permissions with Admin flag', () => {
       await setMetadataUpdatePermissionFlagExpectSuccess(alice, nftCollectionId, 'Admin');
 
       await setMintPermissionExpectSuccess(alice, nftCollectionId, true);
-      await addToWhiteListExpectSuccess(alice, nftCollectionId, bob.address);
+      await addToAllowListExpectSuccess(alice, nftCollectionId, bob.address);
       await addCollectionAdminExpectSuccess(alice, nftCollectionId, bob.address);
 
       await setVariableMetaDataExpectSuccess(bob, nftCollectionId, newNftTokenId, data);
@@ -129,8 +129,8 @@ describe('Metadata update permissions with Admin flag', () => {
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       await enablePublicMintingExpectSuccess(alice, nftCollectionId);
-      await addToWhiteListExpectSuccess(alice, nftCollectionId, bob.address);
-      await enableWhiteListExpectSuccess(alice, nftCollectionId);
+      await addToAllowListExpectSuccess(alice, nftCollectionId, bob.address);
+      await enableAllowListExpectSuccess(alice, nftCollectionId);
       const newNftTokenId = await createItemExpectSuccess(bob, nftCollectionId, 'NFT');
       await setMetadataUpdatePermissionFlagExpectSuccess(alice, nftCollectionId, 'Admin');
 
@@ -169,7 +169,7 @@ describe('Metadata update permissions with None flag', () => {
       await setMetadataUpdatePermissionFlagExpectSuccess(alice, nftCollectionId, 'None');
 
       await setMintPermissionExpectSuccess(alice, nftCollectionId, true);
-      await addToWhiteListExpectSuccess(alice, nftCollectionId, bob.address);
+      await addToAllowListExpectSuccess(alice, nftCollectionId, bob.address);
       await addCollectionAdminExpectSuccess(alice, nftCollectionId, bob.address);
 
       await setVariableMetaDataExpectFailure(bob, nftCollectionId, newNftTokenId, data);

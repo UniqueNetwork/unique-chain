@@ -187,14 +187,14 @@ come back after you claim one.
    address.
 7. Transfer token back to your main address. Observe that despite the zero balance, the transfer is successful.
 
-### White Lists and Public Mint Permission
+### Allow Lists and Public Mint Permission
 
 We did not complete these features in time by Hackusama deadline, but because they are important for security of the
 network, we completed them after the deadline anyway. They can be seen in branch
-[feature/white_list](https://github.com/usetech-llc/nft_parachain/tree/feature/white_list). Here are the permalinks to
+[feature/allow_list](https://github.com/usetech-llc/nft_parachain/tree/feature/allow_list). Here are the permalinks to
 essential functions:
 
-[white_lists](https://github.com/usetech-llc/nft_parachain/blob/b7c59f0085ed2bc1922e937adf68ef4174a8ba36/pallets/nft/src/lib.rs#L659)
+[allow_lists](https://github.com/usetech-llc/nft_parachain/blob/b7c59f0085ed2bc1922e937adf68ef4174a8ba36/pallets/nft/src/lib.rs#L659)
 
 [mint_permission](https://github.com/usetech-llc/nft_parachain/blob/b7c59f0085ed2bc1922e937adf68ef4174a8ba36/pallets/nft/src/lib.rs#L373)
 

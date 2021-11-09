@@ -211,14 +211,14 @@ impl<C: Config + pallet_contracts::Config> ChainExtension<C> for NFTExtension {
 				Ok(RetVal::Converging(0))
 			}
 			6 => {
-				// Toggle whitelist
+				// Toggle allowlist
 				let mut env = env.buf_in_buf_out();
 				let input: NFTExtToggleAllowList<AccountIdOf<C>> = env.read_as()?;
 				env.charge_weight(NftWeightInfoOf::<C>::add_to_allow_list())?;
 
 				let collection = pallet_nft::Module::<C>::get_collection(input.collection_id)?;
 
-				pallet_nft::Module::<C>::toggle_white_list_internal(
+				pallet_nft::Module::<C>::toggle_allow_list_internal(
 					&C::CrossAccountId::from_sub(env.ext().address().clone()),
 					&collection,
 					&C::CrossAccountId::from_sub(input.address),

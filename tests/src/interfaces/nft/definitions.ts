@@ -91,7 +91,7 @@ export default {
       },
     },
     NftDataStructsAccessMode: {
-      _enum: ['Normal', 'WhiteList'],
+      _enum: ['Normal', 'AllowList'],
     },
     NftDataStructsSchemaVersion: mkDummy('SchemaVersion'),
 

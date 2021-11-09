@@ -57,16 +57,16 @@ benchmarks! {
 
 	add_to_allow_list {
 		let caller: T::AccountId = account("caller", 0, SEED);
-		let whitelist_account: T::AccountId = account("admin", 0, SEED);
+		let allowlist_account: T::AccountId = account("admin", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
-	}: _(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(whitelist_account))
+	}: _(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(allowlist_account))
 
 	remove_from_allow_list {
 		let caller: T::AccountId = account("caller", 0, SEED);
-		let whitelist_account: T::AccountId = account("admin", 0, SEED);
+		let allowlist_account: T::AccountId = account("admin", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
-		<Pallet<T>>::add_to_allow_list(RawOrigin::Signed(caller.clone()).into(), collection, T::CrossAccountId::from_sub(whitelist_account.clone()))?;
-	}: _(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(whitelist_account))
+		<Pallet<T>>::add_to_allow_list(RawOrigin::Signed(caller.clone()).into(), collection, T::CrossAccountId::from_sub(allowlist_account.clone()))?;
+	}: _(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(allowlist_account))
 
 	set_public_access_mode {
 		let caller: T::AccountId = account("caller", 0, SEED);
