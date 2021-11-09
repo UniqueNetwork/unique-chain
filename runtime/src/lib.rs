@@ -1035,12 +1035,14 @@ impl_runtime_apis! {
 		}
 
 		fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
-			<pallet_nft::NftErcSupport<Runtime>>::get_code(&account).or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account)).or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
+			<pallet_nft::NftErcSupport<Runtime>>::get_code(&account)
+				.or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account))
+				.or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
 		}
-		fn adminlist(collection: CollectionId) -> Vec<AccountId> {
+		fn adminlist(collection: CollectionId) -> Vec<CrossAccountId> {
 			<pallet_nft::Pallet<Runtime>>::adminlist(collection)
 		}
-		fn allowlist(collection: CollectionId) -> Vec<AccountId> {
+		fn allowlist(collection: CollectionId) -> Vec<CrossAccountId> {
 			<pallet_nft::Pallet<Runtime>>::allowlist(collection)
 		}
 		fn last_token_id(collection: CollectionId) -> TokenId {

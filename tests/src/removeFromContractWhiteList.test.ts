@@ -5,10 +5,10 @@
 
 import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
-import { deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess } from './util/contracthelpers';
-import { addToContractWhiteListExpectSuccess, isWhitelistedInContract, removeFromContractWhiteListExpectFailure, removeFromContractWhiteListExpectSuccess, toggleContractWhitelistExpectSuccess } from './util/helpers';
-import { IKeyringPair } from '@polkadot/types/types';
-import { expect } from 'chai';
+import {deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess} from './util/contracthelpers';
+import {addToContractWhiteListExpectSuccess, isWhitelistedInContract, removeFromContractWhiteListExpectFailure, removeFromContractWhiteListExpectSuccess, toggleContractWhitelistExpectSuccess} from './util/helpers';
+import {IKeyringPair} from '@polkadot/types/types';
+import {expect} from 'chai';
 
 describe.skip('Integration Test removeFromContractWhiteList', () => {
   let bob: IKeyringPair;

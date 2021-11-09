@@ -3,11 +3,11 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { IKeyringPair } from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
-import usingApi, { submitTransactionExpectFailAsync } from './substrate/substrate-api';
+import usingApi, {submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import {
   addToWhiteListExpectSuccess,
   createCollectionExpectSuccess,
@@ -32,276 +32,273 @@ import {
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-let Alice: IKeyringPair;
-let Bob: IKeyringPair;
-let Charlie: IKeyringPair;
+let alice: IKeyringPair;
+let bob: IKeyringPair;
+let charlie: IKeyringPair;
 
 describe('Integration Test ext. White list tests', () => {
 
   before(async () => {
     await usingApi(async () => {
-      Alice = privateKey('//Alice');
-      Bob = privateKey('//Bob');
-      Charlie = privateKey('//Charlie');
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
     });
   });
 
   it('Owner can add address to white list', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await addToWhiteListExpectSuccess(Alice, collectionId, Bob.address);
+    await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
   });
 
   it('Admin can add address to white list', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
-    await addToWhiteListExpectSuccess(Bob, collectionId, Charlie.address);
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+    await addToWhiteListExpectSuccess(bob, collectionId, charlie.address);
   });
 
   it('Non-privileged user cannot add address to white list', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await addToWhiteListExpectFail(Bob, collectionId, Charlie.address);
+    await addToWhiteListExpectFail(bob, collectionId, charlie.address);
   });
 
   it('Nobody can add address to white list of non-existing collection', async () => {
     const collectionId = (1<<32) - 1;
-    await addToWhiteListExpectFail(Alice, collectionId, Bob.address);
+    await addToWhiteListExpectFail(alice, collectionId, bob.address);
   });
 
   it('Nobody can add address to white list of destroyed collection', async () => {
     const collectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectSuccess(collectionId, '//Alice');
-    await addToWhiteListExpectFail(Alice, collectionId, Bob.address);
+    await addToWhiteListExpectFail(alice, collectionId, bob.address);
   });
 
   it('If address is already added to white list, nothing happens', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await addToWhiteListExpectSuccess(Alice, collectionId, Bob.address);
-    await addToWhiteListAgainExpectSuccess(Alice, collectionId, Bob.address);
+    await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
+    await addToWhiteListAgainExpectSuccess(alice, collectionId, bob.address);
   });
 
   it('Owner can remove address from white list', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await addToWhiteListExpectSuccess(Alice, collectionId, Bob.address);
-    await removeFromWhiteListExpectSuccess(Alice, collectionId, normalizeAccountId(Bob));
-  });  
+    await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
+    await removeFromWhiteListExpectSuccess(alice, collectionId, normalizeAccountId(bob));
+  });
 
   it('Admin can remove address from white list', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
-    await removeFromWhiteListExpectSuccess(Bob, collectionId, normalizeAccountId(Charlie));
-  }); 
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+    await addToWhiteListExpectSuccess(alice, collectionId, charlie.address);
+    await removeFromWhiteListExpectSuccess(bob, collectionId, normalizeAccountId(charlie));
+  });
 
   it('Non-privileged user cannot remove address from white list', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
-    await removeFromWhiteListExpectFailure(Bob, collectionId, normalizeAccountId(Charlie));
-  }); 
+    await addToWhiteListExpectSuccess(alice, collectionId, charlie.address);
+    await removeFromWhiteListExpectFailure(bob, collectionId, normalizeAccountId(charlie));
+  });
 
   it('Nobody can remove address from white list of non-existing collection', async () => {
     const collectionId = (1<<32) - 1;
-    await removeFromWhiteListExpectFailure(Alice, collectionId, normalizeAccountId(Charlie));
-  }); 
-
-
+    await removeFromWhiteListExpectFailure(alice, collectionId, normalizeAccountId(charlie));
+  });
 
   it('Nobody can remove address from white list of deleted collection', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
+    await addToWhiteListExpectSuccess(alice, collectionId, charlie.address);
     await destroyCollectionExpectSuccess(collectionId, '//Alice');
-    await removeFromWhiteListExpectFailure(Alice, collectionId, normalizeAccountId(Charlie));
-  }); 
+    await removeFromWhiteListExpectFailure(alice, collectionId, normalizeAccountId(charlie));
+  });
 
   it('If address is already removed from white list, nothing happens', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
-    await removeFromWhiteListExpectSuccess(Alice, collectionId, normalizeAccountId(Charlie));
-    await removeFromWhiteListExpectSuccess(Alice, collectionId, normalizeAccountId(Charlie));
-  }); 
+    await addToWhiteListExpectSuccess(alice, collectionId, charlie.address);
+    await removeFromWhiteListExpectSuccess(alice, collectionId, normalizeAccountId(charlie));
+    await removeFromWhiteListExpectSuccess(alice, collectionId, normalizeAccountId(charlie));
+  });
 
   it('If Public Access mode is set to WhiteList, tokens can’t be transferred from a non-whitelisted address with transfer or transferFrom. Test1', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await addToWhiteListExpectSuccess(alice, collectionId, charlie.address);
 
     await transferExpectFailure(
       collectionId,
       itemId,
-      Alice,
-      Charlie,
+      alice,
+      charlie,
       1,
     );
-  }); 
+  });
 
   it('If Public Access mode is set to WhiteList, tokens can’t be transferred from a non-whitelisted address with transfer or transferFrom. Test2', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Alice.address);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
-    await approveExpectSuccess(collectionId, itemId, Alice, Charlie);
-    await removeFromWhiteListExpectSuccess(Alice, collectionId, normalizeAccountId(Alice));
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await addToWhiteListExpectSuccess(alice, collectionId, alice.address);
+    await addToWhiteListExpectSuccess(alice, collectionId, charlie.address);
+    await approveExpectSuccess(collectionId, itemId, alice, charlie.address);
+    await removeFromWhiteListExpectSuccess(alice, collectionId, normalizeAccountId(alice));
 
     await transferExpectFailure(
       collectionId,
       itemId,
-      Alice,
-      Charlie,
+      alice,
+      charlie,
       1,
     );
-  });   
+  });
 
   it('If Public Access mode is set to WhiteList, tokens can’t be transferred to a non-whitelisted address with transfer or transferFrom. Test1', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Alice.address);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await addToWhiteListExpectSuccess(alice, collectionId, alice.address);
 
     await transferExpectFailure(
       collectionId,
       itemId,
-      Alice,
-      Charlie,
+      alice,
+      charlie,
       1,
     );
-  });   
+  });
 
   it('If Public Access mode is set to WhiteList, tokens can’t be transferred to a non-whitelisted address with transfer or transferFrom. Test2', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Alice.address);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
-    await approveExpectSuccess(collectionId, itemId, Alice, Charlie);
-    await removeFromWhiteListExpectSuccess(Alice, collectionId, normalizeAccountId(Alice));
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await addToWhiteListExpectSuccess(alice, collectionId, alice.address);
+    await addToWhiteListExpectSuccess(alice, collectionId, charlie.address);
+    await approveExpectSuccess(collectionId, itemId, alice, charlie.address);
+    await removeFromWhiteListExpectSuccess(alice, collectionId, normalizeAccountId(alice));
 
     await transferExpectFailure(
       collectionId,
       itemId,
-      Alice,
-      Charlie,
+      alice,
+      charlie,
       1,
     );
-  }); 
+  });
 
   it('If Public Access mode is set to WhiteList, tokens can’t be destroyed by a non-whitelisted address (even if it owned them before enabling WhiteList mode)', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
-    await enableWhiteListExpectSuccess(Alice, collectionId);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
 
     await usingApi(async (api) => {
       const tx = api.tx.nft.burnItem(collectionId, itemId, /*normalizeAccountId(Alice.address),*/ 11);
-      const badTransaction = async function () { 
-        await submitTransactionExpectFailAsync(Alice, tx);
+      const badTransaction = async function () {
+        await submitTransactionExpectFailAsync(alice, tx);
       };
       await expect(badTransaction()).to.be.rejected;
     });
-  });   
-  
+  });
+
   it('If Public Access mode is set to WhiteList, token transfers can’t be Approved by a non-whitelisted address (see Approve method)', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await approveExpectFail(collectionId, itemId, Alice, Bob);
-  });   
-  
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await approveExpectFail(collectionId, itemId, alice, bob);
+  });
+
   it('If Public Access mode is set to WhiteList, tokens can be transferred to a whitelisted address with transfer.', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Alice.address);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
-    await transferExpectSuccess(collectionId, itemId, Alice, Charlie, 1, 'NFT');
-  });  
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await addToWhiteListExpectSuccess(alice, collectionId, alice.address);
+    await addToWhiteListExpectSuccess(alice, collectionId, charlie.address);
+    await transferExpectSuccess(collectionId, itemId, alice, charlie, 1, 'NFT');
+  });
 
   it('If Public Access mode is set to WhiteList, tokens can be transferred to a whitelisted address with transferFrom.', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Alice.address);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
-    await approveExpectSuccess(collectionId, itemId, Alice, Charlie);
-    await transferFromExpectSuccess(collectionId, itemId, Alice, Alice, Charlie, 1, 'NFT');
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await addToWhiteListExpectSuccess(alice, collectionId, alice.address);
+    await addToWhiteListExpectSuccess(alice, collectionId, charlie.address);
+    await approveExpectSuccess(collectionId, itemId, alice, charlie.address);
+    await transferFromExpectSuccess(collectionId, itemId, alice, alice, charlie, 1, 'NFT');
   });
 
   it('If Public Access mode is set to WhiteList, tokens can be transferred from a whitelisted address with transfer', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Alice.address);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
-    await transferExpectSuccess(collectionId, itemId, Alice, Charlie, 1, 'NFT');
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await addToWhiteListExpectSuccess(alice, collectionId, alice.address);
+    await addToWhiteListExpectSuccess(alice, collectionId, charlie.address);
+    await transferExpectSuccess(collectionId, itemId, alice, charlie, 1, 'NFT');
   });
 
   it('If Public Access mode is set to WhiteList, tokens can be transferred from a whitelisted address with transferFrom', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Alice.address);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Charlie.address);
-    await approveExpectSuccess(collectionId, itemId, Alice, Charlie);
-    await transferFromExpectSuccess(collectionId, itemId, Alice, Alice, Charlie, 1, 'NFT');
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await addToWhiteListExpectSuccess(alice, collectionId, alice.address);
+    await addToWhiteListExpectSuccess(alice, collectionId, charlie.address);
+    await approveExpectSuccess(collectionId, itemId, alice, charlie.address);
+    await transferFromExpectSuccess(collectionId, itemId, alice, alice, charlie, 1, 'NFT');
   });
 
   it('If Public Access mode is set to WhiteList, and Mint Permission is set to false, tokens can be created by owner', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await setMintPermissionExpectSuccess(Alice, collectionId, false);
-    await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await setMintPermissionExpectSuccess(alice, collectionId, false);
+    await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
   });
 
   it('If Public Access mode is set to WhiteList, and Mint Permission is set to false, tokens can be created by admin', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await setMintPermissionExpectSuccess(Alice, collectionId, false);
-    await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
-    await createItemExpectSuccess(Bob, collectionId, 'NFT', Bob.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await setMintPermissionExpectSuccess(alice, collectionId, false);
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+    await createItemExpectSuccess(bob, collectionId, 'NFT', bob.address);
   });
 
   it('If Public Access mode is set to WhiteList, and Mint Permission is set to false, tokens cannot be created by non-privileged and white-listed address', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await setMintPermissionExpectSuccess(Alice, collectionId, false);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Bob.address);
-    await createItemExpectFailure(Bob, collectionId, 'NFT', Bob.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await setMintPermissionExpectSuccess(alice, collectionId, false);
+    await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
+    await createItemExpectFailure(bob, collectionId, 'NFT', bob.address);
   });
 
   it('If Public Access mode is set to WhiteList, and Mint Permission is set to false, tokens cannot be created by non-privileged and non-white listed address', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await setMintPermissionExpectSuccess(Alice, collectionId, false);
-    await createItemExpectFailure(Bob, collectionId, 'NFT', Bob.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await setMintPermissionExpectSuccess(alice, collectionId, false);
+    await createItemExpectFailure(bob, collectionId, 'NFT', bob.address);
   });
 
   it('If Public Access mode is set to WhiteList, and Mint Permission is set to true, tokens can be created by owner', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await setMintPermissionExpectSuccess(Alice, collectionId, true);
-    await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
-  });  
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await setMintPermissionExpectSuccess(alice, collectionId, true);
+    await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
+  });
 
   it('If Public Access mode is set to WhiteList, and Mint Permission is set to true, tokens can be created by admin', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await setMintPermissionExpectSuccess(Alice, collectionId, true);
-    await addCollectionAdminExpectSuccess(Alice, collectionId, Bob);
-    await createItemExpectSuccess(Bob, collectionId, 'NFT', Bob.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await setMintPermissionExpectSuccess(alice, collectionId, true);
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+    await createItemExpectSuccess(bob, collectionId, 'NFT', bob.address);
   });
 
   it('If Public Access mode is set to WhiteList, and Mint Permission is set to true, tokens cannot be created by non-privileged and non-white listed address', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await setMintPermissionExpectSuccess(Alice, collectionId, true);
-    await createItemExpectFailure(Bob, collectionId, 'NFT', Bob.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await setMintPermissionExpectSuccess(alice, collectionId, true);
+    await createItemExpectFailure(bob, collectionId, 'NFT', bob.address);
   });
 
   it('If Public Access mode is set to WhiteList, and Mint Permission is set to true, tokens can be created by non-privileged and white listed address', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    await enableWhiteListExpectSuccess(Alice, collectionId);
-    await setMintPermissionExpectSuccess(Alice, collectionId, true);
-    await addToWhiteListExpectSuccess(Alice, collectionId, Bob.address);
-    await createItemExpectSuccess(Bob, collectionId, 'NFT', Bob.address);
+    await enableWhiteListExpectSuccess(alice, collectionId);
+    await setMintPermissionExpectSuccess(alice, collectionId, true);
+    await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
+    await createItemExpectSuccess(bob, collectionId, 'NFT', bob.address);
   });
 });
-

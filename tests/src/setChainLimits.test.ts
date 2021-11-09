@@ -3,7 +3,7 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { IKeyringPair } from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import {
@@ -40,16 +40,16 @@ describe.skip('Negative Integration Test setChainLimits', () => {
   });
 
   it('Collection owner cannot set chain limits', async () => {
-    await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+    await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await setChainLimitsExpectFailure(alice, limits);
   });
 
   it('Collection admin cannot set chain limits', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob);
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
     await setChainLimitsExpectFailure(bob, limits);
   });
-  
+
   it('Regular user cannot set chain limits', async () => {
     await setChainLimitsExpectFailure(dave, limits);
   });

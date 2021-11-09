@@ -9,7 +9,8 @@
                 "rpcPort": 9843,
                 "port": 30444,
                 "flags": [
-                    "--rpc-port=9843"
+                    "--rpc-port=9843",
+                    "-lparachain::candidate_validation=debug"
                 ]
             },
             {
@@ -18,7 +19,8 @@
                 "rpcPort": 9854,
                 "port": 30555,
                 "flags": [
-                    "--rpc-port=9854"
+                    "--rpc-port=9854",
+                    "-lparachain::candidate_validation=debug"
                 ]
             },
             {
@@ -27,7 +29,8 @@
                 "rpcPort": 9865,
                 "port": 30666,
                 "flags": [
-                    "--rpc-port=9865"
+                    "--rpc-port=9865",
+                    "-lparachain::candidate_validation=debug"
                 ]
             },
             {
@@ -36,7 +39,8 @@
                 "rpcPort": 9876,
                 "port": 30777,
                 "flags": [
-                    "--rpc-port=9876"
+                    "--rpc-port=9876",
+                    "-lparachain::candidate_validation=debug"
                 ]
             }
         ],

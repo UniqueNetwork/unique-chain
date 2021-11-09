@@ -2,9 +2,7 @@ use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use nft_data_structs::TokenId;
-use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, account::CrossAccountId, with_weight,
-};
+use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
 
@@ -200,7 +198,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 	}
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId> {
-		<Owned<T>>::iter_prefix((self.id, account.as_sub()))
+		<Owned<T>>::iter_prefix((self.id, account))
 			.map(|(id, _)| id)
 			.collect()
 	}
@@ -234,7 +232,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 	}
 
 	fn account_balance(&self, account: T::CrossAccountId) -> u32 {
-		<AccountBalance<T>>::get((self.id, account.as_sub()))
+		<AccountBalance<T>>::get((self.id, account))
 	}
 
 	fn balance(&self, account: T::CrossAccountId, token: TokenId) -> u128 {
@@ -255,8 +253,8 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		token: TokenId,
 	) -> u128 {
 		if <TokenData<T>>::get((self.id, token))
-			.map(|a| a.owner == sender)
-			.unwrap_or(false)
+			.map(|a| a.owner != sender)
+			.unwrap_or(true)
 		{
 			0
 		} else if <Allowance<T>>::get((self.id, token)) == Some(spender) {

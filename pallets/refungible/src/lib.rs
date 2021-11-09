@@ -83,7 +83,7 @@ pub mod pallet {
 	pub(super) type Owned<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
-			Key<Blake2_128Concat, T::AccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
 			Key<Twox64Concat, TokenId>,
 		),
 		Value = bool,
@@ -95,7 +95,7 @@ pub mod pallet {
 		Key = (
 			Key<Twox64Concat, CollectionId>,
 			// Owner
-			Key<Blake2_128Concat, T::AccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
 		),
 		Value = u32,
 		QueryKind = ValueQuery,
@@ -107,7 +107,7 @@ pub mod pallet {
 			Key<Twox64Concat, CollectionId>,
 			Key<Twox64Concat, TokenId>,
 			// Owner
-			Key<Blake2_128Concat, T::AccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
 		),
 		Value = u128,
 		QueryKind = ValueQuery,
@@ -119,7 +119,7 @@ pub mod pallet {
 			Key<Twox64Concat, CollectionId>,
 			Key<Twox64Concat, TokenId>,
 			// Owner
-			Key<Blake2_128, T::AccountId>,
+			Key<Blake2_128, T::CrossAccountId>,
 			// Spender
 			Key<Blake2_128Concat, T::CrossAccountId>,
 		),
@@ -206,18 +206,18 @@ impl<T: Config> Pallet<T> {
 		if total_supply == 0 {
 			// Ensure user actually owns this amount
 			ensure!(
-				<Balance<T>>::get((collection.id, token, owner.as_sub())) == amount,
+				<Balance<T>>::get((collection.id, token, owner)) == amount,
 				<CommonError<T>>::TokenValueTooLow
 			);
-			let account_balance = <AccountBalance<T>>::get((collection.id, owner.as_sub()))
+			let account_balance = <AccountBalance<T>>::get((collection.id, owner))
 				.checked_sub(1)
 				// Should not occur
 				.ok_or(ArithmeticError::Underflow)?;
 
 			// =========
 
-			<Owned<T>>::remove((collection.id, owner.as_sub(), token));
-			<AccountBalance<T>>::insert((collection.id, owner.as_sub()), account_balance);
+			<Owned<T>>::remove((collection.id, owner, token));
+			<AccountBalance<T>>::insert((collection.id, owner), account_balance);
 			Self::burn_token(collection, token)?;
 			<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
 				collection.id,
@@ -228,11 +228,11 @@ impl<T: Config> Pallet<T> {
 			return Ok(());
 		}
 
-		let balance = <Balance<T>>::get((collection.id, token, owner.as_sub()))
+		let balance = <Balance<T>>::get((collection.id, token, owner))
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 		let account_balance = if balance == 0 {
-			<AccountBalance<T>>::get((collection.id, owner.as_sub()))
+			<AccountBalance<T>>::get((collection.id, owner))
 				.checked_sub(1)
 				// Should not occur
 				.ok_or(ArithmeticError::Underflow)?
@@ -243,11 +243,11 @@ impl<T: Config> Pallet<T> {
 		// =========
 
 		if balance == 0 {
-			<Owned<T>>::remove((collection.id, owner.as_sub(), token));
-			<Balance<T>>::remove((collection.id, token, owner.as_sub()));
-			<AccountBalance<T>>::insert((collection.id, owner.as_sub()), account_balance);
+			<Owned<T>>::remove((collection.id, owner, token));
+			<Balance<T>>::remove((collection.id, token, owner));
+			<AccountBalance<T>>::insert((collection.id, owner), account_balance);
 		} else {
-			<Balance<T>>::insert((collection.id, token, owner.as_sub()), balance);
+			<Balance<T>>::insert((collection.id, token, owner), balance);
 		}
 		<TotalSupply<T>>::insert((collection.id, token), total_supply);
 		// TODO: ERC20 transfer event
@@ -268,7 +268,7 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 	) -> DispatchResult {
 		ensure!(
-			collection.transfers_enabled,
+			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed
 		);
 
@@ -278,13 +278,13 @@ impl<T: Config> Pallet<T> {
 		}
 		<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
-		let balance_from = <Balance<T>>::get((collection.id, token, from.as_sub()))
+		let balance_from = <Balance<T>>::get((collection.id, token, from))
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 		let mut create_target = false;
 		let from_to_differ = from != to;
 		let balance_to = if from != to {
-			let old_balance = <Balance<T>>::get((collection.id, token, to.as_sub()));
+			let old_balance = <Balance<T>>::get((collection.id, token, to));
 			if old_balance == 0 {
 				create_target = true;
 			}
@@ -299,7 +299,7 @@ impl<T: Config> Pallet<T> {
 
 		let account_balance_from = if balance_from == 0 {
 			Some(
-				<AccountBalance<T>>::get((collection.id, from.as_sub()))
+				<AccountBalance<T>>::get((collection.id, from))
 					.checked_sub(1)
 					// Should not occur
 					.ok_or(ArithmeticError::Underflow)?,
@@ -310,7 +310,7 @@ impl<T: Config> Pallet<T> {
 		// Account data is created in token, AccountBalance should be increased
 		// But only if from != to as we shouldn't check overflow in this case
 		let account_balance_to = if create_target && from_to_differ {
-			let account_balance_to = <AccountBalance<T>>::get((collection.id, to.as_sub()))
+			let account_balance_to = <AccountBalance<T>>::get((collection.id, to))
 				.checked_add(1)
 				.ok_or(ArithmeticError::Overflow)?;
 			ensure!(
@@ -328,18 +328,18 @@ impl<T: Config> Pallet<T> {
 		if let Some(balance_to) = balance_to {
 			// from != to
 			if balance_from == 0 {
-				<Balance<T>>::remove((collection.id, token, from.as_sub()));
+				<Balance<T>>::remove((collection.id, token, from));
 			} else {
-				<Balance<T>>::insert((collection.id, token, from.as_sub()), balance_from);
+				<Balance<T>>::insert((collection.id, token, from), balance_from);
 			}
-			<Balance<T>>::insert((collection.id, token, to.as_sub()), balance_to);
+			<Balance<T>>::insert((collection.id, token, to), balance_to);
 			if let Some(account_balance_from) = account_balance_from {
-				<AccountBalance<T>>::insert((collection.id, from.as_sub()), account_balance_from);
-				<Owned<T>>::remove((collection.id, from.as_sub(), token));
+				<AccountBalance<T>>::insert((collection.id, from), account_balance_from);
+				<Owned<T>>::remove((collection.id, from, token));
 			}
 			if let Some(account_balance_to) = account_balance_to {
-				<AccountBalance<T>>::insert((collection.id, to.as_sub()), account_balance_to);
-				<Owned<T>>::insert((collection.id, to.as_sub(), token), true);
+				<AccountBalance<T>>::insert((collection.id, to), account_balance_to);
+				<Owned<T>>::insert((collection.id, to, token), true);
 			}
 		}
 
@@ -404,7 +404,7 @@ impl<T: Config> Pallet<T> {
 			.checked_add(data.len() as u32)
 			.ok_or(ArithmeticError::Overflow)?;
 		ensure!(
-			tokens_minted < collection.limits.token_limit,
+			tokens_minted < collection.limits.token_limit(),
 			<CommonError<T>>::CollectionTokenLimitExceeded
 		);
 
@@ -412,8 +412,8 @@ impl<T: Config> Pallet<T> {
 		for data in &data {
 			for (owner, _) in &data.users {
 				let balance = balances
-					.entry(owner.as_sub())
-					.or_insert_with(|| <AccountBalance<T>>::get((collection.id, owner.as_sub())));
+					.entry(owner)
+					.or_insert_with(|| <AccountBalance<T>>::get((collection.id, owner)));
 				*balance = balance.checked_add(1).ok_or(ArithmeticError::Overflow)?;
 
 				ensure!(
@@ -444,8 +444,8 @@ impl<T: Config> Pallet<T> {
 				if amount == 0 {
 					continue;
 				}
-				<Balance<T>>::insert((collection.id, token_id, user.as_sub()), amount);
-				<Owned<T>>::insert((collection.id, user.as_sub(), TokenId(token_id)), true);
+				<Balance<T>>::insert((collection.id, token_id, &user), amount);
+				<Owned<T>>::insert((collection.id, &user, TokenId(token_id)), true);
 				// TODO: ERC20 transfer event
 				<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
 					collection.id,
@@ -465,7 +465,7 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		amount: u128,
 	) {
-		<Allowance<T>>::insert((collection.id, token, sender.as_sub(), spender), amount);
+		<Allowance<T>>::insert((collection.id, token, sender, spender), amount);
 		// TODO: ERC20 approval event
 		<PalletCommon<T>>::deposit_event(CommonEvent::Approved(
 			collection.id,
@@ -490,9 +490,9 @@ impl<T: Config> Pallet<T> {
 
 		<PalletCommon<T>>::ensure_correct_receiver(spender)?;
 
-		if <Balance<T>>::get((collection.id, token, sender.as_sub())) < amount {
+		if <Balance<T>>::get((collection.id, token, sender)) < amount {
 			ensure!(
-				collection.ignores_owned_amount(sender)?,
+				collection.ignores_owned_amount(sender)? && Self::token_exists(collection, token),
 				<CommonError<T>>::CantApproveMoreThanOwned
 			);
 		}
@@ -511,7 +511,7 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult {
-		if spender == from {
+		if spender.conv_eq(from) {
 			return Self::transfer(collection, from, to, token, amount);
 		}
 		if collection.access == AccessMode::AllowList {
@@ -519,8 +519,8 @@ impl<T: Config> Pallet<T> {
 			collection.check_allowlist(spender)?;
 		}
 
-		let allowance = <Allowance<T>>::get((collection.id, token, from.as_sub(), &spender))
-			.checked_sub(amount);
+		let allowance =
+			<Allowance<T>>::get((collection.id, token, from, &spender)).checked_sub(amount);
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender)?,
@@ -544,7 +544,7 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult {
-		if spender == from {
+		if spender.conv_eq(from) {
 			return Self::burn(collection, from, token, amount);
 		}
 		if collection.access == AccessMode::AllowList {
@@ -552,8 +552,8 @@ impl<T: Config> Pallet<T> {
 			collection.check_allowlist(spender)?;
 		}
 
-		let allowance = <Allowance<T>>::get((collection.id, token, from.as_sub(), &spender))
-			.checked_sub(amount);
+		let allowance =
+			<Allowance<T>>::get((collection.id, token, from, &spender)).checked_sub(amount);
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender)?,

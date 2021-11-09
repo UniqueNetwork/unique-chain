@@ -5,7 +5,7 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { default as usingApi } from './substrate/substrate-api';
+import {default as usingApi} from './substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
   destroyCollectionExpectSuccess,
@@ -19,7 +19,7 @@ import {
   normalizeAccountId,
   addCollectionAdminExpectSuccess,
 } from './util/helpers';
-import { IKeyringPair } from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import privateKey from './substrate/privateKey';
 
 chai.use(chaiAsPromised);
@@ -38,7 +38,7 @@ describe('Integration Test removeFromWhiteList', () => {
 
   it('ensure bob is not in whitelist after removal', async () => {
     await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await enableWhiteListExpectSuccess(alice, collectionId);
       await addToWhiteListExpectSuccess(alice, collectionId, bob.address);
 
@@ -105,9 +105,9 @@ describe('Integration Test removeFromWhiteList with collection admin permissions
 
   it('ensure address is not in whitelist after removal', async () => {
     await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await enableWhiteListExpectSuccess(alice, collectionId);
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob);
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
       await addToWhiteListExpectSuccess(alice, collectionId, charlie.address);
       await removeFromWhiteListExpectSuccess(bob, collectionId, normalizeAccountId(charlie.address));
       expect(await isWhitelisted(collectionId, charlie.address)).to.be.false;
@@ -118,7 +118,7 @@ describe('Integration Test removeFromWhiteList with collection admin permissions
     await usingApi(async () => {
       const collectionWithoutWhitelistId = await createCollectionExpectSuccess();
       await enableWhiteListExpectSuccess(alice, collectionWithoutWhitelistId);
-      await addCollectionAdminExpectSuccess(alice, collectionWithoutWhitelistId, bob);
+      await addCollectionAdminExpectSuccess(alice, collectionWithoutWhitelistId, bob.address);
       await addToWhiteListExpectSuccess(alice, collectionWithoutWhitelistId, charlie.address);
       await disableWhiteListExpectSuccess(alice, collectionWithoutWhitelistId);
       await removeFromWhiteListExpectSuccess(bob, collectionWithoutWhitelistId, normalizeAccountId(charlie.address));
