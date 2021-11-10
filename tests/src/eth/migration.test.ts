@@ -1,10 +1,10 @@
-import { expect } from 'chai';
+import {expect} from 'chai';
 import privateKey from '../substrate/privateKey';
-import { submitTransactionAsync } from '../substrate/substrate-api';
-import { createEthAccountWithBalance, GAS_ARGS, itWeb3 } from './util/helpers';
+import {submitTransactionAsync} from '../substrate/substrate-api';
+import {createEthAccountWithBalance, GAS_ARGS, itWeb3} from './util/helpers';
 
 describe('EVM Migrations', () => {
-  itWeb3('Deploy contract saved state', async ({ web3, api }) => {
+  itWeb3('Deploy contract saved state', async ({web3, api}) => {
     /*
       contract StatefulContract {
         uint counter;
@@ -41,9 +41,9 @@ describe('EVM Migrations', () => {
     const alice = privateKey('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
 
-    await submitTransactionAsync(alice, api.tx.sudo.sudo(api.tx.evmMigration.begin(ADDRESS)));
-    await submitTransactionAsync(alice, api.tx.sudo.sudo(api.tx.evmMigration.setData(ADDRESS, DATA)));
-    await submitTransactionAsync(alice, api.tx.sudo.sudo(api.tx.evmMigration.finish(ADDRESS, CODE)));
+    await submitTransactionAsync(alice, api.tx.sudo.sudo(api.tx.evmMigration.begin(ADDRESS) as any));
+    await submitTransactionAsync(alice, api.tx.sudo.sudo(api.tx.evmMigration.setData(ADDRESS, DATA as any) as any));
+    await submitTransactionAsync(alice, api.tx.sudo.sudo(api.tx.evmMigration.finish(ADDRESS, CODE) as any));
 
     const contract = new web3.eth.Contract([
       {
@@ -72,8 +72,8 @@ describe('EVM Migrations', () => {
         stateMutability: 'view',
         type: 'function',
       },
-    ], ADDRESS, { from: caller, ...GAS_ARGS });
-    
+    ], ADDRESS, {from: caller, ...GAS_ARGS});
+
     expect(await contract.methods.counterValue().call()).to.be.equal('10');
     for (let i = 1; i <= 4; i++) {
       expect(await contract.methods.get(i).call()).to.be.equal(i.toString());

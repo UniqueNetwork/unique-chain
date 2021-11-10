@@ -75,9 +75,17 @@ pub trait NftApi<BlockHash, CrossAccountId, AccountId> {
 	) -> Result<String>;
 
 	#[rpc(name = "nft_adminlist")]
-	fn adminlist(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<Vec<AccountId>>;
+	fn adminlist(
+		&self,
+		collection: CollectionId,
+		at: Option<BlockHash>,
+	) -> Result<Vec<CrossAccountId>>;
 	#[rpc(name = "nft_allowlist")]
-	fn allowlist(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<Vec<AccountId>>;
+	fn allowlist(
+		&self,
+		collection: CollectionId,
+		at: Option<BlockHash>,
+	) -> Result<Vec<CrossAccountId>>;
 	#[rpc(name = "nft_lastTokenId")]
 	fn last_token_id(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<TokenId>;
 }
@@ -150,7 +158,7 @@ where
 	pass_method!(balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> String => |v| v.to_string());
 	pass_method!(allowance(collection: CollectionId, sender: CrossAccountId, spender: CrossAccountId, token: TokenId) -> String => |v| v.to_string());
 
-	pass_method!(adminlist(collection: CollectionId) -> Vec<AccountId>);
-	pass_method!(allowlist(collection: CollectionId) -> Vec<AccountId>);
+	pass_method!(adminlist(collection: CollectionId) -> Vec<CrossAccountId>);
+	pass_method!(allowlist(collection: CollectionId) -> Vec<CrossAccountId>);
 	pass_method!(last_token_id(collection: CollectionId) -> TokenId);
 }

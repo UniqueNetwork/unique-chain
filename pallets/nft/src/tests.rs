@@ -460,7 +460,7 @@ fn nft_approve_and_transfer_from() {
 }
 
 #[test]
-fn nft_approve_and_transfer_from_white_list() {
+fn nft_approve_and_transfer_from_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -485,19 +485,19 @@ fn nft_approve_and_transfer_from_white_list() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			1,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(2)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(3)
@@ -549,19 +549,19 @@ fn refungible_approve_and_transfer_from() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			1,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(2)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(3)
@@ -609,19 +609,19 @@ fn fungible_approve_and_transfer_from() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			1,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(2)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(3)
@@ -765,9 +765,9 @@ fn burn_refungible_item() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
@@ -952,19 +952,19 @@ fn transfer_from() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			1,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(2)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(origin1, 1, account(3)));
+		assert_ok!(TemplateModule::add_to_allow_list(origin1, 1, account(3)));
 
 		assert_ok!(TemplateModule::transfer_from(
 			origin2,
@@ -987,22 +987,22 @@ fn transfer_from() {
 // #region
 
 #[test]
-fn owner_can_add_address_to_white_list() {
+fn owner_can_add_address_to_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1,
 			collection_id,
 			account(2)
 		));
-		assert!(TemplateModule::white_list(collection_id, 2));
+		assert!(TemplateModule::allow_list(collection_id, 2));
 	});
 }
 
 #[test]
-fn admin_can_add_address_to_white_list() {
+fn admin_can_add_address_to_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
@@ -1013,42 +1013,42 @@ fn admin_can_add_address_to_white_list() {
 			collection_id,
 			account(2)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin2,
 			collection_id,
 			account(3)
 		));
-		assert!(TemplateModule::white_list(collection_id, 3));
+		assert!(TemplateModule::allow_list(collection_id, 3));
 	});
 }
 
 #[test]
-fn nonprivileged_user_cannot_add_address_to_white_list() {
+fn nonprivileged_user_cannot_add_address_to_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin2 = Origin::signed(2);
 		assert_noop!(
-			TemplateModule::add_to_white_list(origin2, collection_id, account(3)),
+			TemplateModule::add_to_allow_list(origin2, collection_id, account(3)),
 			Error::<Test>::NoPermission
 		);
 	});
 }
 
 #[test]
-fn nobody_can_add_address_to_white_list_of_nonexisting_collection() {
+fn nobody_can_add_address_to_allow_list_of_nonexisting_collection() {
 	new_test_ext().execute_with(|| {
 		let origin1 = Origin::signed(1);
 
 		assert_noop!(
-			TemplateModule::add_to_white_list(origin1, 1, account(2)),
+			TemplateModule::add_to_allow_list(origin1, 1, account(2)),
 			Error::<Test>::CollectionNotFound
 		);
 	});
 }
 
 #[test]
-fn nobody_can_add_address_to_white_list_of_deleted_collection() {
+fn nobody_can_add_address_to_allow_list_of_deleted_collection() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1058,55 +1058,55 @@ fn nobody_can_add_address_to_white_list_of_deleted_collection() {
 			collection_id
 		));
 		assert_noop!(
-			TemplateModule::add_to_white_list(origin1, collection_id, account(2)),
+			TemplateModule::add_to_allow_list(origin1, collection_id, account(2)),
 			Error::<Test>::CollectionNotFound
 		);
 	});
 }
 
-// If address is already added to white list, nothing happens
+// If address is already added to allow list, nothing happens
 #[test]
-fn address_is_already_added_to_white_list() {
+fn address_is_already_added_to_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1,
 			collection_id,
 			account(2)
 		));
-		assert!(TemplateModule::white_list(collection_id, 2));
+		assert!(TemplateModule::allow_list(collection_id, 2));
 	});
 }
 
 #[test]
-fn owner_can_remove_address_from_white_list() {
+fn owner_can_remove_address_from_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
 		let origin1 = Origin::signed(1);
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
 		));
-		assert_ok!(TemplateModule::remove_from_white_list(
+		assert_ok!(TemplateModule::remove_from_allow_list(
 			origin1,
 			collection_id,
 			account(2)
 		));
-		assert!(!TemplateModule::white_list(collection_id, 2));
+		assert!(!TemplateModule::allow_list(collection_id, 2));
 	});
 }
 
 #[test]
-fn admin_can_remove_address_from_white_list() {
+fn admin_can_remove_address_from_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
@@ -1118,102 +1118,102 @@ fn admin_can_remove_address_from_white_list() {
 			account(2)
 		));
 
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1,
 			collection_id,
 			account(3)
 		));
-		assert_ok!(TemplateModule::remove_from_white_list(
+		assert_ok!(TemplateModule::remove_from_allow_list(
 			origin2,
 			collection_id,
 			account(3)
 		));
-		assert!(!TemplateModule::white_list(collection_id, 3));
+		assert!(!TemplateModule::allow_list(collection_id, 3));
 	});
 }
 
 #[test]
-fn nonprivileged_user_cannot_remove_address_from_white_list() {
+fn nonprivileged_user_cannot_remove_address_from_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1,
 			collection_id,
 			account(2)
 		));
 		assert_noop!(
-			TemplateModule::remove_from_white_list(origin2, collection_id, account(2)),
+			TemplateModule::remove_from_allow_list(origin2, collection_id, account(2)),
 			Error::<Test>::NoPermission
 		);
-		assert!(TemplateModule::white_list(collection_id, 2));
+		assert!(TemplateModule::allow_list(collection_id, 2));
 	});
 }
 
 #[test]
-fn nobody_can_remove_address_from_white_list_of_nonexisting_collection() {
+fn nobody_can_remove_address_from_allow_list_of_nonexisting_collection() {
 	new_test_ext().execute_with(|| {
 		let origin1 = Origin::signed(1);
 
 		assert_noop!(
-			TemplateModule::remove_from_white_list(origin1, 1, account(2)),
+			TemplateModule::remove_from_allow_list(origin1, 1, account(2)),
 			Error::<Test>::CollectionNotFound
 		);
 	});
 }
 
 #[test]
-fn nobody_can_remove_address_from_white_list_of_deleted_collection() {
+fn nobody_can_remove_address_from_allow_list_of_deleted_collection() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
 		));
 		assert_ok!(TemplateModule::destroy_collection(origin1, collection_id));
 		assert_noop!(
-			TemplateModule::remove_from_white_list(origin2, collection_id, account(2)),
+			TemplateModule::remove_from_allow_list(origin2, collection_id, account(2)),
 			Error::<Test>::CollectionNotFound
 		);
-		assert!(!TemplateModule::white_list(collection_id, 2));
+		assert!(!TemplateModule::allow_list(collection_id, 2));
 	});
 }
 
-// If address is already removed from white list, nothing happens
+// If address is already removed from allow list, nothing happens
 #[test]
-fn address_is_already_removed_from_white_list() {
+fn address_is_already_removed_from_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
 
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
 		));
-		assert_ok!(TemplateModule::remove_from_white_list(
+		assert_ok!(TemplateModule::remove_from_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
 		));
-		assert_ok!(TemplateModule::remove_from_white_list(
+		assert_ok!(TemplateModule::remove_from_allow_list(
 			origin1,
 			collection_id,
 			account(2)
 		));
-		assert!(!TemplateModule::white_list(collection_id, 2));
+		assert!(!TemplateModule::allow_list(collection_id, 2));
 	});
 }
 
-// If Public Access mode is set to WhiteList, tokens can’t be transferred from a non-whitelisted address with transfer or transferFrom (2 tests)
+// If Public Access mode is set to AllowList, tokens can’t be transferred from a non-allowlisted address with transfer or transferFrom (2 tests)
 #[test]
-fn white_list_test_1() {
+fn allow_list_test_1() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1225,9 +1225,9 @@ fn white_list_test_1() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
@@ -1235,13 +1235,13 @@ fn white_list_test_1() {
 
 		assert_noop!(
 			TemplateModule::transfer(origin1, account(3), 1, 1, 1),
-			Error::<Test>::AddresNotInWhiteList
+			Error::<Test>::AddresNotInAllowList
 		);
 	});
 }
 
 #[test]
-fn white_list_test_2() {
+fn allow_list_test_2() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
@@ -1252,14 +1252,14 @@ fn white_list_test_2() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(2)
@@ -1275,7 +1275,7 @@ fn white_list_test_2() {
 		));
 		assert_eq!(TemplateModule::approved(1, (1, 1, 1)), 1);
 
-		assert_ok!(TemplateModule::remove_from_white_list(
+		assert_ok!(TemplateModule::remove_from_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
@@ -1283,14 +1283,14 @@ fn white_list_test_2() {
 
 		assert_noop!(
 			TemplateModule::transfer_from(origin1, account(1), account(3), 1, 1, 1),
-			Error::<Test>::AddresNotInWhiteList
+			Error::<Test>::AddresNotInAllowList
 		);
 	});
 }
 
-// If Public Access mode is set to WhiteList, tokens can’t be transferred to a non-whitelisted address with transfer or transferFrom (2 tests)
+// If Public Access mode is set to AllowList, tokens can’t be transferred to a non-allowlisted address with transfer or transferFrom (2 tests)
 #[test]
-fn white_list_test_3() {
+fn allow_list_test_3() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1302,9 +1302,9 @@ fn white_list_test_3() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			1,
 			account(1)
@@ -1312,13 +1312,13 @@ fn white_list_test_3() {
 
 		assert_noop!(
 			TemplateModule::transfer(origin1, account(3), 1, 1, 1),
-			Error::<Test>::AddresNotInWhiteList
+			Error::<Test>::AddresNotInAllowList
 		);
 	});
 }
 
 #[test]
-fn white_list_test_4() {
+fn allow_list_test_4() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1330,14 +1330,14 @@ fn white_list_test_4() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
@@ -1353,7 +1353,7 @@ fn white_list_test_4() {
 		));
 		assert_eq!(TemplateModule::approved(1, (1, 1, 1)), 1);
 
-		assert_ok!(TemplateModule::remove_from_white_list(
+		assert_ok!(TemplateModule::remove_from_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
@@ -1361,14 +1361,14 @@ fn white_list_test_4() {
 
 		assert_noop!(
 			TemplateModule::transfer_from(origin1, account(1), account(3), 1, 1, 1),
-			Error::<Test>::AddresNotInWhiteList
+			Error::<Test>::AddresNotInAllowList
 		);
 	});
 }
 
-// If Public Access mode is set to WhiteList, tokens can’t be destroyed by a non-whitelisted address (even if it owned them before enabling WhiteList mode)
+// If Public Access mode is set to AllowList, tokens can’t be destroyed by a non-allowlisted address (even if it owned them before enabling AllowList mode)
 #[test]
-fn white_list_test_5() {
+fn allow_list_test_5() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1380,18 +1380,18 @@ fn white_list_test_5() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_noop!(
 			TemplateModule::burn_item(origin1.clone(), 1, 1, 5),
-			Error::<Test>::AddresNotInWhiteList
+			Error::<Test>::AddresNotInAllowList
 		);
 	});
 }
 
-// If Public Access mode is set to WhiteList, token transfers can’t be Approved by a non-whitelisted address (see Approve method).
+// If Public Access mode is set to AllowList, token transfers can’t be Approved by a non-allowlisted address (see Approve method).
 #[test]
-fn white_list_test_6() {
+fn allow_list_test_6() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1403,21 +1403,21 @@ fn white_list_test_6() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 
 		// do approve
 		assert_noop!(
 			TemplateModule::approve(origin1, account(1), 1, 1, 5),
-			Error::<Test>::AddresNotInWhiteList
+			Error::<Test>::AddresNotInAllowList
 		);
 	});
 }
 
-// If Public Access mode is set to WhiteList, tokens can be transferred from a whitelisted address with transfer or transferFrom (2 tests) and
-//          tokens can be transferred from a whitelisted address with transfer or transferFrom (2 tests)
+// If Public Access mode is set to AllowList, tokens can be transferred from a allowlisted address with transfer or transferFrom (2 tests) and
+//          tokens can be transferred from a allowlisted address with transfer or transferFrom (2 tests)
 #[test]
-fn white_list_test_7() {
+fn allow_list_test_7() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1429,14 +1429,14 @@ fn white_list_test_7() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
@@ -1447,7 +1447,7 @@ fn white_list_test_7() {
 }
 
 #[test]
-fn white_list_test_8() {
+fn allow_list_test_8() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1459,14 +1459,14 @@ fn white_list_test_8() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(1)
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
@@ -1493,9 +1493,9 @@ fn white_list_test_8() {
 	});
 }
 
-// If Public Access mode is set to WhiteList, and Mint Permission is set to false, tokens can be created by owner.
+// If Public Access mode is set to AllowList, and Mint Permission is set to false, tokens can be created by owner.
 #[test]
-fn white_list_test_9() {
+fn allow_list_test_9() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 		let origin1 = Origin::signed(1);
@@ -1503,7 +1503,7 @@ fn white_list_test_9() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1,
@@ -1516,9 +1516,9 @@ fn white_list_test_9() {
 	});
 }
 
-// If Public Access mode is set to WhiteList, and Mint Permission is set to false, tokens can be created by admin.
+// If Public Access mode is set to AllowList, and Mint Permission is set to false, tokens can be created by admin.
 #[test]
-fn white_list_test_10() {
+fn allow_list_test_10() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1528,7 +1528,7 @@ fn white_list_test_10() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1.clone(),
@@ -1551,9 +1551,9 @@ fn white_list_test_10() {
 	});
 }
 
-// If Public Access mode is set to WhiteList, and Mint Permission is set to false, tokens cannot be created by non-privileged and white listed address.
+// If Public Access mode is set to AllowList, and Mint Permission is set to false, tokens cannot be created by non-privileged and allow listed address.
 #[test]
-fn white_list_test_11() {
+fn allow_list_test_11() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1563,14 +1563,14 @@ fn white_list_test_11() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1.clone(),
 			collection_id,
 			false
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1,
 			collection_id,
 			account(2)
@@ -1583,9 +1583,9 @@ fn white_list_test_11() {
 	});
 }
 
-// If Public Access mode is set to WhiteList, and Mint Permission is set to false, tokens cannot be created by non-privileged and non-white listed address.
+// If Public Access mode is set to AllowList, and Mint Permission is set to false, tokens cannot be created by non-privileged and non-allow listed address.
 #[test]
-fn white_list_test_12() {
+fn allow_list_test_12() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1595,7 +1595,7 @@ fn white_list_test_12() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1,
@@ -1610,9 +1610,9 @@ fn white_list_test_12() {
 	});
 }
 
-// If Public Access mode is set to WhiteList, and Mint Permission is set to true, tokens can be created by owner.
+// If Public Access mode is set to AllowList, and Mint Permission is set to true, tokens can be created by owner.
 #[test]
-fn white_list_test_13() {
+fn allow_list_test_13() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1621,7 +1621,7 @@ fn white_list_test_13() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1,
@@ -1634,9 +1634,9 @@ fn white_list_test_13() {
 	});
 }
 
-// If Public Access mode is set to WhiteList, and Mint Permission is set to true, tokens can be created by admin.
+// If Public Access mode is set to AllowList, and Mint Permission is set to true, tokens can be created by admin.
 #[test]
-fn white_list_test_14() {
+fn allow_list_test_14() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1646,7 +1646,7 @@ fn white_list_test_14() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1.clone(),
@@ -1669,9 +1669,9 @@ fn white_list_test_14() {
 	});
 }
 
-// If Public Access mode is set to WhiteList, and Mint Permission is set to true, tokens cannot be created by non-privileged and non-white listed address.
+// If Public Access mode is set to AllowList, and Mint Permission is set to true, tokens cannot be created by non-privileged and non-allow listed address.
 #[test]
-fn white_list_test_15() {
+fn allow_list_test_15() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1681,7 +1681,7 @@ fn white_list_test_15() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1,
@@ -1691,14 +1691,14 @@ fn white_list_test_15() {
 
 		assert_noop!(
 			TemplateModule::create_item(origin2, 1, account(2), default_nft_data().into()),
-			Error::<Test>::AddresNotInWhiteList
+			Error::<Test>::AddresNotInAllowList
 		);
 	});
 }
 
-// If Public Access mode is set to WhiteList, and Mint Permission is set to true, tokens can be created by non-privileged and white listed address.
+// If Public Access mode is set to AllowList, and Mint Permission is set to true, tokens can be created by non-privileged and allow listed address.
 #[test]
-fn white_list_test_16() {
+fn allow_list_test_16() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, 1);
 
@@ -1708,14 +1708,14 @@ fn white_list_test_16() {
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
-			AccessMode::WhiteList
+			AccessMode::AllowList
 		));
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1.clone(),
 			collection_id,
 			true
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1,
 			collection_id,
 			account(2)
@@ -2056,7 +2056,7 @@ fn set_variable_meta_data_on_nft_with_item_owner_permission_flag_neg() {
 			collection_id,
 			true
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(1)
@@ -2124,7 +2124,7 @@ fn set_variable_meta_data_on_nft_with_admin_flag() {
 			collection_id,
 			true
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin2.clone(),
 			collection_id,
 			account(1)
@@ -2177,7 +2177,7 @@ fn set_variable_meta_data_on_nft_with_admin_flag_neg() {
 			collection_id,
 			true
 		));
-		assert_ok!(TemplateModule::add_to_white_list(
+		assert_ok!(TemplateModule::add_to_allow_list(
 			origin2.clone(),
 			collection_id,
 			account(1)

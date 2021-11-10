@@ -55,7 +55,7 @@ pub mod pallet {
 	pub(super) type Balance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
-			Key<Blake2_128Concat, T::AccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
 		),
 		Value = u128,
 		QueryKind = ValueQuery,
@@ -65,8 +65,8 @@ pub mod pallet {
 	pub(super) type Allowance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
-			Key<Blake2_128, T::AccountId>,
-			Key<Blake2_128Concat, T::AccountId>,
+			Key<Blake2_128, T::CrossAccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
 		),
 		Value = u128,
 		QueryKind = ValueQuery,
@@ -119,20 +119,20 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 
-		let balance = <Balance<T>>::get((collection.id, owner.as_sub()))
+		let balance = <Balance<T>>::get((collection.id, owner))
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 
-		if collection.access == AccessMode::WhiteList {
+		if collection.access == AccessMode::AllowList {
 			collection.check_allowlist(owner)?;
 		}
 
 		// =========
 
 		if balance == 0 {
-			<Balance<T>>::remove((collection.id, owner.as_sub()));
+			<Balance<T>>::remove((collection.id, owner));
 		} else {
-			<Balance<T>>::insert((collection.id, owner.as_sub()), balance);
+			<Balance<T>>::insert((collection.id, owner), balance);
 		}
 		<TotalSupply<T>>::insert(collection.id, total_supply);
 
@@ -157,22 +157,22 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 	) -> DispatchResult {
 		ensure!(
-			collection.transfers_enabled,
-			<CommonError<T>>::TransferNotAllowed
+			collection.limits.transfers_enabled(),
+			<CommonError<T>>::TransferNotAllowed,
 		);
 
-		if collection.access == AccessMode::WhiteList {
+		if collection.access == AccessMode::AllowList {
 			collection.check_allowlist(from)?;
 			collection.check_allowlist(to)?;
 		}
 		<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
-		let balance_from = <Balance<T>>::get((collection.id, from.as_sub()))
+		let balance_from = <Balance<T>>::get((collection.id, from))
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 		let balance_to = if from != to {
 			Some(
-				<Balance<T>>::get((collection.id, to.as_sub()))
+				<Balance<T>>::get((collection.id, to))
 					.checked_add(amount)
 					.ok_or(ArithmeticError::Overflow)?,
 			)
@@ -190,11 +190,11 @@ impl<T: Config> Pallet<T> {
 		if let Some(balance_to) = balance_to {
 			// from != to
 			if balance_from == 0 {
-				<Balance<T>>::remove((collection.id, from.as_sub()));
+				<Balance<T>>::remove((collection.id, from));
 			} else {
-				<Balance<T>>::insert((collection.id, from.as_sub()), balance_from);
+				<Balance<T>>::insert((collection.id, from), balance_from);
 			}
-			<Balance<T>>::insert((collection.id, to.as_sub()), balance_to);
+			<Balance<T>>::insert((collection.id, to), balance_to);
 		}
 
 		collection.log_infallible(ERC20Events::Transfer {
@@ -235,14 +235,16 @@ impl<T: Config> Pallet<T> {
 		let total_supply = data
 			.iter()
 			.map(|u| u.1)
-			.try_fold(0u128, |acc, v| acc.checked_add(v))
+			.try_fold(<TotalSupply<T>>::get(collection.id), |acc, v| {
+				acc.checked_add(v)
+			})
 			.ok_or(ArithmeticError::Overflow)?;
 
 		for (user, amount) in data.into_iter() {
 			collection.consume_sload()?;
 			let balance = balances
 				.entry(user.clone())
-				.or_insert_with(|| <Balance<T>>::get((collection.id, user.as_sub())));
+				.or_insert_with(|| <Balance<T>>::get((collection.id, user)));
 			*balance = (*balance)
 				.checked_add(amount)
 				.ok_or(ArithmeticError::Overflow)?;
@@ -259,7 +261,7 @@ impl<T: Config> Pallet<T> {
 
 		<TotalSupply<T>>::insert(collection.id, total_supply);
 		for (user, amount) in balances {
-			<Balance<T>>::insert((collection.id, user.as_sub()), amount);
+			<Balance<T>>::insert((collection.id, &user), amount);
 
 			collection.log_infallible(ERC20Events::Transfer {
 				from: H160::default(),
@@ -283,7 +285,7 @@ impl<T: Config> Pallet<T> {
 		spender: &T::CrossAccountId,
 		amount: u128,
 	) {
-		<Allowance<T>>::insert((collection.id, owner.as_sub(), spender.as_sub()), amount);
+		<Allowance<T>>::insert((collection.id, owner, spender), amount);
 
 		collection.log_infallible(ERC20Events::Approval {
 			owner: *owner.as_eth(),
@@ -305,12 +307,12 @@ impl<T: Config> Pallet<T> {
 		spender: &T::CrossAccountId,
 		amount: u128,
 	) -> DispatchResult {
-		if collection.access == AccessMode::WhiteList {
+		if collection.access == AccessMode::AllowList {
 			collection.check_allowlist(&owner)?;
 			collection.check_allowlist(&spender)?;
 		}
 
-		if <Balance<T>>::get((collection.id, owner.as_sub())) < amount {
+		if <Balance<T>>::get((collection.id, owner)) < amount {
 			ensure!(
 				collection.ignores_owned_amount(owner)?,
 				<CommonError<T>>::CantApproveMoreThanOwned
@@ -330,16 +332,15 @@ impl<T: Config> Pallet<T> {
 		to: &T::CrossAccountId,
 		amount: u128,
 	) -> DispatchResult {
-		if spender == from {
+		if spender.conv_eq(from) {
 			return Self::transfer(collection, from, to, amount);
 		}
-		if collection.access == AccessMode::WhiteList {
+		if collection.access == AccessMode::AllowList {
 			// `from`, `to` checked in [`transfer`]
 			collection.check_allowlist(spender)?;
 		}
 
-		let allowance = <Allowance<T>>::get((collection.id, from.as_sub(), spender.as_sub()))
-			.checked_sub(amount);
+		let allowance = <Allowance<T>>::get((collection.id, from, spender)).checked_sub(amount);
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender)?,
@@ -362,16 +363,15 @@ impl<T: Config> Pallet<T> {
 		from: &T::CrossAccountId,
 		amount: u128,
 	) -> DispatchResult {
-		if spender == from {
+		if spender.conv_eq(from) {
 			return Self::burn(collection, from, amount);
 		}
-		if collection.access == AccessMode::WhiteList {
+		if collection.access == AccessMode::AllowList {
 			// `from` checked in [`burn`]
 			collection.check_allowlist(spender)?;
 		}
 
-		let allowance = <Allowance<T>>::get((collection.id, from.as_sub(), spender.as_sub()))
-			.checked_sub(amount);
+		let allowance = <Allowance<T>>::get((collection.id, from, spender)).checked_sub(amount);
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender)?,

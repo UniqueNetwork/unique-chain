@@ -43,11 +43,8 @@ fn try_sponsor<T: Config>(
 					let token_id: u32 = token_id.try_into().map_err(|_| AnyError)?;
 					let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 					let collection_limits = &collection.limits;
-					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
-						collection_limits.sponsor_transfer_timeout
-					} else {
-						NFT_SPONSOR_TRANSFER_TIMEOUT
-					};
+					let limit =
+						collection_limits.sponsor_transfer_timeout(NFT_SPONSOR_TRANSFER_TIMEOUT);
 
 					let mut sponsor = true;
 					if <NftTransferBasket<T>>::contains_key(collection_id, token_id) {
@@ -74,11 +71,8 @@ fn try_sponsor<T: Config>(
 				UniqueFungibleCall::ERC20(ERC20Call::Transfer { .. }) => {
 					let who = T::CrossAccountId::from_eth(*caller);
 					let collection_limits = &collection.limits;
-					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
-						collection_limits.sponsor_transfer_timeout
-					} else {
-						FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT
-					};
+					let limit = collection_limits
+						.sponsor_transfer_timeout(FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT);
 
 					let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 					let mut sponsored = true;

@@ -3,11 +3,11 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { IKeyringPair } from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import waitNewBlocks from './substrate/wait-new-blocks';
-import { deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess } from './util/contracthelpers';
+import {deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess} from './util/contracthelpers';
 import {
   enableContractSponsoringExpectSuccess,
   findUnusedAddress,

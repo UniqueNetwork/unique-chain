@@ -5,16 +5,15 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { submitTransactionAsync, submitTransactionExpectFailAsync } from '../substrate/substrate-api';
+import {submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import fs from 'fs';
-import { Abi, CodePromise, ContractPromise as Contract } from '@polkadot/api-contract';
-import { IKeyringPair } from '@polkadot/types/types';
-import { ApiPromise, Keyring } from '@polkadot/api';
+import {Abi, CodePromise, ContractPromise as Contract} from '@polkadot/api-contract';
+import {IKeyringPair} from '@polkadot/types/types';
+import {ApiPromise, Keyring} from '@polkadot/api';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
-import { BigNumber } from 'bignumber.js';
-import { findUnusedAddress, getGenericResult } from '../util/helpers';
+import {findUnusedAddress, getGenericResult} from '../util/helpers';
 
 const value = 0;
 const gasLimit = '200000000000';
@@ -40,11 +39,10 @@ async function prepareDeployer(api: ApiPromise) {
   const deployer = await findUnusedAddress(api);
 
   // Transfer balance to it
-  const keyring = new Keyring({ type: 'sr25519' });
+  const keyring = new Keyring({type: 'sr25519'});
   const alice = keyring.addFromUri('//Alice');
-  let amount = new BigNumber(endowment);
-  amount = amount.plus(100e15);
-  const tx = api.tx.balances.transfer(deployer.address, amount.toFixed());
+  const amount = BigInt(endowment) + 10n**15n;
+  const tx = api.tx.balances.transfer(deployer.address, amount);
   await submitTransactionAsync(alice, tx);
 
   return deployer;

@@ -30,8 +30,8 @@ sp_api::decl_runtime_apis! {
 		/// Used for ethereum integration
 		fn eth_contract_code(account: H160) -> Option<Vec<u8>>;
 
-		fn adminlist(collection: CollectionId) -> Vec<AccountId>;
-		fn allowlist(collection: CollectionId) -> Vec<AccountId>;
+		fn adminlist(collection: CollectionId) -> Vec<CrossAccountId>;
+		fn allowlist(collection: CollectionId) -> Vec<CrossAccountId>;
 		fn last_token_id(collection: CollectionId) -> TokenId;
 	}
 }

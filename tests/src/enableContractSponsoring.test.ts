@@ -3,12 +3,12 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { IKeyringPair } from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
-import { deployFlipper, getFlipValue, toggleFlipValueExpectSuccess } from './util/contracthelpers';
+import {deployFlipper, getFlipValue, toggleFlipValueExpectSuccess} from './util/contracthelpers';
 import {
   enableContractSponsoringExpectFailure,
   enableContractSponsoringExpectSuccess,
