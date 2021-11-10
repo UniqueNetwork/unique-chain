@@ -52,7 +52,7 @@ impl<T: Config> FungibleHandle<T> {
 	}
 	fn balance_of(&self, owner: address) -> Result<uint256> {
 		let owner = T::CrossAccountId::from_eth(owner);
-		let balance = <Balance<T>>::get((self.id, owner.as_sub()));
+		let balance = <Balance<T>>::get((self.id, owner));
 		Ok(balance.into())
 	}
 	fn transfer(&mut self, caller: caller, to: address, amount: uint256) -> Result<bool> {
@@ -92,7 +92,7 @@ impl<T: Config> FungibleHandle<T> {
 		let owner = T::CrossAccountId::from_eth(owner);
 		let spender = T::CrossAccountId::from_eth(spender);
 
-		Ok(<Allowance<T>>::get((self.id, owner.as_sub(), spender.as_sub())).into())
+		Ok(<Allowance<T>>::get((self.id, owner, spender)).into())
 	}
 }
 

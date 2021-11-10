@@ -3,12 +3,11 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import usingApi, { submitTransactionAsync } from './substrate/substrate-api';
-import { IKeyringPair } from '@polkadot/types/types';
-import { Abi, BlueprintPromise as Blueprint, CodePromise, ContractPromise as Contract } from '@polkadot/api-contract';
-import { ApiPromise, Keyring } from '@polkadot/api';
-import { BigNumber } from 'bignumber.js';
-import { findUnusedAddress } from './util/helpers';
+import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
+import {IKeyringPair} from '@polkadot/types/types';
+import {Abi, BlueprintPromise as Blueprint, CodePromise, ContractPromise as Contract} from '@polkadot/api-contract';
+import {ApiPromise, Keyring} from '@polkadot/api';
+import {findUnusedAddress} from './util/helpers';
 import fs from 'fs';
 import privateKey from './substrate/privateKey';
 
@@ -41,7 +40,7 @@ function deployContract(alice: IKeyringPair, blueprint: Blueprint) : Promise<any
           unsub();
           resolve(result);
         }
-      });    
+      });
   });
 }
 
@@ -50,11 +49,10 @@ async function prepareDeployer(api: ApiPromise) {
   const deployer = await findUnusedAddress(api);
 
   // Transfer balance to it
-  const keyring = new Keyring({ type: 'sr25519' });
+  const keyring = new Keyring({type: 'sr25519'});
   const alice = keyring.addFromUri('//Alice');
-  let amount = new BigNumber(endowment);
-  amount = amount.plus(1e15);
-  const tx = api.tx.balances.transfer(deployer.address, amount.toFixed());
+  const amount = BigInt(endowment) + 10n**15n;
+  const tx = api.tx.balances.transfer(deployer.address, amount);
   await submitTransactionAsync(alice, tx);
 
   return deployer;
@@ -100,7 +98,7 @@ describe('RPC Tests', () => {
         await api.rpc.system.chain();
         count++;
         process.stdout.write(`RPC reads: ${count} times at rate ${rate} r/s            \r`);
-    
+
         if (count % checkPoint == 0) {
           hrTime = process.hrtime();
           const microsec2 = hrTime[0] * 1000000 + hrTime[1] / 1000;
@@ -134,7 +132,7 @@ describe('RPC Tests', () => {
         await getScData(contract, deployer);
         count++;
         process.stdout.write(`SC reads: ${count} times at rate ${rate} r/s            \r`);
-    
+
         if (count % checkPoint == 0) {
           hrTime = process.hrtime();
           const microsec2 = hrTime[0] * 1000000 + hrTime[1] / 1000;

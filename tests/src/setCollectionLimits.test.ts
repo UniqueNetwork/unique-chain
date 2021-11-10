@@ -4,19 +4,18 @@
 //
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
-import { ApiPromise, Keyring } from '@polkadot/api';
-import { IKeyringPair } from '@polkadot/types/types';
+import {ApiPromise, Keyring} from '@polkadot/api';
+import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import usingApi, {submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import { ICollectionInterface } from './types';
 import {
   createCollectionExpectSuccess, getCreatedCollectionCount,
   getCreateItemResult,
-  getDetailedCollectionInfo,
   setCollectionLimitsExpectFailure,
   setCollectionLimitsExpectSuccess,
   addCollectionAdminExpectSuccess,
+  queryCollectionExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -28,15 +27,14 @@ let collectionIdForTesting: number;
 
 const accountTokenOwnershipLimit = 0;
 const sponsoredDataSize = 0;
-const sponsoredMintSize = 0;
-const sponsorTimeout = 1;
+const sponsorTransferTimeout = 1;
 const tokenLimit = 10;
 
 describe('setCollectionLimits positive', () => {
   let tx;
   before(async () => {
     await usingApi(async () => {
-      const keyring = new Keyring({ type: 'sr25519' });
+      const keyring = new Keyring({type: 'sr25519'});
       alice = keyring.addFromUri('//Alice');
       collectionIdForTesting = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'}});
     });
@@ -47,9 +45,9 @@ describe('setCollectionLimits positive', () => {
         collectionIdForTesting,
         {
           accountTokenOwnershipLimit: accountTokenOwnershipLimit,
-          sponsoredMintSize: sponsoredDataSize,
+          sponsoredDataSize: sponsoredDataSize,
           tokenLimit: tokenLimit,
-          sponsorTimeout: sponsorTimeout,
+          sponsorTransferTimeout,
           ownerCanTransfer: true,
           ownerCanDestroy: true,
         },
@@ -58,16 +56,16 @@ describe('setCollectionLimits positive', () => {
       const result = getCreateItemResult(events);
 
       // get collection limits defined previously
-      const collectionInfo = await getDetailedCollectionInfo(api, collectionIdForTesting) as ICollectionInterface;
+      const collectionInfo = await queryCollectionExpectSuccess(api, collectionIdForTesting);
 
       // tslint:disable-next-line:no-unused-expression
       expect(result.success).to.be.true;
-      expect(collectionInfo.limits.accountTokenOwnershipLimit).to.be.equal(accountTokenOwnershipLimit);
-      expect(collectionInfo.limits.sponsoredDataSize).to.be.equal(sponsoredDataSize);
-      expect(collectionInfo.limits.tokenLimit).to.be.equal(tokenLimit);
-      expect(collectionInfo.limits.sponsorTimeout).to.be.equal(sponsorTimeout);
-      expect(collectionInfo.limits.ownerCanTransfer).to.be.true;
-      expect(collectionInfo.limits.ownerCanDestroy).to.be.true;
+      expect(collectionInfo.limits.accountTokenOwnershipLimit.unwrap().toNumber()).to.be.equal(accountTokenOwnershipLimit);
+      expect(collectionInfo.limits.sponsoredDataSize.unwrap().toNumber()).to.be.equal(sponsoredDataSize);
+      expect(collectionInfo.limits.tokenLimit.unwrap().toNumber()).to.be.equal(tokenLimit);
+      expect(collectionInfo.limits.sponsorTransferTimeout.unwrap().toNumber()).to.be.equal(sponsorTransferTimeout);
+      expect(collectionInfo.limits.ownerCanTransfer.unwrap().toJSON()).to.be.true;
+      expect(collectionInfo.limits.ownerCanDestroy.unwrap().toJSON()).to.be.true;
     });
   });
 
@@ -78,7 +76,7 @@ describe('setCollectionLimits positive', () => {
         accountTokenOwnershipLimit: accountTokenOwnershipLimit,
         sponsoredMintSize: sponsoredDataSize,
         tokenLimit: tokenLimit,
-        sponsorTimeout: sponsorTimeout,
+        sponsorTransferTimeout,
         ownerCanTransfer: true,
         ownerCanDestroy: true,
       };
@@ -90,7 +88,9 @@ describe('setCollectionLimits positive', () => {
       );
       const events1 = await submitTransactionAsync(alice, tx1);
       const result1 = getCreateItemResult(events1);
-      const collectionInfo1 = await getDetailedCollectionInfo(api, collectionIdForTesting) as ICollectionInterface;
+      expect(result1.success).to.be.true;
+      const collectionInfo1 = await queryCollectionExpectSuccess(api, collectionIdForTesting);
+      expect(collectionInfo1.limits.tokenLimit.unwrap().toNumber()).to.be.equal(tokenLimit);
 
       // The second time
       const tx2 = api.tx.nft.setCollectionLimits(
@@ -99,13 +99,9 @@ describe('setCollectionLimits positive', () => {
       );
       const events2 = await submitTransactionAsync(alice, tx2);
       const result2 = getCreateItemResult(events2);
-      const collectionInfo2 = await getDetailedCollectionInfo(api, collectionIdForTesting) as ICollectionInterface;
-
-      // tslint:disable-next-line:no-unused-expression
-      expect(result1.success).to.be.true;
-      expect(collectionInfo1.limits.tokenLimit).to.be.equal(tokenLimit);
       expect(result2.success).to.be.true;
-      expect(collectionInfo2.limits.tokenLimit).to.be.equal(tokenLimit);
+      const collectionInfo2 = await queryCollectionExpectSuccess(api, collectionIdForTesting);
+      expect(collectionInfo2.limits.tokenLimit.unwrap().toNumber()).to.be.equal(tokenLimit);
     });
   });
 
@@ -115,7 +111,7 @@ describe('setCollectionLimits negative', () => {
   let tx;
   before(async () => {
     await usingApi(async () => {
-      const keyring = new Keyring({ type: 'sr25519' });
+      const keyring = new Keyring({type: 'sr25519'});
       alice = keyring.addFromUri('//Alice');
       bob = keyring.addFromUri('//Bob');
       collectionIdForTesting = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'}});
@@ -130,7 +126,7 @@ describe('setCollectionLimits negative', () => {
         {
           accountTokenOwnershipLimit,
           sponsoredDataSize,
-          sponsoredMintSize,
+          // sponsoredMintSize,
           tokenLimit,
         },
       );
@@ -144,7 +140,7 @@ describe('setCollectionLimits negative', () => {
         {
           accountTokenOwnershipLimit,
           sponsoredDataSize,
-          sponsoredMintSize,
+          // sponsoredMintSize,
           tokenLimit,
         },
       );
@@ -152,14 +148,14 @@ describe('setCollectionLimits negative', () => {
     });
   });
   it('execute setCollectionLimits from admin collection', async () => {
-    await addCollectionAdminExpectSuccess(alice, collectionIdForTesting, bob);
+    await addCollectionAdminExpectSuccess(alice, collectionIdForTesting, bob.address);
     await usingApi(async (api: ApiPromise) => {
       tx = api.tx.nft.setCollectionLimits(
         collectionIdForTesting,
         {
           accountTokenOwnershipLimit,
           sponsoredDataSize,
-          sponsoredMintSize,
+          // sponsoredMintSize,
           tokenLimit,
         },
       );
@@ -173,7 +169,7 @@ describe('setCollectionLimits negative', () => {
       accountTokenOwnershipLimit: accountTokenOwnershipLimit,
       sponsoredMintSize: sponsoredDataSize,
       tokenLimit: tokenLimit,
-      sponsorTimeout: sponsorTimeout,
+      sponsorTransferTimeout,
       ownerCanTransfer: false,
       ownerCanDestroy: true,
     });
@@ -181,7 +177,7 @@ describe('setCollectionLimits negative', () => {
       accountTokenOwnershipLimit: accountTokenOwnershipLimit,
       sponsoredMintSize: sponsoredDataSize,
       tokenLimit: tokenLimit,
-      sponsorTimeout: sponsorTimeout,
+      sponsorTransferTimeout,
       ownerCanTransfer: true,
       ownerCanDestroy: true,
     });
@@ -193,7 +189,7 @@ describe('setCollectionLimits negative', () => {
       accountTokenOwnershipLimit: accountTokenOwnershipLimit,
       sponsoredMintSize: sponsoredDataSize,
       tokenLimit: tokenLimit,
-      sponsorTimeout: sponsorTimeout,
+      sponsorTransferTimeout,
       ownerCanTransfer: true,
       ownerCanDestroy: false,
     });
@@ -201,7 +197,7 @@ describe('setCollectionLimits negative', () => {
       accountTokenOwnershipLimit: accountTokenOwnershipLimit,
       sponsoredMintSize: sponsoredDataSize,
       tokenLimit: tokenLimit,
-      sponsorTimeout: sponsorTimeout,
+      sponsorTransferTimeout,
       ownerCanTransfer: true,
       ownerCanDestroy: true,
     });
@@ -215,7 +211,7 @@ describe('setCollectionLimits negative', () => {
         accountTokenOwnershipLimit: accountTokenOwnershipLimit,
         sponsoredMintSize: sponsoredDataSize,
         tokenLimit: tokenLimit,
-        sponsorTimeout: sponsorTimeout,
+        sponsorTransferTimeout,
         ownerCanTransfer: true,
         ownerCanDestroy: true,
       };

@@ -3,7 +3,7 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { IKeyringPair } from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import {

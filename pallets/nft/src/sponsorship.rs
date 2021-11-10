@@ -26,7 +26,13 @@ impl<T: Config> NftSponsorshipHandler<T> {
 		// sponsor timeout
 		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 
-		let limit = collection.limits.sponsor_transfer_timeout;
+		let limit = collection
+			.limits
+			.sponsor_transfer_timeout(match _properties {
+				CreateItemData::NFT(_) => NFT_SPONSOR_TRANSFER_TIMEOUT,
+				CreateItemData::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+				CreateItemData::ReFungible(_) => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+			});
 		if CreateItemBasket::<T>::contains_key((collection_id, &who)) {
 			let last_tx_block = CreateItemBasket::<T>::get((collection_id, &who));
 			let limit_time = last_tx_block + limit.into();
@@ -37,7 +43,7 @@ impl<T: Config> NftSponsorshipHandler<T> {
 		CreateItemBasket::<T>::insert((collection_id, who.clone()), block_number);
 
 		// check free create limit
-		if collection.limits.sponsored_data_size >= (_properties.data_size() as u32) {
+		if collection.limits.sponsored_data_size() >= (_properties.data_size() as u32) {
 			collection.sponsorship.sponsor().cloned()
 		} else {
 			None
@@ -61,11 +67,8 @@ impl<T: Config> NftSponsorshipHandler<T> {
 			sponsor_transfer = match collection_mode {
 				CollectionMode::NFT => {
 					// get correct limit
-					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
-						collection_limits.sponsor_transfer_timeout
-					} else {
-						NFT_SPONSOR_TRANSFER_TIMEOUT
-					};
+					let limit =
+						collection_limits.sponsor_transfer_timeout(NFT_SPONSOR_TRANSFER_TIMEOUT);
 
 					let mut sponsored = true;
 					if NftTransferBasket::<T>::contains_key(collection_id, item_id) {
@@ -83,11 +86,8 @@ impl<T: Config> NftSponsorshipHandler<T> {
 				}
 				CollectionMode::Fungible(_) => {
 					// get correct limit
-					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
-						collection_limits.sponsor_transfer_timeout
-					} else {
-						FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT
-					};
+					let limit = collection_limits
+						.sponsor_transfer_timeout(FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT);
 
 					let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 					let mut sponsored = true;
@@ -106,11 +106,8 @@ impl<T: Config> NftSponsorshipHandler<T> {
 				}
 				CollectionMode::ReFungible => {
 					// get correct limit
-					let limit: u32 = if collection_limits.sponsor_transfer_timeout > 0 {
-						collection_limits.sponsor_transfer_timeout
-					} else {
-						REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT
-					};
+					let limit = collection_limits
+						.sponsor_transfer_timeout(REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT);
 
 					let mut sponsored = true;
 					if ReFungibleTransferBasket::<T>::contains_key(collection_id, item_id) {
@@ -150,13 +147,13 @@ impl<T: Config> NftSponsorshipHandler<T> {
 			// Can't sponsor fungible collection, this tx will be rejected
 			// as invalid
 			!matches!(collection.mode, CollectionMode::Fungible(_)) &&
-			data.len() <= collection.limits.sponsored_data_size as usize
+			data.len() <= collection.limits.sponsored_data_size() as usize
 		{
-			if let Some(rate_limit) = collection.limits.sponsored_data_rate_limit {
+			if let Some(rate_limit) = collection.limits.sponsored_data_rate_limit() {
 				let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 
 				if VariableMetaDataBasket::<T>::get(collection_id, item_id)
-					.map(|last_block| block_number - last_block > rate_limit)
+					.map(|last_block| block_number - last_block > rate_limit.into())
 					.unwrap_or(true)
 				{
 					sponsor_metadata_changes = true;

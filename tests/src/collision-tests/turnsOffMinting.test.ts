@@ -1,10 +1,14 @@
+/* broken by design
+// substrate transactions are sequential, not parallel
+// the order of execution is indeterminate
+
 import { IKeyringPair } from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from '../substrate/privateKey';
 import usingApi from '../substrate/substrate-api';
 import {
-  addToWhiteListExpectSuccess,
+  addToAllowListExpectSuccess,
   createCollectionExpectSuccess,
   setMintPermissionExpectSuccess,
   normalizeAccountId,
@@ -29,7 +33,7 @@ describe('Turns off minting mode: ', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       await setMintPermissionExpectSuccess(Alice, collectionId, true);
-      await addToWhiteListExpectSuccess(Alice, collectionId, Ferdie.address);
+      await addToAllowListExpectSuccess(Alice, collectionId, Ferdie.address);
 
       const mintItem = api.tx.nft.createItem(collectionId, normalizeAccountId(Ferdie.address), 'NFT');
       const offMinting = api.tx.nft.setMintPermission(collectionId, false);
@@ -45,3 +49,4 @@ describe('Turns off minting mode: ', () => {
     });
   });
 });
+*/

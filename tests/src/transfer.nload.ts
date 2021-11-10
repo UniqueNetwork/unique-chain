@@ -3,12 +3,12 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { ApiPromise } from '@polkadot/api';
-import { IKeyringPair } from '@polkadot/types/types';
+import {ApiPromise} from '@polkadot/api';
+import {IKeyringPair} from '@polkadot/types/types';
 import privateKey from './substrate/privateKey';
-import usingApi, { submitTransactionAsync } from './substrate/substrate-api';
+import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
 import waitNewBlocks from './substrate/wait-new-blocks';
-import { findUnusedAddresses } from './util/helpers';
+import {findUnusedAddresses} from './util/helpers';
 import * as cluster from 'cluster';
 import os from 'os';
 

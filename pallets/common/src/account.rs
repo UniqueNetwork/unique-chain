@@ -19,6 +19,8 @@ pub trait CrossAccountId<AccountId>:
 
 	fn from_sub(account: AccountId) -> Self;
 	fn from_eth(account: H160) -> Self;
+
+	fn conv_eq(&self, other: &Self) -> bool;
 }
 
 #[derive(Encode, Decode, Serialize, Deserialize, TypeInfo)]
@@ -28,7 +30,7 @@ enum BasicCrossAccountIdRepr<AccountId> {
 	Ethereum(H160),
 }
 
-#[derive(Eq)]
+#[derive(PartialEq, Eq)]
 pub struct BasicCrossAccountId<T: Config> {
 	/// If true - then ethereum is canonical encoding
 	from_ethereum: bool,
@@ -77,18 +79,6 @@ impl<T: Config> Ord for BasicCrossAccountId<T> {
 	}
 }
 
-impl<T: Config> PartialEq for BasicCrossAccountId<T> {
-	fn eq(&self, other: &Self) -> bool {
-		if self.from_ethereum == other.from_ethereum {
-			self.substrate == other.substrate && self.ethereum == other.ethereum
-		} else if self.from_ethereum {
-			// ethereum is canonical encoding, but we need to compare derived address
-			self.substrate == other.substrate
-		} else {
-			self.ethereum == other.ethereum
-		}
-	}
-}
 impl<T: Config> Clone for BasicCrossAccountId<T> {
 	fn clone(&self) -> Self {
 		Self {
@@ -156,6 +146,16 @@ impl<T: Config> CrossAccountId<T::AccountId> for BasicCrossAccountId<T> {
 			ethereum,
 			substrate: T::EvmAddressMapping::into_account_id(ethereum),
 			from_ethereum: true,
+		}
+	}
+	fn conv_eq(&self, other: &Self) -> bool {
+		if self.from_ethereum == other.from_ethereum {
+			self.substrate == other.substrate && self.ethereum == other.ethereum
+		} else if self.from_ethereum {
+			// ethereum is canonical encoding, but we need to compare derived address
+			self.substrate == other.substrate
+		} else {
+			self.ethereum == other.ethereum
 		}
 	}
 }

@@ -3,12 +3,12 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { IKeyringPair } from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
-import { approveExpectFail, approveExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, getAllowance, getFungibleBalance, transferExpectFailure, transferExpectSuccess, transferFromExpectFail, transferFromExpectSuccess, U128_MAX } from './util/helpers';
+import {approveExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, getAllowance, getBalance, transferExpectFailure, transferExpectSuccess, transferFromExpectFail, transferFromExpectSuccess, U128_MAX} from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -27,41 +27,36 @@ describe('Integration Test fungible overflows', () => {
   });
 
   it('fails when overflows on transfer', async () => {
-    const fungibleCollectionId = await createCollectionExpectSuccess({ mode: { type: 'Fungible', decimalPoints: 0 } });
+    await usingApi(async api => {
+      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
 
-    await createFungibleItemExpectSuccess(alice, fungibleCollectionId, { Value: U128_MAX });
-    await transferExpectSuccess(fungibleCollectionId, 0, alice, bob, U128_MAX, 'Fungible');
+      await createFungibleItemExpectSuccess(alice, fungibleCollectionId, {Value: U128_MAX});
+      await transferExpectSuccess(fungibleCollectionId, 0, alice, bob, U128_MAX, 'Fungible');
 
-    await createFungibleItemExpectSuccess(alice, fungibleCollectionId, { Value: 1n });
-    await transferExpectFailure(fungibleCollectionId, 0, alice, bob, 1);
+      await createFungibleItemExpectSuccess(alice, fungibleCollectionId, {Value: 1n});
+      await transferExpectFailure(fungibleCollectionId, 0, alice, bob, 1);
 
-    expect(await getFungibleBalance(fungibleCollectionId, alice.address)).to.equal(1n);
-    expect(await getFungibleBalance(fungibleCollectionId, bob.address)).to.equal(U128_MAX);
-  });
-
-  it('fails on allowance overflow', async () => {
-    const fungibleCollectionId = await createCollectionExpectSuccess({ mode: { type: 'Fungible', decimalPoints: 0 } });
-
-    await createFungibleItemExpectSuccess(alice, fungibleCollectionId, { Value: U128_MAX });
-    await approveExpectSuccess(fungibleCollectionId, 0, alice, bob, U128_MAX);
-    await approveExpectFail(fungibleCollectionId, 0, alice, bob, U128_MAX);
+      expect(await getBalance(api, fungibleCollectionId, alice.address, 0)).to.equal(1n);
+      expect(await getBalance(api, fungibleCollectionId, bob.address, 0)).to.equal(U128_MAX);
+    });
   });
 
   it('fails when overflows on transferFrom', async () => {
-    const fungibleCollectionId = await createCollectionExpectSuccess({ mode: { type: 'Fungible', decimalPoints: 0 } });
+    await usingApi(async api => {
+      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+      await createFungibleItemExpectSuccess(alice, fungibleCollectionId, {Value: U128_MAX});
+      await approveExpectSuccess(fungibleCollectionId, 0, alice, bob.address, U128_MAX);
+      await transferFromExpectSuccess(fungibleCollectionId, 0, bob, alice, charlie, U128_MAX, 'Fungible');
 
-    await createFungibleItemExpectSuccess(alice, fungibleCollectionId, { Value: U128_MAX });
-    await approveExpectSuccess(fungibleCollectionId, 0, alice, bob, U128_MAX);
-    await transferFromExpectSuccess(fungibleCollectionId, 0, bob, alice, charlie, U128_MAX, 'Fungible');
+      expect(await getBalance(api, fungibleCollectionId, charlie.address, 0)).to.equal(U128_MAX);
+      expect(await getAllowance(api, fungibleCollectionId, alice.address, bob.address, 0)).to.equal(0n);
 
-    expect(await getFungibleBalance(fungibleCollectionId, charlie.address)).to.equal(U128_MAX);
-    expect((await getAllowance(fungibleCollectionId, 0, alice.address, bob.address)).toString()).to.equal('0');
+      await createFungibleItemExpectSuccess(alice, fungibleCollectionId, {Value: U128_MAX});
+      await approveExpectSuccess(fungibleCollectionId, 0, alice, bob.address, 1n);
+      await transferFromExpectFail(fungibleCollectionId, 0, bob, alice, charlie, 1);
 
-    await createFungibleItemExpectSuccess(alice, fungibleCollectionId, { Value: U128_MAX });
-    await approveExpectSuccess(fungibleCollectionId, 0, alice, bob, 1n);
-    await transferFromExpectFail(fungibleCollectionId, 0, bob, alice, charlie, 1);
-
-    expect(await getFungibleBalance(fungibleCollectionId, charlie.address)).to.equal(U128_MAX);
-    expect((await getAllowance(fungibleCollectionId, 0, alice.address, bob.address)).toString()).to.equal('1');
+      expect(await getBalance(api, fungibleCollectionId, charlie.address, 0)).to.equal(U128_MAX);
+      expect(await getAllowance(api, fungibleCollectionId, alice.address, bob.address, 0)).to.equal(1n);
+    });
   });
 });

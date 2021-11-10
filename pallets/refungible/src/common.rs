@@ -3,9 +3,7 @@ use core::marker::PhantomData;
 use sp_std::collections::btree_map::BTreeMap;
 use frame_support::{dispatch::DispatchResultWithPostInfo, fail, weights::Weight};
 use nft_data_structs::TokenId;
-use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, account::CrossAccountId, with_weight,
-};
+use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
 
@@ -196,7 +194,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	}
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId> {
-		<Owned<T>>::iter_prefix((self.id, account.as_sub()))
+		<Owned<T>>::iter_prefix((self.id, account))
 			.map(|(id, _)| id)
 			.collect()
 	}
@@ -224,11 +222,11 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	}
 
 	fn account_balance(&self, account: T::CrossAccountId) -> u32 {
-		<AccountBalance<T>>::get((self.id, account.as_sub()))
+		<AccountBalance<T>>::get((self.id, account))
 	}
 
 	fn balance(&self, account: T::CrossAccountId, token: TokenId) -> u128 {
-		<Balance<T>>::get((self.id, token, account.as_sub()))
+		<Balance<T>>::get((self.id, token, account))
 	}
 
 	fn allowance(
@@ -237,6 +235,6 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		spender: T::CrossAccountId,
 		token: TokenId,
 	) -> u128 {
-		<Allowance<T>>::get((self.id, token, sender.as_sub(), spender))
+		<Allowance<T>>::get((self.id, token, sender, spender))
 	}
 }

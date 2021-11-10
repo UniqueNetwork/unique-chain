@@ -1035,12 +1035,14 @@ impl_runtime_apis! {
 		}
 
 		fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
-			<pallet_nft::NftErcSupport<Runtime>>::get_code(&account).or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account)).or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
+			<pallet_nft::NftErcSupport<Runtime>>::get_code(&account)
+				.or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account))
+				.or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
 		}
-		fn adminlist(collection: CollectionId) -> Vec<AccountId> {
+		fn adminlist(collection: CollectionId) -> Vec<CrossAccountId> {
 			<pallet_nft::Pallet<Runtime>>::adminlist(collection)
 		}
-		fn allowlist(collection: CollectionId) -> Vec<AccountId> {
+		fn allowlist(collection: CollectionId) -> Vec<CrossAccountId> {
 			<pallet_nft::Pallet<Runtime>>::allowlist(collection)
 		}
 		fn last_token_id(collection: CollectionId) -> TokenId {
@@ -1338,7 +1340,7 @@ impl_runtime_apis! {
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
-			let whitelist: Vec<TrackedStorageKey> = vec![
+			let allowlist: Vec<TrackedStorageKey> = vec![
 				// Block Number
 				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
 				// Total Issuance
@@ -1352,7 +1354,7 @@ impl_runtime_apis! {
 			];
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
-			let params = (&config, &whitelist);
+			let params = (&config, &allowlist);
 
 			add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
 			add_benchmark!(params, batches, pallet_nft, Nft);

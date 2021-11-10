@@ -36,9 +36,10 @@ use frame_system::{self as system, ensure_signed};
 use sp_runtime::{sp_std::prelude::Vec};
 use nft_data_structs::{
 	MAX_DECIMAL_POINTS, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, CUSTOM_DATA_LIMIT,
-	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, COLLECTION_ADMINS_LIMIT,
-	OFFCHAIN_SCHEMA_LIMIT, AccessMode, Collection, CreateItemData, CollectionLimits, CollectionId,
-	CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
+	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT,
+	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	NFT_SPONSOR_TRANSFER_TIMEOUT, AccessMode, Collection, CreateItemData, CollectionLimits,
+	CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
 };
 use pallet_common::{
 	account::CrossAccountId, CollectionHandle, IsAdmin, Pallet as PalletCommon,
@@ -155,7 +156,6 @@ decl_module! {
 	where
 		origin: T::Origin
 	{
-		const CollectionAdminsLimit: u64 = COLLECTION_ADMINS_LIMIT;
 		type Error = Error<T>;
 
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
@@ -189,11 +189,6 @@ decl_module! {
 			// Anyone can create a collection
 			let who = ensure_signed(origin)?;
 
-			let limits = CollectionLimits::<T::BlockNumber> {
-				sponsored_data_size: CUSTOM_DATA_LIMIT,
-				..Default::default()
-			};
-
 			// Create new collection
 			let new_collection = Collection::<T> {
 				owner: who.clone(),
@@ -208,8 +203,7 @@ decl_module! {
 				sponsorship: SponsorshipState::Disabled,
 				variable_on_chain_schema: Vec::new(),
 				const_on_chain_schema: Vec::new(),
-				limits,
-				transfers_enabled: true,
+				limits: Default::default(),
 				meta_update_permission: Default::default(),
 			};
 
@@ -262,7 +256,7 @@ decl_module! {
 			Ok(())
 		}
 
-		/// Add an address to white list.
+		/// Add an address to allow list.
 		///
 		/// # Permissions
 		///
@@ -274,9 +268,9 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * address.
-		#[weight = <SelfWeightOf<T>>::add_to_white_list()]
+		#[weight = <SelfWeightOf<T>>::add_to_allow_list()]
 		#[transactional]
-		pub fn add_to_white_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
+		pub fn add_to_allow_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
@@ -291,7 +285,7 @@ decl_module! {
 			Ok(())
 		}
 
-		/// Remove an address from white list.
+		/// Remove an address from allow list.
 		///
 		/// # Permissions
 		///
@@ -303,9 +297,9 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * address.
-		#[weight = <SelfWeightOf<T>>::remove_from_white_list()]
+		#[weight = <SelfWeightOf<T>>::remove_from_allow_list()]
 		#[transactional]
-		pub fn remove_from_white_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
+		pub fn remove_from_allow_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
@@ -320,7 +314,7 @@ decl_module! {
 			Ok(())
 		}
 
-		/// Toggle between normal and white list access for the methods with access for `Anyone`.
+		/// Toggle between normal and allow list access for the methods with access for `Anyone`.
 		///
 		/// # Permissions
 		///
@@ -345,8 +339,8 @@ decl_module! {
 		}
 
 		/// Allows Anyone to create tokens if:
-		/// * White List is enabled, and
-		/// * Address is added to white list, and
+		/// * Allow List is enabled, and
+		/// * Address is added to allow list, and
 		/// * This method was called with True parameter
 		///
 		/// # Permissions
@@ -411,12 +405,9 @@ decl_module! {
 		#[transactional]
 		pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin_id: T::CrossAccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			collection.check_is_owner_or_admin(&sender)?;
 
-			<IsAdmin<T>>::insert((collection_id, new_admin_id.as_sub()), true);
-			Ok(())
+			<PalletCommon<T>>::toggle_admin(&collection, &sender, &new_admin_id, true)
 		}
 
 		/// Remove admin address of the Collection. An admin address can remove itself. List of admins may become empty, in which case only Collection Owner will be able to add an Admin.
@@ -435,12 +426,9 @@ decl_module! {
 		#[transactional]
 		pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::CrossAccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			collection.check_is_owner_or_admin(&sender)?;
 
-			<IsAdmin<T>>::remove((collection_id, account_id.as_sub()));
-			Ok(())
+			<PalletCommon<T>>::toggle_admin(&collection, &sender, &account_id, false)
 		}
 
 		/// # Permissions
@@ -458,7 +446,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_owner_or_admin(&sender)?;
+			target_collection.check_is_owner(&sender)?;
 
 			target_collection.sponsorship = SponsorshipState::Unconfirmed(new_sponsor);
 			target_collection.save()
@@ -514,8 +502,8 @@ decl_module! {
 		/// * Collection Owner.
 		/// * Collection Admin.
 		/// * Anyone if
-		///     * White List is enabled, and
-		///     * Address is added to white list, and
+		///     * Allow List is enabled, and
+		///     * Address is added to allow list, and
 		///     * MintPermission is enabled (see SetMintPermission method)
 		///
 		/// # Arguments
@@ -540,8 +528,8 @@ decl_module! {
 		/// * Collection Owner.
 		/// * Collection Admin.
 		/// * Anyone if
-		///     * White List is enabled, and
-		///     * Address is added to white list, and
+		///     * Allow List is enabled, and
+		///     * Address is added to allow list, and
 		///     * MintPermission is enabled (see SetMintPermission method)
 		///
 		/// # Arguments
@@ -582,7 +570,7 @@ decl_module! {
 
 			// =========
 
-			target_collection.transfers_enabled = value;
+			target_collection.limits.transfers_enabled = Some(value);
 			target_collection.save()
 		}
 
@@ -888,30 +876,63 @@ decl_module! {
 		pub fn set_collection_limits(
 			origin,
 			collection_id: CollectionId,
-			new_limits: CollectionLimits<T::BlockNumber>,
+			new_limit: CollectionLimits,
 		) -> DispatchResult {
+			let mut new_limit = new_limit;
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner(&sender)?;
-			let old_limits = &target_collection.limits;
+			let old_limit = &target_collection.limits;
 
-			// collection bounds
-			ensure!(new_limits.sponsor_transfer_timeout <= MAX_SPONSOR_TIMEOUT &&
-				new_limits.account_token_ownership_limit.unwrap_or(0) <= MAX_TOKEN_OWNERSHIP &&
-				new_limits.sponsored_data_size <= CUSTOM_DATA_LIMIT,
-				Error::<T>::CollectionLimitBoundsExceeded);
+			macro_rules! limit_default {
+				($old:ident, $new:ident, $($field:ident $(($arg:expr))? => $check:expr),* $(,)?) => {{
+					$(
+						if let Some($new) = $new.$field {
+							let $old = $old.$field($($arg)?);
+							let _ = $new;
+							let _ = $old;
+							$check
+						} else {
+							$new.$field = $old.$field
+						}
+					)*
+				}};
+			}
 
-			// token_limit   check  prev
-			ensure!(old_limits.token_limit >= new_limits.token_limit, <CommonError<T>>::CollectionTokenLimitExceeded);
-			ensure!(new_limits.token_limit > 0, <CommonError<T>>::CollectionTokenLimitExceeded);
-
-			ensure!(
-				(old_limits.owner_can_transfer || !new_limits.owner_can_transfer) &&
-				(old_limits.owner_can_destroy || !new_limits.owner_can_destroy),
-				Error::<T>::OwnerPermissionsCantBeReverted,
+			limit_default!(old_limit, new_limit,
+				account_token_ownership_limit => ensure!(
+					new_limit <= MAX_TOKEN_OWNERSHIP,
+					<Error<T>>::CollectionLimitBoundsExceeded,
+				),
+				sponsor_transfer_timeout(match target_collection.mode {
+					CollectionMode::NFT => NFT_SPONSOR_TRANSFER_TIMEOUT,
+					CollectionMode::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+					CollectionMode::ReFungible => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+				}) => ensure!(
+					new_limit <= MAX_SPONSOR_TIMEOUT,
+					<Error<T>>::CollectionLimitBoundsExceeded,
+				),
+				sponsored_data_size => ensure!(
+					new_limit <= CUSTOM_DATA_LIMIT,
+					<Error<T>>::CollectionLimitBoundsExceeded,
+				),
+				token_limit => ensure!(
+					old_limit >= new_limit && new_limit > 0,
+					<CommonError<T>>::CollectionTokenLimitExceeded
+				),
+				owner_can_transfer => ensure!(
+					old_limit || !new_limit,
+					<Error<T>>::OwnerPermissionsCantBeReverted,
+				),
+				owner_can_destroy => ensure!(
+					old_limit || !new_limit,
+					<Error<T>>::OwnerPermissionsCantBeReverted,
+				),
+				sponsored_data_rate_limit => {},
+				transfers_enabled => {},
 			);
 
-			target_collection.limits = new_limits;
+			target_collection.limits = new_limit;
 
 			target_collection.save()
 		}
@@ -920,12 +941,12 @@ decl_module! {
 
 // TODO: limit returned entries?
 impl<T: Config> Pallet<T> {
-	pub fn adminlist(collection: CollectionId) -> Vec<T::AccountId> {
+	pub fn adminlist(collection: CollectionId) -> Vec<T::CrossAccountId> {
 		<IsAdmin<T>>::iter_prefix((collection,))
 			.map(|(a, _)| a)
 			.collect()
 	}
-	pub fn allowlist(collection: CollectionId) -> Vec<T::AccountId> {
+	pub fn allowlist(collection: CollectionId) -> Vec<T::CrossAccountId> {
 		<Allowlist<T>>::iter_prefix((collection,))
 			.map(|(a, _)| a)
 			.collect()

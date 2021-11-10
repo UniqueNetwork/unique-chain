@@ -41,7 +41,8 @@ pub const CUSTOM_DATA_LIMIT: u32 = if cfg!(not(feature = "limit-testing")) {
 } else {
 	10
 };
-pub const COLLECTION_ADMINS_LIMIT: u64 = 5;
+pub const COLLECTION_ADMINS_LIMIT: u32 = 5;
+pub const COLLECTION_TOKEN_LIMIT: u32 = u32::MAX;
 pub const ACCOUNT_TOKEN_OWNERSHIP_LIMIT: u32 = if cfg!(not(feature = "limit-testing")) {
 	1000000
 } else {
@@ -141,7 +142,7 @@ pub trait SponsoringResolve<AccountId, Call> {
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum AccessMode {
 	Normal,
-	WhiteList,
+	AllowList,
 }
 impl Default for AccessMode {
 	fn default() -> Self {
@@ -217,11 +218,10 @@ pub struct Collection<T: frame_system::Config> {
 	pub offchain_schema: Vec<u8>,
 	pub schema_version: SchemaVersion,
 	pub sponsorship: SponsorshipState<T::AccountId>,
-	pub limits: CollectionLimits<T::BlockNumber>, // Collection private restrictions
-	pub variable_on_chain_schema: Vec<u8>,        //
-	pub const_on_chain_schema: Vec<u8>,           //
+	pub limits: CollectionLimits,          // Collection private restrictions
+	pub variable_on_chain_schema: Vec<u8>, //
+	pub const_on_chain_schema: Vec<u8>,    //
 	pub meta_update_permission: MetaUpdatePermission,
-	pub transfers_enabled: bool,
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
@@ -246,42 +246,57 @@ pub struct ReFungibleItemType<AccountId> {
 	pub variable_data: Vec<u8>,
 }
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
+#[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-pub struct CollectionLimits<BlockNumber: Encode + Decode> {
+pub struct CollectionLimits {
 	pub account_token_ownership_limit: Option<u32>,
-	pub sponsored_data_size: u32,
+	pub sponsored_data_size: Option<u32>,
 	/// None - setVariableMetadata is not sponsored
 	/// Some(v) - setVariableMetadata is sponsored
 	///           if there is v block between txs
-	pub sponsored_data_rate_limit: Option<BlockNumber>,
-	pub token_limit: u32,
+	pub sponsored_data_rate_limit: Option<u32>,
+	pub token_limit: Option<u32>,
 
 	// Timeouts for item types in passed blocks
-	pub sponsor_transfer_timeout: u32,
-	pub owner_can_transfer: bool,
-	pub owner_can_destroy: bool,
+	pub sponsor_transfer_timeout: Option<u32>,
+	pub owner_can_transfer: Option<bool>,
+	pub owner_can_destroy: Option<bool>,
+	pub transfers_enabled: Option<bool>,
 }
 
-impl<BlockNumber: Encode + Decode> CollectionLimits<BlockNumber> {
+impl CollectionLimits {
 	pub fn account_token_ownership_limit(&self) -> u32 {
 		self.account_token_ownership_limit
 			.unwrap_or(ACCOUNT_TOKEN_OWNERSHIP_LIMIT)
-			.min(ACCOUNT_TOKEN_OWNERSHIP_LIMIT)
+			.min(MAX_TOKEN_OWNERSHIP)
 	}
-}
-
-impl<BlockNumber: Encode + Decode> Default for CollectionLimits<BlockNumber> {
-	fn default() -> Self {
-		Self {
-			account_token_ownership_limit: Some(10_000_000),
-			token_limit: u32::max_value(),
-			sponsored_data_size: u32::MAX,
-			sponsored_data_rate_limit: None,
-			sponsor_transfer_timeout: 14400,
-			owner_can_transfer: true,
-			owner_can_destroy: true,
-		}
+	pub fn sponsored_data_size(&self) -> u32 {
+		self.sponsored_data_size
+			.unwrap_or(CUSTOM_DATA_LIMIT)
+			.min(CUSTOM_DATA_LIMIT)
+	}
+	pub fn token_limit(&self) -> u32 {
+		self.token_limit
+			.unwrap_or(COLLECTION_TOKEN_LIMIT)
+			.min(COLLECTION_TOKEN_LIMIT)
+	}
+	pub fn sponsor_transfer_timeout(&self, default: u32) -> u32 {
+		self.sponsor_transfer_timeout
+			.unwrap_or(default)
+			.min(MAX_SPONSOR_TIMEOUT)
+	}
+	pub fn owner_can_transfer(&self) -> bool {
+		self.owner_can_transfer.unwrap_or(true)
+	}
+	pub fn owner_can_destroy(&self) -> bool {
+		self.owner_can_destroy.unwrap_or(true)
+	}
+	pub fn transfers_enabled(&self) -> bool {
+		self.transfers_enabled.unwrap_or(true)
+	}
+	pub fn sponsored_data_rate_limit(&self) -> Option<u32> {
+		self.sponsored_data_rate_limit
+			.map(|v| v.min(MAX_SPONSOR_TIMEOUT))
 	}
 }
 
