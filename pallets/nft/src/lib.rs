@@ -162,7 +162,7 @@ decl_module! {
 			0
 		}
 
-		/// This method creates a Collection of NFTs. Each Token may have multiple properties encoded as an array of bytes of certain length. The initial owner and admin of the collection are set to the address that signed the transaction. Both addresses can be changed later.
+		/// This method creates a Collection of NFTs. Each Token may have multiple properties encoded as an array of bytes of certain length. The initial owner of the collection is set to the address that signed the transaction and can be changed later.
 		///
 		/// # Permissions
 		///
@@ -262,7 +262,7 @@ decl_module! {
 			Ok(())
 		}
 
-		/// Add an address to white list.
+		/// Add an address to allow list.
 		///
 		/// # Permissions
 		///
@@ -291,7 +291,7 @@ decl_module! {
 			Ok(())
 		}
 
-		/// Remove an address from white list.
+		/// Remove an address from allow list.
 		///
 		/// # Permissions
 		///
@@ -320,7 +320,7 @@ decl_module! {
 			Ok(())
 		}
 
-		/// Toggle between normal and white list access for the methods with access for `Anyone`.
+		/// Toggle between normal and allow list access for the methods with access for `Anyone`.
 		///
 		/// # Permissions
 		///
@@ -345,8 +345,8 @@ decl_module! {
 		}
 
 		/// Allows Anyone to create tokens if:
-		/// * White List is enabled, and
-		/// * Address is added to white list, and
+		/// * Allow List is enabled, and
+		/// * Address is added to allow list, and
 		/// * This method was called with True parameter
 		///
 		/// # Permissions
@@ -514,8 +514,8 @@ decl_module! {
 		/// * Collection Owner.
 		/// * Collection Admin.
 		/// * Anyone if
-		///     * White List is enabled, and
-		///     * Address is added to white list, and
+		///     * Allow List is enabled, and
+		///     * Address is added to allow list, and
 		///     * MintPermission is enabled (see SetMintPermission method)
 		///
 		/// # Arguments
@@ -540,8 +540,8 @@ decl_module! {
 		/// * Collection Owner.
 		/// * Collection Admin.
 		/// * Anyone if
-		///     * White List is enabled, and
-		///     * Address is added to white list, and
+		///     * Allow List is enabled, and
+		///     * Address is added to allow list, and
 		///     * MintPermission is enabled (see SetMintPermission method)
 		///
 		/// # Arguments

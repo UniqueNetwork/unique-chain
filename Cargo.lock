@@ -5055,6 +5055,8 @@ dependencies = [
  "sp-transaction-pool",
  "substrate-frame-rpc-system",
  "tokio 0.2.25",
+ "uc-rpc",
+ "up-rpc",
 ]
 
 [[package]]
@@ -5082,18 +5084,22 @@ dependencies = [
  "nft-data-structs",
  "pallet-aura",
  "pallet-balances",
+ "pallet-common",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-coder-substrate",
  "pallet-evm-contract-helpers",
  "pallet-evm-migration",
  "pallet-evm-transaction-payment",
+ "pallet-fungible",
  "pallet-inflation",
  "pallet-nft",
  "pallet-nft-transaction-payment",
+ "pallet-nonfungible",
  "pallet-randomness-collective-flip",
+ "pallet-refungible",
  "pallet-sudo",
- "pallet-template-charge-transaction",
+ "pallet-template-transaction-payment",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -5121,6 +5127,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+ "up-rpc",
  "xcm",
  "xcm-builder",
  "xcm-executor",
@@ -5538,6 +5545,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-common"
+version = "0.1.0"
+dependencies = [
+ "evm-coder",
+ "frame-support",
+ "frame-system",
+ "nft-data-structs",
+ "pallet-evm",
+ "pallet-evm-coder-substrate",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-contract-helpers"
 version = "0.1.0"
 dependencies = [
@@ -5788,6 +5813,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-fungible"
+version = "0.1.0"
+dependencies = [
+ "ethereum 0.9.0 (git+https://github.com/purestake/ethereum?branch=joshy-scale-info)",
+ "evm-coder",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "nft-data-structs",
+ "pallet-common",
+ "pallet-evm-coder-substrate",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-gilt"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.12#d76f39995315ec36980908e4b99709bd14927044"
@@ -5993,10 +6037,14 @@ dependencies = [
  "hex-literal",
  "nft-data-structs",
  "pallet-balances",
+ "pallet-common",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-coder-substrate",
+ "pallet-fungible",
+ "pallet-nonfungible",
  "pallet-randomness-collective-flip",
+ "pallet-refungible",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "parity-scale-codec",
@@ -6040,6 +6088,25 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-nonfungible"
+version = "0.1.0"
+dependencies = [
+ "ethereum 0.9.0 (git+https://github.com/purestake/ethereum?branch=joshy-scale-info)",
+ "evm-coder",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "nft-data-structs",
+ "pallet-common",
+ "pallet-evm-coder-substrate",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
  "sp-runtime",
  "sp-std",
 ]
@@ -6123,6 +6190,22 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-refungible"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "nft-data-structs",
+ "pallet-common",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
  "sp-runtime",
  "sp-std",
 ]
@@ -6252,9 +6335,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-template-charge-transaction"
+name = "pallet-template-transaction-payment"
 version = "3.0.0"
-source = "git+https://github.com/UniqueNetwork/pallet-sponsoring#e5d3354ab68face1b2ef709dc7f629803f56598d"
+source = "git+https://github.com/UniqueNetwork/pallet-sponsoring#ab8b91e9350a31133f3a3e4f52a84c6de4108e95"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -11598,7 +11681,7 @@ version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f559b464de2e2bdabcac6a210d12e9b5a5973c251e102c44c585c71d51bd78e"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "rand 0.8.4",
  "static_assertions",
 ]
@@ -11608,6 +11691,24 @@ name = "typenum"
 version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b63708a265f51345575b27fe43f9500ad611579e764c79edbc2037b1121959ec"
+
+[[package]]
+name = "uc-rpc"
+version = "0.1.0"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "nft-data-structs",
+ "pallet-common",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+ "up-rpc",
+]
 
 [[package]]
 name = "ucd-trie"
@@ -11716,9 +11817,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
+name = "up-rpc"
+version = "0.1.0"
+dependencies = [
+ "nft-data-structs",
+ "pallet-common",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "up-sponsorship"
 version = "0.1.0"
-source = "git+https://github.com/UniqueNetwork/pallet-sponsoring#e5d3354ab68face1b2ef709dc7f629803f56598d"
+source = "git+https://github.com/UniqueNetwork/pallet-sponsoring#ab8b91e9350a31133f3a3e4f52a84c6de4108e95"
 dependencies = [
  "impl-trait-for-tuples 0.2.1",
 ]
