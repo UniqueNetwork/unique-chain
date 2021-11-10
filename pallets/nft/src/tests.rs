@@ -49,21 +49,33 @@ fn create_test_collection_for_owner(
 	let saved_col_name: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 	let saved_description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 	let saved_prefix: Vec<u8> = b"token_prefix1\0".to_vec();
-	assert_eq!(pallet_common::CollectionById::<Test>::get(id).unwrap().owner, owner);
+	assert_eq!(
+		pallet_common::CollectionById::<Test>::get(id)
+			.unwrap()
+			.owner,
+		owner
+	);
 	assert_eq!(
 		// TemplateModule::pallet_common::collection_by_id(id).unwrap().name,
 		pallet_common::CollectionById::<Test>::get(id).unwrap().name,
 		saved_col_name
 	);
-	assert_eq!(pallet_common::CollectionById::<Test>::get(id).unwrap().mode, *mode);
+	assert_eq!(
+		pallet_common::CollectionById::<Test>::get(id).unwrap().mode,
+		*mode
+	);
 	// assert_eq!(TemplateModule::pallet_common::collection_by_id(id).unwrap().mode, *mode);
 	assert_eq!(
-		pallet_common::CollectionById::<Test>::get(id).unwrap().description,
+		pallet_common::CollectionById::<Test>::get(id)
+			.unwrap()
+			.description,
 		// TemplateModule::pallet_common::collection_by_id(id).unwrap().description,
 		saved_description
 	);
 	assert_eq!(
-		pallet_common::CollectionById::<Test>::get(id).unwrap().token_prefix,
+		pallet_common::CollectionById::<Test>::get(id)
+			.unwrap()
+			.token_prefix,
 		saved_prefix
 	);
 	id
