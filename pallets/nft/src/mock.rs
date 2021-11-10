@@ -10,7 +10,7 @@ use sp_runtime::{
 use pallet_transaction_payment::{CurrencyAdapter};
 use frame_system as system;
 use pallet_evm::AddressMapping;
-use crate::{EvmBackwardsAddressMapping, CrossAccountId};
+use crate::{CrossAccountId};
 use codec::{Encode, Decode};
 use scale_info::TypeInfo;
 
@@ -27,6 +27,10 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		TemplateModule: pallet_template::{Pallet, Call, Storage},
 		Balances: pallet_balances::{Pallet, Call, Storage},
+		Common: pallet_common::{Pallet, Storage, Event<T>},
+		Fungible: pallet_fungible::{Pallet, Storage},
+		Refungible: pallet_refungible::{Pallet, Storage},
+		Nonfungible: pallet_nonfungible::{Pallet, Storage},
 	}
 );
 
@@ -114,14 +118,34 @@ impl AddressMapping<u64> for TestEvmAddressMapping {
 	}
 }
 
+impl pallet_common::Config for Test {
+	type Event = ();
+	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
+	type EvmAddressMapping = TestEvmAddressMapping;
+	type CrossAccountId = TestCrossAccountId;
+	type Currency = Balances;
+	type CollectionCreationPrice = CollectionCreationPrice;
+	type TreasuryAccountId = TreasuryAccountId;
+}
+
+impl pallet_fungible::Config for Test {
+	type WeightInfo = pallet_fungible::weights::SubstrateWeight<Self>;
+}
+impl pallet_refungible::Config for Test {
+	type WeightInfo = pallet_refungible::weights::SubstrateWeight<Self>;
+}
+impl pallet_nonfungible::Config for Test {
+	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
+}
+
 pub struct TestEvmBackwardsAddressMapping;
-impl EvmBackwardsAddressMapping<u64> for TestEvmBackwardsAddressMapping {
+impl pallet_common::account::EvmBackwardsAddressMapping<u64> for TestEvmBackwardsAddressMapping {
 	fn from_account_id(_account_id: u64) -> sp_core::H160 {
 		unimplemented!()
 	}
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, TypeInfo)]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Default, TypeInfo)]
 pub struct TestCrossAccountId(u64, sp_core::H160);
 impl CrossAccountId<u64> for TestCrossAccountId {
 	fn from_sub(sub: u64) -> Self {
@@ -141,6 +165,12 @@ impl CrossAccountId<u64> for TestCrossAccountId {
 	fn as_eth(&self) -> &sp_core::H160 {
 		&self.1
 	}
+	fn conv_eq(&self, other: &Self) -> bool {
+		true
+	}
+	// fn default() -> Self {
+	// 	0
+	// } 
 }
 
 pub struct TestEtheremTransactionSender;
@@ -158,14 +188,14 @@ impl pallet_evm_coder_substrate::Config for Test {
 }
 
 impl pallet_template::Config for Test {
-	type Event = ();
+	// type Event = ();
 	type WeightInfo = ();
-	type CollectionCreationPrice = CollectionCreationPrice;
-	type Currency = pallet_balances::Pallet<Test>;
-	type TreasuryAccountId = TreasuryAccountId;
-	type EvmAddressMapping = TestEvmAddressMapping;
-	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
-	type CrossAccountId = TestCrossAccountId;
+	// type CollectionCreationPrice = CollectionCreationPrice;
+	// type Currency = pallet_balances::Pallet<Test>;
+	// type TreasuryAccountId = TreasuryAccountId;
+	// type EvmAddressMapping = TestEvmAddressMapping;
+	// type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
+	// type CrossAccountId = TestCrossAccountId;
 }
 
 // Build genesis storage according to the mock runtime.
