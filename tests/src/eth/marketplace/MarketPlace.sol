@@ -278,6 +278,7 @@ contract MarketPlace {
         address _receiver
     ) public {
         Order memory order = orders[asks[_idCollection][_idNFT]];
+        require(msg.sender == escrow || msg.sender == _buyer, "Only escrow or buyer can call buyKSM" );
         //1. reduce balance
         balanceKSM[_buyer] = balanceKSM[_buyer] - order.price;
         balanceKSM[order.ownerAddr] = balanceKSM[order.ownerAddr] + order.price;

@@ -143,23 +143,29 @@ describe.only('Matcher contract usage', () => {
       from: matcherOwner,
       ...GAS_ARGS,
     });
-    const matcher = await matcherContract.deploy({data: (await readFile(`${__dirname}/MarketPlace.bin`)).toString(), arguments:[matcherOwner]}).send({from: matcherOwner});
-
-    const ksmToken = '0x000000000000000000000000000000000000000b';
+    const matcher = await matcherContract.deploy({data: (await readFile(`${__dirname}/MarketPlace.bin`)).toString(), arguments: [matcherOwner]}).send({from: matcherOwner});
+    await matcher.methods.setEscrow(escrow).send({from: matcherOwner});
+    const helpers = contractHelpers(web3, matcherOwner);
+    await helpers.methods.toggleSponsoring(matcher.options.address, true).send({from: matcherOwner});
+    await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
 
     const alice = privateKey('//Alice');
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     const evmCollection = new web3.eth.Contract(nonFungibleAbi as any, collectionIdToAddress(collectionId), {from: matcherOwner});
+    await setCollectionSponsorExpectSuccess(collectionId, alice.address);
+    await confirmSponsorshipExpectSuccess(collectionId);
+
+    await helpers.methods.toggleAllowed(matcher.options.address, subToEth(alice.address), true).send({from: matcherOwner});
+    await addToWhiteListExpectSuccess(alice, collectionId, evmToAddress(subToEth(alice.address)));
 
     const seller = privateKey('//Bob');
+    await helpers.methods.toggleAllowed(matcher.options.address, subToEth(seller.address), true).send({from: matcherOwner});
+    await addToWhiteListExpectSuccess(alice, collectionId, evmToAddress(subToEth(seller.address)));
 
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', seller.address);
 
     // To transfer item to matcher it first needs to be transfered to EVM account of bob
     await transferExpectSuccess(collectionId, tokenId, seller, {Ethereum: subToEth(seller.address)});
-    // Fees will be paid from EVM account, so we should have some balance here
-    await transferBalanceExpectSuccess(api, seller, evmToAddress(subToEth(seller.address)), 10n ** 18n);
-    await transferBalanceExpectSuccess(api, alice, evmToAddress(subToEth(alice.address)), 10n ** 18n);
 
     // Token is owned by seller initially
     expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal({Ethereum: subToEthLowercase(seller.address)});
@@ -167,7 +173,7 @@ describe.only('Matcher contract usage', () => {
     // Ask
     {
       await executeEthTxOnSub(api, seller, evmCollection, m => m.approve(matcher.options.address, tokenId));
-      await executeEthTxOnSub(api, seller, matcher, m => m.addAsk(PRICE, ksmToken, evmCollection.options.address, tokenId));
+      await executeEthTxOnSub(api, seller, matcher, m => m.addAsk(PRICE, '0x0000000000000000000000000000000000000001', evmCollection.options.address, tokenId));
     }
 
     // Token is transferred to matcher
@@ -178,14 +184,14 @@ describe.only('Matcher contract usage', () => {
 
     // Buy
     {
-      expect(await matcher.methods.escrowBalance(ksmToken, subToEth(seller.address)).call()).to.be.equal('0');
-      expect(await matcher.methods.escrowBalance(ksmToken, subToEth(alice.address)).call()).to.be.equal(PRICE.toString());
+      expect(await matcher.methods.balanceKSM(subToEth(seller.address)).call()).to.be.equal('0');
+      expect(await matcher.methods.balanceKSM(subToEth(alice.address)).call()).to.be.equal(PRICE.toString());
 
-      await executeEthTxOnSub(api, alice, matcher, m => m.buyKSM(evmCollection.options.address, tokenId, subToEth(alice.address)));
+      await executeEthTxOnSub(api, alice, matcher, m => m.buyKSM(evmCollection.options.address, tokenId, subToEth(alice.address), subToEth(alice.address)));
 
       // Price is removed from buyer balance, and added to seller
-      expect(await matcher.methods.escrowBalance(ksmToken, subToEth(alice.address)).call()).to.be.equal('0');
-      expect(await matcher.methods.escrowBalance(ksmToken, subToEth(seller.address)).call()).to.be.equal(PRICE.toString());
+      expect(await matcher.methods.balanceKSM(subToEth(alice.address)).call()).to.be.equal('0');
+      expect(await matcher.methods.balanceKSM(subToEth(seller.address)).call()).to.be.equal(PRICE.toString());
     }
 
     // Token is transferred to evm account of alice
