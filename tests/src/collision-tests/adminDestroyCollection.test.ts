@@ -27,26 +27,26 @@ before(async () => {
   });
 });
 
-describe('Deleting a collection while add address to whitelist: ', () => {
+describe('Deleting a collection while add address to allowlist: ', () => {
   // tslint:disable-next-line: max-line-length
-  it('Adding an address to the collection whitelist in a block by the admin, and deleting the collection by the owner ', async () => {
+  it('Adding an address to the collection allowlist in a block by the admin, and deleting the collection by the owner ', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx);
       await waitNewBlocks(1);
       //
-      const addWhitelistAdm = api.tx.nft.addToWhiteList(collectionId, normalizeAccountId(Ferdie.address));
+      const addAllowlistAdm = api.tx.nft.addToAllowList(collectionId, normalizeAccountId(Ferdie.address));
       const destroyCollection = api.tx.nft.destroyCollection(collectionId);
       await Promise.all([
-        addWhitelistAdm.signAndSend(Bob),
+        addAllowlistAdm.signAndSend(Bob),
         destroyCollection.signAndSend(Alice),
       ]);
       await waitNewBlocks(1);
-      let whiteList = false;
-      whiteList = (await api.query.nft.whiteList(collectionId, Ferdie.address)).toJSON() as boolean;
+      let allowList = false;
+      allowList = (await api.query.nft.allowList(collectionId, Ferdie.address)).toJSON() as boolean;
       // tslint:disable-next-line: no-unused-expression
-      expect(whiteList).to.be.false;
+      expect(allowList).to.be.false;
       await waitNewBlocks(2);
     });
   });

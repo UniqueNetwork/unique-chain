@@ -32,7 +32,7 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
   });
 
-  itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should decrease (whitelisted)', async ({api, web3}) => {
+  itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should decrease (allowlisted)', async ({api, web3}) => {
     const alice = privateKey('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
@@ -62,7 +62,7 @@ describe('Sponsoring EVM contracts', () => {
     expect(+balanceAfter).to.be.lessThan(+originalFlipperBalance);
   });
 
-  itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should not decrease (non-whitelisted)', async ({api, web3}) => {
+  itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should not decrease (non-allowlisted)', async ({api, web3}) => {
     const alice = privateKey('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
@@ -158,7 +158,7 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.getSponsoringRateLimit(flipper.options.address).call()).to.be.equals('7200');
   });
 
-  itWeb3('If whitelist mode is off and sponsorship is on, sponsorship does not work', async ({api, web3}) => {
+  itWeb3('If allowlist mode is off and sponsorship is on, sponsorship does not work', async ({api, web3}) => {
     const alice = privateKey('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);

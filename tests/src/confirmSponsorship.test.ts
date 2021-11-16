@@ -15,9 +15,9 @@ import {
   createItemExpectSuccess,
   findUnusedAddress,
   getGenericResult,
-  enableWhiteListExpectSuccess,
+  enableAllowListExpectSuccess,
   enablePublicMintingExpectSuccess,
-  addToWhiteListExpectSuccess,
+  addToAllowListExpectSuccess,
   normalizeAccountId,
   addCollectionAdminExpectSuccess,
 } from './util/helpers';
@@ -144,8 +144,8 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
-    // Enable collection white list
-    await enableWhiteListExpectSuccess(alice, collectionId);
+    // Enable collection allow list
+    await enableAllowListExpectSuccess(alice, collectionId);
 
     // Enable public minting
     await enablePublicMintingExpectSuccess(alice, collectionId);
@@ -157,8 +157,8 @@ describe('integration test: ext. confirmSponsorship():', () => {
       // Find unused address
       const zeroBalance = await findUnusedAddress(api);
 
-      // Add zeroBalance address to white list
-      await addToWhiteListExpectSuccess(alice, collectionId, zeroBalance.address);
+      // Add zeroBalance address to allow list
+      await addToAllowListExpectSuccess(alice, collectionId, zeroBalance.address);
 
       // Mint token using unused address as signer
       await createItemExpectSuccess(zeroBalance, collectionId, 'NFT', zeroBalance.address);
@@ -285,8 +285,8 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
-    // Enable collection white list
-    await enableWhiteListExpectSuccess(alice, collectionId);
+    // Enable collection allow list
+    await enableAllowListExpectSuccess(alice, collectionId);
 
     // Enable public minting
     await enablePublicMintingExpectSuccess(alice, collectionId);
@@ -295,8 +295,8 @@ describe('integration test: ext. confirmSponsorship():', () => {
       // Find unused address
       const zeroBalance = await findUnusedAddress(api);
 
-      // Add zeroBalance address to white list
-      await addToWhiteListExpectSuccess(alice, collectionId, zeroBalance.address);
+      // Add zeroBalance address to allow list
+      await addToAllowListExpectSuccess(alice, collectionId, zeroBalance.address);
 
       // Mint token using unused address as signer - gets sponsored
       await createItemExpectSuccess(zeroBalance, collectionId, 'NFT', zeroBalance.address);

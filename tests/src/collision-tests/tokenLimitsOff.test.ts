@@ -9,7 +9,7 @@ import chaiAsPromised from 'chai-as-promised';
 import privateKey from '../substrate/privateKey';
 import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
 import {
-  addToWhiteListExpectSuccess,
+  addToAllowListExpectSuccess,
   createCollectionExpectSuccess,
   getCreateItemResult,
   setMintPermissionExpectSuccess,
@@ -44,8 +44,8 @@ describe('Token limit exceeded collection: ', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       await setMintPermissionExpectSuccess(Alice, collectionId, true);
-      await addToWhiteListExpectSuccess(Alice, collectionId, Ferdie.address);
-      await addToWhiteListExpectSuccess(Alice, collectionId, Bob.address);
+      await addToAllowListExpectSuccess(Alice, collectionId, Ferdie.address);
+      await addToAllowListExpectSuccess(Alice, collectionId, Bob.address);
       const setCollectionLim = api.tx.nft.setCollectionLimits(
         collectionId,
         {

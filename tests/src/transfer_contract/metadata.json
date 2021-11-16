@@ -323,7 +323,7 @@
             }
           },
           {
-            "name": "whitelisted",
+            "name": "allowlisted",
             "type": {
               "displayName": [
                 "bool"
@@ -335,7 +335,7 @@
         "docs": [],
         "mutates": true,
         "name": [
-          "toggle_white_list"
+          "toggle_allow_list"
         ],
         "payable": false,
         "returnType": null,
