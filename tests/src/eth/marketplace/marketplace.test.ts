@@ -10,7 +10,7 @@ import {expect} from 'chai';
 
 const PRICE = 2000n;
 
-describe.only('Matcher contract usage', () => {
+describe('Matcher contract usage', () => {
   itWeb3('With UNQ', async ({api, web3}) => {
     const matcherOwner = await createEthAccountWithBalance(api, web3);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
