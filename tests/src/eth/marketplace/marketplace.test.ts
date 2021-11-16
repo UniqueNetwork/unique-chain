@@ -29,7 +29,7 @@ describe('Matcher contract usage', () => {
     await confirmSponsorshipExpectSuccess(collectionId);
 
     await helpers.methods.toggleAllowed(matcher.options.address, subToEth(alice.address), true).send({from: matcherOwner});
-    await addAllowListExpectSuccess(alice, collectionId, evmToAddress(subToEth(alice.address)));
+    await addToAllowListExpectSuccess(alice, collectionId, evmToAddress(subToEth(alice.address)));
 
     const seller = privateKey('//Bob');
     await helpers.methods.toggleAllowed(matcher.options.address, subToEth(seller.address), true).send({from: matcherOwner});
