@@ -219,7 +219,7 @@ declare module '@polkadot/api/types/submittable' {
        **/
       addCollectionAdmin: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newAdminId: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
       /**
-       * Add an address to white list.
+       * Add an address to allow list.
        * 
        * # Permissions
        * 
@@ -232,7 +232,7 @@ declare module '@polkadot/api/types/submittable' {
        * 
        * * address.
        **/
-      addToWhiteList: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, address: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
+      addToAllowList: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, address: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
       /**
        * Set, change, or remove approved address to transfer the ownership of the NFT.
        * 
@@ -336,8 +336,8 @@ declare module '@polkadot/api/types/submittable' {
        * * Collection Owner.
        * * Collection Admin.
        * * Anyone if
-       * * White List is enabled, and
-       * * Address is added to white list, and
+       * * Allow List is enabled, and
+       * * Address is added to allow list, and
        * * MintPermission is enabled (see SetMintPermission method)
        * 
        * # Arguments
@@ -357,8 +357,8 @@ declare module '@polkadot/api/types/submittable' {
        * * Collection Owner.
        * * Collection Admin.
        * * Anyone if
-       * * White List is enabled, and
-       * * Address is added to white list, and
+       * * Allow List is enabled, and
+       * * Address is added to allow list, and
        * * MintPermission is enabled (see SetMintPermission method)
        * 
        * # Arguments
@@ -410,7 +410,7 @@ declare module '@polkadot/api/types/submittable' {
        **/
       removeCollectionSponsor: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
       /**
-       * Remove an address from white list.
+       * Remove an address from allow list.
        * 
        * # Permissions
        * 
@@ -423,7 +423,7 @@ declare module '@polkadot/api/types/submittable' {
        * 
        * * address.
        **/
-      removeFromWhiteList: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, address: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
+      removeFromAllowList: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, address: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
       setCollectionLimits: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newLimit: NftDataStructsCollectionLimits | { accountTokenOwnershipLimit?: any; sponsoredDataSize?: any; sponsoredDataRateLimit?: any; tokenLimit?: any; sponsorTransferTimeout?: any; ownerCanTransfer?: any; ownerCanDestroy?: any; transfersEnabled?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, NftDataStructsCollectionLimits]>;
       /**
        * # Permissions
@@ -468,8 +468,8 @@ declare module '@polkadot/api/types/submittable' {
       setMetaUpdatePermissionFlag: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, value: NftDataStructsMetaUpdatePermission | 'ItemOwner' | 'Admin' | 'None' | number | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, NftDataStructsMetaUpdatePermission]>;
       /**
        * Allows Anyone to create tokens if:
-       * * White List is enabled, and
-       * * Address is added to white list, and
+       * * Allow List is enabled, and
+       * * Address is added to allow list, and
        * * This method was called with True parameter
        * 
        * # Permissions
@@ -498,7 +498,7 @@ declare module '@polkadot/api/types/submittable' {
        **/
       setOffchainSchema: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, schema: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, Bytes]>;
       /**
-       * Toggle between normal and white list access for the methods with access for `Anyone`.
+       * Toggle between normal and allow list access for the methods with access for `Anyone`.
        * 
        * # Permissions
        * 
@@ -510,7 +510,7 @@ declare module '@polkadot/api/types/submittable' {
        * 
        * * mode: [AccessMode]
        **/
-      setPublicAccessMode: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, mode: NftDataStructsAccessMode | 'Normal' | 'WhiteList' | number | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, NftDataStructsAccessMode]>;
+      setPublicAccessMode: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, mode: NftDataStructsAccessMode | 'Normal' | 'AllowList' | number | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, NftDataStructsAccessMode]>;
       /**
        * Set schema standard
        * ImageURL

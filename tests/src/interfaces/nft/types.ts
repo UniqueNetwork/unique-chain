@@ -7,7 +7,7 @@ import type { AccountId, H160 } from '@polkadot/types/interfaces/runtime';
 /** @name NftDataStructsAccessMode */
 export interface NftDataStructsAccessMode extends Enum {
   readonly isNormal: boolean;
-  readonly isWhiteList: boolean;
+  readonly isAllowList: boolean;
 }
 
 /** @name NftDataStructsCollection */

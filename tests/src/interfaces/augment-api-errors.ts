@@ -53,7 +53,7 @@ declare module '@polkadot/api/types/errors' {
        **/
       AddressIsZero: AugmentedError<ApiType>;
       /**
-       * Address is not in white list.
+       * Address is not in allow list.
        **/
       AddressNotInAllowlist: AugmentedError<ApiType>;
       /**

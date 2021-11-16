@@ -5114,7 +5114,7 @@ dependencies = [
  "pallet-randomness-collective-flip",
  "pallet-refungible",
  "pallet-sudo",
- "pallet-template-charge-transaction",
+ "pallet-template-transaction-payment",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -6350,9 +6350,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-template-charge-transaction"
+name = "pallet-template-transaction-payment"
 version = "3.0.0"
-source = "git+https://github.com/UniqueNetwork/pallet-sponsoring#e5d3354ab68face1b2ef709dc7f629803f56598d"
+source = "git+https://github.com/UniqueNetwork/pallet-sponsoring#ab8b91e9350a31133f3a3e4f52a84c6de4108e95"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -11696,7 +11696,7 @@ version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f559b464de2e2bdabcac6a210d12e9b5a5973c251e102c44c585c71d51bd78e"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "rand 0.8.4",
  "static_assertions",
 ]
@@ -11847,7 +11847,7 @@ dependencies = [
 [[package]]
 name = "up-sponsorship"
 version = "0.1.0"
-source = "git+https://github.com/UniqueNetwork/pallet-sponsoring#e5d3354ab68face1b2ef709dc7f629803f56598d"
+source = "git+https://github.com/UniqueNetwork/pallet-sponsoring#ab8b91e9350a31133f3a3e4f52a84c6de4108e95"
 dependencies = [
  "impl-trait-for-tuples 0.2.1",
 ]

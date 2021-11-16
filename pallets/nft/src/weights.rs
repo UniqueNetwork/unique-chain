@@ -33,8 +33,8 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn create_collection() -> Weight;
 	fn destroy_collection() -> Weight;
-	fn add_to_white_list() -> Weight;
-	fn remove_from_white_list() -> Weight;
+	fn add_to_allow_list() -> Weight;
+	fn remove_from_allow_list() -> Weight;
 	fn set_public_access_mode() -> Weight;
 	fn set_mint_permission() -> Weight;
 	fn change_collection_owner() -> Weight;
@@ -75,14 +75,14 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	}
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Common Allowlist (r:0 w:1)
-	fn add_to_white_list() -> Weight {
+	fn add_to_allow_list() -> Weight {
 		(6_629_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Common Allowlist (r:0 w:1)
-	fn remove_from_white_list() -> Weight {
+	fn remove_from_allow_list() -> Weight {
 		(6_596_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -205,14 +205,14 @@ impl WeightInfo for () {
 	}
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Common Allowlist (r:0 w:1)
-	fn add_to_white_list() -> Weight {
+	fn add_to_allow_list() -> Weight {
 		(6_629_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Common Allowlist (r:0 w:1)
-	fn remove_from_white_list() -> Weight {
+	fn remove_from_allow_list() -> Weight {
 		(6_596_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
