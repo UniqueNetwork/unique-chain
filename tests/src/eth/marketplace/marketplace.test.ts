@@ -1,7 +1,7 @@
 import {readFile} from 'fs/promises';
 import {getBalanceSingle, transferBalanceExpectSuccess} from '../../substrate/get-balance';
 import privateKey from '../../substrate/privateKey';
-import {addToWhiteListExpectSuccess, confirmSponsorshipExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, createItemExpectSuccess, getTokenOwner, setCollectionSponsorExpectSuccess, transferExpectSuccess, transferFromExpectSuccess} from '../../util/helpers';
+import {addToAllowListExpectSuccess, confirmSponsorshipExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, createItemExpectSuccess, getTokenOwner, setCollectionSponsorExpectSuccess, transferExpectSuccess, transferFromExpectSuccess} from '../../util/helpers';
 import {collectionIdToAddress, contractHelpers, createEthAccountWithBalance, executeEthTxOnSub, GAS_ARGS, itWeb3, subToEth, subToEthLowercase} from '../util/helpers';
 import {evmToAddress} from '@polkadot/util-crypto';
 import nonFungibleAbi from '../nonFungibleAbi.json';
@@ -29,11 +29,11 @@ describe.only('Matcher contract usage', () => {
     await confirmSponsorshipExpectSuccess(collectionId);
 
     await helpers.methods.toggleAllowed(matcher.options.address, subToEth(alice.address), true).send({from: matcherOwner});
-    await addToWhiteListExpectSuccess(alice, collectionId, evmToAddress(subToEth(alice.address)));
+    await addAllowListExpectSuccess(alice, collectionId, evmToAddress(subToEth(alice.address)));
 
     const seller = privateKey('//Bob');
     await helpers.methods.toggleAllowed(matcher.options.address, subToEth(seller.address), true).send({from: matcherOwner});
-    await addToWhiteListExpectSuccess(alice, collectionId, evmToAddress(subToEth(seller.address)));
+    await addToAllowListExpectSuccess(alice, collectionId, evmToAddress(subToEth(seller.address)));
 
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', seller.address);
 
@@ -156,11 +156,11 @@ describe.only('Matcher contract usage', () => {
     await confirmSponsorshipExpectSuccess(collectionId);
 
     await helpers.methods.toggleAllowed(matcher.options.address, subToEth(alice.address), true).send({from: matcherOwner});
-    await addToWhiteListExpectSuccess(alice, collectionId, evmToAddress(subToEth(alice.address)));
+    await addToAllowListExpectSuccess(alice, collectionId, evmToAddress(subToEth(alice.address)));
 
     const seller = privateKey('//Bob');
     await helpers.methods.toggleAllowed(matcher.options.address, subToEth(seller.address), true).send({from: matcherOwner});
-    await addToWhiteListExpectSuccess(alice, collectionId, evmToAddress(subToEth(seller.address)));
+    await addToAllowListExpectSuccess(alice, collectionId, evmToAddress(subToEth(seller.address)));
 
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', seller.address);
 
