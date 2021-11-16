@@ -63,6 +63,7 @@
             {
                 "destructuring": "all"
             }
-        ]
+        ],
+        "@typescript-eslint/ban-ts-comment": "off"
     }
 }
