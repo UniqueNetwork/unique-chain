@@ -78,7 +78,7 @@ describe('Number of tokens per address (ReFungible)', () => {
   });
 });
 
-describe('Sponsor timeout (NFT)', () => {
+describe.skip('Sponsor timeout (NFT) (only for special chain limits test)', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
@@ -91,7 +91,7 @@ describe('Sponsor timeout (NFT)', () => {
     });
   });
 
-  it('Collection limits have greater timeout value than chain limits, collection limits are enforced', async () => {
+  it.skip('Collection limits have greater timeout value than chain limits, collection limits are enforced', async () => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorTransferTimeout: 7});
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
@@ -141,7 +141,7 @@ describe('Sponsor timeout (NFT)', () => {
   });
 });
 
-describe('Sponsor timeout (Fungible)', () => {
+describe.skip('Sponsor timeout (Fungible) (only for special chain limits test)', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
@@ -208,7 +208,7 @@ describe('Sponsor timeout (Fungible)', () => {
   });
 });
 
-describe('Sponsor timeout (ReFungible)', () => {
+describe.skip('Sponsor timeout (ReFungible) (only for special chain limits test)', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
