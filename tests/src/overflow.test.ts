@@ -13,7 +13,7 @@ import {approveExpectSuccess, createCollectionExpectSuccess, createFungibleItemE
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-describe('Integration Test fungible overflows', () => {
+describe.skip('Integration Test fungible overflows', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
