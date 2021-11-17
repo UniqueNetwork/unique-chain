@@ -12,6 +12,8 @@ import {
   createCollectionExpectSuccess,
   destroyCollectionExpectSuccess,
   addCollectionAdminExpectSuccess,
+  queryCollectionExpectSuccess,
+  getCreatedCollectionCount,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -37,7 +39,7 @@ describe('Integration Test ext. setVariableOnChainSchema()', () => {
   it('Run extrinsic with parameters of the collection id, set the scheme', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.eq(alice.address);
       const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, schema);
       await submitTransactionAsync(alice, setSchema);
@@ -49,7 +51,7 @@ describe('Integration Test ext. setVariableOnChainSchema()', () => {
       const collectionId = await createCollectionExpectSuccess();
       const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, schema);
       await submitTransactionAsync(alice, setSchema);
-      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.variableOnChainSchema.toString()).to.be.eq(schema);
 
     });
@@ -61,7 +63,7 @@ describe('Integration Test ext. collection admin setVariableOnChainSchema()', ()
   it('Run extrinsic with parameters of the collection id, set the scheme', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.eq(alice.address);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
       const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, schema);
@@ -75,7 +77,7 @@ describe('Integration Test ext. collection admin setVariableOnChainSchema()', ()
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
       const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, schema);
       await submitTransactionAsync(bob, setSchema);
-      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.variableOnChainSchema.toString()).to.be.eq(schema);
 
     });
@@ -87,7 +89,7 @@ describe('Negative Integration Test ext. setVariableOnChainSchema()', () => {
   it('Set a non-existent collection', async () => {
     await usingApi(async (api) => {
       // tslint:disable-next-line: radix
-      const collectionId = (await api.query.common.createdCollectionCount()).toNumber() + 1;
+      const collectionId = await getCreatedCollectionCount(api) + 1;
       const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, schema);
       await expect(submitTransactionExpectFailAsync(alice, setSchema)).to.be.rejected;
     });
@@ -113,7 +115,7 @@ describe('Negative Integration Test ext. setVariableOnChainSchema()', () => {
   it('Execute method not on behalf of the collection owner', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.eq(alice.address);
       const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, schema);
       await expect(submitTransactionExpectFailAsync(bob, setSchema)).to.be.rejected;

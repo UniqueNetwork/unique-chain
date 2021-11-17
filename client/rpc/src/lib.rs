@@ -3,7 +3,7 @@ use std::sync::Arc;
 use codec::Decode;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
-use nft_data_structs::{CollectionId, TokenId};
+use nft_data_structs::{Collection, CollectionId, CollectionStats, TokenId};
 use sp_api::{BlockId, BlockT, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
 use up_rpc::NftApi as NftRuntimeApi;
@@ -86,8 +86,23 @@ pub trait NftApi<BlockHash, CrossAccountId, AccountId> {
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<CrossAccountId>>;
+	#[rpc(name = "nft_allowed")]
+	fn allowed(
+		&self,
+		collection: CollectionId,
+		user: CrossAccountId,
+		at: Option<BlockHash>,
+	) -> Result<bool>;
 	#[rpc(name = "nft_lastTokenId")]
 	fn last_token_id(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<TokenId>;
+	#[rpc(name = "nft_collectionById")]
+	fn collection_by_id(
+		&self,
+		collection: CollectionId,
+		at: Option<BlockHash>,
+	) -> Result<Option<Collection<AccountId>>>;
+	#[rpc(name = "nft_collectionStats")]
+	fn collection_stats(&self, at: Option<BlockHash>) -> Result<CollectionStats>;
 }
 
 pub struct Nft<C, P> {
@@ -160,5 +175,8 @@ where
 
 	pass_method!(adminlist(collection: CollectionId) -> Vec<CrossAccountId>);
 	pass_method!(allowlist(collection: CollectionId) -> Vec<CrossAccountId>);
+	pass_method!(allowed(collection: CollectionId, user: CrossAccountId) -> bool);
 	pass_method!(last_token_id(collection: CollectionId) -> TokenId);
+	pass_method!(collection_by_id(collection: CollectionId) -> Option<Collection<AccountId>>);
+	pass_method!(collection_stats() -> CollectionStats);
 }

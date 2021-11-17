@@ -42,8 +42,8 @@ use nft_data_structs::{
 	CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
 };
 use pallet_common::{
-	account::CrossAccountId, CollectionHandle, IsAdmin, Pallet as PalletCommon,
-	Error as CommonError, CommonWeightInfo, Allowlist,
+	account::CrossAccountId, CollectionHandle, Pallet as PalletCommon, Error as CommonError,
+	CommonWeightInfo,
 };
 use pallet_refungible::{Pallet as PalletRefungible, RefungibleHandle};
 use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
@@ -190,7 +190,7 @@ decl_module! {
 			let who = ensure_signed(origin)?;
 
 			// Create new collection
-			let new_collection = Collection::<T> {
+			let new_collection = Collection {
 				owner: who.clone(),
 				name: collection_name,
 				mode: mode.clone(),
@@ -208,14 +208,14 @@ decl_module! {
 			};
 
 			let _id = match mode {
-				CollectionMode::NFT => {PalletNonfungible::init_collection(new_collection)?},
+				CollectionMode::NFT => {<PalletNonfungible<T>>::init_collection(new_collection)?},
 				CollectionMode::Fungible(decimal_points) => {
 					// check params
 					ensure!(decimal_points <= MAX_DECIMAL_POINTS, Error::<T>::CollectionDecimalPointLimitExceeded);
-					PalletFungible::init_collection(new_collection)?
+					<PalletFungible<T>>::init_collection(new_collection)?
 				}
 				CollectionMode::ReFungible => {
-					PalletRefungible::init_collection(new_collection)?
+					<PalletRefungible<T>>::init_collection(new_collection)?
 				}
 			};
 
@@ -936,19 +936,5 @@ decl_module! {
 
 			target_collection.save()
 		}
-	}
-}
-
-// TODO: limit returned entries?
-impl<T: Config> Pallet<T> {
-	pub fn adminlist(collection: CollectionId) -> Vec<T::CrossAccountId> {
-		<IsAdmin<T>>::iter_prefix((collection,))
-			.map(|(a, _)| a)
-			.collect()
-	}
-	pub fn allowlist(collection: CollectionId) -> Vec<T::CrossAccountId> {
-		<Allowlist<T>>::iter_prefix((collection,))
-			.map(|(a, _)| a)
-			.collect()
 	}
 }

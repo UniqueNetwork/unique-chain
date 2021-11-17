@@ -207,8 +207,8 @@ impl<T> Default for SponsorshipState<T> {
 
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-pub struct Collection<T: frame_system::Config> {
-	pub owner: T::AccountId,
+pub struct Collection<AccountId> {
+	pub owner: AccountId,
 	pub mode: CollectionMode,
 	pub access: AccessMode,
 	pub name: Vec<u16>,        // 64 include null escape char
@@ -217,7 +217,7 @@ pub struct Collection<T: frame_system::Config> {
 	pub mint_mode: bool,
 	pub offchain_schema: Vec<u8>,
 	pub schema_version: SchemaVersion,
-	pub sponsorship: SponsorshipState<T::AccountId>,
+	pub sponsorship: SponsorshipState<AccountId>,
 	pub limits: CollectionLimits,          // Collection private restrictions
 	pub variable_on_chain_schema: Vec<u8>, //
 	pub const_on_chain_schema: Vec<u8>,    //
@@ -412,4 +412,12 @@ impl From<CreateFungibleData> for CreateItemData {
 	fn from(item: CreateFungibleData) -> Self {
 		CreateItemData::Fungible(item)
 	}
+}
+
+#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub struct CollectionStats {
+	pub created: u32,
+	pub destroyed: u32,
+	pub alive: u32,
 }

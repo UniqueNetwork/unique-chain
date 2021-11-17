@@ -12,7 +12,7 @@ use nft_data_structs::{
 	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, ExistenceRequirement,
 	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
 	COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, Pays, PostDispatchInfo, TokenId, Weight,
-	WithdrawReasons,
+	WithdrawReasons, CollectionStats,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -26,7 +26,7 @@ pub mod eth;
 #[must_use = "Should call submit_logs or save, otherwise some data will be lost for evm side"]
 pub struct CollectionHandle<T: Config> {
 	pub id: CollectionId,
-	collection: Collection<T>,
+	collection: Collection<T::AccountId>,
 	pub recorder: pallet_evm_coder_substrate::SubstrateRecorder<T>,
 }
 impl<T: Config> CollectionHandle<T> {
@@ -78,7 +78,7 @@ impl<T: Config> CollectionHandle<T> {
 	}
 }
 impl<T: Config> Deref for CollectionHandle<T> {
-	type Target = Collection<T>;
+	type Target = Collection<T::AccountId>;
 
 	fn deref(&self) -> &Self::Target {
 		&self.collection
@@ -311,7 +311,7 @@ pub mod pallet {
 	pub type CollectionById<T> = StorageMap<
 		Hasher = Blake2_128Concat,
 		Key = CollectionId,
-		Value = Collection<T>,
+		Value = Collection<<T as frame_system::Config>::AccountId>,
 		QueryKind = OptionQuery,
 	>;
 
@@ -344,6 +344,10 @@ pub mod pallet {
 		Value = bool,
 		QueryKind = ValueQuery,
 	>;
+
+	/// Not used by code, exists only to provide some types to metadata
+	#[pallet::storage]
+	pub type DummyStorageValue<T> = StorageValue<Value = (CollectionStats, CollectionId, TokenId), QueryKind = OptionQuery>;
 }
 
 impl<T: Config> Pallet<T> {
@@ -355,10 +359,32 @@ impl<T: Config> Pallet<T> {
 		);
 		Ok(())
 	}
+	pub fn adminlist(collection: CollectionId) -> Vec<T::CrossAccountId> {
+		<IsAdmin<T>>::iter_prefix((collection,))
+			.map(|(a, _)| a)
+			.collect()
+	}
+	pub fn allowlist(collection: CollectionId) -> Vec<T::CrossAccountId> {
+		<Allowlist<T>>::iter_prefix((collection,))
+			.map(|(a, _)| a)
+			.collect()
+	}
+	pub fn allowed(collection: CollectionId, user: T::CrossAccountId) -> bool {
+		<Allowlist<T>>::get((collection, user))
+	}
+	pub fn collection_stats() -> CollectionStats {
+		let created = <CreatedCollectionCount<T>>::get();
+		let destroyed = <DestroyedCollectionCount<T>>::get();
+		CollectionStats {
+			created: created.0,
+			destroyed: destroyed.0,
+			alive: created.0 - destroyed.0,
+		}
+	}
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T>) -> Result<CollectionId, DispatchError> {
+	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
 		{
 			ensure!(
 				data.name.len() <= MAX_COLLECTION_NAME_LENGTH,

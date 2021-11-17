@@ -18,6 +18,7 @@ import {
   transferExpectSuccess,
   addCollectionAdminExpectSuccess,
   adminApproveFromExpectSuccess,
+  getCreatedCollectionCount,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -94,13 +95,13 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
   it('Approve for a collection that does not exist', async () => {
     await usingApi(async (api: ApiPromise) => {
       // nft
-      const nftCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
+      const nftCollectionCount = await getCreatedCollectionCount(api);
       await approveExpectFail(nftCollectionCount + 1, 1, alice, bob);
       // fungible
-      const fungibleCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
+      const fungibleCollectionCount = await getCreatedCollectionCount(api);
       await approveExpectFail(fungibleCollectionCount + 1, 0, alice, bob);
       // reFungible
-      const reFungibleCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
+      const reFungibleCollectionCount = await getCreatedCollectionCount(api);
       await approveExpectFail(reFungibleCollectionCount + 1, 1, alice, bob);
     });
   });

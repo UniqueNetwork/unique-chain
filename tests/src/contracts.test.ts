@@ -228,7 +228,7 @@ describe.skip('Chain extensions', () => {
       const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, contract.address);
       await submitTransactionAsync(alice, changeAdminTx);
 
-      expect(await isAllowlisted(collectionId, bob.address)).to.be.false;
+      expect(await isAllowlisted(api, collectionId, bob.address)).to.be.false;
 
       {
         const transferTx = contract.tx.toggleAllowList(value, gasLimit, collectionId, bob.address, true);
@@ -236,7 +236,7 @@ describe.skip('Chain extensions', () => {
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
 
-        expect(await isAllowlisted(collectionId, bob.address)).to.be.true;
+        expect(await isAllowlisted(api, collectionId, bob.address)).to.be.true;
       }
       {
         const transferTx = contract.tx.toggleAllowList(value, gasLimit, collectionId, bob.address, false);
@@ -244,7 +244,7 @@ describe.skip('Chain extensions', () => {
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
 
-        expect(await isAllowlisted(collectionId, bob.address)).to.be.false;
+        expect(await isAllowlisted(api, collectionId, bob.address)).to.be.false;
       }
     });
   });

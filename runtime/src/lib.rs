@@ -1040,13 +1040,22 @@ impl_runtime_apis! {
 				.or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
 		}
 		fn adminlist(collection: CollectionId) -> Vec<CrossAccountId> {
-			<pallet_nft::Pallet<Runtime>>::adminlist(collection)
+			<pallet_common::Pallet<Runtime>>::adminlist(collection)
 		}
 		fn allowlist(collection: CollectionId) -> Vec<CrossAccountId> {
-			<pallet_nft::Pallet<Runtime>>::allowlist(collection)
+			<pallet_common::Pallet<Runtime>>::allowlist(collection)
+		}
+		fn allowed(collection: CollectionId, user: CrossAccountId) -> bool {
+			<pallet_common::Pallet<Runtime>>::allowed(collection, user)
 		}
 		fn last_token_id(collection: CollectionId) -> TokenId {
 			dispatch_nft_runtime!(collection.last_token_id())
+		}
+		fn collection_by_id(collection: CollectionId) -> Option<Collection<AccountId>> {
+			<pallet_common::CollectionById<Runtime>>::get(collection)
+		}
+		fn collection_stats() -> CollectionStats {
+			<pallet_common::Pallet<Runtime>>::collection_stats()
 		}
 	}
 

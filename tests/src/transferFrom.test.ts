@@ -19,6 +19,7 @@ import {
   transferFromExpectSuccess,
   burnItemExpectSuccess,
   setCollectionLimitsExpectSuccess,
+  getCreatedCollectionCount,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -109,18 +110,18 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
   it('transferFrom for a collection that does not exist', async () => {
     await usingApi(async (api: ApiPromise) => {
       // nft
-      const nftCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
+      const nftCollectionCount = await getCreatedCollectionCount(api);
       await approveExpectFail(nftCollectionCount + 1, 1, alice, bob);
 
       await transferFromExpectFail(nftCollectionCount + 1, 1, bob, alice, charlie, 1);
 
       // fungible
-      const fungibleCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
+      const fungibleCollectionCount = await getCreatedCollectionCount(api);
       await approveExpectFail(fungibleCollectionCount + 1, 0, alice, bob);
 
       await transferFromExpectFail(fungibleCollectionCount + 1, 0, bob, alice, charlie, 1);
       // reFungible
-      const reFungibleCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
+      const reFungibleCollectionCount = await getCreatedCollectionCount(api);
       await approveExpectFail(reFungibleCollectionCount + 1, 1, alice, bob);
 
       await transferFromExpectFail(reFungibleCollectionCount + 1, 1, bob, alice, charlie, 1);

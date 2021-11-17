@@ -25,7 +25,7 @@ struct AnyError;
 fn try_sponsor<T: Config>(
 	caller: &H160,
 	collection_id: CollectionId,
-	collection: &Collection<T>,
+	collection: &Collection<T::AccountId>,
 	call: &[u8],
 ) -> Result<(), AnyError> {
 	let (method_id, mut reader) = AbiReader::new_call(call).map_err(|_| AnyError)?;
@@ -109,7 +109,7 @@ impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for NftEthSponsorshipH
 				if !collection.sponsorship.confirmed() {
 					return None;
 				}
-				if try_sponsor(who, collection_id, &collection, &call.1).is_ok() {
+				if try_sponsor::<T>(who, collection_id, &collection, &call.1).is_ok() {
 					return collection
 						.sponsorship
 						.sponsor()

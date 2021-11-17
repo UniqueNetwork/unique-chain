@@ -269,7 +269,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
   let collectionId = 0;
   await usingApi(async (api) => {
     // Get number of collections before the transaction
-    const collectionCountBefore = (await api.query.common.createdCollectionCount()).toNumber();
+    const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
     const alicePrivateKey = privateKey('//Alice');
@@ -288,10 +288,10 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     const result = getCreateCollectionResult(events);
 
     // Get number of collections after the transaction
-    const collectionCountAfter = (await api.query.common.createdCollectionCount()).toNumber();
+    const collectionCountAfter = await getCreatedCollectionCount(api);
 
     // Get the collection
-    const collection = (await api.query.common.collectionById(result.collectionId)).unwrap();
+    const collection = await queryCollectionExpectSuccess(api, result.collectionId);
 
     // What to expect
     // tslint:disable-next-line:no-unused-expression
@@ -325,7 +325,7 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
 
   await usingApi(async (api) => {
     // Get number of collections before the transaction
-    const collectionCountBefore = (await api.query.common.createdCollectionCount()).toNumber();
+    const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
     const alicePrivateKey = privateKey('//Alice');
@@ -334,7 +334,7 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
     const result = getCreateCollectionResult(events);
 
     // Get number of collections after the transaction
-    const collectionCountAfter = (await api.query.common.createdCollectionCount()).toNumber();
+    const collectionCountAfter = await getCreatedCollectionCount(api);
 
     // What to expect
     // tslint:disable-next-line:no-unused-expression
@@ -364,7 +364,7 @@ export function findUnusedAddresses(api: ApiPromise, amount: number): Promise<IK
 }
 
 export async function findNotExistingCollection(api: ApiPromise): Promise<number> {
-  const totalNumber = (await api.query.common.createdCollectionCount()).toNumber();
+  const totalNumber = await getCreatedCollectionCount(api);
   const newCollection: number = totalNumber + 1;
   return newCollection;
 }
@@ -398,7 +398,7 @@ export async function destroyCollectionExpectSuccess(collectionId: number, sende
     expect(result).to.be.true;
 
     // What to expect
-    expect((await api.query.common.collectionById(collectionId)).isNone).to.be.true;
+    expect(await getDetailedCollectionInfo(api, collectionId)).to.be.null;
   });
 }
 
@@ -432,7 +432,7 @@ export async function setCollectionSponsorExpectSuccess(collectionId: number, sp
     const result = getGenericResult(events);
 
     // Get the collection
-    const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+    const collection = await queryCollectionExpectSuccess(api, collectionId);
 
     // What to expect
     expect(result.success).to.be.true;
@@ -452,7 +452,7 @@ export async function removeCollectionSponsorExpectSuccess(collectionId: number,
     const result = getGenericResult(events);
 
     // Get the collection
-    const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+    const collection = await queryCollectionExpectSuccess(api, collectionId);
 
     // What to expect
     expect(result.success).to.be.true;
@@ -490,7 +490,7 @@ export async function confirmSponsorshipExpectSuccess(collectionId: number, send
     const result = getGenericResult(events);
 
     // Get the collection
-    const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+    const collection = await queryCollectionExpectSuccess(api, collectionId);
 
     // What to expect
     expect(result.success).to.be.true;
@@ -1057,7 +1057,7 @@ export async function setPublicAccessModeExpectSuccess(
     const result = getGenericResult(events);
 
     // Get the collection
-    const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+    const collection = await queryCollectionExpectSuccess(api, collectionId);
 
     // What to expect
     // tslint:disable-next-line:no-unused-expression
@@ -1105,7 +1105,7 @@ export async function setMintPermissionExpectSuccess(sender: IKeyringPair, colle
     expect(result.success).to.be.true;
 
     // Get the collection
-    const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+    const collection = await queryCollectionExpectSuccess(api, collectionId);
 
     expect(collection.mintMode.toHuman()).to.be.equal(enabled);
   });
@@ -1137,15 +1137,13 @@ export async function setChainLimitsExpectFailure(sender: IKeyringPair, limits: 
   });
 }
 
-export async function isAllowlisted(collectionId: number, address: string | CrossAccountId) {
-  return await usingApi(async (api) => {
-    return (await api.query.common.allowlist(collectionId, normalizeAccountId(address))).toJSON();
-  });
+export async function isAllowlisted(api: ApiPromise, collectionId: number, address: string | CrossAccountId) {
+  return (await api.rpc.nft.allowed(collectionId, normalizeAccountId(address))).toJSON();
 }
 
 export async function addToAllowListExpectSuccess(sender: IKeyringPair, collectionId: number, address: string | AccountId | CrossAccountId) {
   await usingApi(async (api) => {
-    expect(await isAllowlisted(collectionId, normalizeAccountId(address))).to.be.false;
+    expect(await isAllowlisted(api, collectionId, normalizeAccountId(address))).to.be.false;
 
     // Run the transaction
     const tx = api.tx.nft.addToAllowList(collectionId, normalizeAccountId(address));
@@ -1153,14 +1151,14 @@ export async function addToAllowListExpectSuccess(sender: IKeyringPair, collecti
     const result = getGenericResult(events);
     expect(result.success).to.be.true;
 
-    expect(await isAllowlisted(collectionId, normalizeAccountId(address))).to.be.true;
+    expect(await isAllowlisted(api, collectionId, normalizeAccountId(address))).to.be.true;
   });
 }
 
 export async function addToAllowListAgainExpectSuccess(sender: IKeyringPair, collectionId: number, address: string | AccountId) {
   await usingApi(async (api) => {
 
-    expect(await isAllowlisted(collectionId, normalizeAccountId(address))).to.be.true;
+    expect(await isAllowlisted(api, collectionId, normalizeAccountId(address))).to.be.true;
 
     // Run the transaction
     const tx = api.tx.nft.addToAllowList(collectionId, normalizeAccountId(address));
@@ -1168,7 +1166,7 @@ export async function addToAllowListAgainExpectSuccess(sender: IKeyringPair, col
     const result = getGenericResult(events);
     expect(result.success).to.be.true;
 
-    expect(await isAllowlisted(collectionId, normalizeAccountId(address))).to.be.true;
+    expect(await isAllowlisted(api, collectionId, normalizeAccountId(address))).to.be.true;
   });
 }
 
@@ -1214,16 +1212,16 @@ export async function removeFromAllowListExpectFailure(sender: IKeyringPair, col
 
 export const getDetailedCollectionInfo = async (api: ApiPromise, collectionId: number)
   : Promise<NftDataStructsCollection | null> => {
-  return (await api.query.common.collectionById(collectionId)).unwrapOr(null);
+  return (await api.rpc.nft.collectionById(collectionId)).unwrapOr(null);
 };
 
 export const getCreatedCollectionCount = async (api: ApiPromise): Promise<number> => {
   // set global object - collectionsCount
-  return (await api.query.common.createdCollectionCount()).toNumber();
+  return (await api.rpc.nft.collectionStats()).created.toNumber();
 };
 
 export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId: number): Promise<NftDataStructsCollection> {
-  return (await api.query.common.collectionById(collectionId)).unwrap();
+  return (await api.rpc.nft.collectionById(collectionId)).unwrap();
 }
 
 export async function waitNewBlocks(blocksCount = 1): Promise<void> {

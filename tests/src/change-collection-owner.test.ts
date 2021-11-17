@@ -22,6 +22,7 @@ import {createCollectionExpectSuccess,
   setMintPermissionExpectFailure,
   destroyCollectionExpectFailure,
   setPublicAccessModeExpectSuccess,
+  queryCollectionExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -34,13 +35,13 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner):', ()
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
 
-      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collection =await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
 
       const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
       await submitTransactionAsync(alice, changeOwnerTx);
 
-      const collectionAfterOwnerChange = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
       expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(bob.address);
     });
   });
@@ -53,7 +54,7 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
 
-      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
 
       const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
@@ -62,7 +63,7 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
       const badChangeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, alice.address);
       await expect(submitTransactionExpectFailAsync(alice, badChangeOwnerTx)).to.be.rejected;
 
-      const collectionAfterOwnerChange = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
       expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(bob.address);
     });
   });
@@ -74,13 +75,13 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
       const bob = privateKey('//Bob');
       const charlie = privateKey('//Charlie');
 
-      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
 
       const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
       await submitTransactionAsync(alice, changeOwnerTx);
 
-      const collectionAfterOwnerChange = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
       expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(bob.address);
 
       // After changing the owner of the collection, all privileged methods are available to the new owner
@@ -118,20 +119,20 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
       const bob = privateKey('//Bob');
       const charlie = privateKey('//Charlie');
 
-      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
 
       const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
       await submitTransactionAsync(alice, changeOwnerTx);
 
-      const collectionAfterOwnerChange = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
       expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(bob.address);
 
       const changeOwnerTx2 = api.tx.nft.changeCollectionOwner(collectionId, charlie.address);
       await submitTransactionAsync(bob, changeOwnerTx2);
 
       // ownership lost
-      const collectionAfterOwnerChange2 = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collectionAfterOwnerChange2 = await queryCollectionExpectSuccess(api, collectionId);
       expect(collectionAfterOwnerChange2.owner.toString()).to.be.deep.eq(charlie.address);
     });
   });
@@ -147,7 +148,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
       const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
       await expect(submitTransactionExpectFailAsync(bob, changeOwnerTx)).to.be.rejected;
 
-      const collectionAfterOwnerChange = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
       expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(alice.address);
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
@@ -166,7 +167,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
       const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
       await expect(submitTransactionExpectFailAsync(bob, changeOwnerTx)).to.be.rejected;
 
-      const collectionAfterOwnerChange = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
       expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(alice.address);
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
@@ -195,7 +196,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
       const bob = privateKey('//Bob');
       const charlie = privateKey('//Charlie');
 
-      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
 
       const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
@@ -204,7 +205,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
       const badChangeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, alice.address);
       await expect(submitTransactionExpectFailAsync(alice, badChangeOwnerTx)).to.be.rejected;
 
-      const collectionAfterOwnerChange = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
       expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(bob.address);
 
       await setCollectionSponsorExpectFailure(collectionId, charlie.address, '//Alice');
