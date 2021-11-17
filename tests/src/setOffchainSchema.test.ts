@@ -40,7 +40,7 @@ describe('Integration Test setOffchainSchema', () => {
       await setOffchainSchemaExpectSuccess(alice, collectionId, DATA);
       const collection = await queryCollectionExpectSuccess(api, collectionId);
 
-      expect(collection.offchainSchema).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));
+      expect('0x' + Buffer.from(collection.offchainSchema).toString('hex')).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));
     });
   });
 
@@ -51,7 +51,7 @@ describe('Integration Test setOffchainSchema', () => {
       await setOffchainSchemaExpectSuccess(bob, collectionId, DATA);
       const collection = await queryCollectionExpectSuccess(api, collectionId);
 
-      expect(collection.offchainSchema).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));
+      expect('0x' + Buffer.from(collection.offchainSchema).toString('hex')).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));
     });
   });
 });
