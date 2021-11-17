@@ -347,7 +347,8 @@ pub mod pallet {
 
 	/// Not used by code, exists only to provide some types to metadata
 	#[pallet::storage]
-	pub type DummyStorageValue<T> = StorageValue<Value = (CollectionStats, CollectionId, TokenId), QueryKind = OptionQuery>;
+	pub type DummyStorageValue<T> =
+		StorageValue<Value = (CollectionStats, CollectionId, TokenId), QueryKind = OptionQuery>;
 }
 
 impl<T: Config> Pallet<T> {
