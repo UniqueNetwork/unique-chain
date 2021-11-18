@@ -777,20 +777,14 @@ parameter_types! {
 	pub const MaxScheduledPerBlock: u32 = 50;
 }
 
-pub struct Sponsoring;
-impl SponsoringResolve<AccountId, Call> for Sponsoring {
-	fn resolve(who: &AccountId, call: &Call) -> Option<AccountId>
-	where
-		Call: Dispatchable<Info = DispatchInfo>,
-		AccountId: AsRef<[u8]>,
-	{
-		pallet_nft_transaction_payment::Module::<Runtime>::withdraw_type(who, call)
-	}
-}
-
+type EvmSponsorshipHandler = (
+	pallet_nft::NftEthSponsorshipHandler<Runtime>,
+	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
+);
 type SponsorshipHandler = (
 	pallet_nft::NftSponsorshipHandler<Runtime>,
 	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
+	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
 );
 
 impl pallet_unq_scheduler::Config for Runtime {
@@ -806,16 +800,14 @@ impl pallet_unq_scheduler::Config for Runtime {
 }
 
 impl pallet_evm_transaction_payment::Config for Runtime {
-	type SponsorshipHandler = (
-		pallet_nft::NftEthSponsorshipHandler<Self>,
-		pallet_evm_contract_helpers::HelpersContractSponsoring<Self>,
-	);
+	type EvmSponsorshipHandler = EvmSponsorshipHandler;
 	type Currency = Balances;
+	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
 	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 }
 
 impl pallet_nft_charge_transaction::Config for Runtime {
-	type SponsorshipHandler = pallet_nft::NftSponsorshipHandler<Runtime>;
+	type SponsorshipHandler = SponsorshipHandler;
 }
 
 // impl pallet_contract_helpers::Config for Runtime {
