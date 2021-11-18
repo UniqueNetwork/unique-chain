@@ -54,6 +54,8 @@ pub const NFT_SPONSOR_TRANSFER_TIMEOUT: u32 = 5;
 pub const FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT: u32 = 5;
 pub const REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT: u32 = 5;
 
+pub const SPONSOR_APPROVE_TIMEOUT: u32 = 5;
+
 // Schema limits
 pub const OFFCHAIN_SCHEMA_LIMIT: u32 = 1024;
 pub const VARIABLE_ON_CHAIN_SCHEMA_LIMIT: u32 = 1024;
@@ -259,6 +261,7 @@ pub struct CollectionLimits {
 
 	// Timeouts for item types in passed blocks
 	pub sponsor_transfer_timeout: Option<u32>,
+	pub sponsor_approve_timeout: Option<u32>,
 	pub owner_can_transfer: Option<bool>,
 	pub owner_can_destroy: Option<bool>,
 	pub transfers_enabled: Option<bool>,
@@ -283,6 +286,11 @@ impl CollectionLimits {
 	pub fn sponsor_transfer_timeout(&self, default: u32) -> u32 {
 		self.sponsor_transfer_timeout
 			.unwrap_or(default)
+			.min(MAX_SPONSOR_TIMEOUT)
+	}
+	pub fn sponsor_approve_timeout(&self) -> u32 {
+		self.sponsor_approve_timeout
+			.unwrap_or(SPONSOR_APPROVE_TIMEOUT)
 			.min(MAX_SPONSOR_TIMEOUT)
 	}
 	pub fn owner_can_transfer(&self) -> bool {
