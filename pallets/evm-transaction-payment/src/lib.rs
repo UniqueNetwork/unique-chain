@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
+use up_evm_mapping::EvmBackwardsAddressMapping;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -20,6 +21,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type SponsorshipHandler: SponsorshipHandler<H160, (H160, Vec<u8>)>;
 		type Currency: Currency<Self::AccountId>;
+		type EvmBackwardsAddressMapping: EvmBackwardsAddressMapping<Self::AccountId>;
 	}
 
 	#[pallet::pallet]

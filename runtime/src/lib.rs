@@ -736,7 +736,7 @@ parameter_types! {
 
 impl pallet_common::Config for Runtime {
 	type Event = Event;
-	type EvmBackwardsAddressMapping = pallet_common::account::MapBackwardsAddressTruncated;
+	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
 	type CrossAccountId = pallet_common::account::BasicCrossAccountId<Self>;
 
@@ -811,6 +811,7 @@ impl pallet_evm_transaction_payment::Config for Runtime {
 		pallet_evm_contract_helpers::HelpersContractSponsoring<Self>,
 	);
 	type Currency = Balances;
+	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 }
 
 impl pallet_nft_charge_transaction::Config for Runtime {
