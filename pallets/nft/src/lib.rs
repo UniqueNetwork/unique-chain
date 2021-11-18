@@ -136,13 +136,13 @@ decl_storage! {
 		//#region Tokens transfer rate limit baskets
 		/// (Collection id (controlled?2), who created (real))
 		/// TODO: Off chain worker should remove from this map when collection gets removed
-		pub CreateItemBasket get(fn create_item_basket): map hasher(blake2_128_concat) (CollectionId, T::AccountId) => T::BlockNumber;
+		pub CreateItemBasket get(fn create_item_basket): map hasher(blake2_128_concat) (CollectionId, T::AccountId) => Option<T::BlockNumber>;
 		/// Collection id (controlled?2), token id (controlled?2)
-		pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => T::BlockNumber;
+		pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber>;
 		/// Collection id (controlled?2), owning user (real)
-		pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(twox_64_concat) T::AccountId => T::BlockNumber;
+		pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(twox_64_concat) T::AccountId => Option<T::BlockNumber>;
 		/// Collection id (controlled?2), token id (controlled?2)
-		pub ReFungibleTransferBasket get(fn refungible_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => T::BlockNumber;
+		pub ReFungibleTransferBasket get(fn refungible_transfer_basket): nmap hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId, hasher(twox_64_concat) T::AccountId => Option<T::BlockNumber>;
 		//#endregion
 
 		/// Variable metadata sponsoring
@@ -253,7 +253,7 @@ decl_module! {
 
 			<NftTransferBasket<T>>::remove_prefix(collection_id, None);
 			<FungibleTransferBasket<T>>::remove_prefix(collection_id, None);
-			<ReFungibleTransferBasket<T>>::remove_prefix(collection_id, None);
+			<ReFungibleTransferBasket<T>>::remove_prefix((collection_id,), None);
 
 			<VariableMetaDataBasket<T>>::remove_prefix(collection_id, None);
 			<NftApproveBasket<T>>::remove_prefix(collection_id, None);

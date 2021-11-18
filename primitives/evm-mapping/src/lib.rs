@@ -4,9 +4,9 @@ use frame_support::sp_runtime::AccountId32;
 use sp_core::H160;
 
 /// Transforms substrate addresses to ethereum (Reverse of `EvmAddressMapping`)
-/// pallet_evm doesn't have this, as it only checks if eth address 
+/// pallet_evm doesn't have this, as it only checks if eth address
 /// is owned by substrate via `EnsureAddressOrigin` trait
-/// 
+///
 /// This trait implementations shouldn't conflict with used `EnsureAddressOrigin`
 pub trait EvmBackwardsAddressMapping<AccountId> {
 	fn from_account_id(account_id: AccountId) -> H160;
