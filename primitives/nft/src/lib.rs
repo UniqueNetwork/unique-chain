@@ -248,6 +248,7 @@ pub struct ReFungibleItemType<AccountId> {
 	pub variable_data: Vec<u8>,
 }
 
+/// All fields are wrapped in `Option`s, where None means chain default
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionLimits {
@@ -256,7 +257,7 @@ pub struct CollectionLimits {
 	/// None - setVariableMetadata is not sponsored
 	/// Some(v) - setVariableMetadata is sponsored
 	///           if there is v block between txs
-	pub sponsored_data_rate_limit: Option<u32>,
+	pub sponsored_data_rate_limit: Option<(Option<u32>,)>,
 	pub token_limit: Option<u32>,
 
 	// Timeouts for item types in passed blocks
@@ -304,6 +305,8 @@ impl CollectionLimits {
 	}
 	pub fn sponsored_data_rate_limit(&self) -> Option<u32> {
 		self.sponsored_data_rate_limit
+			.unwrap_or((None,))
+			.0
 			.map(|v| v.min(MAX_SPONSOR_TIMEOUT))
 	}
 }
