@@ -805,10 +805,6 @@ impl pallet_unq_scheduler::Config for Runtime {
 	type WeightInfo = ();
 }
 
-impl pallet_nft_transaction_payment::Config for Runtime {
-	type SponsorshipHandler = SponsorshipHandler;
-}
-
 impl pallet_evm_transaction_payment::Config for Runtime {
 	type SponsorshipHandler = (
 		pallet_nft::NftEthSponsorshipHandler<Self>,
@@ -870,7 +866,7 @@ construct_runtime!(
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
 		Nft: pallet_nft::{Pallet, Call, Storage} = 61,
 		Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
-		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage} = 63,
+		// free = 63
 		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage } = 64,
 		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
 		Common: pallet_common::{Pallet, Storage, Event<T>} = 66,
