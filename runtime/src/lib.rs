@@ -22,8 +22,7 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, ConvertInto, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify,
-		AccountIdConversion,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, AccountIdConversion,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature,
@@ -70,7 +69,7 @@ use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMetho
 use fp_rpc::TransactionStatus;
 use sp_core::crypto::Public;
 use sp_runtime::{
-	traits::{Dispatchable, PostDispatchInfoOf},
+	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf},
 	transaction_validity::TransactionValidityError,
 };
 
@@ -538,17 +537,33 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
-parameter_types! {
-	pub const MinVestedTransfer: Balance = 10 * UNIQUE;
+pub struct RelayChainBlockNumberProvider<T>(sp_std::marker::PhantomData<T>);
+
+impl<T: cumulus_pallet_parachain_system::Config> BlockNumberProvider
+	for RelayChainBlockNumberProvider<T>
+{
+	type BlockNumber = BlockNumber;
+
+	fn current_block_number() -> Self::BlockNumber {
+		cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
+			.map(|d| d.relay_parent_number)
+			.unwrap_or_default()
+	}
 }
 
-impl pallet_vesting::Config for Runtime {
+parameter_types! {
+	pub const MinVestedTransfer: Balance = 10 * UNIQUE;
+	pub const MaxVestingSchedules: u32 = 28;
+}
+
+impl orml_vesting::Config for Runtime {
 	type Event = Event;
-	type Currency = Balances;
-	type BlockNumberToBalance = ConvertInto;
+	type Currency = pallet_balances::Pallet<Runtime>;
 	type MinVestedTransfer = MinVestedTransfer;
+	type VestedTransferOrigin = EnsureSigned<AccountId>;
 	type WeightInfo = ();
-	const MAX_VESTING_SCHEDULES: u32 = 28;
+	type MaxVestingSchedules = MaxVestingSchedules;
+	type BlockNumberProvider = RelayChainBlockNumberProvider<Runtime>;
 }
 
 parameter_types! {
@@ -865,7 +880,8 @@ construct_runtime!(
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 34,
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		System: system::{Pallet, Call, Storage, Config, Event<T>} = 36,
-		Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
+		Vesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 37,
+		// Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
 		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 
 		// XCM helpers.

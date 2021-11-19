@@ -323,7 +323,7 @@ impl<T: Config> Pallet<T> {
 			.checked_add(data.len() as u32)
 			.ok_or(ArithmeticError::Overflow)?;
 		ensure!(
-			tokens_minted < collection.limits.token_limit(),
+			tokens_minted <= collection.limits.token_limit(),
 			<CommonError<T>>::CollectionTokenLimitExceeded
 		);
 

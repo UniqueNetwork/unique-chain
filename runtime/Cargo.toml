@@ -62,7 +62,7 @@ std = [
     'pallet-transaction-payment/std',
     'pallet-transaction-payment-rpc-runtime-api/std',
     'pallet-treasury/std',
-    'pallet-vesting/std',
+    # 'pallet-vesting/std',
     'pallet-evm/std',
     'pallet-evm-migration/std',
     'pallet-evm-contract-helpers/std',
@@ -99,6 +99,8 @@ std = [
     'xcm/std',
     'xcm-builder/std',
     'xcm-executor/std',
+
+    "orml-vesting/std",
 ]
 limit-testing = ['pallet-nft/limit-testing', 'nft-data-structs/limit-testing']
 
@@ -212,10 +214,10 @@ default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 branch = 'polkadot-v0.9.12'
 
-[dependencies.pallet-vesting]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.12'
+# [dependencies.pallet-vesting]
+# default-features = false
+# git = 'https://github.com/paritytech/substrate.git'
+# branch = 'polkadot-v0.9.12'
 
 [dependencies.sp-arithmetic]
 default-features = false
@@ -361,6 +363,10 @@ git = 'https://github.com/paritytech/polkadot'
 branch = 'release-v0.9.12'
 default-features = false
 
+[dependencies.orml-vesting]
+git = "https://github.com/open-web3-stack/open-runtime-module-library"
+version = "0.4.1-dev" 
+default-features = false
 
 ################################################################################
 # local dependencies
