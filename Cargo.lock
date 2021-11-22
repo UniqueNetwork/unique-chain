@@ -5310,7 +5310,7 @@ dependencies = [
 [[package]]
 name = "orml-vesting"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#55d52768c5e8897dddb44a36956eae744bb401fe"
+source = "git+https://github.com/UniqueNetwork/open-runtime-module-library#d69f226e332ae29b7b33d53d2f06f309d2986ea0"
 dependencies = [
  "frame-support",
  "frame-system",
