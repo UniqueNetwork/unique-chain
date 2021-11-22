@@ -10,7 +10,7 @@ use sp_runtime::{
 use pallet_transaction_payment::{CurrencyAdapter};
 use frame_system as system;
 use pallet_evm::AddressMapping;
-use crate::{EvmBackwardsAddressMapping, CrossAccountId};
+use pallet_common::account::{EvmBackwardsAddressMapping, CrossAccountId};
 use codec::{Encode, Decode};
 use scale_info::TypeInfo;
 
@@ -158,14 +158,7 @@ impl pallet_evm_coder_substrate::Config for Test {
 }
 
 impl pallet_template::Config for Test {
-	type Event = ();
 	type WeightInfo = ();
-	type CollectionCreationPrice = CollectionCreationPrice;
-	type Currency = pallet_balances::Pallet<Test>;
-	type TreasuryAccountId = TreasuryAccountId;
-	type EvmAddressMapping = TestEvmAddressMapping;
-	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
-	type CrossAccountId = TestCrossAccountId;
 }
 
 // Build genesis storage according to the mock runtime.

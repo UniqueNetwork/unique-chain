@@ -1,7 +1,7 @@
 // Tests to be written here
 use super::*;
 use crate::mock::*;
-use crate::{AccessMode, CollectionMode, Ownership, CreateItemData};
+use crate::{AccessMode, CollectionMode, CreateItemData};
 use nft_data_structs::{
 	CreateNftData, CreateFungibleData, CreateReFungibleData, CollectionId, TokenId,
 	MAX_DECIMAL_POINTS,
@@ -178,15 +178,10 @@ fn create_refungible_item() {
 		let data = default_re_fungible_data();
 		create_test_item(collection_id, &data.clone().into());
 		let item = TemplateModule::refungible_item_id(collection_id, 1).unwrap();
+		let balance = TemplateModule::balance(collection_id, 1, account(1));
 		assert_eq!(item.const_data, data.const_data.into_inner());
 		assert_eq!(item.variable_data, data.variable_data.into_inner());
-		assert_eq!(
-			item.owner[0],
-			Ownership {
-				owner: account(1),
-				fraction: 1023
-			}
-		);
+		assert_eq!(balance, 1023);
 	});
 }
 
@@ -215,15 +210,10 @@ fn create_multiple_refungible_items() {
 		));
 		for (index, data) in items_data.into_iter().enumerate() {
 			let item = TemplateModule::refungible_item_id(1, (index + 1) as TokenId).unwrap();
+			let balance = TemplateModule::balance(1, 1, account(1));
 			assert_eq!(item.const_data.to_vec(), data.const_data.into_inner());
 			assert_eq!(item.variable_data.to_vec(), data.variable_data.into_inner());
-			assert_eq!(
-				item.owner[0],
-				Ownership {
-					owner: account(1),
-					fraction: 1023
-				}
-			);
+			assert_eq!(balance, 1023);
 		}
 	});
 }
@@ -318,28 +308,19 @@ fn transfer_refungible_item() {
 		let origin2 = Origin::signed(2);
 		{
 			let item = TemplateModule::refungible_item_id(collection_id, 1).unwrap();
+			let balance = TemplateModule::balance(collection_id, 1, account(1));
 			assert_eq!(item.const_data, data.const_data.into_inner());
 			assert_eq!(item.variable_data, data.variable_data.into_inner());
-			assert_eq!(
-				item.owner[0],
-				Ownership {
-					owner: account(1),
-					fraction: 1023
-				}
-			);
+			assert_eq!(balance, 1023);
 		}
 		assert_eq!(TemplateModule::balance_count(1, 1), 1023);
 		assert_eq!(TemplateModule::address_tokens(1, 1), [1]);
 
 		// change owner scenario
 		assert_ok!(TemplateModule::transfer(origin1, account(2), 1, 1, 1023));
-		assert_eq!(
-			TemplateModule::refungible_item_id(1, 1).unwrap().owner[0],
-			Ownership {
-				owner: account(2),
-				fraction: 1023
-			}
-		);
+
+		let balance2 = TemplateModule::balance(collection_id, 1, account(2));
+		assert_eq!(balance2, 1023);
 		assert_eq!(TemplateModule::balance_count(1, 1), 0);
 		assert_eq!(TemplateModule::balance_count(1, 2), 1023);
 		// assert_eq!(TemplateModule::address_tokens(1, 1), []);
@@ -355,20 +336,10 @@ fn transfer_refungible_item() {
 		));
 		{
 			let item = TemplateModule::refungible_item_id(1, 1).unwrap();
-			assert_eq!(
-				item.owner[0],
-				Ownership {
-					owner: account(2),
-					fraction: 523
-				}
-			);
-			assert_eq!(
-				item.owner[1],
-				Ownership {
-					owner: account(3),
-					fraction: 500
-				}
-			);
+			let balance2 = TemplateModule::balance(collection_id, 1, account(2));
+			let balance3 = TemplateModule::balance(collection_id, 1, account(3));
+			assert_eq!(balance2, 523);
+			assert_eq!(balance3, 500);
 		}
 		assert_eq!(TemplateModule::balance_count(1, 2), 523);
 		assert_eq!(TemplateModule::balance_count(1, 3), 500);
@@ -379,20 +350,10 @@ fn transfer_refungible_item() {
 		assert_ok!(TemplateModule::transfer(origin2, account(3), 1, 1, 200));
 		{
 			let item = TemplateModule::refungible_item_id(1, 1).unwrap();
-			assert_eq!(
-				item.owner[0],
-				Ownership {
-					owner: account(2),
-					fraction: 323
-				}
-			);
-			assert_eq!(
-				item.owner[1],
-				Ownership {
-					owner: account(3),
-					fraction: 700
-				}
-			);
+			let balance2 = TemplateModule::balance(collection_id, 1, account(2));
+			let balance3 = TemplateModule::balance(collection_id, 1, account(3));
+			assert_eq!(balance2, 323);
+			assert_eq!(balance3, 700);
 		}
 		assert_eq!(TemplateModule::balance_count(1, 2), 323);
 		assert_eq!(TemplateModule::balance_count(1, 3), 700);
