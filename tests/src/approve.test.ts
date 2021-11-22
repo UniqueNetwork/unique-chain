@@ -26,321 +26,321 @@ chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 describe('Integration Test approve(spender, collection_id, item_id, amount):', () => {
-  let Alice: IKeyringPair;
-  let Bob: IKeyringPair;
-  let Charlie: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async () => {
     await usingApi(async () => {
-      Alice = privateKey('//Alice');
-      Bob = privateKey('//Bob');
-      Charlie = privateKey('//Charlie');
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
     });
   });
 
   it('Execute the extrinsic and check approvedList', async () => {
     const nftCollectionId = await createCollectionExpectSuccess();
     // nft
-    const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
-    await approveExpectSuccess(nftCollectionId, newNftTokenId, Alice, Bob.address);
+    const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
+    await approveExpectSuccess(nftCollectionId, newNftTokenId, alice, bob.address);
     // fungible
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible');
-    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob.address);
+    const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
+    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob.address);
     // reFungible
     const reFungibleCollectionId =
       await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
-    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob.address);
+    const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
+    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, alice, bob.address);
   });
 
   it('Remove approval by using 0 amount', async () => {
     const nftCollectionId = await createCollectionExpectSuccess();
     // nft
-    const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
-    await approveExpectSuccess(nftCollectionId, newNftTokenId, Alice, Bob.address, 1);
-    await approveExpectSuccess(nftCollectionId, newNftTokenId, Alice, Bob.address, 0);
+    const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
+    await approveExpectSuccess(nftCollectionId, newNftTokenId, alice, bob.address, 1);
+    await approveExpectSuccess(nftCollectionId, newNftTokenId, alice, bob.address, 0);
     // fungible
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible');
-    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob.address, 1);
-    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob.address, 0);
+    const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
+    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob.address, 1);
+    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob.address, 0);
     // reFungible
     const reFungibleCollectionId =
       await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
-    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob.address, 1);
-    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob.address, 0);
+    const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
+    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, alice, bob.address, 1);
+    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, alice, bob.address, 0);
   });
 
   it('can be called by collection owner on non-owned item when OwnerCanTransfer == true', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Bob.address);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
 
-    await adminApproveFromExpectSuccess(collectionId, itemId, Alice, Bob.address, Charlie.address);
+    await adminApproveFromExpectSuccess(collectionId, itemId, alice, bob.address, charlie.address);
   });
 });
 
 describe('Normal user can approve other users to transfer:', () => {
-  let Alice: IKeyringPair;
-  let Bob: IKeyringPair;
-  let Charlie: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async () => {
     await usingApi(async () => {
-      Alice = privateKey('//Alice');
-      Bob = privateKey('//Bob');
-      Charlie = privateKey('//Charlie');
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
     });
   });  
 
   it('NFT', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Bob.address);
-    await approveExpectSuccess(collectionId, itemId, Bob, Charlie.address);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
+    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
   });
 
   it('Fungible up to an approved amount', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'Fungible', decimalPoints: 0 }});
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'Fungible', Bob.address); 
-    await approveExpectSuccess(collectionId, itemId, Bob, Charlie.address);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', bob.address); 
+    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
   });
 
   it('ReFungible up to an approved amount', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'ReFungible' } });
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'ReFungible', Bob.address);
-    await approveExpectSuccess(collectionId, itemId, Bob, Charlie.address);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', bob.address);
+    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
   });
 });
 
 describe('Approved users can transferFrom up to approved amount:', () => {
-  let Alice: IKeyringPair;
-  let Bob: IKeyringPair;
-  let Charlie: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async () => {
     await usingApi(async () => {
-      Alice = privateKey('//Alice');
-      Bob = privateKey('//Bob');
-      Charlie = privateKey('//Charlie');
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
     });
   });  
 
   it('NFT', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Bob.address);
-    await approveExpectSuccess(collectionId, itemId, Bob, Charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, Charlie, Bob, Alice, 1, 'NFT');
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
+    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
+    await transferFromExpectSuccess(collectionId, itemId, charlie, bob, alice, 1, 'NFT');
   });
 
   it('Fungible up to an approved amount', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'Fungible', decimalPoints: 0 }});
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'Fungible', Bob.address); 
-    await approveExpectSuccess(collectionId, itemId, Bob, Charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, Charlie, Bob, Alice, 1, 'Fungible');
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', bob.address); 
+    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
+    await transferFromExpectSuccess(collectionId, itemId, charlie, bob, alice, 1, 'Fungible');
   });
 
   it('ReFungible up to an approved amount', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'ReFungible' } });
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'ReFungible', Bob.address);
-    await approveExpectSuccess(collectionId, itemId, Bob, Charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, Charlie, Bob, Alice, 1, 'ReFungible');
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', bob.address);
+    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
+    await transferFromExpectSuccess(collectionId, itemId, charlie, bob, alice, 1, 'ReFungible');
   });
 });
 
 describe('Approved users cannot use transferFrom to repeat transfers if approved amount was already transferred:', () => {
-  let Alice: IKeyringPair;
-  let Bob: IKeyringPair;
-  let Charlie: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async () => {
     await usingApi(async () => {
-      Alice = privateKey('//Alice');
-      Bob = privateKey('//Bob');
-      Charlie = privateKey('//Charlie');
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
     });
   });  
 
   it('NFT', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Bob.address);
-    await approveExpectSuccess(collectionId, itemId, Bob, Charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, Charlie, Bob, Alice, 1, 'NFT');
-    await transferFromExpectFail(collectionId, itemId, Charlie, Bob, Alice, 1);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
+    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
+    await transferFromExpectSuccess(collectionId, itemId, charlie, bob, alice, 1, 'NFT');
+    await transferFromExpectFail(collectionId, itemId, charlie, bob, alice, 1);
   });
 
   it('Fungible up to an approved amount', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'Fungible', decimalPoints: 0 }});
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'Fungible', Bob.address); 
-    await approveExpectSuccess(collectionId, itemId, Bob, Charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, Charlie, Bob, Alice, 1, 'Fungible');
-    await transferFromExpectFail(collectionId, itemId, Charlie, Bob, Alice, 1);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', bob.address); 
+    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
+    await transferFromExpectSuccess(collectionId, itemId, charlie, bob, alice, 1, 'Fungible');
+    await transferFromExpectFail(collectionId, itemId, charlie, bob, alice, 1);
   });
 
   it('ReFungible up to an approved amount', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'ReFungible' } });
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'ReFungible', Bob.address);
-    await approveExpectSuccess(collectionId, itemId, Bob, Charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, Charlie, Bob, Alice, 1, 'ReFungible');
-    await transferFromExpectFail(collectionId, itemId, Charlie, Bob, Alice, 1);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', bob.address);
+    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
+    await transferFromExpectSuccess(collectionId, itemId, charlie, bob, alice, 1, 'ReFungible');
+    await transferFromExpectFail(collectionId, itemId, charlie, bob, alice, 1);
   });
 });
 
 describe('Approved amount decreases by the transferred amount.:', () => {
-  let Alice: IKeyringPair;
-  let Bob: IKeyringPair;
-  let Charlie: IKeyringPair;
-  let Dave: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
+  let dave: IKeyringPair;
 
   before(async () => {
     await usingApi(async () => {
-      Alice = privateKey('//Alice');
-      Bob = privateKey('//Bob');
-      Charlie = privateKey('//Charlie');
-      Dave = privateKey('//Dave');
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
+      dave = privateKey('//Dave');
     });
   });  
 
   it('If a user B is approved to transfer 10 Fungible tokens from user A, they can transfer 2 tokens to user C, which will result in decreasing approval from 10 to 8. Then user B can transfer 8 tokens to user D.', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'Fungible', decimalPoints: 0 }});
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'Fungible', Alice.address); 
-    await approveExpectSuccess(collectionId, itemId, Alice, Bob.address, 10);
-    await transferFromExpectSuccess(collectionId, itemId, Bob, Alice, Charlie, 2, 'Fungible');
-    await transferFromExpectSuccess(collectionId, itemId, Bob, Alice, Dave, 8, 'Fungible');
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', alice.address); 
+    await approveExpectSuccess(collectionId, itemId, alice, bob.address, 10);
+    await transferFromExpectSuccess(collectionId, itemId, bob, alice, charlie, 2, 'Fungible');
+    await transferFromExpectSuccess(collectionId, itemId, bob, alice, dave, 8, 'Fungible');
   });
 });
 
 describe('User may clear the approvals to approving for 0 amount:', () => {
-  let Alice: IKeyringPair;
-  let Bob: IKeyringPair;
-  let Charlie: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async () => {
     await usingApi(async () => {
-      Alice = privateKey('//Alice');
-      Bob = privateKey('//Bob');
-      Charlie = privateKey('//Charlie');
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
     });
   });
 
   it('NFT', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT');
-    await approveExpectSuccess(collectionId, itemId, Alice, Bob.address, 1);
-    await approveExpectSuccess(collectionId, itemId, Alice, Bob.address, 0);
-    await transferFromExpectFail(collectionId, itemId, Bob, Bob, Charlie, 1);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT');
+    await approveExpectSuccess(collectionId, itemId, alice, bob.address, 1);
+    await approveExpectSuccess(collectionId, itemId, alice, bob.address, 0);
+    await transferFromExpectFail(collectionId, itemId, bob, bob, charlie, 1);
   });
 
   it('Fungible', async () => {
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible');
-    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob.address, 1);
-    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, Alice, Bob.address, 0);
-    await transferFromExpectFail(fungibleCollectionId, newFungibleTokenId, Bob, Bob, Charlie, 1);
+    const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
+    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob.address, 1);
+    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob.address, 0);
+    await transferFromExpectFail(fungibleCollectionId, newFungibleTokenId, bob, bob, charlie, 1);
   });
 
   it('ReFungible', async () => {
     const reFungibleCollectionId =
       await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
-    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob.address, 1);
-    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, Alice, Bob.address, 0);
-    await transferFromExpectFail(reFungibleCollectionId, newReFungibleTokenId, Bob, Bob, Charlie, 1);
+    const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
+    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, alice, bob.address, 1);
+    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, alice, bob.address, 0);
+    await transferFromExpectFail(reFungibleCollectionId, newReFungibleTokenId, bob, bob, charlie, 1);
   });
 });
 
 describe('User cannot approve for the amount greater than they own:', () => {
-  let Alice: IKeyringPair;
-  let Bob: IKeyringPair;
-  let Charlie: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async () => {
     await usingApi(async () => {
-      Alice = privateKey('//Alice');
-      Bob = privateKey('//Bob');
-      Charlie = privateKey('//Charlie');
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
     });
   });
 
   it('1 for NFT', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Bob.address);
-    await approveExpectFail(collectionId, itemId, Bob, Charlie, 2);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
+    await approveExpectFail(collectionId, itemId, bob, charlie, 2);
   });
 
   it('Fungible', async () => {
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible');
-    await approveExpectFail(fungibleCollectionId, newFungibleTokenId, Bob, Charlie, 11);
+    const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
+    await approveExpectFail(fungibleCollectionId, newFungibleTokenId, bob, charlie, 11);
   });
 
   it('ReFungible', async () => {
     const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
-    await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, Bob, Charlie, 101);
+    const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
+    await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, bob, charlie, 101);
   });
 });
 
 describe('Administrator and collection owner do not need approval in order to execute TransferFrom:', () => {
-  let Alice: IKeyringPair;
-  let Bob: IKeyringPair;
-  let Charlie: IKeyringPair;
-  let Dave: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
+  let dave: IKeyringPair;
 
   before(async () => {
     await usingApi(async () => {
-      Alice = privateKey('//Alice');
-      Bob = privateKey('//Bob');
-      Charlie = privateKey('//Charlie');
-      Dave = privateKey('//Dave');
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
+      dave = privateKey('//Dave');
     });
   });  
 
   it('NFT', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, Alice, Charlie, Dave, 1, 'NFT');
-    await addCollectionAdminExpectSuccess(Alice, collectionId, Bob.address);
-    await transferFromExpectSuccess(collectionId, itemId, Bob, Dave, Alice, 1, 'NFT');
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', charlie.address);
+    await transferFromExpectSuccess(collectionId, itemId, alice, charlie, dave, 1, 'NFT');
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+    await transferFromExpectSuccess(collectionId, itemId, bob, dave, alice, 1, 'NFT');
   });
 
   it('Fungible up to an approved amount', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'Fungible', decimalPoints: 0 }});
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'Fungible', Charlie.address); 
-    await transferFromExpectSuccess(collectionId, itemId, Alice, Charlie, Dave, 1, 'Fungible');
-    await addCollectionAdminExpectSuccess(Alice, collectionId, Bob.address);
-    await transferFromExpectSuccess(collectionId, itemId, Bob, Dave, Alice, 1, 'Fungible');
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', charlie.address); 
+    await transferFromExpectSuccess(collectionId, itemId, alice, charlie, dave, 1, 'Fungible');
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+    await transferFromExpectSuccess(collectionId, itemId, bob, dave, alice, 1, 'Fungible');
   });
 
   it('ReFungible up to an approved amount', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'ReFungible' } });
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'ReFungible', Charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, Alice, Charlie, Dave, 1, 'ReFungible');
-    await addCollectionAdminExpectSuccess(Alice, collectionId, Bob.address);
-    await transferFromExpectSuccess(collectionId, itemId, Bob, Dave, Alice, 1, 'ReFungible');
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', charlie.address);
+    await transferFromExpectSuccess(collectionId, itemId, alice, charlie, dave, 1, 'ReFungible');
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+    await transferFromExpectSuccess(collectionId, itemId, bob, dave, alice, 1, 'ReFungible');
   });
 });
 
 describe('Repeated approvals add up', () => {
-  let Alice: IKeyringPair;
-  let Bob: IKeyringPair;
-  let Charlie: IKeyringPair;
-  let Dave: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
+  let dave: IKeyringPair;
 
   before(async () => {
     await usingApi(async () => {
-      Alice = privateKey('//Alice');
-      Bob = privateKey('//Bob');
-      Charlie = privateKey('//Charlie');
-      Dave = privateKey('//Dave');
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
+      dave = privateKey('//Dave');
     });
   });  
 
   it.skip('Owned 10, approval 1: 1, approval 2: 1, resulting approved value: 2. Fungible', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'Fungible', decimalPoints: 0 }});
-    await createItemExpectSuccess(Alice, collectionId, 'Fungible', Alice.address);
-    await approveExpectSuccess(collectionId, 0, Alice, Bob.address, 1);
-    await approveExpectSuccess(collectionId, 0, Alice, Charlie.address, 1);
+    await createItemExpectSuccess(alice, collectionId, 'Fungible', alice.address);
+    await approveExpectSuccess(collectionId, 0, alice, bob.address, 1);
+    await approveExpectSuccess(collectionId, 0, alice, charlie.address, 1);
     // const allowances1 = await getAllowance(collectionId, 0, Alice.address, Bob.address);
     // const allowances2 = await getAllowance(collectionId, 0, Alice.address, Charlie.address);
     // expect(allowances1 + allowances2).to.be.eq(BigInt(2));
@@ -348,9 +348,9 @@ describe('Repeated approvals add up', () => {
 
   it.skip('Owned 10, approval 1: 1, approval 2: 1, resulting approved value: 2. ReFungible', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'ReFungible' } });
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'ReFungible', Alice.address);
-    await approveExpectSuccess(collectionId, itemId, Alice, Bob.address, 1);
-    await approveExpectSuccess(collectionId, itemId, Alice, Charlie.address, 1);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', alice.address);
+    await approveExpectSuccess(collectionId, itemId, alice, bob.address, 1);
+    await approveExpectSuccess(collectionId, itemId, alice, charlie.address, 1);
     // const allowances1 = await getAllowance(collectionId, itemId, Alice.address, Bob.address);
     // const allowances2 = await getAllowance(collectionId, itemId, Alice.address, Charlie.address);
     // expect(allowances1 + allowances2).to.be.eq(BigInt(2));
@@ -359,52 +359,52 @@ describe('Repeated approvals add up', () => {
   // Canceled by changing approve logic
   it.skip('Cannot approve for more than total user`s amount (owned: 10, approval 1: 5 - should succeed, approval 2: 6 - should fail). Fungible', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'Fungible', decimalPoints: 0 }});
-    await createItemExpectSuccess(Alice, collectionId, 'Fungible', Dave.address);
-    await approveExpectSuccess(collectionId, 0, Dave, Bob.address, 5);
-    await approveExpectFail(collectionId, 0, Dave, Charlie, 6);
+    await createItemExpectSuccess(alice, collectionId, 'Fungible', dave.address);
+    await approveExpectSuccess(collectionId, 0, dave, bob.address, 5);
+    await approveExpectFail(collectionId, 0, dave, charlie, 6);
   });
 
   // Canceled by changing approve logic
   it.skip('Cannot approve for more than total users amount (owned: 100, approval 1: 50 - should succeed, approval 2: 51 - should fail). ReFungible', async () => {
     const collectionId = await createCollectionExpectSuccess({ mode:{ type: 'ReFungible' } });
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'ReFungible', Dave.address);
-    await approveExpectSuccess(collectionId, itemId, Dave, Bob.address, 50);
-    await approveExpectFail(collectionId, itemId, Dave, Charlie, 51);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', dave.address);
+    await approveExpectSuccess(collectionId, itemId, dave, bob.address, 50);
+    await approveExpectFail(collectionId, itemId, dave, charlie, 51);
   });
 });
 
 describe('Integration Test approve(spender, collection_id, item_id, amount) with collection admin permissions:', () => {
-  let Alice: IKeyringPair;
-  let Bob: IKeyringPair;
-  let Charlie: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async () => {
     await usingApi(async () => {
-      Alice = privateKey('//Alice');
-      Bob = privateKey('//Bob');
-      Charlie = privateKey('//Charlie');
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
     });
   });
 
   it('can be called by collection admin on non-owned item', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Alice.address);
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
 
-    await addCollectionAdminExpectSuccess(Alice, collectionId, Bob.address);
-    await adminApproveFromExpectSuccess(collectionId, itemId, Bob, Alice.address, Charlie.address);
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+    await adminApproveFromExpectSuccess(collectionId, itemId, bob, alice.address, charlie.address);
   });
 });
 
 describe('Negative Integration Test approve(spender, collection_id, item_id, amount):', () => {
-  let Alice: IKeyringPair;
-  let Bob: IKeyringPair;
-  let Charlie: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async () => {
     await usingApi(async () => {
-      Alice = privateKey('//Alice');
-      Bob = privateKey('//Bob');
-      Charlie = privateKey('//Charlie');
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
     });
   });
 
@@ -412,13 +412,13 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
     await usingApi(async (api: ApiPromise) => {
       // nft
       const nftCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
-      await approveExpectFail(nftCollectionCount + 1, 1, Alice, Bob);
+      await approveExpectFail(nftCollectionCount + 1, 1, alice, bob);
       // fungible
       const fungibleCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
-      await approveExpectFail(fungibleCollectionCount + 1, 0, Alice, Bob);
+      await approveExpectFail(fungibleCollectionCount + 1, 0, alice, bob);
       // reFungible
       const reFungibleCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
-      await approveExpectFail(reFungibleCollectionCount + 1, 1, Alice, Bob);
+      await approveExpectFail(reFungibleCollectionCount + 1, 1, alice, bob);
     });
   });
 
@@ -426,65 +426,65 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
     // nft
     const nftCollectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectSuccess(nftCollectionId);
-    await approveExpectFail(nftCollectionId, 1, Alice, Bob);
+    await approveExpectFail(nftCollectionId, 1, alice, bob);
     // fungible
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     await destroyCollectionExpectSuccess(fungibleCollectionId);
-    await approveExpectFail(fungibleCollectionId, 0, Alice, Bob);
+    await approveExpectFail(fungibleCollectionId, 0, alice, bob);
     // reFungible
     const reFungibleCollectionId =
       await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     await destroyCollectionExpectSuccess(reFungibleCollectionId);
-    await approveExpectFail(reFungibleCollectionId, 1, Alice, Bob);
+    await approveExpectFail(reFungibleCollectionId, 1, alice, bob);
   });
 
   it('Approve transfer of a token that does not exist', async () => {
     // nft
     const nftCollectionId = await createCollectionExpectSuccess();
-    await approveExpectFail(nftCollectionId, 2, Alice, Bob);
+    await approveExpectFail(nftCollectionId, 2, alice, bob);
     // reFungible
     const reFungibleCollectionId =
       await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    await approveExpectFail(reFungibleCollectionId, 2, Alice, Bob);
+    await approveExpectFail(reFungibleCollectionId, 2, alice, bob);
   });
 
   it('Approve using the address that does not own the approved token', async () => {
     const nftCollectionId = await createCollectionExpectSuccess();
     // nft
-    const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
-    await approveExpectFail(nftCollectionId, newNftTokenId, Bob, Alice);
+    const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
+    await approveExpectFail(nftCollectionId, newNftTokenId, bob, alice);
     // fungible
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const newFungibleTokenId = await createItemExpectSuccess(Alice, fungibleCollectionId, 'Fungible');
-    await approveExpectFail(fungibleCollectionId, newFungibleTokenId, Bob, Alice);
+    const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
+    await approveExpectFail(fungibleCollectionId, newFungibleTokenId, bob, alice);
     // reFungible
     const reFungibleCollectionId =
       await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    const newReFungibleTokenId = await createItemExpectSuccess(Alice, reFungibleCollectionId, 'ReFungible');
-    await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, Bob, Alice);
+    const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
+    await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, bob, alice);
   });
 
   it('should fail if approved more ReFungibles than owned', async () => {
     const nftCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'ReFungible');
-    await transferExpectSuccess(nftCollectionId, newNftTokenId, Alice, Bob, 100, 'ReFungible');
-    await approveExpectSuccess(nftCollectionId, newNftTokenId, Bob, Alice.address, 100);
-    await approveExpectFail(nftCollectionId, newNftTokenId, Bob, Alice, 101);
+    const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'ReFungible');
+    await transferExpectSuccess(nftCollectionId, newNftTokenId, alice, bob, 100, 'ReFungible');
+    await approveExpectSuccess(nftCollectionId, newNftTokenId, bob, alice.address, 100);
+    await approveExpectFail(nftCollectionId, newNftTokenId, bob, alice, 101);
   });
 
   it('should fail if approved more Fungibles than owned', async () => {
     const nftCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'Fungible');
-    await transferExpectSuccess(nftCollectionId, newNftTokenId, Alice, Bob, 10, 'Fungible');
-    await approveExpectSuccess(nftCollectionId, newNftTokenId, Bob, Alice.address, 10);
-    await approveExpectFail(nftCollectionId, newNftTokenId, Bob, Alice, 11);
+    const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'Fungible');
+    await transferExpectSuccess(nftCollectionId, newNftTokenId, alice, bob, 10, 'Fungible');
+    await approveExpectSuccess(nftCollectionId, newNftTokenId, bob, alice.address, 10);
+    await approveExpectFail(nftCollectionId, newNftTokenId, bob, alice, 11);
   });
 
   it('fails when called by collection owner on non-owned item when OwnerCanTransfer == false', async () => {
     const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(Alice, collectionId, 'NFT', Bob.address);
-    await setCollectionLimitsExpectSuccess(Alice, collectionId, {ownerCanTransfer: false});
+    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: false});
 
-    await approveExpectFail(collectionId, itemId, Alice, Charlie);
+    await approveExpectFail(collectionId, itemId, alice, charlie);
   });
 });
