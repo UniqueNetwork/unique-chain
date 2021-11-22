@@ -22,8 +22,7 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, ConvertInto, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify,
-		AccountIdConversion,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, AccountIdConversion,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature,
@@ -70,7 +69,7 @@ use pallet_evm::{Account as EVMAccount, FeeCalculator, OnMethodCall};
 use fp_rpc::TransactionStatus;
 use sp_core::crypto::Public;
 use sp_runtime::{
-	traits::{Dispatchable, PostDispatchInfoOf},
+	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf},
 	transaction_validity::TransactionValidityError,
 };
 
@@ -515,17 +514,33 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
-parameter_types! {
-	pub const MinVestedTransfer: Balance = 10 * UNIQUE;
+pub struct RelayChainBlockNumberProvider<T>(sp_std::marker::PhantomData<T>);
+
+impl<T: cumulus_pallet_parachain_system::Config> BlockNumberProvider
+	for RelayChainBlockNumberProvider<T>
+{
+	type BlockNumber = BlockNumber;
+
+	fn current_block_number() -> Self::BlockNumber {
+		cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
+			.map(|d| d.relay_parent_number)
+			.unwrap_or_default()
+	}
 }
 
-impl pallet_vesting::Config for Runtime {
+parameter_types! {
+	pub const MinVestedTransfer: Balance = 10 * UNIQUE;
+	pub const MaxVestingSchedules: u32 = 28;
+}
+
+impl orml_vesting::Config for Runtime {
 	type Event = Event;
-	type Currency = Balances;
-	type BlockNumberToBalance = ConvertInto;
+	type Currency = pallet_balances::Pallet<Runtime>;
 	type MinVestedTransfer = MinVestedTransfer;
+	type VestedTransferOrigin = EnsureSigned<AccountId>;
 	type WeightInfo = ();
-	const MAX_VESTING_SCHEDULES: u32 = 28;
+	type MaxVestingSchedules = MaxVestingSchedules;
+	type BlockNumberProvider = RelayChainBlockNumberProvider<Runtime>;
 }
 
 parameter_types! {
@@ -721,7 +736,7 @@ parameter_types! {
 
 impl pallet_common::Config for Runtime {
 	type Event = Event;
-	type EvmBackwardsAddressMapping = pallet_common::account::MapBackwardsAddressTruncated;
+	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
 	type CrossAccountId = pallet_common::account::BasicCrossAccountId<Self>;
 
@@ -762,20 +777,14 @@ parameter_types! {
 	pub const MaxScheduledPerBlock: u32 = 50;
 }
 
-pub struct Sponsoring;
-impl SponsoringResolve<AccountId, Call> for Sponsoring {
-	fn resolve(who: &AccountId, call: &Call) -> Option<AccountId>
-	where
-		Call: Dispatchable<Info = DispatchInfo>,
-		AccountId: AsRef<[u8]>,
-	{
-		pallet_nft_transaction_payment::Module::<Runtime>::withdraw_type(who, call)
-	}
-}
-
+type EvmSponsorshipHandler = (
+	pallet_nft::NftEthSponsorshipHandler<Runtime>,
+	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
+);
 type SponsorshipHandler = (
 	pallet_nft::NftSponsorshipHandler<Runtime>,
 	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
+	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
 );
 
 impl pallet_unq_scheduler::Config for Runtime {
@@ -790,20 +799,15 @@ impl pallet_unq_scheduler::Config for Runtime {
 	type WeightInfo = ();
 }
 
-impl pallet_nft_transaction_payment::Config for Runtime {
-	type SponsorshipHandler = SponsorshipHandler;
-}
-
 impl pallet_evm_transaction_payment::Config for Runtime {
-	type SponsorshipHandler = (
-		pallet_nft::NftEthSponsorshipHandler<Self>,
-		pallet_evm_contract_helpers::HelpersContractSponsoring<Self>,
-	);
+	type EvmSponsorshipHandler = EvmSponsorshipHandler;
 	type Currency = Balances;
+	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
+	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 }
 
 impl pallet_nft_charge_transaction::Config for Runtime {
-	type SponsorshipHandler = pallet_nft::NftSponsorshipHandler<Runtime>;
+	type SponsorshipHandler = SponsorshipHandler;
 }
 
 // impl pallet_contract_helpers::Config for Runtime {
@@ -841,7 +845,8 @@ construct_runtime!(
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 34,
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		System: system::{Pallet, Call, Storage, Config, Event<T>} = 36,
-		Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
+		Vesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 37,
+		// Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
 		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 
 		// XCM helpers.
@@ -854,7 +859,7 @@ construct_runtime!(
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
 		Nft: pallet_nft::{Pallet, Call, Storage} = 61,
 		Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
-		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage} = 63,
+		// free = 63
 		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage } = 64,
 		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
 		Common: pallet_common::{Pallet, Storage, Event<T>} = 66,

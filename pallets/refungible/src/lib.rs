@@ -54,25 +54,25 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::generate_store(pub trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	pub(super) type TokensMinted<T: Config> =
+	pub type TokensMinted<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
 	#[pallet::storage]
-	pub(super) type TokensBurnt<T: Config> =
+	pub type TokensBurnt<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
 
 	#[pallet::storage]
-	pub(super) type TokenData<T: Config> = StorageNMap<
+	pub type TokenData<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
 		Value = ItemData,
 		QueryKind = ValueQuery,
 	>;
 
 	#[pallet::storage]
-	pub(super) type TotalSupply<T: Config> = StorageNMap<
+	pub type TotalSupply<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
 		Value = u128,
 		QueryKind = ValueQuery,
@@ -80,7 +80,7 @@ pub mod pallet {
 
 	/// Used to enumerate tokens owned by account
 	#[pallet::storage]
-	pub(super) type Owned<T: Config> = StorageNMap<
+	pub type Owned<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
 			Key<Blake2_128Concat, T::CrossAccountId>,
@@ -91,7 +91,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	pub(super) type AccountBalance<T: Config> = StorageNMap<
+	pub type AccountBalance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
 			// Owner
@@ -102,7 +102,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	pub(super) type Balance<T: Config> = StorageNMap<
+	pub type Balance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
 			Key<Twox64Concat, TokenId>,
@@ -114,7 +114,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	pub(super) type Allowance<T: Config> = StorageNMap<
+	pub type Allowance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
 			Key<Twox64Concat, TokenId>,

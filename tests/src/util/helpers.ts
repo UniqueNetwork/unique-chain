@@ -905,11 +905,12 @@ transferExpectFailure(
   await usingApi(async (api: ApiPromise) => {
     const transferTx = api.tx.nft.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value);
     const events = await expect(submitTransactionExpectFailAsync(sender, transferTx)).to.be.rejected;
-    if (events && Array.isArray(events)) {
-      const result = getCreateCollectionResult(events);
-      // tslint:disable-next-line:no-unused-expression
-      expect(result.success).to.be.false;
-    }
+    const result = getGenericResult(events);
+    // if (events && Array.isArray(events)) {
+    //   const result = getCreateCollectionResult(events);
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.false;
+    //}
   });
 }
 
