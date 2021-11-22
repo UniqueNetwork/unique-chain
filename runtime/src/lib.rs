@@ -736,7 +736,7 @@ parameter_types! {
 
 impl pallet_common::Config for Runtime {
 	type Event = Event;
-	type EvmBackwardsAddressMapping = pallet_common::account::MapBackwardsAddressTruncated;
+	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
 	type CrossAccountId = pallet_common::account::BasicCrossAccountId<Self>;
 
@@ -777,20 +777,14 @@ parameter_types! {
 	pub const MaxScheduledPerBlock: u32 = 50;
 }
 
-pub struct Sponsoring;
-impl SponsoringResolve<AccountId, Call> for Sponsoring {
-	fn resolve(who: &AccountId, call: &Call) -> Option<AccountId>
-	where
-		Call: Dispatchable<Info = DispatchInfo>,
-		AccountId: AsRef<[u8]>,
-	{
-		pallet_nft_transaction_payment::Module::<Runtime>::withdraw_type(who, call)
-	}
-}
-
+type EvmSponsorshipHandler = (
+	pallet_nft::NftEthSponsorshipHandler<Runtime>,
+	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
+);
 type SponsorshipHandler = (
 	pallet_nft::NftSponsorshipHandler<Runtime>,
 	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
+	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
 );
 
 impl pallet_unq_scheduler::Config for Runtime {
@@ -805,20 +799,15 @@ impl pallet_unq_scheduler::Config for Runtime {
 	type WeightInfo = ();
 }
 
-impl pallet_nft_transaction_payment::Config for Runtime {
-	type SponsorshipHandler = SponsorshipHandler;
-}
-
 impl pallet_evm_transaction_payment::Config for Runtime {
-	type SponsorshipHandler = (
-		pallet_nft::NftEthSponsorshipHandler<Self>,
-		pallet_evm_contract_helpers::HelpersContractSponsoring<Self>,
-	);
+	type EvmSponsorshipHandler = EvmSponsorshipHandler;
 	type Currency = Balances;
+	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
+	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 }
 
 impl pallet_nft_charge_transaction::Config for Runtime {
-	type SponsorshipHandler = pallet_nft::NftSponsorshipHandler<Runtime>;
+	type SponsorshipHandler = SponsorshipHandler;
 }
 
 // impl pallet_contract_helpers::Config for Runtime {
@@ -870,7 +859,7 @@ construct_runtime!(
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
 		Nft: pallet_nft::{Pallet, Call, Storage} = 61,
 		Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
-		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage} = 63,
+		// free = 63
 		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage } = 64,
 		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
 		Common: pallet_common::{Pallet, Storage, Event<T>} = 66,

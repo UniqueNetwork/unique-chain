@@ -76,11 +76,7 @@ pub mod pallet {
 			<SponsoringRateLimit<T>>::insert(contract, rate_limit);
 		}
 
-		/// Default is returned if allowlist is disabled
-		pub fn allowed(contract: H160, user: H160, default: bool) -> bool {
-			if !<AllowlistEnabled<T>>::get(contract) {
-				return default;
-			}
+		pub fn allowed(contract: H160, user: H160) -> bool {
 			<Allowlist<T>>::get(&contract, &user) || <Owner<T>>::get(&contract) == user
 		}
 
