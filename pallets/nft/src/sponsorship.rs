@@ -14,12 +14,24 @@ use nft_data_structs::{
 	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId,
 };
 use pallet_common::{CollectionHandle};
+use pallet_common::account::CrossAccountId;
 
 pub fn withdraw_transfer<T: Config>(
 	collection: &CollectionHandle<T>,
 	who: &T::AccountId,
 	item_id: &TokenId,
 ) -> Option<()> {
+
+	// preliminary sponsoring correctness check
+	if !((pallet_nonfungible::TokenData::<T>::get((collection.id, item_id))?.owner).as_sub()
+		== who) || (pallet_refungible::Owned::<T>::get((
+		collection.id,
+		T::CrossAccountId::from_sub(who.clone()),
+		item_id,
+	))) {
+		return None;
+	}
+	
 	// sponsor timeout
 	let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 	let limit = collection
@@ -90,10 +102,22 @@ pub fn withdraw_create_item<T: Config>(
 }
 
 pub fn withdraw_set_variable_meta_data<T: Config>(
+	who: &T::AccountId,
 	collection: &CollectionHandle<T>,
 	item_id: &TokenId,
 	data: &[u8],
 ) -> Option<()> {
+
+	// preliminary sponsoring correctness check
+	if !((pallet_nonfungible::TokenData::<T>::get((collection.id, item_id))?.owner).as_sub()
+		== who) || (pallet_refungible::Owned::<T>::get((
+		collection.id,
+		T::CrossAccountId::from_sub(who.clone()),
+		item_id,
+	))) {
+		return None;
+	}
+
 	// Can't sponsor fungible collection, this tx will be rejected
 	// as invalid
 	if matches!(collection.mode, CollectionMode::Fungible(_)) {
@@ -204,7 +228,7 @@ where
 				data,
 			} => {
 				let (sponsor, collection) = load(*collection_id)?;
-				withdraw_set_variable_meta_data::<T>(&collection, item_id, data).map(|()| sponsor)
+				withdraw_set_variable_meta_data::<T>(&who, &collection, item_id, data).map(|()| sponsor)
 			}
 			_ => None,
 		}
