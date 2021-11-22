@@ -362,7 +362,7 @@ branch = 'release-v0.9.12'
 default-features = false
 
 [dependencies.orml-vesting]
-git = "https://github.com/open-web3-stack/open-runtime-module-library"
+git = 'https://github.com/UniqueNetwork/open-runtime-module-library'
 version = "0.4.1-dev" 
 default-features = false
 
