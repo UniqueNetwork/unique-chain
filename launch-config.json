@@ -55,7 +55,7 @@
     },
     "parachains": [
         {
-            "bin": "../nft_private/target/release/nft",
+            "bin": "../unique-chain/target/release/nft",
             "id": "2000",
             "balance": "1000000000000000000000",
             "nodes": [
