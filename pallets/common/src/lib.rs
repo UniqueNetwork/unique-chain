@@ -141,7 +141,7 @@ impl<T: Config> CollectionHandle<T> {
 pub mod pallet {
 	use super::*;
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key};
-	use account::{EvmBackwardsAddressMapping, CrossAccountId};
+	use account::CrossAccountId;
 	use frame_support::traits::Currency;
 	use nft_data_structs::TokenId;
 	use scale_info::TypeInfo;
@@ -153,7 +153,7 @@ pub mod pallet {
 		type CrossAccountId: CrossAccountId<Self::AccountId>;
 
 		type EvmAddressMapping: pallet_evm::AddressMapping<Self::AccountId>;
-		type EvmBackwardsAddressMapping: EvmBackwardsAddressMapping<Self::AccountId>;
+		type EvmBackwardsAddressMapping: up_evm_mapping::EvmBackwardsAddressMapping<Self::AccountId>;
 
 		type Currency: Currency<Self::AccountId>;
 		type CollectionCreationPrice: Get<

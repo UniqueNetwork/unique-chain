@@ -39,7 +39,6 @@ const requiredPallets = [
   'nonfungible',
   'refungible',
   'scheduler',
-  'nftpayment',
   'charging',
 ];
 
