@@ -21,17 +21,16 @@ pub fn withdraw_transfer<T: Config>(
 	who: &T::AccountId,
 	item_id: &TokenId,
 ) -> Option<()> {
-
 	// preliminary sponsoring correctness check
-	if !((pallet_nonfungible::TokenData::<T>::get((collection.id, item_id))?.owner).as_sub()
-		== who) || (pallet_refungible::Owned::<T>::get((
-		collection.id,
-		T::CrossAccountId::from_sub(who.clone()),
-		item_id,
-	))) {
+	if !((pallet_nonfungible::TokenData::<T>::get((collection.id, item_id))?.owner).as_sub() == who)
+		|| (pallet_refungible::Owned::<T>::get((
+			collection.id,
+			T::CrossAccountId::from_sub(who.clone()),
+			item_id,
+		))) {
 		return None;
 	}
-	
+
 	// sponsor timeout
 	let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 	let limit = collection
@@ -107,14 +106,13 @@ pub fn withdraw_set_variable_meta_data<T: Config>(
 	item_id: &TokenId,
 	data: &[u8],
 ) -> Option<()> {
-
 	// preliminary sponsoring correctness check
-	if !((pallet_nonfungible::TokenData::<T>::get((collection.id, item_id))?.owner).as_sub()
-		== who) || (pallet_refungible::Owned::<T>::get((
-		collection.id,
-		T::CrossAccountId::from_sub(who.clone()),
-		item_id,
-	))) {
+	if !((pallet_nonfungible::TokenData::<T>::get((collection.id, item_id))?.owner).as_sub() == who)
+		|| (pallet_refungible::Owned::<T>::get((
+			collection.id,
+			T::CrossAccountId::from_sub(who.clone()),
+			item_id,
+		))) {
 		return None;
 	}
 
@@ -228,7 +226,8 @@ where
 				data,
 			} => {
 				let (sponsor, collection) = load(*collection_id)?;
-				withdraw_set_variable_meta_data::<T>(&who, &collection, item_id, data).map(|()| sponsor)
+				withdraw_set_variable_meta_data::<T>(&who, &collection, item_id, data)
+					.map(|()| sponsor)
 			}
 			_ => None,
 		}
