@@ -59,7 +59,8 @@ impl<T: Config> ContractHelpers<T> {
 
 	fn allowed(&self, contract_address: address, user: address) -> Result<bool> {
 		self.0.consume_sload()?;
-		Ok(<Pallet<T>>::allowed(contract_address, user, true))
+		Ok(<Pallet<T>>::allowed(contract_address, user)
+			|| !<AllowlistEnabled<T>>::get(contract_address))
 	}
 
 	fn allowlist_enabled(&self, contract_address: address) -> Result<bool> {
@@ -113,7 +114,7 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 		value: sp_core::U256,
 	) -> Option<PrecompileOutput> {
 		// TODO: Extract to another OnMethodCall handler
-		if !<Pallet<T>>::allowed(*target, *source, true) {
+		if <AllowlistEnabled<T>>::get(target) && !<Pallet<T>>::allowed(*target, *source) {
 			return Some(PrecompileOutput {
 				exit_status: ExitReason::Revert(ExitRevert::Reverted),
 				cost: 0,
@@ -151,22 +152,26 @@ impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 pub struct HelpersContractSponsoring<T: Config>(PhantomData<*const T>);
 impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for HelpersContractSponsoring<T> {
 	fn get_sponsor(who: &H160, call: &(H160, Vec<u8>)) -> Option<H160> {
-		if <SelfSponsoring<T>>::get(&call.0) && <Pallet<T>>::allowed(call.0, *who, false) {
-			let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
-			if let Some(last_tx_block) = <SponsorBasket<T>>::get(&call.0, who) {
-				let rate_limit = <SponsoringRateLimit<T>>::get(&call.0);
-				let limit_time = last_tx_block + rate_limit;
+		if !<SelfSponsoring<T>>::get(&call.0) {
+			return None;
+		}
+		if !<Pallet<T>>::allowed(call.0, *who) {
+			return None;
+		}
+		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 
-				if block_number > limit_time {
-					<SponsorBasket<T>>::insert(&call.0, who, block_number);
-					return Some(call.0);
-				}
-			} else {
-				<SponsorBasket<T>>::insert(&call.0, who, block_number);
-				return Some(call.0);
+		if let Some(last_tx_block) = <SponsorBasket<T>>::get(&call.0, who) {
+			let limit = <SponsoringRateLimit<T>>::get(&call.0);
+
+			let timeout = last_tx_block + limit.into();
+			if block_number < timeout {
+				return None;
 			}
 		}
-		None
+
+		<SponsorBasket<T>>::insert(&call.0, who, block_number);
+
+		Some(call.0)
 	}
 }
 
