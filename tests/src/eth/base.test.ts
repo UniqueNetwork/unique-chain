@@ -39,8 +39,8 @@ describe('Contract calls', () => {
 
     const fee = Number(cost) / Number(UNIQUE);
     const expectedFee = 0.15;
-    const tolerance = 0.002;
+    const tolerance = 0.00001;
 
-    expect(Math.abs(fee - expectedFee) < tolerance).to.be.true;
+    expect(Math.abs(fee - expectedFee)).to.be.lessThan(tolerance);
   });
 });

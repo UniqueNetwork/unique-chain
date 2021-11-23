@@ -243,7 +243,7 @@ pub struct FixedFee;
 impl FeeCalculator for FixedFee {
 	fn min_gas_price() -> U256 {
 		// Targeting 0.15 UNQ per transfer
-		(1 * MICROUNIQUE).into()
+		1_024_947_215u32.into()
 	}
 }
 
@@ -480,7 +480,8 @@ where
 
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		smallvec!(WeightToFeeCoefficient {
-			coeff_integer: 146_700u32.into(), // Targeting 0.1 Unique per NFT transfer
+			// Targeting 0.1 Unique per NFT transfer
+			coeff_integer: 142_688u32.into(),
 			coeff_frac: Perbill::zero(),
 			negative: false,
 			degree: 1,
