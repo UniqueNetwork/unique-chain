@@ -273,8 +273,8 @@ pub mod pallet {
 		TotalCollectionsLimitExceeded,
 		/// variable_data exceeded data limit.
 		TokenVariableDataLimitExceeded,
-		/// Exceeded max admin amount
-		CollectionAdminAmountExceeded,
+		/// Exceeded max admin count
+		CollectionAdminCountExceeded,
 
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
@@ -479,10 +479,10 @@ impl<T: Config> Pallet<T> {
 		if admin {
 			let amount = amount
 				.checked_add(1)
-				.ok_or(<Error<T>>::CollectionAdminAmountExceeded)?;
+				.ok_or(<Error<T>>::CollectionAdminCountExceeded)?;
 			ensure!(
 				amount <= Self::collection_admins_limit(),
-				<Error<T>>::CollectionAdminAmountExceeded,
+				<Error<T>>::CollectionAdminCountExceeded,
 			);
 
 			// =========

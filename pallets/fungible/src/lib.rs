@@ -35,7 +35,7 @@ pub mod pallet {
 		/// Not default id passed as TokenId argument
 		FungibleItemsHaveNoId,
 		/// Tried to set data for fungible item
-		FungibleItemsHaveData,
+		FungibleItemsDontHaveData,
 	}
 
 	#[pallet::config]
@@ -44,15 +44,15 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::generate_store(pub trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	pub(super) type TotalSupply<T: Config> =
+	pub type TotalSupply<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u128, QueryKind = ValueQuery>;
 
 	#[pallet::storage]
-	pub(super) type Balance<T: Config> = StorageNMap<
+	pub type Balance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
 			Key<Blake2_128Concat, T::CrossAccountId>,
@@ -62,7 +62,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	pub(super) type Allowance<T: Config> = StorageNMap<
+	pub type Allowance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
 			Key<Blake2_128, T::CrossAccountId>,
