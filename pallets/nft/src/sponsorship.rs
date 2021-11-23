@@ -10,25 +10,38 @@ use frame_support::{
 	storage::{StorageMap, StorageDoubleMap, StorageNMap},
 };
 use nft_data_structs::{
-	CollectionId, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, NFT_SPONSOR_TRANSFER_TIMEOUT,
-	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId,
+	CollectionId, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MetaUpdatePermission,
+	NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId,
 };
 use pallet_common::{CollectionHandle};
 use pallet_common::account::CrossAccountId;
 
 pub fn withdraw_transfer<T: Config>(
 	collection: &CollectionHandle<T>,
-	who: &T::AccountId,
+	who: &T::CrossAccountId,
 	item_id: &TokenId,
 ) -> Option<()> {
 	// preliminary sponsoring correctness check
-	if !((pallet_nonfungible::TokenData::<T>::get((collection.id, item_id))?.owner).as_sub() == who)
-		|| (pallet_refungible::Owned::<T>::get((
-			collection.id,
-			T::CrossAccountId::from_sub(who.clone()),
-			item_id,
-		))) {
-		return None;
+	match collection.mode {
+		CollectionMode::NFT => {
+			let owner = pallet_nonfungible::TokenData::<T>::get((collection.id, item_id))?.owner;
+			if !owner.conv_eq(who) {
+				return None;
+			}
+		}
+		CollectionMode::Fungible(_) => {
+			if item_id != &TokenId::default() {
+				return None;
+			}
+			if <pallet_fungible::Balance<T>>::get((collection.id, who)) == 0 {
+				return None;
+			}
+		}
+		CollectionMode::ReFungible => {
+			if !<pallet_refungible::Owned<T>>::get((collection.id, who, item_id)) {
+				return None;
+			}
+		}
 	}
 
 	// sponsor timeout
@@ -43,9 +56,11 @@ pub fn withdraw_transfer<T: Config>(
 
 	let last_tx_block = match collection.mode {
 		CollectionMode::NFT => <NftTransferBasket<T>>::get(collection.id, item_id),
-		CollectionMode::Fungible(_) => <FungibleTransferBasket<T>>::get(collection.id, who),
+		CollectionMode::Fungible(_) => {
+			<FungibleTransferBasket<T>>::get(collection.id, who.as_sub())
+		}
 		CollectionMode::ReFungible => {
-			<ReFungibleTransferBasket<T>>::get((collection.id, item_id, who))
+			<ReFungibleTransferBasket<T>>::get((collection.id, item_id, who.as_sub()))
 		}
 	};
 
@@ -59,11 +74,12 @@ pub fn withdraw_transfer<T: Config>(
 	match collection.mode {
 		CollectionMode::NFT => <NftTransferBasket<T>>::insert(collection.id, item_id, block_number),
 		CollectionMode::Fungible(_) => {
-			<FungibleTransferBasket<T>>::insert(collection.id, who, block_number)
+			<FungibleTransferBasket<T>>::insert(collection.id, who.as_sub(), block_number)
 		}
-		CollectionMode::ReFungible => {
-			<ReFungibleTransferBasket<T>>::insert((collection.id, item_id, who), block_number)
-		}
+		CollectionMode::ReFungible => <ReFungibleTransferBasket<T>>::insert(
+			(collection.id, item_id, who.as_sub()),
+			block_number,
+		),
 	};
 
 	Some(())
@@ -101,19 +117,36 @@ pub fn withdraw_create_item<T: Config>(
 }
 
 pub fn withdraw_set_variable_meta_data<T: Config>(
-	who: &T::AccountId,
+	who: &T::CrossAccountId,
 	collection: &CollectionHandle<T>,
 	item_id: &TokenId,
 	data: &[u8],
 ) -> Option<()> {
-	// preliminary sponsoring correctness check
-	if !((pallet_nonfungible::TokenData::<T>::get((collection.id, item_id))?.owner).as_sub() == who)
-		|| (pallet_refungible::Owned::<T>::get((
-			collection.id,
-			T::CrossAccountId::from_sub(who.clone()),
-			item_id,
-		))) {
+	// TODO: make it work for admins
+	if collection.meta_update_permission != MetaUpdatePermission::ItemOwner {
 		return None;
+	}
+	// preliminary sponsoring correctness check
+	match collection.mode {
+		CollectionMode::NFT => {
+			let owner = pallet_nonfungible::TokenData::<T>::get((collection.id, item_id))?.owner;
+			if !owner.conv_eq(who) {
+				return None;
+			}
+		}
+		CollectionMode::Fungible(_) => {
+			if item_id != &TokenId::default() {
+				return None;
+			}
+			if <pallet_fungible::Balance<T>>::get((collection.id, who)) == 0 {
+				return None;
+			}
+		}
+		CollectionMode::ReFungible => {
+			if !<pallet_refungible::Owned<T>>::get((collection.id, who, item_id)) {
+				return None;
+			}
+		}
 	}
 
 	// Can't sponsor fungible collection, this tx will be rejected
@@ -203,14 +236,23 @@ where
 				collection_id,
 				item_id,
 				..
+			} => {
+				let (sponsor, collection) = load(*collection_id)?;
+				withdraw_transfer::<T>(
+					&collection,
+					&T::CrossAccountId::from_sub(who.clone()),
+					item_id,
+				)
+				.map(|()| sponsor)
 			}
-			| Call::transfer_from {
+			Call::transfer_from {
 				collection_id,
 				item_id,
+				from,
 				..
 			} => {
 				let (sponsor, collection) = load(*collection_id)?;
-				withdraw_transfer::<T>(&collection, who, item_id).map(|()| sponsor)
+				withdraw_transfer::<T>(&collection, from, item_id).map(|()| sponsor)
 			}
 			Call::approve {
 				collection_id,
@@ -226,8 +268,13 @@ where
 				data,
 			} => {
 				let (sponsor, collection) = load(*collection_id)?;
-				withdraw_set_variable_meta_data::<T>(&who, &collection, item_id, data)
-					.map(|()| sponsor)
+				withdraw_set_variable_meta_data::<T>(
+					&T::CrossAccountId::from_sub(who.clone()),
+					&collection,
+					item_id,
+					data,
+				)
+				.map(|()| sponsor)
 			}
 			_ => None,
 		}

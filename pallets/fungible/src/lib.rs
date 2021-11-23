@@ -52,7 +52,7 @@ pub mod pallet {
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u128, QueryKind = ValueQuery>;
 
 	#[pallet::storage]
-	pub(super) type Balance<T: Config> = StorageNMap<
+	pub type Balance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
 			Key<Blake2_128Concat, T::CrossAccountId>,
