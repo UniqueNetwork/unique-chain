@@ -14,7 +14,7 @@ import {
   createItemExpectSuccess,
   getGenericResult,
   transferExpectSuccess,
-  UNIQUE
+  UNIQUE,
 } from './util/helpers';
 
 import {default as waitNewBlocks} from './substrate/wait-new-blocks';
