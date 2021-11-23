@@ -19,6 +19,7 @@ import {
   transferExpectFailure,
   transferExpectSuccess,
   addCollectionAdminExpectSuccess,
+  getCreatedCollectionCount,
   toSubstrateAddress,
   getTokenOwner,
   normalizeAccountId,
@@ -136,13 +137,13 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
   it('Transfer with not existed collection_id', async () => {
     await usingApi(async (api) => {
       // nft
-      const nftCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
+      const nftCollectionCount = await getCreatedCollectionCount(api);
       await transferExpectFailure(nftCollectionCount + 1, 1, alice, bob, 1);
       // fungible
-      const fungibleCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
+      const fungibleCollectionCount = await getCreatedCollectionCount(api);
       await transferExpectFailure(fungibleCollectionCount + 1, 0, alice, bob, 1);
       // reFungible
-      const reFungibleCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
+      const reFungibleCollectionCount = await getCreatedCollectionCount(api);
       await transferExpectFailure(reFungibleCollectionCount + 1, 1, alice, bob, 1);
     });
   });

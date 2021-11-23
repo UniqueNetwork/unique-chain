@@ -20,6 +20,7 @@ import {
   getLastTokenId,
   getVariableMetadata,
   getConstMetadata,
+  getCreatedCollectionCount,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -273,7 +274,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
 
   it('Create token in not existing collection', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const collectionId = (await api.query.common.createdCollectionCount()).toNumber() + 1;
+      const collectionId = await getCreatedCollectionCount(api) + 1;
       const createMultipleItemsTx = api.tx.nft
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), ['NFT', 'NFT', 'NFT']);
       await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTx)).to.be.rejected;

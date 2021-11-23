@@ -8,7 +8,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import {createCollectionExpectSuccess, destroyCollectionExpectSuccess, getAdminList, normalizeAccountId} from './util/helpers';
+import {createCollectionExpectSuccess, destroyCollectionExpectSuccess, getAdminList, normalizeAccountId, queryCollectionExpectSuccess} from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -19,7 +19,7 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
       const collectionId = await createCollectionExpectSuccess();
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
-      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
       // first - add collection admin Bob
       const addAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
@@ -43,7 +43,7 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
       const charlie = privateKey('//Charlie');
-      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.eq(alice.address);
       // first - add collection admin Bob
       const addAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));

@@ -91,8 +91,8 @@ impl<T: Config> Deref for FungibleHandle<T> {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T>) -> Result<CollectionId, DispatchError> {
-		PalletCommon::init_collection(data)
+	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
+		<PalletCommon<T>>::init_collection(data)
 	}
 	pub fn destroy_collection(
 		collection: FungibleHandle<T>,

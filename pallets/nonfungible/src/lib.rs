@@ -133,8 +133,8 @@ impl<T: Config> Pallet<T> {
 
 // unchecked calls skips any permission checks
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T>) -> Result<CollectionId, DispatchError> {
-		PalletCommon::init_collection(data)
+	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
+		<PalletCommon<T>>::init_collection(data)
 	}
 	pub fn destroy_collection(
 		collection: NonfungibleHandle<T>,

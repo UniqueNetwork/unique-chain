@@ -98,7 +98,7 @@ RUN export NVM_DIR="$HOME/.nvm" && \
     npm install --global yarn && \
     yarn
 
-COPY --from=builder /nft_parachain/target/$PROFILE/nft /nft_private/target/$PROFILE/
+COPY --from=builder /nft_parachain/target/$PROFILE/nft /unique-chain/target/$PROFILE/
 COPY --from=builder-polkadot /nft_parachain/polkadot/target/$PROFILE/polkadot /polkadot/target/$PROFILE/
 
 CMD export NVM_DIR="$HOME/.nvm" && \
