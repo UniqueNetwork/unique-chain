@@ -42,8 +42,8 @@ use nft_data_structs::{
 	CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
 };
 use pallet_common::{
-	account::CrossAccountId, CollectionHandle, IsAdmin, Pallet as PalletCommon,
-	Error as CommonError, CommonWeightInfo, Allowlist,
+	account::CrossAccountId, CollectionHandle, Pallet as PalletCommon, Error as CommonError,
+	CommonWeightInfo,
 };
 use pallet_refungible::{Pallet as PalletRefungible, RefungibleHandle};
 use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
@@ -136,18 +136,22 @@ decl_storage! {
 		//#region Tokens transfer rate limit baskets
 		/// (Collection id (controlled?2), who created (real))
 		/// TODO: Off chain worker should remove from this map when collection gets removed
-		pub CreateItemBasket get(fn create_item_basket): map hasher(blake2_128_concat) (CollectionId, T::AccountId) => T::BlockNumber;
+		pub CreateItemBasket get(fn create_item_basket): map hasher(blake2_128_concat) (CollectionId, T::AccountId) => Option<T::BlockNumber>;
 		/// Collection id (controlled?2), token id (controlled?2)
-		pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => T::BlockNumber;
+		pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber>;
 		/// Collection id (controlled?2), owning user (real)
-		pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(twox_64_concat) T::AccountId => T::BlockNumber;
+		pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(twox_64_concat) T::AccountId => Option<T::BlockNumber>;
 		/// Collection id (controlled?2), token id (controlled?2)
-		pub ReFungibleTransferBasket get(fn refungible_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => T::BlockNumber;
+		pub ReFungibleTransferBasket get(fn refungible_transfer_basket): nmap hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId, hasher(twox_64_concat) T::AccountId => Option<T::BlockNumber>;
 		//#endregion
 
 		/// Variable metadata sponsoring
 		/// Collection id (controlled?2), token id (controlled?2)
-		pub VariableMetaDataBasket get(fn variable_meta_data_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber> = None;
+		pub VariableMetaDataBasket get(fn variable_meta_data_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber>;
+		/// Approval sponsoring
+		pub NftApproveBasket get(fn nft_approve_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber>;
+		pub FungibleApproveBasket get(fn fungible_approve_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(twox_64_concat) T::AccountId => Option<T::BlockNumber>;
+		pub RefungibleApproveBasket get(fn refungible_approve_basket): nmap hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId, hasher(twox_64_concat) T::AccountId => Option<T::BlockNumber>;
 	}
 }
 
@@ -190,7 +194,7 @@ decl_module! {
 			let who = ensure_signed(origin)?;
 
 			// Create new collection
-			let new_collection = Collection::<T> {
+			let new_collection = Collection {
 				owner: who.clone(),
 				name: collection_name,
 				mode: mode.clone(),
@@ -208,14 +212,14 @@ decl_module! {
 			};
 
 			let _id = match mode {
-				CollectionMode::NFT => {PalletNonfungible::init_collection(new_collection)?},
+				CollectionMode::NFT => {<PalletNonfungible<T>>::init_collection(new_collection)?},
 				CollectionMode::Fungible(decimal_points) => {
 					// check params
 					ensure!(decimal_points <= MAX_DECIMAL_POINTS, Error::<T>::CollectionDecimalPointLimitExceeded);
-					PalletFungible::init_collection(new_collection)?
+					<PalletFungible<T>>::init_collection(new_collection)?
 				}
 				CollectionMode::ReFungible => {
-					PalletRefungible::init_collection(new_collection)?
+					<PalletRefungible<T>>::init_collection(new_collection)?
 				}
 			};
 
@@ -249,9 +253,12 @@ decl_module! {
 
 			<NftTransferBasket<T>>::remove_prefix(collection_id, None);
 			<FungibleTransferBasket<T>>::remove_prefix(collection_id, None);
-			<ReFungibleTransferBasket<T>>::remove_prefix(collection_id, None);
+			<ReFungibleTransferBasket<T>>::remove_prefix((collection_id,), None);
 
 			<VariableMetaDataBasket<T>>::remove_prefix(collection_id, None);
+			<NftApproveBasket<T>>::remove_prefix(collection_id, None);
+			<FungibleApproveBasket<T>>::remove_prefix(collection_id, None);
+			<RefungibleApproveBasket<T>>::remove_prefix((collection_id,), None);
 
 			Ok(())
 		}
@@ -592,7 +599,15 @@ decl_module! {
 		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_call::<T, _>(collection_id, |d| d.burn_item(sender, item_id, value))
+			let post_info = dispatch_call::<T, _>(collection_id, |d| d.burn_item(sender, item_id, value))?;
+			if value == 1 {
+				<NftTransferBasket<T>>::remove(collection_id, item_id);
+				<NftApproveBasket<T>>::remove(collection_id, item_id);
+			}
+			// Those maps should be cleared only if token disappears completly, need to move this part of logic to pallets?
+			// <FungibleApproveBasket<T>>::remove(collection_id, sender.as_sub());
+			// <RefungibleApproveBasket<T>>::remove((collection_id, item_id, sender.as_sub()));
+			Ok(post_info)
 		}
 
 		/// Destroys a concrete instance of NFT on behalf of the owner
@@ -936,19 +951,5 @@ decl_module! {
 
 			target_collection.save()
 		}
-	}
-}
-
-// TODO: limit returned entries?
-impl<T: Config> Pallet<T> {
-	pub fn adminlist(collection: CollectionId) -> Vec<T::CrossAccountId> {
-		<IsAdmin<T>>::iter_prefix((collection,))
-			.map(|(a, _)| a)
-			.collect()
-	}
-	pub fn allowlist(collection: CollectionId) -> Vec<T::CrossAccountId> {
-		<Allowlist<T>>::iter_prefix((collection,))
-			.map(|(a, _)| a)
-			.collect()
 	}
 }

@@ -40,6 +40,9 @@ export default {
     constMetadata: fun('Get token constant metadata', [collectionParam, tokenParam], 'Vec<u8>'),
     variableMetadata: fun('Get token variable metadata', [collectionParam, tokenParam], 'Vec<u8>'),
     tokenExists: fun('Check if token exists', [collectionParam, tokenParam], 'bool'),
+    collectionById: fun('Get collection by specified id', [collectionParam], 'Option<NftDataStructsCollection>'),
+    collectionStats: fun('Get collection stats', [], 'NftDataStructsCollectionStats'),
+    allowed: fun('Check if user is allowed to use collection', [collectionParam, crossAccountParam()], 'bool'),
   },
   types: {
     PalletCommonAccountBasicCrossAccountIdRepr: {
@@ -63,6 +66,11 @@ export default {
       variableOnChainSchema: 'Vec<u8>',
       constOnChainSchema: 'Vec<u8>',
       metaUpdatePermission: 'NftDataStructsMetaUpdatePermission',
+    },
+    NftDataStructsCollectionStats: {
+      created: 'u32',
+      destroyed: 'u32',
+      alive: 'u32',
     },
     NftDataStructsCollectionId: 'u32',
     NftDataStructsTokenId: 'u32',

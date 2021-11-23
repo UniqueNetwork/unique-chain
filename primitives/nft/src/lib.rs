@@ -54,6 +54,8 @@ pub const NFT_SPONSOR_TRANSFER_TIMEOUT: u32 = 5;
 pub const FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT: u32 = 5;
 pub const REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT: u32 = 5;
 
+pub const SPONSOR_APPROVE_TIMEOUT: u32 = 5;
+
 // Schema limits
 pub const OFFCHAIN_SCHEMA_LIMIT: u32 = 1024;
 pub const VARIABLE_ON_CHAIN_SCHEMA_LIMIT: u32 = 1024;
@@ -207,8 +209,8 @@ impl<T> Default for SponsorshipState<T> {
 
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-pub struct Collection<T: frame_system::Config> {
-	pub owner: T::AccountId,
+pub struct Collection<AccountId> {
+	pub owner: AccountId,
 	pub mode: CollectionMode,
 	pub access: AccessMode,
 	pub name: Vec<u16>,        // 64 include null escape char
@@ -217,7 +219,7 @@ pub struct Collection<T: frame_system::Config> {
 	pub mint_mode: bool,
 	pub offchain_schema: Vec<u8>,
 	pub schema_version: SchemaVersion,
-	pub sponsorship: SponsorshipState<T::AccountId>,
+	pub sponsorship: SponsorshipState<AccountId>,
 	pub limits: CollectionLimits,          // Collection private restrictions
 	pub variable_on_chain_schema: Vec<u8>, //
 	pub const_on_chain_schema: Vec<u8>,    //
@@ -246,6 +248,7 @@ pub struct ReFungibleItemType<AccountId> {
 	pub variable_data: Vec<u8>,
 }
 
+/// All fields are wrapped in `Option`s, where None means chain default
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionLimits {
@@ -254,11 +257,12 @@ pub struct CollectionLimits {
 	/// None - setVariableMetadata is not sponsored
 	/// Some(v) - setVariableMetadata is sponsored
 	///           if there is v block between txs
-	pub sponsored_data_rate_limit: Option<u32>,
+	pub sponsored_data_rate_limit: Option<(Option<u32>,)>,
 	pub token_limit: Option<u32>,
 
 	// Timeouts for item types in passed blocks
 	pub sponsor_transfer_timeout: Option<u32>,
+	pub sponsor_approve_timeout: Option<u32>,
 	pub owner_can_transfer: Option<bool>,
 	pub owner_can_destroy: Option<bool>,
 	pub transfers_enabled: Option<bool>,
@@ -285,6 +289,11 @@ impl CollectionLimits {
 			.unwrap_or(default)
 			.min(MAX_SPONSOR_TIMEOUT)
 	}
+	pub fn sponsor_approve_timeout(&self) -> u32 {
+		self.sponsor_approve_timeout
+			.unwrap_or(SPONSOR_APPROVE_TIMEOUT)
+			.min(MAX_SPONSOR_TIMEOUT)
+	}
 	pub fn owner_can_transfer(&self) -> bool {
 		self.owner_can_transfer.unwrap_or(true)
 	}
@@ -296,6 +305,8 @@ impl CollectionLimits {
 	}
 	pub fn sponsored_data_rate_limit(&self) -> Option<u32> {
 		self.sponsored_data_rate_limit
+			.unwrap_or((None,))
+			.0
 			.map(|v| v.min(MAX_SPONSOR_TIMEOUT))
 	}
 }
@@ -412,4 +423,12 @@ impl From<CreateFungibleData> for CreateItemData {
 	fn from(item: CreateFungibleData) -> Self {
 		CreateItemData::Fungible(item)
 	}
+}
+
+#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub struct CollectionStats {
+	pub created: u32,
+	pub destroyed: u32,
+	pub alive: u32,
 }

@@ -48,6 +48,13 @@ export interface NftDataStructsCollectionMode extends Struct {
   readonly dummyCollectionMode: u32;
 }
 
+/** @name NftDataStructsCollectionStats */
+export interface NftDataStructsCollectionStats extends Struct {
+  readonly created: u32;
+  readonly destroyed: u32;
+  readonly alive: u32;
+}
+
 /** @name NftDataStructsCreateItemData */
 export interface NftDataStructsCreateItemData extends Struct {
   readonly dummyCreateItemData: u32;

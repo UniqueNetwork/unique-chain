@@ -52,7 +52,7 @@ pub mod pallet {
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u128, QueryKind = ValueQuery>;
 
 	#[pallet::storage]
-	pub(super) type Balance<T: Config> = StorageNMap<
+	pub type Balance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
 			Key<Blake2_128Concat, T::CrossAccountId>,
@@ -91,8 +91,8 @@ impl<T: Config> Deref for FungibleHandle<T> {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T>) -> Result<CollectionId, DispatchError> {
-		PalletCommon::init_collection(data)
+	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
+		<PalletCommon<T>>::init_collection(data)
 	}
 	pub fn destroy_collection(
 		collection: FungibleHandle<T>,
