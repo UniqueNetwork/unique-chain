@@ -3,10 +3,9 @@ use super::*;
 use crate::mock::*;
 use crate::{AccessMode, CollectionMode};
 use nft_data_structs::{
-	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, CreateFungibleData, 
-	CreateNftData, CreateReFungibleData, ExistenceRequirement, MAX_COLLECTION_DESCRIPTION_LENGTH, 
-	MAX_COLLECTION_NAME_LENGTH, MAX_DECIMAL_POINTS, MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, 
-	MetaUpdatePermission, Pays, PostDispatchInfo, TokenId, Weight, WithdrawReasons,
+	COLLECTION_NUMBER_LIMIT, CollectionId, CreateItemData, CreateFungibleData, 
+	CreateNftData, CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT, 
+	MetaUpdatePermission, TokenId,
 };
 
 use frame_support::{assert_noop, assert_ok};
@@ -213,7 +212,7 @@ fn create_multiple_refungible_items() {
 				.collect()
 		));
 		for (index, data) in items_data.into_iter().enumerate() {
-			let item = <pallet_nonfungible::TokenData<Test>>::get((CollectionId(1), TokenId((index + 1) as u32))).unwrap();
+			let item = <pallet_refungible::TokenData<Test>>::get((CollectionId(1), TokenId((index + 1) as u32)));
 			let balance = <pallet_refungible::Balance<Test>>::get((CollectionId(1), TokenId(1), account(1)));
 			assert_eq!(item.const_data.to_vec(), data.const_data.into_inner());
 			assert_eq!(item.variable_data.to_vec(), data.variable_data.into_inner());
@@ -274,7 +273,7 @@ fn transfer_fungible_item() {
 		assert_eq!(<pallet_fungible::Balance<Test>>::get((CollectionId(1), account(1))), 5);
 
 		// change owner scenario
-		assert_ok!(TemplateModule::transfer(origin1, account(2), CollectionId(1), TokenId(1), 5));
+		assert_ok!(TemplateModule::transfer(origin1, account(2), CollectionId(1), TokenId(0), 5));
 		assert_eq!(<pallet_fungible::Balance<Test>>::get((CollectionId(1), account(1))), 0);
 
 		// split item scenario
@@ -282,12 +281,12 @@ fn transfer_fungible_item() {
 			origin2.clone(),
 			account(3),
 			CollectionId(1),
-			TokenId(1),
+			TokenId(0),
 			3
 		));
 
 		// split item and new owner has account scenario
-		assert_ok!(TemplateModule::transfer(origin2, account(3), CollectionId(1), TokenId(1), 1));
+		assert_ok!(TemplateModule::transfer(origin2, account(3), CollectionId(1), TokenId(0), 1));
 		assert_eq!(<pallet_fungible::Balance<Test>>::get((CollectionId(1), account(2))), 1);
 		assert_eq!(<pallet_fungible::Balance<Test>>::get((CollectionId(1), account(3))), 4);
 	});
@@ -298,33 +297,27 @@ fn transfer_refungible_item() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::ReFungible, CollectionId(1));
 
+		// Create RFT 1 in 1023 pieces for account 1
 		let data = default_re_fungible_data();
 		create_test_item(collection_id, &data.clone().into());
-
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
-		{
-			let item = <pallet_refungible::TokenData<Test>>::get((collection_id, TokenId(1)));
-			let balance = <pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(1)));
-			assert_eq!(item.const_data, data.const_data.into_inner());
-			assert_eq!(item.variable_data, data.variable_data.into_inner());
-			assert_eq!(balance, 1023);
-		}
-		
-		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))), 1023);
+		let item = <pallet_refungible::TokenData<Test>>::get((collection_id, TokenId(1)));
+		assert_eq!(item.const_data, data.const_data.into_inner());
+		assert_eq!(item.variable_data, data.variable_data.into_inner());
+		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))), 1);
+		assert_eq!(<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(1))), 1023);
 		assert_eq!(<pallet_refungible::Owned<Test>>::get((collection_id, account(1), TokenId(1))), true);
 
-		// change owner scenario
+		// Account 1 transfers all 1023 pieces of RFT 1 to account 2
+		let origin1 = Origin::signed(1);
+		let origin2 = Origin::signed(2);
 		assert_ok!(TemplateModule::transfer(origin1, account(2), CollectionId(1), TokenId(1), 1023));
-
-		let balance2 = <pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(2)));
-		assert_eq!(balance2, 1023);
+		assert_eq!(<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(2))), 1023);
 		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))), 0);
-		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(2))), 1023);
+		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(2))), 1);
 		assert_eq!(<pallet_refungible::Owned<Test>>::get((collection_id, account(1), TokenId(1))), false);
 		assert_eq!(<pallet_refungible::Owned<Test>>::get((collection_id, account(2), TokenId(1))), true);
 
-		// split item scenario
+		// Account 2 transfers 500 pieces of RFT 1 to account 3
 		assert_ok!(TemplateModule::transfer(
 			origin2.clone(),
 			account(3),
@@ -332,29 +325,19 @@ fn transfer_refungible_item() {
 			TokenId(1),
 			500
 		));
-		{
-			let item = <pallet_refungible::TokenData<Test>>::get((CollectionId(1), TokenId(1)));
-			let balance2 = <pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(2)));
-			let balance3 = <pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(3)));
-			assert_eq!(balance2, 523);
-			assert_eq!(balance3, 500);
-		}
-		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(2))), 523);
-		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(3))), 500);
+		assert_eq!(<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(2))), 523);
+		assert_eq!(<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(3))), 500);
+		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(2))), 1);
+		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(3))), 1);
 		assert_eq!(<pallet_refungible::Owned<Test>>::get((collection_id, account(2), TokenId(1))), true);
 		assert_eq!(<pallet_refungible::Owned<Test>>::get((collection_id, account(3), TokenId(1))), true);
 
-		// split item and new owner has account scenario
+		// Account 2 transfers 200 more pieces of RFT 1 to account 3 with pre-existing balance
 		assert_ok!(TemplateModule::transfer(origin2, account(3), CollectionId(1), TokenId(1), 200));
-		{
-			let item = <pallet_refungible::TokenData<Test>>::get((CollectionId(1), TokenId(1)));
-			let balance2 = <pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(2)));
-			let balance3 = <pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(3)));
-			assert_eq!(balance2, 323);
-			assert_eq!(balance3, 700);
-		}
-		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(2))), 323);
-		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(3))), 700);
+		assert_eq!(<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(2))), 323);
+		assert_eq!(<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(3))), 700);
+		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(2))), 1);
+		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(3))), 1);
 		assert_eq!(<pallet_refungible::Owned<Test>>::get((collection_id, account(2), TokenId(1))), true);
 		assert_eq!(<pallet_refungible::Owned<Test>>::get((collection_id, account(3), TokenId(1))), true);
 	});
@@ -373,11 +356,50 @@ fn transfer_nft_item() {
 
 		let origin1 = Origin::signed(1);
 		// default scenario
-		assert_ok!(TemplateModule::transfer(origin1, account(2), CollectionId(1), TokenId(1), 1000));
+		assert_ok!(TemplateModule::transfer(origin1, account(2), CollectionId(1), TokenId(1), 1));
 		assert_eq!(<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))), 0);
 		assert_eq!(<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(2))), 1);
 		assert_eq!(<pallet_nonfungible::Owned<Test>>::get((collection_id, account(1), TokenId(1))), false);
 		assert_eq!(<pallet_nonfungible::Owned<Test>>::get((collection_id, account(2), TokenId(1))), true);
+	});
+}
+
+#[test]
+fn transfer_nft_item_wrong_value() {
+	new_test_ext().execute_with(|| {
+		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
+
+		let data = default_nft_data();
+		create_test_item(collection_id, &data.into());
+		assert_eq!(<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))), 1);
+		assert_eq!(<pallet_nonfungible::Owned<Test>>::get((collection_id, account(1), TokenId(1))), true);
+
+		let origin1 = Origin::signed(1);
+
+		assert_noop!(
+			TemplateModule::transfer(origin1, account(2), CollectionId(1), TokenId(1), 2).map_err(|e| e.error),
+			<pallet_nonfungible::Error::<Test>>::NonfungibleItemsHaveNoAmount
+		);
+	});
+}
+
+#[test]
+fn transfer_nft_item_zero_value() {
+	new_test_ext().execute_with(|| {
+		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
+
+		let data = default_nft_data();
+		create_test_item(collection_id, &data.into());
+		assert_eq!(<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))), 1);
+		assert_eq!(<pallet_nonfungible::Owned<Test>>::get((collection_id, account(1), TokenId(1))), true);
+
+		let origin1 = Origin::signed(1);
+
+		// Transferring 0 amount works on NFT...
+		assert_ok!(TemplateModule::transfer(origin1, account(2), CollectionId(1), TokenId(1), 0));
+		// ... and results in no transfer
+		assert_eq!(<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))), 1);
+		assert_eq!(<pallet_nonfungible::Owned<Test>>::get((collection_id, account(1), TokenId(1))), true);
 	});
 }
 
@@ -395,14 +417,14 @@ fn nft_approve_and_transfer_from() {
 		assert_eq!(<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))), 1);
 		assert_eq!(<pallet_nonfungible::Owned<Test>>::get((collection_id, account(1), TokenId(1))), true);
 
-		// neg transfer
+		// neg transfer_from
 		assert_noop!(
-			TemplateModule::transfer_from(origin2.clone(), account(1), account(2), CollectionId(1), TokenId(1), 1),
-			CommonError::<Test>::NoPermission
+			TemplateModule::transfer_from(origin2.clone(), account(1), account(2), CollectionId(1), TokenId(1), 1).map_err(|e| e.error),
+			CommonError::<Test>::TokenValueNotEnough
 		);
 
 		// do approve
-		assert_ok!(TemplateModule::approve(origin1, account(2), CollectionId(1), TokenId(1), 5));
+		assert_ok!(TemplateModule::approve(origin1, account(2), CollectionId(1), TokenId(1), 1));
 		assert_eq!(<pallet_nonfungible::Allowance<Test>>::get((CollectionId(1), TokenId(1))).unwrap(), account(2));
 
 		assert_ok!(TemplateModule::transfer_from(
@@ -425,9 +447,9 @@ fn nft_approve_and_transfer_from_allow_list() {
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
+		// Create NFT 1 for account 1
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.clone().into());
-
 		assert_eq!(
 			&<pallet_nonfungible::TokenData<Test>>::get((collection_id, TokenId(1))).unwrap().const_data,
 			&data.const_data.into_inner()
@@ -435,6 +457,7 @@ fn nft_approve_and_transfer_from_allow_list() {
 		assert_eq!(<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))), 1);
 		assert_eq!(<pallet_nonfungible::Owned<Test>>::get((collection_id, account(1), TokenId(1))), true);
 
+		// Allow allow-list users to mint and add accounts 1, 2, and 3 to allow-list
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1.clone(),
 			CollectionId(1),
@@ -461,18 +484,17 @@ fn nft_approve_and_transfer_from_allow_list() {
 			account(3)
 		));
 
-		// do approve
+		// Account 1 approves account 2 for NFT 1 
 		assert_ok!(TemplateModule::approve(
 			origin1.clone(),
 			account(2),
 			CollectionId(1),
 			TokenId(1),
-			5
+			1
 		));
 		assert_eq!(<pallet_nonfungible::Allowance<Test>>::get((CollectionId(1), TokenId(1))).unwrap(), account(2));
-		assert_ok!(TemplateModule::approve(origin1, account(3), CollectionId(1), TokenId(1), 5));
-		assert_eq!(<pallet_nonfungible::Allowance<Test>>::get((CollectionId(1), TokenId(1))).unwrap(), account(3));
 
+		// Account 2 transfers NFT 1 from account 1 to account 3
 		assert_ok!(TemplateModule::transfer_from(
 			origin2,
 			account(1),
@@ -493,12 +515,15 @@ fn refungible_approve_and_transfer_from() {
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
+		// Create RFT 1 in 1023 pieces for account 1
 		let data = default_re_fungible_data();
 		create_test_item(collection_id, &data.into());
 
-		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))), 1023);
+		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))), 1);
+		assert_eq!(<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(1))), 1023);
 		assert_eq!(<pallet_refungible::Owned<Test>>::get((collection_id, account(1), TokenId(1))), true);
 
+		// Allow public minting, enable allow-list and add accounts 1, 2, 3 to allow-list
 		assert_ok!(TemplateModule::set_mint_permission(
 			origin1.clone(),
 			CollectionId(1),
@@ -525,10 +550,11 @@ fn refungible_approve_and_transfer_from() {
 			account(3)
 		));
 
-		// do approve
+		// Account 1 approves account 2 for 1023 pieces of RFT 1
 		assert_ok!(TemplateModule::approve(origin1, account(2), CollectionId(1), TokenId(1), 1023));
 		assert_eq!(<pallet_refungible::Allowance<Test>>::get((CollectionId(1), TokenId(1), account(1), account(2))), 1023);
 
+		// Account 2 transfers 100 pieces of RFT 1 from account 1 to account 3
 		assert_ok!(TemplateModule::transfer_from(
 			origin2,
 			account(1),
@@ -537,10 +563,12 @@ fn refungible_approve_and_transfer_from() {
 			TokenId(1),
 			100
 		));
-		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))), 923);
-		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(3))), 100);
+		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))), 1);
+		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(3))), 1);
+		assert_eq!(<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(1))), 923);
+		assert_eq!(<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(3))), 100);
 		assert_eq!(<pallet_refungible::Owned<Test>>::get((collection_id, account(1), TokenId(1))), true);
-		assert_eq!(<pallet_refungible::Owned<Test>>::get((collection_id, account(1), TokenId(3))), true);
+		assert_eq!(<pallet_refungible::Owned<Test>>::get((collection_id, account(1), TokenId(1))), true);
 		assert_eq!(<pallet_refungible::Allowance<Test>>::get((CollectionId(1), TokenId(1), account(1), account(2))), 923);
 	});
 }
@@ -587,11 +615,11 @@ fn fungible_approve_and_transfer_from() {
 			origin1.clone(),
 			account(2),
 			CollectionId(1),
-			TokenId(1),
+			TokenId(0),
 			5
 		));
 		assert_eq!(<pallet_fungible::Allowance<Test>>::get((CollectionId(1), account(1), account(2))), 5);
-		assert_ok!(TemplateModule::approve(origin1, account(3), CollectionId(1), TokenId(1), 5));
+		assert_ok!(TemplateModule::approve(origin1, account(3), CollectionId(1), TokenId(0), 5));
 		assert_eq!(<pallet_fungible::Allowance<Test>>::get((CollectionId(1), account(1), account(2))), 5);
 		assert_eq!(<pallet_fungible::Allowance<Test>>::get((CollectionId(1), account(1), account(3))), 5);
 
@@ -600,15 +628,15 @@ fn fungible_approve_and_transfer_from() {
 			account(1),
 			account(3),
 			CollectionId(1),
-			TokenId(1),
+			TokenId(0),
 			4
 		));
 
 		assert_eq!(<pallet_fungible::Allowance<Test>>::get((CollectionId(1), account(1), account(2))), 1);
 
 		assert_noop!(
-			TemplateModule::transfer_from(origin2, account(1), account(3), CollectionId(1), TokenId(1), 4),
-			CommonError::<Test>::NoPermission
+			TemplateModule::transfer_from(origin2, account(1), account(3), CollectionId(1), TokenId(0), 4).map_err(|e| e.error),
+			CommonError::<Test>::TokenValueNotEnough
 		);
 	});
 }
@@ -647,17 +675,12 @@ fn burn_nft_item() {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
 		let origin1 = Origin::signed(1);
-		assert_ok!(TemplateModule::add_collection_admin(
-			origin1.clone(),
-			collection_id,
-			account(2)
-		));
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
 
 		// check balance (collection with id = 1, user id = 1)
-		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))), 1);
+		assert_eq!(<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))), 1);
 
 		// burn item
 		assert_ok!(TemplateModule::burn_item(
@@ -666,12 +689,38 @@ fn burn_nft_item() {
 			TokenId(1),
 			1
 		));
+		assert_eq!(<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))), 0);
+	});
+}
+
+#[test]
+fn burn_same_nft_item_twice() {
+	new_test_ext().execute_with(|| {
+		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
+
+		let origin1 = Origin::signed(1);
+
+		let data = default_nft_data();
+		create_test_item(collection_id, &data.into());
+
+		// check balance (collection with id = 1, user id = 1)
+		assert_eq!(<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))), 1);
+
+		// burn item
+		assert_ok!(TemplateModule::burn_item(
+			origin1.clone(),
+			collection_id,
+			TokenId(1),
+			1
+		));
+		
+		// burn item again
 		assert_noop!(
-			TemplateModule::burn_item(origin1, collection_id, TokenId(1), 1),
+			TemplateModule::burn_item(origin1, collection_id, TokenId(1), 1).map_err(|e| e.error),
 			CommonError::<Test>::TokenNotFound
 		);
 
-		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))), 0);
+		assert_eq!(<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))), 0);
 	});
 }
 
@@ -694,16 +743,41 @@ fn burn_fungible_item() {
 		assert_eq!(<pallet_fungible::Balance<Test>>::get((collection_id, account(1))), 5);
 
 		// burn item
-		assert_ok!(TemplateModule::burn_item(origin1.clone(), CollectionId(1), TokenId(1), 5));
+		assert_ok!(TemplateModule::burn_item(origin1.clone(), CollectionId(1), TokenId(0), 5));
 		assert_noop!(
-			TemplateModule::burn_item(origin1, CollectionId(1), TokenId(1), 5),
-			CommonError::<Test>::TokenValueNotEnough
+			TemplateModule::burn_item(origin1, CollectionId(1), TokenId(0), 5).map_err(|e| e.error),
+			CommonError::<Test>::TokenValueTooLow
 		);
 
 		assert_eq!(<pallet_fungible::Balance<Test>>::get((collection_id, account(1))), 0);
 	});
 }
 
+#[test]
+fn burn_fungible_item_with_token_id() {
+	new_test_ext().execute_with(|| {
+		let collection_id = create_test_collection(&CollectionMode::Fungible(3), CollectionId(1));
+
+		let origin1 = Origin::signed(1);
+		assert_ok!(TemplateModule::add_collection_admin(
+			origin1.clone(),
+			collection_id,
+			account(2)
+		));
+
+		let data = default_fungible_data();
+		create_test_item(collection_id, &data.into());
+
+		// check balance (collection with id = 1, user id = 1)
+		assert_eq!(<pallet_fungible::Balance<Test>>::get((collection_id, account(1))), 5);
+
+		// Try to burn item using Token ID
+		assert_noop!(
+			TemplateModule::burn_item(origin1, CollectionId(1), TokenId(1), 5).map_err(|e| e.error),
+			<pallet_fungible::Error::<Test>>::FungibleItemsHaveNoId
+		);
+	});
+}
 #[test]
 fn burn_refungible_item() {
 	new_test_ext().execute_with(|| {
@@ -736,14 +810,14 @@ fn burn_refungible_item() {
 		create_test_item(collection_id, &data.into());
 
 		// check balance (collection with id = 1, user id = 2)
-		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))), 1023);
+		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))), 1);
 		assert_eq!(<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(1))), 1023);
 
 		// burn item
 		assert_ok!(TemplateModule::burn_item(origin1.clone(), collection_id, TokenId(1), 1023));
 		assert_noop!(
-			TemplateModule::burn_item(origin1, collection_id, TokenId(1), 1023),
-			CommonError::<Test>::TokenNotFound
+			TemplateModule::burn_item(origin1, collection_id, TokenId(1), 1023).map_err(|e| e.error),
+			CommonError::<Test>::TokenValueTooLow
 		);
 
 		assert_eq!(<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(1))), 0);
@@ -754,12 +828,9 @@ fn burn_refungible_item() {
 fn add_collection_admin() {
 	new_test_ext().execute_with(|| {
 		let collection1_id = create_test_collection_for_owner(&CollectionMode::NFT, 1, CollectionId(1));
-		create_test_collection_for_owner(&CollectionMode::NFT, 2, CollectionId(2));
-		create_test_collection_for_owner(&CollectionMode::NFT, 3, CollectionId(3));
-
 		let origin1 = Origin::signed(1);
 
-		// collection admin
+		// Add collection admins
 		assert_ok!(TemplateModule::add_collection_admin(
 			origin1.clone(),
 			collection1_id,
@@ -771,7 +842,8 @@ fn add_collection_admin() {
 			account(3)
 		));
 
-		assert!(<pallet_common::IsAdmin<Test>>::get((CollectionId(1), account(1))));
+		// Owner is not an admin by default
+		assert_eq!(<pallet_common::IsAdmin<Test>>::get((CollectionId(1), account(1))), false);
 		assert!(<pallet_common::IsAdmin<Test>>::get((CollectionId(1), account(2))));
 		assert!(<pallet_common::IsAdmin<Test>>::get((CollectionId(1), account(3))));
 	});
@@ -781,13 +853,10 @@ fn add_collection_admin() {
 fn remove_collection_admin() {
 	new_test_ext().execute_with(|| {
 		let collection1_id = create_test_collection_for_owner(&CollectionMode::NFT, 1, CollectionId(1));
-		create_test_collection_for_owner(&CollectionMode::NFT, 2, CollectionId(2));
-		create_test_collection_for_owner(&CollectionMode::NFT, 3, CollectionId(3));
-
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
-		// collection admin
+		// Add collection admins 2 and 3
 		assert_ok!(TemplateModule::add_collection_admin(
 			origin1.clone(),
 			collection1_id,
@@ -802,14 +871,16 @@ fn remove_collection_admin() {
 		assert!(<pallet_common::IsAdmin<Test>>::get((CollectionId(1), account(2))));
 		assert!(<pallet_common::IsAdmin<Test>>::get((CollectionId(1), account(3))));
 
-		// remove admin
+		// remove admin 3
 		assert_ok!(TemplateModule::remove_collection_admin(
 			origin2,
 			CollectionId(1),
 			account(3)
 		));
-		assert!(<pallet_common::IsAdmin<Test>>::get((CollectionId(1), account(3))));
-		assert_eq!(<pallet_common::IsAdmin<Test>>::get((CollectionId(1), account(2))), false);
+
+		// 2 is still admin, 3 is not an admin anymore
+		assert!(<pallet_common::IsAdmin<Test>>::get((CollectionId(1), account(2))));
+		assert_eq!(<pallet_common::IsAdmin<Test>>::get((CollectionId(1), account(3))), false);
 	});
 }
 
@@ -837,10 +908,10 @@ fn balance_of() {
 		// check balance (collection with id = 1, user id = 1)
 		assert_eq!(<pallet_nonfungible::AccountBalance<Test>>::get((nft_collection_id, account(1))), 1);
 		assert_eq!(<pallet_fungible::Balance<Test>>::get((fungible_collection_id, account(1))), 5);
-		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((re_fungible_collection_id, account(1))), 1023);
+		assert_eq!(<pallet_refungible::AccountBalance<Test>>::get((re_fungible_collection_id, account(1))), 1);
 
 		assert_eq!(<pallet_nonfungible::Owned<Test>>::get((nft_collection_id, account(1), TokenId(1))), true);
-		assert_eq!(<pallet_refungible::Owned<Test>>::get((nft_collection_id, account(1), TokenId(1))), true);
+		assert_eq!(<pallet_refungible::Owned<Test>>::get((re_fungible_collection_id, account(1), TokenId(1))), true);
 	});
 }
 
@@ -1037,7 +1108,7 @@ fn owner_can_remove_address_from_allow_list() {
 			collection_id,
 			account(2)
 		));
-		assert!(<pallet_common::Allowlist<Test>>::get((collection_id, account(2))));
+		assert_eq!(<pallet_common::Allowlist<Test>>::get((collection_id, account(2))), false);
 	});
 }
 
@@ -1048,23 +1119,27 @@ fn admin_can_remove_address_from_allow_list() {
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
+		// Owner adds admin
 		assert_ok!(TemplateModule::add_collection_admin(
 			origin1.clone(),
 			collection_id,
 			account(2)
 		));
 
+		// Owner adds address 3 to allow list
 		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1,
 			collection_id,
 			account(3)
 		));
+
+		// Admin removes address 3 from allow list
 		assert_ok!(TemplateModule::remove_from_allow_list(
 			origin2,
 			collection_id,
 			account(3)
 		));
-		assert!(<pallet_common::Allowlist<Test>>::get((collection_id, account(3))));
+		assert_eq!(<pallet_common::Allowlist<Test>>::get((collection_id, account(3))), false);
 	});
 }
 
@@ -1107,17 +1182,27 @@ fn nobody_can_remove_address_from_allow_list_of_deleted_collection() {
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
+		// Add account 2 to allow list
 		assert_ok!(TemplateModule::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account(2)
 		));
+
+		// Account 2 is in collection allow-list
+		assert!(<pallet_common::Allowlist<Test>>::get((collection_id, account(2))));
+
+		// Destroy collection
 		assert_ok!(TemplateModule::destroy_collection(origin1, collection_id));
+
+		// Attempt to remove account 2 from collection allow-list => error
 		assert_noop!(
 			TemplateModule::remove_from_allow_list(origin2, collection_id, account(2)),
 			CommonError::<Test>::CollectionNotFound
 		);
-		assert!(<pallet_common::Allowlist<Test>>::get((collection_id, account(2))));
+
+		// Account 2 is not found in collection allow-list anyway
+		assert_eq!(<pallet_common::Allowlist<Test>>::get((collection_id, account(2))), false);
 	});
 }
 
@@ -1138,12 +1223,13 @@ fn address_is_already_removed_from_allow_list() {
 			collection_id,
 			account(2)
 		));
+		assert_eq!(<pallet_common::Allowlist<Test>>::get((collection_id, account(2))), false);
 		assert_ok!(TemplateModule::remove_from_allow_list(
 			origin1,
 			collection_id,
 			account(2)
 		));
-		assert!(<pallet_common::Allowlist<Test>>::get((collection_id, account(2))));
+		assert_eq!(<pallet_common::Allowlist<Test>>::get((collection_id, account(2))), false);
 	});
 }
 
@@ -1170,7 +1256,7 @@ fn allow_list_test_1() {
 		));
 
 		assert_noop!(
-			TemplateModule::transfer(origin1, account(3), CollectionId(1), TokenId(1), 1),
+			TemplateModule::transfer(origin1, account(3), CollectionId(1), TokenId(1), 1).map_err(|e| e.error),
 			CommonError::<Test>::AddressNotInAllowlist
 		);
 	});
@@ -1218,7 +1304,7 @@ fn allow_list_test_2() {
 		));
 
 		assert_noop!(
-			TemplateModule::transfer_from(origin1, account(1), account(3), CollectionId(1), TokenId(1), 1),
+			TemplateModule::transfer_from(origin1, account(1), account(3), CollectionId(1), TokenId(1), 1).map_err(|e| e.error),
 			CommonError::<Test>::AddressNotInAllowlist
 		);
 	});
@@ -1247,7 +1333,7 @@ fn allow_list_test_3() {
 		));
 
 		assert_noop!(
-			TemplateModule::transfer(origin1, account(3), collection_id, TokenId(1), 1),
+			TemplateModule::transfer(origin1, account(3), collection_id, TokenId(1), 1).map_err(|e| e.error),
 			CommonError::<Test>::AddressNotInAllowlist
 		);
 	});
@@ -1296,7 +1382,7 @@ fn allow_list_test_4() {
 		));
 
 		assert_noop!(
-			TemplateModule::transfer_from(origin1, account(1), account(3), collection_id, TokenId(1), 1),
+			TemplateModule::transfer_from(origin1, account(1), account(3), collection_id, TokenId(1), 1).map_err(|e| e.error),
 			CommonError::<Test>::AddressNotInAllowlist
 		);
 	});
@@ -1319,7 +1405,7 @@ fn allow_list_test_5() {
 			AccessMode::AllowList
 		));
 		assert_noop!(
-			TemplateModule::burn_item(origin1.clone(), CollectionId(1), TokenId(1), 5),
+			TemplateModule::burn_item(origin1.clone(), CollectionId(1), TokenId(1), 1).map_err(|e| e.error),
 			CommonError::<Test>::AddressNotInAllowlist
 		);
 	});
@@ -1344,7 +1430,7 @@ fn allow_list_test_6() {
 
 		// do approve
 		assert_noop!(
-			TemplateModule::approve(origin1, account(1), CollectionId(1), TokenId(1), 5),
+			TemplateModule::approve(origin1, account(1), CollectionId(1), TokenId(1), 1).map_err(|e| e.error),
 			CommonError::<Test>::AddressNotInAllowlist
 		);
 	});
@@ -1387,11 +1473,13 @@ fn allow_list_test_8() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
+		// Create NFT for account 1
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
 
 		let origin1 = Origin::signed(1);
 
+		// Toggle Allow List mode and add accounts 1 and 2
 		assert_ok!(TemplateModule::set_public_access_mode(
 			origin1.clone(),
 			collection_id,
@@ -1408,16 +1496,17 @@ fn allow_list_test_8() {
 			account(2)
 		));
 
-		// do approve
+		// Sself-approve account 1 for NFT 1
 		assert_ok!(TemplateModule::approve(
 			origin1.clone(),
 			account(1),
 			CollectionId(1), 
 			TokenId(1),
-			5
+			1
 		));
 		assert_eq!(<pallet_nonfungible::Allowance<Test>>::get((CollectionId(1), TokenId(1))).unwrap(), account(1));
 
+		// Transfer from 1 to 2
 		assert_ok!(TemplateModule::transfer_from(
 			origin1,
 			account(1),
@@ -1513,7 +1602,7 @@ fn allow_list_test_11() {
 		));
 
 		assert_noop!(
-			TemplateModule::create_item(origin2, CollectionId(1), account(2), default_nft_data().into()),
+			TemplateModule::create_item(origin2, CollectionId(1), account(2), default_nft_data().into()).map_err(|e| e.error),
 			CommonError::<Test>::PublicMintingNotAllowed
 		);
 	});
@@ -1540,7 +1629,7 @@ fn allow_list_test_12() {
 		));
 
 		assert_noop!(
-			TemplateModule::create_item(origin2, CollectionId(1), account(2), default_nft_data().into()),
+			TemplateModule::create_item(origin2, CollectionId(1), account(2), default_nft_data().into()).map_err(|e| e.error),
 			CommonError::<Test>::PublicMintingNotAllowed
 		);
 	});
@@ -1626,7 +1715,7 @@ fn allow_list_test_15() {
 		));
 
 		assert_noop!(
-			TemplateModule::create_item(origin2, collection_id, account(2), default_nft_data().into()),
+			TemplateModule::create_item(origin2, collection_id, account(2), default_nft_data().into()).map_err(|e| e.error),
 			CommonError::<Test>::AddressNotInAllowlist
 		);
 	});
@@ -1674,14 +1763,23 @@ fn total_number_collections_bound() {
 	});
 }
 
-// Total number of collections. Negotive test
+#[test]
+fn create_max_collections() {
+	new_test_ext().execute_with(|| {
+		for i in 1..=COLLECTION_NUMBER_LIMIT {
+			create_test_collection(&CollectionMode::NFT, CollectionId(i));
+		}
+	});
+}
+
+// Total number of collections. Negative test
 #[test]
 fn total_number_collections_bound_neg() {
 	new_test_ext().execute_with(|| {
 		let origin1 = Origin::signed(1);
 
-		for i in 0..COLLECTION_NUMBER_LIMIT {
-			create_test_collection(&CollectionMode::NFT, CollectionId(i + 1));
+		for i in 1..=COLLECTION_NUMBER_LIMIT {
+			create_test_collection(&CollectionMode::NFT, CollectionId(i));
 		}
 
 		let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
@@ -1722,14 +1820,14 @@ fn owned_tokens_bound_neg() {
 
 		let origin1 = Origin::signed(1);
 
-		for _ in 0..MAX_TOKEN_OWNERSHIP {
+		for _ in 1..=MAX_TOKEN_OWNERSHIP {
 			let data = default_nft_data();
 			create_test_item(collection_id, &data.clone().into());
 		}
 
 		let data = default_nft_data();
 		assert_noop!(
-			TemplateModule::create_item(origin1, CollectionId(1), account(1), data.into()),
+			TemplateModule::create_item(origin1, CollectionId(1), account(1), data.into()).map_err(|e| e.error),
 			CommonError::<Test>::AccountTokenLimitExceeded
 		);
 	});
@@ -1902,8 +2000,26 @@ fn set_variable_meta_data_on_fungible_token_fails() {
 
 		let variable_data = b"test data".to_vec();
 		assert_noop!(
-			TemplateModule::set_variable_meta_data(origin1, collection_id, TokenId(1), variable_data),
+			TemplateModule::set_variable_meta_data(origin1, collection_id, TokenId(0), variable_data).map_err(|e| e.error),
 			<pallet_fungible::Error<Test>>::FungibleItemsDontHaveData
+		);
+	});
+}
+
+#[test]
+fn set_variable_meta_data_on_fungible_token_with_token_id_fails() {
+	new_test_ext().execute_with(|| {
+		let collection_id = create_test_collection(&CollectionMode::Fungible(3), CollectionId(1));
+
+		let origin1 = Origin::signed(1);
+
+		let data = default_fungible_data();
+		create_test_item(collection_id, &data.into());
+
+		let variable_data = b"test data".to_vec();
+		assert_noop!(
+			TemplateModule::set_variable_meta_data(origin1, collection_id, TokenId(1), variable_data).map_err(|e| e.error),
+			<pallet_fungible::Error::<Test>>::FungibleItemsHaveNoId
 		);
 	});
 }
@@ -1920,7 +2036,7 @@ fn set_variable_meta_data_on_nft_token_fails_for_big_data() {
 
 		let variable_data = b"test set_variable_meta_data method, bigger than limits.".to_vec();
 		assert_noop!(
-			TemplateModule::set_variable_meta_data(origin1, collection_id, TokenId(1), variable_data),
+			TemplateModule::set_variable_meta_data(origin1, collection_id, TokenId(1), variable_data).map_err(|e| e.error),
 			CommonError::<Test>::TokenVariableDataLimitExceeded
 		);
 	});
@@ -1938,7 +2054,7 @@ fn set_variable_meta_data_on_re_fungible_token_fails_for_big_data() {
 
 		let variable_data = b"test set_variable_meta_data method, bigger than limits.".to_vec();
 		assert_noop!(
-			TemplateModule::set_variable_meta_data(origin1, collection_id, TokenId(1), variable_data),
+			TemplateModule::set_variable_meta_data(origin1, collection_id, TokenId(1), variable_data).map_err(|e| e.error),
 			CommonError::<Test>::TokenVariableDataLimitExceeded
 		);
 	});
@@ -2013,7 +2129,7 @@ fn set_variable_meta_data_on_nft_with_item_owner_permission_flag_neg() {
 				collection_id,
 				TokenId(1),
 				variable_data.clone()
-			),
+			).map_err(|e| e.error),
 			CommonError::<Test>::TokenVariableDataLimitExceeded
 		);
 	})
@@ -2035,7 +2151,7 @@ fn collection_transfer_flag_works() {
 		let origin1 = Origin::signed(1);
 
 		// default scenario
-		assert_ok!(TemplateModule::transfer(origin1, account(2), collection_id, TokenId(1), 1000));
+		assert_ok!(TemplateModule::transfer(origin1, account(2), collection_id, TokenId(1), 1));
 		assert_eq!(<pallet_nonfungible::Owned<Test>>::get((collection_id, account(1), TokenId(1))), false);
 		assert_eq!(<pallet_nonfungible::Owned<Test>>::get((collection_id, account(2), TokenId(1))), true);
 		assert_eq!(<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))), 0);
@@ -2133,7 +2249,7 @@ fn set_variable_meta_data_on_nft_with_admin_flag_neg() {
 				collection_id,
 				TokenId(1),
 				variable_data.clone()
-			),
+			).map_err(|e| e.error),
 			CommonError::<Test>::NoPermission
 		);
 	});
@@ -2188,7 +2304,7 @@ fn set_variable_meta_data_on_nft_with_none_flag_neg() {
 				collection_id,
 				TokenId(1),
 				variable_data.clone()
-			),
+			).map_err(|e| e.error),
 			CommonError::<Test>::NoPermission
 		);
 	});
@@ -2213,7 +2329,7 @@ fn collection_transfer_flag_works_neg() {
 
 		// default scenario
 		assert_noop!(
-			TemplateModule::transfer(origin1, account(2), CollectionId(1), TokenId(1), 1000),
+			TemplateModule::transfer(origin1, account(2), CollectionId(1), TokenId(1), 1).map_err(|e| e.error),
 			CommonError::<Test>::TransferNotAllowed
 		);
 		assert_eq!(<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))), 1);

@@ -29,10 +29,14 @@ use scale_info::TypeInfo;
 pub const MAX_DECIMAL_POINTS: DecimalPoints = 30;
 pub const MAX_REFUNGIBLE_PIECES: u128 = 1_000_000_000_000_000_000_000;
 pub const MAX_SPONSOR_TIMEOUT: u32 = 10_368_000;
-pub const MAX_TOKEN_OWNERSHIP: u32 = 10_000_000;
 
+pub const MAX_TOKEN_OWNERSHIP: u32 = if cfg!(not(feature = "limit-testing")) {
+	10_000_000
+} else {
+	10
+};
 pub const COLLECTION_NUMBER_LIMIT: u32 = if cfg!(not(feature = "limit-testing")) {
-	100000
+	100_000
 } else {
 	10
 };
@@ -44,7 +48,7 @@ pub const CUSTOM_DATA_LIMIT: u32 = if cfg!(not(feature = "limit-testing")) {
 pub const COLLECTION_ADMINS_LIMIT: u32 = 5;
 pub const COLLECTION_TOKEN_LIMIT: u32 = u32::MAX;
 pub const ACCOUNT_TOKEN_OWNERSHIP_LIMIT: u32 = if cfg!(not(feature = "limit-testing")) {
-	1000000
+	1_000_000
 } else {
 	10
 };

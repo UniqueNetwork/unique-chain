@@ -18,7 +18,7 @@ use sp_runtime::{
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
-const YEAR: u64 = 5_259_600;
+const YEAR: u64 = 2_629_800;
 
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
@@ -112,8 +112,8 @@ fn inflation_works() {
 		// first inflation deposit should be equal to BlockInflation
 		Inflation::on_initialize(1);
 
-		// SBP M2 review: Verify expected block inflation for year 1
-		assert_eq!(Inflation::block_inflation(), 1901);
+		// Expected 100-block inflation for year 1 is 100 * 100_000_000 / YEAR = 3803
+		assert_eq!(Inflation::block_inflation(), 3803);
 		assert_eq!(
 			Balances::free_balance(1234) - initial_issuance,
 			Inflation::block_inflation()
@@ -158,26 +158,21 @@ fn inflation_in_1_year() {
 		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
 		Inflation::on_initialize(1);
-		let block_inflation_year_0 = Inflation::block_inflation();
 
-		// SBP M2 review: go through all the block inflations for year 1,
+		// Go through all the block inflations for year 1,
 		// total issuance will be updated accordingly
 		for block in (100..YEAR).step_by(100) {
 			Inflation::on_initialize(block);
 		}
 		assert_eq!(
-			initial_issuance + (1901 * (YEAR / 100)),
+			initial_issuance + (3803 * (YEAR / 100)),
 			<Balances as Currency<_>>::total_issuance()
 		);
 
 		Inflation::on_initialize(YEAR);
 		let block_inflation_year_1 = Inflation::block_inflation();
-		// SBP M2 review: Verify expected block inflation for year 2
-		assert_eq!(block_inflation_year_1, 1952);
-
-		// SBP M2 review: this is actually not true
-		// Assert that year 1 inflation is less than year 0
-		// assert!(block_inflation_year_0 > block_inflation_year_1);
+		// Expected 100-block inflation for year 2: 100 * 9.33% * initial issuance * 110% / YEAR = 3904
+		assert_eq!(block_inflation_year_1, 3904);
 	});
 }
 

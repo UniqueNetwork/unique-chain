@@ -27,6 +27,10 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		TemplateModule: pallet_template::{Pallet, Call, Storage},
 		Balances: pallet_balances::{Pallet, Call, Storage},
+		Common: pallet_common::{Pallet, Storage, Event<T>},
+		Fungible: pallet_fungible::{Pallet, Storage},
+		Refungible: pallet_refungible::{Pallet, Storage},
+		Nonfungible: pallet_nonfungible::{Pallet, Storage},
 	}
 );
 
@@ -151,7 +155,6 @@ impl Default for TestCrossAccountId {
 		Self::from_sub(0)
 	}
 }
-
 
 pub struct TestEtheremTransactionSender;
 impl pallet_ethereum::EthereumTransactionSender for TestEtheremTransactionSender {
