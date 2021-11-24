@@ -11,7 +11,7 @@ import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {alicesPublicKey} from '../accounts';
-import {NftDataStructsCollection} from '../interfaces';
+import {UpDataStructsCollection} from '../interfaces';
 import privateKey from '../substrate/privateKey';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
@@ -105,7 +105,7 @@ interface IReFungibleOwner {
 }
 
 interface IGetMessage {
-  checkMsgNftMethod: string;
+  checkMsgUnqMethod: string;
   checkMsgTrsMethod: string;
   checkMsgSysMethod: string;
 }
@@ -133,13 +133,13 @@ export interface IReFungibleTokenDataType {
   variableData: number[];
 }
 
-export function nftEventMessage(events: EventRecord[]): IGetMessage {
-  let checkMsgNftMethod = '';
+export function uniqueEventMessage(events: EventRecord[]): IGetMessage {
+  let checkMsgUnqMethod = '';
   let checkMsgTrsMethod = '';
   let checkMsgSysMethod = '';
   events.forEach(({event: {method, section}}) => {
     if (section === 'common') {
-      checkMsgNftMethod = method;
+      checkMsgUnqMethod = method;
     } else if (section === 'treasury') {
       checkMsgTrsMethod = method;
     } else if (section === 'system') {
@@ -147,7 +147,7 @@ export function nftEventMessage(events: EventRecord[]): IGetMessage {
     } else { return null; }
   });
   const result: IGetMessage = {
-    checkMsgNftMethod,
+    checkMsgUnqMethod,
     checkMsgTrsMethod,
     checkMsgSysMethod,
   };
@@ -716,8 +716,8 @@ approveExpectSuccess(
   tokenId: number, owner: IKeyringPair, approved: CrossAccountId | string, amount: number | bigint = 1,
 ) {
   await usingApi(async (api: ApiPromise) => {
-    const approveNftTx = api.tx.unique.approve(normalizeAccountId(approved), collectionId, tokenId, amount);
-    const events = await submitTransactionAsync(owner, approveNftTx);
+    const approveUniqueTx = api.tx.unique.approve(normalizeAccountId(approved), collectionId, tokenId, amount);
+    const events = await submitTransactionAsync(owner, approveUniqueTx);
     const result = getGenericResult(events);
     expect(result.success).to.be.true;
 
@@ -730,8 +730,8 @@ export async function adminApproveFromExpectSuccess(
   tokenId: number, admin: IKeyringPair, owner: CrossAccountId | string, approved: CrossAccountId | string, amount: number | bigint = 1,
 ) {
   await usingApi(async (api: ApiPromise) => {
-    const approveNftTx = api.tx.unique.approve(normalizeAccountId(approved), collectionId, tokenId, amount);
-    const events = await submitTransactionAsync(admin, approveNftTx);
+    const approveUniqueTx = api.tx.unique.approve(normalizeAccountId(approved), collectionId, tokenId, amount);
+    const events = await submitTransactionAsync(admin, approveUniqueTx);
     const result = getGenericResult(events);
     expect(result.success).to.be.true;
 
@@ -920,8 +920,8 @@ approveExpectFail(
   tokenId: number, owner: IKeyringPair, approved: IKeyringPair, amount: number | bigint = 1,
 ) {
   await usingApi(async (api: ApiPromise) => {
-    const approveNftTx = api.tx.unique.approve(normalizeAccountId(approved.address), collectionId, tokenId, amount);
-    const events = await expect(submitTransactionExpectFailAsync(owner, approveNftTx)).to.be.rejected;
+    const approveUniqueTx = api.tx.unique.approve(normalizeAccountId(approved.address), collectionId, tokenId, amount);
+    const events = await expect(submitTransactionExpectFailAsync(owner, approveUniqueTx)).to.be.rejected;
     const result = getCreateCollectionResult(events);
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.false;
@@ -1212,7 +1212,7 @@ export async function removeFromAllowListExpectFailure(sender: IKeyringPair, col
 }
 
 export const getDetailedCollectionInfo = async (api: ApiPromise, collectionId: number)
-  : Promise<NftDataStructsCollection | null> => {
+  : Promise<UpDataStructsCollection | null> => {
   return (await api.rpc.unique.collectionById(collectionId)).unwrapOr(null);
 };
 
@@ -1221,7 +1221,7 @@ export const getCreatedCollectionCount = async (api: ApiPromise): Promise<number
   return (await api.rpc.unique.collectionStats()).created.toNumber();
 };
 
-export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId: number): Promise<NftDataStructsCollection> {
+export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId: number): Promise<UpDataStructsCollection> {
   return (await api.rpc.unique.collectionById(collectionId)).unwrap();
 }
 
