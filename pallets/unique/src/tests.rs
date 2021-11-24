@@ -2006,24 +2006,6 @@ fn set_variable_meta_data_on_fungible_token_fails() {
 }
 
 #[test]
-fn set_variable_meta_data_on_fungible_token_with_token_id_fails() {
-	new_test_ext().execute_with(|| {
-		let collection_id = create_test_collection(&CollectionMode::Fungible(3), CollectionId(1));
-
-		let origin1 = Origin::signed(1);
-
-		let data = default_fungible_data();
-		create_test_item(collection_id, &data.into());
-
-		let variable_data = b"test data".to_vec();
-		assert_noop!(
-			TemplateModule::set_variable_meta_data(origin1, collection_id, TokenId(1), variable_data).map_err(|e| e.error),
-			<pallet_fungible::Error::<Test>>::FungibleItemsHaveNoId
-		);
-	});
-}
-
-#[test]
 fn set_variable_meta_data_on_nft_token_fails_for_big_data() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
