@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import type { EthereumBlock, EthereumLog, EthereumReceipt, EthereumTransactionLegacyTransaction, EvmCoreErrorExitReason, FpRpcTransactionStatus } from './ethereum';
-import type { NftDataStructsAccessMode, NftDataStructsCollection, NftDataStructsCollectionId, NftDataStructsCollectionLimits, NftDataStructsCollectionMode, NftDataStructsCreateItemData, NftDataStructsMetaUpdatePermission, NftDataStructsSchemaVersion, NftDataStructsSponsorshipState, NftDataStructsTokenId, PalletCommonAccountBasicCrossAccountIdRepr, PalletNonfungibleItemData, PalletRefungibleItemData, PalletUnqSchedulerCallSpec, PalletUnqSchedulerReleases, PalletUnqSchedulerScheduledV2 } from './nft';
+import type { NftDataStructsAccessMode, NftDataStructsCollection, NftDataStructsCollectionId, NftDataStructsCollectionLimits, NftDataStructsCollectionMode, NftDataStructsCollectionStats, NftDataStructsCreateItemData, NftDataStructsMetaUpdatePermission, NftDataStructsSchemaVersion, NftDataStructsSponsorshipState, NftDataStructsTokenId, PalletCommonAccountBasicCrossAccountIdRepr, PalletNonfungibleItemData, PalletRefungibleItemData, PalletUnqSchedulerCallSpec, PalletUnqSchedulerReleases, PalletUnqSchedulerScheduledV2 } from './nft';
 import type { CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundStatus, CumulusPalletXcmpQueueOutboundStatus, CumulusPalletXcmpQueueQueueConfigData, CumulusPrimitivesParachainInherentParachainInherentData, PolkadotParachainPrimitivesXcmpMessageFormat, PolkadotPrimitivesV1AbridgedHostConfiguration, PolkadotPrimitivesV1PersistedValidationData } from './polkadot';
 import type { BitVec, Bool, Bytes, Data, I128, I16, I256, I32, I64, I8, Json, Null, Raw, StorageKey, Text, Type, U128, U16, U256, U32, U64, U8, USize, bool, i128, i16, i256, i32, i64, i8, u128, u16, u256, u32, u64, u8, usize } from '@polkadot/types';
 import type { AssetApproval, AssetApprovalKey, AssetBalance, AssetDestroyWitness, AssetDetails, AssetMetadata, TAssetBalance, TAssetDepositBalance } from '@polkadot/types/interfaces/assets';
@@ -627,6 +627,7 @@ declare module '@polkadot/types/types/registry' {
     NftDataStructsCollectionId: NftDataStructsCollectionId;
     NftDataStructsCollectionLimits: NftDataStructsCollectionLimits;
     NftDataStructsCollectionMode: NftDataStructsCollectionMode;
+    NftDataStructsCollectionStats: NftDataStructsCollectionStats;
     NftDataStructsCreateItemData: NftDataStructsCreateItemData;
     NftDataStructsMetaUpdatePermission: NftDataStructsMetaUpdatePermission;
     NftDataStructsSchemaVersion: NftDataStructsSchemaVersion;

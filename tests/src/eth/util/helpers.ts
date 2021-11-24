@@ -228,6 +228,18 @@ export function contractHelpers(web3: Web3, caller: string) {
   return new web3.eth.Contract(contractHelpersAbi as any, '0x842899ECF380553E8a4de75bF534cdf6fBF64049', {from: caller, ...GAS_ARGS});
 }
 
+/**
+ * Execute ethereum method call using substrate account
+ * @param to target contract
+ * @param mkTx - closure, receiving `contract.methods`, and returning method call,
+ * to be used as following (assuming `to` = erc20 contract):
+ * `m => m.transfer(to, amount)`
+ * 
+ * # Example
+ * ```ts
+ * executeEthTxOnSub(api, alice, erc20Contract, m => m.transfer(target, amount));
+ * ```
+ */
 export async function executeEthTxOnSub(web3: Web3, api: ApiPromise, from: IKeyringPair, to: any, mkTx: (methods: any) => any, {value = 0}: {value?: bigint | number} = { }) {
   const tx = api.tx.evm.call(
     subToEth(from.address),
@@ -246,6 +258,11 @@ export async function ethBalanceViaSub(api: ApiPromise, address: string): Promis
   return (await getBalance(api, [evmToAddress(address)]))[0];
 }
 
+/**
+ * Measure how much gas given closure consumes
+ * 
+ * @param user which user balance will be checked
+ */
 export async function recordEthFee(api: ApiPromise, user: string, call: () => Promise<any>): Promise<bigint> {
   const before = await ethBalanceViaSub(api, user);
 

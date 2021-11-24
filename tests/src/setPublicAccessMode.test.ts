@@ -19,6 +19,7 @@ import {
   enableAllowListExpectSuccess,
   normalizeAccountId,
   addCollectionAdminExpectSuccess,
+  getCreatedCollectionCount,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -60,7 +61,7 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
   it('Set a non-existent collection', async () => {
     await usingApi(async (api: ApiPromise) => {
       // tslint:disable-next-line: radix
-      const collectionId = (await api.query.common.createdCollectionCount()).toNumber() + 1;
+      const collectionId = await getCreatedCollectionCount(api) + 1;
       const tx = api.tx.nft.setPublicAccessMode(collectionId, 'AllowList');
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });

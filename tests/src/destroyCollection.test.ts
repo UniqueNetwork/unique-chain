@@ -13,6 +13,7 @@ import {createCollectionExpectSuccess,
   destroyCollectionExpectFailure,
   setCollectionLimitsExpectSuccess,
   addCollectionAdminExpectSuccess,
+  getCreatedCollectionCount,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -46,7 +47,7 @@ describe('(!negative test!) integration test: ext. destroyCollection():', () => 
   it('(!negative test!) Destroy a collection that never existed', async () => {
     await usingApi(async (api) => {
       // Find the collection that never existed
-      const collectionId = (await api.query.common.createdCollectionCount()).toNumber() + 1;
+      const collectionId = await getCreatedCollectionCount(api) + 1;
       await destroyCollectionExpectFailure(collectionId);
     });
   });

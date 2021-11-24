@@ -37,13 +37,13 @@ describe('Integration Test removeFromAllowList', () => {
   });
 
   it('ensure bob is not in allowlist after removal', async () => {
-    await usingApi(async () => {
+    await usingApi(async api => {
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await enableAllowListExpectSuccess(alice, collectionId);
       await addToAllowListExpectSuccess(alice, collectionId, bob.address);
 
       await removeFromAllowListExpectSuccess(alice, collectionId, normalizeAccountId(bob.address));
-      expect(await isAllowlisted(collectionId, bob.address)).to.be.false;
+      expect(await isAllowlisted(api, collectionId, bob.address)).to.be.false;
     });
   });
 
@@ -104,13 +104,13 @@ describe('Integration Test removeFromAllowList with collection admin permissions
   });
 
   it('ensure address is not in allowlist after removal', async () => {
-    await usingApi(async () => {
+    await usingApi(async api => {
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await enableAllowListExpectSuccess(alice, collectionId);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
       await addToAllowListExpectSuccess(alice, collectionId, charlie.address);
       await removeFromAllowListExpectSuccess(bob, collectionId, normalizeAccountId(charlie.address));
-      expect(await isAllowlisted(collectionId, charlie.address)).to.be.false;
+      expect(await isAllowlisted(api, collectionId, charlie.address)).to.be.false;
     });
   });
 

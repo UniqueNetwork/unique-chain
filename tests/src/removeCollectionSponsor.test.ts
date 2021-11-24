@@ -18,6 +18,7 @@ import {
   removeCollectionSponsorExpectFailure,
   normalizeAccountId,
   addCollectionAdminExpectSuccess,
+  getCreatedCollectionCount,
 } from './util/helpers';
 import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -98,7 +99,7 @@ describe('(!negative test!) integration test: ext. removeCollectionSponsor():', 
     // Find the collection that never existed
     let collectionId = 0;
     await usingApi(async (api) => {
-      collectionId = (await api.query.common.createdCollectionCount()).toNumber() + 1;
+      collectionId = await getCreatedCollectionCount(api) + 1;
     });
 
     await removeCollectionSponsorExpectFailure(collectionId);

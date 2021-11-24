@@ -18,6 +18,7 @@ import {
   normalizeAccountId,
   addCollectionAdminExpectSuccess,
   addToAllowListExpectFail,
+  getCreatedCollectionCount,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -55,7 +56,7 @@ describe('Negative Integration Test ext. addToAllowList()', () => {
   it('Allow list an address in the collection that does not exist', async () => {
     await usingApi(async (api) => {
       // tslint:disable-next-line: no-bitwise
-      const collectionId = ((await api.query.common.createdCollectionCount()).toNumber()) + 1;
+      const collectionId = await getCreatedCollectionCount(api) + 1;
       const bob = privateKey('//Bob');
 
       const tx = api.tx.nft.addToAllowList(collectionId, normalizeAccountId(bob.address));

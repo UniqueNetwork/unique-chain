@@ -19,7 +19,7 @@ pub fn create_u16_data(size: usize) -> Vec<u16> {
 pub fn create_collection_raw<T: Config, R>(
 	owner: T::AccountId,
 	mode: CollectionMode,
-	handler: impl FnOnce(Collection<T>) -> Result<CollectionId, DispatchError>,
+	handler: impl FnOnce(Collection<T::AccountId>) -> Result<CollectionId, DispatchError>,
 	cast: impl FnOnce(CollectionHandle<T>) -> R,
 ) -> Result<R, DispatchError> {
 	T::Currency::deposit_creating(&owner, T::CollectionCreationPrice::get());

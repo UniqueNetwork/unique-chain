@@ -1,13 +1,13 @@
 version: '3'
 services:
-  nft_private:
+  unique-chain:
     build: 
         context: .
     environment:
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     volumes:
-      - ..:/workspaces/nft_private:cached
+      - ..:/workspaces/unique-chain:cached
       - ../../polkadot:/workspaces/polkadot:cached
       - ../../polkadot-launch:/workspaces/polkadot-launch:cached
       #- ../../frontier:/workspaces/frontier

@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { NftDataStructsCollectionId, NftDataStructsTokenId, PalletCommonAccountBasicCrossAccountIdRepr } from './nft';
+import type { NftDataStructsCollection, NftDataStructsCollectionId, NftDataStructsCollectionStats, NftDataStructsTokenId, PalletCommonAccountBasicCrossAccountIdRepr } from './nft';
 import type { Bytes, HashMap, Json, Metadata, Null, Option, StorageKey, Text, U256, U64, Vec, bool, u128, u32, u64 } from '@polkadot/types';
 import type { ExtrinsicOrHash, ExtrinsicStatus } from '@polkadot/types/interfaces/author';
 import type { EpochAuthorship } from '@polkadot/types/interfaces/babe';
@@ -373,6 +373,10 @@ declare module '@polkadot/rpc-core/types.jsonrpc' {
        **/
       allowance: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, sender: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, spender: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: NftDataStructsTokenId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
       /**
+       * Check if user is allowed to use collection
+       **/
+      allowed: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<bool>>;
+      /**
        * Get allowlist
        **/
       allowlist: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletCommonAccountBasicCrossAccountIdRepr>>>;
@@ -380,6 +384,14 @@ declare module '@polkadot/rpc-core/types.jsonrpc' {
        * Get amount of specific account token
        **/
       balance: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: NftDataStructsTokenId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
+      /**
+       * Get collection by specified id
+       **/
+      collectionById: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<NftDataStructsCollection>>>;
+      /**
+       * Get collection stats
+       **/
+      collectionStats: AugmentedRpc<(at?: Hash | string | Uint8Array) => Observable<NftDataStructsCollectionStats>>;
       /**
        * Get tokens contained in collection
        **/
