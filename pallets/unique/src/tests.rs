@@ -2,7 +2,7 @@
 use super::*;
 use crate::mock::*;
 use crate::{AccessMode, CollectionMode, Ownership, CreateItemData};
-use nft_data_structs::{
+use up_data_structs::{
 	CreateNftData, CreateFungibleData, CreateReFungibleData, CollectionId, TokenId,
 	MAX_DECIMAL_POINTS,
 };

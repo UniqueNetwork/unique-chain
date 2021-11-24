@@ -1,6 +1,6 @@
 use sp_std::vec::Vec;
 use crate::{Config, CollectionHandle};
-use nft_data_structs::{
+use up_data_structs::{
 	CollectionMode, Collection, CollectionId, MAX_COLLECTION_NAME_LENGTH,
 	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, OFFCHAIN_SCHEMA_LIMIT,
 	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT,

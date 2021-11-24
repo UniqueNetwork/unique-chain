@@ -4,7 +4,7 @@ use crate::{Pallet, Config, FungibleHandle};
 use sp_std::prelude::*;
 use pallet_common::benchmarking::create_collection_raw;
 use frame_benchmarking::{benchmarks, account};
-use nft_data_structs::{CollectionMode};
+use up_data_structs::{CollectionMode};
 use pallet_common::bench_init;
 
 const SEED: u32 = 1;

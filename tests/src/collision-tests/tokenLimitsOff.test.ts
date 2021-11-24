@@ -46,7 +46,7 @@ describe('Token limit exceeded collection: ', () => {
       await setMintPermissionExpectSuccess(Alice, collectionId, true);
       await addToAllowListExpectSuccess(Alice, collectionId, Ferdie.address);
       await addToAllowListExpectSuccess(Alice, collectionId, Bob.address);
-      const setCollectionLim = api.tx.nft.setCollectionLimits(
+      const setCollectionLim = api.tx.unique.setCollectionLimits(
         collectionId,
         {
           accountTokenOwnershipLimit,
@@ -65,16 +65,16 @@ describe('Token limit exceeded collection: ', () => {
       await waitNewBlocks(2);
 
       const args = [{ nft: ['0x31', '0x31'] }, { nft: ['0x32', '0x32'] }, { nft: ['0x33', '0x33'] }];
-      const mintItemOne = api.tx.nft
+      const mintItemOne = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(Ferdie.address), args);
-      const mintItemTwo = api.tx.nft
+      const mintItemTwo = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(Bob.address), args);
       await Promise.all([
         mintItemOne.signAndSend(Ferdie),
         mintItemTwo.signAndSend(Bob),
       ]);
       await waitNewBlocks(2);
-      const itemsListIndexAfter = await api.query.nft.itemListIndex(collectionId) as unknown as BN;
+      const itemsListIndexAfter = await api.query.unique.itemListIndex(collectionId) as unknown as BN;
       expect(itemsListIndexAfter.toNumber()).to.be.equal(3);
       // TokenLimit = 4. The first transaction is successful. The second should fail.
       await waitNewBlocks(2);

@@ -8,7 +8,7 @@ use frame_support::{
 	ensure, fail,
 	traits::{Imbalance, Get, Currency},
 };
-use nft_data_structs::{
+use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, ExistenceRequirement,
 	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
 	COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, Pays, PostDispatchInfo, TokenId, Weight,
@@ -143,7 +143,7 @@ pub mod pallet {
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key};
 	use account::CrossAccountId;
 	use frame_support::traits::Currency;
-	use nft_data_structs::TokenId;
+	use up_data_structs::TokenId;
 	use scale_info::TypeInfo;
 
 	#[pallet::config]

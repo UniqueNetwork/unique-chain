@@ -88,7 +88,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const address = collectionIdToAddress(collection);
     const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS}));
 
-    const changeAdminTx = api.tx.nft.addCollectionAdmin(collection, {Ethereum: contract.options.address});
+    const changeAdminTx = api.tx.unique.addCollectionAdmin(collection, {Ethereum: contract.options.address});
     await submitTransactionAsync(alice, changeAdminTx);
 
     {
@@ -127,7 +127,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
 
     const address = collectionIdToAddress(collection);
     const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS}));
-    const changeAdminTx = api.tx.nft.addCollectionAdmin(collection, {Ethereum: contract.options.address});
+    const changeAdminTx = api.tx.unique.addCollectionAdmin(collection, {Ethereum: contract.options.address});
     await submitTransactionAsync(alice, changeAdminTx);
 
     {
@@ -190,7 +190,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS}));
     const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: contract.options.address});
 
-    const changeAdminTx = api.tx.nft.addCollectionAdmin(collection, {Ethereum: contract.options.address});
+    const changeAdminTx = api.tx.unique.addCollectionAdmin(collection, {Ethereum: contract.options.address});
     await submitTransactionAsync(alice, changeAdminTx);
 
     {

@@ -5,7 +5,7 @@ edition = "2018"
 
 [dependencies]
 pallet-common = { default-features = false, path = '../../pallets/common' }
-nft-data-structs = { default-features = false, path = '../../primitives/nft' }
+up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
 up-rpc = { path = "../../primitives/rpc" }
 codec = { package = "parity-scale-codec", version = "2.0.0" }
 jsonrpc-core = "18.0.0"

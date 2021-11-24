@@ -1,12 +1,12 @@
 [package]
 name = "pallet-unq-scheduler"
-version = "3.0.0"
-authors = ["Parity Technologies <admin@parity.io>"]
+version = "0.1.0"
+authors = ["Unique Network <support@uniquenetwork.io>"]
 edition = "2018"
-license = "Unlicense"
-homepage = "https://substrate.dev"
-repository = "https://github.com/paritytech/substrate/"
-description = "FRAME example pallet"
+license = "All Rights Reserved"
+homepage = "https://unique.network"
+repository = "https://github.com/UniqueNetwork/unique-chain"
+description = "Unique Scheduler pallet"
 readme = "README.md"
 
 [dependencies]

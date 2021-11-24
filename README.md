@@ -1,10 +1,10 @@
 ![Docker build](https://github.com/usetech-llc/nft_parachain/workflows/Docker%20build/badge.svg)
 
-# NFT Parachain
+# Unique Parachain
 
 ## Project Description
 
-The NFT Pallet is the core of NFT functionality. Like ERC-721 standard in Ethereum ecosystem, this pallet provides the
+The Unique Pallet is the core of NFT functionality. Like ERC-721 standard in Ethereum ecosystem, this pallet provides the
 basement for creating collections of unique non-divisible things, also called Non Fungible Tokens (NFTs), minting NFT of
 a given Collection, and managing their ownership.
 
@@ -12,19 +12,19 @@ The pallet also enables storing NFT properties. Though (according to ERC-721) NF
 concrete application that operates a Collection, so purposefully the NFT Tracking Module does not have any knowledge
 about properties except their byte size leaving application logic out to be controlled by Smart Contracts.
 
-The NFT Chain also provides:
+The Unique Chain also provides:
 
--   Smart Contracts Pallet and example smart contract that interacts with NFT Runtime
+-   Smart Contracts Pallet and example smart contract that interacts with Unique Runtime
 -   ERC-1155 Functionality (currently PoC as Re-Fungible tokens, i.e. items that are still unique, but that can be split
     between multiple users)
 -   Variety of economic options for dapp producers to choose from to create freemium games and other ways to attract
     users. As a step one, we implemented an economic model when a collection sponsor can be set to pay for collection
     Transfer transactions.
 
-Wider NFT Ecosystem (most of it was developed during Hackusama):
+Wider Unique Ecosystem (most of it was developed during Hackusama):
 
 -   [SubstraPunks Game hosted on IPFS](https://github.com/usetech-llc/substrapunks)
--   [NFT Wallet and UI](https://uniqueapps.usetech.com/#/nft)
+-   [Unique Wallet and UI](https://uniqueapps.usetech.com/#/nft)
 -   [NFT Asset for Unity Framework](https://github.com/usetech-llc/nft_unity)
 
 Please see our [walk-thorugh instructions](doc/hackusama_walk_through.md) to try everything out!
@@ -34,15 +34,15 @@ Please see our [walk-thorugh instructions](doc/hackusama_walk_through.md) to try
 During the Kusama Hackaphon the following changes were made:
 
 -   Enabled Smart Contracts Pallet
--   Enabled integration between Smart Contracts and NFT Pallet (required special edition of RC4 Substrate version)
--   Fixed misc. bugs in NFT Pallet
--   Deployed NFT TestNet. Public node available at wss://unique.usetech.com, custom UI types - see below in this README.
+-   Enabled integration between Smart Contracts and Unique Pallet (required special edition of RC4 Substrate version)
+-   Fixed misc. bugs in Unique Pallet
+-   Deployed Unique TestNet. Public node available at wss://unique.usetech.com, custom UI types - see below in this README.
 -   New Features:
     -   Re-Fungible Token Mode
     -   Off-Chain Schema to store token image URLs
     -   Alternative economic model
     -   Allow Lists and Public Mint Permission
--   Use example: [SubstraPunks Game](https://github.com/usetech-llc/substrapunks), fully hosted on IPFS and NFT Testnet
+-   Use example: [SubstraPunks Game](https://github.com/usetech-llc/substrapunks), fully hosted on IPFS and Unique Testnet
     Blockchain.
 
 ## Application Development
@@ -51,7 +51,7 @@ If you are building an application that operates NFT tokens, use [this document]
 
 ## Building
 
-Building NFT chain requires special versions of Rust and toolchain. We don't use the most recent versions of everything
+Building Unique chain requires special versions of Rust and toolchain. We don't use the most recent versions of everything
 so that we can keep the builds stable.
 
 1. Install Rust:
@@ -168,12 +168,12 @@ Example (Run in polkadot folder. Replace `12D3KooWNLAmKcyee3oqSgTMthaQVXaAcXeo8R
 
 ```
 
-3. Export genesis state and runtime wasm from NFT parachain:
+3. Export genesis state and runtime wasm from Unique parachain:
 
 Run from this project root:
 ```
-./target/release/nft export-genesis-state --parachain-id 2000 > ./resources/para-2000-genesis
-./target/release/nft export-genesis-wasm > ./resources/para-2000-wasm
+./target/release/unique-collator export-genesis-state --parachain-id 2000 > ./resources/para-2000-genesis
+./target/release/unique-collator export-genesis-wasm > ./resources/para-2000-wasm
 ```
 
 4. Run two parachain nodes:
@@ -182,8 +182,8 @@ Replace `12D3KooWN1ah2bFQSysEFnwZqcmcVpDDR8UedXyo6xfzV1zDNMNg` with Alice or Bob
 
 Run from this project root:
 ```
-./target/release/nft --alice --collator --force-authoring --base-path ./tmp/parachain-alice --parachain-id 2000 --port 40333 --ws-port 9844  -- --execution wasm --chain ../polkadot/rococo-custom-4.json --port 30343 --ws-port 9977
-./target/release/nft --bob --collator --force-authoring --parachain-id 2000 --base-path ./tmp/parachain/bob --port 40334 --ws-port 9845 -- --execution wasm --chain ../polkadot/rococo-custom-4.json --port 30344 --ws-port 9978 --bootnodes /ip4/127.0.0.1/tcp/50556/p2p/12D3KooWN1ah2bFQSysEFnwZqcmcVpDDR8UedXyo6xfzV1zDNMNg
+./target/release/unique-collator --alice --collator --force-authoring --base-path ./tmp/parachain-alice --parachain-id 2000 --port 40333 --ws-port 9844  -- --execution wasm --chain ../polkadot/rococo-custom-4.json --port 30343 --ws-port 9977
+./target/release/unique-collator --bob --collator --force-authoring --parachain-id 2000 --base-path ./tmp/parachain/bob --port 40334 --ws-port 9845 -- --execution wasm --chain ../polkadot/rococo-custom-4.json --port 30344 --ws-port 9978 --bootnodes /ip4/127.0.0.1/tcp/50556/p2p/12D3KooWN1ah2bFQSysEFnwZqcmcVpDDR8UedXyo6xfzV1zDNMNg
 ```
 
 4. Reserve parachain ID as described here: https://substrate.dev/cumulus-workshop/#/en/2-relay-chain/2-reserve
@@ -218,7 +218,7 @@ cargo +nightly-2021-06-28 build --release --features runtime-benchmarks
 
 Run benchmark
 ```bash
-target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" --repeat 1
+target/release/unique-collator benchmark --chain dev --pallet "pallet_unique" --extrinsic "*" --repeat 1
 ```
 
 ## UI custom types

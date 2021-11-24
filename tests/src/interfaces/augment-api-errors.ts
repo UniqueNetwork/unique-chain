@@ -241,32 +241,6 @@ declare module '@polkadot/api/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    nft: {
-      /**
-       * Decimal_points parameter must be lower than MAX_DECIMAL_POINTS constant, currently it is 30.
-       **/
-      CollectionDecimalPointLimitExceeded: AugmentedError<ApiType>;
-      /**
-       * Collection limit bounds per collection exceeded
-       **/
-      CollectionLimitBoundsExceeded: AugmentedError<ApiType>;
-      /**
-       * This address is not set as sponsor, use setCollectionSponsor first.
-       **/
-      ConfirmUnsetSponsorFail: AugmentedError<ApiType>;
-      /**
-       * Length of items properties must be greater than 0.
-       **/
-      EmptyArgument: AugmentedError<ApiType>;
-      /**
-       * Tried to enable permissions which are only permitted to be disabled
-       **/
-      OwnerPermissionsCantBeReverted: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
     nonfungible: {
       /**
        * Used amount > 1 with NFT
@@ -395,28 +369,6 @@ declare module '@polkadot/api/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    scheduler: {
-      /**
-       * Failed to schedule a call
-       **/
-      FailedToSchedule: AugmentedError<ApiType>;
-      /**
-       * Cannot find the scheduled call.
-       **/
-      NotFound: AugmentedError<ApiType>;
-      /**
-       * Reschedule failed because it does not change scheduled time.
-       **/
-      RescheduleNoChange: AugmentedError<ApiType>;
-      /**
-       * Given target block number is in the past.
-       **/
-      TargetBlockNumberInPast: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
     sudo: {
       /**
        * Sender must be the Sudo account
@@ -475,28 +427,57 @@ declare module '@polkadot/api/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    unique: {
+      /**
+       * Decimal_points parameter must be lower than MAX_DECIMAL_POINTS constant, currently it is 30.
+       **/
+      CollectionDecimalPointLimitExceeded: AugmentedError<ApiType>;
+      /**
+       * Collection limit bounds per collection exceeded
+       **/
+      CollectionLimitBoundsExceeded: AugmentedError<ApiType>;
+      /**
+       * This address is not set as sponsor, use setCollectionSponsor first.
+       **/
+      ConfirmUnsetSponsorFail: AugmentedError<ApiType>;
+      /**
+       * Length of items properties must be greater than 0.
+       **/
+      EmptyArgument: AugmentedError<ApiType>;
+      /**
+       * Tried to enable permissions which are only permitted to be disabled
+       **/
+      OwnerPermissionsCantBeReverted: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     vesting: {
       /**
-       * Amount being transferred is too low to create a vesting schedule.
+       * The vested transfer amount is too low
        **/
       AmountLow: AugmentedError<ApiType>;
       /**
-       * The account already has `MaxVestingSchedules` count of schedules and thus
-       * cannot add another one. Consider merging existing schedules in order to add another.
+       * Insufficient amount of balance to lock
        **/
-      AtMaxVestingSchedules: AugmentedError<ApiType>;
+      InsufficientBalanceToLock: AugmentedError<ApiType>;
       /**
-       * Failed to create a new schedule because some parameter was invalid.
+       * Failed because the maximum vesting schedules was exceeded
        **/
-      InvalidScheduleParams: AugmentedError<ApiType>;
+      MaxVestingSchedulesExceeded: AugmentedError<ApiType>;
       /**
-       * The account given is not vesting.
+       * This account have too many vesting schedules
        **/
-      NotVesting: AugmentedError<ApiType>;
+      TooManyVestingSchedules: AugmentedError<ApiType>;
       /**
-       * An index was out of bounds of the vesting schedules.
+       * Vesting period is zero
        **/
-      ScheduleIndexOutOfBounds: AugmentedError<ApiType>;
+      ZeroVestingPeriod: AugmentedError<ApiType>;
+      /**
+       * Number of vests is zero
+       **/
+      ZeroVestingPeriodCount: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

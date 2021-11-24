@@ -35,14 +35,14 @@ describe('Turns off minting mode: ', () => {
       await setMintPermissionExpectSuccess(Alice, collectionId, true);
       await addToAllowListExpectSuccess(Alice, collectionId, Ferdie.address);
 
-      const mintItem = api.tx.nft.createItem(collectionId, normalizeAccountId(Ferdie.address), 'NFT');
-      const offMinting = api.tx.nft.setMintPermission(collectionId, false);
+      const mintItem = api.tx.unique.createItem(collectionId, normalizeAccountId(Ferdie.address), 'NFT');
+      const offMinting = api.tx.unique.setMintPermission(collectionId, false);
       await Promise.all([
         mintItem.signAndSend(Ferdie),
         offMinting.signAndSend(Alice),
       ]);
       let itemList = false;
-      itemList = (await (api.query.nft.nftItemList(collectionId, mintItem))).toJSON() as boolean;
+      itemList = (await (api.query.unique.nftItemList(collectionId, mintItem))).toJSON() as boolean;
       // tslint:disable-next-line: no-unused-expression
       expect(itemList).to.be.null;
       await waitNewBlocks(2);

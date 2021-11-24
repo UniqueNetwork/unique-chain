@@ -13,7 +13,7 @@ use std::time::Duration;
 use futures::StreamExt;
 
 // Local Runtime Types
-use nft_runtime::RuntimeApi;
+use unique_runtime::RuntimeApi;
 
 // Cumulus Imports
 use cumulus_client_consensus_aura::{build_aura_consensus, BuildAuraConsensusParams, SlotProportion};
@@ -54,11 +54,11 @@ impl NativeExecutionDispatch for ParachainRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		nft_runtime::api::dispatch(method, data)
+		unique_runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		nft_runtime::native_version()
+		unique_runtime::native_version()
 	}
 }
 
@@ -68,7 +68,7 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backen
 		.as_ref()
 		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
 		.unwrap_or_else(|| {
-			BasePath::from_project("", "", "nft").config_dir(config.chain_spec.id())
+			BasePath::from_project("", "", "unique").config_dir(config.chain_spec.id())
 		});
 	let database_dir = config_dir.join("frontier").join("db");
 
@@ -291,7 +291,7 @@ where
 
 	let rpc_frontier_backend = frontier_backend.clone();
 	let rpc_extensions_builder = Box::new(move |deny_unsafe, _| {
-		let full_deps = nft_rpc::FullDeps {
+		let full_deps = unique_rpc::FullDeps {
 			backend: rpc_frontier_backend.clone(),
 			deny_unsafe,
 			client: rpc_client.clone(),
@@ -307,7 +307,7 @@ where
 			max_past_logs: 10000,
 		};
 
-		Ok(nft_rpc::create_full::<_, _, _, _, RuntimeApi, _>(
+		Ok(unique_rpc::create_full::<_, _, _, _, RuntimeApi, _>(
 			full_deps,
 			subscription_executor.clone(),
 		))

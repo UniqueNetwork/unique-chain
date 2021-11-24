@@ -34,21 +34,21 @@ describe('Admin vs Owner changes token: ', () => {
 
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const changeAdminTxBob = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
+      const changeAdminTxBob = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTxBob);
-      const changeAdminTxFerdie = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Ferdie.address));
+      const changeAdminTxFerdie = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(Ferdie.address));
       await submitTransactionAsync(Bob, changeAdminTxFerdie);
       const itemId = await createItemExpectSuccess(Ferdie, collectionId, 'NFT');
 
-      const changeOwner = api.tx.nft.transferFrom(normalizeAccountId(Ferdie.address), normalizeAccountId(Bob.address), collectionId, itemId, 1);
-      const approve = api.tx.nft.approve(normalizeAccountId(Bob.address), collectionId, itemId, 1);
-      const sendItem = api.tx.nft.transfer(normalizeAccountId(Alice.address), collectionId, itemId, 1);
+      const changeOwner = api.tx.unique.transferFrom(normalizeAccountId(Ferdie.address), normalizeAccountId(Bob.address), collectionId, itemId, 1);
+      const approve = api.tx.unique.approve(normalizeAccountId(Bob.address), collectionId, itemId, 1);
+      const sendItem = api.tx.unique.transfer(normalizeAccountId(Alice.address), collectionId, itemId, 1);
       await Promise.all([
         changeOwner.signAndSend(Alice),
         approve.signAndSend(Bob),
         sendItem.signAndSend(Ferdie),
       ]);
-      const itemBefore: any = await api.query.nft.nftItemList(collectionId, itemId);
+      const itemBefore: any = await api.query.unique.nftItemList(collectionId, itemId);
       expect(itemBefore.owner).not.to.be.eq(Bob.address);
       await waitNewBlocks(2);
     });

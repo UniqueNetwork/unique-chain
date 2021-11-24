@@ -27,10 +27,10 @@ describe.skip('Integration Test toggleContractAllowList', () => {
     await usingApi(async api => {
       const [contract, deployer] = await deployFlipper(api);
 
-      const enabledBefore = (await api.query.nft.contractAllowListEnabled(contract.address)).toJSON();
-      const enableAllowListTx = api.tx.nft.toggleContractAllowList(contract.address, true);
+      const enabledBefore = (await api.query.unique.contractAllowListEnabled(contract.address)).toJSON();
+      const enableAllowListTx = api.tx.unique.toggleContractAllowList(contract.address, true);
       const enableEvents = await submitTransactionAsync(deployer, enableAllowListTx);
-      const enabled = (await api.query.nft.contractAllowListEnabled(contract.address)).toJSON();
+      const enabled = (await api.query.unique.contractAllowListEnabled(contract.address)).toJSON();
 
       expect(getGenericResult(enableEvents).success).to.be.true;
       expect(enabledBefore).to.be.false;
@@ -60,7 +60,7 @@ describe.skip('Integration Test toggleContractAllowList', () => {
       await deployerCanFlip();
 
       flipValueBefore = await getFlipValue(contract, deployer);
-      const enableAllowListTx = api.tx.nft.toggleContractAllowList(contract.address, true);
+      const enableAllowListTx = api.tx.unique.toggleContractAllowList(contract.address, true);
       await submitTransactionAsync(deployer, enableAllowListTx);
       const flipWithEnabledAllowList = contract.tx.flip(value, gasLimit);
       await expect(submitTransactionExpectFailAsync(bob, flipWithEnabledAllowList)).to.be.rejected;
@@ -70,7 +70,7 @@ describe.skip('Integration Test toggleContractAllowList', () => {
       await deployerCanFlip();
 
       flipValueBefore = await getFlipValue(contract, deployer);
-      const addBobToAllowListTx = api.tx.nft.addToContractAllowList(contract.address, bob.address);
+      const addBobToAllowListTx = api.tx.unique.addToContractAllowList(contract.address, bob.address);
       await submitTransactionAsync(deployer, addBobToAllowListTx);
       const flipWithAllowlistedBob = contract.tx.flip(value, gasLimit);
       await submitTransactionAsync(bob, flipWithAllowlistedBob);
@@ -80,7 +80,7 @@ describe.skip('Integration Test toggleContractAllowList', () => {
       await deployerCanFlip();
 
       flipValueBefore = await getFlipValue(contract, deployer);
-      const removeBobFromAllowListTx = api.tx.nft.removeFromContractAllowList(contract.address, bob.address);
+      const removeBobFromAllowListTx = api.tx.unique.removeFromContractAllowList(contract.address, bob.address);
       await submitTransactionAsync(deployer, removeBobFromAllowListTx);
       const bobRemoved = contract.tx.flip(value, gasLimit);
       await expect(submitTransactionExpectFailAsync(bob, bobRemoved)).to.be.rejected;
@@ -90,7 +90,7 @@ describe.skip('Integration Test toggleContractAllowList', () => {
       await deployerCanFlip();
 
       flipValueBefore = await getFlipValue(contract, deployer);
-      const disableAllowListTx = api.tx.nft.toggleContractAllowList(contract.address, false);
+      const disableAllowListTx = api.tx.unique.toggleContractAllowList(contract.address, false);
       await submitTransactionAsync(deployer, disableAllowListTx);
       const allowListDisabledFlip = contract.tx.flip(value, gasLimit);
       await submitTransactionAsync(bob, allowListDisabledFlip);
@@ -104,12 +104,12 @@ describe.skip('Integration Test toggleContractAllowList', () => {
     await usingApi(async api => {
       const [contract, deployer] = await deployFlipper(api);
 
-      const enabledBefore = (await api.query.nft.contractAllowListEnabled(contract.address)).toJSON();
-      const enableAllowListTx = api.tx.nft.toggleContractAllowList(contract.address, true);
+      const enabledBefore = (await api.query.unique.contractAllowListEnabled(contract.address)).toJSON();
+      const enableAllowListTx = api.tx.unique.toggleContractAllowList(contract.address, true);
       const enableEvents = await submitTransactionAsync(deployer, enableAllowListTx);
-      const enabled = (await api.query.nft.contractAllowListEnabled(contract.address)).toJSON();
+      const enabled = (await api.query.unique.contractAllowListEnabled(contract.address)).toJSON();
       const enableAgainEvents = await submitTransactionAsync(deployer, enableAllowListTx);
-      const enabledAgain = (await api.query.nft.contractAllowListEnabled(contract.address)).toJSON();
+      const enabledAgain = (await api.query.unique.contractAllowListEnabled(contract.address)).toJSON();
 
       expect(getGenericResult(enableEvents).success).to.be.true;
       expect(enabledBefore).to.be.false;
@@ -128,10 +128,10 @@ describe.skip('Negative Integration Test toggleContractAllowList', () => {
       const alice = privateKey('//Alice');
       const bobGuineaPig = privateKey('//Bob');
 
-      const enabledBefore = (await api.query.nft.contractAllowListEnabled(bobGuineaPig.address)).toJSON();
-      const enableAllowListTx = api.tx.nft.toggleContractAllowList(bobGuineaPig.address, true);
+      const enabledBefore = (await api.query.unique.contractAllowListEnabled(bobGuineaPig.address)).toJSON();
+      const enableAllowListTx = api.tx.unique.toggleContractAllowList(bobGuineaPig.address, true);
       await expect(submitTransactionExpectFailAsync(alice, enableAllowListTx)).to.be.rejected;
-      const enabled = (await api.query.nft.contractAllowListEnabled(bobGuineaPig.address)).toJSON();
+      const enabled = (await api.query.unique.contractAllowListEnabled(bobGuineaPig.address)).toJSON();
 
       expect(enabledBefore).to.be.false;
       expect(enabled).to.be.false;
@@ -143,10 +143,10 @@ describe.skip('Negative Integration Test toggleContractAllowList', () => {
       const bob = privateKey('//Bob');
       const [contract] = await deployFlipper(api);
 
-      const enabledBefore = (await api.query.nft.contractAllowListEnabled(contract.address)).toJSON();
-      const enableAllowListTx = api.tx.nft.toggleContractAllowList(contract.address, true);
+      const enabledBefore = (await api.query.unique.contractAllowListEnabled(contract.address)).toJSON();
+      const enableAllowListTx = api.tx.unique.toggleContractAllowList(contract.address, true);
       await expect(submitTransactionExpectFailAsync(bob, enableAllowListTx)).to.be.rejected;
-      const enabled = (await api.query.nft.contractAllowListEnabled(contract.address)).toJSON();
+      const enabled = (await api.query.unique.contractAllowListEnabled(contract.address)).toJSON();
 
       expect(enabledBefore).to.be.false;
       expect(enabled).to.be.false;

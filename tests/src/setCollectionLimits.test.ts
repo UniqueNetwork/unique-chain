@@ -41,7 +41,7 @@ describe('setCollectionLimits positive', () => {
   });
   it('execute setCollectionLimits with predefined params ', async () => {
     await usingApi(async (api: ApiPromise) => {
-      tx = api.tx.nft.setCollectionLimits(
+      tx = api.tx.unique.setCollectionLimits(
         collectionIdForTesting,
         {
           accountTokenOwnershipLimit: accountTokenOwnershipLimit,
@@ -82,7 +82,7 @@ describe('setCollectionLimits positive', () => {
       };
 
       // The first time
-      const tx1 = api.tx.nft.setCollectionLimits(
+      const tx1 = api.tx.unique.setCollectionLimits(
         collectionIdForTesting,
         collectionLimits,
       );
@@ -93,7 +93,7 @@ describe('setCollectionLimits positive', () => {
       expect(collectionInfo1.limits.tokenLimit.unwrap().toNumber()).to.be.equal(tokenLimit);
 
       // The second time
-      const tx2 = api.tx.nft.setCollectionLimits(
+      const tx2 = api.tx.unique.setCollectionLimits(
         collectionIdForTesting,
         collectionLimits,
       );
@@ -121,7 +121,7 @@ describe('setCollectionLimits negative', () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionCount = await getCreatedCollectionCount(api);
       const nonExistedCollectionId = collectionCount + 1;
-      tx = api.tx.nft.setCollectionLimits(
+      tx = api.tx.unique.setCollectionLimits(
         nonExistedCollectionId,
         {
           accountTokenOwnershipLimit,
@@ -135,7 +135,7 @@ describe('setCollectionLimits negative', () => {
   });
   it('execute setCollectionLimits from user who is not owner of this collection', async () => {
     await usingApi(async (api: ApiPromise) => {
-      tx = api.tx.nft.setCollectionLimits(
+      tx = api.tx.unique.setCollectionLimits(
         collectionIdForTesting,
         {
           accountTokenOwnershipLimit,
@@ -150,7 +150,7 @@ describe('setCollectionLimits negative', () => {
   it('execute setCollectionLimits from admin collection', async () => {
     await addCollectionAdminExpectSuccess(alice, collectionIdForTesting, bob.address);
     await usingApi(async (api: ApiPromise) => {
-      tx = api.tx.nft.setCollectionLimits(
+      tx = api.tx.unique.setCollectionLimits(
         collectionIdForTesting,
         {
           accountTokenOwnershipLimit,
