@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { NftDataStructsCollectionId, NftDataStructsTokenId, PalletCommonAccountBasicCrossAccountIdRepr } from './nft';
+import type { PalletCommonAccountBasicCrossAccountIdRepr, UpDataStructsCollection, UpDataStructsCollectionId, UpDataStructsCollectionStats, UpDataStructsTokenId } from './unique';
 import type { Bytes, HashMap, Json, Metadata, Null, Option, StorageKey, Text, U256, U64, Vec, bool, u128, u32, u64 } from '@polkadot/types';
 import type { ExtrinsicOrHash, ExtrinsicStatus } from '@polkadot/types/interfaces/author';
 import type { EpochAuthorship } from '@polkadot/types/interfaces/babe';
@@ -355,56 +355,6 @@ declare module '@polkadot/rpc-core/types.jsonrpc' {
        **/
       version: AugmentedRpc<() => Observable<Text>>;
     };
-    nft: {
-      /**
-       * Get amount of different user tokens
-       **/
-      accountBalance: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
-      /**
-       * Get tokens owned by account
-       **/
-      accountTokens: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<NftDataStructsTokenId>>>;
-      /**
-       * Get admin list
-       **/
-      adminlist: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletCommonAccountBasicCrossAccountIdRepr>>>;
-      /**
-       * Get allowed amount
-       **/
-      allowance: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, sender: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, spender: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: NftDataStructsTokenId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
-      /**
-       * Get allowlist
-       **/
-      allowlist: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletCommonAccountBasicCrossAccountIdRepr>>>;
-      /**
-       * Get amount of specific account token
-       **/
-      balance: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: NftDataStructsTokenId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
-      /**
-       * Get tokens contained in collection
-       **/
-      collectionTokens: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<NftDataStructsTokenId>>>;
-      /**
-       * Get token constant metadata
-       **/
-      constMetadata: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, tokenId: NftDataStructsTokenId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Bytes>>;
-      /**
-       * Get last token id
-       **/
-      lastTokenId: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<NftDataStructsTokenId>>;
-      /**
-       * Check if token exists
-       **/
-      tokenExists: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, tokenId: NftDataStructsTokenId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<bool>>;
-      /**
-       * Get token owner
-       **/
-      tokenOwner: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, tokenId: NftDataStructsTokenId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<PalletCommonAccountBasicCrossAccountIdRepr>>;
-      /**
-       * Get token variable metadata
-       **/
-      variableMetadata: AugmentedRpc<(collection: NftDataStructsCollectionId | AnyNumber | Uint8Array, tokenId: NftDataStructsTokenId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Bytes>>;
-    };
     offchain: {
       /**
        * Get offchain local storage under given key and prefix
@@ -596,6 +546,68 @@ declare module '@polkadot/rpc-core/types.jsonrpc' {
        * Retrieves the version of the node
        **/
       version: AugmentedRpc<() => Observable<Text>>;
+    };
+    unique: {
+      /**
+       * Get amount of different user tokens
+       **/
+      accountBalance: AugmentedRpc<(collection: UpDataStructsCollectionId | AnyNumber | Uint8Array, account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
+      /**
+       * Get tokens owned by account
+       **/
+      accountTokens: AugmentedRpc<(collection: UpDataStructsCollectionId | AnyNumber | Uint8Array, account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsTokenId>>>;
+      /**
+       * Get admin list
+       **/
+      adminlist: AugmentedRpc<(collection: UpDataStructsCollectionId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletCommonAccountBasicCrossAccountIdRepr>>>;
+      /**
+       * Get allowed amount
+       **/
+      allowance: AugmentedRpc<(collection: UpDataStructsCollectionId | AnyNumber | Uint8Array, sender: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, spender: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: UpDataStructsTokenId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
+      /**
+       * Check if user is allowed to use collection
+       **/
+      allowed: AugmentedRpc<(collection: UpDataStructsCollectionId | AnyNumber | Uint8Array, account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<bool>>;
+      /**
+       * Get allowlist
+       **/
+      allowlist: AugmentedRpc<(collection: UpDataStructsCollectionId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletCommonAccountBasicCrossAccountIdRepr>>>;
+      /**
+       * Get amount of specific account token
+       **/
+      balance: AugmentedRpc<(collection: UpDataStructsCollectionId | AnyNumber | Uint8Array, account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: UpDataStructsTokenId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
+      /**
+       * Get collection by specified id
+       **/
+      collectionById: AugmentedRpc<(collection: UpDataStructsCollectionId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsCollection>>>;
+      /**
+       * Get collection stats
+       **/
+      collectionStats: AugmentedRpc<(at?: Hash | string | Uint8Array) => Observable<UpDataStructsCollectionStats>>;
+      /**
+       * Get tokens contained in collection
+       **/
+      collectionTokens: AugmentedRpc<(collection: UpDataStructsCollectionId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsTokenId>>>;
+      /**
+       * Get token constant metadata
+       **/
+      constMetadata: AugmentedRpc<(collection: UpDataStructsCollectionId | AnyNumber | Uint8Array, tokenId: UpDataStructsTokenId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Bytes>>;
+      /**
+       * Get last token id
+       **/
+      lastTokenId: AugmentedRpc<(collection: UpDataStructsCollectionId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<UpDataStructsTokenId>>;
+      /**
+       * Check if token exists
+       **/
+      tokenExists: AugmentedRpc<(collection: UpDataStructsCollectionId | AnyNumber | Uint8Array, tokenId: UpDataStructsTokenId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<bool>>;
+      /**
+       * Get token owner
+       **/
+      tokenOwner: AugmentedRpc<(collection: UpDataStructsCollectionId | AnyNumber | Uint8Array, tokenId: UpDataStructsTokenId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<PalletCommonAccountBasicCrossAccountIdRepr>>;
+      /**
+       * Get token variable metadata
+       **/
+      variableMetadata: AugmentedRpc<(collection: UpDataStructsCollectionId | AnyNumber | Uint8Array, tokenId: UpDataStructsTokenId | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Bytes>>;
     };
     web3: {
       /**

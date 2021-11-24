@@ -62,7 +62,7 @@ use sp_runtime::{
 	traits::{Zero, One, BadOrigin, Saturating},
 };
 use frame_support::{
-	decl_module, decl_storage, decl_event, decl_error, IterableStorageMap,
+	decl_module, decl_storage, decl_event, decl_error,
 	dispatch::{Dispatchable, DispatchError, DispatchResult, Parameter},
 	traits::{
 		Get,
@@ -456,63 +456,6 @@ decl_module! {
 }
 
 impl<T: Config> Module<T> {
-	/// Migrate storage format from V1 to V2.
-	/// Return true if migration is performed.
-	pub fn migrate_v1_to_t2() -> bool {
-		if StorageVersion::get() == Releases::V1 {
-			StorageVersion::put(Releases::V2);
-
-			Agenda::<T>::translate::<
-				Vec<Option<ScheduledV1<<T as Config>::Call, T::BlockNumber>>>,
-				_,
-			>(|_, agenda| {
-				Some(
-					agenda
-						.into_iter()
-						.map(|schedule| {
-							schedule.map(|schedule| ScheduledV2 {
-								maybe_id: schedule.maybe_id,
-								priority: schedule.priority,
-								call: schedule.call,
-								maybe_periodic: schedule.maybe_periodic,
-								origin: system::RawOrigin::Root.into(),
-								_phantom: Default::default(),
-							})
-						})
-						.collect::<Vec<_>>(),
-				)
-			});
-
-			true
-		} else {
-			false
-		}
-	}
-
-	/// Helper to migrate scheduler when the pallet origin type has changed.
-	pub fn migrate_origin<OldOrigin: Into<T::PalletsOrigin> + codec::Decode>() {
-		Agenda::<T>::translate::<
-			Vec<Option<Scheduled<<T as Config>::Call, T::BlockNumber, OldOrigin, T::AccountId>>>,
-			_,
-		>(|_, agenda| {
-			Some(
-				agenda
-					.into_iter()
-					.map(|schedule| {
-						schedule.map(|schedule| Scheduled {
-							maybe_id: schedule.maybe_id,
-							priority: schedule.priority,
-							call: schedule.call,
-							maybe_periodic: schedule.maybe_periodic,
-							origin: schedule.origin.into(),
-							_phantom: Default::default(),
-						})
-					})
-					.collect::<Vec<_>>(),
-			)
-		});
-	}
-
 	fn resolve_time(when: DispatchTime<T::BlockNumber>) -> Result<T::BlockNumber, DispatchError> {
 		let now = frame_system::Pallet::<T>::block_number();
 

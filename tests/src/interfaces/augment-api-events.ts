@@ -2,12 +2,11 @@
 /* eslint-disable */
 
 import type { EthereumLog, EvmCoreErrorExitReason } from './ethereum';
-import type { PalletCommonAccountBasicCrossAccountIdRepr } from './nft';
+import type { PalletCommonAccountBasicCrossAccountIdRepr } from './unique';
 import type { ApiTypes } from '@polkadot/api/types';
-import type { Bytes, Null, Option, Result, U256, U8aFixed, u128, u32, u64, u8 } from '@polkadot/types';
+import type { Null, Option, Result, U256, U8aFixed, u128, u32, u64, u8 } from '@polkadot/types';
 import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
 import type { FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, SpRuntimeDispatchError, XcmV1MultiLocation, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
-import type { ITuple } from '@polkadot/types/types';
 
 declare module '@polkadot/api/types/events' {
   export interface AugmentedEvents<ApiType> {
@@ -389,24 +388,6 @@ declare module '@polkadot/api/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
-    scheduler: {
-      /**
-       * Canceled some task. \[when, index\]
-       **/
-      Canceled: AugmentedEvent<ApiType, [u32, u32]>;
-      /**
-       * Dispatched some task. \[task, id, result\]
-       **/
-      Dispatched: AugmentedEvent<ApiType, [ITuple<[u32, u32]>, Option<Bytes>, Result<Null, SpRuntimeDispatchError>]>;
-      /**
-       * Scheduled some task. \[when, index\]
-       **/
-      Scheduled: AugmentedEvent<ApiType, [u32, u32]>;
-      /**
-       * Generic event
-       **/
-      [key: string]: AugmentedEvent<ApiType>;
-    };
     sudo: {
       /**
        * The \[sudoer\] just switched identity; the old key is supplied.
@@ -492,15 +473,17 @@ declare module '@polkadot/api/types/events' {
     };
     vesting: {
       /**
-       * An \[account\] has become fully vested.
+       * Claimed vesting. \[who, locked_amount\]
        **/
-      VestingCompleted: AugmentedEvent<ApiType, [AccountId32]>;
+      Claimed: AugmentedEvent<ApiType, [AccountId32, u128]>;
       /**
-       * The amount vested has been updated. This could indicate a change in funds available.
-       * The balance given is the amount which is left unvested (and thus locked).
-       * \[account, unvested\]
+       * Added new vesting schedule. \[from, to, vesting_schedule\]
        **/
-      VestingUpdated: AugmentedEvent<ApiType, [AccountId32, u128]>;
+      VestingScheduleAdded: AugmentedEvent<ApiType, [AccountId32, AccountId32, OrmlVestingVestingSchedule]>;
+      /**
+       * Updated vesting schedules. \[who\]
+       **/
+      VestingSchedulesUpdated: AugmentedEvent<ApiType, [AccountId32]>;
       /**
        * Generic event
        **/

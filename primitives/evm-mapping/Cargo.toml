@@ -1,0 +1,15 @@
+[package]
+name = "up-evm-mapping"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
+frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
+
+[features]
+default = ["std"]
+std = [
+	"sp-core/std",
+	"frame-support/std",
+]

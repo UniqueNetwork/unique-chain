@@ -19,6 +19,7 @@ import {
   enableAllowListExpectSuccess,
   normalizeAccountId,
   addCollectionAdminExpectSuccess,
+  getCreatedCollectionCount,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -50,7 +51,7 @@ describe('Integration Test setPublicAccessMode(): ', () => {
       const collectionId = await createCollectionExpectSuccess();
       await enableAllowListExpectSuccess(alice, collectionId);
       await enablePublicMintingExpectSuccess(alice, collectionId);
-      const tx = api.tx.nft.createItem(collectionId, normalizeAccountId(bob.address), 'NFT');
+      const tx = api.tx.unique.createItem(collectionId, normalizeAccountId(bob.address), 'NFT');
       await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
     });
   });
@@ -60,8 +61,8 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
   it('Set a non-existent collection', async () => {
     await usingApi(async (api: ApiPromise) => {
       // tslint:disable-next-line: radix
-      const collectionId = (await api.query.common.createdCollectionCount()).toNumber() + 1;
-      const tx = api.tx.nft.setPublicAccessMode(collectionId, 'AllowList');
+      const collectionId = await getCreatedCollectionCount(api) + 1;
+      const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });
@@ -71,7 +72,7 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
       await destroyCollectionExpectSuccess(collectionId);
-      const tx = api.tx.nft.setPublicAccessMode(collectionId, 'AllowList');
+      const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });
@@ -88,7 +89,7 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
     await usingApi(async (api: ApiPromise) => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
-      const tx = api.tx.nft.setPublicAccessMode(collectionId, 'AllowList');
+      const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
       await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
     });
   });
@@ -106,7 +107,7 @@ describe('Negative Integration Test ext. collection admin setPublicAccessMode():
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const tx = api.tx.nft.setPublicAccessMode(collectionId, 'AllowList');
+      const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
       await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
     });
   });

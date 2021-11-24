@@ -20,6 +20,7 @@ import {
   getLastTokenId,
   getVariableMetadata,
   getConstMetadata,
+  getCreatedCollectionCount,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -33,7 +34,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(itemsListIndexBefore).to.be.equal(0);
       const alice = privateKey('//Alice');
       const args = [{NFT: ['0x31', '0x31']}, {NFT: ['0x32', '0x32']}, {NFT: ['0x33', '0x33']}];
-      const createMultipleItemsTx = api.tx.nft
+      const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await submitTransactionAsync(alice, createMultipleItemsTx);
       const itemsListIndexAfter = await getLastTokenId(api, collectionId);
@@ -64,7 +65,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
         {Fungible: {value: 2}},
         {Fungible: {value: 3}},
       ];
-      const createMultipleItemsTx = api.tx.nft
+      const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await submitTransactionAsync(alice, createMultipleItemsTx);
       const token1Data = await getBalance(api, collectionId, alice.address, 0);
@@ -84,7 +85,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
         {ReFungible: {const_data: [0x32], variable_data: [0x32], pieces: 1}},
         {ReFungible: {const_data: [0x33], variable_data: [0x33], pieces: 1}},
       ];
-      const createMultipleItemsTx = api.tx.nft
+      const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await submitTransactionAsync(alice, createMultipleItemsTx);
       const itemsListIndexAfter = await getLastTokenId(api, collectionId);
@@ -116,7 +117,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
         {NFT: ['A', 'A']},
         {NFT: ['B', 'B']},
       ];
-      const createMultipleItemsTx = api.tx.nft.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
+      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       const events = await submitTransactionAsync(alice, createMultipleItemsTx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
@@ -143,7 +144,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(itemsListIndexBefore).to.be.equal(0);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
       const args = [{NFT: ['0x31', '0x31']}, {NFT: ['0x32', '0x32']}, {NFT: ['0x33', '0x33']}];
-      const createMultipleItemsTx = api.tx.nft
+      const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(bob.address), args);
       await submitTransactionAsync(bob, createMultipleItemsTx);
       const itemsListIndexAfter = await getLastTokenId(api, collectionId);
@@ -174,7 +175,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
         {Fungible: {value: 2}},
         {Fungible: {value: 3}},
       ];
-      const createMultipleItemsTx = api.tx.nft
+      const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(bob.address), args);
       await submitTransactionAsync(bob, createMultipleItemsTx);
       const token1Data = await getBalance(api, collectionId, bob.address, 0);
@@ -194,7 +195,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
         {ReFungible: {const_data: [0x32], variable_data: [0x32], pieces: 1}},
         {ReFungible: {const_data: [0x33], variable_data: [0x33], pieces: 1}},
       ];
-      const createMultipleItemsTx = api.tx.nft
+      const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(bob.address), args);
       await submitTransactionAsync(bob, createMultipleItemsTx);
       const itemsListIndexAfter = await getLastTokenId(api, collectionId);
@@ -233,7 +234,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       const args = [{NFT: ['0x31', '0x31']}, {NFT: ['0x32', '0x32']}, {NFT: ['0x33', '0x33']}];
-      const createMultipleItemsTx = api.tx.nft
+      const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await expect(submitTransactionAsync(bob, createMultipleItemsTx)).to.be.rejected;
     });
@@ -249,7 +250,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
         {Fungible: {value: 2}},
         {Fungible: {value: 3}},
       ];
-      const createMultipleItemsTx = api.tx.nft
+      const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await expect(submitTransactionAsync(bob, createMultipleItemsTx)).to.be.rejected;
     });
@@ -265,7 +266,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
         {ReFungible: {const_data: [0x32], variable_data: [0x32], pieces: 1}},
         {ReFungible: {const_data: [0x33], variable_data: [0x33], pieces: 1}},
       ];
-      const createMultipleItemsTx = api.tx.nft
+      const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await expect(submitTransactionAsync(bob, createMultipleItemsTx)).to.be.rejected;
     });
@@ -273,8 +274,8 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
 
   it('Create token in not existing collection', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const collectionId = (await api.query.common.createdCollectionCount()).toNumber() + 1;
-      const createMultipleItemsTx = api.tx.nft
+      const collectionId = await getCreatedCollectionCount(api) + 1;
+      const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), ['NFT', 'NFT', 'NFT']);
       await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTx)).to.be.rejected;
     });
@@ -290,7 +291,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
         {NFT: ['B'.repeat(2049), 'B'.repeat(2049)]},
         {NFT: ['C'.repeat(2049), 'C'.repeat(2049)]},
       ];
-      const createMultipleItemsTx = api.tx.nft
+      const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTx)).to.be.rejected;
 
@@ -302,7 +303,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
         {ReFungible: ['2'.repeat(2049), '2'.repeat(2049), 10]},
         {ReFungible: ['3'.repeat(2049), '3'.repeat(2049), 10]},
       ];
-      const createMultipleItemsTxFungible = api.tx.nft
+      const createMultipleItemsTxFungible = api.tx.unique
         .createMultipleItems(collectionIdReFungible, normalizeAccountId(alice.address), argsReFungible);
       await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTxFungible)).to.be.rejected;
     });
@@ -311,7 +312,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
   it('Create tokens with different types', async () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionId = await createCollectionExpectSuccess();
-      const createMultipleItemsTx = api.tx.nft
+      const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), ['NFT', 'Fungible', 'ReFungible']);
       await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTx)).to.be.rejected;
       // garbage collection :-D
@@ -327,7 +328,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
         {NFT: ['B', 'B'.repeat(2049)]},
         {NFT: ['C'.repeat(2049), 'C']},
       ];
-      const createMultipleItemsTx = await api.tx.nft
+      const createMultipleItemsTx = await api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTx)).to.be.rejected;
     });
@@ -344,7 +345,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
         {NFT: ['A', 'A']},
         {NFT: ['B', 'B']},
       ];
-      const createMultipleItemsTx = api.tx.nft.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
+      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTx)).to.be.rejected;
     });
   });

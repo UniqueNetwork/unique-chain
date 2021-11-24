@@ -35,10 +35,10 @@ jobs:
           script: |
             eval $(ssh-agent -s)
             ssh-add /home/devops/.ssh/git_hub
-            git clone git@github.com:UniqueNetwork/nft_private.git
-            cd nft_private
+            git clone git@github.com:UniqueNetwork/unique-chain.git
+            cd unique-chain
             git checkout develop
             # git pull --all
             chmod +x ci_node.sh
             ./ci_node.sh
-            rm -rf /home/polkadot/nft_private
+            rm -rf /home/polkadot/unique-chain

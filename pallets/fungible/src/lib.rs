@@ -2,7 +2,7 @@
 
 use core::ops::Deref;
 use frame_support::{ensure};
-use nft_data_structs::{AccessMode, Collection, CollectionId, TokenId};
+use up_data_structs::{AccessMode, Collection, CollectionId, TokenId};
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
 };
@@ -25,7 +25,7 @@ pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key};
-	use nft_data_structs::CollectionId;
+	use up_data_structs::CollectionId;
 	use super::weights::WeightInfo;
 
 	#[pallet::error]
@@ -91,8 +91,8 @@ impl<T: Config> Deref for FungibleHandle<T> {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T>) -> Result<CollectionId, DispatchError> {
-		PalletCommon::init_collection(data)
+	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
+		<PalletCommon<T>>::init_collection(data)
 	}
 	pub fn destroy_collection(
 		collection: FungibleHandle<T>,

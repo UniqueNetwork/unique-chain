@@ -1,8 +1,8 @@
 {
 	"name": "Rust",
     "dockerComposeFile": "./docker-compose.yml",
-    "service": "nft_private",
-    "workspaceFolder": "/workspaces/nft_private",
+    "service": "unique-chain",
+    "workspaceFolder": "/workspaces/unique-chain",
 	"settings": { 
 		"terminal.integrated.shell.linux": "/bin/bash",
 		"lldb.executable": "/usr/bin/lldb",

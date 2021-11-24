@@ -2,12 +2,12 @@ use crate::Config;
 use codec::{Encode, EncodeLike, Decode};
 use sp_core::H160;
 use scale_info::{Type, TypeInfo};
-use sp_core::crypto::AccountId32;
 use core::cmp::Ordering;
 use serde::{Serialize, Deserialize};
 use pallet_evm::AddressMapping;
 use sp_std::vec::Vec;
 use sp_std::clone::Clone;
+pub use up_evm_mapping::EvmBackwardsAddressMapping;
 
 pub trait CrossAccountId<AccountId>:
 	Encode + EncodeLike + Decode + TypeInfo + Clone + PartialEq + Ord + core::fmt::Debug + Default
@@ -174,19 +174,5 @@ impl<T: Config> From<BasicCrossAccountId<T>> for BasicCrossAccountIdRepr<T::Acco
 		} else {
 			BasicCrossAccountIdRepr::Substrate(v.as_sub().clone())
 		}
-	}
-}
-
-pub trait EvmBackwardsAddressMapping<AccountId> {
-	fn from_account_id(account_id: AccountId) -> H160;
-}
-
-/// Should have same mapping as EnsureAddressTruncated
-pub struct MapBackwardsAddressTruncated;
-impl EvmBackwardsAddressMapping<AccountId32> for MapBackwardsAddressTruncated {
-	fn from_account_id(account_id: AccountId32) -> H160 {
-		let mut out = [0; 20];
-		out.copy_from_slice(&(account_id.as_ref() as &[u8])[0..20]);
-		H160(out)
 	}
 }

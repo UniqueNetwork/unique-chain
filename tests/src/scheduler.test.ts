@@ -17,7 +17,7 @@ import {
 
 chai.use(chaiAsPromised);
 
-describe('Integration Test scheduler base transaction', () => {
+describe.skip('Integration Test scheduler base transaction', () => {
   it('User can transfer owned token with delay (scheduler)', async () => {
     await usingApi(async () => {
       const alice = privateKey('//Alice');

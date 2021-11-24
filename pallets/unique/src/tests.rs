@@ -2,11 +2,16 @@
 use super::*;
 use crate::mock::*;
 use crate::{AccessMode, CollectionMode};
-use nft_data_structs::{
+use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, CollectionId, CreateItemData, CreateFungibleData, 
 	CreateNftData, CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT, 
 	MetaUpdatePermission, TokenId,
 };
+// use crate::{AccessMode, CollectionMode, Ownership, CreateItemData};
+// use up_data_structs::{
+// 	CreateNftData, CreateFungibleData, CreateReFungibleData, CollectionId, TokenId,
+// 	MAX_DECIMAL_POINTS,
+// };
 
 use frame_support::{assert_noop, assert_ok};
 use sp_std::convert::TryInto;

@@ -35,11 +35,10 @@ const requiredPallets = [
   'cumulusxcm',
   'dmpqueue',
   'inflation',
-  'nft',
+  'unique',
   'nonfungible',
   'refungible',
-  'scheduler',
-  'nftpayment',
+  //'scheduler',
   'charging',
 ];
 

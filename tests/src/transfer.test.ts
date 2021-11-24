@@ -19,6 +19,11 @@ import {
   transferExpectFailure,
   transferExpectSuccess,
   addCollectionAdminExpectSuccess,
+  getCreatedCollectionCount,
+  toSubstrateAddress,
+  getTokenOwner,
+  normalizeAccountId,
+  getBalance as getTokenBalance,
 } from './util/helpers';
 
 let alice: IKeyringPair;
@@ -132,13 +137,13 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
   it('Transfer with not existed collection_id', async () => {
     await usingApi(async (api) => {
       // nft
-      const nftCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
+      const nftCollectionCount = await getCreatedCollectionCount(api);
       await transferExpectFailure(nftCollectionCount + 1, 1, alice, bob, 1);
       // fungible
-      const fungibleCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
+      const fungibleCollectionCount = await getCreatedCollectionCount(api);
       await transferExpectFailure(fungibleCollectionCount + 1, 0, alice, bob, 1);
       // reFungible
-      const reFungibleCollectionCount = (await api.query.common.createdCollectionCount()).toNumber();
+      const reFungibleCollectionCount = await getCreatedCollectionCount(api);
       await transferExpectFailure(reFungibleCollectionCount + 1, 1, alice, bob, 1);
     });
   });
@@ -228,5 +233,63 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
       bob,
       1,
     );
+  });
+});
+
+describe('Zero value transfer(From)', () => {
+  before(async () => {
+    await usingApi(async () => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+    });
+  });
+
+  it('NFT', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const nftCollectionId = await createCollectionExpectSuccess();
+      const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
+
+      const transferTx = api.tx.unique.transfer(normalizeAccountId(bob), nftCollectionId, newNftTokenId, 0);
+      await submitTransactionAsync(alice, transferTx);
+      const address = normalizeAccountId(await getTokenOwner(api, nftCollectionId, newNftTokenId));
+
+      expect(toSubstrateAddress(address)).to.be.equal(alice.address);
+    });
+  });
+
+  it('RFT', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+      const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
+      const balanceBeforeAlice = await getTokenBalance(api, reFungibleCollectionId, normalizeAccountId(alice), newReFungibleTokenId);
+      const balanceBeforeBob = await getTokenBalance(api, reFungibleCollectionId, normalizeAccountId(bob), newReFungibleTokenId);
+
+      const transferTx = api.tx.unique.transfer(normalizeAccountId(bob), reFungibleCollectionId, newReFungibleTokenId, 0);
+      await submitTransactionAsync(alice, transferTx);
+
+      const balanceAfterAlice = await getTokenBalance(api, reFungibleCollectionId, normalizeAccountId(alice), newReFungibleTokenId);
+      const balanceAfterBob = await getTokenBalance(api, reFungibleCollectionId, normalizeAccountId(bob), newReFungibleTokenId);
+
+      expect((balanceBeforeAlice)).to.be.equal(balanceAfterAlice);
+      expect((balanceBeforeBob)).to.be.equal(balanceAfterBob);
+    });
+  });
+
+  it('Fungible', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+      const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
+      const balanceBeforeAlice = await getTokenBalance(api, fungibleCollectionId, normalizeAccountId(alice), newFungibleTokenId);
+      const balanceBeforeBob = await getTokenBalance(api, fungibleCollectionId, normalizeAccountId(bob), newFungibleTokenId);
+
+      const transferTx = api.tx.unique.transfer(normalizeAccountId(bob), fungibleCollectionId, newFungibleTokenId, 0);
+      await submitTransactionAsync(alice, transferTx);
+
+      const balanceAfterAlice = await getTokenBalance(api, fungibleCollectionId, normalizeAccountId(alice), newFungibleTokenId);
+      const balanceAfterBob = await getTokenBalance(api, fungibleCollectionId, normalizeAccountId(bob), newFungibleTokenId);
+
+      expect((balanceBeforeAlice)).to.be.equal(balanceAfterAlice);
+      expect((balanceBeforeBob)).to.be.equal(balanceAfterBob);
+    });
   });
 });

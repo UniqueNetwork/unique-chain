@@ -1,4 +1,4 @@
-use nft_data_structs::{CollectionId, TokenId};
+use up_data_structs::{CollectionId, TokenId};
 use sp_core::H160;
 
 // 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection 1

@@ -40,7 +40,7 @@ describe('integration test: ext. burnItem():', () => {
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
+      const tx = api.tx.unique.burnItem(collectionId, tokenId, 1);
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
 
@@ -58,7 +58,7 @@ describe('integration test: ext. burnItem():', () => {
 
     await usingApi(async (api) => {
       // Destroy 1 of 10
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
+      const tx = api.tx.unique.burnItem(collectionId, tokenId, 1);
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
 
@@ -77,7 +77,7 @@ describe('integration test: ext. burnItem():', () => {
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, 100);
+      const tx = api.tx.unique.burnItem(collectionId, tokenId, 100);
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
 
@@ -97,7 +97,7 @@ describe('integration test: ext. burnItem():', () => {
 
     await usingApi(async (api) => {
       // Transfer 1/100 of the token to Bob
-      const transfertx = api.tx.nft.transfer(normalizeAccountId(bob.address), collectionId, tokenId, 1);
+      const transfertx = api.tx.unique.transfer(normalizeAccountId(bob.address), collectionId, tokenId, 1);
       const events1 = await submitTransactionAsync(alice, transfertx);
       const result1 = getGenericResult(events1);
 
@@ -106,7 +106,7 @@ describe('integration test: ext. burnItem():', () => {
       const aliceBalanceBefore = await getBalance(api, collectionId, alice.address, tokenId);
 
       // Bob burns his portion
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
+      const tx = api.tx.unique.burnItem(collectionId, tokenId, 1);
       const events2 = await submitTransactionAsync(bob, tx);
       const result2 = getGenericResult(events2);
 
@@ -146,7 +146,7 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
     await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
+      const tx = api.tx.unique.burnItem(collectionId, tokenId, 1);
       const events = await submitTransactionAsync(bob, tx);
       const result = getGenericResult(events);
 
@@ -165,7 +165,7 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
 
     await usingApi(async (api) => {
       // Destroy 1 of 10
-      const tx = api.tx.nft.burnFrom(collectionId, normalizeAccountId(alice.address), tokenId, 1);
+      const tx = api.tx.unique.burnFrom(collectionId, normalizeAccountId(alice.address), tokenId, 1);
       const events = await submitTransactionAsync(bob, tx);
       const result = getGenericResult(events);
 
@@ -186,7 +186,7 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
     await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnFrom(collectionId, normalizeAccountId(alice.address), tokenId, 100);
+      const tx = api.tx.unique.burnFrom(collectionId, normalizeAccountId(alice.address), tokenId, 100);
       const events = await submitTransactionAsync(bob, tx);
       const result = getGenericResult(events);
       // Get alice balance
@@ -213,7 +213,7 @@ describe('Negative integration test: ext. burnItem():', () => {
     await destroyCollectionExpectSuccess(collectionId);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, 0);
+      const tx = api.tx.unique.burnItem(collectionId, tokenId, 0);
       const badTransaction = async function () {
         await submitTransactionExpectFailAsync(alice, tx);
       };
@@ -228,7 +228,7 @@ describe('Negative integration test: ext. burnItem():', () => {
     const tokenId = 10;
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
+      const tx = api.tx.unique.burnItem(collectionId, tokenId, 1);
       const badTransaction = async function () {
         await submitTransactionExpectFailAsync(alice, tx);
       };
@@ -243,7 +243,7 @@ describe('Negative integration test: ext. burnItem():', () => {
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, 1);
+      const tx = api.tx.unique.burnItem(collectionId, tokenId, 1);
       const badTransaction = async function () {
         await submitTransactionExpectFailAsync(bob, tx);
       };
@@ -259,12 +259,12 @@ describe('Negative integration test: ext. burnItem():', () => {
 
     await usingApi(async (api) => {
 
-      const burntx = api.tx.nft.burnItem(collectionId, tokenId, 1);
+      const burntx = api.tx.unique.burnItem(collectionId, tokenId, 1);
       const events1 = await submitTransactionAsync(alice, burntx);
       const result1 = getGenericResult(events1);
       expect(result1.success).to.be.true;
 
-      const tx = api.tx.nft.transfer(normalizeAccountId(bob.address), collectionId, tokenId, 1);
+      const tx = api.tx.unique.transfer(normalizeAccountId(bob.address), collectionId, tokenId, 1);
       const badTransaction = async function () {
         await submitTransactionExpectFailAsync(alice, tx);
       };
@@ -282,7 +282,7 @@ describe('Negative integration test: ext. burnItem():', () => {
 
     await usingApi(async (api) => {
       // Destroy 11 of 10
-      const tx = api.tx.nft.burnItem(collectionId, tokenId, 11);
+      const tx = api.tx.unique.burnItem(collectionId, tokenId, 11);
       const badTransaction = async function () {
         await submitTransactionExpectFailAsync(alice, tx);
       };

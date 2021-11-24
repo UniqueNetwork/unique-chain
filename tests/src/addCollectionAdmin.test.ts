@@ -8,7 +8,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, destroyCollectionExpectSuccess, getAdminList, normalizeAccountId} from './util/helpers';
+import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, destroyCollectionExpectSuccess, getAdminList, normalizeAccountId, queryCollectionExpectSuccess} from './util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -20,10 +20,10 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
 
-      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.equal(alice.address);
 
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
+      const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
       await submitTransactionAsync(alice, changeAdminTx);
 
       const adminListAfterAddAdmin = await getAdminList(api, collectionId);
@@ -38,16 +38,16 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
       const bob = privateKey('//Bob');
       const charlie = privateKey('//CHARLIE');
 
-      const collection = (await api.query.common.collectionById(collectionId)).unwrap();
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.equal(alice.address);
 
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
+      const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
       await submitTransactionAsync(alice, changeAdminTx);
 
       const adminListAfterAddAdmin = await getAdminList(api, collectionId);
       expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
 
-      const changeAdminTxCharlie = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(charlie.address));
+      const changeAdminTxCharlie = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(charlie.address));
       await submitTransactionAsync(bob, changeAdminTxCharlie);
       const adminListAfterAddNewAdmin = await getAdminList(api, collectionId);
       expect(adminListAfterAddNewAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
@@ -63,7 +63,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
       const alice = privateKey('//Alice');
       const nonOwner = privateKey('//Bob_stash');
 
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(alice.address));
+      const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(alice.address));
       await expect(submitTransactionExpectFailAsync(nonOwner, changeAdminTx)).to.be.rejected;
 
       const adminListAfterAddAdmin = await getAdminList(api, collectionId);
@@ -80,7 +80,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
 
-      const changeOwnerTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
+      const changeOwnerTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
       await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
@@ -94,7 +94,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
       await destroyCollectionExpectSuccess(collectionId);
-      const changeOwnerTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
+      const changeOwnerTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
       await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
@@ -125,7 +125,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
         expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(accounts[i]));
       }
 
-      const tx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(accounts[chainAdminLimit]));
+      const tx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(accounts[chainAdminLimit]));
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });

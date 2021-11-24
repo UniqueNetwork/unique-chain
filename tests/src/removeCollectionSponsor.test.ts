@@ -18,6 +18,7 @@ import {
   removeCollectionSponsorExpectFailure,
   normalizeAccountId,
   addCollectionAdminExpectSuccess,
+  getCreatedCollectionCount,
 } from './util/helpers';
 import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -53,7 +54,7 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
 
       // Transfer this tokens from unused address to Alice - should fail
       const sponsorBalanceBefore = (await api.query.system.account(bob.address)).data.free.toBigInt();
-      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(alice.address), collectionId, itemId, 0);
+      const zeroToAlice = api.tx.unique.transfer(normalizeAccountId(alice.address), collectionId, itemId, 0);
       const badTransaction = async function () {
         await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       };
@@ -98,7 +99,7 @@ describe('(!negative test!) integration test: ext. removeCollectionSponsor():', 
     // Find the collection that never existed
     let collectionId = 0;
     await usingApi(async (api) => {
-      collectionId = (await api.query.common.createdCollectionCount()).toNumber() + 1;
+      collectionId = await getCreatedCollectionCount(api) + 1;
     });
 
     await removeCollectionSponsorExpectFailure(collectionId);

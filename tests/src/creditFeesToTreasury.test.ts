@@ -14,6 +14,7 @@ import {
   createItemExpectSuccess,
   getGenericResult,
   transferExpectSuccess,
+  UNIQUE,
 } from './util/helpers';
 
 import {default as waitNewBlocks} from './substrate/wait-new-blocks';
@@ -169,12 +170,11 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       const aliceBalanceBefore: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
       await transferExpectSuccess(collectionId, tokenId, alice, bob, 1, 'NFT');
       const aliceBalanceAfter: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
-      const fee = aliceBalanceBefore - aliceBalanceAfter;
+      const fee = Number(aliceBalanceBefore - aliceBalanceAfter) / Number(UNIQUE);
 
-      // console.log(fee.toString());
       const expectedTransferFee = 0.1;
       const tolerance = 0.001;
-      expect(Number(fee) / 1e15 - expectedTransferFee).to.be.lessThan(tolerance);
+      expect(Number(fee) / Number(UNIQUE) - expectedTransferFee).to.be.lessThan(tolerance);
     });
   });
 

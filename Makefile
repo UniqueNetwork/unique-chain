@@ -4,7 +4,7 @@ _help:
 	@echo "evm_stubs - recompile contract stubs"
 	@echo "bench - run frame-benchmarking"
 	@echo "  bench-evm-migration"
-	@echo "  bench-nft"
+	@echo "  bench-unique"
 
 .PHONY: regenerate_solidity
 regenerate_solidity:
@@ -41,9 +41,9 @@ _bench:
 bench-evm-migration:
 	make _bench PALLET=evm-migration
 
-.PHONY: bench-nft
-bench-nft:
-	make _bench PALLET=nft
+.PHONY: bench-unique
+bench-unique:
+	make _bench PALLET=unique
 
 .PHONY: bench-fungible
 bench-fungible:
@@ -58,4 +58,4 @@ bench-nonfungible:
 	make _bench PALLET=nonfungible
 
 .PHONY: bench
-bench: bench-evm-migration bench-nft bench-fungible bench-refungible bench-nonfungible
+bench: bench-evm-migration bench-unique bench-fungible bench-refungible bench-nonfungible

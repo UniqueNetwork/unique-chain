@@ -11,9 +11,9 @@ type RpcParam = {
 };
 
 const CROSS_ACCOUNT_ID_TYPE = 'PalletCommonAccountBasicCrossAccountIdRepr';
-const TOKEN_ID_TYPE = 'NftDataStructsTokenId';
+const TOKEN_ID_TYPE = 'UpDataStructsTokenId';
 
-const collectionParam = {name: 'collection', type: 'NftDataStructsCollectionId'};
+const collectionParam = {name: 'collection', type: 'UpDataStructsCollectionId'};
 const tokenParam = {name: 'tokenId', type: TOKEN_ID_TYPE};
 const crossAccountParam = (name = 'account') => ({name, type: CROSS_ACCOUNT_ID_TYPE});
 const atParam = {name: 'at', type: 'Hash', isOptional: true};
@@ -29,8 +29,8 @@ export default {
     adminlist: fun('Get admin list', [collectionParam], 'Vec<PalletCommonAccountBasicCrossAccountIdRepr>'),
     allowlist: fun('Get allowlist', [collectionParam], 'Vec<PalletCommonAccountBasicCrossAccountIdRepr>'),
 
-    accountTokens: fun('Get tokens owned by account', [collectionParam, crossAccountParam()], 'Vec<NftDataStructsTokenId>'),
-    collectionTokens: fun('Get tokens contained in collection', [collectionParam], 'Vec<NftDataStructsTokenId>'),
+    accountTokens: fun('Get tokens owned by account', [collectionParam, crossAccountParam()], 'Vec<UpDataStructsTokenId>'),
+    collectionTokens: fun('Get tokens contained in collection', [collectionParam], 'Vec<UpDataStructsTokenId>'),
 
     lastTokenId: fun('Get last token id', [collectionParam], TOKEN_ID_TYPE),
     accountBalance: fun('Get amount of different user tokens', [collectionParam, crossAccountParam()], 'u32'),
@@ -40,6 +40,9 @@ export default {
     constMetadata: fun('Get token constant metadata', [collectionParam, tokenParam], 'Vec<u8>'),
     variableMetadata: fun('Get token variable metadata', [collectionParam, tokenParam], 'Vec<u8>'),
     tokenExists: fun('Check if token exists', [collectionParam, tokenParam], 'bool'),
+    collectionById: fun('Get collection by specified id', [collectionParam], 'Option<UpDataStructsCollection>'),
+    collectionStats: fun('Get collection stats', [], 'UpDataStructsCollectionStats'),
+    allowed: fun('Check if user is allowed to use collection', [collectionParam, crossAccountParam()], 'bool'),
   },
   types: {
     PalletCommonAccountBasicCrossAccountIdRepr: {
@@ -48,29 +51,34 @@ export default {
         Ethereum: 'H160',
       },
     },
-    NftDataStructsCollection: {
+    UpDataStructsCollection: {
       owner: 'AccountId',
-      mode: 'NftDataStructsCollectionMode',
-      access: 'NftDataStructsAccessMode',
+      mode: 'UpDataStructsCollectionMode',
+      access: 'UpDataStructsAccessMode',
       name: 'Vec<u16>',
       description: 'Vec<u16>',
       tokenPrefix: 'Vec<u8>',
       mintMode: 'bool',
       offchainSchema: 'Vec<u8>',
-      schemaVersion: 'NftDataStructsSchemaVersion',
-      sponsorship: 'NftDataStructsSponsorshipState',
-      limits: 'NftDataStructsCollectionLimits',
+      schemaVersion: 'UpDataStructsSchemaVersion',
+      sponsorship: 'UpDataStructsSponsorshipState',
+      limits: 'UpDataStructsCollectionLimits',
       variableOnChainSchema: 'Vec<u8>',
       constOnChainSchema: 'Vec<u8>',
-      metaUpdatePermission: 'NftDataStructsMetaUpdatePermission',
+      metaUpdatePermission: 'UpDataStructsMetaUpdatePermission',
     },
-    NftDataStructsCollectionId: 'u32',
-    NftDataStructsTokenId: 'u32',
+    UpDataStructsCollectionStats: {
+      created: 'u32',
+      destroyed: 'u32',
+      alive: 'u32',
+    },
+    UpDataStructsCollectionId: 'u32',
+    UpDataStructsTokenId: 'u32',
     PalletNonfungibleItemData: mkDummy('NftItemData'),
     PalletRefungibleItemData: mkDummy('RftItemData'),
-    NftDataStructsCollectionMode: mkDummy('CollectionMode'),
-    NftDataStructsCreateItemData: mkDummy('CreateItemData'),
-    NftDataStructsCollectionLimits: {
+    UpDataStructsCollectionMode: mkDummy('CollectionMode'),
+    UpDataStructsCreateItemData: mkDummy('CreateItemData'),
+    UpDataStructsCollectionLimits: {
       accountTokenOwnershipLimit: 'Option<u32>',
       sponsoredDataSize: 'Option<u32>',
       sponsoredDataRateLimit: 'Option<u32>',
@@ -80,20 +88,20 @@ export default {
       ownerCanDestroy: 'Option<bool>',
       transfersEnabled: 'Option<bool>',
     },
-    NftDataStructsMetaUpdatePermission: {
+    UpDataStructsMetaUpdatePermission: {
       _enum: ['ItemOwner', 'Admin', 'None'],
     },
-    NftDataStructsSponsorshipState: {
+    UpDataStructsSponsorshipState: {
       _enum: {
         Disabled: null,
         Unconfirmed: 'AccountId',
         Confirmed: 'AccountId',
       },
     },
-    NftDataStructsAccessMode: {
+    UpDataStructsAccessMode: {
       _enum: ['Normal', 'AllowList'],
     },
-    NftDataStructsSchemaVersion: mkDummy('SchemaVersion'),
+    UpDataStructsSchemaVersion: mkDummy('SchemaVersion'),
 
     PalletUnqSchedulerScheduledV2: mkDummy('ScheduledV2'),
     PalletUnqSchedulerCallSpec: mkDummy('CallSpec'),

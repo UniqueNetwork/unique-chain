@@ -5,7 +5,7 @@ edition = "2018"
 
 [dependencies]
 pallet-common = { default-features = false, path = '../../pallets/common' }
-nft-data-structs = { default-features = false, path = '../nft' }
+up-data-structs = { default-features = false, path = '../data-structs' }
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [
 	"derive",
 ] }
@@ -23,5 +23,5 @@ std = [
 	"sp-api/std",
 	"sp-runtime/std",
 	"pallet-common/std",
-	"nft-data-structs/std",
+	"up-data-structs/std",
 ]

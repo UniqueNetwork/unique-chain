@@ -85,6 +85,9 @@ decl_module! {
 
 			let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);
 
+			// TODO: Rewrite inflation to use block timestamp instead of block number
+			// let _now = <timestamp::Module<T>>::get();
+
 			// Recalculate inflation on the first block of the year (or if it is not initialized yet)
 			if (now % T::BlockNumber::from(YEAR)).is_zero() || <BlockInflation<T>>::get().is_zero() {
 				let current_year: u32 = (now / T::BlockNumber::from(YEAR)).try_into().unwrap_or(0);

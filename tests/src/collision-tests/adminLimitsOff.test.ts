@@ -39,27 +39,27 @@ describe('Admin limit exceeded collection: ', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
 
-      const chainAdminLimit = (api.consts.nft.collectionAdminsLimit as any).toNumber();
+      const chainAdminLimit = (api.consts.unique.collectionAdminsLimit as any).toNumber();
       expect(chainAdminLimit).to.be.equal(5);
 
-      const changeAdminTx1 = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Eve.address));
+      const changeAdminTx1 = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(Eve.address));
       await submitTransactionAsync(Alice, changeAdminTx1);
-      const changeAdminTx2 = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Dave.address));
+      const changeAdminTx2 = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(Dave.address));
       await submitTransactionAsync(Alice, changeAdminTx2);
-      const changeAdminTx3 = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
+      const changeAdminTx3 = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx3);
 
-      const addAdmOne = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Ferdie.address));
-      const addAdmTwo = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Charlie.address));
+      const addAdmOne = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(Ferdie.address));
+      const addAdmTwo = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(Charlie.address));
       await Promise.all([
         addAdmOne.signAndSend(Bob),
         addAdmTwo.signAndSend(Alice),
       ]);
       await waitNewBlocks(2);
-      const changeAdminTx4 = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Alice.address));
+      const changeAdminTx4 = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(Alice.address));
       await expect(submitTransactionExpectFailAsync(Alice, changeAdminTx4)).to.be.rejected;
 
-      const adminListAfterAddAdmin: any = (await api.query.nft.adminList(collectionId));
+      const adminListAfterAddAdmin: any = (await api.query.unique.adminList(collectionId));
       expect(adminListAfterAddAdmin).to.be.contains(normalizeAccountId(Eve.address));
       expect(adminListAfterAddAdmin).to.be.contains(normalizeAccountId(Ferdie.address));
       expect(adminListAfterAddAdmin).not.to.be.contains(normalizeAccountId(Alice.address));

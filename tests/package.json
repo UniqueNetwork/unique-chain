@@ -1,7 +1,7 @@
 {
-  "name": "nfttests",
+  "name": "unique-tests",
   "version": "1.0.0",
-  "description": "Substrate Nft tests",
+  "description": "Unique Chain Tests",
   "main": "",
   "devDependencies": {
     "@polkadot/dev": "0.63.18",

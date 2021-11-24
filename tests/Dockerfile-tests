@@ -7,8 +7,8 @@ LABEL maintainer="UniqueNetwork.io"
 RUN apt -y update; apt -y upgrade; apt -y install curl
 
 
-RUN mkdir nft_parachain
-WORKDIR /nft_parachain
+RUN mkdir unique_parachain
+WORKDIR /unique_parachain
 
 RUN apt-get -y update && \
       apt-get -y upgrade && \

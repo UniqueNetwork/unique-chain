@@ -1,12 +1,12 @@
 [package]
-name = "nft-data-structs"
-authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
-description = "Nft data structs definitions"
+name = "up-data-structs"
+authors = ["Unique Network <support@uniquenetwork.io>"]
+description = "Unique data structs definitions"
 edition = "2018"
-license = 'GPL-3.0'
-homepage = "https://substrate.dev"
-repository = 'https://github.com/clover-network/clover'
-version = '0.9.0'
+license = 'All Rights Reserved'
+homepage = "https://unique.network"
+repository = 'https://github.com/UniqueNetwork/unique-chain'
+version = '0.1.0'
 
 [dependencies]
 scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }

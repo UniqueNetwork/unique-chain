@@ -73,7 +73,7 @@ describe.skip('Chain extensions', () => {
       const collectionId = await createCollectionExpectSuccess();
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
       const [contract] = await deployTransferContract(api);
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, contract.address);
+      const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, contract.address);
       await submitTransactionAsync(alice, changeAdminTx);
 
       expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(alice.address));
@@ -105,7 +105,7 @@ describe.skip('Chain extensions', () => {
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
 
-      const tokensAfter = (await api.query.nft.nftItemList.entries(collectionId)).map((kv: any) => kv[1].toJSON());
+      const tokensAfter = (await api.query.unique.nftItemList.entries(collectionId)).map((kv: any) => kv[1].toJSON());
       expect(tokensAfter).to.be.deep.equal([
         {
           owner: bob.address,
@@ -137,7 +137,7 @@ describe.skip('Chain extensions', () => {
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
 
-      const tokensAfter: any = (await api.query.nft.nftItemList.entries(collectionId) as any)
+      const tokensAfter: any = (await api.query.unique.nftItemList.entries(collectionId) as any)
         .map((kv: any) => kv[1].toJSON())
         .sort((a: any, b: any) => a.constData.localeCompare(b.constData));
       expect(tokensAfter).to.be.deep.equal([
@@ -195,7 +195,7 @@ describe.skip('Chain extensions', () => {
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
 
-      const token: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap();
+      const token: any = (await api.query.unique.nftItemList(collectionId, tokenId) as any).unwrap();
       expect(token.owner.toString()).to.be.equal(charlie.address);
     });
   });
@@ -213,7 +213,7 @@ describe.skip('Chain extensions', () => {
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
 
-      const token: any = (await api.query.nft.nftItemList(collectionId, tokenId) as any).unwrap();
+      const token: any = (await api.query.unique.nftItemList(collectionId, tokenId) as any).unwrap();
       expect(token.variableData.toString()).to.be.equal('0x121314');
     });
   });
@@ -225,10 +225,10 @@ describe.skip('Chain extensions', () => {
 
       const collectionId = await createCollectionExpectSuccess();
       const [contract] = await deployTransferContract(api);
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, contract.address);
+      const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, contract.address);
       await submitTransactionAsync(alice, changeAdminTx);
 
-      expect(await isAllowlisted(collectionId, bob.address)).to.be.false;
+      expect(await isAllowlisted(api, collectionId, bob.address)).to.be.false;
 
       {
         const transferTx = contract.tx.toggleAllowList(value, gasLimit, collectionId, bob.address, true);
@@ -236,7 +236,7 @@ describe.skip('Chain extensions', () => {
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
 
-        expect(await isAllowlisted(collectionId, bob.address)).to.be.true;
+        expect(await isAllowlisted(api, collectionId, bob.address)).to.be.true;
       }
       {
         const transferTx = contract.tx.toggleAllowList(value, gasLimit, collectionId, bob.address, false);
@@ -244,7 +244,7 @@ describe.skip('Chain extensions', () => {
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
 
-        expect(await isAllowlisted(collectionId, bob.address)).to.be.false;
+        expect(await isAllowlisted(api, collectionId, bob.address)).to.be.false;
       }
     });
   });

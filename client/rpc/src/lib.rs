@@ -3,21 +3,21 @@ use std::sync::Arc;
 use codec::Decode;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
-use nft_data_structs::{CollectionId, TokenId};
+use up_data_structs::{Collection, CollectionId, CollectionStats, TokenId};
 use sp_api::{BlockId, BlockT, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
-use up_rpc::NftApi as NftRuntimeApi;
+use up_rpc::UniqueApi as UniqueRuntimeApi;
 
 #[rpc]
-pub trait NftApi<BlockHash, CrossAccountId, AccountId> {
-	#[rpc(name = "nft_accountTokens")]
+pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
+	#[rpc(name = "unique_accountTokens")]
 	fn account_tokens(
 		&self,
 		collection: CollectionId,
 		account: CrossAccountId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<TokenId>>;
-	#[rpc(name = "nft_tokenExists")]
+	#[rpc(name = "unique_tokenExists")]
 	fn token_exists(
 		&self,
 		collection: CollectionId,
@@ -25,21 +25,21 @@ pub trait NftApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<bool>;
 
-	#[rpc(name = "nft_tokenOwner")]
+	#[rpc(name = "unique_tokenOwner")]
 	fn token_owner(
 		&self,
 		collection: CollectionId,
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<CrossAccountId>;
-	#[rpc(name = "nft_constMetadata")]
+	#[rpc(name = "unique_constMetadata")]
 	fn const_metadata(
 		&self,
 		collection: CollectionId,
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<u8>>;
-	#[rpc(name = "nft_variableMetadata")]
+	#[rpc(name = "unique_variableMetadata")]
 	fn variable_metadata(
 		&self,
 		collection: CollectionId,
@@ -47,16 +47,16 @@ pub trait NftApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Vec<u8>>;
 
-	#[rpc(name = "nft_collectionTokens")]
+	#[rpc(name = "unique_collectionTokens")]
 	fn collection_tokens(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<u32>;
-	#[rpc(name = "nft_accountBalance")]
+	#[rpc(name = "unique_accountBalance")]
 	fn account_balance(
 		&self,
 		collection: CollectionId,
 		account: CrossAccountId,
 		at: Option<BlockHash>,
 	) -> Result<u32>;
-	#[rpc(name = "nft_balance")]
+	#[rpc(name = "unique_balance")]
 	fn balance(
 		&self,
 		collection: CollectionId,
@@ -64,7 +64,7 @@ pub trait NftApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<String>;
-	#[rpc(name = "nft_allowance")]
+	#[rpc(name = "unique_allowance")]
 	fn allowance(
 		&self,
 		collection: CollectionId,
@@ -74,28 +74,43 @@ pub trait NftApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<String>;
 
-	#[rpc(name = "nft_adminlist")]
+	#[rpc(name = "unique_adminlist")]
 	fn adminlist(
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<CrossAccountId>>;
-	#[rpc(name = "nft_allowlist")]
+	#[rpc(name = "unique_allowlist")]
 	fn allowlist(
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<CrossAccountId>>;
-	#[rpc(name = "nft_lastTokenId")]
+	#[rpc(name = "unique_allowed")]
+	fn allowed(
+		&self,
+		collection: CollectionId,
+		user: CrossAccountId,
+		at: Option<BlockHash>,
+	) -> Result<bool>;
+	#[rpc(name = "unique_lastTokenId")]
 	fn last_token_id(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<TokenId>;
+	#[rpc(name = "unique_collectionById")]
+	fn collection_by_id(
+		&self,
+		collection: CollectionId,
+		at: Option<BlockHash>,
+	) -> Result<Option<Collection<AccountId>>>;
+	#[rpc(name = "unique_collectionStats")]
+	fn collection_stats(&self, at: Option<BlockHash>) -> Result<CollectionStats>;
 }
 
-pub struct Nft<C, P> {
+pub struct Unique<C, P> {
 	client: Arc<C>,
 	_marker: std::marker::PhantomData<P>,
 }
 
-impl<C, P> Nft<C, P> {
+impl<C, P> Unique<C, P> {
 	pub fn new(client: Arc<C>) -> Self {
 		Self {
 			client,
@@ -139,13 +154,13 @@ macro_rules! pass_method {
 	};
 }
 
-impl<C, Block, CrossAccountId, AccountId> NftApi<<Block as BlockT>::Hash, CrossAccountId, AccountId>
-	for Nft<C, Block>
+impl<C, Block, CrossAccountId, AccountId>
+	UniqueApi<<Block as BlockT>::Hash, CrossAccountId, AccountId> for Unique<C, Block>
 where
 	Block: BlockT,
 	AccountId: Decode,
 	C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	C::Api: NftRuntimeApi<Block, CrossAccountId, AccountId>,
+	C::Api: UniqueRuntimeApi<Block, CrossAccountId, AccountId>,
 	CrossAccountId: pallet_common::account::CrossAccountId<AccountId>,
 {
 	pass_method!(account_tokens(collection: CollectionId, account: CrossAccountId) -> Vec<TokenId>);
@@ -160,5 +175,8 @@ where
 
 	pass_method!(adminlist(collection: CollectionId) -> Vec<CrossAccountId>);
 	pass_method!(allowlist(collection: CollectionId) -> Vec<CrossAccountId>);
+	pass_method!(allowed(collection: CollectionId, user: CrossAccountId) -> bool);
 	pass_method!(last_token_id(collection: CollectionId) -> TokenId);
+	pass_method!(collection_by_id(collection: CollectionId) -> Option<Collection<AccountId>>);
+	pass_method!(collection_stats() -> CollectionStats);
 }

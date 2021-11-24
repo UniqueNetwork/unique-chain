@@ -4,7 +4,7 @@ use crate::{Pallet, Config, RefungibleHandle};
 use sp_std::prelude::*;
 use pallet_common::benchmarking::{create_collection_raw, create_data};
 use frame_benchmarking::{benchmarks, account};
-use nft_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH};
+use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH};
 use pallet_common::bench_init;
 use core::convert::TryInto;
 use core::iter::IntoIterator;

@@ -2,7 +2,7 @@
 
 use erc::ERC721Events;
 use frame_support::{BoundedVec, ensure};
-use nft_data_structs::{
+use up_data_structs::{
 	AccessMode, CUSTOM_DATA_LIMIT, Collection, CollectionId, CustomDataLimit, TokenId,
 };
 use pallet_common::{
@@ -41,7 +41,7 @@ pub struct ItemData<T: Config> {
 pub mod pallet {
 	use super::*;
 	use frame_support::{Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key};
-	use nft_data_structs::{CollectionId, TokenId};
+	use up_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;
 
 	#[pallet::error]
@@ -133,8 +133,8 @@ impl<T: Config> Pallet<T> {
 
 // unchecked calls skips any permission checks
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T>) -> Result<CollectionId, DispatchError> {
-		PalletCommon::init_collection(data)
+	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
+		<PalletCommon<T>>::init_collection(data)
 	}
 	pub fn destroy_collection(
 		collection: NonfungibleHandle<T>,
