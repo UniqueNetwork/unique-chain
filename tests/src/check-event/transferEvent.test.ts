@@ -31,7 +31,7 @@ describe('Transfer event ', () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionID = await createCollectionExpectSuccess();
       const itemID = await createItemExpectSuccess(alice, collectionID, 'NFT');
-      const transfer = api.tx.nft.transfer(normalizeAccountId(bob.address), collectionID, itemID, 1);
+      const transfer = api.tx.unique.transfer(normalizeAccountId(bob.address), collectionID, itemID, 1);
       const events = await submitTransactionAsync(alice, transfer);
       const msg = JSON.stringify(nftEventMessage(events));
       expect(msg).to.be.contain(checkSection);

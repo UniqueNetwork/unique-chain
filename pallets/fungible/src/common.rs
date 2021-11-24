@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
-use nft_data_structs::TokenId;
+use up_data_structs::TokenId;
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::ArithmeticError;
 use sp_std::{vec::Vec, vec};
@@ -51,10 +51,10 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		&self,
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
-		data: nft_data_structs::CreateItemData,
+		data: up_data_structs::CreateItemData,
 	) -> DispatchResultWithPostInfo {
 		match data {
-			nft_data_structs::CreateItemData::Fungible(data) => with_weight(
+			up_data_structs::CreateItemData::Fungible(data) => with_weight(
 				<Pallet<T>>::create_item(self, &sender, (to, data.value)),
 				<CommonWeights<T>>::create_item(),
 			),
@@ -66,12 +66,12 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		&self,
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
-		data: Vec<nft_data_structs::CreateItemData>,
+		data: Vec<up_data_structs::CreateItemData>,
 	) -> DispatchResultWithPostInfo {
 		let mut sum: u128 = 0;
 		for data in data {
 			match data {
-				nft_data_structs::CreateItemData::Fungible(data) => {
+				up_data_structs::CreateItemData::Fungible(data) => {
 					sum = sum
 						.checked_add(data.value)
 						.ok_or(ArithmeticError::Overflow)?;

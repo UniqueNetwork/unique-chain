@@ -249,7 +249,7 @@ describe('Zero value transfer(From)', () => {
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
 
-      const transferTx = api.tx.nft.transfer(normalizeAccountId(bob), nftCollectionId, newNftTokenId, 0);
+      const transferTx = api.tx.unique.transfer(normalizeAccountId(bob), nftCollectionId, newNftTokenId, 0);
       await submitTransactionAsync(alice, transferTx);
       const address = normalizeAccountId(await getTokenOwner(api, nftCollectionId, newNftTokenId));
 
@@ -264,7 +264,7 @@ describe('Zero value transfer(From)', () => {
       const balanceBeforeAlice = await getTokenBalance(api, reFungibleCollectionId, normalizeAccountId(alice), newReFungibleTokenId);
       const balanceBeforeBob = await getTokenBalance(api, reFungibleCollectionId, normalizeAccountId(bob), newReFungibleTokenId);
 
-      const transferTx = api.tx.nft.transfer(normalizeAccountId(bob), reFungibleCollectionId, newReFungibleTokenId, 0);
+      const transferTx = api.tx.unique.transfer(normalizeAccountId(bob), reFungibleCollectionId, newReFungibleTokenId, 0);
       await submitTransactionAsync(alice, transferTx);
 
       const balanceAfterAlice = await getTokenBalance(api, reFungibleCollectionId, normalizeAccountId(alice), newReFungibleTokenId);
@@ -282,7 +282,7 @@ describe('Zero value transfer(From)', () => {
       const balanceBeforeAlice = await getTokenBalance(api, fungibleCollectionId, normalizeAccountId(alice), newFungibleTokenId);
       const balanceBeforeBob = await getTokenBalance(api, fungibleCollectionId, normalizeAccountId(bob), newFungibleTokenId);
 
-      const transferTx = api.tx.nft.transfer(normalizeAccountId(bob), fungibleCollectionId, newFungibleTokenId, 0);
+      const transferTx = api.tx.unique.transfer(normalizeAccountId(bob), fungibleCollectionId, newFungibleTokenId, 0);
       await submitTransactionAsync(alice, transferTx);
 
       const balanceAfterAlice = await getTokenBalance(api, fungibleCollectionId, normalizeAccountId(alice), newFungibleTokenId);

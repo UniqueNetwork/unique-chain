@@ -1,6 +1,6 @@
 [package]
-name = "nft-rpc"
-version = "3.3.1"
+name = "unique-rpc"
+version = "0.1.0"
 authors = ['Unique Network <support@uniquenetwork.io>']
 license = 'All Rights Reserved'
 edition = "2018"
@@ -48,10 +48,10 @@ fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwor
 fc-db = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12" }
 fc-mapping-sync = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12" }
 
-pallet-nft = { path = "../../pallets/nft" }
+pallet-unique = { path = "../../pallets/unique" }
 uc-rpc = { path = "../../client/rpc" }
 up-rpc = { path = "../../primitives/rpc" }
-nft-runtime = { path = "../../runtime" }
+unique-runtime = { path = "../../runtime" }
 
 [features]
 std = []

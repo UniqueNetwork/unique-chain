@@ -29,7 +29,7 @@ describe('Burn Item event ', () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionID = await createCollectionExpectSuccess();
       const itemID = await createItemExpectSuccess(alice, collectionID, 'NFT');
-      const burnItem = api.tx.nft.burnItem(collectionID, itemID, 1);
+      const burnItem = api.tx.unique.burnItem(collectionID, itemID, 1);
       const events = await submitTransactionAsync(alice, burnItem);
       const msg = JSON.stringify(nftEventMessage(events));
       expect(msg).to.be.contain(checkSection);

@@ -18,7 +18,7 @@ macro_rules! max_weight_of {
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo for CommonWeights<T> {
-	fn create_item() -> nft_data_structs::Weight {
+	fn create_item() -> up_data_structs::Weight {
 		dispatch_weight::<T>() + max_weight_of!(create_item())
 	}
 
@@ -30,19 +30,19 @@ impl<T: Config> CommonWeightInfo for CommonWeights<T> {
 		dispatch_weight::<T>() + max_weight_of!(burn_item())
 	}
 
-	fn transfer() -> nft_data_structs::Weight {
+	fn transfer() -> up_data_structs::Weight {
 		dispatch_weight::<T>() + max_weight_of!(transfer())
 	}
 
-	fn approve() -> nft_data_structs::Weight {
+	fn approve() -> up_data_structs::Weight {
 		dispatch_weight::<T>() + max_weight_of!(approve())
 	}
 
-	fn transfer_from() -> nft_data_structs::Weight {
+	fn transfer_from() -> up_data_structs::Weight {
 		dispatch_weight::<T>() + max_weight_of!(transfer_from())
 	}
 
-	fn set_variable_metadata(bytes: u32) -> nft_data_structs::Weight {
+	fn set_variable_metadata(bytes: u32) -> up_data_structs::Weight {
 		dispatch_weight::<T>() + max_weight_of!(set_variable_metadata(bytes))
 	}
 

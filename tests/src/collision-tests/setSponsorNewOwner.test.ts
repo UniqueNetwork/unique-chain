@@ -34,14 +34,14 @@ describe('Sponsored with new owner ', () => {
       const collectionId = await createCollectionExpectSuccess();
       await setCollectionSponsorExpectSuccess(collectionId, Bob.address);
       await waitNewBlocks(2);
-      const confirmSponsorship = api.tx.nft.confirmSponsorship(collectionId);
-      const changeCollectionOwner = api.tx.nft.changeCollectionOwner(collectionId, Ferdie.address);
+      const confirmSponsorship = api.tx.unique.confirmSponsorship(collectionId);
+      const changeCollectionOwner = api.tx.unique.changeCollectionOwner(collectionId, Ferdie.address);
       await Promise.all([
         confirmSponsorship.signAndSend(Bob),
         changeCollectionOwner.signAndSend(Alice),
       ]);
       await waitNewBlocks(2);
-      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
+      const collection: any = (await api.query.unique.collectionById(collectionId)).toJSON();
       expect(collection.sponsorship.confirmed).to.be.eq(Bob.address);
       expect(collection.owner).to.be.eq(Ferdie.address);
       await waitNewBlocks(2);

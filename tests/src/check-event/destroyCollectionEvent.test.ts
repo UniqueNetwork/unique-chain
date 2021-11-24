@@ -27,7 +27,7 @@ describe('Destroy collection event ', () => {
   it('Check event from destroyCollection(): ', async () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionID = await createCollectionExpectSuccess();
-      const destroyCollection = api.tx.nft.destroyCollection(collectionID);
+      const destroyCollection = api.tx.unique.destroyCollection(collectionID);
       const events = await submitTransactionAsync(alice, destroyCollection);
       const msg = JSON.stringify(nftEventMessage(events));
       expect(msg).to.be.contain(checkTreasury);

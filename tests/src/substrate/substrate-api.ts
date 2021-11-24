@@ -24,7 +24,7 @@ function defaultApiOptions(): ApiOptions {
       },
     },
     rpc: {
-      nft: defs.nft.rpc,
+      unique: defs.unique.rpc,
     },
   };
 }

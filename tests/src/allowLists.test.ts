@@ -189,7 +189,7 @@ describe('Integration Test ext. Allow list tests', () => {
     await enableAllowListExpectSuccess(alice, collectionId);
 
     await usingApi(async (api) => {
-      const tx = api.tx.nft.burnItem(collectionId, itemId, /*normalizeAccountId(Alice.address),*/ 11);
+      const tx = api.tx.unique.burnItem(collectionId, itemId, /*normalizeAccountId(Alice.address),*/ 11);
       const badTransaction = async function () {
         await submitTransactionExpectFailAsync(alice, tx);
       };

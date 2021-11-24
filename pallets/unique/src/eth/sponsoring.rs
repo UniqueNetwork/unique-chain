@@ -8,15 +8,15 @@ use sp_std::prelude::*;
 use up_sponsorship::SponsorshipHandler;
 use core::marker::PhantomData;
 use core::convert::TryInto;
-use nft_data_structs::TokenId;
+use up_data_structs::TokenId;
 use up_evm_mapping::EvmBackwardsAddressMapping;
 use pallet_common::account::CrossAccountId;
 
 use pallet_nonfungible::erc::{UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721Call};
 use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};
 
-pub struct NftEthSponsorshipHandler<T: Config>(PhantomData<*const T>);
-impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for NftEthSponsorshipHandler<T> {
+pub struct UniqueEthSponsorshipHandler<T: Config>(PhantomData<*const T>);
+impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for UniqueEthSponsorshipHandler<T> {
 	fn get_sponsor(who: &H160, call: &(H160, Vec<u8>)) -> Option<H160> {
 		let collection_id = map_eth_to_id(&call.0)?;
 		let collection = <CollectionHandle<T>>::new(collection_id)?;

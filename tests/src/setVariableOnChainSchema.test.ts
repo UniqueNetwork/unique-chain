@@ -41,7 +41,7 @@ describe('Integration Test ext. setVariableOnChainSchema()', () => {
       const collectionId = await createCollectionExpectSuccess();
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.eq(alice.address);
-      const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, schema);
+      const setSchema = api.tx.unique.setVariableOnChainSchema(collectionId, schema);
       await submitTransactionAsync(alice, setSchema);
     });
   });
@@ -49,7 +49,7 @@ describe('Integration Test ext. setVariableOnChainSchema()', () => {
   it('Checking collection data using the setVariableOnChainSchema parameter', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, schema);
+      const setSchema = api.tx.unique.setVariableOnChainSchema(collectionId, schema);
       await submitTransactionAsync(alice, setSchema);
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.variableOnChainSchema.toString()).to.be.eq(schema);
@@ -66,7 +66,7 @@ describe('Integration Test ext. collection admin setVariableOnChainSchema()', ()
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.eq(alice.address);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, schema);
+      const setSchema = api.tx.unique.setVariableOnChainSchema(collectionId, schema);
       await submitTransactionAsync(bob, setSchema);
     });
   });
@@ -75,7 +75,7 @@ describe('Integration Test ext. collection admin setVariableOnChainSchema()', ()
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, schema);
+      const setSchema = api.tx.unique.setVariableOnChainSchema(collectionId, schema);
       await submitTransactionAsync(bob, setSchema);
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.variableOnChainSchema.toString()).to.be.eq(schema);
@@ -90,7 +90,7 @@ describe('Negative Integration Test ext. setVariableOnChainSchema()', () => {
     await usingApi(async (api) => {
       // tslint:disable-next-line: radix
       const collectionId = await getCreatedCollectionCount(api) + 1;
-      const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, schema);
+      const setSchema = api.tx.unique.setVariableOnChainSchema(collectionId, schema);
       await expect(submitTransactionExpectFailAsync(alice, setSchema)).to.be.rejected;
     });
   });
@@ -99,7 +99,7 @@ describe('Negative Integration Test ext. setVariableOnChainSchema()', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       await destroyCollectionExpectSuccess(collectionId);
-      const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, schema);
+      const setSchema = api.tx.unique.setVariableOnChainSchema(collectionId, schema);
       await expect(submitTransactionExpectFailAsync(alice, setSchema)).to.be.rejected;
     });
   });
@@ -107,7 +107,7 @@ describe('Negative Integration Test ext. setVariableOnChainSchema()', () => {
   it('Set invalid data in schema (size too large:> 1024b)', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, largeSchema);
+      const setSchema = api.tx.unique.setVariableOnChainSchema(collectionId, largeSchema);
       await expect(submitTransactionExpectFailAsync(alice, setSchema)).to.be.rejected;
     });
   });
@@ -117,7 +117,7 @@ describe('Negative Integration Test ext. setVariableOnChainSchema()', () => {
       const collectionId = await createCollectionExpectSuccess();
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.eq(alice.address);
-      const setSchema = api.tx.nft.setVariableOnChainSchema(collectionId, schema);
+      const setSchema = api.tx.unique.setVariableOnChainSchema(collectionId, schema);
       await expect(submitTransactionExpectFailAsync(bob, setSchema)).to.be.rejected;
     });
   });

@@ -29,7 +29,7 @@ describe('Create Multiple Items Event event ', () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionID = await createCollectionExpectSuccess();
       const args = [{NFT: ['0x31', '0x31']}, {NFT: ['0x32', '0x32']}, {NFT: ['0x33', '0x33']}];
-      const createMultipleItems = api.tx.nft.createMultipleItems(collectionID, normalizeAccountId(alice.address), args);
+      const createMultipleItems = api.tx.unique.createMultipleItems(collectionID, normalizeAccountId(alice.address), args);
       const events = await submitTransactionAsync(alice, createMultipleItems);
       const msg = JSON.stringify(nftEventMessage(events));
       expect(msg).to.be.contain(checkSection);

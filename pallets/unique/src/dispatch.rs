@@ -3,7 +3,7 @@ use frame_support::{
 	traits::Get,
 	weights::Weight,
 };
-use nft_data_structs::{CollectionId, CollectionMode, Pays, PostDispatchInfo};
+use up_data_structs::{CollectionId, CollectionMode, Pays, PostDispatchInfo};
 use pallet_common::{CollectionHandle, CommonCollectionOperations};
 use pallet_fungible::FungibleHandle;
 use pallet_nonfungible::NonfungibleHandle;

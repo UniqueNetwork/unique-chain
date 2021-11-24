@@ -76,7 +76,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', zeroBalance.address);
 
       // Transfer this tokens from unused address to Alice
-      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 0);
+      const zeroToAlice = api.tx.unique.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 0);
       const events = await submitTransactionAsync(zeroBalance, zeroToAlice);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
@@ -103,7 +103,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', zeroBalance.address);
 
       // Transfer this tokens from unused address to Alice
-      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 1);
+      const zeroToAlice = api.tx.unique.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 1);
       const events1 = await submitTransactionAsync(zeroBalance, zeroToAlice);
       const result1 = getGenericResult(events1);
       expect(result1.success).to.be.true;
@@ -129,7 +129,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', zeroBalance.address);
 
       // Transfer this tokens from unused address to Alice
-      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 1);
+      const zeroToAlice = api.tx.unique.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 1);
       const events1 = await submitTransactionAsync(zeroBalance, zeroToAlice);
       const result1 = getGenericResult(events1);
 
@@ -184,13 +184,13 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
       // Transfer this token from Alice to unused address and back
       // Alice to Zero gets sponsored
-      const aliceToZero = api.tx.nft.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 0);
+      const aliceToZero = api.tx.unique.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 0);
       const events1 = await submitTransactionAsync(alice, aliceToZero);
       const result1 = getGenericResult(events1);
 
       // Second transfer should fail
       const sponsorBalanceBefore = (await api.query.system.account(bob.address)).data.free.toBigInt();
-      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(alice.address), collectionId, itemId, 0);
+      const zeroToAlice = api.tx.unique.transfer(normalizeAccountId(alice.address), collectionId, itemId, 0);
       const badTransaction = async function () {
         await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       };
@@ -222,7 +222,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', zeroBalance.address);
 
       // Transfer this tokens in parts from unused address to Alice
-      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 1);
+      const zeroToAlice = api.tx.unique.transfer(normalizeAccountId(zeroBalance.address), collectionId, itemId, 1);
       const events1 = await submitTransactionAsync(zeroBalance, zeroToAlice);
       const result1 = getGenericResult(events1);
       expect(result1.success).to.be.true;
@@ -254,7 +254,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       // Mint token for alice
       const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', zeroBalance.address);
 
-      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(alice.address), collectionId, itemId, 1);
+      const zeroToAlice = api.tx.unique.transfer(normalizeAccountId(alice.address), collectionId, itemId, 1);
 
       // Zero to alice gets sponsored
       const events1 = await submitTransactionAsync(zeroBalance, zeroToAlice);

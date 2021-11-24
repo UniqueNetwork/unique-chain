@@ -4,7 +4,7 @@ use super::*;
 use crate::Pallet;
 use frame_system::RawOrigin;
 use frame_benchmarking::{benchmarks, account};
-use nft_data_structs::*;
+use up_data_structs::*;
 use core::convert::TryInto;
 use sp_runtime::DispatchError;
 use pallet_common::benchmarking::{create_data, create_u16_data};

@@ -54,7 +54,7 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
 
       // Transfer this tokens from unused address to Alice - should fail
       const sponsorBalanceBefore = (await api.query.system.account(bob.address)).data.free.toBigInt();
-      const zeroToAlice = api.tx.nft.transfer(normalizeAccountId(alice.address), collectionId, itemId, 0);
+      const zeroToAlice = api.tx.unique.transfer(normalizeAccountId(alice.address), collectionId, itemId, 0);
       const badTransaction = async function () {
         await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       };

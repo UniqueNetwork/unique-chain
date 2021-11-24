@@ -24,10 +24,10 @@ describe.skip('Integration Test addToContractAllowList', () => {
       const bob = privateKey('//Bob');
       const [contract, deployer] = await deployFlipper(api);
 
-      const allowListedBefore = (await api.query.nft.contractAllowList(contract.address, bob.address)).toJSON();
-      const addTx = api.tx.nft.addToContractAllowList(contract.address, bob.address);
+      const allowListedBefore = (await api.query.unique.contractAllowList(contract.address, bob.address)).toJSON();
+      const addTx = api.tx.unique.addToContractAllowList(contract.address, bob.address);
       const addEvents = await submitTransactionAsync(deployer, addTx);
-      const allowListedAfter = (await api.query.nft.contractAllowList(contract.address, bob.address)).toJSON();
+      const allowListedAfter = (await api.query.unique.contractAllowList(contract.address, bob.address)).toJSON();
 
       expect(getGenericResult(addEvents).success).to.be.true;
       expect(allowListedBefore).to.be.false;
@@ -40,12 +40,12 @@ describe.skip('Integration Test addToContractAllowList', () => {
       const bob = privateKey('//Bob');
       const [contract, deployer] = await deployFlipper(api);
 
-      const allowListedBefore = (await api.query.nft.contractAllowList(contract.address, bob.address)).toJSON();
-      const addTx = api.tx.nft.addToContractAllowList(contract.address, bob.address);
+      const allowListedBefore = (await api.query.unique.contractAllowList(contract.address, bob.address)).toJSON();
+      const addTx = api.tx.unique.addToContractAllowList(contract.address, bob.address);
       const addEvents = await submitTransactionAsync(deployer, addTx);
-      const allowListedAfter = (await api.query.nft.contractAllowList(contract.address, bob.address)).toJSON();
+      const allowListedAfter = (await api.query.unique.contractAllowList(contract.address, bob.address)).toJSON();
       const addAgainEvents = await submitTransactionAsync(deployer, addTx);
-      const allowListedAgainAfter = (await api.query.nft.contractAllowList(contract.address, bob.address)).toJSON();
+      const allowListedAgainAfter = (await api.query.unique.contractAllowList(contract.address, bob.address)).toJSON();
 
       expect(getGenericResult(addEvents).success).to.be.true;
       expect(allowListedBefore).to.be.false;
@@ -64,10 +64,10 @@ describe.skip('Negative Integration Test addToContractAllowList', () => {
       const bob = privateKey('//Bob');
       const charlieGuineaPig = privateKey('//Charlie');
 
-      const allowListedBefore = (await api.query.nft.contractAllowList(charlieGuineaPig.address, bob.address)).toJSON();
-      const addTx = api.tx.nft.addToContractAllowList(charlieGuineaPig.address, bob.address);
+      const allowListedBefore = (await api.query.unique.contractAllowList(charlieGuineaPig.address, bob.address)).toJSON();
+      const addTx = api.tx.unique.addToContractAllowList(charlieGuineaPig.address, bob.address);
       await expect(submitTransactionExpectFailAsync(alice, addTx)).to.be.rejected;
-      const allowListedAfter = (await api.query.nft.contractAllowList(charlieGuineaPig.address, bob.address)).toJSON();
+      const allowListedAfter = (await api.query.unique.contractAllowList(charlieGuineaPig.address, bob.address)).toJSON();
 
       expect(allowListedBefore).to.be.false;
       expect(allowListedAfter).to.be.false;
@@ -79,10 +79,10 @@ describe.skip('Negative Integration Test addToContractAllowList', () => {
       const bob = privateKey('//Bob');
       const [contract] = await deployFlipper(api);
 
-      const allowListedBefore = (await api.query.nft.contractAllowList(contract.address, bob.address)).toJSON();
-      const addTx = api.tx.nft.addToContractAllowList(contract.address, bob.address);
+      const allowListedBefore = (await api.query.unique.contractAllowList(contract.address, bob.address)).toJSON();
+      const addTx = api.tx.unique.addToContractAllowList(contract.address, bob.address);
       await expect(submitTransactionExpectFailAsync(bob, addTx)).to.be.rejected;
-      const allowListedAfter = (await api.query.nft.contractAllowList(contract.address, bob.address)).toJSON();
+      const allowListedAfter = (await api.query.unique.contractAllowList(contract.address, bob.address)).toJSON();
 
       expect(allowListedBefore).to.be.false;
       expect(allowListedAfter).to.be.false;

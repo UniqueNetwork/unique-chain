@@ -41,7 +41,7 @@ describe('setSchemaVersion positive', () => {
   it('execute setSchemaVersion with image url and unique ', async () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionIdForTesting = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'}});
-      tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'Unique');
+      tx = api.tx.unique.setSchemaVersion(collectionIdForTesting, 'Unique');
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateItemResult(events);
       const collectionInfo = await getDetailedCollectionInfo(api, collectionIdForTesting);
@@ -70,7 +70,7 @@ describe('Collection admin setSchemaVersion positive', () => {
   });
   it('execute setSchemaVersion with image url and unique ', async () => {
     await usingApi(async (api: ApiPromise) => {
-      tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'Unique');
+      tx = api.tx.unique.setSchemaVersion(collectionIdForTesting, 'Unique');
       const events = await submitTransactionAsync(bob, tx);
       const result = getCreateItemResult(events);
       const collectionInfo = await getDetailedCollectionInfo(api, collectionIdForTesting);
@@ -85,7 +85,7 @@ describe('Collection admin setSchemaVersion positive', () => {
 
   it('validate schema version with just entered data', async () => {
     await usingApi(async (api: ApiPromise) => {
-      tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'ImageURL');
+      tx = api.tx.unique.setSchemaVersion(collectionIdForTesting, 'ImageURL');
       const events = await submitTransactionAsync(bob, tx);
       const result = getCreateItemResult(events);
       const collectionInfo = await getDetailedCollectionInfo(api, collectionIdForTesting);
@@ -114,20 +114,20 @@ describe('setSchemaVersion negative', () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionCount = await getCreatedCollectionCount(api);
       const nonExistedCollectionId = collectionCount + 1;
-      tx = api.tx.nft.setSchemaVersion(nonExistedCollectionId, 'ImageURL');
+      tx = api.tx.unique.setSchemaVersion(nonExistedCollectionId, 'ImageURL');
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });
   it('execute setSchemaVersion for deleted collection', async () => {
     await usingApi(async (api: ApiPromise) => {
       await destroyCollectionExpectSuccess(collectionIdForTesting);
-      tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'ImageURL');
+      tx = api.tx.unique.setSchemaVersion(collectionIdForTesting, 'ImageURL');
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });
   it('Regular user can`t execute setSchemaVersion with image url and unique ', async () => {
     await usingApi(async (api: ApiPromise) => {
-      tx = api.tx.nft.setSchemaVersion(collectionIdForTesting, 'Unique');
+      tx = api.tx.unique.setSchemaVersion(collectionIdForTesting, 'Unique');
       await expect(submitTransactionAsync(charlie, tx)).to.be.rejected;
     });
   });

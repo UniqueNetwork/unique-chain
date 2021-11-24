@@ -27,7 +27,7 @@ describe('Create collection event ', () => {
   });
   it('Check event from createCollection(): ', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const tx = api.tx.nft.createCollection([0x31], [0x32], '0x33', 'NFT');
+      const tx = api.tx.unique.createCollection([0x31], [0x32], '0x33', 'NFT');
       const events = await submitTransactionAsync(alice, tx);
       const msg = JSON.stringify(nftEventMessage(events));
       expect(msg).to.be.contain(checkSection);
