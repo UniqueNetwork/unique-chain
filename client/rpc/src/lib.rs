@@ -154,8 +154,8 @@ macro_rules! pass_method {
 	};
 }
 
-impl<C, Block, CrossAccountId, AccountId> UniqueApi<<Block as BlockT>::Hash, CrossAccountId, AccountId>
-	for Unique<C, Block>
+impl<C, Block, CrossAccountId, AccountId>
+	UniqueApi<<Block as BlockT>::Hash, CrossAccountId, AccountId> for Unique<C, Block>
 where
 	Block: BlockT,
 	AccountId: Decode,
