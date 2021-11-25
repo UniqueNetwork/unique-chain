@@ -175,6 +175,8 @@ impl<T: Config> Pallet<T> {
 		<TotalSupply<T>>::remove_prefix((id,), None);
 		<Balance<T>>::remove_prefix((id,), None);
 		<Allowance<T>>::remove_prefix((id,), None);
+		<Owned<T>>::remove_prefix((id,), None);
+		<AccountBalance<T>>::remove_prefix((id,), None);
 		Ok(())
 	}
 
