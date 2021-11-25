@@ -182,10 +182,10 @@ impl<T: Config> Pallet<T> {
 			.ok_or(ArithmeticError::Overflow)?;
 
 		if balance == 0 {
-				<AccountBalance<T>>::remove((collection.id, sender));
-			} else {
-				<AccountBalance<T>>::insert((collection.id, sender), balance);
-			}
+			<AccountBalance<T>>::remove((collection.id, sender));
+		} else {
+			<AccountBalance<T>>::insert((collection.id, sender), balance);
+		}
 		// =========
 
 		<Owned<T>>::remove((collection.id, &token_data.owner, token));
