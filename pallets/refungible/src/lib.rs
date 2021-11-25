@@ -467,7 +467,11 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		amount: u128,
 	) {
-		<Allowance<T>>::insert((collection.id, token, sender, spender), amount);
+		if amount == 0 {
+			<Allowance<T>>::remove((collection.id, token, sender, spender));
+		} else {
+			<Allowance<T>>::insert((collection.id, token, sender, spender), amount);
+		}
 		// TODO: ERC20 approval event
 		<PalletCommon<T>>::deposit_event(CommonEvent::Approved(
 			collection.id,
