@@ -3,7 +3,8 @@
 use erc::ERC721Events;
 use frame_support::{BoundedVec, ensure};
 use up_data_structs::{
-	AccessMode, CUSTOM_DATA_LIMIT, Collection, CollectionId, CustomDataLimit, TokenId,
+	AccessMode, ACCOUNT_TOKEN_OWNERSHIP_LIMIT, CUSTOM_DATA_LIMIT, Collection, CollectionId,
+	CustomDataLimit, TokenId,
 };
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, account::CrossAccountId,
@@ -217,6 +218,12 @@ impl<T: Config> Pallet<T> {
 		ensure!(
 			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed
+		);
+
+		// Ownership limit check
+		ensure!(
+			<AccountBalance<T>>::get((collection.id, from)) < ACCOUNT_TOKEN_OWNERSHIP_LIMIT,
+			<CommonError<T>>::AccountTokenLimitExceeded
 		);
 
 		let token_data = <TokenData<T>>::get((collection.id, token))
