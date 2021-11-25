@@ -285,7 +285,11 @@ impl<T: Config> Pallet<T> {
 		spender: &T::CrossAccountId,
 		amount: u128,
 	) {
-		<Allowance<T>>::insert((collection.id, owner, spender), amount);
+		if amount == 0 {
+			<Allowance<T>>::remove((collection.id, owner, spender));
+		} else {
+			<Allowance<T>>::insert((collection.id, owner, spender), amount);
+		}
 
 		collection.log_infallible(ERC20Events::Approval {
 			owner: *owner.as_eth(),

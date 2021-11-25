@@ -177,6 +177,15 @@ impl<T: Config> Pallet<T> {
 			.checked_add(1)
 			.ok_or(ArithmeticError::Overflow)?;
 
+		let balance = <AccountBalance<T>>::get((collection.id, sender))
+			.checked_sub(1)
+			.ok_or(ArithmeticError::Overflow)?;
+
+		if balance == 0 {
+			<AccountBalance<T>>::remove((collection.id, sender));
+		} else {
+			<AccountBalance<T>>::insert((collection.id, sender), balance);
+		}
 		// =========
 
 		<Owned<T>>::remove((collection.id, &token_data.owner, token));
