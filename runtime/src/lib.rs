@@ -146,7 +146,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("opal"),
 	impl_name: create_runtime_str!("opal"),
 	authoring_version: 1,
-	spec_version: 912202,
+	spec_version: 912204,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
