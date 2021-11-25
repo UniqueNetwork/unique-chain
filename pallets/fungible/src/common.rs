@@ -182,7 +182,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		_token: TokenId,
 		_data: Vec<u8>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::FungibleItemsHaveData)
+		fail!(<Error<T>>::FungibleItemsDontHaveData)
 	}
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId> {

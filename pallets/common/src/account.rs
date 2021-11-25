@@ -7,7 +7,7 @@ use serde::{Serialize, Deserialize};
 use pallet_evm::AddressMapping;
 use sp_std::vec::Vec;
 use sp_std::clone::Clone;
-use up_evm_mapping::EvmBackwardsAddressMapping;
+pub use up_evm_mapping::EvmBackwardsAddressMapping;
 
 pub trait CrossAccountId<AccountId>:
 	Encode + EncodeLike + Decode + TypeInfo + Clone + PartialEq + Ord + core::fmt::Debug + Default

@@ -738,9 +738,7 @@ mod tests {
 	use super::*;
 
 	use frame_support::{
-		Hashable, assert_err, assert_noop, assert_ok, ord_parameter_types, parameter_types,
-		traits::{Contains, OnFinalize, OnInitialize},
-		weights::constants::RocksDbWeight,
+		ord_parameter_types, parameter_types, traits::Contains, weights::constants::RocksDbWeight,
 	};
 	use sp_core::H256;
 	use sp_runtime::{
@@ -749,7 +747,6 @@ mod tests {
 		traits::{BlakeTwo256, IdentityLookup},
 	};
 	use frame_system::{EnsureOneOf, EnsureRoot, EnsureSignedBy};
-	use substrate_test_utils::assert_eq_uvec;
 	use crate as scheduler;
 
 	mod logger {
@@ -758,9 +755,6 @@ mod tests {
 
 		thread_local! {
 			static LOG: RefCell<Vec<(OriginCaller, u32)>> = RefCell::new(Vec::new());
-		}
-		pub fn log() -> Vec<(OriginCaller, u32)> {
-			LOG.with(|log| log.borrow().clone())
 		}
 		pub trait Config: system::Config {
 			type Event: From<Event> + Into<<Self as system::Config>::Event>;
@@ -871,24 +865,5 @@ mod tests {
 		type MaxScheduledPerBlock = MaxScheduledPerBlock;
 		type WeightInfo = ();
 		type SponsorshipHandler = ();
-	}
-
-	pub fn new_test_ext() -> sp_io::TestExternalities {
-		let t = system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
-		t.into()
-	}
-
-	fn run_to_block(n: u64) {
-		while System::block_number() < n {
-			Scheduler::on_finalize(System::block_number());
-			System::set_block_number(System::block_number() + 1);
-			Scheduler::on_initialize(System::block_number());
-		}
-	}
-
-	fn root() -> OriginCaller {
-		system::RawOrigin::Root.into()
 	}
 }
