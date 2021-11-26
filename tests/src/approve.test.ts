@@ -24,7 +24,6 @@ import {
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
-const expect = chai.expect;
 
 describe('Integration Test approve(spender, collection_id, item_id, amount):', () => {
   let alice: IKeyringPair;

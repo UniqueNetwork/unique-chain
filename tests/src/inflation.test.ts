@@ -25,7 +25,7 @@ describe.only('integration test: Inflation', () => {
       const totalActualInflation = blockInflation * YEAR / blockInterval;
 
       const tolerance = 0.00001; // Relative difference per year between theoretical and actual inflation
-      let expectedInflation = totalExpectedInflation / totalActualInflation - 1n;
+      const expectedInflation = totalExpectedInflation / totalActualInflation - 1n;
 
       expect(Math.abs(Number(expectedInflation))).to.be.lessThanOrEqual(tolerance);
     });
