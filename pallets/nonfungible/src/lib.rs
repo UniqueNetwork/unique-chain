@@ -177,18 +177,18 @@ impl<T: Config> Pallet<T> {
 			.checked_add(1)
 			.ok_or(ArithmeticError::Overflow)?;
 
-		let balance = <AccountBalance<T>>::get((collection.id, sender))
+		let balance = <AccountBalance<T>>::get((collection.id, token_data.owner.clone()))
 			.checked_sub(1)
 			.ok_or(ArithmeticError::Overflow)?;
 
 		if balance == 0 {
-			<AccountBalance<T>>::remove((collection.id, sender));
+			<AccountBalance<T>>::remove((collection.id, token_data.owner.clone()));
 		} else {
-			<AccountBalance<T>>::insert((collection.id, sender), balance);
+			<AccountBalance<T>>::insert((collection.id, token_data.owner.clone()), balance);
 		}
 		// =========
 
-		<Owned<T>>::remove((collection.id, &token_data.owner, token));
+		<Owned<T>>::remove((collection.id, &token_data.owner.clone(), token));
 		<TokensBurnt<T>>::insert(collection.id, burnt);
 		<TokenData<T>>::remove((collection.id, token));
 		let old_spender = <Allowance<T>>::take((collection.id, token));
