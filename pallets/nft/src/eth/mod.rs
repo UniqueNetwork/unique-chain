@@ -1,5 +1,6 @@
 pub mod sponsoring;
 
+use fp_evm::PrecompileResult;
 use pallet_common::{
 	CollectionById,
 	erc::CommonEvmHandler,
@@ -10,7 +11,6 @@ use pallet_nonfungible::NonfungibleHandle;
 use pallet_refungible::{RefungibleHandle, erc::RefungibleTokenHandle};
 use sp_std::borrow::ToOwned;
 use sp_std::vec::Vec;
-use pallet_evm::{PrecompileOutput};
 use sp_core::{H160, U256};
 use crate::{CollectionMode, Config, dispatch::Dispatched};
 use pallet_common::CollectionHandle;
@@ -54,7 +54,7 @@ impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
 		gas_limit: u64,
 		input: &[u8],
 		value: U256,
-	) -> Option<PrecompileOutput> {
+	) -> Option<PrecompileResult> {
 		if let Some(collection_id) = map_eth_to_id(target) {
 			let collection = <CollectionHandle<T>>::new_with_gas_limit(collection_id, gas_limit)?;
 			let dispatched = Dispatched::dispatch(collection);

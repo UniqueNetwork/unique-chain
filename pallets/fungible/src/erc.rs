@@ -2,7 +2,7 @@ use core::char::{REPLACEMENT_CHARACTER, decode_utf16};
 use core::convert::TryInto;
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity_interface, types::*, weight};
 use nft_data_structs::CollectionMode;
-use pallet_common::erc::CommonEvmHandler;
+use pallet_common::erc::{CommonEvmHandler, PrecompileResult};
 use sp_core::{H160, U256};
 use sp_std::vec::Vec;
 use pallet_common::account::CrossAccountId;
@@ -127,7 +127,7 @@ generate_stubgen!(gen_iface, UniqueFungibleCall<()>, false);
 impl<T: Config> CommonEvmHandler for FungibleHandle<T> {
 	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueFungible.raw");
 
-	fn call(self, source: &H160, input: &[u8], value: U256) -> Option<PrecompileOutput> {
+	fn call(self, source: &H160, input: &[u8], value: U256) -> Option<PrecompileResult> {
 		call::<T, UniqueFungibleCall<T>, _>(*source, self, value, input)
 	}
 }

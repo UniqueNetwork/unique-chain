@@ -27,7 +27,7 @@ impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for NftEthSponsorshipH
 		let (method_id, mut reader) = AbiReader::new_call(&call.1).ok()?;
 		match &collection.mode {
 			crate::CollectionMode::NFT => {
-				let call = UniqueNFTCall::parse(method_id, &mut reader).ok()??;
+				let call = <UniqueNFTCall<T>>::parse(method_id, &mut reader).ok()??;
 				match call {
 					UniqueNFTCall::ERC721UniqueExtensions(
 						ERC721UniqueExtensionsCall::Transfer { token_id, .. },
@@ -49,7 +49,7 @@ impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for NftEthSponsorshipH
 				}
 			}
 			crate::CollectionMode::Fungible(_) => {
-				let call = UniqueFungibleCall::parse(method_id, &mut reader).ok()??;
+				let call = <UniqueFungibleCall<T>>::parse(method_id, &mut reader).ok()??;
 				#[allow(clippy::single_match)]
 				match call {
 					UniqueFungibleCall::ERC20(ERC20Call::Transfer { .. }) => {

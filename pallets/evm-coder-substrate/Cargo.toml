@@ -9,7 +9,7 @@ scale-info = { version = "1.0.0", default-features = false, features = [
 ] }
 sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
 sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
-ethereum = { version = "0.9", git = "https://github.com/purestake/ethereum", branch = "joshy-scale-info", default-features = false }
+ethereum = { version = "0.10.0", default-features = false }
 evm-coder = { default-features = false, path = "../../crates/evm-coder" }
 pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12-weights" }
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12-weights" }

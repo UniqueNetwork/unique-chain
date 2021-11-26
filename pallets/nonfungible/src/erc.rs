@@ -8,7 +8,10 @@ use nft_data_structs::TokenId;
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_core::{H160, U256};
 use sp_std::{vec::Vec, vec};
-use pallet_common::{account::CrossAccountId, erc::CommonEvmHandler};
+use pallet_common::{
+	account::CrossAccountId,
+	erc::{CommonEvmHandler, PrecompileResult},
+};
 use pallet_evm_coder_substrate::call;
 use pallet_common::erc::PrecompileOutput;
 
@@ -434,7 +437,7 @@ generate_stubgen!(gen_iface, UniqueNFTCall<()>, false);
 impl<T: Config> CommonEvmHandler for NonfungibleHandle<T> {
 	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueNFT.raw");
 
-	fn call(self, source: &H160, input: &[u8], value: U256) -> Option<PrecompileOutput> {
+	fn call(self, source: &H160, input: &[u8], value: U256) -> Option<PrecompileResult> {
 		call::<T, UniqueNFTCall<T>, _>(*source, self, value, input)
 	}
 }

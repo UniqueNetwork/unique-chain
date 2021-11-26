@@ -20,7 +20,8 @@ pub mod pallet {
 	};
 	use frame_support::{ensure};
 	use pallet_evm::{
-		ExitError, ExitReason, ExitRevert, ExitSucceed, PrecompileOutput, GasWeightMapping,
+		ExitError, ExitRevert, ExitSucceed, GasWeightMapping, PrecompileFailure, PrecompileOutput,
+		PrecompileResult,
 	};
 	use frame_system::ensure_signed;
 	pub use frame_support::dispatch::DispatchResult;
@@ -158,26 +159,28 @@ pub mod pallet {
 		pub fn evm_to_precompile_output(
 			self,
 			result: evm_coder::execution::Result<Option<AbiWriter>>,
-		) -> Option<PrecompileOutput> {
+		) -> Option<PrecompileResult> {
 			use evm_coder::execution::Error;
-			let (writer, reason) = match result {
-				Ok(Some(v)) => (v, ExitReason::Succeed(ExitSucceed::Returned)),
+			Some(match result {
+				Ok(Some(v)) => Ok(PrecompileOutput {
+					exit_status: ExitSucceed::Returned,
+					cost: self.initial_gas - self.gas_left(),
+					logs: self.retrieve_logs(),
+					output: v.finish(),
+				}),
 				Ok(None) => return None,
 				Err(Error::Revert(e)) => {
 					let mut writer = AbiWriter::new_call(evm_coder::fn_selector!(Error(string)));
 					(&e as &str).abi_write(&mut writer);
 
-					(writer, ExitReason::Revert(ExitRevert::Reverted))
+					Err(PrecompileFailure::Revert {
+						exit_status: ExitRevert::Reverted,
+						cost: self.initial_gas - self.gas_left(),
+						output: writer.finish(),
+					})
 				}
-				Err(Error::Fatal(f)) => (AbiWriter::new(), ExitReason::Fatal(f)),
-				Err(Error::Error(e)) => (AbiWriter::new(), ExitReason::Error(e)),
-			};
-
-			Some(PrecompileOutput {
-				cost: self.initial_gas - self.gas_left(),
-				exit_status: reason,
-				logs: self.retrieve_logs(),
-				output: writer.finish(),
+				Err(Error::Fatal(f)) => Err(f.into()),
+				Err(Error::Error(e)) => Err(e.into()),
 			})
 		}
 
@@ -234,7 +237,7 @@ pub mod pallet {
 		mut e: E,
 		value: value,
 		input: &[u8],
-	) -> Option<PrecompileOutput> {
+	) -> Option<PrecompileResult> {
 		let result = call_internal(caller, &mut e, value, input);
 		e.into_recorder().evm_to_precompile_output(result)
 	}

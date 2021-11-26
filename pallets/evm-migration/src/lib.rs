@@ -98,7 +98,7 @@ pub mod pallet {
 			_gas_left: u64,
 			_input: &[u8],
 			_value: sp_core::U256,
-		) -> Option<pallet_evm::PrecompileOutput> {
+		) -> Option<pallet_evm::PrecompileResult> {
 			None
 		}
 

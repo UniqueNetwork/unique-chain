@@ -11,7 +11,7 @@ impl<T: Config> CommonEvmHandler for RefungibleHandle<T> {
 		_source: &sp_core::H160,
 		_input: &[u8],
 		_value: sp_core::U256,
-	) -> Option<pallet_common::erc::PrecompileOutput> {
+	) -> Option<pallet_common::erc::PrecompileResult> {
 		// TODO: Implement RFT variant of ERC721
 		None
 	}
@@ -27,7 +27,7 @@ impl<T: Config> CommonEvmHandler for RefungibleTokenHandle<T> {
 		_source: &sp_core::H160,
 		_input: &[u8],
 		_value: sp_core::U256,
-	) -> Option<pallet_common::erc::PrecompileOutput> {
+	) -> Option<pallet_common::erc::PrecompileResult> {
 		// TODO: Implement RFT variant of ERC20
 		None
 	}

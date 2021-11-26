@@ -1,7 +1,10 @@
 use core::marker::PhantomData;
 use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use pallet_evm::{ExitReason, ExitRevert, OnCreate, OnMethodCall, PrecompileOutput};
+use pallet_evm::{
+	ExitReason, ExitRevert, OnCreate, OnMethodCall, PrecompileOutput, PrecompileResult,
+	PrecompileFailure,
+};
 use sp_core::H160;
 use crate::{
 	AllowlistEnabled, Config, Owner, Pallet, SelfSponsoring, SponsorBasket, SponsoringRateLimit,
@@ -109,19 +112,18 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 		gas_left: u64,
 		input: &[u8],
 		value: sp_core::U256,
-	) -> Option<PrecompileOutput> {
+	) -> Option<PrecompileResult> {
 		// TODO: Extract to another OnMethodCall handler
 		if <AllowlistEnabled<T>>::get(target) && !<Pallet<T>>::allowed(*target, *source) {
-			return Some(PrecompileOutput {
-				exit_status: ExitReason::Revert(ExitRevert::Reverted),
+			return Some(Err(PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
 				cost: 0,
 				output: {
 					let mut writer = AbiWriter::new_call(evm_coder::fn_selector!(Error(string)));
 					writer.string("Target contract is allowlisted");
 					writer.finish()
 				},
-				logs: sp_std::vec![],
-			});
+			}));
 		}
 
 		if target != &T::ContractAddress::get() {
