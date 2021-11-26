@@ -51,7 +51,7 @@ impl<T: Config> CollectionHandle<T> {
 		Self::new_with_gas_limit(id, u64::MAX)
 	}
 	pub fn try_get(id: CollectionId) -> Result<Self, DispatchError> {
-		Ok(Self::new(id).ok_or_else(|| <Error<T>>::CollectionNotFound)?)
+		Ok(Self::new(id).ok_or(<Error<T>>::CollectionNotFound)?)
 	}
 	pub fn log(&self, log: impl evm_coder::ToLog) {
 		self.recorder.log(log)
@@ -453,7 +453,7 @@ impl<T: Config> Pallet<T> {
 			collection.limits.owner_can_destroy(),
 			<Error<T>>::NoPermission,
 		);
-		collection.check_is_owner(&sender)?;
+		collection.check_is_owner(sender)?;
 
 		let destroyed_collections = <DestroyedCollectionCount<T>>::get()
 			.0
@@ -476,7 +476,7 @@ impl<T: Config> Pallet<T> {
 		user: &T::CrossAccountId,
 		allowed: bool,
 	) -> DispatchResult {
-		collection.check_is_owner_or_admin(&sender)?;
+		collection.check_is_owner_or_admin(sender)?;
 
 		// =========
 
@@ -495,7 +495,7 @@ impl<T: Config> Pallet<T> {
 		user: &T::CrossAccountId,
 		admin: bool,
 	) -> DispatchResult {
-		collection.check_is_owner_or_admin(&sender)?;
+		collection.check_is_owner_or_admin(sender)?;
 
 		let was_admin = <IsAdmin<T>>::get((collection.id, user));
 		if was_admin == admin {

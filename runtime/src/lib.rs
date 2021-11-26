@@ -1177,6 +1177,7 @@ impl_runtime_apis! {
 			EVM::account_storages(address, H256::from_slice(&tmp[..]))
 		}
 
+		#[allow(clippy::redundant_closure)]
 		fn call(
 			from: H160,
 			to: H160,
@@ -1207,6 +1208,7 @@ impl_runtime_apis! {
 			).map_err(|err| err.into())
 		}
 
+		#[allow(clippy::redundant_closure)]
 		fn create(
 			from: H160,
 			data: Vec<u8>,

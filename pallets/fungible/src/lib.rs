@@ -303,8 +303,8 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 	) -> DispatchResult {
 		if collection.access == AccessMode::AllowList {
-			collection.check_allowlist(&owner)?;
-			collection.check_allowlist(&spender)?;
+			collection.check_allowlist(owner)?;
+			collection.check_allowlist(spender)?;
 		}
 
 		if <Balance<T>>::get((collection.id, owner)) < amount {

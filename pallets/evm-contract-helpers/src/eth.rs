@@ -1,10 +1,7 @@
 use core::marker::PhantomData;
 use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use pallet_evm::{
-	ExitReason, ExitRevert, OnCreate, OnMethodCall, PrecompileOutput, PrecompileResult,
-	PrecompileFailure,
-};
+use pallet_evm::{ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure};
 use sp_core::H160;
 use crate::{
 	AllowlistEnabled, Config, Owner, Pallet, SelfSponsoring, SponsorBasket, SponsoringRateLimit,
@@ -161,7 +158,7 @@ impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for HelpersContractSpo
 		if let Some(last_tx_block) = <SponsorBasket<T>>::get(&call.0, who) {
 			let limit = <SponsoringRateLimit<T>>::get(&call.0);
 
-			let timeout = last_tx_block + limit.into();
+			let timeout = last_tx_block + limit;
 			if block_number < timeout {
 				return None;
 			}

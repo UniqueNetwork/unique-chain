@@ -25,6 +25,7 @@
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
+#![allow(clippy::unnecessary_cast)]
 
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
@@ -32,11 +33,11 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for pallet_fungible.
 pub trait WeightInfo {
 	fn create_item() -> Weight;
-	fn burn_from() -> Weight;
 	fn burn_item() -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
+	fn burn_from() -> Weight;
 }
 
 /// Weights for pallet_fungible using the Substrate node and recommended hardware.

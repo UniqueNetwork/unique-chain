@@ -214,7 +214,7 @@ where
 			500_usize, // max stored filters
 			overrides.clone(),
 			max_past_logs,
-			block_data_cache.clone(),
+			block_data_cache,
 		)));
 	}
 

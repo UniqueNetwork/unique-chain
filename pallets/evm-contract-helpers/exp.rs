@@ -532,11 +532,11 @@ pub mod eth {
             match c.call {
                 InternalCall::ContractOwner { contract_address } => {
                     let result = self.contract_owner(contract_address)?;
-                    (&result).into_result()
+                    (&result).to_result()
                 }
                 InternalCall::SponsoringEnabled { contract_address } => {
                     let result = self.sponsoring_enabled(contract_address)?;
-                    (&result).into_result()
+                    (&result).to_result()
                 }
                 InternalCall::ToggleSponsoring {
                     contract_address,
@@ -544,7 +544,7 @@ pub mod eth {
                 } => {
                     let result =
                         self.toggle_sponsoring(c.caller.clone(), contract_address, enabled)?;
-                    (&result).into_result()
+                    (&result).to_result()
                 }
                 InternalCall::SetSponsoringRateLimit {
                     contract_address,
@@ -555,22 +555,22 @@ pub mod eth {
                         contract_address,
                         rate_limit,
                     )?;
-                    (&result).into_result()
+                    (&result).to_result()
                 }
                 InternalCall::GetSponsoringRateLimit { contract_address } => {
                     let result = self.get_sponsoring_rate_limit(contract_address)?;
-                    (&result).into_result()
+                    (&result).to_result()
                 }
                 InternalCall::Allowed {
                     contract_address,
                     user,
                 } => {
                     let result = self.allowed(contract_address, user)?;
-                    (&result).into_result()
+                    (&result).to_result()
                 }
                 InternalCall::AllowlistEnabled { contract_address } => {
                     let result = self.allowlist_enabled(contract_address)?;
-                    (&result).into_result()
+                    (&result).to_result()
                 }
                 InternalCall::ToggleAllowlist {
                     contract_address,
@@ -578,7 +578,7 @@ pub mod eth {
                 } => {
                     let result =
                         self.toggle_allowlist(c.caller.clone(), contract_address, enabled)?;
-                    (&result).into_result()
+                    (&result).to_result()
                 }
                 InternalCall::ToggleAllowed {
                     contract_address,
@@ -587,7 +587,7 @@ pub mod eth {
                 } => {
                     let result =
                         self.toggle_allowed(c.caller.clone(), contract_address, user, allowed)?;
-                    (&result).into_result()
+                    (&result).to_result()
                 }
                 _ => ::core::panicking::panic("internal error: entered unreachable code"),
             }

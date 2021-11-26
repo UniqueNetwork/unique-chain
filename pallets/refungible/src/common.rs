@@ -135,7 +135,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		amount: u128,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
-			<Pallet<T>>::transfer(&self, &from, &to, token, amount),
+			<Pallet<T>>::transfer(self, &from, &to, token, amount),
 			<CommonWeights<T>>::transfer(),
 		)
 	}
@@ -148,7 +148,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		amount: u128,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
-			<Pallet<T>>::set_allowance(&self, &sender, &spender, token, amount),
+			<Pallet<T>>::set_allowance(self, &sender, &spender, token, amount),
 			<CommonWeights<T>>::approve(),
 		)
 	}
@@ -162,7 +162,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		amount: u128,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
-			<Pallet<T>>::transfer_from(&self, &sender, &from, &to, token, amount),
+			<Pallet<T>>::transfer_from(self, &sender, &from, &to, token, amount),
 			<CommonWeights<T>>::transfer_from(),
 		)
 	}
@@ -175,7 +175,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		amount: u128,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
-			<Pallet<T>>::burn_from(&self, &sender, &from, token, amount),
+			<Pallet<T>>::burn_from(self, &sender, &from, token, amount),
 			<CommonWeights<T>>::burn_from(),
 		)
 	}
@@ -188,7 +188,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		let len = data.len();
 		with_weight(
-			<Pallet<T>>::set_variable_metadata(&self, &sender, token, data),
+			<Pallet<T>>::set_variable_metadata(self, &sender, token, data),
 			<CommonWeights<T>>::set_variable_metadata(len as u32),
 		)
 	}

@@ -25,6 +25,7 @@
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
+#![allow(clippy::unnecessary_cast)]
 
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
@@ -33,7 +34,6 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn create_item() -> Weight;
 	fn create_multiple_items(b: u32, ) -> Weight;
-	fn burn_from() -> Weight;
 	fn burn_item_partial() -> Weight;
 	fn burn_item_fully() -> Weight;
 	fn transfer_normal() -> Weight;
@@ -45,6 +45,7 @@ pub trait WeightInfo {
 	fn transfer_from_creating() -> Weight;
 	fn transfer_from_removing() -> Weight;
 	fn transfer_from_creating_removing() -> Weight;
+	fn burn_from() -> Weight;
 	fn set_variable_metadata(b: u32, ) -> Weight;
 }
 

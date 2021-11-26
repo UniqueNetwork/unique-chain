@@ -310,7 +310,7 @@ impl_tuples! {A B C D E F G H I J}
 
 pub trait AbiWrite {
 	fn abi_write(&self, writer: &mut AbiWriter);
-	fn into_result(&self) -> ResultWithPostInfo<AbiWriter> {
+	fn to_result(&self) -> ResultWithPostInfo<AbiWriter> {
 		let mut writer = AbiWriter::new();
 		self.abi_write(&mut writer);
 		Ok(writer.into())
@@ -319,7 +319,7 @@ pub trait AbiWrite {
 
 impl<T: AbiWrite> AbiWrite for ResultWithPostInfo<T> {
 	// this particular AbiWrite implementation should be split to another trait,
-	// which only implements [`into_result`]
+	// which only implements [`to_result`]
 	//
 	// But due to lack of specialization feature in stable Rust, we can't have
 	// blanket impl of this trait `for T where T: AbiWrite`, so here we abusing
@@ -327,7 +327,7 @@ impl<T: AbiWrite> AbiWrite for ResultWithPostInfo<T> {
 	fn abi_write(&self, _writer: &mut AbiWriter) {
 		debug_assert!(false, "shouldn't be called, see comment")
 	}
-	fn into_result(&self) -> ResultWithPostInfo<AbiWriter> {
+	fn to_result(&self) -> ResultWithPostInfo<AbiWriter> {
 		match self {
 			Ok(v) => Ok(WithPostDispatchInfo {
 				post_info: v.post_info.clone(),

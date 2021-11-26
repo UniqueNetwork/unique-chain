@@ -158,6 +158,7 @@ benchmarks! {
 			sponsored_data_size: Some(0),
 			token_limit: Some(1),
 			sponsor_transfer_timeout: Some(0),
+			sponsor_approve_timeout: None,
 			owner_can_destroy: Some(true),
 			owner_can_transfer: Some(true),
 			sponsored_data_rate_limit: None,

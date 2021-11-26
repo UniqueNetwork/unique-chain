@@ -189,7 +189,7 @@ impl<T: Config> Pallet<T> {
 		<Balance<T>>::remove_prefix((collection.id, token_id), None);
 		<Allowance<T>>::remove_prefix((collection.id, token_id), None);
 		// TODO: ERC721 transfer event
-		return Ok(());
+		Ok(())
 	}
 
 	pub fn burn(
@@ -367,8 +367,8 @@ impl<T: Config> Pallet<T> {
 			collection.check_allowlist(sender)?;
 
 			for item in data.iter() {
-				for (user, _) in &item.users {
-					collection.check_allowlist(&user)?;
+				for user in item.users.keys() {
+					collection.check_allowlist(user)?;
 				}
 			}
 		}
@@ -409,7 +409,7 @@ impl<T: Config> Pallet<T> {
 
 		let mut balances = BTreeMap::new();
 		for data in &data {
-			for (owner, _) in &data.users {
+			for owner in data.users.keys() {
 				let balance = balances
 					.entry(owner)
 					.or_insert_with(|| <AccountBalance<T>>::get((collection.id, owner)));
@@ -483,8 +483,8 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 	) -> DispatchResult {
 		if collection.access == AccessMode::AllowList {
-			collection.check_allowlist(&sender)?;
-			collection.check_allowlist(&spender)?;
+			collection.check_allowlist(sender)?;
+			collection.check_allowlist(spender)?;
 		}
 
 		<PalletCommon<T>>::ensure_correct_receiver(spender)?;

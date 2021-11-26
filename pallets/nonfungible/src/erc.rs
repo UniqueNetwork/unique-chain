@@ -13,7 +13,6 @@ use pallet_common::{
 	erc::{CommonEvmHandler, PrecompileResult},
 };
 use pallet_evm_coder_substrate::call;
-use pallet_common::erc::PrecompileOutput;
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,

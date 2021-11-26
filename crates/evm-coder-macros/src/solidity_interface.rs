@@ -226,16 +226,10 @@ impl AbiType {
 		}
 	}
 	fn is_value(&self) -> bool {
-		match self {
-			Self::Plain(v) if v == "value" => true,
-			_ => false,
-		}
+		matches!(self, Self::Plain(v) if v == "value")
 	}
 	fn is_caller(&self) -> bool {
-		match self {
-			Self::Plain(v) if v == "caller" => true,
-			_ => false,
-		}
+		matches!(self, Self::Plain(v) if v == "caller")
 	}
 	fn is_special(&self) -> bool {
 		self.is_caller() || self.is_value()
@@ -599,7 +593,7 @@ impl Method {
 						#args,
 					)*
 				)?;
-				(&result).into_result()
+				(&result).to_result()
 			}
 		}
 	}

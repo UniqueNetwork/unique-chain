@@ -169,8 +169,8 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token: TokenId,
 	) -> DispatchResult {
-		let token_data = <TokenData<T>>::get((collection.id, token))
-			.ok_or_else(|| <CommonError<T>>::TokenNotFound)?;
+		let token_data =
+			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
 		ensure!(
 			&token_data.owner == sender
 				|| (collection.limits.owner_can_transfer() && collection.is_owner_or_admin(sender)),
@@ -197,7 +197,7 @@ impl<T: Config> Pallet<T> {
 				collection.id,
 				token,
 				sender.clone(),
-				old_spender.clone(),
+				old_spender,
 				0,
 			));
 		}
@@ -213,7 +213,7 @@ impl<T: Config> Pallet<T> {
 			token_data.owner,
 			1,
 		));
-		return Ok(());
+		Ok(())
 	}
 
 	pub fn transfer(
@@ -227,8 +227,8 @@ impl<T: Config> Pallet<T> {
 			<CommonError<T>>::TransferNotAllowed
 		);
 
-		let token_data = <TokenData<T>>::get((collection.id, token))
-			.ok_or_else(|| <CommonError<T>>::TokenNotFound)?;
+		let token_data =
+			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
 		ensure!(
 			&token_data.owner == from
 				|| (collection.limits.owner_can_transfer() && collection.is_owner_or_admin(from)),
@@ -399,7 +399,7 @@ impl<T: Config> Pallet<T> {
 						collection.id,
 						token,
 						sender.clone(),
-						old_owner.clone(),
+						old_owner,
 						0,
 					));
 				}
@@ -429,7 +429,7 @@ impl<T: Config> Pallet<T> {
 					collection.id,
 					token,
 					sender.clone(),
-					old_spender.clone(),
+					old_spender,
 					0,
 				));
 			}
@@ -443,9 +443,9 @@ impl<T: Config> Pallet<T> {
 		spender: Option<&T::CrossAccountId>,
 	) -> DispatchResult {
 		if collection.access == AccessMode::AllowList {
-			collection.check_allowlist(&sender)?;
+			collection.check_allowlist(sender)?;
 			if let Some(spender) = spender {
-				collection.check_allowlist(&spender)?;
+				collection.check_allowlist(spender)?;
 			}
 		}
 
@@ -491,7 +491,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		Self::transfer(collection, &from, to, token)?;
+		Self::transfer(collection, from, to, token)?;
 		// Allowance is reset in [`transfer`]
 		Ok(())
 	}
@@ -519,7 +519,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		Self::burn(collection, &from, token)
+		Self::burn(collection, from, token)
 	}
 
 	pub fn set_variable_metadata(

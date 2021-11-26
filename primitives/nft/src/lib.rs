@@ -327,8 +327,7 @@ mod bounded_serde {
 		D: ser::Serializer,
 		V: Serialize,
 	{
-		let vec: &Vec<_> = &value;
-		vec.serialize(serializer)
+		(value as &Vec<_>).serialize(serializer)
 	}
 
 	pub fn deserialize<'de, D, V, S>(deserializer: D) -> Result<BoundedVec<V, S>, D::Error>

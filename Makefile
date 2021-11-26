@@ -57,9 +57,5 @@ bench-refungible:
 bench-nonfungible:
 	make _bench PALLET=nonfungible
 
-.PHONY: bench-evm-coder-substrate
-bench-evm-coder-substrate:
-	make _bench PALLET=evm-coder-substrate
-
 .PHONY: bench
-bench: bench-evm-migration bench-nft bench-fungible bench-refungible bench-nonfungible bench-evm-coder-substrate
+bench: bench-evm-migration bench-nft bench-fungible bench-refungible bench-nonfungible
