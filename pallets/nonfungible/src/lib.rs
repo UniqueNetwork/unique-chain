@@ -220,12 +220,6 @@ impl<T: Config> Pallet<T> {
 			<CommonError<T>>::TransferNotAllowed
 		);
 
-		// Ownership limit check
-		ensure!(
-			<AccountBalance<T>>::get((collection.id, from)) < ACCOUNT_TOKEN_OWNERSHIP_LIMIT,
-			<CommonError<T>>::AccountTokenLimitExceeded
-		);
-
 		let token_data = <TokenData<T>>::get((collection.id, token))
 			.ok_or_else(|| <CommonError<T>>::TokenNotFound)?;
 		ensure!(
@@ -250,7 +244,8 @@ impl<T: Config> Pallet<T> {
 				.ok_or(ArithmeticError::Overflow)?;
 
 			ensure!(
-				balance_to < collection.limits.account_token_ownership_limit(),
+				balance_to < collection.limits.account_token_ownership_limit()
+					&& balance_to < ACCOUNT_TOKEN_OWNERSHIP_LIMIT,
 				<CommonError<T>>::AccountTokenLimitExceeded,
 			);
 
