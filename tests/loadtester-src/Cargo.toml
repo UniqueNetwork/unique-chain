@@ -2,7 +2,7 @@
 name = "loadtester"
 version = "0.1.0"
 authors = ["[your_name] <[your_email]>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 ink_primitives = { version = "3.0.0-rc2", default-features = false }

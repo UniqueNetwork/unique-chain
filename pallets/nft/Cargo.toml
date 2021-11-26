@@ -135,7 +135,7 @@ ethereum = { version = "0.9", git = "https://github.com/purestake/ethereum", bra
 rlp = { default-features = false, version = "0.5.0" }
 sp-api = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
 
-up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring" } 
+up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring" }
 up-evm-mapping = { default-features = false, path = "../../primitives/evm-mapping" }
 evm-coder = { default-features = false, path = "../../crates/evm-coder" }
 pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }

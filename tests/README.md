@@ -8,7 +8,7 @@ git clone https://github.com/paritytech/polkadot.git && cd polkadot
 git checkout release-v0.9.9
 ```
 
-2. Build with nightly-2021-06-28
+2. Build with nightly-2021-11-11
 ```bash
 cargo build --release
 ```
@@ -28,4 +28,3 @@ git clone https://github.com/paritytech/polkadot-launch && cd polkadot-launch
 1. Run `yarn install`.
 2. Optional step - configure tests with env variables or by editing [configuration file](src/config.ts).
 3. Run `yarn test`.
-

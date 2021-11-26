@@ -63,17 +63,17 @@ sudo apt-get install libssl-dev pkg-config libclang-dev clang
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
 
-3. Install install nightly 2021-06-28 and make it default:
+3. Install install nightly 2021-11-11 and make it default:
 
 ```bash
-rustup toolchain install nightly-2021-06-28
-rustup default nightly-2021-06-28
+rustup toolchain install nightly-2021-11-11
+rustup default nightly-2021-11-11
 ```
 
 4. Add wasm target for nightly toolchain:
 
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2021-06-28
+rustup target add wasm32-unknown-unknown --toolchain nightly-2021-11-11
 ```
 
 5. Build:
@@ -135,7 +135,7 @@ Additional CLI usage options are available and may be shown by running `cargo ru
 
 ## Building and Running as Parachain locally
 
-Rust toolchain: nightly-2021-06-28
+Rust toolchain: nightly-2021-11-11
 Note: checkout this project and polkadot project (see below) in the sibling folders (both under the same folder)
 
 ### Build relay
@@ -208,12 +208,12 @@ yarn test
 
 First of all, add rust toolchain and make it default.
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2021-06-28
+rustup target add wasm32-unknown-unknown --toolchain nightly-2021-11-11
 ```
 
 Then in "/node/src" run build command below
 ```bash
-cargo +nightly-2021-06-28 build --release --features runtime-benchmarks
+cargo +nightly-2021-11-11 build --release --features runtime-benchmarks
 ```
 
 Run benchmark

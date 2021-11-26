@@ -3,7 +3,7 @@ name = "nft-rpc"
 version = "3.3.1"
 authors = ['Unique Network <support@uniquenetwork.io>']
 license = 'All Rights Reserved'
-edition = "2018"
+edition = "2021"
 description = "Unique chain rpc"
 
 [package.metadata.docs.rs]
