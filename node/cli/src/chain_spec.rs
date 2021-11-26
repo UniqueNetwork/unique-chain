@@ -213,7 +213,8 @@ fn testnet_genesis(
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.map(|k| (k, 1 << 70))
+				// 1e13 UNQ
+				.map(|k| (k, 1 << 100))
 				.collect(),
 		},
 		treasury: Default::default(),

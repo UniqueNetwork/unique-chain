@@ -19,7 +19,7 @@ import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
 import getBalance from '../../substrate/get-balance';
 
-export const GAS_ARGS = {gas: 1000000};
+export const GAS_ARGS = {gas: 2500000};
 
 let web3Connected = false;
 export async function usingWeb3<T>(cb: (web3: Web3) => Promise<T> | T): Promise<T> {
@@ -63,7 +63,7 @@ export async function createEthAccountWithBalance(api: ApiPromise, web3: Web3) {
   return account;
 }
 
-export async function transferBalanceToEth(api: ApiPromise, source: IKeyringPair, target: string, amount = 10000n * UNIQUE) {
+export async function transferBalanceToEth(api: ApiPromise, source: IKeyringPair, target: string, amount = 1000n * UNIQUE) {
   const tx = api.tx.balances.transfer(evmToAddress(target), amount);
   const events = await submitTransactionAsync(source, tx);
   const result = getGenericResult(events);
@@ -234,7 +234,7 @@ export function contractHelpers(web3: Web3, caller: string) {
  * @param mkTx - closure, receiving `contract.methods`, and returning method call,
  * to be used as following (assuming `to` = erc20 contract):
  * `m => m.transfer(to, amount)`
- * 
+ *
  * # Example
  * ```ts
  * executeEthTxOnSub(api, alice, erc20Contract, m => m.transfer(target, amount));
@@ -260,7 +260,7 @@ export async function ethBalanceViaSub(api: ApiPromise, address: string): Promis
 
 /**
  * Measure how much gas given closure consumes
- * 
+ *
  * @param user which user balance will be checked
  */
 export async function recordEthFee(api: ApiPromise, user: string, call: () => Promise<any>): Promise<bigint> {

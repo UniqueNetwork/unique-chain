@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 import privateKey from '../substrate/privateKey';
 import {submitTransactionAsync} from '../substrate/substrate-api';
-import {createEthAccountWithBalance, deployCollector, GAS_ARGS, itWeb3, subToEth} from './util/helpers';
+import {createEthAccountWithBalance, deployCollector, GAS_ARGS, itWeb3, subToEth, transferBalanceToEth} from './util/helpers';
 import {evmToAddress} from '@polkadot/util-crypto';
 import {getGenericResult} from '../util/helpers';
 import {getBalanceSingle, transferBalanceExpectSuccess} from '../substrate/get-balance';
@@ -23,7 +23,7 @@ describe('EVM payable contracts', () => {
 
     // Transaction fee/value will be payed from subToEth(sender) evm balance,
     // which is backed by evmToAddress(subToEth(sender)) substrate balance
-    await transferBalanceExpectSuccess(api, alice, evmToAddress(subToEth(alice.address)), '1000000000000');
+    await transferBalanceToEth(api, alice, subToEth(alice.address));
 
     {
       const tx = api.tx.evm.call(
