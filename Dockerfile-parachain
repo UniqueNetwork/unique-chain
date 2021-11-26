@@ -5,7 +5,7 @@ LABEL maintainer="Unique.Network"
 ARG RUST_TOOLCHAIN=nightly-2021-11-11
 #ARG RUST_C=1.55.0-nightly
 ARG POLKA_VERSION=v0.9.12
-ARG NFT_BRANCH=develop
+ARG UNIQUE_BRANCH=develop
 
 #ARG USER=***
 #ARG PASS=***
@@ -14,13 +14,13 @@ ARG NFT_BRANCH=develop
 ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
 #ENV RUST_C $RUST_C
 ENV POLKA_VERSION $POLKA_VERSION
-ENV NFT_BRANCH $NFT_BRANCH
+ENV UNIQUE_BRANCH $UNIQUE_BRANCH
 
 
 #RUN echo $RUST_TOOLCHAIN
 #RUN echo $RUST_C
 #RUN echo $POLKA_VERSION
-#RUN echo $NFT_BRANCH
+#RUN echo $UNIQUE_BRANCH
 
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
@@ -40,8 +40,8 @@ RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
 RUN cargo install cargo-chef
 
-RUN mkdir nft_parachain
-WORKDIR /nft_parachain
+RUN mkdir unique_parachain
+WORKDIR /unique_parachain
 
 # ===== Chef =====
 FROM rust-builder as chef
@@ -52,10 +52,10 @@ RUN cargo chef prepare --recipe-path recipe.json
 # ===== BUILD ======
 FROM rust-builder as builder
 
-RUN mkdir nft_parachain
-WORKDIR /nft_parachain
+RUN mkdir unique_parachain
+WORKDIR /unique_parachain
 
-COPY --from=chef /nft_parachain/recipe.json recipe.json
+COPY --from=chef /unique_parachain/recipe.json recipe.json
 ARG PROFILE=release
 RUN cargo chef cook "--$PROFILE" --recipe-path recipe.json
 
@@ -67,8 +67,8 @@ RUN cargo build "--$PROFILE"
 # ===== BUILD POLKADOT =====
 FROM rust-builder as builder-polkadot
 
-RUN mkdir nft_parachain
-WORKDIR /nft_parachain
+RUN mkdir unique_parachain
+WORKDIR /unique_parachain
 
 RUN git clone -b $POLKA_VERSION --depth 1 https://github.com/paritytech/polkadot.git && \
     cd polkadot && \
@@ -98,8 +98,8 @@ RUN export NVM_DIR="$HOME/.nvm" && \
     npm install --global yarn && \
     yarn
 
-COPY --from=builder /nft_parachain/target/$PROFILE/nft /unique-chain/target/$PROFILE/
-COPY --from=builder-polkadot /nft_parachain/polkadot/target/$PROFILE/polkadot /polkadot/target/$PROFILE/
+COPY --from=builder /unique_parachain/target/$PROFILE/unique-collator /unique-chain/target/$PROFILE/
+COPY --from=builder-polkadot /unique_parachain/polkadot/target/$PROFILE/polkadot /polkadot/target/$PROFILE/
 
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \

@@ -2,7 +2,7 @@
 
 use core::ops::Deref;
 use frame_support::{ensure};
-use nft_data_structs::{AccessMode, Collection, CollectionId, TokenId};
+use up_data_structs::{AccessMode, Collection, CollectionId, TokenId};
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
 };
@@ -26,7 +26,7 @@ pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key};
-	use nft_data_structs::CollectionId;
+	use up_data_structs::CollectionId;
 	use super::weights::WeightInfo;
 
 	#[pallet::error]
@@ -36,7 +36,7 @@ pub mod pallet {
 		/// Not default id passed as TokenId argument
 		FungibleItemsHaveNoId,
 		/// Tried to set data for fungible item
-		FungibleItemsHaveData,
+		FungibleItemsDontHaveData,
 	}
 
 	#[pallet::config]
@@ -49,7 +49,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	pub(super) type TotalSupply<T: Config> =
+	pub type TotalSupply<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u128, QueryKind = ValueQuery>;
 
 	#[pallet::storage]
@@ -63,7 +63,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	pub(super) type Allowance<T: Config> = StorageNMap<
+	pub type Allowance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
 			Key<Blake2_128, T::CrossAccountId>,
@@ -280,7 +280,11 @@ impl<T: Config> Pallet<T> {
 		spender: &T::CrossAccountId,
 		amount: u128,
 	) {
-		<Allowance<T>>::insert((collection.id, owner, spender), amount);
+		if amount == 0 {
+			<Allowance<T>>::remove((collection.id, owner, spender));
+		} else {
+			<Allowance<T>>::insert((collection.id, owner, spender), amount);
+		}
 
 		collection.log(ERC20Events::Approval {
 			owner: *owner.as_eth(),

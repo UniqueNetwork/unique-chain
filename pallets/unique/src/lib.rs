@@ -34,7 +34,7 @@ pub use frame_support::{
 use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{sp_std::prelude::Vec};
-use nft_data_structs::{
+use up_data_structs::{
 	MAX_DECIMAL_POINTS, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, CUSTOM_DATA_LIMIT,
 	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT,
 	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
@@ -57,10 +57,10 @@ mod tests;
 
 mod eth;
 mod sponsorship;
-pub use sponsorship::NftSponsorshipHandler;
-pub use eth::sponsoring::NftEthSponsorshipHandler;
+pub use sponsorship::UniqueSponsorshipHandler;
+pub use eth::sponsoring::UniqueEthSponsorshipHandler;
 
-pub use eth::NftErcSupport;
+pub use eth::UniqueErcSupport;
 
 pub mod common;
 use common::CommonWeights;
@@ -126,7 +126,7 @@ type SelfWeightOf<T> = <T as Config>::WeightInfo;
 // ?3 - real -> controlled
 //      no confirmation required, so addresses can be easily generated
 decl_storage! {
-	trait Store for Module<T: Config> as Nft {
+	trait Store for Module<T: Config> as Unique {
 
 		//#region Private members
 		/// Used for migrations

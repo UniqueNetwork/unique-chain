@@ -1,7 +1,7 @@
 use core::char::{REPLACEMENT_CHARACTER, decode_utf16};
 use core::convert::TryInto;
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity_interface, types::*, weight};
-use nft_data_structs::CollectionMode;
+use up_data_structs::CollectionMode;
 use pallet_common::erc::{CommonEvmHandler, PrecompileResult};
 use sp_core::{H160, U256};
 use sp_std::vec::Vec;

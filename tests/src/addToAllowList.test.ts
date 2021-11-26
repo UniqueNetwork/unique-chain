@@ -59,7 +59,7 @@ describe('Negative Integration Test ext. addToAllowList()', () => {
       const collectionId = await getCreatedCollectionCount(api) + 1;
       const bob = privateKey('//Bob');
 
-      const tx = api.tx.nft.addToAllowList(collectionId, normalizeAccountId(bob.address));
+      const tx = api.tx.unique.addToAllowList(collectionId, normalizeAccountId(bob.address));
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });
@@ -71,7 +71,7 @@ describe('Negative Integration Test ext. addToAllowList()', () => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
       await destroyCollectionExpectSuccess(collectionId);
-      const tx = api.tx.nft.addToAllowList(collectionId, normalizeAccountId(bob.address));
+      const tx = api.tx.unique.addToAllowList(collectionId, normalizeAccountId(bob.address));
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });
@@ -83,7 +83,7 @@ describe('Negative Integration Test ext. addToAllowList()', () => {
       const collectionId = await createCollectionExpectSuccess();
       await enableAllowListExpectSuccess(alice, collectionId);
       await enablePublicMintingExpectSuccess(alice, collectionId);
-      const tx = api.tx.nft.createItem(collectionId, normalizeAccountId(ferdie.address), 'NFT');
+      const tx = api.tx.unique.createItem(collectionId, normalizeAccountId(ferdie.address), 'NFT');
       await expect(submitTransactionExpectFailAsync(ferdie, tx)).to.be.rejected;
     });
   });

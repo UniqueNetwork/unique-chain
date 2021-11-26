@@ -9,7 +9,7 @@ use frame_support::{
 	traits::{IsSubType},
 	storage::{StorageMap, StorageDoubleMap, StorageNMap},
 };
-use nft_data_structs::{
+use up_data_structs::{
 	CollectionId, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MetaUpdatePermission,
 	NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId,
 };
@@ -216,8 +216,8 @@ fn load<T: Config>(id: CollectionId) -> Option<(T::AccountId, CollectionHandle<T
 	Some((sponsor, collection))
 }
 
-pub struct NftSponsorshipHandler<T>(PhantomData<T>);
-impl<T, C> SponsorshipHandler<T::AccountId, C> for NftSponsorshipHandler<T>
+pub struct UniqueSponsorshipHandler<T>(PhantomData<T>);
+impl<T, C> SponsorshipHandler<T::AccountId, C> for UniqueSponsorshipHandler<T>
 where
 	T: Config,
 	C: IsSubType<Call<T>>,

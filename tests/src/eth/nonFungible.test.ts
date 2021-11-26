@@ -70,7 +70,7 @@ describe('NFT: Plain calls', () => {
     const alice = privateKey('//Alice');
 
     const caller = await createEthAccountWithBalance(api, web3);
-    const changeAdminTx = api.tx.nft.addCollectionAdmin(collection, {Ethereum: caller});
+    const changeAdminTx = api.tx.unique.addCollectionAdmin(collection, {Ethereum: caller});
     await submitTransactionAsync(alice, changeAdminTx);
     const receiver = createEthAccount(web3);
 
@@ -109,7 +109,7 @@ describe('NFT: Plain calls', () => {
     const alice = privateKey('//Alice');
 
     const caller = await createEthAccountWithBalance(api, web3);
-    const changeAdminTx = api.tx.nft.addCollectionAdmin(collection, {Ethereum: caller});
+    const changeAdminTx = api.tx.unique.addCollectionAdmin(collection, {Ethereum: caller});
     await submitTransactionAsync(alice, changeAdminTx);
     const receiver = createEthAccount(web3);
 

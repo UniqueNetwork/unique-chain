@@ -55,7 +55,7 @@
     },
     "parachains": [
         {
-            "bin": "../unique-chain/target/release/nft",
+            "bin": "../unique-chain/target/release/unique-collator",
             "id": "2000",
             "balance": "1000000000000000000000",
             "nodes": [

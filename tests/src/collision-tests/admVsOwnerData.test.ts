@@ -32,19 +32,19 @@ describe('Admin vs Owner changes the data in the token: ', () => {
       const AliceData = 1;
       const BobData = 2;
       const collectionId = await createCollectionExpectSuccess();
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
+      const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx);
       const itemId = await createItemExpectSuccess(Bob, collectionId, 'NFT');
       //
       // tslint:disable-next-line: max-line-length
-      const AliceTx = api.tx.nft.setVariableMetaData(collectionId, itemId, AliceData.toString());
+      const AliceTx = api.tx.unique.setVariableMetaData(collectionId, itemId, AliceData.toString());
       // tslint:disable-next-line: max-line-length
-      const BobTx = api.tx.nft.setVariableMetaData(collectionId, itemId, BobData.toString());
+      const BobTx = api.tx.unique.setVariableMetaData(collectionId, itemId, BobData.toString());
       await Promise.all([
         AliceTx.signAndSend(Alice),
         BobTx.signAndSend(Bob),
       ]);
-      const item: any = await api.query.nft.nftItemList(collectionId, itemId);
+      const item: any = await api.query.unique.nftItemList(collectionId, itemId);
       expect(item.variableData).not.to.be.eq(null); // Pseudo-random selection of one of two values
       await waitNewBlocks(2);
     });

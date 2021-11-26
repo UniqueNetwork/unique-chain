@@ -1,12 +1,12 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use nft_data_structs::{CollectionId, TokenId, Collection, CollectionStats};
+use up_data_structs::{CollectionId, TokenId, Collection, CollectionStats};
 use sp_std::vec::Vec;
 use sp_core::H160;
 use codec::Decode;
 
 sp_api::decl_runtime_apis! {
-	pub trait NftApi<CrossAccountId, AccountId> where
+	pub trait UniqueApi<CrossAccountId, AccountId> where
 		AccountId: Decode,
 		CrossAccountId: pallet_common::account::CrossAccountId<AccountId>,
 	{

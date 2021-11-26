@@ -1,4 +1,4 @@
-use nft_data_structs::TokenId;
+use up_data_structs::TokenId;
 use pallet_common::erc::CommonEvmHandler;
 
 use crate::{Config, RefungibleHandle};

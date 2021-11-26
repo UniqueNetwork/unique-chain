@@ -231,12 +231,11 @@ branch = 'release-v0.9.12'
 ################################################################################
 # Local dependencies
 
-[dependencies.nft-runtime]
+[dependencies.unique-runtime]
 path = '../../runtime'
-version = '0.9.12'
 
-[dependencies.nft-data-structs]
-path = "../../primitives/nft"
+[dependencies.up-data-structs]
+path = "../../primitives/data-structs"
 default-features = false
 
 ################################################################################
@@ -245,16 +244,17 @@ default-features = false
 [package]
 authors = ['Unique Network <support@uniquenetwork.io>']
 build = 'build.rs'
-description = 'Substrate node nft'
+description = 'Unique Node'
 edition = '2018'
 homepage = 'https://unique.network'
 license = 'All Rights Reserved'
-name = 'nft'
-repository = 'https://github.com/usetech-llc/nft_private/'
+name = 'unique-node'
+repository = 'https://github.com/UniqueNetwork/unique-chain'
 version = '0.9.12'
 
 [[bin]]
-name = 'nft'
+name = 'unique-collator'
+path = "src/main.rs"
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -276,11 +276,11 @@ fc-db = { git = "https://github.com/uniquenetwork/frontier.git", branch = "uniqu
 fp-rpc = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12-weights" }
 pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12-weights" }
 
-nft-rpc = { path = "../rpc" }
+unique-rpc = { path = "../rpc" }
 
 [features]
 default = []
 runtime-benchmarks = [
-    'nft-runtime/runtime-benchmarks',
+    'unique-runtime/runtime-benchmarks',
     'polkadot-service/runtime-benchmarks',
 ]

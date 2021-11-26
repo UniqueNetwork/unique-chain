@@ -3,13 +3,13 @@
 
 [package]
 authors = ['Unique Network <support@uniquenetwork.io>']
-description = 'Substrate node nft'
+description = 'Unique Pallet'
 edition = '2018'
 homepage = 'https://unique.network'
 license = 'All Rights Reserved'
-name = 'pallet-nft'
-repository = 'https://github.com/usetech-llc/nft_private/'
-version = '3.0.0'
+name = 'pallet-unique'
+repository = 'https://github.com/UniqueNetwork/unique-chain'
+version = '0.1.0'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -32,7 +32,7 @@ std = [
     'pallet-nonfungible/std',
     'pallet-refungible/std',
     'fp-evm/std',
-    'nft-data-structs/std',
+    'up-data-structs/std',
     'up-sponsorship/std',
     'up-evm-mapping/std',
     'sp-std/std',
@@ -46,7 +46,7 @@ std = [
     'evm-coder/std',
     'pallet-evm-coder-substrate/std',
 ]
-limit-testing = ["nft-data-structs/limit-testing"]
+limit-testing = ["up-data-structs/limit-testing"]
 
 ################################################################################
 # Substrate Dependencies
@@ -121,13 +121,9 @@ branch = 'polkadot-v0.9.12'
 
 ################################################################################
 # Local Dependencies
-
-[dependencies.nft-data-structs]
-default-features = false
-path = '../../primitives/nft'
-version = '0.9.0'
-
 [dependencies]
+up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
+
 scale-info = { version = "1.0.0", default-features = false, features = [
     "derive",
 ] }

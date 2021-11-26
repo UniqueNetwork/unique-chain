@@ -2,7 +2,7 @@
 
 use erc::ERC721Events;
 use frame_support::{BoundedVec, ensure};
-use nft_data_structs::{
+use up_data_structs::{
 	AccessMode, CUSTOM_DATA_LIMIT, Collection, CollectionId, CustomDataLimit, TokenId,
 };
 use pallet_common::{
@@ -42,7 +42,7 @@ pub struct ItemData<T: Config> {
 pub mod pallet {
 	use super::*;
 	use frame_support::{Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key};
-	use nft_data_structs::{CollectionId, TokenId};
+	use up_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;
 
 	#[pallet::error]
@@ -59,7 +59,7 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub trait Store)]
+	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
@@ -185,9 +185,18 @@ impl<T: Config> Pallet<T> {
 			.checked_add(1)
 			.ok_or(ArithmeticError::Overflow)?;
 
+		let balance = <AccountBalance<T>>::get((collection.id, token_data.owner.clone()))
+			.checked_sub(1)
+			.ok_or(ArithmeticError::Overflow)?;
+
+		if balance == 0 {
+			<AccountBalance<T>>::remove((collection.id, token_data.owner.clone()));
+		} else {
+			<AccountBalance<T>>::insert((collection.id, token_data.owner.clone()), balance);
+		}
 		// =========
 
-		<Owned<T>>::remove((collection.id, &token_data.owner, token));
+		<Owned<T>>::remove((collection.id, &token_data.owner.clone(), token));
 		<TokensBurnt<T>>::insert(collection.id, burnt);
 		<TokenData<T>>::remove((collection.id, token));
 		let old_spender = <Allowance<T>>::take((collection.id, token));

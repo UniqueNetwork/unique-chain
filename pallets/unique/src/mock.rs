@@ -10,7 +10,7 @@ use sp_runtime::{
 use pallet_transaction_payment::{CurrencyAdapter};
 use frame_system as system;
 use pallet_evm::AddressMapping;
-use crate::{EvmBackwardsAddressMapping, CrossAccountId};
+use pallet_common::account::{EvmBackwardsAddressMapping, CrossAccountId};
 use codec::{Encode, Decode};
 use scale_info::TypeInfo;
 
@@ -27,6 +27,10 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		TemplateModule: pallet_template::{Pallet, Call, Storage},
 		Balances: pallet_balances::{Pallet, Call, Storage},
+		Common: pallet_common::{Pallet, Storage, Event<T>},
+		Fungible: pallet_fungible::{Pallet, Storage},
+		Refungible: pallet_refungible::{Pallet, Storage},
+		Nonfungible: pallet_nonfungible::{Pallet, Storage},
 	}
 );
 
@@ -124,13 +128,16 @@ impl EvmBackwardsAddressMapping<u64> for TestEvmBackwardsAddressMapping {
 #[derive(Encode, Decode, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, TypeInfo)]
 pub struct TestCrossAccountId(u64, sp_core::H160);
 impl CrossAccountId<u64> for TestCrossAccountId {
+	fn as_sub(&self) -> &u64 {
+		&self.0
+	}
+	fn as_eth(&self) -> &sp_core::H160 {
+		&self.1
+	}
 	fn from_sub(sub: u64) -> Self {
 		let mut eth = [0; 20];
 		eth[12..20].copy_from_slice(&sub.to_be_bytes());
 		Self(sub, sp_core::H160(eth))
-	}
-	fn as_sub(&self) -> &u64 {
-		&self.0
 	}
 	fn from_eth(eth: sp_core::H160) -> Self {
 		let mut sub_raw = [0; 8];
@@ -138,8 +145,14 @@ impl CrossAccountId<u64> for TestCrossAccountId {
 		let sub = u64::from_be_bytes(sub_raw);
 		Self(sub, eth)
 	}
-	fn as_eth(&self) -> &sp_core::H160 {
-		&self.1
+	fn conv_eq(&self, other: &Self) -> bool {
+		self.as_sub() == other.as_sub()
+	}
+}
+
+impl Default for TestCrossAccountId {
+	fn default() -> Self {
+		Self::from_sub(0)
 	}
 }
 
@@ -157,15 +170,29 @@ impl pallet_evm_coder_substrate::Config for Test {
 	type EthereumTransactionSender = TestEtheremTransactionSender;
 }
 
-impl pallet_template::Config for Test {
+impl pallet_common::Config for Test {
 	type Event = ();
-	type WeightInfo = ();
-	type CollectionCreationPrice = CollectionCreationPrice;
-	type Currency = pallet_balances::Pallet<Test>;
-	type TreasuryAccountId = TreasuryAccountId;
-	type EvmAddressMapping = TestEvmAddressMapping;
 	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
+	type EvmAddressMapping = TestEvmAddressMapping;
 	type CrossAccountId = TestCrossAccountId;
+
+	type Currency = Balances;
+	type CollectionCreationPrice = CollectionCreationPrice;
+	type TreasuryAccountId = TreasuryAccountId;
+}
+
+impl pallet_fungible::Config for Test {
+	type WeightInfo = ();
+}
+impl pallet_refungible::Config for Test {
+	type WeightInfo = ();
+}
+impl pallet_nonfungible::Config for Test {
+	type WeightInfo = ();
+}
+
+impl pallet_template::Config for Test {
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

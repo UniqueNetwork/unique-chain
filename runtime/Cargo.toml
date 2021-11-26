@@ -4,12 +4,12 @@
 [package]
 authors = ['Unique Network <support@uniquenetwork.io>']
 build = 'build.rs'
-description = 'Substrate node nft'
+description = 'Unique Runtime'
 edition = '2018'
 homepage = 'https://unique.network'
 license = 'All Rights Reserved'
-name = 'nft-runtime'
-repository = 'https://github.com/usetech-llc/nft_private/'
+name = 'unique-runtime'
+repository = 'https://github.com/UniqueNetwork/unique-chain'
 version = '0.9.12'
 
 [package.metadata.docs.rs]
@@ -32,7 +32,7 @@ runtime-benchmarks = [
     'pallet-fungible/runtime-benchmarks',
     'pallet-refungible/runtime-benchmarks',
     'pallet-nonfungible/runtime-benchmarks',
-    'pallet-nft/runtime-benchmarks',
+    'pallet-unique/runtime-benchmarks',
     'pallet-inflation/runtime-benchmarks',
     'pallet-xcm/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
@@ -80,10 +80,10 @@ std = [
     'pallet-fungible/std',
     'pallet-refungible/std',
     'pallet-nonfungible/std',
-    'pallet-nft/std',
+    'pallet-unique/std',
     'pallet-unq-scheduler/std',
-    'pallet-nft-charge-transaction/std',
-    'nft-data-structs/std',
+    'pallet-charge-transaction/std',
+    'up-data-structs/std',
     'sp-api/std',
     'sp-block-builder/std',
     "sp-consensus-aura/std",
@@ -102,7 +102,7 @@ std = [
 
     "orml-vesting/std",
 ]
-limit-testing = ['pallet-nft/limit-testing', 'nft-data-structs/limit-testing']
+limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 
 ################################################################################
 # Substrate Dependencies
@@ -376,18 +376,18 @@ scale-info = { version = "1.0.0", default-features = false, features = [
     "derive",
 ] }
 derivative = "2.2.0"
-pallet-nft = { path = '../pallets/nft', default-features = false, version = '3.0.0' }
+pallet-unique = { path = '../pallets/unique', default-features = false }
 up-rpc = { path = "../primitives/rpc", default-features = false }
 up-evm-mapping = { path = "../primitives/evm-mapping", default-features = false }
-pallet-inflation = { path = '../pallets/inflation', default-features = false, version = '3.0.0' }
-nft-data-structs = { path = '../primitives/nft', default-features = false, version = '0.9.0' }
+pallet-inflation = { path = '../pallets/inflation', default-features = false }
+up-data-structs = { path = '../primitives/data-structs', default-features = false }
 pallet-common = { default-features = false, path = "../pallets/common" }
 pallet-fungible = { default-features = false, path = "../pallets/fungible" }
 pallet-refungible = { default-features = false, path = "../pallets/refungible" }
 pallet-nonfungible = { default-features = false, path = "../pallets/nonfungible" }
-pallet-unq-scheduler = { path = '../pallets/scheduler', default-features = false, version = '3.0.0' }
+pallet-unq-scheduler = { path = '../pallets/scheduler', default-features = false }
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
-pallet-nft-charge-transaction = { git = "https://github.com/UniqueNetwork/pallet-sponsoring", package = "pallet-template-transaction-payment", default-features = false, version = '3.0.0' }
+pallet-charge-transaction = { git = "https://github.com/UniqueNetwork/pallet-sponsoring", package = "pallet-template-transaction-payment", default-features = false, version = '3.0.0' }
 pallet-evm-migration = { path = '../pallets/evm-migration', default-features = false }
 pallet-evm-contract-helpers = { path = '../pallets/evm-contract-helpers', default-features = false }
 pallet-evm-transaction-payment = { path = '../pallets/evm-transaction-payment', default-features = false }

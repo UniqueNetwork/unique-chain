@@ -9,7 +9,7 @@ services:
         - RUST_TOOLCHAIN=${RUST_TOOLCHAIN:?err}
         - RUST_C=${RUST_C:?err}
         - POLKA_VERSION=${POLKA_VERSION:?err}
-        - NFT_BRANCH=${NFT_BRANCH:?err}
+        - UNIQUE_BRANCH=${UNIQUE_BRANCH:?err}
     volumes:
       - ./launch-config.json:/polkadot-launch/launch-config.json
     env_file:
@@ -22,7 +22,7 @@ services:
     environment:
       RPC_URL: http://blockchain_nodes:9933/
     volumes:
-      - ./tests/src/config_docker.ts:/nft_parachain/src/config.ts
-      - /home/ubuntu/mochawesome-report:/nft_parachain/mochawesome-report
+      - ./tests/src/config_docker.ts:/unique_parachain/src/config.ts
+      - /home/ubuntu/mochawesome-report:/unique_parachain/mochawesome-report
     depends_on:
       - blockchain_nodes

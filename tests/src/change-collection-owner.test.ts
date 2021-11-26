@@ -38,7 +38,7 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner):', ()
       const collection =await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
 
-      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
       await submitTransactionAsync(alice, changeOwnerTx);
 
       const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
@@ -57,10 +57,10 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
 
-      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
       await submitTransactionAsync(alice, changeOwnerTx);
 
-      const badChangeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, alice.address);
+      const badChangeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, alice.address);
       await expect(submitTransactionExpectFailAsync(alice, badChangeOwnerTx)).to.be.rejected;
 
       const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
@@ -78,7 +78,7 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
 
-      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
       await submitTransactionAsync(alice, changeOwnerTx);
 
       const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
@@ -99,7 +99,7 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
         ownerCanTransfer: true,
         ownerCanDestroy: true,
       };
-      const tx1 = api.tx.nft.setCollectionLimits(
+      const tx1 = api.tx.unique.setCollectionLimits(
         collectionId,
         collectionLimits,
       );
@@ -122,13 +122,13 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
 
-      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
       await submitTransactionAsync(alice, changeOwnerTx);
 
       const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
       expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(bob.address);
 
-      const changeOwnerTx2 = api.tx.nft.changeCollectionOwner(collectionId, charlie.address);
+      const changeOwnerTx2 = api.tx.unique.changeCollectionOwner(collectionId, charlie.address);
       await submitTransactionAsync(bob, changeOwnerTx2);
 
       // ownership lost
@@ -145,7 +145,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
 
-      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
       await expect(submitTransactionExpectFailAsync(bob, changeOwnerTx)).to.be.rejected;
 
       const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
@@ -164,7 +164,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
 
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
 
-      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
       await expect(submitTransactionExpectFailAsync(bob, changeOwnerTx)).to.be.rejected;
 
       const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
@@ -181,7 +181,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
 
-      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
       await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
@@ -199,10 +199,10 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
 
-      const changeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, bob.address);
+      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
       await submitTransactionAsync(alice, changeOwnerTx);
 
-      const badChangeOwnerTx = api.tx.nft.changeCollectionOwner(collectionId, alice.address);
+      const badChangeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, alice.address);
       await expect(submitTransactionExpectFailAsync(alice, badChangeOwnerTx)).to.be.rejected;
 
       const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
@@ -220,7 +220,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
         ownerCanTransfer: true,
         ownerCanDestroy: true,
       };
-      const tx1 = api.tx.nft.setCollectionLimits(
+      const tx1 = api.tx.unique.setCollectionLimits(
         collectionId,
         collectionLimits,
       );

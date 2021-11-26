@@ -15,9 +15,9 @@ use sp_core::{H160, U256};
 use crate::{CollectionMode, Config, dispatch::Dispatched};
 use pallet_common::CollectionHandle;
 
-pub struct NftErcSupport<T: Config>(core::marker::PhantomData<T>);
+pub struct UniqueErcSupport<T: Config>(core::marker::PhantomData<T>);
 
-impl<T: Config> pallet_evm::OnMethodCall<T> for NftErcSupport<T> {
+impl<T: Config> pallet_evm::OnMethodCall<T> for UniqueErcSupport<T> {
 	fn is_reserved(target: &H160) -> bool {
 		map_eth_to_id(target).is_some()
 	}

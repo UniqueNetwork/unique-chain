@@ -4,7 +4,7 @@
 //
 
 use cumulus_primitives_core::ParaId;
-use nft_runtime::*;
+use unique_runtime::*;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use sp_core::{sr25519, Pair, Public};
@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::map::Map;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<nft_runtime::GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<unique_runtime::GenesisConfig, Extensions>;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -203,8 +203,8 @@ fn testnet_genesis(
 	id: ParaId,
 ) -> GenesisConfig {
 	GenesisConfig {
-		system: nft_runtime::SystemConfig {
-			code: nft_runtime::WASM_BINARY
+		system: unique_runtime::SystemConfig {
+			code: unique_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 			changes_trie_config: Default::default(),
@@ -220,8 +220,8 @@ fn testnet_genesis(
 		treasury: Default::default(),
 		sudo: SudoConfig { key: root_key },
 		vesting: VestingConfig { vesting: vec![] },
-		parachain_info: nft_runtime::ParachainInfoConfig { parachain_id: id },
-		aura: nft_runtime::AuraConfig {
+		parachain_info: unique_runtime::ParachainInfoConfig { parachain_id: id },
+		aura: unique_runtime::AuraConfig {
 			authorities: initial_authorities,
 		},
 		aura_ext: Default::default(),

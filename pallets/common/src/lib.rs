@@ -10,7 +10,7 @@ use frame_support::{
 	traits::{Imbalance, Get, Currency},
 };
 use pallet_evm::GasWeightMapping;
-use nft_data_structs::{
+use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, ExistenceRequirement,
 	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
 	COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, Pays, PostDispatchInfo, TokenId, Weight,
@@ -143,7 +143,7 @@ pub mod pallet {
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key};
 	use account::CrossAccountId;
 	use frame_support::traits::Currency;
-	use nft_data_structs::TokenId;
+	use up_data_structs::TokenId;
 	use scale_info::TypeInfo;
 
 	#[pallet::config]
@@ -273,8 +273,8 @@ pub mod pallet {
 		TotalCollectionsLimitExceeded,
 		/// variable_data exceeded data limit.
 		TokenVariableDataLimitExceeded,
-		/// Exceeded max admin amount
-		CollectionAdminAmountExceeded,
+		/// Exceeded max admin count
+		CollectionAdminCountExceeded,
 
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
@@ -506,10 +506,10 @@ impl<T: Config> Pallet<T> {
 		if admin {
 			let amount = amount
 				.checked_add(1)
-				.ok_or(<Error<T>>::CollectionAdminAmountExceeded)?;
+				.ok_or(<Error<T>>::CollectionAdminCountExceeded)?;
 			ensure!(
 				amount <= Self::collection_admins_limit(),
-				<Error<T>>::CollectionAdminAmountExceeded,
+				<Error<T>>::CollectionAdminCountExceeded,
 			);
 
 			// =========

@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{ensure, BoundedVec};
-use nft_data_structs::{
+use up_data_structs::{
 	AccessMode, CUSTOM_DATA_LIMIT, Collection, CollectionId, CustomDataLimit,
 	MAX_REFUNGIBLE_PIECES, TokenId,
 };
@@ -37,7 +37,7 @@ pub struct ItemData {
 pub mod pallet {
 	use super::*;
 	use frame_support::{Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key};
-	use nft_data_structs::{CollectionId, TokenId};
+	use up_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;
 
 	#[pallet::error]
@@ -54,7 +54,7 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub trait Store)]
+	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
@@ -175,6 +175,8 @@ impl<T: Config> Pallet<T> {
 		<TotalSupply<T>>::remove_prefix((id,), None);
 		<Balance<T>>::remove_prefix((id,), None);
 		<Allowance<T>>::remove_prefix((id,), None);
+		<Owned<T>>::remove_prefix((id,), None);
+		<AccountBalance<T>>::remove_prefix((id,), None);
 		Ok(())
 	}
 
@@ -464,7 +466,11 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		amount: u128,
 	) {
-		<Allowance<T>>::insert((collection.id, token, sender, spender), amount);
+		if amount == 0 {
+			<Allowance<T>>::remove((collection.id, token, sender, spender));
+		} else {
+			<Allowance<T>>::insert((collection.id, token, sender, spender), amount);
+		}
 		// TODO: ERC20 approval event
 		<PalletCommon<T>>::deposit_event(CommonEvent::Approved(
 			collection.id,

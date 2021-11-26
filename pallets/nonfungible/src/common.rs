@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
-use nft_data_structs::TokenId;
+use up_data_structs::TokenId;
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
@@ -47,11 +47,11 @@ impl<T: Config> CommonWeightInfo for CommonWeights<T> {
 }
 
 fn map_create_data<T: Config>(
-	data: nft_data_structs::CreateItemData,
+	data: up_data_structs::CreateItemData,
 	to: &T::CrossAccountId,
 ) -> Result<CreateItemData<T>, DispatchError> {
 	match data {
-		nft_data_structs::CreateItemData::NFT(data) => Ok(CreateItemData {
+		up_data_structs::CreateItemData::NFT(data) => Ok(CreateItemData {
 			const_data: data.const_data,
 			variable_data: data.variable_data,
 			owner: to.clone(),
@@ -65,7 +65,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		&self,
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
-		data: nft_data_structs::CreateItemData,
+		data: up_data_structs::CreateItemData,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
 			<Pallet<T>>::create_item(self, &sender, map_create_data(data, &to)?),
@@ -77,7 +77,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		&self,
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
-		data: Vec<nft_data_structs::CreateItemData>,
+		data: Vec<up_data_structs::CreateItemData>,
 	) -> DispatchResultWithPostInfo {
 		let data = data
 			.into_iter()

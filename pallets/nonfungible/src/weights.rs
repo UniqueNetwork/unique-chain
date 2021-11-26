@@ -7,7 +7,7 @@
 //! EXECUTION: None, WASM-EXECUTION: Compiled, CHAIN: None, DB CACHE: 128
 
 // Executed Command:
-// target/release/nft
+// target/release/unique-collator
 // benchmark
 // --pallet
 // pallet-nonfungible
