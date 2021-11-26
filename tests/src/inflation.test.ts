@@ -10,7 +10,7 @@ import {default as usingApi} from './substrate/substrate-api';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-describe.only('integration test: Inflation', () => {
+describe('integration test: Inflation', () => {
   it('First year inflation is 10%', async () => {
     await usingApi(async (api) => {
 
