@@ -1,7 +1,7 @@
 import {readFile} from 'fs/promises';
 import {getBalanceSingle, transferBalanceExpectSuccess} from '../../substrate/get-balance';
 import privateKey from '../../substrate/privateKey';
-import {addToAllowListExpectSuccess, confirmSponsorshipExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, createItemExpectSuccess, getTokenOwner, setCollectionSponsorExpectSuccess, transferExpectSuccess, transferFromExpectSuccess} from '../../util/helpers';
+import {addToAllowListExpectSuccess, confirmSponsorshipExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, createItemExpectSuccess, getTokenOwner, setCollectionLimitsExpectSuccess, setCollectionSponsorExpectSuccess, transferExpectSuccess, transferFromExpectSuccess} from '../../util/helpers';
 import {collectionIdToAddress, contractHelpers, createEthAccountWithBalance, executeEthTxOnSub, GAS_ARGS, itWeb3, subToEth, subToEthLowercase, transferBalanceToEth} from '../util/helpers';
 import {evmToAddress} from '@polkadot/util-crypto';
 import nonFungibleAbi from '../nonFungibleAbi.json';
@@ -25,16 +25,17 @@ describe('Matcher contract usage', () => {
     await transferBalanceToEth(api, alice, matcher.options.address);
 
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorApproveTimeout: 1});
     const evmCollection = new web3.eth.Contract(nonFungibleAbi as any, collectionIdToAddress(collectionId), {from: matcherOwner});
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
+    await transferBalanceToEth(api, alice, subToEth(alice.address));
     await confirmSponsorshipExpectSuccess(collectionId);
 
     await helpers.methods.toggleAllowed(matcher.options.address, subToEth(alice.address), true).send({from: matcherOwner});
     await addToAllowListExpectSuccess(alice, collectionId, evmToAddress(subToEth(alice.address)));
 
-    const seller = privateKey('//Bob');
+    const seller = privateKey(`//Seller/${Date.now()}`);
     await helpers.methods.toggleAllowed(matcher.options.address, subToEth(seller.address), true).send({from: matcherOwner});
-    await addToAllowListExpectSuccess(alice, collectionId, evmToAddress(subToEth(seller.address)));
 
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', seller.address);
 
@@ -151,16 +152,17 @@ describe('Matcher contract usage', () => {
     await transferBalanceToEth(api, alice, matcher.options.address);
 
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorApproveTimeout: 1});
     const evmCollection = new web3.eth.Contract(nonFungibleAbi as any, collectionIdToAddress(collectionId), {from: matcherOwner});
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
+    await transferBalanceToEth(api, alice, subToEth(alice.address));
     await confirmSponsorshipExpectSuccess(collectionId);
 
     await helpers.methods.toggleAllowed(matcher.options.address, subToEth(alice.address), true).send({from: matcherOwner});
     await addToAllowListExpectSuccess(alice, collectionId, evmToAddress(subToEth(alice.address)));
 
-    const seller = privateKey('//Bob');
+    const seller = privateKey(`//Seller/${Date.now()}`);
     await helpers.methods.toggleAllowed(matcher.options.address, subToEth(seller.address), true).send({from: matcherOwner});
-    await addToAllowListExpectSuccess(alice, collectionId, evmToAddress(subToEth(seller.address)));
 
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', seller.address);
 
