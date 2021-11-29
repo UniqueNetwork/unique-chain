@@ -187,6 +187,13 @@ pub mod pallet {
 		/// * account_id: Collection owner.
 		CollectionCreated(CollectionId, u8, T::AccountId),
 
+		/// New collection was destroyed
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique identifier of collection.
+		CollectionDestroyed(CollectionId),
+
 		/// New item was created.
 		///
 		/// # Arguments
@@ -467,6 +474,8 @@ impl<T: Config> Pallet<T> {
 		<AdminAmount<T>>::remove(collection.id);
 		<IsAdmin<T>>::remove_prefix((collection.id,), None);
 		<Allowlist<T>>::remove_prefix((collection.id,), None);
+
+		<Pallet<T>>::deposit_event(Event::CollectionDestroyed(collection.id));
 		Ok(())
 	}
 
