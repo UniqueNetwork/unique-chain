@@ -159,7 +159,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
     });
   });
 
-  it.only('NFT Transfer fee is close to 0.1 Unique', async () => {
+  it('NFT Transfer fee is close to 0.1 Unique', async () => {
     await usingApi(async (api) => {
       await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
