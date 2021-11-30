@@ -1,3 +1,7 @@
+/* broken by design
+// substrate transactions are sequential, not parallel
+// the order of execution is indeterminate
+
 import { IKeyringPair } from '@polkadot/types/types';
 import BN from 'bn.js';
 import chai from 'chai';
@@ -5,7 +9,7 @@ import chaiAsPromised from 'chai-as-promised';
 import privateKey from '../substrate/privateKey';
 import usingApi, { submitTransactionAsync } from '../substrate/substrate-api';
 import {
-  addToWhiteListExpectSuccess,
+  addToAllowListExpectSuccess,
   createCollectionExpectSuccess,
   getCreateItemResult,
   setMintPermissionExpectSuccess,
@@ -19,12 +23,12 @@ let Alice: IKeyringPair;
 let Bob: IKeyringPair;
 let Ferdie: IKeyringPair;
 
-const AccountTokenOwnershipLimit = 4;
-const SponsoredMintSize = 4294967295;
-const TokenLimit = 4;
-const SponsorTimeout = 14400;
-const OwnerCanTransfer = false;
-const OwnerCanDestroy = false;
+const accountTokenOwnershipLimit = 4;
+const sponsoredMintSize = 4294967295;
+const tokenLimit = 4;
+const sponsorTimeout = 14400;
+const ownerCanTransfer = false;
+const ownerCanDestroy = false;
 
 before(async () => {
   await usingApi(async () => {
@@ -40,18 +44,18 @@ describe('Token limit exceeded collection: ', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       await setMintPermissionExpectSuccess(Alice, collectionId, true);
-      await addToWhiteListExpectSuccess(Alice, collectionId, Ferdie.address);
-      await addToWhiteListExpectSuccess(Alice, collectionId, Bob.address);
-      const setCollectionLim = api.tx.nft.setCollectionLimits(
+      await addToAllowListExpectSuccess(Alice, collectionId, Ferdie.address);
+      await addToAllowListExpectSuccess(Alice, collectionId, Bob.address);
+      const setCollectionLim = api.tx.unique.setCollectionLimits(
         collectionId,
         {
-          AccountTokenOwnershipLimit,
-          SponsoredMintSize,
-          TokenLimit,
+          accountTokenOwnershipLimit,
+          sponsoredMintSize,
+          tokenLimit,
           // tslint:disable-next-line: object-literal-sort-keys
-          SponsorTimeout,
-          OwnerCanTransfer,
-          OwnerCanDestroy,
+          sponsorTimeout,
+          ownerCanTransfer,
+          ownerCanDestroy,
         },
       );
       const subTx = await submitTransactionAsync(Alice, setCollectionLim);
@@ -61,19 +65,20 @@ describe('Token limit exceeded collection: ', () => {
       await waitNewBlocks(2);
 
       const args = [{ nft: ['0x31', '0x31'] }, { nft: ['0x32', '0x32'] }, { nft: ['0x33', '0x33'] }];
-      const mintItemOne = api.tx.nft
+      const mintItemOne = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(Ferdie.address), args);
-      const mintItemTwo = api.tx.nft
+      const mintItemTwo = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(Bob.address), args);
       await Promise.all([
         mintItemOne.signAndSend(Ferdie),
         mintItemTwo.signAndSend(Bob),
       ]);
       await waitNewBlocks(2);
-      const itemsListIndexAfter = await api.query.nft.itemListIndex(collectionId) as unknown as BN;
+      const itemsListIndexAfter = await api.query.unique.itemListIndex(collectionId) as unknown as BN;
       expect(itemsListIndexAfter.toNumber()).to.be.equal(3);
       // TokenLimit = 4. The first transaction is successful. The second should fail.
       await waitNewBlocks(2);
     });
   });
 });
+*/

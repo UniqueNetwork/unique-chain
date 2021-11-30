@@ -4,41 +4,39 @@
 //
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
-import { ApiPromise } from '@polkadot/api';
-import { IKeyringPair } from '@polkadot/types/types';
+import {ApiPromise} from '@polkadot/api';
+import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from '../substrate/privateKey';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
-import { createCollectionExpectSuccess, createItemExpectSuccess, nftEventMessage, normalizeAccountId } from '../util/helpers';
+import {createCollectionExpectSuccess, createItemExpectSuccess, uniqueEventMessage, normalizeAccountId} from '../util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 describe('Transfer event ', () => {
-  let Alice: IKeyringPair;
-  let Bob: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
   const checkSection = 'Transfer';
   const checkTreasury = 'Deposit';
   const checkSystem = 'ExtrinsicSuccess';
   before(async () => {
     await usingApi(async () => {
-      Alice = privateKey('//Alice');
-      Bob = privateKey('//Bob');
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
     });
   });
   it('Check event from transfer(): ', async () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionID = await createCollectionExpectSuccess();
-      const itemID = await createItemExpectSuccess(Alice, collectionID, 'NFT');
-      const transfer = api.tx.nft.transfer(normalizeAccountId(Bob.address), collectionID, itemID, 1);
-      const events = await submitTransactionAsync(Alice, transfer);
-      const msg = JSON.stringify(nftEventMessage(events));
+      const itemID = await createItemExpectSuccess(alice, collectionID, 'NFT');
+      const transfer = api.tx.unique.transfer(normalizeAccountId(bob.address), collectionID, itemID, 1);
+      const events = await submitTransactionAsync(alice, transfer);
+      const msg = JSON.stringify(uniqueEventMessage(events));
       expect(msg).to.be.contain(checkSection);
       expect(msg).to.be.contain(checkTreasury);
       expect(msg).to.be.contain(checkSystem);
     });
   });
 });
-
-

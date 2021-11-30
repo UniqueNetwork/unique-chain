@@ -3,7 +3,7 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { IKeyringPair } from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import {
@@ -33,7 +33,7 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
     await setCollectionLimitsExpectSuccess(alice, collectionId, {
-      SponsoredDataRateLimit: 0,
+      sponsoredDataRateLimit: 0,
     });
 
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', userWithNoBalance.address);
@@ -46,7 +46,7 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
     await setCollectionLimitsExpectSuccess(alice, collectionId, {
-      SponsoredDataRateLimit: 10,
+      sponsoredDataRateLimit: 10,
     });
 
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', userWithNoBalance.address);
@@ -59,8 +59,8 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
     await setCollectionLimitsExpectSuccess(alice, collectionId, {
-      SponsoredDataRateLimit: 0,
-      SponsoredDataSize: 1,
+      sponsoredDataRateLimit: 0,
+      sponsoredDataSize: 1,
     });
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', userWithNoBalance.address);
 

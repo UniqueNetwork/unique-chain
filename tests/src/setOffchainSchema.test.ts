@@ -3,7 +3,7 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { IKeyringPair } from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
@@ -35,20 +35,24 @@ describe('Integration Test setOffchainSchema', () => {
   });
 
   it('execute setOffchainSchema, verify data was set', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-    await setOffchainSchemaExpectSuccess(alice, collectionId, DATA);
-    const collection = await queryCollectionExpectSuccess(collectionId);
+    await usingApi(async api => {
+      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await setOffchainSchemaExpectSuccess(alice, collectionId, DATA);
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
 
-    expect(collection.OffchainSchema).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));
+      expect('0x' + Buffer.from(collection.offchainSchema).toString('hex')).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));
+    });
   });
 
   it('execute setOffchainSchema (collection admin), verify data was set', async () => {
-    const collectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob);
-    await setOffchainSchemaExpectSuccess(bob, collectionId, DATA);
-    const collection = await queryCollectionExpectSuccess(collectionId);
+    await usingApi(async api => {
+      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+      await setOffchainSchemaExpectSuccess(bob, collectionId, DATA);
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
 
-    expect(collection.OffchainSchema).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));
+      expect('0x' + Buffer.from(collection.offchainSchema).toString('hex')).to.be.equal('0x' + Buffer.from(DATA).toString('hex'));
+    });
   });
 });
 
@@ -63,7 +67,7 @@ describe('Negative Integration Test setOffchainSchema', () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
 
-      validCollectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+      validCollectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     });
   });
 
@@ -74,7 +78,7 @@ describe('Negative Integration Test setOffchainSchema', () => {
   });
 
   it('fails on destroyed collection id', async () => {
-    const destroyedCollectionId = await createCollectionExpectSuccess({ mode: { type: 'NFT' } });
+    const destroyedCollectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await destroyCollectionExpectSuccess(destroyedCollectionId);
 
     await setOffchainSchemaExpectFailure(alice, destroyedCollectionId, DATA);

@@ -62,7 +62,7 @@ use sp_runtime::{
 	traits::{Zero, One, BadOrigin, Saturating},
 };
 use frame_support::{
-	decl_module, decl_storage, decl_event, decl_error, IterableStorageMap,
+	decl_module, decl_storage, decl_event, decl_error,
 	dispatch::{Dispatchable, DispatchError, DispatchResult, Parameter},
 	traits::{
 		Get,
@@ -74,6 +74,7 @@ use frame_support::{
 use frame_system::{self as system, ensure_signed};
 pub use weights::WeightInfo;
 use up_sponsorship::SponsorshipHandler;
+use scale_info::TypeInfo;
 
 /// Our pallet's configuration trait. All our types and constants go in here. If the
 /// pallet is dependent on specific other pallets, then their configuration traits
@@ -91,7 +92,7 @@ pub trait Config: system::Config {
 		+ IsType<<Self as system::Config>::Origin>;
 
 	/// The caller origin, overarching type of all pallets origins.
-	type PalletsOrigin: From<system::RawOrigin<Self::AccountId>> + Codec + Clone + Eq;
+	type PalletsOrigin: From<system::RawOrigin<Self::AccountId>> + Codec + TypeInfo + Clone + Eq;
 
 	/// The aggregated call type.
 	type Call: Parameter
@@ -135,7 +136,7 @@ struct ScheduledV1<Call, BlockNumber> {
 
 /// Information regarding an item to be executed in the future.
 #[cfg_attr(any(feature = "std", test), derive(PartialEq, Eq))]
-#[derive(Clone, RuntimeDebug, Encode, Decode)]
+#[derive(Clone, RuntimeDebug, Encode, Decode, TypeInfo)]
 pub struct ScheduledV2<Call, BlockNumber, PalletsOrigin, AccountId> {
 	/// The unique identity for this task, if there is one.
 	maybe_id: Option<Vec<u8>>,
@@ -157,7 +158,7 @@ pub type Scheduled<Call, BlockNumber, PalletsOrigin, AccountId> =
 // A value placed in storage that represents the current version of the Scheduler storage.
 // This value is used by the `on_runtime_upgrade` logic to determine whether we run
 // storage migration logic.
-#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug)]
+#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 enum Releases {
 	V1,
 	V2,
@@ -169,7 +170,7 @@ impl Default for Releases {
 	}
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct CallSpec {
 	module: u32,
 	method: u32,
@@ -455,63 +456,6 @@ decl_module! {
 }
 
 impl<T: Config> Module<T> {
-	/// Migrate storage format from V1 to V2.
-	/// Return true if migration is performed.
-	pub fn migrate_v1_to_t2() -> bool {
-		if StorageVersion::get() == Releases::V1 {
-			StorageVersion::put(Releases::V2);
-
-			Agenda::<T>::translate::<
-				Vec<Option<ScheduledV1<<T as Config>::Call, T::BlockNumber>>>,
-				_,
-			>(|_, agenda| {
-				Some(
-					agenda
-						.into_iter()
-						.map(|schedule| {
-							schedule.map(|schedule| ScheduledV2 {
-								maybe_id: schedule.maybe_id,
-								priority: schedule.priority,
-								call: schedule.call,
-								maybe_periodic: schedule.maybe_periodic,
-								origin: system::RawOrigin::Root.into(),
-								_phantom: Default::default(),
-							})
-						})
-						.collect::<Vec<_>>(),
-				)
-			});
-
-			true
-		} else {
-			false
-		}
-	}
-
-	/// Helper to migrate scheduler when the pallet origin type has changed.
-	pub fn migrate_origin<OldOrigin: Into<T::PalletsOrigin> + codec::Decode>() {
-		Agenda::<T>::translate::<
-			Vec<Option<Scheduled<<T as Config>::Call, T::BlockNumber, OldOrigin, T::AccountId>>>,
-			_,
-		>(|_, agenda| {
-			Some(
-				agenda
-					.into_iter()
-					.map(|schedule| {
-						schedule.map(|schedule| Scheduled {
-							maybe_id: schedule.maybe_id,
-							priority: schedule.priority,
-							call: schedule.call,
-							maybe_periodic: schedule.maybe_periodic,
-							origin: schedule.origin.into(),
-							_phantom: Default::default(),
-						})
-					})
-					.collect::<Vec<_>>(),
-			)
-		});
-	}
-
 	fn resolve_time(when: DispatchTime<T::BlockNumber>) -> Result<T::BlockNumber, DispatchError> {
 		let now = frame_system::Pallet::<T>::block_number();
 
@@ -794,9 +738,7 @@ mod tests {
 	use super::*;
 
 	use frame_support::{
-		Hashable, assert_err, assert_noop, assert_ok, ord_parameter_types, parameter_types,
-		traits::{Contains, Filter, OnFinalize, OnInitialize},
-		weights::constants::RocksDbWeight,
+		ord_parameter_types, parameter_types, traits::Contains, weights::constants::RocksDbWeight,
 	};
 	use sp_core::H256;
 	use sp_runtime::{
@@ -805,7 +747,6 @@ mod tests {
 		traits::{BlakeTwo256, IdentityLookup},
 	};
 	use frame_system::{EnsureOneOf, EnsureRoot, EnsureSignedBy};
-	use substrate_test_utils::assert_eq_uvec;
 	use crate as scheduler;
 
 	mod logger {
@@ -814,9 +755,6 @@ mod tests {
 
 		thread_local! {
 			static LOG: RefCell<Vec<(OriginCaller, u32)>> = RefCell::new(Vec::new());
-		}
-		pub fn log() -> Vec<(OriginCaller, u32)> {
-			LOG.with(|log| log.borrow().clone())
 		}
 		pub trait Config: system::Config {
 			type Event: From<Event> + Into<<Self as system::Config>::Event>;
@@ -872,7 +810,7 @@ mod tests {
 	pub struct BaseFilter;
 	impl Contains<Call> for BaseFilter {
 		fn contains(call: &Call) -> bool {
-			!matches!(call, Call::Logger(logger::Call::log(_, _)))
+			!matches!(call, Call::Logger(logger::Call::log { .. }))
 		}
 	}
 
@@ -927,24 +865,5 @@ mod tests {
 		type MaxScheduledPerBlock = MaxScheduledPerBlock;
 		type WeightInfo = ();
 		type SponsorshipHandler = ();
-	}
-
-	pub fn new_test_ext() -> sp_io::TestExternalities {
-		let t = system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
-		t.into()
-	}
-
-	fn run_to_block(n: u64) {
-		while System::block_number() < n {
-			Scheduler::on_finalize(System::block_number());
-			System::set_block_number(System::block_number() + 1);
-			Scheduler::on_initialize(System::block_number());
-		}
-	}
-
-	fn root() -> OriginCaller {
-		system::RawOrigin::Root.into()
 	}
 }

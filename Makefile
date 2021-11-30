@@ -4,29 +4,30 @@ _help:
 	@echo "evm_stubs - recompile contract stubs"
 	@echo "bench - run frame-benchmarking"
 	@echo "  bench-evm-migration"
-	@echo "  bench-nft"
+	@echo "  bench-unique"
 
 .PHONY: regenerate_solidity
 regenerate_solidity:
-	PACKAGE=pallet-nft NAME=eth::erc::fungible_iface OUTPUT=./tests/src/eth/api/UniqueFungible.sol ./.maintain/scripts/generate_api.sh
-	PACKAGE=pallet-nft NAME=eth::erc::nft_iface OUTPUT=./tests/src/eth/api/UniqueNFT.sol ./.maintain/scripts/generate_api.sh
+	PACKAGE=pallet-fungible NAME=erc::gen_iface OUTPUT=./tests/src/eth/api/UniqueFungible.sol ./.maintain/scripts/generate_api.sh
+	PACKAGE=pallet-nonfungible NAME=erc::gen_iface OUTPUT=./tests/src/eth/api/UniqueNFT.sol ./.maintain/scripts/generate_api.sh
 	PACKAGE=pallet-evm-contract-helpers NAME=eth::contract_helpers_iface OUTPUT=./tests/src/eth/api/ContractHelpers.sol ./.maintain/scripts/generate_api.sh
 
-	PACKAGE=pallet-nft NAME=eth::erc::fungible_impl OUTPUT=./pallets/nft/src/eth/stubs/UniqueFungible.sol ./.maintain/scripts/generate_api.sh
-	PACKAGE=pallet-nft NAME=eth::erc::nft_impl OUTPUT=./pallets/nft/src/eth/stubs/UniqueNFT.sol ./.maintain/scripts/generate_api.sh
+	PACKAGE=pallet-fungible NAME=erc::gen_impl OUTPUT=./pallets/fungible/src/stubs/UniqueFungible.sol ./.maintain/scripts/generate_api.sh
+	PACKAGE=pallet-nonfungible NAME=erc::gen_impl OUTPUT=./pallets/nonfungible/src/stubs/UniqueNFT.sol ./.maintain/scripts/generate_api.sh
 	PACKAGE=pallet-evm-contract-helpers NAME=eth::contract_helpers_impl OUTPUT=./pallets/evm-contract-helpers/src/stubs/ContractHelpers.sol ./.maintain/scripts/generate_api.sh
 
-NFT_EVM_STUBS=./pallets/nft/src/eth/stubs
+FUNGIBLE_EVM_STUBS=./pallets/fungible/src/stubs
+NONFUNGIBLE_EVM_STUBS=./pallets/nonfungible/src/stubs
 CONTRACT_HELPERS_STUBS=./pallets/evm-contract-helpers/src/stubs/
 
-$(NFT_EVM_STUBS)/UniqueFungible.raw: $(NFT_EVM_STUBS)/UniqueFungible.sol
+$(FUNGIBLE_EVM_STUBS)/UniqueFungible.raw: $(FUNGIBLE_EVM_STUBS)/UniqueFungible.sol
 	INPUT=$< OUTPUT=$@ ./.maintain/scripts/compile_stub.sh
-$(NFT_EVM_STUBS)/UniqueNFT.raw: $(NFT_EVM_STUBS)/UniqueNFT.sol
+$(NONFUNGIBLE_EVM_STUBS)/UniqueNFT.raw: $(NONFUNGIBLE_EVM_STUBS)/UniqueNFT.sol
 	INPUT=$< OUTPUT=$@ ./.maintain/scripts/compile_stub.sh
 $(CONTRACT_HELPERS_STUBS)/ContractHelpers.raw: $(CONTRACT_HELPERS_STUBS)/ContractHelpers.sol
 	INPUT=$< OUTPUT=$@ ./.maintain/scripts/compile_stub.sh
 
-evm_stubs: $(NFT_EVM_STUBS)/UniqueFungible.raw $(NFT_EVM_STUBS)/UniqueNFT.raw $(CONTRACT_HELPERS_STUBS)/ContractHelpers.raw
+evm_stubs: $(FUNGIBLE_EVM_STUBS)/UniqueFungible.raw $(NONFUNGIBLE_EVM_STUBS)/UniqueNFT.raw $(CONTRACT_HELPERS_STUBS)/ContractHelpers.raw
 
 .PHONY: _bench
 _bench:
@@ -40,9 +41,21 @@ _bench:
 bench-evm-migration:
 	make _bench PALLET=evm-migration
 
-.PHONY: bench-nft
-bench-nft:
-	make _bench PALLET=nft
+.PHONY: bench-unique
+bench-unique:
+	make _bench PALLET=unique
+
+.PHONY: bench-fungible
+bench-fungible:
+	make _bench PALLET=fungible
+
+.PHONY: bench-refungible
+bench-refungible:
+	make _bench PALLET=refungible
+
+.PHONY: bench-nonfungible
+bench-nonfungible:
+	make _bench PALLET=nonfungible
 
 .PHONY: bench
-bench: bench-evm-migration bench-nft
+bench: bench-evm-migration bench-unique bench-fungible bench-refungible bench-nonfungible

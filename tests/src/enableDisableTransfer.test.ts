@@ -21,31 +21,31 @@ chai.use(chaiAsPromised);
 describe('Enable/Disable Transfers', () => {
   it('User can transfer token with enabled transfer flag', async () => {
     await usingApi(async () => {
-      const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
-      const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
+      const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
 
       // explicitely set transfer flag
-      await setTransferFlagExpectSuccess(Alice, nftCollectionId, true);
+      await setTransferFlagExpectSuccess(alice, nftCollectionId, true);
 
-      await transferExpectSuccess(nftCollectionId, newNftTokenId, Alice, Bob, 1);
+      await transferExpectSuccess(nftCollectionId, newNftTokenId, alice, bob, 1);
     });
   });
 
   it('User can\'n transfer token with disabled transfer flag', async () => {
     await usingApi(async () => {
-      const Alice = privateKey('//Alice');
-      const Bob = privateKey('//Bob');
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
-      const newNftTokenId = await createItemExpectSuccess(Alice, nftCollectionId, 'NFT');
+      const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
 
       // explicitely set transfer flag
-      await setTransferFlagExpectSuccess(Alice, nftCollectionId, false);
+      await setTransferFlagExpectSuccess(alice, nftCollectionId, false);
 
-      await transferExpectFailure(nftCollectionId, newNftTokenId, Alice, Bob, 1);
+      await transferExpectFailure(nftCollectionId, newNftTokenId, alice, bob, 1);
     });
   });
 });
@@ -53,12 +53,12 @@ describe('Enable/Disable Transfers', () => {
 describe('Negative Enable/Disable Transfers', () => {
   it('Non-owner cannot change transfer flag', async () => {
     await usingApi(async () => {
-      const Bob = privateKey('//Bob');
+      const bob = privateKey('//Bob');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
 
       // Change transfer flag
-      await setTransferFlagExpectFailure(Bob, nftCollectionId, false);
+      await setTransferFlagExpectFailure(bob, nftCollectionId, false);
     });
   });
 });

@@ -24,7 +24,7 @@ use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use cumulus_client_service::genesis::generate_genesis_block;
 use log::info;
-use nft_runtime::Block;
+use unique_runtime::Block;
 use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
@@ -76,11 +76,11 @@ impl SubstrateCli for Cli {
 
 	//TODO use args
 	fn support_url() -> String {
-		"mailto:support@unique.network".into()
+		"support@unique.network".into()
 	}
 
 	fn copyright_start_year() -> i32 {
-		2021
+		2019
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -88,7 +88,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&nft_runtime::VERSION
+		&unique_runtime::VERSION
 	}
 }
 
@@ -115,11 +115,11 @@ impl SubstrateCli for RelayChainCli {
 	}
 	// TODO use args
 	fn support_url() -> String {
-		"mailto:support@unique.network".into()
+		"support@unique.network".into()
 	}
 
 	fn copyright_start_year() -> i32 {
-		2021
+		2019
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -200,7 +200,7 @@ pub fn run() -> Result<()> {
 				let polkadot_config = SubstrateCli::create_configuration(
 					&polkadot_cli,
 					&polkadot_cli,
-					config.task_executor.clone(),
+					config.tokio_handle.clone(),
 				)
 				.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
@@ -289,10 +289,12 @@ pub fn run() -> Result<()> {
 					generate_genesis_block(&config.chain_spec).map_err(|e| format!("{:?}", e))?;
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
 
-				let task_executor = config.task_executor.clone();
-				let polkadot_config =
-					SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, task_executor)
-						.map_err(|err| format!("Relay chain argument error: {}", err))?;
+				let polkadot_config = SubstrateCli::create_configuration(
+					&polkadot_cli,
+					&polkadot_cli,
+					config.tokio_handle.clone(),
+				)
+				.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
 				info!("Parachain id: {:?}", id);
 				info!("Parachain Account: {}", parachain_account);
@@ -409,10 +411,6 @@ impl CliConfiguration<Self> for RelayChainCli {
 
 	fn rpc_cors(&self, is_dev: bool) -> Result<Option<Vec<String>>> {
 		self.base.base.rpc_cors(is_dev)
-	}
-
-	fn telemetry_external_transport(&self) -> Result<Option<sc_service::config::ExtTransport>> {
-		self.base.base.telemetry_external_transport()
 	}
 
 	fn default_heap_pages(&self) -> Result<Option<u64>> {

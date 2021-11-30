@@ -2,7 +2,7 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc;
 
-use abi::{AbiReader, AbiWriter};
+use abi::{AbiRead, AbiReader, AbiWriter};
 pub use evm_coder_macros::{event_topic, fn_selector, solidity_interface, solidity, ToLog};
 pub mod abi;
 pub mod events;
@@ -59,6 +59,29 @@ pub trait Call: Sized {
 
 pub trait Callable<C: Call> {
 	fn call(&mut self, call: types::Msg<C>) -> execution::Result<AbiWriter>;
+}
+
+/// Implementation is implicitly provided for all interfaces
+///
+/// Note: no Callable implementation is provided
+#[derive(Debug)]
+pub enum ERC165Call {
+	SupportsInterface { interface_id: types::bytes4 },
+}
+
+impl ERC165Call {
+	pub const INTERFACE_ID: types::bytes4 = 0x01ffc9a7;
+}
+
+impl Call for ERC165Call {
+	fn parse(selector: u32, input: &mut AbiReader) -> execution::Result<Option<Self>> {
+		if selector != Self::INTERFACE_ID {
+			return Ok(None);
+		}
+		Ok(Some(Self::SupportsInterface {
+			interface_id: input.abi_read()?,
+		}))
+	}
 }
 
 #[macro_export]

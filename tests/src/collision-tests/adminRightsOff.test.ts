@@ -1,3 +1,7 @@
+/* broken by design
+// substrate transactions are sequential, not parallel
+// the order of execution is indeterminate
+
 import { IKeyringPair } from '@polkadot/types/types';
 import BN from 'bn.js';
 import chai from 'chai';
@@ -27,22 +31,23 @@ describe('Deprivation of admin rights: ', () => {
   it('In the block, the collection admin adds a token or changes data, and the collection owner deprives the admin of rights ', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const changeAdminTx = api.tx.nft.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
+      const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await submitTransactionAsync(Alice, changeAdminTx);
       await waitNewBlocks(1);
       const args = [{ nft: ['0x31', '0x31'] }, { nft: ['0x32', '0x32'] }, { nft: ['0x33', '0x33'] }];
-      const addItemAdm = api.tx.nft.createMultipleItems(collectionId, normalizeAccountId(Bob.address), args);
-      const removeAdm = api.tx.nft.removeCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
+      const addItemAdm = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(Bob.address), args);
+      const removeAdm = api.tx.unique.removeCollectionAdmin(collectionId, normalizeAccountId(Bob.address));
       await Promise.all([
         addItemAdm.signAndSend(Bob),
         removeAdm.signAndSend(Alice),
       ]);
       await waitNewBlocks(2);
-      const itemsListIndex = await api.query.nft.itemListIndex(collectionId) as unknown as BN;
+      const itemsListIndex = await api.query.unique.itemListIndex(collectionId) as unknown as BN;
       expect(itemsListIndex.toNumber()).to.be.equal(0);
-      const adminList: any = (await api.query.nft.adminList(collectionId));
+      const adminList: any = (await api.query.unique.adminList(collectionId));
       expect(adminList).not.to.be.contains(normalizeAccountId(Bob.address));
       await waitNewBlocks(2);
     });
   });
 });
+*/

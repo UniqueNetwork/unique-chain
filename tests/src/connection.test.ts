@@ -4,7 +4,7 @@
 //
 
 import usingApi from './substrate/substrate-api';
-import { WsProvider } from '@polkadot/api';
+import {WsProvider} from '@polkadot/api';
 import * as chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 
@@ -21,19 +21,11 @@ describe('Connection smoke test', () => {
   });
 
   it('Cannot connect to 255.255.255.255', async () => {
-    const log = console.log;
-    const error = console.error;
-    console.log = function () {};
-    console.error = function () {};
-
     const neverConnectProvider = new WsProvider('ws://255.255.255.255:9944');
     await expect((async () => {
       await usingApi(async api => {
         await api.rpc.system.health();
-      }, { provider: neverConnectProvider });
+      }, {provider: neverConnectProvider});
     })()).to.be.eventually.rejected;
-
-    console.log = log;
-    console.error = error;
   });
 });

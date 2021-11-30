@@ -22,8 +22,7 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, ConvertInto, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify,
-		AccountIdConversion,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, AccountIdConversion,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature,
@@ -54,7 +53,7 @@ pub use frame_support::{
 		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients,
 	},
 };
-use nft_data_structs::*;
+use up_data_structs::*;
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
 use frame_system::{
@@ -70,7 +69,8 @@ use pallet_evm::{Account as EVMAccount, FeeCalculator, OnMethodCall};
 use fp_rpc::TransactionStatus;
 use sp_core::crypto::Public;
 use sp_runtime::{
-	traits::{Dispatchable},
+	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf},
+	transaction_validity::TransactionValidityError,
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
@@ -101,6 +101,8 @@ pub type Signature = MultiSignature;
 /// Some way of identifying an account on the chain. We intentionally make it equivalent
 /// to the public key of our transaction signing scheme.
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+
+pub type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
 
 /// The type for looking up accounts. We don't expect more than 4 billion of them, but you
 /// never know...
@@ -144,7 +146,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("opal"),
 	impl_name: create_runtime_str!("opal"),
 	authoring_version: 1,
-	spec_version: 910000,
+	spec_version: 912204,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -257,7 +259,7 @@ impl pallet_evm::Config for Runtime {
 	type Event = Event;
 	type OnMethodCall = (
 		pallet_evm_migration::OnMethodCall<Self>,
-		pallet_nft::NftErcSupport<Self>,
+		pallet_unique::UniqueErcSupport<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
 	);
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
@@ -439,6 +441,9 @@ impl pallet_contracts::Config for Runtime {
 
 parameter_types! {
 	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE; // Targeting 0.1 Unique per NFT transfer
+	/// This value increases the priority of `Operational` transactions by adding
+	/// a "virtual tip" that's equal to the `OperationalFeeMultiplier * final_fee`.
+	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
 /// Linear implementor of `WeightToFeePolynomial`
@@ -463,6 +468,7 @@ where
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees>;
 	type TransactionByteFee = TransactionByteFee;
+	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = LinearFee<Balance>;
 	type FeeMultiplierUpdate = ();
 }
@@ -508,16 +514,33 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
-parameter_types! {
-	pub const MinVestedTransfer: Balance = 10 * UNIQUE;
+pub struct RelayChainBlockNumberProvider<T>(sp_std::marker::PhantomData<T>);
+
+impl<T: cumulus_pallet_parachain_system::Config> BlockNumberProvider
+	for RelayChainBlockNumberProvider<T>
+{
+	type BlockNumber = BlockNumber;
+
+	fn current_block_number() -> Self::BlockNumber {
+		cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
+			.map(|d| d.relay_parent_number)
+			.unwrap_or_default()
+	}
 }
 
-impl pallet_vesting::Config for Runtime {
+parameter_types! {
+	pub const MinVestedTransfer: Balance = 10 * UNIQUE;
+	pub const MaxVestingSchedules: u32 = 28;
+}
+
+impl orml_vesting::Config for Runtime {
 	type Event = Event;
-	type Currency = Balances;
-	type BlockNumberToBalance = ConvertInto;
+	type Currency = pallet_balances::Pallet<Runtime>;
 	type MinVestedTransfer = MinVestedTransfer;
+	type VestedTransferOrigin = EnsureSigned<AccountId>;
 	type WeightInfo = ();
+	type MaxVestingSchedules = MaxVestingSchedules;
+	type BlockNumberProvider = RelayChainBlockNumberProvider<Runtime>;
 }
 
 parameter_types! {
@@ -607,6 +630,8 @@ parameter_types! {
 	pub UnitWeightCost: Weight = 1_000_000;
 	// 1200 UNIQUEs buy 1 second of weight.
 	pub const WeightPrice: (MultiLocation, u128) = (MultiLocation::parent(), 1_200 * UNIQUE);
+	pub const MaxInstructions: u32 = 100;
+	pub const MaxAuthorities: u32 = 100_000;
 }
 
 match_type! {
@@ -634,10 +659,13 @@ impl Config for XcmConfig {
 	type IsTeleporter = (); // Teleportation is disabled
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type Trader = UsingComponents<IdentityFee<Balance>, RelayLocation, AccountId, Balances, ()>;
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;
+
+	type AssetTrap = PolkadotXcm;
+	type AssetClaims = PolkadotXcm;
 }
 
 // parameter_types! {
@@ -668,9 +696,13 @@ impl pallet_xcm::Config for Runtime {
 	type XcmExecuteFilter = Everything;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
-	type XcmReserveTransferFilter = ();
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
+	type XcmReserveTransferFilter = Everything;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type LocationInverter = LocationInverter<Ancestry>;
+	type Origin = Origin;
+	type Call = Call;
+	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
+	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -694,6 +726,7 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
+	type MaxAuthorities = MaxAuthorities;
 }
 
 parameter_types! {
@@ -701,18 +734,29 @@ parameter_types! {
 	pub const CollectionCreationPrice: Balance = 100 * UNIQUE;
 }
 
-/// Used for the pallet nft in `./nft.rs`
-impl pallet_nft::Config for Runtime {
+impl pallet_common::Config for Runtime {
 	type Event = Event;
-	type WeightInfo = pallet_nft::weights::SubstrateWeight<Self>;
-
-	type EvmBackwardsAddressMapping = pallet_nft::MapBackwardsAddressTruncated;
+	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type CrossAccountId = pallet_nft::BasicCrossAccountId<Self>;
+	type CrossAccountId = pallet_common::account::BasicCrossAccountId<Self>;
 
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
+}
+
+impl pallet_fungible::Config for Runtime {
+	type WeightInfo = pallet_fungible::weights::SubstrateWeight<Self>;
+}
+impl pallet_refungible::Config for Runtime {
+	type WeightInfo = pallet_refungible::weights::SubstrateWeight<Self>;
+}
+impl pallet_nonfungible::Config for Runtime {
+	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
+}
+
+impl pallet_unique::Config for Runtime {
+	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
 }
 
 parameter_types! {
@@ -726,53 +770,44 @@ impl pallet_inflation::Config for Runtime {
 	type InflationBlockInterval = InflationBlockInterval;
 }
 
-parameter_types! {
-	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(50) *
-		RuntimeBlockWeights::get().max_block;
-	pub const MaxScheduledPerBlock: u32 = 50;
-}
+// parameter_types! {
+// 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(50) *
+// 		RuntimeBlockWeights::get().max_block;
+// 	pub const MaxScheduledPerBlock: u32 = 50;
+// }
 
-pub struct Sponsoring;
-impl SponsoringResolve<AccountId, Call> for Sponsoring {
-	fn resolve(who: &AccountId, call: &Call) -> Option<AccountId>
-	where
-		Call: Dispatchable<Info = DispatchInfo>,
-		AccountId: AsRef<[u8]>,
-	{
-		pallet_nft_transaction_payment::Module::<Runtime>::withdraw_type(who, call)
-	}
-}
-
+type EvmSponsorshipHandler = (
+	pallet_unique::UniqueEthSponsorshipHandler<Runtime>,
+	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
+);
 type SponsorshipHandler = (
-	pallet_nft::NftSponsorshipHandler<Runtime>,
+	pallet_unique::UniqueSponsorshipHandler<Runtime>,
 	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
+	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
 );
 
-impl pallet_scheduler::Config for Runtime {
-	type Event = Event;
-	type Origin = Origin;
-	type PalletsOrigin = OriginCaller;
-	type Call = Call;
-	type MaximumWeight = MaximumSchedulerWeight;
-	type ScheduleOrigin = EnsureSigned<AccountId>;
-	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type SponsorshipHandler = SponsorshipHandler;
-	type WeightInfo = ();
-}
-
-impl pallet_nft_transaction_payment::Config for Runtime {
-	type SponsorshipHandler = SponsorshipHandler;
-}
+// impl pallet_unq_scheduler::Config for Runtime {
+// 	type Event = Event;
+// 	type Origin = Origin;
+// 	type PalletsOrigin = OriginCaller;
+// 	type Call = Call;
+// 	type MaximumWeight = MaximumSchedulerWeight;
+// 	type ScheduleOrigin = EnsureSigned<AccountId>;
+// 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+// 	type SponsorshipHandler = SponsorshipHandler;
+// 	type WeightInfo = ();
+// }
 
 impl pallet_evm_transaction_payment::Config for Runtime {
-	type SponsorshipHandler = (
-		pallet_nft::NftEthSponsorshipHandler<Self>,
-		pallet_evm_contract_helpers::HelpersContractSponsoring<Self>,
-	);
+	type EvmSponsorshipHandler = EvmSponsorshipHandler;
 	type Currency = Balances;
+	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
+	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 }
 
-impl pallet_nft_charge_transaction::Config for Runtime {}
+impl pallet_charge_transaction::Config for Runtime {
+	type SponsorshipHandler = SponsorshipHandler;
+}
 
 // impl pallet_contract_helpers::Config for Runtime {
 //	 type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
@@ -809,7 +844,8 @@ construct_runtime!(
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 34,
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		System: system::{Pallet, Call, Storage, Config, Event<T>} = 36,
-		Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
+		Vesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 37,
+		// Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
 		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 
 		// XCM helpers.
@@ -820,15 +856,19 @@ construct_runtime!(
 
 		// Unique Pallets
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
-		Nft: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>} = 61,
-		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
-		NftPayment: pallet_nft_transaction_payment::{Pallet, Call, Storage} = 63,
-		Charging: pallet_nft_charge_transaction::{Pallet, Call, Storage } = 64,
+		Unique: pallet_unique::{Pallet, Call, Storage} = 61,
+		// Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
+		// free = 63
+		Charging: pallet_charge_transaction::{Pallet, Call, Storage } = 64,
 		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
+		Common: pallet_common::{Pallet, Storage, Event<T>} = 66,
+		Fungible: pallet_fungible::{Pallet, Storage} = 67,
+		Refungible: pallet_refungible::{Pallet, Storage} = 68,
+		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
-		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, ValidateUnsigned} = 101,
+		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, Origin} = 101,
 
 		EvmCoderSubstrate: pallet_evm_coder_substrate::{Pallet, Storage} = 150,
 		EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage} = 151,
@@ -842,7 +882,7 @@ pub struct TransactionConverter;
 impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
 		UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact(transaction).into(),
+			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
 		)
 	}
 }
@@ -853,7 +893,7 @@ impl fp_rpc::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConve
 		transaction: pallet_ethereum::Transaction,
 	) -> opaque::UncheckedExtrinsic {
 		let extrinsic = UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact(transaction).into(),
+			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
 		);
 		let encoded = extrinsic.encode();
 		opaque::UncheckedExtrinsic::decode(&mut &encoded[..])
@@ -879,13 +919,14 @@ pub type SignedExtra = (
 	system::CheckEra<Runtime>,
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
-	pallet_nft_charge_transaction::ChargeTransactionPayment<Runtime>,
+	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic =
+	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
+pub type CheckedExtrinsic = fp_self_contained::CheckedExtrinsic<AccountId, Call, SignedExtra, H160>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -901,12 +942,124 @@ impl_opaque_keys! {
 	}
 }
 
+impl fp_self_contained::SelfContainedCall for Call {
+	type SignedInfo = H160;
+
+	fn is_self_contained(&self) -> bool {
+		match self {
+			Call::Ethereum(call) => call.is_self_contained(),
+			_ => false,
+		}
+	}
+
+	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.check_self_contained(),
+			_ => None,
+		}
+	}
+
+	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
+		match self {
+			Call::Ethereum(call) => call.validate_self_contained(info),
+			_ => None,
+		}
+	}
+
+	fn pre_dispatch_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+	) -> Option<Result<(), TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.pre_dispatch_self_contained(info),
+			_ => None,
+		}
+	}
+
+	fn apply_self_contained(
+		self,
+		info: Self::SignedInfo,
+	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
+		match self {
+			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
+				Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
+			)),
+			_ => None,
+		}
+	}
+}
+
+macro_rules! dispatch_unique_runtime {
+	($collection:ident.$method:ident($($name:ident),*)) => {{
+		use pallet_unique::dispatch::Dispatched;
+
+		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::new($collection).unwrap());
+		let dispatch = collection.as_dyn();
+
+		dispatch.$method($($name),*)
+	}};
+}
 impl_runtime_apis! {
-	impl pallet_nft::NftApi<Block>
+	impl up_rpc::UniqueApi<Block, CrossAccountId, AccountId>
 		for Runtime
 	{
+		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Vec<TokenId> {
+			dispatch_unique_runtime!(collection.account_tokens(account))
+		}
+		fn token_exists(collection: CollectionId, token: TokenId) -> bool {
+			dispatch_unique_runtime!(collection.token_exists(token))
+		}
+
+		fn token_owner(collection: CollectionId, token: TokenId) -> CrossAccountId {
+			dispatch_unique_runtime!(collection.token_owner(token))
+		}
+		fn const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8> {
+			dispatch_unique_runtime!(collection.const_metadata(token))
+		}
+		fn variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8> {
+			dispatch_unique_runtime!(collection.variable_metadata(token))
+		}
+
+		fn collection_tokens(collection: CollectionId) -> u32 {
+			dispatch_unique_runtime!(collection.collection_tokens())
+		}
+		fn account_balance(collection: CollectionId, account: CrossAccountId) -> u32 {
+			dispatch_unique_runtime!(collection.account_balance(account))
+		}
+		fn balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> u128 {
+			dispatch_unique_runtime!(collection.balance(account, token))
+		}
+		fn allowance(
+			collection: CollectionId,
+			sender: CrossAccountId,
+			spender: CrossAccountId,
+			token: TokenId,
+		) -> u128 {
+			dispatch_unique_runtime!(collection.allowance(sender, spender, token))
+		}
+
 		fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
-			<pallet_nft::NftErcSupport<Runtime>>::get_code(&account)
+			<pallet_unique::UniqueErcSupport<Runtime>>::get_code(&account)
+				.or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account))
+				.or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
+		}
+		fn adminlist(collection: CollectionId) -> Vec<CrossAccountId> {
+			<pallet_common::Pallet<Runtime>>::adminlist(collection)
+		}
+		fn allowlist(collection: CollectionId) -> Vec<CrossAccountId> {
+			<pallet_common::Pallet<Runtime>>::allowlist(collection)
+		}
+		fn allowed(collection: CollectionId, user: CrossAccountId) -> bool {
+			<pallet_common::Pallet<Runtime>>::allowed(collection, user)
+		}
+		fn last_token_id(collection: CollectionId) -> TokenId {
+			dispatch_unique_runtime!(collection.last_token_id())
+		}
+		fn collection_by_id(collection: CollectionId) -> Option<Collection<AccountId>> {
+			<pallet_common::CollectionById<Runtime>>::get(collection)
+		}
+		fn collection_stats() -> CollectionStats {
+			<pallet_common::Pallet<Runtime>>::collection_stats()
 		}
 	}
 
@@ -926,7 +1079,7 @@ impl_runtime_apis! {
 
 	impl sp_api::Metadata<Block> for Runtime {
 		fn metadata() -> OpaqueMetadata {
-			Runtime::metadata().into()
+			OpaqueMetadata::new(Runtime::metadata().into())
 		}
 	}
 
@@ -1081,8 +1234,8 @@ impl_runtime_apis! {
 		}
 
 		fn extrinsic_filter(xts: Vec<<Block as sp_api::BlockT>::Extrinsic>) -> Vec<pallet_ethereum::Transaction> {
-			xts.into_iter().filter_map(|xt| match xt.function {
-				Call::Ethereum(pallet_ethereum::Call::transact(t)) => Some(t),
+			xts.into_iter().filter_map(|xt| match xt.0.function {
+				Call::Ethereum(pallet_ethereum::Call::transact { transaction }) => Some(transaction),
 				_ => None
 			}).collect()
 		}
@@ -1106,7 +1259,7 @@ impl_runtime_apis! {
 		}
 
 		fn authorities() -> Vec<AuraId> {
-			Aura::authorities()
+			Aura::authorities().to_vec()
 		}
 	}
 
@@ -1174,30 +1327,54 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
+		fn benchmark_metadata(extra: bool) -> (
+			Vec<frame_benchmarking::BenchmarkList>,
+			Vec<frame_support::traits::StorageInfo>,
+		) {
+			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_support::traits::StorageInfoTrait;
+
+			let mut list = Vec::<BenchmarkList>::new();
+
+			list_benchmark!(list, extra, pallet_evm_migration, EvmMigration);
+			list_benchmark!(list, extra, pallet_unique, Unique);
+			list_benchmark!(list, extra, pallet_inflation, Inflation);
+			list_benchmark!(list, extra, pallet_fungible, Fungible);
+			list_benchmark!(list, extra, pallet_refungible, Refungible);
+			list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
+
+			let storage_info = AllPalletsWithSystem::storage_info();
+
+			return (list, storage_info)
+		}
+
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
-			let whitelist: Vec<TrackedStorageKey> = vec![
-				// Alice account
-				hex_literal::hex!("d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d").to_vec().into(),
-				// // Total Issuance
-				// hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
-				// // Execution Phase
-				// hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
-				// // Event Count
-				// hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
-				// // System Events
-				// hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
+			let allowlist: Vec<TrackedStorageKey> = vec![
+				// Block Number
+				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
+				// Total Issuance
+				hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
+				// Execution Phase
+				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
+				// Event Count
+				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
+				// System Events
+				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
 			];
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
-			let params = (&config, &whitelist);
+			let params = (&config, &allowlist);
 
 			add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
-			add_benchmark!(params, batches, pallet_nft, Nft);
+			add_benchmark!(params, batches, pallet_unique, Unique);
 			add_benchmark!(params, batches, pallet_inflation, Inflation);
+			add_benchmark!(params, batches, pallet_fungible, Fungible);
+			add_benchmark!(params, batches, pallet_refungible, Refungible);
+			add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

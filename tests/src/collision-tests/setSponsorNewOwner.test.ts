@@ -1,10 +1,14 @@
+/* broken by design
+// substrate transactions are sequential, not parallel
+// the order of execution is indeterminate
+
 import { IKeyringPair } from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from '../substrate/privateKey';
 import usingApi from '../substrate/substrate-api';
 import {
-  createCollectionExpectSuccess, 
+  createCollectionExpectSuccess,
   setCollectionSponsorExpectSuccess,
   waitNewBlocks,
 } from '../util/helpers';
@@ -30,17 +34,18 @@ describe('Sponsored with new owner ', () => {
       const collectionId = await createCollectionExpectSuccess();
       await setCollectionSponsorExpectSuccess(collectionId, Bob.address);
       await waitNewBlocks(2);
-      const confirmSponsorship = api.tx.nft.confirmSponsorship(collectionId);
-      const changeCollectionOwner = api.tx.nft.changeCollectionOwner(collectionId, Ferdie.address);
+      const confirmSponsorship = api.tx.unique.confirmSponsorship(collectionId);
+      const changeCollectionOwner = api.tx.unique.changeCollectionOwner(collectionId, Ferdie.address);
       await Promise.all([
         confirmSponsorship.signAndSend(Bob),
         changeCollectionOwner.signAndSend(Alice),
       ]);
       await waitNewBlocks(2);
-      const collection: any = (await api.query.nft.collectionById(collectionId)).toJSON();
-      expect(collection.Sponsorship.confirmed).to.be.eq(Bob.address);
-      expect(collection.Owner).to.be.eq(Ferdie.address);
+      const collection: any = (await api.query.unique.collectionById(collectionId)).toJSON();
+      expect(collection.sponsorship.confirmed).to.be.eq(Bob.address);
+      expect(collection.owner).to.be.eq(Ferdie.address);
       await waitNewBlocks(2);
     });
   });
 });
+*/

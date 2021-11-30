@@ -46,7 +46,8 @@ use frame_system::{self as system};
 pub type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-pub const YEAR: u32 = 5_259_600;
+// pub const YEAR: u32 = 5_259_600; // 6-second block
+pub const YEAR: u32 = 2_629_800; // 12-second block
 pub const TOTAL_YEARS_UNTIL_FLAT: u32 = 9;
 pub const START_INFLATION_PERCENT: u32 = 10;
 pub const END_INFLATION_PERCENT: u32 = 4;
@@ -83,6 +84,9 @@ decl_module! {
 			};
 
 			let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);
+
+			// TODO: Rewrite inflation to use block timestamp instead of block number
+			// let _now = <timestamp::Module<T>>::get();
 
 			// Recalculate inflation on the first block of the year (or if it is not initialized yet)
 			if (now % T::BlockNumber::from(YEAR)).is_zero() || <BlockInflation<T>>::get().is_zero() {

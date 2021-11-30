@@ -1,0 +1,39 @@
+[package]
+name = "pallet-common"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies.codec]
+default-features = false
+features = ['derive']
+package = 'parity-scale-codec'
+version = '2.0.0'
+
+[dependencies]
+frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
+frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
+sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
+sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
+sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
+up-evm-mapping = { default-features = false, path = '../../primitives/evm-mapping' }
+up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
+pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }
+evm-coder = { default-features = false, path = '../../crates/evm-coder' }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12" }
+serde = { version = "1.0.130", default-features = false }
+scale-info = { version = "1.0.0", default-features = false, features = [
+    "derive",
+] }
+
+[features]
+default = ["std"]
+std = [
+    "frame-support/std",
+    "frame-system/std",
+    "sp-runtime/std",
+    "sp-std/std",
+    "up-evm-mapping/std",
+    "up-data-structs/std",
+    "pallet-evm/std",
+]
+runtime-benchmarks = []

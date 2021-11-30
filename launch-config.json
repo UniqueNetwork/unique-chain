@@ -9,7 +9,7 @@
                 "rpcPort": 9843,
                 "port": 30444,
                 "flags": [
-                    "--rpc-port=9843"
+                    "-lparachain::candidate_validation=debug"
                 ]
             },
             {
@@ -18,7 +18,7 @@
                 "rpcPort": 9854,
                 "port": 30555,
                 "flags": [
-                    "--rpc-port=9854"
+                    "-lparachain::candidate_validation=debug"
                 ]
             },
             {
@@ -27,7 +27,7 @@
                 "rpcPort": 9865,
                 "port": 30666,
                 "flags": [
-                    "--rpc-port=9865"
+                    "-lparachain::candidate_validation=debug"
                 ]
             },
             {
@@ -36,7 +36,7 @@
                 "rpcPort": 9876,
                 "port": 30777,
                 "flags": [
-                    "--rpc-port=9876"
+                    "-lparachain::candidate_validation=debug"
                 ]
             }
         ],
@@ -55,7 +55,7 @@
     },
     "parachains": [
         {
-            "bin": "../nft_private/target/release/nft",
+            "bin": "../unique-chain/target/release/unique-collator",
             "id": "2000",
             "balance": "1000000000000000000000",
             "nodes": [
@@ -66,7 +66,8 @@
                     "name": "alice",
                     "flags": [
                         "--rpc-cors=all",
-                        "--rpc-port=9933", "--unsafe-ws-external"
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external"
                     ]
                 },
                 {
@@ -76,7 +77,8 @@
                     "name": "bob",
                     "flags": [
                         "--rpc-cors=all",
-                        "--rpc-port=9934"
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external"
                     ]
                 }
             ]
@@ -84,6 +86,5 @@
     ],
     "simpleParachains": [],
     "hrmpChannels": [],
-    "types": "./runtime_types.json",
     "finalization": false
 }
