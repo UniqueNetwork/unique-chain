@@ -290,7 +290,7 @@ impl WeightInfo for () {
 	fn set_variable_on_chain_schema(b: u32, ) -> Weight {
 		(6_092_000_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((2_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add((2_000_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
