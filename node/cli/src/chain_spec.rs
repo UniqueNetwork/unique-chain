@@ -53,9 +53,9 @@ where
 
 pub fn development_config(id: ParaId) -> ChainSpec {
 	let mut properties = Map::new();
-	properties.insert("tokenSymbol".into(), "testUNQ".into());
-	properties.insert("tokenDecimals".into(), 15.into());
-	properties.insert("ss58Format".into(), 42.into()); // Generic Substrate wildcard (SS58 checksum preimage)
+	properties.insert("tokenSymbol".into(), "OPL".into());
+	properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("ss58Format".into(), 42.into());
 
 	ChainSpec::from_genesis(
 		// Name
@@ -96,6 +96,11 @@ pub fn development_config(id: ParaId) -> ChainSpec {
 }
 
 pub fn local_testnet_rococo_config(id: ParaId) -> ChainSpec {
+	let mut properties = Map::new();
+	properties.insert("tokenSymbol".into(), "OPL".into());
+	properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("ss58Format".into(), 42.into());
+	
 	ChainSpec::from_genesis(
 		// Name
 		"Local Testnet",
@@ -135,7 +140,7 @@ pub fn local_testnet_rococo_config(id: ParaId) -> ChainSpec {
 		// Protocol ID
 		None,
 		// Properties
-		None,
+		Some(properties),
 		// Extensions
 		Extensions {
 			relay_chain: "rococo-local".into(),
@@ -145,6 +150,11 @@ pub fn local_testnet_rococo_config(id: ParaId) -> ChainSpec {
 }
 
 pub fn local_testnet_westend_config(id: ParaId) -> ChainSpec {
+	let mut properties = Map::new();
+	properties.insert("tokenSymbol".into(), "OPL".into());
+	properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("ss58Format".into(), 42.into());
+	
 	ChainSpec::from_genesis(
 		// Name
 		"Local Testnet",
@@ -187,7 +197,7 @@ pub fn local_testnet_westend_config(id: ParaId) -> ChainSpec {
 		// Protocol ID
 		None,
 		// Properties
-		None,
+		Some(properties),
 		// Extensions
 		Extensions {
 			relay_chain: "westend-local".into(),

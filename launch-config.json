@@ -57,7 +57,7 @@
         {
             "bin": "../unique-chain/target/release/unique-collator",
             "id": "2000",
-            "balance": "1000000000000000000000",
+            "balance": "1000000000000000000000000",
             "nodes": [
                 {
                     "port": 31200,

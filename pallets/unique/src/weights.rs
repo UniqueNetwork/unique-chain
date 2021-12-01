@@ -61,7 +61,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System Account (r:2 w:2)
 	// Storage: Common CollectionById (r:0 w:1)
 	fn create_collection() -> Weight {
-		(23_803_000 as Weight)
+		(23_803_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -70,115 +70,115 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokensMinted (r:0 w:1)
 	// Storage: Nonfungible TokensBurnt (r:0 w:1)
 	fn destroy_collection() -> Weight {
-		(27_831_000 as Weight)
+		(27_831_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Common Allowlist (r:0 w:1)
 	fn add_to_allow_list() -> Weight {
-		(6_629_000 as Weight)
+		(6_629_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Common Allowlist (r:0 w:1)
 	fn remove_from_allow_list() -> Weight {
-		(6_596_000 as Weight)
+		(6_596_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_public_access_mode() -> Weight {
-		(6_338_000 as Weight)
+		(6_338_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_mint_permission() -> Weight {
-		(6_383_000 as Weight)
+		(6_383_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn change_collection_owner() -> Weight {
-		(6_493_000 as Weight)
+		(6_493_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Common IsAdmin (r:0 w:1)
 	fn add_collection_admin() -> Weight {
-		(6_850_000 as Weight)
+		(6_850_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Common IsAdmin (r:0 w:1)
 	fn remove_collection_admin() -> Weight {
-		(6_615_000 as Weight)
+		(6_615_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_collection_sponsor() -> Weight {
-		(6_430_000 as Weight)
+		(6_430_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn confirm_sponsorship() -> Weight {
-		(6_125_000 as Weight)
+		(6_125_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn remove_collection_sponsor() -> Weight {
-		(6_236_000 as Weight)
+		(6_236_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_transfers_enabled_flag() -> Weight {
-		(6_500_000 as Weight)
+		(6_500_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_offchain_schema(_b: u32, ) -> Weight {
-		(6_538_000 as Weight)
+		(6_538_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_const_on_chain_schema(_b: u32, ) -> Weight {
-		(6_542_000 as Weight)
+		(6_542_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_variable_on_chain_schema(b: u32, ) -> Weight {
-		(6_092_000 as Weight)
+		(6_092_000_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((2_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add((2_000_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_schema_version() -> Weight {
-		(6_470_000 as Weight)
+		(6_470_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_collection_limits() -> Weight {
-		(6_841_000 as Weight)
+		(6_841_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_meta_update_permission_flag() -> Weight {
-		(6_278_000 as Weight)
+		(6_278_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -191,7 +191,7 @@ impl WeightInfo for () {
 	// Storage: System Account (r:2 w:2)
 	// Storage: Common CollectionById (r:0 w:1)
 	fn create_collection() -> Weight {
-		(23_803_000 as Weight)
+		(23_803_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
@@ -200,95 +200,95 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokensMinted (r:0 w:1)
 	// Storage: Nonfungible TokensBurnt (r:0 w:1)
 	fn destroy_collection() -> Weight {
-		(27_831_000 as Weight)
+		(27_831_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Common Allowlist (r:0 w:1)
 	fn add_to_allow_list() -> Weight {
-		(6_629_000 as Weight)
+		(6_629_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Common Allowlist (r:0 w:1)
 	fn remove_from_allow_list() -> Weight {
-		(6_596_000 as Weight)
+		(6_596_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_public_access_mode() -> Weight {
-		(6_338_000 as Weight)
+		(6_338_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_mint_permission() -> Weight {
-		(6_383_000 as Weight)
+		(6_383_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn change_collection_owner() -> Weight {
-		(6_493_000 as Weight)
+		(6_493_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Common IsAdmin (r:0 w:1)
 	fn add_collection_admin() -> Weight {
-		(6_850_000 as Weight)
+		(6_850_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Common IsAdmin (r:0 w:1)
 	fn remove_collection_admin() -> Weight {
-		(6_615_000 as Weight)
+		(6_615_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_collection_sponsor() -> Weight {
-		(6_430_000 as Weight)
+		(6_430_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn confirm_sponsorship() -> Weight {
-		(6_125_000 as Weight)
+		(6_125_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn remove_collection_sponsor() -> Weight {
-		(6_236_000 as Weight)
+		(6_236_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_transfers_enabled_flag() -> Weight {
-		(6_500_000 as Weight)
+		(6_500_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_offchain_schema(_b: u32, ) -> Weight {
-		(6_538_000 as Weight)
+		(6_538_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_const_on_chain_schema(_b: u32, ) -> Weight {
-		(6_542_000 as Weight)
+		(6_542_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_variable_on_chain_schema(b: u32, ) -> Weight {
-		(6_092_000 as Weight)
+		(6_092_000_000 as Weight)
 			// Standard Error: 0
 			.saturating_add((2_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
@@ -296,19 +296,19 @@ impl WeightInfo for () {
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_schema_version() -> Weight {
-		(6_470_000 as Weight)
+		(6_470_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_collection_limits() -> Weight {
-		(6_841_000 as Weight)
+		(6_841_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_meta_update_permission_flag() -> Weight {
-		(6_278_000 as Weight)
+		(6_278_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}

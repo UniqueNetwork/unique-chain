@@ -55,26 +55,26 @@ pub trait WeightInfo {
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn schedule(s: u32) -> Weight {
-		35_029_000_u64
-			.saturating_add(77_000_u64.saturating_mul(s as Weight))
+		35_029_000_000_u64
+			.saturating_add(77_000_000_u64.saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	fn cancel(s: u32) -> Weight {
-		31_419_000_u64
-			.saturating_add(4_015_000_u64.saturating_mul(s as Weight))
+		31_419_000_000_u64
+			.saturating_add(4_015_000_000_u64.saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	fn schedule_named(s: u32) -> Weight {
-		44_752_000_u64
-			.saturating_add(123_000_u64.saturating_mul(s as Weight))
+		44_752_000_000_u64
+			.saturating_add(123_000_000_u64.saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2_u64))
 			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	fn cancel_named(s: u32) -> Weight {
-		35_712_000_u64
-			.saturating_add(4_008_000_u64.saturating_mul(s as Weight))
+		35_712_000_000_u64
+			.saturating_add(4_008_000_000_u64.saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2_u64))
 			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
@@ -83,26 +83,26 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn schedule(s: u32) -> Weight {
-		35_029_000_u64
-			.saturating_add(77_000_u64.saturating_mul(s as Weight))
+		35_029_000_000_u64
+			.saturating_add(77_000_000_u64.saturating_mul(s as Weight))
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
 	fn cancel(s: u32) -> Weight {
-		31_419_000_u64
-			.saturating_add(4_015_000_u64.saturating_mul(s as Weight))
+		31_419_000_000_u64
+			.saturating_add(4_015_000_000_u64.saturating_mul(s as Weight))
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(2_u64))
 	}
 	fn schedule_named(s: u32) -> Weight {
-		44_752_000_u64
-			.saturating_add(123_000_u64.saturating_mul(s as Weight))
+		44_752_000_000_u64
+			.saturating_add(123_000_000_u64.saturating_mul(s as Weight))
 			.saturating_add(RocksDbWeight::get().reads(2_u64))
 			.saturating_add(RocksDbWeight::get().writes(2_u64))
 	}
 	fn cancel_named(s: u32) -> Weight {
-		35_712_000_u64
-			.saturating_add(4_008_000_u64.saturating_mul(s as Weight))
+		35_712_000_000_u64
+			.saturating_add(4_008_000_000_u64.saturating_mul(s as Weight))
 			.saturating_add(RocksDbWeight::get().reads(2_u64))
 			.saturating_add(RocksDbWeight::get().writes(2_u64))
 	}
