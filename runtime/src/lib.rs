@@ -768,6 +768,7 @@ impl pallet_inflation::Config for Runtime {
 	type Currency = Balances;
 	type TreasuryAccountId = TreasuryAccountId;
 	type InflationBlockInterval = InflationBlockInterval;
+	type BlockNumberProvider = RelayChainBlockNumberProvider<Runtime>;
 }
 
 // parameter_types! {

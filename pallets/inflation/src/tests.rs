@@ -11,7 +11,7 @@ use frame_support::{
 };
 use sp_core::H256;
 use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, BlockNumberProvider, IdentityLookup},
 	testing::Header,
 };
 
@@ -85,12 +85,22 @@ impl frame_system::Config for Test {
 parameter_types! {
 	pub TreasuryAccountId: u64 = 1234;
 	pub const InflationBlockInterval: u32 = 100; // every time per how many blocks inflation is applied
+	pub static MockBlockNumberProvider: u64 = 0;
+}
+
+impl BlockNumberProvider for MockBlockNumberProvider {
+	type BlockNumber = u64;
+
+	fn current_block_number() -> Self::BlockNumber {
+		Self::get()
+	}
 }
 
 impl pallet_inflation::Config for Test {
 	type Currency = Balances;
 	type TreasuryAccountId = TreasuryAccountId;
 	type InflationBlockInterval = InflationBlockInterval;
+	type BlockNumberProvider = MockBlockNumberProvider;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -110,7 +120,8 @@ fn inflation_works() {
 
 		// BlockInflation should be set after 1st block and
 		// first inflation deposit should be equal to BlockInflation
-		Inflation::on_initialize(1);
+		MockBlockNumberProvider::set(1);
+		Inflation::on_initialize(0);
 
 		// Expected 100-block inflation for year 1 is 100 * 100_000_000 / YEAR = 3803
 		assert_eq!(Inflation::block_inflation(), 3803);
@@ -128,20 +139,23 @@ fn inflation_second_deposit() {
 		let initial_issuance: u64 = 1_000_000_000;
 		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
-		Inflation::on_initialize(1);
+		MockBlockNumberProvider::set(1);
+		Inflation::on_initialize(0);
 
 		// Next inflation deposit happens when block is multiple of InflationBlockInterval
 		let mut block: u32 = 2;
 		let balance_before: u64 = Balances::free_balance(1234);
 		while block % InflationBlockInterval::get() != 0 {
-			Inflation::on_initialize(block as u64);
+			MockBlockNumberProvider::set(block as u64);
+			Inflation::on_initialize(0);
 			block += 1;
 		}
 		let balance_just_before: u64 = Balances::free_balance(1234);
 		assert_eq!(balance_before, balance_just_before);
 
 		// The block with inflation
-		Inflation::on_initialize(block as u64);
+		MockBlockNumberProvider::set(block as u64);
+		Inflation::on_initialize(0);
 		let balance_after: u64 = Balances::free_balance(1234);
 		assert_eq!(
 			balance_after - balance_just_before,
@@ -157,19 +171,22 @@ fn inflation_in_1_year() {
 		let initial_issuance: u64 = 1_000_000_000;
 		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
-		Inflation::on_initialize(1);
+		MockBlockNumberProvider::set(1);
+		Inflation::on_initialize(0);
 
 		// Go through all the block inflations for year 1,
 		// total issuance will be updated accordingly
 		for block in (100..YEAR).step_by(100) {
-			Inflation::on_initialize(block);
+			MockBlockNumberProvider::set(block);
+			Inflation::on_initialize(0);
 		}
 		assert_eq!(
 			initial_issuance + (3803 * (YEAR / 100)),
 			<Balances as Currency<_>>::total_issuance()
 		);
 
-		Inflation::on_initialize(YEAR);
+		MockBlockNumberProvider::set(YEAR);
+		Inflation::on_initialize(0);
 		let block_inflation_year_1 = Inflation::block_inflation();
 		// Expected 100-block inflation for year 2: 100 * 9.33% * initial issuance * 110% / YEAR = 3904
 		assert_eq!(block_inflation_year_1, 3904);
@@ -181,13 +198,16 @@ fn inflation_in_1_to_9_years() {
 	new_test_ext().execute_with(|| {
 		// Total issuance = 1_000_000_000
 		let initial_issuance: u64 = 1_000_000_000;
+
 		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
-		Inflation::on_initialize(1);
+		MockBlockNumberProvider::set(1);
+		Inflation::on_initialize(0);
 
 		for year in 1..=9 {
 			let block_inflation_year_before = Inflation::block_inflation();
-			Inflation::on_initialize(YEAR * year);
+			MockBlockNumberProvider::set(YEAR * year);
+			Inflation::on_initialize(0);
 			let block_inflation_year_after = Inflation::block_inflation();
 
 			// SBP M2 review: this is actually not true (not for the first few years)
@@ -204,11 +224,13 @@ fn inflation_after_year_10_is_flat() {
 		let initial_issuance: u64 = 1_000_000_000;
 		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
-		Inflation::on_initialize(YEAR * 9);
+		MockBlockNumberProvider::set(YEAR * 9);
+		Inflation::on_initialize(0);
 
 		for year in 10..=20 {
 			let block_inflation_year_before = Inflation::block_inflation();
-			Inflation::on_initialize(YEAR * year);
+			MockBlockNumberProvider::set(YEAR * year);
+			Inflation::on_initialize(0);
 			let block_inflation_year_after = Inflation::block_inflation();
 
 			// Assert that next year inflation is equal to previous year inflation
@@ -233,22 +255,26 @@ fn inflation_rate_by_year() {
 
 		for year in 0..=10 {
 			// Year first block
-			Inflation::on_initialize(year * YEAR);
+			MockBlockNumberProvider::set(YEAR * year);
+			Inflation::on_initialize(0);
 			let mut actual_payout = Inflation::block_inflation();
 			assert_eq!(actual_payout, payout_by_year[year as usize]);
 
 			// Year second block
-			Inflation::on_initialize(year * YEAR + 1);
+			MockBlockNumberProvider::set(YEAR * year + 1);
+			Inflation::on_initialize(0);
 			actual_payout = Inflation::block_inflation();
 			assert_eq!(actual_payout, payout_by_year[year as usize]);
 
 			// Year middle block
-			Inflation::on_initialize(year * YEAR + YEAR / 2);
+			MockBlockNumberProvider::set(year * YEAR + YEAR / 2);
+			Inflation::on_initialize(0);
 			actual_payout = Inflation::block_inflation();
 			assert_eq!(actual_payout, payout_by_year[year as usize]);
 
 			// Year last block
-			Inflation::on_initialize((year + 1) * YEAR - 1);
+			MockBlockNumberProvider::set((year + 1) * YEAR - 1);
+			Inflation::on_initialize(0);
 			actual_payout = Inflation::block_inflation();
 			assert_eq!(actual_payout, payout_by_year[year as usize]);
 		}

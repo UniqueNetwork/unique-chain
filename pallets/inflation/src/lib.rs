@@ -36,7 +36,7 @@ pub use frame_support::dispatch::DispatchResult;
 
 use sp_runtime::{
 	Perbill,
-	traits::{Zero},
+	traits::{BlockNumberProvider, Zero},
 };
 use sp_std::convert::TryInto;
 
@@ -56,6 +56,9 @@ pub trait Config: system::Config {
 	type Currency: Currency<Self::AccountId>;
 	type TreasuryAccountId: Get<Self::AccountId>;
 	type InflationBlockInterval: Get<Self::BlockNumber>;
+
+	// The block number provider
+	type BlockNumberProvider: BlockNumberProvider<BlockNumber = Self::BlockNumber>;
 }
 
 decl_storage! {
@@ -75,7 +78,7 @@ decl_module! {
 	{
 		const InflationBlockInterval: T::BlockNumber = T::InflationBlockInterval::get();
 
-		fn on_initialize(now: T::BlockNumber) -> Weight
+		fn on_initialize() -> Weight
 		{
 			let mut consumed_weight = 0;
 			let mut add_weight = |reads, writes, weight| {
@@ -84,13 +87,11 @@ decl_module! {
 			};
 
 			let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);
-
-			// TODO: Rewrite inflation to use block timestamp instead of block number
-			// let _now = <timestamp::Module<T>>::get();
+			let _now = T::BlockNumberProvider::current_block_number();
 
 			// Recalculate inflation on the first block of the year (or if it is not initialized yet)
-			if (now % T::BlockNumber::from(YEAR)).is_zero() || <BlockInflation<T>>::get().is_zero() {
-				let current_year: u32 = (now / T::BlockNumber::from(YEAR)).try_into().unwrap_or(0);
+			if (_now % T::BlockNumber::from(YEAR)).is_zero() || <BlockInflation<T>>::get().is_zero() {
+				let current_year: u32 = (_now / T::BlockNumber::from(YEAR)).try_into().unwrap_or(0);
 
 				let one_percent = Perbill::from_percent(1);
 
@@ -117,7 +118,7 @@ decl_module! {
 			}
 
 			// Apply inflation every InflationBlockInterval blocks and in the 1st block to initialize Treasury account
-			else if (now % T::BlockNumber::from(block_interval)).is_zero() {
+			else if (_now % T::BlockNumber::from(block_interval)).is_zero() {
 				T::Currency::deposit_into_existing(&T::TreasuryAccountId::get(), <BlockInflation<T>>::get()).ok();
 
 				add_weight(3, 2, 12_900_000);
