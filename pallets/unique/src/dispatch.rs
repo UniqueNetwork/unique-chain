@@ -83,10 +83,6 @@ pub fn dispatch_call<
 		_ => {}
 	}
 
-	// TODO: Make submit_logs infallible, but it shouldn't fail here anyway
-	dispatched
-		.into_inner()
-		.submit_logs()
-		.expect("should succeed");
+	dispatched.into_inner().submit_logs();
 	result
 }

@@ -69,7 +69,7 @@ export function toSubstrateAddress(input: string | CrossAccountId | IKeyringPair
 
 export const U128_MAX = (1n << 128n) - 1n;
 
-const MICROUNIQUE = 1_000_000_000n;
+const MICROUNIQUE = 1_000_000_000_000n;
 const MILLIUNIQUE = 1_000n * MICROUNIQUE;
 const CENTIUNIQUE = 10n * MILLIUNIQUE;
 export const UNIQUE = 100n * CENTIUNIQUE;

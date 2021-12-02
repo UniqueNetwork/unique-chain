@@ -1,7 +1,7 @@
 {
     "relaychain": {
         "bin": "../polkadot/target/release/polkadot",
-        "chain": "rococo-local",
+        "chain": "westend-local",
         "nodes": [
             {
                 "name": "alice",
@@ -9,6 +9,7 @@
                 "rpcPort": 9843,
                 "port": 30444,
                 "flags": [
+                    "--rpc-port=9843",
                     "-lparachain::candidate_validation=debug"
                 ]
             },
@@ -18,6 +19,7 @@
                 "rpcPort": 9854,
                 "port": 30555,
                 "flags": [
+                    "--rpc-port=9854",
                     "-lparachain::candidate_validation=debug"
                 ]
             },
@@ -27,6 +29,7 @@
                 "rpcPort": 9865,
                 "port": 30666,
                 "flags": [
+                    "--rpc-port=9865",
                     "-lparachain::candidate_validation=debug"
                 ]
             },
@@ -36,6 +39,27 @@
                 "rpcPort": 9876,
                 "port": 30777,
                 "flags": [
+                    "--rpc-port=9876",
+                    "-lparachain::candidate_validation=debug"
+                ]
+            },
+            {
+                "name": "eve",
+                "wsPort": 9888,
+                "rpcPort": 9886,
+                "port": 30888,
+                "flags": [
+                    "--rpc-port=9886",
+                    "-lparachain::candidate_validation=debug"
+                ]
+            },
+            {
+                "name": "ferdie",
+                "wsPort": 9897,
+                "rpcPort": 9896,
+                "port": 30999,
+                "flags": [
+                    "--rpc-port=9896",
                     "-lparachain::candidate_validation=debug"
                 ]
             }
@@ -56,7 +80,7 @@
     "parachains": [
         {
             "bin": "../unique-chain/target/release/unique-collator",
-            "id": "2000",
+            "chain": "westend-local",
             "balance": "1000000000000000000000000",
             "nodes": [
                 {
@@ -66,6 +90,7 @@
                     "name": "alice",
                     "flags": [
                         "--rpc-cors=all",
+                        "--rpc-port=9933",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
                     ]
@@ -77,6 +102,43 @@
                     "name": "bob",
                     "flags": [
                         "--rpc-cors=all",
+                        "--rpc-port=9934",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external"
+                    ]
+                },
+                {
+                    "port": 31202,
+                    "wsPort": 9946,
+                    "rpcPort": 9935,
+                    "name": "charlie",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--rpc-port=9935",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external"
+                    ]
+                },
+                {
+                    "port": 31203,
+                    "wsPort": 9947,
+                    "rpcPort": 9936,
+                    "name": "dave",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--rpc-port=9936",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external"
+                    ]
+                },
+                {
+                    "port": 31204,
+                    "wsPort": 9948,
+                    "rpcPort": 9937,
+                    "name": "eve",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--rpc-port=9937",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
                     ]

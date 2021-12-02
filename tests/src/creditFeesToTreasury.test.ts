@@ -154,8 +154,8 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       const aliceBalanceAfter: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
       const fee = aliceBalanceBefore - aliceBalanceAfter;
 
-      expect(fee / 10n ** 15n < BigInt(Math.ceil(saneMaximumFee + createCollectionDeposit))).to.be.true;
-      expect(fee / 10n ** 15n < BigInt(Math.ceil(saneMinimumFee  + createCollectionDeposit))).to.be.true;
+      expect(fee / UNIQUE < BigInt(Math.ceil(saneMaximumFee + createCollectionDeposit))).to.be.true;
+      expect(fee / UNIQUE < BigInt(Math.ceil(saneMinimumFee  + createCollectionDeposit))).to.be.true;
     });
   });
 
@@ -170,11 +170,13 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       const aliceBalanceBefore: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
       await transferExpectSuccess(collectionId, tokenId, alice, bob, 1, 'NFT');
       const aliceBalanceAfter: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
-      const fee = Number(aliceBalanceBefore - aliceBalanceAfter) / Number(UNIQUE);
 
+      const fee = Number(aliceBalanceBefore - aliceBalanceAfter) / Number(UNIQUE);
       const expectedTransferFee = 0.1;
+      // fee drifts because of NextFeeMultiplier
       const tolerance = 0.001;
-      expect(Number(fee) / Number(UNIQUE) - expectedTransferFee).to.be.lessThan(tolerance);
+
+      expect(Math.abs(fee - expectedTransferFee)).to.be.lessThan(tolerance);
     });
   });
 

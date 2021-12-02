@@ -21,6 +21,7 @@ import {
   normalizeAccountId,
   addCollectionAdminExpectSuccess,
   getCreatedCollectionCount,
+  UNIQUE,
 } from './util/helpers';
 import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -198,7 +199,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const sponsorBalanceAfter = (await api.query.system.account(bob.address)).data.free.toBigInt();
 
       // Try again after Zero gets some balance - now it should succeed
-      const balancetx = api.tx.balances.transfer(zeroBalance.address, 1e15);
+      const balancetx = api.tx.balances.transfer(zeroBalance.address, 1n * UNIQUE);
       await submitTransactionAsync(alice, balancetx);
       const events2 = await submitTransactionAsync(zeroBalance, zeroToAlice);
       const result2 = getGenericResult(events2);
@@ -232,7 +233,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const sponsorBalanceAfter = (await api.query.system.account(bob.address)).data.free.toBigInt();
 
       // Try again after Zero gets some balance - now it should succeed
-      const balancetx = api.tx.balances.transfer(zeroBalance.address, 1e15);
+      const balancetx = api.tx.balances.transfer(zeroBalance.address, 1n * UNIQUE);
       await submitTransactionAsync(alice, balancetx);
       const events2 = await submitTransactionAsync(zeroBalance, zeroToAlice);
       const result2 = getGenericResult(events2);
@@ -268,7 +269,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       expect(sponsorBalanceAfter).to.be.equal(sponsorBalanceBefore);
 
       // Try again after Zero gets some balance - now it should succeed
-      const balancetx = api.tx.balances.transfer(zeroBalance.address, 1e15);
+      const balancetx = api.tx.balances.transfer(zeroBalance.address, 1n * UNIQUE);
       await submitTransactionAsync(alice, balancetx);
       const events2 = await submitTransactionAsync(zeroBalance, zeroToAlice);
       const result2 = getGenericResult(events2);
@@ -307,7 +308,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
       const sponsorBalanceAfter = (await api.query.system.account(bob.address)).data.free.toBigInt();
 
       // Try again after Zero gets some balance - now it should succeed
-      const balancetx = api.tx.balances.transfer(zeroBalance.address, 1e15);
+      const balancetx = api.tx.balances.transfer(zeroBalance.address, 1n * UNIQUE);
       await submitTransactionAsync(alice, balancetx);
       await createItemExpectSuccess(zeroBalance, collectionId, 'NFT', zeroBalance.address);
 

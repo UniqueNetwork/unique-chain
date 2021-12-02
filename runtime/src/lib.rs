@@ -65,7 +65,7 @@ use sp_arithmetic::{
 };
 use smallvec::smallvec;
 use codec::{Encode, Decode};
-use pallet_evm::{Account as EVMAccount, FeeCalculator, OnMethodCall};
+use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
 use fp_rpc::TransactionStatus;
 use sp_core::crypto::Public;
 use sp_runtime::{
@@ -242,14 +242,42 @@ parameter_types! {
 pub struct FixedFee;
 impl FeeCalculator for FixedFee {
 	fn min_gas_price() -> U256 {
-		1.into()
+		// Targeting 0.15 UNQ per transfer
+		1_024_947_215_000u64.into()
+	}
+}
+
+// Assuming slowest ethereum opcode is SSTORE, with gas price of 20000 as our worst case
+// (contract, which only writes a lot of data),
+// approximating on top of our real store write weight
+parameter_types! {
+	pub const WritesPerSecond: u64 = WEIGHT_PER_SECOND / <Runtime as frame_system::Config>::DbWeight::get().write;
+	pub const GasPerSecond: u64 = WritesPerSecond::get() * 20000;
+	pub const WeightPerGas: u64 = WEIGHT_PER_SECOND / GasPerSecond::get();
+}
+
+/// Limiting EVM execution to 50% of block for substrate users and management tasks
+/// EVM transaction consumes more weight than substrate's, so we can't rely on them being
+/// scheduled fairly
+const EVM_DISPATCH_RATIO: Perbill = Perbill::from_percent(50);
+parameter_types! {
+	pub BlockGasLimit: U256 = U256::from(NORMAL_DISPATCH_RATIO * EVM_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WeightPerGas::get());
+}
+
+pub enum FixedGasWeightMapping {}
+impl GasWeightMapping for FixedGasWeightMapping {
+	fn gas_to_weight(gas: u64) -> Weight {
+		gas.saturating_mul(WeightPerGas::get())
+	}
+	fn weight_to_gas(weight: Weight) -> u64 {
+		weight / WeightPerGas::get()
 	}
 }
 
 impl pallet_evm::Config for Runtime {
 	type BlockGasLimit = BlockGasLimit;
 	type FeeCalculator = FixedFee;
-	type GasWeightMapping = ();
+	type GasWeightMapping = FixedGasWeightMapping;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
@@ -288,14 +316,9 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	}
 }
 
-parameter_types! {
-	pub BlockGasLimit: U256 = U256::from(u32::max_value());
-}
-
 impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot;
-	type EvmSubmitLog = pallet_evm::Pallet<Self>;
 }
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
@@ -380,7 +403,7 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 }
 
-pub const MICROUNIQUE: Balance = 1_000_000_000;
+pub const MICROUNIQUE: Balance = 1_000_000_000_000;
 pub const MILLIUNIQUE: Balance = 1_000 * MICROUNIQUE;
 pub const CENTIUNIQUE: Balance = 10 * MILLIUNIQUE;
 pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
@@ -457,7 +480,8 @@ where
 
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		smallvec!(WeightToFeeCoefficient {
-			coeff_integer: 146_700u32.into(), // Targeting 0.1 Unique per NFT transfer
+			// Targeting 0.1 Unique per NFT transfer
+			coeff_integer: 142_688_000u32.into(),
 			coeff_frac: Perbill::zero(),
 			negative: false,
 			degree: 1,
@@ -686,6 +710,7 @@ pub type XcmRouter = (
 
 impl pallet_evm_coder_substrate::Config for Runtime {
 	type EthereumTransactionSender = pallet_ethereum::Pallet<Self>;
+	type GasWeightMapping = FixedGasWeightMapping;
 }
 
 impl pallet_xcm::Config for Runtime {
@@ -756,6 +781,7 @@ impl pallet_nonfungible::Config for Runtime {
 }
 
 impl pallet_unique::Config for Runtime {
+	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
 }
 
@@ -856,7 +882,7 @@ construct_runtime!(
 
 		// Unique Pallets
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
-		Unique: pallet_unique::{Pallet, Call, Storage} = 61,
+		Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
 		// Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 		// free = 63
 		Charging: pallet_charge_transaction::{Pallet, Call, Storage } = 64,
@@ -1151,6 +1177,7 @@ impl_runtime_apis! {
 			EVM::account_storages(address, H256::from_slice(&tmp[..]))
 		}
 
+		#[allow(clippy::redundant_closure)]
 		fn call(
 			from: H160,
 			to: H160,
@@ -1181,6 +1208,7 @@ impl_runtime_apis! {
 			).map_err(|err| err.into())
 		}
 
+		#[allow(clippy::redundant_closure)]
 		fn create(
 			from: H160,
 			data: Vec<u8>,
@@ -1342,6 +1370,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_fungible, Fungible);
 			list_benchmark!(list, extra, pallet_refungible, Refungible);
 			list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
+			// list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1375,6 +1404,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_fungible, Fungible);
 			add_benchmark!(params, batches, pallet_refungible, Refungible);
 			add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
+			// add_benchmark!(params, batches, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

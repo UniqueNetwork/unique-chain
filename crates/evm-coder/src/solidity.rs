@@ -84,6 +84,7 @@ macro_rules! solidity_type_name {
 solidity_type_name! {
 	uint8 => "uint8" true = "0",
 	uint32 => "uint32" true = "0",
+	uint64 => "uint64" true = "0",
 	uint128 => "uint128" true = "0",
 	uint256 => "uint256" true = "0",
 	address => "address" true = "0x0000000000000000000000000000000000000000",
@@ -376,6 +377,7 @@ pub enum SolidityMutability {
 	Mutable,
 }
 pub struct SolidityFunction<A, R> {
+	pub docs: &'static [&'static str],
 	pub selector: &'static str,
 	pub name: &'static str,
 	pub args: A,
@@ -389,6 +391,12 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		writer: &mut impl fmt::Write,
 		tc: &TypeCollector,
 	) -> fmt::Result {
+		for doc in self.docs {
+			writeln!(writer, "\t//{}", doc)?;
+		}
+		if !self.docs.is_empty() {
+			writeln!(writer, "\t//")?;
+		}
 		writeln!(writer, "\t// Selector: {}", self.selector)?;
 		write!(writer, "\tfunction {}(", self.name)?;
 		self.args.solidity_name(writer, tc)?;
@@ -449,6 +457,7 @@ impl SolidityFunctions for Tuple {
 }
 
 pub struct SolidityInterface<F: SolidityFunctions> {
+	pub selector: u32,
 	pub name: &'static str,
 	pub is: &'static [&'static str],
 	pub functions: F,
@@ -461,6 +470,9 @@ impl<F: SolidityFunctions> SolidityInterface<F> {
 		out: &mut impl fmt::Write,
 		tc: &TypeCollector,
 	) -> fmt::Result {
+		if self.selector != 0 {
+			writeln!(out, "// Selector: {:0>8x}", self.selector)?;
+		}
 		if is_impl {
 			write!(out, "contract ")?;
 		} else {
