@@ -53,9 +53,9 @@ where
 
 pub fn development_config(id: ParaId) -> ChainSpec {
 	let mut properties = Map::new();
-	properties.insert("tokenSymbol".into(), "testUNQ".into());
+	properties.insert("tokenSymbol".into(), "OPL".into());
 	properties.insert("tokenDecimals".into(), 15.into());
-	properties.insert("ss58Format".into(), 42.into()); // Generic Substrate wildcard (SS58 checksum preimage)
+	properties.insert("ss58Format".into(), 42.into());
 
 	ChainSpec::from_genesis(
 		// Name
