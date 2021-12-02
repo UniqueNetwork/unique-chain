@@ -54,7 +54,7 @@ describe('EVM payable contracts', () => {
     expect(await contract.methods.getUnaccounted().call()).to.be.equal('10000');
   });
 
-  itWeb3('Balance can be retrieved from evm contract', async({api, web3}) => {
+  itWeb3.only('Balance can be retrieved from evm contract', async({api, web3}) => {
     const FEE_BALANCE = 10n ** 18n;
     const CONTRACT_BALANCE = 10n ** 14n;
 

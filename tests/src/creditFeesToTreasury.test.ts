@@ -154,8 +154,8 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       const aliceBalanceAfter: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
       const fee = aliceBalanceBefore - aliceBalanceAfter;
 
-      expect(fee / 10n ** 15n < BigInt(Math.ceil(saneMaximumFee + createCollectionDeposit))).to.be.true;
-      expect(fee / 10n ** 15n < BigInt(Math.ceil(saneMinimumFee  + createCollectionDeposit))).to.be.true;
+      expect(fee / UNIQUE < BigInt(Math.ceil(saneMaximumFee + createCollectionDeposit))).to.be.true;
+      expect(fee / UNIQUE < BigInt(Math.ceil(saneMinimumFee  + createCollectionDeposit))).to.be.true;
     });
   });
 
