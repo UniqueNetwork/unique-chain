@@ -1019,7 +1019,7 @@ macro_rules! dispatch_unique_runtime {
 	($collection:ident.$method:ident($($name:ident),*)) => {{
 		use pallet_unique::dispatch::Dispatched;
 
-		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::new($collection).unwrap_or_default());
+		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::new($collection).unwrap());
 		let dispatch = collection.as_dyn();
 
 		dispatch.$method($($name),*)
