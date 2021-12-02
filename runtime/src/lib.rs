@@ -243,7 +243,7 @@ pub struct FixedFee;
 impl FeeCalculator for FixedFee {
 	fn min_gas_price() -> U256 {
 		// Targeting 0.15 UNQ per transfer
-		1_024_947_215_000u32.into()
+		1_024_947_215_000u64.into()
 	}
 }
 
