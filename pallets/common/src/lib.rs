@@ -417,7 +417,7 @@ impl<T: Config> Pallet<T> {
 
 		// bound Total number of collections
 		ensure!(
-			created_count - destroyed_count < COLLECTION_NUMBER_LIMIT,
+			created_count - destroyed_count <= COLLECTION_NUMBER_LIMIT,
 			<Error<T>>::TotalCollectionsLimitExceeded
 		);
 
