@@ -95,12 +95,12 @@ describe('Fungible: Plain calls', () => {
     const alice = privateKey('//Alice');
 
     const owner = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, owner, 999999999999999);
+    await transferBalanceToEth(api, alice, owner);
 
     await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Ethereum: owner});
 
     const spender = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, spender, 999999999999999);
+    await transferBalanceToEth(api, alice, spender);
 
     const receiver = createEthAccount(web3);
 
@@ -153,12 +153,12 @@ describe('Fungible: Plain calls', () => {
     const alice = privateKey('//Alice');
 
     const owner = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, owner, 999999999999999);
+    await transferBalanceToEth(api, alice, owner);
 
     await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Ethereum: owner});
 
     const receiver = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, receiver, 999999999999999);
+    await transferBalanceToEth(api, alice, receiver);
 
     const address = collectionIdToAddress(collection);
     const contract = new web3.eth.Contract(fungibleAbi as any, address, {from: owner, ...GAS_ARGS});

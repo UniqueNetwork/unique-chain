@@ -12,14 +12,14 @@ import Web3 from 'web3';
 import usingApi, {submitTransactionAsync} from '../../substrate/substrate-api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
-import {getGenericResult} from '../../util/helpers';
+import {getGenericResult, UNIQUE} from '../../util/helpers';
 import * as solc from 'solc';
 import config from '../../config';
 import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
 import getBalance from '../../substrate/get-balance';
 
-export const GAS_ARGS = {gas: 0x1000000, gasPrice: '0x01'};
+export const GAS_ARGS = {gas: 2500000};
 
 let web3Connected = false;
 export async function usingWeb3<T>(cb: (web3: Web3) => Promise<T> | T): Promise<T> {
@@ -63,7 +63,7 @@ export async function createEthAccountWithBalance(api: ApiPromise, web3: Web3) {
   return account;
 }
 
-export async function transferBalanceToEth(api: ApiPromise, source: IKeyringPair, target: string, amount = 999999999999999) {
+export async function transferBalanceToEth(api: ApiPromise, source: IKeyringPair, target: string, amount = 1000n * UNIQUE) {
   const tx = api.tx.balances.transfer(evmToAddress(target), amount);
   const events = await submitTransactionAsync(source, tx);
   const result = getGenericResult(events);
@@ -234,20 +234,20 @@ export function contractHelpers(web3: Web3, caller: string) {
  * @param mkTx - closure, receiving `contract.methods`, and returning method call,
  * to be used as following (assuming `to` = erc20 contract):
  * `m => m.transfer(to, amount)`
- * 
+ *
  * # Example
  * ```ts
  * executeEthTxOnSub(api, alice, erc20Contract, m => m.transfer(target, amount));
  * ```
  */
-export async function executeEthTxOnSub(api: ApiPromise, from: IKeyringPair, to: any, mkTx: (methods: any) => any, {value = 0}: {value?: bigint | number} = { }) {
+export async function executeEthTxOnSub(web3: Web3, api: ApiPromise, from: IKeyringPair, to: any, mkTx: (methods: any) => any, {value = 0}: {value?: bigint | number} = { }) {
   const tx = api.tx.evm.call(
     subToEth(from.address),
     to.options.address,
     mkTx(to.methods).encodeABI(),
     value,
     GAS_ARGS.gas,
-    GAS_ARGS.gasPrice,
+    await web3.eth.getGasPrice(),
     null,
   );
   const events = await submitTransactionAsync(from, tx);
@@ -260,7 +260,7 @@ export async function ethBalanceViaSub(api: ApiPromise, address: string): Promis
 
 /**
  * Measure how much gas given closure consumes
- * 
+ *
  * @param user which user balance will be checked
  */
 export async function recordEthFee(api: ApiPromise, user: string, call: () => Promise<any>): Promise<bigint> {

@@ -22,6 +22,7 @@ interface ERC20Events {
 	);
 }
 
+// Selector: 942e8b22
 interface ERC20 is Dummy, ERC165, ERC20Events {
 	// Selector: name() 06fdde03
 	function name() external view returns (string memory);

@@ -149,6 +149,16 @@ benchmarks! {
 		<Pallet<T>>::set_allowance(&collection, &sender, &spender, item, 200)?;
 	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, item, 200)?}
 
+	// Both source account and token is destroyed
+	burn_from {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub; sender: cross_sub; burner: cross_sub;
+		};
+		let item = create_max_item(&collection, &owner, [(sender.clone(), 200)])?;
+		<Pallet<T>>::set_allowance(&collection, &sender, &burner, item, 200)?;
+	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, item, 200)?}
+
 	set_variable_metadata {
 		let b in 0..CUSTOM_DATA_LIMIT;
 		bench_init!{
