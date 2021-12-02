@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use evm_coder::{ToLog, types::*};
 
 #[derive(ToLog)]

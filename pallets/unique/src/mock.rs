@@ -1,7 +1,7 @@
 #![allow(clippy::from_over_into)]
 
 use crate as pallet_template;
-use sp_core::H256;
+use sp_core::{H160, H256};
 use frame_support::{parameter_types, traits::Everything, weights::IdentityFee};
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
@@ -159,15 +159,15 @@ impl Default for TestCrossAccountId {
 pub struct TestEtheremTransactionSender;
 impl pallet_ethereum::EthereumTransactionSender for TestEtheremTransactionSender {
 	fn submit_logs_transaction(
+		_source: H160,
 		_tx: pallet_ethereum::Transaction,
 		_logs: Vec<pallet_ethereum::Log>,
-	) -> Result<(), sp_runtime::DispatchError> {
-		Ok(())
-	}
+	) {}
 }
 
 impl pallet_evm_coder_substrate::Config for Test {
 	type EthereumTransactionSender = TestEtheremTransactionSender;
+	type GasWeightMapping = ();
 }
 
 impl pallet_common::Config for Test {
