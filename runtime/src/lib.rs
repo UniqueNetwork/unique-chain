@@ -243,7 +243,7 @@ pub struct FixedFee;
 impl FeeCalculator for FixedFee {
 	fn min_gas_price() -> U256 {
 		// Targeting 0.15 UNQ per transfer
-		1_024_947_215u32.into()
+		1_024_947_215_000u64.into()
 	}
 }
 
@@ -403,7 +403,7 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 }
 
-pub const MICROUNIQUE: Balance = 1_000_000_000;
+pub const MICROUNIQUE: Balance = 1_000_000_000_000;
 pub const MILLIUNIQUE: Balance = 1_000 * MICROUNIQUE;
 pub const CENTIUNIQUE: Balance = 10 * MILLIUNIQUE;
 pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
@@ -481,7 +481,7 @@ where
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		smallvec!(WeightToFeeCoefficient {
 			// Targeting 0.1 Unique per NFT transfer
-			coeff_integer: 142_688u32.into(),
+			coeff_integer: 142_688_000u32.into(),
 			coeff_frac: Perbill::zero(),
 			negative: false,
 			degree: 1,
