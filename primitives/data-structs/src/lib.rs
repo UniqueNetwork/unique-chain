@@ -31,7 +31,7 @@ pub const MAX_REFUNGIBLE_PIECES: u128 = 1_000_000_000_000_000_000_000;
 pub const MAX_SPONSOR_TIMEOUT: u32 = 10_368_000;
 
 pub const MAX_TOKEN_OWNERSHIP: u32 = if cfg!(not(feature = "limit-testing")) {
-	10_000_000
+	100_000
 } else {
 	10
 };
@@ -61,9 +61,9 @@ pub const REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT: u32 = 5;
 pub const SPONSOR_APPROVE_TIMEOUT: u32 = 5;
 
 // Schema limits
-pub const OFFCHAIN_SCHEMA_LIMIT: u32 = 1024;
-pub const VARIABLE_ON_CHAIN_SCHEMA_LIMIT: u32 = 1024;
-pub const CONST_ON_CHAIN_SCHEMA_LIMIT: u32 = 1024;
+pub const OFFCHAIN_SCHEMA_LIMIT: u32 = 8192;
+pub const VARIABLE_ON_CHAIN_SCHEMA_LIMIT: u32 = 8192;
+pub const CONST_ON_CHAIN_SCHEMA_LIMIT: u32 = 1048576;
 
 pub const MAX_COLLECTION_NAME_LENGTH: usize = 64;
 pub const MAX_COLLECTION_DESCRIPTION_LENGTH: usize = 256;
