@@ -3,10 +3,11 @@
 extern crate alloc;
 
 use abi::{AbiRead, AbiReader, AbiWriter};
-pub use evm_coder_macros::{event_topic, fn_selector, solidity_interface, solidity, ToLog};
+pub use evm_coder_macros::{event_topic, fn_selector, solidity_interface, solidity, weight, ToLog};
 pub mod abi;
 pub mod events;
 pub use events::ToLog;
+use execution::DispatchInfo;
 pub mod execution;
 pub mod solidity;
 
@@ -57,8 +58,14 @@ pub trait Call: Sized {
 	fn parse(selector: u32, input: &mut AbiReader) -> execution::Result<Option<Self>>;
 }
 
+pub type Weight = u64;
+
+pub trait Weighted: Call {
+	fn weight(&self) -> DispatchInfo;
+}
+
 pub trait Callable<C: Call> {
-	fn call(&mut self, call: types::Msg<C>) -> execution::Result<AbiWriter>;
+	fn call(&mut self, call: types::Msg<C>) -> execution::ResultWithPostInfo<AbiWriter>;
 }
 
 /// Implementation is implicitly provided for all interfaces
@@ -84,15 +91,20 @@ impl Call for ERC165Call {
 	}
 }
 
+/// Generate "tests", which will generate solidity code on execution and print it to stdout
+/// Script at .maintain/scripts/generate_api.sh can split this output from test runtime
+///
+/// This macro receives type usage as second argument, but you can use anything as generics,
+/// because no bounds are implied
 #[macro_export]
 macro_rules! generate_stubgen {
-	($name:ident, $decl:ident, $is_impl:literal) => {
+	($name:ident, $decl:ty, $is_impl:literal) => {
 		#[test]
 		#[ignore]
 		fn $name() {
 			use evm_coder::solidity::TypeCollector;
 			let mut out = TypeCollector::new();
-			$decl::generate_solidity_interface(&mut out, $is_impl);
+			<$decl>::generate_solidity_interface(&mut out, $is_impl);
 			println!("=== SNIP START ===");
 			println!("// SPDX-License-Identifier: OTHER");
 			println!("// This code is automatically generated");

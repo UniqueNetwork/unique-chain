@@ -329,7 +329,7 @@ decl_module! {
 
 			// Create new collection
 			let new_collection = Collection {
-				owner: who.clone(),
+				owner: who,
 				name: collection_name,
 				mode: mode.clone(),
 				mint_mode: false,

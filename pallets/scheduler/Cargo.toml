@@ -2,7 +2,7 @@
 name = "pallet-unq-scheduler"
 version = "0.1.0"
 authors = ["Unique Network <support@uniquenetwork.io>"]
-edition = "2018"
+edition = "2021"
 license = "All Rights Reserved"
 homepage = "https://unique.network"
 repository = "https://github.com/UniqueNetwork/unique-chain"
@@ -20,7 +20,7 @@ sp-std = { default-features = false, git = 'https://github.com/paritytech/substr
 sp-io = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
 frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
 
-up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring" } 
+up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring" }
 log = { version = "0.4.14", default-features = false }
 
 [dev-dependencies]

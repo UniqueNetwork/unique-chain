@@ -25,6 +25,7 @@
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
+#![allow(clippy::unnecessary_cast)]
 
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
@@ -44,6 +45,7 @@ pub trait WeightInfo {
 	fn transfer_from_creating() -> Weight;
 	fn transfer_from_removing() -> Weight;
 	fn transfer_from_creating_removing() -> Weight;
+	fn burn_from() -> Weight;
 	fn set_variable_metadata(b: u32, ) -> Weight;
 }
 
@@ -163,6 +165,18 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible Owned (r:0 w:2)
 	fn transfer_from_creating_removing() -> Weight {
 		(32_362_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(5 as Weight))
+			.saturating_add(T::DbWeight::get().writes(7 as Weight))
+	}
+	// Storage: Refungible Allowance (r:1 w:1)
+	// Storage: Refungible TotalSupply (r:1 w:1)
+	// Storage: Refungible Balance (r:1 w:1)
+	// Storage: Refungible AccountBalance (r:1 w:1)
+	// Storage: Refungible TokensBurnt (r:1 w:1)
+	// Storage: Refungible TokenData (r:0 w:1)
+	// Storage: Refungible Owned (r:0 w:1)
+	fn burn_from() -> Weight {
+		(60_903_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
@@ -289,6 +303,18 @@ impl WeightInfo for () {
 	// Storage: Refungible Owned (r:0 w:2)
 	fn transfer_from_creating_removing() -> Weight {
 		(32_362_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
+	}
+	// Storage: Refungible Allowance (r:1 w:1)
+	// Storage: Refungible TotalSupply (r:1 w:1)
+	// Storage: Refungible Balance (r:1 w:1)
+	// Storage: Refungible AccountBalance (r:1 w:1)
+	// Storage: Refungible TokensBurnt (r:1 w:1)
+	// Storage: Refungible TokenData (r:0 w:1)
+	// Storage: Refungible Owned (r:0 w:1)
+	fn burn_from() -> Weight {
+		(60_903_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}

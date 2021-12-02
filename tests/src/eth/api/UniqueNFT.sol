@@ -42,6 +42,13 @@ interface ERC721MintableEvents {
 	event MintingFinished();
 }
 
+// Selector: 42966c68
+interface ERC721Burnable is Dummy, ERC165 {
+	// Selector: burn(uint256) 42966c68
+	function burn(uint256 tokenId) external;
+}
+
+// Selector: 58800161
 interface ERC721 is Dummy, ERC165, ERC721Events {
 	// Selector: balanceOf(address) 70a08231
 	function balanceOf(address owner) external view returns (uint256);
@@ -49,6 +56,8 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 	// Selector: ownerOf(uint256) 6352211e
 	function ownerOf(uint256 tokenId) external view returns (address);
 
+	// Not implemented
+	//
 	// Selector: safeTransferFromWithData(address,address,uint256,bytes) 60a11672
 	function safeTransferFromWithData(
 		address from,
@@ -57,6 +66,8 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 		bytes memory data
 	) external;
 
+	// Not implemented
+	//
 	// Selector: safeTransferFrom(address,address,uint256) 42842e0e
 	function safeTransferFrom(
 		address from,
@@ -74,12 +85,18 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 	// Selector: approve(address,uint256) 095ea7b3
 	function approve(address approved, uint256 tokenId) external;
 
+	// Not implemented
+	//
 	// Selector: setApprovalForAll(address,bool) a22cb465
 	function setApprovalForAll(address operator, bool approved) external;
 
+	// Not implemented
+	//
 	// Selector: getApproved(uint256) 081812fc
 	function getApproved(uint256 tokenId) external view returns (address);
 
+	// Not implemented
+	//
 	// Selector: isApprovedForAll(address,address) e985e9c5
 	function isApprovedForAll(address owner, address operator)
 		external
@@ -87,15 +104,54 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 		returns (address);
 }
 
-interface ERC721Burnable is Dummy, ERC165 {
-	// Selector: burn(uint256) 42966c68
-	function burn(uint256 tokenId) external;
+// Selector: 5b5e139f
+interface ERC721Metadata is Dummy, ERC165 {
+	// Selector: name() 06fdde03
+	function name() external view returns (string memory);
+
+	// Selector: symbol() 95d89b41
+	function symbol() external view returns (string memory);
+
+	// Returns token's const_metadata
+	//
+	// Selector: tokenURI(uint256) c87b56dd
+	function tokenURI(uint256 tokenId) external view returns (string memory);
 }
 
+// Selector: 68ccfe89
+interface ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
+	// Selector: mintingFinished() 05d2035b
+	function mintingFinished() external view returns (bool);
+
+	// `token_id` should be obtained with `next_token_id` method,
+	// unlike standard, you can't specify it manually
+	//
+	// Selector: mint(address,uint256) 40c10f19
+	function mint(address to, uint256 tokenId) external returns (bool);
+
+	// `token_id` should be obtained with `next_token_id` method,
+	// unlike standard, you can't specify it manually
+	//
+	// Selector: mintWithTokenURI(address,uint256,string) 50bb4e7f
+	function mintWithTokenURI(
+		address to,
+		uint256 tokenId,
+		string memory tokenUri
+	) external returns (bool);
+
+	// Not implemented
+	//
+	// Selector: finishMinting() 7d64bcb4
+	function finishMinting() external returns (bool);
+}
+
+// Selector: 780e9d63
 interface ERC721Enumerable is Dummy, ERC165 {
 	// Selector: tokenByIndex(uint256) 4f6ccce7
 	function tokenByIndex(uint256 index) external view returns (uint256);
 
+	// Not implemented
+	//
 	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
 	function tokenOfOwnerByIndex(address owner, uint256 index)
 		external
@@ -106,35 +162,7 @@ interface ERC721Enumerable is Dummy, ERC165 {
 	function totalSupply() external view returns (uint256);
 }
 
-interface ERC721Metadata is Dummy, ERC165 {
-	// Selector: name() 06fdde03
-	function name() external view returns (string memory);
-
-	// Selector: symbol() 95d89b41
-	function symbol() external view returns (string memory);
-
-	// Selector: tokenURI(uint256) c87b56dd
-	function tokenURI(uint256 tokenId) external view returns (string memory);
-}
-
-interface ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
-	// Selector: mintingFinished() 05d2035b
-	function mintingFinished() external view returns (bool);
-
-	// Selector: mint(address,uint256) 40c10f19
-	function mint(address to, uint256 tokenId) external returns (bool);
-
-	// Selector: mintWithTokenURI(address,uint256,string) 50bb4e7f
-	function mintWithTokenURI(
-		address to,
-		uint256 tokenId,
-		string memory tokenUri
-	) external returns (bool);
-
-	// Selector: finishMinting() 7d64bcb4
-	function finishMinting() external returns (bool);
-}
-
+// Selector: e562194d
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// Selector: transfer(address,uint256) a9059cbb
 	function transfer(address to, uint256 tokenId) external;
