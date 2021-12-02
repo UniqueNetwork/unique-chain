@@ -781,6 +781,7 @@ impl pallet_nonfungible::Config for Runtime {
 }
 
 impl pallet_unique::Config for Runtime {
+	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
 }
 
@@ -881,7 +882,7 @@ construct_runtime!(
 
 		// Unique Pallets
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
-		Unique: pallet_unique::{Pallet, Call, Storage} = 61,
+		Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
 		// Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 		// free = 63
 		Charging: pallet_charge_transaction::{Pallet, Call, Storage } = 64,
