@@ -162,7 +162,8 @@ impl pallet_ethereum::EthereumTransactionSender for TestEtheremTransactionSender
 		_source: H160,
 		_tx: pallet_ethereum::Transaction,
 		_logs: Vec<pallet_ethereum::Log>,
-	) {}
+	) {
+	}
 }
 
 impl pallet_evm_coder_substrate::Config for Test {
