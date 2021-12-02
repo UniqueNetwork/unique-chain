@@ -2,7 +2,7 @@
 name = "nft_transfer"
 version = "0.1.0"
 authors = ["[Greg Zaitsev] <[your_email]>"]
-edition = "2018"
+edition = "2021"
 
 [workspace]
 

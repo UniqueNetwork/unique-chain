@@ -128,7 +128,7 @@ where
 				let sponsor = frame_support::storage::with_transaction(|| {
 					TransactionOutcome::Rollback(T::EvmSponsorshipHandler::get_sponsor(
 						&who,
-						&(target.clone(), input.clone()),
+						&(*target, input.clone()),
 					))
 				})?;
 				let sponsor = T::EvmAddressMapping::into_account_id(sponsor);

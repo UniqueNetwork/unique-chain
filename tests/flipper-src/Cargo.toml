@@ -2,7 +2,7 @@
 name = "flipper"
 version = "3.0.0-rc1"
 authors = ["Parity Technologies <admin@parity.io>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 ink_primitives = { version = "3.0.0-rc1", git = "https://github.com/paritytech/ink", tag = "v3.0.0-rc1", default-features = false }

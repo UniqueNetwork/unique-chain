@@ -25,6 +25,7 @@
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
+#![allow(clippy::unnecessary_cast)]
 
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
@@ -37,6 +38,7 @@ pub trait WeightInfo {
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
+	fn burn_from() -> Weight;
 	fn set_variable_metadata(b: u32, ) -> Weight;
 }
 
@@ -97,6 +99,15 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		(28_001_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+	}
+	// Storage: Nonfungible Allowance (r:1 w:1)
+	// Storage: Nonfungible TokenData (r:1 w:1)
+	// Storage: Nonfungible TokensBurnt (r:1 w:1)
+	// Storage: Nonfungible Owned (r:0 w:1)
+	fn burn_from() -> Weight {
+		(53_429_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 	// Storage: Nonfungible TokenData (r:1 w:1)
 	fn set_variable_metadata(_b: u32, ) -> Weight {
@@ -162,6 +173,15 @@ impl WeightInfo for () {
 		(28_001_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+	}
+	// Storage: Nonfungible Allowance (r:1 w:1)
+	// Storage: Nonfungible TokenData (r:1 w:1)
+	// Storage: Nonfungible TokensBurnt (r:1 w:1)
+	// Storage: Nonfungible Owned (r:0 w:1)
+	fn burn_from() -> Weight {
+		(53_429_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
 	// Storage: Nonfungible TokenData (r:1 w:1)
 	fn set_variable_metadata(_b: u32, ) -> Weight {

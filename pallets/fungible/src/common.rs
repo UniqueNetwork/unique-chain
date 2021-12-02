@@ -37,7 +37,7 @@ impl<T: Config> CommonWeightInfo for CommonWeights<T> {
 	}
 
 	fn burn_from() -> Weight {
-		0
+		<SelfWeightOf<T>>::burn_from()
 	}
 
 	fn set_variable_metadata(_bytes: u32) -> Weight {
@@ -116,7 +116,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		);
 
 		with_weight(
-			<Pallet<T>>::transfer(&self, &from, &to, amount),
+			<Pallet<T>>::transfer(self, &from, &to, amount),
 			<CommonWeights<T>>::transfer(),
 		)
 	}
@@ -134,7 +134,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		);
 
 		with_weight(
-			<Pallet<T>>::set_allowance(&self, &sender, &spender, amount),
+			<Pallet<T>>::set_allowance(self, &sender, &spender, amount),
 			<CommonWeights<T>>::approve(),
 		)
 	}
@@ -153,7 +153,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		);
 
 		with_weight(
-			<Pallet<T>>::transfer_from(&self, &sender, &from, &to, amount),
+			<Pallet<T>>::transfer_from(self, &sender, &from, &to, amount),
 			<CommonWeights<T>>::transfer_from(),
 		)
 	}
@@ -171,7 +171,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		);
 
 		with_weight(
-			<Pallet<T>>::burn_from(&self, &sender, &from, amount),
+			<Pallet<T>>::burn_from(self, &sender, &from, amount),
 			<CommonWeights<T>>::burn_from(),
 		)
 	}

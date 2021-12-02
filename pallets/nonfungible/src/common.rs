@@ -38,7 +38,7 @@ impl<T: Config> CommonWeightInfo for CommonWeights<T> {
 	}
 
 	fn burn_from() -> Weight {
-		0
+		<SelfWeightOf<T>>::burn_from()
 	}
 
 	fn set_variable_metadata(bytes: u32) -> Weight {
@@ -100,7 +100,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		ensure!(amount <= 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
 		if amount == 1 {
 			with_weight(
-				<Pallet<T>>::burn(&self, &sender, token),
+				<Pallet<T>>::burn(self, &sender, token),
 				<CommonWeights<T>>::burn_item(),
 			)
 		} else {
@@ -118,7 +118,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		ensure!(amount <= 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
 		if amount == 1 {
 			with_weight(
-				<Pallet<T>>::transfer(&self, &from, &to, token),
+				<Pallet<T>>::transfer(self, &from, &to, token),
 				<CommonWeights<T>>::transfer(),
 			)
 		} else {
@@ -137,9 +137,9 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 		with_weight(
 			if amount == 1 {
-				<Pallet<T>>::set_allowance(&self, &sender, token, Some(&spender))
+				<Pallet<T>>::set_allowance(self, &sender, token, Some(&spender))
 			} else {
-				<Pallet<T>>::set_allowance(&self, &sender, token, None)
+				<Pallet<T>>::set_allowance(self, &sender, token, None)
 			},
 			<CommonWeights<T>>::approve(),
 		)
@@ -157,7 +157,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 		if amount == 1 {
 			with_weight(
-				<Pallet<T>>::transfer_from(&self, &sender, &from, &to, token),
+				<Pallet<T>>::transfer_from(self, &sender, &from, &to, token),
 				<CommonWeights<T>>::transfer_from(),
 			)
 		} else {
@@ -176,7 +176,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 		if amount == 1 {
 			with_weight(
-				<Pallet<T>>::burn_from(&self, &sender, &from, token),
+				<Pallet<T>>::burn_from(self, &sender, &from, token),
 				<CommonWeights<T>>::burn_from(),
 			)
 		} else {
@@ -192,7 +192,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		let len = data.len();
 		with_weight(
-			<Pallet<T>>::set_variable_metadata(&self, &sender, token, data),
+			<Pallet<T>>::set_variable_metadata(self, &sender, token, data),
 			<CommonWeights<T>>::set_variable_metadata(len as u32),
 		)
 	}
@@ -218,12 +218,12 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 	}
 	fn const_metadata(&self, token: TokenId) -> Vec<u8> {
 		<TokenData<T>>::get((self.id, token))
-			.map(|t| t.const_data.clone())
+			.map(|t| t.const_data)
 			.unwrap_or_default()
 	}
 	fn variable_metadata(&self, token: TokenId) -> Vec<u8> {
 		<TokenData<T>>::get((self.id, token))
-			.map(|t| t.variable_data.clone())
+			.map(|t| t.variable_data)
 			.unwrap_or_default()
 	}
 

@@ -89,6 +89,15 @@ benchmarks! {
 		<Pallet<T>>::set_allowance(&collection, &sender, item, Some(&spender))?;
 	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, item)?}
 
+	burn_from {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub; sender: cross_sub; burner: cross_sub;
+		};
+		let item = create_max_item(&collection, &owner, sender.clone())?;
+		<Pallet<T>>::set_allowance(&collection, &sender, item, Some(&burner))?;
+	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, item)?}
+
 	set_variable_metadata {
 		let b in 0..CUSTOM_DATA_LIMIT;
 		bench_init!{
