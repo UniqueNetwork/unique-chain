@@ -600,7 +600,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 
-			<Pallet<T>>::deposit_event(Event::<T>::CollectionAdminAdded(
+			<Pallet<T>>::deposit_event(Event::<T>::CollectionAdminRemoved(
 				collection_id,
 				account_id.clone()
 			));
