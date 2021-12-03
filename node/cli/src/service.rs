@@ -555,9 +555,7 @@ pub async fn start_node(
 
 /// Builds a new development service. This service uses instant seal, and mocks
 /// the parachain inherent.
-pub fn new_dev(
-	config: Configuration,
-) -> Result<TaskManager, sc_service::Error>
+pub fn new_dev(config: Configuration) -> Result<TaskManager, sc_service::Error>
 where
 	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
@@ -615,7 +613,7 @@ where
 		//    in the parachain context
 		// 3. check the keystore like we do in nimbus. Actually, maybe the keystore-checking could
 		//    be exported as a helper function from nimbus.
-		let _author_id = get_account_id_from_seed::<sr25519::Public>("Alice");//chain_spec::get_from_seed::<NimbusId>("Alice");
+		let _author_id = get_account_id_from_seed::<sr25519::Public>("Alice"); //chain_spec::get_from_seed::<NimbusId>("Alice");
 
 		let block_import =
 			FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
@@ -673,8 +671,7 @@ where
 					async move {
 						let time = sp_timestamp::InherentDataProvider::from_system_time();
 
-						let mocked_parachain = 
-						cumulus_primitives_parachain_inherent::MockValidationDataInherentDataProvider {
+						let mocked_parachain = cumulus_primitives_parachain_inherent::MockValidationDataInherentDataProvider {
 							current_para_block,
 							relay_offset: 1000,
 							relay_blocks_per_para_block: 2,
@@ -693,7 +690,7 @@ where
 			}),
 		);
 	}
-	
+
 	task_manager.spawn_essential_handle().spawn(
 		"frontier-mapping-sync-worker",
 		MappingSyncWorker::new(

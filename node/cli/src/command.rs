@@ -274,9 +274,9 @@ pub fn run() -> Result<()> {
 			runner.run_node_until_exit(|config| async move {
 				let extension = chain_spec::Extensions::try_get(&*config.chain_spec);
 				let para_id = extension.map(|e| e.para_id);
-				
+
 				/*let para_id =
-					chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);*/
+				chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);*/
 
 				// If dev service was requested, start up manual or instant seal.
 				// Otherwise continue with the normal parachain node.
@@ -294,8 +294,7 @@ pub fn run() -> Result<()> {
 				if dev_service {
 					// When running the dev service, just use Alice's author inherent
 
-					return crate::service::new_dev(config)
-						.map_err(Into::into)
+					return crate::service::new_dev(config).map_err(Into::into);
 				}
 
 				let polkadot_cli = RelayChainCli::new(
