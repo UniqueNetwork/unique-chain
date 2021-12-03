@@ -193,6 +193,7 @@ impl pallet_nonfungible::Config for Test {
 }
 
 impl pallet_template::Config for Test {
+	type Event = ();
 	type WeightInfo = ();
 }
 

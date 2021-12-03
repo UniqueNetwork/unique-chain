@@ -2259,7 +2259,7 @@ fn total_number_collections_bound_neg() {
 	new_test_ext().execute_with(|| {
 		let origin1 = Origin::signed(1);
 
-		for i in 1..COLLECTION_NUMBER_LIMIT {
+		for i in 1..=COLLECTION_NUMBER_LIMIT {
 			create_test_collection(&CollectionMode::NFT, CollectionId(i));
 		}
 
