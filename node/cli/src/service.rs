@@ -29,7 +29,7 @@ use sc_client_api::ExecutorProvider;
 use sc_executor::NativeElseWasmExecutor;
 use sc_executor::NativeExecutionDispatch;
 use sc_network::NetworkService;
-use sc_service::{BasePath, Configuration, PartialComponents, Role, TaskManager};
+use sc_service::{BasePath, ChainSpec, Configuration, PartialComponents, Role, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_consensus::SlotData;
 use sp_keystore::SyncCryptoStorePtr;
@@ -88,6 +88,7 @@ type FullClient =
 	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
+type MaybeSelectChain = Option<FullSelectChain>;
 
 /// Starts a `ServiceBuilder` for a full service.
 ///
@@ -97,11 +98,12 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 pub fn new_partial<BIQ>(
 	config: &Configuration,
 	build_import_queue: BIQ,
+	dev_service: bool,
 ) -> Result<
 	PartialComponents<
 		FullClient,
 		FullBackend,
-		FullSelectChain,
+		MaybeSelectChain,
 		sc_consensus::DefaultImportQueue<Block, FullClient>,
 		sc_transaction_pool::FullPool<Block, FullClient>,
 		(
@@ -166,7 +168,12 @@ where
 		telemetry
 	});
 
-	let select_chain = sc_consensus::LongestChain::new(backend.clone());
+	//let select_chain = sc_consensus::LongestChain::new(backend.clone());
+	let maybe_select_chain = if dev_service {
+		Some(sc_consensus::LongestChain::new(backend.clone()))
+	} else {
+		None
+	};
 
 	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
 		config.transaction_pool.clone(),
@@ -194,7 +201,7 @@ where
 		keystore_container,
 		task_manager,
 		transaction_pool,
-		select_chain,
+		select_chain: maybe_select_chain,
 		other: (
 			telemetry,
 			filter_pool,
@@ -204,6 +211,19 @@ where
 	};
 
 	Ok(params)
+}
+
+/// Can be called for a `Configuration` to check if it is a configuration for
+/// a development network.
+pub trait IdentifyVariant {
+	/// Returns `true` if this is a configuration for a dev network.
+	fn is_dev(&self) -> bool;
+}
+
+impl IdentifyVariant for Box<dyn ChainSpec> {
+	fn is_dev(&self) -> bool {
+		self.id().ends_with("dev")
+	}
 }
 
 /// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
@@ -244,7 +264,7 @@ where
 
 	let parachain_config = prepare_node_config(parachain_config);
 
-	let params = new_partial::<BIQ>(&parachain_config, build_import_queue)?;
+	let params = new_partial::<BIQ>(&parachain_config, build_import_queue, false)?;
 	let (mut telemetry, filter_pool, frontier_backend, telemetry_worker_handle) = params.other;
 
 	let relay_chain_full_node =
@@ -285,7 +305,7 @@ where
 	let subscription_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let rpc_client = client.clone();
 	let rpc_pool = transaction_pool.clone();
-	let select_chain = params.select_chain.clone();
+	let select_chain = params.select_chain.unwrap().clone();
 	let is_authority = parachain_config.role.clone().is_authority();
 	let rpc_network = network.clone();
 
@@ -430,6 +450,19 @@ pub fn parachain_build_import_queue(
 	.map_err(Into::into)
 }
 
+pub fn dev_build_import_queue(
+	client: Arc<FullClient>,
+	config: &Configuration,
+	_: Option<TelemetryHandle>,
+	task_manager: &TaskManager,
+) -> Result<sc_consensus::DefaultImportQueue<Block, FullClient>, sc_service::Error> {
+	Ok(sc_consensus_manual_seal::import_queue(
+		Box::new(client.clone()),
+		&task_manager.spawn_essential_handle(),
+		config.prometheus_registry(),
+	))
+}
+
 /// Start a normal parachain node.
 pub async fn start_node(
 	parachain_config: Configuration,
@@ -518,4 +551,258 @@ pub async fn start_node(
 		},
 	)
 	.await
+}
+
+/// Builds a new development service. This service uses instant seal, and mocks
+/// the parachain inherent.
+pub fn new_dev(
+	config: Configuration,
+) -> Result<TaskManager, sc_service::Error>
+where
+	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
+	ExecutorDispatch: NativeExecutionDispatch + 'static,
+{
+	//use async_io::Timer;
+	use futures::Stream;
+	use sc_consensus_manual_seal::{run_manual_seal, EngineCommand, ManualSealParams};
+	use sp_core::{sr25519, H256};
+	use sc_client_api::HeaderBackend;
+	use fc_consensus::FrontierBlockImport;
+	use crate::chain_spec::get_account_id_from_seed;
+
+	let sc_service::PartialComponents {
+		client,
+		backend,
+		mut task_manager,
+		import_queue,
+		keystore_container,
+		select_chain: maybe_select_chain,
+		transaction_pool,
+		other: (telemetry, filter_pool, frontier_backend, _telemetry_worker_handle),
+	} = new_partial(&config, dev_build_import_queue, true)?;
+
+	let (network, system_rpc_tx, network_starter) =
+		sc_service::build_network(sc_service::BuildNetworkParams {
+			config: &config,
+			client: client.clone(),
+			transaction_pool: transaction_pool.clone(),
+			spawn_handle: task_manager.spawn_handle(),
+			import_queue,
+			on_demand: None,
+			block_announce_validator_builder: None,
+			warp_sync: None,
+		})?;
+
+	if config.offchain_worker.enabled {
+		sc_service::build_offchain_workers(
+			&config,
+			task_manager.spawn_handle(),
+			client.clone(),
+			network.clone(),
+		);
+	}
+
+	let prometheus_registry = config.prometheus_registry().cloned();
+	//let subscription_task_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
+	//let mut command_sink = None;
+	let collator = config.role.is_authority();
+
+	if collator {
+		//TODO For now, all dev service nodes use Alith's nimbus id in their author inherent.
+		// This could and perhaps should be made more flexible. Here are some options:
+		// 1. a dedicated `--dev-author-id` flag that only works with the dev service
+		// 2. restore the old --author-id` and also allow it to force a secific key
+		//    in the parachain context
+		// 3. check the keystore like we do in nimbus. Actually, maybe the keystore-checking could
+		//    be exported as a helper function from nimbus.
+		let _author_id = get_account_id_from_seed::<sr25519::Public>("Alice");//chain_spec::get_from_seed::<NimbusId>("Alice");
+
+		let block_import =
+			FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
+
+		let env = sc_basic_authorship::ProposerFactory::new(
+			task_manager.spawn_handle(),
+			client.clone(),
+			transaction_pool.clone(),
+			prometheus_registry.as_ref(),
+			telemetry.as_ref().map(|x| x.handle()),
+		);
+		let commands_stream: Box<dyn Stream<Item = EngineCommand<H256>> + Send + Sync + Unpin> =
+		// Here would be sealing options
+			Box::new(
+				// This bit cribbed from the implementation of instant seal.
+				transaction_pool
+					.pool()
+					.validated_pool()
+					.import_notification_stream()
+					.map(|_| EngineCommand::SealNewBlock {
+						create_empty: false,
+						finalize: false,
+						parent_hash: None,
+						sender: None,
+					}),
+			);
+
+		let select_chain = maybe_select_chain.clone().expect(
+			"`new_partial` builds a `LongestChainRule` when building dev service.\
+				We specified the dev service when calling `new_partial`.\
+				Therefore, a `LongestChainRule` is present. qed.",
+		);
+
+		let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
+
+		let client_set_aside_for_cidp = client.clone();
+
+		task_manager.spawn_essential_handle().spawn_blocking(
+			"authorship_task",
+			run_manual_seal(ManualSealParams {
+				block_import,
+				env,
+				client: client.clone(),
+				pool: transaction_pool.clone(),
+				commands_stream,
+				select_chain,
+				consensus_data_provider: None,
+				create_inherent_data_providers: move |block: H256, ()| {
+					let current_para_block = client_set_aside_for_cidp
+						.number(block)
+						.expect("Header lookup should succeed")
+						.expect("Header passed in as parent should be present in backend.");
+					//let author_id = author_id.clone();
+
+					async move {
+						let time = sp_timestamp::InherentDataProvider::from_system_time();
+
+						let mocked_parachain = 
+						cumulus_primitives_parachain_inherent::MockValidationDataInherentDataProvider {
+							current_para_block,
+							relay_offset: 1000,
+							relay_blocks_per_para_block: 2,
+						};
+
+						//let author = sp_inherents::InherentDataProvider::<sr25519::Public>(author_id);
+						let slot =
+						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
+							*time,
+							slot_duration.slot_duration(),
+						);
+
+						Ok((time, slot, mocked_parachain))
+					}
+				},
+			}),
+		);
+	}
+	
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-mapping-sync-worker",
+		MappingSyncWorker::new(
+			client.import_notification_stream(),
+			Duration::new(6, 0),
+			client.clone(),
+			backend.clone(),
+			frontier_backend.clone(),
+			SyncStrategy::Normal,
+		)
+		.for_each(|()| futures::future::ready(())),
+	);
+
+	let subscription_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
+	let rpc_client = client.clone();
+	let rpc_pool = transaction_pool.clone();
+	let select_chain = maybe_select_chain.unwrap().clone();
+	let rpc_network = network.clone();
+	let rpc_frontier_backend = frontier_backend.clone();
+	let rpc_extensions_builder = Box::new(move |deny_unsafe, _| {
+		let full_deps = unique_rpc::FullDeps {
+			backend: rpc_frontier_backend.clone(),
+			deny_unsafe,
+			client: rpc_client.clone(),
+			pool: rpc_pool.clone(),
+			graph: rpc_pool.pool().clone(),
+			// TODO: Unhardcode // copied from start_node_impl; maybe, no need to unhardcode
+			enable_dev_signer: true,
+			filter_pool: filter_pool.clone(),
+			network: rpc_network.clone(),
+			select_chain: select_chain.clone(),
+			is_authority: collator,
+			// TODO: Unhardcode
+			max_past_logs: 10000,
+		};
+
+		Ok(unique_rpc::create_full::<_, _, _, _, RuntimeApi, _>(
+			full_deps,
+			subscription_executor.clone(),
+		))
+	});
+
+	/*let rpc_extensions_builder = {
+		let client = client.clone();
+		let pool = transaction_pool.clone();
+		let backend = backend.clone();
+		let network = network.clone();
+		//let ethapi_cmd = ethapi_cmd.clone();
+		//let max_past_logs = rpc_config.max_past_logs;
+
+		//let is_moonbeam = config.chain_spec.is_moonbeam();
+		//let is_moonriver = config.chain_spec.is_moonriver();
+
+		Box::new(move |deny_unsafe, _| {
+			let transaction_converter: TransactionConverters = if is_moonbeam {
+				TransactionConverters::moonbeam()
+			} else if is_moonriver {
+				TransactionConverters::moonriver()
+			} else {
+				TransactionConverters::moonbase()
+			};
+
+			let deps = rpc::FullDeps {
+				backend: backend.clone(),
+				client: client.clone(),
+				command_sink: command_sink.clone(),
+				deny_unsafe,
+				ethapi_cmd: ethapi_cmd.clone(),
+				eth_log_block_cache: rpc_config.eth_log_block_cache,
+				filter_pool: filter_pool.clone(),
+				frontier_backend: frontier_backend.clone(),
+				graph: pool.pool().clone(),
+				pool: pool.clone(),
+				is_authority: collator,
+				max_past_logs,
+				network: network.clone(),
+				transaction_converter,
+			};
+			#[allow(unused_mut)]
+			let mut io = rpc::create_full(deps, subscription_task_executor.clone());
+			/*if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
+				rpc::tracing::extend_with_tracing(
+					client.clone(),
+					tracing_requesters.clone(),
+					rpc_config.ethapi_trace_max_count,
+					&mut io,
+				);
+			}*/
+			Ok(io)
+		})
+	};*/
+
+	let _rpc_handlers = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
+		network,
+		client,
+		keystore: keystore_container.sync_keystore(),
+		task_manager: &mut task_manager,
+		transaction_pool,
+		rpc_extensions_builder,
+		on_demand: None,
+		remote_blockchain: None,
+		backend,
+		system_rpc_tx,
+		config,
+		telemetry: None,
+	})?;
+
+	log::info!("Development Service Ready");
+
+	network_starter.start_network();
+	Ok(task_manager)
 }

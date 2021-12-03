@@ -18,7 +18,7 @@
 use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, ParachainRuntimeExecutor},
+	service::{new_partial, IdentifyVariant, ParachainRuntimeExecutor},
 };
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
@@ -151,6 +151,7 @@ macro_rules! construct_async_run {
 			>(
 				&$config,
 				crate::service::parachain_build_import_queue,
+				false,
 			)?;
 			let task_manager = $components.task_manager;
 			{ $( $code )* }.map(|v| (v, task_manager))
@@ -271,8 +272,31 @@ pub fn run() -> Result<()> {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
 			runner.run_node_until_exit(|config| async move {
-				let para_id =
-					chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
+				let extension = chain_spec::Extensions::try_get(&*config.chain_spec);
+				let para_id = extension.map(|e| e.para_id);
+				
+				/*let para_id =
+					chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);*/
+
+				// If dev service was requested, start up manual or instant seal.
+				// Otherwise continue with the normal parachain node.
+				// Dev service can be requested in two ways.
+				// 1. by providing the --dev-service flag to the CLI
+				// 2. by specifying "dev-service" in the chain spec's "relay-chain" field.
+				// NOTE: the --dev flag triggers the dev service by way of number 2
+				let relay_chain_id = extension.map(|e| e.relay_chain.clone());
+
+				let dev_service =
+					config.chain_spec.is_dev() || relay_chain_id == Some("dev-service".to_string());
+
+				info!("Dev Service is {}", if dev_service { "on" } else { "off" }); // TODO delete this line
+
+				if dev_service {
+					// When running the dev service, just use Alice's author inherent
+
+					return crate::service::new_dev(config)
+						.map_err(Into::into)
+				}
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
