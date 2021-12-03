@@ -18,8 +18,8 @@ describe('integration test: Inflation', () => {
       const totalIssuanceStart = (await api.query.inflation.startingYearTotalIssuance()).toBigInt();
       const blockInflation = (await api.query.inflation.blockInflation()).toBigInt();
 
-      // const YEAR = 5259600n;  // 6-second block. Blocks in one year
-      const YEAR = 2629800n; // 12-second block. Blocks in one year
+      const YEAR = 5259600n;  // 6-second block. Blocks in one year
+      // const YEAR = 2629800n; // 12-second block. Blocks in one year
 
       const totalExpectedInflation = totalIssuanceStart / 10n;
       const totalActualInflation = blockInflation * YEAR / blockInterval;

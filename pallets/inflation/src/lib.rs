@@ -36,7 +36,7 @@ pub use frame_support::dispatch::DispatchResult;
 
 use sp_runtime::{
 	Perbill,
-	traits::{BlockNumberProvider, Zero},
+	traits::{BlockNumberProvider},
 };
 use sp_std::convert::TryInto;
 
@@ -46,8 +46,8 @@ use frame_system::{self as system};
 pub type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-// pub const YEAR: u32 = 5_259_600; // 6-second block
-pub const YEAR: u32 = 2_629_800; // 12-second block
+pub const YEAR: u32 = 5_259_600; // 6-second block
+// pub const YEAR: u32 = 2_629_800; // 12-second block
 pub const TOTAL_YEARS_UNTIL_FLAT: u32 = 9;
 pub const START_INFLATION_PERCENT: u32 = 10;
 pub const END_INFLATION_PERCENT: u32 = 4;
@@ -68,6 +68,12 @@ decl_storage! {
 
 		/// Current block inflation
 		pub BlockInflation get(fn block_inflation): BalanceOf<T>;
+
+		/// Next (relay) block when inflation is applied. This value is approximate.
+		pub NextInflationBlock get(fn next_inflation_block): T::BlockNumber;
+
+		/// Next (relay) block when inflation is recalculated. This value is approximate.
+		pub NextRecalculationBlock get(fn next_recalculation_block): T::BlockNumber;
 	}
 }
 
@@ -88,10 +94,13 @@ decl_module! {
 
 			let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);
 			let _now = T::BlockNumberProvider::current_block_number();
+			let next_recalculation: T::BlockNumber = <NextRecalculationBlock<T>>::get();
+			let next_inflation: T::BlockNumber = <NextInflationBlock<T>>::get();
+			add_weight(2, 0, 5_000_000);
 
 			// Recalculate inflation on the first block of the year (or if it is not initialized yet)
-			if (_now % T::BlockNumber::from(YEAR)).is_zero() || <BlockInflation<T>>::get().is_zero() {
-				let current_year: u32 = (_now / T::BlockNumber::from(YEAR)).try_into().unwrap_or(0);
+			if _now >= next_recalculation {
+				let current_year: u32 = (next_recalculation / T::BlockNumber::from(YEAR)).try_into().unwrap_or(0);
 
 				let one_percent = Perbill::from_percent(1);
 
@@ -114,14 +123,21 @@ decl_module! {
 				// First time deposit
 				T::Currency::deposit_creating(&T::TreasuryAccountId::get(), <BlockInflation<T>>::get());
 
-				add_weight(7, 6, 28_300_000);
+				// Update recalculation and inflation blocks
+				<NextRecalculationBlock<T>>::set(next_recalculation + YEAR.into());
+				<NextInflationBlock<T>>::set(next_recalculation + block_interval.into() + YEAR.into());
+
+				add_weight(7, 8, 28_300_000);
 			}
 
 			// Apply inflation every InflationBlockInterval blocks and in the 1st block to initialize Treasury account
-			else if (_now % T::BlockNumber::from(block_interval)).is_zero() {
+			else if _now >= next_inflation {
 				T::Currency::deposit_into_existing(&T::TreasuryAccountId::get(), <BlockInflation<T>>::get()).ok();
 
-				add_weight(3, 2, 12_900_000);
+				// Update inflation block
+				<NextInflationBlock<T>>::set(next_inflation + block_interval.into());
+
+				add_weight(3, 3, 12_900_000);
 			}
 
 			consumed_weight
