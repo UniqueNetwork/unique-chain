@@ -628,7 +628,7 @@ where
 			telemetry.as_ref().map(|x| x.handle()),
 		);
 		let commands_stream: Box<dyn Stream<Item = EngineCommand<H256>> + Send + Sync + Unpin> =
-		// Here would be sealing options
+		// Here would be other ealing options besides instant sealing
 			Box::new(
 				// This bit cribbed from the implementation of instant seal.
 				transaction_pool
@@ -636,7 +636,7 @@ where
 					.validated_pool()
 					.import_notification_stream()
 					.map(|_| EngineCommand::SealNewBlock {
-						create_empty: false,
+						create_empty: true, // was false in Moonbeam
 						finalize: false,
 						parent_hash: None,
 						sender: None,
@@ -720,7 +720,7 @@ where
 			client: rpc_client.clone(),
 			pool: rpc_pool.clone(),
 			graph: rpc_pool.pool().clone(),
-			// TODO: Unhardcode // copied from start_node_impl; maybe, no need to unhardcode
+			// TODO: Unhardcode // copied from start_node_impl, changed to true; maybe, no need to unhardcode
 			enable_dev_signer: true,
 			filter_pool: filter_pool.clone(),
 			network: rpc_network.clone(),
@@ -735,56 +735,6 @@ where
 			subscription_executor.clone(),
 		))
 	});
-
-	/*let rpc_extensions_builder = {
-		let client = client.clone();
-		let pool = transaction_pool.clone();
-		let backend = backend.clone();
-		let network = network.clone();
-		//let ethapi_cmd = ethapi_cmd.clone();
-		//let max_past_logs = rpc_config.max_past_logs;
-
-		//let is_moonbeam = config.chain_spec.is_moonbeam();
-		//let is_moonriver = config.chain_spec.is_moonriver();
-
-		Box::new(move |deny_unsafe, _| {
-			let transaction_converter: TransactionConverters = if is_moonbeam {
-				TransactionConverters::moonbeam()
-			} else if is_moonriver {
-				TransactionConverters::moonriver()
-			} else {
-				TransactionConverters::moonbase()
-			};
-
-			let deps = rpc::FullDeps {
-				backend: backend.clone(),
-				client: client.clone(),
-				command_sink: command_sink.clone(),
-				deny_unsafe,
-				ethapi_cmd: ethapi_cmd.clone(),
-				eth_log_block_cache: rpc_config.eth_log_block_cache,
-				filter_pool: filter_pool.clone(),
-				frontier_backend: frontier_backend.clone(),
-				graph: pool.pool().clone(),
-				pool: pool.clone(),
-				is_authority: collator,
-				max_past_logs,
-				network: network.clone(),
-				transaction_converter,
-			};
-			#[allow(unused_mut)]
-			let mut io = rpc::create_full(deps, subscription_task_executor.clone());
-			/*if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
-				rpc::tracing::extend_with_tracing(
-					client.clone(),
-					tracing_requesters.clone(),
-					rpc_config.ethapi_trace_max_count,
-					&mut io,
-				);
-			}*/
-			Ok(io)
-		})
-	};*/
 
 	let _rpc_handlers = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		network,
