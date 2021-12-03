@@ -125,7 +125,7 @@ decl_module! {
 
 				// Update recalculation and inflation blocks
 				<NextRecalculationBlock<T>>::set(next_recalculation + YEAR.into());
-				<NextInflationBlock<T>>::set(next_recalculation + block_interval.into() + YEAR.into());
+				<NextInflationBlock<T>>::set(next_recalculation + block_interval.into());
 
 				add_weight(7, 8, 28_300_000);
 			}
