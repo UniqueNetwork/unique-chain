@@ -16,6 +16,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
+use sp_runtime::DispatchError;
 // #[cfg(any(feature = "std", test))]
 // pub use sp_runtime::BuildStorage;
 
@@ -1019,40 +1020,40 @@ macro_rules! dispatch_unique_runtime {
 	($collection:ident.$method:ident($($name:ident),*)) => {{
 		use pallet_unique::dispatch::Dispatched;
 
-		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::new($collection).unwrap());
+		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
 		let dispatch = collection.as_dyn();
 
-		dispatch.$method($($name),*)
+		Ok(dispatch.$method($($name),*))
 	}};
 }
 impl_runtime_apis! {
 	impl up_rpc::UniqueApi<Block, CrossAccountId, AccountId>
 		for Runtime
 	{
-		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Vec<TokenId> {
+		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Result<Vec<TokenId>, DispatchError> {
 			dispatch_unique_runtime!(collection.account_tokens(account))
 		}
-		fn token_exists(collection: CollectionId, token: TokenId) -> bool {
+		fn token_exists(collection: CollectionId, token: TokenId) -> Result<bool, DispatchError> {
 			dispatch_unique_runtime!(collection.token_exists(token))
 		}
 
-		fn token_owner(collection: CollectionId, token: TokenId) -> CrossAccountId {
+		fn token_owner(collection: CollectionId, token: TokenId) -> Result<CrossAccountId, DispatchError> {
 			dispatch_unique_runtime!(collection.token_owner(token))
 		}
-		fn const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8> {
+		fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
 			dispatch_unique_runtime!(collection.const_metadata(token))
 		}
-		fn variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8> {
+		fn variable_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
 			dispatch_unique_runtime!(collection.variable_metadata(token))
 		}
 
-		fn collection_tokens(collection: CollectionId) -> u32 {
+		fn collection_tokens(collection: CollectionId) -> Result<u32, DispatchError> {
 			dispatch_unique_runtime!(collection.collection_tokens())
 		}
-		fn account_balance(collection: CollectionId, account: CrossAccountId) -> u32 {
+		fn account_balance(collection: CollectionId, account: CrossAccountId) -> Result<u32, DispatchError> {
 			dispatch_unique_runtime!(collection.account_balance(account))
 		}
-		fn balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> u128 {
+		fn balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<u128, DispatchError> {
 			dispatch_unique_runtime!(collection.balance(account, token))
 		}
 		fn allowance(
@@ -1060,7 +1061,7 @@ impl_runtime_apis! {
 			sender: CrossAccountId,
 			spender: CrossAccountId,
 			token: TokenId,
-		) -> u128 {
+		) -> Result<u128, DispatchError> {
 			dispatch_unique_runtime!(collection.allowance(sender, spender, token))
 		}
 
@@ -1069,23 +1070,23 @@ impl_runtime_apis! {
 				.or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account))
 				.or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
 		}
-		fn adminlist(collection: CollectionId) -> Vec<CrossAccountId> {
-			<pallet_common::Pallet<Runtime>>::adminlist(collection)
+		fn adminlist(collection: CollectionId) -> Result<Vec<CrossAccountId>, DispatchError> {
+			Ok(<pallet_common::Pallet<Runtime>>::adminlist(collection))
 		}
-		fn allowlist(collection: CollectionId) -> Vec<CrossAccountId> {
-			<pallet_common::Pallet<Runtime>>::allowlist(collection)
+		fn allowlist(collection: CollectionId) -> Result<Vec<CrossAccountId>, DispatchError> {
+			Ok(<pallet_common::Pallet<Runtime>>::allowlist(collection))
 		}
-		fn allowed(collection: CollectionId, user: CrossAccountId) -> bool {
-			<pallet_common::Pallet<Runtime>>::allowed(collection, user)
+		fn allowed(collection: CollectionId, user: CrossAccountId) -> Result<bool, DispatchError> {
+			Ok(<pallet_common::Pallet<Runtime>>::allowed(collection, user))
 		}
-		fn last_token_id(collection: CollectionId) -> TokenId {
+		fn last_token_id(collection: CollectionId) -> Result<TokenId, DispatchError> {
 			dispatch_unique_runtime!(collection.last_token_id())
 		}
-		fn collection_by_id(collection: CollectionId) -> Option<Collection<AccountId>> {
-			<pallet_common::CollectionById<Runtime>>::get(collection)
+		fn collection_by_id(collection: CollectionId) -> Result<Option<Collection<AccountId>>, DispatchError> {
+			Ok(<pallet_common::CollectionById<Runtime>>::get(collection))
 		}
-		fn collection_stats() -> CollectionStats {
-			<pallet_common::Pallet<Runtime>>::collection_stats()
+		fn collection_stats() -> Result<CollectionStats, DispatchError> {
+			Ok(<pallet_common::Pallet<Runtime>>::collection_stats())
 		}
 	}
 
