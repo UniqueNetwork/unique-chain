@@ -14,6 +14,9 @@ describe('integration test: Inflation', () => {
   it('First year inflation is 10%', async () => {
     await usingApi(async (api) => {
 
+      // Start inflation on relay block 1
+      await api.tx.inflation.start_inflation(1);
+
       const blockInterval = (api.consts.inflation.inflationBlockInterval).toBigInt();
       const totalIssuanceStart = (await api.query.inflation.startingYearTotalIssuance()).toBigInt();
       const blockInflation = (await api.query.inflation.blockInflation()).toBigInt();

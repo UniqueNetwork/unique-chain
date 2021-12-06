@@ -377,7 +377,7 @@ derivative = "2.2.0"
 pallet-unique = { path = '../pallets/unique', default-features = false }
 up-rpc = { path = "../primitives/rpc", default-features = false }
 up-evm-mapping = { path = "../primitives/evm-mapping", default-features = false }
-pallet-inflation = { path = '../pallets/inflation', default-features = false }
+pallet-inflation = { path = '../pallets/inflation' }
 up-data-structs = { path = '../primitives/data-structs', default-features = false }
 pallet-common = { default-features = false, path = "../pallets/common" }
 pallet-fungible = { default-features = false, path = "../pallets/fungible" }
