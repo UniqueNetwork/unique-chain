@@ -12,6 +12,7 @@ import {
   destroyCollectionExpectSuccess,
   confirmSponsorshipExpectSuccess,
   confirmSponsorshipExpectFailure,
+  transferExpectFailure,
   createItemExpectSuccess,
   findUnusedAddress,
   getGenericResult,
@@ -371,5 +372,33 @@ describe('(!negative test!) integration test: ext. confirmSponsorship():', () =>
     const collectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectSuccess(collectionId);
     await confirmSponsorshipExpectFailure(collectionId, '//Bob');
+  });
+
+  it('(!negative test!) Transfer fees are not paid by the sponsor if the transfer failed', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+
+    await usingApi(async (api) => {
+      // Find unused address
+      const ownerZeroBalance = await findUnusedAddress(api);
+
+      // Find another unused address
+      const senderZeroBalance = await findUnusedAddress(api);
+
+      expect(ownerZeroBalance.address).to.be.not.equal(senderZeroBalance.address);
+
+      // Mint token for an unused address
+      const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', ownerZeroBalance.address);
+
+      const sponsorBalanceBeforeTx = (await api.query.system.account(bob.address)).data.free.toBigInt();
+
+      // Try to transfer this token from the incorrect unused address to Alice
+      transferExpectFailure(collectionId, itemId, senderZeroBalance, alice);
+
+      const sponsorBalanceAfterTx = (await api.query.system.account(bob.address)).data.free.toBigInt();
+
+      expect(sponsorBalanceAfterTx).to.be.equal(sponsorBalanceBeforeTx);
+    });
   });
 });
