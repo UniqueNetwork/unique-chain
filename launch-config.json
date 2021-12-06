@@ -56,7 +56,7 @@
     "parachains": [
         {
             "bin": "../unique-chain/target/release/unique-collator",
-            "id": "2000",
+            "id": "1000",
             "balance": "1000000000000000000000000",
             "nodes": [
                 {

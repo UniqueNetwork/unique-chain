@@ -245,12 +245,12 @@ default-features = false
 authors = ['Unique Network <support@uniquenetwork.io>']
 build = 'build.rs'
 description = 'Unique Node'
-edition = '2018'
+edition = '2021'
 homepage = 'https://unique.network'
 license = 'All Rights Reserved'
 name = 'unique-node'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.9.12'
+version = '0.9.13'
 
 [[bin]]
 name = 'unique-collator'

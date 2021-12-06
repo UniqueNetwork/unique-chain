@@ -11527,7 +11527,7 @@ checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
 
 [[package]]
 name = "unique-node"
-version = "0.9.12"
+version = "0.9.13"
 dependencies = [
  "cumulus-client-cli",
  "cumulus-client-collator",
@@ -11648,7 +11648,7 @@ dependencies = [
 
 [[package]]
 name = "unique-runtime"
-version = "0.9.12"
+version = "0.9.13"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",

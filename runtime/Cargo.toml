@@ -5,12 +5,12 @@
 authors = ['Unique Network <support@uniquenetwork.io>']
 build = 'build.rs'
 description = 'Unique Runtime'
-edition = '2018'
+edition = '2021'
 homepage = 'https://unique.network'
 license = 'All Rights Reserved'
 name = 'unique-runtime'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.9.12'
+version = '0.9.13'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
