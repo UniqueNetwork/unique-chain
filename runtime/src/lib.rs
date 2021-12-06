@@ -146,7 +146,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("opal"),
 	impl_name: create_runtime_str!("opal"),
 	authoring_version: 1,
-	spec_version: 912204,
+	spec_version: 912210,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -784,17 +784,17 @@ impl pallet_unique::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
 }
-
+/*
 parameter_types! {
 	pub const InflationBlockInterval: BlockNumber = 100; // every time per how many blocks inflation is applied
-}
+} */
 
 /// Used for the pallet inflation
-impl pallet_inflation::Config for Runtime {
+/* impl pallet_inflation::Config for Runtime {
 	type Currency = Balances;
 	type TreasuryAccountId = TreasuryAccountId;
 	type InflationBlockInterval = InflationBlockInterval;
-}
+} */
 
 // parameter_types! {
 // 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(50) *
@@ -881,7 +881,7 @@ construct_runtime!(
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 
 		// Unique Pallets
-		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
+		// Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
 		Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
 		// Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 		// free = 63
@@ -1366,7 +1366,7 @@ impl_runtime_apis! {
 
 			list_benchmark!(list, extra, pallet_evm_migration, EvmMigration);
 			list_benchmark!(list, extra, pallet_unique, Unique);
-			list_benchmark!(list, extra, pallet_inflation, Inflation);
+			//list_benchmark!(list, extra, pallet_inflation, Inflation);
 			list_benchmark!(list, extra, pallet_fungible, Fungible);
 			list_benchmark!(list, extra, pallet_refungible, Refungible);
 			list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
@@ -1400,7 +1400,7 @@ impl_runtime_apis! {
 
 			add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
 			add_benchmark!(params, batches, pallet_unique, Unique);
-			add_benchmark!(params, batches, pallet_inflation, Inflation);
+			//add_benchmark!(params, batches, pallet_inflation, Inflation);
 			add_benchmark!(params, batches, pallet_fungible, Fungible);
 			add_benchmark!(params, batches, pallet_refungible, Refungible);
 			add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);

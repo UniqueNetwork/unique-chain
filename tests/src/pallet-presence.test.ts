@@ -34,7 +34,7 @@ const requiredPallets = [
   'polkadotxcm',
   'cumulusxcm',
   'dmpqueue',
-  'inflation',
+  //'inflation',
   'unique',
   'nonfungible',
   'refungible',
