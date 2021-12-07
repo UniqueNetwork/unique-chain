@@ -1,14 +1,14 @@
 [package]
 name = "evm-coder"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 evm-coder-macros = { path = "../evm-coder-macros" }
 primitive-types = { version = "0.10.1", default-features = false }
 hex-literal = "0.3.3"
-ethereum = { version = "0.9", git = "https://github.com/purestake/ethereum", branch = "joshy-scale-info", default-features = false }
-evm-core = { default-features = false, git = "https://github.com/uniquenetwork/evm.git", branch="precompile-output-parachain" }
+ethereum = { version = "0.10.0", default-features = false }
+evm-core = { default-features = false, git = "https://github.com/uniquenetwork/evm.git", branch = "unique-weights" }
 impl-trait-for-tuples = "0.2.1"
 
 [dev-dependencies]

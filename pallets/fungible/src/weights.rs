@@ -25,6 +25,7 @@
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
+#![allow(clippy::unnecessary_cast)]
 
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
@@ -36,6 +37,7 @@ pub trait WeightInfo {
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
+	fn burn_from() -> Weight;
 }
 
 /// Weights for pallet_fungible using the Substrate node and recommended hardware.
@@ -75,6 +77,14 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+	// Storage: Fungible Allowance (r:1 w:1)
+	// Storage: Fungible TotalSupply (r:1 w:1)
+	// Storage: Fungible Balance (r:1 w:1)
+	fn burn_from() -> Weight {
+		(55_874_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+	}
 }
 
 // For backwards compatibility and tests
@@ -110,6 +120,14 @@ impl WeightInfo for () {
 	// Storage: Fungible Balance (r:2 w:2)
 	fn transfer_from() -> Weight {
 		(21_462_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+	}
+	// Storage: Fungible Allowance (r:1 w:1)
+	// Storage: Fungible TotalSupply (r:1 w:1)
+	// Storage: Fungible Balance (r:1 w:1)
+	fn burn_from() -> Weight {
+		(55_874_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}

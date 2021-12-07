@@ -2247,7 +2247,7 @@ fn total_number_collections_bound() {
 #[test]
 fn create_max_collections() {
 	new_test_ext().execute_with(|| {
-		for i in 1..=COLLECTION_NUMBER_LIMIT {
+		for i in 1..COLLECTION_NUMBER_LIMIT {
 			create_test_collection(&CollectionMode::NFT, CollectionId(i));
 		}
 	});

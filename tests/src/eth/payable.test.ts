@@ -1,9 +1,9 @@
 import {expect} from 'chai';
 import privateKey from '../substrate/privateKey';
 import {submitTransactionAsync} from '../substrate/substrate-api';
-import {createEthAccountWithBalance, deployCollector, GAS_ARGS, itWeb3, subToEth} from './util/helpers';
+import {createEthAccountWithBalance, deployCollector, GAS_ARGS, itWeb3, subToEth, transferBalanceToEth} from './util/helpers';
 import {evmToAddress} from '@polkadot/util-crypto';
-import {getGenericResult} from '../util/helpers';
+import {getGenericResult, UNIQUE} from '../util/helpers';
 import {getBalanceSingle, transferBalanceExpectSuccess} from '../substrate/get-balance';
 
 describe('EVM payable contracts', () => {
@@ -23,7 +23,7 @@ describe('EVM payable contracts', () => {
 
     // Transaction fee/value will be payed from subToEth(sender) evm balance,
     // which is backed by evmToAddress(subToEth(sender)) substrate balance
-    await transferBalanceExpectSuccess(api, alice, evmToAddress(subToEth(alice.address)), '1000000000000');
+    await transferBalanceToEth(api, alice, subToEth(alice.address));
 
     {
       const tx = api.tx.evm.call(
@@ -32,7 +32,7 @@ describe('EVM payable contracts', () => {
         contract.methods.giveMoney().encodeABI(),
         '10000',
         GAS_ARGS.gas,
-        GAS_ARGS.gasPrice,
+        await web3.eth.getGasPrice(),
         null,
       );
       const events = await submitTransactionAsync(alice, tx);
@@ -55,8 +55,8 @@ describe('EVM payable contracts', () => {
   });
 
   itWeb3('Balance can be retrieved from evm contract', async({api, web3}) => {
-    const FEE_BALANCE = 10n ** 18n;
-    const CONTRACT_BALANCE = 10n ** 14n;
+    const FEE_BALANCE = 1000n * UNIQUE;
+    const CONTRACT_BALANCE = 1n * UNIQUE;
 
     const deployer = await createEthAccountWithBalance(api, web3);
     const contract = await deployCollector(web3, deployer);

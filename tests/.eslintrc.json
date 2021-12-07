@@ -64,6 +64,7 @@
                 "destructuring": "all"
             }
         ],
+        "@typescript-eslint/ban-ts-comment": "off",
         "object-curly-spacing": "warn",
         "arrow-spacing": "warn",
         "array-bracket-spacing": "warn",

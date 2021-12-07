@@ -31,6 +31,7 @@ contract ERC20Events {
 	);
 }
 
+// Selector: 942e8b22
 contract ERC20 is Dummy, ERC165, ERC20Events {
 	// Selector: name() 06fdde03
 	function name() public view returns (string memory) {

@@ -21,6 +21,7 @@ contract ERC165 is Dummy {
 	}
 }
 
+// Selector: 31acb1fe
 contract ContractHelpers is Dummy, ERC165 {
 	// Selector: contractOwner(address) 5152b14c
 	function contractOwner(address contractAddress)
