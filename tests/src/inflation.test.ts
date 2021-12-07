@@ -5,7 +5,8 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi} from './substrate/substrate-api';
+import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
+import privateKey from './substrate/privateKey';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -14,8 +15,15 @@ describe('integration test: Inflation', () => {
   it('First year inflation is 10%', async () => {
     await usingApi(async (api) => {
 
-      // Start inflation on relay block 1
-      await api.tx.inflation.start_inflation(1);
+      // Make sure non-sudo can't start inflation
+      const tx = api.tx.inflation.startInflation(1);
+      const bob = privateKey('//Bob');
+      await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
+
+      // Start inflation on relay block 1 (Alice is sudo)
+      const alice = privateKey('//Alice');
+      const sudoTx = api.tx.sudo.sudo(tx as any);
+      await submitTransactionAsync(alice, sudoTx);
 
       const blockInterval = (api.consts.inflation.inflationBlockInterval).toBigInt();
       const totalIssuanceStart = (await api.query.inflation.startingYearTotalIssuance()).toBigInt();

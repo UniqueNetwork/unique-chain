@@ -3,23 +3,17 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-#![recursion_limit = "1024"]
+// #![recursion_limit = "1024"]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(
-	clippy::too_many_arguments,
-	clippy::unnecessary_mut_passed,
-	clippy::unused_unit
-)]
 
+#[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-#[cfg(test)]
-mod mock;
+
 #[cfg(test)]
 mod tests;
 
 use frame_support::{
 	dispatch::{DispatchResult},
-	ensure,
 	traits::{Currency, Get},
 };
 pub use pallet::*;
@@ -28,7 +22,7 @@ use sp_runtime::{
 	traits::{BlockNumberProvider}
 };
 
-use std::convert::TryInto;
+use sp_std::convert::TryInto;
 
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -44,12 +38,6 @@ pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-
-	#[pallet::error]
-	pub enum Error<T> {
-        /// Inflation has already been initialized
-        AlreadyInitialized,
-	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -144,17 +132,17 @@ pub mod pallet {
 		where <T as frame_system::Config>::BlockNumber: From<u32> {
 			ensure_root(origin)?;
 
-			// Ensure inflation has not been yet initialized
+			// Start inflation if it has not been yet initialized
 			let next_inflation: T::BlockNumber = <NextInflationBlock<T>>::get();
-			ensure!(next_inflation == 0u32.into(), Error::<T>::AlreadyInitialized);
+			if next_inflation == 0u32.into() {
+				// Recalculate inflation. This can be backdated and will catch up.
+				Self::recalculate_inflation(inflation_start_relay_block);
+				let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);
+				<NextInflationBlock<T>>::set(inflation_start_relay_block + block_interval.into());
 
-			// Recalculate inflation. This can be backdated and will catch up.
-			Self::recalculate_inflation(inflation_start_relay_block);
-			let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);
-			<NextInflationBlock<T>>::set(inflation_start_relay_block + block_interval.into());
-
-			// First time deposit - create Treasury account so that we can call deposit_into_existing everywhere else
-			T::Currency::deposit_creating(&T::TreasuryAccountId::get(), <BlockInflation<T>>::get());
+				// First time deposit - create Treasury account so that we can call deposit_into_existing everywhere else
+				T::Currency::deposit_creating(&T::TreasuryAccountId::get(), <BlockInflation<T>>::get());
+			}
 
 			Ok(())
 		}
