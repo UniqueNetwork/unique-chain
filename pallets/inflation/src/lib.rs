@@ -19,7 +19,7 @@ use frame_support::{
 pub use pallet::*;
 use sp_runtime::{
 	Perbill,
-	traits::{BlockNumberProvider}
+	traits::{BlockNumberProvider},
 };
 
 use sp_std::convert::TryInto;
@@ -28,7 +28,7 @@ type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 pub const YEAR: u32 = 5_259_600; // 6-second block
-// pub const YEAR: u32 = 2_629_800; // 12-second block
+								 // pub const YEAR: u32 = 2_629_800; // 12-second block
 pub const TOTAL_YEARS_UNTIL_FLAT: u32 = 9;
 pub const START_INFLATION_PERCENT: u32 = 10;
 pub const END_INFLATION_PERCENT: u32 = 4;
@@ -43,7 +43,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type Currency: Currency<Self::AccountId>;
 		type TreasuryAccountId: Get<Self::AccountId>;
-	
+
 		// The block number provider
 		type BlockNumberProvider: BlockNumberProvider<BlockNumber = Self::BlockNumber>;
 
@@ -58,7 +58,8 @@ pub mod pallet {
 
 	/// starting year total issuance
 	#[pallet::storage]
-	pub type StartingYearTotalIssuance<T: Config> = StorageValue<Value = BalanceOf<T>, QueryKind = ValueQuery>;
+	pub type StartingYearTotalIssuance<T: Config> =
+		StorageValue<Value = BalanceOf<T>, QueryKind = ValueQuery>;
 
 	/// Current inflation for `InflationBlockInterval` number of blocks
 	#[pallet::storage]
@@ -66,16 +67,19 @@ pub mod pallet {
 
 	/// Next target (relay) block when inflation will be applied
 	#[pallet::storage]
-	pub type NextInflationBlock<T: Config> = StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
+	pub type NextInflationBlock<T: Config> =
+		StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
 
 	/// Next target (relay) block when inflation is recalculated
 	#[pallet::storage]
-	pub type NextRecalculationBlock<T: Config> = StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
+	pub type NextRecalculationBlock<T: Config> =
+		StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_: T::BlockNumber) -> Weight
-		where <T as frame_system::Config>::BlockNumber: From<u32>
+		where
+			<T as frame_system::Config>::BlockNumber: From<u32>,
 		{
 			let mut consumed_weight = 0;
 			let mut add_weight = |reads, writes, weight| {
@@ -91,9 +95,8 @@ pub mod pallet {
 			// Apply inflation every InflationBlockInterval blocks
 			// If next_inflation == 0, this means inflation wasn't yet initialized
 			if (next_inflation != 0u32.into()) && (current_relay_block >= next_inflation) {
-
 				// Recalculate inflation on the first block of the year (or if it is not initialized yet)
-				// Do the "current_relay_block >= next_recalculation" check in the "current_relay_block >= next_inflation" 
+				// Do the "current_relay_block >= next_recalculation" check in the "current_relay_block >= next_inflation"
 				// block because it saves InflationBlockInterval DB reads for NextRecalculationBlock.
 				let next_recalculation: T::BlockNumber = <NextRecalculationBlock<T>>::get();
 				add_weight(1, 0, 0);
@@ -102,7 +105,11 @@ pub mod pallet {
 					add_weight(0, 4, 5_000_000);
 				}
 
-				T::Currency::deposit_into_existing(&T::TreasuryAccountId::get(), <BlockInflation<T>>::get()).ok();
+				T::Currency::deposit_into_existing(
+					&T::TreasuryAccountId::get(),
+					<BlockInflation<T>>::get(),
+				)
+				.ok();
 
 				// Update inflation block
 				<NextInflationBlock<T>>::set(next_inflation + block_interval.into());
@@ -117,7 +124,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// This method sets the inflation start date. Can be only called once.
-		/// Inflation start block can be backdated and will catch up. The method will create Treasury 
+		/// Inflation start block can be backdated and will catch up. The method will create Treasury
 		/// account if it does not exist and perform the first inflation deposit.
 		///
 		/// # Permissions
@@ -128,8 +135,13 @@ pub mod pallet {
 		///
 		/// * inflation_start_relay_block: The relay chain block at which inflation should start
 		#[pallet::weight(0)]
-		pub fn start_inflation(origin: OriginFor<T>, inflation_start_relay_block: T::BlockNumber) -> DispatchResult 
-		where <T as frame_system::Config>::BlockNumber: From<u32> {
+		pub fn start_inflation(
+			origin: OriginFor<T>,
+			inflation_start_relay_block: T::BlockNumber,
+		) -> DispatchResult
+		where
+			<T as frame_system::Config>::BlockNumber: From<u32>,
+		{
 			ensure_root(origin)?;
 
 			// Start inflation if it has not been yet initialized
@@ -141,7 +153,10 @@ pub mod pallet {
 				<NextInflationBlock<T>>::set(inflation_start_relay_block + block_interval.into());
 
 				// First time deposit - create Treasury account so that we can call deposit_into_existing everywhere else
-				T::Currency::deposit_creating(&T::TreasuryAccountId::get(), <BlockInflation<T>>::get());
+				T::Currency::deposit_creating(
+					&T::TreasuryAccountId::get(),
+					<BlockInflation<T>>::get(),
+				);
 			}
 
 			Ok(())
@@ -151,24 +166,25 @@ pub mod pallet {
 
 impl<T: Config> Pallet<T> {
 	pub fn recalculate_inflation(recalculation_block: T::BlockNumber) {
-
-		let current_year: u32 = (recalculation_block / T::BlockNumber::from(YEAR)).try_into().unwrap_or(0);
+		let current_year: u32 = (recalculation_block / T::BlockNumber::from(YEAR))
+			.try_into()
+			.unwrap_or(0);
 		let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);
 
 		let one_percent = Perbill::from_percent(1);
 
 		if current_year <= TOTAL_YEARS_UNTIL_FLAT {
 			let amount: BalanceOf<T> = Perbill::from_rational(
-				block_interval * (START_INFLATION_PERCENT * TOTAL_YEARS_UNTIL_FLAT - current_year * (START_INFLATION_PERCENT - END_INFLATION_PERCENT)),
-				YEAR * TOTAL_YEARS_UNTIL_FLAT
-			) * ( one_percent * T::Currency::total_issuance() );
-			<BlockInflation<T>>::put(amount);
-		}
-		else {
-			let amount: BalanceOf<T> = Perbill::from_rational(
-				block_interval * END_INFLATION_PERCENT,
-				YEAR
+				block_interval
+					* (START_INFLATION_PERCENT * TOTAL_YEARS_UNTIL_FLAT
+						- current_year * (START_INFLATION_PERCENT - END_INFLATION_PERCENT)),
+				YEAR * TOTAL_YEARS_UNTIL_FLAT,
 			) * (one_percent * T::Currency::total_issuance());
+			<BlockInflation<T>>::put(amount);
+		} else {
+			let amount: BalanceOf<T> =
+				Perbill::from_rational(block_interval * END_INFLATION_PERCENT, YEAR)
+					* (one_percent * T::Currency::total_issuance());
 			<BlockInflation<T>>::put(amount);
 		}
 		<StartingYearTotalIssuance<T>>::set(T::Currency::total_issuance());
