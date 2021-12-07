@@ -9,7 +9,6 @@
                 "rpcPort": 9843,
                 "port": 30444,
                 "flags": [
-                    "--rpc-port=9843",
                     "-lparachain::candidate_validation=debug"
                 ]
             },
@@ -19,7 +18,6 @@
                 "rpcPort": 9854,
                 "port": 30555,
                 "flags": [
-                    "--rpc-port=9854",
                     "-lparachain::candidate_validation=debug"
                 ]
             },
@@ -29,7 +27,6 @@
                 "rpcPort": 9865,
                 "port": 30666,
                 "flags": [
-                    "--rpc-port=9865",
                     "-lparachain::candidate_validation=debug"
                 ]
             },
@@ -39,7 +36,6 @@
                 "rpcPort": 9876,
                 "port": 30777,
                 "flags": [
-                    "--rpc-port=9876",
                     "-lparachain::candidate_validation=debug"
                 ]
             },
@@ -49,7 +45,6 @@
                 "rpcPort": 9886,
                 "port": 30888,
                 "flags": [
-                    "--rpc-port=9886",
                     "-lparachain::candidate_validation=debug"
                 ]
             },
@@ -59,7 +54,6 @@
                 "rpcPort": 9896,
                 "port": 30999,
                 "flags": [
-                    "--rpc-port=9896",
                     "-lparachain::candidate_validation=debug"
                 ]
             }
@@ -90,7 +84,6 @@
                     "name": "alice",
                     "flags": [
                         "--rpc-cors=all",
-                        "--rpc-port=9933",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
                     ]
@@ -102,7 +95,6 @@
                     "name": "bob",
                     "flags": [
                         "--rpc-cors=all",
-                        "--rpc-port=9934",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
                     ]
@@ -114,7 +106,6 @@
                     "name": "charlie",
                     "flags": [
                         "--rpc-cors=all",
-                        "--rpc-port=9935",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
                     ]
@@ -126,7 +117,6 @@
                     "name": "dave",
                     "flags": [
                         "--rpc-cors=all",
-                        "--rpc-port=9936",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
                     ]
@@ -138,7 +128,6 @@
                     "name": "eve",
                     "flags": [
                         "--rpc-cors=all",
-                        "--rpc-port=9937",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
                     ]
