@@ -27,7 +27,6 @@ import {
   transferFromExpectSuccess,
 } from './util/helpers';
 import {
-  createEthAccountWithBalance,
   subToEth,
   itWeb3, 
 } from './eth/util/helpers';
@@ -300,23 +299,23 @@ describe('Zero value transfer(From)', () => {
   });
 });
 
-describe('Transfers to self (potentially over substrate-evm boundary)', () => {
+describe.only('Transfers to self (potentially over substrate-evm boundary)', () => {
   itWeb3('Transfers to self. In case of same frontend', async ({api}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     const alice = privateKey('//Alice');
     const aliceProxy = subToEth(alice.address);
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
-    const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
-    await transferExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy} , 10, 'ReFungible');
-    await transferFromExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, alice, 10, 'ReFungible');
-    const balanceAliceAfter = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
+    await transferExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, 10, 'ReFungible');
+    const balanceAliceBefore = await getTokenBalance(api, collectionId, {Ethereum: aliceProxy}, tokenId);
+    await transferFromExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, {Ethereum: aliceProxy}, 10, 'ReFungible');
+    const balanceAliceAfter = await getTokenBalance(api, collectionId, {Ethereum: aliceProxy}, tokenId);
     expect(balanceAliceBefore).to.be.eq(balanceAliceAfter);
   });
 
-  itWeb3('Transfers to self. In case of substrate-evm boundary', async ({api, web3}) => {
+  itWeb3('Transfers to self. In case of substrate-evm boundary', async ({api}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     const alice = privateKey('//Alice');
-    const aliceProxy = await createEthAccountWithBalance(api, web3);
+    const aliceProxy = subToEth(alice.address);
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
     const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
     await transferExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy} , 10, 'ReFungible');
