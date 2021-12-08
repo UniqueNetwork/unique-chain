@@ -51,7 +51,7 @@ where
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-pub fn development_config(id: ParaId) -> ChainSpec {
+pub fn development_config() -> ChainSpec {
 	let mut properties = Map::new();
 	properties.insert("tokenSymbol".into(), "OPL".into());
 	properties.insert("tokenDecimals".into(), 15.into());
@@ -76,7 +76,7 @@ pub fn development_config(id: ParaId) -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 				],
-				id,
+				1000.into(),
 			)
 		},
 		// Bootnodes
@@ -90,12 +90,12 @@ pub fn development_config(id: ParaId) -> ChainSpec {
 		// Extensions
 		Extensions {
 			relay_chain: "rococo-dev".into(),
-			para_id: id.into(),
+			para_id: 1000,
 		},
 	)
 }
 
-pub fn local_testnet_rococo_config(id: ParaId) -> ChainSpec {
+pub fn local_testnet_rococo_config() -> ChainSpec {
 	ChainSpec::from_genesis(
 		// Name
 		"Local Testnet",
@@ -125,7 +125,7 @@ pub fn local_testnet_rococo_config(id: ParaId) -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
-				id,
+				1000.into(),
 			)
 		},
 		// Bootnodes
@@ -139,12 +139,12 @@ pub fn local_testnet_rococo_config(id: ParaId) -> ChainSpec {
 		// Extensions
 		Extensions {
 			relay_chain: "rococo-local".into(),
-			para_id: id.into(),
+			para_id: 1000,
 		},
 	)
 }
 
-pub fn local_testnet_westend_config(id: ParaId) -> ChainSpec {
+pub fn local_testnet_westend_config() -> ChainSpec {
 	ChainSpec::from_genesis(
 		// Name
 		"Local Testnet",
@@ -177,7 +177,7 @@ pub fn local_testnet_westend_config(id: ParaId) -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
-				id,
+				1000.into(),
 			)
 		},
 		// Bootnodes
@@ -191,7 +191,7 @@ pub fn local_testnet_westend_config(id: ParaId) -> ChainSpec {
 		// Extensions
 		Extensions {
 			relay_chain: "westend-local".into(),
-			para_id: id.into(),
+			para_id: 1000,
 		},
 	)
 }
@@ -207,7 +207,6 @@ fn testnet_genesis(
 			code: unique_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
-			changes_trie_config: Default::default(),
 		},
 		balances: BalancesConfig {
 			balances: endowed_accounts

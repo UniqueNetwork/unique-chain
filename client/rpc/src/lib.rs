@@ -143,13 +143,16 @@ macro_rules! pass_method {
 			let api = self.client.runtime_api();
 			let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 
-			api.$method_name(&at, $($name),*).map_err(|e| RpcError {
+			let result = api.$method_name(&at, $($name),*).map_err(|e| RpcError {
 				code: ErrorCode::ServerError(Error::RuntimeError.into()),
 				message: "Unable to query".into(),
 				data: Some(format!("{:?}", e).into()),
-			}) $(
-				.map($mapper)
-			)?
+			})?;
+			result.map_err(|e| RpcError {
+				code: ErrorCode::InvalidParams,
+				message: "Runtime returned error".into(),
+				data: Some(format!("{:?}", e).into()),
+			})$(.map($mapper))?
 		}
 	};
 }

@@ -26,18 +26,6 @@ use std::{collections::BTreeMap, marker::PhantomData, sync::Arc};
 /// Public io handler for exporting into other modules
 pub type IoHandler = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
 
-/// Light client extra dependencies.
-pub struct LightDeps<C, F, P> {
-	/// The client instance to use.
-	pub client: Arc<C>,
-	/// Transaction pool instance.
-	pub pool: Arc<P>,
-	/// Remote access to the blockchain (async).
-	pub remote_blockchain: Arc<dyn sc_client_api::light::RemoteBlockchain<Block>>,
-	/// Fetcher instance.
-	pub fetcher: Arc<F>,
-}
-
 /// Extra dependencies for GRANDPA
 pub struct GrandpaDeps<B> {
 	/// Voting round info.
@@ -237,31 +225,6 @@ where
 		),
 		overrides,
 	)));
-
-	io
-}
-
-/// Instantiate all Light RPC extensions.
-pub fn create_light<C, P, M, F>(deps: LightDeps<C, F, P>) -> jsonrpc_core::IoHandler<M>
-where
-	C: sp_blockchain::HeaderBackend<Block>,
-	C: Send + Sync + 'static,
-	F: sc_client_api::light::Fetcher<Block> + 'static,
-	P: TransactionPool + 'static,
-	M: jsonrpc_core::Metadata + Default,
-{
-	use substrate_frame_rpc_system::{LightSystem, SystemApi};
-
-	let LightDeps {
-		client,
-		pool,
-		remote_blockchain,
-		fetcher,
-	} = deps;
-	let mut io = jsonrpc_core::IoHandler::default();
-	io.extend_with(SystemApi::<Hash, AccountId, Index>::to_delegate(
-		LightSystem::new(client, remote_blockchain, fetcher, pool),
-	));
 
 	io
 }
