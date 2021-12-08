@@ -143,8 +143,8 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("opal"),
-	impl_name: create_runtime_str!("opal"),
+	spec_name: create_runtime_str!("quartz"),
+	impl_name: create_runtime_str!("quartz"),
 	authoring_version: 1,
 	spec_version: 913000,
 	impl_version: 1,
@@ -232,7 +232,7 @@ parameter_types! {
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u8 = 42;
+	pub const SS58Prefix: u8 = 255;
 }
 
 parameter_types! {
