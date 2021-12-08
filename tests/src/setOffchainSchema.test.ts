@@ -84,7 +84,7 @@ describe('Negative Integration Test setOffchainSchema', () => {
     await setOffchainSchemaExpectFailure(alice, destroyedCollectionId, DATA);
   });
 
-  it.only('fails on too long data', async () => {
+  it('fails on too long data', async () => {
     const tooLongData = new Array(8 * 1024 + 10).fill(0xff);
 
     await setOffchainSchemaExpectFailure(alice, validCollectionId, tooLongData);

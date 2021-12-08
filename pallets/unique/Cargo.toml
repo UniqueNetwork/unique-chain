@@ -61,42 +61,42 @@ version = '2.3.0'
 default-features = false
 optional = true
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.12'
+branch = 'polkadot-v0.9.13'
 
 [dependencies.frame-support]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.12'
+branch = 'polkadot-v0.9.13'
 
 [dependencies.frame-system]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.12'
+branch = 'polkadot-v0.9.13'
 
 [dependencies.pallet-balances]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.12'
+branch = 'polkadot-v0.9.13'
 
 [dependencies.pallet-timestamp]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.12'
+branch = 'polkadot-v0.9.13'
 
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.12'
+branch = 'polkadot-v0.9.13'
 
 [dependencies.sp-std]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.12'
+branch = 'polkadot-v0.9.13'
 
 [dependencies.pallet-transaction-payment]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.12'
+branch = 'polkadot-v0.9.13'
 
 [dependencies.serde]
 default-features = false
@@ -106,17 +106,17 @@ version = '1.0.130'
 [dependencies.sp-runtime]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.12'
+branch = 'polkadot-v0.9.13'
 
 [dependencies.sp-core]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.12'
+branch = 'polkadot-v0.9.13'
 
 [dependencies.sp-io]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.12'
+branch = 'polkadot-v0.9.13'
 
 
 ################################################################################
@@ -129,9 +129,9 @@ scale-info = { version = "1.0.0", default-features = false, features = [
 ] }
 ethereum = { version = "0.10.0", default-features = false }
 rlp = { default-features = false, version = "0.5.0" }
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
+sp-api = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.13" }
 
-up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring" }
+up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring", branch = 'polkadot-v0.9.13' }
 up-evm-mapping = { default-features = false, path = "../../primitives/evm-mapping" }
 evm-coder = { default-features = false, path = "../../crates/evm-coder" }
 pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }
@@ -139,9 +139,9 @@ primitive-types = { version = "0.10.1", default-features = false, features = [
     "serde_no_std",
 ] }
 
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12-weights" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12-weights" }
-fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.12-weights" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.13" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.13" }
+fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.13" }
 hex-literal = "0.3.3"
 
 pallet-common = { default-features = false, path = "../common" }

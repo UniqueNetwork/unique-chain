@@ -104,7 +104,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('Treasury balance increased by failed tx fee', async () => {
     await usingApi(async (api) => {
-      await skipInflationBlock(api);
+      //await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const bobPrivateKey = privateKey('//Bob');

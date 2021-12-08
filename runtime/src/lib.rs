@@ -16,6 +16,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
+use sp_runtime::DispatchError;
 // #[cfg(any(feature = "std", test))]
 // pub use sp_runtime::BuildStorage;
 
@@ -57,7 +58,7 @@ use up_data_structs::*;
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
 use frame_system::{
-	self as system, EnsureRoot, EnsureSigned,
+	self as frame_system, EnsureRoot, EnsureSigned,
 	limits::{BlockWeights, BlockLength},
 };
 use sp_arithmetic::{
@@ -118,7 +119,7 @@ pub type Index = u32;
 pub type Hash = sp_core::H256;
 
 /// Digest item type.
-pub type DigestItem = generic::DigestItem<Hash>;
+pub type DigestItem = generic::DigestItem;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -146,7 +147,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("opal"),
 	impl_name: create_runtime_str!("opal"),
 	authoring_version: 1,
-	spec_version: 912204,
+	spec_version: 913000,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -323,7 +324,7 @@ impl pallet_ethereum::Config for Runtime {
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
 
-impl system::Config for Runtime {
+impl frame_system::Config for Runtime {
 	/// The data to be stored in an account.
 	type AccountData = pallet_balances::AccountData<Balance>;
 	/// The identifier used to distinguish between accounts.
@@ -366,7 +367,7 @@ impl system::Config for Runtime {
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = system::weights::SubstrateWeight<Self>;
+	type SystemWeightInfo = frame_system::weights::SubstrateWeight<Self>;
 	/// Version of the runtime.
 	type Version = Version;
 }
@@ -870,7 +871,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 33,
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 34,
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
-		System: system::{Pallet, Call, Storage, Config, Event<T>} = 36,
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 36,
 		Vesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 37,
 		// Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
 		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
@@ -940,12 +941,12 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
-	system::CheckSpecVersion<Runtime>,
+	frame_system::CheckSpecVersion<Runtime>,
 	// system::CheckTxVersion<Runtime>,
-	system::CheckGenesis<Runtime>,
-	system::CheckEra<Runtime>,
-	system::CheckNonce<Runtime>,
-	system::CheckWeight<Runtime>,
+	frame_system::CheckGenesis<Runtime>,
+	frame_system::CheckEra<Runtime>,
+	frame_system::CheckNonce<Runtime>,
+	frame_system::CheckWeight<Runtime>,
 	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 );
@@ -1020,40 +1021,40 @@ macro_rules! dispatch_unique_runtime {
 	($collection:ident.$method:ident($($name:ident),*)) => {{
 		use pallet_unique::dispatch::Dispatched;
 
-		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::new($collection).unwrap());
+		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
 		let dispatch = collection.as_dyn();
 
-		dispatch.$method($($name),*)
+		Ok(dispatch.$method($($name),*))
 	}};
 }
 impl_runtime_apis! {
 	impl up_rpc::UniqueApi<Block, CrossAccountId, AccountId>
 		for Runtime
 	{
-		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Vec<TokenId> {
+		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Result<Vec<TokenId>, DispatchError> {
 			dispatch_unique_runtime!(collection.account_tokens(account))
 		}
-		fn token_exists(collection: CollectionId, token: TokenId) -> bool {
+		fn token_exists(collection: CollectionId, token: TokenId) -> Result<bool, DispatchError> {
 			dispatch_unique_runtime!(collection.token_exists(token))
 		}
 
-		fn token_owner(collection: CollectionId, token: TokenId) -> CrossAccountId {
+		fn token_owner(collection: CollectionId, token: TokenId) -> Result<CrossAccountId, DispatchError> {
 			dispatch_unique_runtime!(collection.token_owner(token))
 		}
-		fn const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8> {
+		fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
 			dispatch_unique_runtime!(collection.const_metadata(token))
 		}
-		fn variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8> {
+		fn variable_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
 			dispatch_unique_runtime!(collection.variable_metadata(token))
 		}
 
-		fn collection_tokens(collection: CollectionId) -> u32 {
+		fn collection_tokens(collection: CollectionId) -> Result<u32, DispatchError> {
 			dispatch_unique_runtime!(collection.collection_tokens())
 		}
-		fn account_balance(collection: CollectionId, account: CrossAccountId) -> u32 {
+		fn account_balance(collection: CollectionId, account: CrossAccountId) -> Result<u32, DispatchError> {
 			dispatch_unique_runtime!(collection.account_balance(account))
 		}
-		fn balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> u128 {
+		fn balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<u128, DispatchError> {
 			dispatch_unique_runtime!(collection.balance(account, token))
 		}
 		fn allowance(
@@ -1061,7 +1062,7 @@ impl_runtime_apis! {
 			sender: CrossAccountId,
 			spender: CrossAccountId,
 			token: TokenId,
-		) -> u128 {
+		) -> Result<u128, DispatchError> {
 			dispatch_unique_runtime!(collection.allowance(sender, spender, token))
 		}
 
@@ -1070,23 +1071,23 @@ impl_runtime_apis! {
 				.or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account))
 				.or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
 		}
-		fn adminlist(collection: CollectionId) -> Vec<CrossAccountId> {
-			<pallet_common::Pallet<Runtime>>::adminlist(collection)
+		fn adminlist(collection: CollectionId) -> Result<Vec<CrossAccountId>, DispatchError> {
+			Ok(<pallet_common::Pallet<Runtime>>::adminlist(collection))
 		}
-		fn allowlist(collection: CollectionId) -> Vec<CrossAccountId> {
-			<pallet_common::Pallet<Runtime>>::allowlist(collection)
+		fn allowlist(collection: CollectionId) -> Result<Vec<CrossAccountId>, DispatchError> {
+			Ok(<pallet_common::Pallet<Runtime>>::allowlist(collection))
 		}
-		fn allowed(collection: CollectionId, user: CrossAccountId) -> bool {
-			<pallet_common::Pallet<Runtime>>::allowed(collection, user)
+		fn allowed(collection: CollectionId, user: CrossAccountId) -> Result<bool, DispatchError> {
+			Ok(<pallet_common::Pallet<Runtime>>::allowed(collection, user))
 		}
-		fn last_token_id(collection: CollectionId) -> TokenId {
+		fn last_token_id(collection: CollectionId) -> Result<TokenId, DispatchError> {
 			dispatch_unique_runtime!(collection.last_token_id())
 		}
-		fn collection_by_id(collection: CollectionId) -> Option<Collection<AccountId>> {
-			<pallet_common::CollectionById<Runtime>>::get(collection)
+		fn collection_by_id(collection: CollectionId) -> Result<Option<Collection<AccountId>>, DispatchError> {
+			Ok(<pallet_common::CollectionById<Runtime>>::get(collection))
 		}
-		fn collection_stats() -> CollectionStats {
-			<pallet_common::Pallet<Runtime>>::collection_stats()
+		fn collection_stats() -> Result<CollectionStats, DispatchError> {
+			Ok(<pallet_common::Pallet<Runtime>>::collection_stats())
 		}
 	}
 

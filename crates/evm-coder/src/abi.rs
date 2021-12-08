@@ -4,10 +4,7 @@
 #![allow(dead_code)]
 
 #[cfg(not(feature = "std"))]
-use alloc::{
-	string::{String, ToString},
-	vec::Vec,
-};
+use alloc::vec::Vec;
 use evm_core::ExitError;
 use primitive_types::{H160, U256};
 
