@@ -34,7 +34,7 @@ let bob: IKeyringPair;
 // Skip the inflation block pauses if the block is close to inflation block
 // until the inflation happens
 /*eslint no-async-promise-executor: "off"*/
-/*function skipInflationBlock(api: ApiPromise): Promise<void> {
+function skipInflationBlock(api: ApiPromise): Promise<void> {
   const promise = new Promise<void>(async (resolve) => {
     const blockInterval = (await api.consts.inflation.inflationBlockInterval).toNumber();
     const unsubscribe = await api.rpc.chain.subscribeNewHeads(head => {
@@ -49,7 +49,7 @@ let bob: IKeyringPair;
   });
 
   return promise;
-}*/
+}
 
 describe('integration test: Fees must be credited to Treasury:', () => {
   before(async () => {
@@ -61,7 +61,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('Total issuance does not change', async () => {
     await usingApi(async (api) => {
-      //await skipInflationBlock(api);
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const totalBefore = (await api.query.balances.totalIssuance()).toBigInt();
@@ -81,7 +81,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('Sender balance decreased by fee+sent amount, Treasury balance increased by fee', async () => {
     await usingApi(async (api) => {
-      //await skipInflationBlock(api);
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const alicePrivateKey = privateKey('//Alice');
@@ -125,7 +125,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('NFT Transactions also send fees to Treasury', async () => {
     await usingApi(async (api) => {
-      //await skipInflationBlock(api);
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const treasuryBalanceBefore = (await api.query.system.account(TREASURY)).data.free.toBigInt();
@@ -144,7 +144,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('Fees are sane', async () => {
     await usingApi(async (api) => {
-      //await skipInflationBlock(api);
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const aliceBalanceBefore: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
@@ -161,7 +161,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('NFT Transfer fee is close to 0.1 Unique', async () => {
     await usingApi(async (api) => {
-      //await skipInflationBlock(api);
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const collectionId = await createCollectionExpectSuccess();

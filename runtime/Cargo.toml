@@ -33,7 +33,7 @@ runtime-benchmarks = [
     'pallet-refungible/runtime-benchmarks',
     'pallet-nonfungible/runtime-benchmarks',
     'pallet-unique/runtime-benchmarks',
-#    'pallet-inflation/runtime-benchmarks',
+    'pallet-inflation/runtime-benchmarks',
     'pallet-xcm/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
     'xcm-builder/runtime-benchmarks',
@@ -75,7 +75,7 @@ std = [
     'fp-self-contained/std',
     'parachain-info/std',
     'serde',
-#    'pallet-inflation/std',
+    'pallet-inflation/std',
     'pallet-common/std',
     'pallet-fungible/std',
     'pallet-refungible/std',
@@ -380,7 +380,7 @@ derivative = "2.2.0"
 pallet-unique = { path = '../pallets/unique', default-features = false }
 up-rpc = { path = "../primitives/rpc", default-features = false }
 up-evm-mapping = { path = "../primitives/evm-mapping", default-features = false }
-# pallet-inflation = { path = '../pallets/inflation', default-features = false }
+pallet-inflation = { path = '../pallets/inflation', default-features = false }
 up-data-structs = { path = '../primitives/data-structs', default-features = false }
 pallet-common = { default-features = false, path = "../pallets/common" }
 pallet-fungible = { default-features = false, path = "../pallets/fungible" }
