@@ -11679,6 +11679,7 @@ dependencies = [
  "pallet-evm-migration",
  "pallet-evm-transaction-payment",
  "pallet-fungible",
+ "pallet-inflation",
  "pallet-nonfungible",
  "pallet-randomness-collective-flip",
  "pallet-refungible",
