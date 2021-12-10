@@ -75,6 +75,11 @@ pub mod pallet {
 	pub type NextRecalculationBlock<T: Config> =
 		StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
 
+	/// Relay block when inflation has started
+	#[pallet::storage]
+	pub type StartBlock<T: Config> =
+		StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
+
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_: T::BlockNumber) -> Weight
@@ -145,8 +150,10 @@ pub mod pallet {
 			ensure_root(origin)?;
 
 			// Start inflation if it has not been yet initialized
-			let next_inflation: T::BlockNumber = <NextInflationBlock<T>>::get();
-			if next_inflation == 0u32.into() {
+			if <StartBlock<T>>::get() == 0u32.into() {
+				// Set inflation global start block
+				<StartBlock<T>>::set(inflation_start_relay_block);
+
 				// Recalculate inflation. This can be backdated and will catch up.
 				Self::recalculate_inflation(inflation_start_relay_block);
 				let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);
@@ -166,7 +173,7 @@ pub mod pallet {
 
 impl<T: Config> Pallet<T> {
 	pub fn recalculate_inflation(recalculation_block: T::BlockNumber) {
-		let current_year: u32 = (recalculation_block / T::BlockNumber::from(YEAR))
+		let current_year: u32 = ((recalculation_block - <StartBlock<T>>::get()) / T::BlockNumber::from(YEAR))
 			.try_into()
 			.unwrap_or(0);
 		let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);
