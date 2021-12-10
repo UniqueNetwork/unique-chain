@@ -1,0 +1,107 @@
+# ===== Rust builder =====
+FROM phusion/baseimage:focal-1.0.0 as rust-builder
+LABEL maintainer="Unique.Network"
+
+ARG RUST_TOOLCHAIN=nightly-2021-11-11
+#ARG RUST_C=1.55.0-nightly
+ARG POLKA_VERSION=v0.9.13
+ARG UNIQUE_BRANCH=develop
+
+#ARG USER=***
+#ARG PASS=***
+
+
+ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
+#ENV RUST_C $RUST_C
+ENV POLKA_VERSION $POLKA_VERSION
+ENV UNIQUE_BRANCH $UNIQUE_BRANCH
+
+
+#RUN echo $RUST_TOOLCHAIN
+#RUN echo $RUST_C
+#RUN echo $POLKA_VERSION
+#RUN echo $UNIQUE_BRANCH
+
+ENV CARGO_HOME="/cargo-home"
+ENV PATH="/cargo-home/bin:$PATH"
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+
+RUN apt-get update && \
+    apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
+    apt-get install -y cmake pkg-config libssl-dev git clang
+
+RUN rustup toolchain uninstall $(rustup toolchain list) && \
+    rustup toolchain install $RUST_TOOLCHAIN && \
+    rustup default $RUST_TOOLCHAIN && \
+    rustup target list --installed && \
+    rustup show
+RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
+
+RUN cargo install cargo-chef
+
+RUN mkdir unique_parachain
+WORKDIR /unique_parachain
+
+# ===== Chef =====
+FROM rust-builder as chef
+
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+# ===== BUILD ======
+FROM rust-builder as builder
+
+RUN mkdir unique_parachain
+WORKDIR /unique_parachain
+
+COPY --from=chef /unique_parachain/recipe.json recipe.json
+ARG PROFILE=release
+RUN cargo chef cook "--$PROFILE" --recipe-path recipe.json
+
+COPY . .
+RUN cargo build "--$PROFILE"
+   # && \
+   # cargo test
+
+# ===== BUILD POLKADOT =====
+FROM rust-builder as builder-polkadot
+
+RUN mkdir unique_parachain
+WORKDIR /unique_parachain
+
+RUN git clone -b $POLKA_VERSION --depth 1 https://github.com/paritytech/polkadot.git && \
+    cd polkadot && \
+    git tag -n && \
+	cargo build --release
+
+# ===== RUN ======
+
+FROM phusion/baseimage:focal-1.0.0
+
+ARG PROFILE=release
+
+RUN apt-get -y update && \
+      apt-get -y upgrade && \
+      apt-get -y install curl git && \
+      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
+      export NVM_DIR="$HOME/.nvm" && \
+      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+      nvm install v15.5.0 && \
+      nvm use v15.5.0
+
+RUN git clone https://github.com/PureStake/polkadot-launch -b jlm-use-para-id-in-specs
+
+RUN export NVM_DIR="$HOME/.nvm" && \
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+    cd /polkadot-launch && \
+    npm install --global yarn && \
+    yarn
+
+COPY --from=builder /unique_parachain/target/$PROFILE/unique-collator /unique-chain/target/$PROFILE/
+COPY --from=builder-polkadot /unique_parachain/polkadot/target/$PROFILE/polkadot /polkadot/target/$PROFILE/
+
+CMD export NVM_DIR="$HOME/.nvm" && \
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+    cd /polkadot-launch && \
+    yarn start launch-config.json

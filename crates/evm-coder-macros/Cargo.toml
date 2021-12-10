@@ -1,0 +1,16 @@
+[package]
+name = "evm-coder-macros"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+sha3 = "0.9.1"
+quote = "1.0"
+proc-macro2 = "1.0"
+syn = { version = "1.0", features = ["full"] }
+hex = "0.4.3"
+Inflector = "0.11.4"
+darling = "0.13.0"

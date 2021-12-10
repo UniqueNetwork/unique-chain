@@ -3,11 +3,11 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { IKeyringPair } from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import waitNewBlocks from './substrate/wait-new-blocks';
-import { deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess } from './util/contracthelpers';
+import {deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess} from './util/contracthelpers';
 import {
   enableContractSponsoringExpectSuccess,
   findUnusedAddress,
@@ -15,7 +15,7 @@ import {
   setContractSponsoringRateLimitExpectSuccess,
 } from './util/helpers';
 
-describe('Integration Test setContractSponsoringRateLimit', () => {
+describe.skip('Integration Test setContractSponsoringRateLimit', () => {
   it('ensure sponsored contract can\'t be called twice without pause for free', async () => {
     await usingApi(async (api) => {
       const user = await findUnusedAddress(api);
@@ -42,7 +42,7 @@ describe('Integration Test setContractSponsoringRateLimit', () => {
   });
 });
 
-describe('Negative Integration Test setContractSponsoringRateLimit', () => {
+describe.skip('Negative Integration Test setContractSponsoringRateLimit', () => {
   let alice: IKeyringPair;
 
   before(async () => {
@@ -59,7 +59,7 @@ describe('Negative Integration Test setContractSponsoringRateLimit', () => {
 
   it('fails when called by non-owning user', async () => {
     await usingApi(async (api) => {
-      const [flipper, _] = await deployFlipper(api);
+      const [flipper] = await deployFlipper(api);
 
       await setContractSponsoringRateLimitExpectFailure(alice, flipper.address, 1);
     });

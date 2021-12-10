@@ -5,24 +5,25 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from "./substrate/substrate-api";
-import { alicesPublicKey, bobsPublicKey } from "./accounts";
-import privateKey from "./substrate/privateKey";
-import { BigNumber } from 'bignumber.js';
-import { IKeyringPair } from '@polkadot/types/types';
-import { 
-  createCollectionExpectSuccess, 
+import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
+import {alicesPublicKey, bobsPublicKey} from './accounts';
+import privateKey from './substrate/privateKey';
+import {IKeyringPair} from '@polkadot/types/types';
+import {
+  createCollectionExpectSuccess,
   createItemExpectSuccess,
   getGenericResult,
-  transferExpectSuccess
+  transferExpectSuccess,
+  UNIQUE,
 } from './util/helpers';
 
-import { default as waitNewBlocks } from './substrate/wait-new-blocks';
+import {default as waitNewBlocks} from './substrate/wait-new-blocks';
+import {ApiPromise} from '@polkadot/api';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-const Treasury = "5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z";
+const TREASURY = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';
 const saneMinimumFee = 0.05;
 const saneMaximumFee = 0.5;
 const createCollectionDeposit = 100;
@@ -30,9 +31,29 @@ const createCollectionDeposit = 100;
 let alice: IKeyringPair;
 let bob: IKeyringPair;
 
+// Skip the inflation block pauses if the block is close to inflation block
+// until the inflation happens
+/*eslint no-async-promise-executor: "off"*/
+function skipInflationBlock(api: ApiPromise): Promise<void> {
+  const promise = new Promise<void>(async (resolve) => {
+    const blockInterval = (await api.consts.inflation.inflationBlockInterval).toNumber();
+    const unsubscribe = await api.rpc.chain.subscribeNewHeads(head => {
+      const currentBlock = head.number.toNumber();
+      if (currentBlock % blockInterval < blockInterval - 10) {
+        unsubscribe();
+        resolve();
+      } else {
+        console.log(`Skipping inflation block, current block: ${currentBlock}`);
+      }
+    });
+  });
+
+  return promise;
+}
+
 describe('integration test: Fees must be credited to Treasury:', () => {
   before(async () => {
-    await usingApi(async (api) => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
     });
@@ -40,117 +61,123 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('Total issuance does not change', async () => {
     await usingApi(async (api) => {
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
-      const totalBefore = new BigNumber((await api.query.balances.totalIssuance()).toString());
+      const totalBefore = (await api.query.balances.totalIssuance()).toBigInt();
 
       const alicePrivateKey = privateKey('//Alice');
-      const amount = new BigNumber(1);
-      const transfer = api.tx.balances.transfer(bobsPublicKey, amount.toFixed());
+      const amount = 1n;
+      const transfer = api.tx.balances.transfer(bobsPublicKey, amount);
 
       const result = getGenericResult(await submitTransactionAsync(alicePrivateKey, transfer));
 
-      const totalAfter = new BigNumber((await api.query.balances.totalIssuance()).toString());
+      const totalAfter = (await api.query.balances.totalIssuance()).toBigInt();
 
       expect(result.success).to.be.true;
-      expect(totalAfter.toFixed()).to.be.equal(totalBefore.toFixed());
+      expect(totalAfter).to.be.equal(totalBefore);
     });
   });
 
   it('Sender balance decreased by fee+sent amount, Treasury balance increased by fee', async () => {
     await usingApi(async (api) => {
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const alicePrivateKey = privateKey('//Alice');
-      const treasuryBalanceBefore = new BigNumber((await api.query.system.account(Treasury)).data.free.toString());
-      const aliceBalanceBefore = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
+      const treasuryBalanceBefore: bigint = (await api.query.system.account(TREASURY)).data.free.toBigInt();
+      const aliceBalanceBefore: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
 
-      const amount = new BigNumber(1);
-      const transfer = api.tx.balances.transfer(bobsPublicKey, amount.toFixed());
+      const amount = 1n;
+      const transfer = api.tx.balances.transfer(bobsPublicKey, amount);
       const result = getGenericResult(await submitTransactionAsync(alicePrivateKey, transfer));
 
-      const treasuryBalanceAfter = new BigNumber((await api.query.system.account(Treasury)).data.free.toString());
-      const aliceBalanceAfter = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
-      const fee = aliceBalanceBefore.minus(aliceBalanceAfter).minus(amount);
-      const treasuryIncrease = treasuryBalanceAfter.minus(treasuryBalanceBefore);
+      const treasuryBalanceAfter: bigint = (await api.query.system.account(TREASURY)).data.free.toBigInt();
+      const aliceBalanceAfter: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
+      const fee = aliceBalanceBefore - aliceBalanceAfter - amount;
+      const treasuryIncrease = treasuryBalanceAfter - treasuryBalanceBefore;
 
       expect(result.success).to.be.true;
-      expect(treasuryIncrease.toFixed()).to.be.equal(fee.toFixed());
+      expect(treasuryIncrease).to.be.equal(fee);
     });
   });
 
   it('Treasury balance increased by failed tx fee', async () => {
     await usingApi(async (api) => {
+      //await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const bobPrivateKey = privateKey('//Bob');
-      const treasuryBalanceBefore = new BigNumber((await api.query.system.account(Treasury)).data.free.toString());
-      const bobBalanceBefore = new BigNumber((await api.query.system.account(bobsPublicKey)).data.free.toString());
+      const treasuryBalanceBefore = (await api.query.system.account(TREASURY)).data.free.toBigInt();
+      const bobBalanceBefore = (await api.query.system.account(bobsPublicKey)).data.free.toBigInt();
 
       const badTx = api.tx.balances.setBalance(alicesPublicKey, 0, 0);
       await expect(submitTransactionExpectFailAsync(bobPrivateKey, badTx)).to.be.rejected;
 
-      const treasuryBalanceAfter = new BigNumber((await api.query.system.account(Treasury)).data.free.toString());
-      const bobBalanceAfter = new BigNumber((await api.query.system.account(bobsPublicKey)).data.free.toString());
-      const fee = bobBalanceBefore.minus(bobBalanceAfter);
-      const treasuryIncrease = treasuryBalanceAfter.minus(treasuryBalanceBefore);
+      const treasuryBalanceAfter = (await api.query.system.account(TREASURY)).data.free.toBigInt();
+      const bobBalanceAfter = (await api.query.system.account(bobsPublicKey)).data.free.toBigInt();
+      const fee = bobBalanceBefore - bobBalanceAfter;
+      const treasuryIncrease = treasuryBalanceAfter - treasuryBalanceBefore;
 
-      expect(treasuryIncrease.toFixed()).to.be.equal(fee.toFixed());
+      expect(treasuryIncrease).to.be.equal(fee);
     });
   });
 
   it('NFT Transactions also send fees to Treasury', async () => {
     await usingApi(async (api) => {
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
-      const treasuryBalanceBefore = new BigNumber((await api.query.system.account(Treasury)).data.free.toString());
-      const aliceBalanceBefore = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
+      const treasuryBalanceBefore = (await api.query.system.account(TREASURY)).data.free.toBigInt();
+      const aliceBalanceBefore = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
 
       await createCollectionExpectSuccess();
 
-      const treasuryBalanceAfter = new BigNumber((await api.query.system.account(Treasury)).data.free.toString());
-      const aliceBalanceAfter = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
-      const fee = aliceBalanceBefore.minus(aliceBalanceAfter);
-      const treasuryIncrease = treasuryBalanceAfter.minus(treasuryBalanceBefore);
+      const treasuryBalanceAfter = (await api.query.system.account(TREASURY)).data.free.toBigInt();
+      const aliceBalanceAfter = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
+      const fee = aliceBalanceBefore - aliceBalanceAfter;
+      const treasuryIncrease = treasuryBalanceAfter - treasuryBalanceBefore;
 
-      expect(treasuryIncrease.toFixed()).to.be.equal(fee.toFixed());
+      expect(treasuryIncrease).to.be.equal(fee);
     });
   });
 
   it('Fees are sane', async () => {
     await usingApi(async (api) => {
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
-      const aliceBalanceBefore = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
+      const aliceBalanceBefore: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
 
       await createCollectionExpectSuccess();
 
-      const aliceBalanceAfter = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
-      const fee = aliceBalanceBefore.minus(aliceBalanceAfter);
+      const aliceBalanceAfter: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
+      const fee = aliceBalanceBefore - aliceBalanceAfter;
 
-      expect(fee.dividedBy(1e15).toNumber()).to.be.lessThan(saneMaximumFee + createCollectionDeposit);
-      expect(fee.dividedBy(1e15).toNumber()).to.be.greaterThan(saneMinimumFee  + createCollectionDeposit);
+      expect(fee / UNIQUE < BigInt(Math.ceil(saneMaximumFee + createCollectionDeposit))).to.be.true;
+      expect(fee / UNIQUE < BigInt(Math.ceil(saneMinimumFee  + createCollectionDeposit))).to.be.true;
     });
   });
 
   it('NFT Transfer fee is close to 0.1 Unique', async () => {
     await usingApi(async (api) => {
+      await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const collectionId = await createCollectionExpectSuccess();
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
 
-      const aliceBalanceBefore = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
+      const aliceBalanceBefore: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
       await transferExpectSuccess(collectionId, tokenId, alice, bob, 1, 'NFT');
-      const aliceBalanceAfter = new BigNumber((await api.query.system.account(alicesPublicKey)).data.free.toString());
-      const fee = aliceBalanceBefore.minus(aliceBalanceAfter);
+      const aliceBalanceAfter: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
 
-      // console.log(fee.toString());
+      const fee = Number(aliceBalanceBefore - aliceBalanceAfter) / Number(UNIQUE);
       const expectedTransferFee = 0.1;
-      const tolerance = 0.00001;
-      expect(fee.dividedBy(1e15).minus(expectedTransferFee).abs().toNumber()).to.be.lessThan(tolerance);
+      // fee drifts because of NextFeeMultiplier
+      const tolerance = 0.001;
+
+      expect(Math.abs(fee - expectedTransferFee)).to.be.lessThan(tolerance);
     });
   });
 
 });
-

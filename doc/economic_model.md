@@ -40,7 +40,7 @@ The dedicated pallet calls allow updating the fee structure for the collection o
 
 Set the collection sponsor address. The sponsorship needs to be confirmed by sending a ConfirmSponsorship transaction
 from that address. Also, the protection measures need to be in place so that sponsor account cannot be depleted by
-malicious users. White listing is one of the measured. It can be enabled with SetPublicAccessMode method.
+malicious users. Allow listing is one of the measured. It can be enabled with SetPublicAccessMode method.
 
 ##### List of transactions
 
@@ -67,7 +67,7 @@ Features:
     Further, the logic is similar to limiting by token as above. If only one of the limits (by token or by address)
     indicates that fee should be paid by the user, the fee is paid by the user.
 -   A pallet method (SetCollectionRateLimits) will be added to set these parameters and enable rate limiting.
--   One idea to consider is deposits that must be made by an address in order to become white listed (instead of admin
+-   One idea to consider is deposits that must be made by an address in order to become allow listed (instead of admin
     review).
 
 #### Permissions
@@ -173,12 +173,12 @@ Switch back to pay-per-own-transaction model.
 
 #### Description
 
-Toggle between normal and white list access for the methods with access for “Anyone”. If White List mode is enabled,
-AddToWhiteList and RemoveFromWhiteList methods can be called to add to and remove addresses from the white list.
+Toggle between normal and allow list access for the methods with access for “Anyone”. If Allow List mode is enabled,
+AddToAllowList and RemoveFromAllowList methods can be called to add to and remove addresses from the allow list.
 
-White list mode is the property of collection. If it is turned on, all public operations such as token transfers, for
-example, which normally have “Anyone” permission, become white listed, i.e. are only available to collection owner,
-admins, and addresses from the white list. White lists can be helpful for rate limiting of transfers when collection
+Allow list mode is the property of collection. If it is turned on, all public operations such as token transfers, for
+example, which normally have “Anyone” permission, become allow listed, i.e. are only available to collection owner,
+admins, and addresses from the allow list. Allow lists can be helpful for rate limiting of transfers when collection
 sponsoring is enabled.
 
 #### Permissions
@@ -190,13 +190,13 @@ sponsoring is enabled.
 -   CollectionID: ID of the Collection to set access mode for
 -   Mode
     -   0 = Normal
-    -   1 = White list
+    -   1 = Allow list
 
-### AddToWhiteList
+### AddToAllowList
 
 #### Description
 
-Add an address to white list.
+Add an address to allow list.
 
 #### Permissions
 
@@ -208,11 +208,11 @@ Add an address to white list.
 -   CollectionID: ID of the Collection
 -   Address
 
-### RemoveFromWhiteList
+### RemoveFromAllowList
 
 #### Description
 
-Remove an address from white list.
+Remove an address from allow list.
 
 #### Permissions
 

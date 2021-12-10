@@ -5,47 +5,41 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync } from "./substrate/substrate-api";
-import { 
-  createCollectionExpectSuccess, 
-  setCollectionSponsorExpectSuccess, 
-  destroyCollectionExpectSuccess, 
-  setCollectionSponsorExpectFailure,
+import {default as usingApi, submitTransactionExpectFailAsync} from './substrate/substrate-api';
+import {
+  createCollectionExpectSuccess,
+  setCollectionSponsorExpectSuccess,
+  destroyCollectionExpectSuccess,
   confirmSponsorshipExpectSuccess,
   confirmSponsorshipExpectFailure,
   createItemExpectSuccess,
   findUnusedAddress,
-  getGenericResult,
-  enableWhiteListExpectSuccess,
-  enablePublicMintingExpectSuccess,
-  addToWhiteListExpectSuccess,
   removeCollectionSponsorExpectSuccess,
   removeCollectionSponsorExpectFailure,
-} from "./util/helpers";
-import { Keyring } from "@polkadot/api";
-import { IKeyringPair } from "@polkadot/types/types";
-import type { AccountId } from '@polkadot/types/interfaces';
-import { BigNumber } from 'bignumber.js';
+  normalizeAccountId,
+  addCollectionAdminExpectSuccess,
+  getCreatedCollectionCount,
+} from './util/helpers';
+import {Keyring} from '@polkadot/api';
+import {IKeyringPair} from '@polkadot/types/types';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
-let charlie: IKeyringPair;
 
 describe('integration test: ext. removeCollectionSponsor():', () => {
 
   before(async () => {
-    await usingApi(async (api) => {
-      const keyring = new Keyring({ type: 'sr25519' });
-      alice = keyring.addFromUri(`//Alice`);
-      bob = keyring.addFromUri(`//Bob`);
-      charlie = keyring.addFromUri(`//Charlie`);
+    await usingApi(async () => {
+      const keyring = new Keyring({type: 'sr25519'});
+      alice = keyring.addFromUri('//Alice');
+      bob = keyring.addFromUri('//Bob');
     });
   });
 
-  it('Remove NFT collection sponsor stops sponsorship', async () => {
+  it('Removing NFT collection sponsor stops sponsorship', async () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
@@ -59,15 +53,15 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
       const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', zeroBalance.address);
 
       // Transfer this tokens from unused address to Alice - should fail
-      const AsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
-      const zeroToAlice = api.tx.nft.transfer(alice.address, collectionId, itemId, 0);
-      const badTransaction = async function () { 
+      const sponsorBalanceBefore = (await api.query.system.account(bob.address)).data.free.toBigInt();
+      const zeroToAlice = api.tx.unique.transfer(normalizeAccountId(alice.address), collectionId, itemId, 0);
+      const badTransaction = async function () {
         await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       };
-      await expect(badTransaction()).to.be.rejectedWith("Inability to pay some fees");
-      const BsponsorBalance = new BigNumber((await api.query.system.account(bob.address)).data.free.toString());
+      await expect(badTransaction()).to.be.rejectedWith('Inability to pay some fees');
+      const sponsorBalanceAfter = (await api.query.system.account(bob.address)).data.free.toBigInt();
 
-      expect(BsponsorBalance.isEqualTo(AsponsorBalance)).to.be.true;
+      expect(sponsorBalanceAfter).to.be.equal(sponsorBalanceBefore);
     });
   });
 
@@ -94,22 +88,34 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
 
 describe('(!negative test!) integration test: ext. removeCollectionSponsor():', () => {
   before(async () => {
-    await usingApi(async (api) => {
-      const keyring = new Keyring({ type: 'sr25519' });
-      alice = keyring.addFromUri(`//Alice`);
-      bob = keyring.addFromUri(`//Bob`);
-      charlie = keyring.addFromUri(`//Charlie`);
+    await usingApi(async () => {
+      const keyring = new Keyring({type: 'sr25519'});
+      alice = keyring.addFromUri('//Alice');
+      bob = keyring.addFromUri('//Bob');
     });
   });
 
   it('(!negative test!) Remove sponsor for a collection that never existed', async () => {
     // Find the collection that never existed
-    const collectionId = 0;
+    let collectionId = 0;
     await usingApi(async (api) => {
-      const collectionId = parseInt((await api.query.nft.createdCollectionCount()).toString()) + 1;
+      collectionId = await getCreatedCollectionCount(api) + 1;
     });
 
     await removeCollectionSponsorExpectFailure(collectionId);
+  });
+
+  it('(!negative test!) Remove sponsor for a collection with collection admin permissions', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+    await removeCollectionSponsorExpectFailure(collectionId, '//Bob');
+  });
+
+  it('(!negative test!) Remove sponsor for a collection by regular user', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await removeCollectionSponsorExpectFailure(collectionId, '//Bob');
   });
 
   it('(!negative test!) Remove sponsor in a destroyed collection', async () => {

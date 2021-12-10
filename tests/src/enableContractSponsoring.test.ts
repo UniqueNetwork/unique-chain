@@ -3,12 +3,12 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { IKeyringPair } from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
-import { deployFlipper, getFlipValue, toggleFlipValueExpectSuccess } from './util/contracthelpers';
+import {deployFlipper, getFlipValue, toggleFlipValueExpectSuccess} from './util/contracthelpers';
 import {
   enableContractSponsoringExpectFailure,
   enableContractSponsoringExpectSuccess,
@@ -19,7 +19,7 @@ import {
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-describe('Integration Test enableContractSponsoring', () => {
+describe.skip('Integration Test enableContractSponsoring', () => {
   it('ensure tx fee is paid from endowment', async () => {
     await usingApi(async (api) => {
       const user = await findUnusedAddress(api);
@@ -64,7 +64,7 @@ describe('Integration Test enableContractSponsoring', () => {
 
 });
 
-describe('Negative Integration Test enableContractSponsoring', () => {
+describe.skip('Negative Integration Test enableContractSponsoring', () => {
   let alice: IKeyringPair;
 
   before(async () => {
@@ -81,7 +81,7 @@ describe('Negative Integration Test enableContractSponsoring', () => {
 
   it('fails when called by non-owning user', async () => {
     await usingApi(async (api) => {
-      const [flipper, _] = await deployFlipper(api);
+      const [flipper] = await deployFlipper(api);
 
       await enableContractSponsoringExpectFailure(alice, flipper.address, true);
     });

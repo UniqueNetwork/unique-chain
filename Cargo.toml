@@ -1,8 +1,12 @@
 [workspace]
+resolver = "2"
 members = [
-    'node',
-    'pallets/nft',
+    'node/*',
+    'pallets/*',
+    'client/*',
+    'primitives/*',
     'runtime',
+    'crates/*',
 ]
 [profile.release]
 panic = 'unwind'

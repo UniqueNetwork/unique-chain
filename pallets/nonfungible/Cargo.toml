@@ -1,0 +1,46 @@
+[package]
+name = "pallet-nonfungible"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies.codec]
+default-features = false
+features = ['derive']
+package = 'parity-scale-codec'
+version = '2.0.0'
+
+[dependencies]
+frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.13' }
+frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.13' }
+sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.13' }
+sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.13' }
+sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.13' }
+pallet-common = { default-features = false, path = '../common' }
+up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
+evm-coder = { default-features = false, path = '../../crates/evm-coder' }
+pallet-evm-coder-substrate = { default-features = false, path = '../evm-coder-substrate' }
+ethereum = { version = "0.10.0", default-features = false }
+frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.13' }
+scale-info = { version = "1.0.0", default-features = false, features = [
+    "derive",
+] }
+
+[features]
+default = ["std"]
+std = [
+    "frame-support/std",
+    "frame-system/std",
+    "sp-runtime/std",
+    "sp-std/std",
+    "up-data-structs/std",
+    "pallet-common/std",
+    "evm-coder/std",
+    "ethereum/std",
+    "pallet-evm-coder-substrate/std",
+    'frame-benchmarking/std',
+]
+runtime-benchmarks = [
+    'frame-benchmarking',
+    'frame-support/runtime-benchmarks',
+    'frame-system/runtime-benchmarks',
+]

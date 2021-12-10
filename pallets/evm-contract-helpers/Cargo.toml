@@ -1,0 +1,39 @@
+[package]
+name = "pallet-evm-contract-helpers"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+scale-info = { version = "1.0.0", default-features = false, features = [
+    "derive",
+] }
+frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.13' }
+frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.13' }
+sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.13' }
+sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.13' }
+sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.13' }
+evm-coder = { default-features = false, path = '../../crates/evm-coder' }
+pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.13" }
+up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring", branch = 'polkadot-v0.9.13' }
+log = "0.4.14"
+
+[dependencies.codec]
+default-features = false
+features = ['derive']
+package = 'parity-scale-codec'
+version = '2.3.0'
+
+[features]
+default = ["std"]
+std = [
+    "frame-support/std",
+    "frame-system/std",
+    "sp-runtime/std",
+    "sp-std/std",
+    "sp-core/std",
+    "evm-coder/std",
+    "pallet-evm-coder-substrate/std",
+    "pallet-evm/std",
+    "up-sponsorship/std",
+]

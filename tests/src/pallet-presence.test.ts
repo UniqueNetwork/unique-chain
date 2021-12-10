@@ -3,22 +3,50 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import { ApiPromise } from "@polkadot/api";
-import { expect } from "chai";
-import usingApi from "./substrate/substrate-api";
+import {ApiPromise} from '@polkadot/api';
+import {expect} from 'chai';
+import usingApi from './substrate/substrate-api';
 
 function getModuleNames(api: ApiPromise): string[] {
-  return api.runtimeMetadata.asLatest.modules.map(m => m.name.toString().toLowerCase());
+  return api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
 }
 
 // Pallets that must always be present
 const requiredPallets = [
-  'nft', 'balances', 'contracts', 'randomnesscollectiveflip', 'system', 'timestamp', 'transactionpayment', 'treasury', 'vesting'
+  'balances',
+  'common',
+  'randomnesscollectiveflip',
+  'timestamp',
+  'transactionpayment',
+  'treasury',
+  'system',
+  'vesting',
+  'parachainsystem',
+  'parachaininfo',
+  'evm',
+  'evmcodersubstrate',
+  'evmcontracthelpers',
+  'evmmigration',
+  'evmtransactionpayment',
+  'ethereum',
+  'fungible',
+  'xcmpqueue',
+  'polkadotxcm',
+  'cumulusxcm',
+  'dmpqueue',
+  'inflation',
+  'unique',
+  'nonfungible',
+  'refungible',
+  //'scheduler',
+  'charging',
 ];
 
 // Pallets that depend on consensus and governance configuration
 const consensusPallets = [
-  'sudo', 'grandpa', 'aura'
+  'sudo',
+  'aura',
+  'auraext',
 ];
 
 describe('Pallet presence', () => {
@@ -38,7 +66,7 @@ describe('Pallet presence', () => {
   });
   it('No extra pallets are included', async () => {
     await usingApi(async api => {
-      expect(getModuleNames(api).length).to.be.equal(requiredPallets.length + consensusPallets.length);
+      expect(getModuleNames(api).sort()).to.be.deep.equal([...requiredPallets, ...consensusPallets].sort());
     });
   });
 });
