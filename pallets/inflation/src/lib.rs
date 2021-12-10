@@ -77,8 +77,7 @@ pub mod pallet {
 
 	/// Relay block when inflation has started
 	#[pallet::storage]
-	pub type StartBlock<T: Config> =
-		StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
+	pub type StartBlock<T: Config> = StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -173,9 +172,10 @@ pub mod pallet {
 
 impl<T: Config> Pallet<T> {
 	pub fn recalculate_inflation(recalculation_block: T::BlockNumber) {
-		let current_year: u32 = ((recalculation_block - <StartBlock<T>>::get()) / T::BlockNumber::from(YEAR))
-			.try_into()
-			.unwrap_or(0);
+		let current_year: u32 = ((recalculation_block - <StartBlock<T>>::get())
+			/ T::BlockNumber::from(YEAR))
+		.try_into()
+		.unwrap_or(0);
 		let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);
 
 		let one_percent = Perbill::from_percent(1);

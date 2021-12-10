@@ -241,7 +241,10 @@ fn inflation_start_large_kusama_block() {
 		MockBlockNumberProvider::set(start_block);
 
 		// Start inflation as sudo
-		assert_ok!(Inflation::start_inflation(RawOrigin::Root.into(), start_block));
+		assert_ok!(Inflation::start_inflation(
+			RawOrigin::Root.into(),
+			start_block
+		));
 
 		// Go through all the block inflations for year 1,
 		// total issuance will be updated accordingly
