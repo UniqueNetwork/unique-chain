@@ -220,6 +220,7 @@ fn testnet_genesis(
 		sudo: SudoConfig { key: root_key },
 		vesting: VestingConfig { vesting: vec![] },
 		parachain_info: unique_runtime::ParachainInfoConfig { parachain_id: id },
+		parachain_system: Default::default(),
 		aura: unique_runtime::AuraConfig {
 			authorities: initial_authorities,
 		},
