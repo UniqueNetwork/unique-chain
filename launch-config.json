@@ -1,0 +1,90 @@
+{
+    "relaychain": {
+        "bin": "../polkadot/target/release/polkadot",
+        "chain": "rococo-local",
+        "nodes": [
+            {
+                "name": "alice",
+                "wsPort": 9844,
+                "rpcPort": 9843,
+                "port": 30444,
+                "flags": [
+                    "-lparachain::candidate_validation=debug"
+                ]
+            },
+            {
+                "name": "bob",
+                "wsPort": 9855,
+                "rpcPort": 9854,
+                "port": 30555,
+                "flags": [
+                    "-lparachain::candidate_validation=debug"
+                ]
+            },
+            {
+                "name": "charlie",
+                "wsPort": 9866,
+                "rpcPort": 9865,
+                "port": 30666,
+                "flags": [
+                    "-lparachain::candidate_validation=debug"
+                ]
+            },
+            {
+                "name": "dave",
+                "wsPort": 9877,
+                "rpcPort": 9876,
+                "port": 30777,
+                "flags": [
+                    "-lparachain::candidate_validation=debug"
+                ]
+            }
+        ],
+        "genesis": {
+            "runtime": {
+                "runtime_genesis_config": {
+                    "parachainsConfiguration": {
+                        "config": {
+                            "validation_upgrade_frequency": 1,
+                            "validation_upgrade_delay": 1
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "parachains": [
+        {
+            "bin": "../unique-chain/target/release/unique-collator",
+            "id": "1000",
+            "balance": "1000000000000000000000000",
+            "nodes": [
+                {
+                    "port": 31200,
+                    "wsPort": 9944,
+                    "rpcPort": 9933,
+                    "name": "alice",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external"
+                    ]
+                },
+                {
+                    "port": 31201,
+                    "wsPort": 9945,
+                    "rpcPort": 9934,
+                    "name": "bob",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external"
+                    ]
+                }
+            ]
+        }
+    ],
+    "simpleParachains": [],
+    "hrmpChannels": [],
+    "finalization": false
+}

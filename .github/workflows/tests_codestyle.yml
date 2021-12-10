@@ -1,0 +1,14 @@
+name: Tests code style
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install modules
+      run: cd tests && yarn
+    - name: Run ESLint
+      run: cd tests && yarn eslint --ext .ts,.js src/

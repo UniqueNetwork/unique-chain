@@ -1,9 +1,8 @@
 {
 	"name": "Rust",
-	"build": {
-		"dockerfile": "Dockerfile"
-	},
-	"runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
+    "dockerComposeFile": "./docker-compose.yml",
+    "service": "unique-chain",
+    "workspaceFolder": "/workspaces/unique-chain",
 	"settings": { 
 		"terminal.integrated.shell.linux": "/bin/bash",
 		"lldb.executable": "/usr/bin/lldb",
@@ -12,7 +11,9 @@
 		}
 	},
 	"extensions": [
-		"matklad.rust-analyzer"
+		"matklad.rust-analyzer",
+		"dbaeumer.vscode-eslint",
+		"tamasfe.even-better-toml"
 	],
 	"remoteUser": "vscode"
 }

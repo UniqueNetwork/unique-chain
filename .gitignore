@@ -13,3 +13,7 @@ einstein_key_file
 /.idea/
 
 tests/.vscode
+cumulus-parachain/
+*genesis
+*wasm
+tmp/

@@ -1,9 +1,9 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0xfbbc0729acefed9d99f93f6cbb751d12e317958fd0fe183f5781329b37f1bf6e",
-    "language": "ink! 3.0.0-rc2",
-    "compiler": "rustc 1.51.0-nightly"
+    "hash": "0xc6c3f47adeafe86d1674ed72c7179605787842f2f05a2d7da0dbabf3c4fa1aa8",
+    "language": "ink! 3.0.0-rc3",
+    "compiler": "rustc 1.52.0-nightly"
   },
   "contract": {
     "name": "nft_transfer",
@@ -24,7 +24,7 @@
         "name": [
           "default"
         ],
-        "selector": "0x6a3712e2"
+        "selector": "0xed4b9d1b"
       }
     ],
     "docs": [],
@@ -78,7 +78,268 @@
         ],
         "payable": false,
         "returnType": null,
-        "selector": "0xfae3a09d"
+        "selector": "0x84a15da1"
+      },
+      {
+        "args": [
+          {
+            "name": "recipient",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "name": "collection_id",
+            "type": {
+              "displayName": [
+                "u32"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "name": "data",
+            "type": {
+              "displayName": [
+                "CreateItemData"
+              ],
+              "type": 6
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "create_item"
+        ],
+        "payable": false,
+        "returnType": null,
+        "selector": "0xd7c3f083"
+      },
+      {
+        "args": [
+          {
+            "name": "owner",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "name": "collection_id",
+            "type": {
+              "displayName": [
+                "u32"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "name": "data",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 8
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "create_multiple_items"
+        ],
+        "payable": false,
+        "returnType": null,
+        "selector": "0x15f9a1eb"
+      },
+      {
+        "args": [
+          {
+            "name": "spender",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "name": "collection_id",
+            "type": {
+              "displayName": [
+                "u32"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "name": "item_id",
+            "type": {
+              "displayName": [
+                "u32"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "name": "amount",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 5
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "approve"
+        ],
+        "payable": false,
+        "returnType": null,
+        "selector": "0x681266a0"
+      },
+      {
+        "args": [
+          {
+            "name": "owner",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "name": "recipient",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "name": "collection_id",
+            "type": {
+              "displayName": [
+                "u32"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "name": "item_id",
+            "type": {
+              "displayName": [
+                "u32"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "name": "amount",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 5
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "transfer_from"
+        ],
+        "payable": false,
+        "returnType": null,
+        "selector": "0x0b396f18"
+      },
+      {
+        "args": [
+          {
+            "name": "collection_id",
+            "type": {
+              "displayName": [
+                "u32"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "name": "item_id",
+            "type": {
+              "displayName": [
+                "u32"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "name": "data",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 7
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "set_variable_meta_data"
+        ],
+        "payable": false,
+        "returnType": null,
+        "selector": "0xb0b26da2"
+      },
+      {
+        "args": [
+          {
+            "name": "collection_id",
+            "type": {
+              "displayName": [
+                "u32"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "name": "address",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "name": "allowlisted",
+            "type": {
+              "displayName": [
+                "bool"
+              ],
+              "type": 9
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "toggle_allow_list"
+        ],
+        "payable": false,
+        "returnType": null,
+        "selector": "0x98574dac"
       }
     ]
   },
@@ -93,7 +354,8 @@
         "composite": {
           "fields": [
             {
-              "type": 2
+              "type": 2,
+              "typeName": "[u8; 32]"
             }
           ]
         }
@@ -125,6 +387,82 @@
     {
       "def": {
         "primitive": "u128"
+      }
+    },
+    {
+      "def": {
+        "variant": {
+          "variants": [
+            {
+              "fields": [
+                {
+                  "name": "const_data",
+                  "type": 7,
+                  "typeName": "Vec<u8>"
+                },
+                {
+                  "name": "variable_data",
+                  "type": 7,
+                  "typeName": "Vec<u8>"
+                }
+              ],
+              "name": "Nft"
+            },
+            {
+              "fields": [
+                {
+                  "name": "value",
+                  "type": 5,
+                  "typeName": "u128"
+                }
+              ],
+              "name": "Fungible"
+            },
+            {
+              "fields": [
+                {
+                  "name": "const_data",
+                  "type": 7,
+                  "typeName": "Vec<u8>"
+                },
+                {
+                  "name": "variable_data",
+                  "type": 7,
+                  "typeName": "Vec<u8>"
+                },
+                {
+                  "name": "pieces",
+                  "type": 5,
+                  "typeName": "u128"
+                }
+              ],
+              "name": "ReFungible"
+            }
+          ]
+        }
+      },
+      "path": [
+        "nft_transfer",
+        "CreateItemData"
+      ]
+    },
+    {
+      "def": {
+        "sequence": {
+          "type": 3
+        }
+      }
+    },
+    {
+      "def": {
+        "sequence": {
+          "type": 6
+        }
+      }
+    },
+    {
+      "def": {
+        "primitive": "bool"
       }
     }
   ]

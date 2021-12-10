@@ -1,10 +1,10 @@
 ![Docker build](https://github.com/usetech-llc/nft_parachain/workflows/Docker%20build/badge.svg)
 
-# NFT Parachain
+# Unique Parachain
 
 ## Project Description
 
-The NFT Pallet is the core of NFT functionality. Like ERC-721 standard in Ethereum ecosystem, this pallet provides the
+The Unique Pallet is the core of NFT functionality. Like ERC-721 standard in Ethereum ecosystem, this pallet provides the
 basement for creating collections of unique non-divisible things, also called Non Fungible Tokens (NFTs), minting NFT of
 a given Collection, and managing their ownership.
 
@@ -12,19 +12,19 @@ The pallet also enables storing NFT properties. Though (according to ERC-721) NF
 concrete application that operates a Collection, so purposefully the NFT Tracking Module does not have any knowledge
 about properties except their byte size leaving application logic out to be controlled by Smart Contracts.
 
-The NFT Chain also provides:
+The Unique Chain also provides:
 
--   Smart Contracts Pallet and example smart contract that interacts with NFT Runtime
+-   Smart Contracts Pallet and example smart contract that interacts with Unique Runtime
 -   ERC-1155 Functionality (currently PoC as Re-Fungible tokens, i.e. items that are still unique, but that can be split
     between multiple users)
 -   Variety of economic options for dapp producers to choose from to create freemium games and other ways to attract
     users. As a step one, we implemented an economic model when a collection sponsor can be set to pay for collection
     Transfer transactions.
 
-Wider NFT Ecosystem (most of it was developed during Hackusama):
+Wider Unique Ecosystem (most of it was developed during Hackusama):
 
 -   [SubstraPunks Game hosted on IPFS](https://github.com/usetech-llc/substrapunks)
--   [NFT Wallet and UI](https://uniqueapps.usetech.com/#/nft)
+-   [Unique Wallet and UI](https://uniqueapps.usetech.com/#/nft)
 -   [NFT Asset for Unity Framework](https://github.com/usetech-llc/nft_unity)
 
 Please see our [walk-thorugh instructions](doc/hackusama_walk_through.md) to try everything out!
@@ -34,15 +34,15 @@ Please see our [walk-thorugh instructions](doc/hackusama_walk_through.md) to try
 During the Kusama Hackaphon the following changes were made:
 
 -   Enabled Smart Contracts Pallet
--   Enabled integration between Smart Contracts and NFT Pallet (required special edition of RC4 Substrate version)
--   Fixed misc. bugs in NFT Pallet
--   Deployed NFT TestNet. Public node available at wss://unique.usetech.com, custom UI types - see below in this README.
+-   Enabled integration between Smart Contracts and Unique Pallet (required special edition of RC4 Substrate version)
+-   Fixed misc. bugs in Unique Pallet
+-   Deployed Unique TestNet. Public node available at wss://unique.usetech.com, custom UI types - see below in this README.
 -   New Features:
     -   Re-Fungible Token Mode
     -   Off-Chain Schema to store token image URLs
     -   Alternative economic model
-    -   White Lists and Public Mint Permission
--   Use example: [SubstraPunks Game](https://github.com/usetech-llc/substrapunks), fully hosted on IPFS and NFT Testnet
+    -   Allow Lists and Public Mint Permission
+-   Use example: [SubstraPunks Game](https://github.com/usetech-llc/substrapunks), fully hosted on IPFS and Unique Testnet
     Blockchain.
 
 ## Application Development
@@ -51,7 +51,7 @@ If you are building an application that operates NFT tokens, use [this document]
 
 ## Building
 
-Building NFT chain requires special versions of Rust and toolchain. We don't use the most recent versions of everything
+Building Unique chain requires special versions of Rust and toolchain. We don't use the most recent versions of everything
 so that we can keep the builds stable.
 
 1. Install Rust:
@@ -63,17 +63,17 @@ sudo apt-get install libssl-dev pkg-config libclang-dev clang
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
 
-3. Install install nightly 2021-04-23 and make it default:
+3. Install install nightly 2021-11-11 and make it default:
 
 ```bash
-rustup toolchain install nightly-2021-04-23
-rustup default nightly-2021-04-23
+rustup toolchain install nightly-2021-11-11
+rustup default nightly-2021-11-11
 ```
 
 4. Add wasm target for nightly toolchain:
 
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2021-04-23
+rustup target add wasm32-unknown-unknown --toolchain nightly-2021-11-11
 ```
 
 5. Build:
@@ -135,32 +135,15 @@ Additional CLI usage options are available and may be shown by running `cargo ru
 
 ## Building and Running as Parachain locally
 
-Rust toolchain: nightly-2021-04-23
+Rust toolchain: nightly-2021-11-11
 Note: checkout this project and polkadot project (see below) in the sibling folders (both under the same folder)
-
-### Parachain Code and Other Configurations
-
-Some changes need to be made in the parachain code depending on the relay chain it connects to
-
-1. Chain Spec (incl. chain_spec.rs)
-```
-Extensions {
-  relay_chain: "rococo".into(),
-  para_id: PARA_ID,
-}
-```
-
-2. All collators need to have at least existential balance
-
-
-
 
 ### Build relay
 
 ```
 git clone https://github.com/paritytech/polkadot.git
 cd polkadot
-git checkout aa386760
+git checkout release-v0.9.13
 cargo build --release
 ```
 
@@ -185,12 +168,12 @@ Example (Run in polkadot folder. Replace `12D3KooWNLAmKcyee3oqSgTMthaQVXaAcXeo8R
 
 ```
 
-3. Export genesis state and runtime wasm from NFT parachain:
+3. Export genesis state and runtime wasm from Unique parachain:
 
 Run from this project root:
 ```
-./target/release/nft export-genesis-state --parachain-id 2000 > ./resources/para-2000-genesis
-./target/release/nft export-genesis-wasm > ./resources/para-2000-wasm
+./target/release/unique-collator export-genesis-state --parachain-id 2000 > ./resources/para-2000-genesis
+./target/release/unique-collator export-genesis-wasm > ./resources/para-2000-wasm
 ```
 
 4. Run two parachain nodes:
@@ -199,8 +182,8 @@ Replace `12D3KooWN1ah2bFQSysEFnwZqcmcVpDDR8UedXyo6xfzV1zDNMNg` with Alice or Bob
 
 Run from this project root:
 ```
-./target/release/nft --alice --collator --force-authoring --base-path ./tmp/parachain-alice --parachain-id 2000 --port 40333 --ws-port 9844  -- --execution wasm --chain ../polkadot/rococo-custom-4.json --port 30343 --ws-port 9977
-./target/release/nft --bob --collator --force-authoring --parachain-id 2000 --base-path ./tmp/parachain/bob --port 40334 --ws-port 9845 -- --execution wasm --chain ../polkadot/rococo-custom-4.json --port 30344 --ws-port 9978 --bootnodes /ip4/127.0.0.1/tcp/50556/p2p/12D3KooWN1ah2bFQSysEFnwZqcmcVpDDR8UedXyo6xfzV1zDNMNg
+./target/release/unique-collator --alice --collator --force-authoring --base-path ./tmp/parachain-alice --parachain-id 2000 --port 40333 --ws-port 9844  -- --execution wasm --chain ../polkadot/rococo-custom-4.json --port 30343 --ws-port 9977
+./target/release/unique-collator --bob --collator --force-authoring --parachain-id 2000 --base-path ./tmp/parachain/bob --port 40334 --ws-port 9845 -- --execution wasm --chain ../polkadot/rococo-custom-4.json --port 30344 --ws-port 9978 --bootnodes /ip4/127.0.0.1/tcp/50556/p2p/12D3KooWN1ah2bFQSysEFnwZqcmcVpDDR8UedXyo6xfzV1zDNMNg
 ```
 
 4. Reserve parachain ID as described here: https://substrate.dev/cumulus-workshop/#/en/2-relay-chain/2-reserve
@@ -221,22 +204,21 @@ yarn install
 yarn test
 ```
 
-
 ## Benchmarks
 
 First of all, add rust toolchain and make it default.
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2021-04-23
+rustup target add wasm32-unknown-unknown --toolchain nightly-2021-11-11
 ```
 
 Then in "/node/src" run build command below
 ```bash
-cargo +nightly-2021-04-23 build --release --features runtime-benchmarks
+cargo +nightly-2021-11-11 build --release --features runtime-benchmarks
 ```
 
 Run benchmark
 ```bash
-target/release/nft benchmark --chain dev --pallet "pallet_nft" --extrinsic "*" --repeat 1
+target/release/unique-collator benchmark --chain dev --pallet "pallet_unique" --extrinsic "*" --repeat 1
 ```
 
 ## UI custom types
@@ -246,3 +228,108 @@ Moved to [runtime_types.json](./runtime_types.json).
 ## Running Integration Tests
 
 See [tests/README.md](./tests/README.md).
+
+## Code Formatting
+
+### Get formatter and linter settings into your branch (if you forked before they were introduced)
+```bash
+git cherry-pick -n 8ff77c21b0d30b2a4648fa35dbf61dfa9d3948a7
+```
+
+### Apply formatting and clippy fixes
+```bash
+cargo clippy
+cargo fmt
+```
+
+### Format tests
+```bash
+pushd tests && yarn fix ; popd
+```
+
+### Check code style in tests
+```bash
+cd tests && yarn eslint --ext .ts,.js src/
+```
+
+## Re-Enabling Ink! Contracts
+
+Uncomment following lies:
+1. In node/rpc/Cargo.toml
+```
+# pallet-contracts-rpc = { version = "3.0", git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.9' }
+```
+
+2. In node/rpc/src/lib.rs
+```
+// C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
+...
+// use pallet_contracts_rpc::{Contracts, ContractsApi};
+...
+// io.extend_with(ContractsApi::to_delegate(Contracts::new(client.clone())));
+
+```
+
+3. In runtime/Cargo.toml
+```
+    # 'pallet-contracts/std',
+    # 'pallet-contracts-primitives/std',
+    # 'pallet-contracts-rpc-runtime-api/std',
+    # 'pallet-contract-helpers/std',
+...
+    # [dependencies.pallet-contracts]
+    # git = 'https://github.com/paritytech/substrate.git'
+    # default-features = false
+    # branch = 'polkadot-v0.9.9'
+    # version = '3.0.0'
+
+    # [dependencies.pallet-contracts-primitives]
+    # git = 'https://github.com/paritytech/substrate.git'
+    # default-features = false
+    # branch = 'polkadot-v0.9.9'
+    # version = '3.0.0'
+
+    # [dependencies.pallet-contracts-rpc-runtime-api]
+    # git = 'https://github.com/paritytech/substrate.git'
+    # default-features = false
+    # branch = 'polkadot-v0.9.9'
+    # version = '3.0.0'
+...
+    # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
+```
+
+4. runtime/src/lib.rs
+```
+// use pallet_contracts::weights::WeightInfo;
+...
+// pub use pallet_timestamp::Call as TimestampCall;
+...
+// mod chain_extension;
+// use crate::chain_extension::{NFTExtension, Imbalance};
+...
+/*
+parameter_types! {
+	pub TombstoneDeposit: Balance = deposit(
+  ...
+}
+*/
+...
+//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
+...
+// impl pallet_contract_helpers::Config for Runtime {}
+...
+// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
+...
+// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage},
+...
+//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
+...
+/*
+	impl pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber, Hash>
+		for Runtime
+	{
+    ...
+	}
+*/
+
+```

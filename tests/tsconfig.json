@@ -13,10 +13,20 @@
     "sourceMap": true,
     "outDir": "dist",
     "rootDir": "src",
-    "strict": true
+    "strict": true,
+    "paths": {
+      "@polkadot/api/augment": [
+        "./src/interfaces/augment-api.ts"
+      ],
+      "@polkadot/types/augment": [
+        "./src/interfaces/augment-types.ts"
+      ]
+    }
   },
   "include": [
     "src/**/*"
   ],
-  "lib": ["es2017"]
+  "lib": [
+    "es2017"
+  ],
 }
