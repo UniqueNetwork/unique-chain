@@ -4,7 +4,7 @@ LABEL maintainer="Unique.Network"
 
 ARG RUST_TOOLCHAIN=nightly-2021-11-11
 #ARG RUST_C=1.55.0-nightly
-ARG POLKA_VERSION=v0.9.13
+ARG POLKA_VERSION=v0.9.14
 ARG UNIQUE_BRANCH=develop
 
 #ARG USER=***
