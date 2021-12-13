@@ -51,7 +51,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 impl SubstrateCli for Cli {
 	// TODO use args
 	fn impl_name() -> String {
-		"Opal Node".into()
+		"Quartz Node".into()
 	}
 
 	fn impl_version() -> String {
@@ -60,7 +60,7 @@ impl SubstrateCli for Cli {
 	// TODO use args
 	fn description() -> String {
 		format!(
-			"Opal Node\n\nThe command-line arguments provided first will be \
+			"Quartz Node\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
 		{} [parachain-args] -- [relaychain-args]",
@@ -93,7 +93,7 @@ impl SubstrateCli for Cli {
 impl SubstrateCli for RelayChainCli {
 	// TODO use args
 	fn impl_name() -> String {
-		"Opal Node".into()
+		"Quartz Node".into()
 	}
 
 	fn impl_version() -> String {
@@ -101,7 +101,7 @@ impl SubstrateCli for RelayChainCli {
 	}
 	// TODO use args
 	fn description() -> String {
-		"Opal Node\n\nThe command-line arguments provided first will be \
+		"Quartz Node\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
 		parachain-collator [parachain-args] -- [relaychain-args]"
