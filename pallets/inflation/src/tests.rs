@@ -231,6 +231,45 @@ fn inflation_in_1_year() {
 }
 
 #[test]
+fn inflation_start_large_kusama_block() {
+	new_test_ext().execute_with(|| {
+		// Total issuance = 1_000_000_000
+		let initial_issuance: u64 = 1_000_000_000;
+		let start_block: u64 = 10457457;
+		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
+		assert_eq!(Balances::free_balance(1234), initial_issuance);
+		MockBlockNumberProvider::set(start_block);
+
+		// Start inflation as sudo
+		assert_ok!(Inflation::start_inflation(
+			RawOrigin::Root.into(),
+			start_block
+		));
+
+		// Go through all the block inflations for year 1,
+		// total issuance will be updated accordingly
+		// Inflation is set to start in block 1, so first iteration is block 101
+		for block in (101..YEAR).step_by(100) {
+			MockBlockNumberProvider::set(start_block + block);
+			Inflation::on_initialize(0);
+		}
+		assert_eq!(
+			initial_issuance + (FIRST_YEAR_BLOCK_INFLATION * (YEAR / 100)),
+			<Balances as Currency<_>>::total_issuance()
+		);
+
+		MockBlockNumberProvider::set(start_block + YEAR + 1);
+		Inflation::on_initialize(0);
+		let block_inflation_year_2 = block_inflation!();
+		// Expected 100-block inflation for year 2: 100 * 9.33% * initial issuance * 110% / YEAR == 1951
+		let expecter_year_2_inflation: u64 = (initial_issuance
+			+ FIRST_YEAR_BLOCK_INFLATION * YEAR / 100)
+			* 933 * 100 / (10000 * YEAR);
+		assert_eq!(block_inflation_year_2 / 10, expecter_year_2_inflation / 10); // divide by 10 for approx. equality
+	});
+}
+
+#[test]
 fn inflation_after_year_10_is_flat() {
 	new_test_ext().execute_with(|| {
 		// Total issuance = 1_000_000_000
