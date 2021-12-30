@@ -49,9 +49,13 @@ fc-db = { default-features = false, git = "https://github.com/uniquenetwork/fron
 fc-mapping-sync = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.14" }
 
 pallet-unique = { path = "../../pallets/unique" }
+pallet-common = { path = "../../pallets/common" }
 uc-rpc = { path = "../../client/rpc" }
 up-rpc = { path = "../../primitives/rpc" }
-unique-runtime = { path = "../../runtime" }
+runtime-common = { path = "../../runtime/common" }
+opal-runtime = { path = "../../runtime/opal" }
+quartz-runtime = { path = "../../runtime/quartz" }
+unique-runtime = { path = "../../runtime/unique" }
 
 [features]
 std = []

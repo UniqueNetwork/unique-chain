@@ -26,6 +26,11 @@ branch = 'polkadot-v0.9.14'
 git = 'https://github.com/paritytech/substrate.git'
 branch = 'polkadot-v0.9.14'
 
+[dependencies.pallet-transaction-payment-rpc-runtime-api]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+branch = 'polkadot-v0.9.14'
+
 [dependencies.substrate-prometheus-endpoint]
 git = 'https://github.com/paritytech/substrate.git'
 branch = 'polkadot-v0.9.14'
@@ -114,6 +119,10 @@ git = 'https://github.com/paritytech/substrate.git'
 branch = 'polkadot-v0.9.14'
 
 [dependencies.sp-core]
+git = 'https://github.com/paritytech/substrate.git'
+branch = 'polkadot-v0.9.14'
+
+[dependencies.sp-storage]
 git = 'https://github.com/paritytech/substrate.git'
 branch = 'polkadot-v0.9.14'
 
@@ -231,8 +240,17 @@ branch = 'release-v0.9.14'
 ################################################################################
 # Local dependencies
 
+[dependencies.opal-runtime]
+path = '../../runtime/opal'
+
+[dependencies.quartz-runtime]
+path = '../../runtime/quartz'
+
 [dependencies.unique-runtime]
-path = '../../runtime'
+path = '../../runtime/unique'
+
+[dependencies.runtime-common]
+path = '../../runtime/common'
 
 [dependencies.up-data-structs]
 path = "../../primitives/data-structs"
@@ -277,10 +295,14 @@ fp-rpc = { git = "https://github.com/uniquenetwork/frontier.git", branch = "uniq
 pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.14" }
 
 unique-rpc = { path = "../rpc" }
+up-rpc = { path = "../../primitives/rpc", default-features = false }
+pallet-common = { default-features = false, path = "../../pallets/common" }
 
 [features]
 default = []
 runtime-benchmarks = [
+    'opal-runtime/runtime-benchmarks',
+    'quartz-runtime/runtime-benchmarks',
     'unique-runtime/runtime-benchmarks',
     'polkadot-service/runtime-benchmarks',
 ]

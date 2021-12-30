@@ -1,4 +1,5 @@
-use unique_runtime::{Hash, AccountId, CrossAccountId, Index, opaque::Block, BlockNumber, Balance};
+//use unique_runtime::{Hash, AccountId, CrossAccountId, Index, opaque::Block, BlockNumber, Balance};
+use runtime_common::{Hash, AccountId, CrossAccountId, Index, Block, BlockNumber, Balance};
 use fc_rpc::{
 	EthBlockDataCache, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride,
 };
@@ -101,7 +102,7 @@ where
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, SC, CA, A, B>(
+pub fn create_full<C, P, SC, CA, B>(
 	deps: FullDeps<C, P, SC, CA>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 ) -> jsonrpc_core::IoHandler<sc_rpc_api::Metadata>

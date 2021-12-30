@@ -1,0 +1,35 @@
+[package]
+name = 'runtime-common'
+authors = ['Unique Network <support@uniquenetwork.io>']
+edition = '2021'
+description = "Logic common to all Unique runtimes"
+homepage = 'https://unique.network'
+license = 'All Rights Reserved'
+repository = 'https://github.com/UniqueNetwork/unique-chain'
+version = '0.1.0'
+
+[dependencies]
+sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.14' }
+sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.14' }
+sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.14' }
+sp-consensus-aura = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.14' }
+frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.14' }
+
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.14" }
+
+pallet-common = { default-features = false, path = "../../pallets/common" }
+up-evm-mapping = { default-features = false, path = "../../primitives/evm-mapping" }
+
+[features]
+default = ["std"]
+std = [
+    "sp-runtime/std",
+	"sp-core/std",
+    "sp-consensus-aura/std",
+    "sp-std/std",
+    'frame-support/std',
+	"pallet-common/std",
+    'up-evm-mapping/std',
+    'pallet-evm/std',
+]
+runtime-benchmarks = []

@@ -4,7 +4,7 @@
 //
 
 use cumulus_primitives_core::ParaId;
-use unique_runtime::*;
+use unique_runtime::*; // TODO change this when the chain specs are configured properly
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use sp_core::{sr25519, Pair, Public};
@@ -205,7 +205,7 @@ fn testnet_genesis(
 	GenesisConfig {
 		system: unique_runtime::SystemConfig {
 			code: unique_runtime::WASM_BINARY
-				.expect("WASM binary was not build, please build it!")
+				.expect("WASM binary was not built, please build it!")
 				.to_vec(),
 		},
 		balances: BalancesConfig {

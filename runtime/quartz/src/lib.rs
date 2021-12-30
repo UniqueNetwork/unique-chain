@@ -22,11 +22,9 @@ use sp_runtime::DispatchError;
 
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
-	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, AccountIdConversion,
-	},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiSignature,
+	ApplyExtrinsicResult,
 };
 
 use sp_std::prelude::*;
@@ -75,7 +73,13 @@ use sp_runtime::{
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
-pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+// pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+
+pub use runtime_common::{
+	opaque, AccountId, AuraId, Balance, BlockNumber, CrossAccountId, Hash, Header, Index,
+	Signature, EvmAddressMapping, EvmBackwardsAddressMapping, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
+	MINUTES, EVM_DISPATCH_RATIO, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+};
 
 // Polkadot imports
 use pallet_xcm::XcmPassthrough;
@@ -93,74 +97,16 @@ use xcm_executor::{Config, XcmExecutor};
 // mod chain_extension;
 // use crate::chain_extension::{NFTExtension, Imbalance};
 
-/// An index to a block.
-pub type BlockNumber = u32;
-
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-pub type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
-
-/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
-/// never know...
-pub type AccountIndex = u32;
-
-/// Balance of an account.
-pub type Balance = u128;
-
-/// Index of a transaction in the chain.
-pub type Index = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
-
-/// Digest item type.
-pub type DigestItem = generic::DigestItem;
-
-/// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
-/// the specifics of the runtime. They can then be made to be agnostic over specific formats
-/// of data like extrinsics, allowing for them to continue syncing the network through upgrades
-/// to even the core data structures.
-pub mod opaque {
-	use super::*;
-
-	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-
-	/// Opaque block type.
-	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-
-	pub type SessionHandlers = ();
-
-	impl_opaque_keys! {
-		pub struct SessionKeys {
-			pub aura: Aura,
-		}
-	}
-}
-
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("opal"),
-	impl_name: create_runtime_str!("opal"),
+	spec_name: create_runtime_str!("quartz"),
+	impl_name: create_runtime_str!("quartz"),
 	authoring_version: 1,
 	spec_version: 914000,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 };
-
-pub const MILLISECS_PER_BLOCK: u64 = 12000;
-
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
-
-// These time units are defined in number of blocks.
-pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-pub const HOURS: BlockNumber = MINUTES * 60;
-pub const DAYS: BlockNumber = HOURS * 24;
 
 parameter_types! {
 	pub const DefaultSponsoringRateLimit: BlockNumber = 1 * DAYS;
@@ -198,15 +144,6 @@ impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 		}
 	}
 }
-
-/// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
-/// This is used to limit the maximal weight of a single extrinsic.
-const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
-/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
-/// by  Operational  extrinsics.
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
-/// We allow for 2 seconds of compute with a 6 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
@@ -257,10 +194,6 @@ parameter_types! {
 	pub const WeightPerGas: u64 = WEIGHT_PER_SECOND / GasPerSecond::get();
 }
 
-/// Limiting EVM execution to 50% of block for substrate users and management tasks
-/// EVM transaction consumes more weight than substrate's, so we can't rely on them being
-/// scheduled fairly
-const EVM_DISPATCH_RATIO: Perbill = Perbill::from_percent(50);
 parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(NORMAL_DISPATCH_RATIO * EVM_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WeightPerGas::get());
 }
@@ -762,9 +695,9 @@ parameter_types! {
 
 impl pallet_common::Config for Runtime {
 	type Event = Event;
-	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
-	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type CrossAccountId = pallet_common::account::BasicCrossAccountId<Self>;
+	type EvmBackwardsAddressMapping = EvmBackwardsAddressMapping;
+	type EvmAddressMapping = EvmAddressMapping;
+	type CrossAccountId = CrossAccountId;
 
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
@@ -829,8 +762,8 @@ type SponsorshipHandler = (
 impl pallet_evm_transaction_payment::Config for Runtime {
 	type EvmSponsorshipHandler = EvmSponsorshipHandler;
 	type Currency = Balances;
-	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
+	type EvmAddressMapping = EvmAddressMapping;
+	type EvmBackwardsAddressMapping = EvmBackwardsAddressMapping;
 }
 
 impl pallet_charge_transaction::Config for Runtime {
@@ -931,8 +864,6 @@ impl fp_rpc::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConve
 
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// A Block signed with a Justification

@@ -18,13 +18,16 @@
 use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, ParachainRuntimeExecutor},
+	service::{
+		new_partial, IdentifyVariant, OpalRuntimeExecutor, QuartzRuntimeExecutor,
+		UniqueRuntimeExecutor,
+	},
 };
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use cumulus_client_service::genesis::generate_genesis_block;
 use log::info;
-use unique_runtime::Block;
+//use unique_runtime::Block;
 use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
@@ -143,11 +146,9 @@ macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
 		runner.async_run(|$config| {
-			let $components = new_partial::<
-				_
-			>(
+			let $components = new_partial( /* TODO replace 'config' with function to select config */
 				&$config,
-				crate::service::parachain_build_import_queue,
+				crate::service::parachain_build_import_queue, // TODO still send parachain build import queue, but to new chain ops
 			)?;
 			let task_manager = $components.task_manager;
 			{ $( $code )* }.map(|v| (v, task_manager))
@@ -161,6 +162,7 @@ pub fn run() -> Result<()> {
 
 	match &cli.subcommand {
 		Some(Subcommand::BuildSpec(cmd)) => {
+			// TODO add more chainspecs and sort accordingly
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		}
@@ -213,13 +215,37 @@ pub fn run() -> Result<()> {
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
 			let _ = builder.init();
 
-			let block: Block =
-				generate_genesis_block(&load_spec(&params.chain.clone().unwrap_or_default())?)?;
-			let raw_header = block.header().encode();
-			let output_buf = if params.raw {
-				raw_header
-			} else {
-				format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
+			// Cumulus approach here, we directly call the generic load_spec func
+			let chain_spec = load_spec(&params.chain.clone().unwrap_or_default())?;
+
+			let output_buf = match chain_spec {
+				spec if spec.is_unique() => {
+					let block: unique_runtime::Block = generate_genesis_block(&chain_spec)?;
+					let raw_header = block.header().encode();
+					if params.raw {
+						raw_header
+					} else {
+						format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
+					}
+				}
+				spec if spec.is_quartz() => {
+					let block: quartz_runtime::Block = generate_genesis_block(&chain_spec)?;
+					let raw_header = block.header().encode();
+					if params.raw {
+						raw_header
+					} else {
+						format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
+					}
+				}
+				_ => {
+					let block: opal_runtime::Block = generate_genesis_block(&chain_spec)?;
+					let raw_header = block.header().encode();
+					if params.raw {
+						raw_header
+					} else {
+						format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
+					}
+				}
 			};
 
 			if let Some(output) = &params.output {
@@ -255,7 +281,25 @@ pub fn run() -> Result<()> {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
 
-				runner.sync_run(|config| cmd.run::<Block, ParachainRuntimeExecutor>(config))
+				//runner.sync_run(|config| cmd.run::<Block, ParachainRuntimeExecutor>(config))
+				let chain_spec = &runner.config().chain_spec;
+				match chain_spec {
+					spec if spec.is_unique() => {
+						return runner.sync_run(|config| {
+							cmd.run::<unique_runtime::Block, UniqueRuntimeExecutor>(config)
+						})
+					}
+					spec if spec.is_quartz() => {
+						return runner.sync_run(|config| {
+							cmd.run::<quartz_runtime::Block, QuartzRuntimeExecutor>(config)
+						})
+					}
+					_ => {
+						return runner.sync_run(|config| {
+							cmd.run::<opal_runtime::Block, OpalRuntimeExecutor>(config)
+						})
+					}
+				}
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."
@@ -282,9 +326,29 @@ pub fn run() -> Result<()> {
 				let parachain_account =
 					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
 
-				let block: Block =
+				/*let block: Block =
 					generate_genesis_block(&config.chain_spec).map_err(|e| format!("{:?}", e))?;
-				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
+				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));*/
+
+				let genesis_state = match config.chain_spec {
+					spec if spec.is_unique() => {
+						let block: unique_runtime::Block =
+							generate_genesis_block(&config.chain_spec)
+								.map_err(|e| format!("{:?}", e))?;
+						format!("0x{:?}", HexDisplay::from(&block.header().encode()))
+					}
+					spec if spec.is_quartz() => {
+						let block: quartz_runtime::Block =
+							generate_genesis_block(&config.chain_spec)
+								.map_err(|e| format!("{:?}", e))?;
+						format!("0x{:?}", HexDisplay::from(&block.header().encode()))
+					}
+					_ => {
+						let block: opal_runtime::Block = generate_genesis_block(&config.chain_spec)
+							.map_err(|e| format!("{:?}", e))?;
+						format!("0x{:?}", HexDisplay::from(&block.header().encode()))
+					}
+				};
 
 				let polkadot_config = SubstrateCli::create_configuration(
 					&polkadot_cli,
@@ -305,10 +369,39 @@ pub fn run() -> Result<()> {
 					}
 				);
 
-				crate::service::start_node(config, polkadot_config, id)
+				/*crate::service::start_node(config, polkadot_config, id)
+				.await
+				.map(|r| r.0)
+				.map_err(Into::into)*/
+
+				match &config.chain_spec {
+					spec if spec.is_unique() => crate::service::start_node::<
+						unique_runtime::RuntimeApi,
+						UniqueRuntimeExecutor,
+					>(config, polkadot_config, id)
 					.await
 					.map(|r| r.0)
-					.map_err(Into::into)
+					.map_err(Into::into),
+
+					spec if spec.is_quartz() => crate::service::start_node::<
+						quartz_runtime::RuntimeApi,
+						QuartzRuntimeExecutor,
+					>(config, polkadot_config, id)
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into),
+
+					_ => {
+						crate::service::start_node::<opal_runtime::RuntimeApi, OpalRuntimeExecutor>(
+							config,
+							polkadot_config,
+							id,
+						)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
+					}
+				}
 			})
 		}
 	}

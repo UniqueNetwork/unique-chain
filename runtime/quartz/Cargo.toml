@@ -4,11 +4,11 @@
 [package]
 authors = ['Unique Network <support@uniquenetwork.io>']
 build = 'build.rs'
-description = 'Unique Runtime'
+description = 'Quartz Runtime'
 edition = '2021'
 homepage = 'https://unique.network'
 license = 'All Rights Reserved'
-name = 'unique-runtime'
+name = 'quartz-runtime'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
 version = '0.9.14'
 
@@ -101,6 +101,7 @@ std = [
     'xcm-executor/std',
 
     "orml-vesting/std",
+    "runtime-common/std",
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 
@@ -377,22 +378,24 @@ scale-info = { version = "1.0.0", default-features = false, features = [
     "derive",
 ] }
 derivative = "2.2.0"
-pallet-unique = { path = '../pallets/unique', default-features = false }
-up-rpc = { path = "../primitives/rpc", default-features = false }
-up-evm-mapping = { path = "../primitives/evm-mapping", default-features = false }
-pallet-inflation = { path = '../pallets/inflation', default-features = false }
-up-data-structs = { path = '../primitives/data-structs', default-features = false }
-pallet-common = { default-features = false, path = "../pallets/common" }
-pallet-fungible = { default-features = false, path = "../pallets/fungible" }
-pallet-refungible = { default-features = false, path = "../pallets/refungible" }
-pallet-nonfungible = { default-features = false, path = "../pallets/nonfungible" }
-pallet-unq-scheduler = { path = '../pallets/scheduler', default-features = false }
-# pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
+pallet-unique = { path = '../../pallets/unique', default-features = false }
+up-rpc = { path = "../../primitives/rpc", default-features = false }
+up-evm-mapping = { path = "../../primitives/evm-mapping", default-features = false }
+pallet-inflation = { path = '../../pallets/inflation', default-features = false }
+up-data-structs = { path = '../../primitives/data-structs', default-features = false }
+pallet-common = { default-features = false, path = "../../pallets/common" }
+pallet-fungible = { default-features = false, path = "../../pallets/fungible" }
+pallet-refungible = { default-features = false, path = "../../pallets/refungible" }
+pallet-nonfungible = { default-features = false, path = "../../pallets/nonfungible" }
+pallet-unq-scheduler = { path = '../../pallets/scheduler', default-features = false }
+# pallet-contract-helpers = { path = '../../pallets/contract-helpers', default-features = false, version = '0.1.0' }
 pallet-charge-transaction = { git = "https://github.com/UniqueNetwork/pallet-sponsoring", branch = 'polkadot-v0.9.14', package = "pallet-template-transaction-payment", default-features = false, version = '3.0.0' }
-pallet-evm-migration = { path = '../pallets/evm-migration', default-features = false }
-pallet-evm-contract-helpers = { path = '../pallets/evm-contract-helpers', default-features = false }
-pallet-evm-transaction-payment = { path = '../pallets/evm-transaction-payment', default-features = false }
-pallet-evm-coder-substrate = { default-features = false, path = "../pallets/evm-coder-substrate" }
+pallet-evm-migration = { path = '../../pallets/evm-migration', default-features = false }
+pallet-evm-contract-helpers = { path = '../../pallets/evm-contract-helpers', default-features = false }
+pallet-evm-transaction-payment = { path = '../../pallets/evm-transaction-payment', default-features = false }
+pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }
+
+runtime-common = { path = "../common", default-features = false }
 
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.14" }
 pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.14" }
