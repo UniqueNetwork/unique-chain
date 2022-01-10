@@ -297,7 +297,7 @@ pub mod pallet {
 		/// Item balance not enough.
 		TokenValueTooLow,
 		/// Requested value more than approved.
-		TokenValueNotEnough,
+		ApprovedValueTooLow,
 		/// Tried to approve more than owned
 		CantApproveMoreThanOwned,
 

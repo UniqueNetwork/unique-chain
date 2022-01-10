@@ -343,7 +343,7 @@ impl<T: Config> Pallet<T> {
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender),
-				<CommonError<T>>::TokenValueNotEnough
+				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
 
@@ -374,7 +374,7 @@ impl<T: Config> Pallet<T> {
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender),
-				<CommonError<T>>::TokenValueNotEnough
+				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
 

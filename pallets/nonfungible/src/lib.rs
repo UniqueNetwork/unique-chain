@@ -494,7 +494,7 @@ impl<T: Config> Pallet<T> {
 		if <Allowance<T>>::get((collection.id, token)).as_ref() != Some(spender) {
 			ensure!(
 				collection.ignores_allowance(spender),
-				<CommonError<T>>::TokenValueNotEnough
+				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
 
@@ -522,7 +522,7 @@ impl<T: Config> Pallet<T> {
 		if <Allowance<T>>::get((collection.id, token)).as_ref() != Some(spender) {
 			ensure!(
 				collection.ignores_allowance(spender),
-				<CommonError<T>>::TokenValueNotEnough
+				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
 
