@@ -160,7 +160,11 @@ pub mod pallet {
 				<Error<T>>::NoPermission
 			);
 
-			<SponsoringRateLimit<T>>::insert(contract, rate_limit);
+			if rate_limit != T::DefaultSponsoringRateLimit::get() {
+				<SponsoringRateLimit<T>>::insert(contract, rate_limit);
+			} else {
+				<SponsoringRateLimit<T>>::remove(contract);
+			}
 			Ok(())
 		}
 	}
