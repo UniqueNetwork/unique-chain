@@ -4,6 +4,7 @@ use erc::ERC721Events;
 use frame_support::{BoundedVec, ensure};
 use up_data_structs::{
 	AccessMode, CUSTOM_DATA_LIMIT, Collection, CollectionId, CustomDataLimit, TokenId,
+	CreateCollectionData,
 };
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, account::CrossAccountId,
@@ -142,8 +143,11 @@ impl<T: Config> Pallet<T> {
 
 // unchecked calls skips any permission checks
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(data)
+	pub fn init_collection(
+		owner: T::AccountId,
+		data: CreateCollectionData<T::AccountId>,
+	) -> Result<CollectionId, DispatchError> {
+		<PalletCommon<T>>::init_collection(owner, data)
 	}
 	pub fn destroy_collection(
 		collection: NonfungibleHandle<T>,

@@ -230,6 +230,25 @@ pub struct Collection<AccountId> {
 	pub meta_update_permission: MetaUpdatePermission,
 }
 
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Debug, Derivative)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derivative(Default)]
+pub struct CreateCollectionData<AccountId> {
+	#[derivative(Default(value = "CollectionMode::NFT"))]
+	pub mode: CollectionMode,
+	pub access: Option<AccessMode>,
+	pub name: Vec<u16>,
+	pub description: Vec<u16>,
+	pub token_prefix: Vec<u8>,
+	pub offchain_schema: Vec<u8>,
+	pub schema_version: Option<SchemaVersion>,
+	pub pending_sponsor: Option<AccountId>,
+	pub limits: Option<CollectionLimits>,
+	pub variable_on_chain_schema: Vec<u8>,
+	pub const_on_chain_schema: Vec<u8>,
+	pub meta_update_permission: Option<MetaUpdatePermission>,
+}
+
 #[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct NftItemType<AccountId> {
