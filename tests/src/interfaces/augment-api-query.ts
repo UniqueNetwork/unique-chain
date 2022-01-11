@@ -163,9 +163,21 @@ declare module '@polkadot/api/types/storage' {
     };
     inflation: {
       /**
-       * Current block inflation
+       * Current inflation for `InflationBlockInterval` number of blocks
        **/
       blockInflation: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Next target (relay) block when inflation will be applied
+       **/
+      nextInflationBlock: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Next target (relay) block when inflation is recalculated
+       **/
+      nextRecalculationBlock: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Relay block when inflation has started
+       **/
+      startBlock: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * starting year total issuance
        **/

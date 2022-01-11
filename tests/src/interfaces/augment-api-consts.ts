@@ -36,6 +36,9 @@ declare module '@polkadot/api/types/consts' {
       [key: string]: Codec;
     };
     inflation: {
+      /**
+       * Number of blocks that pass between treasury balance updates due to inflation
+       **/
       inflationBlockInterval: u32 & AugmentedConst<ApiType>;
       /**
        * Generic const

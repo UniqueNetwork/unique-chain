@@ -3,12 +3,12 @@
 
 import type { EthereumTransactionLegacyTransaction } from './ethereum';
 import type { CumulusPrimitivesParachainInherentParachainInherentData } from './polkadot';
-import type { PalletCommonAccountBasicCrossAccountIdRepr, UpDataStructsAccessMode, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCreateItemData, UpDataStructsMetaUpdatePermission, UpDataStructsSchemaVersion } from './unique';
+import type { PalletCommonAccountBasicCrossAccountIdRepr, UpDataStructsAccessMode, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCreateCollectionData, UpDataStructsCreateItemData, UpDataStructsMetaUpdatePermission, UpDataStructsSchemaVersion } from './unique';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { Bytes, Compact, Option, U256, Vec, bool, u128, u16, u32, u64 } from '@polkadot/types';
 import type { Extrinsic } from '@polkadot/types/interfaces/extrinsics';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill } from '@polkadot/types/interfaces/runtime';
-import type { SpCoreChangesTrieChangesTrieConfiguration, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
+import type { XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
 import type { AnyNumber, ITuple } from '@polkadot/types/types';
 
 declare module '@polkadot/api/types/submittable' {
@@ -38,16 +38,6 @@ declare module '@polkadot/api/types/submittable' {
        * it will reset the account nonce (`frame_system::AccountNonce`).
        * 
        * The dispatch origin for this call is `root`.
-       * 
-       * # <weight>
-       * - Independent of the arguments.
-       * - Contains a limited number of reads and writes.
-       * ---------------------
-       * - Base Weight:
-       * - Creating: 27.56 µs
-       * - Killing: 35.11 µs
-       * - DB Weight: 1 Read, 1 Write to `who`
-       * # </weight>
        **/
       setBalance: AugmentedSubmittable<(who: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, newFree: Compact<u128> | AnyNumber | Uint8Array, newReserved: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [MultiAddress, Compact<u128>, Compact<u128>]>;
       /**
@@ -75,8 +65,6 @@ declare module '@polkadot/api/types/submittable' {
        * - `transfer_keep_alive` works the same way as `transfer`, but has an additional check
        * that the transfer will not kill the origin account.
        * ---------------------------------
-       * - Base Weight: 73.64 µs, worst case scenario (account created, account removed)
-       * - DB Weight: 1 Read and 1 Write to destination account
        * - Origin account is already in memory, so no DB operations for them.
        * # </weight>
        **/
@@ -108,11 +96,6 @@ declare module '@polkadot/api/types/submittable' {
        * 99% of the time you want [`transfer`] instead.
        * 
        * [`transfer`]: struct.Pallet.html#method.transfer
-       * # <weight>
-       * - Cheaper than transfer because account cannot be killed.
-       * - Base Weight: 51.4 µs
-       * - DB Weight: 1 Read and 1 Write to dest (sender is in overlay already)
-       * #</weight>
        **/
       transferKeepAlive: AugmentedSubmittable<(dest: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, value: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [MultiAddress, Compact<u128>]>;
       /**
@@ -196,6 +179,20 @@ declare module '@polkadot/api/types/submittable' {
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
     inflation: {
+      /**
+       * This method sets the inflation start date. Can be only called once.
+       * Inflation start block can be backdated and will catch up. The method will create Treasury
+       * account if it does not exist and perform the first inflation deposit.
+       * 
+       * # Permissions
+       * 
+       * * Root
+       * 
+       * # Arguments
+       * 
+       * * inflation_start_relay_block: The relay chain block at which inflation should start
+       **/
+      startInflation: AugmentedSubmittable<(inflationStartRelayBlock: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
       /**
        * Generic tx
        **/
@@ -374,7 +371,7 @@ declare module '@polkadot/api/types/submittable' {
        * - Weight of derivative `call` execution + 10,000.
        * # </weight>
        **/
-       sudo: AugmentedSubmittable<(call: Call) => SubmittableExtrinsic<ApiType>, [Call]>;
+      sudo: AugmentedSubmittable<(call: Call | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Call]>;
       /**
        * Authenticates the sudo key and dispatches a function call with `Signed` origin from
        * a given account.
@@ -388,7 +385,7 @@ declare module '@polkadot/api/types/submittable' {
        * - Weight of derivative `call` execution + 10,000.
        * # </weight>
        **/
-      sudoAs: AugmentedSubmittable<(who: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, ) => SubmittableExtrinsic<ApiType>, [MultiAddress, Call]>;
+      sudoAs: AugmentedSubmittable<(who: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, call: Call | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [MultiAddress, Call]>;
       /**
        * Authenticates the sudo key and dispatches a function call with `Root` origin.
        * This function does not check the weight of the call, and instead allows the
@@ -401,7 +398,7 @@ declare module '@polkadot/api/types/submittable' {
        * - The weight of this call is defined by the caller.
        * # </weight>
        **/
-       sudoUncheckedWeight: AugmentedSubmittable<(call: Call, weight: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Call, u64]>;
+      sudoUncheckedWeight: AugmentedSubmittable<(call: Call | string | Uint8Array, weight: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Call, u64]>;
       /**
        * Generic tx
        **/
@@ -417,24 +414,10 @@ declare module '@polkadot/api/types/submittable' {
        * 
        * **NOTE:** We rely on the Root origin to provide us the number of subkeys under
        * the prefix we are removing to accurately calculate the weight of this function.
-       * 
-       * # <weight>
-       * - `O(P)` where `P` amount of keys with prefix `prefix`
-       * - `P` storage deletions.
-       * - Base Weight: 0.834 * P µs
-       * - Writes: Number of subkeys + 1
-       * # </weight>
        **/
       killPrefix: AugmentedSubmittable<(prefix: Bytes | string | Uint8Array, subkeys: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes, u32]>;
       /**
        * Kill some items from storage.
-       * 
-       * # <weight>
-       * - `O(IK)` where `I` length of `keys` and `K` length of one key
-       * - `I` storage deletions.
-       * - Base Weight: .378 * i µs
-       * - Writes: Number of items
-       * # </weight>
        **/
       killStorage: AugmentedSubmittable<(keys: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Vec<Bytes>]>;
       /**
@@ -454,19 +437,6 @@ declare module '@polkadot/api/types/submittable' {
        * # </weight>
        **/
       remarkWithEvent: AugmentedSubmittable<(remark: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes]>;
-      /**
-       * Set the new changes trie configuration.
-       * 
-       * # <weight>
-       * - `O(1)`
-       * - 1 storage write or delete (codec `O(1)`).
-       * - 1 call to `deposit_log`: Uses `append` API, so O(1)
-       * - Base Weight: 7.218 µs
-       * - DB Weight:
-       * - Writes: Changes Trie, System Digest
-       * # </weight>
-       **/
-      setChangesTrieConfig: AugmentedSubmittable<(changesTrieConfig: Option<SpCoreChangesTrieChangesTrieConfiguration> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<SpCoreChangesTrieChangesTrieConfiguration>]>;
       /**
        * Set the new runtime code.
        * 
@@ -496,25 +466,10 @@ declare module '@polkadot/api/types/submittable' {
       setCodeWithoutChecks: AugmentedSubmittable<(code: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes]>;
       /**
        * Set the number of pages in the WebAssembly environment's heap.
-       * 
-       * # <weight>
-       * - `O(1)`
-       * - 1 storage write.
-       * - Base Weight: 1.405 µs
-       * - 1 write to HEAP_PAGES
-       * - 1 digest item
-       * # </weight>
        **/
       setHeapPages: AugmentedSubmittable<(pages: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64]>;
       /**
        * Set some items of storage.
-       * 
-       * # <weight>
-       * - `O(I)` where `I` length of `items`
-       * - `I` storage writes (`O(1)`).
-       * - Base Weight: 0.568 * i µs
-       * - Writes: Number of items
-       * # </weight>
        **/
       setStorage: AugmentedSubmittable<(items: Vec<ITuple<[Bytes, Bytes]>> | ([Bytes | string | Uint8Array, Bytes | string | Uint8Array])[]) => SubmittableExtrinsic<ApiType>, [Vec<ITuple<[Bytes, Bytes]>>]>;
       /**
@@ -717,6 +672,12 @@ declare module '@polkadot/api/types/submittable' {
        * * mode: [CollectionMode] collection type and type dependent data.
        **/
       createCollection: AugmentedSubmittable<(collectionName: Vec<u16> | (u16 | AnyNumber | Uint8Array)[], collectionDescription: Vec<u16> | (u16 | AnyNumber | Uint8Array)[], tokenPrefix: Bytes | string | Uint8Array, mode: UpDataStructsCollectionMode | { NFT: any } | { Fungible: any } | { ReFungible: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Vec<u16>, Vec<u16>, Bytes, UpDataStructsCollectionMode]>;
+      /**
+       * This method creates a collection
+       * 
+       * Prefer it to deprecated [`created_collection`] method
+       **/
+      createCollectionEx: AugmentedSubmittable<(data: UpDataStructsCreateCollectionData | { mode?: any; access?: any; name?: any; description?: any; tokenPrefix?: any; offchainSchema?: any; schemaVersion?: any; pendingSponsor?: any; limits?: any; variableOnChainSchema?: any; constOnChainSchema?: any; metaUpdatePermission?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [UpDataStructsCreateCollectionData]>;
       /**
        * This method creates a concrete instance of NFT Collection created with CreateCollection method.
        * 
