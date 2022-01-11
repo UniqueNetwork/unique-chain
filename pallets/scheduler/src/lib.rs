@@ -76,6 +76,8 @@ pub use weights::WeightInfo;
 use up_sponsorship::SponsorshipHandler;
 use scale_info::TypeInfo;
 
+pub const MAX_TASK_ID_LENGTH_IN_BYTES: u32 = 16;
+
 /// Our pallet's configuration trait. All our types and constants go in here. If the
 /// pallet is dependent on specific other pallets, then their configuration traits
 /// should be added to our implied traits list.
@@ -569,8 +571,10 @@ impl<T: Config> Module<T> {
 		origin: T::PalletsOrigin,
 		call: <T as Config>::Call,
 	) -> Result<TaskAddress<T::BlockNumber>, DispatchError> {
-		// ensure id it is unique
-		if Lookup::<T>::contains_key(&id) {
+		// ensure id length does not exceed expectations & is unique
+		if id.len() > MAX_TASK_ID_LENGTH_IN_BYTES.try_into().unwrap()
+			|| Lookup::<T>::contains_key(&id)
+		{
 			return Err(Error::<T>::FailedToSchedule.into());
 		}
 
@@ -792,6 +796,8 @@ mod tests {
 	}
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+	// todo check current cumulus implementation, add changes accordingly, do something with signedExtra and (un)checked extrinsic (integral to Scheduler?)
+	// todo to include pallet in runtime, not only uncomment but also (implement?) trait
 	type Block = frame_system::mocking::MockBlock<Test>;
 
 	frame_support::construct_runtime!(
