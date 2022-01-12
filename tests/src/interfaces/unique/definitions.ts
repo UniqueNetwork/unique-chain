@@ -101,12 +101,18 @@ export default {
     UpDataStructsCollectionLimits: {
       accountTokenOwnershipLimit: 'Option<u32>',
       sponsoredDataSize: 'Option<u32>',
-      sponsoredDataRateLimit: 'Option<u32>',
+      sponsoredDataRateLimit: 'Option<UpDataStructsSponsoringRateLimit>',
       tokenLimit: 'Option<u32>',
       sponsorTransferTimeout: 'Option<u32>',
       ownerCanTransfer: 'Option<bool>',
       ownerCanDestroy: 'Option<bool>',
       transfersEnabled: 'Option<bool>',
+    },
+    UpDataStructsSponsoringRateLimit: {
+      _enum: {
+        SponsoringDisabled: null,
+        Blocks: 'u32',
+      },
     },
     UpDataStructsMetaUpdatePermission: {
       _enum: ['ItemOwner', 'Admin', 'None'],
