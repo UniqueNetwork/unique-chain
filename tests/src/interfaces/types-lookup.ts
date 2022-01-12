@@ -1513,11 +1513,19 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'ImageURL' | 'Unique';
   }
 
+  /** @name UpDataStructsSponsoringRateLimit */
+  export interface UpDataStructsSponsoringRateLimit extends Enum {
+    readonly isSponsoringDisabled: boolean;
+    readonly isBlocks: boolean;
+    readonly asBlocks: u32;
+    readonly type: 'SponsoringDisabled' | 'Blocks';
+  }
+
   /** @name UpDataStructsCollectionLimits (163) */
   export interface UpDataStructsCollectionLimits extends Struct {
     readonly accountTokenOwnershipLimit: Option<u32>;
     readonly sponsoredDataSize: Option<u32>;
-    readonly sponsoredDataRateLimit: Option<Option<u32>>;
+    readonly sponsoredDataRateLimit: Option<UpDataStructsSponsoringRateLimit>;
     readonly tokenLimit: Option<u32>;
     readonly sponsorTransferTimeout: Option<u32>;
     readonly sponsorApproveTimeout: Option<u32>;
