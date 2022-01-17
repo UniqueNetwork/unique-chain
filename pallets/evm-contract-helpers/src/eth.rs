@@ -61,8 +61,7 @@ impl<T: Config> ContractHelpers<T> {
 
 	fn allowed(&self, contract_address: address, user: address) -> Result<bool> {
 		self.0.consume_sload()?;
-		Ok(<Pallet<T>>::allowed(contract_address, user)
-			|| !<AllowlistEnabled<T>>::get(contract_address))
+		Ok(<Pallet<T>>::allowed(contract_address, user))
 	}
 
 	fn allowlist_enabled(&self, contract_address: address) -> Result<bool> {
