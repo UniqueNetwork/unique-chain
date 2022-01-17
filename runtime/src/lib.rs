@@ -283,7 +283,8 @@ impl pallet_evm::Config for Runtime {
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = HashedAddressMapping<Self::Hashing>;
-	type Precompiles = ();
+	type PrecompilesType = ();
+	type PrecompilesValue = ();
 	type Currency = Balances;
 	type Event = Event;
 	type OnMethodCall = (
@@ -961,7 +962,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllPallets,
+	AllPalletsWithSystem,
 >;
 
 impl_opaque_keys! {
@@ -1186,9 +1187,11 @@ impl_runtime_apis! {
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
-			gas_price: Option<U256>,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
+			access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
 				let mut config = <Runtime as pallet_evm::Config>::config().clone();
@@ -1204,8 +1207,10 @@ impl_runtime_apis! {
 				data,
 				value,
 				gas_limit.low_u64(),
-				gas_price,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
 				nonce,
+				access_list.unwrap_or_default(),
 				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -1216,9 +1221,11 @@ impl_runtime_apis! {
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
-			gas_price: Option<U256>,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
+			access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
 				let mut config = <Runtime as pallet_evm::Config>::config().clone();
@@ -1233,8 +1240,10 @@ impl_runtime_apis! {
 				data,
 				value,
 				gas_limit.low_u64(),
-				gas_price,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
 				nonce,
+				access_list.unwrap_or_default(),
 				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -1268,6 +1277,10 @@ impl_runtime_apis! {
 				Call::Ethereum(pallet_ethereum::Call::transact { transaction }) => Some(transaction),
 				_ => None
 			}).collect()
+		}
+
+		fn elasticity() -> Option<Permill> {
+			None
 		}
 	}
 

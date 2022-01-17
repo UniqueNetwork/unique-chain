@@ -53,8 +53,11 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn try_get(id: CollectionId) -> Result<Self, DispatchError> {
 		Ok(Self::new(id).ok_or(<Error<T>>::CollectionNotFound)?)
 	}
-	pub fn log(&self, log: impl evm_coder::ToLog) {
-		self.recorder.log(log)
+	pub fn log_mirrored(&self, log: impl evm_coder::ToLog) {
+		self.recorder.log_mirrored(log)
+	}
+	pub fn log_direct(&self, log: impl evm_coder::ToLog) {
+		self.recorder.log_direct(log)
 	}
 	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
 		self.recorder

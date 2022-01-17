@@ -7,8 +7,8 @@ edition = "2021"
 evm-coder-macros = { path = "../evm-coder-macros" }
 primitive-types = { version = "0.10.1", default-features = false }
 hex-literal = "0.3.3"
-ethereum = { version = "0.10.0", default-features = false }
-evm-core = { default-features = false, git = "https://github.com/uniquenetwork/evm.git", branch = "unique-weights" }
+ethereum = { version = "0.11.1", default-features = false }
+evm-core = { default-features = false, git = "https://github.com/uniquenetwork/evm.git", branch = "unique-polkadot-v0.9.15" }
 impl-trait-for-tuples = "0.2.1"
 
 [dev-dependencies]

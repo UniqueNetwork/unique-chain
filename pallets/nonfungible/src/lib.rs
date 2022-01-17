@@ -211,7 +211,7 @@ impl<T: Config> Pallet<T> {
 			));
 		}
 
-		collection.log(ERC721Events::Transfer {
+		collection.log_mirrored(ERC721Events::Transfer {
 			from: *token_data.owner.as_eth(),
 			to: H160::default(),
 			token_id: token.into(),
@@ -291,7 +291,7 @@ impl<T: Config> Pallet<T> {
 		}
 		Self::set_allowance_unchecked(collection, from, token, None, true);
 
-		collection.log(ERC721Events::Transfer {
+		collection.log_mirrored(ERC721Events::Transfer {
 			from: *from.as_eth(),
 			to: *to.as_eth(),
 			token_id: token.into(),
@@ -368,7 +368,7 @@ impl<T: Config> Pallet<T> {
 			);
 			<Owned<T>>::insert((collection.id, &data.owner, token), true);
 
-			collection.log(ERC721Events::Transfer {
+			collection.log_mirrored(ERC721Events::Transfer {
 				from: H160::default(),
 				to: *data.owner.as_eth(),
 				token_id: token.into(),
@@ -395,7 +395,7 @@ impl<T: Config> Pallet<T> {
 			<Allowance<T>>::insert((collection.id, token), spender);
 			// In ERC721 there is only one possible approved user of token, so we set
 			// approved user to spender
-			collection.log(ERC721Events::Approval {
+			collection.log_mirrored(ERC721Events::Approval {
 				owner: *sender.as_eth(),
 				approved: *spender.as_eth(),
 				token_id: token.into(),
@@ -425,7 +425,7 @@ impl<T: Config> Pallet<T> {
 			if !assume_implicit_eth {
 				// In ERC721 there is only one possible approved user of token, so we set
 				// approved user to zero address
-				collection.log(ERC721Events::Approval {
+				collection.log_mirrored(ERC721Events::Approval {
 					owner: *sender.as_eth(),
 					approved: H160::default(),
 					token_id: token.into(),

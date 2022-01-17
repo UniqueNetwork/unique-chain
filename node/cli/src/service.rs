@@ -10,8 +10,10 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::collections::BTreeMap;
 use std::time::Duration;
+use fc_rpc_core::types::FeeHistoryCache;
 use futures::StreamExt;
 
+use unique_rpc::overrides_handle;
 // Local Runtime Types
 use unique_runtime::RuntimeApi;
 
@@ -109,6 +111,7 @@ pub fn new_partial<BIQ>(
 			Option<FilterPool>,
 			Arc<fc_db::Backend<Block>>,
 			Option<TelemetryWorkerHandle>,
+			FeeHistoryCache,
 		),
 	>,
 	sc_service::Error,
@@ -188,6 +191,7 @@ where
 		telemetry.as_ref().map(|telemetry| telemetry.handle()),
 		&task_manager,
 	)?;
+	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
 
 	let params = PartialComponents {
 		backend,
@@ -202,6 +206,7 @@ where
 			filter_pool,
 			frontier_backend,
 			telemetry_worker_handle,
+			fee_history_cache,
 		),
 	};
 
@@ -247,7 +252,8 @@ where
 	let parachain_config = prepare_node_config(parachain_config);
 
 	let params = new_partial::<BIQ>(&parachain_config, build_import_queue)?;
-	let (mut telemetry, filter_pool, frontier_backend, telemetry_worker_handle) = params.other;
+	let (mut telemetry, filter_pool, frontier_backend, telemetry_worker_handle, fee_history_cache) =
+		params.other;
 
 	let relay_chain_full_node =
 		cumulus_client_service::build_polkadot_full_node(polkadot_config, telemetry_worker_handle)
@@ -291,6 +297,14 @@ where
 	let rpc_network = network.clone();
 
 	let rpc_frontier_backend = frontier_backend.clone();
+
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCache::new(
+		task_manager.spawn_handle(),
+		overrides_handle(client.clone()),
+		50,
+		50,
+	));
+
 	let rpc_extensions_builder = Box::new(move |deny_unsafe, _| {
 		let full_deps = unique_rpc::FullDeps {
 			backend: rpc_frontier_backend.clone(),
@@ -306,6 +320,10 @@ where
 			is_authority,
 			// TODO: Unhardcode
 			max_past_logs: 10000,
+			block_data_cache: block_data_cache.clone(),
+			fee_history_cache: fee_history_cache.clone(),
+			// TODO: Unhardcode
+			fee_history_limit: 2048,
 		};
 
 		Ok(unique_rpc::create_full::<_, _, _, _, RuntimeApi, _>(

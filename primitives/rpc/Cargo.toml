@@ -9,10 +9,10 @@ up-data-structs = { default-features = false, path = '../data-structs' }
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [
 	"derive",
 ] }
-sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.14' }
-sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.14' }
-sp-api = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.14' }
-sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.14' }
+sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.15' }
+sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.15' }
+sp-api = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.15' }
+sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.15' }
 
 [features]
 default = ["std"]
