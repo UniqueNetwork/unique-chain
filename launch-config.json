@@ -9,7 +9,8 @@
                 "rpcPort": 9843,
                 "port": 30444,
                 "flags": [
-                    "-lparachain::candidate_validation=debug"
+                    "-lparachain::candidate_validation=debug",
+                    "-lxcm=trace"
                 ]
             },
             {
@@ -18,7 +19,8 @@
                 "rpcPort": 9854,
                 "port": 30555,
                 "flags": [
-                    "-lparachain::candidate_validation=debug"
+                    "-lparachain::candidate_validation=debug",
+                    "-lxcm=trace"
                 ]
             },
             {
@@ -67,7 +69,8 @@
                     "flags": [
                         "--rpc-cors=all",
                         "--unsafe-rpc-external",
-                        "--unsafe-ws-external"
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
                     ]
                 },
                 {
@@ -78,13 +81,46 @@
                     "flags": [
                         "--rpc-cors=all",
                         "--unsafe-rpc-external",
-                        "--unsafe-ws-external"
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
                     ]
                 }
             ]
-        }
+        },
+        {
+            "bin": "../Acala/target/release/acala",
+            "id": "2000",
+            "chain":  "karura-dev",
+			"balance": "1000000000000000000000",
+			"nodes": [
+				{
+					"wsPort": 9988,
+					"port": 31200,
+					"name": "alice",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+				}
+			]
+		}
     ],
     "simpleParachains": [],
-    "hrmpChannels": [],
+    "hrmpChannels": [
+        {
+            "sender": 2000,
+            "recipient": 1000,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        },
+        {
+            "sender": 1000,
+            "recipient": 2000,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        }
+    ],
     "finalization": false
 }

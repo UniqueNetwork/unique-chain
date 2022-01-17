@@ -333,3 +333,35 @@ parameter_types! {
 */
 
 ```
+
+
+## Karura token transfer
+
+To get started, you need to open the hrmr channel.
+Next, we need to register our asset in Karura.
+
+assetRegistry -> registerForeignAsset(location, metadata)
+location:
+	V0(X2(Parent, Parachain(PARA_ID))) 
+metadata:
+	name         OPL
+	symbol       OPL
+	decimals     15
+minimalBalance	 1
+
+Next, we can send tokens of our chain:
+polkadotXcm -> reserveTransferAssets
+dest:
+	V0(X2(Parent, Parachain(KARURA_PARA_ID))) 
+beneficiary:
+	X1(AccountId(Any, ACCOUNT))
+assets:
+	V1(Concrete(0,Here), Fungible(AMOUNT))
+feeAssetItem: 
+	0	
+weightLimit:
+	Limit
+	
+
+The result will be displayed in ChainState   
+tokens -> accounts	

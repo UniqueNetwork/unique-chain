@@ -83,12 +83,21 @@ use polkadot_parachain::primitives::Sibling;
 use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
-	EnsureXcmOrigin, FixedWeightBounds, IsConcrete, LocationInverter, NativeAsset,
+	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, NativeAsset,
 	ParentAsSuperuser, ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative,
 	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
 	SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 };
 use xcm_executor::{Config, XcmExecutor};
+
+use xcm::latest::{
+//	Xcm, 	
+	AssetId::{Concrete},
+	Fungibility::Fungible as XcmFungible,
+	MultiAsset
+};
+use xcm_executor::traits::MatchesFungible;
+use sp_runtime::traits::CheckedConversion;
 
 // mod chain_extension;
 // use crate::chain_extension::{NFTExtension, Imbalance};
@@ -612,12 +621,24 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
+
+pub struct OnlySelfCurrency;
+impl<B: TryFrom<u128>> MatchesFungible<B> for OnlySelfCurrency {
+	fn matches_fungible(a: &MultiAsset) -> Option<B> {
+		match (&a.id, &a.fun) {
+			(Concrete(_), XcmFungible(ref amount)) =>
+				CheckedConversion::checked_from(*amount),
+			_ => None,
+		}
+	}
+}
+
 /// Means for transacting assets on this chain.
 pub type LocalAssetTransactor = CurrencyAdapter<
 	// Use this currency:
 	Balances,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	IsConcrete<RelayLocation>,
+	OnlySelfCurrency,
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
