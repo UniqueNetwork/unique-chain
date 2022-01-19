@@ -21,6 +21,12 @@ import getBalance from '../../substrate/get-balance';
 
 export const GAS_ARGS = {gas: 2500000};
 
+export enum SponsoringMode {
+  Disabled,
+  Allowlisted,
+  Generous,
+}
+
 let web3Connected = false;
 export async function usingWeb3<T>(cb: (web3: Web3) => Promise<T> | T): Promise<T> {
   if (web3Connected) throw new Error('do not nest usingWeb3 calls');

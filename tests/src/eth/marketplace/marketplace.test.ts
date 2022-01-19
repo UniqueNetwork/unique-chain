@@ -2,7 +2,7 @@ import {readFile} from 'fs/promises';
 import {getBalanceSingle, transferBalanceExpectSuccess} from '../../substrate/get-balance';
 import privateKey from '../../substrate/privateKey';
 import {addToAllowListExpectSuccess, confirmSponsorshipExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, createItemExpectSuccess, getTokenOwner, setCollectionLimitsExpectSuccess, setCollectionSponsorExpectSuccess, transferExpectSuccess, transferFromExpectSuccess} from '../../util/helpers';
-import {collectionIdToAddress, contractHelpers, createEthAccountWithBalance, executeEthTxOnSub, GAS_ARGS, itWeb3, subToEth, subToEthLowercase, transferBalanceToEth} from '../util/helpers';
+import {collectionIdToAddress, contractHelpers, createEthAccountWithBalance, executeEthTxOnSub, GAS_ARGS, itWeb3, SponsoringMode, subToEth, subToEthLowercase, transferBalanceToEth} from '../util/helpers';
 import {evmToAddress} from '@polkadot/util-crypto';
 import nonFungibleAbi from '../nonFungibleAbi.json';
 import fungibleAbi from '../fungibleAbi.json';
@@ -20,7 +20,7 @@ describe('Matcher contract usage', () => {
     });
     const matcher = await matcherContract.deploy({data: (await readFile(`${__dirname}/MarketPlace.bin`)).toString(), arguments:[matcherOwner]}).send({from: matcherOwner});
     const helpers = contractHelpers(web3, matcherOwner);
-    await helpers.methods.toggleSponsoring(matcher.options.address, true).send({from: matcherOwner});
+    await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
     await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
     await transferBalanceToEth(api, alice, matcher.options.address);
 
@@ -147,7 +147,7 @@ describe('Matcher contract usage', () => {
     const matcher = await matcherContract.deploy({data: (await readFile(`${__dirname}/MarketPlace.bin`)).toString(), arguments: [matcherOwner]}).send({from: matcherOwner, gas: 10000000});
     await matcher.methods.setEscrow(escrow).send({from: matcherOwner});
     const helpers = contractHelpers(web3, matcherOwner);
-    await helpers.methods.toggleSponsoring(matcher.options.address, true).send({from: matcherOwner});
+    await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
     await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
     await transferBalanceToEth(api, alice, matcher.options.address);
 

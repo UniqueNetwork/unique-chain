@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import privateKey from '../substrate/privateKey';
-import {contractHelpers, createEthAccount, createEthAccountWithBalance, deployCollector, deployFlipper, itWeb3, transferBalanceToEth} from './util/helpers';
+import {contractHelpers, createEthAccount, createEthAccountWithBalance, deployCollector, deployFlipper, itWeb3, SponsoringMode, transferBalanceToEth} from './util/helpers';
 
 describe('EVM sponsoring', () => {
   itWeb3('Fee is deducted from contract if sponsoring is enabled', async ({api, web3}) => {
@@ -18,7 +18,7 @@ describe('EVM sponsoring', () => {
     await helpers.methods.toggleAllowed(flipper.options.address, caller, true).send({from: owner});
 
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
-    await helpers.methods.toggleSponsoring(flipper.options.address, true).send({from: owner});
+    await helpers.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Allowlisted).send({from: owner});
     await helpers.methods.setSponsoringRateLimit(flipper.options.address, 0).send({from: owner});
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.true;
 
@@ -49,7 +49,7 @@ describe('EVM sponsoring', () => {
     await helpers.methods.toggleAllowed(collector.options.address, caller, true).send({from: owner});
 
     expect(await helpers.methods.sponsoringEnabled(collector.options.address).call()).to.be.false;
-    await helpers.methods.toggleSponsoring(collector.options.address, true).send({from: owner});
+    await helpers.methods.setSponsoringMode(collector.options.address, SponsoringMode.Allowlisted).send({from: owner});
     await helpers.methods.setSponsoringRateLimit(collector.options.address, 0).send({from: owner});
     expect(await helpers.methods.sponsoringEnabled(collector.options.address).call()).to.be.true;
 
