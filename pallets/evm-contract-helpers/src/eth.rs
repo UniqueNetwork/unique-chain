@@ -4,7 +4,8 @@ use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure};
 use sp_core::H160;
 use crate::{
-	AllowlistEnabled, Config, Owner, Pallet, SelfSponsoring, SponsorBasket, SponsoringRateLimit,
+	AllowlistEnabled, Config, Owner, Pallet, SelfSponsoring, SponsoringMode, SponsorBasket,
+	SponsoringRateLimit, SponsoringModeT,
 };
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
@@ -31,6 +32,7 @@ impl<T: Config> ContractHelpers<T> {
 		Ok(<SelfSponsoring<T>>::get(contract_address))
 	}
 
+	/// Deprecated
 	fn toggle_sponsoring(
 		&mut self,
 		caller: caller,
@@ -40,6 +42,22 @@ impl<T: Config> ContractHelpers<T> {
 		<Pallet<T>>::ensure_owner(contract_address, caller)?;
 		<Pallet<T>>::toggle_sponsoring(contract_address, enabled);
 		Ok(())
+	}
+
+	fn set_sponsoring_mode(
+		&mut self,
+		caller: caller,
+		contract_address: address,
+		mode: uint8,
+	) -> Result<void> {
+		<Pallet<T>>::ensure_owner(contract_address, caller)?;
+		let mode = SponsoringModeT::from_eth(mode).ok_or("unknown mode")?;
+		<Pallet<T>>::set_sponsoring_mode(contract_address, mode);
+		Ok(())
+	}
+
+	fn sponsoring_mode(&self, contract_address: address) -> Result<uint8> {
+		Ok(<Pallet<T>>::sponsoring_mode(contract_address).to_eth())
 	}
 
 	fn set_sponsoring_rate_limit(
@@ -147,10 +165,11 @@ impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 pub struct HelpersContractSponsoring<T: Config>(PhantomData<*const T>);
 impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for HelpersContractSponsoring<T> {
 	fn get_sponsor(who: &H160, call: &(H160, Vec<u8>)) -> Option<H160> {
-		if !<SelfSponsoring<T>>::get(&call.0) {
+		let mode = <Pallet<T>>::sponsoring_mode(call.0);
+		if mode == SponsoringModeT::Disabled {
 			return None;
 		}
-		if !<Pallet<T>>::allowed(call.0, *who) {
+		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(call.0, *who) {
 			return None;
 		}
 		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;

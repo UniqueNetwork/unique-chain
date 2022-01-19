@@ -21,7 +21,7 @@ contract ERC165 is Dummy {
 	}
 }
 
-// Selector: 31acb1fe
+// Selector: 7b4866f9
 contract ContractHelpers is Dummy, ERC165 {
 	// Selector: contractOwner(address) 5152b14c
 	function contractOwner(address contractAddress)
@@ -47,12 +47,34 @@ contract ContractHelpers is Dummy, ERC165 {
 		return false;
 	}
 
+	// Deprecated
+	//
 	// Selector: toggleSponsoring(address,bool) fcac6d86
 	function toggleSponsoring(address contractAddress, bool enabled) public {
 		require(false, stub_error);
 		contractAddress;
 		enabled;
 		dummy = 0;
+	}
+
+	// Selector: setSponsoringMode(address,uint8) fde8a560
+	function setSponsoringMode(address contractAddress, uint8 mode) public {
+		require(false, stub_error);
+		contractAddress;
+		mode;
+		dummy = 0;
+	}
+
+	// Selector: sponsoringMode(address) b70c7267
+	function sponsoringMode(address contractAddress)
+		public
+		view
+		returns (uint8)
+	{
+		require(false, stub_error);
+		contractAddress;
+		dummy;
+		return 0;
 	}
 
 	// Selector: setSponsoringRateLimit(address,uint32) 77b6c908
