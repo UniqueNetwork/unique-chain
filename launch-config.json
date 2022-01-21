@@ -40,6 +40,15 @@
                 "flags": [
                     "-lparachain::candidate_validation=debug"
                 ]
+            },
+            {
+                "name": "eve",
+                "wsPort": 9888,
+                "rpcPort": 9887,
+                "port": 30888,
+                "flags": [
+                    "-lparachain::candidate_validation=debug"
+                ]
             }
         ],
         "genesis": {
@@ -94,8 +103,8 @@
 			"balance": "1000000000000000000000",
 			"nodes": [
 				{
-					"wsPort": 9988,
-					"port": 31200,
+					"wsPort": 9946,
+					"port": 31202,
 					"name": "alice",
                     "flags": [
                         "--rpc-cors=all",
@@ -105,7 +114,26 @@
                     ]
 				}
 			]
-		}
+		},
+        {
+            "bin": "../cumulus/target/release/polkadot-collator",
+            "id": "3000",
+            "chain": "statemint-dev",
+            "balance": "1000000000000000000000000",
+            "nodes": [
+                {
+                    "wsPort": 9947,
+                    "port": 31203,
+                    "name": "alice",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                }
+            ]
+        }
     ],
     "simpleParachains": [],
     "hrmpChannels": [

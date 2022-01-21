@@ -64,6 +64,7 @@
     "testOverflow": "mocha --timeout 9999999 -r ts-node/register ./**/overflow.test.ts",
     "testSetVariableMetadataSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetadataSponsoringRateLimit.test.ts",
     "testInflation": "mocha --timeout 9999999 -r ts-node/register ./**/inflation.test.ts",
+    "testXcmTransfer": "mocha --timeout 9999999 -r ts-node/register ./**/xcmTransfer.test.ts",
     "testPalletPresence": "mocha --timeout 9999999 -r ts-node/register ./**/pallet-presence.test.ts",
     "testBlockProduction": "mocha --timeout 9999999 -r ts-node/register ./**/block-production.test.ts",
     "testEnableDisableTransfers": "mocha --timeout 9999999 -r ts-node/register ./**/enableDisableTransfer.test.ts",
