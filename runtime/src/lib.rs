@@ -90,13 +90,17 @@ use xcm_builder::{
 };
 use xcm_executor::{Config, XcmExecutor};
 
+use log::{debug};
+use sp_std::{borrow::Borrow, marker::PhantomData};
+
 use xcm::latest::{
 //	Xcm, 	
 	AssetId::{Concrete},
 	Fungibility::Fungible as XcmFungible,
 	MultiAsset
 };
-use xcm_executor::traits::MatchesFungible;
+use xcm_executor::traits::{ShouldExecute, WeightBounds, MatchesFungible, WeightTrader, Convert};
+//use xcm_executor::traits::MatchesFungible;
 use sp_runtime::traits::CheckedConversion;
 
 // mod chain_extension;
@@ -598,6 +602,37 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type XcmpMessageHandler = XcmpQueue;
 }
 
+pub struct SiblingParachainConvertsVia2<ParaId, AccountId>(PhantomData<(ParaId, AccountId)>);
+impl<ParaId: From<u32> + Into<u32> + AccountIdConversion<AccountId>, AccountId: Clone + core::fmt::Debug>
+	Convert<MultiLocation, AccountId> for SiblingParachainConvertsVia2<ParaId, AccountId>
+{
+	fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<AccountId, ()> {
+
+
+
+		match location.borrow() {
+			MultiLocation { parents: 1, interior: X1(Parachain(id)) } => {
+				log::debug!(
+					target: "xcm::converter",
+					"SiblingParachainConvertsVia2 accountId: {:?}",
+					ParaId::from(*id).into_account(),
+				);
+				Ok(ParaId::from(*id).into_account())
+			}
+			_ => Err(()),
+		}
+	}
+
+	fn reverse_ref(who: impl Borrow<AccountId>) -> Result<MultiLocation, ()> {
+		if let Some(id) = ParaId::try_from_account(who.borrow()) {
+			Ok(MultiLocation::new(1, X1(Parachain(id.into()))))
+		} else {
+			Err(())
+		}
+	}
+}
+
+
 impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
@@ -616,7 +651,7 @@ pub type LocationToAccountId = (
 	// The parent (Relay-chain) origin converts to the default `AccountId`.
 	ParentIsDefault<AccountId>,
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
-	SiblingParachainConvertsVia<Sibling, AccountId>,
+	SiblingParachainConvertsVia2<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
