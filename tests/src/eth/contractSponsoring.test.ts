@@ -35,7 +35,7 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
   });
 
-  itWeb3('In generous mode, non-allowlisted user transaction will be sponsored', async ({ api, web3 }) => {
+  itWeb3('In generous mode, non-allowlisted user transaction will be sponsored', async ({api, web3}) => {
     const alice = privateKey('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
@@ -67,7 +67,7 @@ describe('Sponsoring EVM contracts', () => {
     const alice = privateKey('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
-    const caller = await createEthAccount(api);
+    const caller = createEthAccount(web3);
 
     const flipper = await deployFlipper(web3, owner);
 
@@ -97,7 +97,7 @@ describe('Sponsoring EVM contracts', () => {
     const alice = privateKey('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
-    const caller = await createEthAccount(api);
+    const caller = createEthAccount(web3);
 
     const flipper = await deployFlipper(web3, owner);
 

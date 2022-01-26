@@ -22,9 +22,9 @@ import getBalance from '../../substrate/get-balance';
 export const GAS_ARGS = {gas: 2500000};
 
 export enum SponsoringMode {
-  Disabled,
-  Allowlisted,
-  Generous,
+  Disabled = 0,
+  Allowlisted = 1,
+  Generous = 2,
 }
 
 let web3Connected = false;
