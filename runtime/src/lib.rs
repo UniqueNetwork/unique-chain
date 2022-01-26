@@ -23,7 +23,8 @@ use sp_runtime::DispatchError;
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, AccountIdConversion,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify,
+		AccountIdConversion, Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, RuntimeAppPublic,
@@ -45,8 +46,9 @@ pub use frame_support::{
 	dispatch::DispatchResult,
 	PalletId, parameter_types, StorageValue, ConsensusEngineId,
 	traits::{
-		Everything, Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem,
-		LockIdentifier, OnUnbalanced, Randomness, FindAuthor,
+		tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Everything,
+		Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier,
+		OnUnbalanced, Randomness, FindAuthor,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -69,8 +71,9 @@ use codec::{Encode, Decode};
 use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
-	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf},
+	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating},
 	transaction_validity::TransactionValidityError,
+	SaturatedConversion,
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
@@ -82,23 +85,21 @@ use polkadot_parachain::primitives::Sibling;
 use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
-	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, NativeAsset,
-	ParentAsSuperuser, ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative,
-	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
-	SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
+	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser,
+	ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 };
-use xcm_executor::{Config, XcmExecutor};
-
-use log::{debug};
-use sp_std::{borrow::Borrow, marker::PhantomData};
+use xcm_executor::{Config, XcmExecutor, Assets};
+use sp_std::{marker::PhantomData};
 
 use xcm::latest::{
-//	Xcm, 	
+	//	Xcm,
 	AssetId::{Concrete},
 	Fungibility::Fungible as XcmFungible,
-	MultiAsset
+	MultiAsset,
+	Error as XcmError,
 };
-use xcm_executor::traits::{ShouldExecute, WeightBounds, MatchesFungible, WeightTrader, Convert};
+use xcm_executor::traits::{MatchesFungible, WeightTrader};
 //use xcm_executor::traits::MatchesFungible;
 use sp_runtime::traits::CheckedConversion;
 
@@ -606,37 +607,6 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type XcmpMessageHandler = XcmpQueue;
 }
 
-pub struct SiblingParachainConvertsVia2<ParaId, AccountId>(PhantomData<(ParaId, AccountId)>);
-impl<ParaId: From<u32> + Into<u32> + AccountIdConversion<AccountId>, AccountId: Clone + core::fmt::Debug>
-	Convert<MultiLocation, AccountId> for SiblingParachainConvertsVia2<ParaId, AccountId>
-{
-	fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<AccountId, ()> {
-
-
-
-		match location.borrow() {
-			MultiLocation { parents: 1, interior: X1(Parachain(id)) } => {
-				log::debug!(
-					target: "xcm::converter",
-					"SiblingParachainConvertsVia2 accountId: {:?}",
-					ParaId::from(*id).into_account(),
-				);
-				Ok(ParaId::from(*id).into_account())
-			}
-			_ => Err(()),
-		}
-	}
-
-	fn reverse_ref(who: impl Borrow<AccountId>) -> Result<MultiLocation, ()> {
-		if let Some(id) = ParaId::try_from_account(who.borrow()) {
-			Ok(MultiLocation::new(1, X1(Parachain(id.into()))))
-		} else {
-			Err(())
-		}
-	}
-}
-
-
 impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
@@ -655,18 +625,16 @@ pub type LocationToAccountId = (
 	// The parent (Relay-chain) origin converts to the default `AccountId`.
 	ParentIsDefault<AccountId>,
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
-	SiblingParachainConvertsVia2<Sibling, AccountId>,
+	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
-
 
 pub struct OnlySelfCurrency;
 impl<B: TryFrom<u128>> MatchesFungible<B> for OnlySelfCurrency {
 	fn matches_fungible(a: &MultiAsset) -> Option<B> {
 		match (&a.id, &a.fun) {
-			(Concrete(_), XcmFungible(ref amount)) =>
-				CheckedConversion::checked_from(*amount),
+			(Concrete(_), XcmFungible(ref amount)) => CheckedConversion::checked_from(*amount),
 			_ => None,
 		}
 	}
@@ -733,6 +701,88 @@ pub type Barrier = (
 	// ^^^ Parent & its unit plurality gets free execution
 );
 
+pub struct UsingOnlySelfCurrencyComponents<
+	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
+	AssetId: Get<MultiLocation>,
+	AccountId,
+	Currency: CurrencyT<AccountId>,
+	OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
+>(
+	Weight,
+	Currency::Balance,
+	PhantomData<(WeightToFee, AssetId, AccountId, Currency, OnUnbalanced)>,
+);
+impl<
+		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
+		AssetId: Get<MultiLocation>,
+		AccountId,
+		Currency: CurrencyT<AccountId>,
+		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
+	> WeightTrader
+	for UsingOnlySelfCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+{
+	fn new() -> Self {
+		Self(0, Zero::zero(), PhantomData)
+	}
+
+	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
+		let amount = WeightToFee::calc(&weight);
+		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
+
+		// location to this parachain through relay chain
+		let option1: xcm::v1::AssetId = Concrete(MultiLocation {
+			parents: 1,
+			interior: X1(Parachain(ParachainInfo::parachain_id().into())),
+		});
+		// direct location
+		let option2: xcm::v1::AssetId = Concrete(MultiLocation {
+			parents: 0,
+			interior: Here,
+		});
+
+		let required = if payment.fungible.contains_key(&option1) {
+			(option1, u128_amount).into()
+		} else if payment.fungible.contains_key(&option2) {
+			(option2, u128_amount).into()
+		} else {
+			(Concrete(MultiLocation::default()), u128_amount).into()
+		};
+
+		let unused = payment
+			.checked_sub(required)
+			.map_err(|_| XcmError::TooExpensive)?;
+		self.0 = self.0.saturating_add(weight);
+		self.1 = self.1.saturating_add(amount);
+		Ok(unused)
+	}
+
+	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
+		let weight = weight.min(self.0);
+		let amount = WeightToFee::calc(&weight);
+		self.0 -= weight;
+		self.1 = self.1.saturating_sub(amount);
+		let amount: u128 = amount.saturated_into();
+		if amount > 0 {
+			Some((AssetId::get(), amount).into())
+		} else {
+			None
+		}
+	}
+}
+impl<
+		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
+		AssetId: Get<MultiLocation>,
+		AccountId,
+		Currency: CurrencyT<AccountId>,
+		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
+	> Drop
+	for UsingOnlySelfCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+{
+	fn drop(&mut self) {
+		OnUnbalanced::on_unbalanced(Currency::issue(self.1));
+	}
+}
+
 pub struct XcmConfig;
 impl Config for XcmConfig {
 	type Call = Call;
@@ -745,7 +795,13 @@ impl Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader = UsingComponents<IdentityFee<Balance>, RelayLocation, AccountId, Balances, ()>;
+	type Trader = UsingOnlySelfCurrencyComponents<
+		IdentityFee<Balance>,
+		RelayLocation,
+		AccountId,
+		Balances,
+		(),
+	>;
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;
 
