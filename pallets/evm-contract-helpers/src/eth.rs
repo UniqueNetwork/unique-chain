@@ -4,8 +4,7 @@ use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure};
 use sp_core::H160;
 use crate::{
-	AllowlistEnabled, Config, Owner, Pallet, SelfSponsoring, SponsoringMode, SponsorBasket,
-	SponsoringRateLimit, SponsoringModeT,
+	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringRateLimit, SponsoringModeT,
 };
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
@@ -29,7 +28,7 @@ impl<T: Config> ContractHelpers<T> {
 	}
 
 	fn sponsoring_enabled(&self, contract_address: address) -> Result<bool> {
-		Ok(<SelfSponsoring<T>>::get(contract_address))
+		Ok(<Pallet<T>>::sponsoring_mode(contract_address) != SponsoringModeT::Disabled)
 	}
 
 	/// Deprecated
