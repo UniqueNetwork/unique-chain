@@ -130,8 +130,7 @@ describe('Integration test: Exchanging QTZ/OPL with Karura', () => {
     }, {provider: new WsProvider('ws://127.0.0.1:' + KARURA_PORT)});
   });
 
-  /// TODO Under construction. The test won't pass.
-  it.skip('Should connect to Karura and send OPL back', async () => {
+  it('Should connect to Karura and send OPL back', async () => {
     let balanceBefore: bigint;
     
     await usingApi(async (api) => {
@@ -141,50 +140,29 @@ describe('Integration test: Exchanging QTZ/OPL with Karura', () => {
     await usingApi(async (api) => {
       const destination = {
         V0: {
-          X2: [
+          X3: [
             'Parent',
             {
               Parachain: UNIQUE_CHAIN,
+            },
+            {
+              AccountId32: {
+                network: 'Any',
+                id: alice.addressRaw,
+              },
             },
           ],
         },
       };
 
-      const beneficiary = {
-        V0: {
-          X1: {
-            AccountId32: {
-              network: 'Any',
-              id: alice.addressRaw,
-            },
-          },
-        },
+      const id = {
+        ForeignAsset: 0,
       };
 
-      const assets = {
-        V1: [
-          {
-            id: {
-              Concrete: {
-                parents: 0,
-                interior: 'Here',
-              },
-            },
-            fun: {
-              Fungible: 5000000000,
-            },
-          },
-        ],
-      };
+      const amount = 5000000000;
+      const destWeight = 50000000;
 
-      const feeAssetItem = 0;
-
-      const weightLimit = {
-        Limited: 5000000000,
-      };
-
-      // todo The functionality to be tested is not complete yet. The metadata above are subject to change, as is the transaction below.
-      const tx = api.tx.polkadotXcm.limitedReserveTransferAssets(destination, beneficiary, assets, feeAssetItem, weightLimit);
+      const tx = api.tx.xTokens.transfer(id, amount, destination, destWeight);
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
