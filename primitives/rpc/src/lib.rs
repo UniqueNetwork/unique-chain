@@ -16,7 +16,7 @@ sp_api::decl_runtime_apis! {
 		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Result<Vec<TokenId>>;
 		fn token_exists(collection: CollectionId, token: TokenId) -> Result<bool>;
 
-		fn token_owner(collection: CollectionId, token: TokenId) -> Result<CrossAccountId>;
+		fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>>;
 		fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>>;
 		fn variable_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>>;
 

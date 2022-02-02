@@ -413,7 +413,11 @@ decl_module! {
 						let origin = <<T as Config>::Origin as From<T::PalletsOrigin>>::from(
 							s.origin.clone()
 						).into();
-						let sender = ensure_signed(origin).unwrap_or_default();
+						let sender = match ensure_signed(origin) {
+							Ok(v) => v,
+							// TODO: Support for unsigned extrinsics?
+							Err(_) => return Some(Some(s))
+						};
 						let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &s.call).unwrap_or(sender);
 						let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay));
 						let r = s.call.clone().dispatch(sponsor.into());
@@ -661,74 +665,6 @@ impl<T: Config> Module<T> {
 				Ok((new_time, new_index))
 			},
 		)
-	}
-}
-
-impl<T: Config> schedule::Anon<T::BlockNumber, <T as Config>::Call, T::PalletsOrigin>
-	for Module<T>
-{
-	type Address = TaskAddress<T::BlockNumber>;
-
-	fn schedule(
-		when: DispatchTime<T::BlockNumber>,
-		maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-		priority: schedule::Priority,
-		origin: T::PalletsOrigin,
-		call: <T as Config>::Call,
-	) -> Result<Self::Address, DispatchError> {
-		Self::do_schedule(when, maybe_periodic, priority, origin, call)
-	}
-
-	fn cancel((when, index): Self::Address) -> Result<(), ()> {
-		Self::do_cancel(None, (when, index)).map_err(|_| ())
-	}
-
-	fn reschedule(
-		address: Self::Address,
-		when: DispatchTime<T::BlockNumber>,
-	) -> Result<Self::Address, DispatchError> {
-		Self::do_reschedule(address, when)
-	}
-
-	fn next_dispatch_time((when, index): Self::Address) -> Result<T::BlockNumber, ()> {
-		Agenda::<T>::get(when)
-			.get(index as usize)
-			.ok_or(())
-			.map(|_| when)
-	}
-}
-
-impl<T: Config> schedule::Named<T::BlockNumber, <T as Config>::Call, T::PalletsOrigin>
-	for Module<T>
-{
-	type Address = TaskAddress<T::BlockNumber>;
-
-	fn schedule_named(
-		id: Vec<u8>,
-		when: DispatchTime<T::BlockNumber>,
-		maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-		priority: schedule::Priority,
-		origin: T::PalletsOrigin,
-		call: <T as Config>::Call,
-	) -> Result<Self::Address, ()> {
-		Self::do_schedule_named(id, when, maybe_periodic, priority, origin, call).map_err(|_| ())
-	}
-
-	fn cancel_named(id: Vec<u8>) -> Result<(), ()> {
-		Self::do_cancel_named(None, id).map_err(|_| ())
-	}
-
-	fn reschedule_named(
-		id: Vec<u8>,
-		when: DispatchTime<T::BlockNumber>,
-	) -> Result<Self::Address, DispatchError> {
-		Self::do_reschedule_named(id, when)
-	}
-
-	fn next_dispatch_time(id: Vec<u8>) -> Result<T::BlockNumber, ()> {
-		Lookup::<T>::get(id)
-			.and_then(|(when, index)| Agenda::<T>::get(when).get(index as usize).map(|_| when))
-			.ok_or(())
 	}
 }
 

@@ -8,13 +8,13 @@ use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo},
 	ensure, fail,
 	traits::{Imbalance, Get, Currency},
+	BoundedVec,
 };
 use pallet_evm::GasWeightMapping;
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, ExistenceRequirement,
-	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, Pays, PostDispatchInfo, TokenId, Weight,
-	WithdrawReasons, CollectionStats,
+	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, Pays, PostDispatchInfo,
+	TokenId, Weight, WithdrawReasons, CollectionStats, CustomDataLimit,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -398,15 +398,7 @@ impl<T: Config> Pallet<T> {
 	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
 		{
 			ensure!(
-				data.name.len() <= MAX_COLLECTION_NAME_LENGTH,
-				Error::<T>::CollectionNameLimitExceeded
-			);
-			ensure!(
-				data.description.len() <= MAX_COLLECTION_DESCRIPTION_LENGTH,
-				Error::<T>::CollectionDescriptionLimitExceeded
-			);
-			ensure!(
-				data.token_prefix.len() <= MAX_TOKEN_PREFIX_LENGTH,
+				data.token_prefix.len() <= MAX_TOKEN_PREFIX_LENGTH as usize,
 				Error::<T>::CollectionTokenPrefixLimitExceeded
 			);
 		}
@@ -610,14 +602,14 @@ pub trait CommonCollectionOperations<T: Config> {
 		&self,
 		sender: T::CrossAccountId,
 		token: TokenId,
-		data: Vec<u8>,
+		data: BoundedVec<u8, CustomDataLimit>,
 	) -> DispatchResultWithPostInfo;
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId>;
 	fn token_exists(&self, token: TokenId) -> bool;
 	fn last_token_id(&self) -> TokenId;
 
-	fn token_owner(&self, token: TokenId) -> T::CrossAccountId;
+	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
 	fn const_metadata(&self, token: TokenId) -> Vec<u8>;
 	fn variable_metadata(&self, token: TokenId) -> Vec<u8>;
 

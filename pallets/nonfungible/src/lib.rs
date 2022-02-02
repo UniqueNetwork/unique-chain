@@ -2,9 +2,7 @@
 
 use erc::ERC721Events;
 use frame_support::{BoundedVec, ensure};
-use up_data_structs::{
-	AccessMode, CUSTOM_DATA_LIMIT, Collection, CollectionId, CustomDataLimit, TokenId,
-};
+use up_data_structs::{AccessMode, Collection, CollectionId, CustomDataLimit, TokenId};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, account::CrossAccountId,
 };
@@ -14,7 +12,7 @@ use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{vec::Vec, vec};
 use core::ops::Deref;
 use sp_std::collections::btree_map::BTreeMap;
-use codec::{Encode, Decode};
+use codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
 pub use pallet::*;
@@ -31,11 +29,11 @@ pub struct CreateItemData<T: Config> {
 }
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
-#[derive(Encode, Decode, TypeInfo)]
-pub struct ItemData<T: Config> {
-	pub const_data: Vec<u8>,
-	pub variable_data: Vec<u8>,
-	pub owner: T::CrossAccountId,
+#[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
+pub struct ItemData<CrossAccountId> {
+	pub const_data: BoundedVec<u8, CustomDataLimit>,
+	pub variable_data: BoundedVec<u8, CustomDataLimit>,
+	pub owner: CrossAccountId,
 }
 
 #[frame_support::pallet]
@@ -72,7 +70,7 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type TokenData<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
-		Value = ItemData<T>,
+		Value = ItemData<T::CrossAccountId>,
 		QueryKind = OptionQuery,
 	>;
 
@@ -535,12 +533,8 @@ impl<T: Config> Pallet<T> {
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		token: TokenId,
-		data: Vec<u8>,
+		data: BoundedVec<u8, CustomDataLimit>,
 	) -> DispatchResult {
-		ensure!(
-			data.len() as u32 <= CUSTOM_DATA_LIMIT,
-			<CommonError<T>>::TokenVariableDataLimitExceeded
-		);
 		let token_data =
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
 		collection.check_can_update_meta(sender, &token_data.owner)?;

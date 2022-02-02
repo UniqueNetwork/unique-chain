@@ -26,7 +26,7 @@ use sp_runtime::{
 		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, AccountIdConversion,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiSignature,
+	ApplyExtrinsicResult, MultiSignature, RuntimeAppPublic,
 };
 
 use sp_std::prelude::*;
@@ -149,6 +149,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	spec_version: 914000,
 	impl_version: 1,
+	state_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 };
@@ -371,6 +372,7 @@ impl frame_system::Config for Runtime {
 	type SystemWeightInfo = frame_system::weights::SubstrateWeight<Self>;
 	/// Version of the runtime.
 	type Version = Version;
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {
@@ -502,6 +504,7 @@ impl pallet_transaction_payment::Config for Runtime {
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = 1 * UNIQUE;
+	pub const ProposalBondMaximum: Balance = 1000 * UNIQUE;
 	pub const SpendPeriod: BlockNumber = 5 * MINUTES;
 	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
@@ -527,6 +530,7 @@ impl pallet_treasury::Config for Runtime {
 	type OnSlash = ();
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
+	type ProposalBondMaximum = ProposalBondMaximum;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
@@ -576,8 +580,8 @@ parameter_types! {
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
-	type OnValidationData = ();
 	type SelfParaId = parachain_info::Pallet<Self>;
+	type OnSystemEvent = ();
 	// type DownwardMessageHandlers = cumulus_primitives_utility::UnqueuedDmpAsParent<
 	// 	MaxDownwardMessageWeight,
 	// 	XcmExecutor<XcmConfig>,
@@ -742,6 +746,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
+	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
@@ -1039,7 +1044,7 @@ impl_runtime_apis! {
 			dispatch_unique_runtime!(collection.token_exists(token))
 		}
 
-		fn token_owner(collection: CollectionId, token: TokenId) -> Result<CrossAccountId, DispatchError> {
+		fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
 			dispatch_unique_runtime!(collection.token_owner(token))
 		}
 		fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
@@ -1307,8 +1312,8 @@ impl_runtime_apis! {
 	}
 
 	impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
-		fn collect_collation_info() -> cumulus_primitives_core::CollationInfo {
-			ParachainSystem::collect_collation_info()
+		fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
+			ParachainSystem::collect_collation_info(header)
 		}
 	}
 
