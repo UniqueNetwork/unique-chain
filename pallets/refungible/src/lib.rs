@@ -436,8 +436,8 @@ impl<T: Config> Pallet<T> {
 			<TokenData<T>>::insert(
 				(collection.id, token_id),
 				ItemData {
-					const_data: token.const_data.into(),
-					variable_data: token.variable_data.into(),
+					const_data: token.const_data,
+					variable_data: token.variable_data,
 				},
 			);
 			for (user, amount) in token.users.into_iter() {
