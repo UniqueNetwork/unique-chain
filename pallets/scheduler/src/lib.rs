@@ -59,7 +59,7 @@ use sp_std::{prelude::*, marker::PhantomData, borrow::Borrow};
 use codec::{Encode, Decode, Codec};
 use sp_runtime::{
 	RuntimeDebug,
-	traits::{Zero, One, BadOrigin, Saturating},
+	traits::{Zero, One, BadOrigin, Saturating, SignedExtension},
 };
 use frame_support::{
 	decl_module, decl_storage, decl_event, decl_error,
@@ -75,8 +75,6 @@ use frame_system::{self as system, ensure_signed};
 pub use weights::WeightInfo;
 use up_sponsorship::SponsorshipHandler;
 use scale_info::TypeInfo;
-
-pub const MAX_TASK_ID_LENGTH_IN_BYTES: u32 = 16;
 
 /// Our pallet's configuration trait. All our types and constants go in here. If the
 /// pallet is dependent on specific other pallets, then their configuration traits
@@ -118,7 +116,14 @@ pub trait Config: system::Config {
 
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
+
+	/// Unchecked extrinsic type as expected by the runtime that uses this pallet.
+	type PaymentHandler: SignedExtension;
 }
+
+pub const MAX_TASK_ID_LENGTH_IN_BYTES: u8 = 16;
+
+pub const PERIODIC_CALLS_LIMIT: u32 = 100;
 
 // pub type SelfWeightInfo<T> = <T as system::Config>::WeightInfo;
 
@@ -250,7 +255,7 @@ decl_module! {
 		)
 		{
 			let origin = <T as Config>::Origin::from(origin);
-			Self::do_schedule(DispatchTime::At(when), maybe_periodic, priority, origin.caller().clone(), *call)?;
+			Self::do_schedule_nameless(DispatchTime::At(when), maybe_periodic, priority, origin.caller().clone(), *call)?;
 		}
 
 		/// Cancel an anonymously scheduled task.
@@ -326,7 +331,7 @@ decl_module! {
 		) {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
 			let origin = <T as Config>::Origin::from(origin);
-			Self::do_schedule(
+			Self::do_schedule_nameless(
 				DispatchTime::After(after), maybe_periodic, priority, origin.caller().clone(), *call
 			)?;
 		}
@@ -364,7 +369,8 @@ decl_module! {
 		/// # </weight>
 		fn on_initialize(now: T::BlockNumber) -> Weight {
 			let limit = T::MaximumWeight::get();
-			let mut queued = Agenda::<T>::take(now).into_iter()
+			let mut queued = Agenda::<T>::take(now)
+				.into_iter()
 				.enumerate()
 				.filter_map(|(index, s)| s.map(|inner| (index as u32, inner)))
 				.collect::<Vec<_>>();
@@ -377,7 +383,7 @@ decl_module! {
 			}
 			queued.sort_by_key(|(_, s)| s.priority);
 			let base_weight: Weight = T::DbWeight::get().reads_writes(1, 2); // Agenda + Agenda(next)
-			let mut total_weight: Weight = 0;
+			let mut total_weight: Weight = 0; // T::WeightInfo::on_initialize(0)
 			queued.into_iter()
 				.enumerate()
 				.scan(base_weight, |cumulative_weight, (order, (index, s))| {
@@ -412,13 +418,13 @@ decl_module! {
 					// - It is the first item in the schedule
 					if s.priority <= schedule::HARD_DEADLINE || cumulative_weight <= limit || order == 0 {
 
-						let origin = <<T as Config>::Origin as From<T::PalletsOrigin>>::from(
-							s.origin.clone()
-						).into();
-						let sender = ensure_signed(origin).unwrap_or_default();
-						let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &s.call).unwrap_or(sender);
-						let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay));
-						let r = s.call.clone().dispatch(sponsor.into());
+						// let origin = <<T as Config>::Origin as From<T::PalletsOrigin>>::from(
+						// 	s.origin.clone()
+						// ).into();
+						// let sender = ensure_signed(origin).unwrap_or_default();
+						// let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &s.call).unwrap_or(sender);
+						// let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay));
+						// let r = s.call.clone().dispatch(sponsor.into());
 						let maybe_id = s.maybe_id.clone();
 						if let Some((period, count)) = s.maybe_periodic {
 							if count > 1 {
@@ -439,7 +445,7 @@ decl_module! {
 						Self::deposit_event(RawEvent::Dispatched(
 							(now, index),
 							maybe_id,
-							r.map(|_| ()).map_err(|e| e.error)
+							Ok(())// r.map(|_| ()).map_err(|e| e.error)
 						));
 						total_weight = cumulative_weight;
 						None
@@ -476,21 +482,32 @@ impl<T: Config> Module<T> {
 	}
 
 	fn do_schedule(
+		maybe_id: Option<Vec<u8>>,
 		when: DispatchTime<T::BlockNumber>,
 		maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
 		priority: schedule::Priority,
 		origin: T::PalletsOrigin,
 		call: <T as Config>::Call,
-	) -> Result<TaskAddress<T::BlockNumber>, DispatchError> {
+	) -> Result<(T::BlockNumber, u32), DispatchError> {
 		let when = Self::resolve_time(when)?;
+
+		let sender = ensure_signed(
+			<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin.clone()).into()
+		).unwrap_or_default();
+		let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &call).unwrap_or(sender);
+		let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay));
+		let r = call.clone().dispatch(sponsor.into());
+
+		//T::PaymentHandler::validate(sponsor.into(), call.clone(), ); todo dispatch call
 
 		// sanitize maybe_periodic
 		let maybe_periodic = maybe_periodic
 			.filter(|p| p.1 > 1 && !p.0.is_zero())
-			// Remove one from the number of repetitions since we will schedule one now.
-			.map(|(p, c)| (p, c - 1));
+			// Limit the repetitions to 100 calls and remove one from the number of repetitions since we will schedule one now.
+			.map(|(p, c)| (p, std::cmp::min(c, PERIODIC_CALLS_LIMIT) - 1));
+			
 		let s = Some(Scheduled {
-			maybe_id: None,
+			maybe_id,
 			priority,
 			call,
 			maybe_periodic,
@@ -506,9 +523,23 @@ impl<T: Config> Module<T> {
 				expected from the runtime configuration. An update might be needed.",
 			);
 		}
-		Self::deposit_event(RawEvent::Scheduled(when, index));
 
 		Ok((when, index))
+	}
+
+	fn do_schedule_nameless(
+		when: DispatchTime<T::BlockNumber>,
+		maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
+		priority: schedule::Priority,
+		origin: T::PalletsOrigin,
+		call: <T as Config>::Call,
+	) -> Result<TaskAddress<T::BlockNumber>, DispatchError> {
+		let address = Self::do_schedule(None, when, maybe_periodic, priority, origin, call)?;
+		let (when, index) = address;
+
+		Self::deposit_event(RawEvent::Scheduled(when, index));
+
+		Ok(address)
 	}
 
 	fn do_cancel(
@@ -578,35 +609,11 @@ impl<T: Config> Module<T> {
 			return Err(Error::<T>::FailedToSchedule.into());
 		}
 
-		let when = Self::resolve_time(when)?;
+		let address = Self::do_schedule(Some(id.clone()), when, maybe_periodic, priority, origin, call)?;
+		let (when, index) = address;
 
-		// sanitize maybe_periodic
-		let maybe_periodic = maybe_periodic
-			.filter(|p| p.1 > 1 && !p.0.is_zero())
-			// Remove one from the number of repetitions since we will schedule one now.
-			.map(|(p, c)| (p, c - 1));
-
-		let s = Scheduled {
-			maybe_id: Some(id.clone()),
-			priority,
-			call,
-			maybe_periodic,
-			origin,
-			_phantom: Default::default(),
-		};
-		Agenda::<T>::append(when, Some(s));
-		let index = Agenda::<T>::decode_len(when).unwrap_or(1) as u32 - 1;
-		if index > T::MaxScheduledPerBlock::get() {
-			log::warn!(
-				target: "runtime::scheduler",
-				"Warning: There are more items queued in the Scheduler than \
-				expected from the runtime configuration. An update might be needed.",
-			);
-		}
-		let address = (when, index);
 		Lookup::<T>::insert(&id, &address);
 		Self::deposit_event(RawEvent::Scheduled(when, index));
-
 		Ok(address)
 	}
 
@@ -680,7 +687,7 @@ impl<T: Config> schedule::Anon<T::BlockNumber, <T as Config>::Call, T::PalletsOr
 		origin: T::PalletsOrigin,
 		call: <T as Config>::Call,
 	) -> Result<Self::Address, DispatchError> {
-		Self::do_schedule(when, maybe_periodic, priority, origin, call)
+		Self::do_schedule_nameless(when, maybe_periodic, priority, origin, call)
 	}
 
 	fn cancel((when, index): Self::Address) -> Result<(), ()> {
@@ -796,8 +803,6 @@ mod tests {
 	}
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-	// todo check current cumulus implementation, add changes accordingly, do something with signedExtra and (un)checked extrinsic (integral to Scheduler?)
-	// todo to include pallet in runtime, not only uncomment but also (implement?) trait
 	type Block = frame_system::mocking::MockBlock<Test>;
 
 	frame_support::construct_runtime!(
@@ -871,5 +876,6 @@ mod tests {
 		type MaxScheduledPerBlock = MaxScheduledPerBlock;
 		type WeightInfo = ();
 		type SponsorshipHandler = ();
+		type PaymentHandler = ();
 	}
 }

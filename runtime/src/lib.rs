@@ -798,11 +798,11 @@ impl pallet_inflation::Config for Runtime {
 	type BlockNumberProvider = RelayChainBlockNumberProvider<Runtime>;
 }
 
-// parameter_types! {
-// 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(50) *
-// 		RuntimeBlockWeights::get().max_block;
-// 	pub const MaxScheduledPerBlock: u32 = 50;
-// }
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(50) *
+		RuntimeBlockWeights::get().max_block;
+	pub const MaxScheduledPerBlock: u32 = 50;
+}
 
 type EvmSponsorshipHandler = (
 	pallet_unique::UniqueEthSponsorshipHandler<Runtime>,
@@ -814,17 +814,18 @@ type SponsorshipHandler = (
 	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
 );
 
-// impl pallet_unq_scheduler::Config for Runtime {
-// 	type Event = Event;
-// 	type Origin = Origin;
-// 	type PalletsOrigin = OriginCaller;
-// 	type Call = Call;
-// 	type MaximumWeight = MaximumSchedulerWeight;
-// 	type ScheduleOrigin = EnsureSigned<AccountId>;
-// 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-// 	type SponsorshipHandler = SponsorshipHandler;
-// 	type WeightInfo = ();
-// }
+impl pallet_unq_scheduler::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type PalletsOrigin = OriginCaller;
+	type Call = Call;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureSigned<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type SponsorshipHandler = SponsorshipHandler;
+	type WeightInfo = ();
+	type PaymentHandler = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
+}
 
 impl pallet_evm_transaction_payment::Config for Runtime {
 	type EvmSponsorshipHandler = EvmSponsorshipHandler;
@@ -885,7 +886,7 @@ construct_runtime!(
 		// Unique Pallets
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
 		Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
-		// Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
+		Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 		// free = 63
 		Charging: pallet_charge_transaction::{Pallet, Call, Storage } = 64,
 		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,

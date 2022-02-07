@@ -14,14 +14,23 @@ import {
   setCollectionSponsorExpectSuccess,
   confirmSponsorshipExpectSuccess,
 } from './util/helpers';
+import {IKeyringPair} from '@polkadot/types/types';
 
 chai.use(chaiAsPromised);
 
-describe.skip('Integration Test scheduler base transaction', () => {
+describe('Integration Test scheduler base transaction', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
+  before(async() => {
+    await usingApi(async () => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+    });
+  });
+
   it('User can transfer owned token with delay (scheduler)', async () => {
     await usingApi(async () => {
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
