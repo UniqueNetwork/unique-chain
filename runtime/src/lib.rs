@@ -149,9 +149,9 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	spec_version: 914000,
 	impl_version: 1,
-	state_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
+	transaction_version: 0,
+	state_version: 0,
 };
 
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
@@ -967,7 +967,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllPalletsWithSystem,
+	AllPalletsReversedWithSystemFirst,
 >;
 
 impl_opaque_keys! {
@@ -1392,7 +1392,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
 			// list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
-			let storage_info = AllPalletsWithSystem::storage_info();
+			let storage_info = AllPalletsReversedWithSystemFirst::storage_info();
 
 			return (list, storage_info)
 		}

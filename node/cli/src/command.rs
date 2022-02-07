@@ -40,6 +40,7 @@ use std::{io::Write, net::SocketAddr};
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
 		"westend-local" => Box::new(chain_spec::local_testnet_westend_config()),
+		"rococo-local" => Box::new(chain_spec::local_testnet_rococo_config()),
 		"dev" => Box::new(chain_spec::development_config()),
 		"" | "local" => Box::new(chain_spec::local_testnet_rococo_config()),
 		path => Box::new(chain_spec::ChainSpec::from_json_file(
@@ -288,6 +289,7 @@ pub fn run() -> Result<()> {
 				let block: Block = generate_genesis_block(&config.chain_spec, state_version)
 					.map_err(|e| format!("{:?}", e))?;
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
+				let genesis_hash = format!("0x{:?}", HexDisplay::from(&block.header().hash().0));
 
 				let polkadot_config = SubstrateCli::create_configuration(
 					&polkadot_cli,
@@ -299,6 +301,7 @@ pub fn run() -> Result<()> {
 				info!("Parachain id: {:?}", id);
 				info!("Parachain Account: {}", parachain_account);
 				info!("Parachain genesis state: {}", genesis_state);
+				info!("Parachain genesis hash: {}", genesis_hash);
 				info!(
 					"Is collating: {}",
 					if config.role.is_authority() {

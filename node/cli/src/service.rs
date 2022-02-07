@@ -257,6 +257,9 @@ where
 	let params = new_partial::<BIQ>(&parachain_config, build_import_queue)?;
 	let (mut telemetry, filter_pool, frontier_backend, telemetry_worker_handle, fee_history_cache) =
 		params.other;
+
+	let client = params.client.clone();
+	let backend = params.backend.clone();
 	let mut task_manager = params.task_manager;
 
 	let (relay_chain_interface, collator_key) =
@@ -265,10 +268,8 @@ where
 				polkadot_service::Error::Sub(x) => x,
 				s => format!("{}", s).into(),
 			})?;
-	let block_announce_validator = BlockAnnounceValidator::new(relay_chain_interface.clone(), id);
 
-	let client = params.client.clone();
-	let backend = params.backend.clone();
+	let block_announce_validator = BlockAnnounceValidator::new(relay_chain_interface.clone(), id);
 
 	let force_authoring = parachain_config.force_authoring;
 	let validator = parachain_config.role.is_authority();
@@ -293,7 +294,6 @@ where
 	let rpc_client = client.clone();
 	let rpc_pool = transaction_pool.clone();
 	let select_chain = params.select_chain.clone();
-	let is_authority = parachain_config.role.clone().is_authority();
 	let rpc_network = network.clone();
 
 	let rpc_frontier_backend = frontier_backend.clone();
@@ -317,7 +317,7 @@ where
 			filter_pool: filter_pool.clone(),
 			network: rpc_network.clone(),
 			select_chain: select_chain.clone(),
-			is_authority,
+			is_authority: validator,
 			// TODO: Unhardcode
 			max_past_logs: 10000,
 			block_data_cache: block_data_cache.clone(),
