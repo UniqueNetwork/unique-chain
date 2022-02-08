@@ -54,6 +54,7 @@ pub use frame_support::{
 		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients,
 	},
 };
+use pallet_unq_scheduler::ApplyExtrinsic;
 use up_data_structs::*;
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
@@ -822,9 +823,24 @@ impl pallet_unq_scheduler::Config for Runtime {
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureSigned<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type SponsorshipHandler = SponsorshipHandler;
 	type WeightInfo = ();
-	type PaymentHandler = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
+	type Executor = Ex;
+}
+
+// pub fn sign(xt: CheckedExtrinsic) -> UncheckedExtrinsic {
+// 	node_testing::keyring::sign(xt, SPEC_VERSION, TRANSACTION_VERSION, GENESIS_HASH)
+// }
+
+struct Ex;
+impl<C: Dispatchable> ApplyExtrinsic<C> for Ex {
+	fn apply_extrinsic(signer: Address, function: C) -> ApplyExtrinsicResult {
+		let extrinsic = sign(fp_self_contained::CheckedExtrinsic {
+			signed: fp_self_contained::CheckedSignature::SelfContained(None),
+			function: function,
+		});
+
+		Executive::apply_extrinsic(extrinsic)
+	}
 }
 
 impl pallet_evm_transaction_payment::Config for Runtime {

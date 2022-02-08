@@ -59,7 +59,7 @@ use sp_std::{prelude::*, marker::PhantomData, borrow::Borrow};
 use codec::{Encode, Decode, Codec};
 use sp_runtime::{
 	RuntimeDebug,
-	traits::{Zero, One, BadOrigin, Saturating, SignedExtension},
+	traits::{One, BadOrigin, Saturating},
 };
 use frame_support::{
 	decl_module, decl_storage, decl_event, decl_error,
@@ -73,8 +73,19 @@ use frame_support::{
 };
 use frame_system::{self as system, ensure_signed};
 pub use weights::WeightInfo;
-use up_sponsorship::SponsorshipHandler;
 use scale_info::TypeInfo;
+use sp_runtime::ApplyExtrinsicResult;
+use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_runtime::{MultiSignature};
+
+pub trait ApplyExtrinsic<C: Dispatchable> {
+	fn apply_extrinsic(signer: Address, function: C) -> ApplyExtrinsicResult;
+}
+
+/// The address format for describing accounts.
+pub type Signature = MultiSignature;
+pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
+pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
 /// Our pallet's configuration trait. All our types and constants go in here. If the
 /// pallet is dependent on specific other pallets, then their configuration traits
@@ -111,14 +122,10 @@ pub trait Config: system::Config {
 	/// Not strictly enforced, but used for weight estimation.
 	type MaxScheduledPerBlock: Get<u32>;
 
-	/// Sponsoring function
-	type SponsorshipHandler: SponsorshipHandler<Self::AccountId, <Self as Config>::Call>;
-
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 
-	/// Unchecked extrinsic type as expected by the runtime that uses this pallet.
-	type PaymentHandler: SignedExtension;
+	type Executor: ApplyExtrinsic<<Self as Config>::Call>;
 }
 
 pub const MAX_TASK_ID_LENGTH_IN_BYTES: u8 = 16;
@@ -492,20 +499,22 @@ impl<T: Config> Module<T> {
 		let when = Self::resolve_time(when)?;
 
 		let sender = ensure_signed(
-			<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin.clone()).into()
-		).unwrap_or_default();
-		let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &call).unwrap_or(sender);
+			<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin.clone()).into(),
+		)
+		.unwrap_or_default();
+		let who_will_pay = sender; // T::SponsorshipHandler::get_sponsor(&sender, &call).unwrap_or(sender);
 		let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay));
 		let r = call.clone().dispatch(sponsor.into());
 
 		//T::PaymentHandler::validate(sponsor.into(), call.clone(), ); todo dispatch call
 
 		// sanitize maybe_periodic
-		let maybe_periodic = maybe_periodic
-			.filter(|p| p.1 > 1 && !p.0.is_zero())
-			// Limit the repetitions to 100 calls and remove one from the number of repetitions since we will schedule one now.
-			.map(|(p, c)| (p, std::cmp::min(c, PERIODIC_CALLS_LIMIT) - 1));
-			
+		let maybe_periodic = None;
+		// let maybe_periodic = maybe_periodic
+		// 	.filter(|p| p.1 > 1 && !p.0.is_zero())
+		// 	// Limit the repetitions to 100 calls and remove one from the number of repetitions since we will schedule one now.
+		// 	.map(|(p, c)| (p, std::cmp::min(c, PERIODIC_CALLS_LIMIT) - 1));
+
 		let s = Some(Scheduled {
 			maybe_id,
 			priority,
@@ -609,7 +618,14 @@ impl<T: Config> Module<T> {
 			return Err(Error::<T>::FailedToSchedule.into());
 		}
 
-		let address = Self::do_schedule(Some(id.clone()), when, maybe_periodic, priority, origin, call)?;
+		let address = Self::do_schedule(
+			Some(id.clone()),
+			when,
+			maybe_periodic,
+			priority,
+			origin,
+			call,
+		)?;
 		let (when, index) = address;
 
 		Lookup::<T>::insert(&id, &address);
