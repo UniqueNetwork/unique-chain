@@ -68,7 +68,6 @@ use smallvec::smallvec;
 use codec::{Encode, Decode};
 use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
 use fp_rpc::TransactionStatus;
-use sp_core::crypto::Public;
 use sp_runtime::{
 	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf},
 	transaction_validity::TransactionValidityError,

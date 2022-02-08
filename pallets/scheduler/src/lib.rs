@@ -674,7 +674,9 @@ mod tests {
 	use super::*;
 
 	use frame_support::{
-		ord_parameter_types, parameter_types, traits::Contains, weights::constants::RocksDbWeight,
+		ord_parameter_types, parameter_types,
+		traits::{Contains, ConstU32, EnsureOneOf},
+		weights::constants::RocksDbWeight,
 	};
 	use sp_core::H256;
 	use sp_runtime::{
@@ -682,7 +684,7 @@ mod tests {
 		testing::Header,
 		traits::{BlakeTwo256, IdentityLookup},
 	};
-	use frame_system::{EnsureOneOf, EnsureRoot, EnsureSignedBy};
+	use frame_system::{EnsureRoot, EnsureSignedBy};
 	use crate as scheduler;
 
 	mod logger {
@@ -779,6 +781,7 @@ mod tests {
 		type SystemWeightInfo = ();
 		type SS58Prefix = ();
 		type OnSetCode = ();
+		type MaxConsumers = ConstU32<16>;
 	}
 	impl logger::Config for Test {
 		type Event = Event;
@@ -797,7 +800,7 @@ mod tests {
 		type PalletsOrigin = OriginCaller;
 		type Call = Call;
 		type MaximumWeight = MaximumSchedulerWeight;
-		type ScheduleOrigin = EnsureOneOf<u64, EnsureRoot<u64>, EnsureSignedBy<One, u64>>;
+		type ScheduleOrigin = EnsureOneOf<EnsureRoot<u64>, EnsureSignedBy<One, u64>>;
 		type MaxScheduledPerBlock = MaxScheduledPerBlock;
 		type WeightInfo = ();
 		type SponsorshipHandler = ();
