@@ -255,6 +255,8 @@ export async function executeEthTxOnSub(web3: Web3, api: ApiPromise, from: IKeyr
     GAS_ARGS.gas,
     await web3.eth.getGasPrice(),
     null,
+    null,
+    [],
   );
   const events = await submitTransactionAsync(from, tx);
   expect(events.some(({event: {section, method}}) => section == 'evm' && method == 'Executed')).to.be.true;

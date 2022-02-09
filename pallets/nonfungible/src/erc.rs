@@ -338,8 +338,14 @@ impl<T: Config> NonfungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token = token_id.try_into()?;
 
-		<Pallet<T>>::set_variable_metadata(self, &caller, token, data)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::set_variable_metadata(
+			self,
+			&caller,
+			token,
+			data.try_into()
+				.map_err(|_| "metadata size exceeded limit")?,
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
@@ -349,7 +355,8 @@ impl<T: Config> NonfungibleHandle<T> {
 
 		Ok(<TokenData<T>>::get((self.id, token))
 			.ok_or("token not found")?
-			.variable_data)
+			.variable_data
+			.into_inner())
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(token_ids.len() as u32))]

@@ -1,5 +1,5 @@
 use crate::Config;
-use codec::{Encode, EncodeLike, Decode};
+use codec::{Encode, EncodeLike, Decode, MaxEncodedLen};
 use sp_core::H160;
 use scale_info::{Type, TypeInfo};
 use core::cmp::Ordering;
@@ -10,7 +10,7 @@ use sp_std::clone::Clone;
 pub use up_evm_mapping::EvmBackwardsAddressMapping;
 
 pub trait CrossAccountId<AccountId>:
-	Encode + EncodeLike + Decode + TypeInfo + Clone + PartialEq + Ord + core::fmt::Debug + Default
+	Encode + EncodeLike + Decode + TypeInfo + MaxEncodedLen + Clone + PartialEq + Ord + core::fmt::Debug
 // +
 // Serialize + Deserialize<'static>
 {
@@ -23,7 +23,7 @@ pub trait CrossAccountId<AccountId>:
 	fn conv_eq(&self, other: &Self) -> bool;
 }
 
-#[derive(Encode, Decode, Serialize, Deserialize, TypeInfo)]
+#[derive(Encode, Decode, Serialize, Deserialize, TypeInfo, MaxEncodedLen)]
 #[serde(rename_all = "camelCase")]
 enum BasicCrossAccountIdRepr<AccountId> {
 	Substrate(AccountId),
@@ -38,17 +38,17 @@ pub struct BasicCrossAccountId<T: Config> {
 	ethereum: H160,
 }
 
+impl<T: Config> MaxEncodedLen for BasicCrossAccountId<T> {
+	fn max_encoded_len() -> usize {
+		<BasicCrossAccountIdRepr<T::AccountId>>::max_encoded_len()
+	}
+}
+
 impl<T: Config> TypeInfo for BasicCrossAccountId<T> {
 	type Identity = Self;
 
 	fn type_info() -> Type {
 		<BasicCrossAccountIdRepr<T::AccountId>>::type_info()
-	}
-}
-
-impl<T: Config> Default for BasicCrossAccountId<T> {
-	fn default() -> Self {
-		Self::from_sub(T::AccountId::default())
 	}
 }
 
