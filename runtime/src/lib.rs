@@ -815,6 +815,23 @@ type SponsorshipHandler = (
 	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
 );
 
+// pub fn sign(xt: CheckedExtrinsic) -> UncheckedExtrinsic {
+// 	node_testing::keyring::sign(xt, SPEC_VERSION, TRANSACTION_VERSION, GENESIS_HASH)
+// }
+
+pub struct SchedulerPaymentExecutor;
+impl<C: Dispatchable> ApplyExtrinsic<C> for SchedulerPaymentExecutor {
+	fn apply_extrinsic(signer: Address, function: C) -> ApplyExtrinsicResult {
+		/*let extrinsic = sign(fp_self_contained::CheckedExtrinsic {
+			signed: fp_self_contained::CheckedSignature::SelfContained(None),
+			function,
+		});
+
+		Executive::apply_extrinsic(extrinsic)*/
+		todo!()
+	}
+}
+
 impl pallet_unq_scheduler::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
@@ -824,23 +841,7 @@ impl pallet_unq_scheduler::Config for Runtime {
 	type ScheduleOrigin = EnsureSigned<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = ();
-	type Executor = Ex;
-}
-
-// pub fn sign(xt: CheckedExtrinsic) -> UncheckedExtrinsic {
-// 	node_testing::keyring::sign(xt, SPEC_VERSION, TRANSACTION_VERSION, GENESIS_HASH)
-// }
-
-struct Ex;
-impl<C: Dispatchable> ApplyExtrinsic<C> for Ex {
-	fn apply_extrinsic(signer: Address, function: C) -> ApplyExtrinsicResult {
-		let extrinsic = sign(fp_self_contained::CheckedExtrinsic {
-			signed: fp_self_contained::CheckedSignature::SelfContained(None),
-			function: function,
-		});
-
-		Executive::apply_extrinsic(extrinsic)
-	}
+	type Executor = SchedulerPaymentExecutor;
 }
 
 impl pallet_evm_transaction_payment::Config for Runtime {

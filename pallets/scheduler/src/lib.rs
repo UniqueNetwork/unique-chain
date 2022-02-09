@@ -55,11 +55,11 @@
 mod benchmarking;
 pub mod weights;
 
-use sp_std::{prelude::*, marker::PhantomData, borrow::Borrow};
+use sp_std::{prelude::*, marker::PhantomData, borrow::Borrow, cmp};
 use codec::{Encode, Decode, Codec};
 use sp_runtime::{
 	RuntimeDebug,
-	traits::{One, BadOrigin, Saturating},
+	traits::{Zero, One, BadOrigin, Saturating},
 };
 use frame_support::{
 	decl_module, decl_storage, decl_event, decl_error,
@@ -241,7 +241,6 @@ decl_module! {
 	{
 		type Error = Error<T>;
 		fn deposit_event() = default;
-
 
 		/// Anonymously schedule a task.
 		///
@@ -506,14 +505,14 @@ impl<T: Config> Module<T> {
 		let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay));
 		let r = call.clone().dispatch(sponsor.into());
 
-		//T::PaymentHandler::validate(sponsor.into(), call.clone(), ); todo dispatch call
+		//T::PaymentHandler::apply();
+		//T::PaymentHandler::validate(sponsor.into(), call.clone(), ); todo dispatch extrinsic here
 
 		// sanitize maybe_periodic
-		let maybe_periodic = None;
-		// let maybe_periodic = maybe_periodic
-		// 	.filter(|p| p.1 > 1 && !p.0.is_zero())
-		// 	// Limit the repetitions to 100 calls and remove one from the number of repetitions since we will schedule one now.
-		// 	.map(|(p, c)| (p, std::cmp::min(c, PERIODIC_CALLS_LIMIT) - 1));
+		let maybe_periodic = maybe_periodic
+			.filter(|p| p.1 > 1 && !p.0.is_zero())
+			// Limit the repetitions to 100 calls and remove one from the number of repetitions since we will schedule one now.
+			.map(|(p, c)| (p, cmp::min(c, PERIODIC_CALLS_LIMIT) - 1));
 
 		let s = Some(Scheduled {
 			maybe_id,
@@ -571,6 +570,7 @@ impl<T: Config> Module<T> {
 		if let Some(s) = scheduled {
 			if let Some(id) = s.maybe_id {
 				Lookup::<T>::remove(id);
+				// todo add back money / displace to another function for consistency
 			}
 			Self::deposit_event(RawEvent::Canceled(when, index));
 			Ok(())
@@ -648,6 +648,7 @@ impl<T: Config> Module<T> {
 					}
 					Ok(())
 				})?;
+				// todo add money back / displace to another function
 				Self::deposit_event(RawEvent::Canceled(when, index));
 				Ok(())
 			} else {
@@ -795,7 +796,7 @@ mod tests {
 			pub struct Module<T: Config> for enum Call
 			where
 				origin: <T as system::Config>::Origin,
-				<T as system::Config>::Origin: OriginTrait<PalletsOrigin = OriginCaller>
+					<T as system::Config>::Origin: OriginTrait<PalletsOrigin = OriginCaller>
 			{
 				fn deposit_event() = default;
 
@@ -838,6 +839,13 @@ mod tests {
 	impl Contains<Call> for BaseFilter {
 		fn contains(call: &Call) -> bool {
 			!matches!(call, Call::Logger(logger::Call::log { .. }))
+		}
+	}
+
+	pub struct DummyExecutor; // todo do something with naming and function body
+	impl<C: Dispatchable> ApplyExtrinsic<C> for DummyExecutor {
+		fn apply_extrinsic(_signer: Address, _function: C) -> ApplyExtrinsicResult {
+			todo!()
 		}
 	}
 
@@ -891,7 +899,6 @@ mod tests {
 		type ScheduleOrigin = EnsureOneOf<u64, EnsureRoot<u64>, EnsureSignedBy<One, u64>>;
 		type MaxScheduledPerBlock = MaxScheduledPerBlock;
 		type WeightInfo = ();
-		type SponsorshipHandler = ();
-		type PaymentHandler = ();
+		type Executor = DummyExecutor;
 	}
 }
