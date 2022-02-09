@@ -1,8 +1,8 @@
 use core::marker::PhantomData;
 
 use sp_std::collections::btree_map::BTreeMap;
-use frame_support::{dispatch::DispatchResultWithPostInfo, fail, weights::Weight};
-use up_data_structs::TokenId;
+use frame_support::{dispatch::DispatchResultWithPostInfo, fail, weights::Weight, BoundedVec};
+use up_data_structs::{TokenId, CustomDataLimit};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
@@ -184,7 +184,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		&self,
 		sender: T::CrossAccountId,
 		token: TokenId,
-		data: Vec<u8>,
+		data: BoundedVec<u8, CustomDataLimit>,
 	) -> DispatchResultWithPostInfo {
 		let len = data.len();
 		with_weight(
@@ -207,14 +207,18 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		TokenId(<TokensMinted<T>>::get(self.id))
 	}
 
-	fn token_owner(&self, _token: TokenId) -> T::CrossAccountId {
-		T::CrossAccountId::default()
+	fn token_owner(&self, _token: TokenId) -> Option<T::CrossAccountId> {
+		None
 	}
 	fn const_metadata(&self, token: TokenId) -> Vec<u8> {
-		<TokenData<T>>::get((self.id, token)).const_data
+		<TokenData<T>>::get((self.id, token))
+			.const_data
+			.into_inner()
 	}
 	fn variable_metadata(&self, token: TokenId) -> Vec<u8> {
-		<TokenData<T>>::get((self.id, token)).variable_data
+		<TokenData<T>>::get((self.id, token))
+			.variable_data
+			.into_inner()
 	}
 
 	fn collection_tokens(&self) -> u32 {

@@ -31,7 +31,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		collection: CollectionId,
 		token: TokenId,
 		at: Option<BlockHash>,
-	) -> Result<CrossAccountId>;
+	) -> Result<Option<CrossAccountId>>;
 	#[rpc(name = "unique_constMetadata")]
 	fn const_metadata(
 		&self,
@@ -168,7 +168,7 @@ where
 {
 	pass_method!(account_tokens(collection: CollectionId, account: CrossAccountId) -> Vec<TokenId>);
 	pass_method!(token_exists(collection: CollectionId, token: TokenId) -> bool);
-	pass_method!(token_owner(collection: CollectionId, token: TokenId) -> CrossAccountId);
+	pass_method!(token_owner(collection: CollectionId, token: TokenId) -> Option<CrossAccountId>);
 	pass_method!(const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
 	pass_method!(variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
 	pass_method!(collection_tokens(collection: CollectionId) -> u32);
