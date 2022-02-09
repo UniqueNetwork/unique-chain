@@ -77,9 +77,10 @@ use scale_info::TypeInfo;
 use sp_runtime::ApplyExtrinsicResult;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sp_runtime::{MultiSignature};
+use sp_core::{H160};
 
-pub trait ApplyExtrinsic<C: Dispatchable> {
-	fn apply_extrinsic(signer: Address, function: C) -> ApplyExtrinsicResult;
+pub trait ApplyCall<C: Dispatchable, SelfContainedSignedInfo> {
+	fn apply_call(signer: Address, function: C);
 }
 
 /// The address format for describing accounts.
@@ -125,7 +126,8 @@ pub trait Config: system::Config {
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 
-	type Executor: ApplyExtrinsic<<Self as Config>::Call>;
+	/// A type that allows you to use SignedExtra additional logic when dispatching call
+	type Executor: ApplyCall<<Self as system::Config>::Call, H160>;
 }
 
 pub const MAX_TASK_ID_LENGTH_IN_BYTES: u8 = 16;
@@ -425,13 +427,18 @@ decl_module! {
 					// - It is the first item in the schedule
 					if s.priority <= schedule::HARD_DEADLINE || cumulative_weight <= limit || order == 0 {
 
-						// let origin = <<T as Config>::Origin as From<T::PalletsOrigin>>::from(
-						// 	s.origin.clone()
-						// ).into();
+						let origin = <<T as Config>::Origin as From<T::PalletsOrigin>>::from(
+							 s.origin.clone()
+						).into();
 						// let sender = ensure_signed(origin).unwrap_or_default();
 						// let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &s.call).unwrap_or(sender);
 						// let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay));
 						// let r = s.call.clone().dispatch(sponsor.into());
+
+
+						let sender = ensure_signed(origin).unwrap_or_default();
+						T::Executor::apply_call(sender.clone(), s.call.clone());
+
 						let maybe_id = s.maybe_id.clone();
 						if let Some((period, count)) = s.maybe_periodic {
 							if count > 1 {

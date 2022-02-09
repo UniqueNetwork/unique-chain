@@ -17,6 +17,8 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
 use sp_runtime::DispatchError;
+use fp_self_contained::*;
+use sp_runtime::traits::{Applyable, Member};
 // #[cfg(any(feature = "std", test))]
 // pub use sp_runtime::BuildStorage;
 
@@ -824,22 +826,33 @@ impl pallet_unq_scheduler::Config for Runtime {
 	type ScheduleOrigin = EnsureSigned<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = ();
-	type Executor = Ex;
+	type Executor = Executor;
 }
 
-// pub fn sign(xt: CheckedExtrinsic) -> UncheckedExtrinsic {
-// 	node_testing::keyring::sign(xt, SPEC_VERSION, TRANSACTION_VERSION, GENESIS_HASH)
-// }
+pub struct Executor;
+impl<C, SelfContainedSignedInfo> ApplyExtrinsic<C, SelfContainedSignedInfo> for Executor
+where
+	C: Member
+		+ Dispatchable<Origin = Origin, Info = DispatchInfo>
+		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>
+		+ GetDispatchInfo
+		+ From<frame_system::Call<Runtime>>,
+	SelfContainedSignedInfo: Send + Sync + 'static,
+	Call: From<C> + SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
+{
+	fn apply_call(signer: Address, call: C) {
+		let dispatch_info = call.get_dispatch_info();
+		let extrinsic = fp_self_contained::CheckedExtrinsic::<
+			AccountId,
+			Call,
+			SignedExtra,
+			SelfContainedSignedInfo,
+		> {
+			signed: CheckedSignature::<AccountId, SignedExtra, SelfContainedSignedInfo>::Unsigned, // change to signer
+			function: call.into(),
+		};
 
-struct Ex;
-impl<C: Dispatchable> ApplyExtrinsic<C> for Ex {
-	fn apply_extrinsic(signer: Address, function: C) -> ApplyExtrinsicResult {
-		let extrinsic = sign(fp_self_contained::CheckedExtrinsic {
-			signed: fp_self_contained::CheckedSignature::SelfContained(None),
-			function: function,
-		});
-
-		Executive::apply_extrinsic(extrinsic)
+		extrinsic.apply::<Runtime>(&dispatch_info, 0);
 	}
 }
 
