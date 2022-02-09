@@ -34,6 +34,8 @@ describe('EVM payable contracts', () => {
         GAS_ARGS.gas,
         await web3.eth.getGasPrice(),
         null,
+        null,
+        [],
       );
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);

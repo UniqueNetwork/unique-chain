@@ -2,7 +2,7 @@
 
 use frame_support::{ensure, BoundedVec};
 use up_data_structs::{
-	AccessMode, CUSTOM_DATA_LIMIT, Collection, CollectionId, CustomDataLimit,
+	AccessMode, Collection, CollectionId, CustomDataLimit,
 	MAX_REFUNGIBLE_PIECES, TokenId, CreateCollectionData,
 };
 use pallet_common::{
@@ -11,7 +11,7 @@ use pallet_common::{
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use core::ops::Deref;
-use codec::{Encode, Decode};
+use codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
 pub use pallet::*;
@@ -27,10 +27,10 @@ pub struct CreateItemData<T: Config> {
 }
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
-#[derive(Encode, Decode, Default, TypeInfo)]
+#[derive(Encode, Decode, Default, TypeInfo, MaxEncodedLen)]
 pub struct ItemData {
-	pub const_data: Vec<u8>,
-	pub variable_data: Vec<u8>,
+	pub const_data: BoundedVec<u8, CustomDataLimit>,
+	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 }
 
 #[frame_support::pallet]
@@ -440,8 +440,8 @@ impl<T: Config> Pallet<T> {
 			<TokenData<T>>::insert(
 				(collection.id, token_id),
 				ItemData {
-					const_data: token.const_data.into(),
-					variable_data: token.variable_data.into(),
+					const_data: token.const_data,
+					variable_data: token.variable_data,
 				},
 			);
 			for (user, amount) in token.users.into_iter() {
@@ -582,12 +582,8 @@ impl<T: Config> Pallet<T> {
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		token: TokenId,
-		data: Vec<u8>,
+		data: BoundedVec<u8, CustomDataLimit>,
 	) -> DispatchResult {
-		ensure!(
-			data.len() as u32 <= CUSTOM_DATA_LIMIT,
-			<CommonError<T>>::TokenVariableDataLimitExceeded
-		);
 		collection.check_can_update_meta(
 			sender,
 			&T::CrossAccountId::from_sub(collection.owner.clone()),

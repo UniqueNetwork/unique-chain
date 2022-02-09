@@ -1,7 +1,6 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { EthereumTransactionLegacyTransaction } from './ethereum';
 import type { CumulusPrimitivesParachainInherentParachainInherentData } from './polkadot';
 import type { PalletCommonAccountBasicCrossAccountIdRepr, UpDataStructsAccessMode, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCreateCollectionData, UpDataStructsCreateItemData, UpDataStructsMetaUpdatePermission, UpDataStructsSchemaVersion } from './unique';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
@@ -33,7 +32,7 @@ declare module '@polkadot/api/types/submittable' {
        * Set the balances of a given account.
        * 
        * This will alter `FreeBalance` and `ReservedBalance` in storage. it will
-       * also decrease the total issuance of the system (`TotalIssuance`).
+       * also alter the total issuance of the system (`TotalIssuance`) appropriately.
        * If the new free or reserved balance is below the existential deposit,
        * it will reset the account nonce (`frame_system::AccountNonce`).
        * 
@@ -44,7 +43,6 @@ declare module '@polkadot/api/types/submittable' {
        * Transfer some liquid free balance to another account.
        * 
        * `transfer` will set the `FreeBalance` of the sender and receiver.
-       * It will decrease the total issuance of the system by the `TransferFee`.
        * If the sender's account is below the existential deposit as a result
        * of the transfer, the account will be reaped.
        * 
@@ -140,7 +138,7 @@ declare module '@polkadot/api/types/submittable' {
       /**
        * Transact an Ethereum transaction.
        **/
-      transact: AugmentedSubmittable<(transaction: EthereumTransactionLegacyTransaction | { nonce?: any; gasPrice?: any; gasLimit?: any; action?: any; value?: any; input?: any; signature?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [EthereumTransactionLegacyTransaction]>;
+      transact: AugmentedSubmittable<(transaction: EthereumTransactionTransactionV2 | { Legacy: any } | { EIP2930: any } | { EIP1559: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [EthereumTransactionTransactionV2]>;
       /**
        * Generic tx
        **/
@@ -150,16 +148,16 @@ declare module '@polkadot/api/types/submittable' {
       /**
        * Issue an EVM call operation. This is similar to a message call transaction in Ethereum.
        **/
-      call: AugmentedSubmittable<(source: H160 | string | Uint8Array, target: H160 | string | Uint8Array, input: Bytes | string | Uint8Array, value: U256 | AnyNumber | Uint8Array, gasLimit: u64 | AnyNumber | Uint8Array, gasPrice: U256 | AnyNumber | Uint8Array, nonce: Option<U256> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [H160, H160, Bytes, U256, u64, U256, Option<U256>]>;
+      call: AugmentedSubmittable<(source: H160 | string | Uint8Array, target: H160 | string | Uint8Array, input: Bytes | string | Uint8Array, value: U256 | AnyNumber | Uint8Array, gasLimit: u64 | AnyNumber | Uint8Array, maxFeePerGas: U256 | AnyNumber | Uint8Array, maxPriorityFeePerGas: Option<U256> | null | object | string | Uint8Array, nonce: Option<U256> | null | object | string | Uint8Array, accessList: Vec<ITuple<[H160, Vec<H256>]>> | ([H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]])[]) => SubmittableExtrinsic<ApiType>, [H160, H160, Bytes, U256, u64, U256, Option<U256>, Option<U256>, Vec<ITuple<[H160, Vec<H256>]>>]>;
       /**
        * Issue an EVM create operation. This is similar to a contract creation transaction in
        * Ethereum.
        **/
-      create: AugmentedSubmittable<(source: H160 | string | Uint8Array, init: Bytes | string | Uint8Array, value: U256 | AnyNumber | Uint8Array, gasLimit: u64 | AnyNumber | Uint8Array, gasPrice: U256 | AnyNumber | Uint8Array, nonce: Option<U256> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [H160, Bytes, U256, u64, U256, Option<U256>]>;
+      create: AugmentedSubmittable<(source: H160 | string | Uint8Array, init: Bytes | string | Uint8Array, value: U256 | AnyNumber | Uint8Array, gasLimit: u64 | AnyNumber | Uint8Array, maxFeePerGas: U256 | AnyNumber | Uint8Array, maxPriorityFeePerGas: Option<U256> | null | object | string | Uint8Array, nonce: Option<U256> | null | object | string | Uint8Array, accessList: Vec<ITuple<[H160, Vec<H256>]>> | ([H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]])[]) => SubmittableExtrinsic<ApiType>, [H160, Bytes, U256, u64, U256, Option<U256>, Option<U256>, Vec<ITuple<[H160, Vec<H256>]>>]>;
       /**
        * Issue an EVM create2 operation.
        **/
-      create2: AugmentedSubmittable<(source: H160 | string | Uint8Array, init: Bytes | string | Uint8Array, salt: H256 | string | Uint8Array, value: U256 | AnyNumber | Uint8Array, gasLimit: u64 | AnyNumber | Uint8Array, gasPrice: U256 | AnyNumber | Uint8Array, nonce: Option<U256> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [H160, Bytes, H256, U256, u64, U256, Option<U256>]>;
+      create2: AugmentedSubmittable<(source: H160 | string | Uint8Array, init: Bytes | string | Uint8Array, salt: H256 | string | Uint8Array, value: U256 | AnyNumber | Uint8Array, gasLimit: u64 | AnyNumber | Uint8Array, maxFeePerGas: U256 | AnyNumber | Uint8Array, maxPriorityFeePerGas: Option<U256> | null | object | string | Uint8Array, nonce: Option<U256> | null | object | string | Uint8Array, accessList: Vec<ITuple<[H160, Vec<H256>]>> | ([H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]])[]) => SubmittableExtrinsic<ApiType>, [H160, Bytes, H256, U256, u64, U256, Option<U256>, Option<U256>, Vec<ITuple<[H160, Vec<H256>]>>]>;
       /**
        * Withdraw balance from EVM into currency/balances pallet.
        **/
@@ -297,8 +295,8 @@ declare module '@polkadot/api/types/submittable' {
        * an `AccountId32` value.
        * - `assets`: The assets to be withdrawn. The first item should be the currency used to to pay the fee on the
        * `dest` side. May not be empty.
-       * - `dest_weight`: Equal to the total weight on `dest` of the XCM message
-       * `Teleport { assets, effects: [ BuyExecution{..}, DepositAsset{..} ] }`.
+       * - `fee_asset_item`: The index into `assets` of the item which should be used to pay
+       * fees.
        * - `weight_limit`: The remote-side weight limit, if any, for the XCM fee purchase.
        **/
       limitedTeleportAssets: AugmentedSubmittable<(dest: XcmVersionedMultiLocation | { V0: any } | { V1: any } | string | Uint8Array, beneficiary: XcmVersionedMultiLocation | { V0: any } | { V1: any } | string | Uint8Array, assets: XcmVersionedMultiAssets | { V0: any } | { V1: any } | string | Uint8Array, feeAssetItem: u32 | AnyNumber | Uint8Array, weightLimit: XcmV2WeightLimit | { Unlimited: any } | { Limited: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [XcmVersionedMultiLocation, XcmVersionedMultiLocation, XcmVersionedMultiAssets, u32, XcmV2WeightLimit]>;
@@ -336,8 +334,8 @@ declare module '@polkadot/api/types/submittable' {
        * an `AccountId32` value.
        * - `assets`: The assets to be withdrawn. The first item should be the currency used to to pay the fee on the
        * `dest` side. May not be empty.
-       * - `dest_weight`: Equal to the total weight on `dest` of the XCM message
-       * `Teleport { assets, effects: [ BuyExecution{..}, DepositAsset{..} ] }`.
+       * - `fee_asset_item`: The index into `assets` of the item which should be used to pay
+       * fees.
        **/
       teleportAssets: AugmentedSubmittable<(dest: XcmVersionedMultiLocation | { V0: any } | { V1: any } | string | Uint8Array, beneficiary: XcmVersionedMultiLocation | { V0: any } | { V1: any } | string | Uint8Array, assets: XcmVersionedMultiAssets | { V0: any } | { V1: any } | string | Uint8Array, feeAssetItem: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [XcmVersionedMultiLocation, XcmVersionedMultiLocation, XcmVersionedMultiAssets, u32]>;
       /**
@@ -986,6 +984,22 @@ declare module '@polkadot/api/types/submittable' {
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
     xcmpQueue: {
+      /**
+       * Services a single overweight XCM.
+       * 
+       * - `origin`: Must pass `ExecuteOverweightOrigin`.
+       * - `index`: The index of the overweight XCM to service
+       * - `weight_limit`: The amount of weight that XCM execution may take.
+       * 
+       * Errors:
+       * - `BadOverweightIndex`: XCM under `index` is not found in the `Overweight` storage map.
+       * - `BadXcm`: XCM under `index` cannot be properly decoded into a valid XCM format.
+       * - `WeightOverLimit`: XCM execution may use greater `weight_limit`.
+       * 
+       * Events:
+       * - `OverweightServiced`: On success.
+       **/
+      serviceOverweight: AugmentedSubmittable<(index: u64 | AnyNumber | Uint8Array, weightLimit: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, u64]>;
       /**
        * Generic tx
        **/

@@ -43,37 +43,37 @@ version = '2.3.0'
 default-features = false
 optional = true
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.14'
+branch = 'polkadot-v0.9.16'
 
 [dependencies.frame-support]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.14'
+branch = 'polkadot-v0.9.16'
 
 [dependencies.frame-system]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.14'
+branch = 'polkadot-v0.9.16'
 
 [dependencies.pallet-balances]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.14'
+branch = 'polkadot-v0.9.16'
 
 [dependencies.pallet-timestamp]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.14'
+branch = 'polkadot-v0.9.16'
 
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.14'
+branch = 'polkadot-v0.9.16'
 
 [dependencies.sp-std]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.14'
+branch = 'polkadot-v0.9.16'
 
 [dependencies.serde]
 default-features = false
@@ -83,17 +83,17 @@ version = '1.0.130'
 [dependencies.sp-runtime]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.14'
+branch = 'polkadot-v0.9.16'
 
 [dependencies.sp-core]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.14'
+branch = 'polkadot-v0.9.16'
 
 [dependencies.sp-io]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.14'
+branch = 'polkadot-v0.9.16'
 
 [dependencies]
 scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }

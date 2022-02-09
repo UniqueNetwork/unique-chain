@@ -395,9 +395,9 @@ declare module '@polkadot/api/types/events' {
     };
     sudo: {
       /**
-       * The \[sudoer\] just switched identity; the old key is supplied.
+       * The \[sudoer\] just switched identity; the old key is supplied if one existed.
        **/
-      KeyChanged: AugmentedEvent<ApiType, [AccountId32]>;
+      KeyChanged: AugmentedEvent<ApiType, [Option<AccountId32>]>;
       /**
        * A sudo just took place. \[result\]
        **/
@@ -417,23 +417,23 @@ declare module '@polkadot/api/types/events' {
        **/
       CodeUpdated: AugmentedEvent<ApiType, []>;
       /**
-       * An extrinsic failed. \[error, info\]
+       * An extrinsic failed.
        **/
       ExtrinsicFailed: AugmentedEvent<ApiType, [SpRuntimeDispatchError, FrameSupportWeightsDispatchInfo]>;
       /**
-       * An extrinsic completed successfully. \[info\]
+       * An extrinsic completed successfully.
        **/
       ExtrinsicSuccess: AugmentedEvent<ApiType, [FrameSupportWeightsDispatchInfo]>;
       /**
-       * An \[account\] was reaped.
+       * An account was reaped.
        **/
       KilledAccount: AugmentedEvent<ApiType, [AccountId32]>;
       /**
-       * A new \[account\] was created.
+       * A new account was created.
        **/
       NewAccount: AugmentedEvent<ApiType, [AccountId32]>;
       /**
-       * On on-chain remark happened. \[origin, remark_hash\]
+       * On on-chain remark happened.
        **/
       Remarked: AugmentedEvent<ApiType, [AccountId32, H256]>;
       /**
@@ -443,32 +443,31 @@ declare module '@polkadot/api/types/events' {
     };
     treasury: {
       /**
-       * Some funds have been allocated. \[proposal_index, award, beneficiary\]
+       * Some funds have been allocated.
        **/
       Awarded: AugmentedEvent<ApiType, [u32, u128, AccountId32]>;
       /**
-       * Some of our funds have been burnt. \[burn\]
+       * Some of our funds have been burnt.
        **/
       Burnt: AugmentedEvent<ApiType, [u128]>;
       /**
-       * Some funds have been deposited. \[deposit\]
+       * Some funds have been deposited.
        **/
       Deposit: AugmentedEvent<ApiType, [u128]>;
       /**
-       * New proposal. \[proposal_index\]
+       * New proposal.
        **/
       Proposed: AugmentedEvent<ApiType, [u32]>;
       /**
-       * A proposal was rejected; funds were slashed. \[proposal_index, slashed\]
+       * A proposal was rejected; funds were slashed.
        **/
       Rejected: AugmentedEvent<ApiType, [u32, u128]>;
       /**
        * Spending has finished; this is the amount that rolls over until next spend.
-       * \[budget_remaining\]
        **/
       Rollover: AugmentedEvent<ApiType, [u128]>;
       /**
-       * We have ended a spend period and will now allocate funds. \[budget_remaining\]
+       * We have ended a spend period and will now allocate funds.
        **/
       Spending: AugmentedEvent<ApiType, [u128]>;
       /**
@@ -620,15 +619,15 @@ declare module '@polkadot/api/types/events' {
     };
     vesting: {
       /**
-       * Claimed vesting. \[who, locked_amount\]
+       * Claimed vesting.
        **/
       Claimed: AugmentedEvent<ApiType, [AccountId32, u128]>;
       /**
-       * Added new vesting schedule. \[from, to, vesting_schedule\]
+       * Added new vesting schedule.
        **/
       VestingScheduleAdded: AugmentedEvent<ApiType, [AccountId32, AccountId32, OrmlVestingVestingSchedule]>;
       /**
-       * Updated vesting schedules. \[who\]
+       * Updated vesting schedules.
        **/
       VestingSchedulesUpdated: AugmentedEvent<ApiType, [AccountId32]>;
       /**
@@ -649,6 +648,14 @@ declare module '@polkadot/api/types/events' {
        * Some XCM failed.
        **/
       Fail: AugmentedEvent<ApiType, [Option<H256>, XcmV2TraitsError]>;
+      /**
+       * An XCM exceeded the individual message weight budget.
+       **/
+      OverweightEnqueued: AugmentedEvent<ApiType, [u32, u32, u64, u64]>;
+      /**
+       * An XCM from the overweight queue was executed with the given actual weight used.
+       **/
+      OverweightServiced: AugmentedEvent<ApiType, [u64, u64]>;
       /**
        * Some XCM was executed ok.
        **/
