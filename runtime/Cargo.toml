@@ -377,7 +377,6 @@ default-features = false
 scale-info = { version = "1.0.0", default-features = false, features = [
     "derive",
 ] }
-log = '0.4.14'
 derivative = "2.2.0"
 pallet-unique = { path = '../pallets/unique', default-features = false }
 up-rpc = { path = "../primitives/rpc", default-features = false }

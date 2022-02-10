@@ -68,7 +68,6 @@
     "testPalletPresence": "mocha --timeout 9999999 -r ts-node/register ./**/pallet-presence.test.ts",
     "testBlockProduction": "mocha --timeout 9999999 -r ts-node/register ./**/block-production.test.ts",
     "testEnableDisableTransfers": "mocha --timeout 9999999 -r ts-node/register ./**/enableDisableTransfer.test.ts",
-    "testXcm": "mocha --timeout 9999999 -r ts-node/register ./**/xcmTransfer.test.ts",
     "polkadot-types-from-defs": "ts-node ./node_modules/.bin/polkadot-types-from-defs --input src/interfaces/ --package .",
     "polkadot-types-from-chain": "ts-node ./node_modules/.bin/polkadot-types-from-chain --endpoint ws://localhost:9944 --output src/interfaces/ --package .",
     "polkadot-types": "yarn polkadot-types-from-defs && yarn polkadot-types-from-chain"

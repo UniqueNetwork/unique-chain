@@ -114,40 +114,21 @@
                     ]
 				}
 			]
-		},
-        {
-            "bin": "../cumulus/target/release/polkadot-collator",
-            "id": "3000",
-            "chain": "statemint-dev",
-            "balance": "1000000000000000000000000",
-            "nodes": [
-                {
-                    "wsPort": 9947,
-                    "port": 31203,
-                    "name": "alice",
-                    "flags": [
-                        "--rpc-cors=all",
-                        "--unsafe-rpc-external",
-                        "--unsafe-ws-external",
-                        "-lxcm=trace"
-                    ]
-                }
-            ]
-        }
+		}
     ],
     "simpleParachains": [],
     "hrmpChannels": [
         {
             "sender": 2000,
             "recipient": 1000,
-            "maxCapacity": 8,
-            "maxMessageSize": 512
+            "maxCapacity": 1000,
+            "maxMessageSize": 102400
         },
         {
             "sender": 1000,
             "recipient": 2000,
-            "maxCapacity": 8,
-            "maxMessageSize": 512
+            "maxCapacity": 1000,
+            "maxMessageSize": 102400
         }
     ],
     "finalization": false

@@ -337,8 +337,8 @@ parameter_types! {
 
 ## Karura token transfer
 
-To get started, you need to open the hrmr channel.
-Next, we need to register our asset in Karura.
+To get started, you need to open inbound and outbound hrmp channels.
+Next, we need to register our asset at Karura.
 
 ```
 assetRegistry -> registerForeignAsset(location, metadata)
@@ -347,11 +347,11 @@ location:
 metadata:
 	name         OPL
 	symbol       OPL
-	decimals     15
+	decimals     18
 minimalBalance	 1
 ```
 
-Next, we can send tokens of our chain:
+Next, we can send tokens from Opal to Karura:
 ```
 polkadotXcm -> reserveTransferAssets
 dest:
@@ -370,7 +370,7 @@ The result will be displayed in ChainState
 tokens -> accounts	
 
 
-To send tokens from karura:
+To send tokens from Karura to Opal:
 
 ```
 xtokens -> transfer

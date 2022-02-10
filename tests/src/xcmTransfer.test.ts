@@ -51,7 +51,7 @@ describe('Integration test: Exchanging QTZ/OPL with Karura', () => {
       {
         name: 'OPL',
         symbol: 'OPL',
-        decimals: 15,
+        decimals: 18,
         minimalBalance: 1,
       };
 
