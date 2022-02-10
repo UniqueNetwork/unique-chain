@@ -333,3 +333,62 @@ parameter_types! {
 */
 
 ```
+
+
+## Karura token transfer
+
+To get started, you need to open inbound and outbound hrmp channels.
+Next, we need to register our asset at Karura.
+
+```
+assetRegistry -> registerForeignAsset(location, metadata)
+location:
+	V0(X2(Parent, Parachain(PARA_ID))) 
+metadata:
+	name         OPL
+	symbol       OPL
+	decimals     18
+minimalBalance	 1
+```
+
+Next, we can send tokens from Opal to Karura:
+```
+polkadotXcm -> reserveTransferAssets
+dest:
+	V0(X2(Parent, Parachain(<KARURA_PARA_ID>))) 
+beneficiary:
+	X1(AccountId(Any, <ACCOUNT>))
+assets:
+	V1(Concrete(0,Here), Fungible(<AMOUNT>))
+feeAssetItem: 
+	0	
+weightLimit:
+	<LIMIT>
+```	
+
+The result will be displayed in ChainState   
+tokens -> accounts	
+
+
+To send tokens from Karura to Opal:
+
+```
+xtokens -> transfer
+
+currencyId:
+	ForeingAsset
+		<TOKEN_ID>
+
+amount:
+		<AMOUNT>
+dest:
+	V1
+	(
+		Parents:1, 
+		X2(Parachain(<KARURA_PARA_ID>), AccountId(Any, <ACCOUNT>)
+	)
+destWeight:
+	<WEIGHT>
+		
+
+```
