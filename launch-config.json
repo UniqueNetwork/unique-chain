@@ -121,14 +121,14 @@
         {
             "sender": 2000,
             "recipient": 1000,
-            "maxCapacity": 1000,
-            "maxMessageSize": 102400
+            "maxCapacity": 8,
+            "maxMessageSize": 512
         },
         {
             "sender": 1000,
             "recipient": 2000,
-            "maxCapacity": 1000,
-            "maxMessageSize": 102400
+            "maxCapacity": 8,
+            "maxMessageSize": 512
         }
     ],
     "finalization": false
