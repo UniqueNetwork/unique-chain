@@ -265,7 +265,7 @@ pub struct Collection<AccountId> {
 
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Debug, Derivative, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-#[derivative(Default)]
+#[derivative(Default(bound = ""))]
 pub struct CreateCollectionData<AccountId> {
 	#[derivative(Default(value = "CollectionMode::NFT"))]
 	pub mode: CollectionMode,
