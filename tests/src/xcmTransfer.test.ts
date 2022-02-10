@@ -23,7 +23,7 @@ const UNIQUE_CHAIN = 1000;
 const KARURA_CHAIN = 2000;
 const KARURA_PORT = '9946';
 
-describe('Integration test: Exchanging QTZ/OPL with Karura', () => {
+describe('Integration test: Exchanging OPL with Karura', () => {
   let alice: IKeyringPair;
   
   before(async () => {
@@ -124,7 +124,7 @@ describe('Integration test: Exchanging QTZ/OPL with Karura', () => {
 
     await usingApi(async (api) => {
       // todo do something about instant sealing, where there might not be any new blocks
-      await waitNewBlocks(api, 1);
+      await waitNewBlocks(api, 3);
       const {free} = (await api.query.tokens.accounts(alice.addressRaw, {ForeignAsset: 0})).toJSON() as any;
       expect(free > balanceOnKaruraBefore).to.be.true;
     }, {provider: new WsProvider('ws://127.0.0.1:' + KARURA_PORT)});
@@ -170,7 +170,7 @@ describe('Integration test: Exchanging QTZ/OPL with Karura', () => {
 
     await usingApi(async (api) => {
       // todo do something about instant sealing, where there might not be any new blocks
-      await waitNewBlocks(api, 1);
+      await waitNewBlocks(api, 3);
       const [balanceAfter] = await getBalance(api, [alicesPublicKey]);
       expect(balanceAfter > balanceBefore).to.be.true;
     });
