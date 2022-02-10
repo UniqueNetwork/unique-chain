@@ -56,7 +56,7 @@ pub use frame_support::{
 		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients,
 	},
 };
-use pallet_unq_scheduler::ApplyExtrinsic;
+use pallet_unq_scheduler::ApplyCall;
 use up_data_structs::*;
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
@@ -830,17 +830,17 @@ impl pallet_unq_scheduler::Config for Runtime {
 }
 
 pub struct Executor;
-impl<C, SelfContainedSignedInfo> ApplyExtrinsic<C, SelfContainedSignedInfo> for Executor
+impl<T: frame_system::Config + pallet_unq_scheduler::Config, SelfContainedSignedInfo> ApplyCall<T, SelfContainedSignedInfo> for Executor
 where
-	C: Member
+	<T as frame_system::Config>::Call: Member
 		+ Dispatchable<Origin = Origin, Info = DispatchInfo>
 		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>
 		+ GetDispatchInfo
 		+ From<frame_system::Call<Runtime>>,
 	SelfContainedSignedInfo: Send + Sync + 'static,
-	Call: From<C> + SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
+	Call: From<<T as frame_system::Config>::Call> + From<<T as pallet_unq_scheduler::Config>::Call> + SelfContainedCall<SignedInfo = SelfContainedSignedInfo>
 {
-	fn apply_call(signer: Address, call: C) {
+	fn apply_call(signer: <T as frame_system::Config>::AccountId, call: <T as pallet_unq_scheduler::Config>::Call) {
 		let dispatch_info = call.get_dispatch_info();
 		let extrinsic = fp_self_contained::CheckedExtrinsic::<
 			AccountId,

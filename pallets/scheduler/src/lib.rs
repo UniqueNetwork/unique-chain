@@ -79,14 +79,14 @@ use sp_runtime::traits::{IdentifyAccount, Verify};
 use sp_runtime::{MultiSignature};
 use sp_core::{H160};
 
-pub trait ApplyCall<C: Dispatchable, SelfContainedSignedInfo> {
-	fn apply_call(signer: Address, function: C);
+pub trait ApplyCall<T: frame_system::Config + Config, SelfContainedSignedInfo> {
+	fn apply_call(signer: T::AccountId, function: <T as Config>::Call); //<T as system::Config>
 }
 
 /// The address format for describing accounts.
-pub type Signature = MultiSignature;
-pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+//pub type Signature = MultiSignature;
+// pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
+//pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
 /// Our pallet's configuration trait. All our types and constants go in here. If the
 /// pallet is dependent on specific other pallets, then their configuration traits
@@ -127,7 +127,7 @@ pub trait Config: system::Config {
 	type WeightInfo: WeightInfo;
 
 	/// A type that allows you to use SignedExtra additional logic when dispatching call
-	type Executor: ApplyCall<<Self as system::Config>::Call, H160>;
+	type Executor: ApplyCall<Self, H160>;
 }
 
 pub const MAX_TASK_ID_LENGTH_IN_BYTES: u8 = 16;
