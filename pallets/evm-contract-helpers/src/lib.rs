@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 pub use pallet::*;
 pub use eth::*;
 use scale_info::TypeInfo;
@@ -126,7 +126,7 @@ pub mod pallet {
 	}
 }
 
-#[derive(Encode, Decode, PartialEq, TypeInfo)]
+#[derive(Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
 pub enum SponsoringModeT {
 	Disabled,
 	Allowlisted,
