@@ -161,10 +161,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("opal"),
 	authoring_version: 1,
 	spec_version: 916000,
-	impl_version: 1,
+	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
-	state_version: 1,
+	state_version: 0,
 };
 
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
