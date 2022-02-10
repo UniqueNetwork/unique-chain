@@ -74,7 +74,9 @@ use fp_rpc::TransactionStatus;
 use sp_core::crypto::Public;
 use sp_runtime::{
 	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf},
+	generic::Era,
 	transaction_validity::TransactionValidityError,
+	DispatchErrorWithPostInfo,
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
@@ -826,11 +828,25 @@ impl pallet_unq_scheduler::Config for Runtime {
 	type ScheduleOrigin = EnsureSigned<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = ();
-	type Executor = Executor;
+	type Executor = SchedulerPaymentExecutor;
 }
 
-pub struct Executor;
-impl<T: frame_system::Config + pallet_unq_scheduler::Config, SelfContainedSignedInfo> ApplyCall<T, SelfContainedSignedInfo> for Executor
+fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> SignedExtra {
+	(
+		frame_system::CheckSpecVersion::<Runtime>::new(),
+		frame_system::CheckGenesis::<Runtime>::new(),
+		frame_system::CheckEra::<Runtime>::from(Era::Immortal),
+		frame_system::CheckNonce::<Runtime>::from(frame_system::Pallet::<Runtime>::account_nonce(
+			from,
+		)),
+		frame_system::CheckWeight::<Runtime>::new(),
+		pallet_charge_transaction::ChargeTransactionPayment::<Runtime>::new(0),
+	)
+}
+
+pub struct SchedulerPaymentExecutor;
+impl<T: frame_system::Config + pallet_unq_scheduler::Config, SelfContainedSignedInfo>
+	ApplyCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
 where
 	<T as frame_system::Config>::Call: Member
 		+ Dispatchable<Origin = Origin, Info = DispatchInfo>
@@ -838,9 +854,18 @@ where
 		+ GetDispatchInfo
 		+ From<frame_system::Call<Runtime>>,
 	SelfContainedSignedInfo: Send + Sync + 'static,
-	Call: From<<T as frame_system::Config>::Call> + From<<T as pallet_unq_scheduler::Config>::Call> + SelfContainedCall<SignedInfo = SelfContainedSignedInfo>
+	Call: From<<T as frame_system::Config>::Call>
+		+ From<<T as pallet_unq_scheduler::Config>::Call>
+		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
+	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
 {
-	fn apply_call(signer: <T as frame_system::Config>::AccountId, call: <T as pallet_unq_scheduler::Config>::Call) {
+	fn apply_call(
+		signer: <T as frame_system::Config>::AccountId,
+		call: <T as pallet_unq_scheduler::Config>::Call,
+	) -> Result<
+		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
+		TransactionValidityError,
+	> {
 		let dispatch_info = call.get_dispatch_info();
 		let extrinsic = fp_self_contained::CheckedExtrinsic::<
 			AccountId,
@@ -848,11 +873,14 @@ where
 			SignedExtra,
 			SelfContainedSignedInfo,
 		> {
-			signed: CheckedSignature::<AccountId, SignedExtra, SelfContainedSignedInfo>::Unsigned, // change to signer
+			signed: CheckedSignature::<AccountId, SignedExtra, SelfContainedSignedInfo>::Signed(
+				signer.clone().into(),
+				get_signed_extras(signer.into()),
+			),
 			function: call.into(),
 		};
 
-		extrinsic.apply::<Runtime>(&dispatch_info, 0);
+		extrinsic.apply::<Runtime>(&dispatch_info, 0)
 	}
 }
 

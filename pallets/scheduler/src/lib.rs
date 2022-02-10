@@ -55,11 +55,11 @@
 mod benchmarking;
 pub mod weights;
 
-use sp_std::{prelude::*, marker::PhantomData, borrow::Borrow};
+use sp_std::{prelude::*, marker::PhantomData, borrow::Borrow, cmp};
 use codec::{Encode, Decode, Codec};
 use sp_runtime::{
 	RuntimeDebug,
-	traits::{One, BadOrigin, Saturating},
+	traits::{Zero, One, BadOrigin, Saturating},
 };
 use frame_support::{
 	decl_module, decl_storage, decl_event, decl_error,
@@ -74,19 +74,20 @@ use frame_support::{
 use frame_system::{self as system, ensure_signed};
 pub use weights::WeightInfo;
 use scale_info::TypeInfo;
-use sp_runtime::ApplyExtrinsicResult;
-use sp_runtime::traits::{IdentifyAccount, Verify};
-use sp_runtime::{MultiSignature};
 use sp_core::{H160};
+use sp_runtime::transaction_validity::TransactionValidityError;
+use frame_support::weights::PostDispatchInfo;
+use sp_runtime::DispatchErrorWithPostInfo;
 
 pub trait ApplyCall<T: frame_system::Config + Config, SelfContainedSignedInfo> {
-	fn apply_call(signer: T::AccountId, function: <T as Config>::Call); //<T as system::Config>
+	fn apply_call(
+		signer: T::AccountId,
+		function: <T as Config>::Call,
+	) -> Result<
+		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
+		TransactionValidityError,
+	>;
 }
-
-/// The address format for describing accounts.
-//pub type Signature = MultiSignature;
-// pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
-//pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
 /// Our pallet's configuration trait. All our types and constants go in here. If the
 /// pallet is dependent on specific other pallets, then their configuration traits
@@ -437,7 +438,7 @@ decl_module! {
 
 
 						let sender = ensure_signed(origin).unwrap_or_default();
-						T::Executor::apply_call(sender.clone(), s.call.clone());
+						let apply_result = T::Executor::apply_call(sender.clone(), s.call.clone());
 
 						let maybe_id = s.maybe_id.clone();
 						if let Some((period, count)) = s.maybe_periodic {
@@ -509,18 +510,20 @@ impl<T: Config> Module<T> {
 			<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin.clone()).into(),
 		)
 		.unwrap_or_default();
-		let who_will_pay = sender; // T::SponsorshipHandler::get_sponsor(&sender, &call).unwrap_or(sender);
-		let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay));
-		let r = call.clone().dispatch(sponsor.into());
+		//let who_will_pay = sender; // T::SponsorshipHandler::get_sponsor(&sender, &call).unwrap_or(sender);
+		//let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay));
+		//let r = call.clone().dispatch(sponsor.into());
+
+		//let sender = ensure_signed(origin).unwrap_or_default();
+		let apply_result = T::Executor::apply_call(sender.clone(), call.clone());
 
 		//T::PaymentHandler::validate(sponsor.into(), call.clone(), ); todo dispatch call
 
 		// sanitize maybe_periodic
-		let maybe_periodic = None;
-		// let maybe_periodic = maybe_periodic
-		// 	.filter(|p| p.1 > 1 && !p.0.is_zero())
-		// 	// Limit the repetitions to 100 calls and remove one from the number of repetitions since we will schedule one now.
-		// 	.map(|(p, c)| (p, std::cmp::min(c, PERIODIC_CALLS_LIMIT) - 1));
+		let maybe_periodic = maybe_periodic
+			.filter(|p| p.1 > 1 && !p.0.is_zero())
+			// Limit the repetitions to 100 calls and remove one from the number of repetitions since we will schedule one now.
+			.map(|(p, c)| (p, cmp::min(c, PERIODIC_CALLS_LIMIT) - 1));
 
 		let s = Some(Scheduled {
 			maybe_id,
@@ -578,6 +581,7 @@ impl<T: Config> Module<T> {
 		if let Some(s) = scheduled {
 			if let Some(id) = s.maybe_id {
 				Lookup::<T>::remove(id);
+				// todo add back money / displace to another function for consistency
 			}
 			Self::deposit_event(RawEvent::Canceled(when, index));
 			Ok(())
