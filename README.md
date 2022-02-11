@@ -29,25 +29,10 @@ Wider Unique Ecosystem (most of it was developed during Hackusama):
 
 Please see our [walk-thorugh instructions](doc/hackusama_walk_through.md) to try everything out!
 
-## Hackusama Update
-
-During the Kusama Hackaphon the following changes were made:
-
--   Enabled Smart Contracts Pallet
--   Enabled integration between Smart Contracts and Unique Pallet (required special edition of RC4 Substrate version)
--   Fixed misc. bugs in Unique Pallet
--   Deployed Unique TestNet. Public node available at wss://unique.usetech.com, custom UI types - see below in this README.
--   New Features:
-    -   Re-Fungible Token Mode
-    -   Off-Chain Schema to store token image URLs
-    -   Alternative economic model
-    -   Allow Lists and Public Mint Permission
--   Use example: [SubstraPunks Game](https://github.com/usetech-llc/substrapunks), fully hosted on IPFS and Unique Testnet
-    Blockchain.
-
 ## Application Development
 
 If you are building an application that operates NFT tokens, use [this document](doc/application_development.md).
+
 
 ## Building
 
@@ -57,8 +42,8 @@ so that we can keep the builds stable.
 1. Install Rust:
 
 ```bash
+sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang
 curl https://sh.rustup.rs -sSf | sh
-sudo apt-get install libssl-dev pkg-config libclang-dev clang
 ```
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
@@ -86,110 +71,51 @@ optionally, build in release:
 cargo build --release
 ```
 
-## Run
+## Building as Parachain locally
 
-You can start a development chain with:
+Note: checkout this project and all related projects (see below) in the sibling folders (both under the same folder)
 
-```bash
-cargo run -- --dev
+### Polkadot launch utility
+
 ```
-
-Detailed logs may be shown by running the node with the following environment variables set:
-`RUST_LOG=debug RUST_BACKTRACE=1 cargo run -- --dev`.
-
-If you want to see the multi-node consensus algorithm in action locally, then you can create a local testnet with two
-validator nodes for Alice and Bob, who are the initial authorities of the genesis chain that have been endowed with
-testnet units. Give each node a name and expose them so they are listed on the Polkadot
-[telemetry site](https://telemetry.polkadot.io/#/Local%20Testnet). You'll need two terminal windows open.
-
-We'll start Alice's substrate node first on default TCP port 30333 with her chain database stored locally at
-`/tmp/alice`. The bootnode ID of her node is `QmQZ8TjTqeDj3ciwr93EJ95hxfDsb9pEYDizUAbWpigtQN`, which is generated from
-the `--node-key` value that we specify below:
-
-```bash
-cargo run -- \
-  --base-path /tmp/alice \
-  --chain=local \
-  --alice \
-  --node-key 0000000000000000000000000000000000000000000000000000000000000001 \
-  --telemetry-url ws://telemetry.polkadot.io:1024 \
-  --validator
+git clone https://github.com/paritytech/polkadot-launch
 ```
-
-In the second terminal, we'll start Bob's substrate node on a different TCP port of 30334, and with his chain database
-stored locally at `/tmp/bob`. We'll specify a value for the `--bootnodes` option that will connect his node to Alice's
-bootnode ID on TCP port 30333:
-
-```bash
-cargo run -- \
-  --base-path /tmp/bob \
-  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/QmQZ8TjTqeDj3ciwr93EJ95hxfDsb9pEYDizUAbWpigtQN \
-  --chain=local \
-  --bob \
-  --port 30334 \
-  --telemetry-url ws://telemetry.polkadot.io:1024 \
-  --validator
-```
-
-Additional CLI usage options are available and may be shown by running `cargo run -- --help`.
-
-## Building and Running as Parachain locally
-
-Rust toolchain: nightly-2021-11-11
-Note: checkout this project and polkadot project (see below) in the sibling folders (both under the same folder)
 
 ### Build relay
 
 ```
 git clone https://github.com/paritytech/polkadot.git
 cd polkadot
-git checkout release-v0.9.9
+git checkout release-v0.9.16
 cargo build --release
 ```
 
-### Build parachain
+### Build Unique parachain
 
 Run in the root of this project:
 ```
-cargo --build
+cargo build --release
 ```
 
-### Run 4-node Relay
-
-1. Download `rococo-custom-4.json` chain spec here: https://substrate.dev/cumulus-workshop/shared/chainspecs/rococo-custom-4.json
-2. Use these instructions to launch 4 nodes: https://substrate.dev/cumulus-workshop/#/en/2-relay-chain/1-launch
-
-Example (Run in polkadot folder. Replace `12D3KooWNLAmKcyee3oqSgTMthaQVXaAcXeo8RrGCzMfMVA3B5on` with output from Alice node):
-```
-./target/release/polkadot --alice --validator --base-path ./cumulus_relay0 --chain rococo-custom-4.json --port 50555 --ws-port 9944
-./target/release/polkadot --bob --validator --base-path ./cumulus_relay1 --chain rococo-custom-4.json --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWNLAmKcyee3oqSgTMthaQVXaAcXeo8RrGCzMfMVA3B5on --port 50556 --ws-port 9945
-./target/release/polkadot --charlie --validator --base-path ./cumulus_relay1 --chain rococo-custom-4.json --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWNLAmKcyee3oqSgTMthaQVXaAcXeo8RrGCzMfMVA3B5on --port 50557 --ws-port 9946
-./target/release/polkadot --dave --validator --base-path ./cumulus_relay1 --chain rococo-custom-4.json --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWNLAmKcyee3oqSgTMthaQVXaAcXeo8RrGCzMfMVA3B5on --port 50558 --ws-port 9947
+### Build Acala parachain (optional, full config only)
 
 ```
-
-3. Export genesis state and runtime wasm from Unique parachain:
-
-Run from this project root:
-```
-./target/release/unique-collator export-genesis-state --parachain-id 2000 > ./resources/para-2000-genesis
-./target/release/unique-collator export-genesis-wasm > ./resources/para-2000-wasm
+git clone https://github.com/AcalaNetwork/Acala
+cd Acala
+git checkout 54db3acd409a0b787f116f20e163a3b24101ce38
+make build-release
 ```
 
-4. Run two parachain nodes:
+## Running as Parachain locally
 
-Replace `12D3KooWN1ah2bFQSysEFnwZqcmcVpDDR8UedXyo6xfzV1zDNMNg` with Alice or Bob relay ID
-
-Run from this project root:
 ```
-./target/release/unique-collator --alice --collator --force-authoring --base-path ./tmp/parachain-alice --parachain-id 2000 --port 40333 --ws-port 9844  -- --execution wasm --chain ../polkadot/rococo-custom-4.json --port 30343 --ws-port 9977
-./target/release/unique-collator --bob --collator --force-authoring --parachain-id 2000 --base-path ./tmp/parachain/bob --port 40334 --ws-port 9845 -- --execution wasm --chain ../polkadot/rococo-custom-4.json --port 30344 --ws-port 9978 --bootnodes /ip4/127.0.0.1/tcp/50556/p2p/12D3KooWN1ah2bFQSysEFnwZqcmcVpDDR8UedXyo6xfzV1zDNMNg
+./launch-testnet.sh
 ```
 
-4. Reserve parachain ID as described here: https://substrate.dev/cumulus-workshop/#/en/2-relay-chain/2-reserve
-
-5. Register parachain in relay as described here: https://substrate.dev/cumulus-workshop/#/en/3-parachains/2-register
-
+Optional, full setup with Acala and Statemint
+```
+./launch-testnet-full.sh
+```
 
 ## Run Integration Tests
 
@@ -204,37 +130,8 @@ yarn install
 yarn test
 ```
 
-## Benchmarks
-
-First of all, add rust toolchain and make it default.
-```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2021-11-11
-```
-
-Then in "/node/src" run build command below
-```bash
-cargo +nightly-2021-11-11 build --release --features runtime-benchmarks
-```
-
-Run benchmark
-```bash
-target/release/unique-collator benchmark --chain dev --pallet "pallet_unique" --extrinsic "*" --repeat 1
-```
-
-## UI custom types
-
-Moved to [runtime_types.json](./runtime_types.json).
-
-## Running Integration Tests
-
-See [tests/README.md](./tests/README.md).
 
 ## Code Formatting
-
-### Get formatter and linter settings into your branch (if you forked before they were introduced)
-```bash
-git cherry-pick -n 8ff77c21b0d30b2a4648fa35dbf61dfa9d3948a7
-```
 
 ### Apply formatting and clippy fixes
 ```bash
@@ -252,94 +149,12 @@ pushd tests && yarn fix ; popd
 cd tests && yarn eslint --ext .ts,.js src/
 ```
 
-## Re-Enabling Ink! Contracts
-
-Uncomment following lies:
-1. In node/rpc/Cargo.toml
-```
-# pallet-contracts-rpc = { version = "3.0", git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.9' }
-```
-
-2. In node/rpc/src/lib.rs
-```
-// C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
-...
-// use pallet_contracts_rpc::{Contracts, ContractsApi};
-...
-// io.extend_with(ContractsApi::to_delegate(Contracts::new(client.clone())));
-
-```
-
-3. In runtime/Cargo.toml
-```
-    # 'pallet-contracts/std',
-    # 'pallet-contracts-primitives/std',
-    # 'pallet-contracts-rpc-runtime-api/std',
-    # 'pallet-contract-helpers/std',
-...
-    # [dependencies.pallet-contracts]
-    # git = 'https://github.com/paritytech/substrate.git'
-    # default-features = false
-    # branch = 'polkadot-v0.9.9'
-    # version = '3.0.0'
-
-    # [dependencies.pallet-contracts-primitives]
-    # git = 'https://github.com/paritytech/substrate.git'
-    # default-features = false
-    # branch = 'polkadot-v0.9.9'
-    # version = '3.0.0'
-
-    # [dependencies.pallet-contracts-rpc-runtime-api]
-    # git = 'https://github.com/paritytech/substrate.git'
-    # default-features = false
-    # branch = 'polkadot-v0.9.9'
-    # version = '3.0.0'
-...
-    # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
-```
-
-4. runtime/src/lib.rs
-```
-// use pallet_contracts::weights::WeightInfo;
-...
-// pub use pallet_timestamp::Call as TimestampCall;
-...
-// mod chain_extension;
-// use crate::chain_extension::{NFTExtension, Imbalance};
-...
-/*
-parameter_types! {
-	pub TombstoneDeposit: Balance = deposit(
-  ...
-}
-*/
-...
-//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
-...
-// impl pallet_contract_helpers::Config for Runtime {}
-...
-// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
-...
-// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage},
-...
-//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
-...
-/*
-	impl pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber, Hash>
-		for Runtime
-	{
-    ...
-	}
-*/
-
-```
-
 
 ## Karura token transfer
 
 To get started, you need to open inbound and outbound hrmp channels.
-Next, we need to register our asset at Karura.
 
+### Next, we need to register our asset at Karura.
 ```
 assetRegistry -> registerForeignAsset(location, metadata)
 location:
@@ -351,7 +166,7 @@ metadata:
 minimalBalance	 1
 ```
 
-Next, we can send tokens from Opal to Karura:
+### Next, we can send tokens from Opal to Karura:
 ```
 polkadotXcm -> reserveTransferAssets
 dest:
@@ -369,9 +184,7 @@ weightLimit:
 The result will be displayed in ChainState   
 tokens -> accounts	
 
-
-To send tokens from Karura to Opal:
-
+### To send tokens from Karura to Opal:
 ```
 xtokens -> transfer
 
@@ -389,6 +202,4 @@ dest:
 	)
 destWeight:
 	<WEIGHT>
-		
-
 ```
