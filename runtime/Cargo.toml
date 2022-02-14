@@ -395,11 +395,11 @@ pallet-evm-contract-helpers = { path = '../pallets/evm-contract-helpers', defaul
 pallet-evm-transaction-payment = { path = '../pallets/evm-transaction-payment', default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = "../pallets/evm-coder-substrate" }
 
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16" }
-pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16" }
-fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16" }
-fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16-runtime-v0.9.14-compat" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16-runtime-v0.9.14-compat" }
+pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16-runtime-v0.9.14-compat" }
+fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16-runtime-v0.9.14-compat" }
+fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16-runtime-v0.9.14-compat" }
 
 ################################################################################
 # Build Dependencies

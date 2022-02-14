@@ -1304,31 +1304,10 @@ impl_runtime_apis! {
 			value: U256,
 			gas_limit: U256,
 			max_fee_per_gas: Option<U256>,
-			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
-			access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
-			let config = if estimate {
-				let mut config = <Runtime as pallet_evm::Config>::config().clone();
-				config.estimate = true;
-				Some(config)
-			} else {
-				None
-			};
-
-			<Runtime as pallet_evm::Config>::Runner::call(
-				from,
-				to,
-				data,
-				value,
-				gas_limit.low_u64(),
-				max_fee_per_gas,
-				max_priority_fee_per_gas,
-				nonce,
-				access_list.unwrap_or_default(),
-				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
-			).map_err(|err| err.into())
+			unreachable!()
 		}
 
 		#[allow(clippy::redundant_closure)]
@@ -1338,30 +1317,10 @@ impl_runtime_apis! {
 			value: U256,
 			gas_limit: U256,
 			max_fee_per_gas: Option<U256>,
-			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
-			access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
-			let config = if estimate {
-				let mut config = <Runtime as pallet_evm::Config>::config().clone();
-				config.estimate = true;
-				Some(config)
-			} else {
-				None
-			};
-
-			<Runtime as pallet_evm::Config>::Runner::create(
-				from,
-				data,
-				value,
-				gas_limit.low_u64(),
-				max_fee_per_gas,
-				max_priority_fee_per_gas,
-				nonce,
-				access_list.unwrap_or_default(),
-				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
-			).map_err(|err| err.into())
+			unreachable!()
 		}
 
 		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {

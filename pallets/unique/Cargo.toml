@@ -139,9 +139,9 @@ primitive-types = { version = "0.10.1", default-features = false, features = [
     "serde_no_std",
 ] }
 
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16" }
-fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16-runtime-v0.9.14-compat" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16-runtime-v0.9.14-compat" }
+fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16-runtime-v0.9.14-compat" }
 hex-literal = "0.3.3"
 
 pallet-common = { default-features = false, path = "../common" }

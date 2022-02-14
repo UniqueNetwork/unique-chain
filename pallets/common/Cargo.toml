@@ -19,7 +19,7 @@ up-evm-mapping = { default-features = false, path = '../../primitives/evm-mappin
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
 pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.16-runtime-v0.9.14-compat" }
 serde = { version = "1.0.130", default-features = false }
 scale-info = { version = "1.0.0", default-features = false, features = [
     "derive",
