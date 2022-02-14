@@ -1025,7 +1025,7 @@ construct_runtime!(
 pub struct TransactionConverter;
 
 impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
+	fn convert_transaction(&self, transaction: pallet_ethereum::LegacyTransaction) -> UncheckedExtrinsic {
 		UncheckedExtrinsic::new_unsigned(
 			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
 		)
@@ -1035,7 +1035,7 @@ impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
 impl fp_rpc::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(
 		&self,
-		transaction: pallet_ethereum::Transaction,
+		transaction: pallet_ethereum::LegacyTransaction,
 	) -> opaque::UncheckedExtrinsic {
 		let extrinsic = UncheckedExtrinsic::new_unsigned(
 			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
@@ -1349,7 +1349,7 @@ impl_runtime_apis! {
 
 		fn extrinsic_filter(xts: Vec<<Block as sp_api::BlockT>::Extrinsic>) -> Vec<pallet_ethereum::Transaction> {
 			xts.into_iter().filter_map(|xt| match xt.0.function {
-				Call::Ethereum(pallet_ethereum::Call::transact { transaction }) => Some(transaction),
+				Call::Ethereum(pallet_ethereum::Call::transact { transaction }) => Some(pallet_ethereum::Transaction::Legacy(transaction)),
 				_ => None
 			}).collect()
 		}
