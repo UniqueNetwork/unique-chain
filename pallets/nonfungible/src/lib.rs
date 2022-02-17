@@ -3,7 +3,7 @@
 use erc::ERC721Events;
 use frame_support::{BoundedVec, ensure};
 use up_data_structs::{
-	AccessMode, CUSTOM_DATA_LIMIT, Collection, CollectionId, CustomDataLimit, TokenId,
+	AccessMode, Collection, CollectionId, CustomDataLimit, TokenId, CreateCollectionData,
 };
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, account::CrossAccountId,
@@ -14,7 +14,7 @@ use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{vec::Vec, vec};
 use core::ops::Deref;
 use sp_std::collections::btree_map::BTreeMap;
-use codec::{Encode, Decode};
+use codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
 pub use pallet::*;
@@ -31,11 +31,11 @@ pub struct CreateItemData<T: Config> {
 }
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
-#[derive(Encode, Decode, TypeInfo)]
-pub struct ItemData<T: Config> {
-	pub const_data: Vec<u8>,
-	pub variable_data: Vec<u8>,
-	pub owner: T::CrossAccountId,
+#[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
+pub struct ItemData<CrossAccountId> {
+	pub const_data: BoundedVec<u8, CustomDataLimit>,
+	pub variable_data: BoundedVec<u8, CustomDataLimit>,
+	pub owner: CrossAccountId,
 }
 
 #[frame_support::pallet]
@@ -72,7 +72,7 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type TokenData<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
-		Value = ItemData<T>,
+		Value = ItemData<T::CrossAccountId>,
 		QueryKind = OptionQuery,
 	>;
 
@@ -142,8 +142,11 @@ impl<T: Config> Pallet<T> {
 
 // unchecked calls skips any permission checks
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(data)
+	pub fn init_collection(
+		owner: T::AccountId,
+		data: CreateCollectionData<T::AccountId>,
+	) -> Result<CollectionId, DispatchError> {
+		<PalletCommon<T>>::init_collection(owner, data)
 	}
 	pub fn destroy_collection(
 		collection: NonfungibleHandle<T>,
@@ -211,7 +214,7 @@ impl<T: Config> Pallet<T> {
 			));
 		}
 
-		collection.log(ERC721Events::Transfer {
+		collection.log_mirrored(ERC721Events::Transfer {
 			from: *token_data.owner.as_eth(),
 			to: H160::default(),
 			token_id: token.into(),
@@ -291,7 +294,7 @@ impl<T: Config> Pallet<T> {
 		}
 		Self::set_allowance_unchecked(collection, from, token, None, true);
 
-		collection.log(ERC721Events::Transfer {
+		collection.log_mirrored(ERC721Events::Transfer {
 			from: *from.as_eth(),
 			to: *to.as_eth(),
 			token_id: token.into(),
@@ -361,14 +364,14 @@ impl<T: Config> Pallet<T> {
 			<TokenData<T>>::insert(
 				(collection.id, token),
 				ItemData {
-					const_data: data.const_data.into(),
-					variable_data: data.variable_data.into(),
+					const_data: data.const_data,
+					variable_data: data.variable_data,
 					owner: data.owner.clone(),
 				},
 			);
 			<Owned<T>>::insert((collection.id, &data.owner, token), true);
 
-			collection.log(ERC721Events::Transfer {
+			collection.log_mirrored(ERC721Events::Transfer {
 				from: H160::default(),
 				to: *data.owner.as_eth(),
 				token_id: token.into(),
@@ -395,7 +398,7 @@ impl<T: Config> Pallet<T> {
 			<Allowance<T>>::insert((collection.id, token), spender);
 			// In ERC721 there is only one possible approved user of token, so we set
 			// approved user to spender
-			collection.log(ERC721Events::Approval {
+			collection.log_mirrored(ERC721Events::Approval {
 				owner: *sender.as_eth(),
 				approved: *spender.as_eth(),
 				token_id: token.into(),
@@ -425,7 +428,7 @@ impl<T: Config> Pallet<T> {
 			if !assume_implicit_eth {
 				// In ERC721 there is only one possible approved user of token, so we set
 				// approved user to zero address
-				collection.log(ERC721Events::Approval {
+				collection.log_mirrored(ERC721Events::Approval {
 					owner: *sender.as_eth(),
 					approved: H160::default(),
 					token_id: token.into(),
@@ -535,12 +538,8 @@ impl<T: Config> Pallet<T> {
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		token: TokenId,
-		data: Vec<u8>,
+		data: BoundedVec<u8, CustomDataLimit>,
 	) -> DispatchResult {
-		ensure!(
-			data.len() as u32 <= CUSTOM_DATA_LIMIT,
-			<CommonError<T>>::TokenVariableDataLimitExceeded
-		);
 		let token_data =
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
 		collection.check_can_update_meta(sender, &token_data.owner)?;

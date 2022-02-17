@@ -22,6 +22,7 @@ pub use frame_support::{
 		WeightToFeePolynomial, DispatchClass,
 	},
 	StorageValue, transactional,
+	pallet_prelude::ConstU32,
 };
 use derivative::Derivative;
 use scale_info::TypeInfo;
@@ -65,9 +66,9 @@ pub const OFFCHAIN_SCHEMA_LIMIT: u32 = 8192;
 pub const VARIABLE_ON_CHAIN_SCHEMA_LIMIT: u32 = 8192;
 pub const CONST_ON_CHAIN_SCHEMA_LIMIT: u32 = 1048576;
 
-pub const MAX_COLLECTION_NAME_LENGTH: usize = 64;
-pub const MAX_COLLECTION_DESCRIPTION_LENGTH: usize = 256;
-pub const MAX_TOKEN_PREFIX_LENGTH: usize = 16;
+pub const MAX_COLLECTION_NAME_LENGTH: u32 = 64;
+pub const MAX_COLLECTION_DESCRIPTION_LENGTH: u32 = 256;
+pub const MAX_TOKEN_PREFIX_LENGTH: u32 = 16;
 
 /// How much items can be created per single
 /// create_many call
@@ -77,13 +78,39 @@ parameter_types! {
 	pub const CustomDataLimit: u32 = CUSTOM_DATA_LIMIT;
 }
 
-#[derive(Encode, Decode, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug, Default, TypeInfo)]
+#[derive(
+	Encode,
+	Decode,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Clone,
+	Copy,
+	Debug,
+	Default,
+	TypeInfo,
+	MaxEncodedLen,
+)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionId(pub u32);
 impl EncodeLike<u32> for CollectionId {}
 impl EncodeLike<CollectionId> for u32 {}
 
-#[derive(Encode, Decode, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug, Default, TypeInfo)]
+#[derive(
+	Encode,
+	Decode,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Clone,
+	Copy,
+	Debug,
+	Default,
+	TypeInfo,
+	MaxEncodedLen,
+)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct TokenId(pub u32);
 impl EncodeLike<u32> for TokenId {}
@@ -121,7 +148,7 @@ impl From<OverflowError> for &'static str {
 
 pub type DecimalPoints = u8;
 
-#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo)]
+#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum CollectionMode {
 	NFT,
@@ -144,7 +171,7 @@ pub trait SponsoringResolve<AccountId, Call> {
 	fn resolve(who: &AccountId, call: &Call) -> Option<AccountId>;
 }
 
-#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo)]
+#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum AccessMode {
 	Normal,
@@ -156,7 +183,7 @@ impl Default for AccessMode {
 	}
 }
 
-#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo)]
+#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum SchemaVersion {
 	ImageURL,
@@ -175,7 +202,7 @@ pub struct Ownership<AccountId> {
 	pub fraction: u128,
 }
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum SponsorshipState<AccountId> {
 	/// The fees are applied to the transaction sender
@@ -211,23 +238,54 @@ impl<T> Default for SponsorshipState<T> {
 	}
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct Collection<AccountId> {
 	pub owner: AccountId,
 	pub mode: CollectionMode,
 	pub access: AccessMode,
-	pub name: Vec<u16>,        // 64 include null escape char
-	pub description: Vec<u16>, // 256 include null escape char
-	pub token_prefix: Vec<u8>, // 16 include null escape char
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
 	pub mint_mode: bool,
-	pub offchain_schema: Vec<u8>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub offchain_schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
 	pub schema_version: SchemaVersion,
 	pub sponsorship: SponsorshipState<AccountId>,
-	pub limits: CollectionLimits,          // Collection private restrictions
-	pub variable_on_chain_schema: Vec<u8>, //
-	pub const_on_chain_schema: Vec<u8>,    //
+	pub limits: CollectionLimits, // Collection private restrictions
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub const_on_chain_schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>,
 	pub meta_update_permission: MetaUpdatePermission,
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Debug, Derivative, MaxEncodedLen)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derivative(Default(bound = ""))]
+pub struct CreateCollectionData<AccountId> {
+	#[derivative(Default(value = "CollectionMode::NFT"))]
+	pub mode: CollectionMode,
+	pub access: Option<AccessMode>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub offchain_schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
+	pub schema_version: Option<SchemaVersion>,
+	pub pending_sponsor: Option<AccountId>,
+	pub limits: Option<CollectionLimits>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub const_on_chain_schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>,
+	pub meta_update_permission: Option<MetaUpdatePermission>,
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
@@ -253,7 +311,7 @@ pub struct ReFungibleItemType<AccountId> {
 }
 
 /// All fields are wrapped in `Option`s, where None means chain default
-#[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo)]
+#[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionLimits {
 	pub account_token_ownership_limit: Option<u32>,
@@ -378,7 +436,7 @@ pub struct CreateReFungibleData {
 	pub pieces: u128,
 }
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum MetaUpdatePermission {
 	ItemOwner,
