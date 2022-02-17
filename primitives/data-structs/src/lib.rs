@@ -378,7 +378,7 @@ impl CollectionLimits {
 	}
 }
 
-#[derive(Encode, Decode, Debug, Clone, Copy, PartialEq, TypeInfo)]
+#[derive(Encode, Decode, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum SponsoringRateLimit {
 	SponsoringDisabled,
