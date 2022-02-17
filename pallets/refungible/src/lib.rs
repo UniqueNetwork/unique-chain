@@ -2,8 +2,8 @@
 
 use frame_support::{ensure, BoundedVec};
 use up_data_structs::{
-	AccessMode, Collection, CollectionId, CustomDataLimit,
-	MAX_REFUNGIBLE_PIECES, TokenId, CreateCollectionData,
+	AccessMode, Collection, CollectionId, CustomDataLimit, MAX_REFUNGIBLE_PIECES, TokenId,
+	CreateCollectionData,
 };
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
