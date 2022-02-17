@@ -263,6 +263,31 @@ pub struct Collection<AccountId> {
 	pub meta_update_permission: MetaUpdatePermission,
 }
 
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Debug, Derivative, MaxEncodedLen)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derivative(Default(bound = ""))]
+pub struct CreateCollectionData<AccountId> {
+	#[derivative(Default(value = "CollectionMode::NFT"))]
+	pub mode: CollectionMode,
+	pub access: Option<AccessMode>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub offchain_schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
+	pub schema_version: Option<SchemaVersion>,
+	pub pending_sponsor: Option<AccountId>,
+	pub limits: Option<CollectionLimits>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub const_on_chain_schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>,
+	pub meta_update_permission: Option<MetaUpdatePermission>,
+}
+
 #[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct NftItemType<AccountId> {

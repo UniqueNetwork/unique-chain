@@ -77,8 +77,11 @@ export interface UpDataStructsCollectionLimits extends Struct {
 }
 
 /** @name UpDataStructsCollectionMode */
-export interface UpDataStructsCollectionMode extends Struct {
-  readonly dummyCollectionMode: u32;
+export interface UpDataStructsCollectionMode extends Enum {
+  readonly isNft: boolean;
+  readonly isFungible: boolean;
+  readonly asFungible: u32;
+  readonly isReFungible: boolean;
 }
 
 /** @name UpDataStructsCollectionStats */
@@ -86,6 +89,22 @@ export interface UpDataStructsCollectionStats extends Struct {
   readonly created: u32;
   readonly destroyed: u32;
   readonly alive: u32;
+}
+
+/** @name UpDataStructsCreateCollectionData */
+export interface UpDataStructsCreateCollectionData extends Struct {
+  readonly mode: UpDataStructsCollectionMode;
+  readonly access: Option<UpDataStructsAccessMode>;
+  readonly name: Vec<u16>;
+  readonly description: Vec<u16>;
+  readonly tokenPrefix: Bytes;
+  readonly offchainSchema: Bytes;
+  readonly schemaVersion: Option<UpDataStructsSchemaVersion>;
+  readonly pendingSponsor: Option<AccountId>;
+  readonly limits: Option<UpDataStructsCollectionLimits>;
+  readonly variableOnChainSchema: Bytes;
+  readonly constOnChainSchema: Bytes;
+  readonly metaUpdatePermission: Option<UpDataStructsMetaUpdatePermission>;
 }
 
 /** @name UpDataStructsCreateItemData */
@@ -101,8 +120,9 @@ export interface UpDataStructsMetaUpdatePermission extends Enum {
 }
 
 /** @name UpDataStructsSchemaVersion */
-export interface UpDataStructsSchemaVersion extends Struct {
-  readonly dummySchemaVersion: u32;
+export interface UpDataStructsSchemaVersion extends Enum {
+  readonly isImageUrl: boolean;
+  readonly isUnique: boolean;
 }
 
 /** @name UpDataStructsSponsorshipState */

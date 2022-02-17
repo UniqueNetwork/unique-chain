@@ -64,12 +64,14 @@
     "testOverflow": "mocha --timeout 9999999 -r ts-node/register ./**/overflow.test.ts",
     "testSetVariableMetadataSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetadataSponsoringRateLimit.test.ts",
     "testInflation": "mocha --timeout 9999999 -r ts-node/register ./**/inflation.test.ts",
+    "testXcmTransfer": "mocha --timeout 9999999 -r ts-node/register ./**/xcmTransfer.test.ts",
     "testPalletPresence": "mocha --timeout 9999999 -r ts-node/register ./**/pallet-presence.test.ts",
     "testBlockProduction": "mocha --timeout 9999999 -r ts-node/register ./**/block-production.test.ts",
     "testEnableDisableTransfers": "mocha --timeout 9999999 -r ts-node/register ./**/enableDisableTransfer.test.ts",
+    "polkadot-types-fetch-metadata": "curl -H 'Content-Type: application/json' -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9933 > src/interfaces/metadata.json",
     "polkadot-types-from-defs": "ts-node ./node_modules/.bin/polkadot-types-from-defs --input src/interfaces/ --package .",
-    "polkadot-types-from-chain": "ts-node ./node_modules/.bin/polkadot-types-from-chain --endpoint ws://localhost:9944 --output src/interfaces/ --package .",
-    "polkadot-types": "yarn polkadot-types-from-defs && yarn polkadot-types-from-chain"
+    "polkadot-types-from-chain": "ts-node ./node_modules/.bin/polkadot-types-from-chain --endpoint src/interfaces/metadata.json --output src/interfaces/ --package .",
+    "polkadot-types": "yarn polkadot-types-fetch-metadata && yarn polkadot-types-from-defs && yarn polkadot-types-from-chain"
   },
   "author": "",
   "license": "SEE LICENSE IN ../LICENSE",

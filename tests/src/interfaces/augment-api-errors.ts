@@ -69,6 +69,10 @@ declare module '@polkadot/api/types/errors' {
        **/
       CollectionDescriptionLimitExceeded: AugmentedError<ApiType>;
       /**
+       * Collection limit bounds per collection exceeded
+       **/
+      CollectionLimitBoundsExceeded: AugmentedError<ApiType>;
+      /**
        * Collection name can not be longer than 63 char.
        **/
       CollectionNameLimitExceeded: AugmentedError<ApiType>;
@@ -97,6 +101,10 @@ declare module '@polkadot/api/types/errors' {
        **/
       NoPermission: AugmentedError<ApiType>;
       /**
+       * Tried to enable permissions which are only permitted to be disabled
+       **/
+      OwnerPermissionsCantBeReverted: AugmentedError<ApiType>;
+      /**
        * Collection is not in mint mode.
        **/
       PublicMintingNotAllowed: AugmentedError<ApiType>;
@@ -107,7 +115,7 @@ declare module '@polkadot/api/types/errors' {
       /**
        * Requested value more than approved.
        **/
-      TokenValueNotEnough: AugmentedError<ApiType>;
+      ApprovedValueTooLow: AugmentedError<ApiType>;
       /**
        * Item balance not enough.
        **/
@@ -437,10 +445,6 @@ declare module '@polkadot/api/types/errors' {
        **/
       CollectionDecimalPointLimitExceeded: AugmentedError<ApiType>;
       /**
-       * Collection limit bounds per collection exceeded
-       **/
-      CollectionLimitBoundsExceeded: AugmentedError<ApiType>;
-      /**
        * This address is not set as sponsor, use setCollectionSponsor first.
        **/
       ConfirmUnsetSponsorFail: AugmentedError<ApiType>;
@@ -448,10 +452,6 @@ declare module '@polkadot/api/types/errors' {
        * Length of items properties must be greater than 0.
        **/
       EmptyArgument: AugmentedError<ApiType>;
-      /**
-       * Tried to enable permissions which are only permitted to be disabled
-       **/
-      OwnerPermissionsCantBeReverted: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
