@@ -5,7 +5,7 @@ use crate::{AccessMode, CollectionMode};
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, CollectionId, CreateItemData, CreateFungibleData, CreateNftData,
 	CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission,
-	TokenId,
+	TokenId, MAX_TOKEN_OWNERSHIP,
 };
 use frame_support::{assert_noop, assert_ok};
 use sp_std::convert::TryInto;

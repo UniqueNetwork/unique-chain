@@ -67,6 +67,20 @@ export default {
       constOnChainSchema: 'Vec<u8>',
       metaUpdatePermission: 'UpDataStructsMetaUpdatePermission',
     },
+    UpDataStructsCreateCollectionData: {
+      mode: 'UpDataStructsCollectionMode',
+      access: 'Option<UpDataStructsAccessMode>',
+      name: 'Vec<u16>',
+      description: 'Vec<u16>',
+      tokenPrefix: 'Vec<u8>',
+      offchainSchema: 'Vec<u8>',
+      schemaVersion: 'Option<UpDataStructsSchemaVersion>',
+      pendingSponsor: 'Option<AccountId>',
+      limits: 'Option<UpDataStructsCollectionLimits>',
+      variableOnChainSchema: 'Vec<u8>',
+      constOnChainSchema: 'Vec<u8>',
+      metaUpdatePermission: 'Option<UpDataStructsMetaUpdatePermission>',
+    },
     UpDataStructsCollectionStats: {
       created: 'u32',
       destroyed: 'u32',
@@ -76,7 +90,13 @@ export default {
     UpDataStructsTokenId: 'u32',
     PalletNonfungibleItemData: mkDummy('NftItemData'),
     PalletRefungibleItemData: mkDummy('RftItemData'),
-    UpDataStructsCollectionMode: mkDummy('CollectionMode'),
+    UpDataStructsCollectionMode: {
+      _enum: {
+        NFT: null,
+        Fungible: 'u32',
+        ReFungible: null,
+      },
+    },
     UpDataStructsCreateItemData: mkDummy('CreateItemData'),
     UpDataStructsCollectionLimits: {
       accountTokenOwnershipLimit: 'Option<u32>',
@@ -101,7 +121,9 @@ export default {
     UpDataStructsAccessMode: {
       _enum: ['Normal', 'AllowList'],
     },
-    UpDataStructsSchemaVersion: mkDummy('SchemaVersion'),
+    UpDataStructsSchemaVersion: {
+      _enum: ['ImageURL', 'Unique'],
+    },
 
     PalletUnqSchedulerScheduledV2: mkDummy('ScheduledV2'),
     PalletUnqSchedulerCallSpec: mkDummy('CallSpec'),

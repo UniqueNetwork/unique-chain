@@ -2,7 +2,7 @@
 
 use core::ops::Deref;
 use frame_support::{ensure};
-use up_data_structs::{AccessMode, Collection, CollectionId, TokenId};
+use up_data_structs::{AccessMode, Collection, CollectionId, TokenId, CreateCollectionData};
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
 };
@@ -100,8 +100,11 @@ impl<T: Config> Deref for FungibleHandle<T> {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(data)
+	pub fn init_collection(
+		owner: T::AccountId,
+		data: CreateCollectionData<T::AccountId>,
+	) -> Result<CollectionId, DispatchError> {
+		<PalletCommon<T>>::init_collection(owner, data)
 	}
 	pub fn destroy_collection(
 		collection: FungibleHandle<T>,

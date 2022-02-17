@@ -14,7 +14,10 @@ use pallet_evm::GasWeightMapping;
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, ExistenceRequirement,
 	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, Pays, PostDispatchInfo,
-	TokenId, Weight, WithdrawReasons, CollectionStats, CustomDataLimit,
+	TokenId, Weight, WithdrawReasons, CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode,
+	NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
+	CustomDataLimit, CreateCollectionData, SponsorshipState,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -285,6 +288,10 @@ pub mod pallet {
 		TokenVariableDataLimitExceeded,
 		/// Exceeded max admin count
 		CollectionAdminCountExceeded,
+		/// Collection limit bounds per collection exceeded
+		CollectionLimitBoundsExceeded,
+		/// Tried to enable permissions which are only permitted to be disabled
+		OwnerPermissionsCantBeReverted,
 
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
@@ -395,7 +402,10 @@ impl<T: Config> Pallet<T> {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
+	pub fn init_collection(
+		owner: T::AccountId,
+		data: CreateCollectionData<T::AccountId>,
+	) -> Result<CollectionId, DispatchError> {
 		{
 			ensure!(
 				data.token_prefix.len() <= MAX_TOKEN_PREFIX_LENGTH as usize,
@@ -418,6 +428,29 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
+		let collection = Collection {
+			owner: owner.clone(),
+			name: data.name,
+			mode: data.mode.clone(),
+			mint_mode: false,
+			access: data.access.unwrap_or_default(),
+			description: data.description,
+			token_prefix: data.token_prefix,
+			offchain_schema: data.offchain_schema,
+			schema_version: data.schema_version.unwrap_or_default(),
+			sponsorship: data
+				.pending_sponsor
+				.map(SponsorshipState::Unconfirmed)
+				.unwrap_or_default(),
+			variable_on_chain_schema: data.variable_on_chain_schema,
+			const_on_chain_schema: data.const_on_chain_schema,
+			limits: data
+				.limits
+				.map(|limits| Self::clamp_limits(data.mode.clone(), &Default::default(), limits))
+				.unwrap_or_else(|| Ok(CollectionLimits::default()))?,
+			meta_update_permission: data.meta_update_permission.unwrap_or_default(),
+		};
+
 		// Take a (non-refundable) deposit of collection creation
 		{
 			let mut imbalance =
@@ -429,7 +462,7 @@ impl<T: Config> Pallet<T> {
 				),
 			);
 			<T as Config>::Currency::settle(
-				&data.owner,
+				&owner,
 				imbalance,
 				WithdrawReasons::TRANSFER,
 				ExistenceRequirement::KeepAlive,
@@ -438,12 +471,8 @@ impl<T: Config> Pallet<T> {
 		}
 
 		<CreatedCollectionCount<T>>::put(created_count);
-		<Pallet<T>>::deposit_event(Event::CollectionCreated(
-			id,
-			data.mode.id(),
-			data.owner.clone(),
-		));
-		<CollectionById<T>>::insert(id, data);
+		<Pallet<T>>::deposit_event(Event::CollectionCreated(id, data.mode.id(), owner.clone()));
+		<CollectionById<T>>::insert(id, collection);
 		Ok(id)
 	}
 
@@ -526,6 +555,61 @@ impl<T: Config> Pallet<T> {
 		}
 
 		Ok(())
+	}
+
+	pub fn clamp_limits(
+		mode: CollectionMode,
+		old_limit: &CollectionLimits,
+		mut new_limit: CollectionLimits,
+	) -> Result<CollectionLimits, DispatchError> {
+		macro_rules! limit_default {
+				($old:ident, $new:ident, $($field:ident $(($arg:expr))? => $check:expr),* $(,)?) => {{
+					$(
+						if let Some($new) = $new.$field {
+							let $old = $old.$field($($arg)?);
+							let _ = $new;
+							let _ = $old;
+							$check
+						} else {
+							$new.$field = $old.$field
+						}
+					)*
+				}};
+			}
+
+		limit_default!(old_limit, new_limit,
+			account_token_ownership_limit => ensure!(
+				new_limit <= MAX_TOKEN_OWNERSHIP,
+				<Error<T>>::CollectionLimitBoundsExceeded,
+			),
+			sponsor_transfer_timeout(match mode {
+				CollectionMode::NFT => NFT_SPONSOR_TRANSFER_TIMEOUT,
+				CollectionMode::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+				CollectionMode::ReFungible => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+			}) => ensure!(
+				new_limit <= MAX_SPONSOR_TIMEOUT,
+				<Error<T>>::CollectionLimitBoundsExceeded,
+			),
+			sponsored_data_size => ensure!(
+				new_limit <= CUSTOM_DATA_LIMIT,
+				<Error<T>>::CollectionLimitBoundsExceeded,
+			),
+			token_limit => ensure!(
+				old_limit >= new_limit && new_limit > 0,
+				<Error<T>>::CollectionTokenLimitExceeded
+			),
+			owner_can_transfer => ensure!(
+				old_limit || !new_limit,
+				<Error<T>>::OwnerPermissionsCantBeReverted,
+			),
+			owner_can_destroy => ensure!(
+				old_limit || !new_limit,
+				<Error<T>>::OwnerPermissionsCantBeReverted,
+			),
+			sponsored_data_rate_limit => {},
+			transfers_enabled => {},
+		);
+		Ok(new_limit)
 	}
 }
 

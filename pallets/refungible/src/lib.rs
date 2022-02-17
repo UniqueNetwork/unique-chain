@@ -3,6 +3,7 @@
 use frame_support::{ensure, BoundedVec};
 use up_data_structs::{
 	AccessMode, Collection, CollectionId, CustomDataLimit, MAX_REFUNGIBLE_PIECES, TokenId,
+	CreateCollectionData,
 };
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
@@ -155,8 +156,11 @@ impl<T: Config> Pallet<T> {
 
 // unchecked calls skips any permission checks
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(data)
+	pub fn init_collection(
+		owner: T::AccountId,
+		data: CreateCollectionData<T::AccountId>,
+	) -> Result<CollectionId, DispatchError> {
+		<PalletCommon<T>>::init_collection(owner, data)
 	}
 	pub fn destroy_collection(
 		collection: RefungibleHandle<T>,
