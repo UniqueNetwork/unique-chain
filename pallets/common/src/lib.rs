@@ -162,9 +162,12 @@ pub mod pallet {
 		type EvmBackwardsAddressMapping: up_evm_mapping::EvmBackwardsAddressMapping<Self::AccountId>;
 
 		type Currency: Currency<Self::AccountId>;
+
+		#[pallet::constant]
 		type CollectionCreationPrice: Get<
 			<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance,
 		>;
+
 		type TreasuryAccountId: Get<Self::AccountId>;
 	}
 
