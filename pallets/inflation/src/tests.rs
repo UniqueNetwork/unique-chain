@@ -4,7 +4,7 @@ use crate as pallet_inflation;
 
 use frame_support::{
 	assert_ok, parameter_types,
-	traits::{Currency, OnInitialize, Everything},
+	traits::{Currency, OnInitialize, Everything, ConstU32},
 };
 use frame_system::RawOrigin;
 use sp_core::H256;
@@ -81,6 +81,7 @@ impl frame_system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {

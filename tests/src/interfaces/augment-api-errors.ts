@@ -61,9 +61,9 @@ declare module '@polkadot/api/types/errors' {
        **/
       CantApproveMoreThanOwned: AugmentedError<ApiType>;
       /**
-       * Exceeded max admin amount
+       * Exceeded max admin count
        **/
-      CollectionAdminAmountExceeded: AugmentedError<ApiType>;
+      CollectionAdminCountExceeded: AugmentedError<ApiType>;
       /**
        * Collection description can not be longer than 255 char.
        **/
@@ -227,7 +227,7 @@ declare module '@polkadot/api/types/errors' {
       /**
        * Tried to set data for fungible item
        **/
-      FungibleItemsHaveData: AugmentedError<ApiType>;
+      FungibleItemsDontHaveData: AugmentedError<ApiType>;
       /**
        * Not default id passed as TokenId argument
        **/
@@ -381,6 +381,10 @@ declare module '@polkadot/api/types/errors' {
     };
     system: {
       /**
+       * The origin filter prevent the call to be dispatched.
+       **/
+      CallFiltered: AugmentedError<ApiType>;
+      /**
        * Failed to extract the runtime version from the new runtime.
        * 
        * Either calling `Core_version` or decoding `RuntimeVersion` failed.
@@ -485,6 +489,10 @@ declare module '@polkadot/api/types/errors' {
     };
     xcmpQueue: {
       /**
+       * Bad overweight index.
+       **/
+      BadOverweightIndex: AugmentedError<ApiType>;
+      /**
        * Bad XCM data.
        **/
       BadXcm: AugmentedError<ApiType>;
@@ -496,6 +504,10 @@ declare module '@polkadot/api/types/errors' {
        * Failed to send XCM message.
        **/
       FailedToSend: AugmentedError<ApiType>;
+      /**
+       * Provided weight is possibly not enough to execute the message.
+       **/
+      WeightOverLimit: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

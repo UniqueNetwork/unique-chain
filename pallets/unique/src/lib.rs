@@ -29,7 +29,8 @@ pub use frame_support::{
 		WeightToFeePolynomial, DispatchClass,
 	},
 	StorageValue, transactional,
-	pallet_prelude::DispatchResultWithPostInfo,
+	pallet_prelude::{DispatchResultWithPostInfo, ConstU32},
+	BoundedVec,
 };
 use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
@@ -38,8 +39,10 @@ use up_data_structs::{
 	MAX_DECIMAL_POINTS, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, CUSTOM_DATA_LIMIT,
 	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT,
 	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-	NFT_SPONSOR_TRANSFER_TIMEOUT, AccessMode, Collection, CreateItemData, CollectionLimits,
+	NFT_SPONSOR_TRANSFER_TIMEOUT, MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH,
+	MAX_TOKEN_PREFIX_LENGTH, AccessMode, Collection, CreateItemData, CollectionLimits,
 	CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
+	CustomDataLimit,
 };
 use pallet_common::{
 	account::CrossAccountId, CollectionHandle, Pallet as PalletCommon, Error as CommonError,
@@ -319,9 +322,9 @@ decl_module! {
 		#[weight = <SelfWeightOf<T>>::create_collection()]
 		#[transactional]
 		pub fn create_collection(origin,
-								 collection_name: Vec<u16>,
-								 collection_description: Vec<u16>,
-								 token_prefix: Vec<u8>,
+								 collection_name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
+								 collection_description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
+								 token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
 								 mode: CollectionMode) -> DispatchResult {
 
 			// Anyone can create a collection
@@ -336,11 +339,11 @@ decl_module! {
 				access: AccessMode::Normal,
 				description: collection_description,
 				token_prefix,
-				offchain_schema: Vec::new(),
+				offchain_schema: BoundedVec::default(),
 				schema_version: SchemaVersion::ImageURL,
 				sponsorship: SponsorshipState::Disabled,
-				variable_on_chain_schema: Vec::new(),
-				const_on_chain_schema: Vec::new(),
+				variable_on_chain_schema: BoundedVec::default(),
+				const_on_chain_schema: BoundedVec::default(),
 				limits: Default::default(),
 				meta_update_permission: Default::default(),
 			};
@@ -919,7 +922,7 @@ decl_module! {
 			origin,
 			collection_id: CollectionId,
 			item_id: TokenId,
-			data: Vec<u8>
+			data: BoundedVec<u8, CustomDataLimit>,
 		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
@@ -1004,14 +1007,11 @@ decl_module! {
 		pub fn set_offchain_schema(
 			origin,
 			collection_id: CollectionId,
-			schema: Vec<u8>
+			schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner_or_admin(&sender)?;
-
-			// check schema limit
-			ensure!(schema.len() as u32 <= OFFCHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.offchain_schema = schema;
 
@@ -1039,14 +1039,11 @@ decl_module! {
 		pub fn set_const_on_chain_schema (
 			origin,
 			collection_id: CollectionId,
-			schema: Vec<u8>
+			schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner_or_admin(&sender)?;
-
-			// check schema limit
-			ensure!(schema.len() as u32 <= CONST_ON_CHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.const_on_chain_schema = schema;
 
@@ -1074,14 +1071,11 @@ decl_module! {
 		pub fn set_variable_on_chain_schema (
 			origin,
 			collection_id: CollectionId,
-			schema: Vec<u8>
+			schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner_or_admin(&sender)?;
-
-			// check schema limit
-			ensure!(schema.len() as u32 <= VARIABLE_ON_CHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.variable_on_chain_schema = schema;
 
