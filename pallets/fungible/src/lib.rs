@@ -2,7 +2,7 @@
 
 use core::ops::Deref;
 use frame_support::{ensure};
-use up_data_structs::{AccessMode, Collection, CollectionId, TokenId, CreateCollectionData};
+use up_data_structs::{AccessMode, CollectionId, TokenId, CreateCollectionData};
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
 };

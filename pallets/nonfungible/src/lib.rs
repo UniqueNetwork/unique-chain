@@ -2,9 +2,7 @@
 
 use erc::ERC721Events;
 use frame_support::{BoundedVec, ensure};
-use up_data_structs::{
-	AccessMode, Collection, CollectionId, CustomDataLimit, TokenId, CreateCollectionData,
-};
+use up_data_structs::{AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, account::CrossAccountId,
 };
