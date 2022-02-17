@@ -373,4 +373,31 @@ describe('(!negative test!) integration test: ext. confirmSponsorship():', () =>
     await destroyCollectionExpectSuccess(collectionId);
     await confirmSponsorshipExpectFailure(collectionId, '//Bob');
   });
+
+  it('(!negative test!) Transfer fees are not paid by the sponsor if the transfer failed', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+
+    await usingApi(async (api) => {
+      // Find unused address
+      const ownerZeroBalance = await findUnusedAddress(api);
+
+      // Find another unused address
+      const senderZeroBalance = await findUnusedAddress(api);
+
+      // Mint token for an unused address
+      const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', ownerZeroBalance.address);
+
+      const sponsorBalanceBeforeTx = (await api.query.system.account(bob.address)).data.free.toBigInt();
+
+      // Try to transfer this token from an unsponsored unused adress to Alice
+      const zeroToAlice = api.tx.unique.transfer(normalizeAccountId(alice.address), collectionId, itemId, 0);
+      await expect(submitTransactionExpectFailAsync(senderZeroBalance, zeroToAlice)).to.be.rejected;
+
+      const sponsorBalanceAfterTx = (await api.query.system.account(bob.address)).data.free.toBigInt();
+
+      expect(sponsorBalanceAfterTx).to.equal(sponsorBalanceBeforeTx);
+    });
+  });
 });
