@@ -2,7 +2,7 @@
 
 use core::ops::Deref;
 use frame_support::{ensure};
-use up_data_structs::{AccessMode, Collection, CollectionId, TokenId, CreateCollectionData};
+use up_data_structs::{AccessMode, CollectionId, TokenId, CreateCollectionData};
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
 };
@@ -346,7 +346,7 @@ impl<T: Config> Pallet<T> {
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender),
-				<CommonError<T>>::TokenValueNotEnough
+				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
 
@@ -377,7 +377,7 @@ impl<T: Config> Pallet<T> {
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender),
-				<CommonError<T>>::TokenValueNotEnough
+				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
 

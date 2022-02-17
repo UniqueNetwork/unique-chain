@@ -601,7 +601,7 @@ fn nft_approve_and_transfer_from() {
 				1
 			)
 			.map_err(|e| e.error),
-			CommonError::<Test>::TokenValueNotEnough
+			CommonError::<Test>::ApprovedValueTooLow
 		);
 
 		// do approve
@@ -916,7 +916,7 @@ fn fungible_approve_and_transfer_from() {
 				4
 			)
 			.map_err(|e| e.error),
-			CommonError::<Test>::TokenValueNotEnough
+			CommonError::<Test>::ApprovedValueTooLow
 		);
 	});
 }

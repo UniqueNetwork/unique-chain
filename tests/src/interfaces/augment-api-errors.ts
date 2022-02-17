@@ -115,7 +115,7 @@ declare module '@polkadot/api/types/errors' {
       /**
        * Requested value more than approved.
        **/
-      TokenValueNotEnough: AugmentedError<ApiType>;
+      ApprovedValueTooLow: AugmentedError<ApiType>;
       /**
        * Item balance not enough.
        **/
