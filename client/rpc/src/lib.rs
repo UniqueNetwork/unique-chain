@@ -4,7 +4,7 @@ use codec::Decode;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
 use up_data_structs::{Collection, CollectionId, CollectionStats, TokenId};
-use sp_api::{BlockId, BlockT, ProvideRuntimeApi};
+use sp_api::{BlockId, BlockT, ProvideRuntimeApi, ApiExt};
 use sp_blockchain::HeaderBackend;
 use up_rpc::UniqueApi as UniqueRuntimeApi;
 
@@ -31,7 +31,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		collection: CollectionId,
 		token: TokenId,
 		at: Option<BlockHash>,
-	) -> Result<CrossAccountId>;
+	) -> Result<Option<CrossAccountId>>;
 	#[rpc(name = "unique_constMetadata")]
 	fn const_metadata(
 		&self,
@@ -132,7 +132,10 @@ impl From<Error> for i64 {
 }
 
 macro_rules! pass_method {
-	($method_name:ident($($name:ident: $ty:ty),* $(,)?) -> $result:ty $(=> $mapper:expr)?) => {
+	(
+		$method_name:ident($($name:ident: $ty:ty),* $(,)?) -> $result:ty $(=> $mapper:expr)?
+		$(; changed_in $ver:expr, $changed_method_name:ident ($($changed_name:expr), * $(,)?) => $fixer:expr)*
+	) => {
 		fn $method_name(
 			&self,
 			$(
@@ -142,8 +145,25 @@ macro_rules! pass_method {
 		) -> Result<$result> {
 			let api = self.client.runtime_api();
 			let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+			let _api_version = if let Ok(Some(api_version)) =
+				api.api_version::<dyn UniqueRuntimeApi<Block, CrossAccountId, AccountId>>(&at)
+			{
+				api_version
+			} else {
+				// unreachable for our runtime
+				return Err(RpcError {
+					code: ErrorCode::InvalidParams,
+					message: "Api is not available".into(),
+					data: None,
+				})
+			};
 
-			let result = api.$method_name(&at, $($name),*).map_err(|e| RpcError {
+			let result = $(if _api_version < $ver {
+				api.$changed_method_name(&at, $($changed_name),*).map(|r| r.map($fixer))
+			} else)*
+			{ api.$method_name(&at, $($name),*) };
+
+			let result = result.map_err(|e| RpcError {
 				code: ErrorCode::ServerError(Error::RuntimeError.into()),
 				message: "Unable to query".into(),
 				data: Some(format!("{:?}", e).into()),
@@ -168,7 +188,10 @@ where
 {
 	pass_method!(account_tokens(collection: CollectionId, account: CrossAccountId) -> Vec<TokenId>);
 	pass_method!(token_exists(collection: CollectionId, token: TokenId) -> bool);
-	pass_method!(token_owner(collection: CollectionId, token: TokenId) -> CrossAccountId);
+	pass_method!(
+		token_owner(collection: CollectionId, token: TokenId) -> Option<CrossAccountId>;
+		changed_in 2, token_owner_before_version_2(collection, token) => |u| Some(u)
+	);
 	pass_method!(const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
 	pass_method!(variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
 	pass_method!(collection_tokens(collection: CollectionId) -> u32);

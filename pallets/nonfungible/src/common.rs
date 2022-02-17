@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 
-use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
-use up_data_structs::TokenId;
+use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
+use up_data_structs::{TokenId, CustomDataLimit};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
@@ -188,7 +188,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		&self,
 		sender: T::CrossAccountId,
 		token: TokenId,
-		data: Vec<u8>,
+		data: BoundedVec<u8, CustomDataLimit>,
 	) -> DispatchResultWithPostInfo {
 		let len = data.len();
 		with_weight(
@@ -211,20 +211,20 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		TokenId(<TokensMinted<T>>::get(self.id))
 	}
 
-	fn token_owner(&self, token: TokenId) -> T::CrossAccountId {
-		<TokenData<T>>::get((self.id, token))
-			.map(|t| t.owner)
-			.unwrap_or_default()
+	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId> {
+		<TokenData<T>>::get((self.id, token)).map(|t| t.owner)
 	}
 	fn const_metadata(&self, token: TokenId) -> Vec<u8> {
 		<TokenData<T>>::get((self.id, token))
 			.map(|t| t.const_data)
 			.unwrap_or_default()
+			.into_inner()
 	}
 	fn variable_metadata(&self, token: TokenId) -> Vec<u8> {
 		<TokenData<T>>::get((self.id, token))
 			.map(|t| t.variable_data)
 			.unwrap_or_default()
+			.into_inner()
 	}
 
 	fn collection_tokens(&self) -> u32 {

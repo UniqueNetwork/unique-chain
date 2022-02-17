@@ -1,8 +1,8 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { EthereumBlock, EthereumReceipt, EthereumTransactionLegacyTransaction, FpRpcTransactionStatus } from './ethereum';
-import type { CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundStatus, CumulusPalletXcmpQueueOutboundStatus, CumulusPalletXcmpQueueQueueConfigData, PolkadotParachainPrimitivesXcmpMessageFormat, PolkadotPrimitivesV1AbridgedHostConfiguration, PolkadotPrimitivesV1PersistedValidationData } from './polkadot';
+import type { EthereumBlock, FpRpcTransactionStatus } from './ethereum';
+import type { CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueQueueConfigData, PolkadotPrimitivesV1AbridgedHostConfiguration, PolkadotPrimitivesV1PersistedValidationData } from './polkadot';
 import type { PalletCommonAccountBasicCrossAccountIdRepr, PalletNonfungibleItemData, PalletRefungibleItemData, UpDataStructsCollection, UpDataStructsCollectionStats } from './unique';
 import type { ApiTypes } from '@polkadot/api/types';
 import type { BTreeMap, Bytes, Option, U256, Vec, bool, u128, u16, u32, u64 } from '@polkadot/types';
@@ -105,7 +105,7 @@ declare module '@polkadot/api/types/storage' {
       /**
        * The current Ethereum receipts.
        **/
-      currentReceipts: AugmentedQuery<ApiType, () => Observable<Option<Vec<EthereumReceipt>>>, []> & QueryableStorageEntry<ApiType, []>;
+      currentReceipts: AugmentedQuery<ApiType, () => Observable<Option<Vec<EthereumReceiptReceiptV3>>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * The current transaction statuses.
        **/
@@ -113,7 +113,7 @@ declare module '@polkadot/api/types/storage' {
       /**
        * Current building block's transactions and receipts.
        **/
-      pending: AugmentedQuery<ApiType, () => Observable<Vec<ITuple<[EthereumTransactionLegacyTransaction, FpRpcTransactionStatus, EthereumReceipt]>>>, []> & QueryableStorageEntry<ApiType, []>;
+      pending: AugmentedQuery<ApiType, () => Observable<Vec<ITuple<[EthereumTransactionTransactionV2, FpRpcTransactionStatus, EthereumReceiptReceiptV3]>>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Generic query
        **/
@@ -219,6 +219,12 @@ declare module '@polkadot/api/types/storage' {
        * The next authorized upgrade, if there is one.
        **/
       authorizedUpgrade: AugmentedQuery<ApiType, () => Observable<Option<H256>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * A custom head data that should be returned as result of `validate_block`.
+       * 
+       * See [`Pallet::set_custom_validation_head_data`] for more information.
+       **/
+      customValidationHeadData: AugmentedQuery<ApiType, () => Observable<Option<Bytes>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Were the validation data set to notify the relay chain?
        **/
@@ -365,7 +371,7 @@ declare module '@polkadot/api/types/storage' {
       /**
        * The `AccountId` of the sudo key.
        **/
-      key: AugmentedQuery<ApiType, () => Observable<AccountId32>, []> & QueryableStorageEntry<ApiType, []>;
+      key: AugmentedQuery<ApiType, () => Observable<Option<AccountId32>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Generic query
        **/
@@ -552,7 +558,7 @@ declare module '@polkadot/api/types/storage' {
       /**
        * Status of the inbound XCMP channels.
        **/
-      inboundXcmpStatus: AugmentedQuery<ApiType, () => Observable<Vec<ITuple<[u32, CumulusPalletXcmpQueueInboundStatus, Vec<ITuple<[u32, PolkadotParachainPrimitivesXcmpMessageFormat]>>]>>>, []> & QueryableStorageEntry<ApiType, []>;
+      inboundXcmpStatus: AugmentedQuery<ApiType, () => Observable<Vec<CumulusPalletXcmpQueueInboundChannelDetails>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * The messages outbound in a given XCMP channel.
        **/
@@ -565,7 +571,19 @@ declare module '@polkadot/api/types/storage' {
        * case of the need to send a high-priority signal message this block.
        * The bool is true if there is a signal message waiting to be sent.
        **/
-      outboundXcmpStatus: AugmentedQuery<ApiType, () => Observable<Vec<ITuple<[u32, CumulusPalletXcmpQueueOutboundStatus, bool, u16, u16]>>>, []> & QueryableStorageEntry<ApiType, []>;
+      outboundXcmpStatus: AugmentedQuery<ApiType, () => Observable<Vec<CumulusPalletXcmpQueueOutboundChannelDetails>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * The messages that exceeded max individual message weight budget.
+       * 
+       * These message stay in this storage map until they are manually dispatched via
+       * `service_overweight`.
+       **/
+      overweight: AugmentedQuery<ApiType, (arg: u64 | AnyNumber | Uint8Array) => Observable<Option<ITuple<[u32, u32, Bytes]>>>, [u64]> & QueryableStorageEntry<ApiType, [u64]>;
+      /**
+       * The number of overweight messages ever recorded in `Overweight`. Also doubles as the next
+       * available free overweight index.
+       **/
+      overweightCount: AugmentedQuery<ApiType, () => Observable<u64>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * The configuration which controls the dynamics of the outbound queue.
        **/

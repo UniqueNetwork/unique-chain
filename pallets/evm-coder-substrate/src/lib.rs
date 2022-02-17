@@ -21,7 +21,7 @@ pub mod pallet {
 	use frame_support::{ensure};
 	use pallet_evm::{
 		ExitError, ExitRevert, ExitSucceed, GasWeightMapping, PrecompileFailure, PrecompileOutput,
-		PrecompileResult,
+		PrecompileResult, runner::stack::MaybeMirroredLog,
 	};
 	use frame_system::ensure_signed;
 	pub use frame_support::dispatch::DispatchResult;
@@ -29,7 +29,7 @@ pub mod pallet {
 	use sp_std::cell::RefCell;
 	use sp_std::vec::Vec;
 	use sp_core::{H160, H256};
-	use ethereum::Log;
+	use ethereum::TransactionV2;
 	use frame_support::{pallet_prelude::*, traits::PalletInfo};
 	use frame_system::pallet_prelude::*;
 
@@ -66,9 +66,9 @@ pub mod pallet {
 	pub const G_SLOAD_WORD: u64 = 800;
 	pub const G_SSTORE_WORD: u64 = 20000;
 
-	pub fn generate_transaction() -> ethereum::TransactionV0 {
+	pub fn generate_transaction() -> TransactionV2 {
 		use ethereum::{TransactionV0, TransactionAction, TransactionSignature};
-		TransactionV0 {
+		TransactionV2::Legacy(TransactionV0 {
 			nonce: 0.into(),
 			gas_price: 0.into(),
 			gas_limit: 0.into(),
@@ -78,13 +78,13 @@ pub mod pallet {
 			input: Vec::from([0, 0, 0, 0]),
 			// if v is not 27 - then we need to pass some other validity checks
 			signature: TransactionSignature::new(27, H256([0x88; 32]), H256([0x88; 32])).unwrap(),
-		}
+		})
 	}
 
 	#[derive(Default)]
 	pub struct SubstrateRecorder<T: Config> {
 		contract: H160,
-		logs: RefCell<Vec<Log>>,
+		logs: RefCell<Vec<MaybeMirroredLog>>,
 		initial_gas: u64,
 		gas_limit: RefCell<u64>,
 		_phantom: PhantomData<*const T>,
@@ -104,13 +104,19 @@ pub mod pallet {
 		pub fn is_empty(&self) -> bool {
 			self.logs.borrow().is_empty()
 		}
-		// TODO: Replace with real storage in pallet-ethereum,
-		// same way as it is done with frame_system's Events
-		/// Doesn't consumes any gas, should be used after consume_log_sub
-		pub fn log(&self, log: impl ToLog) {
-			self.logs.borrow_mut().push(log.to_log(self.contract));
+		// Logs emitted with log_direct appear as substrate evm.Log event
+		pub fn log_direct(&self, log: impl ToLog) {
+			self.logs
+				.borrow_mut()
+				.push(MaybeMirroredLog::direct(log.to_log(self.contract)))
 		}
-		pub fn retrieve_logs(self) -> Vec<Log> {
+		/// If log already has substrate equivalent - then we don't need to emit evm.Log
+		pub fn log_mirrored(&self, log: impl ToLog) {
+			self.logs
+				.borrow_mut()
+				.push(MaybeMirroredLog::mirrored(log.to_log(self.contract)))
+		}
+		pub fn retrieve_logs(self) -> Vec<MaybeMirroredLog> {
 			self.logs.into_inner()
 		}
 
@@ -165,7 +171,8 @@ pub mod pallet {
 				Ok(Some(v)) => Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
 					cost: self.initial_gas - self.gas_left(),
-					logs: self.retrieve_logs(),
+					// TODO: preserve mirroring status
+					logs: self.retrieve_logs().into_iter().map(|l| l.log).collect(),
 					output: v.finish(),
 				}),
 				Ok(None) => return None,

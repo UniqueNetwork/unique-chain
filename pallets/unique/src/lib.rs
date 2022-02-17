@@ -29,16 +29,18 @@ pub use frame_support::{
 		WeightToFeePolynomial, DispatchClass,
 	},
 	StorageValue, transactional,
-	pallet_prelude::DispatchResultWithPostInfo,
+	pallet_prelude::{DispatchResultWithPostInfo, ConstU32},
+	BoundedVec,
 };
 use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{sp_std::prelude::Vec};
 use up_data_structs::{
 	MAX_DECIMAL_POINTS, VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT,
-	OFFCHAIN_SCHEMA_LIMIT, AccessMode, CreateItemData, CollectionLimits, CollectionId,
+	OFFCHAIN_SCHEMA_LIMIT, MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH,
+	MAX_TOKEN_PREFIX_LENGTH, AccessMode, CreateItemData, CollectionLimits, CollectionId,
 	CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
-	CreateCollectionData,
+	CreateCollectionData, CustomDataLimit,
 };
 use pallet_common::{
 	account::CrossAccountId, CollectionHandle, Pallet as PalletCommon, Error as CommonError,
@@ -315,17 +317,18 @@ decl_module! {
 		#[transactional]
 		#[deprecated]
 		pub fn create_collection(origin,
-								 collection_name: Vec<u16>,
-								 collection_description: Vec<u16>,
-								 token_prefix: Vec<u8>,
-								 mode: CollectionMode) -> DispatchResult {
-			Self::create_collection_ex(origin, CreateCollectionData {
+								 collection_name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
+								 collection_description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
+								 token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
+								 mode: CollectionMode) -> DispatchResult  {
+			let data: CreateCollectionData<T::AccountId> = CreateCollectionData {
 				name: collection_name,
 				description: collection_description,
 				token_prefix,
 				mode,
 				..Default::default()
-			})
+			};
+			Self::create_collection_ex(origin, data)
 		}
 
 		/// This method creates a collection
@@ -910,7 +913,7 @@ decl_module! {
 			origin,
 			collection_id: CollectionId,
 			item_id: TokenId,
-			data: Vec<u8>
+			data: BoundedVec<u8, CustomDataLimit>,
 		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
@@ -995,14 +998,11 @@ decl_module! {
 		pub fn set_offchain_schema(
 			origin,
 			collection_id: CollectionId,
-			schema: Vec<u8>
+			schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner_or_admin(&sender)?;
-
-			// check schema limit
-			ensure!(schema.len() as u32 <= OFFCHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.offchain_schema = schema;
 
@@ -1030,14 +1030,11 @@ decl_module! {
 		pub fn set_const_on_chain_schema (
 			origin,
 			collection_id: CollectionId,
-			schema: Vec<u8>
+			schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner_or_admin(&sender)?;
-
-			// check schema limit
-			ensure!(schema.len() as u32 <= CONST_ON_CHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.const_on_chain_schema = schema;
 
@@ -1065,14 +1062,11 @@ decl_module! {
 		pub fn set_variable_on_chain_schema (
 			origin,
 			collection_id: CollectionId,
-			schema: Vec<u8>
+			schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner_or_admin(&sender)?;
-
-			// check schema limit
-			ensure!(schema.len() as u32 <= VARIABLE_ON_CHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.variable_on_chain_schema = schema;
 

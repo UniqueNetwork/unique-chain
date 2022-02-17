@@ -8,16 +8,16 @@ use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo},
 	ensure, fail,
 	traits::{Imbalance, Get, Currency},
+	BoundedVec,
 };
 use pallet_evm::GasWeightMapping;
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, ExistenceRequirement,
-	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, Pays, PostDispatchInfo, TokenId, Weight,
-	WithdrawReasons, CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode,
+	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, Pays, PostDispatchInfo,
+	TokenId, Weight, WithdrawReasons, CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode,
 	NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
-	CreateCollectionData, SponsorshipState,
+	CustomDataLimit, CreateCollectionData, SponsorshipState,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -56,8 +56,11 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn try_get(id: CollectionId) -> Result<Self, DispatchError> {
 		Ok(Self::new(id).ok_or(<Error<T>>::CollectionNotFound)?)
 	}
-	pub fn log(&self, log: impl evm_coder::ToLog) {
-		self.recorder.log(log)
+	pub fn log_mirrored(&self, log: impl evm_coder::ToLog) {
+		self.recorder.log_mirrored(log)
+	}
+	pub fn log_direct(&self, log: impl evm_coder::ToLog) {
+		self.recorder.log_direct(log)
 	}
 	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
@@ -304,7 +307,7 @@ pub mod pallet {
 		/// Item balance not enough.
 		TokenValueTooLow,
 		/// Requested value more than approved.
-		TokenValueNotEnough,
+		ApprovedValueTooLow,
 		/// Tried to approve more than owned
 		CantApproveMoreThanOwned,
 
@@ -405,15 +408,7 @@ impl<T: Config> Pallet<T> {
 	) -> Result<CollectionId, DispatchError> {
 		{
 			ensure!(
-				data.name.len() <= MAX_COLLECTION_NAME_LENGTH,
-				Error::<T>::CollectionNameLimitExceeded
-			);
-			ensure!(
-				data.description.len() <= MAX_COLLECTION_DESCRIPTION_LENGTH,
-				Error::<T>::CollectionDescriptionLimitExceeded
-			);
-			ensure!(
-				data.token_prefix.len() <= MAX_TOKEN_PREFIX_LENGTH,
+				data.token_prefix.len() <= MAX_TOKEN_PREFIX_LENGTH as usize,
 				Error::<T>::CollectionTokenPrefixLimitExceeded
 			);
 		}
@@ -691,14 +686,14 @@ pub trait CommonCollectionOperations<T: Config> {
 		&self,
 		sender: T::CrossAccountId,
 		token: TokenId,
-		data: Vec<u8>,
+		data: BoundedVec<u8, CustomDataLimit>,
 	) -> DispatchResultWithPostInfo;
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId>;
 	fn token_exists(&self, token: TokenId) -> bool;
 	fn last_token_id(&self) -> TokenId;
 
-	fn token_owner(&self, token: TokenId) -> T::CrossAccountId;
+	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
 	fn const_metadata(&self, token: TokenId) -> Vec<u8>;
 	fn variable_metadata(&self, token: TokenId) -> Vec<u8>;
 

@@ -115,7 +115,7 @@ declare module '@polkadot/api/types/errors' {
       /**
        * Requested value more than approved.
        **/
-      TokenValueNotEnough: AugmentedError<ApiType>;
+      ApprovedValueTooLow: AugmentedError<ApiType>;
       /**
        * Item balance not enough.
        **/
@@ -489,6 +489,10 @@ declare module '@polkadot/api/types/errors' {
     };
     xcmpQueue: {
       /**
+       * Bad overweight index.
+       **/
+      BadOverweightIndex: AugmentedError<ApiType>;
+      /**
        * Bad XCM data.
        **/
       BadXcm: AugmentedError<ApiType>;
@@ -500,6 +504,10 @@ declare module '@polkadot/api/types/errors' {
        * Failed to send XCM message.
        **/
       FailedToSend: AugmentedError<ApiType>;
+      /**
+       * Provided weight is possibly not enough to execute the message.
+       **/
+      WeightOverLimit: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

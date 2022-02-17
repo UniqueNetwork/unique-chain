@@ -2,7 +2,7 @@
 
 use core::ops::Deref;
 use frame_support::{ensure};
-use up_data_structs::{AccessMode, Collection, CollectionId, TokenId, CreateCollectionData};
+use up_data_structs::{AccessMode, CollectionId, TokenId, CreateCollectionData};
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
 };
@@ -148,7 +148,7 @@ impl<T: Config> Pallet<T> {
 		}
 		<TotalSupply<T>>::insert(collection.id, total_supply);
 
-		collection.log(ERC20Events::Transfer {
+		collection.log_mirrored(ERC20Events::Transfer {
 			from: *owner.as_eth(),
 			to: H160::default(),
 			value: amount.into(),
@@ -204,7 +204,7 @@ impl<T: Config> Pallet<T> {
 			<Balance<T>>::insert((collection.id, to), balance_to);
 		}
 
-		collection.log(ERC20Events::Transfer {
+		collection.log_mirrored(ERC20Events::Transfer {
 			from: *from.as_eth(),
 			to: *to.as_eth(),
 			value: amount.into(),
@@ -261,7 +261,7 @@ impl<T: Config> Pallet<T> {
 		for (user, amount) in balances {
 			<Balance<T>>::insert((collection.id, &user), amount);
 
-			collection.log(ERC20Events::Transfer {
+			collection.log_mirrored(ERC20Events::Transfer {
 				from: H160::default(),
 				to: *user.as_eth(),
 				value: amount.into(),
@@ -289,7 +289,7 @@ impl<T: Config> Pallet<T> {
 			<Allowance<T>>::insert((collection.id, owner, spender), amount);
 		}
 
-		collection.log(ERC20Events::Approval {
+		collection.log_mirrored(ERC20Events::Approval {
 			owner: *owner.as_eth(),
 			spender: *spender.as_eth(),
 			value: amount.into(),
@@ -346,7 +346,7 @@ impl<T: Config> Pallet<T> {
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender),
-				<CommonError<T>>::TokenValueNotEnough
+				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
 
@@ -377,7 +377,7 @@ impl<T: Config> Pallet<T> {
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender),
-				<CommonError<T>>::TokenValueNotEnough
+				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
 
