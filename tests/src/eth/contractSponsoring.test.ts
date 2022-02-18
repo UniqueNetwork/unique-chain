@@ -113,8 +113,8 @@ describe('Sponsoring EVM contracts', () => {
     const originalFlipperBalance = await web3.eth.getBalance(flipper.options.address);
     expect(originalFlipperBalance).to.be.not.equal('0');
 
-    await flipper.methods.flip().send({from: caller});
-    expect(await flipper.methods.getValue().call()).to.be.true;
+    await expect(flipper.methods.flip().send({from: caller})).to.be.rejectedWith(/InvalidTransaction::Payment/);
+    expect(await flipper.methods.getValue().call()).to.be.false;
 
     // Balance should be taken from flipper instead of caller
     const balanceAfter = await web3.eth.getBalance(flipper.options.address);
