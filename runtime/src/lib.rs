@@ -250,8 +250,13 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
+/*
+8880 - Unique
+8881 - Quartz
+8882 - Opal
+*/
 parameter_types! {
-	pub const ChainId: u64 = 8888;
+	pub const ChainId: u64 = 8882;
 }
 
 pub struct FixedFee;
@@ -874,7 +879,7 @@ impl pallet_aura::Config for Runtime {
 
 parameter_types! {
 	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account();
-	pub const CollectionCreationPrice: Balance = 100 * UNIQUE;
+	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
 }
 
 impl pallet_common::Config for Runtime {
