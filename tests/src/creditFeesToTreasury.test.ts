@@ -3,6 +3,7 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
+import './interfaces/augment-api-consts';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
