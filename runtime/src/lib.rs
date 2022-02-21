@@ -811,19 +811,6 @@ parameter_types! {
 
 type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
 
-/*fn get_signed_extra(from: <Runtime as frame_system::Config>::AccountId) -> SignedExtra {
-	(
-		frame_system::CheckSpecVersion::<Runtime>::new(),
-		frame_system::CheckGenesis::<Runtime>::new(),
-		frame_system::CheckEra::<Runtime>::from(Era::Immortal),
-		frame_system::CheckNonce::<Runtime>::from(frame_system::Pallet::<Runtime>::account_nonce(
-			from,
-		)),
-		frame_system::CheckWeight::<Runtime>::new(),
-		ChargeTransactionPayment::new(0),
-	)
-}*/
-
 #[derive(Default, Encode, Decode, Clone, TypeInfo)]
 pub struct SchedulerPreDispatch {
 	tip: Balance,
@@ -849,29 +836,12 @@ where
 	type Pre = SchedulerPreDispatch;
 
 	fn dispatch_call(
-		//signer: <T as frame_system::Config>::AccountId,
 		pre_dispatch: Self::Pre,
 		call: <T as pallet_unq_scheduler::Config>::Call,
 	) -> Result<
 		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
 		TransactionValidityError,
 	> {
-		/*let dispatch_info = call.get_dispatch_info();
-
-		let extrinsic = fp_self_contained::CheckedExtrinsic::<
-			AccountId,
-			Call,
-			SignedExtra,
-			SelfContainedSignedInfo,
-		> {
-			signed: CheckedSignature::<AccountId, SignedExtra, SelfContainedSignedInfo>::Signed(
-				signer.clone().into(),
-				get_signed_extra(signer.clone().into()),
-			),
-			function: call.clone().into(),
-		};
-
-		extrinsic.apply::<Runtime>(&dispatch_info, 0)*/
 		let dispatch_info = call.get_dispatch_info();
 		let pre = (
 			pre_dispatch.tip,

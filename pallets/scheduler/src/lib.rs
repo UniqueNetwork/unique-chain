@@ -159,15 +159,6 @@ pub type PeriodicIndex = u32;
 /// The location of a scheduled task that can be used to remove it.
 pub type TaskAddress<BlockNumber> = (BlockNumber, u32);
 
-/*#[cfg_attr(any(feature = "std", test), derive(PartialEq, Eq))] todo remove completely?
-#[derive(Clone, RuntimeDebug, Encode, Decode)]
-struct ScheduledV1<Call, BlockNumber> {
-	maybe_id: Option<Vec<u8>>,
-	priority: schedule::Priority,
-	call: Call,
-	maybe_periodic: Option<schedule::Period<BlockNumber>>,
-}*/
-
 /// Information regarding an item to be executed in the future.
 #[cfg_attr(any(feature = "std", test), derive(PartialEq, Eq))]
 #[derive(Clone, RuntimeDebug, Encode, Decode, TypeInfo)]
@@ -187,25 +178,6 @@ pub struct Scheduled<Call, BlockNumber, PalletsOrigin, AccountId, PreDispatch> {
 	_phantom: PhantomData<AccountId>,
 }
 
-/// The current version of Scheduled struct.
-/*pub type Scheduled<Call, BlockNumber, PalletsOrigin, AccountId, PreDispatch> =
-	ScheduledV2<Call, BlockNumber, PalletsOrigin, AccountId, PreDispatch>;*/
-
-// A value placed in storage that represents the current version of the Scheduler storage.
-// This value is used by the `on_runtime_upgrade` logic to determine whether we run
-// storage migration logic.
-/*#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, TypeInfo)] todo remove completely?
-enum Releases {
-	V1,
-	V2,
-}
-
-impl Default for Releases {
-	fn default() -> Self {
-		Releases::V1
-	}
-}*/
-
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct CallSpec {
 	module: u32,
@@ -223,17 +195,9 @@ decl_storage! {
 				T::AccountId,
 				<<T as Config>::CallExecutor as DispatchCall<T, H160>>::Pre
 			>>>;
-
-		/*pub SpecAgenda: map hasher(twox_64_concat) T::BlockNumber todo remove completely?
-			=> Vec<Option<CallSpec>>;*/
-
+			
 		/// Lookup from identity to the block number and index of the task.
 		Lookup: map hasher(twox_64_concat) Vec<u8> => Option<TaskAddress<T::BlockNumber>>;
-
-		// / Storage version of the pallet.
-		// /
-		// / New networks start with last version.
-		//StorageVersion build(|_| Releases::V2): Releases; todo remove completely?
 	}
 }
 
@@ -535,9 +499,9 @@ impl<T: Config> Module<T> {
 			<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin.clone()).into(),
 		)
 		.unwrap_or_default(); // todo sponsoring doesn't work with the line below -- found sponsoring is already checked for in transaction_payment
-					  //let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &call).unwrap_or(sender);
-					  //let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay.clone()));
-					  //let r = call.clone().dispatch(sponsor.into());
+		//let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &call).unwrap_or(sender);
+		//let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay.clone()));
+		//let r = call.clone().dispatch(sponsor.into());
 
 		let pre_dispatch = match T::CallExecutor::pre_dispatch(sender.clone(), call.clone()) {
 			Ok(pre_dispatch) => pre_dispatch,

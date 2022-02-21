@@ -3,7 +3,7 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
-import chai, { expect } from 'chai';
+import chai, {expect} from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
 import {
@@ -27,8 +27,6 @@ import {
   getTokenOwner,
   getGenericResult,
   scheduleTransferFundsPeriodicExpectSuccess,
-  setCollectionLimitsExpectSuccess,
-  getDetailedCollectionInfo,
   getFreeBalance,
   confirmSponsorshipByKeyExpectSuccess,
 } from './util/helpers';
@@ -142,51 +140,6 @@ describe('Scheduling token and balance transfers', () => {
       expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(alice.address));
     });
   });
-
-  /*it.skip('Going bankrupt after sponsoring a scheduled transaction does not nullify the transaction', async () => {
-    await usingApi(async (api) => {
-      // Find two empty, unused accounts
-      const zeroBalance = await findUnusedAddress(api);
-      const zeroBalanceSponsor = await findUnusedAddress(api);
-
-      const collectionId = await createCollectionExpectSuccess();
-
-      // Grace these with money, enough to cover future transactions
-      const balanceTx = api.tx.balances.transfer(zeroBalance.address, 1n * UNIQUE);
-      await submitTransactionAsync(alice, balanceTx);
-
-      // Grace these with money, enough to cover future transactions
-      const balanceSponsorTx = api.tx.balances.transfer(zeroBalanceSponsor.address, 1n * UNIQUE);
-      await submitTransactionAsync(alice, balanceSponsorTx);
-
-      // Set a collection sponsor
-      await setCollectionSponsorExpectSuccess(collectionId, zeroBalanceSponsor.address);
-      await confirmSponsorshipExpectSuccess(collectionId);
-
-      // Add zeroBalance address to allow list
-      await enablePublicMintingExpectSuccess(alice, collectionId);
-      await addToAllowListExpectSuccess(alice, collectionId, zeroBalance.address);
-
-      // Mint a fresh NFT
-      const tokenId = await createItemExpectSuccess(zeroBalance, collectionId, 'NFT');
-
-      // Schedule transfer of the NFT a few blocks ahead
-      // const waitForBlocks = 4;
-      await scheduleTransferExpectSuccess(collectionId, tokenId, zeroBalance, alice, 1, 4);
-      //await waitAfterScheduleExpectSuccess(collectionId, tokenId, alice, 3);
-
-      // Get rid of the account's funds before the scheduled transaction takes place
-      const emptyBalanceSponsorTx = api.tx.balances.setBalance(zeroBalanceSponsor.address, 0, 0);
-      const sudoTx = api.tx.sudo.sudo(emptyBalanceSponsorTx as any);
-      const events = await submitTransactionAsync(alice, sudoTx);
-      expect(getGenericResult(events).success).to.be.true;
-
-      // Wait for a certain number of blocks, save for the ones that already happened while accepting the late transactions
-      await waitNewBlocks(4);
-
-      expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(alice.address));
-    });
-  });*/
 
   it('Sponsor going bankrupt does not impact a scheduled transaction', async () => {
     const collectionId = await createCollectionExpectSuccess();
