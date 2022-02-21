@@ -38,14 +38,16 @@ fn create_test_collection_for_owner(
 	let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 	let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
 
+	let data: CreateCollectionData<u64> = CreateCollectionData {
+		name: col_name1.try_into().unwrap(),
+		description: col_desc1.try_into().unwrap(),
+		token_prefix: token_prefix1.try_into().unwrap(),
+		mode: mode.clone(),
+		..Default::default()
+	};
+
 	let origin1 = Origin::signed(owner);
-	assert_ok!(TemplateModule::create_collection(
-		origin1,
-		col_name1.try_into().unwrap(),
-		col_desc1.try_into().unwrap(),
-		token_prefix1.try_into().unwrap(),
-		mode.clone()
-	));
+	assert_ok!(TemplateModule::create_collection_ex(origin1, data));
 
 	let saved_col_name: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 	let saved_description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
@@ -127,15 +129,17 @@ fn create_fungible_collection_fails_with_large_decimal_numbers() {
 		let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 		let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
 
+		let data: CreateCollectionData<u64> = CreateCollectionData {
+			name: col_name1.try_into().unwrap(),
+			description: col_desc1.try_into().unwrap(),
+			token_prefix: token_prefix1.try_into().unwrap(),
+			mode: CollectionMode::Fungible(MAX_DECIMAL_POINTS + 1),
+			..Default::default()
+		};
+
 		let origin1 = Origin::signed(1);
 		assert_noop!(
-			TemplateModule::create_collection(
-				origin1,
-				col_name1.try_into().unwrap(),
-				col_desc1.try_into().unwrap(),
-				token_prefix1.try_into().unwrap(),
-				CollectionMode::Fungible(MAX_DECIMAL_POINTS + 1)
-			),
+			TemplateModule::create_collection_ex(origin1, data),
 			Error::<Test>::CollectionDecimalPointLimitExceeded
 		);
 	});
@@ -2267,15 +2271,17 @@ fn total_number_collections_bound_neg() {
 		let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 		let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
 
+		let data: CreateCollectionData<u64> = CreateCollectionData {
+			name: col_name1.try_into().unwrap(),
+			description: col_desc1.try_into().unwrap(),
+			token_prefix: token_prefix1.try_into().unwrap(),
+			mode: CollectionMode::NFT,
+			..Default::default()
+		};
+
 		// 11-th collection in chain. Expects error
 		assert_noop!(
-			TemplateModule::create_collection(
-				origin1,
-				col_name1.try_into().unwrap(),
-				col_desc1.try_into().unwrap(),
-				token_prefix1.try_into().unwrap(),
-				CollectionMode::NFT
-			),
+			TemplateModule::create_collection_ex(origin1, data),
 			CommonError::<Test>::TotalCollectionsLimitExceeded
 		);
 	});
