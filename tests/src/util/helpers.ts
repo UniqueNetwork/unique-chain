@@ -481,10 +481,16 @@ export async function setCollectionSponsorExpectFailure(collectionId: number, sp
 }
 
 export async function confirmSponsorshipExpectSuccess(collectionId: number, senderSeed = '//Alice') {
+  await usingApi(async () => {
+    const sender = privateKey(senderSeed);
+    await confirmSponsorshipByKeyExpectSuccess(collectionId, sender);
+  });
+}
+
+export async function confirmSponsorshipByKeyExpectSuccess(collectionId: number, sender: IKeyringPair) {
   await usingApi(async (api) => {
 
     // Run the transaction
-    const sender = privateKey(senderSeed);
     const tx = api.tx.unique.confirmSponsorship(collectionId);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
@@ -792,7 +798,7 @@ transferFromExpectFail(
 }
 
 /* eslint no-async-promise-executor: "off" */
-async function getBlockNumber(api: ApiPromise): Promise<number> {
+export async function getBlockNumber(api: ApiPromise): Promise<number> {
   return new Promise<number>(async (resolve) => {
     const unsubscribe = await api.rpc.chain.subscribeNewHeads((head) => {
       unsubscribe();
@@ -822,6 +828,31 @@ getFreeBalance(account: IKeyringPair) : Promise<bigint>
 }
 
 export async function
+scheduleTransferAndWaitExpectSuccess(
+  collectionId: number,
+  tokenId: number,
+  sender: IKeyringPair,
+  recipient: IKeyringPair,
+  value: number | bigint = 1,
+  blockSchedule: number,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    await scheduleTransferExpectSuccess(collectionId, tokenId, sender, recipient, value, blockSchedule);
+
+    const recipientBalanceBefore = (await api.query.system.account(recipient.address)).data.free.toBigInt();
+    console.log(await getFreeBalance(sender));
+
+    // sleep for n + 1 blocks
+    await waitNewBlocks(blockSchedule + 1);
+
+    const recipientBalanceAfter = (await api.query.system.account(recipient.address)).data.free.toBigInt();
+
+    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(recipient.address));
+    expect(recipientBalanceAfter).to.be.equal(recipientBalanceBefore);
+  });
+}
+
+export async function
 scheduleTransferExpectSuccess(
   collectionId: number,
   tokenId: number,
@@ -838,19 +869,36 @@ scheduleTransferExpectSuccess(
     const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value);
     const scheduleTx = api.tx.scheduler.schedule(expectedBlockNumber, null, 0, transferTx as any);
 
-    await submitTransactionAsync(sender, scheduleTx);
-
-    const recipientBalanceBefore = (await api.query.system.account(recipient.address)).data.free.toBigInt();
+    const events = await submitTransactionAsync(sender, scheduleTx);
+    expect(getGenericResult(events).success).to.be.true;
 
     expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(sender.address));
+  });
+}
 
-    // sleep for 4 blocks
-    await waitNewBlocks(blockSchedule + 1);
+export async function
+scheduleTransferFundsPeriodicExpectSuccess(
+  amount: bigint,
+  sender: IKeyringPair,
+  recipient: IKeyringPair,
+  blockSchedule: number,
+  period: number,
+  repetitions: number,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    const blockNumber: number | undefined = await getBlockNumber(api);
+    const expectedBlockNumber = blockNumber + blockSchedule;
 
-    const recipientBalanceAfter = (await api.query.system.account(recipient.address)).data.free.toBigInt();
+    const balanceBefore = await getFreeBalance(recipient);
+    
+    expect(blockNumber).to.be.greaterThan(0);
+    const transferTx = api.tx.balances.transfer(recipient.address, amount);
+    const scheduleTx = api.tx.scheduler.schedule(expectedBlockNumber, [period, repetitions], 0, transferTx as any);
 
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(recipient.address));
-    expect(recipientBalanceAfter).to.be.equal(recipientBalanceBefore);
+    const events = await submitTransactionAsync(sender, scheduleTx);
+    expect(getGenericResult(events).success).to.be.true;
+
+    expect(await getFreeBalance(recipient)).to.be.equal(balanceBefore);
   });
 }
 

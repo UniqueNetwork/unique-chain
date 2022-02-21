@@ -60,6 +60,8 @@ use codec::{Encode, Decode, Codec};
 use sp_runtime::{
 	RuntimeDebug,
 	traits::{Zero, One, BadOrigin, Saturating},
+	transaction_validity::TransactionValidityError,
+	DispatchErrorWithPostInfo,
 };
 use frame_support::{
 	decl_module, decl_storage, decl_event, decl_error,
@@ -69,23 +71,13 @@ use frame_support::{
 		schedule::{self, DispatchTime},
 		OriginTrait, EnsureOrigin, IsType,
 	},
-	weights::{GetDispatchInfo, Weight},
+	weights::{GetDispatchInfo, Weight, PostDispatchInfo},
 };
 use frame_system::{self as system, ensure_signed};
 pub use weights::WeightInfo;
+use up_sponsorship::SponsorshipHandler;
 use scale_info::TypeInfo;
-use sp_runtime::ApplyExtrinsicResult;
-use sp_runtime::traits::{IdentifyAccount, Verify};
-use sp_runtime::{MultiSignature};
-
-pub trait ApplyExtrinsic<C: Dispatchable> {
-	fn apply_extrinsic(signer: Address, function: C) -> ApplyExtrinsicResult;
-}
-
-/// The address format for describing accounts.
-pub type Signature = MultiSignature;
-pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+use sp_core::H160;
 
 /// Our pallet's configuration trait. All our types and constants go in here. If the
 /// pallet is dependent on specific other pallets, then their configuration traits
@@ -122,10 +114,38 @@ pub trait Config: system::Config {
 	/// Not strictly enforced, but used for weight estimation.
 	type MaxScheduledPerBlock: Get<u32>;
 
+	/// Sponsoring function.
+	type SponsorshipHandler: SponsorshipHandler<Self::AccountId, <Self as Config>::Call>;
+
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 
-	type Executor: ApplyExtrinsic<<Self as Config>::Call>;
+	/// The helper type used for custom transaction fee logic.
+	type CallExecutor: DispatchCall<Self, H160>;
+}
+
+/// A Scheduler-Runtime interface for finer payment handling.
+pub trait DispatchCall<T: frame_system::Config + Config, SelfContainedSignedInfo> {
+	/// The type that encodes information that can be passed from pre_dispatch to post-dispatch.
+	type Pre: Default + Codec + Clone + TypeInfo;
+
+	/// Resolve the call dispatch, including any post-dispatch operations.
+	fn dispatch_call(
+		pre_dispatch: Self::Pre,
+		function: <T as Config>::Call,
+	) -> Result<
+		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
+		TransactionValidityError,
+	>;
+
+	/// Prepare for the scheduled call (e.g. by withdrawing the fee in advance).
+	fn pre_dispatch(
+		signer: T::AccountId,
+		function: <T as Config>::Call,
+	) -> Result<Self::Pre, TransactionValidityError>;
+
+	/// Perform a clean-up after a cancelled call (e.g. by returning the remaining fee).
+	fn cancel_dispatch(pre_dispatch: Self::Pre) -> Result<(), TransactionValidityError>;
 }
 
 pub const MAX_TASK_ID_LENGTH_IN_BYTES: u8 = 16;
@@ -139,19 +159,19 @@ pub type PeriodicIndex = u32;
 /// The location of a scheduled task that can be used to remove it.
 pub type TaskAddress<BlockNumber> = (BlockNumber, u32);
 
-#[cfg_attr(any(feature = "std", test), derive(PartialEq, Eq))]
+/*#[cfg_attr(any(feature = "std", test), derive(PartialEq, Eq))] todo remove completely?
 #[derive(Clone, RuntimeDebug, Encode, Decode)]
 struct ScheduledV1<Call, BlockNumber> {
 	maybe_id: Option<Vec<u8>>,
 	priority: schedule::Priority,
 	call: Call,
 	maybe_periodic: Option<schedule::Period<BlockNumber>>,
-}
+}*/
 
 /// Information regarding an item to be executed in the future.
 #[cfg_attr(any(feature = "std", test), derive(PartialEq, Eq))]
 #[derive(Clone, RuntimeDebug, Encode, Decode, TypeInfo)]
-pub struct ScheduledV2<Call, BlockNumber, PalletsOrigin, AccountId> {
+pub struct Scheduled<Call, BlockNumber, PalletsOrigin, AccountId, PreDispatch> {
 	/// The unique identity for this task, if there is one.
 	maybe_id: Option<Vec<u8>>,
 	/// This task's priority.
@@ -162,17 +182,19 @@ pub struct ScheduledV2<Call, BlockNumber, PalletsOrigin, AccountId> {
 	maybe_periodic: Option<schedule::Period<BlockNumber>>,
 	/// The origin to dispatch the call.
 	origin: PalletsOrigin,
+	/// The information regarding the call's preparation for dispatch, in particular the fee, to be sent to post-dispatch.
+	pre_dispatch: PreDispatch,
 	_phantom: PhantomData<AccountId>,
 }
 
 /// The current version of Scheduled struct.
-pub type Scheduled<Call, BlockNumber, PalletsOrigin, AccountId> =
-	ScheduledV2<Call, BlockNumber, PalletsOrigin, AccountId>;
+/*pub type Scheduled<Call, BlockNumber, PalletsOrigin, AccountId, PreDispatch> =
+	ScheduledV2<Call, BlockNumber, PalletsOrigin, AccountId, PreDispatch>;*/
 
 // A value placed in storage that represents the current version of the Scheduler storage.
 // This value is used by the `on_runtime_upgrade` logic to determine whether we run
 // storage migration logic.
-#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+/*#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, TypeInfo)] todo remove completely?
 enum Releases {
 	V1,
 	V2,
@@ -182,7 +204,7 @@ impl Default for Releases {
 	fn default() -> Self {
 		Releases::V1
 	}
-}
+}*/
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct CallSpec {
@@ -194,18 +216,24 @@ decl_storage! {
 	trait Store for Module<T: Config> as Scheduler {
 		/// Items to be executed, indexed by the block number that they should be executed on.
 		pub Agenda: map hasher(twox_64_concat) T::BlockNumber
-			=> Vec<Option<Scheduled<<T as Config>::Call, T::BlockNumber, T::PalletsOrigin, T::AccountId>>>;
+			=> Vec<Option<Scheduled<
+				<T as Config>::Call,
+				T::BlockNumber,
+				T::PalletsOrigin,
+				T::AccountId,
+				<<T as Config>::CallExecutor as DispatchCall<T, H160>>::Pre
+			>>>;
 
-		pub SpecAgenda: map hasher(twox_64_concat) T::BlockNumber
-			=> Vec<Option<CallSpec>>;
+		/*pub SpecAgenda: map hasher(twox_64_concat) T::BlockNumber todo remove completely?
+			=> Vec<Option<CallSpec>>;*/
 
 		/// Lookup from identity to the block number and index of the task.
 		Lookup: map hasher(twox_64_concat) Vec<u8> => Option<TaskAddress<T::BlockNumber>>;
 
-		/// Storage version of the pallet.
-		///
-		/// New networks start with last version.
-		StorageVersion build(|_| Releases::V2): Releases;
+		// / Storage version of the pallet.
+		// /
+		// / New networks start with last version.
+		//StorageVersion build(|_| Releases::V2): Releases; todo remove completely?
 	}
 }
 
@@ -418,19 +446,25 @@ decl_module! {
 					Some((order, index, *cumulative_weight, s))
 				})
 				.filter_map(|(order, index, cumulative_weight, mut s)| {
-					// We allow a scheduled call if any is true:
+					// We allow a scheduled call if:
 					// - It's priority is `HARD_DEADLINE`
-					// - It does not push the weight past the limit.
+					// - It does not push the weight past the limit
+					// or, alternatively,
 					// - It is the first item in the schedule
-					if s.priority <= schedule::HARD_DEADLINE || cumulative_weight <= limit || order == 0 {
+					if s.priority <= schedule::HARD_DEADLINE && cumulative_weight <= limit || order == 0 {
+						let r = T::CallExecutor::dispatch_call(s.pre_dispatch.clone(), s.call.clone());
 
-						// let origin = <<T as Config>::Origin as From<T::PalletsOrigin>>::from(
-						// 	s.origin.clone()
-						// ).into();
-						// let sender = ensure_signed(origin).unwrap_or_default();
-						// let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &s.call).unwrap_or(sender);
-						// let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay));
-						// let r = s.call.clone().dispatch(sponsor.into());
+						if let Err(_) = r {
+							log::warn!(
+								target: "runtime::scheduler",
+								"Warning: Scheduler has failed to execute a post-dispatch transaction. \
+								This block might have become invalid.",
+							);
+							// todo possibly force a skip/return here, do something with the error
+						}
+
+						let r = r.unwrap(); // todo dangerous! but it shouldn't come to that, and if it does, the error is critical, is it safe to panic?
+
 						let maybe_id = s.maybe_id.clone();
 						if let Some((period, count)) = s.maybe_periodic {
 							if count > 1 {
@@ -451,7 +485,7 @@ decl_module! {
 						Self::deposit_event(RawEvent::Dispatched(
 							(now, index),
 							maybe_id,
-							Ok(())// r.map(|_| ()).map_err(|e| e.error)
+							r.map(|_| ()).map_err(|e| e.error)
 						));
 						total_weight = cumulative_weight;
 						None
@@ -500,13 +534,19 @@ impl<T: Config> Module<T> {
 		let sender = ensure_signed(
 			<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin.clone()).into(),
 		)
-		.unwrap_or_default();
-		let who_will_pay = sender; // T::SponsorshipHandler::get_sponsor(&sender, &call).unwrap_or(sender);
-		let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay));
-		let r = call.clone().dispatch(sponsor.into());
+		.unwrap_or_default(); // todo sponsoring doesn't work with the line below -- found sponsoring is already checked for in transaction_payment
+					  //let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &call).unwrap_or(sender);
+					  //let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay.clone()));
+					  //let r = call.clone().dispatch(sponsor.into());
 
-		//T::PaymentHandler::apply();
-		//T::PaymentHandler::validate(sponsor.into(), call.clone(), ); todo dispatch extrinsic here
+		let pre_dispatch = match T::CallExecutor::pre_dispatch(sender.clone(), call.clone()) {
+			Ok(pre_dispatch) => pre_dispatch,
+			Err(_) => return Err(Error::<T>::FailedToSchedule.into()),
+		};
+
+		// todo continually pre-dispatch according to maybe_periodic -- but it's called only once?
+		// no, reschedule and cancel rely on scheduled being only the next instance
+		// actually can count with OnChargePayment, so no need to run around. expand Pre with unspent_total_fee and single_fee, deduct single_fee
 
 		// sanitize maybe_periodic
 		let maybe_periodic = maybe_periodic
@@ -514,12 +554,21 @@ impl<T: Config> Module<T> {
 			// Limit the repetitions to 100 calls and remove one from the number of repetitions since we will schedule one now.
 			.map(|(p, c)| (p, cmp::min(c, PERIODIC_CALLS_LIMIT) - 1));
 
+		if let Some(periodic) = maybe_periodic {
+			for _i in 0..=periodic.1 {
+				// displace to runtime and count the total required fee, then deduct. find a way to use OnChargePayment
+				// send constants and priority to runtime for fee computation, too. should create constants here or just declare them in runtime?
+				// roadblock - they will return on post_dispatch -- oh! tips?
+			}
+		}
+
 		let s = Some(Scheduled {
 			maybe_id,
 			priority,
 			call,
 			maybe_periodic,
 			origin,
+			pre_dispatch,
 			_phantom: PhantomData::<T::AccountId>::default(),
 		});
 		Agenda::<T>::append(when, s);
@@ -557,7 +606,7 @@ impl<T: Config> Module<T> {
 		let scheduled = Agenda::<T>::try_mutate(when, |agenda| {
 			agenda.get_mut(index as usize).map_or(
 				Ok(None),
-				|s| -> Result<Option<Scheduled<_, _, _, _>>, DispatchError> {
+				|s| -> Result<Option<Scheduled<_, _, _, _, _>>, DispatchError> {
 					if let (Some(ref o), Some(ref s)) = (origin, s.borrow()) {
 						if *o != s.origin {
 							return Err(BadOrigin.into());
@@ -570,8 +619,14 @@ impl<T: Config> Module<T> {
 		if let Some(s) = scheduled {
 			if let Some(id) = s.maybe_id {
 				Lookup::<T>::remove(id);
-				// todo add back money / displace to another function for consistency
 			}
+			if let Err(_) = T::CallExecutor::cancel_dispatch(s.pre_dispatch.clone()) {
+				log::warn!(
+					target: "runtime::scheduler",
+					"Warning: Scheduler has failed to execute a post-dispatch transaction. \
+					This block might have become invalid.",
+				);
+			} // maybe do something with the error?
 			Self::deposit_event(RawEvent::Canceled(when, index));
 			Ok(())
 		} else {
@@ -643,12 +698,19 @@ impl<T: Config> Module<T> {
 							if *o != s.origin {
 								return Err(BadOrigin.into());
 							}
+							if let Err(_) = T::CallExecutor::cancel_dispatch(s.pre_dispatch.clone())
+							{
+								log::warn!(
+									target: "runtime::scheduler",
+									"Warning: Scheduler has failed to execute a post-dispatch transaction. \
+									This block might have become invalid.",
+								);
+							} // maybe do something with the error?
 						}
 						*s = None;
 					}
 					Ok(())
 				})?;
-				// todo add money back / displace to another function
 				Self::deposit_event(RawEvent::Canceled(when, index));
 				Ok(())
 			} else {
@@ -842,9 +904,30 @@ mod tests {
 		}
 	}
 
-	pub struct DummyExecutor; // todo do something with naming and function body
-	impl<C: Dispatchable> ApplyExtrinsic<C> for DummyExecutor {
-		fn apply_extrinsic(_signer: Address, _function: C) -> ApplyExtrinsicResult {
+	pub struct DummyExecutor;
+	impl<T: frame_system::Config + Config, SelfContainedSignedInfo>
+		DispatchCall<T, SelfContainedSignedInfo> for DummyExecutor
+	{
+		type Pre = ();
+
+		fn dispatch_call(
+			_pre: Self::Pre,
+			_call: <T as Config>::Call,
+		) -> Result<
+			Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
+			TransactionValidityError,
+		> {
+			todo!()
+		}
+
+		fn pre_dispatch(
+			_signer: <T as frame_system::Config>::AccountId,
+			_call: <T as Config>::Call,
+		) -> Result<Self::Pre, TransactionValidityError> {
+			todo!()
+		}
+
+		fn cancel_dispatch(_pre: Self::Pre) -> Result<(), TransactionValidityError> {
 			todo!()
 		}
 	}
@@ -898,7 +981,8 @@ mod tests {
 		type MaximumWeight = MaximumSchedulerWeight;
 		type ScheduleOrigin = EnsureOneOf<u64, EnsureRoot<u64>, EnsureSignedBy<One, u64>>;
 		type MaxScheduledPerBlock = MaxScheduledPerBlock;
+		type SponsorshipHandler = ();
 		type WeightInfo = ();
-		type Executor = DummyExecutor;
+		type CallExecutor = DummyExecutor;
 	}
 }

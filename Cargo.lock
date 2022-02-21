@@ -6108,7 +6108,7 @@ dependencies = [
 [[package]]
 name = "pallet-template-transaction-payment"
 version = "3.0.0"
-source = "git+https://github.com/UniqueNetwork/pallet-sponsoring?branch=polkadot-v0.9.14#858001a6fd841614eb3bc47562e1a08685e6c8df"
+source = "git+https://github.com/UniqueNetwork/pallet-sponsoring?branch=polkadot-v0.9.14#0f6291079a781cb9f8815efd5113a6a61059ce97"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6272,7 +6272,6 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-api",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -11313,7 +11312,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.11.2",
+ "parking_lot 0.10.2",
  "regex",
  "serde",
  "serde_json",
@@ -11443,7 +11442,7 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "rand 0.8.4",
  "static_assertions",
 ]
@@ -11812,7 +11811,7 @@ dependencies = [
 [[package]]
 name = "up-sponsorship"
 version = "0.1.0"
-source = "git+https://github.com/UniqueNetwork/pallet-sponsoring?branch=polkadot-v0.9.14#858001a6fd841614eb3bc47562e1a08685e6c8df"
+source = "git+https://github.com/UniqueNetwork/pallet-sponsoring?branch=polkadot-v0.9.14#0f6291079a781cb9f8815efd5113a6a61059ce97"
 dependencies = [
  "impl-trait-for-tuples",
 ]

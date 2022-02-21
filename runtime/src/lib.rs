@@ -17,6 +17,8 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
 use sp_runtime::DispatchError;
+use fp_self_contained::*;
+use sp_runtime::traits::{SignedExtension, Member};
 // #[cfg(any(feature = "std", test))]
 // pub use sp_runtime::BuildStorage;
 
@@ -54,7 +56,7 @@ pub use frame_support::{
 		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients,
 	},
 };
-use pallet_unq_scheduler::ApplyExtrinsic;
+use pallet_unq_scheduler::DispatchCall;
 use up_data_structs::*;
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
@@ -66,6 +68,7 @@ use sp_arithmetic::{
 	traits::{BaseArithmetic, Unsigned},
 };
 use smallvec::smallvec;
+use scale_info::TypeInfo;
 use codec::{Encode, Decode};
 use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
 use fp_rpc::TransactionStatus;
@@ -73,6 +76,7 @@ use sp_core::crypto::Public;
 use sp_runtime::{
 	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf},
 	transaction_validity::TransactionValidityError,
+	DispatchErrorWithPostInfo,
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
@@ -805,30 +809,114 @@ parameter_types! {
 	pub const MaxScheduledPerBlock: u32 = 50;
 }
 
-type EvmSponsorshipHandler = (
-	pallet_unique::UniqueEthSponsorshipHandler<Runtime>,
-	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
-);
-type SponsorshipHandler = (
-	pallet_unique::UniqueSponsorshipHandler<Runtime>,
-	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
-	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
-);
+type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
 
-// pub fn sign(xt: CheckedExtrinsic) -> UncheckedExtrinsic {
-// 	node_testing::keyring::sign(xt, SPEC_VERSION, TRANSACTION_VERSION, GENESIS_HASH)
-// }
+/*fn get_signed_extra(from: <Runtime as frame_system::Config>::AccountId) -> SignedExtra {
+	(
+		frame_system::CheckSpecVersion::<Runtime>::new(),
+		frame_system::CheckGenesis::<Runtime>::new(),
+		frame_system::CheckEra::<Runtime>::from(Era::Immortal),
+		frame_system::CheckNonce::<Runtime>::from(frame_system::Pallet::<Runtime>::account_nonce(
+			from,
+		)),
+		frame_system::CheckWeight::<Runtime>::new(),
+		ChargeTransactionPayment::new(0),
+	)
+}*/
+
+#[derive(Default, Encode, Decode, Clone, TypeInfo)]
+pub struct SchedulerPreDispatch {
+	tip: Balance,
+	signer: AccountId,
+	fee: Option<Balance>,
+}
 
 pub struct SchedulerPaymentExecutor;
-impl<C: Dispatchable> ApplyExtrinsic<C> for SchedulerPaymentExecutor {
-	fn apply_extrinsic(signer: Address, function: C) -> ApplyExtrinsicResult {
-		/*let extrinsic = sign(fp_self_contained::CheckedExtrinsic {
-			signed: fp_self_contained::CheckedSignature::SelfContained(None),
-			function,
-		});
+impl<T: frame_system::Config + pallet_unq_scheduler::Config, SelfContainedSignedInfo>
+	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
+where
+	<T as frame_system::Config>::Call: Member
+		+ Dispatchable<Origin = Origin, Info = DispatchInfo>
+		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>
+		+ GetDispatchInfo
+		+ From<frame_system::Call<Runtime>>,
+	SelfContainedSignedInfo: Send + Sync + 'static,
+	Call: From<<T as frame_system::Config>::Call>
+		+ From<<T as pallet_unq_scheduler::Config>::Call>
+		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
+	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
+{
+	type Pre = SchedulerPreDispatch;
 
-		Executive::apply_extrinsic(extrinsic)*/
+	fn dispatch_call(
+		//signer: <T as frame_system::Config>::AccountId,
+		pre_dispatch: Self::Pre,
+		call: <T as pallet_unq_scheduler::Config>::Call,
+	) -> Result<
+		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
+		TransactionValidityError,
+	> {
+		/*let dispatch_info = call.get_dispatch_info();
+
+		let extrinsic = fp_self_contained::CheckedExtrinsic::<
+			AccountId,
+			Call,
+			SignedExtra,
+			SelfContainedSignedInfo,
+		> {
+			signed: CheckedSignature::<AccountId, SignedExtra, SelfContainedSignedInfo>::Signed(
+				signer.clone().into(),
+				get_signed_extra(signer.clone().into()),
+			),
+			function: call.clone().into(),
+		};
+
+		extrinsic.apply::<Runtime>(&dispatch_info, 0)*/
+		let dispatch_info = call.get_dispatch_info();
+		let pre = (
+			pre_dispatch.tip,
+			pre_dispatch.signer.clone().into(),
+			pre_dispatch.fee.map(|fee| NegativeImbalance::new(fee)),
+		);
+
+		let maybe_who = Some(pre_dispatch.signer.clone().into());
+		let res = Call::from(call.clone()).dispatch(Origin::from(maybe_who));
+		let post_info = match res {
+			Ok(dispatch_info) => dispatch_info,
+			Err(err) => err.post_info,
+		};
+		SignedExtra::post_dispatch(
+			((), (), (), (), (), pre),
+			&dispatch_info,
+			&post_info,
+			0,
+			&res.map(|_| ()).map_err(|e| e.error),
+		)?;
+		Ok(res)
+	}
+
+	fn pre_dispatch(
+		signer: <T as frame_system::Config>::AccountId,
+		call: <T as pallet_unq_scheduler::Config>::Call,
+	) -> Result<Self::Pre, TransactionValidityError> {
+		let dispatch_info = call.get_dispatch_info();
+		//<T as Config>::OnChargeTransaction::withdraw_fee();
+		let fee_charger = ChargeTransactionPayment::new(
+			// Linear scaling of the fee tip if the priority is high enough
+			0, //if priority > HARD_DEADLINE { 0 } else { (HARD_DEADLINE - priority + 1) / HARD_DEADLINE * PRIORITY_TIP_MULTIPLIER * total_fee }
+		);
+		let pre = fee_charger.pre_dispatch(&signer.into(), &call.into(), &dispatch_info, 0)?;
+
+		Ok(SchedulerPreDispatch {
+			tip: pre.0,
+			signer: pre.1,
+			fee: pre.2.map(|imbalance| imbalance.peek()),
+		})
+	}
+
+	fn cancel_dispatch(pre_dispatch: Self::Pre) -> Result<(), TransactionValidityError> {
 		todo!()
+		// simply call post_dispatch with 0 actual fee and the whole remaining, already withdrawn, fee
 	}
 }
 
@@ -840,9 +928,21 @@ impl pallet_unq_scheduler::Config for Runtime {
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureSigned<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type SponsorshipHandler = SponsorshipHandler;
 	type WeightInfo = ();
-	type Executor = SchedulerPaymentExecutor;
+	type CallExecutor = SchedulerPaymentExecutor;
 }
+
+type EvmSponsorshipHandler = (
+	pallet_unique::UniqueEthSponsorshipHandler<Runtime>,
+	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
+);
+
+type SponsorshipHandler = (
+	pallet_unique::UniqueSponsorshipHandler<Runtime>,
+	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
+	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
+);
 
 impl pallet_evm_transaction_payment::Config for Runtime {
 	type EvmSponsorshipHandler = EvmSponsorshipHandler;
@@ -965,7 +1065,7 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
+	ChargeTransactionPayment,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
