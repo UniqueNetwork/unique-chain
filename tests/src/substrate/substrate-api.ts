@@ -3,6 +3,7 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
+import '../interfaces/augment-api-events';
 import {WsProvider, ApiPromise} from '@polkadot/api';
 import {EventRecord} from '@polkadot/types/interfaces/system/types';
 import {ExtrinsicStatus} from '@polkadot/types/interfaces/author/types';

@@ -3,6 +3,8 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
+import '../interfaces/augment-api-rpc';
+import '../interfaces/augment-api-query';
 import {ApiPromise, Keyring} from '@polkadot/api';
 import type {AccountId, EventRecord} from '@polkadot/types/interfaces';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -11,10 +13,10 @@ import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {alicesPublicKey} from '../accounts';
-import {UpDataStructsCollection} from '../interfaces';
 import privateKey from '../substrate/privateKey';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
+import {UpDataStructsCollection} from '@polkadot/types/lookup';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

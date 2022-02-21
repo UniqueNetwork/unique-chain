@@ -2,5 +2,3 @@
 /* eslint-disable */
 
 export * from './unique/types';
-export * from './ethereum/types';
-export * from './polkadot/types';
