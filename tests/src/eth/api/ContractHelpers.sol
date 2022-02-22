@@ -12,7 +12,7 @@ interface ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-// Selector: 31acb1fe
+// Selector: 7b4866f9
 interface ContractHelpers is Dummy, ERC165 {
 	// Selector: contractOwner(address) 5152b14c
 	function contractOwner(address contractAddress)
@@ -26,8 +26,19 @@ interface ContractHelpers is Dummy, ERC165 {
 		view
 		returns (bool);
 
+	// Deprecated
+	//
 	// Selector: toggleSponsoring(address,bool) fcac6d86
 	function toggleSponsoring(address contractAddress, bool enabled) external;
+
+	// Selector: setSponsoringMode(address,uint8) fde8a560
+	function setSponsoringMode(address contractAddress, uint8 mode) external;
+
+	// Selector: sponsoringMode(address) b70c7267
+	function sponsoringMode(address contractAddress)
+		external
+		view
+		returns (uint8);
 
 	// Selector: setSponsoringRateLimit(address,uint32) 77b6c908
 	function setSponsoringRateLimit(address contractAddress, uint32 rateLimit)

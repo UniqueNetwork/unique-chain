@@ -3,6 +3,7 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
+import '../interfaces/augment-api-events';
 import {WsProvider, ApiPromise} from '@polkadot/api';
 import {EventRecord} from '@polkadot/types/interfaces/system/types';
 import {ExtrinsicStatus} from '@polkadot/types/interfaces/author/types';
@@ -93,6 +94,32 @@ function getTransactionStatus(events: EventRecord[], status: ExtrinsicStatus): T
   }
 
   return TransactionStatus.Fail;
+}
+
+export function executeTransaction(api: ApiPromise, sender: IKeyringPair, transaction: SubmittableExtrinsic<'promise'>): Promise<EventRecord[]> {
+  return new Promise(async (res, rej) => {
+    try {
+      await transaction.signAndSend(sender, ({events, status}) => {
+        if (!status.isInBlock && !status.isFinalized) return;
+        for (const {event} of events) {
+          if (api.events.system.ExtrinsicSuccess.is(event)) {
+            res(events);
+          } else if (api.events.system.ExtrinsicFailed.is(event)) {
+            const {data: [error]} = event;
+            if (error.isModule) {
+              const decoded = api.registry.findMetaError(error.asModule);
+              const {method, section} = decoded;
+              rej(new Error(`${section}.${method}`));
+            } else {
+              rej(new Error(error.toString()));
+            }
+          }
+        }
+      });
+    } catch (e) {
+      rej(e);
+    }
+  });
 }
 
 export function

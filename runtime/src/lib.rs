@@ -25,10 +25,11 @@ use sp_runtime::traits::{SignedExtension, Member};
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, AccountIdConversion,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify,
+		AccountIdConversion, Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiSignature,
+	ApplyExtrinsicResult, MultiSignature, RuntimeAppPublic,
 };
 
 use sp_std::prelude::*;
@@ -47,8 +48,9 @@ pub use frame_support::{
 	dispatch::DispatchResult,
 	PalletId, parameter_types, StorageValue, ConsensusEngineId,
 	traits::{
-		Everything, Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem,
-		LockIdentifier, OnUnbalanced, Randomness, FindAuthor,
+		tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Everything,
+		Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier,
+		OnUnbalanced, Randomness, FindAuthor,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -72,11 +74,12 @@ use scale_info::TypeInfo;
 use codec::{Encode, Decode};
 use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
 use fp_rpc::TransactionStatus;
-use sp_core::crypto::Public;
 use sp_runtime::{
-	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf},
+	traits::{
+		BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating, CheckedConversion,
+	},
 	transaction_validity::TransactionValidityError,
-	DispatchErrorWithPostInfo,
+	SaturatedConversion, DispatchErrorWithPostInfo,
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
@@ -88,12 +91,22 @@ use polkadot_parachain::primitives::Sibling;
 use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
-	EnsureXcmOrigin, FixedWeightBounds, IsConcrete, LocationInverter, NativeAsset,
-	ParentAsSuperuser, ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative,
-	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
-	SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
+	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser,
+	ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 };
-use xcm_executor::{Config, XcmExecutor};
+use xcm_executor::{Config, XcmExecutor, Assets};
+use sp_std::{marker::PhantomData};
+
+use xcm::latest::{
+	//	Xcm,
+	AssetId::{Concrete},
+	Fungibility::Fungible as XcmFungible,
+	MultiAsset,
+	Error as XcmError,
+};
+use xcm_executor::traits::{MatchesFungible, WeightTrader};
+//use xcm_executor::traits::MatchesFungible;
 
 // mod chain_extension;
 // use crate::chain_extension::{NFTExtension, Imbalance};
@@ -152,10 +165,11 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("opal"),
 	impl_name: create_runtime_str!("opal"),
 	authoring_version: 1,
-	spec_version: 914000,
-	impl_version: 1,
+	spec_version: 916001,
+	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
+	state_version: 0,
 };
 
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
@@ -241,8 +255,13 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
+/*
+8880 - Unique
+8881 - Quartz
+8882 - Opal
+*/
 parameter_types! {
-	pub const ChainId: u64 = 8888;
+	pub const ChainId: u64 = 8882;
 }
 
 pub struct FixedFee;
@@ -288,7 +307,8 @@ impl pallet_evm::Config for Runtime {
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = HashedAddressMapping<Self::Hashing>;
-	type Precompiles = ();
+	type PrecompilesType = ();
+	type PrecompilesValue = ();
 	type Currency = Balances;
 	type Event = Event;
 	type OnMethodCall = (
@@ -375,6 +395,7 @@ impl frame_system::Config for Runtime {
 	type SystemWeightInfo = frame_system::weights::SubstrateWeight<Self>;
 	/// Version of the runtime.
 	type Version = Version;
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {
@@ -506,6 +527,7 @@ impl pallet_transaction_payment::Config for Runtime {
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = 1 * UNIQUE;
+	pub const ProposalBondMaximum: Balance = 1000 * UNIQUE;
 	pub const SpendPeriod: BlockNumber = 5 * MINUTES;
 	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
@@ -531,6 +553,7 @@ impl pallet_treasury::Config for Runtime {
 	type OnSlash = ();
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
+	type ProposalBondMaximum = ProposalBondMaximum;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
@@ -580,8 +603,8 @@ parameter_types! {
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
-	type OnValidationData = ();
 	type SelfParaId = parachain_info::Pallet<Self>;
+	type OnSystemEvent = ();
 	// type DownwardMessageHandlers = cumulus_primitives_utility::UnqueuedDmpAsParent<
 	// 	MaxDownwardMessageWeight,
 	// 	XcmExecutor<XcmConfig>,
@@ -617,12 +640,22 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
+pub struct OnlySelfCurrency;
+impl<B: TryFrom<u128>> MatchesFungible<B> for OnlySelfCurrency {
+	fn matches_fungible(a: &MultiAsset) -> Option<B> {
+		match (&a.id, &a.fun) {
+			(Concrete(_), XcmFungible(ref amount)) => CheckedConversion::checked_from(*amount),
+			_ => None,
+		}
+	}
+}
+
 /// Means for transacting assets on this chain.
 pub type LocalAssetTransactor = CurrencyAdapter<
 	// Use this currency:
 	Balances,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	IsConcrete<RelayLocation>,
+	OnlySelfCurrency,
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -678,6 +711,88 @@ pub type Barrier = (
 	// ^^^ Parent & its unit plurality gets free execution
 );
 
+pub struct UsingOnlySelfCurrencyComponents<
+	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
+	AssetId: Get<MultiLocation>,
+	AccountId,
+	Currency: CurrencyT<AccountId>,
+	OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
+>(
+	Weight,
+	Currency::Balance,
+	PhantomData<(WeightToFee, AssetId, AccountId, Currency, OnUnbalanced)>,
+);
+impl<
+		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
+		AssetId: Get<MultiLocation>,
+		AccountId,
+		Currency: CurrencyT<AccountId>,
+		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
+	> WeightTrader
+	for UsingOnlySelfCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+{
+	fn new() -> Self {
+		Self(0, Zero::zero(), PhantomData)
+	}
+
+	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
+		let amount = WeightToFee::calc(&weight);
+		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
+
+		// location to this parachain through relay chain
+		let option1: xcm::v1::AssetId = Concrete(MultiLocation {
+			parents: 1,
+			interior: X1(Parachain(ParachainInfo::parachain_id().into())),
+		});
+		// direct location
+		let option2: xcm::v1::AssetId = Concrete(MultiLocation {
+			parents: 0,
+			interior: Here,
+		});
+
+		let required = if payment.fungible.contains_key(&option1) {
+			(option1, u128_amount).into()
+		} else if payment.fungible.contains_key(&option2) {
+			(option2, u128_amount).into()
+		} else {
+			(Concrete(MultiLocation::default()), u128_amount).into()
+		};
+
+		let unused = payment
+			.checked_sub(required)
+			.map_err(|_| XcmError::TooExpensive)?;
+		self.0 = self.0.saturating_add(weight);
+		self.1 = self.1.saturating_add(amount);
+		Ok(unused)
+	}
+
+	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
+		let weight = weight.min(self.0);
+		let amount = WeightToFee::calc(&weight);
+		self.0 -= weight;
+		self.1 = self.1.saturating_sub(amount);
+		let amount: u128 = amount.saturated_into();
+		if amount > 0 {
+			Some((AssetId::get(), amount).into())
+		} else {
+			None
+		}
+	}
+}
+impl<
+		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
+		AssetId: Get<MultiLocation>,
+		AccountId,
+		Currency: CurrencyT<AccountId>,
+		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
+	> Drop
+	for UsingOnlySelfCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+{
+	fn drop(&mut self) {
+		OnUnbalanced::on_unbalanced(Currency::issue(self.1));
+	}
+}
+
 pub struct XcmConfig;
 impl Config for XcmConfig {
 	type Call = Call;
@@ -690,7 +805,13 @@ impl Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader = UsingComponents<IdentityFee<Balance>, RelayLocation, AccountId, Balances, ()>;
+	type Trader = UsingOnlySelfCurrencyComponents<
+		IdentityFee<Balance>,
+		RelayLocation,
+		AccountId,
+		Balances,
+		(),
+	>;
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;
 
@@ -746,6 +867,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
+	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
@@ -762,7 +884,7 @@ impl pallet_aura::Config for Runtime {
 
 parameter_types! {
 	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account();
-	pub const CollectionCreationPrice: Balance = 100 * UNIQUE;
+	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
 }
 
 impl pallet_common::Config for Runtime {
@@ -856,7 +978,7 @@ where
 			Err(err) => err.post_info,
 		};
 		SignedExtra::post_dispatch(
-			((), (), (), (), (), pre),
+			Some(((), (), (), (), (), pre)),
 			&dispatch_info,
 			&post_info,
 			0,
@@ -1049,7 +1171,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllPallets,
+	AllPalletsReversedWithSystemFirst,
 >;
 
 impl_opaque_keys! {
@@ -1126,7 +1248,7 @@ impl_runtime_apis! {
 			dispatch_unique_runtime!(collection.token_exists(token))
 		}
 
-		fn token_owner(collection: CollectionId, token: TokenId) -> Result<CrossAccountId, DispatchError> {
+		fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
 			dispatch_unique_runtime!(collection.token_owner(token))
 		}
 		fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
@@ -1274,9 +1396,11 @@ impl_runtime_apis! {
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
-			gas_price: Option<U256>,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
+			access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
 				let mut config = <Runtime as pallet_evm::Config>::config().clone();
@@ -1292,8 +1416,10 @@ impl_runtime_apis! {
 				data,
 				value,
 				gas_limit.low_u64(),
-				gas_price,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
 				nonce,
+				access_list.unwrap_or_default(),
 				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -1304,9 +1430,11 @@ impl_runtime_apis! {
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
-			gas_price: Option<U256>,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
+			access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
 				let mut config = <Runtime as pallet_evm::Config>::config().clone();
@@ -1321,8 +1449,10 @@ impl_runtime_apis! {
 				data,
 				value,
 				gas_limit.low_u64(),
-				gas_price,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
 				nonce,
+				access_list.unwrap_or_default(),
 				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -1357,6 +1487,10 @@ impl_runtime_apis! {
 				_ => None
 			}).collect()
 		}
+
+		fn elasticity() -> Option<Permill> {
+			None
+		}
 	}
 
 	impl sp_session::SessionKeys<Block> for Runtime {
@@ -1382,8 +1516,8 @@ impl_runtime_apis! {
 	}
 
 	impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
-		fn collect_collation_info() -> cumulus_primitives_core::CollationInfo {
-			ParachainSystem::collect_collation_info()
+		fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
+			ParachainSystem::collect_collation_info(header)
 		}
 	}
 
@@ -1462,7 +1596,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
 			// list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
-			let storage_info = AllPalletsWithSystem::storage_info();
+			let storage_info = AllPalletsReversedWithSystemFirst::storage_info();
 
 			return (list, storage_info)
 		}

@@ -47,7 +47,7 @@ describe('Scheduling token and balance transfers', () => {
     });
   });
 
-  it.skip('Can schedule a transfer of an owned token with delay', async () => {
+  it('Can schedule a transfer of an owned token with delay', async () => {
     await usingApi(async () => {
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
@@ -58,7 +58,7 @@ describe('Scheduling token and balance transfers', () => {
     });
   });
 
-  it.skip('Can transfer funds periodically', async () => {
+  it('Can transfer funds periodically', async () => {
     await usingApi(async () => {
       const waitForBlocks = 4;
       const period = 2;
@@ -76,7 +76,7 @@ describe('Scheduling token and balance transfers', () => {
     });
   });
 
-  it.skip('Can sponsor scheduling a transaction', async () => {
+  it('Can sponsor scheduling a transaction', async () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
@@ -93,7 +93,7 @@ describe('Scheduling token and balance transfers', () => {
     });
   });
 
-  it.skip('Schedules and dispatches a transaction even if the caller has no funds at the time of the dispatch', async () => {
+  it('Schedules and dispatches a transaction even if the caller has no funds at the time of the dispatch', async () => {
     await usingApi(async (api) => {
       // Find an empty, unused account
       const zeroBalance = await findUnusedAddress(api);
@@ -128,7 +128,7 @@ describe('Scheduling token and balance transfers', () => {
     });
   });
 
-  it.skip('Sponsor going bankrupt does not impact a scheduled transaction', async () => {
+  it('Sponsor going bankrupt does not impact a scheduled transaction', async () => {
     const collectionId = await createCollectionExpectSuccess();
 
     await usingApi(async (api) => {
@@ -184,7 +184,7 @@ describe('Scheduling token and balance transfers', () => {
   });
 });
 
-describe.skip('Scheduling EVM smart contracts', () => {
+describe('Scheduling EVM smart contracts', () => {
   let alice: IKeyringPair;
 
   before(async() => {

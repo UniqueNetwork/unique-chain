@@ -85,6 +85,7 @@ pub fn development_config() -> ChainSpec {
 		None,
 		// Protocol ID
 		None,
+		None,
 		// Properties
 		Some(properties),
 		// Extensions
@@ -133,6 +134,7 @@ pub fn local_testnet_rococo_config() -> ChainSpec {
 		// Telemetry
 		None,
 		// Protocol ID
+		None,
 		None,
 		// Properties
 		None,
@@ -186,6 +188,7 @@ pub fn local_testnet_westend_config() -> ChainSpec {
 		None,
 		// Protocol ID
 		None,
+		None,
 		// Properties
 		None,
 		// Extensions
@@ -217,7 +220,9 @@ fn testnet_genesis(
 				.collect(),
 		},
 		treasury: Default::default(),
-		sudo: SudoConfig { key: root_key },
+		sudo: SudoConfig {
+			key: Some(root_key),
+		},
 		vesting: VestingConfig { vesting: vec![] },
 		parachain_info: unique_runtime::ParachainInfoConfig { parachain_id: id },
 		parachain_system: Default::default(),

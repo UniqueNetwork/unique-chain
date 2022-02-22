@@ -496,13 +496,18 @@ impl<T: Config> Module<T> {
 	) -> Result<(T::BlockNumber, u32), DispatchError> {
 		let when = Self::resolve_time(when)?;
 
-		let sender = ensure_signed(
+		let sender: T::AccountId = match ensure_signed(
 			<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin.clone()).into(),
-		)
-		.unwrap_or_default(); // todo sponsoring doesn't work with the line below -- found sponsoring is already checked for in transaction_payment
-					  //let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &call).unwrap_or(sender);
-					  //let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay.clone()));
-					  //let r = call.clone().dispatch(sponsor.into());
+		) {
+			Ok(v) => v,
+			// TODO: Support for unsigned extrinsics?
+			Err(_) => return Err(Error::<T>::FailedToSchedule.into()),
+		};
+		//.unwrap_or_default();
+		// todo sponsoring doesn't work with the line below -- found sponsoring is already checked for in transaction_payment
+		//let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &call).unwrap_or(sender);
+		//let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay.clone()));
+		//let r = call.clone().dispatch(sponsor.into());
 
 		let pre_dispatch = match T::CallExecutor::pre_dispatch(sender.clone(), call.clone()) {
 			Ok(pre_dispatch) => pre_dispatch,
@@ -715,81 +720,15 @@ impl<T: Config> Module<T> {
 	}
 }
 
-impl<T: Config> schedule::Anon<T::BlockNumber, <T as Config>::Call, T::PalletsOrigin>
-	for Module<T>
-{
-	type Address = TaskAddress<T::BlockNumber>;
-
-	fn schedule(
-		when: DispatchTime<T::BlockNumber>,
-		maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-		priority: schedule::Priority,
-		origin: T::PalletsOrigin,
-		call: <T as Config>::Call,
-	) -> Result<Self::Address, DispatchError> {
-		Self::do_schedule_nameless(when, maybe_periodic, priority, origin, call)
-	}
-
-	fn cancel((when, index): Self::Address) -> Result<(), ()> {
-		Self::do_cancel(None, (when, index)).map_err(|_| ())
-	}
-
-	fn reschedule(
-		address: Self::Address,
-		when: DispatchTime<T::BlockNumber>,
-	) -> Result<Self::Address, DispatchError> {
-		Self::do_reschedule(address, when)
-	}
-
-	fn next_dispatch_time((when, index): Self::Address) -> Result<T::BlockNumber, ()> {
-		Agenda::<T>::get(when)
-			.get(index as usize)
-			.ok_or(())
-			.map(|_| when)
-	}
-}
-
-impl<T: Config> schedule::Named<T::BlockNumber, <T as Config>::Call, T::PalletsOrigin>
-	for Module<T>
-{
-	type Address = TaskAddress<T::BlockNumber>;
-
-	fn schedule_named(
-		id: Vec<u8>,
-		when: DispatchTime<T::BlockNumber>,
-		maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-		priority: schedule::Priority,
-		origin: T::PalletsOrigin,
-		call: <T as Config>::Call,
-	) -> Result<Self::Address, ()> {
-		Self::do_schedule_named(id, when, maybe_periodic, priority, origin, call).map_err(|_| ())
-	}
-
-	fn cancel_named(id: Vec<u8>) -> Result<(), ()> {
-		Self::do_cancel_named(None, id).map_err(|_| ())
-	}
-
-	fn reschedule_named(
-		id: Vec<u8>,
-		when: DispatchTime<T::BlockNumber>,
-	) -> Result<Self::Address, DispatchError> {
-		Self::do_reschedule_named(id, when)
-	}
-
-	fn next_dispatch_time(id: Vec<u8>) -> Result<T::BlockNumber, ()> {
-		Lookup::<T>::get(id)
-			.and_then(|(when, index)| Agenda::<T>::get(when).get(index as usize).map(|_| when))
-			.ok_or(())
-	}
-}
-
 #[cfg(test)]
 #[allow(clippy::from_over_into)]
 mod tests {
 	use super::*;
 
 	use frame_support::{
-		ord_parameter_types, parameter_types, traits::Contains, weights::constants::RocksDbWeight,
+		ord_parameter_types, parameter_types,
+		traits::{Contains, ConstU32, EnsureOneOf},
+		weights::constants::RocksDbWeight,
 	};
 	use sp_core::H256;
 	use sp_runtime::{
@@ -797,7 +736,7 @@ mod tests {
 		testing::Header,
 		traits::{BlakeTwo256, IdentityLookup},
 	};
-	use frame_system::{EnsureOneOf, EnsureRoot, EnsureSignedBy};
+	use frame_system::{EnsureRoot, EnsureSignedBy};
 	use crate as scheduler;
 
 	mod logger {
@@ -922,6 +861,7 @@ mod tests {
 		type SystemWeightInfo = ();
 		type SS58Prefix = ();
 		type OnSetCode = ();
+		type MaxConsumers = ConstU32<16>;
 	}
 	impl logger::Config for Test {
 		type Event = Event;
@@ -940,7 +880,7 @@ mod tests {
 		type PalletsOrigin = OriginCaller;
 		type Call = Call;
 		type MaximumWeight = MaximumSchedulerWeight;
-		type ScheduleOrigin = EnsureOneOf<u64, EnsureRoot<u64>, EnsureSignedBy<One, u64>>;
+		type ScheduleOrigin = EnsureOneOf<EnsureRoot<u64>, EnsureSignedBy<One, u64>>;
 		type MaxScheduledPerBlock = MaxScheduledPerBlock;
 		type SponsorshipHandler = ();
 		type WeightInfo = ();

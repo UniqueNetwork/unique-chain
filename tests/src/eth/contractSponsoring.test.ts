@@ -10,7 +10,10 @@ import {
   createEthAccountWithBalance,
   transferBalanceToEth,
   deployFlipper,
-  itWeb3} from './util/helpers';
+  itWeb3,
+  SponsoringMode,
+  createEthAccount,
+} from './util/helpers';
 
 describe('Sponsoring EVM contracts', () => {
   itWeb3('Sponsoring can be set by the address that has deployed the contract', async ({api, web3}) => {
@@ -18,7 +21,7 @@ describe('Sponsoring EVM contracts', () => {
     const flipper = await deployFlipper(web3, owner);
     const helpers = contractHelpers(web3, owner);
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
-    await helpers.methods.toggleSponsoring(flipper.options.address, true).send({from: owner});
+    await helpers.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Allowlisted).send({from: owner});
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.true;
   });
 
@@ -28,11 +31,11 @@ describe('Sponsoring EVM contracts', () => {
     const flipper = await deployFlipper(web3, owner);
     const helpers = contractHelpers(web3, owner);
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
-    await expect(helpers.methods.toggleSponsoring(notOwner, true).send({from: notOwner})).to.rejected;
+    await expect(helpers.methods.setSponsoringMode(notOwner, SponsoringMode.Allowlisted).send({from: notOwner})).to.rejected;
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
   });
 
-  itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should decrease (allowlisted)', async ({api, web3}) => {
+  itWeb3('In generous mode, non-allowlisted user transaction will be sponsored', async ({api, web3}) => {
     const alice = privateKey('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
@@ -41,11 +44,39 @@ describe('Sponsoring EVM contracts', () => {
     const flipper = await deployFlipper(web3, owner);
 
     const helpers = contractHelpers(web3, owner);
+
+    expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
+    await helpers.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Generous).send({from: owner});
+    await helpers.methods.setSponsoringRateLimit(flipper.options.address, 0).send({from: owner});
+    expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.true;
+
+    await transferBalanceToEth(api, alice, flipper.options.address);
+
+    const originalFlipperBalance = await web3.eth.getBalance(flipper.options.address);
+    expect(originalFlipperBalance).to.be.not.equal('0');
+
+    await flipper.methods.flip().send({from: caller});
+    expect(await flipper.methods.getValue().call()).to.be.true;
+
+    // Balance should be taken from flipper instead of caller
+    const balanceAfter = await web3.eth.getBalance(flipper.options.address);
+    expect(+balanceAfter).to.be.lessThan(+originalFlipperBalance);
+  });
+
+  itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should decrease (allowlisted)', async ({api, web3}) => {
+    const alice = privateKey('//Alice');
+
+    const owner = await createEthAccountWithBalance(api, web3);
+    const caller = createEthAccount(web3);
+
+    const flipper = await deployFlipper(web3, owner);
+
+    const helpers = contractHelpers(web3, owner);
     await helpers.methods.toggleAllowlist(flipper.options.address, true).send({from: owner});
     await helpers.methods.toggleAllowed(flipper.options.address, caller, true).send({from: owner});
 
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
-    await helpers.methods.toggleSponsoring(flipper.options.address, true).send({from: owner});
+    await helpers.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Allowlisted).send({from: owner});
     await helpers.methods.setSponsoringRateLimit(flipper.options.address, 0).send({from: owner});
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.true;
 
@@ -66,14 +97,14 @@ describe('Sponsoring EVM contracts', () => {
     const alice = privateKey('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
-    const caller = await createEthAccountWithBalance(api, web3);
+    const caller = createEthAccount(web3);
 
     const flipper = await deployFlipper(web3, owner);
 
     const helpers = contractHelpers(web3, owner);
 
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
-    await helpers.methods.toggleSponsoring(flipper.options.address, true).send({from: owner});
+    await helpers.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Allowlisted).send({from: owner});
     await helpers.methods.setSponsoringRateLimit(flipper.options.address, 0).send({from: owner});
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.true;
 
@@ -82,8 +113,8 @@ describe('Sponsoring EVM contracts', () => {
     const originalFlipperBalance = await web3.eth.getBalance(flipper.options.address);
     expect(originalFlipperBalance).to.be.not.equal('0');
 
-    await flipper.methods.flip().send({from: caller});
-    expect(await flipper.methods.getValue().call()).to.be.true;
+    await expect(flipper.methods.flip().send({from: caller})).to.be.rejectedWith(/InvalidTransaction::Payment/);
+    expect(await flipper.methods.getValue().call()).to.be.false;
 
     // Balance should be taken from flipper instead of caller
     const balanceAfter = await web3.eth.getBalance(flipper.options.address);
@@ -104,7 +135,7 @@ describe('Sponsoring EVM contracts', () => {
     await helpers.methods.toggleAllowed(flipper.options.address, caller, true).send({from: owner});
 
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
-    await helpers.methods.toggleSponsoring(flipper.options.address, true).send({from: owner});
+    await helpers.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Allowlisted).send({from: owner});
     await helpers.methods.setSponsoringRateLimit(flipper.options.address, 0).send({from: owner});
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.true;
 
@@ -133,7 +164,7 @@ describe('Sponsoring EVM contracts', () => {
     await helpers.methods.toggleAllowed(flipper.options.address, caller, true).send({from: owner});
 
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
-    await helpers.methods.toggleSponsoring(flipper.options.address, true).send({from: owner});
+    await helpers.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Allowlisted).send({from: owner});
     await helpers.methods.setSponsoringRateLimit(flipper.options.address, 10).send({from: owner});
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.true;
 
@@ -157,33 +188,4 @@ describe('Sponsoring EVM contracts', () => {
     const helpers = contractHelpers(web3, owner);
     expect(await helpers.methods.getSponsoringRateLimit(flipper.options.address).call()).to.be.equals('7200');
   });
-
-  itWeb3('If allowlist mode is off and sponsorship is on, sponsorship does not work', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await createEthAccountWithBalance(api, web3);
-    const caller = await createEthAccountWithBalance(api, web3);
-
-    const flipper = await deployFlipper(web3, owner);
-
-    const helpers = contractHelpers(web3, owner);
-
-    expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
-    await helpers.methods.toggleSponsoring(flipper.options.address, true).send({from: owner});
-    await helpers.methods.setSponsoringRateLimit(flipper.options.address, 0).send({from: owner});
-    expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.true;
-
-    await transferBalanceToEth(api, alice, flipper.options.address);
-
-    const originalFlipperBalance = await web3.eth.getBalance(flipper.options.address);
-    expect(originalFlipperBalance).to.be.not.equal('0');
-
-    await flipper.methods.flip().send({from: caller});
-    expect(await flipper.methods.getValue().call()).to.be.true;
-
-    // Balance should be taken from flipper instead of caller
-    const balanceAfter = await web3.eth.getBalance(flipper.options.address);
-    expect(+balanceAfter).to.be.equals(+originalFlipperBalance);
-  });
-
 });

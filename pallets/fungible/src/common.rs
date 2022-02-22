@@ -1,10 +1,11 @@
 use core::marker::PhantomData;
 
-use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
+use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
 use up_data_structs::TokenId;
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::ArithmeticError;
 use sp_std::{vec::Vec, vec};
+use up_data_structs::CustomDataLimit;
 
 use crate::{
 	Allowance, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf, weights::WeightInfo,
@@ -180,7 +181,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		&self,
 		_sender: T::CrossAccountId,
 		_token: TokenId,
-		_data: Vec<u8>,
+		_data: BoundedVec<u8, CustomDataLimit>,
 	) -> DispatchResultWithPostInfo {
 		fail!(<Error<T>>::FungibleItemsDontHaveData)
 	}
@@ -201,8 +202,8 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		TokenId::default()
 	}
 
-	fn token_owner(&self, _token: TokenId) -> T::CrossAccountId {
-		T::CrossAccountId::default()
+	fn token_owner(&self, _token: TokenId) -> Option<T::CrossAccountId> {
+		None
 	}
 	fn const_metadata(&self, _token: TokenId) -> Vec<u8> {
 		Vec::new()

@@ -100,6 +100,10 @@ where
 			already_withdrawn.map(|e| e.negative_imbalance),
 		)
 	}
+
+	fn pay_priority_fee(tip: U256) {
+		<EVMCurrencyAdapter<<T as Config>::Currency, ()> as pallet_evm::OnChargeEVMTransaction<T>>::pay_priority_fee(tip)
+	}
 }
 
 /// Implements sponsoring for evm calls performed from pallet-evm (via api.tx.ethereum.transact/api.tx.evm.call)
