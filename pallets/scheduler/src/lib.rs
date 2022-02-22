@@ -195,7 +195,7 @@ decl_storage! {
 				T::AccountId,
 				<<T as Config>::CallExecutor as DispatchCall<T, H160>>::Pre
 			>>>;
-			
+
 		/// Lookup from identity to the block number and index of the task.
 		Lookup: map hasher(twox_64_concat) Vec<u8> => Option<TaskAddress<T::BlockNumber>>;
 	}
@@ -424,10 +424,11 @@ decl_module! {
 								"Warning: Scheduler has failed to execute a post-dispatch transaction. \
 								This block might have become invalid.",
 							);
-							// todo possibly force a skip/return here, do something with the error
-						}
 
-						let r = r.unwrap(); // todo dangerous! but it shouldn't come to that, and if it does, the error is critical, is it safe to panic?
+							// Force skip this call since the block is likely to be discarded
+							return None;
+						}
+						let r = r.unwrap();
 
 						let maybe_id = s.maybe_id.clone();
 						if let Some((period, count)) = s.maybe_periodic {
@@ -499,18 +500,14 @@ impl<T: Config> Module<T> {
 			<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin.clone()).into(),
 		)
 		.unwrap_or_default(); // todo sponsoring doesn't work with the line below -- found sponsoring is already checked for in transaction_payment
-		//let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &call).unwrap_or(sender);
-		//let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay.clone()));
-		//let r = call.clone().dispatch(sponsor.into());
+					  //let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &call).unwrap_or(sender);
+					  //let sponsor = T::PalletsOrigin::from(system::RawOrigin::Signed(who_will_pay.clone()));
+					  //let r = call.clone().dispatch(sponsor.into());
 
 		let pre_dispatch = match T::CallExecutor::pre_dispatch(sender.clone(), call.clone()) {
 			Ok(pre_dispatch) => pre_dispatch,
 			Err(_) => return Err(Error::<T>::FailedToSchedule.into()),
 		};
-
-		// todo continually pre-dispatch according to maybe_periodic -- but it's called only once?
-		// no, reschedule and cancel rely on scheduled being only the next instance
-		// actually can count with OnChargePayment, so no need to run around. expand Pre with unspent_total_fee and single_fee, deduct single_fee
 
 		// sanitize maybe_periodic
 		let maybe_periodic = maybe_periodic
@@ -590,7 +587,7 @@ impl<T: Config> Module<T> {
 					"Warning: Scheduler has failed to execute a post-dispatch transaction. \
 					This block might have become invalid.",
 				);
-			} // maybe do something with the error?
+			} // todo maybe do something with the error? if the block is invalid, let it slide; we don't need the result anyway
 			Self::deposit_event(RawEvent::Canceled(when, index));
 			Ok(())
 		} else {
@@ -669,7 +666,7 @@ impl<T: Config> Module<T> {
 									"Warning: Scheduler has failed to execute a post-dispatch transaction. \
 									This block might have become invalid.",
 								);
-							} // maybe do something with the error?
+							} // todo maybe do something with the error? if the block is invalid, let it slide; we don't need the result anyway
 						}
 						*s = None;
 					}
