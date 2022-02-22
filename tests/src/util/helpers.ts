@@ -3,6 +3,8 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
+import '../interfaces/augment-api-rpc';
+import '../interfaces/augment-api-query';
 import {ApiPromise, Keyring} from '@polkadot/api';
 import type {AccountId, EventRecord} from '@polkadot/types/interfaces';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -11,10 +13,10 @@ import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {alicesPublicKey} from '../accounts';
-import {UpDataStructsCollection} from '../interfaces';
 import privateKey from '../substrate/privateKey';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
+import {UpDataStructsCollection} from '@polkadot/types/lookup';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -49,7 +51,7 @@ export function normalizeAccountId(input: string | AccountId | CrossAccountId | 
     };
   } else if ('Substrate' in input) {
     return input;
-  }else if ('substrate' in input) {
+  } else if ('substrate' in input) {
     return {
       Substrate: (input as any).substrate,
     };
@@ -69,7 +71,7 @@ export function toSubstrateAddress(input: string | CrossAccountId | IKeyringPair
 
 export const U128_MAX = (1n << 128n) - 1n;
 
-const MICROUNIQUE = 1_000_000_000n;
+const MICROUNIQUE = 1_000_000_000_000n;
 const MILLIUNIQUE = 1_000n * MICROUNIQUE;
 const CENTIUNIQUE = 10n * MILLIUNIQUE;
 export const UNIQUE = 100n * CENTIUNIQUE;
@@ -116,15 +118,15 @@ export interface IFungibleTokenDataType {
 
 export interface IChainLimits {
   collectionNumbersLimit: number;
-	accountTokenOwnershipLimit: number;
-	collectionsAdminsLimit: number;
-	customDataLimit: number;
-	nftSponsorTransferTimeout: number;
-	fungibleSponsorTransferTimeout: number;
-	refungibleSponsorTransferTimeout: number;
-	offchainSchemaLimit: number;
-	variableOnChainSchemaLimit: number;
-	constOnChainSchemaLimit: number;
+  accountTokenOwnershipLimit: number;
+  collectionsAdminsLimit: number;
+  customDataLimit: number;
+  nftSponsorTransferTimeout: number;
+  fungibleSponsorTransferTimeout: number;
+  refungibleSponsorTransferTimeout: number;
+  offchainSchemaLimit: number;
+  variableOnChainSchemaLimit: number;
+  constOnChainSchemaLimit: number;
 }
 
 export interface IReFungibleTokenDataType {
@@ -283,7 +285,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
       modeprm = {refungible: null};
     }
 
-    const tx = api.tx.unique.createCollection(strToUTF16(name), strToUTF16(description), strToUTF16(tokenPrefix), modeprm as any);
+    const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any});
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getCreateCollectionResult(events);
 
@@ -329,7 +331,7 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
 
     // Run the CreateCollection transaction
     const alicePrivateKey = privateKey('//Alice');
-    const tx = api.tx.unique.createCollection(strToUTF16(name), strToUTF16(description), strToUTF16(tokenPrefix), modeprm as any);
+    const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any});
     const events = await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
     const result = getCreateCollectionResult(events);
 
@@ -557,7 +559,7 @@ export async function setTransferFlagExpectSuccess(sender: IKeyringPair, collect
 
   await usingApi(async (api) => {
 
-    const tx = api.tx.unique.setTransfersEnabledFlag (collectionId, enabled);
+    const tx = api.tx.unique.setTransfersEnabledFlag(collectionId, enabled);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
 
@@ -569,7 +571,7 @@ export async function setTransferFlagExpectFailure(sender: IKeyringPair, collect
 
   await usingApi(async (api) => {
 
-    const tx = api.tx.unique.setTransfersEnabledFlag (collectionId, enabled);
+    const tx = api.tx.unique.setTransfersEnabledFlag(collectionId, enabled);
     const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
     const result = getGenericResult(events);
 
@@ -811,8 +813,7 @@ export async function addCollectionAdminExpectSuccess(sender: IKeyringPair, coll
 }
 
 export async function
-getFreeBalance(account: IKeyringPair) : Promise<bigint>
-{
+getFreeBalance(account: IKeyringPair): Promise<bigint> {
   let balance = 0n;
   await usingApi(async (api) => {
     balance = BigInt((await api.query.system.account(account.address)).data.free.toString());

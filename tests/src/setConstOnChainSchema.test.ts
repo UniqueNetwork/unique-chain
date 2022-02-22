@@ -30,8 +30,7 @@ before(async () => {
     alice = keyring.addFromUri('//Alice');
     bob = keyring.addFromUri('//Bob');
     shema = '0x31';
-    largeShema = new Array(4097).fill(0xff);
-
+    largeShema = new Array(1024 * 1024 + 10).fill(0xff);
   });
 });
 describe('Integration Test ext. setConstOnChainSchema()', () => {
@@ -88,7 +87,7 @@ describe('Negative Integration Test ext. setConstOnChainSchema()', () => {
     });
   });
 
-  it('Set invalid data in schema (size too large:> 1024b)', async () => {
+  it('Set invalid data in schema (size too large:> 1MB)', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       const setShema = api.tx.unique.setConstOnChainSchema(collectionId, largeShema);

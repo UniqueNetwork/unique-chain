@@ -16,7 +16,7 @@ extern crate alloc;
 pub use serde::{Serialize, Deserialize};
 
 pub use frame_support::{
-	construct_runtime, decl_module, decl_storage, decl_error,
+	construct_runtime, decl_module, decl_storage, decl_error, decl_event,
 	dispatch::DispatchResult,
 	ensure, fail, parameter_types,
 	traits::{
@@ -29,17 +29,18 @@ pub use frame_support::{
 		WeightToFeePolynomial, DispatchClass,
 	},
 	StorageValue, transactional,
-	pallet_prelude::DispatchResultWithPostInfo,
+	pallet_prelude::{DispatchResultWithPostInfo, ConstU32},
+	BoundedVec,
 };
 use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{sp_std::prelude::Vec};
 use up_data_structs::{
-	MAX_DECIMAL_POINTS, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, CUSTOM_DATA_LIMIT,
-	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT,
-	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-	NFT_SPONSOR_TRANSFER_TIMEOUT, AccessMode, Collection, CreateItemData, CollectionLimits,
-	CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
+	MAX_DECIMAL_POINTS, VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT,
+	OFFCHAIN_SCHEMA_LIMIT, MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH,
+	MAX_TOKEN_PREFIX_LENGTH, AccessMode, CreateItemData, CollectionLimits, CollectionId,
+	CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
+	CreateCollectionData, CustomDataLimit,
 };
 use pallet_common::{
 	account::CrossAccountId, CollectionHandle, Pallet as PalletCommon, Error as CommonError,
@@ -81,12 +82,9 @@ decl_error! {
 		ConfirmUnsetSponsorFail,
 		/// Length of items properties must be greater than 0.
 		EmptyArgument,
-		/// Collection limit bounds per collection exceeded
-		CollectionLimitBoundsExceeded,
-		/// Tried to enable permissions which are only permitted to be disabled
-		OwnerPermissionsCantBeReverted,
 	}
 }
+
 pub trait Config:
 	system::Config
 	+ pallet_evm_coder_substrate::Config
@@ -97,8 +95,139 @@ pub trait Config:
 	+ Sized
 	+ TypeInfo
 {
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
+
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
+}
+
+decl_event! {
+	pub enum Event<T>
+	where
+		<T as frame_system::Config>::AccountId,
+		<T as pallet_common::Config>::CrossAccountId,
+	{
+		/// Collection sponsor was removed
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		CollectionSponsorRemoved(CollectionId),
+
+		/// Collection admin was added
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		///
+		/// * admin:  Admin address.
+		CollectionAdminAdded(CollectionId, CrossAccountId),
+
+		/// Collection owned was change
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		///
+		/// * owner:  New owner address.
+		CollectionOwnedChanged(CollectionId, AccountId),
+
+		/// Collection sponsor was set
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		///
+		/// * owner:  New sponsor address.
+		CollectionSponsorSet(CollectionId, AccountId),
+
+		/// const on chain schema was set
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		ConstOnChainSchemaSet(CollectionId),
+
+		/// New sponsor was confirm
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		///
+		/// * sponsor:  New sponsor address.
+		SponsorshipConfirmed(CollectionId, AccountId),
+
+		/// Collection admin was removed
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		///
+		/// * admin:  Admin address.
+		CollectionAdminRemoved(CollectionId, CrossAccountId),
+
+		/// Address was remove from allow list
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		///
+		/// * user:  Address.
+		AllowListAddressRemoved(CollectionId, CrossAccountId),
+
+		/// Address was add to allow list
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		///
+		/// * user:  Address.
+		AllowListAddressAdded(CollectionId, CrossAccountId),
+
+		/// Collection limits was set
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		CollectionLimitSet(CollectionId),
+
+		/// Mint permission	was set
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		MintPermissionSet(CollectionId),
+
+		/// Offchain schema was set
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		OffchainSchemaSet(CollectionId),
+
+		/// Public access mode was set
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		///
+		/// * mode: New access state.
+		PublicAccessModeSet(CollectionId, AccessMode),
+
+		/// Schema version was set
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		SchemaVersionSet(CollectionId),
+
+		/// Variable on chain schema was set
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique collection identifier.
+		VariableOnChainSchemaSet(CollectionId),
+	}
 }
 
 type SelfWeightOf<T> = <T as Config>::WeightInfo;
@@ -162,6 +291,8 @@ decl_module! {
 	{
 		type Error = Error<T>;
 
+		fn deposit_event() = default;
+
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
 			0
 		}
@@ -184,42 +315,39 @@ decl_module! {
 		// returns collection ID
 		#[weight = <SelfWeightOf<T>>::create_collection()]
 		#[transactional]
+		#[deprecated]
 		pub fn create_collection(origin,
-								 collection_name: Vec<u16>,
-								 collection_description: Vec<u16>,
-								 token_prefix: Vec<u8>,
-								 mode: CollectionMode) -> DispatchResult {
-
-			// Anyone can create a collection
-			let who = ensure_signed(origin)?;
-
-			// Create new collection
-			let new_collection = Collection {
-				owner: who,
+								 collection_name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
+								 collection_description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
+								 token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
+								 mode: CollectionMode) -> DispatchResult  {
+			let data: CreateCollectionData<T::AccountId> = CreateCollectionData {
 				name: collection_name,
-				mode: mode.clone(),
-				mint_mode: false,
-				access: AccessMode::Normal,
 				description: collection_description,
 				token_prefix,
-				offchain_schema: Vec::new(),
-				schema_version: SchemaVersion::ImageURL,
-				sponsorship: SponsorshipState::Disabled,
-				variable_on_chain_schema: Vec::new(),
-				const_on_chain_schema: Vec::new(),
-				limits: Default::default(),
-				meta_update_permission: Default::default(),
+				mode,
+				..Default::default()
 			};
+			Self::create_collection_ex(origin, data)
+		}
 
-			let _id = match mode {
-				CollectionMode::NFT => {<PalletNonfungible<T>>::init_collection(new_collection)?},
+		/// This method creates a collection
+		///
+		/// Prefer it to deprecated [`created_collection`] method
+		#[weight = <SelfWeightOf<T>>::create_collection()]
+		#[transactional]
+		pub fn create_collection_ex(origin, data: CreateCollectionData<T::AccountId>) -> DispatchResult {
+			let owner = ensure_signed(origin)?;
+
+			let _id = match data.mode {
+				CollectionMode::NFT => {<PalletNonfungible<T>>::init_collection(owner, data)?},
 				CollectionMode::Fungible(decimal_points) => {
 					// check params
 					ensure!(decimal_points <= MAX_DECIMAL_POINTS, Error::<T>::CollectionDecimalPointLimitExceeded);
-					<PalletFungible<T>>::init_collection(new_collection)?
+					<PalletFungible<T>>::init_collection(owner, data)?
 				}
 				CollectionMode::ReFungible => {
-					<PalletRefungible<T>>::init_collection(new_collection)?
+					<PalletRefungible<T>>::init_collection(owner, data)?
 				}
 			};
 
@@ -289,6 +417,11 @@ decl_module! {
 				true,
 			)?;
 
+			Self::deposit_event(Event::<T>::AllowListAddressAdded(
+				collection_id,
+				address
+			));
+
 			Ok(())
 		}
 
@@ -318,6 +451,11 @@ decl_module! {
 				false,
 			)?;
 
+			<Pallet<T>>::deposit_event(Event::<T>::AllowListAddressRemoved(
+				collection_id,
+				address
+			));
+
 			Ok(())
 		}
 
@@ -341,7 +479,13 @@ decl_module! {
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner(&sender)?;
 
-			target_collection.access = mode;
+			target_collection.access = mode.clone();
+
+			<Pallet<T>>::deposit_event(Event::<T>::PublicAccessModeSet(
+				collection_id,
+				mode
+			));
+
 			target_collection.save()
 		}
 
@@ -368,6 +512,11 @@ decl_module! {
 			target_collection.check_is_owner(&sender)?;
 
 			target_collection.mint_mode = mint_permission;
+
+			<Pallet<T>>::deposit_event(Event::<T>::MintPermissionSet(
+				collection_id
+			));
+
 			target_collection.save()
 		}
 
@@ -391,7 +540,12 @@ decl_module! {
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner(&sender)?;
 
-			target_collection.owner = new_owner;
+			target_collection.owner = new_owner.clone();
+			<Pallet<T>>::deposit_event(Event::<T>::CollectionOwnedChanged(
+				collection_id,
+				new_owner
+			));
+
 			target_collection.save()
 		}
 
@@ -414,6 +568,11 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 
+			<Pallet<T>>::deposit_event(Event::<T>::CollectionAdminAdded(
+				collection_id,
+				new_admin_id.clone()
+			));
+
 			<PalletCommon<T>>::toggle_admin(&collection, &sender, &new_admin_id, true)
 		}
 
@@ -435,6 +594,11 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 
+			<Pallet<T>>::deposit_event(Event::<T>::CollectionAdminRemoved(
+				collection_id,
+				account_id.clone()
+			));
+
 			<PalletCommon<T>>::toggle_admin(&collection, &sender, &account_id, false)
 		}
 
@@ -455,7 +619,13 @@ decl_module! {
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner(&sender)?;
 
-			target_collection.sponsorship = SponsorshipState::Unconfirmed(new_sponsor);
+			target_collection.sponsorship = SponsorshipState::Unconfirmed(new_sponsor.clone());
+
+			<Pallet<T>>::deposit_event(Event::<T>::CollectionSponsorSet(
+				collection_id,
+				new_sponsor
+			));
+
 			target_collection.save()
 		}
 
@@ -477,7 +647,13 @@ decl_module! {
 				Error::<T>::ConfirmUnsetSponsorFail
 			);
 
-			target_collection.sponsorship = SponsorshipState::Confirmed(sender);
+			target_collection.sponsorship = SponsorshipState::Confirmed(sender.clone());
+
+			<Pallet<T>>::deposit_event(Event::<T>::SponsorshipConfirmed(
+				collection_id,
+				sender
+			));
+
 			target_collection.save()
 		}
 
@@ -499,6 +675,10 @@ decl_module! {
 			target_collection.check_is_owner(&sender)?;
 
 			target_collection.sponsorship = SponsorshipState::Disabled;
+
+			<Pallet<T>>::deposit_event(Event::<T>::CollectionSponsorRemoved(
+				collection_id
+			));
 			target_collection.save()
 		}
 
@@ -733,7 +913,7 @@ decl_module! {
 			origin,
 			collection_id: CollectionId,
 			item_id: TokenId,
-			data: Vec<u8>
+			data: BoundedVec<u8, CustomDataLimit>,
 		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
@@ -793,6 +973,11 @@ decl_module! {
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner_or_admin(&sender)?;
 			target_collection.schema_version = version;
+
+			<Pallet<T>>::deposit_event(Event::<T>::SchemaVersionSet(
+				collection_id
+			));
+
 			target_collection.save()
 		}
 
@@ -813,16 +998,18 @@ decl_module! {
 		pub fn set_offchain_schema(
 			origin,
 			collection_id: CollectionId,
-			schema: Vec<u8>
+			schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner_or_admin(&sender)?;
 
-			// check schema limit
-			ensure!(schema.len() as u32 <= OFFCHAIN_SCHEMA_LIMIT, "");
-
 			target_collection.offchain_schema = schema;
+
+			<Pallet<T>>::deposit_event(Event::<T>::OffchainSchemaSet(
+				collection_id
+			));
+
 			target_collection.save()
 		}
 
@@ -843,16 +1030,18 @@ decl_module! {
 		pub fn set_const_on_chain_schema (
 			origin,
 			collection_id: CollectionId,
-			schema: Vec<u8>
+			schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner_or_admin(&sender)?;
 
-			// check schema limit
-			ensure!(schema.len() as u32 <= CONST_ON_CHAIN_SCHEMA_LIMIT, "");
-
 			target_collection.const_on_chain_schema = schema;
+
+			<Pallet<T>>::deposit_event(Event::<T>::ConstOnChainSchemaSet(
+				collection_id
+			));
+
 			target_collection.save()
 		}
 
@@ -873,16 +1062,18 @@ decl_module! {
 		pub fn set_variable_on_chain_schema (
 			origin,
 			collection_id: CollectionId,
-			schema: Vec<u8>
+			schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner_or_admin(&sender)?;
 
-			// check schema limit
-			ensure!(schema.len() as u32 <= VARIABLE_ON_CHAIN_SCHEMA_LIMIT, "");
-
 			target_collection.variable_on_chain_schema = schema;
+
+			<Pallet<T>>::deposit_event(Event::<T>::VariableOnChainSchemaSet(
+				collection_id
+			));
+
 			target_collection.save()
 		}
 
@@ -893,61 +1084,16 @@ decl_module! {
 			collection_id: CollectionId,
 			new_limit: CollectionLimits,
 		) -> DispatchResult {
-			let mut new_limit = new_limit;
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner(&sender)?;
 			let old_limit = &target_collection.limits;
 
-			macro_rules! limit_default {
-				($old:ident, $new:ident, $($field:ident $(($arg:expr))? => $check:expr),* $(,)?) => {{
-					$(
-						if let Some($new) = $new.$field {
-							let $old = $old.$field($($arg)?);
-							let _ = $new;
-							let _ = $old;
-							$check
-						} else {
-							$new.$field = $old.$field
-						}
-					)*
-				}};
-			}
+			target_collection.limits = <PalletCommon<T>>::clamp_limits(target_collection.mode.clone(), &old_limit, new_limit)?;
 
-			limit_default!(old_limit, new_limit,
-				account_token_ownership_limit => ensure!(
-					new_limit <= MAX_TOKEN_OWNERSHIP,
-					<Error<T>>::CollectionLimitBoundsExceeded,
-				),
-				sponsor_transfer_timeout(match target_collection.mode {
-					CollectionMode::NFT => NFT_SPONSOR_TRANSFER_TIMEOUT,
-					CollectionMode::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-					CollectionMode::ReFungible => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-				}) => ensure!(
-					new_limit <= MAX_SPONSOR_TIMEOUT,
-					<Error<T>>::CollectionLimitBoundsExceeded,
-				),
-				sponsored_data_size => ensure!(
-					new_limit <= CUSTOM_DATA_LIMIT,
-					<Error<T>>::CollectionLimitBoundsExceeded,
-				),
-				token_limit => ensure!(
-					old_limit >= new_limit && new_limit > 0,
-					<CommonError<T>>::CollectionTokenLimitExceeded
-				),
-				owner_can_transfer => ensure!(
-					old_limit || !new_limit,
-					<Error<T>>::OwnerPermissionsCantBeReverted,
-				),
-				owner_can_destroy => ensure!(
-					old_limit || !new_limit,
-					<Error<T>>::OwnerPermissionsCantBeReverted,
-				),
-				sponsored_data_rate_limit => {},
-				transfers_enabled => {},
-			);
-
-			target_collection.limits = new_limit;
+			<Pallet<T>>::deposit_event(Event::<T>::CollectionLimitSet(
+				collection_id
+			));
 
 			target_collection.save()
 		}

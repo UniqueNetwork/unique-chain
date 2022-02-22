@@ -1,7 +1,7 @@
 {
     "relaychain": {
         "bin": "../polkadot/target/release/polkadot",
-        "chain": "westend-local",
+        "chain": "rococo-local",
         "nodes": [
             {
                 "name": "alice",
@@ -9,8 +9,8 @@
                 "rpcPort": 9843,
                 "port": 30444,
                 "flags": [
-                    "--rpc-port=9843",
-                    "-lparachain::candidate_validation=debug"
+                    "-lparachain::candidate_validation=debug",
+                    "-lxcm=trace"
                 ]
             },
             {
@@ -19,8 +19,8 @@
                 "rpcPort": 9854,
                 "port": 30555,
                 "flags": [
-                    "--rpc-port=9854",
-                    "-lparachain::candidate_validation=debug"
+                    "-lparachain::candidate_validation=debug",
+                    "-lxcm=trace"
                 ]
             },
             {
@@ -29,7 +29,6 @@
                 "rpcPort": 9865,
                 "port": 30666,
                 "flags": [
-                    "--rpc-port=9865",
                     "-lparachain::candidate_validation=debug"
                 ]
             },
@@ -39,27 +38,15 @@
                 "rpcPort": 9876,
                 "port": 30777,
                 "flags": [
-                    "--rpc-port=9876",
                     "-lparachain::candidate_validation=debug"
                 ]
             },
             {
                 "name": "eve",
                 "wsPort": 9888,
-                "rpcPort": 9886,
+                "rpcPort": 9887,
                 "port": 30888,
                 "flags": [
-                    "--rpc-port=9886",
-                    "-lparachain::candidate_validation=debug"
-                ]
-            },
-            {
-                "name": "ferdie",
-                "wsPort": 9897,
-                "rpcPort": 9896,
-                "port": 30999,
-                "flags": [
-                    "--rpc-port=9896",
                     "-lparachain::candidate_validation=debug"
                 ]
             }
@@ -79,9 +66,9 @@
     },
     "parachains": [
         {
-            "bin": "../unique-chain/target/release/nft",
-            "chain": "westend-local",
-            "balance": "1000000000000000000000",
+            "bin": "../unique-chain/target/release/unique-collator",
+            "id": "1000",
+            "balance": "1000000000000000000000000",
             "nodes": [
                 {
                     "port": 31200,
@@ -90,9 +77,9 @@
                     "name": "alice",
                     "flags": [
                         "--rpc-cors=all",
-                        "--rpc-port=9933",
                         "--unsafe-rpc-external",
-                        "--unsafe-ws-external"
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
                     ]
                 },
                 {
@@ -102,51 +89,47 @@
                     "name": "bob",
                     "flags": [
                         "--rpc-cors=all",
-                        "--rpc-port=9934",
                         "--unsafe-rpc-external",
-                        "--unsafe-ws-external"
-                    ]
-                },
-                {
-                    "port": 31202,
-                    "wsPort": 9946,
-                    "rpcPort": 9935,
-                    "name": "charlie",
-                    "flags": [
-                        "--rpc-cors=all",
-                        "--rpc-port=9935",
-                        "--unsafe-rpc-external",
-                        "--unsafe-ws-external"
-                    ]
-                },
-                {
-                    "port": 31203,
-                    "wsPort": 9947,
-                    "rpcPort": 9936,
-                    "name": "dave",
-                    "flags": [
-                        "--rpc-cors=all",
-                        "--rpc-port=9936",
-                        "--unsafe-rpc-external",
-                        "--unsafe-ws-external"
-                    ]
-                },
-                {
-                    "port": 31204,
-                    "wsPort": 9948,
-                    "rpcPort": 9937,
-                    "name": "eve",
-                    "flags": [
-                        "--rpc-cors=all",
-                        "--rpc-port=9937",
-                        "--unsafe-rpc-external",
-                        "--unsafe-ws-external"
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
                     ]
                 }
             ]
-        }
+        },
+        {
+            "bin": "../Acala/target/release/acala",
+            "id": "2000",
+            "chain":  "karura-dev",
+			"balance": "1000000000000000000000",
+			"nodes": [
+				{
+					"wsPort": 9946,
+					"port": 31202,
+					"name": "alice",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+				}
+			]
+		}
     ],
     "simpleParachains": [],
-    "hrmpChannels": [],
+    "hrmpChannels": [
+        {
+            "sender": 2000,
+            "recipient": 1000,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        },
+        {
+            "sender": 1000,
+            "recipient": 2000,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        }
+    ],
     "finalization": false
 }

@@ -3,7 +3,7 @@ import privateKey from '../substrate/privateKey';
 import {submitTransactionAsync} from '../substrate/substrate-api';
 import {createEthAccountWithBalance, deployCollector, GAS_ARGS, itWeb3, subToEth, transferBalanceToEth} from './util/helpers';
 import {evmToAddress} from '@polkadot/util-crypto';
-import {getGenericResult} from '../util/helpers';
+import {getGenericResult, UNIQUE} from '../util/helpers';
 import {getBalanceSingle, transferBalanceExpectSuccess} from '../substrate/get-balance';
 
 describe('EVM payable contracts', () => {
@@ -34,6 +34,8 @@ describe('EVM payable contracts', () => {
         GAS_ARGS.gas,
         await web3.eth.getGasPrice(),
         null,
+        null,
+        [],
       );
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
@@ -55,8 +57,8 @@ describe('EVM payable contracts', () => {
   });
 
   itWeb3('Balance can be retrieved from evm contract', async({api, web3}) => {
-    const FEE_BALANCE = 10n ** 18n;
-    const CONTRACT_BALANCE = 10n ** 14n;
+    const FEE_BALANCE = 1000n * UNIQUE;
+    const CONTRACT_BALANCE = 1n * UNIQUE;
 
     const deployer = await createEthAccountWithBalance(api, web3);
     const contract = await deployCollector(web3, deployer);

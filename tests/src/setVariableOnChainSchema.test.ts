@@ -30,7 +30,7 @@ before(async () => {
     alice = keyring.addFromUri('//Alice');
     bob = keyring.addFromUri('//Bob');
     schema = '0x31';
-    largeSchema = new Array(4097).fill(0xff);
+    largeSchema = new Array(8 * 1024 + 10).fill(0xff);
 
   });
 });
@@ -104,7 +104,7 @@ describe('Negative Integration Test ext. setVariableOnChainSchema()', () => {
     });
   });
 
-  it('Set invalid data in schema (size too large:> 1024b)', async () => {
+  it('Set invalid data in schema (size too large:> 8kB)', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       const setSchema = api.tx.unique.setVariableOnChainSchema(collectionId, largeSchema);

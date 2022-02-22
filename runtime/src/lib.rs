@@ -16,16 +16,18 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
+use sp_runtime::DispatchError;
 // #[cfg(any(feature = "std", test))]
 // pub use sp_runtime::BuildStorage;
 
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, AccountIdConversion,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify,
+		AccountIdConversion, Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiSignature,
+	ApplyExtrinsicResult, MultiSignature, RuntimeAppPublic,
 };
 
 use sp_std::prelude::*;
@@ -44,8 +46,9 @@ pub use frame_support::{
 	dispatch::DispatchResult,
 	PalletId, parameter_types, StorageValue, ConsensusEngineId,
 	traits::{
-		Everything, Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem,
-		LockIdentifier, OnUnbalanced, Randomness, FindAuthor,
+		tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Everything,
+		Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier,
+		OnUnbalanced, Randomness, FindAuthor,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -57,7 +60,7 @@ use up_data_structs::*;
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
 use frame_system::{
-	self as system, EnsureRoot, EnsureSigned,
+	self as frame_system, EnsureRoot, EnsureSigned,
 	limits::{BlockWeights, BlockLength},
 };
 use sp_arithmetic::{
@@ -67,10 +70,10 @@ use smallvec::smallvec;
 use codec::{Encode, Decode};
 use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
 use fp_rpc::TransactionStatus;
-use sp_core::crypto::Public;
 use sp_runtime::{
-	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf},
+	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating},
 	transaction_validity::TransactionValidityError,
+	SaturatedConversion,
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
@@ -82,12 +85,23 @@ use polkadot_parachain::primitives::Sibling;
 use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
-	EnsureXcmOrigin, FixedWeightBounds, IsConcrete, LocationInverter, NativeAsset,
-	ParentAsSuperuser, ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative,
-	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
-	SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
+	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser,
+	ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 };
-use xcm_executor::{Config, XcmExecutor};
+use xcm_executor::{Config, XcmExecutor, Assets};
+use sp_std::{marker::PhantomData};
+
+use xcm::latest::{
+	//	Xcm,
+	AssetId::{Concrete},
+	Fungibility::Fungible as XcmFungible,
+	MultiAsset,
+	Error as XcmError,
+};
+use xcm_executor::traits::{MatchesFungible, WeightTrader};
+//use xcm_executor::traits::MatchesFungible;
+use sp_runtime::traits::CheckedConversion;
 
 // mod chain_extension;
 // use crate::chain_extension::{NFTExtension, Imbalance};
@@ -118,7 +132,7 @@ pub type Index = u32;
 pub type Hash = sp_core::H256;
 
 /// Digest item type.
-pub type DigestItem = generic::DigestItem<Hash>;
+pub type DigestItem = generic::DigestItem;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -146,10 +160,11 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("opal"),
 	impl_name: create_runtime_str!("opal"),
 	authoring_version: 1,
-	spec_version: 912204,
-	impl_version: 1,
+	spec_version: 916001,
+	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
+	state_version: 0,
 };
 
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
@@ -235,15 +250,20 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
+/*
+8880 - Unique
+8881 - Quartz
+8882 - Opal
+*/
 parameter_types! {
-	pub const ChainId: u64 = 8888;
+	pub const ChainId: u64 = 8882;
 }
 
 pub struct FixedFee;
 impl FeeCalculator for FixedFee {
 	fn min_gas_price() -> U256 {
 		// Targeting 0.15 UNQ per transfer
-		1_024_947_215u32.into()
+		1_024_947_215_000u64.into()
 	}
 }
 
@@ -282,7 +302,8 @@ impl pallet_evm::Config for Runtime {
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = HashedAddressMapping<Self::Hashing>;
-	type Precompiles = ();
+	type PrecompilesType = ();
+	type PrecompilesValue = ();
 	type Currency = Balances;
 	type Event = Event;
 	type OnMethodCall = (
@@ -323,7 +344,7 @@ impl pallet_ethereum::Config for Runtime {
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
 
-impl system::Config for Runtime {
+impl frame_system::Config for Runtime {
 	/// The data to be stored in an account.
 	type AccountData = pallet_balances::AccountData<Balance>;
 	/// The identifier used to distinguish between accounts.
@@ -366,9 +387,10 @@ impl system::Config for Runtime {
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = system::weights::SubstrateWeight<Self>;
+	type SystemWeightInfo = frame_system::weights::SubstrateWeight<Self>;
 	/// Version of the runtime.
 	type Version = Version;
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {
@@ -403,7 +425,7 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 }
 
-pub const MICROUNIQUE: Balance = 1_000_000_000;
+pub const MICROUNIQUE: Balance = 1_000_000_000_000;
 pub const MILLIUNIQUE: Balance = 1_000 * MICROUNIQUE;
 pub const CENTIUNIQUE: Balance = 10 * MILLIUNIQUE;
 pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
@@ -481,7 +503,7 @@ where
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		smallvec!(WeightToFeeCoefficient {
 			// Targeting 0.1 Unique per NFT transfer
-			coeff_integer: 142_688u32.into(),
+			coeff_integer: 142_688_000u32.into(),
 			coeff_frac: Perbill::zero(),
 			negative: false,
 			degree: 1,
@@ -500,6 +522,7 @@ impl pallet_transaction_payment::Config for Runtime {
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = 1 * UNIQUE;
+	pub const ProposalBondMaximum: Balance = 1000 * UNIQUE;
 	pub const SpendPeriod: BlockNumber = 5 * MINUTES;
 	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
@@ -525,6 +548,7 @@ impl pallet_treasury::Config for Runtime {
 	type OnSlash = ();
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
+	type ProposalBondMaximum = ProposalBondMaximum;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
@@ -574,8 +598,8 @@ parameter_types! {
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
-	type OnValidationData = ();
 	type SelfParaId = parachain_info::Pallet<Self>;
+	type OnSystemEvent = ();
 	// type DownwardMessageHandlers = cumulus_primitives_utility::UnqueuedDmpAsParent<
 	// 	MaxDownwardMessageWeight,
 	// 	XcmExecutor<XcmConfig>,
@@ -611,12 +635,22 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
+pub struct OnlySelfCurrency;
+impl<B: TryFrom<u128>> MatchesFungible<B> for OnlySelfCurrency {
+	fn matches_fungible(a: &MultiAsset) -> Option<B> {
+		match (&a.id, &a.fun) {
+			(Concrete(_), XcmFungible(ref amount)) => CheckedConversion::checked_from(*amount),
+			_ => None,
+		}
+	}
+}
+
 /// Means for transacting assets on this chain.
 pub type LocalAssetTransactor = CurrencyAdapter<
 	// Use this currency:
 	Balances,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	IsConcrete<RelayLocation>,
+	OnlySelfCurrency,
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -672,6 +706,88 @@ pub type Barrier = (
 	// ^^^ Parent & its unit plurality gets free execution
 );
 
+pub struct UsingOnlySelfCurrencyComponents<
+	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
+	AssetId: Get<MultiLocation>,
+	AccountId,
+	Currency: CurrencyT<AccountId>,
+	OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
+>(
+	Weight,
+	Currency::Balance,
+	PhantomData<(WeightToFee, AssetId, AccountId, Currency, OnUnbalanced)>,
+);
+impl<
+		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
+		AssetId: Get<MultiLocation>,
+		AccountId,
+		Currency: CurrencyT<AccountId>,
+		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
+	> WeightTrader
+	for UsingOnlySelfCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+{
+	fn new() -> Self {
+		Self(0, Zero::zero(), PhantomData)
+	}
+
+	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
+		let amount = WeightToFee::calc(&weight);
+		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
+
+		// location to this parachain through relay chain
+		let option1: xcm::v1::AssetId = Concrete(MultiLocation {
+			parents: 1,
+			interior: X1(Parachain(ParachainInfo::parachain_id().into())),
+		});
+		// direct location
+		let option2: xcm::v1::AssetId = Concrete(MultiLocation {
+			parents: 0,
+			interior: Here,
+		});
+
+		let required = if payment.fungible.contains_key(&option1) {
+			(option1, u128_amount).into()
+		} else if payment.fungible.contains_key(&option2) {
+			(option2, u128_amount).into()
+		} else {
+			(Concrete(MultiLocation::default()), u128_amount).into()
+		};
+
+		let unused = payment
+			.checked_sub(required)
+			.map_err(|_| XcmError::TooExpensive)?;
+		self.0 = self.0.saturating_add(weight);
+		self.1 = self.1.saturating_add(amount);
+		Ok(unused)
+	}
+
+	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
+		let weight = weight.min(self.0);
+		let amount = WeightToFee::calc(&weight);
+		self.0 -= weight;
+		self.1 = self.1.saturating_sub(amount);
+		let amount: u128 = amount.saturated_into();
+		if amount > 0 {
+			Some((AssetId::get(), amount).into())
+		} else {
+			None
+		}
+	}
+}
+impl<
+		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
+		AssetId: Get<MultiLocation>,
+		AccountId,
+		Currency: CurrencyT<AccountId>,
+		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
+	> Drop
+	for UsingOnlySelfCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+{
+	fn drop(&mut self) {
+		OnUnbalanced::on_unbalanced(Currency::issue(self.1));
+	}
+}
+
 pub struct XcmConfig;
 impl Config for XcmConfig {
 	type Call = Call;
@@ -684,7 +800,13 @@ impl Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader = UsingComponents<IdentityFee<Balance>, RelayLocation, AccountId, Balances, ()>;
+	type Trader = UsingOnlySelfCurrencyComponents<
+		IdentityFee<Balance>,
+		RelayLocation,
+		AccountId,
+		Balances,
+		(),
+	>;
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;
 
@@ -740,6 +862,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
+	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
@@ -756,7 +879,7 @@ impl pallet_aura::Config for Runtime {
 
 parameter_types! {
 	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account();
-	pub const CollectionCreationPrice: Balance = 100 * UNIQUE;
+	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
 }
 
 impl pallet_common::Config for Runtime {
@@ -781,6 +904,7 @@ impl pallet_nonfungible::Config for Runtime {
 }
 
 impl pallet_unique::Config for Runtime {
+	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
 }
 
@@ -793,6 +917,7 @@ impl pallet_inflation::Config for Runtime {
 	type Currency = Balances;
 	type TreasuryAccountId = TreasuryAccountId;
 	type InflationBlockInterval = InflationBlockInterval;
+	type BlockNumberProvider = RelayChainBlockNumberProvider<Runtime>;
 }
 
 // parameter_types! {
@@ -856,7 +981,7 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
+		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
 		Aura: pallet_aura::{Pallet, Config<T>} = 22,
@@ -868,7 +993,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 33,
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 34,
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
-		System: system::{Pallet, Call, Storage, Config, Event<T>} = 36,
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 36,
 		Vesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 37,
 		// Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
 		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
@@ -881,7 +1006,7 @@ construct_runtime!(
 
 		// Unique Pallets
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
-		Unique: pallet_unique::{Pallet, Call, Storage} = 61,
+		Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
 		// Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 		// free = 63
 		Charging: pallet_charge_transaction::{Pallet, Call, Storage } = 64,
@@ -938,12 +1063,12 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
-	system::CheckSpecVersion<Runtime>,
+	frame_system::CheckSpecVersion<Runtime>,
 	// system::CheckTxVersion<Runtime>,
-	system::CheckGenesis<Runtime>,
-	system::CheckEra<Runtime>,
-	system::CheckNonce<Runtime>,
-	system::CheckWeight<Runtime>,
+	frame_system::CheckGenesis<Runtime>,
+	frame_system::CheckEra<Runtime>,
+	frame_system::CheckNonce<Runtime>,
+	frame_system::CheckWeight<Runtime>,
 	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 );
@@ -958,7 +1083,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllPallets,
+	AllPalletsReversedWithSystemFirst,
 >;
 
 impl_opaque_keys! {
@@ -1018,40 +1143,40 @@ macro_rules! dispatch_unique_runtime {
 	($collection:ident.$method:ident($($name:ident),*)) => {{
 		use pallet_unique::dispatch::Dispatched;
 
-		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::new($collection).unwrap());
+		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
 		let dispatch = collection.as_dyn();
 
-		dispatch.$method($($name),*)
+		Ok(dispatch.$method($($name),*))
 	}};
 }
 impl_runtime_apis! {
 	impl up_rpc::UniqueApi<Block, CrossAccountId, AccountId>
 		for Runtime
 	{
-		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Vec<TokenId> {
+		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Result<Vec<TokenId>, DispatchError> {
 			dispatch_unique_runtime!(collection.account_tokens(account))
 		}
-		fn token_exists(collection: CollectionId, token: TokenId) -> bool {
+		fn token_exists(collection: CollectionId, token: TokenId) -> Result<bool, DispatchError> {
 			dispatch_unique_runtime!(collection.token_exists(token))
 		}
 
-		fn token_owner(collection: CollectionId, token: TokenId) -> CrossAccountId {
+		fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
 			dispatch_unique_runtime!(collection.token_owner(token))
 		}
-		fn const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8> {
+		fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
 			dispatch_unique_runtime!(collection.const_metadata(token))
 		}
-		fn variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8> {
+		fn variable_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
 			dispatch_unique_runtime!(collection.variable_metadata(token))
 		}
 
-		fn collection_tokens(collection: CollectionId) -> u32 {
+		fn collection_tokens(collection: CollectionId) -> Result<u32, DispatchError> {
 			dispatch_unique_runtime!(collection.collection_tokens())
 		}
-		fn account_balance(collection: CollectionId, account: CrossAccountId) -> u32 {
+		fn account_balance(collection: CollectionId, account: CrossAccountId) -> Result<u32, DispatchError> {
 			dispatch_unique_runtime!(collection.account_balance(account))
 		}
-		fn balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> u128 {
+		fn balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<u128, DispatchError> {
 			dispatch_unique_runtime!(collection.balance(account, token))
 		}
 		fn allowance(
@@ -1059,7 +1184,7 @@ impl_runtime_apis! {
 			sender: CrossAccountId,
 			spender: CrossAccountId,
 			token: TokenId,
-		) -> u128 {
+		) -> Result<u128, DispatchError> {
 			dispatch_unique_runtime!(collection.allowance(sender, spender, token))
 		}
 
@@ -1068,23 +1193,23 @@ impl_runtime_apis! {
 				.or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account))
 				.or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
 		}
-		fn adminlist(collection: CollectionId) -> Vec<CrossAccountId> {
-			<pallet_common::Pallet<Runtime>>::adminlist(collection)
+		fn adminlist(collection: CollectionId) -> Result<Vec<CrossAccountId>, DispatchError> {
+			Ok(<pallet_common::Pallet<Runtime>>::adminlist(collection))
 		}
-		fn allowlist(collection: CollectionId) -> Vec<CrossAccountId> {
-			<pallet_common::Pallet<Runtime>>::allowlist(collection)
+		fn allowlist(collection: CollectionId) -> Result<Vec<CrossAccountId>, DispatchError> {
+			Ok(<pallet_common::Pallet<Runtime>>::allowlist(collection))
 		}
-		fn allowed(collection: CollectionId, user: CrossAccountId) -> bool {
-			<pallet_common::Pallet<Runtime>>::allowed(collection, user)
+		fn allowed(collection: CollectionId, user: CrossAccountId) -> Result<bool, DispatchError> {
+			Ok(<pallet_common::Pallet<Runtime>>::allowed(collection, user))
 		}
-		fn last_token_id(collection: CollectionId) -> TokenId {
+		fn last_token_id(collection: CollectionId) -> Result<TokenId, DispatchError> {
 			dispatch_unique_runtime!(collection.last_token_id())
 		}
-		fn collection_by_id(collection: CollectionId) -> Option<Collection<AccountId>> {
-			<pallet_common::CollectionById<Runtime>>::get(collection)
+		fn collection_by_id(collection: CollectionId) -> Result<Option<Collection<AccountId>>, DispatchError> {
+			Ok(<pallet_common::CollectionById<Runtime>>::get(collection))
 		}
-		fn collection_stats() -> CollectionStats {
-			<pallet_common::Pallet<Runtime>>::collection_stats()
+		fn collection_stats() -> Result<CollectionStats, DispatchError> {
+			Ok(<pallet_common::Pallet<Runtime>>::collection_stats())
 		}
 	}
 
@@ -1183,9 +1308,11 @@ impl_runtime_apis! {
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
-			gas_price: Option<U256>,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
+			access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
 				let mut config = <Runtime as pallet_evm::Config>::config().clone();
@@ -1201,8 +1328,10 @@ impl_runtime_apis! {
 				data,
 				value,
 				gas_limit.low_u64(),
-				gas_price,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
 				nonce,
+				access_list.unwrap_or_default(),
 				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -1213,9 +1342,11 @@ impl_runtime_apis! {
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
-			gas_price: Option<U256>,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
+			access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
 				let mut config = <Runtime as pallet_evm::Config>::config().clone();
@@ -1230,8 +1361,10 @@ impl_runtime_apis! {
 				data,
 				value,
 				gas_limit.low_u64(),
-				gas_price,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
 				nonce,
+				access_list.unwrap_or_default(),
 				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -1266,6 +1399,10 @@ impl_runtime_apis! {
 				_ => None
 			}).collect()
 		}
+
+		fn elasticity() -> Option<Permill> {
+			None
+		}
 	}
 
 	impl sp_session::SessionKeys<Block> for Runtime {
@@ -1291,8 +1428,8 @@ impl_runtime_apis! {
 	}
 
 	impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
-		fn collect_collation_info() -> cumulus_primitives_core::CollationInfo {
-			ParachainSystem::collect_collation_info()
+		fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
+			ParachainSystem::collect_collation_info(header)
 		}
 	}
 
@@ -1371,7 +1508,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
 			// list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
-			let storage_info = AllPalletsWithSystem::storage_info();
+			let storage_info = AllPalletsReversedWithSystemFirst::storage_info();
 
 			return (list, storage_info)
 		}

@@ -3,8 +3,8 @@ FROM phusion/baseimage:focal-1.0.0 as rust-builder
 LABEL maintainer="Unique.Network"
 
 ARG RUST_TOOLCHAIN=nightly-2021-11-11
-#ARG RUST_C=1.55.0-nightly
-ARG POLKA_VERSION=v0.9.12
+#ARG RUST_C=1.58.0-nightly
+ARG POLKA_VERSION=release-v0.9.16
 ARG UNIQUE_BRANCH=develop
 
 #ARG USER=***
@@ -90,7 +90,7 @@ RUN apt-get -y update && \
       nvm install v15.5.0 && \
       nvm use v15.5.0
 
-RUN git clone https://github.com/paritytech/polkadot-launch.git
+RUN git clone https://github.com/paritytech/polkadot-launch
 
 RUN export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \

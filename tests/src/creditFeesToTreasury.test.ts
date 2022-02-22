@@ -3,6 +3,7 @@
 // file 'LICENSE', which is part of this source code package.
 //
 
+import './interfaces/augment-api-consts';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
@@ -104,7 +105,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   it('Treasury balance increased by failed tx fee', async () => {
     await usingApi(async (api) => {
-      await skipInflationBlock(api);
+      //await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const bobPrivateKey = privateKey('//Bob');
@@ -154,8 +155,8 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       const aliceBalanceAfter: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
       const fee = aliceBalanceBefore - aliceBalanceAfter;
 
-      expect(fee / 10n ** 15n < BigInt(Math.ceil(saneMaximumFee + createCollectionDeposit))).to.be.true;
-      expect(fee / 10n ** 15n < BigInt(Math.ceil(saneMinimumFee  + createCollectionDeposit))).to.be.true;
+      expect(fee / UNIQUE < BigInt(Math.ceil(saneMaximumFee + createCollectionDeposit))).to.be.true;
+      expect(fee / UNIQUE < BigInt(Math.ceil(saneMinimumFee  + createCollectionDeposit))).to.be.true;
     });
   });
 

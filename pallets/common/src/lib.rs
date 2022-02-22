@@ -8,13 +8,16 @@ use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo},
 	ensure, fail,
 	traits::{Imbalance, Get, Currency},
+	BoundedVec,
 };
 use pallet_evm::GasWeightMapping;
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, ExistenceRequirement,
-	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, Pays, PostDispatchInfo, TokenId, Weight,
-	WithdrawReasons, CollectionStats,
+	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, Pays, PostDispatchInfo,
+	TokenId, Weight, WithdrawReasons, CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode,
+	NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
+	CustomDataLimit, CreateCollectionData, SponsorshipState,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -53,8 +56,11 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn try_get(id: CollectionId) -> Result<Self, DispatchError> {
 		Ok(Self::new(id).ok_or(<Error<T>>::CollectionNotFound)?)
 	}
-	pub fn log(&self, log: impl evm_coder::ToLog) {
-		self.recorder.log(log)
+	pub fn log_mirrored(&self, log: impl evm_coder::ToLog) {
+		self.recorder.log_mirrored(log)
+	}
+	pub fn log_direct(&self, log: impl evm_coder::ToLog) {
+		self.recorder.log_direct(log)
 	}
 	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
@@ -156,9 +162,12 @@ pub mod pallet {
 		type EvmBackwardsAddressMapping: up_evm_mapping::EvmBackwardsAddressMapping<Self::AccountId>;
 
 		type Currency: Currency<Self::AccountId>;
+
+		#[pallet::constant]
 		type CollectionCreationPrice: Get<
 			<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance,
 		>;
+
 		type TreasuryAccountId: Get<Self::AccountId>;
 	}
 
@@ -186,6 +195,13 @@ pub mod pallet {
 		///
 		/// * account_id: Collection owner.
 		CollectionCreated(CollectionId, u8, T::AccountId),
+
+		/// New collection was destroyed
+		///
+		/// # Arguments
+		///
+		/// * collection_id: Globally unique identifier of collection.
+		CollectionDestroyed(CollectionId),
 
 		/// New item was created.
 		///
@@ -275,6 +291,10 @@ pub mod pallet {
 		TokenVariableDataLimitExceeded,
 		/// Exceeded max admin count
 		CollectionAdminCountExceeded,
+		/// Collection limit bounds per collection exceeded
+		CollectionLimitBoundsExceeded,
+		/// Tried to enable permissions which are only permitted to be disabled
+		OwnerPermissionsCantBeReverted,
 
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
@@ -290,7 +310,7 @@ pub mod pallet {
 		/// Item balance not enough.
 		TokenValueTooLow,
 		/// Requested value more than approved.
-		TokenValueNotEnough,
+		ApprovedValueTooLow,
 		/// Tried to approve more than owned
 		CantApproveMoreThanOwned,
 
@@ -385,18 +405,13 @@ impl<T: Config> Pallet<T> {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
+	pub fn init_collection(
+		owner: T::AccountId,
+		data: CreateCollectionData<T::AccountId>,
+	) -> Result<CollectionId, DispatchError> {
 		{
 			ensure!(
-				data.name.len() <= MAX_COLLECTION_NAME_LENGTH,
-				Error::<T>::CollectionNameLimitExceeded
-			);
-			ensure!(
-				data.description.len() <= MAX_COLLECTION_DESCRIPTION_LENGTH,
-				Error::<T>::CollectionDescriptionLimitExceeded
-			);
-			ensure!(
-				data.token_prefix.len() <= MAX_TOKEN_PREFIX_LENGTH,
+				data.token_prefix.len() <= MAX_TOKEN_PREFIX_LENGTH as usize,
 				Error::<T>::CollectionTokenPrefixLimitExceeded
 			);
 		}
@@ -410,11 +425,34 @@ impl<T: Config> Pallet<T> {
 
 		// bound Total number of collections
 		ensure!(
-			created_count - destroyed_count < COLLECTION_NUMBER_LIMIT,
+			created_count - destroyed_count <= COLLECTION_NUMBER_LIMIT,
 			<Error<T>>::TotalCollectionsLimitExceeded
 		);
 
 		// =========
+
+		let collection = Collection {
+			owner: owner.clone(),
+			name: data.name,
+			mode: data.mode.clone(),
+			mint_mode: false,
+			access: data.access.unwrap_or_default(),
+			description: data.description,
+			token_prefix: data.token_prefix,
+			offchain_schema: data.offchain_schema,
+			schema_version: data.schema_version.unwrap_or_default(),
+			sponsorship: data
+				.pending_sponsor
+				.map(SponsorshipState::Unconfirmed)
+				.unwrap_or_default(),
+			variable_on_chain_schema: data.variable_on_chain_schema,
+			const_on_chain_schema: data.const_on_chain_schema,
+			limits: data
+				.limits
+				.map(|limits| Self::clamp_limits(data.mode.clone(), &Default::default(), limits))
+				.unwrap_or_else(|| Ok(CollectionLimits::default()))?,
+			meta_update_permission: data.meta_update_permission.unwrap_or_default(),
+		};
 
 		// Take a (non-refundable) deposit of collection creation
 		{
@@ -427,7 +465,7 @@ impl<T: Config> Pallet<T> {
 				),
 			);
 			<T as Config>::Currency::settle(
-				&data.owner,
+				&owner,
 				imbalance,
 				WithdrawReasons::TRANSFER,
 				ExistenceRequirement::KeepAlive,
@@ -436,12 +474,8 @@ impl<T: Config> Pallet<T> {
 		}
 
 		<CreatedCollectionCount<T>>::put(created_count);
-		<Pallet<T>>::deposit_event(Event::CollectionCreated(
-			id,
-			data.mode.id(),
-			data.owner.clone(),
-		));
-		<CollectionById<T>>::insert(id, data);
+		<Pallet<T>>::deposit_event(Event::CollectionCreated(id, data.mode.id(), owner.clone()));
+		<CollectionById<T>>::insert(id, collection);
 		Ok(id)
 	}
 
@@ -467,6 +501,8 @@ impl<T: Config> Pallet<T> {
 		<AdminAmount<T>>::remove(collection.id);
 		<IsAdmin<T>>::remove_prefix((collection.id,), None);
 		<Allowlist<T>>::remove_prefix((collection.id,), None);
+
+		<Pallet<T>>::deposit_event(Event::CollectionDestroyed(collection.id));
 		Ok(())
 	}
 
@@ -522,6 +558,61 @@ impl<T: Config> Pallet<T> {
 		}
 
 		Ok(())
+	}
+
+	pub fn clamp_limits(
+		mode: CollectionMode,
+		old_limit: &CollectionLimits,
+		mut new_limit: CollectionLimits,
+	) -> Result<CollectionLimits, DispatchError> {
+		macro_rules! limit_default {
+				($old:ident, $new:ident, $($field:ident $(($arg:expr))? => $check:expr),* $(,)?) => {{
+					$(
+						if let Some($new) = $new.$field {
+							let $old = $old.$field($($arg)?);
+							let _ = $new;
+							let _ = $old;
+							$check
+						} else {
+							$new.$field = $old.$field
+						}
+					)*
+				}};
+			}
+
+		limit_default!(old_limit, new_limit,
+			account_token_ownership_limit => ensure!(
+				new_limit <= MAX_TOKEN_OWNERSHIP,
+				<Error<T>>::CollectionLimitBoundsExceeded,
+			),
+			sponsor_transfer_timeout(match mode {
+				CollectionMode::NFT => NFT_SPONSOR_TRANSFER_TIMEOUT,
+				CollectionMode::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+				CollectionMode::ReFungible => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+			}) => ensure!(
+				new_limit <= MAX_SPONSOR_TIMEOUT,
+				<Error<T>>::CollectionLimitBoundsExceeded,
+			),
+			sponsored_data_size => ensure!(
+				new_limit <= CUSTOM_DATA_LIMIT,
+				<Error<T>>::CollectionLimitBoundsExceeded,
+			),
+			token_limit => ensure!(
+				old_limit >= new_limit && new_limit > 0,
+				<Error<T>>::CollectionTokenLimitExceeded
+			),
+			owner_can_transfer => ensure!(
+				old_limit || !new_limit,
+				<Error<T>>::OwnerPermissionsCantBeReverted,
+			),
+			owner_can_destroy => ensure!(
+				old_limit || !new_limit,
+				<Error<T>>::OwnerPermissionsCantBeReverted,
+			),
+			sponsored_data_rate_limit => {},
+			transfers_enabled => {},
+		);
+		Ok(new_limit)
 	}
 }
 
@@ -598,14 +689,14 @@ pub trait CommonCollectionOperations<T: Config> {
 		&self,
 		sender: T::CrossAccountId,
 		token: TokenId,
-		data: Vec<u8>,
+		data: BoundedVec<u8, CustomDataLimit>,
 	) -> DispatchResultWithPostInfo;
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId>;
 	fn token_exists(&self, token: TokenId) -> bool;
 	fn last_token_id(&self) -> TokenId;
 
-	fn token_owner(&self, token: TokenId) -> T::CrossAccountId;
+	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
 	fn const_metadata(&self, token: TokenId) -> Vec<u8>;
 	fn variable_metadata(&self, token: TokenId) -> Vec<u8>;
 

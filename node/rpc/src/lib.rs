@@ -1,13 +1,16 @@
+use sp_runtime::traits::BlakeTwo256;
 use unique_runtime::{Hash, AccountId, CrossAccountId, Index, opaque::Block, BlockNumber, Balance};
 use fc_rpc::{
-	EthBlockDataCache, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride,
+	EthBlockDataCache, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
+	StorageOverride, SchemaV2Override, SchemaV3Override,
 };
-use fc_rpc_core::types::FilterPool;
+use fc_rpc_core::types::{FilterPool, FeeHistoryCache};
 use jsonrpc_pubsub::manager::SubscriptionManager;
 use pallet_ethereum::EthereumStorageSchema;
 use sc_client_api::{
 	backend::{AuxStore, StorageProvider},
 	client::BlockchainEvents,
+	StateBackend, Backend,
 };
 use sc_finality_grandpa::{
 	FinalityProofProvider, GrandpaJustificationStream, SharedAuthoritySet, SharedVoterState,
@@ -19,24 +22,11 @@ use sc_transaction_pool::{ChainApi, Pool};
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-use sp_consensus::SelectChain;
 use sc_service::TransactionPool;
 use std::{collections::BTreeMap, marker::PhantomData, sync::Arc};
 
 /// Public io handler for exporting into other modules
 pub type IoHandler = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
-
-/// Light client extra dependencies.
-pub struct LightDeps<C, F, P> {
-	/// The client instance to use.
-	pub client: Arc<C>,
-	/// Transaction pool instance.
-	pub pool: Arc<P>,
-	/// Remote access to the blockchain (async).
-	pub remote_blockchain: Arc<dyn sc_client_api::light::RemoteBlockchain<Block>>,
-	/// Fetcher instance.
-	pub fetcher: Arc<F>,
-}
 
 /// Extra dependencies for GRANDPA
 pub struct GrandpaDeps<B> {
@@ -76,6 +66,12 @@ pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	pub backend: Arc<fc_db::Backend<Block>>,
 	/// Maximum number of logs in a query.
 	pub max_past_logs: u32,
+	/// Maximum fee history cache size.
+	pub fee_history_limit: u64,
+	/// Fee history cache.
+	pub fee_history_cache: FeeHistoryCache,
+	/// Cache for Ethereum block data.
+	pub block_data_cache: Arc<EthBlockDataCache<Block>>,
 }
 
 struct AccountCodes<C, B> {
@@ -112,6 +108,41 @@ where
 	}
 }
 
+pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
+where
+	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
+	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
+	C: Send + Sync + 'static,
+	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
+	C::Api: up_rpc::UniqueApi<Block, CrossAccountId, AccountId>,
+	BE: Backend<Block> + 'static,
+	BE::State: StateBackend<BlakeTwo256>,
+{
+	let mut overrides_map = BTreeMap::new();
+	overrides_map.insert(
+		EthereumStorageSchema::V1,
+		Box::new(SchemaV1Override::new_with_code_provider(
+			client.clone(),
+			Arc::new(AccountCodes::<C, Block>::new(client.clone())),
+		)) as Box<dyn StorageOverride<_> + Send + Sync>,
+	);
+	overrides_map.insert(
+		EthereumStorageSchema::V2,
+		Box::new(SchemaV2Override::new(client.clone()))
+			as Box<dyn StorageOverride<_> + Send + Sync>,
+	);
+	overrides_map.insert(
+		EthereumStorageSchema::V3,
+		Box::new(SchemaV3Override::new(client.clone()))
+			as Box<dyn StorageOverride<_> + Send + Sync>,
+	);
+
+	Arc::new(OverrideHandle {
+		schemas: overrides_map,
+		fallback: Box::new(RuntimeApiStorageOverride::new(client)),
+	})
+}
+
 /// Instantiate all Full RPC extensions.
 pub fn create_full<C, P, SC, CA, A, B>(
 	deps: FullDeps<C, P, SC, CA>,
@@ -130,7 +161,6 @@ where
 	C::Api: up_rpc::UniqueApi<Block, CrossAccountId, AccountId>,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
-	SC: SelectChain<Block> + 'static,
 	P: TransactionPool<Block = Block> + 'static,
 	CA: ChainApi<Block = Block> + 'static,
 {
@@ -150,6 +180,9 @@ where
 		pool,
 		graph,
 		select_chain: _,
+		fee_history_limit,
+		fee_history_cache,
+		block_data_cache,
 		enable_dev_signer,
 		is_authority,
 		network,
@@ -175,21 +208,8 @@ where
 	if enable_dev_signer {
 		signers.push(Box::new(EthDevSigner::new()) as Box<dyn EthSigner>);
 	}
-	let mut overrides_map = BTreeMap::new();
-	overrides_map.insert(
-		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new_with_code_provider(
-			client.clone(),
-			Arc::new(AccountCodes::<C, Block>::new(client.clone())),
-		)) as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
 
-	let overrides = Arc::new(OverrideHandle {
-		schemas: overrides_map,
-		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
-	});
-
-	let block_data_cache = Arc::new(EthBlockDataCache::new(50, 50));
+	let overrides = overrides_handle(client.clone());
 
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
@@ -203,6 +223,8 @@ where
 		is_authority,
 		max_past_logs,
 		block_data_cache.clone(),
+		fee_history_limit,
+		fee_history_cache,
 	)));
 	io.extend_with(UniqueApi::to_delegate(Unique::new(client.clone())));
 
@@ -212,7 +234,6 @@ where
 			backend,
 			filter_pool,
 			500_usize, // max stored filters
-			overrides.clone(),
 			max_past_logs,
 			block_data_cache,
 		)));
@@ -237,31 +258,6 @@ where
 		),
 		overrides,
 	)));
-
-	io
-}
-
-/// Instantiate all Light RPC extensions.
-pub fn create_light<C, P, M, F>(deps: LightDeps<C, F, P>) -> jsonrpc_core::IoHandler<M>
-where
-	C: sp_blockchain::HeaderBackend<Block>,
-	C: Send + Sync + 'static,
-	F: sc_client_api::light::Fetcher<Block> + 'static,
-	P: TransactionPool + 'static,
-	M: jsonrpc_core::Metadata + Default,
-{
-	use substrate_frame_rpc_system::{LightSystem, SystemApi};
-
-	let LightDeps {
-		client,
-		pool,
-		remote_blockchain,
-		fetcher,
-	} = deps;
-	let mut io = jsonrpc_core::IoHandler::default();
-	io.extend_with(SystemApi::<Hash, AccountId, Index>::to_delegate(
-		LightSystem::new(client, remote_blockchain, fetcher, pool),
-	));
 
 	io
 }

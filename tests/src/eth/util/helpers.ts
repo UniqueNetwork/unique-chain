@@ -21,6 +21,12 @@ import getBalance from '../../substrate/get-balance';
 
 export const GAS_ARGS = {gas: 2500000};
 
+export enum SponsoringMode {
+  Disabled = 0,
+  Allowlisted = 1,
+  Generous = 2,
+}
+
 let web3Connected = false;
 export async function usingWeb3<T>(cb: (web3: Web3) => Promise<T> | T): Promise<T> {
   if (web3Connected) throw new Error('do not nest usingWeb3 calls');
@@ -249,6 +255,8 @@ export async function executeEthTxOnSub(web3: Web3, api: ApiPromise, from: IKeyr
     GAS_ARGS.gas,
     await web3.eth.getGasPrice(),
     null,
+    null,
+    [],
   );
   const events = await submitTransactionAsync(from, tx);
   expect(events.some(({event: {section, method}}) => section == 'evm' && method == 'Executed')).to.be.true;

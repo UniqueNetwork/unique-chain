@@ -4,10 +4,7 @@
 #![allow(dead_code)]
 
 #[cfg(not(feature = "std"))]
-use alloc::{
-	string::{String, ToString},
-	vec::Vec,
-};
+use alloc::vec::Vec;
 use evm_core::ExitError;
 use primitive_types::{H160, U256};
 
@@ -96,6 +93,10 @@ impl<'i> AbiReader<'i> {
 	}
 	pub fn string(&mut self) -> Result<string> {
 		string::from_utf8(self.bytes()?).map_err(|_| Error::Error(ExitError::InvalidRange))
+	}
+
+	pub fn uint8(&mut self) -> Result<u8> {
+		Ok(self.read_padleft::<1>()?[0])
 	}
 
 	pub fn uint32(&mut self) -> Result<u32> {
@@ -246,6 +247,7 @@ macro_rules! impl_abi_readable {
 	};
 }
 
+impl_abi_readable!(u8, uint8);
 impl_abi_readable!(u32, uint32);
 impl_abi_readable!(u64, uint64);
 impl_abi_readable!(u128, uint128);
