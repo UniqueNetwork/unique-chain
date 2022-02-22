@@ -25,6 +25,7 @@ import {
   normalizeAccountId,
   getBalance as getTokenBalance,
   transferFromExpectSuccess,
+  transferFromExpectFail,
 } from './util/helpers';
 import {
   subToEth,
@@ -299,7 +300,7 @@ describe('Zero value transfer(From)', () => {
   });
 });
 
-describe.only('Transfers to self (potentially over substrate-evm boundary)', () => {
+describe('Transfers to self (potentially over substrate-evm boundary)', () => {
   itWeb3('Transfers to self. In case of same frontend', async ({api}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     const alice = privateKey('//Alice');
@@ -320,6 +321,28 @@ describe.only('Transfers to self (potentially over substrate-evm boundary)', () 
     const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
     await transferExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy} , 10, 'ReFungible');
     await transferFromExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, alice, 10, 'ReFungible');
+    const balanceAliceAfter = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
+    expect(balanceAliceBefore).to.be.eq(balanceAliceAfter);
+  });
+
+  itWeb3.only('Transfers to self. In case of inside substrate-evm', async ({api}) => {
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+    const alice = privateKey('//Alice');
+    const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
+    const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
+    await transferExpectSuccess(collectionId, tokenId, alice, alice , 10, 'ReFungible');
+    await transferFromExpectSuccess(collectionId, tokenId, alice, alice, alice, 10, 'ReFungible');
+    const balanceAliceAfter = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
+    expect(balanceAliceBefore).to.be.eq(balanceAliceAfter);
+  });
+
+  itWeb3('Transfers to self. In case of inside substrate-evm when not enought "Fungibles"', async ({api}) => {
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+    const alice = privateKey('//Alice');
+    const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
+    const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
+    await transferExpectFailure(collectionId, tokenId, alice, alice , 11);
+    await transferFromExpectFail(collectionId, tokenId, alice, alice, alice, 11);
     const balanceAliceAfter = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
     expect(balanceAliceBefore).to.be.eq(balanceAliceAfter);
   });
