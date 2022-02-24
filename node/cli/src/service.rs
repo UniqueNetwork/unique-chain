@@ -527,7 +527,7 @@ pub async fn start_node(
 				sync_oracle,
 				keystore,
 				force_authoring,
-				slot_duration,
+				slot_duration: *slot_duration,
 				// We got around 500ms for proposing
 				block_proposal_slot_portion: SlotProportion::new(1f32 / 24f32),
 				telemetry,
