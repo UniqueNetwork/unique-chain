@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {createEthAccountWithBalance, deployFlipper, GAS_ARGS, itWeb3, subToEth} from './util/helpers';
+import {createEthAccountWithBalance, deployFlipper, GAS_ARGS, itWeb3, subToEth, transferBalanceToEth} from './util/helpers';
 import {scheduleExpectSuccess, waitNewBlocks} from '../util/helpers';
 import privateKey from '../substrate/privateKey';
 
@@ -9,6 +9,7 @@ describe('Scheduing EVM smart contracts', () => {
     const flipper = await deployFlipper(web3, deployer);
     const initialValue = await flipper.methods.getValue().call();
     const alice = privateKey('//Alice');
+    await transferBalanceToEth(api, alice, subToEth(alice.address));
 
     {
       const tx = api.tx.evm.call(

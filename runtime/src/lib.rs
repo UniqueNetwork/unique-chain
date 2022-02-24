@@ -414,12 +414,13 @@ parameter_types! {
 	// pub const ExistentialDeposit: u128 = 500;
 	pub const ExistentialDeposit: u128 = 0;
 	pub const MaxLocks: u32 = 50;
+	pub const MaxReserves: u32 = 50;
 }
 
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
+	type MaxReserves = MaxReserves;
+	type ReserveIdentifier = [u8; 16];
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// The ubiquitous event type.
@@ -940,6 +941,8 @@ pub struct SchedulerPreDispatch {
 	fee: Option<Balance>,
 }
 
+use frame_support::traits::NamedReservableCurrency;
+
 pub struct SchedulerPaymentExecutor;
 impl<T: frame_system::Config + pallet_unq_scheduler::Config, SelfContainedSignedInfo>
 	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
@@ -987,12 +990,66 @@ where
 		Ok(res)
 	}
 
+	fn reserve_balance(
+		id: [u8; 16],
+		sponsor: <T as frame_system::Config>::AccountId,
+		call: <T as pallet_unq_scheduler::Config>::Call,
+		count: u32,
+	) -> Result<(), DispatchError> {
+		let dispatch_info = call.get_dispatch_info();
+		let fee_charger = ChargeTransactionPayment::new(0);
+		let pre = match fee_charger.pre_dispatch(
+			&sponsor.clone().into(),
+			&call.into(),
+			&dispatch_info,
+			0,
+		) {
+			Ok(p) => p,
+			Err(_) => fail!("failed to get pre dispatch info"),
+		};
+
+		let count: u128 = count.into();
+		let total_fee: u128 = pre.2.map(|imbalance| imbalance.peek()).unwrap() * count;
+		<Balances as NamedReservableCurrency<AccountId>>::reserve_named(
+			&id,
+			&(sponsor.into()),
+			total_fee,
+		)
+	}
+
+	fn pay_for_call(
+		id: [u8; 16],
+		sponsor: <T as frame_system::Config>::AccountId,
+		call: <T as pallet_unq_scheduler::Config>::Call,
+	) -> Result<u128, DispatchError> {
+		let dispatch_info = call.get_dispatch_info();
+		let fee_charger = ChargeTransactionPayment::new(0);
+		let pre = match fee_charger.pre_dispatch(
+			&sponsor.clone().into(),
+			&call.into(),
+			&dispatch_info,
+			0,
+		) {
+			Ok(p) => p,
+			Err(_) => fail!("failed to get pre dispatch info"),
+		};
+
+		let single_fee: u128 = pre.2.map(|imbalance| imbalance.peek()).unwrap();
+
+		Ok(
+			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
+				&id,
+				&(sponsor.into()),
+				single_fee,
+			),
+		)
+	}
+
 	fn pre_dispatch(
 		signer: <T as frame_system::Config>::AccountId,
 		call: <T as pallet_unq_scheduler::Config>::Call,
 	) -> Result<Self::Pre, TransactionValidityError> {
 		let dispatch_info = call.get_dispatch_info();
-		//<T as Config>::OnChargeTransaction::withdraw_fee();
 		let fee_charger = ChargeTransactionPayment::new(
 			// Linear scaling of the fee tip if the priority is high enough
 			0, //if priority > HARD_DEADLINE { 0 } else { (HARD_DEADLINE - priority + 1) / HARD_DEADLINE * PRIORITY_TIP_MULTIPLIER * total_fee }
@@ -1015,6 +1072,7 @@ where
 impl pallet_unq_scheduler::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
+	type Currency = Balances;
 	type PalletsOrigin = OriginCaller;
 	type Call = Call;
 	type MaximumWeight = MaximumSchedulerWeight;

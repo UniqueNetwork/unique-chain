@@ -28,11 +28,9 @@ import {
   scheduleTransferFundsPeriodicExpectSuccess,
   getFreeBalance,
   confirmSponsorshipByKeyExpectSuccess,
-  scheduleExpectSuccess,
   scheduleExpectFailure,
 } from './util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
-import {deployFlipper, getFlipValue} from './util/contracthelpers';
 
 chai.use(chaiAsPromised);
 
@@ -180,35 +178,6 @@ describe('Scheduling token and balance transfers', () => {
       await scheduleExpectFailure(creationTx, zeroBalance, 3, 1, 3);
 
       expect(await getFreeBalance(bob)).to.be.equal(bobBalanceBefore);
-    });
-  });
-});
-
-describe('Scheduling EVM smart contracts', () => {
-  let alice: IKeyringPair;
-
-  before(async() => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-    });
-  });
-
-  it('Successfully schedules and periodically executes an EVM contract', async () => {
-    await usingApi(async (api) => {  
-      const [flipper, deployer] = await deployFlipper(api);
-      const initialValue = await getFlipValue(flipper, deployer);
-      
-      const contractTx = flipper.tx.flip(0, '200000000000');
-      const waitForBlocks = 3;
-      const periodBlocks = 3;
-      await scheduleExpectSuccess(contractTx, alice, waitForBlocks, periodBlocks, 2);
-      expect(await getFlipValue(flipper, deployer)).to.be.equal(initialValue);
-
-      await waitNewBlocks(waitForBlocks - 1);
-      expect(await getFlipValue(flipper, deployer)).to.be.equal(initialValue);
-
-      await waitNewBlocks(periodBlocks);
-      expect(await getFlipValue(flipper, deployer)).to.be.equal(initialValue);
     });
   });
 });
