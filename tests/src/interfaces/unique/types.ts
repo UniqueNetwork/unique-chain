@@ -1720,7 +1720,7 @@ export interface UpDataStructsCollection extends Struct {
 export interface UpDataStructsCollectionLimits extends Struct {
   readonly accountTokenOwnershipLimit: Option<u32>;
   readonly sponsoredDataSize: Option<u32>;
-  readonly sponsoredDataRateLimit: Option<Option<u32>>;
+  readonly sponsoredDataRateLimit: Option<UpDataStructsSponsoringRateLimit>;
   readonly tokenLimit: Option<u32>;
   readonly sponsorTransferTimeout: Option<u32>;
   readonly sponsorApproveTimeout: Option<u32>;
@@ -1803,6 +1803,13 @@ export interface UpDataStructsSchemaVersion extends Enum {
   readonly isImageURL: boolean;
   readonly isUnique: boolean;
   readonly type: 'ImageURL' | 'Unique';
+}
+
+/** @name UpDataStructsSponsoringRateLimit */
+export interface UpDataStructsSponsoringRateLimit extends Enum {
+  readonly isSponsoringDisabled: boolean;
+  readonly isBlocks: boolean;
+  readonly asBlocks: u32;
 }
 
 /** @name UpDataStructsSponsorshipState */

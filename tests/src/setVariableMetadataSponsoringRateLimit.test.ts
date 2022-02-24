@@ -4,6 +4,7 @@
 //
 
 import {IKeyringPair} from '@polkadot/types/types';
+import {expect} from 'chai';
 import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import {
@@ -11,6 +12,7 @@ import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
   findUnusedAddress,
+  getDetailedCollectionInfo,
   setCollectionLimitsExpectSuccess,
   setCollectionSponsorExpectSuccess,
   setVariableMetaDataExpectFailure,
@@ -33,7 +35,7 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
     await setCollectionLimitsExpectSuccess(alice, collectionId, {
-      sponsoredDataRateLimit: 0,
+      sponsoredDataRateLimit: {Blocks: 0},
     });
 
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', userWithNoBalance.address);
@@ -46,7 +48,7 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
     await setCollectionLimitsExpectSuccess(alice, collectionId, {
-      sponsoredDataRateLimit: 10,
+      sponsoredDataRateLimit: {Blocks: 10},
     });
 
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', userWithNoBalance.address);
@@ -59,7 +61,7 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     await setCollectionSponsorExpectSuccess(collectionId, alice.address);
     await confirmSponsorshipExpectSuccess(collectionId);
     await setCollectionLimitsExpectSuccess(alice, collectionId, {
-      sponsoredDataRateLimit: 0,
+      sponsoredDataRateLimit: {Blocks: 0},
       sponsoredDataSize: 1,
     });
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', userWithNoBalance.address);
@@ -77,4 +79,32 @@ describe('Integration Test setVariableMetadataSponsoringRateLimit', () => {
     await setVariableMetaDataExpectFailure(userWithNoBalance, collectionId, itemId, [1]);
   });
 
+  it('sponsoring of data is disabled by default', async () => {
+    await usingApi(async api => {
+      const collectionId = await createCollectionExpectSuccess();
+
+      const collection = (await getDetailedCollectionInfo(api, collectionId))!;
+      // limit is none = default is used
+      expect(collection?.limits.sponsoredDataRateLimit.isNone);
+    });
+  });
+
+  it('sponsoring can be disabled explicitly', async () => {
+    await usingApi(async api => {
+      const collectionId = await createCollectionExpectSuccess();
+
+      await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsoredDataRateLimit: {Blocks: 6}});
+      {
+        const collection = (await getDetailedCollectionInfo(api, collectionId))!;
+        expect(collection?.limits.sponsoredDataRateLimit.unwrap().asBlocks.toNumber()).to.equal(6);
+      }
+
+      await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsoredDataRateLimit: 'SponsoringDisabled'});
+      {
+        const collection = (await getDetailedCollectionInfo(api, collectionId))!;
+        // disabled sponsoring = default value
+        expect(collection?.limits.sponsoredDataRateLimit.unwrap().isNone).to.true;
+      }
+    });
+  });
 });

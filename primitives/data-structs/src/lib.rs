@@ -27,6 +27,8 @@ pub use frame_support::{
 use derivative::Derivative;
 use scale_info::TypeInfo;
 
+mod migration;
+
 pub const MAX_DECIMAL_POINTS: DecimalPoints = 30;
 pub const MAX_REFUNGIBLE_PIECES: u128 = 1_000_000_000_000_000_000_000;
 pub const MAX_SPONSOR_TIMEOUT: u32 = 10_368_000;
@@ -319,7 +321,7 @@ pub struct CollectionLimits {
 	/// None - setVariableMetadata is not sponsored
 	/// Some(v) - setVariableMetadata is sponsored
 	///           if there is v block between txs
-	pub sponsored_data_rate_limit: Option<(Option<u32>,)>,
+	pub sponsored_data_rate_limit: Option<SponsoringRateLimit>,
 	pub token_limit: Option<u32>,
 
 	// Timeouts for item types in passed blocks
@@ -366,11 +368,21 @@ impl CollectionLimits {
 		self.transfers_enabled.unwrap_or(true)
 	}
 	pub fn sponsored_data_rate_limit(&self) -> Option<u32> {
-		self.sponsored_data_rate_limit
-			.unwrap_or((None,))
-			.0
-			.map(|v| v.min(MAX_SPONSOR_TIMEOUT))
+		match self
+			.sponsored_data_rate_limit
+			.unwrap_or(SponsoringRateLimit::SponsoringDisabled)
+		{
+			SponsoringRateLimit::SponsoringDisabled => None,
+			SponsoringRateLimit::Blocks(v) => Some(v.min(MAX_SPONSOR_TIMEOUT)),
+		}
 	}
+}
+
+#[derive(Encode, Decode, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub enum SponsoringRateLimit {
+	SponsoringDisabled,
+	Blocks(u32),
 }
 
 /// BoundedVec doesn't supports serde
