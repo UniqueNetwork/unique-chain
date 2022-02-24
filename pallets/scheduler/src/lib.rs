@@ -78,6 +78,9 @@ pub use weights::WeightInfo;
 use up_sponsorship::SponsorshipHandler;
 use scale_info::TypeInfo;
 use sp_core::H160;
+use frame_support::traits::NamedReservableCurrency;
+
+type ScheduledId = [u8; MAX_TASK_ID_LENGTH_IN_BYTES as usize];
 
 /// Our pallet's configuration trait. All our types and constants go in here. If the
 /// pallet is dependent on specific other pallets, then their configuration traits
@@ -96,6 +99,8 @@ pub trait Config: system::Config {
 
 	/// The caller origin, overarching type of all pallets origins.
 	type PalletsOrigin: From<system::RawOrigin<Self::AccountId>> + Codec + TypeInfo + Clone + Eq;
+
+	type Currency: NamedReservableCurrency<Self::AccountId, ReserveIdentifier = ScheduledId>;
 
 	/// The aggregated call type.
 	type Call: Parameter
@@ -128,6 +133,19 @@ pub trait Config: system::Config {
 pub trait DispatchCall<T: frame_system::Config + Config, SelfContainedSignedInfo> {
 	/// The type that encodes information that can be passed from pre_dispatch to post-dispatch.
 	type Pre: Default + Codec + Clone + TypeInfo;
+
+	fn reserve_balance(
+		id: ScheduledId,
+		sponsor: <T as frame_system::Config>::AccountId,
+		call: <T as Config>::Call,
+		count: u32,
+	) -> Result<(), DispatchError>;
+
+	fn pay_for_call(
+		id: ScheduledId,
+		sponsor: <T as frame_system::Config>::AccountId,
+		call: <T as Config>::Call,
+	) -> Result<u128, DispatchError>;
 
 	/// Resolve the call dispatch, including any post-dispatch operations.
 	fn dispatch_call(
@@ -164,7 +182,7 @@ pub type TaskAddress<BlockNumber> = (BlockNumber, u32);
 #[derive(Clone, RuntimeDebug, Encode, Decode, TypeInfo)]
 pub struct Scheduled<Call, BlockNumber, PalletsOrigin, AccountId, PreDispatch> {
 	/// The unique identity for this task, if there is one.
-	maybe_id: Option<Vec<u8>>,
+	maybe_id: Option<ScheduledId>,
 	/// This task's priority.
 	priority: schedule::Priority,
 	/// The call to be dispatched.
@@ -197,7 +215,7 @@ decl_storage! {
 			>>>;
 			
 		/// Lookup from identity to the block number and index of the task.
-		Lookup: map hasher(twox_64_concat) Vec<u8> => Option<TaskAddress<T::BlockNumber>>;
+		Lookup: map hasher(twox_64_concat) ScheduledId => Option<TaskAddress<T::BlockNumber>>;
 	}
 }
 
@@ -208,7 +226,7 @@ decl_event!(
 		/// Canceled some task. \[when, index\]
 		Canceled(BlockNumber, u32),
 		/// Dispatched some task. \[task, id, result\]
-		Dispatched(TaskAddress<BlockNumber>, Option<Vec<u8>>, DispatchResult),
+		Dispatched(TaskAddress<BlockNumber>, Option<ScheduledId>, DispatchResult),
 	}
 );
 
@@ -285,7 +303,7 @@ decl_module! {
 		/// # </weight>
 		#[weight = <T as Config>::WeightInfo::schedule_named(T::MaxScheduledPerBlock::get())]
 		fn schedule_named(origin,
-			id: Vec<u8>,
+			id: ScheduledId,
 			when: T::BlockNumber,
 			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
 			priority: schedule::Priority,
@@ -309,7 +327,7 @@ decl_module! {
 		/// - Will use base weight of 100 which should be good for up to 30 scheduled calls
 		/// # </weight>
 		#[weight = <T as Config>::WeightInfo::cancel_named(T::MaxScheduledPerBlock::get())]
-		fn cancel_named(origin, id: Vec<u8>) {
+		fn cancel_named(origin, id: ScheduledId) {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
 			let origin = <T as Config>::Origin::from(origin);
 			Self::do_cancel_named(Some(origin.caller().clone()), id)?;
@@ -341,7 +359,7 @@ decl_module! {
 		/// # </weight>
 		#[weight = <T as Config>::WeightInfo::schedule_named(T::MaxScheduledPerBlock::get())]
 		fn schedule_named_after(origin,
-			id: Vec<u8>,
+			id: ScheduledId,
 			after: T::BlockNumber,
 			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
 			priority: schedule::Priority,
@@ -410,6 +428,24 @@ decl_module! {
 					Some((order, index, *cumulative_weight, s))
 				})
 				.filter_map(|(order, index, cumulative_weight, mut s)| {
+
+					// if call have id and periodic, it was be reserved 
+					if s.maybe_id.is_some() && s.maybe_periodic.is_some()
+					{
+						let sender = ensure_signed(
+							<<T as Config>::Origin as From<T::PalletsOrigin>>::from(s.origin.clone()).into(),
+						)
+						.unwrap_or_default();
+						let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &s.call.clone())
+						 	.unwrap_or(sender.clone());
+
+						T::CallExecutor::pay_for_call(
+							s.maybe_id.unwrap(),
+							who_will_pay.clone(),
+							s.call.clone(),
+						);
+					}
+
 					// We allow a scheduled call if:
 					// - It's priority is `HARD_DEADLINE`
 					// - It does not push the weight past the limit
@@ -419,7 +455,7 @@ decl_module! {
 						let r = T::CallExecutor::dispatch_call(s.pre_dispatch.clone(), s.call.clone());
 
 						if let Err(_) = r {
-							log::warn!(
+							log::info!(
 								target: "runtime::scheduler",
 								"Warning: Scheduler has failed to execute a post-dispatch transaction. \
 								This block might have become invalid.",
@@ -486,7 +522,7 @@ impl<T: Config> Module<T> {
 	}
 
 	fn do_schedule(
-		maybe_id: Option<Vec<u8>>,
+		maybe_id: Option<ScheduledId>,
 		when: DispatchTime<T::BlockNumber>,
 		maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
 		priority: schedule::Priority,
@@ -519,11 +555,24 @@ impl<T: Config> Module<T> {
 			.map(|(p, c)| (p, cmp::min(c, PERIODIC_CALLS_LIMIT) - 1));
 
 		if let Some(periodic) = maybe_periodic {
-			for _i in 0..=periodic.1 {
+
+			// reserve balance for periodic execution 
+			if maybe_id.is_some()
+			{			
+				let sender = ensure_signed(
+					<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin.clone()).into(),
+				)
+				.unwrap_or_default();
+				let who_will_pay = T::SponsorshipHandler::get_sponsor(&sender, &call.clone())
+				 	.unwrap_or(sender.clone());
+				T::CallExecutor::reserve_balance(maybe_id.unwrap(), who_will_pay.clone(), call.clone(), periodic.1);	
+			}
+
+			//for _i in 0..=periodic.1 {
 				// displace to runtime and count the total required fee, then deduct. find a way to use OnChargePayment
 				// send constants and priority to runtime for fee computation, too. should create constants here or just declare them in runtime?
 				// roadblock - they will return on post_dispatch -- oh! tips?
-			}
+			//}
 		}
 
 		let s = Some(Scheduled {
@@ -623,7 +672,7 @@ impl<T: Config> Module<T> {
 	}
 
 	fn do_schedule_named(
-		id: Vec<u8>,
+		id: ScheduledId,
 		when: DispatchTime<T::BlockNumber>,
 		maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
 		priority: schedule::Priority,
@@ -652,7 +701,7 @@ impl<T: Config> Module<T> {
 		Ok(address)
 	}
 
-	fn do_cancel_named(origin: Option<T::PalletsOrigin>, id: Vec<u8>) -> DispatchResult {
+	fn do_cancel_named(origin: Option<T::PalletsOrigin>, id: ScheduledId) -> DispatchResult {
 		Lookup::<T>::try_mutate_exists(id, |lookup| -> DispatchResult {
 			if let Some((when, index)) = lookup.take() {
 				let i = index as usize;
@@ -684,7 +733,7 @@ impl<T: Config> Module<T> {
 	}
 
 	fn do_reschedule_named(
-		id: Vec<u8>,
+		id: ScheduledId,
 		new_time: DispatchTime<T::BlockNumber>,
 	) -> Result<TaskAddress<T::BlockNumber>, DispatchError> {
 		let new_time = Self::resolve_time(new_time)?;
@@ -765,22 +814,27 @@ impl<T: Config> schedule::Named<T::BlockNumber, <T as Config>::Call, T::PalletsO
 		origin: T::PalletsOrigin,
 		call: <T as Config>::Call,
 	) -> Result<Self::Address, ()> {
-		Self::do_schedule_named(id, when, maybe_periodic, priority, origin, call).map_err(|_| ())
+
+		let inner_id: ScheduledId = id.try_into().unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
+		Self::do_schedule_named(inner_id, when, maybe_periodic, priority, origin, call).map_err(|_| ())
 	}
 
 	fn cancel_named(id: Vec<u8>) -> Result<(), ()> {
-		Self::do_cancel_named(None, id).map_err(|_| ())
+		let inner_id: ScheduledId = id.try_into().unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
+		Self::do_cancel_named(None, inner_id).map_err(|_| ())
 	}
 
 	fn reschedule_named(
 		id: Vec<u8>,
 		when: DispatchTime<T::BlockNumber>,
 	) -> Result<Self::Address, DispatchError> {
-		Self::do_reschedule_named(id, when)
+		let inner_id: ScheduledId = id.try_into().unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES  as usize]);
+		Self::do_reschedule_named(inner_id, when)
 	}
 
 	fn next_dispatch_time(id: Vec<u8>) -> Result<T::BlockNumber, ()> {
-		Lookup::<T>::get(id)
+		let inner_id: ScheduledId = id.try_into().unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES  as usize]);
+		Lookup::<T>::get(inner_id)
 			.and_then(|(when, index)| Agenda::<T>::get(when).get(index as usize).map(|_| when))
 			.ok_or(())
 	}
