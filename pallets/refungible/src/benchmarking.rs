@@ -2,24 +2,28 @@ use super::*;
 use crate::{Pallet, Config, RefungibleHandle};
 
 use sp_std::prelude::*;
-use pallet_common::benchmarking::{create_collection_raw, create_data};
+use pallet_common::benchmarking::{create_collection_raw, create_data, create_var_data};
 use frame_benchmarking::{benchmarks, account};
-use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH};
+use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, CUSTOM_DATA_LIMIT};
 use pallet_common::bench_init;
 use core::convert::TryInto;
 use core::iter::IntoIterator;
 
 const SEED: u32 = 1;
 
-fn create_max_item_data<T: Config>(
-	users: impl IntoIterator<Item = (T::CrossAccountId, u128)>,
-) -> CreateItemData<T> {
-	let const_data = create_data(CUSTOM_DATA_LIMIT as usize).try_into().unwrap();
-	let variable_data = create_data(CUSTOM_DATA_LIMIT as usize).try_into().unwrap();
-	CreateItemData {
+fn create_max_item_data<CrossAccountId: Ord>(
+	users: impl IntoIterator<Item = (CrossAccountId, u128)>,
+) -> CreateRefungibleExData<CrossAccountId> {
+	let const_data = create_data::<CUSTOM_DATA_LIMIT>();
+	let variable_data = create_data::<CUSTOM_DATA_LIMIT>();
+	CreateRefungibleExData {
 		const_data,
 		variable_data,
-		users: users.into_iter().collect(),
+		users: users
+			.into_iter()
+			.collect::<BTreeMap<_, _>>()
+			.try_into()
+			.unwrap(),
 	}
 }
 fn create_max_item<T: Config>(

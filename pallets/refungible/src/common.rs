@@ -8,8 +8,8 @@ use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
 
 use crate::{
-	AccountBalance, Allowance, Balance, Config, CreateItemData, Error, Owned, Pallet,
-	RefungibleHandle, SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted,
+	AccountBalance, Allowance, Balance, Config, Error, Owned, Pallet, RefungibleHandle,
+	SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted,
 };
 
 macro_rules! max_weight_of {
@@ -22,7 +22,7 @@ macro_rules! max_weight_of {
 }
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
-impl<T: Config> CommonWeightInfo for CommonWeights<T> {
+impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_item() -> Weight {
 		<SelfWeightOf<T>>::create_item()
 	}

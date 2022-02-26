@@ -76,9 +76,7 @@ pub const MAX_TOKEN_PREFIX_LENGTH: u32 = 16;
 /// create_many call
 pub const MAX_ITEMS_PER_BATCH: u32 = 200;
 
-parameter_types! {
-	pub const CustomDataLimit: u32 = CUSTOM_DATA_LIMIT;
-}
+pub type CustomDataLimit = ConstU32<CUSTOM_DATA_LIMIT>;
 
 #[derive(
 	Encode,
@@ -417,15 +415,72 @@ mod bounded_serde {
 	}
 }
 
+fn bounded_debug<V, S>(v: &BoundedVec<V, S>, f: &mut fmt::Formatter) -> Result<(), fmt::Error>
+where
+	V: fmt::Debug,
+{
+	use core::fmt::Debug;
+	(&v as &Vec<V>).fmt(f)
+}
+
+#[cfg(feature = "serde1")]
+#[allow(dead_code)]
+mod bounded_map_serde {
+	use core::convert::TryFrom;
+	use sp_std::collections::btree_map::BTreeMap;
+	use frame_support::{traits::Get, storage::bounded_btree_map::BoundedBTreeMap};
+	use serde::{
+		ser::{self, Serialize},
+		de::{self, Deserialize, Error},
+	};
+	pub fn serialize<D, K, V, S>(
+		value: &BoundedBTreeMap<K, V, S>,
+		serializer: D,
+	) -> Result<D::Ok, D::Error>
+	where
+		D: ser::Serializer,
+		K: Serialize + Ord,
+		V: Serialize,
+	{
+		(value as &BTreeMap<_, _>).serialize(serializer)
+	}
+
+	pub fn deserialize<'de, D, K, V, S>(
+		deserializer: D,
+	) -> Result<BoundedBTreeMap<K, V, S>, D::Error>
+	where
+		D: de::Deserializer<'de>,
+		K: de::Deserialize<'de> + Ord,
+		V: de::Deserialize<'de>,
+		S: Get<u32>,
+	{
+		let map = <BTreeMap<K, V>>::deserialize(deserializer)?;
+		let len = map.len();
+		TryFrom::try_from(map).map_err(|_| D::Error::invalid_length(len, &"lesser size"))
+	}
+}
+
+fn bounded_map_debug<K, V, S>(
+	v: &BoundedBTreeMap<K, V, S>,
+	f: &mut fmt::Formatter,
+) -> Result<(), fmt::Error>
+where
+	K: fmt::Debug + Ord,
+	V: fmt::Debug,
+{
+	use core::fmt::Debug;
+	(&v as &BTreeMap<K, V>).fmt(f)
+}
+
 #[derive(Encode, Decode, MaxEncodedLen, Default, PartialEq, Clone, Derivative, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 #[derivative(Debug)]
 pub struct CreateNftData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
-	#[derivative(Debug = "ignore")]
+	#[derivative(Debug(format_with = "bounded_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
 	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
-	#[derivative(Debug = "ignore")]
+	#[derivative(Debug(format_with = "bounded_debug"))]
 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 }
 
@@ -440,10 +495,10 @@ pub struct CreateFungibleData {
 #[derivative(Debug)]
 pub struct CreateReFungibleData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
-	#[derivative(Debug = "ignore")]
+	#[derivative(Debug(format_with = "bounded_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
 	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
-	#[derivative(Debug = "ignore")]
+	#[derivative(Debug(format_with = "bounded_debug"))]
 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 	pub pieces: u128,
 }

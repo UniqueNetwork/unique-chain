@@ -12,7 +12,7 @@ use crate::{
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
-impl<T: Config> CommonWeightInfo for CommonWeights<T> {
+impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_item() -> Weight {
 		<SelfWeightOf<T>>::create_item()
 	}
@@ -51,7 +51,7 @@ fn map_create_data<T: Config>(
 	to: &T::CrossAccountId,
 ) -> Result<CreateItemData<T>, DispatchError> {
 	match data {
-		up_data_structs::CreateItemData::NFT(data) => Ok(CreateItemData {
+		up_data_structs::CreateItemData::NFT(data) => Ok(CreateItemData::<T> {
 			const_data: data.const_data,
 			variable_data: data.variable_data,
 			owner: to.clone(),
@@ -68,7 +68,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		data: up_data_structs::CreateItemData,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
-			<Pallet<T>>::create_item(self, &sender, map_create_data(data, &to)?),
+			<Pallet<T>>::create_item(self, &sender, map_create_data::<T>(data, &to)?),
 			<CommonWeights<T>>::create_item(),
 		)
 	}

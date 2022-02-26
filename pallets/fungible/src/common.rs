@@ -12,7 +12,7 @@ use crate::{
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
-impl<T: Config> CommonWeightInfo for CommonWeights<T> {
+impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_item() -> Weight {
 		<SelfWeightOf<T>>::create_item()
 	}
