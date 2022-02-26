@@ -2,7 +2,8 @@
 
 use frame_support::{ensure, BoundedVec};
 use up_data_structs::{
-	AccessMode, CollectionId, CustomDataLimit, MAX_REFUNGIBLE_PIECES, TokenId, CreateCollectionData,
+	AccessMode, CollectionId, CustomDataLimit, MAX_REFUNGIBLE_PIECES, TokenId,
+	CreateCollectionData, CreateRefungibleExData,
 };
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
@@ -19,11 +20,6 @@ pub mod benchmarking;
 pub mod common;
 pub mod erc;
 pub mod weights;
-pub struct CreateItemData<T: Config> {
-	pub const_data: BoundedVec<u8, CustomDataLimit>,
-	pub variable_data: BoundedVec<u8, CustomDataLimit>,
-	pub users: BTreeMap<T::CrossAccountId, u128>,
-}
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 #[derive(Encode, Decode, Default, TypeInfo, MaxEncodedLen)]
@@ -361,7 +357,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_multiple_items(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: Vec<CreateItemData<T>>,
+		data: Vec<CreateRefungibleExData<T::CrossAccountId>>,
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
@@ -606,7 +602,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_item(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: CreateItemData<T>,
+		data: CreateRefungibleExData<T::CrossAccountId>,
 	) -> DispatchResult {
 		Self::create_multiple_items(collection, sender, vec![data])
 	}

@@ -1,6 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::convert::{TryFrom, TryInto};
+use core::{
+	convert::{TryFrom, TryInto},
+	fmt,
+};
+use frame_support::storage::bounded_btree_map::BoundedBTreeMap;
+use sp_std::collections::btree_map::BTreeMap;
 
 #[cfg(feature = "serde")]
 pub use serde::{Serialize, Deserialize};
@@ -523,6 +528,47 @@ pub enum CreateItemData {
 	NFT(CreateNftData),
 	Fungible(CreateFungibleData),
 	ReFungible(CreateReFungibleData),
+}
+
+#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
+#[derivative(Debug)]
+pub struct CreateNftExData<CrossAccountId> {
+	#[derivative(Debug(format_with = "bounded_debug"))]
+	pub const_data: BoundedVec<u8, CustomDataLimit>,
+	#[derivative(Debug(format_with = "bounded_debug"))]
+	pub variable_data: BoundedVec<u8, CustomDataLimit>,
+	pub owner: CrossAccountId,
+}
+
+#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
+#[derivative(Debug(bound = "CrossAccountId: fmt::Debug + Ord"))]
+pub struct CreateRefungibleExData<CrossAccountId> {
+	#[derivative(Debug(format_with = "bounded_debug"))]
+	pub const_data: BoundedVec<u8, CustomDataLimit>,
+	#[derivative(Debug(format_with = "bounded_debug"))]
+	pub variable_data: BoundedVec<u8, CustomDataLimit>,
+	#[derivative(Debug(format_with = "bounded_map_debug"))]
+	pub users: BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
+}
+
+#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
+#[derivative(Debug(bound = "CrossAccountId: fmt::Debug + Ord"))]
+pub enum CreateItemExData<CrossAccountId> {
+	NFT(
+		#[derivative(Debug(format_with = "bounded_debug"))]
+		BoundedVec<CreateNftExData<CrossAccountId>, ConstU32<MAX_ITEMS_PER_BATCH>>,
+	),
+	Fungible(
+		#[derivative(Debug(format_with = "bounded_map_debug"))]
+		BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
+	),
+	/// Many tokens, each may have only one owner
+	RefungibleMultipleItems(
+		#[derivative(Debug(format_with = "bounded_debug"))]
+		BoundedVec<CreateRefungibleExData<CrossAccountId>, ConstU32<MAX_ITEMS_PER_BATCH>>,
+	),
+	/// Single token, which may have many owners
+	RefungibleMultipleOwners(CreateRefungibleExData<CrossAccountId>),
 }
 
 impl CreateItemData {

@@ -56,6 +56,16 @@ benchmarks! {
 		let data = (0..b).map(|_| create_max_item_data::<T>(to.clone())).collect();
 	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data)?}
 
+	create_multiple_items_ex {
+		let b in 0..MAX_ITEMS_PER_BATCH;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			sender: cross_from_sub(owner);
+		};
+		let data = (0..b).map(|i| {
+			bench_init!(to: cross_sub(i););
+			create_max_item_data::<T>(to)
+		}).collect();
 	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data)?}
 
 	burn_item {

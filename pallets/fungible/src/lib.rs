@@ -392,6 +392,6 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		data: CreateItemData<T>,
 	) -> DispatchResult {
-		Self::create_multiple_items(collection, sender, vec![data])
+		Self::create_multiple_items(collection, sender, [(data.0, data.1)].into_iter().collect())
 	}
 }

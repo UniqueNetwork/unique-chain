@@ -31,7 +31,8 @@ fn create_max_item<T: Config>(
 	sender: &T::CrossAccountId,
 	users: impl IntoIterator<Item = (T::CrossAccountId, u128)>,
 ) -> Result<TokenId, DispatchError> {
-	<Pallet<T>>::create_item(&collection, sender, create_max_item_data(users))?;
+	let data: CreateRefungibleExData<T::CrossAccountId> = create_max_item_data(users);
+	<Pallet<T>>::create_item(&collection, sender, data)?;
 	Ok(TokenId(<TokensMinted<T>>::get(&collection.id)))
 }
 
@@ -58,6 +59,30 @@ benchmarks! {
 			sender: cross_from_sub(owner); to: cross_sub;
 		};
 		let data = (0..b).map(|_| create_max_item_data([(to.clone(), 200)])).collect();
+	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data)?}
+
+	create_multiple_items_ex_multiple_items {
+		let b in 0..MAX_ITEMS_PER_BATCH;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			sender: cross_from_sub(owner);
+		};
+		let data = (0..b).map(|t| {
+			bench_init!(to: cross_sub(t););
+			create_max_item_data([(to, 200)])
+		}).collect();
+	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data)?}
+
+	create_multiple_items_ex_multiple_owners {
+		let b in 0..MAX_ITEMS_PER_BATCH;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			sender: cross_from_sub(owner);
+		};
+		let data = vec![create_max_item_data((0..b).map(|u| {
+			bench_init!(to: cross_sub(u););
+			(to, 200)
+		}))].try_into().unwrap();
 	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data)?}
 
 	// Other user left, token data is kept
@@ -170,6 +195,6 @@ benchmarks! {
 			sender: cross_from_sub(owner);
 		};
 		let item = create_max_item(&collection, &sender, [(sender.clone(), 200)])?;
-		let data = create_data(b as usize);
+		let data = create_var_data(b).try_into().unwrap();
 	}: {<Pallet<T>>::set_variable_metadata(&collection, &sender, item, data)?}
 }

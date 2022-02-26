@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
-use up_data_structs::{TokenId, CustomDataLimit};
+use up_data_structs::{TokenId, CustomDataLimit, CreateItemExData};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
@@ -15,6 +15,13 @@ pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_item() -> Weight {
 		<SelfWeightOf<T>>::create_item()
+	}
+
+	fn create_multiple_items_ex(data: &CreateItemExData<T::CrossAccountId>) -> Weight {
+		match data {
+			CreateItemExData::NFT(t) => <SelfWeightOf<T>>::create_multiple_items_ex(t.len() as u32),
+			_ => 0,
+		}
 	}
 
 	fn create_multiple_items(amount: u32) -> Weight {
@@ -88,6 +95,23 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		with_weight(
 			<Pallet<T>>::create_multiple_items(self, &sender, data),
 			<CommonWeights<T>>::create_multiple_items(amount as u32),
+		)
+	}
+
+	fn create_multiple_items_ex(
+		&self,
+		sender: <T>::CrossAccountId,
+		data: up_data_structs::CreateItemExData<<T>::CrossAccountId>,
+	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::create_multiple_items_ex(&data);
+		let data = match data {
+			up_data_structs::CreateItemExData::NFT(nft) => nft,
+			_ => fail!(Error::<T>::NotNonfungibleDataUsedToMintFungibleCollectionToken),
+		};
+
+		with_weight(
+			<Pallet<T>>::create_multiple_items(self, &sender, data.into_inner()),
+			weight,
 		)
 	}
 
