@@ -13,8 +13,18 @@ use pallet_balances;
 
 fn add_balance(user: u64, value: u64) {
 	const RICH_USER: u64 = 999;
-	assert_ok!(<pallet_balances::Pallet<Test>>::set_balance(Origin::root(), RICH_USER, value, 0));
-	assert_ok!(<pallet_balances::Pallet<Test>>::force_transfer(Origin::root(), RICH_USER, user, value));
+	assert_ok!(<pallet_balances::Pallet<Test>>::set_balance(
+		Origin::root(),
+		RICH_USER,
+		value,
+		0
+	));
+	assert_ok!(<pallet_balances::Pallet<Test>>::force_transfer(
+		Origin::root(),
+		RICH_USER,
+		user,
+		value
+	));
 }
 
 fn default_nft_data() -> CreateNftData {
@@ -139,14 +149,15 @@ fn check_not_sufficient_founds() {
 		let description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 		let token_prefix: Vec<u8> = b"token_prefix1\0".to_vec();
 
-		let data: CreateCollectionData<<Test as system::Config>::AccountId> = CreateCollectionData {
-			name: name.try_into().unwrap(),
-			description: description.try_into().unwrap(),
-			token_prefix: token_prefix.try_into().unwrap(),
-			mode: CollectionMode::NFT,
-			..Default::default()
-		};
-	
+		let data: CreateCollectionData<<Test as system::Config>::AccountId> =
+			CreateCollectionData {
+				name: name.try_into().unwrap(),
+				description: description.try_into().unwrap(),
+				token_prefix: token_prefix.try_into().unwrap(),
+				mode: CollectionMode::NFT,
+				..Default::default()
+			};
+
 		let result = TemplateModule::create_collection_ex(Origin::signed(acc), data);
 		assert_err!(result, <CommonError<Test>>::NotSufficientFounds);
 	});
