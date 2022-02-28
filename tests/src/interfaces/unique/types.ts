@@ -133,7 +133,33 @@ export interface CumulusPalletXcmpQueueCall extends Enum {
     readonly index: u64;
     readonly weightLimit: u64;
   } & Struct;
-  readonly type: 'ServiceOverweight';
+  readonly isSuspendXcmExecution: boolean;
+  readonly isResumeXcmExecution: boolean;
+  readonly isUpdateSuspendThreshold: boolean;
+  readonly asUpdateSuspendThreshold: {
+    readonly new_: u32;
+  } & Struct;
+  readonly isUpdateDropThreshold: boolean;
+  readonly asUpdateDropThreshold: {
+    readonly new_: u32;
+  } & Struct;
+  readonly isUpdateResumeThreshold: boolean;
+  readonly asUpdateResumeThreshold: {
+    readonly new_: u32;
+  } & Struct;
+  readonly isUpdateThresholdWeight: boolean;
+  readonly asUpdateThresholdWeight: {
+    readonly new_: u64;
+  } & Struct;
+  readonly isUpdateWeightRestrictDecay: boolean;
+  readonly asUpdateWeightRestrictDecay: {
+    readonly new_: u64;
+  } & Struct;
+  readonly isUpdateXcmpMaxIndividualWeight: boolean;
+  readonly asUpdateXcmpMaxIndividualWeight: {
+    readonly new_: u64;
+  } & Struct;
+  readonly type: 'ServiceOverweight' | 'SuspendXcmExecution' | 'ResumeXcmExecution' | 'UpdateSuspendThreshold' | 'UpdateDropThreshold' | 'UpdateResumeThreshold' | 'UpdateThresholdWeight' | 'UpdateWeightRestrictDecay' | 'UpdateXcmpMaxIndividualWeight';
 }
 
 /** @name CumulusPalletXcmpQueueError */
@@ -1634,10 +1660,7 @@ export interface SpRuntimeDispatchError extends Enum {
   readonly isCannotLookup: boolean;
   readonly isBadOrigin: boolean;
   readonly isModule: boolean;
-  readonly asModule: {
-    readonly index: u8;
-    readonly error: u8;
-  } & Struct;
+  readonly asModule: SpRuntimeModuleError;
   readonly isConsumerRemaining: boolean;
   readonly isNoProviders: boolean;
   readonly isTooManyConsumers: boolean;
@@ -1646,6 +1669,12 @@ export interface SpRuntimeDispatchError extends Enum {
   readonly isArithmetic: boolean;
   readonly asArithmetic: SpRuntimeArithmeticError;
   readonly type: 'Other' | 'CannotLookup' | 'BadOrigin' | 'Module' | 'ConsumerRemaining' | 'NoProviders' | 'TooManyConsumers' | 'Token' | 'Arithmetic';
+}
+
+/** @name SpRuntimeModuleError */
+export interface SpRuntimeModuleError extends Struct {
+  readonly index: u8;
+  readonly error: u8;
 }
 
 /** @name SpRuntimeMultiSignature */
@@ -1810,6 +1839,7 @@ export interface UpDataStructsSponsoringRateLimit extends Enum {
   readonly isSponsoringDisabled: boolean;
   readonly isBlocks: boolean;
   readonly asBlocks: u32;
+  readonly type: 'SponsoringDisabled' | 'Blocks';
 }
 
 /** @name UpDataStructsSponsorshipState */

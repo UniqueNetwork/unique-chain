@@ -18,7 +18,7 @@ pub mod pallet {
 		execution::{self, Result},
 		types::{Msg, value},
 	};
-	use frame_support::{ensure};
+	use frame_support::{ensure, sp_runtime::ModuleError};
 	use pallet_evm::{
 		ExitError, ExitRevert, ExitSucceed, GasWeightMapping, PrecompileFailure, PrecompileOutput,
 		PrecompileResult, runner::stack::MaybeMirroredLog,
@@ -207,7 +207,7 @@ pub mod pallet {
 	pub fn dispatch_to_evm<T: Config>(err: DispatchError) -> evm_coder::execution::Error {
 		use evm_coder::execution::Error as ExError;
 		match err {
-			DispatchError::Module { index, error, .. }
+			DispatchError::Module(ModuleError { index, error, .. })
 				if index
 					== T::PalletInfo::index::<Pallet<T>>()
 						.expect("evm-coder-substrate is a pallet, which should be added to runtime")
@@ -219,10 +219,10 @@ pub mod pallet {
 					_ => unreachable!("this pallet only defines two possible errors"),
 				}
 			}
-			DispatchError::Module {
+			DispatchError::Module(ModuleError {
 				message: Some(msg), ..
-			} => ExError::Revert(msg.into()),
-			DispatchError::Module { index, error, .. } => {
+			}) => ExError::Revert(msg.into()),
+			DispatchError::Module(ModuleError { index, error, .. }) => {
 				ExError::Revert(format!("error {} in pallet {}", error, index))
 			}
 			e => ExError::Revert(format!("substrate error: {:?}", e)),
