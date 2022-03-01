@@ -108,7 +108,7 @@ impl pallet_timestamp::Config for Test {
 }
 
 parameter_types! {
-	pub const CollectionCreationPrice: u32 = 0;
+	pub const CollectionCreationPrice: u32 = 100;
 	pub TreasuryAccountId: u64 = 1234;
 	pub EthereumChainId: u32 = 1111;
 }

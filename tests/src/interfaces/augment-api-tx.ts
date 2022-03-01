@@ -5,7 +5,7 @@ import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Bytes, Compact, Option, U256, Vec, bool, u128, u16, u32, u64 } from '@polkadot/types-codec';
 import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill } from '@polkadot/types/interfaces/runtime';
-import type { CumulusPrimitivesParachainInherentParachainInherentData, EthereumTransactionTransactionV2, OrmlVestingVestingSchedule, PalletCommonAccountBasicCrossAccountIdRepr, UpDataStructsAccessMode, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCreateCollectionData, UpDataStructsCreateItemData, UpDataStructsMetaUpdatePermission, UpDataStructsSchemaVersion, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
+import type { CumulusPrimitivesParachainInherentParachainInherentData, EthereumTransactionTransactionV2, OrmlVestingVestingSchedule, PalletCommonAccountBasicCrossAccountIdRepr, UpDataStructsAccessMode, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCreateCollectionData, UpDataStructsCreateItemData, UpDataStructsCreateItemExData, UpDataStructsMetaUpdatePermission, UpDataStructsSchemaVersion, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/submittable' {
   export interface AugmentedSubmittables<ApiType extends ApiTypes> {
@@ -425,11 +425,6 @@ declare module '@polkadot/api-base/types/submittable' {
       remark: AugmentedSubmittable<(remark: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes]>;
       /**
        * Make some on-chain remark and emit event.
-       * 
-       * # <weight>
-       * - `O(b)` where b is the length of the remark.
-       * - 1 event.
-       * # </weight>
        **/
       remarkWithEvent: AugmentedSubmittable<(remark: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes]>;
       /**
@@ -715,6 +710,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * * owner: Address, initial owner of the NFT.
        **/
       createMultipleItems: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, owner: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, itemsData: Vec<UpDataStructsCreateItemData> | (UpDataStructsCreateItemData | { NFT: any } | { Fungible: any } | { ReFungible: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, PalletCommonAccountBasicCrossAccountIdRepr, Vec<UpDataStructsCreateItemData>]>;
+      createMultipleItemsEx: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, data: UpDataStructsCreateItemExData | { NFT: any } | { Fungible: any } | { RefungibleMultipleItems: any } | { RefungibleMultipleOwners: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsCreateItemExData]>;
       /**
        * **DANGEROUS**: Destroys collection and all NFTs within this collection. Users irrecoverably lose their assets and may lose real money.
        * 
@@ -982,6 +978,14 @@ declare module '@polkadot/api-base/types/submittable' {
     };
     xcmpQueue: {
       /**
+       * Resumes all XCM executions for the XCMP queue.
+       * 
+       * Note that this function doesn't change the status of the in/out bound channels.
+       * 
+       * - `origin`: Must pass `ControllerOrigin`.
+       **/
+      resumeXcmExecution: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
+      /**
        * Services a single overweight XCM.
        * 
        * - `origin`: Must pass `ExecuteOverweightOrigin`.
@@ -997,6 +1001,59 @@ declare module '@polkadot/api-base/types/submittable' {
        * - `OverweightServiced`: On success.
        **/
       serviceOverweight: AugmentedSubmittable<(index: u64 | AnyNumber | Uint8Array, weightLimit: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, u64]>;
+      /**
+       * Suspends all XCM executions for the XCMP queue, regardless of the sender's origin.
+       * 
+       * - `origin`: Must pass `ControllerOrigin`.
+       **/
+      suspendXcmExecution: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
+      /**
+       * Overwrites the number of pages of messages which must be in the queue after which we drop any further
+       * messages from the channel.
+       * 
+       * - `origin`: Must pass `Root`.
+       * - `new`: Desired value for `QueueConfigData.drop_threshold`
+       **/
+      updateDropThreshold: AugmentedSubmittable<(updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
+      /**
+       * Overwrites the number of pages of messages which the queue must be reduced to before it signals that
+       * message sending may recommence after it has been suspended.
+       * 
+       * - `origin`: Must pass `Root`.
+       * - `new`: Desired value for `QueueConfigData.resume_threshold`
+       **/
+      updateResumeThreshold: AugmentedSubmittable<(updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
+      /**
+       * Overwrites the number of pages of messages which must be in the queue for the other side to be told to
+       * suspend their sending.
+       * 
+       * - `origin`: Must pass `Root`.
+       * - `new`: Desired value for `QueueConfigData.suspend_value`
+       **/
+      updateSuspendThreshold: AugmentedSubmittable<(updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
+      /**
+       * Overwrites the amount of remaining weight under which we stop processing messages.
+       * 
+       * - `origin`: Must pass `Root`.
+       * - `new`: Desired value for `QueueConfigData.threshold_weight`
+       **/
+      updateThresholdWeight: AugmentedSubmittable<(updated: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64]>;
+      /**
+       * Overwrites the speed to which the available weight approaches the maximum weight.
+       * A lower number results in a faster progression. A value of 1 makes the entire weight available initially.
+       * 
+       * - `origin`: Must pass `Root`.
+       * - `new`: Desired value for `QueueConfigData.weight_restrict_decay`.
+       **/
+      updateWeightRestrictDecay: AugmentedSubmittable<(updated: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64]>;
+      /**
+       * Overwrite the maximum amount of weight any individual message may consume.
+       * Messages above this weight go into the overweight queue and may only be serviced explicitly.
+       * 
+       * - `origin`: Must pass `Root`.
+       * - `new`: Desired value for `QueueConfigData.xcmp_max_individual_weight`.
+       **/
+      updateXcmpMaxIndividualWeight: AugmentedSubmittable<(updated: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64]>;
       /**
        * Generic tx
        **/

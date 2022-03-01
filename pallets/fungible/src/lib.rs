@@ -9,7 +9,7 @@ use pallet_common::{
 use pallet_evm_coder_substrate::WithRecorder;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
-use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
+use sp_std::collections::btree_map::BTreeMap;
 
 pub use pallet::*;
 
@@ -222,7 +222,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_multiple_items(
 		collection: &FungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: Vec<CreateItemData<T>>,
+		data: BTreeMap<T::CrossAccountId, u128>,
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
@@ -236,22 +236,18 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 
-		let mut balances = BTreeMap::new();
-
 		let total_supply = data
 			.iter()
-			.map(|u| u.1)
+			.map(|(_, v)| *v)
 			.try_fold(<TotalSupply<T>>::get(collection.id), |acc, v| {
 				acc.checked_add(v)
 			})
 			.ok_or(ArithmeticError::Overflow)?;
 
-		for (user, amount) in data.into_iter() {
-			let balance = balances
-				.entry(user.clone())
-				.or_insert_with(|| <Balance<T>>::get((collection.id, user)));
-			*balance = (*balance)
-				.checked_add(amount)
+		let mut balances = data;
+		for (k, v) in balances.iter_mut() {
+			*v = <Balance<T>>::get((collection.id, &k))
+				.checked_add(*v)
 				.ok_or(ArithmeticError::Overflow)?;
 		}
 
@@ -396,6 +392,6 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		data: CreateItemData<T>,
 	) -> DispatchResult {
-		Self::create_multiple_items(collection, sender, vec![data])
+		Self::create_multiple_items(collection, sender, [(data.0, data.1)].into_iter().collect())
 	}
 }

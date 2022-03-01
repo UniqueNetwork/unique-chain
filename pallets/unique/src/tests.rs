@@ -7,8 +7,25 @@ use up_data_structs::{
 	CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission,
 	TokenId, MAX_TOKEN_OWNERSHIP,
 };
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_noop, assert_ok, assert_err};
 use sp_std::convert::TryInto;
+use pallet_balances;
+
+fn add_balance(user: u64, value: u64) {
+	const DONOR_USER: u64 = 999;
+	assert_ok!(<pallet_balances::Pallet<Test>>::set_balance(
+		Origin::root(),
+		DONOR_USER,
+		value,
+		0
+	));
+	assert_ok!(<pallet_balances::Pallet<Test>>::force_transfer(
+		Origin::root(),
+		DONOR_USER,
+		user,
+		value
+	));
+}
 
 fn default_nft_data() -> CreateNftData {
 	CreateNftData {
@@ -34,18 +51,22 @@ fn create_test_collection_for_owner(
 	owner: u64,
 	id: CollectionId,
 ) -> CollectionId {
+	add_balance(owner, CollectionCreationPrice::get() as u64 + 1);
+
 	let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 	let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 	let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
 
+	let data: CreateCollectionData<u64> = CreateCollectionData {
+		name: col_name1.try_into().unwrap(),
+		description: col_desc1.try_into().unwrap(),
+		token_prefix: token_prefix1.try_into().unwrap(),
+		mode: mode.clone(),
+		..Default::default()
+	};
+
 	let origin1 = Origin::signed(owner);
-	assert_ok!(TemplateModule::create_collection(
-		origin1,
-		col_name1.try_into().unwrap(),
-		col_desc1.try_into().unwrap(),
-		token_prefix1.try_into().unwrap(),
-		mode.clone()
-	));
+	assert_ok!(TemplateModule::create_collection_ex(origin1, data));
 
 	let saved_col_name: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 	let saved_description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
@@ -121,21 +142,47 @@ fn set_version_schema() {
 }
 
 #[test]
+fn check_not_sufficient_founds() {
+	new_test_ext().execute_with(|| {
+		let acc: u64 = 1;
+		<pallet_balances::Pallet<Test>>::set_balance(Origin::root(), acc, 0, 0).unwrap();
+
+		let name: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+		let description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+		let token_prefix: Vec<u8> = b"token_prefix1\0".to_vec();
+
+		let data: CreateCollectionData<<Test as system::Config>::AccountId> =
+			CreateCollectionData {
+				name: name.try_into().unwrap(),
+				description: description.try_into().unwrap(),
+				token_prefix: token_prefix.try_into().unwrap(),
+				mode: CollectionMode::NFT,
+				..Default::default()
+			};
+
+		let result = TemplateModule::create_collection_ex(Origin::signed(acc), data);
+		assert_err!(result, <CommonError<Test>>::NotSufficientFounds);
+	});
+}
+
+#[test]
 fn create_fungible_collection_fails_with_large_decimal_numbers() {
 	new_test_ext().execute_with(|| {
 		let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 		let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 		let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
 
+		let data: CreateCollectionData<u64> = CreateCollectionData {
+			name: col_name1.try_into().unwrap(),
+			description: col_desc1.try_into().unwrap(),
+			token_prefix: token_prefix1.try_into().unwrap(),
+			mode: CollectionMode::Fungible(MAX_DECIMAL_POINTS + 1),
+			..Default::default()
+		};
+
 		let origin1 = Origin::signed(1);
 		assert_noop!(
-			TemplateModule::create_collection(
-				origin1,
-				col_name1.try_into().unwrap(),
-				col_desc1.try_into().unwrap(),
-				token_prefix1.try_into().unwrap(),
-				CollectionMode::Fungible(MAX_DECIMAL_POINTS + 1)
-			),
+			TemplateModule::create_collection_ex(origin1, data),
 			Error::<Test>::CollectionDecimalPointLimitExceeded
 		);
 	});
@@ -2267,15 +2314,17 @@ fn total_number_collections_bound_neg() {
 		let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 		let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
 
+		let data: CreateCollectionData<u64> = CreateCollectionData {
+			name: col_name1.try_into().unwrap(),
+			description: col_desc1.try_into().unwrap(),
+			token_prefix: token_prefix1.try_into().unwrap(),
+			mode: CollectionMode::NFT,
+			..Default::default()
+		};
+
 		// 11-th collection in chain. Expects error
 		assert_noop!(
-			TemplateModule::create_collection(
-				origin1,
-				col_name1.try_into().unwrap(),
-				col_desc1.try_into().unwrap(),
-				token_prefix1.try_into().unwrap(),
-				CollectionMode::NFT
-			),
+			TemplateModule::create_collection_ex(origin1, data),
 			CommonError::<Test>::TotalCollectionsLimitExceeded
 		);
 	});

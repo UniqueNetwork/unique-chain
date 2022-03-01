@@ -2,7 +2,9 @@
 
 use erc::ERC721Events;
 use frame_support::{BoundedVec, ensure};
-use up_data_structs::{AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData};
+use up_data_structs::{
+	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
+};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, account::CrossAccountId,
 };
@@ -22,11 +24,7 @@ pub mod common;
 pub mod erc;
 pub mod weights;
 
-pub struct CreateItemData<T: Config> {
-	pub const_data: BoundedVec<u8, CustomDataLimit>,
-	pub variable_data: BoundedVec<u8, CustomDataLimit>,
-	pub owner: T::CrossAccountId,
-}
+pub type CreateItemData<T> = CreateNftExData<<T as pallet_common::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]

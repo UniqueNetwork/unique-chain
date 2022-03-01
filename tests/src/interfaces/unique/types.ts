@@ -133,7 +133,33 @@ export interface CumulusPalletXcmpQueueCall extends Enum {
     readonly index: u64;
     readonly weightLimit: u64;
   } & Struct;
-  readonly type: 'ServiceOverweight';
+  readonly isSuspendXcmExecution: boolean;
+  readonly isResumeXcmExecution: boolean;
+  readonly isUpdateSuspendThreshold: boolean;
+  readonly asUpdateSuspendThreshold: {
+    readonly new_: u32;
+  } & Struct;
+  readonly isUpdateDropThreshold: boolean;
+  readonly asUpdateDropThreshold: {
+    readonly new_: u32;
+  } & Struct;
+  readonly isUpdateResumeThreshold: boolean;
+  readonly asUpdateResumeThreshold: {
+    readonly new_: u32;
+  } & Struct;
+  readonly isUpdateThresholdWeight: boolean;
+  readonly asUpdateThresholdWeight: {
+    readonly new_: u64;
+  } & Struct;
+  readonly isUpdateWeightRestrictDecay: boolean;
+  readonly asUpdateWeightRestrictDecay: {
+    readonly new_: u64;
+  } & Struct;
+  readonly isUpdateXcmpMaxIndividualWeight: boolean;
+  readonly asUpdateXcmpMaxIndividualWeight: {
+    readonly new_: u64;
+  } & Struct;
+  readonly type: 'ServiceOverweight' | 'SuspendXcmExecution' | 'ResumeXcmExecution' | 'UpdateSuspendThreshold' | 'UpdateDropThreshold' | 'UpdateResumeThreshold' | 'UpdateThresholdWeight' | 'UpdateWeightRestrictDecay' | 'UpdateXcmpMaxIndividualWeight';
 }
 
 /** @name CumulusPalletXcmpQueueError */
@@ -1290,6 +1316,11 @@ export interface PalletUniqueCall extends Enum {
     readonly owner: PalletCommonAccountBasicCrossAccountIdRepr;
     readonly itemsData: Vec<UpDataStructsCreateItemData>;
   } & Struct;
+  readonly isCreateMultipleItemsEx: boolean;
+  readonly asCreateMultipleItemsEx: {
+    readonly collectionId: u32;
+    readonly data: UpDataStructsCreateItemExData;
+  } & Struct;
   readonly isSetTransfersEnabledFlag: boolean;
   readonly asSetTransfersEnabledFlag: {
     readonly collectionId: u32;
@@ -1366,7 +1397,7 @@ export interface PalletUniqueCall extends Enum {
     readonly collectionId: u32;
     readonly newLimit: UpDataStructsCollectionLimits;
   } & Struct;
-  readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'SetPublicAccessMode' | 'SetMintPermission' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetVariableMetaData' | 'SetMetaUpdatePermissionFlag' | 'SetSchemaVersion' | 'SetOffchainSchema' | 'SetConstOnChainSchema' | 'SetVariableOnChainSchema' | 'SetCollectionLimits';
+  readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'SetPublicAccessMode' | 'SetMintPermission' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetVariableMetaData' | 'SetMetaUpdatePermissionFlag' | 'SetSchemaVersion' | 'SetOffchainSchema' | 'SetConstOnChainSchema' | 'SetVariableOnChainSchema' | 'SetCollectionLimits';
 }
 
 /** @name PalletUniqueError */
@@ -1634,10 +1665,7 @@ export interface SpRuntimeDispatchError extends Enum {
   readonly isCannotLookup: boolean;
   readonly isBadOrigin: boolean;
   readonly isModule: boolean;
-  readonly asModule: {
-    readonly index: u8;
-    readonly error: u8;
-  } & Struct;
+  readonly asModule: SpRuntimeModuleError;
   readonly isConsumerRemaining: boolean;
   readonly isNoProviders: boolean;
   readonly isTooManyConsumers: boolean;
@@ -1646,6 +1674,12 @@ export interface SpRuntimeDispatchError extends Enum {
   readonly isArithmetic: boolean;
   readonly asArithmetic: SpRuntimeArithmeticError;
   readonly type: 'Other' | 'CannotLookup' | 'BadOrigin' | 'Module' | 'ConsumerRemaining' | 'NoProviders' | 'TooManyConsumers' | 'Token' | 'Arithmetic';
+}
+
+/** @name SpRuntimeModuleError */
+export interface SpRuntimeModuleError extends Struct {
+  readonly index: u8;
+  readonly error: u8;
 }
 
 /** @name SpRuntimeMultiSignature */
@@ -1720,7 +1754,7 @@ export interface UpDataStructsCollection extends Struct {
 export interface UpDataStructsCollectionLimits extends Struct {
   readonly accountTokenOwnershipLimit: Option<u32>;
   readonly sponsoredDataSize: Option<u32>;
-  readonly sponsoredDataRateLimit: Option<Option<u32>>;
+  readonly sponsoredDataRateLimit: Option<UpDataStructsSponsoringRateLimit>;
   readonly tokenLimit: Option<u32>;
   readonly sponsorTransferTimeout: Option<u32>;
   readonly sponsorApproveTimeout: Option<u32>;
@@ -1777,10 +1811,30 @@ export interface UpDataStructsCreateItemData extends Enum {
   readonly type: 'Nft' | 'Fungible' | 'ReFungible';
 }
 
+/** @name UpDataStructsCreateItemExData */
+export interface UpDataStructsCreateItemExData extends Enum {
+  readonly isNft: boolean;
+  readonly asNft: Vec<UpDataStructsCreateNftExData>;
+  readonly isFungible: boolean;
+  readonly asFungible: BTreeMap<PalletCommonAccountBasicCrossAccountIdRepr,u128>;
+  readonly isRefungibleMultipleItems: boolean;
+  readonly asRefungibleMultipleItems: Vec<UpDataStructsCreateRefungibleExData>;
+  readonly isRefungibleMultipleOwners: boolean;
+  readonly asRefungibleMultipleOwners: UpDataStructsCreateRefungibleExData;
+  readonly type: 'Nft' | 'Fungible' | 'RefungibleMultipleItems' | 'RefungibleMultipleOwners';
+}
+
 /** @name UpDataStructsCreateNftData */
 export interface UpDataStructsCreateNftData extends Struct {
   readonly constData: Bytes;
   readonly variableData: Bytes;
+}
+
+/** @name UpDataStructsCreateNftExData */
+export interface UpDataStructsCreateNftExData extends Struct {
+  readonly constData: Bytes;
+  readonly variableData: Bytes;
+  readonly owner: PalletCommonAccountBasicCrossAccountIdRepr;
 }
 
 /** @name UpDataStructsCreateReFungibleData */
@@ -1788,6 +1842,13 @@ export interface UpDataStructsCreateReFungibleData extends Struct {
   readonly constData: Bytes;
   readonly variableData: Bytes;
   readonly pieces: u128;
+}
+
+/** @name UpDataStructsCreateRefungibleExData */
+export interface UpDataStructsCreateRefungibleExData extends Struct {
+  readonly constData: Bytes;
+  readonly variableData: Bytes;
+  readonly users: BTreeMap<PalletCommonAccountBasicCrossAccountIdRepr, u128>;
 }
 
 /** @name UpDataStructsMetaUpdatePermission */
@@ -1803,6 +1864,14 @@ export interface UpDataStructsSchemaVersion extends Enum {
   readonly isImageURL: boolean;
   readonly isUnique: boolean;
   readonly type: 'ImageURL' | 'Unique';
+}
+
+/** @name UpDataStructsSponsoringRateLimit */
+export interface UpDataStructsSponsoringRateLimit extends Enum {
+  readonly isSponsoringDisabled: boolean;
+  readonly isBlocks: boolean;
+  readonly asBlocks: u32;
+  readonly type: 'SponsoringDisabled' | 'Blocks';
 }
 
 /** @name UpDataStructsSponsorshipState */

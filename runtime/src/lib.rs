@@ -86,8 +86,9 @@ use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
 	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser,
-	ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
+	ParentIsPreset,
 };
 use xcm_executor::{Config, XcmExecutor, Assets};
 use sp_std::{marker::PhantomData};
@@ -160,7 +161,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("opal"),
 	impl_name: create_runtime_str!("opal"),
 	authoring_version: 1,
-	spec_version: 916001,
+	spec_version: 916010,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -628,7 +629,7 @@ parameter_types! {
 /// `Transact` in order to determine the dispatch Origin.
 pub type LocationToAccountId = (
 	// The parent (Relay-chain) origin converts to the default `AccountId`.
-	ParentIsDefault<AccountId>,
+	ParentIsPreset<AccountId>,
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
@@ -863,6 +864,8 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
+	type ControllerOrigin = EnsureRoot<AccountId>;
+	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
