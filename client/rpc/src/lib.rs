@@ -177,6 +177,7 @@ macro_rules! pass_method {
 	};
 }
 
+#[allow(deprecated)]
 impl<C, Block, CrossAccountId, AccountId>
 	UniqueApi<<Block as BlockT>::Hash, CrossAccountId, AccountId> for Unique<C, Block>
 where

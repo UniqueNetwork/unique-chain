@@ -4,7 +4,7 @@ use crate::{Pallet, Config, FungibleHandle};
 use sp_std::prelude::*;
 use pallet_common::benchmarking::create_collection_raw;
 use frame_benchmarking::{benchmarks, account};
-use up_data_structs::{CollectionMode};
+use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH};
 use pallet_common::bench_init;
 
 const SEED: u32 = 1;
@@ -25,6 +25,18 @@ benchmarks! {
 			sender: cross_from_sub(owner); to: cross_sub;
 		};
 	}: {<Pallet<T>>::create_item(&collection, &sender, (to, 200))?}
+
+	create_multiple_items_ex {
+		let b in 0..MAX_ITEMS_PER_BATCH;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			sender: cross_from_sub(owner);
+		};
+		let data = (0..b).map(|i| {
+			bench_init!(to: cross_sub(i););
+			(to, 200)
+		}).collect::<BTreeMap<_, _>>().try_into().unwrap();
+	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data)}
 
 	burn_item {
 		bench_init!{

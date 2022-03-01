@@ -1,7 +1,7 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use super::*;
-use crate::Module as Inflation;
+use crate::Pallet as Inflation;
 
 use frame_benchmarking::{benchmarks};
 use frame_support::traits::OnInitialize;

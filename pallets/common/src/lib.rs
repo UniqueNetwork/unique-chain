@@ -17,7 +17,7 @@ use up_data_structs::{
 	TokenId, Weight, WithdrawReasons, CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode,
 	NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
-	CustomDataLimit, CreateCollectionData, SponsorshipState,
+	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -627,9 +627,10 @@ macro_rules! unsupported {
 }
 
 /// Worst cases
-pub trait CommonWeightInfo {
+pub trait CommonWeightInfo<CrossAccountId> {
 	fn create_item() -> Weight;
 	fn create_multiple_items(amount: u32) -> Weight;
+	fn create_multiple_items_ex(cost: &CreateItemExData<CrossAccountId>) -> Weight;
 	fn burn_item() -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
@@ -650,6 +651,11 @@ pub trait CommonCollectionOperations<T: Config> {
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
 		data: Vec<CreateItemData>,
+	) -> DispatchResultWithPostInfo;
+	fn create_multiple_items_ex(
+		&self,
+		sender: T::CrossAccountId,
+		data: CreateItemExData<T::CrossAccountId>,
 	) -> DispatchResultWithPostInfo;
 	fn burn_item(
 		&self,

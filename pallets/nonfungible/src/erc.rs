@@ -232,7 +232,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		<Pallet<T>>::create_item(
 			self,
 			&caller,
-			CreateItemData {
+			CreateItemData::<T> {
 				const_data: BoundedVec::default(),
 				variable_data: BoundedVec::default(),
 				owner: to,
@@ -268,7 +268,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		<Pallet<T>>::create_item(
 			self,
 			&caller,
-			CreateItemData {
+			CreateItemData::<T> {
 				const_data: Vec::<u8>::from(token_uri)
 					.try_into()
 					.map_err(|_| "token uri is too long")?,
@@ -376,7 +376,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
 		}
 		let data = (0..total_tokens)
-			.map(|_| CreateItemData {
+			.map(|_| CreateItemData::<T> {
 				const_data: BoundedVec::default(),
 				variable_data: BoundedVec::default(),
 				owner: to.clone(),
@@ -409,7 +409,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			}
 			expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
 
-			data.push(CreateItemData {
+			data.push(CreateItemData::<T> {
 				const_data: Vec::<u8>::from(token_uri)
 					.try_into()
 					.map_err(|_| "token uri is too long")?,

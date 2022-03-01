@@ -5,6 +5,7 @@ use pallet_common::{CommonWeightInfo};
 use pallet_fungible::{common::CommonWeights as FungibleWeights};
 use pallet_nonfungible::{common::CommonWeights as NonfungibleWeights};
 use pallet_refungible::{common::CommonWeights as RefungibleWeights};
+use up_data_structs::CreateItemExData;
 
 use crate::{Config, dispatch::dispatch_weight};
 
@@ -17,13 +18,17 @@ macro_rules! max_weight_of {
 }
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
-impl<T: Config> CommonWeightInfo for CommonWeights<T> {
+impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_item() -> up_data_structs::Weight {
 		dispatch_weight::<T>() + max_weight_of!(create_item())
 	}
 
 	fn create_multiple_items(amount: u32) -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(create_multiple_items(amount))
+	}
+
+	fn create_multiple_items_ex(data: &CreateItemExData<T::CrossAccountId>) -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(create_multiple_items_ex(data))
 	}
 
 	fn burn_item() -> Weight {
