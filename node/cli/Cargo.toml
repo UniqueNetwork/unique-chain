@@ -257,7 +257,7 @@ homepage = 'https://unique.network'
 license = 'All Rights Reserved'
 name = 'unique-node'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.9.16'
+version = '0.9.17'
 
 [[bin]]
 name = 'unique-collator'
