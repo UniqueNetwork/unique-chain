@@ -306,9 +306,9 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
     const alice = privateKey('//Alice');
     const aliceProxy = subToEth(alice.address);
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
-    await transferExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, 10, 'ReFungible');
+    await transferExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, 10, 'Fungible');
     const balanceAliceBefore = await getTokenBalance(api, collectionId, {Ethereum: aliceProxy}, tokenId);
-    await transferFromExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, {Ethereum: aliceProxy}, 10, 'ReFungible');
+    await transferFromExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, {Ethereum: aliceProxy}, 10, 'Fungible');
     const balanceAliceAfter = await getTokenBalance(api, collectionId, {Ethereum: aliceProxy}, tokenId);
     expect(balanceAliceBefore).to.be.eq(balanceAliceAfter);
   });
@@ -319,8 +319,8 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
     const aliceProxy = subToEth(alice.address);
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
     const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
-    await transferExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy} , 10, 'ReFungible');
-    await transferFromExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, alice, 10, 'ReFungible');
+    await transferExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy} , 10, 'Fungible');
+    await transferFromExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, alice, 10, 'Fungible');
     const balanceAliceAfter = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
     expect(balanceAliceBefore).to.be.eq(balanceAliceAfter);
   });
@@ -330,8 +330,8 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
     const alice = privateKey('//Alice');
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
     const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
-    await transferExpectSuccess(collectionId, tokenId, alice, alice , 10, 'ReFungible');
-    await transferFromExpectSuccess(collectionId, tokenId, alice, alice, alice, 10, 'ReFungible');
+    await transferExpectSuccess(collectionId, tokenId, alice, alice , 10, 'Fungible');
+    await transferFromExpectSuccess(collectionId, tokenId, alice, alice, alice, 10, 'Fungible');
     const balanceAliceAfter = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
     expect(balanceAliceBefore).to.be.eq(balanceAliceAfter);
   });
