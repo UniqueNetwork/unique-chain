@@ -12,16 +12,16 @@ use sp_std::convert::TryInto;
 use pallet_balances;
 
 fn add_balance(user: u64, value: u64) {
-	const RICH_USER: u64 = 999;
+	const DONOR_USER: u64 = 999;
 	assert_ok!(<pallet_balances::Pallet<Test>>::set_balance(
 		Origin::root(),
-		RICH_USER,
+		DONOR_USER,
 		value,
 		0
 	));
 	assert_ok!(<pallet_balances::Pallet<Test>>::force_transfer(
 		Origin::root(),
-		RICH_USER,
+		DONOR_USER,
 		user,
 		value
 	));
