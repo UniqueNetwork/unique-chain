@@ -60,7 +60,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible TokenData (r:0 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn create_item() -> Weight {
-		(21_227_000 as Weight)
+		(21_122_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
@@ -71,9 +71,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible TokenData (r:0 w:4)
 	// Storage: Refungible Owned (r:0 w:4)
 	fn create_multiple_items(b: u32, ) -> Weight {
-		(25_932_000 as Weight)
-			// Standard Error: 11_000
-			.saturating_add((5_730_000 as Weight).saturating_mul(b as Weight))
+		(21_553_000 as Weight)
+			// Standard Error: 10_000
+			.saturating_add((5_768_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes((4 as Weight).saturating_mul(b as Weight)))
@@ -85,9 +85,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible TokenData (r:0 w:4)
 	// Storage: Refungible Owned (r:0 w:4)
 	fn create_multiple_items_ex_multiple_items(b: u32, ) -> Weight {
-		(18_884_000 as Weight)
-			// Standard Error: 11_000
-			.saturating_add((8_489_000 as Weight).saturating_mul(b as Weight))
+		(24_715_000 as Weight)
+			// Standard Error: 15_000
+			.saturating_add((8_456_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -100,9 +100,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible Balance (r:0 w:4)
 	// Storage: Refungible Owned (r:0 w:4)
 	fn create_multiple_items_ex_multiple_owners(b: u32, ) -> Weight {
-		(16_515_000 as Weight)
-			// Standard Error: 9_000
-			.saturating_add((6_428_000 as Weight).saturating_mul(b as Weight))
+		(14_998_000 as Weight)
+			// Standard Error: 6_000
+			.saturating_add((6_380_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
@@ -113,7 +113,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible AccountBalance (r:1 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn burn_item_partial() -> Weight {
-		(23_855_000 as Weight)
+		(23_945_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -124,13 +124,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible TokenData (r:0 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn burn_item_fully() -> Weight {
-		(32_709_000 as Weight)
+		(33_347_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
 	// Storage: Refungible Balance (r:2 w:2)
 	fn transfer_normal() -> Weight {
-		(20_001_000 as Weight)
+		(20_780_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -138,7 +138,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible AccountBalance (r:1 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn transfer_creating() -> Weight {
-		(23_807_000 as Weight)
+		(24_135_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -146,7 +146,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible AccountBalance (r:1 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn transfer_removing() -> Weight {
-		(25_250_000 as Weight)
+		(26_275_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -154,21 +154,21 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible AccountBalance (r:2 w:2)
 	// Storage: Refungible Owned (r:0 w:2)
 	fn transfer_creating_removing() -> Weight {
-		(29_423_000 as Weight)
+		(29_151_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
 	// Storage: Refungible Balance (r:1 w:0)
 	// Storage: Refungible Allowance (r:0 w:1)
 	fn approve() -> Weight {
-		(16_546_000 as Weight)
+		(16_309_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Refungible Allowance (r:1 w:1)
 	// Storage: Refungible Balance (r:2 w:2)
 	fn transfer_from_normal() -> Weight {
-		(29_661_000 as Weight)
+		(29_193_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -177,7 +177,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible AccountBalance (r:1 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn transfer_from_creating() -> Weight {
-		(33_972_000 as Weight)
+		(33_671_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
@@ -186,7 +186,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible AccountBalance (r:1 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn transfer_from_removing() -> Weight {
-		(35_767_000 as Weight)
+		(35_638_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
@@ -195,7 +195,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible AccountBalance (r:2 w:2)
 	// Storage: Refungible Owned (r:0 w:2)
 	fn transfer_from_creating_removing() -> Weight {
-		(38_449_000 as Weight)
+		(38_359_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
@@ -207,13 +207,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible TokenData (r:0 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn burn_from() -> Weight {
-		(43_547_000 as Weight)
+		(42_912_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
 	// Storage: Refungible TokenData (r:1 w:1)
 	fn set_variable_metadata(_b: u32, ) -> Weight {
-		(7_790_000 as Weight)
+		(7_725_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -228,7 +228,7 @@ impl WeightInfo for () {
 	// Storage: Refungible TokenData (r:0 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn create_item() -> Weight {
-		(21_227_000 as Weight)
+		(21_122_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
@@ -239,9 +239,9 @@ impl WeightInfo for () {
 	// Storage: Refungible TokenData (r:0 w:4)
 	// Storage: Refungible Owned (r:0 w:4)
 	fn create_multiple_items(b: u32, ) -> Weight {
-		(25_932_000 as Weight)
-			// Standard Error: 11_000
-			.saturating_add((5_730_000 as Weight).saturating_mul(b as Weight))
+		(21_553_000 as Weight)
+			// Standard Error: 10_000
+			.saturating_add((5_768_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes((4 as Weight).saturating_mul(b as Weight)))
@@ -253,9 +253,9 @@ impl WeightInfo for () {
 	// Storage: Refungible TokenData (r:0 w:4)
 	// Storage: Refungible Owned (r:0 w:4)
 	fn create_multiple_items_ex_multiple_items(b: u32, ) -> Weight {
-		(18_884_000 as Weight)
-			// Standard Error: 11_000
-			.saturating_add((8_489_000 as Weight).saturating_mul(b as Weight))
+		(24_715_000 as Weight)
+			// Standard Error: 15_000
+			.saturating_add((8_456_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
@@ -268,9 +268,9 @@ impl WeightInfo for () {
 	// Storage: Refungible Balance (r:0 w:4)
 	// Storage: Refungible Owned (r:0 w:4)
 	fn create_multiple_items_ex_multiple_owners(b: u32, ) -> Weight {
-		(16_515_000 as Weight)
-			// Standard Error: 9_000
-			.saturating_add((6_428_000 as Weight).saturating_mul(b as Weight))
+		(14_998_000 as Weight)
+			// Standard Error: 6_000
+			.saturating_add((6_380_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
@@ -281,7 +281,7 @@ impl WeightInfo for () {
 	// Storage: Refungible AccountBalance (r:1 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn burn_item_partial() -> Weight {
-		(23_855_000 as Weight)
+		(23_945_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
@@ -292,13 +292,13 @@ impl WeightInfo for () {
 	// Storage: Refungible TokenData (r:0 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn burn_item_fully() -> Weight {
-		(32_709_000 as Weight)
+		(33_347_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
 	// Storage: Refungible Balance (r:2 w:2)
 	fn transfer_normal() -> Weight {
-		(20_001_000 as Weight)
+		(20_780_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
@@ -306,7 +306,7 @@ impl WeightInfo for () {
 	// Storage: Refungible AccountBalance (r:1 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn transfer_creating() -> Weight {
-		(23_807_000 as Weight)
+		(24_135_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
@@ -314,7 +314,7 @@ impl WeightInfo for () {
 	// Storage: Refungible AccountBalance (r:1 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn transfer_removing() -> Weight {
-		(25_250_000 as Weight)
+		(26_275_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
@@ -322,21 +322,21 @@ impl WeightInfo for () {
 	// Storage: Refungible AccountBalance (r:2 w:2)
 	// Storage: Refungible Owned (r:0 w:2)
 	fn transfer_creating_removing() -> Weight {
-		(29_423_000 as Weight)
+		(29_151_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
 	// Storage: Refungible Balance (r:1 w:0)
 	// Storage: Refungible Allowance (r:0 w:1)
 	fn approve() -> Weight {
-		(16_546_000 as Weight)
+		(16_309_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Refungible Allowance (r:1 w:1)
 	// Storage: Refungible Balance (r:2 w:2)
 	fn transfer_from_normal() -> Weight {
-		(29_661_000 as Weight)
+		(29_193_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
@@ -345,7 +345,7 @@ impl WeightInfo for () {
 	// Storage: Refungible AccountBalance (r:1 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn transfer_from_creating() -> Weight {
-		(33_972_000 as Weight)
+		(33_671_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
@@ -354,7 +354,7 @@ impl WeightInfo for () {
 	// Storage: Refungible AccountBalance (r:1 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn transfer_from_removing() -> Weight {
-		(35_767_000 as Weight)
+		(35_638_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
@@ -363,7 +363,7 @@ impl WeightInfo for () {
 	// Storage: Refungible AccountBalance (r:2 w:2)
 	// Storage: Refungible Owned (r:0 w:2)
 	fn transfer_from_creating_removing() -> Weight {
-		(38_449_000 as Weight)
+		(38_359_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}
@@ -375,13 +375,13 @@ impl WeightInfo for () {
 	// Storage: Refungible TokenData (r:0 w:1)
 	// Storage: Refungible Owned (r:0 w:1)
 	fn burn_from() -> Weight {
-		(43_547_000 as Weight)
+		(42_912_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}
 	// Storage: Refungible TokenData (r:1 w:1)
 	fn set_variable_metadata(_b: u32, ) -> Weight {
-		(7_790_000 as Weight)
+		(7_725_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
