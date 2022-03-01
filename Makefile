@@ -34,7 +34,7 @@ _bench:
 	cargo run --release --features runtime-benchmarks -- \
 	benchmark --pallet pallet-$(PALLET) \
 	--wasm-execution compiled --extrinsic '*' \
-	--template .maintain/frame-weight-template.hbs --steps=50 --repeat=100 --heap-pages=4096 \
+	--template .maintain/frame-weight-template.hbs --steps=50 --repeat=200 --heap-pages=4096 \
 	--output=./pallets/$(PALLET)/src/weights.rs
 
 .PHONY: bench-evm-migration
