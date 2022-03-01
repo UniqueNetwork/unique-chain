@@ -318,6 +318,9 @@ pub mod pallet {
 		AddressIsZero,
 		/// Target collection doesn't supports this operation
 		UnsupportedOperation,
+
+		/// Not sufficient founds to perform action
+		NotSufficientFounds,
 	}
 
 	#[pallet::storage]
@@ -470,7 +473,7 @@ impl<T: Config> Pallet<T> {
 				WithdrawReasons::TRANSFER,
 				ExistenceRequirement::KeepAlive,
 			)
-			.map_err(|_| Error::<T>::NoPermission)?;
+			.map_err(|_| Error::<T>::NotSufficientFounds)?;
 		}
 
 		<CreatedCollectionCount<T>>::put(created_count);
