@@ -19,6 +19,7 @@
 // .maintain/frame-weight-template.hbs
 // --steps=50
 // --repeat=20
+// --heap-pages=4096
 // --output=./pallets/evm-migration/src/weights.rs
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
@@ -43,23 +44,23 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System Account (r:1 w:0)
 	// Storage: EVM AccountCodes (r:1 w:0)
 	fn begin() -> Weight {
-		(7_230_000 as Weight)
+		(6_750_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: EvmMigration MigrationPending (r:1 w:0)
 	// Storage: EVM AccountStorages (r:0 w:1)
 	fn set_data(b: u32, ) -> Weight {
-		(3_442_000 as Weight)
-			// Standard Error: 5_000
-			.saturating_add((1_038_000 as Weight).saturating_mul(b as Weight))
+		(3_555_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((1_071_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(b as Weight)))
 	}
 	// Storage: EvmMigration MigrationPending (r:1 w:1)
 	// Storage: EVM AccountCodes (r:0 w:1)
 	fn finish(_b: u32, ) -> Weight {
-		(5_282_000 as Weight)
+		(5_166_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -71,23 +72,23 @@ impl WeightInfo for () {
 	// Storage: System Account (r:1 w:0)
 	// Storage: EVM AccountCodes (r:1 w:0)
 	fn begin() -> Weight {
-		(7_230_000 as Weight)
+		(6_750_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: EvmMigration MigrationPending (r:1 w:0)
 	// Storage: EVM AccountStorages (r:0 w:1)
 	fn set_data(b: u32, ) -> Weight {
-		(3_442_000 as Weight)
-			// Standard Error: 5_000
-			.saturating_add((1_038_000 as Weight).saturating_mul(b as Weight))
+		(3_555_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((1_071_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(b as Weight)))
 	}
 	// Storage: EvmMigration MigrationPending (r:1 w:1)
 	// Storage: EVM AccountCodes (r:0 w:1)
 	fn finish(_b: u32, ) -> Weight {
-		(5_282_000 as Weight)
+		(5_166_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
