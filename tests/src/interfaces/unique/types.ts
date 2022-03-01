@@ -1316,6 +1316,11 @@ export interface PalletUniqueCall extends Enum {
     readonly owner: PalletCommonAccountBasicCrossAccountIdRepr;
     readonly itemsData: Vec<UpDataStructsCreateItemData>;
   } & Struct;
+  readonly isCreateMultipleItemsEx: boolean;
+  readonly asCreateMultipleItemsEx: {
+    readonly collectionId: u32;
+    readonly data: UpDataStructsCreateItemExData;
+  } & Struct;
   readonly isSetTransfersEnabledFlag: boolean;
   readonly asSetTransfersEnabledFlag: {
     readonly collectionId: u32;
@@ -1392,7 +1397,7 @@ export interface PalletUniqueCall extends Enum {
     readonly collectionId: u32;
     readonly newLimit: UpDataStructsCollectionLimits;
   } & Struct;
-  readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'SetPublicAccessMode' | 'SetMintPermission' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetVariableMetaData' | 'SetMetaUpdatePermissionFlag' | 'SetSchemaVersion' | 'SetOffchainSchema' | 'SetConstOnChainSchema' | 'SetVariableOnChainSchema' | 'SetCollectionLimits';
+  readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'SetPublicAccessMode' | 'SetMintPermission' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetVariableMetaData' | 'SetMetaUpdatePermissionFlag' | 'SetSchemaVersion' | 'SetOffchainSchema' | 'SetConstOnChainSchema' | 'SetVariableOnChainSchema' | 'SetCollectionLimits';
 }
 
 /** @name PalletUniqueError */
@@ -1806,10 +1811,30 @@ export interface UpDataStructsCreateItemData extends Enum {
   readonly type: 'Nft' | 'Fungible' | 'ReFungible';
 }
 
+/** @name UpDataStructsCreateItemExData */
+export interface UpDataStructsCreateItemExData extends Enum {
+  readonly isNft: boolean;
+  readonly asNft: Vec<UpDataStructsCreateNftExData>;
+  readonly isFungible: boolean;
+  readonly asFungible: BTreeMap<PalletCommonAccountBasicCrossAccountIdRepr,u128>;
+  readonly isRefungibleMultipleItems: boolean;
+  readonly asRefungibleMultipleItems: Vec<UpDataStructsCreateRefungibleExData>;
+  readonly isRefungibleMultipleOwners: boolean;
+  readonly asRefungibleMultipleOwners: UpDataStructsCreateRefungibleExData;
+  readonly type: 'Nft' | 'Fungible' | 'RefungibleMultipleItems' | 'RefungibleMultipleOwners';
+}
+
 /** @name UpDataStructsCreateNftData */
 export interface UpDataStructsCreateNftData extends Struct {
   readonly constData: Bytes;
   readonly variableData: Bytes;
+}
+
+/** @name UpDataStructsCreateNftExData */
+export interface UpDataStructsCreateNftExData extends Struct {
+  readonly constData: Bytes;
+  readonly variableData: Bytes;
+  readonly owner: PalletCommonAccountBasicCrossAccountIdRepr;
 }
 
 /** @name UpDataStructsCreateReFungibleData */
@@ -1817,6 +1842,13 @@ export interface UpDataStructsCreateReFungibleData extends Struct {
   readonly constData: Bytes;
   readonly variableData: Bytes;
   readonly pieces: u128;
+}
+
+/** @name UpDataStructsCreateRefungibleExData */
+export interface UpDataStructsCreateRefungibleExData extends Struct {
+  readonly constData: Bytes;
+  readonly variableData: Bytes;
+  readonly users: BTreeMap<PalletCommonAccountBasicCrossAccountIdRepr, u128>;
 }
 
 /** @name UpDataStructsMetaUpdatePermission */

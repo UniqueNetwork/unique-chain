@@ -34,6 +34,8 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn create_item() -> Weight;
 	fn create_multiple_items(b: u32, ) -> Weight;
+	fn create_multiple_items_ex_multiple_items(b: u32, ) -> Weight;
+	fn create_multiple_items_ex_multiple_owners(b: u32, ) -> Weight;
 	fn burn_item_partial() -> Weight;
 	fn burn_item_fully() -> Weight;
 	fn transfer_normal() -> Weight;
@@ -76,6 +78,36 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes((4 as Weight).saturating_mul(b as Weight)))
+	}
+	// Storage: Refungible TokensMinted (r:1 w:1)
+	// Storage: Refungible AccountBalance (r:4 w:4)
+	// Storage: Refungible Balance (r:0 w:4)
+	// Storage: Refungible TotalSupply (r:0 w:4)
+	// Storage: Refungible TokenData (r:0 w:4)
+	// Storage: Refungible Owned (r:0 w:4)
+	fn create_multiple_items_ex_multiple_items(b: u32, ) -> Weight {
+		(11_953_000 as Weight)
+			// Standard Error: 27_000
+			.saturating_add((10_775_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes((5 as Weight).saturating_mul(b as Weight)))
+	}
+	// Storage: Refungible TokensMinted (r:1 w:1)
+	// Storage: Refungible TotalSupply (r:0 w:1)
+	// Storage: Refungible TokenData (r:0 w:1)
+	// Storage: Refungible AccountBalance (r:4 w:4)
+	// Storage: Refungible Balance (r:0 w:4)
+	// Storage: Refungible Owned (r:0 w:4)
+	fn create_multiple_items_ex_multiple_owners(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 13_000
+			.saturating_add((8_528_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes((3 as Weight).saturating_mul(b as Weight)))
 	}
 	// Storage: Refungible TotalSupply (r:1 w:1)
 	// Storage: Refungible Balance (r:1 w:1)
@@ -214,6 +246,36 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes((4 as Weight).saturating_mul(b as Weight)))
+	}
+	// Storage: Refungible TokensMinted (r:1 w:1)
+	// Storage: Refungible AccountBalance (r:4 w:4)
+	// Storage: Refungible Balance (r:0 w:4)
+	// Storage: Refungible TotalSupply (r:0 w:4)
+	// Storage: Refungible TokenData (r:0 w:4)
+	// Storage: Refungible Owned (r:0 w:4)
+	fn create_multiple_items_ex_multiple_items(b: u32, ) -> Weight {
+		(11_953_000 as Weight)
+			// Standard Error: 27_000
+			.saturating_add((10_775_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes((5 as Weight).saturating_mul(b as Weight)))
+	}
+	// Storage: Refungible TokensMinted (r:1 w:1)
+	// Storage: Refungible TotalSupply (r:0 w:1)
+	// Storage: Refungible TokenData (r:0 w:1)
+	// Storage: Refungible AccountBalance (r:4 w:4)
+	// Storage: Refungible Balance (r:0 w:4)
+	// Storage: Refungible Owned (r:0 w:4)
+	fn create_multiple_items_ex_multiple_owners(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 13_000
+			.saturating_add((8_528_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes((3 as Weight).saturating_mul(b as Weight)))
 	}
 	// Storage: Refungible TotalSupply (r:1 w:1)
 	// Storage: Refungible Balance (r:1 w:1)
