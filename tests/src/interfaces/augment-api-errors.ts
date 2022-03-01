@@ -1,10 +1,10 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from '@polkadot/api/types';
+import type { ApiTypes } from '@polkadot/api-base/types';
 
-declare module '@polkadot/api/types/errors' {
-  export interface AugmentedErrors<ApiType> {
+declare module '@polkadot/api-base/types/errors' {
+  export interface AugmentedErrors<ApiType extends ApiTypes> {
     balances: {
       /**
        * Beneficiary account must pre-exist
@@ -56,6 +56,10 @@ declare module '@polkadot/api/types/errors' {
        * Address is not in allow list.
        **/
       AddressNotInAllowlist: AugmentedError<ApiType>;
+      /**
+       * Requested value more than approved.
+       **/
+      ApprovedValueTooLow: AugmentedError<ApiType>;
       /**
        * Tried to approve more than owned
        **/
@@ -112,10 +116,6 @@ declare module '@polkadot/api/types/errors' {
        * Item not exists.
        **/
       TokenNotFound: AugmentedError<ApiType>;
-      /**
-       * Requested value more than approved.
-       **/
-      ApprovedValueTooLow: AugmentedError<ApiType>;
       /**
        * Item balance not enough.
        **/
@@ -513,9 +513,5 @@ declare module '@polkadot/api/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-  }
-
-  export interface DecoratedErrors<ApiType extends ApiTypes> extends AugmentedErrors<ApiType> {
-    [key: string]: ModuleErrors<ApiType>;
-  }
-}
+  } // AugmentedErrors
+} // declare module

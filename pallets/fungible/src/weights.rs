@@ -33,6 +33,7 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for pallet_fungible.
 pub trait WeightInfo {
 	fn create_item() -> Weight;
+	fn create_multiple_items_ex(b: u32, ) -> Weight;
 	fn burn_item() -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
@@ -49,6 +50,17 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		(12_069_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
+	// Storage: Fungible TotalSupply (r:1 w:1)
+	// Storage: Fungible Balance (r:4 w:4)
+	fn create_multiple_items_ex(b: u32, ) -> Weight {
+		(1_055_000 as Weight)
+			// Standard Error: 22_000
+			.saturating_add((5_273_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(b as Weight)))
 	}
 	// Storage: Fungible TotalSupply (r:1 w:1)
 	// Storage: Fungible Balance (r:1 w:1)
@@ -95,6 +107,17 @@ impl WeightInfo for () {
 		(12_069_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+	}
+	// Storage: Fungible TotalSupply (r:1 w:1)
+	// Storage: Fungible Balance (r:4 w:4)
+	fn create_multiple_items_ex(b: u32, ) -> Weight {
+		(1_055_000 as Weight)
+			// Standard Error: 22_000
+			.saturating_add((5_273_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(b as Weight)))
 	}
 	// Storage: Fungible TotalSupply (r:1 w:1)
 	// Storage: Fungible Balance (r:1 w:1)

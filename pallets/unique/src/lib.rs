@@ -40,7 +40,7 @@ use up_data_structs::{
 	OFFCHAIN_SCHEMA_LIMIT, MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH,
 	MAX_TOKEN_PREFIX_LENGTH, AccessMode, CreateItemData, CollectionLimits, CollectionId,
 	CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
-	CreateCollectionData, CustomDataLimit,
+	CreateCollectionData, CustomDataLimit, CreateItemExData,
 };
 use pallet_common::{
 	account::CrossAccountId, CollectionHandle, Pallet as PalletCommon, Error as CommonError,
@@ -733,6 +733,14 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
 			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items(sender, owner, items_data))
+		}
+
+		#[weight = <CommonWeights<T>>::create_multiple_items_ex(&data)]
+		#[transactional]
+		pub fn create_multiple_items_ex(origin, collection_id: CollectionId, data: CreateItemExData<T::CrossAccountId>) -> DispatchResultWithPostInfo {
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+
+			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items_ex(sender, data))
 		}
 
 		// TODO! transaction weight
