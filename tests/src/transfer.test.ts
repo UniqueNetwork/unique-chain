@@ -325,7 +325,7 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
     expect(balanceAliceBefore).to.be.eq(balanceAliceAfter);
   });
 
-  itWeb3.only('Transfers to self. In case of inside substrate-evm', async ({api}) => {
+  itWeb3('Transfers to self. In case of inside substrate-evm', async ({api}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     const alice = privateKey('//Alice');
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
