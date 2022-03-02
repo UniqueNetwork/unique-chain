@@ -158,8 +158,8 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("opal"),
-	impl_name: create_runtime_str!("opal"),
+	spec_name: create_runtime_str!("quartz"),
+	impl_name: create_runtime_str!("quartz"),
 	authoring_version: 1,
 	spec_version: 917000,
 	impl_version: 0,
@@ -257,7 +257,7 @@ parameter_types! {
 8882 - Opal
 */
 parameter_types! {
-	pub const ChainId: u64 = 8882;
+	pub const ChainId: u64 = 8881;
 }
 
 pub struct FixedFee;
