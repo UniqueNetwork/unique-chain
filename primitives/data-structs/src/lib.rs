@@ -362,7 +362,7 @@ impl CollectionLimits {
 			.min(MAX_SPONSOR_TIMEOUT)
 	}
 	pub fn owner_can_transfer(&self) -> bool {
-		self.owner_can_transfer.unwrap_or(true)
+		self.owner_can_transfer.unwrap_or(false)
 	}
 	pub fn owner_can_destroy(&self) -> bool {
 		self.owner_can_destroy.unwrap_or(true)
