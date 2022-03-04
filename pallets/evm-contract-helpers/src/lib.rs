@@ -35,7 +35,6 @@ pub mod pallet {
 	pub(super) type Owner<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = H160, QueryKind = ValueQuery>;
 
-
 	#[pallet::storage]
 	#[deprecated] // TODO: Remove #![allow(deprecated)] after migration
 	pub(super) type SelfSponsoring<T: Config> =
