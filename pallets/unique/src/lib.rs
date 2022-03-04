@@ -10,6 +10,7 @@
 	clippy::unnecessary_mut_passed,
 	clippy::unused_unit
 )]
+#![allow(deprecated)] // Reason: Backward compatibility for [`frame_support::create_collection']
 
 extern crate alloc;
 
@@ -315,7 +316,7 @@ decl_module! {
 		// returns collection ID
 		#[weight = <SelfWeightOf<T>>::create_collection()]
 		#[transactional]
-		#[deprecated]
+		#[deprecated] // TODO: Remove #![allow(deprecated)] after migration
 		pub fn create_collection(origin,
 								 collection_name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
 								 collection_description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,

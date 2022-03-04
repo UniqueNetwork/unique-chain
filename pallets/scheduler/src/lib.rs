@@ -541,6 +541,7 @@ impl<T: Config> Module<T> {
 		}
 	}
 
+	#[allow(dead_code)] // TODO: Remove before migration
 	fn do_reschedule(
 		(when, index): TaskAddress<T::BlockNumber>,
 		new_time: DispatchTime<T::BlockNumber>,
@@ -633,6 +634,7 @@ impl<T: Config> Module<T> {
 		})
 	}
 
+	#[allow(dead_code)] // TODO: Remove before migration
 	fn do_reschedule_named(
 		id: Vec<u8>,
 		new_time: DispatchTime<T::BlockNumber>,

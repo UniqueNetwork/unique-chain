@@ -8,6 +8,8 @@ pub mod eth;
 
 #[frame_support::pallet]
 pub mod pallet {
+	#![allow(deprecated)] // Reason: Backward compatibility for [`SelfSponsoring']
+
 	pub use super::*;
 	use evm_coder::execution::Result;
 	use frame_support::pallet_prelude::*;
@@ -33,8 +35,9 @@ pub mod pallet {
 	pub(super) type Owner<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = H160, QueryKind = ValueQuery>;
 
+
 	#[pallet::storage]
-	#[deprecated]
+	#[deprecated] // TODO: Remove #![allow(deprecated)] after migration
 	pub(super) type SelfSponsoring<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = bool, QueryKind = ValueQuery>;
 
@@ -76,6 +79,7 @@ pub mod pallet {
 	>;
 
 	impl<T: Config> Pallet<T> {
+		#[allow(deprecated)] // reason="Backward compatibility"
 		pub fn sponsoring_mode(contract: H160) -> SponsoringModeT {
 			<SponsoringMode<T>>::get(contract)
 				.or_else(|| {
@@ -83,6 +87,8 @@ pub mod pallet {
 				})
 				.unwrap_or_default()
 		}
+
+		#[allow(deprecated)] // reason="Backward compatibility"
 		pub fn set_sponsoring_mode(contract: H160, mode: SponsoringModeT) {
 			if mode == SponsoringModeT::Disabled {
 				<SponsoringMode<T>>::remove(contract);
