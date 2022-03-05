@@ -111,6 +111,8 @@ use unique_runtime_common::{
 // mod chain_extension;
 // use crate::chain_extension::{NFTExtension, Imbalance};
 
+pub const RUNTIME_NAME: &'static str = "Unique";
+
 pub type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
