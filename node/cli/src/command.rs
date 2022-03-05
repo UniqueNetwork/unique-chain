@@ -41,7 +41,6 @@ use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use cumulus_client_service::genesis::generate_genesis_block;
 use log::info;
-use unique_runtime::Block;
 use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
@@ -53,6 +52,17 @@ use sc_service::{
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
+
+#[cfg(feature = "unique-runtime")]
+use unique_runtime as runtime;
+
+#[cfg(feature = "quartz-runtime")]
+use quartz_runtime as runtime;
+
+#[cfg(feature = "opal-runtime")]
+use opal_runtime as runtime;
+
+use runtime::Block;
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
@@ -104,7 +114,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&unique_runtime::VERSION
+		&runtime::VERSION
 	}
 }
 

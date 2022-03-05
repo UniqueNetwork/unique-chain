@@ -51,7 +51,10 @@ fc-mapping-sync = { default-features = false, git = "https://github.com/uniquene
 pallet-unique = { path = "../../pallets/unique" }
 uc-rpc = { path = "../../client/rpc" }
 up-rpc = { path = "../../primitives/rpc" }
-unique-runtime = { path = "../../runtime" }
+unique-runtime = { path = "../../runtime/unique", optional = true }
+quartz-runtime = { path = "../../runtime/quartz", optional = true }
+opal-runtime = { path = "../../runtime/opal", optional = true }
 
 [features]
+default = ["unique-runtime"]
 std = []

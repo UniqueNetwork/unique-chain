@@ -239,7 +239,16 @@ branch = 'release-v0.9.17'
 # Local dependencies
 
 [dependencies.unique-runtime]
-path = '../../runtime'
+path = '../../runtime/unique'
+optional = true
+
+[dependencies.quartz-runtime]
+path = '../../runtime/quartz'
+optional = true
+
+[dependencies.opal-runtime]
+path = '../../runtime/opal'
+optional = true
 
 [dependencies.up-data-structs]
 path = "../../primitives/data-structs"
@@ -283,10 +292,10 @@ fc-db = { git = "https://github.com/uniquenetwork/frontier.git", branch = "uniqu
 fp-rpc = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.17" }
 pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.17" }
 
-unique-rpc = { path = "../rpc" }
+unique-rpc = { default-features = false, path = "../rpc" }
 
 [features]
-default = []
+default = ["unique-runtime"]
 runtime-benchmarks = [
     'unique-runtime/runtime-benchmarks',
     'polkadot-service/runtime-benchmarks',

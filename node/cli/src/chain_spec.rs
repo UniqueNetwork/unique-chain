@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use cumulus_primitives_core::ParaId;
-use unique_runtime::*;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use sp_core::{sr25519, Pair, Public};
@@ -25,8 +24,19 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use serde_json::map::Map;
 
+#[cfg(feature = "unique-runtime")]
+use unique_runtime as runtime;
+
+#[cfg(feature = "quartz-runtime")]
+use quartz_runtime as runtime;
+
+#[cfg(feature = "opal-runtime")]
+use opal_runtime as runtime;
+
+use runtime::{*, opaque::*};
+
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<unique_runtime::GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<runtime::GenesisConfig, Extensions>;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -217,8 +227,8 @@ fn testnet_genesis(
 	id: ParaId,
 ) -> GenesisConfig {
 	GenesisConfig {
-		system: unique_runtime::SystemConfig {
-			code: unique_runtime::WASM_BINARY
+		system: runtime::SystemConfig {
+			code: runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 		},
@@ -235,9 +245,9 @@ fn testnet_genesis(
 			key: Some(root_key),
 		},
 		vesting: VestingConfig { vesting: vec![] },
-		parachain_info: unique_runtime::ParachainInfoConfig { parachain_id: id },
+		parachain_info: runtime::ParachainInfoConfig { parachain_id: id },
 		parachain_system: Default::default(),
-		aura: unique_runtime::AuraConfig {
+		aura: runtime::AuraConfig {
 			authorities: initial_authorities,
 		},
 		aura_ext: Default::default(),
