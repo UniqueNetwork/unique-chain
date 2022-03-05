@@ -136,8 +136,8 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("quartz"),
-	impl_name: create_runtime_str!("quartz"),
+	spec_name: create_runtime_str!(RUNTIME_NAME),
+	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
 	spec_version: 916001,
 	impl_version: 0,
