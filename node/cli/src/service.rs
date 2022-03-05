@@ -26,7 +26,16 @@ use futures::StreamExt;
 
 use unique_rpc::overrides_handle;
 // Local Runtime Types
-use unique_runtime::RuntimeApi;
+#[cfg(feature = "unique-runtime")]
+use unique_runtime as runtime;
+
+#[cfg(feature = "quartz-runtime")]
+use quartz_runtime as runtime;
+
+#[cfg(feature = "opal-runtime")]
+use opal_runtime as runtime;
+
+use runtime::RuntimeApi;
 
 // Cumulus Imports
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
@@ -69,11 +78,11 @@ impl NativeExecutionDispatch for ParachainRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		unique_runtime::api::dispatch(method, data)
+		runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		unique_runtime::native_version()
+		runtime::native_version()
 	}
 }
 

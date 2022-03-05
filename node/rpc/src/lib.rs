@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use sp_runtime::traits::BlakeTwo256;
-use unique_runtime::{Hash, AccountId, CrossAccountId, Index, opaque::Block, BlockNumber, Balance};
 use fc_rpc::{
 	EthBlockDataCache, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
 	StorageOverride, SchemaV2Override, SchemaV3Override,
@@ -40,6 +39,17 @@ use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sc_service::TransactionPool;
 use std::{collections::BTreeMap, marker::PhantomData, sync::Arc};
+
+#[cfg(feature = "unique-runtime")]
+use unique_runtime as runtime;
+
+#[cfg(feature = "quartz-runtime")]
+use quartz_runtime as runtime;
+
+#[cfg(feature = "opal-runtime")]
+use opal_runtime as runtime;
+
+use runtime::opaque::{Hash, AccountId, CrossAccountId, Index, Block, BlockNumber, Balance};
 
 /// Public io handler for exporting into other modules
 pub type IoHandler = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
@@ -231,7 +241,7 @@ where
 		client.clone(),
 		pool.clone(),
 		graph,
-		unique_runtime::TransactionConverter,
+		runtime::TransactionConverter,
 		network.clone(),
 		signers,
 		overrides.clone(),
