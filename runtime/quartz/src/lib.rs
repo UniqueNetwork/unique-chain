@@ -1,18 +1,7 @@
-// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
-// This file is part of Unique Network.
-
-// Unique Network is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Unique Network is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
 
 //! The Substrate Node Template runtime. This can be compiled with `#[no_std]`, ready for Wasm.
 
@@ -34,11 +23,11 @@ use sp_runtime::DispatchError;
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify,
+		AccountIdLookup, BlakeTwo256, Block as BlockT,
 		AccountIdConversion, Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiSignature, RuntimeAppPublic,
+	ApplyExtrinsicResult, RuntimeAppPublic,
 };
 
 use sp_std::prelude::*;
@@ -97,9 +86,8 @@ use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
 	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser,
-	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-	ParentIsPreset,
 };
 use xcm_executor::{Config, XcmExecutor, Assets};
 use sp_std::{marker::PhantomData};
@@ -115,50 +103,27 @@ use xcm_executor::traits::{MatchesFungible, WeightTrader};
 //use xcm_executor::traits::MatchesFungible;
 use sp_runtime::traits::CheckedConversion;
 
+use unique_runtime_common::{
+	types::*,
+	constants::*,
+};
+
 // mod chain_extension;
 // use crate::chain_extension::{NFTExtension, Imbalance};
 
-/// An index to a block.
-pub type BlockNumber = u32;
-
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
 pub type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
-
-/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
-/// never know...
-pub type AccountIndex = u32;
-
-/// Balance of an account.
-pub type Balance = u128;
-
-/// Index of a transaction in the chain.
-pub type Index = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
-
-/// Digest item type.
-pub type DigestItem = generic::DigestItem;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
 /// to even the core data structures.
 pub mod opaque {
-	use super::*;
+	use sp_std::prelude::*;
+	use sp_runtime::impl_opaque_keys;
+	use super::Aura;
 
-	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-
-	/// Opaque block type.
-	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-
-	pub type SessionHandlers = ();
+	pub use unique_runtime_common::types::*;
+	pub use super::CrossAccountId;
 
 	impl_opaque_keys! {
 		pub struct SessionKeys {
@@ -172,25 +137,12 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("quartz"),
 	impl_name: create_runtime_str!("quartz"),
 	authoring_version: 1,
-	spec_version: 917004,
+	spec_version: 916001,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 	state_version: 0,
 };
-
-pub const MILLISECS_PER_BLOCK: u64 = 12000;
-
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
-
-// These time units are defined in number of blocks.
-pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-pub const HOURS: BlockNumber = MINUTES * 60;
-pub const DAYS: BlockNumber = HOURS * 24;
-
-parameter_types! {
-	pub const DefaultSponsoringRateLimit: BlockNumber = 1 * DAYS;
-}
 
 #[derive(codec::Encode, codec::Decode)]
 pub enum XCMPMessage<XAccountId, XBalance> {
@@ -225,15 +177,6 @@ impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 	}
 }
 
-/// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
-/// This is used to limit the maximal weight of a single extrinsic.
-const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
-/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
-/// by  Operational  extrinsics.
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
-/// We allow for 2 seconds of compute with a 6 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
-
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
 	pub RuntimeBlockLength: BlockLength =
@@ -259,27 +202,18 @@ parameter_types! {
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
 	pub const Version: RuntimeVersion = VERSION;
-	/*
-	255 - Quartz
-	42 - Opal
-	*/
 	pub const SS58Prefix: u8 = 255;
 }
 
-/*
-8880 - Unique
-8881 - Quartz
-8882 - Opal
-*/
 parameter_types! {
-	pub const ChainId: u64 = 8881;
+	pub const ChainId: u64 = 8888;
 }
 
 pub struct FixedFee;
 impl FeeCalculator for FixedFee {
 	fn min_gas_price() -> U256 {
 		// Targeting 0.15 UNQ per transfer
-		1_018_751_825_264u64.into()
+		1_024_947_215_000u64.into()
 	}
 }
 
@@ -644,7 +578,7 @@ parameter_types! {
 /// `Transact` in order to determine the dispatch Origin.
 pub type LocationToAccountId = (
 	// The parent (Relay-chain) origin converts to the default `AccountId`.
-	ParentIsPreset<AccountId>,
+	ParentIsDefault<AccountId>,
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
@@ -879,8 +813,6 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
-	type ControllerOrigin = EnsureRoot<AccountId>;
-	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
@@ -897,7 +829,7 @@ impl pallet_aura::Config for Runtime {
 
 parameter_types! {
 	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account();
-	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
+	pub const CollectionCreationPrice: Balance = 100 * UNIQUE;
 }
 
 impl pallet_common::Config for Runtime {
