@@ -2,7 +2,7 @@
 name = "unique-rpc"
 version = "0.1.0"
 authors = ['Unique Network <support@uniquenetwork.io>']
-license = 'All Rights Reserved'
+license = 'GPLv3'
 edition = "2021"
 description = "Unique chain rpc"
 
