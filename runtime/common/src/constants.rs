@@ -1,9 +1,7 @@
 use sp_runtime::Perbill;
 use frame_support::{
-    parameter_types, weights::{
-        Weight,
-        constants::WEIGHT_PER_SECOND
-    },
+	parameter_types,
+	weights::{Weight, constants::WEIGHT_PER_SECOND},
 };
 use crate::types::BlockNumber;
 

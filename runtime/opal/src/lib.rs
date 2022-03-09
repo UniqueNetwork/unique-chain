@@ -33,10 +33,7 @@ use sp_runtime::DispatchError;
 
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
-	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT,
-		AccountIdConversion, Zero,
-	},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, RuntimeAppPublic,
 };
@@ -115,10 +112,7 @@ use xcm_executor::traits::{MatchesFungible, WeightTrader};
 //use xcm_executor::traits::MatchesFungible;
 use sp_runtime::traits::CheckedConversion;
 
-use unique_runtime_common::{
-	types::*,
-	constants::*,
-};
+use unique_runtime_common::{types::*, constants::*};
 
 // mod chain_extension;
 // use crate::chain_extension::{NFTExtension, Imbalance};
