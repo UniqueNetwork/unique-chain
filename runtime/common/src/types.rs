@@ -1,7 +1,5 @@
 use sp_runtime::{
-	traits::{
-		Verify, IdentifyAccount, BlakeTwo256,
-	},
+	traits::{Verify, IdentifyAccount, BlakeTwo256},
 	generic, MultiSignature,
 };
 
