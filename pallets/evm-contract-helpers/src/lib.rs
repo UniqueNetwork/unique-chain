@@ -33,6 +33,8 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config {
 		type ContractAddress: Get<H160>;
 		type DefaultSponsoringRateLimit: Get<Self::BlockNumber>;
+		type EvmAddressMapping: pallet_evm::AddressMapping<Self::AccountId>;
+		type EvmBackwardsAddressMapping: up_evm_mapping::EvmBackwardsAddressMapping<Self::AccountId>;
 	}
 
 	#[pallet::error]

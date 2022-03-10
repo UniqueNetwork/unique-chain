@@ -32,14 +32,12 @@ use pallet_nonfungible::erc::{UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721C
 use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};
 
 pub struct UniqueEthSponsorshipHandler<T: Config>(PhantomData<*const T>);
-impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for UniqueEthSponsorshipHandler<T> {
-	fn get_sponsor(who: &H160, call: &(H160, Vec<u8>)) -> Option<H160> {
+impl<T: Config> SponsorshipHandler<T::AccountId, (H160, Vec<u8>)> for UniqueEthSponsorshipHandler<T> {
+	fn get_sponsor(who: &T::AccountId, call: &(H160, Vec<u8>)) -> Option<T::AccountId> {
 		let collection_id = map_eth_to_id(&call.0)?;
 		let collection = <CollectionHandle<T>>::new(collection_id)?;
 		let sponsor = collection.sponsorship.sponsor()?.clone();
-		let sponsor =
-			<T as pallet_common::Config>::EvmBackwardsAddressMapping::from_account_id(sponsor);
-		let who = T::CrossAccountId::from_eth(*who);
+		let who = T::CrossAccountId::from_sub(who.clone());
 		let (method_id, mut reader) = AbiReader::new_call(&call.1).ok()?;
 		match &collection.mode {
 			crate::CollectionMode::NFT => {

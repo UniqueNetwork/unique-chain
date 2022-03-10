@@ -17,14 +17,17 @@
 use core::marker::PhantomData;
 use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use pallet_evm::{ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure};
+use pallet_evm::{
+	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, AddressMapping
+};
 use sp_core::H160;
 use crate::{
 	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringRateLimit, SponsoringModeT,
 };
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
-use sp_std::{convert::TryInto, vec::Vec};
+use up_evm_mapping::EvmBackwardsAddressMapping;
+use sp_std::vec::Vec;
 
 struct ContractHelpers<T: Config>(SubstrateRecorder<T>);
 impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
@@ -177,13 +180,15 @@ impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 }
 
 pub struct HelpersContractSponsoring<T: Config>(PhantomData<*const T>);
-impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for HelpersContractSponsoring<T> {
-	fn get_sponsor(who: &H160, call: &(H160, Vec<u8>)) -> Option<H160> {
+impl<T: Config> SponsorshipHandler<T::AccountId, (H160, Vec<u8>)> for HelpersContractSponsoring<T> {
+	fn get_sponsor(who: &T::AccountId, call: &(H160, Vec<u8>)) -> Option<T::AccountId> {
 		let mode = <Pallet<T>>::sponsoring_mode(call.0);
 		if mode == SponsoringModeT::Disabled {
 			return None;
 		}
-		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(call.0, *who) {
+
+		let who = T::EvmBackwardsAddressMapping::from_account_id(who.clone());
+		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(call.0, who) {
 			return None;
 		}
 		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
@@ -199,7 +204,8 @@ impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for HelpersContractSpo
 
 		<SponsorBasket<T>>::insert(&call.0, who, block_number);
 
-		Some(call.0)
+		let sponsor = T::EvmAddressMapping::into_account_id(call.0);
+		Some(sponsor)
 	}
 }
 

@@ -36,7 +36,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type EvmSponsorshipHandler: SponsorshipHandler<H160, (H160, Vec<u8>)>;
+		type EvmSponsorshipHandler: SponsorshipHandler<Self::AccountId, (H160, Vec<u8>)>;
 		type Currency: Currency<Self::AccountId>;
 		type EvmBackwardsAddressMapping: EvmBackwardsAddressMapping<Self::AccountId>;
 		type EvmAddressMapping: AddressMapping<Self::AccountId>;
@@ -60,14 +60,15 @@ where
 }
 
 pub struct TransactionValidityHack<T: Config>(PhantomData<*const T>);
-impl<T: Config> fp_evm::TransactionValidityHack for TransactionValidityHack<T> {
-	fn who_pays_fee(origin: H160, reason: &WithdrawReason) -> Option<H160> {
+impl<T: Config> fp_evm::TransactionValidityHack<T::AccountId> for TransactionValidityHack<T> {
+	fn who_pays_fee(origin: H160, reason: &WithdrawReason) -> Option<T::AccountId> {
 		match reason {
 			WithdrawReason::Call { target, input } => {
 				// This method is only used for checking, we shouldn't touch storage in it
 				frame_support::storage::with_transaction(|| {
+					let origin_sub = T::EvmAddressMapping::into_account_id(origin);
 					TransactionOutcome::Rollback(T::EvmSponsorshipHandler::get_sponsor(
-						&origin,
+						&origin_sub,
 						&(*target, input.clone()),
 					))
 				})
@@ -85,33 +86,36 @@ where
 	type LiquidityInfo = Option<ChargeEvmLiquidityInfo<T>>;
 
 	fn withdraw_fee(
-		who: &H160,
+		who: &T::AccountId,
 		reason: WithdrawReason,
 		fee: U256,
 	) -> core::result::Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
-		let mut who_pays_fee = *who;
+		let mut who_pays_fee = who.clone();
 		if let WithdrawReason::Call { target, input } = &reason {
 			who_pays_fee = T::EvmSponsorshipHandler::get_sponsor(who, &(*target, input.clone()))
 				.unwrap_or(who_pays_fee);
 		}
+
 		let negative_imbalance = EVMCurrencyAdapter::<<T as Config>::Currency, ()>::withdraw_fee(
 			&who_pays_fee,
 			reason,
 			fee,
 		)?;
+
+		let who_pays_fee_eth = T::EvmBackwardsAddressMapping::from_account_id(who_pays_fee);
 		Ok(negative_imbalance.map(|i| ChargeEvmLiquidityInfo {
-			who: who_pays_fee,
+			who: who_pays_fee_eth,
 			negative_imbalance: i,
 		}))
 	}
 
 	fn correct_and_deposit_fee(
-		who: &H160,
+		who: &T::AccountId,
 		corrected_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
 	) {
 		<EVMCurrencyAdapter<<T as Config>::Currency, ()> as pallet_evm::OnChargeEVMTransaction<T>>::correct_and_deposit_fee(
-			&already_withdrawn.as_ref().map(|e| e.who).unwrap_or(*who),
+			&already_withdrawn.as_ref().map(|e| T::EvmAddressMapping::into_account_id(e.who)).unwrap_or(who.clone()),
 			corrected_fee,
 			already_withdrawn.map(|e| e.negative_imbalance),
 		)
@@ -142,7 +146,6 @@ where
 					<frame_system::RawOrigin<T::AccountId>>::Signed(who.clone()).into(),
 				)
 				.ok()?;
-				let who = T::EvmBackwardsAddressMapping::from_account_id(who.clone());
 				// Effects from EvmSponsorshipHandler are applied in OnChargeEvmTransaction by pallet_evm::runner
 				// TODO: Should we implement simulation mode (test, but do not apply effects) in `up-sponsorship`?
 				let sponsor = frame_support::storage::with_transaction(|| {
@@ -151,7 +154,6 @@ where
 						&(*target, input.clone()),
 					))
 				})?;
-				let sponsor = T::EvmAddressMapping::into_account_id(sponsor);
 				Some(sponsor)
 			}
 			_ => None,
