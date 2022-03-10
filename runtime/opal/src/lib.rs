@@ -114,10 +114,7 @@ use sp_runtime::traits::CheckedConversion;
 
 use unique_runtime_common::{types::*, constants::*};
 
-// mod chain_extension;
-// use crate::chain_extension::{NFTExtension, Imbalance};
-
-pub const RUNTIME_NAME: &'static str = "Opal";
+pub const RUNTIME_NAME: &str = "Opal";
 
 pub type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
 
@@ -214,7 +211,7 @@ parameter_types! {
 	255 - Quartz
 	42 - Opal
 	*/
-	pub const SS58Prefix: u8 = 255;
+	pub const SS58Prefix: u8 = 42;
 }
 
 /*
@@ -223,7 +220,7 @@ parameter_types! {
 8882 - Opal
 */
 parameter_types! {
-	pub const ChainId: u64 = 8881;
+	pub const ChainId: u64 = 8882;
 }
 
 pub struct FixedFee;
