@@ -114,10 +114,7 @@ use sp_runtime::traits::CheckedConversion;
 
 use unique_runtime_common::{types::*, constants::*};
 
-// mod chain_extension;
-// use crate::chain_extension::{NFTExtension, Imbalance};
-
-pub const RUNTIME_NAME: &'static str = "Opal";
+pub const RUNTIME_NAME: &str = "Opal";
 
 pub type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
 
