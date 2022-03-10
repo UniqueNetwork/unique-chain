@@ -210,11 +210,6 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
-/*
-8880 - Unique
-8881 - Quartz
-8882 - Opal
-*/
 parameter_types! {
 	pub const ChainId: u64 = 8882;
 }
