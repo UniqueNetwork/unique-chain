@@ -591,7 +591,11 @@ impl<T: Config> Pallet<T> {
 							let $old = $old.$field($($arg)?);
 							let _ = $new;
 							let _ = $old;
-							$check
+
+							// If limit is none allowed to set it 
+							if Some($old).is_some() {
+								$check
+							} 
 						} else {
 							$new.$field = $old.$field
 						}
