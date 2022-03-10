@@ -1,10 +1,26 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 use core::marker::PhantomData;
 use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure};
 use sp_core::H160;
 use crate::{
-	AllowlistEnabled, Config, Owner, Pallet, SelfSponsoring, SponsorBasket, SponsoringRateLimit,
+	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringRateLimit, SponsoringModeT,
 };
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
@@ -28,9 +44,10 @@ impl<T: Config> ContractHelpers<T> {
 	}
 
 	fn sponsoring_enabled(&self, contract_address: address) -> Result<bool> {
-		Ok(<SelfSponsoring<T>>::get(contract_address))
+		Ok(<Pallet<T>>::sponsoring_mode(contract_address) != SponsoringModeT::Disabled)
 	}
 
+	/// Deprecated
 	fn toggle_sponsoring(
 		&mut self,
 		caller: caller,
@@ -40,6 +57,22 @@ impl<T: Config> ContractHelpers<T> {
 		<Pallet<T>>::ensure_owner(contract_address, caller)?;
 		<Pallet<T>>::toggle_sponsoring(contract_address, enabled);
 		Ok(())
+	}
+
+	fn set_sponsoring_mode(
+		&mut self,
+		caller: caller,
+		contract_address: address,
+		mode: uint8,
+	) -> Result<void> {
+		<Pallet<T>>::ensure_owner(contract_address, caller)?;
+		let mode = SponsoringModeT::from_eth(mode).ok_or("unknown mode")?;
+		<Pallet<T>>::set_sponsoring_mode(contract_address, mode);
+		Ok(())
+	}
+
+	fn sponsoring_mode(&self, contract_address: address) -> Result<uint8> {
+		Ok(<Pallet<T>>::sponsoring_mode(contract_address).to_eth())
 	}
 
 	fn set_sponsoring_rate_limit(
@@ -61,8 +94,7 @@ impl<T: Config> ContractHelpers<T> {
 
 	fn allowed(&self, contract_address: address, user: address) -> Result<bool> {
 		self.0.consume_sload()?;
-		Ok(<Pallet<T>>::allowed(contract_address, user)
-			|| !<AllowlistEnabled<T>>::get(contract_address))
+		Ok(<Pallet<T>>::allowed(contract_address, user))
 	}
 
 	fn allowlist_enabled(&self, contract_address: address) -> Result<bool> {
@@ -147,10 +179,11 @@ impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 pub struct HelpersContractSponsoring<T: Config>(PhantomData<*const T>);
 impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for HelpersContractSponsoring<T> {
 	fn get_sponsor(who: &H160, call: &(H160, Vec<u8>)) -> Option<H160> {
-		if !<SelfSponsoring<T>>::get(&call.0) {
+		let mode = <Pallet<T>>::sponsoring_mode(call.0);
+		if mode == SponsoringModeT::Disabled {
 			return None;
 		}
-		if !<Pallet<T>>::allowed(call.0, *who) {
+		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(call.0, *who) {
 			return None;
 		}
 		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;

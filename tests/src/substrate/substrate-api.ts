@@ -1,8 +1,20 @@
-//
-// This file is subject to the terms and conditions defined in
-// file 'LICENSE', which is part of this source code package.
-//
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
 
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
+import '../interfaces/augment-api-events';
 import {WsProvider, ApiPromise} from '@polkadot/api';
 import {EventRecord} from '@polkadot/types/interfaces/system/types';
 import {ExtrinsicStatus} from '@polkadot/types/interfaces/author/types';
@@ -93,6 +105,32 @@ function getTransactionStatus(events: EventRecord[], status: ExtrinsicStatus): T
   }
 
   return TransactionStatus.Fail;
+}
+
+export function executeTransaction(api: ApiPromise, sender: IKeyringPair, transaction: SubmittableExtrinsic<'promise'>): Promise<EventRecord[]> {
+  return new Promise(async (res, rej) => {
+    try {
+      await transaction.signAndSend(sender, ({events, status}) => {
+        if (!status.isInBlock && !status.isFinalized) return;
+        for (const {event} of events) {
+          if (api.events.system.ExtrinsicSuccess.is(event)) {
+            res(events);
+          } else if (api.events.system.ExtrinsicFailed.is(event)) {
+            const {data: [error]} = event;
+            if (error.isModule) {
+              const decoded = api.registry.findMetaError(error.asModule);
+              const {method, section} = decoded;
+              rej(new Error(`${section}.${method}`));
+            } else {
+              rej(new Error(error.toString()));
+            }
+          }
+        }
+      });
+    } catch (e) {
+      rej(e);
+    }
+  });
 }
 
 export function

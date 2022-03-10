@@ -1,3 +1,19 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 #![cfg(feature = "runtime-benchmarks")]
 
 use super::*;
@@ -5,9 +21,8 @@ use crate::Pallet;
 use frame_system::RawOrigin;
 use frame_benchmarking::{benchmarks, account};
 use up_data_structs::*;
-use core::convert::TryInto;
 use sp_runtime::DispatchError;
-use pallet_common::benchmarking::{create_data, create_u16_data};
+use pallet_common::benchmarking::{create_data, create_var_data, create_u16_data};
 
 const SEED: u32 = 1;
 
@@ -16,13 +31,9 @@ fn create_collection_helper<T: Config>(
 	mode: CollectionMode,
 ) -> Result<CollectionId, DispatchError> {
 	T::Currency::deposit_creating(&owner, T::CollectionCreationPrice::get());
-	let col_name = create_u16_data(MAX_COLLECTION_NAME_LENGTH)
-		.try_into()
-		.unwrap();
-	let col_desc = create_u16_data(MAX_COLLECTION_DESCRIPTION_LENGTH)
-		.try_into()
-		.unwrap();
-	let token_prefix = create_data(MAX_TOKEN_PREFIX_LENGTH).try_into().unwrap();
+	let col_name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
+	let col_desc = create_u16_data::<MAX_COLLECTION_DESCRIPTION_LENGTH>();
+	let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
 	<Pallet<T>>::create_collection(
 		RawOrigin::Signed(owner).into(),
 		col_name,
@@ -37,11 +48,10 @@ fn create_nft_collection<T: Config>(owner: T::AccountId) -> Result<CollectionId,
 }
 
 benchmarks! {
-
 	create_collection {
-		let col_name: Vec<u16> = create_u16_data(MAX_COLLECTION_NAME_LENGTH);
-		let col_desc: Vec<u16> = create_u16_data(MAX_COLLECTION_DESCRIPTION_LENGTH);
-		let token_prefix: Vec<u8> = create_data(MAX_TOKEN_PREFIX_LENGTH);
+		let col_name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
+		let col_desc = create_u16_data::<MAX_COLLECTION_DESCRIPTION_LENGTH>();
+		let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
 		let mode: CollectionMode = CollectionMode::NFT;
 		let caller: T::AccountId = account("caller", 0, SEED);
 		T::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
@@ -125,7 +135,7 @@ benchmarks! {
 
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
-		let data = create_data(b as usize);
+		let data = create_var_data(b);
 	}: set_offchain_schema(RawOrigin::Signed(caller.clone()), collection, data)
 
 	set_const_on_chain_schema {
@@ -133,7 +143,7 @@ benchmarks! {
 
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
-		let data = create_data(b as usize);
+		let data = create_var_data(b);
 	}: set_const_on_chain_schema(RawOrigin::Signed(caller.clone()), collection, data)
 
 	set_variable_on_chain_schema {
@@ -141,7 +151,7 @@ benchmarks! {
 
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
-		let data = create_data(b as usize);
+		let data = create_var_data(b);
 	}: set_variable_on_chain_schema(RawOrigin::Signed(caller.clone()), collection, data)
 
 	set_schema_version {

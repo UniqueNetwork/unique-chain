@@ -1,6 +1,27 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::convert::{TryFrom, TryInto};
+use core::{
+	convert::{TryFrom, TryInto},
+	fmt,
+};
+use frame_support::storage::bounded_btree_map::BoundedBTreeMap;
+use sp_std::collections::btree_map::BTreeMap;
 
 #[cfg(feature = "serde")]
 pub use serde::{Serialize, Deserialize};
@@ -26,6 +47,8 @@ pub use frame_support::{
 };
 use derivative::Derivative;
 use scale_info::TypeInfo;
+
+mod migration;
 
 pub const MAX_DECIMAL_POINTS: DecimalPoints = 30;
 pub const MAX_REFUNGIBLE_PIECES: u128 = 1_000_000_000_000_000_000_000;
@@ -64,7 +87,7 @@ pub const SPONSOR_APPROVE_TIMEOUT: u32 = 5;
 // Schema limits
 pub const OFFCHAIN_SCHEMA_LIMIT: u32 = 8192;
 pub const VARIABLE_ON_CHAIN_SCHEMA_LIMIT: u32 = 8192;
-pub const CONST_ON_CHAIN_SCHEMA_LIMIT: u32 = 1048576;
+pub const CONST_ON_CHAIN_SCHEMA_LIMIT: u32 = 32768;
 
 pub const MAX_COLLECTION_NAME_LENGTH: u32 = 64;
 pub const MAX_COLLECTION_DESCRIPTION_LENGTH: u32 = 256;
@@ -74,9 +97,7 @@ pub const MAX_TOKEN_PREFIX_LENGTH: u32 = 16;
 /// create_many call
 pub const MAX_ITEMS_PER_BATCH: u32 = 200;
 
-parameter_types! {
-	pub const CustomDataLimit: u32 = CUSTOM_DATA_LIMIT;
-}
+pub type CustomDataLimit = ConstU32<CUSTOM_DATA_LIMIT>;
 
 #[derive(
 	Encode,
@@ -263,6 +284,31 @@ pub struct Collection<AccountId> {
 	pub meta_update_permission: MetaUpdatePermission,
 }
 
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Debug, Derivative, MaxEncodedLen)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derivative(Default(bound = ""))]
+pub struct CreateCollectionData<AccountId> {
+	#[derivative(Default(value = "CollectionMode::NFT"))]
+	pub mode: CollectionMode,
+	pub access: Option<AccessMode>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub offchain_schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
+	pub schema_version: Option<SchemaVersion>,
+	pub pending_sponsor: Option<AccountId>,
+	pub limits: Option<CollectionLimits>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
+	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
+	pub const_on_chain_schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>,
+	pub meta_update_permission: Option<MetaUpdatePermission>,
+}
+
 #[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct NftItemType<AccountId> {
@@ -294,7 +340,7 @@ pub struct CollectionLimits {
 	/// None - setVariableMetadata is not sponsored
 	/// Some(v) - setVariableMetadata is sponsored
 	///           if there is v block between txs
-	pub sponsored_data_rate_limit: Option<(Option<u32>,)>,
+	pub sponsored_data_rate_limit: Option<SponsoringRateLimit>,
 	pub token_limit: Option<u32>,
 
 	// Timeouts for item types in passed blocks
@@ -341,11 +387,21 @@ impl CollectionLimits {
 		self.transfers_enabled.unwrap_or(true)
 	}
 	pub fn sponsored_data_rate_limit(&self) -> Option<u32> {
-		self.sponsored_data_rate_limit
-			.unwrap_or((None,))
-			.0
-			.map(|v| v.min(MAX_SPONSOR_TIMEOUT))
+		match self
+			.sponsored_data_rate_limit
+			.unwrap_or(SponsoringRateLimit::SponsoringDisabled)
+		{
+			SponsoringRateLimit::SponsoringDisabled => None,
+			SponsoringRateLimit::Blocks(v) => Some(v.min(MAX_SPONSOR_TIMEOUT)),
+		}
 	}
+}
+
+#[derive(Encode, Decode, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub enum SponsoringRateLimit {
+	SponsoringDisabled,
+	Blocks(u32),
 }
 
 /// BoundedVec doesn't supports serde
@@ -380,15 +436,72 @@ mod bounded_serde {
 	}
 }
 
+fn bounded_debug<V, S>(v: &BoundedVec<V, S>, f: &mut fmt::Formatter) -> Result<(), fmt::Error>
+where
+	V: fmt::Debug,
+{
+	use core::fmt::Debug;
+	(&v as &Vec<V>).fmt(f)
+}
+
+#[cfg(feature = "serde1")]
+#[allow(dead_code)]
+mod bounded_map_serde {
+	use core::convert::TryFrom;
+	use sp_std::collections::btree_map::BTreeMap;
+	use frame_support::{traits::Get, storage::bounded_btree_map::BoundedBTreeMap};
+	use serde::{
+		ser::{self, Serialize},
+		de::{self, Deserialize, Error},
+	};
+	pub fn serialize<D, K, V, S>(
+		value: &BoundedBTreeMap<K, V, S>,
+		serializer: D,
+	) -> Result<D::Ok, D::Error>
+	where
+		D: ser::Serializer,
+		K: Serialize + Ord,
+		V: Serialize,
+	{
+		(value as &BTreeMap<_, _>).serialize(serializer)
+	}
+
+	pub fn deserialize<'de, D, K, V, S>(
+		deserializer: D,
+	) -> Result<BoundedBTreeMap<K, V, S>, D::Error>
+	where
+		D: de::Deserializer<'de>,
+		K: de::Deserialize<'de> + Ord,
+		V: de::Deserialize<'de>,
+		S: Get<u32>,
+	{
+		let map = <BTreeMap<K, V>>::deserialize(deserializer)?;
+		let len = map.len();
+		TryFrom::try_from(map).map_err(|_| D::Error::invalid_length(len, &"lesser size"))
+	}
+}
+
+fn bounded_map_debug<K, V, S>(
+	v: &BoundedBTreeMap<K, V, S>,
+	f: &mut fmt::Formatter,
+) -> Result<(), fmt::Error>
+where
+	K: fmt::Debug + Ord,
+	V: fmt::Debug,
+{
+	use core::fmt::Debug;
+	(&v as &BTreeMap<K, V>).fmt(f)
+}
+
 #[derive(Encode, Decode, MaxEncodedLen, Default, PartialEq, Clone, Derivative, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 #[derivative(Debug)]
 pub struct CreateNftData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
-	#[derivative(Debug = "ignore")]
+	#[derivative(Debug(format_with = "bounded_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
 	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
-	#[derivative(Debug = "ignore")]
+	#[derivative(Debug(format_with = "bounded_debug"))]
 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 }
 
@@ -403,10 +516,10 @@ pub struct CreateFungibleData {
 #[derivative(Debug)]
 pub struct CreateReFungibleData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
-	#[derivative(Debug = "ignore")]
+	#[derivative(Debug(format_with = "bounded_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
 	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
-	#[derivative(Debug = "ignore")]
+	#[derivative(Debug(format_with = "bounded_debug"))]
 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 	pub pieces: u128,
 }
@@ -431,6 +544,47 @@ pub enum CreateItemData {
 	NFT(CreateNftData),
 	Fungible(CreateFungibleData),
 	ReFungible(CreateReFungibleData),
+}
+
+#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
+#[derivative(Debug)]
+pub struct CreateNftExData<CrossAccountId> {
+	#[derivative(Debug(format_with = "bounded_debug"))]
+	pub const_data: BoundedVec<u8, CustomDataLimit>,
+	#[derivative(Debug(format_with = "bounded_debug"))]
+	pub variable_data: BoundedVec<u8, CustomDataLimit>,
+	pub owner: CrossAccountId,
+}
+
+#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
+#[derivative(Debug(bound = "CrossAccountId: fmt::Debug + Ord"))]
+pub struct CreateRefungibleExData<CrossAccountId> {
+	#[derivative(Debug(format_with = "bounded_debug"))]
+	pub const_data: BoundedVec<u8, CustomDataLimit>,
+	#[derivative(Debug(format_with = "bounded_debug"))]
+	pub variable_data: BoundedVec<u8, CustomDataLimit>,
+	#[derivative(Debug(format_with = "bounded_map_debug"))]
+	pub users: BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
+}
+
+#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
+#[derivative(Debug(bound = "CrossAccountId: fmt::Debug + Ord"))]
+pub enum CreateItemExData<CrossAccountId> {
+	NFT(
+		#[derivative(Debug(format_with = "bounded_debug"))]
+		BoundedVec<CreateNftExData<CrossAccountId>, ConstU32<MAX_ITEMS_PER_BATCH>>,
+	),
+	Fungible(
+		#[derivative(Debug(format_with = "bounded_map_debug"))]
+		BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
+	),
+	/// Many tokens, each may have only one owner
+	RefungibleMultipleItems(
+		#[derivative(Debug(format_with = "bounded_debug"))]
+		BoundedVec<CreateRefungibleExData<CrossAccountId>, ConstU32<MAX_ITEMS_PER_BATCH>>,
+	),
+	/// Single token, which may have many owners
+	RefungibleMultipleOwners(CreateRefungibleExData<CrossAccountId>),
 }
 
 impl CreateItemData {

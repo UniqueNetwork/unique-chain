@@ -1,8 +1,26 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use erc::ERC721Events;
 use frame_support::{BoundedVec, ensure};
-use up_data_structs::{AccessMode, Collection, CollectionId, CustomDataLimit, TokenId};
+use up_data_structs::{
+	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
+};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, account::CrossAccountId,
 };
@@ -22,11 +40,7 @@ pub mod common;
 pub mod erc;
 pub mod weights;
 
-pub struct CreateItemData<T: Config> {
-	pub const_data: BoundedVec<u8, CustomDataLimit>,
-	pub variable_data: BoundedVec<u8, CustomDataLimit>,
-	pub owner: T::CrossAccountId,
-}
+pub type CreateItemData<T> = CreateNftExData<<T as pallet_common::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
@@ -140,8 +154,11 @@ impl<T: Config> Pallet<T> {
 
 // unchecked calls skips any permission checks
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(data)
+	pub fn init_collection(
+		owner: T::AccountId,
+		data: CreateCollectionData<T::AccountId>,
+	) -> Result<CollectionId, DispatchError> {
+		<PalletCommon<T>>::init_collection(owner, data)
 	}
 	pub fn destroy_collection(
 		collection: NonfungibleHandle<T>,
@@ -492,7 +509,7 @@ impl<T: Config> Pallet<T> {
 		if <Allowance<T>>::get((collection.id, token)).as_ref() != Some(spender) {
 			ensure!(
 				collection.ignores_allowance(spender),
-				<CommonError<T>>::TokenValueNotEnough
+				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
 
@@ -520,7 +537,7 @@ impl<T: Config> Pallet<T> {
 		if <Allowance<T>>::get((collection.id, token)).as_ref() != Some(spender) {
 			ensure!(
 				collection.ignores_allowance(spender),
-				<CommonError<T>>::TokenValueNotEnough
+				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
 

@@ -1,27 +1,39 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 import {expect} from 'chai';
-import {contractHelpers, createEthAccount, createEthAccountWithBalance, deployFlipper, itWeb3} from './util/helpers';
+import {contractHelpers, createEthAccountWithBalance, deployFlipper, itWeb3} from './util/helpers';
 
 describe('EVM allowlist', () => {
   itWeb3('Contract allowlist can be toggled', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
     const flipper = await deployFlipper(web3, owner);
-    const randomUser = createEthAccount(web3);
 
     const helpers = contractHelpers(web3, owner);
 
     // Any user is allowed by default
     expect(await helpers.methods.allowlistEnabled(flipper.options.address).call()).to.be.false;
-    expect(await helpers.methods.allowed(flipper.options.address, randomUser).call()).to.be.true;
 
     // Enable
     await helpers.methods.toggleAllowlist(flipper.options.address, true).send({from: owner});
     expect(await helpers.methods.allowlistEnabled(flipper.options.address).call()).to.be.true;
-    expect(await helpers.methods.allowed(flipper.options.address, randomUser).call()).to.be.false;
 
     // Disable
     await helpers.methods.toggleAllowlist(flipper.options.address, false).send({from: owner});
     expect(await helpers.methods.allowlistEnabled(flipper.options.address).call()).to.be.false;
-    expect(await helpers.methods.allowed(flipper.options.address, randomUser).call()).to.be.true;
   });
 
   itWeb3('Non-allowlisted user can\'t call contract with allowlist enabled', async ({api, web3}) => {

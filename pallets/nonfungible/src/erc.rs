@@ -1,3 +1,19 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
@@ -232,7 +248,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		<Pallet<T>>::create_item(
 			self,
 			&caller,
-			CreateItemData {
+			CreateItemData::<T> {
 				const_data: BoundedVec::default(),
 				variable_data: BoundedVec::default(),
 				owner: to,
@@ -268,7 +284,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		<Pallet<T>>::create_item(
 			self,
 			&caller,
-			CreateItemData {
+			CreateItemData::<T> {
 				const_data: Vec::<u8>::from(token_uri)
 					.try_into()
 					.map_err(|_| "token uri is too long")?,
@@ -376,7 +392,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
 		}
 		let data = (0..total_tokens)
-			.map(|_| CreateItemData {
+			.map(|_| CreateItemData::<T> {
 				const_data: BoundedVec::default(),
 				variable_data: BoundedVec::default(),
 				owner: to.clone(),
@@ -409,7 +425,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			}
 			expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
 
-			data.push(CreateItemData {
+			data.push(CreateItemData::<T> {
 				const_data: Vec::<u8>::from(token_uri)
 					.try_into()
 					.map_err(|_| "token uri is too long")?,

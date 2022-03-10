@@ -1,3 +1,19 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(not(feature = "std"))]
@@ -18,7 +34,7 @@ pub mod pallet {
 		execution::{self, Result},
 		types::{Msg, value},
 	};
-	use frame_support::{ensure};
+	use frame_support::{ensure, sp_runtime::ModuleError};
 	use pallet_evm::{
 		ExitError, ExitRevert, ExitSucceed, GasWeightMapping, PrecompileFailure, PrecompileOutput,
 		PrecompileResult, runner::stack::MaybeMirroredLog,
@@ -207,7 +223,7 @@ pub mod pallet {
 	pub fn dispatch_to_evm<T: Config>(err: DispatchError) -> evm_coder::execution::Error {
 		use evm_coder::execution::Error as ExError;
 		match err {
-			DispatchError::Module { index, error, .. }
+			DispatchError::Module(ModuleError { index, error, .. })
 				if index
 					== T::PalletInfo::index::<Pallet<T>>()
 						.expect("evm-coder-substrate is a pallet, which should be added to runtime")
@@ -219,10 +235,10 @@ pub mod pallet {
 					_ => unreachable!("this pallet only defines two possible errors"),
 				}
 			}
-			DispatchError::Module {
+			DispatchError::Module(ModuleError {
 				message: Some(msg), ..
-			} => ExError::Revert(msg.into()),
-			DispatchError::Module { index, error, .. } => {
+			}) => ExError::Revert(msg.into()),
+			DispatchError::Module(ModuleError { index, error, .. }) => {
 				ExError::Revert(format!("error {} in pallet {}", error, index))
 			}
 			e => ExError::Revert(format!("substrate error: {:?}", e)),

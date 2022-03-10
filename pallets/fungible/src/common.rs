@@ -1,7 +1,23 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
-use up_data_structs::TokenId;
+use up_data_structs::{TokenId, CreateItemExData};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::ArithmeticError;
 use sp_std::{vec::Vec, vec};
@@ -12,13 +28,22 @@ use crate::{
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
-impl<T: Config> CommonWeightInfo for CommonWeights<T> {
+impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_item() -> Weight {
 		<SelfWeightOf<T>>::create_item()
 	}
 
 	fn create_multiple_items(_amount: u32) -> Weight {
 		Self::create_item()
+	}
+
+	fn create_multiple_items_ex(data: &CreateItemExData<T::CrossAccountId>) -> Weight {
+		match data {
+			CreateItemExData::Fungible(f) => {
+				<SelfWeightOf<T>>::create_multiple_items_ex(f.len() as u32)
+			}
+			_ => 0,
+		}
 	}
 
 	fn burn_item() -> Weight {
@@ -84,6 +109,23 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		with_weight(
 			<Pallet<T>>::create_item(self, &sender, (to, sum)),
 			<CommonWeights<T>>::create_item(),
+		)
+	}
+
+	fn create_multiple_items_ex(
+		&self,
+		sender: <T>::CrossAccountId,
+		data: up_data_structs::CreateItemExData<<T>::CrossAccountId>,
+	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::create_multiple_items_ex(&data);
+		let data = match data {
+			up_data_structs::CreateItemExData::Fungible(f) => f,
+			_ => fail!(<Error<T>>::NotFungibleDataUsedToMintFungibleCollectionToken),
+		};
+
+		with_weight(
+			<Pallet<T>>::create_multiple_items(self, &sender, data.into_inner()),
+			weight,
 		)
 	}
 

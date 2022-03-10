@@ -1,3 +1,19 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use core::ops::{Deref, DerefMut};
@@ -14,7 +30,10 @@ use pallet_evm::GasWeightMapping;
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, ExistenceRequirement,
 	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, Pays, PostDispatchInfo,
-	TokenId, Weight, WithdrawReasons, CollectionStats, CustomDataLimit,
+	TokenId, Weight, WithdrawReasons, CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode,
+	NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
+	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -159,9 +178,12 @@ pub mod pallet {
 		type EvmBackwardsAddressMapping: up_evm_mapping::EvmBackwardsAddressMapping<Self::AccountId>;
 
 		type Currency: Currency<Self::AccountId>;
+
+		#[pallet::constant]
 		type CollectionCreationPrice: Get<
 			<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance,
 		>;
+
 		type TreasuryAccountId: Get<Self::AccountId>;
 	}
 
@@ -285,6 +307,10 @@ pub mod pallet {
 		TokenVariableDataLimitExceeded,
 		/// Exceeded max admin count
 		CollectionAdminCountExceeded,
+		/// Collection limit bounds per collection exceeded
+		CollectionLimitBoundsExceeded,
+		/// Tried to enable permissions which are only permitted to be disabled
+		OwnerPermissionsCantBeReverted,
 
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
@@ -300,7 +326,7 @@ pub mod pallet {
 		/// Item balance not enough.
 		TokenValueTooLow,
 		/// Requested value more than approved.
-		TokenValueNotEnough,
+		ApprovedValueTooLow,
 		/// Tried to approve more than owned
 		CantApproveMoreThanOwned,
 
@@ -308,6 +334,9 @@ pub mod pallet {
 		AddressIsZero,
 		/// Target collection doesn't supports this operation
 		UnsupportedOperation,
+
+		/// Not sufficient founds to perform action
+		NotSufficientFounds,
 	}
 
 	#[pallet::storage]
@@ -395,7 +424,10 @@ impl<T: Config> Pallet<T> {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
+	pub fn init_collection(
+		owner: T::AccountId,
+		data: CreateCollectionData<T::AccountId>,
+	) -> Result<CollectionId, DispatchError> {
 		{
 			ensure!(
 				data.token_prefix.len() <= MAX_TOKEN_PREFIX_LENGTH as usize,
@@ -418,6 +450,29 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
+		let collection = Collection {
+			owner: owner.clone(),
+			name: data.name,
+			mode: data.mode.clone(),
+			mint_mode: false,
+			access: data.access.unwrap_or_default(),
+			description: data.description,
+			token_prefix: data.token_prefix,
+			offchain_schema: data.offchain_schema,
+			schema_version: data.schema_version.unwrap_or_default(),
+			sponsorship: data
+				.pending_sponsor
+				.map(SponsorshipState::Unconfirmed)
+				.unwrap_or_default(),
+			variable_on_chain_schema: data.variable_on_chain_schema,
+			const_on_chain_schema: data.const_on_chain_schema,
+			limits: data
+				.limits
+				.map(|limits| Self::clamp_limits(data.mode.clone(), &Default::default(), limits))
+				.unwrap_or_else(|| Ok(CollectionLimits::default()))?,
+			meta_update_permission: data.meta_update_permission.unwrap_or_default(),
+		};
+
 		// Take a (non-refundable) deposit of collection creation
 		{
 			let mut imbalance =
@@ -429,21 +484,17 @@ impl<T: Config> Pallet<T> {
 				),
 			);
 			<T as Config>::Currency::settle(
-				&data.owner,
+				&owner,
 				imbalance,
 				WithdrawReasons::TRANSFER,
 				ExistenceRequirement::KeepAlive,
 			)
-			.map_err(|_| Error::<T>::NoPermission)?;
+			.map_err(|_| Error::<T>::NotSufficientFounds)?;
 		}
 
 		<CreatedCollectionCount<T>>::put(created_count);
-		<Pallet<T>>::deposit_event(Event::CollectionCreated(
-			id,
-			data.mode.id(),
-			data.owner.clone(),
-		));
-		<CollectionById<T>>::insert(id, data);
+		<Pallet<T>>::deposit_event(Event::CollectionCreated(id, data.mode.id(), owner.clone()));
+		<CollectionById<T>>::insert(id, collection);
 		Ok(id)
 	}
 
@@ -527,6 +578,61 @@ impl<T: Config> Pallet<T> {
 
 		Ok(())
 	}
+
+	pub fn clamp_limits(
+		mode: CollectionMode,
+		old_limit: &CollectionLimits,
+		mut new_limit: CollectionLimits,
+	) -> Result<CollectionLimits, DispatchError> {
+		macro_rules! limit_default {
+				($old:ident, $new:ident, $($field:ident $(($arg:expr))? => $check:expr),* $(,)?) => {{
+					$(
+						if let Some($new) = $new.$field {
+							let $old = $old.$field($($arg)?);
+							let _ = $new;
+							let _ = $old;
+							$check
+						} else {
+							$new.$field = $old.$field
+						}
+					)*
+				}};
+			}
+
+		limit_default!(old_limit, new_limit,
+			account_token_ownership_limit => ensure!(
+				new_limit <= MAX_TOKEN_OWNERSHIP,
+				<Error<T>>::CollectionLimitBoundsExceeded,
+			),
+			sponsor_transfer_timeout(match mode {
+				CollectionMode::NFT => NFT_SPONSOR_TRANSFER_TIMEOUT,
+				CollectionMode::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+				CollectionMode::ReFungible => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+			}) => ensure!(
+				new_limit <= MAX_SPONSOR_TIMEOUT,
+				<Error<T>>::CollectionLimitBoundsExceeded,
+			),
+			sponsored_data_size => ensure!(
+				new_limit <= CUSTOM_DATA_LIMIT,
+				<Error<T>>::CollectionLimitBoundsExceeded,
+			),
+			token_limit => ensure!(
+				old_limit >= new_limit && new_limit > 0,
+				<Error<T>>::CollectionTokenLimitExceeded
+			),
+			owner_can_transfer => ensure!(
+				old_limit || !new_limit,
+				<Error<T>>::OwnerPermissionsCantBeReverted,
+			),
+			owner_can_destroy => ensure!(
+				old_limit || !new_limit,
+				<Error<T>>::OwnerPermissionsCantBeReverted,
+			),
+			sponsored_data_rate_limit => {},
+			transfers_enabled => {},
+		);
+		Ok(new_limit)
+	}
 }
 
 #[macro_export]
@@ -537,9 +643,10 @@ macro_rules! unsupported {
 }
 
 /// Worst cases
-pub trait CommonWeightInfo {
+pub trait CommonWeightInfo<CrossAccountId> {
 	fn create_item() -> Weight;
 	fn create_multiple_items(amount: u32) -> Weight;
+	fn create_multiple_items_ex(cost: &CreateItemExData<CrossAccountId>) -> Weight;
 	fn burn_item() -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
@@ -560,6 +667,11 @@ pub trait CommonCollectionOperations<T: Config> {
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
 		data: Vec<CreateItemData>,
+	) -> DispatchResultWithPostInfo;
+	fn create_multiple_items_ex(
+		&self,
+		sender: T::CrossAccountId,
+		data: CreateItemExData<T::CrossAccountId>,
 	) -> DispatchResultWithPostInfo;
 	fn burn_item(
 		&self,

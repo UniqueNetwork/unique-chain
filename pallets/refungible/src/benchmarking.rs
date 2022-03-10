@@ -1,25 +1,45 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 use super::*;
 use crate::{Pallet, Config, RefungibleHandle};
 
 use sp_std::prelude::*;
-use pallet_common::benchmarking::{create_collection_raw, create_data};
+use pallet_common::benchmarking::{create_collection_raw, create_data, create_var_data};
 use frame_benchmarking::{benchmarks, account};
-use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH};
+use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, CUSTOM_DATA_LIMIT};
 use pallet_common::bench_init;
 use core::convert::TryInto;
 use core::iter::IntoIterator;
 
 const SEED: u32 = 1;
 
-fn create_max_item_data<T: Config>(
-	users: impl IntoIterator<Item = (T::CrossAccountId, u128)>,
-) -> CreateItemData<T> {
-	let const_data = create_data(CUSTOM_DATA_LIMIT as usize).try_into().unwrap();
-	let variable_data = create_data(CUSTOM_DATA_LIMIT as usize).try_into().unwrap();
-	CreateItemData {
+fn create_max_item_data<CrossAccountId: Ord>(
+	users: impl IntoIterator<Item = (CrossAccountId, u128)>,
+) -> CreateRefungibleExData<CrossAccountId> {
+	let const_data = create_data::<CUSTOM_DATA_LIMIT>();
+	let variable_data = create_data::<CUSTOM_DATA_LIMIT>();
+	CreateRefungibleExData {
 		const_data,
 		variable_data,
-		users: users.into_iter().collect(),
+		users: users
+			.into_iter()
+			.collect::<BTreeMap<_, _>>()
+			.try_into()
+			.unwrap(),
 	}
 }
 fn create_max_item<T: Config>(
@@ -27,7 +47,8 @@ fn create_max_item<T: Config>(
 	sender: &T::CrossAccountId,
 	users: impl IntoIterator<Item = (T::CrossAccountId, u128)>,
 ) -> Result<TokenId, DispatchError> {
-	<Pallet<T>>::create_item(&collection, sender, create_max_item_data(users))?;
+	let data: CreateRefungibleExData<T::CrossAccountId> = create_max_item_data(users);
+	<Pallet<T>>::create_item(&collection, sender, data)?;
 	Ok(TokenId(<TokensMinted<T>>::get(&collection.id)))
 }
 
@@ -54,6 +75,30 @@ benchmarks! {
 			sender: cross_from_sub(owner); to: cross_sub;
 		};
 		let data = (0..b).map(|_| create_max_item_data([(to.clone(), 200)])).collect();
+	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data)?}
+
+	create_multiple_items_ex_multiple_items {
+		let b in 0..MAX_ITEMS_PER_BATCH;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			sender: cross_from_sub(owner);
+		};
+		let data = (0..b).map(|t| {
+			bench_init!(to: cross_sub(t););
+			create_max_item_data([(to, 200)])
+		}).collect();
+	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data)?}
+
+	create_multiple_items_ex_multiple_owners {
+		let b in 0..MAX_ITEMS_PER_BATCH;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			sender: cross_from_sub(owner);
+		};
+		let data = vec![create_max_item_data((0..b).map(|u| {
+			bench_init!(to: cross_sub(u););
+			(to, 200)
+		}))].try_into().unwrap();
 	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data)?}
 
 	// Other user left, token data is kept
@@ -166,6 +211,6 @@ benchmarks! {
 			sender: cross_from_sub(owner);
 		};
 		let item = create_max_item(&collection, &sender, [(sender.clone(), 200)])?;
-		let data = create_data(b as usize);
+		let data = create_var_data(b).try_into().unwrap();
 	}: {<Pallet<T>>::set_variable_metadata(&collection, &sender, item, data)?}
 }
