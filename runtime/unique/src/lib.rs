@@ -207,19 +207,9 @@ parameter_types! {
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
 	pub const Version: RuntimeVersion = VERSION;
-	/*
-	FIXME - Unique
-	255 - Quartz
-	42 - Opal
-	*/
-	pub const SS58Prefix: u8 = 255; // FIXME set valid valud for the Unique runtime
+	pub const SS58Prefix: u8 = 7391;
 }
 
-/*
-8880 - Unique
-8881 - Quartz
-8882 - Opal
-*/
 parameter_types! {
 	pub const ChainId: u64 = 8880;
 }
