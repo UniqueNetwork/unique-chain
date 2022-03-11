@@ -1,5 +1,3 @@
-//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
-
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // This file is part of Unique Network.
 
