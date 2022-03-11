@@ -2,25 +2,38 @@ name: Code style
 
 on: [push]
 
-jobs:
-  rustfmt:
-    runs-on: ubuntu-latest
+#jobs:
+#  rustfmt:
+#    runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v1
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
+#    steps:
+#      - uses: actions/checkout@v1
+#      - name: Install latest nightly
+#        uses: actions-rs/toolchain@v1
     #    with:
     #        toolchain: nightly
     #        default: true
     #        target: wasm32-unknown-unknown
     #        components: rustfmt, clippy
+ #       with:
+ #           toolchain: stable
+ #           components: rustfmt
+  #          override: true
+ #     - name: Run cargo fmt
+  #      run: cargo fmt -- --check
+        
+        
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
         with:
             toolchain: stable
             components: rustfmt
             override: true
-      - name: Run cargo fmt
-        run: cargo fmt -- --check
+      - uses: mbrobbel/rustfmt-check@master
 
   #clippy:
   #  if: ${{ false }}
