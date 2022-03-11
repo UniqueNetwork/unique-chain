@@ -22,6 +22,10 @@ branch = 'polkadot-v0.9.17'
 git = 'https://github.com/paritytech/substrate.git'
 branch = 'polkadot-v0.9.17'
 
+[dependencies.try-runtime-cli]
+git = 'https://github.com/paritytech/substrate.git'
+branch = 'polkadot-v0.9.17'
+
 [dependencies.pallet-transaction-payment-rpc]
 git = 'https://github.com/paritytech/substrate.git'
 branch = 'polkadot-v0.9.17'
@@ -291,3 +295,4 @@ runtime-benchmarks = [
     'unique-runtime/runtime-benchmarks',
     'polkadot-service/runtime-benchmarks',
 ]
+try-runtime = []
