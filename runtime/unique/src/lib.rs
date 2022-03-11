@@ -85,7 +85,6 @@ use sp_runtime::{
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
-pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 
 // Polkadot imports
 use pallet_xcm::XcmPassthrough;
@@ -116,7 +115,17 @@ use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
 
 pub const RUNTIME_NAME: &str = "Unique";
 
-pub type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
+type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
+
+impl RuntimeInstance for Runtime {
+	type CrossAccountId = self::CrossAccountId;
+
+	type TransactionConverter = self::TransactionConverter;
+
+	fn get_transaction_converter() -> TransactionConverter {
+		TransactionConverter
+	}
+}
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -128,7 +137,6 @@ pub mod opaque {
 	use super::Aura;
 
 	pub use unique_runtime_common::types::*;
-	pub use super::CrossAccountId;
 
 	impl_opaque_keys! {
 		pub struct SessionKeys {
@@ -207,7 +215,7 @@ parameter_types! {
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u8 = 7391;
+	pub const SS58Prefix: u16 = 7391;
 }
 
 parameter_types! {

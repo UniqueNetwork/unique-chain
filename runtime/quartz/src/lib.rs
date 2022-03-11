@@ -116,7 +116,17 @@ use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
 
 pub const RUNTIME_NAME: &str = "Quartz";
 
-pub type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
+type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
+
+impl RuntimeInstance for Runtime {
+	type CrossAccountId = self::CrossAccountId;
+
+	type TransactionConverter = self::TransactionConverter;
+
+	fn get_transaction_converter() -> TransactionConverter {
+		TransactionConverter
+	}
+}
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -128,7 +138,6 @@ pub mod opaque {
 	use super::Aura;
 
 	pub use unique_runtime_common::types::*;
-	pub use super::CrossAccountId;
 
 	impl_opaque_keys! {
 		pub struct SessionKeys {

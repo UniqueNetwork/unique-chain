@@ -16,6 +16,9 @@ std = [
     'codec/std',
     'frame-support/std',
     'frame-system/std',
+    'sp-consensus-aura/std',
+    'pallet-common/std',
+    'fp-rpc/std',
 ]
 runtime-benchmarks = [
     'sp-runtime/runtime-benchmarks',
@@ -53,3 +56,17 @@ branch = 'polkadot-v0.9.17'
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 branch = 'polkadot-v0.9.17'
+
+[dependencies.pallet-common]
+default-features = false
+path = "../../pallets/common"
+
+[dependencies.sp-consensus-aura]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+branch = 'polkadot-v0.9.17'
+
+[dependencies.fp-rpc]
+default-features = false
+git = "https://github.com/uniquenetwork/frontier.git"
+branch = "unique-polkadot-v0.9.17"
