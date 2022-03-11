@@ -264,7 +264,7 @@ parameter_types! {
 	255  - Quartz
 	42   - Opal
 	*/
-	pub const SS58Prefix: u8 = 7391;
+	pub const SS58Prefix: u16 = 7391;
 }
 
 /*
