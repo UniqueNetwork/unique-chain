@@ -22,20 +22,20 @@ jobs:
       - name: Run cargo fmt
         run: cargo fmt -- --check
 
-  clippy:
-    if: ${{ false }}
-    runs-on: ubuntu-latest
+  #clippy:
+  #  if: ${{ false }}
+  #  runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v1
-      - name: Install substrate dependencies
-        run: sudo apt-get install libssl-dev pkg-config libclang-dev clang
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: nightly
-            default: true
-            target: wasm32-unknown-unknown
-            components: rustfmt, clippy
-      - name: Run cargo check
-        run: cargo clippy -- -Dwarnings
+  #  steps:
+  #    - uses: actions/checkout@v1
+  #    - name: Install substrate dependencies
+  #      run: sudo apt-get install libssl-dev pkg-config libclang-dev clang
+  #    - name: Install latest nightly
+  #      uses: actions-rs/toolchain@v1
+  #      with:
+  #          toolchain: nightly
+  #          default: true
+  #          target: wasm32-unknown-unknown
+  #          components: rustfmt, clippy
+  #    - name: Run cargo check
+  #      run: cargo clippy -- -Dwarnings
