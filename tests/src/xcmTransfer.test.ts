@@ -34,7 +34,7 @@ const UNIQUE_CHAIN = 1000;
 const KARURA_CHAIN = 2000;
 const KARURA_PORT = '9946';
 
-describe('Integration test: Exchanging QTZ with Karura', () => {
+describe('Integration test: Exchanging UNQ with Karura', () => {
   let alice: IKeyringPair;
   
   before(async () => {
@@ -60,8 +60,8 @@ describe('Integration test: Exchanging QTZ with Karura', () => {
 
       const metadata =
       {
-        name: 'QTZ',
-        symbol: 'QTZ',
+        name: 'UNQ',
+        symbol: 'UNQ',
         decimals: 18,
         minimalBalance: 1,
       };
@@ -74,7 +74,7 @@ describe('Integration test: Exchanging QTZ with Karura', () => {
     }, karuraApiOptions);
   });
 
-  it('Should connect and send QTZ to Karura', async () => {
+  it('Should connect and send UNQ to Karura', async () => {
     let balanceOnKaruraBefore: bigint;
     
     await usingApi(async (api) => {
@@ -141,7 +141,7 @@ describe('Integration test: Exchanging QTZ with Karura', () => {
     }, {provider: new WsProvider('ws://127.0.0.1:' + KARURA_PORT)});
   });
 
-  it('Should connect to Karura and send QTZ back', async () => {
+  it('Should connect to Karura and send UNQ back', async () => {
     let balanceBefore: bigint;
     
     await usingApi(async (api) => {

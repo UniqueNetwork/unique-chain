@@ -169,8 +169,8 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("quartz"),
-	impl_name: create_runtime_str!("quartz"),
+	spec_name: create_runtime_str!("unique"),
+	impl_name: create_runtime_str!("unique"),
 	authoring_version: 1,
 	spec_version: 917004,
 	impl_version: 0,
@@ -260,10 +260,11 @@ parameter_types! {
 		.build_or_panic();
 	pub const Version: RuntimeVersion = VERSION;
 	/*
-	255 - Quartz
-	42 - Opal
+    7391 - Unique
+	255  - Quartz
+	42   - Opal
 	*/
-	pub const SS58Prefix: u8 = 255;
+	pub const SS58Prefix: u8 = 7391;
 }
 
 /*
@@ -272,7 +273,7 @@ parameter_types! {
 8882 - Opal
 */
 parameter_types! {
-	pub const ChainId: u64 = 8881;
+	pub const ChainId: u64 = 8880;
 }
 
 pub struct FixedFee;

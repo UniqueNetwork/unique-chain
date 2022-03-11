@@ -160,13 +160,13 @@ assetRegistry -> registerForeignAsset(location, metadata)
 location:
 	V0(X2(Parent, Parachain(PARA_ID))) 
 metadata:
-	name         QTZ
-	symbol       QTZ
+	name         UNQ
+	symbol       UNQ
 	decimals     18
 minimalBalance	 1
 ```
 
-### Next, we can send tokens from Quartz to Karura:
+### Next, we can send tokens from Unique to Karura:
 ```
 polkadotXcm -> reserveTransferAssets
 dest:
@@ -184,7 +184,7 @@ weightLimit:
 The result will be displayed in ChainState   
 tokens -> accounts	
 
-### To send tokens from Karura to Quartz:
+### To send tokens from Karura to Unique:
 ```
 xtokens -> transfer
 
