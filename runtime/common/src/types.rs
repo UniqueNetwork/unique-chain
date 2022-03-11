@@ -43,10 +43,14 @@ pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 
 pub trait RuntimeInstance {
 	type CrossAccountId: pallet_common::account::CrossAccountId<sp_runtime::AccountId32>
-						+ Send + Sync + 'static;
+		+ Send
+		+ Sync
+		+ 'static;
 
 	type TransactionConverter: fp_rpc::ConvertTransaction<UncheckedExtrinsic>
-						+ Send + Sync + 'static;
+		+ Send
+		+ Sync
+		+ 'static;
 
 	fn get_transaction_converter() -> Self::TransactionConverter;
 }
