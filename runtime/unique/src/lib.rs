@@ -466,7 +466,7 @@ where
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		smallvec!(WeightToFeeCoefficient {
 			// Targeting 0.1 Unique per NFT transfer
-			coeff_integer: 142_688_000u32.into(),
+			coeff_integer: WEIGHT_TO_FEE_COEFF.into(),
 			coeff_frac: Perbill::zero(),
 			negative: false,
 			degree: 1,
