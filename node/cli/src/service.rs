@@ -69,6 +69,7 @@ pub struct UniqueRuntimeExecutor;
 pub struct QuartzRuntimeExecutor;
 pub struct OpalRuntimeExecutor;
 
+#[cfg(feature = "unique-runtime")]
 impl NativeExecutionDispatch for UniqueRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
@@ -81,27 +82,29 @@ impl NativeExecutionDispatch for UniqueRuntimeExecutor {
 	}
 }
 
+#[cfg(feature = "quartz-runtime")]
 impl NativeExecutionDispatch for QuartzRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		unique_runtime::api::dispatch(method, data)
+		quartz_runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		unique_runtime::native_version()
+		quartz_runtime::native_version()
 	}
 }
 
+#[cfg(feature = "opal-runtime")]
 impl NativeExecutionDispatch for OpalRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		unique_runtime::api::dispatch(method, data)
+		opal_runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		unique_runtime::native_version()
+		opal_runtime::native_version()
 	}
 }
 
