@@ -82,12 +82,13 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"" | "local" => Ok(Box::new(chain_spec::local_testnet_rococo_config())),
 		path => {
 			let path = std::path::PathBuf::from(path);
-			let chain_spec = Box::new(chain_spec::UniqueChainSpec::from_json_file(path.clone())?)
+			let chain_spec = Box::new(sc_service::GenericChainSpec::<()>::from_json_file(path.clone())?)
 				as Box<dyn sc_service::ChainSpec>;
 
 			#[cfg(feature = "unique-runtime")]
 			if chain_spec.is_unique() {
-				return Ok(chain_spec);
+				let chain_spec = chain_spec::UniqueChainSpec::from_json_file(path)?;
+				return Ok(Box::new(chain_spec));
 			}
 
 			#[cfg(feature = "quartz-runtime")]
