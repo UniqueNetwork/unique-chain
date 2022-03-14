@@ -591,11 +591,7 @@ impl<T: Config> Pallet<T> {
 							let $old = $old.$field($($arg)?);
 							let _ = $new;
 							let _ = $old;
-
-							// If limit is none allowed to set it
-							if Some($old).is_some() {
-								$check
-							}
+							$check
 						} else {
 							$new.$field = $old.$field
 						}
@@ -603,6 +599,7 @@ impl<T: Config> Pallet<T> {
 				}};
 			}
 
+		let limits = old_limit;
 		limit_default!(old_limit, new_limit,
 			account_token_ownership_limit => ensure!(
 				new_limit <= MAX_TOKEN_OWNERSHIP,
@@ -625,6 +622,7 @@ impl<T: Config> Pallet<T> {
 				<Error<T>>::CollectionTokenLimitExceeded
 			),
 			owner_can_transfer => ensure!(
+				!limits.owner_can_transfer_instaled() ||
 				old_limit || !new_limit,
 				<Error<T>>::OwnerPermissionsCantBeReverted,
 			),
