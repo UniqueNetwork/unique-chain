@@ -56,13 +56,7 @@ use sc_client_api::BlockchainEvents;
 use fc_rpc_core::types::FilterPool;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
-// Runtime type overrides
-type BlockNumber = u32;
-type Header = sp_runtime::generic::Header<BlockNumber, sp_runtime::traits::BlakeTwo256>;
-pub type Block = sp_runtime::generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
-type Hash = sp_core::H256;
-
-use unique_runtime_common::types::{AuraId, RuntimeInstance, AccountId, Balance, Index};
+use unique_runtime_common::types::{AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block};
 
 /// Native executor instance.
 pub struct UniqueRuntimeExecutor;
