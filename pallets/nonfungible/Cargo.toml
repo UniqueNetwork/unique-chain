@@ -26,6 +26,7 @@ frame-benchmarking = { default-features = false, optional = true, git = 'https:/
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
 ] }
+frame-common = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "feature/300" }
 
 [features]
 default = ["std"]
