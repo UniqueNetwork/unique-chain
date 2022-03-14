@@ -29,7 +29,6 @@ import {
   setCollectionLimitsExpectSuccess,
   transferExpectSuccess,
   addCollectionAdminExpectSuccess,
-  adminApproveFromExpectSuccess,
   adminApproveFromExpectFail,
   getCreatedCollectionCount,
   transferFromExpectSuccess,

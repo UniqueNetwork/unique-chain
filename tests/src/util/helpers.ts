@@ -758,7 +758,7 @@ export async function adminApproveFromExpectFail(
 ) {
   await usingApi(async (api: ApiPromise) => {
     const approveUniqueTx = api.tx.unique.approve(normalizeAccountId(approved), collectionId, tokenId, amount);
-    const events = await expect(submitTransactionAsync(admin, approveUniqueTx)).to.be.rejected;;
+    const events = await expect(submitTransactionAsync(admin, approveUniqueTx)).to.be.rejected;
     const result = getGenericResult(events);
     expect(result.success).to.be.false;
   });
