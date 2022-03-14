@@ -21,6 +21,9 @@ pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
 
 pub const WEIGHT_TO_FEE_COEFF: u32 = 142_688_000;
 
+// Targeting 0.15 UNQ per transfer
+pub const MIN_GAS_PRICE: u64 = 1_018_751_825_264;
+
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.
 pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
