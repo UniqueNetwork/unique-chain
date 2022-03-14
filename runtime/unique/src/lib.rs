@@ -388,11 +388,6 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 }
 
-pub const MICROUNIQUE: Balance = 1_000_000_000_000;
-pub const MILLIUNIQUE: Balance = 1_000 * MICROUNIQUE;
-pub const CENTIUNIQUE: Balance = 10 * MILLIUNIQUE;
-pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
-
 pub const fn deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 15 * CENTIUNIQUE + (bytes as Balance) * 6 * CENTIUNIQUE
 }
@@ -448,7 +443,6 @@ impl pallet_contracts::Config for Runtime {
 */
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE; // Targeting 0.1 Unique per NFT transfer
 	/// This value increases the priority of `Operational` transactions by adding
 	/// a "virtual tip" that's equal to the `OperationalFeeMultiplier * final_fee`.
 	pub const OperationalFeeMultiplier: u8 = 5;
