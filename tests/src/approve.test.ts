@@ -30,6 +30,7 @@ import {
   transferExpectSuccess,
   addCollectionAdminExpectSuccess,
   adminApproveFromExpectSuccess,
+  adminApproveFromExpectFail,
   getCreatedCollectionCount,
   transferFromExpectSuccess,
   transferFromExpectFail,
@@ -85,11 +86,11 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
     await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, alice, bob.address, 0);
   });
 
-  it('can be called by collection owner on non-owned item when OwnerCanTransfer == true', async () => {
+  it('can`t be called by collection owner on non-owned item when OwnerCanTransfer == false', async () => {
     const collectionId = await createCollectionExpectSuccess();
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
 
-    await adminApproveFromExpectSuccess(collectionId, itemId, alice, bob.address, charlie.address);
+    await adminApproveFromExpectFail(collectionId, itemId, alice, bob.address, charlie.address);
   });
 });
 
@@ -293,7 +294,7 @@ describe('User cannot approve for the amount greater than they own:', () => {
   });
 });
 
-describe('Administrator and collection owner do not need approval in order to execute TransferFrom:', () => {
+describe('Administrator and collection owner do not need approval in order to execute TransferFrom (with owner_can_transfer_flag = true):', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
@@ -310,6 +311,7 @@ describe('Administrator and collection owner do not need approval in order to ex
 
   it('NFT', async () => {
     const collectionId = await createCollectionExpectSuccess();
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', charlie.address);
     await transferFromExpectSuccess(collectionId, itemId, alice, charlie, dave, 1, 'NFT');
     await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
@@ -318,6 +320,7 @@ describe('Administrator and collection owner do not need approval in order to ex
 
   it('Fungible up to an approved amount', async () => {
     const collectionId = await createCollectionExpectSuccess({mode:{type: 'Fungible', decimalPoints: 0}});
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
     const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', charlie.address); 
     await transferFromExpectSuccess(collectionId, itemId, alice, charlie, dave, 1, 'Fungible');
     await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
@@ -326,6 +329,7 @@ describe('Administrator and collection owner do not need approval in order to ex
 
   it('ReFungible up to an approved amount', async () => {
     const collectionId = await createCollectionExpectSuccess({mode:{type: 'ReFungible'}});
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
     const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', charlie.address);
     await transferFromExpectSuccess(collectionId, itemId, alice, charlie, dave, 1, 'ReFungible');
     await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
@@ -403,7 +407,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount) with
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
 
     await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-    await adminApproveFromExpectSuccess(collectionId, itemId, bob, alice.address, charlie.address);
+    await adminApproveFromExpectFail(collectionId, itemId, bob, alice.address, charlie.address);
   });
 });
 
