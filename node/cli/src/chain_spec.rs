@@ -56,9 +56,7 @@ impl RuntimeIdentification for Box<dyn sc_service::ChainSpec> {
 	}
 
 	fn is_opal(&self) -> bool {
-		self.id().starts_with("opal")
-		|| self.id() == "dev"
-		|| self.id() == "local_testnet"
+		self.id().starts_with("opal") || self.id() == "dev" || self.id() == "local_testnet"
 	}
 }
 

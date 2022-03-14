@@ -82,9 +82,8 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"" | "local" => Ok(Box::new(chain_spec::local_testnet_rococo_config())),
 		path => {
 			let path = std::path::PathBuf::from(path);
-			let chain_spec = Box::new(
-				chain_spec::UniqueChainSpec::from_json_file(path.clone())?
-			) as Box<dyn sc_service::ChainSpec>;
+			let chain_spec = Box::new(chain_spec::UniqueChainSpec::from_json_file(path.clone())?)
+				as Box<dyn sc_service::ChainSpec>;
 
 			#[cfg(feature = "unique-runtime")]
 			if chain_spec.is_unique() {
@@ -93,22 +92,18 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 
 			#[cfg(feature = "quartz-runtime")]
 			if chain_spec.is_quartz() {
-				let chain_spec = chain_spec::QuartzChainSpec::from_json_file(
-					path
-				)?;
+				let chain_spec = chain_spec::QuartzChainSpec::from_json_file(path)?;
 				return Ok(Box::new(chain_spec));
 			}
 
 			#[cfg(feature = "opal-runtime")]
 			if chain_spec.is_opal() {
-				let chain_spec = chain_spec::OpalChainSpec::from_json_file(
-					path
-				)?;
+				let chain_spec = chain_spec::OpalChainSpec::from_json_file(path)?;
 				return Ok(Box::new(chain_spec));
 			}
 
 			Err(no_runtime_err!(chain_spec))
-		},
+		}
 	}
 }
 
