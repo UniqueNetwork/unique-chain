@@ -26,7 +26,8 @@ use sp_runtime::{
 use pallet_transaction_payment::{CurrencyAdapter};
 use frame_system as system;
 use pallet_evm::{AddressMapping, runner::stack::MaybeMirroredLog};
-use pallet_common::account::{EvmBackwardsAddressMapping, CrossAccountId};
+use up_evm_mapping::EvmBackwardsAddressMapping;
+use frame_common::account::CrossAccountId;
 use codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use up_data_structs::ConstU32;

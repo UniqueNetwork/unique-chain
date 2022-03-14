@@ -19,7 +19,7 @@
 use core::ops::{Deref, DerefMut};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_std::vec::Vec;
-use account::CrossAccountId;
+use frame_common::account::CrossAccountId;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo},
 	ensure, fail,
@@ -38,7 +38,6 @@ use up_data_structs::{
 pub use pallet::*;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
-pub mod account;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod erc;
@@ -163,7 +162,7 @@ impl<T: Config> CollectionHandle<T> {
 pub mod pallet {
 	use super::*;
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key};
-	use account::CrossAccountId;
+	use frame_common::account::CrossAccountId;
 	use frame_support::traits::Currency;
 	use up_data_structs::TokenId;
 	use scale_info::TypeInfo;

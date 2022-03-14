@@ -54,9 +54,10 @@ use up_data_structs::{
 	CreateCollectionData, CustomDataLimit, CreateItemExData,
 };
 use pallet_common::{
-	account::CrossAccountId, CollectionHandle, Pallet as PalletCommon, Error as CommonError,
+	CollectionHandle, Pallet as PalletCommon, Error as CommonError,
 	CommonWeightInfo,
 };
+use frame_common::account::CrossAccountId;
 use pallet_refungible::{Pallet as PalletRefungible, RefungibleHandle};
 use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
 use pallet_nonfungible::{Pallet as PalletNonfungible, NonfungibleHandle};

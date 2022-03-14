@@ -116,11 +116,10 @@ use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
 
 pub const RUNTIME_NAME: &str = "Opal";
 
-type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
+type CrossAccountId = frame_common::account::BasicCrossAccountId<Runtime>;
 
 impl RuntimeInstance for Runtime {
 	type CrossAccountId = self::CrossAccountId;
-
 	type TransactionConverter = self::TransactionConverter;
 
 	fn get_transaction_converter() -> TransactionConverter {
@@ -284,6 +283,11 @@ impl pallet_evm::Config for Runtime {
 
 impl pallet_evm_migration::Config for Runtime {
 	type WeightInfo = pallet_evm_migration::weights::SubstrateWeight<Self>;
+}
+
+impl frame_common::account::Config for Runtime {
+	type EvmAddressMapping = pallet_evm::HashedAddressMapping<Self::Hashing>;
+	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 }
 
 pub struct EthereumFindAuthor<F>(core::marker::PhantomData<F>);
@@ -846,7 +850,7 @@ impl pallet_common::Config for Runtime {
 	type Event = Event;
 	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type CrossAccountId = pallet_common::account::BasicCrossAccountId<Self>;
+	type CrossAccountId = frame_common::account::BasicCrossAccountId<Self>;
 
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
