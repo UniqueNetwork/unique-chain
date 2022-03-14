@@ -91,7 +91,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 				#[cfg(feature = "quartz-runtime")]
 				RuntimeId::Quartz => Box::new(chain_spec::QuartzChainSpec::from_json_file(path)?),
 
-				RuntimeId::Opal => Box::new(chain_spec::OpalChainSpec::from_json_file(path)?),
+				RuntimeId::Opal => chain_spec,
 				RuntimeId::Unknown(chain) => return Err(no_runtime_err!(chain)),
 			}
 		}
