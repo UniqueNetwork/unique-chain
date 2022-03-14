@@ -67,8 +67,10 @@ use unique_runtime_common::types::Block;
 
 macro_rules! no_runtime_err {
 	($chain_spec:expr) => {
-		format!("No runtime valid runtime was found, chain id: {}",
-			$chain_spec.id())
+		format!(
+			"No runtime valid runtime was found, chain id: {}",
+			$chain_spec.id()
+		)
 	};
 }
 
