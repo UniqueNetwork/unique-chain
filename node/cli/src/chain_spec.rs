@@ -35,7 +35,6 @@ pub type UniqueChainSpec = sc_service::GenericChainSpec<unique_runtime::GenesisC
 pub type QuartzChainSpec = sc_service::GenericChainSpec<quartz_runtime::GenesisConfig, Extensions>;
 
 /// The `ChainSpec` parameterized for the opal runtime.
-#[cfg(feature = "opal-runtime")]
 pub type OpalChainSpec = sc_service::GenericChainSpec<opal_runtime::GenesisConfig, Extensions>;
 
 pub enum RuntimeId {
@@ -61,7 +60,6 @@ impl RuntimeIdentification for Box<dyn sc_service::ChainSpec> {
 			return RuntimeId::Quartz;
 		}
 
-		#[cfg(feature = "opal-runtime")]
 		if self.id().starts_with("opal") {
 			return RuntimeId::Opal;
 		}

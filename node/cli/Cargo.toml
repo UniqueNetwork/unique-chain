@@ -252,7 +252,6 @@ optional = true
 
 [dependencies.opal-runtime]
 path = '../../runtime/opal'
-optional = true
 
 [dependencies.up-data-structs]
 path = "../../primitives/data-structs"
@@ -306,7 +305,7 @@ pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier.git", branc
 unique-rpc = { default-features = false, path = "../rpc" }
 
 [features]
-default = ["unique-runtime", "quartz-runtime", "opal-runtime"]
+default = ["unique-runtime", "quartz-runtime"]
 runtime-benchmarks = [
     'unique-runtime/runtime-benchmarks',
     'polkadot-service/runtime-benchmarks',

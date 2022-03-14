@@ -44,7 +44,6 @@ use crate::service::UniqueRuntimeExecutor;
 #[cfg(feature = "quartz-runtime")]
 use crate::service::QuartzRuntimeExecutor;
 
-#[cfg(feature = "opal-runtime")]
 use crate::service::OpalRuntimeExecutor;
 
 use codec::Encode;
@@ -82,7 +81,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"" | "local" => Box::new(chain_spec::local_testnet_rococo_config()),
 		path => {
 			let path = std::path::PathBuf::from(path);
-			let chain_spec = Box::new(sc_service::GenericChainSpec::<()>::from_json_file(
+			let chain_spec = Box::new(chain_spec::OpalChainSpec::from_json_file(
 				path.clone(),
 			)?) as Box<dyn sc_service::ChainSpec>;
 
@@ -93,9 +92,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 				#[cfg(feature = "quartz-runtime")]
 				RuntimeId::Quartz => Box::new(chain_spec::QuartzChainSpec::from_json_file(path)?),
 
-				#[cfg(feature = "opal-runtime")]
 				RuntimeId::Opal => Box::new(chain_spec::OpalChainSpec::from_json_file(path)?),
-
 				RuntimeId::Unknown(chain) => return Err(no_runtime_err!(chain)),
 			}
 		}
@@ -147,9 +144,7 @@ impl SubstrateCli for Cli {
 			#[cfg(feature = "quartz-runtime")]
 			RuntimeId::Quartz => &quartz_runtime::VERSION,
 
-			#[cfg(feature = "opal-runtime")]
 			RuntimeId::Opal => &opal_runtime::VERSION,
-
 			RuntimeId::Unknown(chain) => panic!("{}", no_runtime_err!(chain)),
 		}
 	}
@@ -241,7 +236,6 @@ macro_rules! construct_async_run {
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
-			#[cfg(feature = "opal-runtime")]
 			RuntimeId::Opal => async_run_with_runtime!(
 				opal_runtime::RuntimeApi, OpalRuntimeExecutor,
 				runner, $components, $cli, $cmd, $config, $( $code )*
@@ -359,9 +353,7 @@ pub fn run() -> Result<()> {
 					#[cfg(feature = "quartz-runtime")]
 					RuntimeId::Quartz => cmd.run::<Block, QuartzRuntimeExecutor>(config),
 
-					#[cfg(feature = "opal-runtime")]
 					RuntimeId::Opal => cmd.run::<Block, OpalRuntimeExecutor>(config),
-
 					RuntimeId::Unknown(chain) => Err(no_runtime_err!(chain).into()),
 				})
 			} else {
@@ -438,7 +430,6 @@ pub fn run() -> Result<()> {
 					.map(|r| r.0)
 					.map_err(Into::into),
 
-					#[cfg(feature = "opal-runtime")]
 					RuntimeId::Opal => crate::service::start_node::<
 						opal_runtime::Runtime,
 						opal_runtime::RuntimeApi,

@@ -95,7 +95,6 @@ impl NativeExecutionDispatch for QuartzRuntimeExecutor {
 	}
 }
 
-#[cfg(feature = "opal-runtime")]
 impl NativeExecutionDispatch for OpalRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
