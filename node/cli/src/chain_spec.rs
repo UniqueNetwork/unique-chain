@@ -26,8 +26,17 @@ use serde_json::map::Map;
 
 use unique_runtime_common::types::*;
 
-/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<unique_runtime::GenesisConfig, Extensions>;
+/// The `ChainSpec` parameterized for the unique runtime.
+#[cfg(feature = "unique-runtime")]
+pub type UniqueChainSpec = sc_service::GenericChainSpec<unique_runtime::GenesisConfig, Extensions>;
+
+/// The `ChainSpec` parameterized for the quartz runtime.
+#[cfg(feature = "quartz-runtime")]
+pub type QuartzChainSpec = sc_service::GenericChainSpec<quartz_runtime::GenesisConfig, Extensions>;
+
+/// The `ChainSpec` parameterized for the opal runtime.
+#[cfg(feature = "opal-runtime")]
+pub type OpalChainSpec = sc_service::GenericChainSpec<opal_runtime::GenesisConfig, Extensions>;
 
 pub trait RuntimeIdentification {
 	fn is_unique(&self) -> bool;
@@ -48,6 +57,8 @@ impl RuntimeIdentification for Box<dyn sc_service::ChainSpec> {
 
 	fn is_opal(&self) -> bool {
 		self.id().starts_with("opal")
+		|| self.id() == "dev"
+		|| self.id() == "local_testnet"
 	}
 }
 
@@ -85,13 +96,13 @@ where
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-pub fn development_config() -> ChainSpec {
+pub fn development_config() -> OpalChainSpec {
 	let mut properties = Map::new();
 	properties.insert("tokenSymbol".into(), "OPL".into());
 	properties.insert("tokenDecimals".into(), 15.into());
 	properties.insert("ss58Format".into(), 42.into());
 
-	ChainSpec::from_genesis(
+	OpalChainSpec::from_genesis(
 		// Name
 		"Development",
 		// ID
@@ -130,8 +141,8 @@ pub fn development_config() -> ChainSpec {
 	)
 }
 
-pub fn local_testnet_rococo_config() -> ChainSpec {
-	ChainSpec::from_genesis(
+pub fn local_testnet_rococo_config() -> OpalChainSpec {
+	OpalChainSpec::from_genesis(
 		// Name
 		"Local Testnet",
 		// ID
@@ -180,8 +191,8 @@ pub fn local_testnet_rococo_config() -> ChainSpec {
 	)
 }
 
-pub fn local_testnet_westend_config() -> ChainSpec {
-	ChainSpec::from_genesis(
+pub fn local_testnet_westend_config() -> OpalChainSpec {
+	OpalChainSpec::from_genesis(
 		// Name
 		"Local Testnet",
 		// ID
@@ -238,8 +249,8 @@ fn testnet_genesis(
 	initial_authorities: Vec<AuraId>,
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
-) -> unique_runtime::GenesisConfig {
-	use unique_runtime::*;
+) -> opal_runtime::GenesisConfig {
+	use opal_runtime::*;
 
 	GenesisConfig {
 		system: SystemConfig {

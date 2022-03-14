@@ -75,15 +75,41 @@ macro_rules! no_runtime_err {
 }
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-	Ok(match id {
-		"westend-local" => Box::new(chain_spec::local_testnet_westend_config()),
-		"rococo-local" => Box::new(chain_spec::local_testnet_rococo_config()),
-		"dev" => Box::new(chain_spec::development_config()),
-		"" | "local" => Box::new(chain_spec::local_testnet_rococo_config()),
-		path => Box::new(chain_spec::ChainSpec::from_json_file(
-			std::path::PathBuf::from(path),
-		)?),
-	})
+	match id {
+		"westend-local" => Ok(Box::new(chain_spec::local_testnet_westend_config())),
+		"rococo-local" => Ok(Box::new(chain_spec::local_testnet_rococo_config())),
+		"dev" => Ok(Box::new(chain_spec::development_config())),
+		"" | "local" => Ok(Box::new(chain_spec::local_testnet_rococo_config())),
+		path => {
+			let path = std::path::PathBuf::from(path);
+			let chain_spec = Box::new(
+				chain_spec::UniqueChainSpec::from_json_file(path.clone())?
+			) as Box<dyn sc_service::ChainSpec>;
+
+			#[cfg(feature = "unique-runtime")]
+			if chain_spec.is_unique() {
+				return Ok(chain_spec);
+			}
+
+			#[cfg(feature = "quartz-runtime")]
+			if chain_spec.is_quartz() {
+				let chain_spec = chain_spec::QuartzChainSpec::from_json_file(
+					path
+				)?;
+				return Ok(Box::new(chain_spec));
+			}
+
+			#[cfg(feature = "opal-runtime")]
+			if chain_spec.is_opal() {
+				let chain_spec = chain_spec::OpalChainSpec::from_json_file(
+					path
+				)?;
+				return Ok(Box::new(chain_spec));
+			}
+
+			Err(no_runtime_err!(chain_spec))
+		},
+	}
 }
 
 impl SubstrateCli for Cli {
