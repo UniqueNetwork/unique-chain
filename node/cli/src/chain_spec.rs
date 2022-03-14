@@ -38,25 +38,35 @@ pub type QuartzChainSpec = sc_service::GenericChainSpec<quartz_runtime::GenesisC
 #[cfg(feature = "opal-runtime")]
 pub type OpalChainSpec = sc_service::GenericChainSpec<opal_runtime::GenesisConfig, Extensions>;
 
+pub enum RuntimeId {
+	Unique,
+	Quartz,
+	Opal,
+	Unknown(String),
+}
+
 pub trait RuntimeIdentification {
-	fn is_unique(&self) -> bool;
-
-	fn is_quartz(&self) -> bool;
-
-	fn is_opal(&self) -> bool;
+	fn runtime_id(&self) -> RuntimeId;
 }
 
 impl RuntimeIdentification for Box<dyn sc_service::ChainSpec> {
-	fn is_unique(&self) -> bool {
-		self.id().starts_with("unique")
-	}
+	fn runtime_id(&self) -> RuntimeId {
+		#[cfg(feature = "unique-runtime")]
+		if self.id().starts_with("unique") {
+			return RuntimeId::Unique;
+		}
 
-	fn is_quartz(&self) -> bool {
-		self.id().starts_with("quartz")
-	}
+		#[cfg(feature = "quartz-runtime")]
+		if self.id().starts_with("quartz") {
+			return RuntimeId::Quartz;
+		}
 
-	fn is_opal(&self) -> bool {
-		self.id().starts_with("opal") || self.id() == "dev" || self.id() == "local_testnet"
+		#[cfg(feature = "opal-runtime")]
+		if self.id().starts_with("opal") {
+			return RuntimeId::Opal;
+		}
+
+		RuntimeId::Unknown(self.id().into())
 	}
 }
 

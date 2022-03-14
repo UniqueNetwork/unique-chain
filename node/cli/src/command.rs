@@ -33,7 +33,7 @@
 // limitations under the License.
 
 use crate::{
-	chain_spec::{self, RuntimeIdentification},
+	chain_spec::{self, RuntimeId, RuntimeIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::new_partial,
 };
@@ -66,46 +66,40 @@ use std::{io::Write, net::SocketAddr};
 use unique_runtime_common::types::Block;
 
 macro_rules! no_runtime_err {
-	($chain_spec:expr) => {
+	($chain_name:expr) => {
 		format!(
-			"No runtime valid runtime was found, chain id: {}",
-			$chain_spec.id()
+			"No runtime valid runtime was found for chain {}",
+			$chain_name
 		)
 	};
 }
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-	match id {
-		"westend-local" => Ok(Box::new(chain_spec::local_testnet_westend_config())),
-		"rococo-local" => Ok(Box::new(chain_spec::local_testnet_rococo_config())),
-		"dev" => Ok(Box::new(chain_spec::development_config())),
-		"" | "local" => Ok(Box::new(chain_spec::local_testnet_rococo_config())),
+	Ok(match id {
+		"westend-local" => Box::new(chain_spec::local_testnet_westend_config()),
+		"rococo-local" => Box::new(chain_spec::local_testnet_rococo_config()),
+		"dev" => Box::new(chain_spec::development_config()),
+		"" | "local" => Box::new(chain_spec::local_testnet_rococo_config()),
 		path => {
 			let path = std::path::PathBuf::from(path);
-			let chain_spec = Box::new(sc_service::GenericChainSpec::<()>::from_json_file(path.clone())?)
-				as Box<dyn sc_service::ChainSpec>;
+			let chain_spec = Box::new(sc_service::GenericChainSpec::<()>::from_json_file(
+				path.clone(),
+			)?) as Box<dyn sc_service::ChainSpec>;
 
-			#[cfg(feature = "unique-runtime")]
-			if chain_spec.is_unique() {
-				let chain_spec = chain_spec::UniqueChainSpec::from_json_file(path)?;
-				return Ok(Box::new(chain_spec));
+			match chain_spec.runtime_id() {
+				#[cfg(feature = "unique-runtime")]
+				RuntimeId::Unique => Box::new(chain_spec::UniqueChainSpec::from_json_file(path)?),
+
+				#[cfg(feature = "quartz-runtime")]
+				RuntimeId::Quartz => Box::new(chain_spec::QuartzChainSpec::from_json_file(path)?),
+
+				#[cfg(feature = "opal-runtime")]
+				RuntimeId::Opal => Box::new(chain_spec::OpalChainSpec::from_json_file(path)?),
+
+				RuntimeId::Unknown(chain) => return Err(no_runtime_err!(chain)),
 			}
-
-			#[cfg(feature = "quartz-runtime")]
-			if chain_spec.is_quartz() {
-				let chain_spec = chain_spec::QuartzChainSpec::from_json_file(path)?;
-				return Ok(Box::new(chain_spec));
-			}
-
-			#[cfg(feature = "opal-runtime")]
-			if chain_spec.is_opal() {
-				let chain_spec = chain_spec::OpalChainSpec::from_json_file(path)?;
-				return Ok(Box::new(chain_spec));
-			}
-
-			Err(no_runtime_err!(chain_spec))
 		}
-	}
+	})
 }
 
 impl SubstrateCli for Cli {
@@ -146,22 +140,18 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		#[cfg(feature = "unique-runtime")]
-		if chain_spec.is_unique() {
-			return &unique_runtime::VERSION;
-		}
+		match chain_spec.runtime_id() {
+			#[cfg(feature = "unique-runtime")]
+			RuntimeId::Unique => &unique_runtime::VERSION,
 
-		#[cfg(feature = "quartz-runtime")]
-		if chain_spec.is_quartz() {
-			return &quartz_runtime::VERSION;
-		}
+			#[cfg(feature = "quartz-runtime")]
+			RuntimeId::Quartz => &quartz_runtime::VERSION,
 
-		#[cfg(feature = "opal-runtime")]
-		if chain_spec.is_opal() {
-			return &opal_runtime::VERSION;
-		}
+			#[cfg(feature = "opal-runtime")]
+			RuntimeId::Opal => &opal_runtime::VERSION,
 
-		panic!("{}", no_runtime_err!(chain_spec));
+			RuntimeId::Unknown(chain) => panic!("{}", no_runtime_err!(chain)),
+		}
 	}
 }
 
@@ -214,53 +204,51 @@ fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<V
 		.ok_or_else(|| "Could not find wasm file in genesis state!".into())
 }
 
+macro_rules! async_run_with_runtime {
+	(
+		$runtime_api:path, $executor:path,
+		$runner:ident, $components:ident, $cli:ident, $cmd:ident, $config:ident,
+		$( $code:tt )*
+	) => {
+		$runner.async_run(|$config| {
+			let $components = new_partial::<
+				$runtime_api, $executor, _
+			>(
+				&$config,
+				crate::service::parachain_build_import_queue,
+			)?;
+			let task_manager = $components.task_manager;
+
+			{ $( $code )* }.map(|v| (v, task_manager))
+		})
+	};
+}
+
 macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
 
-		#[cfg(feature = "unique-runtime")]
-		if runner.config().chain_spec.is_unique() {
-			return runner.async_run(|$config| {
-				let $components = new_partial::<
-					unique_runtime::RuntimeApi, UniqueRuntimeExecutor, _
-				>(
-					&$config,
-					crate::service::parachain_build_import_queue,
-				)?;
-				let task_manager = $components.task_manager;
-				{ $( $code )* }.map(|v| (v, task_manager))
-			});
-		}
+		match runner.config().chain_spec.runtime_id() {
+			#[cfg(feature = "unique-runtime")]
+			RuntimeId::Unique => async_run_with_runtime!(
+				unique_runtime::RuntimeApi, UniqueRuntimeExecutor,
+				runner, $components, $cli, $cmd, $config, $( $code )*
+			),
 
-		#[cfg(feature = "quartz-runtime")]
-		if runner.config().chain_spec.is_quartz() {
-			return runner.async_run(|$config| {
-				let $components = new_partial::<
-					quartz_runtime::RuntimeApi, QuartzRuntimeExecutor, _
-				>(
-					&$config,
-					crate::service::parachain_build_import_queue,
-				)?;
-				let task_manager = $components.task_manager;
-				{ $( $code )* }.map(|v| (v, task_manager))
-			});
-		}
+			#[cfg(feature = "quartz-runtime")]
+			RuntimeId::Quartz => async_run_with_runtime!(
+				quartz_runtime::RuntimeApi, QuartzRuntimeExecutor,
+				runner, $components, $cli, $cmd, $config, $( $code )*
+			),
 
-		#[cfg(feature = "opal-runtime")]
-		if runner.config().chain_spec.is_opal() {
-			return runner.async_run(|$config| {
-				let $components = new_partial::<
-					opal_runtime::RuntimeApi, OpalRuntimeExecutor, _
-				>(
-					&$config,
-					crate::service::parachain_build_import_queue,
-				)?;
-				let task_manager = $components.task_manager;
-				{ $( $code )* }.map(|v| (v, task_manager))
-			});
-		}
+			#[cfg(feature = "opal-runtime")]
+			RuntimeId::Opal => async_run_with_runtime!(
+				opal_runtime::RuntimeApi, OpalRuntimeExecutor,
+				runner, $components, $cli, $cmd, $config, $( $code )*
+			),
 
-		Err(no_runtime_err!(runner.config().chain_spec).into())
+			RuntimeId::Unknown(chain) => Err(no_runtime_err!(chain).into())
+		}
 	}}
 }
 
@@ -364,23 +352,17 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Benchmark(cmd)) => {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
-				runner.sync_run(|config| {
+				runner.sync_run(|config| match config.chain_spec.runtime_id() {
 					#[cfg(feature = "unique-runtime")]
-					if config.chain_spec.is_unique() {
-						return cmd.run::<Block, UniqueRuntimeExecutor>(config);
-					}
+					RuntimeId::Unique => cmd.run::<Block, UniqueRuntimeExecutor>(config),
 
 					#[cfg(feature = "quartz-runtime")]
-					if config.chain_spec.is_quartz() {
-						return cmd.run::<Block, QuartzRuntimeExecutor>(config);
-					}
+					RuntimeId::Quartz => cmd.run::<Block, QuartzRuntimeExecutor>(config),
 
 					#[cfg(feature = "opal-runtime")]
-					if config.chain_spec.is_opal() {
-						return cmd.run::<Block, OpalRuntimeExecutor>(config);
-					}
+					RuntimeId::Opal => cmd.run::<Block, OpalRuntimeExecutor>(config),
 
-					Err(no_runtime_err!(config.chain_spec).into())
+					RuntimeId::Unknown(chain) => Err(no_runtime_err!(chain).into()),
 				})
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. \
@@ -435,43 +417,39 @@ pub fn run() -> Result<()> {
 					}
 				);
 
-				#[cfg(feature = "unique-runtime")]
-				if config.chain_spec.is_unique() {
-					return crate::service::start_node::<
+				match config.chain_spec.runtime_id() {
+					#[cfg(feature = "unique-runtime")]
+					RuntimeId::Unique => crate::service::start_node::<
 						unique_runtime::Runtime,
 						unique_runtime::RuntimeApi,
 						UniqueRuntimeExecutor,
 					>(config, polkadot_config, id)
 					.await
 					.map(|r| r.0)
-					.map_err(Into::into);
-				}
+					.map_err(Into::into),
 
-				#[cfg(feature = "quartz-runtime")]
-				if config.chain_spec.is_quartz() {
-					return crate::service::start_node::<
+					#[cfg(feature = "quartz-runtime")]
+					RuntimeId::Quartz => crate::service::start_node::<
 						quartz_runtime::Runtime,
 						quartz_runtime::RuntimeApi,
 						QuartzRuntimeExecutor,
 					>(config, polkadot_config, id)
 					.await
 					.map(|r| r.0)
-					.map_err(Into::into);
-				}
+					.map_err(Into::into),
 
-				#[cfg(feature = "opal-runtime")]
-				if config.chain_spec.is_opal() {
-					return crate::service::start_node::<
+					#[cfg(feature = "opal-runtime")]
+					RuntimeId::Opal => crate::service::start_node::<
 						opal_runtime::Runtime,
 						opal_runtime::RuntimeApi,
 						OpalRuntimeExecutor,
 					>(config, polkadot_config, id)
 					.await
 					.map(|r| r.0)
-					.map_err(Into::into);
-				}
+					.map_err(Into::into),
 
-				Err(no_runtime_err!(config.chain_spec).into())
+					RuntimeId::Unknown(chain) => Err(no_runtime_err!(chain).into()),
+				}
 			})
 		}
 	}
