@@ -40,16 +40,9 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sc_service::TransactionPool;
 use std::{collections::BTreeMap, marker::PhantomData, sync::Arc};
 
-#[cfg(feature = "unique-runtime")]
-use unique_runtime as runtime;
-
-#[cfg(feature = "quartz-runtime")]
-use quartz_runtime as runtime;
-
-#[cfg(feature = "opal-runtime")]
-use opal_runtime as runtime;
-
-use runtime::opaque::{Hash, AccountId, CrossAccountId, Index, Block, BlockNumber, Balance};
+use unique_runtime_common::types::{
+	Hash, AccountId, RuntimeInstance, Index, Block, BlockNumber, Balance,
+};
 
 /// Public io handler for exporting into other modules
 pub type IoHandler = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
@@ -100,29 +93,33 @@ pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	pub block_data_cache: Arc<EthBlockDataCache<Block>>,
 }
 
-struct AccountCodes<C, B> {
+struct AccountCodes<C, B, R> {
 	client: Arc<C>,
-	_marker: PhantomData<B>,
+	_blk_marker: PhantomData<B>,
+	_runtime_marker: PhantomData<R>,
 }
 
-impl<C, Block> AccountCodes<C, Block>
+impl<C, Block, R> AccountCodes<C, Block, R>
 where
 	Block: sp_api::BlockT,
 	C: ProvideRuntimeApi<Block>,
+	R: RuntimeInstance,
 {
 	fn new(client: Arc<C>) -> Self {
 		Self {
 			client,
-			_marker: PhantomData,
+			_blk_marker: PhantomData,
+			_runtime_marker: PhantomData,
 		}
 	}
 }
 
-impl<C, Block> fc_rpc::AccountCodeProvider<Block> for AccountCodes<C, Block>
+impl<C, Block, Runtime> fc_rpc::AccountCodeProvider<Block> for AccountCodes<C, Block, Runtime>
 where
 	Block: sp_api::BlockT,
 	C: ProvideRuntimeApi<Block>,
-	C::Api: up_rpc::UniqueApi<Block, CrossAccountId, AccountId>,
+	C::Api: up_rpc::UniqueApi<Block, <Runtime as RuntimeInstance>::CrossAccountId, AccountId>,
+	Runtime: RuntimeInstance,
 {
 	fn code(&self, block: &sp_api::BlockId<Block>, account: sp_core::H160) -> Option<Vec<u8>> {
 		use up_rpc::UniqueApi;
@@ -134,22 +131,23 @@ where
 	}
 }
 
-pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
+pub fn overrides_handle<C, BE, R>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
 where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
 	C: Send + Sync + 'static,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
-	C::Api: up_rpc::UniqueApi<Block, CrossAccountId, AccountId>,
+	C::Api: up_rpc::UniqueApi<Block, <R as RuntimeInstance>::CrossAccountId, AccountId>,
 	BE: Backend<Block> + 'static,
 	BE::State: StateBackend<BlakeTwo256>,
+	R: RuntimeInstance + Send + Sync + 'static,
 {
 	let mut overrides_map = BTreeMap::new();
 	overrides_map.insert(
 		EthereumStorageSchema::V1,
 		Box::new(SchemaV1Override::new_with_code_provider(
 			client.clone(),
-			Arc::new(AccountCodes::<C, Block>::new(client.clone())),
+			Arc::new(AccountCodes::<C, Block, R>::new(client.clone())),
 		)) as Box<dyn StorageOverride<_> + Send + Sync>,
 	);
 	overrides_map.insert(
@@ -170,7 +168,7 @@ where
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, SC, CA, A, B>(
+pub fn create_full<C, P, SC, CA, R, A, B>(
 	deps: FullDeps<C, P, SC, CA>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 ) -> jsonrpc_core::IoHandler<sc_rpc_api::Metadata>
@@ -184,11 +182,14 @@ where
 	// C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
-	C::Api: up_rpc::UniqueApi<Block, CrossAccountId, AccountId>,
+	C::Api: up_rpc::UniqueApi<Block, <R as RuntimeInstance>::CrossAccountId, AccountId>,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
 	P: TransactionPool<Block = Block> + 'static,
 	CA: ChainApi<Block = Block> + 'static,
+	R: RuntimeInstance + Send + Sync + 'static,
+	<R as RuntimeInstance>::CrossAccountId: serde::Serialize,
+	for<'de> <R as RuntimeInstance>::CrossAccountId: serde::Deserialize<'de>,
 {
 	use fc_rpc::{
 		EthApi, EthApiServer, EthDevSigner, EthFilterApi, EthFilterApiServer, EthPubSubApi,
@@ -235,13 +236,13 @@ where
 		signers.push(Box::new(EthDevSigner::new()) as Box<dyn EthSigner>);
 	}
 
-	let overrides = overrides_handle(client.clone());
+	let overrides = overrides_handle::<_, _, R>(client.clone());
 
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
 		graph,
-		runtime::TransactionConverter,
+		<R as RuntimeInstance>::get_transaction_converter(),
 		network.clone(),
 		signers,
 		overrides.clone(),

@@ -238,6 +238,10 @@ branch = 'release-v0.9.17'
 ################################################################################
 # Local dependencies
 
+[dependencies.unique-runtime-common]
+default-features = false
+path = "../../runtime/common"
+
 [dependencies.unique-runtime]
 path = '../../runtime/unique'
 optional = true
@@ -253,6 +257,13 @@ optional = true
 [dependencies.up-data-structs]
 path = "../../primitives/data-structs"
 default-features = false
+
+[dependencies.up-rpc]
+path = "../../primitives/rpc"
+
+[dependencies.pallet-transaction-payment-rpc-runtime-api]
+git = 'https://github.com/paritytech/substrate.git'
+branch = 'polkadot-v0.9.17'
 
 ################################################################################
 # Package
@@ -295,7 +306,7 @@ pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier.git", branc
 unique-rpc = { default-features = false, path = "../rpc" }
 
 [features]
-default = ["unique-runtime"]
+default = ["unique-runtime", "quartz-runtime", "opal-runtime"]
 runtime-benchmarks = [
     'unique-runtime/runtime-benchmarks',
     'polkadot-service/runtime-benchmarks',

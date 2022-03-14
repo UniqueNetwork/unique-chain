@@ -11942,6 +11942,7 @@ dependencies = [
  "opal-runtime",
  "pallet-ethereum",
  "pallet-transaction-payment-rpc",
+ "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "parking_lot 0.11.2",
  "polkadot-cli",
@@ -11988,7 +11989,9 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "unique-rpc",
  "unique-runtime",
+ "unique-runtime-common",
  "up-data-structs",
+ "up-rpc",
 ]
 
 [[package]]
@@ -12003,12 +12006,11 @@ dependencies = [
  "futures 0.3.21",
  "jsonrpc-core",
  "jsonrpc-pubsub",
- "opal-runtime",
+ "pallet-common",
  "pallet-ethereum",
  "pallet-transaction-payment-rpc",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-unique",
- "quartz-runtime",
  "sc-client-api",
  "sc-consensus-aura",
  "sc-consensus-epochs",
@@ -12020,6 +12022,7 @@ dependencies = [
  "sc-rpc-api",
  "sc-service",
  "sc-transaction-pool",
+ "serde",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
@@ -12034,7 +12037,7 @@ dependencies = [
  "substrate-frame-rpc-system",
  "tokio 0.2.25",
  "uc-rpc",
- "unique-runtime",
+ "unique-runtime-common",
  "up-rpc",
 ]
 
@@ -12118,10 +12121,13 @@ dependencies = [
 name = "unique-runtime-common"
 version = "0.1.0"
 dependencies = [
+ "fp-rpc",
  "frame-support",
  "frame-system",
+ "pallet-common",
  "parity-scale-codec",
  "scale-info",
+ "sp-consensus-aura",
  "sp-core",
  "sp-runtime",
 ]

@@ -25,17 +25,8 @@ use fc_rpc_core::types::FeeHistoryCache;
 use futures::StreamExt;
 
 use unique_rpc::overrides_handle;
-// Local Runtime Types
-#[cfg(feature = "unique-runtime")]
-use unique_runtime as runtime;
 
-#[cfg(feature = "quartz-runtime")]
-use quartz_runtime as runtime;
-
-#[cfg(feature = "opal-runtime")]
-use opal_runtime as runtime;
-
-use runtime::RuntimeApi;
+use serde::{Serialize, Deserialize};
 
 // Cumulus Imports
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
@@ -71,18 +62,46 @@ type Header = sp_runtime::generic::Header<BlockNumber, sp_runtime::traits::Blake
 pub type Block = sp_runtime::generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
 type Hash = sp_core::H256;
 
-/// Native executor instance.
-pub struct ParachainRuntimeExecutor;
+use unique_runtime_common::types::{AuraId, RuntimeInstance, AccountId, Balance, Index};
 
-impl NativeExecutionDispatch for ParachainRuntimeExecutor {
+/// Native executor instance.
+pub struct UniqueRuntimeExecutor;
+pub struct QuartzRuntimeExecutor;
+pub struct OpalRuntimeExecutor;
+
+impl NativeExecutionDispatch for UniqueRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		runtime::api::dispatch(method, data)
+		unique_runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		runtime::native_version()
+		unique_runtime::native_version()
+	}
+}
+
+impl NativeExecutionDispatch for QuartzRuntimeExecutor {
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		unique_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		unique_runtime::native_version()
+	}
+}
+
+impl NativeExecutionDispatch for OpalRuntimeExecutor {
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		unique_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		unique_runtime::native_version()
 	}
 }
 
@@ -106,9 +125,7 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backen
 	)?))
 }
 
-type ExecutorDispatch = ParachainRuntimeExecutor;
-
-type FullClient =
+type FullClient<RuntimeApi, ExecutorDispatch> =
 	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
@@ -118,16 +135,16 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 /// Use this macro if you don't actually need the full service, but just the builder in order to
 /// be able to perform chain operations.
 #[allow(clippy::type_complexity)]
-pub fn new_partial<BIQ>(
+pub fn new_partial<RuntimeApi, ExecutorDispatch, BIQ>(
 	config: &Configuration,
 	build_import_queue: BIQ,
 ) -> Result<
 	PartialComponents<
-		FullClient,
+		FullClient<RuntimeApi, ExecutorDispatch>,
 		FullBackend,
 		FullSelectChain,
-		sc_consensus::DefaultImportQueue<Block, FullClient>,
-		sc_transaction_pool::FullPool<Block, FullClient>,
+		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
+		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
 		(
 			Option<Telemetry>,
 			Option<FilterPool>,
@@ -140,13 +157,21 @@ pub fn new_partial<BIQ>(
 >
 where
 	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+		+ Send
+		+ Sync
+		+ 'static,
+	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
-		Arc<FullClient>,
+		Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
-	) -> Result<sc_consensus::DefaultImportQueue<Block, FullClient>, sc_service::Error>,
+	) -> Result<
+		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
+		sc_service::Error,
+	>,
 {
 	let _telemetry = config
 		.telemetry_endpoints
@@ -240,29 +265,50 @@ where
 ///
 /// This is the actual implementation that is abstract over the executor and the runtime api.
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
-async fn start_node_impl<BIQ, BIC>(
+async fn start_node_impl<Runtime, RuntimeApi, ExecutorDispatch, BIQ, BIC>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	id: ParaId,
 	build_import_queue: BIQ,
 	build_consensus: BIC,
-) -> sc_service::error::Result<(TaskManager, Arc<FullClient>)>
+) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, ExecutorDispatch>>)>
 where
 	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
+	Runtime: RuntimeInstance + Send + Sync + 'static,
+	<Runtime as RuntimeInstance>::CrossAccountId: Serialize,
+	for<'de> <Runtime as RuntimeInstance>::CrossAccountId: Deserialize<'de>,
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+		+ Send
+		+ Sync
+		+ 'static,
+	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+		+ fp_rpc::EthereumRuntimeRPCApi<Block>
+		+ sp_session::SessionKeys<Block>
+		+ sp_block_builder::BlockBuilder<Block>
+		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
+		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
+		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		+ sp_api::Metadata<Block>
+		+ sp_offchain::OffchainWorkerApi<Block>
+		+ cumulus_primitives_core::CollectCollationInfo<Block>,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
-		Arc<FullClient>,
+		Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
-	) -> Result<sc_consensus::DefaultImportQueue<Block, FullClient>, sc_service::Error>,
+	) -> Result<
+		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
+		sc_service::Error,
+	>,
 	BIC: FnOnce(
-		Arc<FullClient>,
+		Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
 		Option<&Registry>,
 		Option<TelemetryHandle>,
 		&TaskManager,
 		Arc<dyn RelayChainInterface>,
-		Arc<sc_transaction_pool::FullPool<Block, FullClient>>,
+		Arc<sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>>,
 		Arc<NetworkService<Block, Hash>>,
 		SyncCryptoStorePtr,
 		bool,
@@ -274,7 +320,8 @@ where
 
 	let parachain_config = prepare_node_config(parachain_config);
 
-	let params = new_partial::<BIQ>(&parachain_config, build_import_queue)?;
+	let params =
+		new_partial::<RuntimeApi, ExecutorDispatch, BIQ>(&parachain_config, build_import_queue)?;
 	let (mut telemetry, filter_pool, frontier_backend, telemetry_worker_handle, fee_history_cache) =
 		params.other;
 
@@ -320,7 +367,7 @@ where
 
 	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCache::new(
 		task_manager.spawn_handle(),
-		overrides_handle(client.clone()),
+		overrides_handle::<_, _, Runtime>(client.clone()),
 		50,
 		50,
 	));
@@ -346,10 +393,12 @@ where
 			fee_history_limit: 2048,
 		};
 
-		Ok(unique_rpc::create_full::<_, _, _, _, RuntimeApi, _>(
-			full_deps,
-			subscription_executor.clone(),
-		))
+		Ok(
+			unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
+				full_deps,
+				subscription_executor.clone(),
+			),
+		)
 	});
 
 	task_manager.spawn_essential_handle().spawn(
@@ -436,12 +485,26 @@ where
 }
 
 /// Build the import queue for the the parachain runtime.
-pub fn parachain_build_import_queue(
-	client: Arc<FullClient>,
+pub fn parachain_build_import_queue<RuntimeApi, ExecutorDispatch>(
+	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
-) -> Result<sc_consensus::DefaultImportQueue<Block, FullClient>, sc_service::Error> {
+) -> Result<
+	sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
+	sc_service::Error,
+>
+where
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+		+ Send
+		+ Sync
+		+ 'static,
+	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+		+ sp_block_builder::BlockBuilder<Block>
+		+ sp_consensus_aura::AuraApi<Block, AuraId>
+		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
+	ExecutorDispatch: NativeExecutionDispatch + 'static,
+{
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
 	cumulus_client_consensus_aura::import_queue::<
@@ -475,12 +538,34 @@ pub fn parachain_build_import_queue(
 }
 
 /// Start a normal parachain node.
-pub async fn start_node(
+pub async fn start_node<Runtime, RuntimeApi, ExecutorDispatch>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	id: ParaId,
-) -> sc_service::error::Result<(TaskManager, Arc<FullClient>)> {
-	start_node_impl::<_, _>(
+) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, ExecutorDispatch>>)>
+where
+	Runtime: RuntimeInstance + Send + Sync + 'static,
+	<Runtime as RuntimeInstance>::CrossAccountId: Serialize,
+	for<'de> <Runtime as RuntimeInstance>::CrossAccountId: Deserialize<'de>,
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+		+ Send
+		+ Sync
+		+ 'static,
+	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+		+ fp_rpc::EthereumRuntimeRPCApi<Block>
+		+ sp_session::SessionKeys<Block>
+		+ sp_block_builder::BlockBuilder<Block>
+		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
+		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
+		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		+ sp_api::Metadata<Block>
+		+ sp_offchain::OffchainWorkerApi<Block>
+		+ cumulus_primitives_core::CollectCollationInfo<Block>
+		+ sp_consensus_aura::AuraApi<Block, AuraId>,
+	ExecutorDispatch: NativeExecutionDispatch + 'static,
+{
+	start_node_impl::<Runtime, RuntimeApi, ExecutorDispatch, _, _>(
 		parachain_config,
 		polkadot_config,
 		id,

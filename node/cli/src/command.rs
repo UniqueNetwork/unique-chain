@@ -33,10 +33,20 @@
 // limitations under the License.
 
 use crate::{
-	chain_spec,
+	chain_spec::{self, RuntimeIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, ParachainRuntimeExecutor},
+	service::new_partial,
 };
+
+#[cfg(feature = "unique-runtime")]
+use crate::service::UniqueRuntimeExecutor;
+
+#[cfg(feature = "quartz-runtime")]
+use crate::service::QuartzRuntimeExecutor;
+
+#[cfg(feature = "opal-runtime")]
+use crate::service::OpalRuntimeExecutor;
+
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use cumulus_client_service::genesis::generate_genesis_block;
@@ -53,16 +63,14 @@ use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
 
-#[cfg(feature = "unique-runtime")]
-use unique_runtime as runtime;
+use unique_runtime_common::types::Block;
 
-#[cfg(feature = "quartz-runtime")]
-use quartz_runtime as runtime;
-
-#[cfg(feature = "opal-runtime")]
-use opal_runtime as runtime;
-
-use runtime::Block;
+macro_rules! no_runtime_err {
+	($chain_spec:expr) => {
+		format!("No runtime valid runtime was found, chain id: {}",
+			$chain_spec.id())
+	};
+}
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
@@ -79,7 +87,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 impl SubstrateCli for Cli {
 	// TODO use args
 	fn impl_name() -> String {
-		format!("{} Node", runtime::RUNTIME_NAME)
+		"Unique Node".into()
 	}
 
 	fn impl_version() -> String {
@@ -88,11 +96,10 @@ impl SubstrateCli for Cli {
 	// TODO use args
 	fn description() -> String {
 		format!(
-			"{} Node\n\nThe command-line arguments provided first will be \
+			"Unique Node\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
 		{} [parachain-args] -- [relaychain-args]",
-			runtime::RUNTIME_NAME,
 			Self::executable_name()
 		)
 	}
@@ -114,15 +121,30 @@ impl SubstrateCli for Cli {
 		load_spec(id)
 	}
 
-	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&runtime::VERSION
+	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+		#[cfg(feature = "unique-runtime")]
+		if chain_spec.is_unique() {
+			return &unique_runtime::VERSION;
+		}
+
+		#[cfg(feature = "quartz-runtime")]
+		if chain_spec.is_quartz() {
+			return &quartz_runtime::VERSION;
+		}
+
+		#[cfg(feature = "opal-runtime")]
+		if chain_spec.is_opal() {
+			return &opal_runtime::VERSION;
+		}
+
+		panic!("{}", no_runtime_err!(chain_spec));
 	}
 }
 
 impl SubstrateCli for RelayChainCli {
 	// TODO use args
 	fn impl_name() -> String {
-		format!("{} Node", runtime::RUNTIME_NAME)
+		"Unique Node".into()
 	}
 
 	fn impl_version() -> String {
@@ -130,13 +152,11 @@ impl SubstrateCli for RelayChainCli {
 	}
 	// TODO use args
 	fn description() -> String {
-		format!(
-			"{} Node\n\nThe command-line arguments provided first will be \
+		"Unique Node\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
-		parachain-collator [parachain-args] -- [relaychain-args]",
-			runtime::RUNTIME_NAME
-		)
+		parachain-collator [parachain-args] -- [relaychain-args]"
+			.into()
 	}
 
 	fn author() -> String {
@@ -173,16 +193,50 @@ fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<V
 macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
-		runner.async_run(|$config| {
-			let $components = new_partial::<
-				_
-			>(
-				&$config,
-				crate::service::parachain_build_import_queue,
-			)?;
-			let task_manager = $components.task_manager;
-			{ $( $code )* }.map(|v| (v, task_manager))
-		})
+
+		#[cfg(feature = "unique-runtime")]
+		if runner.config().chain_spec.is_unique() {
+			return runner.async_run(|$config| {
+				let $components = new_partial::<
+					unique_runtime::RuntimeApi, UniqueRuntimeExecutor, _
+				>(
+					&$config,
+					crate::service::parachain_build_import_queue,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			});
+		}
+
+		#[cfg(feature = "quartz-runtime")]
+		if runner.config().chain_spec.is_quartz() {
+			return runner.async_run(|$config| {
+				let $components = new_partial::<
+					quartz_runtime::RuntimeApi, QuartzRuntimeExecutor, _
+				>(
+					&$config,
+					crate::service::parachain_build_import_queue,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			});
+		}
+
+		#[cfg(feature = "opal-runtime")]
+		if runner.config().chain_spec.is_opal() {
+			return runner.async_run(|$config| {
+				let $components = new_partial::<
+					opal_runtime::RuntimeApi, OpalRuntimeExecutor, _
+				>(
+					&$config,
+					crate::service::parachain_build_import_queue,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			});
+		}
+
+		Err(no_runtime_err!(runner.config().chain_spec).into())
 	}}
 }
 
@@ -286,8 +340,24 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Benchmark(cmd)) => {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
+				runner.sync_run(|config| {
+					#[cfg(feature = "unique-runtime")]
+					if config.chain_spec.is_unique() {
+						return cmd.run::<Block, UniqueRuntimeExecutor>(config);
+					}
 
-				runner.sync_run(|config| cmd.run::<Block, ParachainRuntimeExecutor>(config))
+					#[cfg(feature = "quartz-runtime")]
+					if config.chain_spec.is_quartz() {
+						return cmd.run::<Block, QuartzRuntimeExecutor>(config);
+					}
+
+					#[cfg(feature = "opal-runtime")]
+					if config.chain_spec.is_opal() {
+						return cmd.run::<Block, OpalRuntimeExecutor>(config);
+					}
+
+					Err(no_runtime_err!(config.chain_spec).into())
+				})
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."
@@ -341,10 +411,43 @@ pub fn run() -> Result<()> {
 					}
 				);
 
-				crate::service::start_node(config, polkadot_config, id)
+				#[cfg(feature = "unique-runtime")]
+				if config.chain_spec.is_unique() {
+					return crate::service::start_node::<
+						unique_runtime::Runtime,
+						unique_runtime::RuntimeApi,
+						UniqueRuntimeExecutor,
+					>(config, polkadot_config, id)
 					.await
 					.map(|r| r.0)
-					.map_err(Into::into)
+					.map_err(Into::into);
+				}
+
+				#[cfg(feature = "quartz-runtime")]
+				if config.chain_spec.is_quartz() {
+					return crate::service::start_node::<
+						quartz_runtime::Runtime,
+						quartz_runtime::RuntimeApi,
+						QuartzRuntimeExecutor,
+					>(config, polkadot_config, id)
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into);
+				}
+
+				#[cfg(feature = "opal-runtime")]
+				if config.chain_spec.is_opal() {
+					return crate::service::start_node::<
+						opal_runtime::Runtime,
+						opal_runtime::RuntimeApi,
+						OpalRuntimeExecutor,
+					>(config, polkadot_config, id)
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into);
+				}
+
+				Err(no_runtime_err!(config.chain_spec).into())
 			})
 		}
 	}

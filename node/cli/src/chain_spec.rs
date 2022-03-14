@@ -24,19 +24,32 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use serde_json::map::Map;
 
-#[cfg(feature = "unique-runtime")]
-use unique_runtime as runtime;
-
-#[cfg(feature = "quartz-runtime")]
-use quartz_runtime as runtime;
-
-#[cfg(feature = "opal-runtime")]
-use opal_runtime as runtime;
-
-use runtime::{*, opaque::*};
+use unique_runtime_common::types::*;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<runtime::GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<unique_runtime::GenesisConfig, Extensions>;
+
+pub trait RuntimeIdentification {
+	fn is_unique(&self) -> bool;
+
+	fn is_quartz(&self) -> bool;
+
+	fn is_opal(&self) -> bool;
+}
+
+impl RuntimeIdentification for Box<dyn sc_service::ChainSpec> {
+	fn is_unique(&self) -> bool {
+		self.id().starts_with("unique")
+	}
+
+	fn is_quartz(&self) -> bool {
+		self.id().starts_with("quartz")
+	}
+
+	fn is_opal(&self) -> bool {
+		self.id().starts_with("opal")
+	}
+}
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -225,10 +238,12 @@ fn testnet_genesis(
 	initial_authorities: Vec<AuraId>,
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
-) -> GenesisConfig {
+) -> unique_runtime::GenesisConfig {
+	use unique_runtime::*;
+
 	GenesisConfig {
-		system: runtime::SystemConfig {
-			code: runtime::WASM_BINARY
+		system: SystemConfig {
+			code: WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 		},
@@ -245,9 +260,9 @@ fn testnet_genesis(
 			key: Some(root_key),
 		},
 		vesting: VestingConfig { vesting: vec![] },
-		parachain_info: runtime::ParachainInfoConfig { parachain_id: id },
+		parachain_info: ParachainInfoConfig { parachain_id: id },
 		parachain_system: Default::default(),
-		aura: runtime::AuraConfig {
+		aura: AuraConfig {
 			authorities: initial_authorities,
 		},
 		aura_ext: Default::default(),
