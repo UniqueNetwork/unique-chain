@@ -361,9 +361,7 @@ where
 	let subscription_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let rpc_client = client.clone();
 	let rpc_pool = transaction_pool.clone();
-	let select_chain = params
-		.select_chain
-		.clone();
+	let select_chain = params.select_chain.clone();
 	let rpc_network = network.clone();
 
 	let rpc_frontier_backend = frontier_backend.clone();
