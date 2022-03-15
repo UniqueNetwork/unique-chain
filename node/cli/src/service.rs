@@ -57,7 +57,6 @@ use fc_rpc_core::types::FilterPool;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
 use unique_runtime_common::types::{AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block};
-use crate::chain_spec::ServiceId;
 
 /// Native executor instance.
 pub struct UniqueRuntimeExecutor;
@@ -135,7 +134,6 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 pub fn new_partial<RuntimeApi, ExecutorDispatch, BIQ>(
 	config: &Configuration,
 	build_import_queue: BIQ,
-	service_id: ServiceId,
 ) -> Result<
 	PartialComponents<
 		FullClient<RuntimeApi, ExecutorDispatch>,
@@ -318,11 +316,8 @@ where
 
 	let parachain_config = prepare_node_config(parachain_config);
 
-	let params = new_partial::<RuntimeApi, ExecutorDispatch, BIQ>(
-		&parachain_config,
-		build_import_queue,
-		ServiceId::Prod,
-	)?;
+	let params =
+		new_partial::<RuntimeApi, ExecutorDispatch, BIQ>(&parachain_config, build_import_queue)?;
 	let (mut telemetry, filter_pool, frontier_backend, telemetry_worker_handle, fee_history_cache) =
 		params.other;
 
@@ -714,7 +709,6 @@ where
 	} = new_partial::<RuntimeApi, ExecutorDispatch, _>(
 		&config,
 		dev_build_import_queue::<RuntimeApi, ExecutorDispatch>,
-		ServiceId::Dev,
 	)?;
 
 	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCache::new(

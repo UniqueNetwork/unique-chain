@@ -208,7 +208,6 @@ macro_rules! async_run_with_runtime {
 			>(
 				&$config,
 				crate::service::parachain_build_import_queue,
-				ServiceId::Prod,
 			)?;
 			let task_manager = $components.task_manager;
 
