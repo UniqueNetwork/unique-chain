@@ -25,7 +25,7 @@ use up_sponsorship::SponsorshipHandler;
 use core::marker::PhantomData;
 use core::convert::TryInto;
 use up_data_structs::TokenId;
-use frame_common::account::CrossAccountId;
+use pallet_evm::account::CrossAccountId;
 
 use pallet_nonfungible::erc::{UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721Call};
 use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};

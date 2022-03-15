@@ -27,7 +27,7 @@ use sp_std::{vec::Vec, vec};
 use pallet_common::{
 	erc::{CommonEvmHandler, PrecompileResult},
 };
-use frame_common::account::CrossAccountId;
+use pallet_evm::account::CrossAccountId;
 use pallet_evm_coder_substrate::call;
 
 use crate::{

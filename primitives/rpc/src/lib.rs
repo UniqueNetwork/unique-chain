@@ -28,7 +28,7 @@ sp_api::decl_runtime_apis! {
 	#[api_version(2)]
 	pub trait UniqueApi<CrossAccountId, AccountId> where
 		AccountId: Decode,
-		CrossAccountId: frame_common::account::CrossAccountId<AccountId>,
+		CrossAccountId: pallet_evm::account::CrossAccountId<AccountId>,
 	{
 		#[changed_in(2)]
 		fn token_owner(collection: CollectionId, token: TokenId) -> Result<CrossAccountId>;

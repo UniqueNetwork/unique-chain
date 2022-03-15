@@ -57,7 +57,7 @@ use pallet_common::{
 	CollectionHandle, Pallet as PalletCommon, Error as CommonError,
 	CommonWeightInfo,
 };
-use frame_common::account::CrossAccountId;
+use pallet_evm::account::CrossAccountId;
 use pallet_refungible::{Pallet as PalletRefungible, RefungibleHandle};
 use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
 use pallet_nonfungible::{Pallet as PalletNonfungible, NonfungibleHandle};
@@ -117,7 +117,7 @@ decl_event! {
 	pub enum Event<T>
 	where
 		<T as frame_system::Config>::AccountId,
-		<T as pallet_common::Config>::CrossAccountId,
+		<T as pallet_evm::account::Config>::CrossAccountId,
 	{
 		/// Collection sponsor was removed
 		///

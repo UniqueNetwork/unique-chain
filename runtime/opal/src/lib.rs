@@ -127,6 +127,22 @@ impl RuntimeInstance for Runtime {
 	}
 }
 
+/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
+/// never know...
+pub type AccountIndex = u32;
+
+/// Balance of an account.
+pub type Balance = u128;
+
+/// Index of a transaction in the chain.
+pub type Index = u32;
+
+/// A hash of some data used by the chain.
+pub type Hash = sp_core::H256;
+
+/// Digest item type.
+pub type DigestItem = generic::DigestItem;
+
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -256,6 +272,12 @@ impl GasWeightMapping for FixedGasWeightMapping {
 	}
 }
 
+impl pallet_evm::account::Config for Runtime {
+	type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Self>;
+	type EvmAddressMapping = pallet_evm::HashedAddressMapping<Self::Hashing>;
+	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
+}
+
 impl pallet_evm::Config for Runtime {
 	type BlockGasLimit = BlockGasLimit;
 	type FeeCalculator = FixedFee;
@@ -283,11 +305,6 @@ impl pallet_evm::Config for Runtime {
 
 impl pallet_evm_migration::Config for Runtime {
 	type WeightInfo = pallet_evm_migration::weights::SubstrateWeight<Self>;
-}
-
-impl frame_common::account::Config for Runtime {
-	type EvmAddressMapping = pallet_evm::HashedAddressMapping<Self::Hashing>;
-	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 }
 
 pub struct EthereumFindAuthor<F>(core::marker::PhantomData<F>);
@@ -848,10 +865,6 @@ parameter_types! {
 
 impl pallet_common::Config for Runtime {
 	type Event = Event;
-	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
-	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type CrossAccountId = frame_common::account::BasicCrossAccountId<Self>;
-
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
@@ -915,8 +928,6 @@ type SponsorshipHandler = (
 impl pallet_evm_transaction_payment::Config for Runtime {
 	type EvmSponsorshipHandler = EvmSponsorshipHandler;
 	type Currency = Balances;
-	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 }
 
 impl pallet_charge_transaction::Config for Runtime {

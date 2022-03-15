@@ -20,7 +20,7 @@ use core::marker::PhantomData;
 use fp_evm::WithdrawReason;
 use frame_support::traits::{Currency, IsSubType};
 pub use pallet::*;
-use pallet_evm::{EVMCurrencyAdapter, EnsureAddressOrigin};
+use pallet_evm::{EVMCurrencyAdapter, EnsureAddressOrigin, account::CrossAccountId};
 use sp_core::{H160, U256};
 use sp_runtime::TransactionOutcome;
 use up_sponsorship::SponsorshipHandler;
@@ -35,11 +35,9 @@ pub mod pallet {
 	use sp_std::vec::Vec;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_evm::account::Config {
 		type EvmSponsorshipHandler: SponsorshipHandler<Self::AccountId, (H160, Vec<u8>)>;
 		type Currency: Currency<Self::AccountId>;
-		type EvmBackwardsAddressMapping: EvmBackwardsAddressMapping<Self::AccountId>;
-		type EvmAddressMapping: AddressMapping<Self::AccountId>;
 	}
 
 	#[pallet::pallet]
@@ -86,14 +84,16 @@ where
 	type LiquidityInfo = Option<ChargeEvmLiquidityInfo<T>>;
 
 	fn withdraw_fee(
-		who: &T::AccountId,
+		who: &T::CrossAccountId,
 		reason: WithdrawReason,
 		fee: U256,
 	) -> core::result::Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
-		let mut who_pays_fee = who.clone();
+		let who_pays_fee;
 		if let WithdrawReason::Call { target, input } = &reason {
-			who_pays_fee = T::EvmSponsorshipHandler::get_sponsor(who, &(*target, input.clone()))
-				.unwrap_or(who_pays_fee);
+			who_pays_fee = <T as pallet_evm::account::Config>::CrossAccountId::from_sub(T::EvmSponsorshipHandler::get_sponsor(&who.as_sub(), &(*target, input.clone()))
+				.unwrap_or(who.as_sub().clone()));
+		} else {
+			who_pays_fee = who.clone();
 		}
 
 		let negative_imbalance = EVMCurrencyAdapter::<<T as Config>::Currency, ()>::withdraw_fee(
@@ -102,20 +102,19 @@ where
 			fee,
 		)?;
 
-		let who_pays_fee_eth = T::EvmBackwardsAddressMapping::from_account_id(who_pays_fee);
 		Ok(negative_imbalance.map(|i| ChargeEvmLiquidityInfo {
-			who: who_pays_fee_eth,
+			who: who_pays_fee.as_eth().clone(),
 			negative_imbalance: i,
 		}))
 	}
 
 	fn correct_and_deposit_fee(
-		who: &T::AccountId,
+		who: &T::CrossAccountId,
 		corrected_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
 	) {
 		<EVMCurrencyAdapter<<T as Config>::Currency, ()> as pallet_evm::OnChargeEVMTransaction<T>>::correct_and_deposit_fee(
-			&already_withdrawn.as_ref().map(|e| T::EvmAddressMapping::into_account_id(e.who)).unwrap_or(who.clone()),
+			&already_withdrawn.as_ref().map(|e| T::CrossAccountId::from_eth(e.who)).unwrap_or(who.clone()),
 			corrected_fee,
 			already_withdrawn.map(|e| e.negative_imbalance),
 		)

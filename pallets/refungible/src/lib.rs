@@ -24,7 +24,7 @@ use up_data_structs::{
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
 };
-use frame_common::account::CrossAccountId;
+use pallet_evm::account::CrossAccountId;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use core::ops::Deref;
