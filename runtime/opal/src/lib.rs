@@ -307,11 +307,6 @@ impl pallet_evm_migration::Config for Runtime {
 	type WeightInfo = pallet_evm_migration::weights::SubstrateWeight<Self>;
 }
 
-impl frame_common::account::Config for Runtime {
-	type EvmAddressMapping = pallet_evm::HashedAddressMapping<Self::Hashing>;
-	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
-}
-
 pub struct EthereumFindAuthor<F>(core::marker::PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	fn find_author<'a, I>(digests: I) -> Option<H160>

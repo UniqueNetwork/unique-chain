@@ -2554,7 +2554,7 @@ dependencies = [
  "fc-db",
  "fc-rpc-core",
  "fp-consensus",
- "fp-evm 3.0.0-dev (git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.17)",
+ "fp-evm",
  "fp-rpc",
  "fp-storage",
  "futures 0.3.21",
@@ -2565,7 +2565,7 @@ dependencies = [
  "log",
  "lru 0.6.6",
  "pallet-ethereum",
- "pallet-evm 6.0.0-dev (git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.17)",
+ "pallet-evm",
  "parity-scale-codec",
  "parking_lot 0.11.2",
  "rand 0.7.3",
@@ -2766,7 +2766,7 @@ source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkad
 dependencies = [
  "ethereum",
  "ethereum-types",
- "fp-evm 3.0.0-dev (git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.17)",
+ "fp-evm",
  "parity-scale-codec",
  "scale-info",
  "sp-api",
@@ -2859,21 +2859,6 @@ dependencies = [
  "sp-std",
  "sp-storage",
  "sp-trie",
-]
-
-[[package]]
-name = "frame-common"
-version = "0.1.0"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=feature/300#0a1dc4086cbe971ddf57edf82a61cfce52c8c20b"
-dependencies = [
- "frame-system",
- "pallet-evm 6.0.0-dev (git+https://github.com/uniquenetwork/frontier.git?branch=feature/300)",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-std",
- "up-evm-mapping",
 ]
 
 [[package]]
@@ -5860,7 +5845,7 @@ source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkad
 dependencies = [
  "frame-support",
  "frame-system",
- "pallet-evm 6.0.0-dev (git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.17)",
+ "pallet-evm",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -6012,7 +5997,7 @@ dependencies = [
  "fp-evm-mapping",
  "frame-support",
  "frame-system",
- "pallet-evm 6.0.0-dev (git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.17)",
+ "pallet-evm",
  "pallet-evm-coder-substrate",
  "parity-scale-codec",
  "scale-info",
@@ -6098,7 +6083,7 @@ dependencies = [
  "frame-system",
  "log",
  "pallet-balances",
- "pallet-evm 6.0.0-dev (git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.17)",
+ "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
  "rlp",
@@ -6151,7 +6136,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-ethereum",
- "pallet-evm 6.0.0-dev (git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.17)",
+ "pallet-evm",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -6167,7 +6152,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "pallet-evm 6.0.0-dev (git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.17)",
+ "pallet-evm",
  "pallet-evm-coder-substrate",
  "parity-scale-codec",
  "scale-info",
@@ -6181,11 +6166,11 @@ dependencies = [
 name = "pallet-evm-migration"
 version = "0.1.0"
 dependencies = [
- "fp-evm 3.0.0-dev (git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.17)",
+ "fp-evm",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "pallet-evm 6.0.0-dev (git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.17)",
+ "pallet-evm",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -6203,7 +6188,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-ethereum",
- "pallet-evm 6.0.0-dev (git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.17)",
+ "pallet-evm",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -6220,7 +6205,6 @@ dependencies = [
  "ethereum",
  "evm-coder",
  "frame-benchmarking",
- "frame-common",
  "frame-support",
  "frame-system",
  "pallet-common",
@@ -6448,7 +6432,6 @@ dependencies = [
  "ethereum",
  "evm-coder",
  "frame-benchmarking",
- "frame-common",
  "frame-support",
  "frame-system",
  "pallet-common",
@@ -6566,7 +6549,6 @@ name = "pallet-refungible"
 version = "0.1.0"
 dependencies = [
  "frame-benchmarking",
- "frame-common",
  "frame-support",
  "frame-system",
  "pallet-common",
@@ -6831,14 +6813,13 @@ dependencies = [
  "fp-evm",
  "fp-evm-mapping",
  "frame-benchmarking",
- "frame-common",
  "frame-support",
  "frame-system",
  "hex-literal",
  "pallet-balances",
  "pallet-common",
  "pallet-ethereum",
- "pallet-evm 6.0.0-dev (git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.17)",
+ "pallet-evm",
  "pallet-evm-coder-substrate",
  "pallet-fungible",
  "pallet-nonfungible",
@@ -12220,7 +12201,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.10.2",
+ "parking_lot 0.11.2",
  "regex",
  "serde",
  "serde_json",
@@ -12367,7 +12348,6 @@ checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
 name = "uc-rpc"
 version = "0.1.0"
 dependencies = [
- "frame-common",
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
@@ -12586,7 +12566,6 @@ dependencies = [
  "fp-rpc",
  "fp-self-contained",
  "frame-benchmarking",
- "frame-common",
  "frame-executive",
  "frame-support",
  "frame-system",
@@ -12599,7 +12578,7 @@ dependencies = [
  "pallet-base-fee",
  "pallet-common",
  "pallet-ethereum",
- "pallet-evm 6.0.0-dev (git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.17)",
+ "pallet-evm",
  "pallet-evm-coder-substrate",
  "pallet-evm-contract-helpers",
  "pallet-evm-migration",
@@ -12727,7 +12706,6 @@ dependencies = [
 name = "up-rpc"
 version = "0.1.0"
 dependencies = [
- "frame-common",
  "pallet-common",
  "pallet-evm",
  "parity-scale-codec",
