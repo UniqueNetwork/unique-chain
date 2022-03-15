@@ -71,28 +71,6 @@ optionally, build in release:
 cargo build --release
 ```
 
-##### _Building the node using the Quartz Runtime (optional)_
-* Build debug version
-```bash
-cargo build --package unique-rpc --package unique-node --no-default-features --features quartz-runtime
-```
-
-* Build release version
-```bash
-cargo build --release --package unique-rpc --package unique-node --no-default-features --features quartz-runtime
-```
-
-##### _Building the node using the Opal Runtime (optional)_
-* Build debug version
-```bash
-cargo build --package unique-rpc --package unique-node --no-default-features --features opal-runtime
-```
-
-* Build release version
-```bash
-cargo build --release --package unique-rpc --package unique-node --no-default-features --features opal-runtime
-```
-
 ## Building as Parachain locally
 
 Note: checkout this project and all related projects (see below) in the sibling folders (both under the same folder)
