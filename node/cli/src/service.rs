@@ -126,7 +126,6 @@ type FullClient<RuntimeApi, ExecutorDispatch> =
 	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
-type MaybeSelectChain = Option<FullSelectChain>;
 
 /// Starts a `ServiceBuilder` for a full service.
 ///
@@ -141,7 +140,7 @@ pub fn new_partial<RuntimeApi, ExecutorDispatch, BIQ>(
 	PartialComponents<
 		FullClient<RuntimeApi, ExecutorDispatch>,
 		FullBackend,
-		MaybeSelectChain,
+		FullSelectChain,
 		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
 		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
 		(
@@ -218,10 +217,7 @@ where
 		telemetry
 	});
 
-	let select_chain = match service_id {
-		ServiceId::Prod => Some(sc_consensus::LongestChain::new(backend.clone())),
-		ServiceId::Dev => None,
-	};
+	let select_chain = sc_consensus::LongestChain::new(backend.clone());
 
 	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
 		config.transaction_pool.clone(),
@@ -367,7 +363,6 @@ where
 	let rpc_pool = transaction_pool.clone();
 	let select_chain = params
 		.select_chain
-		.expect("select_chain always exists when running Prod service; qed")
 		.clone();
 	let rpc_network = network.clone();
 
@@ -754,11 +749,7 @@ where
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let collator = config.role.is_authority();
 
-	let select_chain = maybe_select_chain.clone().expect(
-		"`new_partial` builds a `LongestChainRule` when building dev service.\
-			We specified the dev service when calling `new_partial`.\
-			Therefore, a `LongestChainRule` is present. qed.",
-	);
+	let select_chain = maybe_select_chain.clone();
 
 	if collator {
 		let block_import =

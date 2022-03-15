@@ -75,8 +75,6 @@ macro_rules! no_runtime_err {
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
-		"westend-local" => Box::new(chain_spec::local_testnet_westend_config()),
-		"rococo-local" => Box::new(chain_spec::local_testnet_rococo_config()),
 		"dev" => Box::new(chain_spec::development_config()),
 		"" | "local" => Box::new(chain_spec::local_testnet_rococo_config()),
 		path => {
@@ -402,6 +400,8 @@ pub fn run() -> Result<()> {
 					|| relay_chain_id == Some("dev-service".into());
 
 				if is_dev_service {
+					info!("Running Dev service");
+
 					return start_node_using_chain_runtime! {
 						start_dev_node(config).map_err(Into::into)
 					};
