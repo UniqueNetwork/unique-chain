@@ -33,9 +33,9 @@
 // limitations under the License.
 
 use crate::{
-	chain_spec::{self, RuntimeId, RuntimeIdentification},
+	chain_spec::{self, RuntimeId, RuntimeIdentification, ServiceId, ServiceIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::new_partial,
+	service::{new_partial, start_node, start_dev_node},
 };
 
 #[cfg(feature = "unique-runtime")]
@@ -210,6 +210,7 @@ macro_rules! async_run_with_runtime {
 			>(
 				&$config,
 				crate::service::parachain_build_import_queue,
+				ServiceId::Prod,
 			)?;
 			let task_manager = $components.task_manager;
 
@@ -243,6 +244,34 @@ macro_rules! construct_async_run {
 			RuntimeId::Unknown(chain) => Err(no_runtime_err!(chain).into())
 		}
 	}}
+}
+
+macro_rules! start_node_using_chain_runtime {
+	($start_node_fn:ident($config:expr $(, $($args:expr),+)?) $($code:tt)*) => {
+		match $config.chain_spec.runtime_id() {
+			#[cfg(feature = "unique-runtime")]
+			RuntimeId::Unique => $start_node_fn::<
+				unique_runtime::Runtime,
+				unique_runtime::RuntimeApi,
+				UniqueRuntimeExecutor,
+			>($config $(, $($args),+)?) $($code)*,
+
+			#[cfg(feature = "quartz-runtime")]
+			RuntimeId::Quartz => $start_node_fn::<
+				quartz_runtime::Runtime,
+				quartz_runtime::RuntimeApi,
+				QuartzRuntimeExecutor,
+			>($config $(, $($args),+)?) $($code)*,
+
+			RuntimeId::Opal => $start_node_fn::<
+				opal_runtime::Runtime,
+				opal_runtime::RuntimeApi,
+				OpalRuntimeExecutor,
+			>($config $(, $($args),+)?) $($code)*,
+
+			RuntimeId::Unknown(chain) => Err(no_runtime_err!(chain).into()),
+		}
+	};
 }
 
 /// Parse command line arguments into service configuration.
@@ -365,7 +394,20 @@ pub fn run() -> Result<()> {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
 			runner.run_node_until_exit(|config| async move {
-				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
+				let extensions = chain_spec::Extensions::try_get(&*config.chain_spec);
+
+				let service_id = config.chain_spec.service_id();
+				let relay_chain_id = extensions.map(|e| e.relay_chain.clone());
+				let is_dev_service = matches![service_id, ServiceId::Dev]
+									|| relay_chain_id == Some("dev-service".into());
+
+				if is_dev_service {
+					return start_node_using_chain_runtime! {
+						start_dev_node(config).map_err(Into::into)
+					};
+				};
+
+				let para_id = extensions
 					.map(|e| e.para_id)
 					.ok_or("Could not find parachain ID in chain-spec.")?;
 
@@ -376,10 +418,10 @@ pub fn run() -> Result<()> {
 						.chain(cli.relaychain_args.iter()),
 				);
 
-				let id = ParaId::from(para_id);
+				let para_id = ParaId::from(para_id);
 
 				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
+					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&para_id);
 
 				let state_version =
 					RelayChainCli::native_runtime_version(&config.chain_spec).state_version();
@@ -395,7 +437,7 @@ pub fn run() -> Result<()> {
 				)
 				.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
-				info!("Parachain id: {:?}", id);
+				info!("Parachain id: {:?}", para_id);
 				info!("Parachain Account: {}", parachain_account);
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Parachain genesis hash: {}", genesis_hash);
@@ -408,37 +450,11 @@ pub fn run() -> Result<()> {
 					}
 				);
 
-				match config.chain_spec.runtime_id() {
-					#[cfg(feature = "unique-runtime")]
-					RuntimeId::Unique => crate::service::start_node::<
-						unique_runtime::Runtime,
-						unique_runtime::RuntimeApi,
-						UniqueRuntimeExecutor,
-					>(config, polkadot_config, id)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into),
-
-					#[cfg(feature = "quartz-runtime")]
-					RuntimeId::Quartz => crate::service::start_node::<
-						quartz_runtime::Runtime,
-						quartz_runtime::RuntimeApi,
-						QuartzRuntimeExecutor,
-					>(config, polkadot_config, id)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into),
-
-					RuntimeId::Opal => crate::service::start_node::<
-						opal_runtime::Runtime,
-						opal_runtime::RuntimeApi,
-						OpalRuntimeExecutor,
-					>(config, polkadot_config, id)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into),
-
-					RuntimeId::Unknown(chain) => Err(no_runtime_err!(chain).into()),
+				start_node_using_chain_runtime! {
+					start_node(config, polkadot_config, para_id)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
 				}
 			})
 		}

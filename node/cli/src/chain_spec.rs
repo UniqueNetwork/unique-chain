@@ -68,6 +68,25 @@ impl RuntimeIdentification for Box<dyn sc_service::ChainSpec> {
 	}
 }
 
+pub enum ServiceId {
+	Prod,
+	Dev
+}
+
+pub trait ServiceIdentification {
+	fn service_id(&self) -> ServiceId;
+}
+
+impl ServiceIdentification for Box<dyn sc_service::ChainSpec> {
+	fn service_id(&self) -> ServiceId {
+		if self.id().ends_with("dev") {
+			ServiceId::Dev
+		} else {
+			ServiceId::Prod
+		}
+	}
+}
+
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
 	TPublic::Pair::from_string(&format!("//{}", seed), None)

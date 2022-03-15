@@ -57,6 +57,7 @@ use fc_rpc_core::types::FilterPool;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
 use unique_runtime_common::types::{AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block};
+use crate::chain_spec::ServiceId;
 
 /// Native executor instance.
 pub struct UniqueRuntimeExecutor;
@@ -125,6 +126,7 @@ type FullClient<RuntimeApi, ExecutorDispatch> =
 	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
+type MaybeSelectChain = Option<FullSelectChain>;
 
 /// Starts a `ServiceBuilder` for a full service.
 ///
@@ -134,11 +136,12 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 pub fn new_partial<RuntimeApi, ExecutorDispatch, BIQ>(
 	config: &Configuration,
 	build_import_queue: BIQ,
+	service_id: ServiceId,
 ) -> Result<
 	PartialComponents<
 		FullClient<RuntimeApi, ExecutorDispatch>,
 		FullBackend,
-		FullSelectChain,
+		MaybeSelectChain,
 		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
 		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
 		(
@@ -215,7 +218,10 @@ where
 		telemetry
 	});
 
-	let select_chain = sc_consensus::LongestChain::new(backend.clone());
+	let select_chain = match service_id {
+		ServiceId::Prod => Some(sc_consensus::LongestChain::new(backend.clone())),
+		ServiceId::Dev => None
+	};
 
 	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
 		config.transaction_pool.clone(),
@@ -317,7 +323,9 @@ where
 	let parachain_config = prepare_node_config(parachain_config);
 
 	let params =
-		new_partial::<RuntimeApi, ExecutorDispatch, BIQ>(&parachain_config, build_import_queue)?;
+		new_partial::<RuntimeApi, ExecutorDispatch, BIQ>(
+			&parachain_config, build_import_queue, ServiceId::Prod
+		)?;
 	let (mut telemetry, filter_pool, frontier_backend, telemetry_worker_handle, fee_history_cache) =
 		params.other;
 
@@ -356,7 +364,9 @@ where
 	let subscription_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let rpc_client = client.clone();
 	let rpc_pool = transaction_pool.clone();
-	let select_chain = params.select_chain.clone();
+	let select_chain = params.select_chain
+							.expect("select_chain always exists when running Prod service; qed")
+							.clone();
 	let rpc_network = network.clone();
 
 	let rpc_frontier_backend = frontier_backend.clone();
@@ -637,4 +647,256 @@ where
 		},
 	)
 	.await
+}
+
+fn dev_build_import_queue<RuntimeApi, ExecutorDispatch>(
+	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+	config: &Configuration,
+	_: Option<TelemetryHandle>,
+	task_manager: &TaskManager,
+) -> Result<sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, ExecutorDispatch>>, sc_service::Error>
+where
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+	+ Send
+	+ Sync
+	+ 'static,
+	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+							+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
+	ExecutorDispatch: NativeExecutionDispatch + 'static,
+{
+	Ok(sc_consensus_manual_seal::import_queue(
+		Box::new(client.clone()),
+		&task_manager.spawn_essential_handle(),
+		config.prometheus_registry(),
+	))
+}
+
+/// Builds a new development service. This service uses instant seal, and mocks
+/// the parachain inherent
+pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch>(config: Configuration)
+	-> sc_service::error::Result<TaskManager>
+where
+	Runtime: RuntimeInstance + Send + Sync + 'static,
+	<Runtime as RuntimeInstance>::CrossAccountId: Serialize,
+	for<'de> <Runtime as RuntimeInstance>::CrossAccountId: Deserialize<'de>,
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+		+ Send
+		+ Sync
+		+ 'static,
+	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+							+ fp_rpc::EthereumRuntimeRPCApi<Block>
+							+ sp_session::SessionKeys<Block>
+							+ sp_block_builder::BlockBuilder<Block>
+							+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
+							+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
+							+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
+							+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+							+ sp_api::Metadata<Block>
+							+ sp_offchain::OffchainWorkerApi<Block>
+							+ cumulus_primitives_core::CollectCollationInfo<Block>
+							+ sp_consensus_aura::AuraApi<Block, AuraId>,
+	ExecutorDispatch: NativeExecutionDispatch + 'static,
+{
+	use futures::Stream;
+	use sc_consensus_manual_seal::{run_manual_seal, EngineCommand, ManualSealParams};
+	use fc_consensus::FrontierBlockImport;
+	use sc_client_api::HeaderBackend;
+
+	let sc_service::PartialComponents {
+		client,
+		backend,
+		mut task_manager,
+		import_queue,
+		keystore_container,
+		select_chain: maybe_select_chain,
+		transaction_pool,
+		other:
+			(
+				telemetry,
+				filter_pool,
+				frontier_backend,
+				_telemetry_worker_handle,
+				fee_history_cache,
+			),
+	} = new_partial::<RuntimeApi, ExecutorDispatch, _>(
+		&config,
+		dev_build_import_queue::<RuntimeApi, ExecutorDispatch>,
+		ServiceId::Dev
+	)?;
+
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCache::new(
+		task_manager.spawn_handle(),
+		overrides_handle::<_, _, Runtime>(client.clone()),
+		50,
+		50,
+	));
+
+	let (network, system_rpc_tx, network_starter) =
+		sc_service::build_network(sc_service::BuildNetworkParams {
+			config: &config,
+			client: client.clone(),
+			transaction_pool: transaction_pool.clone(),
+			spawn_handle: task_manager.spawn_handle(),
+			import_queue,
+			block_announce_validator_builder: None,
+			warp_sync: None,
+		})?;
+
+	if config.offchain_worker.enabled {
+		sc_service::build_offchain_workers(
+			&config,
+			task_manager.spawn_handle(),
+			client.clone(),
+			network.clone(),
+		);
+	}
+
+	let prometheus_registry = config.prometheus_registry().cloned();
+	let collator = config.role.is_authority();
+
+	let select_chain = maybe_select_chain.clone().expect(
+		"`new_partial` builds a `LongestChainRule` when building dev service.\
+			We specified the dev service when calling `new_partial`.\
+			Therefore, a `LongestChainRule` is present. qed.",
+	);
+
+	if collator {
+		let block_import =
+			FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
+
+		let env = sc_basic_authorship::ProposerFactory::new(
+			task_manager.spawn_handle(),
+			client.clone(),
+			transaction_pool.clone(),
+			prometheus_registry.as_ref(),
+			telemetry.as_ref().map(|x| x.handle()),
+		);
+
+		let commands_stream: Box<dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin> =
+			Box::new(
+				// This bit cribbed from the implementation of instant seal.
+				transaction_pool
+					.pool()
+					.validated_pool()
+					.import_notification_stream()
+					.map(|_| EngineCommand::SealNewBlock {
+						create_empty: true, // was false in Moonbeam
+						finalize: false,
+						parent_hash: None,
+						sender: None,
+					}),
+			);
+
+		let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
+		let client_set_aside_for_cidp = client.clone();
+
+		task_manager.spawn_essential_handle().spawn_blocking(
+			"authorship_task",
+			Some("block-authoring"),
+			run_manual_seal(ManualSealParams {
+				block_import,
+				env,
+				client: client.clone(),
+				pool: transaction_pool.clone(),
+				commands_stream,
+				select_chain: select_chain.clone(),
+				consensus_data_provider: None,
+				create_inherent_data_providers: move |block: Hash, ()| {
+					let current_para_block = client_set_aside_for_cidp
+						.number(block)
+						.expect("Header lookup should succeed")
+						.expect("Header passed in as parent should be present in backend.");
+
+					let client_for_xcm = client_set_aside_for_cidp.clone();
+					async move {
+						let time = sp_timestamp::InherentDataProvider::from_system_time();
+
+						let mocked_parachain = cumulus_primitives_parachain_inherent::MockValidationDataInherentDataProvider {
+							current_para_block,
+							relay_offset: 1000,
+							relay_blocks_per_para_block: 2,
+							xcm_config: cumulus_primitives_parachain_inherent::MockXcmConfig::new(
+								&*client_for_xcm,
+								block,
+								Default::default(),
+								Default::default(),
+							),
+							raw_downward_messages: vec![],
+							raw_horizontal_messages: vec![],
+						};
+
+						let slot =
+						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
+							*time,
+							slot_duration.slot_duration(),
+						);
+
+						Ok((time, slot, mocked_parachain))
+					}
+				},
+			}),
+		);
+	}
+
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-mapping-sync-worker",
+		Some("block-authoring"),
+		MappingSyncWorker::new(
+			client.import_notification_stream(),
+			Duration::new(6, 0),
+			client.clone(),
+			backend.clone(),
+			frontier_backend.clone(),
+			SyncStrategy::Normal,
+		)
+		.for_each(|()| futures::future::ready(())),
+	);
+
+	let subscription_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
+	let rpc_client = client.clone();
+	let rpc_pool = transaction_pool.clone();
+	let rpc_network = network.clone();
+	let rpc_frontier_backend = frontier_backend.clone();
+	let rpc_extensions_builder = Box::new(move |deny_unsafe, _| {
+		let full_deps = unique_rpc::FullDeps {
+			backend: rpc_frontier_backend.clone(),
+			deny_unsafe,
+			client: rpc_client.clone(),
+			pool: rpc_pool.clone(),
+			graph: rpc_pool.pool().clone(),
+			// TODO: Unhardcode
+			enable_dev_signer: false,
+			filter_pool: filter_pool.clone(),
+			network: rpc_network.clone(),
+			select_chain: select_chain.clone(),
+			is_authority: collator,
+			// TODO: Unhardcode
+			max_past_logs: 10000,
+			block_data_cache: block_data_cache.clone(),
+			fee_history_cache: fee_history_cache.clone(),
+			// TODO: Unhardcode
+			fee_history_limit: 2048,
+		};
+
+		Ok(unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
+			full_deps,
+			subscription_executor.clone(),
+		))
+	});
+
+	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
+		network,
+		client,
+		keystore: keystore_container.sync_keystore(),
+		task_manager: &mut task_manager,
+		transaction_pool,
+		rpc_extensions_builder,
+		backend,
+		system_rpc_tx,
+		config,
+		telemetry: None,
+	})?;
+
+	network_starter.start_network();
+	Ok(task_manager)
 }
