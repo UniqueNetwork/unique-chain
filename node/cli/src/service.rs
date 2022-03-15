@@ -220,7 +220,7 @@ where
 
 	let select_chain = match service_id {
 		ServiceId::Prod => Some(sc_consensus::LongestChain::new(backend.clone())),
-		ServiceId::Dev => None
+		ServiceId::Dev => None,
 	};
 
 	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
@@ -322,10 +322,11 @@ where
 
 	let parachain_config = prepare_node_config(parachain_config);
 
-	let params =
-		new_partial::<RuntimeApi, ExecutorDispatch, BIQ>(
-			&parachain_config, build_import_queue, ServiceId::Prod
-		)?;
+	let params = new_partial::<RuntimeApi, ExecutorDispatch, BIQ>(
+		&parachain_config,
+		build_import_queue,
+		ServiceId::Prod,
+	)?;
 	let (mut telemetry, filter_pool, frontier_backend, telemetry_worker_handle, fee_history_cache) =
 		params.other;
 
@@ -364,9 +365,10 @@ where
 	let subscription_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let rpc_client = client.clone();
 	let rpc_pool = transaction_pool.clone();
-	let select_chain = params.select_chain
-							.expect("select_chain always exists when running Prod service; qed")
-							.clone();
+	let select_chain = params
+		.select_chain
+		.expect("select_chain always exists when running Prod service; qed")
+		.clone();
 	let rpc_network = network.clone();
 
 	let rpc_frontier_backend = frontier_backend.clone();
@@ -654,14 +656,17 @@ fn dev_build_import_queue<RuntimeApi, ExecutorDispatch>(
 	config: &Configuration,
 	_: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
-) -> Result<sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, ExecutorDispatch>>, sc_service::Error>
+) -> Result<
+	sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
+	sc_service::Error,
+>
 where
 	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
-	+ Send
-	+ Sync
-	+ 'static,
+		+ Send
+		+ Sync
+		+ 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-							+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
+		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
 	Ok(sc_consensus_manual_seal::import_queue(
@@ -673,8 +678,9 @@ where
 
 /// Builds a new development service. This service uses instant seal, and mocks
 /// the parachain inherent
-pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch>(config: Configuration)
-	-> sc_service::error::Result<TaskManager>
+pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch>(
+	config: Configuration,
+) -> sc_service::error::Result<TaskManager>
 where
 	Runtime: RuntimeInstance + Send + Sync + 'static,
 	<Runtime as RuntimeInstance>::CrossAccountId: Serialize,
@@ -684,17 +690,17 @@ where
 		+ Sync
 		+ 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-							+ fp_rpc::EthereumRuntimeRPCApi<Block>
-							+ sp_session::SessionKeys<Block>
-							+ sp_block_builder::BlockBuilder<Block>
-							+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
-							+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
-							+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
-							+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
-							+ sp_api::Metadata<Block>
-							+ sp_offchain::OffchainWorkerApi<Block>
-							+ cumulus_primitives_core::CollectCollationInfo<Block>
-							+ sp_consensus_aura::AuraApi<Block, AuraId>,
+		+ fp_rpc::EthereumRuntimeRPCApi<Block>
+		+ sp_session::SessionKeys<Block>
+		+ sp_block_builder::BlockBuilder<Block>
+		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
+		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
+		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		+ sp_api::Metadata<Block>
+		+ sp_offchain::OffchainWorkerApi<Block>
+		+ cumulus_primitives_core::CollectCollationInfo<Block>
+		+ sp_consensus_aura::AuraApi<Block, AuraId>,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
 	use futures::Stream;
@@ -711,17 +717,11 @@ where
 		select_chain: maybe_select_chain,
 		transaction_pool,
 		other:
-			(
-				telemetry,
-				filter_pool,
-				frontier_backend,
-				_telemetry_worker_handle,
-				fee_history_cache,
-			),
+			(telemetry, filter_pool, frontier_backend, _telemetry_worker_handle, fee_history_cache),
 	} = new_partial::<RuntimeApi, ExecutorDispatch, _>(
 		&config,
 		dev_build_import_queue::<RuntimeApi, ExecutorDispatch>,
-		ServiceId::Dev
+		ServiceId::Dev,
 	)?;
 
 	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCache::new(
@@ -878,10 +878,12 @@ where
 			fee_history_limit: 2048,
 		};
 
-		Ok(unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
-			full_deps,
-			subscription_executor.clone(),
-		))
+		Ok(
+			unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
+				full_deps,
+				subscription_executor.clone(),
+			),
+		)
 	});
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {

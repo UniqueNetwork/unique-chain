@@ -70,7 +70,7 @@ impl RuntimeIdentification for Box<dyn sc_service::ChainSpec> {
 
 pub enum ServiceId {
 	Prod,
-	Dev
+	Dev,
 }
 
 pub trait ServiceIdentification {

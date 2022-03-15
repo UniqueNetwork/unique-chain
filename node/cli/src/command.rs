@@ -399,7 +399,7 @@ pub fn run() -> Result<()> {
 				let service_id = config.chain_spec.service_id();
 				let relay_chain_id = extensions.map(|e| e.relay_chain.clone());
 				let is_dev_service = matches![service_id, ServiceId::Dev]
-									|| relay_chain_id == Some("dev-service".into());
+					|| relay_chain_id == Some("dev-service".into());
 
 				if is_dev_service {
 					return start_node_using_chain_runtime! {
@@ -421,7 +421,9 @@ pub fn run() -> Result<()> {
 				let para_id = ParaId::from(para_id);
 
 				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&para_id);
+					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(
+						&para_id,
+					);
 
 				let state_version =
 					RelayChainCli::native_runtime_version(&config.chain_spec).state_version();
