@@ -24,7 +24,22 @@ import {
   itWeb3,
   SponsoringMode,
   createEthAccount,
+  collectionIdToAddress,
+  GAS_ARGS,
+  normalizeEvents,
 } from './util/helpers';
+import {
+  createCollectionExpectSuccess,
+  createItemExpectSuccess,
+  getCreateCollectionResult,
+  normalizeAccountId,
+  toSubstrateAddress,
+} from '../util/helpers';
+import nonFungibleAbi from './nonFungibleAbi.json';
+import {
+  submitTransactionAsync,
+} from '../substrate/substrate-api';
+import { evmToAddress } from '@polkadot/util-crypto';
 
 describe('Sponsoring EVM contracts', () => {
   itWeb3('Sponsoring can be set by the address that has deployed the contract', async ({api, web3}) => {
@@ -198,5 +213,105 @@ describe('Sponsoring EVM contracts', () => {
     const flipper = await deployFlipper(web3, owner);
     const helpers = contractHelpers(web3, owner);
     expect(await helpers.methods.getSponsoringRateLimit(flipper.options.address).call()).to.be.equals('7200');
+  });
+
+
+
+
+
+
+
+  
+  itWeb3.only('Sponsoring evm address from substrate collection', async ({api, web3}) => {
+    const owner = privateKey('//Alice');
+    const userEth = createEthAccount(web3);
+    const userSub = evmToAddress(userEth);
+    const collectionId = await createCollectionExpectSuccess();
+
+    {
+      const tx = api.tx.unique.setCollectionSponsor(collectionId, owner.address);
+      const events = await submitTransactionAsync(owner, tx);
+      const result = getCreateCollectionResult(events);
+      expect(result.success).to.be.true;
+    }
+    {
+      const tx = api.tx.unique.confirmSponsorship(collectionId);
+      const events = await submitTransactionAsync(owner, tx);
+      const result = getCreateCollectionResult(events);
+      expect(result.success).to.be.true;
+    }
+
+    const address = collectionIdToAddress(collectionId);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: userEth, ...GAS_ARGS});
+    const receiver = createEthAccount(web3);
+
+    {
+      const nextTokenId = await contract.methods.nextTokenId().call();
+      expect(nextTokenId).to.be.equal('1');
+      // const result = await contract.methods.mintWithTokenURI(
+      //   receiver,
+      //   nextTokenId,
+      //   'Test URI',
+      // ).send({from: userEth});
+      // const events = normalizeEvents(result.events);
+
+      // expect(events).to.be.deep.equal([
+      //   {
+      //     address,
+      //     event: 'Transfer',
+      //     args: {
+      //       from: '0x0000000000000000000000000000000000000000',
+      //       to: receiver,
+      //       tokenId: nextTokenId,
+      //     },
+      //   },
+      // ]);
+
+      // expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+    }
+
+    {
+      const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
+      const events = await submitTransactionAsync(owner, tx);
+      const result = getCreateCollectionResult(events);
+      expect(result.success).to.be.true;
+    }
+    {
+      const tx = api.tx.unique.addToAllowList(collectionId, {Ethereum: userEth});
+      const events = await submitTransactionAsync(owner, tx);
+      const result = getCreateCollectionResult(events);
+      expect(result.success).to.be.true;
+    }
+    {
+      const tx = api.tx.unique.setMintPermission(collectionId, true);
+      const events = await submitTransactionAsync(owner, tx);
+      const result = getCreateCollectionResult(events);
+      expect(result.success).to.be.true;
+    }
+    {
+      const nextTokenId = await contract.methods.nextTokenId().call();
+      expect(nextTokenId).to.be.equal('1');
+      // const result = await contract.methods.mintWithTokenURI(
+      //   receiver,
+      //   nextTokenId,
+      //   'Test URI',
+      // ).send({from: userEth});
+      // const events = normalizeEvents(result.events);
+
+      // expect(events).to.be.deep.equal([
+      //   {
+      //     address,
+      //     event: 'Transfer',
+      //     args: {
+      //       from: '0x0000000000000000000000000000000000000000',
+      //       to: receiver,
+      //       tokenId: nextTokenId,
+      //     },
+      //   },
+      // ]);
+
+      // expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+    }
+
   });
 });
