@@ -201,7 +201,7 @@ where
 	AccountId: Decode,
 	C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	C::Api: UniqueRuntimeApi<Block, CrossAccountId, AccountId>,
-	CrossAccountId: pallet_common::account::CrossAccountId<AccountId>,
+	CrossAccountId: pallet_common::CrossAccountId<AccountId>,
 {
 	pass_method!(account_tokens(collection: CollectionId, account: CrossAccountId) -> Vec<TokenId>);
 	pass_method!(token_exists(collection: CollectionId, token: TokenId) -> bool);

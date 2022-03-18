@@ -5,9 +5,20 @@ license = "GPLv3"
 edition = "2021"
 
 [dependencies]
+scale-info = { version = "1.0.0", default-features = false, features = [
+	"derive",
+] }
+parity-scale-codec = { version = "2.3.0", default-features = false, features = [
+	'derive',
+] }
 sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
 frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
 
 [features]
 default = ["std"]
-std = ["sp-core/std", "frame-support/std"]
+std = [
+	"scale-info/std",
+	"parity-scale-codec/std",
+	"sp-core/std",
+	"frame-support/std",
+]

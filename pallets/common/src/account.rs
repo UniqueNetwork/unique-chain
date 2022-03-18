@@ -18,26 +18,13 @@ use crate::Config;
 use codec::{Encode, EncodeLike, Decode, MaxEncodedLen};
 use sp_core::H160;
 use scale_info::{Type, TypeInfo};
+use up_evm_mapping::CrossAccountId;
 use core::cmp::Ordering;
 use serde::{Serialize, Deserialize};
 use pallet_evm::AddressMapping;
 use sp_std::vec::Vec;
 use sp_std::clone::Clone;
 pub use up_evm_mapping::EvmBackwardsAddressMapping;
-
-pub trait CrossAccountId<AccountId>:
-	Encode + EncodeLike + Decode + TypeInfo + MaxEncodedLen + Clone + PartialEq + Ord + core::fmt::Debug
-// +
-// Serialize + Deserialize<'static>
-{
-	fn as_sub(&self) -> &AccountId;
-	fn as_eth(&self) -> &H160;
-
-	fn from_sub(account: AccountId) -> Self;
-	fn from_eth(account: H160) -> Self;
-
-	fn conv_eq(&self, other: &Self) -> bool;
-}
 
 #[derive(Encode, Decode, Serialize, Deserialize, TypeInfo, MaxEncodedLen)]
 #[serde(rename_all = "camelCase")]

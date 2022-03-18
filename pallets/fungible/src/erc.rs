@@ -21,7 +21,7 @@ use up_data_structs::CollectionMode;
 use pallet_common::erc::{CommonEvmHandler, PrecompileResult};
 use sp_core::{H160, U256};
 use sp_std::vec::Vec;
-use pallet_common::account::CrossAccountId;
+use pallet_common::CrossAccountId;
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
 
 use crate::{

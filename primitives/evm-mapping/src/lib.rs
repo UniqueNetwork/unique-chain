@@ -18,6 +18,8 @@
 
 use frame_support::sp_runtime::AccountId32;
 use sp_core::H160;
+use parity_scale_codec::{Encode, EncodeLike, Decode, MaxEncodedLen};
+use scale_info::TypeInfo;
 
 /// Transforms substrate addresses to ethereum (Reverse of `EvmAddressMapping`)
 /// pallet_evm doesn't have this, as it only checks if eth address
@@ -36,4 +38,18 @@ impl EvmBackwardsAddressMapping<AccountId32> for MapBackwardsAddressTruncated {
 		out.copy_from_slice(&(account_id.as_ref() as &[u8])[0..20]);
 		H160(out)
 	}
+}
+
+pub trait CrossAccountId<AccountId>:
+	Encode + EncodeLike + Decode + TypeInfo + MaxEncodedLen + Clone + PartialEq + Ord + core::fmt::Debug
+// +
+// Serialize + Deserialize<'static>
+{
+	fn as_sub(&self) -> &AccountId;
+	fn as_eth(&self) -> &H160;
+
+	fn from_sub(account: AccountId) -> Self;
+	fn from_eth(account: H160) -> Self;
+
+	fn conv_eq(&self, other: &Self) -> bool;
 }

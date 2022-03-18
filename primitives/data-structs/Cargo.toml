@@ -22,6 +22,7 @@ sp-core = { default-features = false, git = 'https://github.com/paritytech/subst
 sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
 sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
 derivative = "2.2.0"
+up-evm-mapping = { path = "../evm-mapping", default-features = false }
 
 [features]
 default = ["std"]
@@ -34,6 +35,7 @@ std = [
   "sp-runtime/std",
   "sp-core/std",
   "sp-std/std",
+  "up-evm-mapping/std",
 ]
 serde1 = ["serde"]
 limit-testing = []
