@@ -2,8 +2,8 @@ use proc_macro::TokenStream;
 use quote::format_ident;
 use syn::{
 	parse::{Parse, ParseStream},
-	Token, LitInt, parse_macro_input, ItemStruct, Error, Fields, Result, Field,
-	punctuated::Punctuated, Expr, parenthesized,
+	Token, LitInt, parse_macro_input, ItemStruct, Error, Fields, Result, Field, Expr,
+	parenthesized,
 };
 use quote::quote;
 
@@ -18,7 +18,6 @@ struct VersionedAttrs {
 	current_version: u32,
 	first_version: u32,
 	upper: bool,
-	versions: bool,
 }
 
 /// #[versioned(version = 2)]
@@ -27,7 +26,6 @@ impl Parse for VersionedAttrs {
 		let mut current_version = None::<u32>;
 		let mut first_version = None::<u32>;
 		let mut upper = false;
-		let mut versions = false;
 
 		loop {
 			if input.is_empty() {
@@ -53,34 +51,30 @@ impl Parse for VersionedAttrs {
 			} else if lookahead.peek(kw::upper) {
 				input.parse::<kw::upper>()?;
 				upper = true;
-			} else if lookahead.peek(kw::versions) {
-				input.parse::<kw::version>()?;
-				versions = true;
 			} else {
-				return Err(lookahead.error())
+				return Err(lookahead.error());
 			}
 
 			if input.is_empty() {
-				break
+				break;
 			} else if input.peek(Token![,]) {
 				input.parse::<Token![,]>()?;
-				continue
+				continue;
 			} else {
-				return Err(input.error("unexpected token"))
+				return Err(input.error("unexpected token"));
 			}
 		}
 		let first_version = first_version.unwrap_or(1);
 		let current_version = current_version.unwrap_or(first_version);
 
 		if current_version == 0 || first_version == 0 || first_version > current_version {
-			return Err(Error::new(input.span(), "1 <= first_version <= version"))
+			return Err(Error::new(input.span(), "1 <= first_version <= version"));
 		}
 
 		Ok(Self {
 			current_version,
 			first_version,
 			upper,
-			versions,
 		})
 	}
 }
@@ -128,7 +122,9 @@ impl Parse for VersionAttr {
 			parenthesized!(expr in input);
 
 			Some(Expr::parse(&expr)?)
-		} else {None};
+		} else {
+			None
+		};
 
 		if since.is_none() && before.is_none() {
 			return Err(Error::new_spanned(
@@ -215,31 +211,46 @@ pub fn versioned(attr: TokenStream, input: TokenStream) -> TokenStream {
 				match (ver.exists_on(version - 1), ver.exists_on(version)) {
 					(true, false) => {
 						let ty = &field.ty;
-						doc.push(format!(" - {}: {} was removed", field.ident.as_ref().unwrap(), quote!{#ty}))
+						doc.push(format!(
+							" - {}: {} was removed",
+							field.ident.as_ref().unwrap(),
+							quote! {#ty}
+						))
 					}
 					(false, true) => {
 						let ty = &field.ty;
-						doc.push(format!(" - [`{}`]: {} was added", field.ident.as_ref().unwrap(), quote!{#ty}))
+						doc.push(format!(
+							" - [`{}`]: {} was added",
+							field.ident.as_ref().unwrap(),
+							quote! {#ty}
+						))
 					}
-					_ => {},
+					_ => {}
 				}
 			}
 		}
 
 		let upper = if attr.upper && version > attr.first_version {
 			let prev_version = format_ident!("{}Version{}", &input.ident, version - 1);
-			let removed_fields = fields.iter()
+			let removed_fields = fields
+				.iter()
 				.filter(|(v, _)| v.exists_on(version - 1) && !v.exists_on(version))
 				.map(|(_, f)| f.ident.as_ref().unwrap())
 				.collect::<Vec<_>>();
-			let added_fields = fields.iter()
+			let added_fields = fields
+				.iter()
 				.filter(|(v, _)| !v.exists_on(version - 1) && v.exists_on(version))
 				.map(|(v, f)| {
 					let name = f.ident.as_ref().unwrap();
-					let value = v.upper.clone().unwrap_or_else(|| Expr::Verbatim(Error::new_spanned(f, "missing upper declaration").to_compile_error()));
+					let value = v.upper.clone().unwrap_or_else(|| {
+						Expr::Verbatim(
+							Error::new_spanned(f, "missing upper declaration").to_compile_error(),
+						)
+					});
 					quote! { #name: #value }
 				});
-			let passed_fields = fields.iter()
+			let passed_fields = fields
+				.iter()
 				.filter(|(v, _)| v.exists_on(version - 1) && v.exists_on(version))
 				.map(|(_, f)| f.ident.as_ref().unwrap())
 				.collect::<Vec<_>>();
@@ -259,7 +270,9 @@ pub fn versioned(attr: TokenStream, input: TokenStream) -> TokenStream {
 					}
 				}
 			}
-		} else {quote!{}};
+		} else {
+			quote! {}
+		};
 
 		out.push(quote! {
 			#(#attrs)*
@@ -275,51 +288,10 @@ pub fn versioned(attr: TokenStream, input: TokenStream) -> TokenStream {
 	let ident = &input.ident;
 	let last_version = format_ident!("{}Version{}", input.ident, attr.current_version);
 
-	let versions = if attr.versions {
-		let name = format_ident!("{}Versions", input.ident);
-		let versions = (attr.first_version..=attr.current_version).map(|v| {
-			let var_name = format_ident!("V{}", v);
-			let var_type = format_ident!("{}Version{}", input.ident, v);
-			quote! {
-				#var_name(#var_type),
-			}
-		});
-		let versions = (attr.first_version..=attr.current_version).map(|this_version| {
-			let var_name = format_ident!("V{}", this_version);
-			let stages = (this_version+1..=attr.current_version).map(|v| {
-				let var_type = format_ident!("{}Version{}", input.ident, v);
-				quote! {
-					let v = #var_type::from(v);
-				}
-			});
-			quote! {
-				#var_name(v) => {
-					#(#stages)*
-					v
-				}
-			}
-		}).collect::<Vec<_>>();
-		quote! {
-			#vis enum #name {
-				#(#versions)*
-			}
-			impl struct_versioning::Versions for #name {
-				type Last = #last_version;
-				fn up(self) -> Self::Last {
-					match self {
-						#(#versions)*
-					}
-				}
-			}
-		}
-	} else {quote!{}};
-
 	quote! {
 		#(#out)*
 
 		#vis type #ident #ty_generics = #last_version #ty_generics;
-
-		#versions
 	}
 	.into()
 }
