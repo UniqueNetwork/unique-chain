@@ -917,6 +917,11 @@ impl pallet_common::Config for Runtime {
 	type CrossTokenAddressMapping = CrossTokenAddressMapping<Self::AccountId>;
 }
 
+impl pallet_structure::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+}
+
 impl pallet_fungible::Config for Runtime {
 	type WeightInfo = pallet_fungible::weights::SubstrateWeight<Self>;
 }
@@ -1039,6 +1044,7 @@ construct_runtime!(
 		Fungible: pallet_fungible::{Pallet, Storage} = 67,
 		Refungible: pallet_refungible::{Pallet, Storage} = 68,
 		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
+		Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
