@@ -18,9 +18,12 @@
 
 use core::ops::Deref;
 use frame_support::{ensure};
-use up_data_structs::{AccessMode, CollectionId, TokenId, CreateCollectionData};
+use up_data_structs::{
+	AccessMode, CollectionId, TokenId, CreateCollectionData, mapping::TokenAddressMapping,
+};
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, CrossAccountId,
+	CollectionHandle, dispatch::CollectionDispatch,
 };
 use pallet_evm_coder_substrate::WithRecorder;
 use sp_core::H160;
@@ -53,6 +56,8 @@ pub mod pallet {
 		FungibleItemsHaveNoId,
 		/// Tried to set data for fungible item
 		FungibleItemsDontHaveData,
+		/// Fungible token does not support nested
+		FungibleDisallowsNesting,
 	}
 
 	#[pallet::config]
@@ -208,7 +213,15 @@ impl<T: Config> Pallet<T> {
 			None
 		};
 
-		// =========
+		if let Some(target) = T::CrossTokenAddressMapping::address_to_token(to) {
+			let handle = <CollectionHandle<T>>::try_get(target.0)?;
+			let dispatch = T::CollectionDispatch::dispatch(handle);
+			let dispatch = dispatch.as_dyn();
+
+			// =========
+
+			dispatch.nest_token(from.clone(), (collection.id, TokenId::default()), target.1)?;
+		}
 
 		if let Some(balance_to) = balance_to {
 			// from != to

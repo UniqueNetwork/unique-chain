@@ -19,10 +19,11 @@
 use frame_support::{ensure, BoundedVec};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, MAX_REFUNGIBLE_PIECES, TokenId,
-	CreateCollectionData, CreateRefungibleExData,
+	CreateCollectionData, CreateRefungibleExData, mapping::TokenAddressMapping,
 };
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, CrossAccountId,
+	CollectionHandle, dispatch::CollectionDispatch,
 };
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
@@ -57,6 +58,8 @@ pub mod pallet {
 		NotRefungibleDataUsedToMintFungibleCollectionToken,
 		/// Maximum refungibility exceeded
 		WrongRefungiblePieces,
+		/// Refungible token can't nest other tokens
+		RefungibleDisallowsNesting,
 	}
 
 	#[pallet::config]
@@ -339,7 +342,15 @@ impl<T: Config> Pallet<T> {
 			None
 		};
 
-		// =========
+		if let Some(target) = T::CrossTokenAddressMapping::address_to_token(to) {
+			let handle = <CollectionHandle<T>>::try_get(target.0)?;
+			let dispatch = T::CollectionDispatch::dispatch(handle);
+			let dispatch = dispatch.as_dyn();
+
+			// =========
+
+			dispatch.nest_token(from.clone(), (collection.id, token), target.1)?;
+		}
 
 		if let Some(balance_to) = balance_to {
 			// from != to

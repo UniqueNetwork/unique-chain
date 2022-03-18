@@ -228,6 +228,15 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		fail!(<Error<T>>::FungibleItemsDontHaveData)
 	}
 
+	fn nest_token(
+		&self,
+		_sender: <T>::CrossAccountId,
+		_from: (up_data_structs::CollectionId, TokenId),
+		_under: TokenId,
+	) -> sp_runtime::DispatchResult {
+		fail!(<Error<T>>::FungibleDisallowsNesting)
+	}
+
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId> {
 		if <Balance<T>>::get((self.id, account)) != 0 {
 			vec![TokenId::default()]

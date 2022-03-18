@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use up_data_structs::{CollectionId, TokenId};
+use up_data_structs::CollectionId;
 use sp_core::H160;
 
 // 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection 1
