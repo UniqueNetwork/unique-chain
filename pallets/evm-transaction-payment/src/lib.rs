@@ -24,8 +24,6 @@ use pallet_evm::{EVMCurrencyAdapter, EnsureAddressOrigin, account::CrossAccountI
 use sp_core::{H160, U256};
 use sp_runtime::TransactionOutcome;
 use up_sponsorship::SponsorshipHandler;
-use up_evm_mapping::EvmBackwardsAddressMapping;
-use pallet_evm::AddressMapping;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -36,7 +34,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm::account::Config {
-		type EvmSponsorshipHandler: SponsorshipHandler<Self::AccountId, (H160, Vec<u8>)>;
+		type EvmSponsorshipHandler: SponsorshipHandler<Self::CrossAccountId, (H160, Vec<u8>)>;
 		type Currency: Currency<Self::AccountId>;
 	}
 
@@ -58,13 +56,13 @@ where
 }
 
 pub struct TransactionValidityHack<T: Config>(PhantomData<*const T>);
-impl<T: Config> fp_evm::TransactionValidityHack<T::AccountId> for TransactionValidityHack<T> {
-	fn who_pays_fee(origin: H160, reason: &WithdrawReason) -> Option<T::AccountId> {
+impl<T: Config> fp_evm::TransactionValidityHack<T::CrossAccountId> for TransactionValidityHack<T> {
+	fn who_pays_fee(origin: H160, reason: &WithdrawReason) -> Option<T::CrossAccountId> {
 		match reason {
 			WithdrawReason::Call { target, input } => {
 				// This method is only used for checking, we shouldn't touch storage in it
 				frame_support::storage::with_transaction(|| {
-					let origin_sub = T::EvmAddressMapping::into_account_id(origin);
+					let origin_sub = T::CrossAccountId::from_eth(origin);
 					TransactionOutcome::Rollback(T::EvmSponsorshipHandler::get_sponsor(
 						&origin_sub,
 						&(*target, input.clone()),
@@ -88,13 +86,11 @@ where
 		reason: WithdrawReason,
 		fee: U256,
 	) -> core::result::Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
-		let who_pays_fee;
-		if let WithdrawReason::Call { target, input } = &reason {
-			who_pays_fee = <T as pallet_evm::account::Config>::CrossAccountId::from_sub(T::EvmSponsorshipHandler::get_sponsor(&who.as_sub(), &(*target, input.clone()))
-				.unwrap_or(who.as_sub().clone()));
+		let who_pays_fee = if let WithdrawReason::Call { target, input } = &reason {
+			T::EvmSponsorshipHandler::get_sponsor(who, &(*target, input.clone())).unwrap_or(who.clone())
 		} else {
-			who_pays_fee = who.clone();
-		}
+			who.clone()
+		};
 
 		let negative_imbalance = EVMCurrencyAdapter::<<T as Config>::Currency, ()>::withdraw_fee(
 			&who_pays_fee,
@@ -145,6 +141,7 @@ where
 					<frame_system::RawOrigin<T::AccountId>>::Signed(who.clone()).into(),
 				)
 				.ok()?;
+				let who = T::CrossAccountId::from_sub(who.clone());
 				// Effects from EvmSponsorshipHandler are applied in OnChargeEvmTransaction by pallet_evm::runner
 				// TODO: Should we implement simulation mode (test, but do not apply effects) in `up-sponsorship`?
 				let sponsor = frame_support::storage::with_transaction(|| {
@@ -153,7 +150,7 @@ where
 						&(*target, input.clone()),
 					))
 				})?;
-				Some(sponsor)
+				Some(sponsor.as_sub().clone())
 			}
 			_ => None,
 		}

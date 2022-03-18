@@ -31,14 +31,13 @@ use pallet_nonfungible::erc::{UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721C
 use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};
 
 pub struct UniqueEthSponsorshipHandler<T: Config>(PhantomData<*const T>);
-impl<T: Config> SponsorshipHandler<T::AccountId, (H160, Vec<u8>)> for UniqueEthSponsorshipHandler<T> {
-	fn get_sponsor(who: &T::AccountId, call: &(H160, Vec<u8>)) -> Option<T::AccountId> {
+impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)> for UniqueEthSponsorshipHandler<T> {
+	fn get_sponsor(who: &T::CrossAccountId, call: &(H160, Vec<u8>)) -> Option<T::CrossAccountId> {
 		let collection_id = map_eth_to_id(&call.0)?;
 		let collection = <CollectionHandle<T>>::new(collection_id)?;
 		let sponsor = collection.sponsorship.sponsor()?.clone();
-		let who = T::CrossAccountId::from_sub(who.clone());
 		let (method_id, mut reader) = AbiReader::new_call(&call.1).ok()?;
-		match &collection.mode {
+		Some(T::CrossAccountId::from_sub(match &collection.mode {
 			crate::CollectionMode::NFT => {
 				let call = <UniqueNFTCall<T>>::parse(method_id, &mut reader).ok()??;
 				match call {
@@ -66,7 +65,7 @@ impl<T: Config> SponsorshipHandler<T::AccountId, (H160, Vec<u8>)> for UniqueEthS
 				#[allow(clippy::single_match)]
 				match call {
 					UniqueFungibleCall::ERC20(ERC20Call::Transfer { .. }) => {
-						withdraw_transfer::<T>(&collection, &who, &TokenId::default())
+						withdraw_transfer::<T>(&collection, who, &TokenId::default())
 							.map(|()| sponsor)
 					}
 					UniqueFungibleCall::ERC20(ERC20Call::TransferFrom { from, .. }) => {
@@ -82,6 +81,6 @@ impl<T: Config> SponsorshipHandler<T::AccountId, (H160, Vec<u8>)> for UniqueEthS
 				}
 			}
 			_ => None,
-		}
+		}?))
 	}
 }

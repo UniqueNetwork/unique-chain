@@ -288,14 +288,15 @@ describe('Sponsoring EVM contracts', () => {
       const result = getCreateCollectionResult(events);
       expect(result.success).to.be.true;
     }
+
     {
       const nextTokenId = await contract.methods.nextTokenId().call();
       expect(nextTokenId).to.be.equal('1');
-      // const result = await contract.methods.mintWithTokenURI(
-      //   receiver,
-      //   nextTokenId,
-      //   'Test URI',
-      // ).send({from: userEth});
+      const result = await contract.methods.mintWithTokenURI(
+        receiver,
+        nextTokenId,
+        'Test URI',
+      ).send({from: userEth});
       // const events = normalizeEvents(result.events);
 
       // expect(events).to.be.deep.equal([

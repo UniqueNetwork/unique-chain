@@ -18,7 +18,7 @@ use core::marker::PhantomData;
 use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{
-	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, AddressMapping
+	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, account::CrossAccountId
 };
 use sp_core::H160;
 use crate::{
@@ -26,7 +26,6 @@ use crate::{
 };
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
-use up_evm_mapping::EvmBackwardsAddressMapping;
 use sp_std::vec::Vec;
 
 struct ContractHelpers<T: Config>(SubstrateRecorder<T>);
@@ -180,20 +179,19 @@ impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 }
 
 pub struct HelpersContractSponsoring<T: Config>(PhantomData<*const T>);
-impl<T: Config> SponsorshipHandler<T::AccountId, (H160, Vec<u8>)> for HelpersContractSponsoring<T> {
-	fn get_sponsor(who: &T::AccountId, call: &(H160, Vec<u8>)) -> Option<T::AccountId> {
+impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)> for HelpersContractSponsoring<T> {
+	fn get_sponsor(who: &T::CrossAccountId, call: &(H160, Vec<u8>)) -> Option<T::CrossAccountId> {
 		let mode = <Pallet<T>>::sponsoring_mode(call.0);
 		if mode == SponsoringModeT::Disabled {
 			return None;
 		}
 
-		let who = T::EvmBackwardsAddressMapping::from_account_id(who.clone());
-		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(call.0, who) {
+		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(call.0, *who.as_eth()) {
 			return None;
 		}
 		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 
-		if let Some(last_tx_block) = <SponsorBasket<T>>::get(&call.0, who) {
+		if let Some(last_tx_block) = <SponsorBasket<T>>::get(&call.0, who.as_eth()) {
 			let limit = <SponsoringRateLimit<T>>::get(&call.0);
 
 			let timeout = last_tx_block + limit;
@@ -202,9 +200,9 @@ impl<T: Config> SponsorshipHandler<T::AccountId, (H160, Vec<u8>)> for HelpersCon
 			}
 		}
 
-		<SponsorBasket<T>>::insert(&call.0, who, block_number);
+		<SponsorBasket<T>>::insert(&call.0, who.as_eth(), block_number);
 
-		let sponsor = T::EvmAddressMapping::into_account_id(call.0);
+		let sponsor = T::CrossAccountId::from_eth(call.0);
 		Some(sponsor)
 	}
 }
