@@ -20,7 +20,7 @@ use core::ops::Deref;
 use frame_support::{ensure};
 use up_data_structs::{AccessMode, CollectionId, TokenId, CreateCollectionData};
 use pallet_common::{
-	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
+	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, CrossAccountId,
 };
 use pallet_evm_coder_substrate::WithRecorder;
 use sp_core::H160;

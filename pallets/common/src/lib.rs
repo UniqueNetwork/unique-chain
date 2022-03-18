@@ -19,28 +19,29 @@
 use core::ops::{Deref, DerefMut};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_std::vec::Vec;
-use account::CrossAccountId;
 use frame_support::{
-	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo},
+	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Weight, PostDispatchInfo},
 	ensure, fail,
-	traits::{Imbalance, Get, Currency},
+	traits::{Imbalance, Get, Currency, WithdrawReasons, ExistenceRequirement},
 	BoundedVec,
+	weights::Pays,
 };
 use pallet_evm::GasWeightMapping;
 use up_data_structs::{
-	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, ExistenceRequirement,
-	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, Pays, PostDispatchInfo,
-	TokenId, Weight, WithdrawReasons, CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode,
-	NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, MAX_TOKEN_PREFIX_LENGTH,
+	COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, TokenId, CollectionStats, MAX_TOKEN_OWNERSHIP,
+	CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
 	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData,
 };
 pub use pallet::*;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
+pub use up_evm_mapping::CrossAccountId;
 pub mod account;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
+pub mod dispatch;
 pub mod erc;
 pub mod eth;
 
@@ -162,11 +163,11 @@ impl<T: Config> CollectionHandle<T> {
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key};
-	use account::CrossAccountId;
+	use dispatch::CollectionDispatch;
 	use frame_support::traits::Currency;
 	use up_data_structs::TokenId;
 	use scale_info::TypeInfo;
+	use up_evm_mapping::CrossAccountId;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config + TypeInfo {
@@ -183,6 +184,7 @@ pub mod pallet {
 		type CollectionCreationPrice: Get<
 			<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance,
 		>;
+		type CollectionDispatch: CollectionDispatch<Self>;
 
 		type TreasuryAccountId: Get<Self::AccountId>;
 	}

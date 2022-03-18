@@ -16,14 +16,14 @@
 
 use core::marker::PhantomData;
 use frame_support::{weights::Weight};
-use pallet_common::{CommonWeightInfo};
+use pallet_common::{CommonWeightInfo, dispatch::dispatch_weight};
 
 use pallet_fungible::{common::CommonWeights as FungibleWeights};
 use pallet_nonfungible::{common::CommonWeights as NonfungibleWeights};
 use pallet_refungible::{common::CommonWeights as RefungibleWeights};
 use up_data_structs::CreateItemExData;
 
-use crate::{Config, dispatch::dispatch_weight};
+use crate::Config;
 
 macro_rules! max_weight_of {
 	($method:ident ( $($args:tt)* )) => {
@@ -35,7 +35,7 @@ macro_rules! max_weight_of {
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
-	fn create_item() -> up_data_structs::Weight {
+	fn create_item() -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(create_item())
 	}
 
@@ -51,19 +51,19 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		dispatch_weight::<T>() + max_weight_of!(burn_item())
 	}
 
-	fn transfer() -> up_data_structs::Weight {
+	fn transfer() -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(transfer())
 	}
 
-	fn approve() -> up_data_structs::Weight {
+	fn approve() -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(approve())
 	}
 
-	fn transfer_from() -> up_data_structs::Weight {
+	fn transfer_from() -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(transfer_from())
 	}
 
-	fn set_variable_metadata(bytes: u32) -> up_data_structs::Weight {
+	fn set_variable_metadata(bytes: u32) -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(set_variable_metadata(bytes))
 	}
 

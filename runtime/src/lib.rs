@@ -59,7 +59,7 @@ pub use frame_support::{
 	traits::{
 		tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Everything,
 		Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier,
-		OnUnbalanced, Randomness, FindAuthor,
+		OnUnbalanced, Randomness, FindAuthor, ConstU32, Imbalance,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -67,7 +67,7 @@ pub use frame_support::{
 		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients,
 	},
 };
-use up_data_structs::*;
+use up_data_structs::{CollectionId, TokenId, CollectionStats, Collection};
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
 use frame_system::{
@@ -114,6 +114,11 @@ use xcm::latest::{
 use xcm_executor::traits::{MatchesFungible, WeightTrader};
 //use xcm_executor::traits::MatchesFungible;
 use sp_runtime::traits::CheckedConversion;
+
+use pallet_common::dispatch::CollectionDispatch;
+
+mod dispatch;
+use dispatch::CollectionDispatchT;
 
 // mod chain_extension;
 // use crate::chain_extension::{NFTExtension, Imbalance};
@@ -320,8 +325,8 @@ impl pallet_evm::Config for Runtime {
 	type Event = Event;
 	type OnMethodCall = (
 		pallet_evm_migration::OnMethodCall<Self>,
-		pallet_unique::UniqueErcSupport<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
+		CollectionDispatchT,
 	);
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
@@ -905,6 +910,8 @@ impl pallet_common::Config for Runtime {
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
+	type CollectionDispatch = CollectionDispatchT;
+
 }
 
 impl pallet_fungible::Config for Runtime {
@@ -1155,9 +1162,7 @@ impl fp_self_contained::SelfContainedCall for Call {
 
 macro_rules! dispatch_unique_runtime {
 	($collection:ident.$method:ident($($name:ident),*)) => {{
-		use pallet_unique::dispatch::Dispatched;
-
-		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
+		let collection = CollectionDispatchT::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
 		let dispatch = collection.as_dyn();
 
 		Ok(dispatch.$method($($name),*))
@@ -1203,8 +1208,8 @@ impl_runtime_apis! {
 		}
 
 		fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
-			<pallet_unique::UniqueErcSupport<Runtime>>::get_code(&account)
-				.or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account))
+			<CollectionDispatchT as OnMethodCall<Self>>::get_code(&account)
+				.or_else(|| <pallet_evm_migration::OnMethodCall<Self>>::get_code(&account))
 				.or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
 		}
 		fn adminlist(collection: CollectionId) -> Result<Vec<CrossAccountId>, DispatchError> {

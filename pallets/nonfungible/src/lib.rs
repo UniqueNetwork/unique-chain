@@ -22,7 +22,7 @@ use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 };
 use pallet_common::{
-	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, account::CrossAccountId,
+	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CrossAccountId,
 };
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_core::H160;
