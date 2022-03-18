@@ -35,8 +35,6 @@ pub mod pallet {
 	{
 		type ContractAddress: Get<H160>;
 		type DefaultSponsoringRateLimit: Get<Self::BlockNumber>;
-		type EvmAddressMapping: pallet_evm::AddressMapping<Self::AccountId>;
-		type EvmBackwardsAddressMapping: up_evm_mapping::EvmBackwardsAddressMapping<Self::AccountId>;
 	}
 
 	#[pallet::error]
