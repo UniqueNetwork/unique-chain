@@ -26,6 +26,7 @@ use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CrossAccountId,
 	CollectionHandle, dispatch::CollectionDispatch,
 };
+use pallet_structure::Pallet as PalletStructure;
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
@@ -68,7 +69,9 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_common::Config {
+	pub trait Config:
+		frame_system::Config + pallet_common::Config + pallet_structure::Config
+	{
 		type WeightInfo: WeightInfo;
 	}
 
@@ -255,6 +258,7 @@ impl<T: Config> Pallet<T> {
 
 		let token_data =
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
+		// TODO: require sender to be token, owner, require admins to go through transfer_from
 		ensure!(
 			&token_data.owner == from
 				|| (collection.limits.owner_can_transfer() && collection.is_owner_or_admin(from)),
@@ -501,6 +505,37 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	fn check_allowed(
+		collection: &NonfungibleHandle<T>,
+		spender: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		token: TokenId,
+	) -> DispatchResult {
+		if spender.conv_eq(from) {
+			return Ok(());
+		}
+		if collection.access == AccessMode::AllowList {
+			// `from`, `to` checked in [`transfer`]
+			collection.check_allowlist(spender)?;
+		}
+		if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
+			// TODO: should collection owner be allowed to perform this transfer?
+			ensure!(
+				<PalletStructure<T>>::indirectly_owned(spender.clone(), source.0, source.1, 1)?,
+				<CommonError<T>>::ApprovedValueTooLow,
+			);
+			return Ok(());
+		}
+		if <Allowance<T>>::get((collection.id, token)).as_ref() == Some(spender) {
+			return Ok(());
+		}
+		ensure!(
+			collection.ignores_allowance(spender),
+			<CommonError<T>>::ApprovedValueTooLow
+		);
+		Ok(())
+	}
+
 	pub fn transfer_from(
 		collection: &NonfungibleHandle<T>,
 		spender: &T::CrossAccountId,
@@ -508,26 +543,12 @@ impl<T: Config> Pallet<T> {
 		to: &T::CrossAccountId,
 		token: TokenId,
 	) -> DispatchResult {
-		if spender.conv_eq(from) {
-			return Self::transfer(collection, from, to, token);
-		}
-		if collection.access == AccessMode::AllowList {
-			// `from`, `to` checked in [`transfer`]
-			collection.check_allowlist(spender)?;
-		}
-
-		if <Allowance<T>>::get((collection.id, token)).as_ref() != Some(spender) {
-			ensure!(
-				collection.ignores_allowance(spender),
-				<CommonError<T>>::ApprovedValueTooLow
-			);
-		}
+		Self::check_allowed(collection, spender, from, token)?;
 
 		// =========
 
-		Self::transfer(collection, from, to, token)?;
 		// Allowance is reset in [`transfer`]
-		Ok(())
+		Self::transfer(collection, from, to, token)
 	}
 
 	pub fn burn_from(
@@ -536,20 +557,7 @@ impl<T: Config> Pallet<T> {
 		from: &T::CrossAccountId,
 		token: TokenId,
 	) -> DispatchResult {
-		if spender.conv_eq(from) {
-			return Self::burn(collection, from, token);
-		}
-		if collection.access == AccessMode::AllowList {
-			// `from` checked in [`burn`]
-			collection.check_allowlist(spender)?;
-		}
-
-		if <Allowance<T>>::get((collection.id, token)).as_ref() != Some(spender) {
-			ensure!(
-				collection.ignores_allowance(spender),
-				<CommonError<T>>::ApprovedValueTooLow
-			);
-		}
+		Self::check_allowed(collection, spender, from, token)?;
 
 		// =========
 
