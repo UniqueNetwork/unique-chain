@@ -248,6 +248,7 @@ impl<T> Default for SponsorshipState<T> {
 	}
 }
 
+#[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct Collection<AccountId> {
@@ -265,7 +266,12 @@ pub struct Collection<AccountId> {
 	pub offchain_schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
 	pub schema_version: SchemaVersion,
 	pub sponsorship: SponsorshipState<AccountId>,
-	pub limits: CollectionLimits, // Collection private restrictions
+
+	#[version(..2)]
+	pub limits: CollectionLimitsVersion1, // Collection private restrictions
+	#[version(2.., upper(limits.into()))]
+	pub limits: CollectionLimitsVersion2,
+
 	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
 	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
 	#[cfg_attr(feature = "serde1", serde(with = "bounded_serde"))]
@@ -321,6 +327,7 @@ pub struct ReFungibleItemType<AccountId> {
 }
 
 /// All fields are wrapped in `Option`s, where None means chain default
+#[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionLimits {
@@ -338,6 +345,9 @@ pub struct CollectionLimits {
 	pub owner_can_transfer: Option<bool>,
 	pub owner_can_destroy: Option<bool>,
 	pub transfers_enabled: Option<bool>,
+
+	#[version(2.., upper(None))]
+	pub nesting_rule: Option<NestingRule>,
 }
 
 impl CollectionLimits {
@@ -384,6 +394,26 @@ impl CollectionLimits {
 			SponsoringRateLimit::Blocks(v) => Some(v.min(MAX_SPONSOR_TIMEOUT)),
 		}
 	}
+	pub fn nesting_rule(&self) -> &NestingRule {
+		static DEFAULT: NestingRule = NestingRule::Owner;
+		self.nesting_rule.as_ref().unwrap_or(&DEFAULT)
+	}
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen, Derivative)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derivative(Debug)]
+pub enum NestingRule {
+	/// No one can nest tokens
+	Disabled,
+	/// Owner can nest any tokens
+	Owner,
+	/// Owner can nest tokens from specified collections
+	OwnerRestricted(
+		#[cfg_attr(feature = "serde1", serde(with = "bounded_set_serde"))]
+		#[derivative(Debug(format_with = "bounded_set_debug"))]
+		BoundedBTreeSet<CollectionId, ConstU32<16>>,
+	),
 }
 
 #[derive(Encode, Decode, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen)]
@@ -480,6 +510,50 @@ where
 {
 	use core::fmt::Debug;
 	(&v as &BTreeMap<K, V>).fmt(f)
+}
+
+#[cfg(feature = "serde1")]
+#[allow(dead_code)]
+mod bounded_set_serde {
+	use core::convert::TryFrom;
+	use sp_std::collections::btree_set::BTreeSet;
+	use frame_support::{traits::Get, storage::bounded_btree_set::BoundedBTreeSet};
+	use serde::{
+		ser::{self, Serialize},
+		de::{self, Deserialize, Error},
+	};
+	pub fn serialize<D, K, S>(
+		value: &BoundedBTreeSet<K, S>,
+		serializer: D,
+	) -> Result<D::Ok, D::Error>
+	where
+		D: ser::Serializer,
+		K: Serialize + Ord,
+	{
+		(value as &BTreeSet<_>).serialize(serializer)
+	}
+
+	pub fn deserialize<'de, D, K, S>(deserializer: D) -> Result<BoundedBTreeSet<K, S>, D::Error>
+	where
+		D: de::Deserializer<'de>,
+		K: de::Deserialize<'de> + Ord,
+		S: Get<u32>,
+	{
+		let map = <BTreeSet<K>>::deserialize(deserializer)?;
+		let len = map.len();
+		TryFrom::try_from(map).map_err(|_| D::Error::invalid_length(len, &"lesser size"))
+	}
+}
+
+fn bounded_set_debug<K, S>(
+	v: &BoundedBTreeSet<K, S>,
+	f: &mut fmt::Formatter,
+) -> Result<(), fmt::Error>
+where
+	K: fmt::Debug + Ord,
+{
+	use core::fmt::Debug;
+	(&v as &BTreeSet<K>).fmt(f)
 }
 
 #[derive(Encode, Decode, MaxEncodedLen, Default, PartialEq, Clone, Derivative, TypeInfo)]

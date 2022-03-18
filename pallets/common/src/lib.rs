@@ -194,7 +194,10 @@ pub mod pallet {
 		type CrossTokenAddressMapping: TokenAddressMapping<Self::CrossAccountId>;
 	}
 
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
@@ -395,6 +398,22 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type DummyStorageValue<T> =
 		StorageValue<Value = (CollectionStats, CollectionId, TokenId), QueryKind = OptionQuery>;
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> Weight {
+			let mut weight = 0;
+
+			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
+				use up_data_structs::{CollectionVersion1, CollectionVersion2};
+				<CollectionById<T>>::translate_values::<CollectionVersion1<T::AccountId>, _>(|v| {
+					Some(CollectionVersion2::from(v))
+				});
+			}
+
+			weight
+		}
+	}
 }
 
 impl<T: Config> Pallet<T> {
