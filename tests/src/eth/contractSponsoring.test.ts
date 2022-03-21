@@ -245,9 +245,9 @@ describe('Sponsoring EVM contracts', () => {
     const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: userEth, ...GAS_ARGS});
     const receiver = createEthAccount(web3);
 
-    {
-      const nextTokenId = await contract.methods.nextTokenId().call();
-      expect(nextTokenId).to.be.equal('1');
+    { // This part should fail, because user not in access list and user have no money
+      // const nextTokenId = await contract.methods.nextTokenId().call();
+      // expect(nextTokenId).to.be.equal('1');
       // const result = await contract.methods.mintWithTokenURI(
       //   receiver,
       //   nextTokenId,
@@ -297,21 +297,21 @@ describe('Sponsoring EVM contracts', () => {
         nextTokenId,
         'Test URI',
       ).send({from: userEth});
-      // const events = normalizeEvents(result.events);
+      const events = normalizeEvents(result.events);
 
-      // expect(events).to.be.deep.equal([
-      //   {
-      //     address,
-      //     event: 'Transfer',
-      //     args: {
-      //       from: '0x0000000000000000000000000000000000000000',
-      //       to: receiver,
-      //       tokenId: nextTokenId,
-      //     },
-      //   },
-      // ]);
+      expect(events).to.be.deep.equal([
+        {
+          address,
+          event: 'Transfer',
+          args: {
+            from: '0x0000000000000000000000000000000000000000',
+            to: receiver,
+            tokenId: nextTokenId,
+          },
+        },
+      ]);
 
-      // expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+      expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
     }
 
   });
