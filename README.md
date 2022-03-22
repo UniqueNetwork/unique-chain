@@ -27,7 +27,7 @@ Wider Unique Ecosystem (most of it was developed during Hackusama):
 -   [Unique Wallet and UI](https://uniqueapps.usetech.com/#/nft)
 -   [NFT Asset for Unity Framework](https://github.com/usetech-llc/nft_unity)
 
-Please see our [walk-thorugh instructions](doc/hackusama_walk_through.md) to try everything out!
+Please see our [walk-through instructions](doc/hackusama_walk_through.md) to try everything out!
 
 ## Application Development
 
@@ -158,7 +158,7 @@ To get started, you need to open inbound and outbound hrmp channels.
 ```
 assetRegistry -> registerForeignAsset(location, metadata)
 location:
-	V0(X2(Parent, Parachain(PARA_ID))) 
+	V0(X2(Parent, Parachain(PARA_ID)))
 metadata:
 	name         OPL
 	symbol       OPL
@@ -170,19 +170,19 @@ minimalBalance	 1
 ```
 polkadotXcm -> reserveTransferAssets
 dest:
-	V0(X2(Parent, Parachain(<KARURA_PARA_ID>))) 
+	V0(X2(Parent, Parachain(<KARURA_PARA_ID>)))
 beneficiary:
 	X1(AccountId(Any, <ACCOUNT>))
 assets:
 	V1(Concrete(0,Here), Fungible(<AMOUNT>))
-feeAssetItem: 
-	0	
+feeAssetItem:
+	0
 weightLimit:
 	<LIMIT>
-```	
+```
 
-The result will be displayed in ChainState   
-tokens -> accounts	
+The result will be displayed in ChainState
+tokens -> accounts
 
 ### To send tokens from Karura to Opal:
 ```
@@ -197,7 +197,7 @@ amount:
 dest:
 	V1
 	(
-		Parents:1, 
+		Parents:1,
 		X2(Parachain(<KARURA_PARA_ID>), AccountId(Any, <ACCOUNT>)
 	)
 destWeight:

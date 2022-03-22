@@ -168,6 +168,9 @@ version = '1.0.130'
 [dependencies.serde_json]
 version = '1.0.68'
 
+[dependencies.sc-consensus-manual-seal]
+git = 'https://github.com/paritytech/substrate.git'
+branch = 'polkadot-v0.9.17'
 
 ################################################################################
 # Cumulus dependencies
@@ -238,12 +241,31 @@ branch = 'release-v0.9.17'
 ################################################################################
 # Local dependencies
 
+[dependencies.unique-runtime-common]
+default-features = false
+path = "../../runtime/common"
+
 [dependencies.unique-runtime]
-path = '../../runtime'
+path = '../../runtime/unique'
+optional = true
+
+[dependencies.quartz-runtime]
+path = '../../runtime/quartz'
+optional = true
+
+[dependencies.opal-runtime]
+path = '../../runtime/opal'
 
 [dependencies.up-data-structs]
 path = "../../primitives/data-structs"
 default-features = false
+
+[dependencies.up-rpc]
+path = "../../primitives/rpc"
+
+[dependencies.pallet-transaction-payment-rpc-runtime-api]
+git = 'https://github.com/paritytech/substrate.git'
+branch = 'polkadot-v0.9.17'
 
 ################################################################################
 # Package
@@ -283,10 +305,10 @@ fc-db = { git = "https://github.com/uniquenetwork/frontier.git", branch = "uniqu
 fp-rpc = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.17" }
 pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.17" }
 
-unique-rpc = { path = "../rpc" }
+unique-rpc = { default-features = false, path = "../rpc" }
 
 [features]
-default = []
+default = ["unique-runtime", "quartz-runtime"]
 runtime-benchmarks = [
     'unique-runtime/runtime-benchmarks',
     'polkadot-service/runtime-benchmarks',

@@ -48,10 +48,16 @@ fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwor
 fc-db = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.17" }
 fc-mapping-sync = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.17" }
 
+pallet-common = { default-features = false, path = "../../pallets/common" }
+unique-runtime-common = { default-features = false, path = "../../runtime/common" }
 pallet-unique = { path = "../../pallets/unique" }
 uc-rpc = { path = "../../client/rpc" }
 up-rpc = { path = "../../primitives/rpc" }
-unique-runtime = { path = "../../runtime" }
+
+[dependencies.serde]
+features = ['derive']
+version = '1.0.130'
 
 [features]
+default = []
 std = []
