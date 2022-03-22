@@ -87,7 +87,8 @@ where
 		fee: U256,
 	) -> core::result::Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
 		let who_pays_fee = if let WithdrawReason::Call { target, input } = &reason {
-			T::EvmSponsorshipHandler::get_sponsor(who, &(*target, input.clone())).unwrap_or(who.clone())
+			T::EvmSponsorshipHandler::get_sponsor(who, &(*target, input.clone()))
+				.unwrap_or(who.clone())
 		} else {
 			who.clone()
 		};

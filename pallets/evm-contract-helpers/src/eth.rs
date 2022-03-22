@@ -18,7 +18,8 @@ use core::marker::PhantomData;
 use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{
-	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, account::CrossAccountId
+	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure,
+	account::CrossAccountId,
 };
 use sp_core::H160;
 use crate::{
@@ -179,7 +180,9 @@ impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 }
 
 pub struct HelpersContractSponsoring<T: Config>(PhantomData<*const T>);
-impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)> for HelpersContractSponsoring<T> {
+impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
+	for HelpersContractSponsoring<T>
+{
 	fn get_sponsor(who: &T::CrossAccountId, call: &(H160, Vec<u8>)) -> Option<T::CrossAccountId> {
 		let mode = <Pallet<T>>::sponsoring_mode(call.0);
 		if mode == SponsoringModeT::Disabled {

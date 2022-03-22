@@ -168,7 +168,9 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config + TypeInfo + account::Config {
+	pub trait Config:
+		frame_system::Config + pallet_evm_coder_substrate::Config + TypeInfo + account::Config
+	{
 		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
 
 		type Currency: Currency<Self::AccountId>;

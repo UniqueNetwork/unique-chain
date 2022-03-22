@@ -30,7 +30,9 @@ pub mod pallet {
 	use sp_core::H160;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config + pallet_evm::account::Config {
+	pub trait Config:
+		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_evm::account::Config
+	{
 		type ContractAddress: Get<H160>;
 		type DefaultSponsoringRateLimit: Get<Self::BlockNumber>;
 	}

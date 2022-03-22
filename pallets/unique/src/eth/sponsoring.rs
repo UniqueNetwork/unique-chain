@@ -32,7 +32,9 @@ use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};
 use up_data_structs::{CreateItemData, CreateNftData};
 
 pub struct UniqueEthSponsorshipHandler<T: Config>(PhantomData<*const T>);
-impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)> for UniqueEthSponsorshipHandler<T> {
+impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
+	for UniqueEthSponsorshipHandler<T>
+{
 	fn get_sponsor(who: &T::CrossAccountId, call: &(H160, Vec<u8>)) -> Option<T::CrossAccountId> {
 		let collection_id = map_eth_to_id(&call.0)?;
 		let collection = <CollectionHandle<T>>::new(collection_id)?;
@@ -59,16 +61,17 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)> for Uniqu
 							.map(|()| sponsor)
 					}
 					UniqueNFTCall::ERC721Mintable(call) => match call {
-						pallet_nonfungible::erc::ERC721MintableCall::Mint { .. } |
-						pallet_nonfungible::erc::ERC721MintableCall::MintWithTokenUri { .. } => {
-							withdraw_create_item(
-								&collection, 
-								who.as_sub(), 
-								&CreateItemData::NFT(CreateNftData::default()))
-							.map(|()| sponsor)
-						}
+						pallet_nonfungible::erc::ERC721MintableCall::Mint { .. }
+						| pallet_nonfungible::erc::ERC721MintableCall::MintWithTokenUri {
+							..
+						} => withdraw_create_item(
+							&collection,
+							who.as_sub(),
+							&CreateItemData::NFT(CreateNftData::default()),
+						)
+						.map(|()| sponsor),
 						_ => None,
-    				}
+					},
 					_ => None,
 				}
 			}
