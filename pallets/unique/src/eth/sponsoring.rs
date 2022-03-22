@@ -29,6 +29,7 @@ use pallet_evm::account::CrossAccountId;
 
 use pallet_nonfungible::erc::{UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721Call};
 use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};
+use up_data_structs::{CreateItemData, CreateNftData};
 
 pub struct UniqueEthSponsorshipHandler<T: Config>(PhantomData<*const T>);
 impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)> for UniqueEthSponsorshipHandler<T> {
@@ -57,6 +58,17 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)> for Uniqu
 						withdraw_approve::<T>(&collection, who.as_sub(), &token_id)
 							.map(|()| sponsor)
 					}
+					UniqueNFTCall::ERC721Mintable(call) => match call {
+						pallet_nonfungible::erc::ERC721MintableCall::Mint { .. } |
+						pallet_nonfungible::erc::ERC721MintableCall::MintWithTokenUri { .. } => {
+							withdraw_create_item(
+								&collection, 
+								who.as_sub(), 
+								&CreateItemData::NFT(CreateNftData::default()))
+							.map(|()| sponsor)
+						}
+						_ => None,
+    				}
 					_ => None,
 				}
 			}

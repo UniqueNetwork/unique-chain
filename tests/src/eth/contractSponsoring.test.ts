@@ -30,16 +30,14 @@ import {
 } from './util/helpers';
 import {
   createCollectionExpectSuccess,
-  createItemExpectSuccess,
   getCreateCollectionResult,
-  normalizeAccountId,
-  toSubstrateAddress,
 } from '../util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import {
   submitTransactionAsync,
 } from '../substrate/substrate-api';
-import { evmToAddress } from '@polkadot/util-crypto';
+import getBalance from '../substrate/get-balance';
+import {alicesPublicKey} from '../accounts';
 
 describe('Sponsoring EVM contracts', () => {
   itWeb3('Sponsoring can be set by the address that has deployed the contract', async ({api, web3}) => {
@@ -215,17 +213,9 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.getSponsoringRateLimit(flipper.options.address).call()).to.be.equals('7200');
   });
 
-
-
-
-
-
-
-  
   itWeb3.only('Sponsoring evm address from substrate collection', async ({api, web3}) => {
     const owner = privateKey('//Alice');
     const userEth = createEthAccount(web3);
-    const userSub = evmToAddress(userEth);
     const collectionId = await createCollectionExpectSuccess();
 
     {
@@ -243,31 +233,15 @@ describe('Sponsoring EVM contracts', () => {
 
     const address = collectionIdToAddress(collectionId);
     const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: userEth, ...GAS_ARGS});
-    const receiver = createEthAccount(web3);
 
     { // This part should fail, because user not in access list and user have no money
-      // const nextTokenId = await contract.methods.nextTokenId().call();
-      // expect(nextTokenId).to.be.equal('1');
-      // const result = await contract.methods.mintWithTokenURI(
-      //   receiver,
-      //   nextTokenId,
-      //   'Test URI',
-      // ).send({from: userEth});
-      // const events = normalizeEvents(result.events);
-
-      // expect(events).to.be.deep.equal([
-      //   {
-      //     address,
-      //     event: 'Transfer',
-      //     args: {
-      //       from: '0x0000000000000000000000000000000000000000',
-      //       to: receiver,
-      //       tokenId: nextTokenId,
-      //     },
-      //   },
-      // ]);
-
-      // expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+      const nextTokenId = await contract.methods.nextTokenId().call();
+      expect(nextTokenId).to.be.equal('1');
+      await expect(contract.methods.mintWithTokenURI(
+        userEth,
+        nextTokenId,
+        'Test URI',
+      ).call({from: userEth})).to.be.rejectedWith(/PublicMintingNotAllowed/);
     }
 
     {
@@ -289,11 +263,13 @@ describe('Sponsoring EVM contracts', () => {
       expect(result.success).to.be.true;
     }
 
+    const [alicesBalanceBefore] = await getBalance(api, [alicesPublicKey]);
+
     {
       const nextTokenId = await contract.methods.nextTokenId().call();
       expect(nextTokenId).to.be.equal('1');
       const result = await contract.methods.mintWithTokenURI(
-        receiver,
+        userEth,
         nextTokenId,
         'Test URI',
       ).send({from: userEth});
@@ -305,7 +281,7 @@ describe('Sponsoring EVM contracts', () => {
           event: 'Transfer',
           args: {
             from: '0x0000000000000000000000000000000000000000',
-            to: receiver,
+            to: userEth,
             tokenId: nextTokenId,
           },
         },
@@ -314,5 +290,7 @@ describe('Sponsoring EVM contracts', () => {
       expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
     }
 
+    const [alicesBalanceAfter] = await getBalance(api, [alicesPublicKey]);
+    expect(alicesBalanceAfter < alicesBalanceBefore).to.be.true;
   });
 });
