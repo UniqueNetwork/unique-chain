@@ -115,20 +115,22 @@ pub struct Cli {
 
 impl Cli {
 	pub fn runtime_name() -> &'static str {
-		CLI_RUNTIME_NAME.get_or_init(|| {
-			let cli = <Cli as sc_cli::SubstrateCli>::from_args();
-			let chain = cli.run.base.shared_params.chain;
+		CLI_RUNTIME_NAME
+			.get_or_init(|| {
+				let cli = <Cli as sc_cli::SubstrateCli>::from_args();
+				let chain = cli.run.base.shared_params.chain;
 
-			let unknown_runtime_name = "Unknown runtime".to_string();
+				let unknown_runtime_name = "Unknown runtime".to_string();
 
-			match chain {
-				Some(chain) => command::load_spec(&chain)
-					.map(|spec| spec.runtime_id().to_string())
-					.ok()
-					.unwrap_or(unknown_runtime_name),
-				None => unknown_runtime_name,
-			}
-		}).as_str()
+				match chain {
+					Some(chain) => command::load_spec(&chain)
+						.map(|spec| spec.runtime_id().to_string())
+						.ok()
+						.unwrap_or(unknown_runtime_name),
+					None => unknown_runtime_name,
+				}
+			})
+			.as_str()
 	}
 }
 
