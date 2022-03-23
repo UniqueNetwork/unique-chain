@@ -45,14 +45,14 @@ pub enum RuntimeId {
 }
 
 impl fmt::Display for RuntimeId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		match self {
 			RuntimeId::Unique => write!(f, "Unique"),
 			RuntimeId::Quartz => write!(f, "Quartz"),
 			RuntimeId::Opal => write!(f, "Opal"),
 			RuntimeId::Unknown(runtime) => write!(f, "{}", runtime),
 		}
-    }
+	}
 }
 
 pub trait RuntimeIdentification {

@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{chain_spec::{self, RuntimeIdentification}, command};
+use crate::{
+	chain_spec::{self, RuntimeIdentification},
+	command,
+};
 use std::path::PathBuf;
 use clap::Parser;
 
@@ -120,10 +123,10 @@ impl Cli {
 
 				match chain {
 					Some(chain) => command::load_spec(&chain)
-											.map(|spec| spec.runtime_id().to_string())
-											.ok()
-											.unwrap_or(unknown_chain_name),
-					None => unknown_chain_name
+						.map(|spec| spec.runtime_id().to_string())
+						.ok()
+						.unwrap_or(unknown_chain_name),
+					None => unknown_chain_name,
 				}
 			};
 		}

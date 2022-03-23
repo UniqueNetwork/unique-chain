@@ -161,7 +161,8 @@ impl SubstrateCli for RelayChainCli {
 		"Unique/Quartz/Opal Node\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
-		parachain-collator [parachain-args] -- [relaychain-args]".into()
+		parachain-collator [parachain-args] -- [relaychain-args]"
+			.into()
 	}
 
 	fn author() -> String {
