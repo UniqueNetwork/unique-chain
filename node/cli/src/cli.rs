@@ -15,8 +15,10 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use crate::chain_spec;
-use std::path::PathBuf;
+use std::{path::PathBuf, env};
 use clap::Parser;
+
+const NODE_NAME_ENV: &str = "UNIQUE_NODE_NAME";
 
 /// Sub-commands supported by the collator.
 #[derive(Debug, Parser)]
@@ -105,6 +107,12 @@ pub struct Cli {
 	/// Relaychain arguments
 	#[structopt(raw = true)]
 	pub relaychain_args: Vec<String>,
+}
+
+impl Cli {
+	pub fn node_name() -> String {
+		env::var(NODE_NAME_ENV).unwrap_or("Unknown".into())
+	}
 }
 
 #[derive(Debug)]
