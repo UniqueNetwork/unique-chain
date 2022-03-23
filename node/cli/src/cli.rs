@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use crate::chain_spec;
+use crate::{chain_spec::{self, RuntimeIdentification}, command};
 use std::path::PathBuf;
 use clap::Parser;
 
@@ -105,6 +105,31 @@ pub struct Cli {
 	/// Relaychain arguments
 	#[structopt(raw = true)]
 	pub relaychain_args: Vec<String>,
+}
+
+impl Cli {
+	pub fn runtime_name() -> &'static str {
+		use lazy_static::lazy_static;
+
+		lazy_static! {
+			static ref CHAIN_NAME: String = {
+				let cli = <Cli as sc_cli::SubstrateCli>::from_args();
+				let chain = cli.run.base.shared_params.chain;
+
+				let unknown_chain_name = "Unknown chain".to_string();
+
+				match chain {
+					Some(chain) => command::load_spec(&chain)
+											.map(|spec| spec.runtime_id().to_string())
+											.ok()
+											.unwrap_or(unknown_chain_name),
+					None => unknown_chain_name
+				}
+			};
+		}
+
+		CHAIN_NAME.as_str()
+	}
 }
 
 #[derive(Debug)]

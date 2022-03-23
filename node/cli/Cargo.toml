@@ -267,6 +267,9 @@ path = "../../primitives/rpc"
 git = 'https://github.com/paritytech/substrate.git'
 branch = 'polkadot-v0.9.17'
 
+[dependencies.lazy_static]
+version = "1.4.0"
+
 ################################################################################
 # Package
 

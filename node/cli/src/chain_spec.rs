@@ -19,7 +19,7 @@ use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, fmt};
 
 use serde::{Deserialize, Serialize};
 use serde_json::map::Map;
@@ -42,6 +42,17 @@ pub enum RuntimeId {
 	Quartz,
 	Opal,
 	Unknown(String),
+}
+
+impl fmt::Display for RuntimeId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+			RuntimeId::Unique => write!(f, "Unique"),
+			RuntimeId::Quartz => write!(f, "Quartz"),
+			RuntimeId::Opal => write!(f, "Opal"),
+			RuntimeId::Unknown(runtime) => write!(f, "{}", runtime),
+		}
+    }
 }
 
 pub trait RuntimeIdentification {
