@@ -2751,6 +2751,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fp-evm-mapping"
+version = "0.1.0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=feature/300#8718bfde84a370f5a6e7642b216dd913ca33db5c"
+dependencies = [
+ "frame-support",
+ "sp-core",
+]
+
+[[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
 source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18#7c8ce8f83e0c8a5b57655622b721f8655b161903"
@@ -5576,6 +5585,7 @@ dependencies = [
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "derivative",
+ "fp-evm-mapping",
  "fp-rpc",
  "fp-self-contained",
  "frame-benchmarking",
@@ -5632,7 +5642,6 @@ dependencies = [
  "substrate-wasm-builder",
  "unique-runtime-common",
  "up-data-structs",
- "up-evm-mapping",
  "up-rpc",
  "xcm",
  "xcm-builder",
@@ -5984,6 +5993,7 @@ name = "pallet-common"
 version = "0.1.0"
 dependencies = [
  "evm-coder",
+ "fp-evm-mapping",
  "frame-support",
  "frame-system",
  "pallet-evm",
@@ -5995,7 +6005,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "up-data-structs",
- "up-evm-mapping",
 ]
 
 [[package]]
@@ -6136,6 +6145,7 @@ name = "pallet-evm-contract-helpers"
 version = "0.1.0"
 dependencies = [
  "evm-coder",
+ "fp-evm-mapping",
  "frame-support",
  "frame-system",
  "log",
@@ -6146,7 +6156,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
- "up-evm-mapping",
  "up-sponsorship",
 ]
 
@@ -6182,7 +6191,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "up-evm-mapping",
  "up-sponsorship",
 ]
 
@@ -6825,7 +6833,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "up-data-structs",
- "up-evm-mapping",
  "up-sponsorship",
 ]
 
@@ -8708,6 +8715,7 @@ dependencies = [
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "derivative",
+ "fp-evm-mapping",
  "fp-rpc",
  "fp-self-contained",
  "frame-benchmarking",
@@ -8764,7 +8772,6 @@ dependencies = [
  "substrate-wasm-builder",
  "unique-runtime-common",
  "up-data-structs",
- "up-evm-mapping",
  "up-rpc",
  "xcm",
  "xcm-builder",
@@ -12550,6 +12557,7 @@ dependencies = [
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "derivative",
+ "fp-evm-mapping",
  "fp-rpc",
  "fp-self-contained",
  "frame-benchmarking",
@@ -12606,7 +12614,6 @@ dependencies = [
  "substrate-wasm-builder",
  "unique-runtime-common",
  "up-data-structs",
- "up-evm-mapping",
  "up-rpc",
  "xcm",
  "xcm-builder",
@@ -12687,15 +12694,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "up-evm-mapping"
-version = "0.1.0"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=feature/300#0a1dc4086cbe971ddf57edf82a61cfce52c8c20b"
-dependencies = [
- "frame-support",
- "sp-core",
 ]
 
 [[package]]

@@ -34,7 +34,7 @@ std = [
     'fp-evm/std',
     'up-data-structs/std',
     'up-sponsorship/std',
-    'up-evm-mapping/std',
+    'fp-evm-mapping/std',
     'sp-std/std',
     'sp-api/std',
     'sp-runtime/std',
@@ -132,7 +132,7 @@ rlp = { default-features = false, version = "0.5.0" }
 sp-api = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.18" }
 
 up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring", branch = 'polkadot-v0.9.18' }
-up-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "feature/300" }
+fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "feature/300" }
 evm-coder = { default-features = false, path = "../../crates/evm-coder" }
 pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }
 primitive-types = { version = "0.11.1", default-features = false, features = [

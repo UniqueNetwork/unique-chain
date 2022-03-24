@@ -852,6 +852,12 @@ impl pallet_common::Config for Runtime {
 	type TreasuryAccountId = TreasuryAccountId;
 }
 
+impl pallet_evm::account::Config for Runtime {
+	type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Self>;
+	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
+	type EvmBackwardsAddressMapping = fp_evm_mapping::MapBackwardsAddressTruncated;
+}
+
 impl pallet_fungible::Config for Runtime {
 	type WeightInfo = pallet_fungible::weights::SubstrateWeight<Self>;
 }

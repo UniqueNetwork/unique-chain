@@ -72,7 +72,7 @@ std = [
     'pallet-base-fee/std',
     'fp-rpc/std',
     'up-rpc/std',
-    'up-evm-mapping/std',
+    'fp-evm-mapping/std',
     'fp-self-contained/std',
     'parachain-info/std',
     'serde',
@@ -400,7 +400,7 @@ pallet-ethereum = { default-features = false, git = "https://github.com/uniquene
 pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
 fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
 fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
-up-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "feature/300" }
+fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "feature/300" }
 frame-common = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "feature/300" }
 
 ################################################################################

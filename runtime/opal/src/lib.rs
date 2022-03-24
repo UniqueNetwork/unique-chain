@@ -275,7 +275,7 @@ impl GasWeightMapping for FixedGasWeightMapping {
 impl pallet_evm::account::Config for Runtime {
 	type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Self>;
 	type EvmAddressMapping = pallet_evm::HashedAddressMapping<Self::Hashing>;
-	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
+	type EvmBackwardsAddressMapping = fp_evm_mapping::MapBackwardsAddressTruncated;
 }
 
 impl pallet_evm::Config for Runtime {
