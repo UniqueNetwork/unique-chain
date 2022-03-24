@@ -111,7 +111,19 @@ pub struct Cli {
 
 impl Cli {
 	pub fn node_name() -> String {
-		env::var(NODE_NAME_ENV).unwrap_or("Unknown".into())
+		match env::var(NODE_NAME_ENV).ok() {
+			Some(name) => name,
+			None => {
+				if cfg!(feature = "unique-runtime") {
+					"Unique"
+				} else if cfg!(feature = "quartz-runtime") {
+					"Quartz"
+				} else {
+					"Opal"
+				}
+			}
+			.into(),
+		}
 	}
 }
 
