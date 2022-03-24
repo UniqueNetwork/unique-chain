@@ -396,3 +396,51 @@ describe('Collection zero limits (ReFungible)', () => {
     //expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
   });
 });
+
+describe.only('Effective collection limits', () => {
+  it('Test1', async () => {
+    await usingApi(async (api) => {
+      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      
+      {
+        const collection = await api.rpc.unique.collectionById(collectionId);
+        expect(collection.isSome).to.be.true;
+        const limits = collection.unwrap().limits;
+        expect(limits).to.be.any;
+        
+        // Check that limits is undefined
+        expect(limits.accountTokenOwnershipLimit.isNone).to.be.true;
+        expect(limits.sponsoredDataSize.isNone).to.be.true;
+        expect(limits.sponsoredDataRateLimit.isNone).to.be.true;
+        expect(limits.tokenLimit.isNone).to.be.true;
+        expect(limits.sponsorTransferTimeout.isNone).to.be.true;
+        expect(limits.sponsorApproveTimeout.isNone).to.be.true;
+        expect(limits.ownerCanTransfer.isNone).to.be.true;
+        expect(limits.ownerCanDestroy.isNone).to.be.true;
+        expect(limits.transfersEnabled.isNone).to.be.true;
+      }
+
+      {
+        const limits = await api.rpc.unique.effectiveCollectionLimits(11111);
+        expect(limits.isNone).to.be.true;
+      }
+
+      {
+        const limitsOpt = await api.rpc.unique.effectiveCollectionLimits(collectionId);
+        expect(limitsOpt.isNone).to.be.false;
+        const limits = limitsOpt.unwrap();
+
+        console.log(limits);
+        expect(limits.accountTokenOwnershipLimit.isSome).to.be.true;
+        expect(limits.sponsoredDataSize.isSome).to.be.true;
+        expect(limits.sponsoredDataRateLimit.isSome).to.be.true;
+        expect(limits.tokenLimit.isSome).to.be.true;
+        expect(limits.sponsorTransferTimeout.isSome).to.be.true;
+        expect(limits.sponsorApproveTimeout.isSome).to.be.true;
+        expect(limits.ownerCanTransfer.isSome).to.be.true;
+        expect(limits.ownerCanDestroy.isSome).to.be.true;
+        expect(limits.transfersEnabled.isSome).to.be.true;
+      }
+    });
+  });
+});

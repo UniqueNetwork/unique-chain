@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { PalletCommonAccountBasicCrossAccountIdRepr, UpDataStructsCollection, UpDataStructsCollectionStats } from './unique';
+import type { PalletCommonAccountBasicCrossAccountIdRepr, UpDataStructsCollection, UpDataStructsCollectionLimits, UpDataStructsCollectionStats } from './unique';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u128, u32, u64 } from '@polkadot/types-codec';
@@ -603,6 +603,10 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Get token constant metadata
        **/
       constMetadata: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Bytes>>;
+      /**
+       * Get effective collection limits
+       **/
+      effectiveCollectionLimits: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsCollectionLimits>>>;
       /**
        * Get last token id
        **/

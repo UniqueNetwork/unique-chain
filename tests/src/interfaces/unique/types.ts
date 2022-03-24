@@ -654,6 +654,9 @@ export interface FrameSystemPhase extends Enum {
   readonly type: 'ApplyExtrinsic' | 'Finalization' | 'Initialization';
 }
 
+/** @name OpalRuntimeRuntime */
+export interface OpalRuntimeRuntime extends Null {}
+
 /** @name OrmlVestingModuleCall */
 export interface OrmlVestingModuleCall extends Enum {
   readonly isClaim: boolean;
@@ -892,7 +895,8 @@ export interface PalletCommonError extends Enum {
   readonly isCantApproveMoreThanOwned: boolean;
   readonly isAddressIsZero: boolean;
   readonly isUnsupportedOperation: boolean;
-  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'TokenVariableDataLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation';
+  readonly isNotSufficientFounds: boolean;
+  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'TokenVariableDataLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds';
 }
 
 /** @name PalletCommonEvent */
@@ -1721,9 +1725,6 @@ export interface SpVersionRuntimeVersion extends Struct {
   readonly transactionVersion: u32;
   readonly stateVersion: u8;
 }
-
-/** @name UniqueRuntimeRuntime */
-export interface UniqueRuntimeRuntime extends Null {}
 
 /** @name UpDataStructsAccessMode */
 export interface UpDataStructsAccessMode extends Enum {
