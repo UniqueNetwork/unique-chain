@@ -33,7 +33,7 @@ use up_data_structs::{
 	TokenId, Weight, WithdrawReasons, CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode,
 	NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
-	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData, SponsoringRateLimit
+	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData, SponsoringRateLimit,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -427,14 +427,16 @@ impl<T: Config> Pallet<T> {
 		if collection.is_none() {
 			return None;
 		}
-		
+
 		let limits = collection.unwrap().limits;
 		let effective_limits = CollectionLimits {
 			account_token_ownership_limit: Some(limits.account_token_ownership_limit()),
 			sponsored_data_size: Some(limits.sponsored_data_size()),
 			sponsored_data_rate_limit: Some(
-				limits.sponsored_data_rate_limit
-				.unwrap_or(SponsoringRateLimit::SponsoringDisabled)),
+				limits
+					.sponsored_data_rate_limit
+					.unwrap_or(SponsoringRateLimit::SponsoringDisabled),
+			),
 			token_limit: Some(limits.token_limit()),
 			sponsor_transfer_timeout: Some(limits.sponsor_transfer_timeout(MAX_SPONSOR_TIMEOUT)),
 			sponsor_approve_timeout: Some(limits.sponsor_approve_timeout()),

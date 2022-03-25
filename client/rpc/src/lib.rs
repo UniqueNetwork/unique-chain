@@ -123,7 +123,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 	fn effective_collection_limits(
 		&self,
 		collection_id: CollectionId,
-		at: Option<BlockHash>
+		at: Option<BlockHash>,
 	) -> Result<Option<CollectionLimits>>;
 }
 
