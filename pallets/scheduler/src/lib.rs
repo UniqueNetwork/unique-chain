@@ -52,18 +52,16 @@
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-#[cfg(test)]
-mod mock;
-#[cfg(test)]
-mod tests;
+
 pub mod weights;
 
 use codec::{Codec, Decode, Encode};
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult, Dispatchable, Parameter},
 	traits::{
-		schedule::{self, DispatchTime, MaybeHashed}, NamedReservableCurrency,
-		EnsureOrigin, Get, IsType, OriginTrait, PrivilegeCmp, StorageVersion,
+		schedule::{self, DispatchTime, MaybeHashed},
+		NamedReservableCurrency, EnsureOrigin, Get, IsType, OriginTrait, PrivilegeCmp,
+		StorageVersion,
 	},
 	weights::{GetDispatchInfo, Weight},
 };
@@ -72,8 +70,7 @@ pub use pallet::*;
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{BadOrigin, One, Saturating, Zero},
-	RuntimeDebug,
-	DispatchErrorWithPostInfo,
+	RuntimeDebug, DispatchErrorWithPostInfo,
 };
 use sp_std::{borrow::Borrow, cmp::Ordering, marker::PhantomData, prelude::*};
 use sp_core::H160;
@@ -138,24 +135,32 @@ pub(crate) trait MarginalWeightInfo: WeightInfo {
 	fn item(periodic: bool, named: bool, resolved: Option<bool>) -> Weight {
 		match (periodic, named, resolved) {
 			(_, false, None) => Self::on_initialize_aborted(2) - Self::on_initialize_aborted(1),
-			(_, true, None) =>
-				Self::on_initialize_named_aborted(2) - Self::on_initialize_named_aborted(1),
+			(_, true, None) => {
+				Self::on_initialize_named_aborted(2) - Self::on_initialize_named_aborted(1)
+			}
 			(false, false, Some(false)) => Self::on_initialize(2) - Self::on_initialize(1),
-			(false, true, Some(false)) =>
-				Self::on_initialize_named(2) - Self::on_initialize_named(1),
-			(true, false, Some(false)) =>
-				Self::on_initialize_periodic(2) - Self::on_initialize_periodic(1),
-			(true, true, Some(false)) =>
-				Self::on_initialize_periodic_named(2) - Self::on_initialize_periodic_named(1),
-			(false, false, Some(true)) =>
-				Self::on_initialize_resolved(2) - Self::on_initialize_resolved(1),
-			(false, true, Some(true)) =>
-				Self::on_initialize_named_resolved(2) - Self::on_initialize_named_resolved(1),
-			(true, false, Some(true)) =>
-				Self::on_initialize_periodic_resolved(2) - Self::on_initialize_periodic_resolved(1),
-			(true, true, Some(true)) =>
-				Self::on_initialize_periodic_named_resolved(2) -
-					Self::on_initialize_periodic_named_resolved(1),
+			(false, true, Some(false)) => {
+				Self::on_initialize_named(2) - Self::on_initialize_named(1)
+			}
+			(true, false, Some(false)) => {
+				Self::on_initialize_periodic(2) - Self::on_initialize_periodic(1)
+			}
+			(true, true, Some(false)) => {
+				Self::on_initialize_periodic_named(2) - Self::on_initialize_periodic_named(1)
+			}
+			(false, false, Some(true)) => {
+				Self::on_initialize_resolved(2) - Self::on_initialize_resolved(1)
+			}
+			(false, true, Some(true)) => {
+				Self::on_initialize_named_resolved(2) - Self::on_initialize_named_resolved(1)
+			}
+			(true, false, Some(true)) => {
+				Self::on_initialize_periodic_resolved(2) - Self::on_initialize_periodic_resolved(1)
+			}
+			(true, true, Some(true)) => {
+				Self::on_initialize_periodic_named_resolved(2)
+					- Self::on_initialize_periodic_named_resolved(1)
+			}
 		}
 	}
 }
@@ -237,12 +242,11 @@ pub mod pallet {
 		// type SponsorshipHandler: SponsorshipHandler<Self::AccountId, <Self as Config>::Call>;
 
 		/// The helper type used for custom transaction fee logic.
-		type CallExecutor: DispatchCall<Self, H160>;		
+		type CallExecutor: DispatchCall<Self, H160>;
 	}
 
 	/// A Scheduler-Runtime interface for finer payment handling.
 	pub trait DispatchCall<T: frame_system::Config + Config, SelfContainedSignedInfo> {
-
 		fn reserve_balance(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
@@ -371,8 +375,8 @@ pub mod pallet {
 							}
 							Agenda::<T>::append(until, Some(s));
 						}
-						continue
-					},
+						continue;
+					}
 				};
 
 				let periodic = s.maybe_periodic.is_some();
@@ -391,8 +395,9 @@ pub mod pallet {
 				// - It does not push the weight past the limit.
 				// - It is the first item in the schedule
 				let hard_deadline = s.priority <= schedule::HARD_DEADLINE;
-				let test_weight =
-					total_weight.saturating_add(call_weight).saturating_add(item_weight);
+				let test_weight = total_weight
+					.saturating_add(call_weight)
+					.saturating_add(item_weight);
 				if !hard_deadline && order > 0 && test_weight > limit {
 					// Cannot be scheduled this block - postpone until next.
 					total_weight.saturating_accrue(T::WeightInfo::item(false, named, None));
@@ -405,43 +410,43 @@ pub mod pallet {
 						Lookup::<T>::insert(id, (next, index as u32));
 					}
 					Agenda::<T>::append(next, Some(s));
-					continue
+					continue;
 				}
 
 				let sender = ensure_signed(
-					<<T as Config>::Origin as From<T::PalletsOrigin>>::from(s.origin.clone()).into(),
-				).unwrap();
+					<<T as Config>::Origin as From<T::PalletsOrigin>>::from(s.origin.clone())
+						.into(),
+				)
+				.unwrap();
 
-				// if call have id and periodic, it was be reserved 
-				if s.maybe_id.is_some() && s.maybe_periodic.is_some()
-				{
+				// if call have id and periodic, it was be reserved
+				if s.maybe_id.is_some() && s.maybe_periodic.is_some() {
 					let _ = T::CallExecutor::pay_for_call(
 						s.maybe_id.unwrap(),
 						sender.clone(),
 						call.clone(),
 					);
-				}				
+				}
 
 				let r = T::CallExecutor::dispatch_call(sender, call.clone());
 
 				let mut actual_call_weight: Weight = item_weight; //PostDispatchInfo;
 				let result: Result<_, DispatchError> = match r {
-					Ok(o) => { match o {
+					Ok(o) => match o {
 						Ok(di) => {
 							actual_call_weight = di.actual_weight.unwrap_or(item_weight);
 							Ok(())
-						},
+						}
 						Err(err) => Err(err.error),
-					}},
-					Err(_) => { 
+					},
+					Err(_) => {
 						log::info!(
 							target: "runtime::scheduler",
 							"Warning: Scheduler has failed to execute a post-dispatch transaction. \
 							This block might have become invalid.");
 						Err(DispatchError::CannotLookup)
-					}
-					// todo possibly force a skip/return here, do something with the error
-				};				
+					} // todo possibly force a skip/return here, do something with the error
+				};
 
 				total_weight.saturating_accrue(item_weight);
 				total_weight.saturating_accrue(actual_call_weight);
@@ -590,7 +595,6 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-
 	#[cfg(feature = "try-runtime")]
 	pub fn pre_migrate_to_v3() -> Result<(), &'static str> {
 		Ok(())
@@ -642,7 +646,7 @@ impl<T: Config> Pallet<T> {
 		};
 
 		if when <= now {
-			return Err(Error::<T>::TargetBlockNumberInPast.into())
+			return Err(Error::<T>::TargetBlockNumberInPast.into());
 		}
 
 		Ok(when)
@@ -691,7 +695,7 @@ impl<T: Config> Pallet<T> {
 							T::OriginPrivilegeCmp::cmp_privilege(o, &s.origin),
 							Some(Ordering::Less) | None
 						) {
-							return Err(BadOrigin.into())
+							return Err(BadOrigin.into());
 						}
 					};
 					Ok(s.take())
@@ -717,7 +721,7 @@ impl<T: Config> Pallet<T> {
 		let new_time = Self::resolve_time(new_time)?;
 
 		if new_time == when {
-			return Err(Error::<T>::RescheduleNoChange.into())
+			return Err(Error::<T>::RescheduleNoChange.into());
 		}
 
 		Agenda::<T>::try_mutate(when, |agenda| -> DispatchResult {
@@ -729,7 +733,10 @@ impl<T: Config> Pallet<T> {
 
 		let new_index = Agenda::<T>::decode_len(new_time).unwrap_or(1) as u32 - 1;
 		Self::deposit_event(Event::Canceled { when, index });
-		Self::deposit_event(Event::Scheduled { when: new_time, index: new_index });
+		Self::deposit_event(Event::Scheduled {
+			when: new_time,
+			index: new_index,
+		});
 
 		Ok((new_time, new_index))
 	}
@@ -744,7 +751,7 @@ impl<T: Config> Pallet<T> {
 	) -> Result<TaskAddress<T::BlockNumber>, DispatchError> {
 		// ensure id it is unique
 		if Lookup::<T>::contains_key(&id) {
-			return Err(Error::<T>::FailedToSchedule)?
+			return Err(Error::<T>::FailedToSchedule)?;
 		}
 
 		let when = Self::resolve_time(when)?;
@@ -766,15 +773,19 @@ impl<T: Config> Pallet<T> {
 			_phantom: Default::default(),
 		};
 
-		// reserve balance for periodic execution 		
-		let sender = ensure_signed(
-			<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin).into(),
-		)?;
+		// reserve balance for periodic execution
+		let sender =
+			ensure_signed(<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin).into())?;
 		let repeats = match maybe_periodic {
 			Some(p) => p.1,
 			None => 0,
 		};
-		let _ = T::CallExecutor::reserve_balance(id.clone(), sender, call.as_value().unwrap().clone(), repeats);	
+		let _ = T::CallExecutor::reserve_balance(
+			id.clone(),
+			sender,
+			call.as_value().unwrap().clone(),
+			repeats,
+		);
 
 		Agenda::<T>::append(when, Some(s));
 		let index = Agenda::<T>::decode_len(when).unwrap_or(1) as u32 - 1;
@@ -796,11 +807,14 @@ impl<T: Config> Pallet<T> {
 								T::OriginPrivilegeCmp::cmp_privilege(o, &s.origin),
 								Some(Ordering::Less) | None
 							) {
-								return Err(BadOrigin.into())
+								return Err(BadOrigin.into());
 							}
 							// release balance reserve
 							let sender = ensure_signed(
-								<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin.unwrap()).into(),
+								<<T as Config>::Origin as From<T::PalletsOrigin>>::from(
+									origin.unwrap(),
+								)
+								.into(),
 							)?;
 							let _ = T::CallExecutor::cancel_reserve(id, sender);
 
@@ -831,7 +845,7 @@ impl<T: Config> Pallet<T> {
 				let (when, index) = lookup.ok_or(Error::<T>::NotFound)?;
 
 				if new_time == when {
-					return Err(Error::<T>::RescheduleNoChange.into())
+					return Err(Error::<T>::RescheduleNoChange.into());
 				}
 
 				Agenda::<T>::try_mutate(when, |agenda| -> DispatchResult {
@@ -844,7 +858,10 @@ impl<T: Config> Pallet<T> {
 
 				let new_index = Agenda::<T>::decode_len(new_time).unwrap_or(1) as u32 - 1;
 				Self::deposit_event(Event::Canceled { when, index });
-				Self::deposit_event(Event::Scheduled { when: new_time, index: new_index });
+				Self::deposit_event(Event::Scheduled {
+					when: new_time,
+					index: new_index,
+				});
 
 				*lookup = Some((new_time, new_index));
 
@@ -882,7 +899,10 @@ impl<T: Config> schedule::v2::Anon<T::BlockNumber, <T as Config>::Call, T::Palle
 	}
 
 	fn next_dispatch_time((when, index): Self::Address) -> Result<T::BlockNumber, ()> {
-		Agenda::<T>::get(when).get(index as usize).ok_or(()).map(|_| when)
+		Agenda::<T>::get(when)
+			.get(index as usize)
+			.ok_or(())
+			.map(|_| when)
 	}
 }
 
@@ -900,12 +920,17 @@ impl<T: Config> schedule::v2::Named<T::BlockNumber, <T as Config>::Call, T::Pall
 		origin: T::PalletsOrigin,
 		call: CallOrHashOf<T>,
 	) -> Result<Self::Address, ()> {
-		let inner_id: ScheduledId = id.try_into().unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
-		Self::do_schedule_named(inner_id, when, maybe_periodic, priority, origin, call).map_err(|_| ())
+		let inner_id: ScheduledId = id
+			.try_into()
+			.unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
+		Self::do_schedule_named(inner_id, when, maybe_periodic, priority, origin, call)
+			.map_err(|_| ())
 	}
 
 	fn cancel_named(id: Vec<u8>) -> Result<(), ()> {
-		let inner_id: ScheduledId = id.try_into().unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
+		let inner_id: ScheduledId = id
+			.try_into()
+			.unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
 		Self::do_cancel_named(None, inner_id).map_err(|_| ())
 	}
 
@@ -913,12 +938,16 @@ impl<T: Config> schedule::v2::Named<T::BlockNumber, <T as Config>::Call, T::Pall
 		id: Vec<u8>,
 		when: DispatchTime<T::BlockNumber>,
 	) -> Result<Self::Address, DispatchError> {
-		let inner_id: ScheduledId = id.try_into().unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
+		let inner_id: ScheduledId = id
+			.try_into()
+			.unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
 		Self::do_reschedule_named(inner_id, when)
 	}
 
 	fn next_dispatch_time(id: Vec<u8>) -> Result<T::BlockNumber, ()> {
-		let inner_id: ScheduledId = id.try_into().unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
+		let inner_id: ScheduledId = id
+			.try_into()
+			.unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
 		Lookup::<T>::get(inner_id)
 			.and_then(|(when, index)| Agenda::<T>::get(when).get(index as usize).map(|_| when))
 			.ok_or(())
