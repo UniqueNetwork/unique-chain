@@ -1,7 +1,18 @@
-//
-// This file is subject to the terms and conditions defined in
-// file 'LICENSE', which is part of this source code package.
-//
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="helpers.d.ts" />
@@ -20,6 +31,12 @@ import contractHelpersAbi from './contractHelpersAbi.json';
 import getBalance from '../../substrate/get-balance';
 
 export const GAS_ARGS = {gas: 2500000};
+
+export enum SponsoringMode {
+  Disabled = 0,
+  Allowlisted = 1,
+  Generous = 2,
+}
 
 let web3Connected = false;
 export async function usingWeb3<T>(cb: (web3: Web3) => Promise<T> | T): Promise<T> {
@@ -249,6 +266,8 @@ export async function executeEthTxOnSub(web3: Web3, api: ApiPromise, from: IKeyr
     GAS_ARGS.gas,
     await web3.eth.getGasPrice(),
     null,
+    null,
+    [],
   );
   const events = await submitTransactionAsync(from, tx);
   expect(events.some(({event: {section, method}}) => section == 'evm' && method == 'Executed')).to.be.true;

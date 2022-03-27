@@ -1,5 +1,21 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 use crate::Config;
-use codec::{Encode, EncodeLike, Decode};
+use codec::{Encode, EncodeLike, Decode, MaxEncodedLen};
 use sp_core::H160;
 use scale_info::{Type, TypeInfo};
 use core::cmp::Ordering;
@@ -10,7 +26,7 @@ use sp_std::clone::Clone;
 pub use up_evm_mapping::EvmBackwardsAddressMapping;
 
 pub trait CrossAccountId<AccountId>:
-	Encode + EncodeLike + Decode + TypeInfo + Clone + PartialEq + Ord + core::fmt::Debug + Default
+	Encode + EncodeLike + Decode + TypeInfo + MaxEncodedLen + Clone + PartialEq + Ord + core::fmt::Debug
 // +
 // Serialize + Deserialize<'static>
 {
@@ -23,7 +39,7 @@ pub trait CrossAccountId<AccountId>:
 	fn conv_eq(&self, other: &Self) -> bool;
 }
 
-#[derive(Encode, Decode, Serialize, Deserialize, TypeInfo)]
+#[derive(Encode, Decode, Serialize, Deserialize, TypeInfo, MaxEncodedLen)]
 #[serde(rename_all = "camelCase")]
 enum BasicCrossAccountIdRepr<AccountId> {
 	Substrate(AccountId),
@@ -38,17 +54,17 @@ pub struct BasicCrossAccountId<T: Config> {
 	ethereum: H160,
 }
 
+impl<T: Config> MaxEncodedLen for BasicCrossAccountId<T> {
+	fn max_encoded_len() -> usize {
+		<BasicCrossAccountIdRepr<T::AccountId>>::max_encoded_len()
+	}
+}
+
 impl<T: Config> TypeInfo for BasicCrossAccountId<T> {
 	type Identity = Self;
 
 	fn type_info() -> Type {
 		<BasicCrossAccountIdRepr<T::AccountId>>::type_info()
-	}
-}
-
-impl<T: Config> Default for BasicCrossAccountId<T> {
-	fn default() -> Self {
-		Self::from_sub(T::AccountId::default())
 	}
 }
 

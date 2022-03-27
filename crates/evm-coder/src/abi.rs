@@ -1,3 +1,19 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 //! TODO: I misunterstood therminology, abi IS rlp encoded, so
 //! this module should be replaced with rlp crate
 
@@ -93,6 +109,10 @@ impl<'i> AbiReader<'i> {
 	}
 	pub fn string(&mut self) -> Result<string> {
 		string::from_utf8(self.bytes()?).map_err(|_| Error::Error(ExitError::InvalidRange))
+	}
+
+	pub fn uint8(&mut self) -> Result<u8> {
+		Ok(self.read_padleft::<1>()?[0])
 	}
 
 	pub fn uint32(&mut self) -> Result<u32> {
@@ -243,6 +263,7 @@ macro_rules! impl_abi_readable {
 	};
 }
 
+impl_abi_readable!(u8, uint8);
 impl_abi_readable!(u32, uint32);
 impl_abi_readable!(u64, uint64);
 impl_abi_readable!(u128, uint128);

@@ -1,7 +1,18 @@
-//
-// This file is subject to the terms and conditions defined in
-// file 'LICENSE', which is part of this source code package.
-//
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -372,5 +383,32 @@ describe('(!negative test!) integration test: ext. confirmSponsorship():', () =>
     const collectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectSuccess(collectionId);
     await confirmSponsorshipExpectFailure(collectionId, '//Bob');
+  });
+
+  it('(!negative test!) Transfer fees are not paid by the sponsor if the transfer failed', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+
+    await usingApi(async (api) => {
+      // Find unused address
+      const ownerZeroBalance = await findUnusedAddress(api);
+
+      // Find another unused address
+      const senderZeroBalance = await findUnusedAddress(api);
+
+      // Mint token for an unused address
+      const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', ownerZeroBalance.address);
+
+      const sponsorBalanceBeforeTx = (await api.query.system.account(bob.address)).data.free.toBigInt();
+
+      // Try to transfer this token from an unsponsored unused adress to Alice
+      const zeroToAlice = api.tx.unique.transfer(normalizeAccountId(alice.address), collectionId, itemId, 0);
+      await expect(submitTransactionExpectFailAsync(senderZeroBalance, zeroToAlice)).to.be.rejected;
+
+      const sponsorBalanceAfterTx = (await api.query.system.account(bob.address)).data.free.toBigInt();
+
+      expect(sponsorBalanceAfterTx).to.equal(sponsorBalanceBeforeTx);
+    });
   });
 });

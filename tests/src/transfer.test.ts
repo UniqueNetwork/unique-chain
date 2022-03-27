@@ -1,7 +1,18 @@
-//
-// This file is subject to the terms and conditions defined in
-// file 'LICENSE', which is part of this source code package.
-//
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -24,7 +35,13 @@ import {
   getTokenOwner,
   normalizeAccountId,
   getBalance as getTokenBalance,
+  transferFromExpectSuccess,
+  transferFromExpectFail,
 } from './util/helpers';
+import {
+  subToEth,
+  itWeb3, 
+} from './eth/util/helpers';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
@@ -291,5 +308,53 @@ describe('Zero value transfer(From)', () => {
       expect((balanceBeforeAlice)).to.be.equal(balanceAfterAlice);
       expect((balanceBeforeBob)).to.be.equal(balanceAfterBob);
     });
+  });
+});
+
+describe('Transfers to self (potentially over substrate-evm boundary)', () => {
+  itWeb3('Transfers to self. In case of same frontend', async ({api}) => {
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+    const alice = privateKey('//Alice');
+    const aliceProxy = subToEth(alice.address);
+    const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
+    await transferExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, 10, 'Fungible');
+    const balanceAliceBefore = await getTokenBalance(api, collectionId, {Ethereum: aliceProxy}, tokenId);
+    await transferFromExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, {Ethereum: aliceProxy}, 10, 'Fungible');
+    const balanceAliceAfter = await getTokenBalance(api, collectionId, {Ethereum: aliceProxy}, tokenId);
+    expect(balanceAliceBefore).to.be.eq(balanceAliceAfter);
+  });
+
+  itWeb3('Transfers to self. In case of substrate-evm boundary', async ({api}) => {
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+    const alice = privateKey('//Alice');
+    const aliceProxy = subToEth(alice.address);
+    const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
+    const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
+    await transferExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy} , 10, 'Fungible');
+    await transferFromExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, alice, 10, 'Fungible');
+    const balanceAliceAfter = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
+    expect(balanceAliceBefore).to.be.eq(balanceAliceAfter);
+  });
+
+  itWeb3('Transfers to self. In case of inside substrate-evm', async ({api}) => {
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+    const alice = privateKey('//Alice');
+    const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
+    const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
+    await transferExpectSuccess(collectionId, tokenId, alice, alice , 10, 'Fungible');
+    await transferFromExpectSuccess(collectionId, tokenId, alice, alice, alice, 10, 'Fungible');
+    const balanceAliceAfter = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
+    expect(balanceAliceBefore).to.be.eq(balanceAliceAfter);
+  });
+
+  itWeb3('Transfers to self. In case of inside substrate-evm when not enought "Fungibles"', async ({api}) => {
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+    const alice = privateKey('//Alice');
+    const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
+    const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
+    await transferExpectFailure(collectionId, tokenId, alice, alice , 11);
+    await transferFromExpectFail(collectionId, tokenId, alice, alice, alice, 11);
+    const balanceAliceAfter = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
+    expect(balanceAliceBefore).to.be.eq(balanceAliceAfter);
   });
 });

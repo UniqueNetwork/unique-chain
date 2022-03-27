@@ -1,3 +1,19 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(not(feature = "std"))]
@@ -18,10 +34,10 @@ pub mod pallet {
 		execution::{self, Result},
 		types::{Msg, value},
 	};
-	use frame_support::{ensure};
+	use frame_support::{ensure, sp_runtime::ModuleError};
 	use pallet_evm::{
 		ExitError, ExitRevert, ExitSucceed, GasWeightMapping, PrecompileFailure, PrecompileOutput,
-		PrecompileResult,
+		PrecompileResult, runner::stack::MaybeMirroredLog,
 	};
 	use frame_system::ensure_signed;
 	pub use frame_support::dispatch::DispatchResult;
@@ -29,7 +45,7 @@ pub mod pallet {
 	use sp_std::cell::RefCell;
 	use sp_std::vec::Vec;
 	use sp_core::{H160, H256};
-	use ethereum::Log;
+	use ethereum::TransactionV2;
 	use frame_support::{pallet_prelude::*, traits::PalletInfo};
 	use frame_system::pallet_prelude::*;
 
@@ -66,9 +82,9 @@ pub mod pallet {
 	pub const G_SLOAD_WORD: u64 = 800;
 	pub const G_SSTORE_WORD: u64 = 20000;
 
-	pub fn generate_transaction() -> ethereum::TransactionV0 {
+	pub fn generate_transaction() -> TransactionV2 {
 		use ethereum::{TransactionV0, TransactionAction, TransactionSignature};
-		TransactionV0 {
+		TransactionV2::Legacy(TransactionV0 {
 			nonce: 0.into(),
 			gas_price: 0.into(),
 			gas_limit: 0.into(),
@@ -78,13 +94,13 @@ pub mod pallet {
 			input: Vec::from([0, 0, 0, 0]),
 			// if v is not 27 - then we need to pass some other validity checks
 			signature: TransactionSignature::new(27, H256([0x88; 32]), H256([0x88; 32])).unwrap(),
-		}
+		})
 	}
 
 	#[derive(Default)]
 	pub struct SubstrateRecorder<T: Config> {
 		contract: H160,
-		logs: RefCell<Vec<Log>>,
+		logs: RefCell<Vec<MaybeMirroredLog>>,
 		initial_gas: u64,
 		gas_limit: RefCell<u64>,
 		_phantom: PhantomData<*const T>,
@@ -104,13 +120,19 @@ pub mod pallet {
 		pub fn is_empty(&self) -> bool {
 			self.logs.borrow().is_empty()
 		}
-		// TODO: Replace with real storage in pallet-ethereum,
-		// same way as it is done with frame_system's Events
-		/// Doesn't consumes any gas, should be used after consume_log_sub
-		pub fn log(&self, log: impl ToLog) {
-			self.logs.borrow_mut().push(log.to_log(self.contract));
+		// Logs emitted with log_direct appear as substrate evm.Log event
+		pub fn log_direct(&self, log: impl ToLog) {
+			self.logs
+				.borrow_mut()
+				.push(MaybeMirroredLog::direct(log.to_log(self.contract)))
 		}
-		pub fn retrieve_logs(self) -> Vec<Log> {
+		/// If log already has substrate equivalent - then we don't need to emit evm.Log
+		pub fn log_mirrored(&self, log: impl ToLog) {
+			self.logs
+				.borrow_mut()
+				.push(MaybeMirroredLog::mirrored(log.to_log(self.contract)))
+		}
+		pub fn retrieve_logs(self) -> Vec<MaybeMirroredLog> {
 			self.logs.into_inner()
 		}
 
@@ -165,7 +187,8 @@ pub mod pallet {
 				Ok(Some(v)) => Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
 					cost: self.initial_gas - self.gas_left(),
-					logs: self.retrieve_logs(),
+					// TODO: preserve mirroring status
+					logs: self.retrieve_logs().into_iter().map(|l| l.log).collect(),
 					output: v.finish(),
 				}),
 				Ok(None) => return None,
@@ -200,7 +223,7 @@ pub mod pallet {
 	pub fn dispatch_to_evm<T: Config>(err: DispatchError) -> evm_coder::execution::Error {
 		use evm_coder::execution::Error as ExError;
 		match err {
-			DispatchError::Module { index, error, .. }
+			DispatchError::Module(ModuleError { index, error, .. })
 				if index
 					== T::PalletInfo::index::<Pallet<T>>()
 						.expect("evm-coder-substrate is a pallet, which should be added to runtime")
@@ -212,10 +235,10 @@ pub mod pallet {
 					_ => unreachable!("this pallet only defines two possible errors"),
 				}
 			}
-			DispatchError::Module {
+			DispatchError::Module(ModuleError {
 				message: Some(msg), ..
-			} => ExError::Revert(msg.into()),
-			DispatchError::Module { index, error, .. } => {
+			}) => ExError::Revert(msg.into()),
+			DispatchError::Module(ModuleError { index, error, .. }) => {
 				ExError::Revert(format!("error {} in pallet {}", error, index))
 			}
 			e => ExError::Revert(format!("substrate error: {:?}", e)),

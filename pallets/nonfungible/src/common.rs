@@ -1,7 +1,23 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 use core::marker::PhantomData;
 
-use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
-use up_data_structs::TokenId;
+use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
+use up_data_structs::{TokenId, CustomDataLimit, CreateItemExData};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
@@ -12,9 +28,16 @@ use crate::{
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
-impl<T: Config> CommonWeightInfo for CommonWeights<T> {
+impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_item() -> Weight {
 		<SelfWeightOf<T>>::create_item()
+	}
+
+	fn create_multiple_items_ex(data: &CreateItemExData<T::CrossAccountId>) -> Weight {
+		match data {
+			CreateItemExData::NFT(t) => <SelfWeightOf<T>>::create_multiple_items_ex(t.len() as u32),
+			_ => 0,
+		}
 	}
 
 	fn create_multiple_items(amount: u32) -> Weight {
@@ -51,7 +74,7 @@ fn map_create_data<T: Config>(
 	to: &T::CrossAccountId,
 ) -> Result<CreateItemData<T>, DispatchError> {
 	match data {
-		up_data_structs::CreateItemData::NFT(data) => Ok(CreateItemData {
+		up_data_structs::CreateItemData::NFT(data) => Ok(CreateItemData::<T> {
 			const_data: data.const_data,
 			variable_data: data.variable_data,
 			owner: to.clone(),
@@ -68,7 +91,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		data: up_data_structs::CreateItemData,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
-			<Pallet<T>>::create_item(self, &sender, map_create_data(data, &to)?),
+			<Pallet<T>>::create_item(self, &sender, map_create_data::<T>(data, &to)?),
 			<CommonWeights<T>>::create_item(),
 		)
 	}
@@ -88,6 +111,23 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		with_weight(
 			<Pallet<T>>::create_multiple_items(self, &sender, data),
 			<CommonWeights<T>>::create_multiple_items(amount as u32),
+		)
+	}
+
+	fn create_multiple_items_ex(
+		&self,
+		sender: <T>::CrossAccountId,
+		data: up_data_structs::CreateItemExData<<T>::CrossAccountId>,
+	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::create_multiple_items_ex(&data);
+		let data = match data {
+			up_data_structs::CreateItemExData::NFT(nft) => nft,
+			_ => fail!(Error::<T>::NotNonfungibleDataUsedToMintFungibleCollectionToken),
+		};
+
+		with_weight(
+			<Pallet<T>>::create_multiple_items(self, &sender, data.into_inner()),
+			weight,
 		)
 	}
 
@@ -188,7 +228,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		&self,
 		sender: T::CrossAccountId,
 		token: TokenId,
-		data: Vec<u8>,
+		data: BoundedVec<u8, CustomDataLimit>,
 	) -> DispatchResultWithPostInfo {
 		let len = data.len();
 		with_weight(
@@ -211,20 +251,20 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		TokenId(<TokensMinted<T>>::get(self.id))
 	}
 
-	fn token_owner(&self, token: TokenId) -> T::CrossAccountId {
-		<TokenData<T>>::get((self.id, token))
-			.map(|t| t.owner)
-			.unwrap_or_default()
+	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId> {
+		<TokenData<T>>::get((self.id, token)).map(|t| t.owner)
 	}
 	fn const_metadata(&self, token: TokenId) -> Vec<u8> {
 		<TokenData<T>>::get((self.id, token))
 			.map(|t| t.const_data)
 			.unwrap_or_default()
+			.into_inner()
 	}
 	fn variable_metadata(&self, token: TokenId) -> Vec<u8> {
 		<TokenData<T>>::get((self.id, token))
 			.map(|t| t.variable_data)
 			.unwrap_or_default()
+			.into_inner()
 	}
 
 	fn collection_tokens(&self) -> u32 {

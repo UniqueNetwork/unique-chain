@@ -1,9 +1,4 @@
 {
-  "exclude": [
-    "node_modules",
-    "node_modules/**/*",
-    "**/node_modules/**/*"
-  ],
   "compilerOptions": {
     "target": "ES2020",
     "moduleResolution": "node",
@@ -12,19 +7,19 @@
     "module": "commonjs",
     "sourceMap": true,
     "outDir": "dist",
-    "rootDir": "src",
     "strict": true,
     "paths": {
-      "@polkadot/api/augment": [
-        "./src/interfaces/augment-api.ts"
+      "@polkadot/types/lookup": [
+        "./src/interfaces/types-lookup.ts"
       ],
-      "@polkadot/types/augment": [
-        "./src/interfaces/augment-types.ts"
-      ]
+      "@unique-nft/types/*": [
+        "./src/interfaces/*"
+      ],
     }
   },
   "include": [
-    "src/**/*"
+    "./src/**/*",
+    "./src/interfaces/*.ts"
   ],
   "lib": [
     "es2017"

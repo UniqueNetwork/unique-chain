@@ -1,14 +1,14 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from '@polkadot/api/types';
-import type { Vec, u128, u16, u32, u64, u8 } from '@polkadot/types';
+import type { ApiTypes } from '@polkadot/api-base/types';
+import type { Option, Vec, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Codec } from '@polkadot/types-codec/types';
 import type { Permill } from '@polkadot/types/interfaces/runtime';
 import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSupportWeightsWeightToFeeCoefficient, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion } from '@polkadot/types/lookup';
-import type { Codec } from '@polkadot/types/types';
 
-declare module '@polkadot/api/types/consts' {
-  export interface AugmentedConsts<ApiType> {
+declare module '@polkadot/api-base/types/consts' {
+  export interface AugmentedConsts<ApiType extends ApiTypes> {
     balances: {
       /**
        * The minimum amount required to keep an account open.
@@ -30,12 +30,16 @@ declare module '@polkadot/api/types/consts' {
     };
     common: {
       collectionAdminsLimit: u32 & AugmentedConst<ApiType>;
+      collectionCreationPrice: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
       [key: string]: Codec;
     };
     inflation: {
+      /**
+       * Number of blocks that pass between treasury balance updates due to inflation
+       **/
       inflationBlockInterval: u32 & AugmentedConst<ApiType>;
       /**
        * Generic const
@@ -134,6 +138,8 @@ declare module '@polkadot/api/types/consts' {
       burn: Permill & AugmentedConst<ApiType>;
       /**
        * The maximum number of approvals that can wait in the spending queue.
+       * 
+       * NOTE: This parameter is also used within the Bounties Pallet extension if enabled.
        **/
       maxApprovals: u32 & AugmentedConst<ApiType>;
       /**
@@ -145,6 +151,10 @@ declare module '@polkadot/api/types/consts' {
        * An accepted proposal gets these back. A rejected proposal does not.
        **/
       proposalBond: Permill & AugmentedConst<ApiType>;
+      /**
+       * Maximum amount of funds that should be placed in a deposit for making a proposal.
+       **/
+      proposalBondMaximum: Option<u128> & AugmentedConst<ApiType>;
       /**
        * Minimum amount of funds that should be placed in a deposit for making a proposal.
        **/
@@ -168,9 +178,5 @@ declare module '@polkadot/api/types/consts' {
        **/
       [key: string]: Codec;
     };
-  }
-
-  export interface QueryableConsts<ApiType extends ApiTypes> extends AugmentedConsts<ApiType> {
-    [key: string]: QueryableModuleConsts;
-  }
-}
+  } // AugmentedConsts
+} // declare module

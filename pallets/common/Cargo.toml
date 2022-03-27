@@ -1,6 +1,7 @@
 [package]
 name = "pallet-common"
 version = "0.1.0"
+license = "GPLv3"
 edition = "2021"
 
 [dependencies.codec]
@@ -10,16 +11,16 @@ package = 'parity-scale-codec'
 version = '2.0.0'
 
 [dependencies]
-frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.14' }
-frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.14' }
-sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.14' }
-sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.14' }
-sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.14' }
+frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
+frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
+sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
+sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
+sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
 up-evm-mapping = { default-features = false, path = '../../primitives/evm-mapping' }
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
 pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.14" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.17" }
 serde = { version = "1.0.130", default-features = false }
 scale-info = { version = "1.0.0", default-features = false, features = [
     "derive",

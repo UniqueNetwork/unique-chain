@@ -1,8 +1,21 @@
-//
-// This file is subject to the terms and conditions defined in
-// file 'LICENSE', which is part of this source code package.
-//
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
 
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
+import '../interfaces/augment-api-rpc';
+import '../interfaces/augment-api-query';
 import {ApiPromise, Keyring} from '@polkadot/api';
 import type {AccountId, EventRecord} from '@polkadot/types/interfaces';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -11,10 +24,10 @@ import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {alicesPublicKey} from '../accounts';
-import {UpDataStructsCollection} from '../interfaces';
 import privateKey from '../substrate/privateKey';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
+import {UpDataStructsCollection} from '@polkadot/types/lookup';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -49,7 +62,7 @@ export function normalizeAccountId(input: string | AccountId | CrossAccountId | 
     };
   } else if ('Substrate' in input) {
     return input;
-  }else if ('substrate' in input) {
+  } else if ('substrate' in input) {
     return {
       Substrate: (input as any).substrate,
     };
@@ -116,15 +129,15 @@ export interface IFungibleTokenDataType {
 
 export interface IChainLimits {
   collectionNumbersLimit: number;
-	accountTokenOwnershipLimit: number;
-	collectionsAdminsLimit: number;
-	customDataLimit: number;
-	nftSponsorTransferTimeout: number;
-	fungibleSponsorTransferTimeout: number;
-	refungibleSponsorTransferTimeout: number;
-	offchainSchemaLimit: number;
-	variableOnChainSchemaLimit: number;
-	constOnChainSchemaLimit: number;
+  accountTokenOwnershipLimit: number;
+  collectionsAdminsLimit: number;
+  customDataLimit: number;
+  nftSponsorTransferTimeout: number;
+  fungibleSponsorTransferTimeout: number;
+  refungibleSponsorTransferTimeout: number;
+  offchainSchemaLimit: number;
+  variableOnChainSchemaLimit: number;
+  constOnChainSchemaLimit: number;
 }
 
 export interface IReFungibleTokenDataType {
@@ -283,7 +296,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
       modeprm = {refungible: null};
     }
 
-    const tx = api.tx.unique.createCollection(strToUTF16(name), strToUTF16(description), strToUTF16(tokenPrefix), modeprm as any);
+    const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any});
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getCreateCollectionResult(events);
 
@@ -329,7 +342,7 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
 
     // Run the CreateCollection transaction
     const alicePrivateKey = privateKey('//Alice');
-    const tx = api.tx.unique.createCollection(strToUTF16(name), strToUTF16(description), strToUTF16(tokenPrefix), modeprm as any);
+    const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any});
     const events = await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
     const result = getCreateCollectionResult(events);
 
@@ -563,7 +576,7 @@ export async function setTransferFlagExpectSuccess(sender: IKeyringPair, collect
 
   await usingApi(async (api) => {
 
-    const tx = api.tx.unique.setTransfersEnabledFlag (collectionId, enabled);
+    const tx = api.tx.unique.setTransfersEnabledFlag(collectionId, enabled);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
 
@@ -575,7 +588,7 @@ export async function setTransferFlagExpectFailure(sender: IKeyringPair, collect
 
   await usingApi(async (api) => {
 
-    const tx = api.tx.unique.setTransfersEnabledFlag (collectionId, enabled);
+    const tx = api.tx.unique.setTransfersEnabledFlag(collectionId, enabled);
     const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
     const result = getGenericResult(events);
 
@@ -817,8 +830,7 @@ export async function addCollectionAdminExpectSuccess(sender: IKeyringPair, coll
 }
 
 export async function
-getFreeBalance(account: IKeyringPair) : Promise<bigint>
-{
+getFreeBalance(account: IKeyringPair): Promise<bigint> {
   let balance = 0n;
   await usingApi(async (api) => {
     balance = BigInt((await api.query.system.account(account.address)).data.free.toString());

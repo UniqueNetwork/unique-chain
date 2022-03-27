@@ -1,15 +1,31 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use core::ops::Deref;
 use frame_support::{ensure};
-use up_data_structs::{AccessMode, Collection, CollectionId, TokenId};
+use up_data_structs::{AccessMode, CollectionId, TokenId, CreateCollectionData};
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
 };
 use pallet_evm_coder_substrate::WithRecorder;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
-use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
+use sp_std::collections::btree_map::BTreeMap;
 
 pub use pallet::*;
 
@@ -100,8 +116,11 @@ impl<T: Config> Deref for FungibleHandle<T> {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(data)
+	pub fn init_collection(
+		owner: T::AccountId,
+		data: CreateCollectionData<T::AccountId>,
+	) -> Result<CollectionId, DispatchError> {
+		<PalletCommon<T>>::init_collection(owner, data)
 	}
 	pub fn destroy_collection(
 		collection: FungibleHandle<T>,
@@ -145,7 +164,7 @@ impl<T: Config> Pallet<T> {
 		}
 		<TotalSupply<T>>::insert(collection.id, total_supply);
 
-		collection.log(ERC20Events::Transfer {
+		collection.log_mirrored(ERC20Events::Transfer {
 			from: *owner.as_eth(),
 			to: H160::default(),
 			value: amount.into(),
@@ -201,7 +220,7 @@ impl<T: Config> Pallet<T> {
 			<Balance<T>>::insert((collection.id, to), balance_to);
 		}
 
-		collection.log(ERC20Events::Transfer {
+		collection.log_mirrored(ERC20Events::Transfer {
 			from: *from.as_eth(),
 			to: *to.as_eth(),
 			value: amount.into(),
@@ -219,7 +238,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_multiple_items(
 		collection: &FungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: Vec<CreateItemData<T>>,
+		data: BTreeMap<T::CrossAccountId, u128>,
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
@@ -233,22 +252,18 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 
-		let mut balances = BTreeMap::new();
-
 		let total_supply = data
 			.iter()
-			.map(|u| u.1)
+			.map(|(_, v)| *v)
 			.try_fold(<TotalSupply<T>>::get(collection.id), |acc, v| {
 				acc.checked_add(v)
 			})
 			.ok_or(ArithmeticError::Overflow)?;
 
-		for (user, amount) in data.into_iter() {
-			let balance = balances
-				.entry(user.clone())
-				.or_insert_with(|| <Balance<T>>::get((collection.id, user)));
-			*balance = (*balance)
-				.checked_add(amount)
+		let mut balances = data;
+		for (k, v) in balances.iter_mut() {
+			*v = <Balance<T>>::get((collection.id, &k))
+				.checked_add(*v)
 				.ok_or(ArithmeticError::Overflow)?;
 		}
 
@@ -258,7 +273,7 @@ impl<T: Config> Pallet<T> {
 		for (user, amount) in balances {
 			<Balance<T>>::insert((collection.id, &user), amount);
 
-			collection.log(ERC20Events::Transfer {
+			collection.log_mirrored(ERC20Events::Transfer {
 				from: H160::default(),
 				to: *user.as_eth(),
 				value: amount.into(),
@@ -286,7 +301,7 @@ impl<T: Config> Pallet<T> {
 			<Allowance<T>>::insert((collection.id, owner, spender), amount);
 		}
 
-		collection.log(ERC20Events::Approval {
+		collection.log_mirrored(ERC20Events::Approval {
 			owner: *owner.as_eth(),
 			spender: *spender.as_eth(),
 			value: amount.into(),
@@ -343,7 +358,7 @@ impl<T: Config> Pallet<T> {
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender),
-				<CommonError<T>>::TokenValueNotEnough
+				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
 
@@ -374,7 +389,7 @@ impl<T: Config> Pallet<T> {
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender),
-				<CommonError<T>>::TokenValueNotEnough
+				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
 
@@ -393,6 +408,6 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		data: CreateItemData<T>,
 	) -> DispatchResult {
-		Self::create_multiple_items(collection, sender, vec![data])
+		Self::create_multiple_items(collection, sender, [(data.0, data.1)].into_iter().collect())
 	}
 }

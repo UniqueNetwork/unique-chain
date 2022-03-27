@@ -1,7 +1,18 @@
-//
-// This file is subject to the terms and conditions defined in
-// file 'LICENSE', which is part of this source code package.
-//
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 #![recursion_limit = "1024"]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -29,17 +40,18 @@ pub use frame_support::{
 		WeightToFeePolynomial, DispatchClass,
 	},
 	StorageValue, transactional,
-	pallet_prelude::DispatchResultWithPostInfo,
+	pallet_prelude::{DispatchResultWithPostInfo, ConstU32},
+	BoundedVec,
 };
 use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{sp_std::prelude::Vec};
 use up_data_structs::{
-	MAX_DECIMAL_POINTS, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, CUSTOM_DATA_LIMIT,
-	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT,
-	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-	NFT_SPONSOR_TRANSFER_TIMEOUT, AccessMode, Collection, CreateItemData, CollectionLimits,
-	CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
+	MAX_DECIMAL_POINTS, VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT,
+	OFFCHAIN_SCHEMA_LIMIT, MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH,
+	MAX_TOKEN_PREFIX_LENGTH, AccessMode, CreateItemData, CollectionLimits, CollectionId,
+	CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
+	CreateCollectionData, CustomDataLimit, CreateItemExData,
 };
 use pallet_common::{
 	account::CrossAccountId, CollectionHandle, Pallet as PalletCommon, Error as CommonError,
@@ -81,10 +93,6 @@ decl_error! {
 		ConfirmUnsetSponsorFail,
 		/// Length of items properties must be greater than 0.
 		EmptyArgument,
-		/// Collection limit bounds per collection exceeded
-		CollectionLimitBoundsExceeded,
-		/// Tried to enable permissions which are only permitted to be disabled
-		OwnerPermissionsCantBeReverted,
 	}
 }
 
@@ -318,42 +326,39 @@ decl_module! {
 		// returns collection ID
 		#[weight = <SelfWeightOf<T>>::create_collection()]
 		#[transactional]
+		#[deprecated]
 		pub fn create_collection(origin,
-								 collection_name: Vec<u16>,
-								 collection_description: Vec<u16>,
-								 token_prefix: Vec<u8>,
-								 mode: CollectionMode) -> DispatchResult {
-
-			// Anyone can create a collection
-			let who = ensure_signed(origin)?;
-
-			// Create new collection
-			let new_collection = Collection {
-				owner: who,
+								 collection_name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
+								 collection_description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
+								 token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
+								 mode: CollectionMode) -> DispatchResult  {
+			let data: CreateCollectionData<T::AccountId> = CreateCollectionData {
 				name: collection_name,
-				mode: mode.clone(),
-				mint_mode: false,
-				access: AccessMode::Normal,
 				description: collection_description,
 				token_prefix,
-				offchain_schema: Vec::new(),
-				schema_version: SchemaVersion::ImageURL,
-				sponsorship: SponsorshipState::Disabled,
-				variable_on_chain_schema: Vec::new(),
-				const_on_chain_schema: Vec::new(),
-				limits: Default::default(),
-				meta_update_permission: Default::default(),
+				mode,
+				..Default::default()
 			};
+			Self::create_collection_ex(origin, data)
+		}
 
-			let _id = match mode {
-				CollectionMode::NFT => {<PalletNonfungible<T>>::init_collection(new_collection)?},
+		/// This method creates a collection
+		///
+		/// Prefer it to deprecated [`created_collection`] method
+		#[weight = <SelfWeightOf<T>>::create_collection()]
+		#[transactional]
+		pub fn create_collection_ex(origin, data: CreateCollectionData<T::AccountId>) -> DispatchResult {
+			let owner = ensure_signed(origin)?;
+
+			let _id = match data.mode {
+				CollectionMode::NFT => {<PalletNonfungible<T>>::init_collection(owner, data)?},
 				CollectionMode::Fungible(decimal_points) => {
 					// check params
 					ensure!(decimal_points <= MAX_DECIMAL_POINTS, Error::<T>::CollectionDecimalPointLimitExceeded);
-					<PalletFungible<T>>::init_collection(new_collection)?
+					<PalletFungible<T>>::init_collection(owner, data)?
 				}
 				CollectionMode::ReFungible => {
-					<PalletRefungible<T>>::init_collection(new_collection)?
+					<PalletRefungible<T>>::init_collection(owner, data)?
 				}
 			};
 
@@ -741,6 +746,14 @@ decl_module! {
 			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items(sender, owner, items_data))
 		}
 
+		#[weight = <CommonWeights<T>>::create_multiple_items_ex(&data)]
+		#[transactional]
+		pub fn create_multiple_items_ex(origin, collection_id: CollectionId, data: CreateItemExData<T::CrossAccountId>) -> DispatchResultWithPostInfo {
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+
+			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items_ex(sender, data))
+		}
+
 		// TODO! transaction weight
 
 		/// Set transfers_enabled value for particular collection
@@ -919,7 +932,7 @@ decl_module! {
 			origin,
 			collection_id: CollectionId,
 			item_id: TokenId,
-			data: Vec<u8>
+			data: BoundedVec<u8, CustomDataLimit>,
 		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
@@ -1004,14 +1017,11 @@ decl_module! {
 		pub fn set_offchain_schema(
 			origin,
 			collection_id: CollectionId,
-			schema: Vec<u8>
+			schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner_or_admin(&sender)?;
-
-			// check schema limit
-			ensure!(schema.len() as u32 <= OFFCHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.offchain_schema = schema;
 
@@ -1039,14 +1049,11 @@ decl_module! {
 		pub fn set_const_on_chain_schema (
 			origin,
 			collection_id: CollectionId,
-			schema: Vec<u8>
+			schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner_or_admin(&sender)?;
-
-			// check schema limit
-			ensure!(schema.len() as u32 <= CONST_ON_CHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.const_on_chain_schema = schema;
 
@@ -1074,14 +1081,11 @@ decl_module! {
 		pub fn set_variable_on_chain_schema (
 			origin,
 			collection_id: CollectionId,
-			schema: Vec<u8>
+			schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner_or_admin(&sender)?;
-
-			// check schema limit
-			ensure!(schema.len() as u32 <= VARIABLE_ON_CHAIN_SCHEMA_LIMIT, "");
 
 			target_collection.variable_on_chain_schema = schema;
 
@@ -1099,61 +1103,12 @@ decl_module! {
 			collection_id: CollectionId,
 			new_limit: CollectionLimits,
 		) -> DispatchResult {
-			let mut new_limit = new_limit;
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner(&sender)?;
 			let old_limit = &target_collection.limits;
 
-			macro_rules! limit_default {
-				($old:ident, $new:ident, $($field:ident $(($arg:expr))? => $check:expr),* $(,)?) => {{
-					$(
-						if let Some($new) = $new.$field {
-							let $old = $old.$field($($arg)?);
-							let _ = $new;
-							let _ = $old;
-							$check
-						} else {
-							$new.$field = $old.$field
-						}
-					)*
-				}};
-			}
-
-			limit_default!(old_limit, new_limit,
-				account_token_ownership_limit => ensure!(
-					new_limit <= MAX_TOKEN_OWNERSHIP,
-					<Error<T>>::CollectionLimitBoundsExceeded,
-				),
-				sponsor_transfer_timeout(match target_collection.mode {
-					CollectionMode::NFT => NFT_SPONSOR_TRANSFER_TIMEOUT,
-					CollectionMode::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-					CollectionMode::ReFungible => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-				}) => ensure!(
-					new_limit <= MAX_SPONSOR_TIMEOUT,
-					<Error<T>>::CollectionLimitBoundsExceeded,
-				),
-				sponsored_data_size => ensure!(
-					new_limit <= CUSTOM_DATA_LIMIT,
-					<Error<T>>::CollectionLimitBoundsExceeded,
-				),
-				token_limit => ensure!(
-					old_limit >= new_limit && new_limit > 0,
-					<CommonError<T>>::CollectionTokenLimitExceeded
-				),
-				owner_can_transfer => ensure!(
-					old_limit || !new_limit,
-					<Error<T>>::OwnerPermissionsCantBeReverted,
-				),
-				owner_can_destroy => ensure!(
-					old_limit || !new_limit,
-					<Error<T>>::OwnerPermissionsCantBeReverted,
-				),
-				sponsored_data_rate_limit => {},
-				transfers_enabled => {},
-			);
-
-			target_collection.limits = new_limit;
+			target_collection.limits = <PalletCommon<T>>::clamp_limits(target_collection.mode.clone(), &old_limit, new_limit)?;
 
 			<Pallet<T>>::deposit_event(Event::<T>::CollectionLimitSet(
 				collection_id

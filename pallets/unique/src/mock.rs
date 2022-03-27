@@ -1,3 +1,19 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 #![allow(clippy::from_over_into)]
 
 use crate as pallet_template;
@@ -9,10 +25,11 @@ use sp_runtime::{
 };
 use pallet_transaction_payment::{CurrencyAdapter};
 use frame_system as system;
-use pallet_evm::AddressMapping;
+use pallet_evm::{AddressMapping, runner::stack::MaybeMirroredLog};
 use pallet_common::account::{EvmBackwardsAddressMapping, CrossAccountId};
-use codec::{Encode, Decode};
+use codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
+use up_data_structs::ConstU32;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -63,6 +80,7 @@ impl system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {
@@ -106,7 +124,7 @@ impl pallet_timestamp::Config for Test {
 }
 
 parameter_types! {
-	pub const CollectionCreationPrice: u32 = 0;
+	pub const CollectionCreationPrice: u32 = 100;
 	pub TreasuryAccountId: u64 = 1234;
 	pub EthereumChainId: u32 = 1111;
 }
@@ -125,7 +143,7 @@ impl EvmBackwardsAddressMapping<u64> for TestEvmBackwardsAddressMapping {
 	}
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, TypeInfo)]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, TypeInfo, MaxEncodedLen)]
 pub struct TestCrossAccountId(u64, sp_core::H160);
 impl CrossAccountId<u64> for TestCrossAccountId {
 	fn as_sub(&self) -> &u64 {
@@ -161,7 +179,7 @@ impl pallet_ethereum::EthereumTransactionSender for TestEtheremTransactionSender
 	fn submit_logs_transaction(
 		_source: H160,
 		_tx: pallet_ethereum::Transaction,
-		_logs: Vec<pallet_ethereum::Log>,
+		_logs: Vec<MaybeMirroredLog>,
 	) {
 	}
 }

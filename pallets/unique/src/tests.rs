@@ -1,3 +1,19 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 // Tests to be written here
 use super::*;
 use crate::mock::*;
@@ -5,10 +21,27 @@ use crate::{AccessMode, CollectionMode};
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, CollectionId, CreateItemData, CreateFungibleData, CreateNftData,
 	CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission,
-	TokenId,
+	TokenId, MAX_TOKEN_OWNERSHIP,
 };
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_noop, assert_ok, assert_err};
 use sp_std::convert::TryInto;
+use pallet_balances;
+
+fn add_balance(user: u64, value: u64) {
+	const DONOR_USER: u64 = 999;
+	assert_ok!(<pallet_balances::Pallet<Test>>::set_balance(
+		Origin::root(),
+		DONOR_USER,
+		value,
+		0
+	));
+	assert_ok!(<pallet_balances::Pallet<Test>>::force_transfer(
+		Origin::root(),
+		DONOR_USER,
+		user,
+		value
+	));
+}
 
 fn default_nft_data() -> CreateNftData {
 	CreateNftData {
@@ -34,18 +67,22 @@ fn create_test_collection_for_owner(
 	owner: u64,
 	id: CollectionId,
 ) -> CollectionId {
+	add_balance(owner, CollectionCreationPrice::get() as u64 + 1);
+
 	let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 	let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 	let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
 
+	let data: CreateCollectionData<u64> = CreateCollectionData {
+		name: col_name1.try_into().unwrap(),
+		description: col_desc1.try_into().unwrap(),
+		token_prefix: token_prefix1.try_into().unwrap(),
+		mode: mode.clone(),
+		..Default::default()
+	};
+
 	let origin1 = Origin::signed(owner);
-	assert_ok!(TemplateModule::create_collection(
-		origin1,
-		col_name1,
-		col_desc1,
-		token_prefix1,
-		mode.clone()
-	));
+	assert_ok!(TemplateModule::create_collection_ex(origin1, data));
 
 	let saved_col_name: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 	let saved_description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
@@ -121,21 +158,47 @@ fn set_version_schema() {
 }
 
 #[test]
+fn check_not_sufficient_founds() {
+	new_test_ext().execute_with(|| {
+		let acc: u64 = 1;
+		<pallet_balances::Pallet<Test>>::set_balance(Origin::root(), acc, 0, 0).unwrap();
+
+		let name: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+		let description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+		let token_prefix: Vec<u8> = b"token_prefix1\0".to_vec();
+
+		let data: CreateCollectionData<<Test as system::Config>::AccountId> =
+			CreateCollectionData {
+				name: name.try_into().unwrap(),
+				description: description.try_into().unwrap(),
+				token_prefix: token_prefix.try_into().unwrap(),
+				mode: CollectionMode::NFT,
+				..Default::default()
+			};
+
+		let result = TemplateModule::create_collection_ex(Origin::signed(acc), data);
+		assert_err!(result, <CommonError<Test>>::NotSufficientFounds);
+	});
+}
+
+#[test]
 fn create_fungible_collection_fails_with_large_decimal_numbers() {
 	new_test_ext().execute_with(|| {
 		let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 		let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 		let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
 
+		let data: CreateCollectionData<u64> = CreateCollectionData {
+			name: col_name1.try_into().unwrap(),
+			description: col_desc1.try_into().unwrap(),
+			token_prefix: token_prefix1.try_into().unwrap(),
+			mode: CollectionMode::Fungible(MAX_DECIMAL_POINTS + 1),
+			..Default::default()
+		};
+
 		let origin1 = Origin::signed(1);
 		assert_noop!(
-			TemplateModule::create_collection(
-				origin1,
-				col_name1,
-				col_desc1,
-				token_prefix1,
-				CollectionMode::Fungible(MAX_DECIMAL_POINTS + 1)
-			),
+			TemplateModule::create_collection_ex(origin1, data),
 			Error::<Test>::CollectionDecimalPointLimitExceeded
 		);
 	});
@@ -601,7 +664,7 @@ fn nft_approve_and_transfer_from() {
 				1
 			)
 			.map_err(|e| e.error),
-			CommonError::<Test>::TokenValueNotEnough
+			CommonError::<Test>::ApprovedValueTooLow
 		);
 
 		// do approve
@@ -916,7 +979,7 @@ fn fungible_approve_and_transfer_from() {
 				4
 			)
 			.map_err(|e| e.error),
-			CommonError::<Test>::TokenValueNotEnough
+			CommonError::<Test>::ApprovedValueTooLow
 		);
 	});
 }
@@ -2267,15 +2330,17 @@ fn total_number_collections_bound_neg() {
 		let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 		let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
 
+		let data: CreateCollectionData<u64> = CreateCollectionData {
+			name: col_name1.try_into().unwrap(),
+			description: col_desc1.try_into().unwrap(),
+			token_prefix: token_prefix1.try_into().unwrap(),
+			mode: CollectionMode::NFT,
+			..Default::default()
+		};
+
 		// 11-th collection in chain. Expects error
 		assert_noop!(
-			TemplateModule::create_collection(
-				origin1,
-				col_name1,
-				col_desc1,
-				token_prefix1,
-				CollectionMode::NFT
-			),
+			TemplateModule::create_collection_ex(origin1, data),
 			CommonError::<Test>::TotalCollectionsLimitExceeded
 		);
 	});
@@ -2372,7 +2437,7 @@ fn set_const_on_chain_schema() {
 		assert_ok!(TemplateModule::set_const_on_chain_schema(
 			origin1,
 			collection_id,
-			b"test const on chain schema".to_vec()
+			b"test const on chain schema".to_vec().try_into().unwrap()
 		));
 
 		assert_eq!(
@@ -2399,7 +2464,10 @@ fn set_variable_on_chain_schema() {
 		assert_ok!(TemplateModule::set_variable_on_chain_schema(
 			origin1,
 			collection_id,
-			b"test variable on chain schema".to_vec()
+			b"test variable on chain schema"
+				.to_vec()
+				.try_into()
+				.unwrap()
 		));
 
 		assert_eq!(
@@ -2432,7 +2500,7 @@ fn set_variable_meta_data_on_nft_token_stores_variable_meta_data() {
 			origin1,
 			collection_id,
 			TokenId(1),
-			variable_data.clone()
+			variable_data.clone().try_into().unwrap()
 		));
 
 		assert_eq!(
@@ -2459,7 +2527,7 @@ fn set_variable_meta_data_on_re_fungible_token_stores_variable_meta_data() {
 			origin1,
 			collection_id,
 			TokenId(1),
-			variable_data.clone()
+			variable_data.clone().try_into().unwrap()
 		));
 
 		assert_eq!(
@@ -2485,58 +2553,10 @@ fn set_variable_meta_data_on_fungible_token_fails() {
 				origin1,
 				collection_id,
 				TokenId(0),
-				variable_data
+				variable_data.try_into().unwrap()
 			)
 			.map_err(|e| e.error),
 			<pallet_fungible::Error<Test>>::FungibleItemsDontHaveData
-		);
-	});
-}
-
-#[test]
-fn set_variable_meta_data_on_nft_token_fails_for_big_data() {
-	new_test_ext().execute_with(|| {
-		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-
-		let origin1 = Origin::signed(1);
-
-		let data = default_nft_data();
-		create_test_item(collection_id, &data.into());
-
-		let variable_data = b"test set_variable_meta_data method, bigger than limits.".to_vec();
-		assert_noop!(
-			TemplateModule::set_variable_meta_data(
-				origin1,
-				collection_id,
-				TokenId(1),
-				variable_data
-			)
-			.map_err(|e| e.error),
-			CommonError::<Test>::TokenVariableDataLimitExceeded
-		);
-	});
-}
-
-#[test]
-fn set_variable_meta_data_on_re_fungible_token_fails_for_big_data() {
-	new_test_ext().execute_with(|| {
-		let collection_id = create_test_collection(&CollectionMode::ReFungible, CollectionId(1));
-
-		let origin1 = Origin::signed(1);
-
-		let data = default_re_fungible_data();
-		create_test_item(collection_id, &data.into());
-
-		let variable_data = b"test set_variable_meta_data method, bigger than limits.".to_vec();
-		assert_noop!(
-			TemplateModule::set_variable_meta_data(
-				origin1,
-				collection_id,
-				TokenId(1),
-				variable_data
-			)
-			.map_err(|e| e.error),
-			CommonError::<Test>::TokenVariableDataLimitExceeded
 		);
 	});
 }
@@ -2564,7 +2584,7 @@ fn set_variable_meta_data_on_nft_with_item_owner_permission_flag() {
 			origin1,
 			collection_id,
 			TokenId(1),
-			variable_data.clone()
+			variable_data.clone().try_into().unwrap()
 		));
 
 		assert_eq!(
@@ -2574,48 +2594,6 @@ fn set_variable_meta_data_on_nft_with_item_owner_permission_flag() {
 			variable_data
 		);
 	});
-}
-
-#[test]
-fn set_variable_meta_data_on_nft_with_item_owner_permission_flag_neg() {
-	new_test_ext().execute_with(|| {
-		let collection_id =
-			create_test_collection_for_owner(&CollectionMode::NFT, 1, CollectionId(1));
-
-		let origin1 = Origin::signed(1);
-
-		assert_ok!(TemplateModule::set_mint_permission(
-			origin1.clone(),
-			collection_id,
-			true
-		));
-		assert_ok!(TemplateModule::add_to_allow_list(
-			origin1.clone(),
-			collection_id,
-			account(1)
-		));
-
-		let data = default_nft_data();
-		create_test_item(collection_id, &data.into());
-
-		assert_ok!(TemplateModule::set_meta_update_permission_flag(
-			origin1.clone(),
-			collection_id,
-			MetaUpdatePermission::ItemOwner,
-		));
-
-		let variable_data = b"1234567890123".to_vec();
-		assert_noop!(
-			TemplateModule::set_variable_meta_data(
-				origin1,
-				collection_id,
-				TokenId(1),
-				variable_data.clone()
-			)
-			.map_err(|e| e.error),
-			CommonError::<Test>::TokenVariableDataLimitExceeded
-		);
-	})
 }
 
 #[test]
@@ -2712,7 +2690,7 @@ fn set_variable_meta_data_on_nft_with_admin_flag() {
 			origin1,
 			collection_id,
 			TokenId(1),
-			variable_data.clone()
+			variable_data.clone().try_into().unwrap()
 		));
 
 		assert_eq!(
@@ -2761,7 +2739,7 @@ fn set_variable_meta_data_on_nft_with_admin_flag_neg() {
 				origin1,
 				collection_id,
 				TokenId(1),
-				variable_data.clone()
+				variable_data.try_into().unwrap()
 			)
 			.map_err(|e| e.error),
 			CommonError::<Test>::NoPermission
@@ -2819,7 +2797,7 @@ fn set_variable_meta_data_on_nft_with_none_flag_neg() {
 				origin1.clone(),
 				collection_id,
 				TokenId(1),
-				variable_data.clone()
+				variable_data.try_into().unwrap()
 			)
 			.map_err(|e| e.error),
 			CommonError::<Test>::NoPermission

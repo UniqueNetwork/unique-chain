@@ -1,9 +1,25 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{ensure, BoundedVec};
 use up_data_structs::{
-	AccessMode, CUSTOM_DATA_LIMIT, Collection, CollectionId, CustomDataLimit,
-	MAX_REFUNGIBLE_PIECES, TokenId,
+	AccessMode, CollectionId, CustomDataLimit, MAX_REFUNGIBLE_PIECES, TokenId,
+	CreateCollectionData, CreateRefungibleExData,
 };
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
@@ -11,7 +27,7 @@ use pallet_common::{
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use core::ops::Deref;
-use codec::{Encode, Decode};
+use codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
 pub use pallet::*;
@@ -20,17 +36,12 @@ pub mod benchmarking;
 pub mod common;
 pub mod erc;
 pub mod weights;
-pub struct CreateItemData<T: Config> {
-	pub const_data: BoundedVec<u8, CustomDataLimit>,
-	pub variable_data: BoundedVec<u8, CustomDataLimit>,
-	pub users: BTreeMap<T::CrossAccountId, u128>,
-}
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
-#[derive(Encode, Decode, Default, TypeInfo)]
+#[derive(Encode, Decode, Default, TypeInfo, MaxEncodedLen)]
 pub struct ItemData {
-	pub const_data: Vec<u8>,
-	pub variable_data: Vec<u8>,
+	pub const_data: BoundedVec<u8, CustomDataLimit>,
+	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 }
 
 #[frame_support::pallet]
@@ -156,8 +167,11 @@ impl<T: Config> Pallet<T> {
 
 // unchecked calls skips any permission checks
 impl<T: Config> Pallet<T> {
-	pub fn init_collection(data: Collection<T::AccountId>) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(data)
+	pub fn init_collection(
+		owner: T::AccountId,
+		data: CreateCollectionData<T::AccountId>,
+	) -> Result<CollectionId, DispatchError> {
+		<PalletCommon<T>>::init_collection(owner, data)
 	}
 	pub fn destroy_collection(
 		collection: RefungibleHandle<T>,
@@ -359,7 +373,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_multiple_items(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: Vec<CreateItemData<T>>,
+		data: Vec<CreateRefungibleExData<T::CrossAccountId>>,
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
@@ -437,8 +451,8 @@ impl<T: Config> Pallet<T> {
 			<TokenData<T>>::insert(
 				(collection.id, token_id),
 				ItemData {
-					const_data: token.const_data.into(),
-					variable_data: token.variable_data.into(),
+					const_data: token.const_data,
+					variable_data: token.variable_data,
 				},
 			);
 			for (user, amount) in token.users.into_iter() {
@@ -529,7 +543,7 @@ impl<T: Config> Pallet<T> {
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender),
-				<CommonError<T>>::TokenValueNotEnough
+				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
 
@@ -562,7 +576,7 @@ impl<T: Config> Pallet<T> {
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender),
-				<CommonError<T>>::TokenValueNotEnough
+				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
 
@@ -579,12 +593,8 @@ impl<T: Config> Pallet<T> {
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		token: TokenId,
-		data: Vec<u8>,
+		data: BoundedVec<u8, CustomDataLimit>,
 	) -> DispatchResult {
-		ensure!(
-			data.len() as u32 <= CUSTOM_DATA_LIMIT,
-			<CommonError<T>>::TokenVariableDataLimitExceeded
-		);
 		collection.check_can_update_meta(
 			sender,
 			&T::CrossAccountId::from_sub(collection.owner.clone()),
@@ -608,7 +618,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_item(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: CreateItemData<T>,
+		data: CreateRefungibleExData<T::CrossAccountId>,
 	) -> DispatchResult {
 		Self::create_multiple_items(collection, sender, vec![data])
 	}
