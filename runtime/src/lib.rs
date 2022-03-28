@@ -920,6 +920,7 @@ impl pallet_common::Config for Runtime {
 impl pallet_structure::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
+	type WeightInfo = pallet_structure::weights::SubstrateWeight<Self>;
 }
 
 impl pallet_fungible::Config for Runtime {
@@ -1529,6 +1530,7 @@ impl_runtime_apis! {
 			let mut list = Vec::<BenchmarkList>::new();
 
 			list_benchmark!(list, extra, pallet_evm_migration, EvmMigration);
+			list_benchmark!(list, extra, pallet_structure, Structure);
 			list_benchmark!(list, extra, pallet_unique, Unique);
 			list_benchmark!(list, extra, pallet_inflation, Inflation);
 			list_benchmark!(list, extra, pallet_fungible, Fungible);
@@ -1563,6 +1565,7 @@ impl_runtime_apis! {
 			let params = (&config, &allowlist);
 
 			add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
+			add_benchmark!(params, batches, pallet_structure, Structure);
 			add_benchmark!(params, batches, pallet_unique, Unique);
 			add_benchmark!(params, batches, pallet_inflation, Inflation);
 			add_benchmark!(params, batches, pallet_fungible, Fungible);
