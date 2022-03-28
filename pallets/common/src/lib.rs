@@ -32,7 +32,7 @@ use up_data_structs::{
 	COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, TokenId, CollectionStats, MAX_TOKEN_OWNERSHIP,
 	CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
-	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData,
+	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData, budget::Budget,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -732,6 +732,7 @@ pub trait CommonCollectionOperations<T: Config> {
 		to: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn burn_from(
 		&self,
@@ -739,6 +740,7 @@ pub trait CommonCollectionOperations<T: Config> {
 		from: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 
 	fn set_variable_metadata(

@@ -29,6 +29,7 @@ use pallet_common::{
 	erc::{CommonEvmHandler, PrecompileResult},
 };
 use pallet_evm_coder_substrate::call;
+use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
@@ -165,8 +166,11 @@ impl<T: Config> NonfungibleHandle<T> {
 		let from = T::CrossAccountId::from_eth(from);
 		let to = T::CrossAccountId::from_eth(to);
 		let token = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer_from(self, &caller, &from, &to, token)
+		<Pallet<T>>::transfer_from(self, &caller, &from, &to, token, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -331,8 +335,12 @@ impl<T: Config> NonfungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let token = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::burn_from(self, &caller, &from, token).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::burn_from(self, &caller, &from, token, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 

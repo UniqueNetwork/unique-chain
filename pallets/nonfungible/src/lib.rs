@@ -20,7 +20,7 @@ use erc::ERC721Events;
 use frame_support::{BoundedVec, ensure, fail};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
-	mapping::TokenAddressMapping, NestingRule,
+	mapping::TokenAddressMapping, NestingRule, budget::Budget,
 };
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CrossAccountId,
@@ -510,6 +510,7 @@ impl<T: Config> Pallet<T> {
 		spender: &T::CrossAccountId,
 		from: &T::CrossAccountId,
 		token: TokenId,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		if spender.conv_eq(from) {
 			return Ok(());
@@ -521,7 +522,12 @@ impl<T: Config> Pallet<T> {
 		if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
 			// TODO: should collection owner be allowed to perform this transfer?
 			ensure!(
-				<PalletStructure<T>>::indirectly_owned(spender.clone(), source.0, source.1, 1)?,
+				<PalletStructure<T>>::indirectly_owned(
+					spender.clone(),
+					source.0,
+					source.1,
+					nesting_budget
+				)?,
 				<CommonError<T>>::ApprovedValueTooLow,
 			);
 			return Ok(());
@@ -542,8 +548,9 @@ impl<T: Config> Pallet<T> {
 		from: &T::CrossAccountId,
 		to: &T::CrossAccountId,
 		token: TokenId,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::check_allowed(collection, spender, from, token)?;
+		Self::check_allowed(collection, spender, from, token, nesting_budget)?;
 
 		// =========
 
@@ -556,8 +563,9 @@ impl<T: Config> Pallet<T> {
 		spender: &T::CrossAccountId,
 		from: &T::CrossAccountId,
 		token: TokenId,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::check_allowed(collection, spender, from, token)?;
+		Self::check_allowed(collection, spender, from, token, nesting_budget)?;
 
 		// =========
 

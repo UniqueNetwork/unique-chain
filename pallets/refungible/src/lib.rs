@@ -19,7 +19,7 @@
 use frame_support::{ensure, BoundedVec};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, MAX_REFUNGIBLE_PIECES, TokenId,
-	CreateCollectionData, CreateRefungibleExData, mapping::TokenAddressMapping,
+	CreateCollectionData, CreateRefungibleExData, mapping::TokenAddressMapping, budget::Budget,
 };
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, CrossAccountId,
@@ -543,6 +543,7 @@ impl<T: Config> Pallet<T> {
 		from: &T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> Result<Option<u128>, DispatchError> {
 		if spender.conv_eq(from) {
 			return Ok(None);
@@ -554,7 +555,12 @@ impl<T: Config> Pallet<T> {
 		if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
 			// TODO: should collection owner be allowed to perform this transfer?
 			ensure!(
-				<PalletStructure<T>>::indirectly_owned(spender.clone(), source.0, source.1, 1)?,
+				<PalletStructure<T>>::indirectly_owned(
+					spender.clone(),
+					source.0,
+					source.1,
+					nesting_budget
+				)?,
 				<CommonError<T>>::ApprovedValueTooLow,
 			);
 			return Ok(None);
@@ -577,8 +583,10 @@ impl<T: Config> Pallet<T> {
 		to: &T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let allowance = Self::check_allowed(collection, spender, from, token, amount)?;
+		let allowance =
+			Self::check_allowed(collection, spender, from, token, amount, nesting_budget)?;
 
 		// =========
 
@@ -595,8 +603,10 @@ impl<T: Config> Pallet<T> {
 		from: &T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let allowance = Self::check_allowed(collection, spender, from, token, amount)?;
+		let allowance =
+			Self::check_allowed(collection, spender, from, token, amount, nesting_budget)?;
 
 		// =========
 

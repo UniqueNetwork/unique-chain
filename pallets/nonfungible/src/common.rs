@@ -17,7 +17,7 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
-use up_data_structs::{TokenId, CustomDataLimit, CreateItemExData, CollectionId};
+use up_data_structs::{TokenId, CustomDataLimit, CreateItemExData, CollectionId, budget::Budget};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
@@ -192,12 +192,13 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		to: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		ensure!(amount <= 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
 
 		if amount == 1 {
 			with_weight(
-				<Pallet<T>>::transfer_from(self, &sender, &from, &to, token),
+				<Pallet<T>>::transfer_from(self, &sender, &from, &to, token, nesting_budget),
 				<CommonWeights<T>>::transfer_from(),
 			)
 		} else {
@@ -211,12 +212,13 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		from: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		ensure!(amount <= 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
 
 		if amount == 1 {
 			with_weight(
-				<Pallet<T>>::burn_from(self, &sender, &from, token),
+				<Pallet<T>>::burn_from(self, &sender, &from, token, nesting_budget),
 				<CommonWeights<T>>::burn_from(),
 			)
 		} else {

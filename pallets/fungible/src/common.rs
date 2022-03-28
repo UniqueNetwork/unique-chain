@@ -17,7 +17,7 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
-use up_data_structs::{TokenId, CreateItemExData};
+use up_data_structs::{TokenId, CreateItemExData, budget::Budget};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::ArithmeticError;
 use sp_std::{vec::Vec, vec};
@@ -189,6 +189,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		to: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
@@ -196,7 +197,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		);
 
 		with_weight(
-			<Pallet<T>>::transfer_from(self, &sender, &from, &to, amount),
+			<Pallet<T>>::transfer_from(self, &sender, &from, &to, amount, nesting_budget),
 			<CommonWeights<T>>::transfer_from(),
 		)
 	}
@@ -207,6 +208,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		from: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
@@ -214,7 +216,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		);
 
 		with_weight(
-			<Pallet<T>>::burn_from(self, &sender, &from, amount),
+			<Pallet<T>>::burn_from(self, &sender, &from, amount, nesting_budget),
 			<CommonWeights<T>>::burn_from(),
 		)
 	}

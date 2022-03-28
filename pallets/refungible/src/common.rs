@@ -18,7 +18,9 @@ use core::marker::PhantomData;
 
 use sp_std::collections::btree_map::BTreeMap;
 use frame_support::{dispatch::DispatchResultWithPostInfo, fail, weights::Weight, BoundedVec};
-use up_data_structs::{TokenId, CustomDataLimit, CreateItemExData, CreateRefungibleExData};
+use up_data_structs::{
+	TokenId, CustomDataLimit, CreateItemExData, CreateRefungibleExData, budget::Budget,
+};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
 use sp_std::{vec::Vec, vec};
@@ -210,9 +212,10 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		to: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
-			<Pallet<T>>::transfer_from(self, &sender, &from, &to, token, amount),
+			<Pallet<T>>::transfer_from(self, &sender, &from, &to, token, amount, nesting_budget),
 			<CommonWeights<T>>::transfer_from(),
 		)
 	}
@@ -223,9 +226,10 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		from: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
-			<Pallet<T>>::burn_from(self, &sender, &from, token, amount),
+			<Pallet<T>>::burn_from(self, &sender, &from, token, amount, nesting_budget),
 			<CommonWeights<T>>::burn_from(),
 		)
 	}

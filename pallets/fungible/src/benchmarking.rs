@@ -20,7 +20,7 @@ use crate::{Pallet, Config, FungibleHandle};
 use sp_std::prelude::*;
 use pallet_common::benchmarking::create_collection_raw;
 use frame_benchmarking::{benchmarks, account};
-use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH};
+use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, budget::Unlimited};
 use pallet_common::bench_init;
 
 const SEED: u32 = 1;
@@ -52,7 +52,7 @@ benchmarks! {
 			bench_init!(to: cross_sub(i););
 			(to, 200)
 		}).collect::<BTreeMap<_, _>>().try_into().unwrap();
-	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data)}
+	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data)?}
 
 	burn_item {
 		bench_init!{
@@ -85,7 +85,7 @@ benchmarks! {
 		};
 		<Pallet<T>>::create_item(&collection, &owner, (sender.clone(), 200))?;
 		<Pallet<T>>::set_allowance(&collection, &sender, &spender, 200)?;
-	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, 100)?}
+	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, 100, &Unlimited)?}
 
 	burn_from {
 		bench_init!{
@@ -94,5 +94,5 @@ benchmarks! {
 		};
 		<Pallet<T>>::create_item(&collection, &owner, (sender.clone(), 200))?;
 		<Pallet<T>>::set_allowance(&collection, &sender, &burner, 200)?;
-	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, 100)?}
+	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, 100, &Unlimited)?}
 }

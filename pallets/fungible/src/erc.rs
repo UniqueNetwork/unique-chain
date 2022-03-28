@@ -23,6 +23,7 @@ use sp_core::{H160, U256};
 use sp_std::vec::Vec;
 use pallet_common::CrossAccountId;
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
+use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 
 use crate::{
 	Allowance, Balance, Config, FungibleHandle, Pallet, SelfWeightOf, TotalSupply,
@@ -96,8 +97,11 @@ impl<T: Config> FungibleHandle<T> {
 		let from = T::CrossAccountId::from_eth(from);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount)
+		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
@@ -127,8 +131,12 @@ impl<T: Config> FungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::burn_from(self, &caller, &from, amount).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::burn_from(self, &caller, &from, amount, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 }

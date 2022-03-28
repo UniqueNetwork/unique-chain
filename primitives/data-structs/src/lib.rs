@@ -35,6 +35,7 @@ use derivative::Derivative;
 use scale_info::TypeInfo;
 
 mod bounded;
+pub mod budget;
 pub mod mapping;
 mod migration;
 
