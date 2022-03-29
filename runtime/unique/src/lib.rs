@@ -1,7 +1,18 @@
-//
-// This file is subject to the terms and conditions defined in
-// file 'LICENSE', which is part of this source code package.
-//
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 //! The Substrate Node Template runtime. This can be compiled with `#[no_std]`, ready for Wasm.
 
@@ -22,12 +33,9 @@ use sp_runtime::DispatchError;
 
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
-	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify,
-		AccountIdConversion, Zero,
-	},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiSignature, RuntimeAppPublic,
+	ApplyExtrinsicResult, RuntimeAppPublic,
 };
 
 use sp_std::prelude::*;
@@ -77,7 +85,6 @@ use sp_runtime::{
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
-pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 
 // Polkadot imports
 use pallet_xcm::XcmPassthrough;
@@ -104,50 +111,32 @@ use xcm_executor::traits::{MatchesFungible, WeightTrader};
 //use xcm_executor::traits::MatchesFungible;
 use sp_runtime::traits::CheckedConversion;
 
-// mod chain_extension;
-// use crate::chain_extension::{NFTExtension, Imbalance};
+use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
 
-/// An index to a block.
-pub type BlockNumber = u32;
+pub const RUNTIME_NAME: &str = "Unique";
 
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
+type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
 
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+impl RuntimeInstance for Runtime {
+	type CrossAccountId = self::CrossAccountId;
 
-pub type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
+	type TransactionConverter = self::TransactionConverter;
 
-/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
-/// never know...
-pub type AccountIndex = u32;
-
-/// Balance of an account.
-pub type Balance = u128;
-
-/// Index of a transaction in the chain.
-pub type Index = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
-
-/// Digest item type.
-pub type DigestItem = generic::DigestItem;
+	fn get_transaction_converter() -> TransactionConverter {
+		TransactionConverter
+	}
+}
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
 /// to even the core data structures.
 pub mod opaque {
-	use super::*;
+	use sp_std::prelude::*;
+	use sp_runtime::impl_opaque_keys;
+	use super::Aura;
 
-	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-
-	/// Opaque block type.
-	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-
-	pub type SessionHandlers = ();
+	pub use unique_runtime_common::types::*;
 
 	impl_opaque_keys! {
 		pub struct SessionKeys {
@@ -158,28 +147,15 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("opal"),
-	impl_name: create_runtime_str!("opal"),
+	spec_name: create_runtime_str!(RUNTIME_NAME),
+	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 916010,
+	spec_version: 917004,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 	state_version: 0,
 };
-
-pub const MILLISECS_PER_BLOCK: u64 = 12000;
-
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
-
-// These time units are defined in number of blocks.
-pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-pub const HOURS: BlockNumber = MINUTES * 60;
-pub const DAYS: BlockNumber = HOURS * 24;
-
-parameter_types! {
-	pub const DefaultSponsoringRateLimit: BlockNumber = 1 * DAYS;
-}
 
 #[derive(codec::Encode, codec::Decode)]
 pub enum XCMPMessage<XAccountId, XBalance> {
@@ -214,15 +190,6 @@ impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 	}
 }
 
-/// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
-/// This is used to limit the maximal weight of a single extrinsic.
-const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
-/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
-/// by  Operational  extrinsics.
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
-/// We allow for 2 seconds of compute with a 6 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
-
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
 	pub RuntimeBlockLength: BlockLength =
@@ -248,23 +215,17 @@ parameter_types! {
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u8 = 42;
+	pub const SS58Prefix: u16 = 7391;
 }
 
-/*
-8880 - Unique
-8881 - Quartz
-8882 - Opal
-*/
 parameter_types! {
-	pub const ChainId: u64 = 8882;
+	pub const ChainId: u64 = 8880;
 }
 
 pub struct FixedFee;
 impl FeeCalculator for FixedFee {
 	fn min_gas_price() -> U256 {
-		// Targeting 0.15 UNQ per transfer
-		1_024_947_215_000u64.into()
+		MIN_GAS_PRICE.into()
 	}
 }
 
@@ -426,11 +387,6 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 }
 
-pub const MICROUNIQUE: Balance = 1_000_000_000_000;
-pub const MILLIUNIQUE: Balance = 1_000 * MICROUNIQUE;
-pub const CENTIUNIQUE: Balance = 10 * MILLIUNIQUE;
-pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
-
 pub const fn deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 15 * CENTIUNIQUE + (bytes as Balance) * 6 * CENTIUNIQUE
 }
@@ -486,7 +442,6 @@ impl pallet_contracts::Config for Runtime {
 */
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE; // Targeting 0.1 Unique per NFT transfer
 	/// This value increases the priority of `Operational` transactions by adding
 	/// a "virtual tip" that's equal to the `OperationalFeeMultiplier * final_fee`.
 	pub const OperationalFeeMultiplier: u8 = 5;
@@ -504,7 +459,7 @@ where
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		smallvec!(WeightToFeeCoefficient {
 			// Targeting 0.1 Unique per NFT transfer
-			coeff_integer: 142_688_000u32.into(),
+			coeff_integer: WEIGHT_TO_FEE_COEFF.into(),
 			coeff_frac: Perbill::zero(),
 			negative: false,
 			degree: 1,
@@ -859,6 +814,7 @@ impl cumulus_pallet_xcm::Config for Runtime {
 }
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
+	type WeightInfo = ();
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;
@@ -1152,404 +1108,8 @@ macro_rules! dispatch_unique_runtime {
 		Ok(dispatch.$method($($name),*))
 	}};
 }
-impl_runtime_apis! {
-	impl up_rpc::UniqueApi<Block, CrossAccountId, AccountId>
-		for Runtime
-	{
-		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Result<Vec<TokenId>, DispatchError> {
-			dispatch_unique_runtime!(collection.account_tokens(account))
-		}
-		fn token_exists(collection: CollectionId, token: TokenId) -> Result<bool, DispatchError> {
-			dispatch_unique_runtime!(collection.token_exists(token))
-		}
 
-		fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
-			dispatch_unique_runtime!(collection.token_owner(token))
-		}
-		fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
-			dispatch_unique_runtime!(collection.const_metadata(token))
-		}
-		fn variable_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
-			dispatch_unique_runtime!(collection.variable_metadata(token))
-		}
-
-		fn collection_tokens(collection: CollectionId) -> Result<u32, DispatchError> {
-			dispatch_unique_runtime!(collection.collection_tokens())
-		}
-		fn account_balance(collection: CollectionId, account: CrossAccountId) -> Result<u32, DispatchError> {
-			dispatch_unique_runtime!(collection.account_balance(account))
-		}
-		fn balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<u128, DispatchError> {
-			dispatch_unique_runtime!(collection.balance(account, token))
-		}
-		fn allowance(
-			collection: CollectionId,
-			sender: CrossAccountId,
-			spender: CrossAccountId,
-			token: TokenId,
-		) -> Result<u128, DispatchError> {
-			dispatch_unique_runtime!(collection.allowance(sender, spender, token))
-		}
-
-		fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
-			<pallet_unique::UniqueErcSupport<Runtime>>::get_code(&account)
-				.or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account))
-				.or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
-		}
-		fn adminlist(collection: CollectionId) -> Result<Vec<CrossAccountId>, DispatchError> {
-			Ok(<pallet_common::Pallet<Runtime>>::adminlist(collection))
-		}
-		fn allowlist(collection: CollectionId) -> Result<Vec<CrossAccountId>, DispatchError> {
-			Ok(<pallet_common::Pallet<Runtime>>::allowlist(collection))
-		}
-		fn allowed(collection: CollectionId, user: CrossAccountId) -> Result<bool, DispatchError> {
-			Ok(<pallet_common::Pallet<Runtime>>::allowed(collection, user))
-		}
-		fn last_token_id(collection: CollectionId) -> Result<TokenId, DispatchError> {
-			dispatch_unique_runtime!(collection.last_token_id())
-		}
-		fn collection_by_id(collection: CollectionId) -> Result<Option<Collection<AccountId>>, DispatchError> {
-			Ok(<pallet_common::CollectionById<Runtime>>::get(collection))
-		}
-		fn collection_stats() -> Result<CollectionStats, DispatchError> {
-			Ok(<pallet_common::Pallet<Runtime>>::collection_stats())
-		}
-	}
-
-	impl sp_api::Core<Block> for Runtime {
-		fn version() -> RuntimeVersion {
-			VERSION
-		}
-
-		fn execute_block(block: Block) {
-			Executive::execute_block(block)
-		}
-
-		fn initialize_block(header: &<Block as BlockT>::Header) {
-			Executive::initialize_block(header)
-		}
-	}
-
-	impl sp_api::Metadata<Block> for Runtime {
-		fn metadata() -> OpaqueMetadata {
-			OpaqueMetadata::new(Runtime::metadata().into())
-		}
-	}
-
-	impl sp_block_builder::BlockBuilder<Block> for Runtime {
-		fn apply_extrinsic(extrinsic: <Block as BlockT>::Extrinsic) -> ApplyExtrinsicResult {
-			Executive::apply_extrinsic(extrinsic)
-		}
-
-		fn finalize_block() -> <Block as BlockT>::Header {
-			Executive::finalize_block()
-		}
-
-		fn inherent_extrinsics(data: sp_inherents::InherentData) -> Vec<<Block as BlockT>::Extrinsic> {
-			data.create_extrinsics()
-		}
-
-		fn check_inherents(
-			block: Block,
-			data: sp_inherents::InherentData,
-		) -> sp_inherents::CheckInherentsResult {
-			data.check_extrinsics(&block)
-		}
-
-		// fn random_seed() -> <Block as BlockT>::Hash {
-		//     RandomnessCollectiveFlip::random_seed().0
-		// }
-	}
-
-	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
-		fn validate_transaction(
-			source: TransactionSource,
-			tx: <Block as BlockT>::Extrinsic,
-			hash: <Block as BlockT>::Hash,
-		) -> TransactionValidity {
-			Executive::validate_transaction(source, tx, hash)
-		}
-	}
-
-	impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
-		fn offchain_worker(header: &<Block as BlockT>::Header) {
-			Executive::offchain_worker(header)
-		}
-	}
-
-	impl fp_rpc::EthereumRuntimeRPCApi<Block> for Runtime {
-		fn chain_id() -> u64 {
-			<Runtime as pallet_evm::Config>::ChainId::get()
-		}
-
-		fn account_basic(address: H160) -> EVMAccount {
-			EVM::account_basic(&address)
-		}
-
-		fn gas_price() -> U256 {
-			<Runtime as pallet_evm::Config>::FeeCalculator::min_gas_price()
-		}
-
-		fn account_code_at(address: H160) -> Vec<u8> {
-			EVM::account_codes(address)
-		}
-
-		fn author() -> H160 {
-			<pallet_evm::Pallet<Runtime>>::find_author()
-		}
-
-		fn storage_at(address: H160, index: U256) -> H256 {
-			let mut tmp = [0u8; 32];
-			index.to_big_endian(&mut tmp);
-			EVM::account_storages(address, H256::from_slice(&tmp[..]))
-		}
-
-		#[allow(clippy::redundant_closure)]
-		fn call(
-			from: H160,
-			to: H160,
-			data: Vec<u8>,
-			value: U256,
-			gas_limit: U256,
-			max_fee_per_gas: Option<U256>,
-			max_priority_fee_per_gas: Option<U256>,
-			nonce: Option<U256>,
-			estimate: bool,
-			access_list: Option<Vec<(H160, Vec<H256>)>>,
-		) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
-			let config = if estimate {
-				let mut config = <Runtime as pallet_evm::Config>::config().clone();
-				config.estimate = true;
-				Some(config)
-			} else {
-				None
-			};
-
-			<Runtime as pallet_evm::Config>::Runner::call(
-				from,
-				to,
-				data,
-				value,
-				gas_limit.low_u64(),
-				max_fee_per_gas,
-				max_priority_fee_per_gas,
-				nonce,
-				access_list.unwrap_or_default(),
-				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
-			).map_err(|err| err.into())
-		}
-
-		#[allow(clippy::redundant_closure)]
-		fn create(
-			from: H160,
-			data: Vec<u8>,
-			value: U256,
-			gas_limit: U256,
-			max_fee_per_gas: Option<U256>,
-			max_priority_fee_per_gas: Option<U256>,
-			nonce: Option<U256>,
-			estimate: bool,
-			access_list: Option<Vec<(H160, Vec<H256>)>>,
-		) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
-			let config = if estimate {
-				let mut config = <Runtime as pallet_evm::Config>::config().clone();
-				config.estimate = true;
-				Some(config)
-			} else {
-				None
-			};
-
-			<Runtime as pallet_evm::Config>::Runner::create(
-				from,
-				data,
-				value,
-				gas_limit.low_u64(),
-				max_fee_per_gas,
-				max_priority_fee_per_gas,
-				nonce,
-				access_list.unwrap_or_default(),
-				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
-			).map_err(|err| err.into())
-		}
-
-		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
-			Ethereum::current_transaction_statuses()
-		}
-
-		fn current_block() -> Option<pallet_ethereum::Block> {
-			Ethereum::current_block()
-		}
-
-		fn current_receipts() -> Option<Vec<pallet_ethereum::Receipt>> {
-			Ethereum::current_receipts()
-		}
-
-		fn current_all() -> (
-			Option<pallet_ethereum::Block>,
-			Option<Vec<pallet_ethereum::Receipt>>,
-			Option<Vec<TransactionStatus>>
-		) {
-			(
-				Ethereum::current_block(),
-				Ethereum::current_receipts(),
-				Ethereum::current_transaction_statuses()
-			)
-		}
-
-		fn extrinsic_filter(xts: Vec<<Block as sp_api::BlockT>::Extrinsic>) -> Vec<pallet_ethereum::Transaction> {
-			xts.into_iter().filter_map(|xt| match xt.0.function {
-				Call::Ethereum(pallet_ethereum::Call::transact { transaction }) => Some(transaction),
-				_ => None
-			}).collect()
-		}
-
-		fn elasticity() -> Option<Permill> {
-			None
-		}
-	}
-
-	impl sp_session::SessionKeys<Block> for Runtime {
-		fn decode_session_keys(
-			encoded: Vec<u8>,
-		) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
-			SessionKeys::decode_into_raw_public_keys(&encoded)
-		}
-
-		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-			SessionKeys::generate(seed)
-		}
-	}
-
-	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
-		fn slot_duration() -> sp_consensus_aura::SlotDuration {
-			sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
-		}
-
-		fn authorities() -> Vec<AuraId> {
-			Aura::authorities().to_vec()
-		}
-	}
-
-	impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
-		fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
-			ParachainSystem::collect_collation_info(header)
-		}
-	}
-
-	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Index> for Runtime {
-		fn account_nonce(account: AccountId) -> Index {
-			System::account_nonce(account)
-		}
-	}
-
-	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
-		fn query_info(uxt: <Block as BlockT>::Extrinsic, len: u32) -> RuntimeDispatchInfo<Balance> {
-			TransactionPayment::query_info(uxt, len)
-		}
-		fn query_fee_details(uxt: <Block as BlockT>::Extrinsic, len: u32) -> FeeDetails<Balance> {
-			TransactionPayment::query_fee_details(uxt, len)
-		}
-	}
-
-	/*
-	impl pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber, Hash>
-		for Runtime
-	{
-		fn call(
-			origin: AccountId,
-			dest: AccountId,
-			value: Balance,
-			gas_limit: u64,
-			input_data: Vec<u8>,
-		) -> pallet_contracts_primitives::ContractExecResult {
-			Contracts::bare_call(origin, dest, value, gas_limit, input_data, false)
-		}
-
-		fn instantiate(
-			origin: AccountId,
-			endowment: Balance,
-			gas_limit: u64,
-			code: pallet_contracts_primitives::Code<Hash>,
-			data: Vec<u8>,
-			salt: Vec<u8>,
-		) -> pallet_contracts_primitives::ContractInstantiateResult<AccountId, BlockNumber>
-		{
-			Contracts::bare_instantiate(origin, endowment, gas_limit, code, data, salt, true, false)
-		}
-
-		fn get_storage(
-			address: AccountId,
-			key: [u8; 32],
-		) -> pallet_contracts_primitives::GetStorageResult {
-			Contracts::get_storage(address, key)
-		}
-
-		fn rent_projection(
-			address: AccountId,
-		) -> pallet_contracts_primitives::RentProjectionResult<BlockNumber> {
-			Contracts::rent_projection(address)
-		}
-	}
-	*/
-
-	#[cfg(feature = "runtime-benchmarks")]
-	impl frame_benchmarking::Benchmark<Block> for Runtime {
-		fn benchmark_metadata(extra: bool) -> (
-			Vec<frame_benchmarking::BenchmarkList>,
-			Vec<frame_support::traits::StorageInfo>,
-		) {
-			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
-			use frame_support::traits::StorageInfoTrait;
-
-			let mut list = Vec::<BenchmarkList>::new();
-
-			list_benchmark!(list, extra, pallet_evm_migration, EvmMigration);
-			list_benchmark!(list, extra, pallet_unique, Unique);
-			list_benchmark!(list, extra, pallet_inflation, Inflation);
-			list_benchmark!(list, extra, pallet_fungible, Fungible);
-			list_benchmark!(list, extra, pallet_refungible, Refungible);
-			list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
-			// list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
-
-			let storage_info = AllPalletsReversedWithSystemFirst::storage_info();
-
-			return (list, storage_info)
-		}
-
-		fn dispatch_benchmark(
-			config: frame_benchmarking::BenchmarkConfig
-		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
-
-			let allowlist: Vec<TrackedStorageKey> = vec![
-				// Block Number
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
-				// Total Issuance
-				hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
-				// Execution Phase
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
-				// Event Count
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
-				// System Events
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
-			];
-
-			let mut batches = Vec::<BenchmarkBatch>::new();
-			let params = (&config, &allowlist);
-
-			add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
-			add_benchmark!(params, batches, pallet_unique, Unique);
-			add_benchmark!(params, batches, pallet_inflation, Inflation);
-			add_benchmark!(params, batches, pallet_fungible, Fungible);
-			add_benchmark!(params, batches, pallet_refungible, Refungible);
-			add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
-			// add_benchmark!(params, batches, pallet_evm_coder_substrate, EvmCoderSubstrate);
-
-			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
-			Ok(batches)
-		}
-	}
-}
+impl_common_runtime_apis!();
 
 struct CheckInherents;
 

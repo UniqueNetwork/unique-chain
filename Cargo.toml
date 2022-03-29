@@ -5,7 +5,7 @@ members = [
     'pallets/*',
     'client/*',
     'primitives/*',
-    'runtime',
+    'runtime/*',
     'crates/*',
 ]
 [profile.release]
