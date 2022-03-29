@@ -6,7 +6,7 @@ homepage = 'https://unique.network'
 license = 'All Rights Reserved'
 name = 'unique-runtime-common'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.1.0'
+version = '0.9.18'
 
 [features]
 default = ['std']
