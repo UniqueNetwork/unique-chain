@@ -27,10 +27,14 @@ import {
   collectionIdToAddress,
   GAS_ARGS,
   normalizeEvents,
+  subToEth,
+  executeEthTxOnSub,
 } from './util/helpers';
 import {
+  addCollectionAdminExpectSuccess,
   createCollectionExpectSuccess,
   getCreateCollectionResult,
+  transferBalanceTo,
 } from '../util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import {
@@ -292,5 +296,35 @@ describe('Sponsoring EVM contracts', () => {
 
     const [alicesBalanceAfter] = await getBalance(api, [alicesPublicKey]);
     expect(alicesBalanceAfter < alicesBalanceBefore).to.be.true;
+  });
+
+
+  itWeb3('Check that transaction via EVM spend money from substrate address', async ({api, web3}) => {
+    const owner = privateKey('//Alice');
+    const user = privateKey(`//User/${Date.now()}`);
+    const userEth = subToEth(user.address);
+    const collectionId = await createCollectionExpectSuccess();
+    await addCollectionAdminExpectSuccess(owner, collectionId, {Ethereum: userEth});
+    await transferBalanceTo(api, owner, user.address);
+
+    const address = collectionIdToAddress(collectionId);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: userEth, ...GAS_ARGS});
+
+    const [userBalanceBefore] = await getBalance(api, [user.address]);
+
+    {
+      const nextTokenId = await contract.methods.nextTokenId().call();
+      expect(nextTokenId).to.be.equal('1');
+      await executeEthTxOnSub(web3, api, user, contract, m => m.mintWithTokenURI(
+        userEth,
+        nextTokenId,
+        'Test URI',
+      ));
+
+      expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+    }
+
+    const [userBalanceAfter] = await getBalance(api, [user.address]);
+    expect(userBalanceAfter < userBalanceBefore).to.be.true;
   });
 });

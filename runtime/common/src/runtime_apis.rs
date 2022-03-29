@@ -181,7 +181,7 @@ macro_rules! impl_common_runtime_apis {
                     };
 
                     <Runtime as pallet_evm::Config>::Runner::call(
-                        from,
+                        CrossAccountId::from_eth(from),
                         to,
                         data,
                         value,
@@ -215,7 +215,7 @@ macro_rules! impl_common_runtime_apis {
                     };
 
                     <Runtime as pallet_evm::Config>::Runner::create(
-                        from,
+                        CrossAccountId::from_eth(from),
                         data,
                         value,
                         gas_limit.low_u64(),

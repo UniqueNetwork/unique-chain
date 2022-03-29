@@ -1364,12 +1364,12 @@ declare module '@polkadot/types/lookup' {
     readonly isAddToAllowList: boolean;
     readonly asAddToAllowList: {
       readonly collectionId: u32;
-      readonly address: PalletCommonAccountBasicCrossAccountIdRepr;
+      readonly address: PalletEvmAccountBasicCrossAccountIdRepr;
     } & Struct;
     readonly isRemoveFromAllowList: boolean;
     readonly asRemoveFromAllowList: {
       readonly collectionId: u32;
-      readonly address: PalletCommonAccountBasicCrossAccountIdRepr;
+      readonly address: PalletEvmAccountBasicCrossAccountIdRepr;
     } & Struct;
     readonly isSetPublicAccessMode: boolean;
     readonly asSetPublicAccessMode: {
@@ -1389,12 +1389,12 @@ declare module '@polkadot/types/lookup' {
     readonly isAddCollectionAdmin: boolean;
     readonly asAddCollectionAdmin: {
       readonly collectionId: u32;
-      readonly newAdminId: PalletCommonAccountBasicCrossAccountIdRepr;
+      readonly newAdminId: PalletEvmAccountBasicCrossAccountIdRepr;
     } & Struct;
     readonly isRemoveCollectionAdmin: boolean;
     readonly asRemoveCollectionAdmin: {
       readonly collectionId: u32;
-      readonly accountId: PalletCommonAccountBasicCrossAccountIdRepr;
+      readonly accountId: PalletEvmAccountBasicCrossAccountIdRepr;
     } & Struct;
     readonly isSetCollectionSponsor: boolean;
     readonly asSetCollectionSponsor: {
@@ -1412,13 +1412,13 @@ declare module '@polkadot/types/lookup' {
     readonly isCreateItem: boolean;
     readonly asCreateItem: {
       readonly collectionId: u32;
-      readonly owner: PalletCommonAccountBasicCrossAccountIdRepr;
+      readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
       readonly data: UpDataStructsCreateItemData;
     } & Struct;
     readonly isCreateMultipleItems: boolean;
     readonly asCreateMultipleItems: {
       readonly collectionId: u32;
-      readonly owner: PalletCommonAccountBasicCrossAccountIdRepr;
+      readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
       readonly itemsData: Vec<UpDataStructsCreateItemData>;
     } & Struct;
     readonly isCreateMultipleItemsEx: boolean;
@@ -1440,28 +1440,28 @@ declare module '@polkadot/types/lookup' {
     readonly isBurnFrom: boolean;
     readonly asBurnFrom: {
       readonly collectionId: u32;
-      readonly from: PalletCommonAccountBasicCrossAccountIdRepr;
+      readonly from: PalletEvmAccountBasicCrossAccountIdRepr;
       readonly itemId: u32;
       readonly value: u128;
     } & Struct;
     readonly isTransfer: boolean;
     readonly asTransfer: {
-      readonly recipient: PalletCommonAccountBasicCrossAccountIdRepr;
+      readonly recipient: PalletEvmAccountBasicCrossAccountIdRepr;
       readonly collectionId: u32;
       readonly itemId: u32;
       readonly value: u128;
     } & Struct;
     readonly isApprove: boolean;
     readonly asApprove: {
-      readonly spender: PalletCommonAccountBasicCrossAccountIdRepr;
+      readonly spender: PalletEvmAccountBasicCrossAccountIdRepr;
       readonly collectionId: u32;
       readonly itemId: u32;
       readonly amount: u128;
     } & Struct;
     readonly isTransferFrom: boolean;
     readonly asTransferFrom: {
-      readonly from: PalletCommonAccountBasicCrossAccountIdRepr;
-      readonly recipient: PalletCommonAccountBasicCrossAccountIdRepr;
+      readonly from: PalletEvmAccountBasicCrossAccountIdRepr;
+      readonly recipient: PalletEvmAccountBasicCrossAccountIdRepr;
       readonly collectionId: u32;
       readonly itemId: u32;
       readonly value: u128;
@@ -1573,8 +1573,8 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'ItemOwner' | 'Admin' | 'None';
   }
 
-  /** @name PalletCommonAccountBasicCrossAccountIdRepr (172) */
-  export interface PalletCommonAccountBasicCrossAccountIdRepr extends Enum {
+  /** @name PalletEvmAccountBasicCrossAccountIdRepr (172) */
+  export interface PalletEvmAccountBasicCrossAccountIdRepr extends Enum {
     readonly isSubstrate: boolean;
     readonly asSubstrate: AccountId32;
     readonly isEthereum: boolean;
@@ -1616,7 +1616,7 @@ declare module '@polkadot/types/lookup' {
     readonly isNft: boolean;
     readonly asNft: Vec<UpDataStructsCreateNftExData>;
     readonly isFungible: boolean;
-    readonly asFungible: BTreeMap<PalletCommonAccountBasicCrossAccountIdRepr, u128>;
+    readonly asFungible: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>;
     readonly isRefungibleMultipleItems: boolean;
     readonly asRefungibleMultipleItems: Vec<UpDataStructsCreateRefungibleExData>;
     readonly isRefungibleMultipleOwners: boolean;
@@ -1628,14 +1628,14 @@ declare module '@polkadot/types/lookup' {
   export interface UpDataStructsCreateNftExData extends Struct {
     readonly constData: Bytes;
     readonly variableData: Bytes;
-    readonly owner: PalletCommonAccountBasicCrossAccountIdRepr;
+    readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
   }
 
   /** @name UpDataStructsCreateRefungibleExData (189) */
   export interface UpDataStructsCreateRefungibleExData extends Struct {
     readonly constData: Bytes;
     readonly variableData: Bytes;
-    readonly users: BTreeMap<PalletCommonAccountBasicCrossAccountIdRepr, u128>;
+    readonly users: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>;
   }
 
   /** @name PalletTemplateTransactionPaymentCall (192) */
@@ -2068,7 +2068,7 @@ declare module '@polkadot/types/lookup' {
     readonly isCollectionSponsorRemoved: boolean;
     readonly asCollectionSponsorRemoved: u32;
     readonly isCollectionAdminAdded: boolean;
-    readonly asCollectionAdminAdded: ITuple<[u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
+    readonly asCollectionAdminAdded: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
     readonly isCollectionOwnedChanged: boolean;
     readonly asCollectionOwnedChanged: ITuple<[u32, AccountId32]>;
     readonly isCollectionSponsorSet: boolean;
@@ -2078,11 +2078,11 @@ declare module '@polkadot/types/lookup' {
     readonly isSponsorshipConfirmed: boolean;
     readonly asSponsorshipConfirmed: ITuple<[u32, AccountId32]>;
     readonly isCollectionAdminRemoved: boolean;
-    readonly asCollectionAdminRemoved: ITuple<[u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
+    readonly asCollectionAdminRemoved: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
     readonly isAllowListAddressRemoved: boolean;
-    readonly asAllowListAddressRemoved: ITuple<[u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
+    readonly asAllowListAddressRemoved: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
     readonly isAllowListAddressAdded: boolean;
-    readonly asAllowListAddressAdded: ITuple<[u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
+    readonly asAllowListAddressAdded: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
     readonly isCollectionLimitSet: boolean;
     readonly asCollectionLimitSet: u32;
     readonly isMintPermissionSet: boolean;
@@ -2105,13 +2105,13 @@ declare module '@polkadot/types/lookup' {
     readonly isCollectionDestroyed: boolean;
     readonly asCollectionDestroyed: u32;
     readonly isItemCreated: boolean;
-    readonly asItemCreated: ITuple<[u32, u32, PalletCommonAccountBasicCrossAccountIdRepr, u128]>;
+    readonly asItemCreated: ITuple<[u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
     readonly isItemDestroyed: boolean;
-    readonly asItemDestroyed: ITuple<[u32, u32, PalletCommonAccountBasicCrossAccountIdRepr, u128]>;
+    readonly asItemDestroyed: ITuple<[u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
     readonly isTransfer: boolean;
-    readonly asTransfer: ITuple<[u32, u32, PalletCommonAccountBasicCrossAccountIdRepr, PalletCommonAccountBasicCrossAccountIdRepr, u128]>;
+    readonly asTransfer: ITuple<[u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
     readonly isApproved: boolean;
-    readonly asApproved: ITuple<[u32, u32, PalletCommonAccountBasicCrossAccountIdRepr, PalletCommonAccountBasicCrossAccountIdRepr, u128]>;
+    readonly asApproved: ITuple<[u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
     readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'ItemCreated' | 'ItemDestroyed' | 'Transfer' | 'Approved';
   }
 
@@ -2462,7 +2462,8 @@ declare module '@polkadot/types/lookup' {
     readonly isCantApproveMoreThanOwned: boolean;
     readonly isAddressIsZero: boolean;
     readonly isUnsupportedOperation: boolean;
-    readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'TokenVariableDataLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation';
+    readonly isNotSufficientFounds: boolean;
+    readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'TokenVariableDataLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds';
   }
 
   /** @name PalletFungibleError (299) */
@@ -2490,7 +2491,7 @@ declare module '@polkadot/types/lookup' {
   export interface PalletNonfungibleItemData extends Struct {
     readonly constData: Bytes;
     readonly variableData: Bytes;
-    readonly owner: PalletCommonAccountBasicCrossAccountIdRepr;
+    readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
   }
 
   /** @name PalletNonfungibleError (306) */
@@ -2643,7 +2644,7 @@ declare module '@polkadot/types/lookup' {
   /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (345) */
   export interface PalletTemplateTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
 
-  /** @name UniqueRuntimeRuntime (346) */
-  export type UniqueRuntimeRuntime = Null;
+  /** @name OpalRuntimeRuntime (346) */
+  export type OpalRuntimeRuntime = Null;
 
 } // declare module

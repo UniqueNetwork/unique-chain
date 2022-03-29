@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { PalletCommonAccountBasicCrossAccountIdRepr, UpDataStructsCollection, UpDataStructsCollectionStats } from './unique';
+import type { PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsCollection, UpDataStructsCollectionStats } from './unique';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u128, u32, u64 } from '@polkadot/types-codec';
@@ -562,31 +562,31 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get amount of different user tokens
        **/
-      accountBalance: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
+      accountBalance: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
       /**
        * Get tokens owned by account
        **/
-      accountTokens: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<u32>>>;
+      accountTokens: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<u32>>>;
       /**
        * Get admin list
        **/
-      adminlist: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletCommonAccountBasicCrossAccountIdRepr>>>;
+      adminlist: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletEvmAccountBasicCrossAccountIdRepr>>>;
       /**
        * Get allowed amount
        **/
-      allowance: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, sender: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, spender: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
+      allowance: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, sender: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, spender: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
       /**
        * Check if user is allowed to use collection
        **/
-      allowed: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<bool>>;
+      allowed: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<bool>>;
       /**
        * Get allowlist
        **/
-      allowlist: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletCommonAccountBasicCrossAccountIdRepr>>>;
+      allowlist: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletEvmAccountBasicCrossAccountIdRepr>>>;
       /**
        * Get amount of specific account token
        **/
-      balance: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
+      balance: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
       /**
        * Get collection by specified id
        **/
@@ -614,7 +614,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get token owner
        **/
-      tokenOwner: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<PalletCommonAccountBasicCrossAccountIdRepr>>;
+      tokenOwner: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<PalletEvmAccountBasicCrossAccountIdRepr>>;
       /**
        * Get token variable metadata
        **/

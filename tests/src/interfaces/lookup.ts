@@ -1254,11 +1254,11 @@ export default {
       },
       add_to_allow_list: {
         collectionId: 'u32',
-        address: 'PalletCommonAccountBasicCrossAccountIdRepr',
+        address: 'PalletEvmAccountBasicCrossAccountIdRepr',
       },
       remove_from_allow_list: {
         collectionId: 'u32',
-        address: 'PalletCommonAccountBasicCrossAccountIdRepr',
+        address: 'PalletEvmAccountBasicCrossAccountIdRepr',
       },
       set_public_access_mode: {
         collectionId: 'u32',
@@ -1274,11 +1274,11 @@ export default {
       },
       add_collection_admin: {
         collectionId: 'u32',
-        newAdminId: 'PalletCommonAccountBasicCrossAccountIdRepr',
+        newAdminId: 'PalletEvmAccountBasicCrossAccountIdRepr',
       },
       remove_collection_admin: {
         collectionId: 'u32',
-        accountId: 'PalletCommonAccountBasicCrossAccountIdRepr',
+        accountId: 'PalletEvmAccountBasicCrossAccountIdRepr',
       },
       set_collection_sponsor: {
         collectionId: 'u32',
@@ -1292,12 +1292,12 @@ export default {
       },
       create_item: {
         collectionId: 'u32',
-        owner: 'PalletCommonAccountBasicCrossAccountIdRepr',
+        owner: 'PalletEvmAccountBasicCrossAccountIdRepr',
         data: 'UpDataStructsCreateItemData',
       },
       create_multiple_items: {
         collectionId: 'u32',
-        owner: 'PalletCommonAccountBasicCrossAccountIdRepr',
+        owner: 'PalletEvmAccountBasicCrossAccountIdRepr',
         itemsData: 'Vec<UpDataStructsCreateItemData>',
       },
       create_multiple_items_ex: {
@@ -1315,25 +1315,25 @@ export default {
       },
       burn_from: {
         collectionId: 'u32',
-        from: 'PalletCommonAccountBasicCrossAccountIdRepr',
+        from: 'PalletEvmAccountBasicCrossAccountIdRepr',
         itemId: 'u32',
         value: 'u128',
       },
       transfer: {
-        recipient: 'PalletCommonAccountBasicCrossAccountIdRepr',
+        recipient: 'PalletEvmAccountBasicCrossAccountIdRepr',
         collectionId: 'u32',
         itemId: 'u32',
         value: 'u128',
       },
       approve: {
-        spender: 'PalletCommonAccountBasicCrossAccountIdRepr',
+        spender: 'PalletEvmAccountBasicCrossAccountIdRepr',
         collectionId: 'u32',
         itemId: 'u32',
         amount: 'u128',
       },
       transfer_from: {
-        from: 'PalletCommonAccountBasicCrossAccountIdRepr',
-        recipient: 'PalletCommonAccountBasicCrossAccountIdRepr',
+        from: 'PalletEvmAccountBasicCrossAccountIdRepr',
+        recipient: 'PalletEvmAccountBasicCrossAccountIdRepr',
         collectionId: 'u32',
         itemId: 'u32',
         value: 'u128',
@@ -1438,9 +1438,9 @@ export default {
     _enum: ['ItemOwner', 'Admin', 'None']
   },
   /**
-   * Lookup172: pallet_common::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>
+   * Lookup172: pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>
    **/
-  PalletCommonAccountBasicCrossAccountIdRepr: {
+  PalletEvmAccountBasicCrossAccountIdRepr: {
     _enum: {
       Substrate: 'AccountId32',
       Ethereum: 'H160'
@@ -1478,31 +1478,31 @@ export default {
     pieces: 'u128'
   },
   /**
-   * Lookup180: up_data_structs::CreateItemExData<pallet_common::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+   * Lookup180: up_data_structs::CreateItemExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
   UpDataStructsCreateItemExData: {
     _enum: {
       NFT: 'Vec<UpDataStructsCreateNftExData>',
-      Fungible: 'BTreeMap<PalletCommonAccountBasicCrossAccountIdRepr, u128>',
+      Fungible: 'BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>',
       RefungibleMultipleItems: 'Vec<UpDataStructsCreateRefungibleExData>',
       RefungibleMultipleOwners: 'UpDataStructsCreateRefungibleExData'
     }
   },
   /**
-   * Lookup182: up_data_structs::CreateNftExData<pallet_common::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+   * Lookup182: up_data_structs::CreateNftExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
   UpDataStructsCreateNftExData: {
     constData: 'Bytes',
     variableData: 'Bytes',
-    owner: 'PalletCommonAccountBasicCrossAccountIdRepr'
+    owner: 'PalletEvmAccountBasicCrossAccountIdRepr'
   },
   /**
-   * Lookup189: up_data_structs::CreateRefungibleExData<pallet_common::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+   * Lookup189: up_data_structs::CreateRefungibleExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
   UpDataStructsCreateRefungibleExData: {
     constData: 'Bytes',
     variableData: 'Bytes',
-    users: 'BTreeMap<PalletCommonAccountBasicCrossAccountIdRepr, u128>'
+    users: 'BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>'
   },
   /**
    * Lookup192: pallet_template_transaction_payment::Call<T>
@@ -1756,7 +1756,7 @@ export default {
     }
   },
   /**
-   * Lookup225: frame_system::EventRecord<unique_runtime::Event, primitive_types::H256>
+   * Lookup225: frame_system::EventRecord<opal_runtime::Event, primitive_types::H256>
    **/
   FrameSystemEventRecord: {
     phase: 'FrameSystemPhase',
@@ -1902,19 +1902,19 @@ export default {
     }
   },
   /**
-   * Lookup238: pallet_unique::RawEvent<sp_core::crypto::AccountId32, pallet_common::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+   * Lookup238: pallet_unique::RawEvent<sp_core::crypto::AccountId32, pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
   PalletUniqueRawEvent: {
     _enum: {
       CollectionSponsorRemoved: 'u32',
-      CollectionAdminAdded: '(u32,PalletCommonAccountBasicCrossAccountIdRepr)',
+      CollectionAdminAdded: '(u32,PalletEvmAccountBasicCrossAccountIdRepr)',
       CollectionOwnedChanged: '(u32,AccountId32)',
       CollectionSponsorSet: '(u32,AccountId32)',
       ConstOnChainSchemaSet: 'u32',
       SponsorshipConfirmed: '(u32,AccountId32)',
-      CollectionAdminRemoved: '(u32,PalletCommonAccountBasicCrossAccountIdRepr)',
-      AllowListAddressRemoved: '(u32,PalletCommonAccountBasicCrossAccountIdRepr)',
-      AllowListAddressAdded: '(u32,PalletCommonAccountBasicCrossAccountIdRepr)',
+      CollectionAdminRemoved: '(u32,PalletEvmAccountBasicCrossAccountIdRepr)',
+      AllowListAddressRemoved: '(u32,PalletEvmAccountBasicCrossAccountIdRepr)',
+      AllowListAddressAdded: '(u32,PalletEvmAccountBasicCrossAccountIdRepr)',
       CollectionLimitSet: 'u32',
       MintPermissionSet: 'u32',
       OffchainSchemaSet: 'u32',
@@ -1930,10 +1930,10 @@ export default {
     _enum: {
       CollectionCreated: '(u32,u8,AccountId32)',
       CollectionDestroyed: 'u32',
-      ItemCreated: '(u32,u32,PalletCommonAccountBasicCrossAccountIdRepr,u128)',
-      ItemDestroyed: '(u32,u32,PalletCommonAccountBasicCrossAccountIdRepr,u128)',
-      Transfer: '(u32,u32,PalletCommonAccountBasicCrossAccountIdRepr,PalletCommonAccountBasicCrossAccountIdRepr,u128)',
-      Approved: '(u32,u32,PalletCommonAccountBasicCrossAccountIdRepr,PalletCommonAccountBasicCrossAccountIdRepr,u128)'
+      ItemCreated: '(u32,u32,PalletEvmAccountBasicCrossAccountIdRepr,u128)',
+      ItemDestroyed: '(u32,u32,PalletEvmAccountBasicCrossAccountIdRepr,u128)',
+      Transfer: '(u32,u32,PalletEvmAccountBasicCrossAccountIdRepr,PalletEvmAccountBasicCrossAccountIdRepr,u128)',
+      Approved: '(u32,u32,PalletEvmAccountBasicCrossAccountIdRepr,PalletEvmAccountBasicCrossAccountIdRepr,u128)'
     }
   },
   /**
@@ -2240,7 +2240,7 @@ export default {
    * Lookup297: pallet_common::pallet::Error<T>
    **/
   PalletCommonError: {
-    _enum: ['CollectionNotFound', 'MustBeTokenOwner', 'NoPermission', 'PublicMintingNotAllowed', 'AddressNotInAllowlist', 'CollectionNameLimitExceeded', 'CollectionDescriptionLimitExceeded', 'CollectionTokenPrefixLimitExceeded', 'TotalCollectionsLimitExceeded', 'TokenVariableDataLimitExceeded', 'CollectionAdminCountExceeded', 'CollectionLimitBoundsExceeded', 'OwnerPermissionsCantBeReverted', 'TransferNotAllowed', 'AccountTokenLimitExceeded', 'CollectionTokenLimitExceeded', 'MetadataFlagFrozen', 'TokenNotFound', 'TokenValueTooLow', 'ApprovedValueTooLow', 'CantApproveMoreThanOwned', 'AddressIsZero', 'UnsupportedOperation']
+    _enum: ['CollectionNotFound', 'MustBeTokenOwner', 'NoPermission', 'PublicMintingNotAllowed', 'AddressNotInAllowlist', 'CollectionNameLimitExceeded', 'CollectionDescriptionLimitExceeded', 'CollectionTokenPrefixLimitExceeded', 'TotalCollectionsLimitExceeded', 'TokenVariableDataLimitExceeded', 'CollectionAdminCountExceeded', 'CollectionLimitBoundsExceeded', 'OwnerPermissionsCantBeReverted', 'TransferNotAllowed', 'AccountTokenLimitExceeded', 'CollectionTokenLimitExceeded', 'MetadataFlagFrozen', 'TokenNotFound', 'TokenValueTooLow', 'ApprovedValueTooLow', 'CantApproveMoreThanOwned', 'AddressIsZero', 'UnsupportedOperation', 'NotSufficientFounds']
   },
   /**
    * Lookup299: pallet_fungible::pallet::Error<T>
@@ -2262,12 +2262,12 @@ export default {
     _enum: ['NotRefungibleDataUsedToMintFungibleCollectionToken', 'WrongRefungiblePieces']
   },
   /**
-   * Lookup305: pallet_nonfungible::ItemData<pallet_common::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+   * Lookup305: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
   PalletNonfungibleItemData: {
     constData: 'Bytes',
     variableData: 'Bytes',
-    owner: 'PalletCommonAccountBasicCrossAccountIdRepr'
+    owner: 'PalletEvmAccountBasicCrossAccountIdRepr'
   },
   /**
    * Lookup306: pallet_nonfungible::pallet::Error<T>
@@ -2417,11 +2417,11 @@ export default {
    **/
   FrameSystemExtensionsCheckWeight: 'Null',
   /**
-   * Lookup345: pallet_template_transaction_payment::ChargeTransactionPayment<unique_runtime::Runtime>
+   * Lookup345: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
    **/
   PalletTemplateTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
   /**
-   * Lookup346: unique_runtime::Runtime
+   * Lookup346: opal_runtime::Runtime
    **/
-  UniqueRuntimeRuntime: 'Null'
+  OpalRuntimeRuntime: 'Null'
 };

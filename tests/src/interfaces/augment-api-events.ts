@@ -4,7 +4,7 @@
 import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Null, Option, Result, U256, U8aFixed, u128, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
-import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, OrmlVestingVestingSchedule, PalletCommonAccountBasicCrossAccountIdRepr, SpRuntimeDispatchError, UpDataStructsAccessMode, XcmV1MultiLocation, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, SpRuntimeDispatchError, UpDataStructsAccessMode, XcmV1MultiLocation, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/events' {
   export interface AugmentedEvents<ApiType extends ApiTypes> {
@@ -68,7 +68,7 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * * amount
        **/
-      Approved: AugmentedEvent<ApiType, [u32, u32, PalletCommonAccountBasicCrossAccountIdRepr, PalletCommonAccountBasicCrossAccountIdRepr, u128]>;
+      Approved: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
        * New collection was created
        * 
@@ -102,7 +102,7 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * * amount: Always 1 for NFT
        **/
-      ItemCreated: AugmentedEvent<ApiType, [u32, u32, PalletCommonAccountBasicCrossAccountIdRepr, u128]>;
+      ItemCreated: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
        * Collection item was burned.
        * 
@@ -116,7 +116,7 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * * amount: Always 1 for NFT
        **/
-      ItemDestroyed: AugmentedEvent<ApiType, [u32, u32, PalletCommonAccountBasicCrossAccountIdRepr, u128]>;
+      ItemDestroyed: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
        * Item was transferred
        * 
@@ -130,7 +130,7 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * * amount: Always 1 for NFT
        **/
-      Transfer: AugmentedEvent<ApiType, [u32, u32, PalletCommonAccountBasicCrossAccountIdRepr, PalletCommonAccountBasicCrossAccountIdRepr, u128]>;
+      Transfer: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
        * Generic event
        **/
@@ -483,7 +483,7 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * * user:  Address.
        **/
-      AllowListAddressAdded: AugmentedEvent<ApiType, [u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
+      AllowListAddressAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Address was remove from allow list
        * 
@@ -493,7 +493,7 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * * user:  Address.
        **/
-      AllowListAddressRemoved: AugmentedEvent<ApiType, [u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
+      AllowListAddressRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Collection admin was added
        * 
@@ -503,7 +503,7 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * * admin:  Admin address.
        **/
-      CollectionAdminAdded: AugmentedEvent<ApiType, [u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
+      CollectionAdminAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Collection admin was removed
        * 
@@ -513,7 +513,7 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * * admin:  Admin address.
        **/
-      CollectionAdminRemoved: AugmentedEvent<ApiType, [u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
+      CollectionAdminRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Collection limits was set
        * 

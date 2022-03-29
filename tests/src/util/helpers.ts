@@ -839,6 +839,13 @@ getFreeBalance(account: IKeyringPair): Promise<bigint> {
   return balance;
 }
 
+export async function transferBalanceTo(api: ApiPromise, source: IKeyringPair, target: string, amount = 1000n * UNIQUE) {
+  const tx = api.tx.balances.transfer(target, amount);
+  const events = await submitTransactionAsync(source, tx);
+  const result = getGenericResult(events);
+  expect(result.success).to.be.true;
+}
+
 export async function
 scheduleTransferExpectSuccess(
   collectionId: number,
