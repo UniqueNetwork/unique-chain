@@ -38,8 +38,12 @@ pub type QuartzChainSpec = sc_service::GenericChainSpec<quartz_runtime::GenesisC
 pub type OpalChainSpec = sc_service::GenericChainSpec<opal_runtime::GenesisConfig, Extensions>;
 
 pub enum RuntimeId {
+	#[cfg(feature = "unique-runtime")]
 	Unique,
+
+	#[cfg(feature = "quartz-runtime")]
 	Quartz,
+
 	Opal,
 	Unknown(String),
 }
