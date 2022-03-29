@@ -1,6 +1,24 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 use crate::chain_spec;
-use std::path::PathBuf;
+use std::{path::PathBuf, env};
 use clap::Parser;
+
+const NODE_NAME_ENV: &str = "UNIQUE_NODE_NAME";
 
 /// Sub-commands supported by the collator.
 #[derive(Debug, Parser)]
@@ -89,6 +107,24 @@ pub struct Cli {
 	/// Relaychain arguments
 	#[structopt(raw = true)]
 	pub relaychain_args: Vec<String>,
+}
+
+impl Cli {
+	pub fn node_name() -> String {
+		match env::var(NODE_NAME_ENV).ok() {
+			Some(name) => name,
+			None => {
+				if cfg!(feature = "unique-runtime") {
+					"Unique"
+				} else if cfg!(feature = "quartz-runtime") {
+					"Quartz"
+				} else {
+					"Opal"
+				}
+			}
+			.into(),
+		}
+	}
 }
 
 #[derive(Debug)]

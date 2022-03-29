@@ -3,7 +3,7 @@ name = "pallet-unq-scheduler"
 version = "0.1.0"
 authors = ["Unique Network <support@uniquenetwork.io>"]
 edition = "2021"
-license = "All Rights Reserved"
+license = "GPLv3"
 homepage = "https://unique.network"
 repository = "https://github.com/UniqueNetwork/unique-chain"
 description = "Unique Scheduler pallet"
@@ -11,21 +11,23 @@ readme = "README.md"
 
 [dependencies]
 serde = { version = "1.0.130", default-features = false }
-codec = { package = "parity-scale-codec", version = "2.3.0", default-features = false }
-scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
-frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
-frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
-sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
-sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
-sp-io = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
+codec = { package = "parity-scale-codec", version = "3.1.2", default-features = false }
+scale-info = { version = "2.0.1", default-features = false, features = [
+	"derive",
+] }
+frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.18' }
+frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.18' }
+sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.18' }
+sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.18' }
+sp-io = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.18' }
+frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.18' }
 
-up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring", branch = 'polkadot-v0.9.17' }
+up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring", branch = 'polkadot-v0.9.18' }
 log = { version = "0.4.14", default-features = false }
 
 [dev-dependencies]
-sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
-substrate-test-utils = { git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
+sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.18' }
+substrate-test-utils = { git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.18' }
 
 [features]
 default = ["std"]

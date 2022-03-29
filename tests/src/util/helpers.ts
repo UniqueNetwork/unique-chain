@@ -1,7 +1,18 @@
-//
-// This file is subject to the terms and conditions defined in
-// file 'LICENSE', which is part of this source code package.
-//
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import '../interfaces/augment-api-rpc';
 import '../interfaces/augment-api-query';
@@ -26,6 +37,7 @@ export type CrossAccountId = {
 } | {
   Ethereum: string,
 };
+
 export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {
   if (typeof input === 'string') {
     if (input.length === 48 || input.length === 47) {
@@ -752,6 +764,7 @@ transferFromExpectSuccess(
   type = 'NFT',
 ) {
   await usingApi(async (api: ApiPromise) => {
+    const from = normalizeAccountId(accountFrom);
     const to = normalizeAccountId(accountTo);
     let balanceBefore = 0n;
     if (type === 'Fungible') {
@@ -767,7 +780,11 @@ transferFromExpectSuccess(
     }
     if (type === 'Fungible') {
       const balanceAfter = await getBalance(api, collectionId, to, tokenId);
-      expect(balanceAfter - balanceBefore).to.be.equal(BigInt(value));
+      if (JSON.stringify(to) !== JSON.stringify(from)) {
+        expect(balanceAfter - balanceBefore).to.be.equal(BigInt(value));
+      } else {
+        expect(balanceAfter).to.be.equal(balanceBefore);
+      }
     }
     if (type === 'ReFungible') {
       expect(await getBalance(api, collectionId, to, tokenId)).to.be.equal(BigInt(value));
@@ -866,6 +883,7 @@ transferExpectSuccess(
   type = 'NFT',
 ) {
   await usingApi(async (api: ApiPromise) => {
+    const from = normalizeAccountId(sender);
     const to = normalizeAccountId(recipient);
 
     let balanceBefore = 0n;
@@ -887,7 +905,11 @@ transferExpectSuccess(
     }
     if (type === 'Fungible') {
       const balanceAfter = await getBalance(api, collectionId, to, tokenId);
-      expect(balanceAfter - balanceBefore).to.be.equal(BigInt(value));
+      if (JSON.stringify(to) !== JSON.stringify(from)) {
+        expect(balanceAfter - balanceBefore).to.be.equal(BigInt(value));
+      } else {
+        expect(balanceAfter).to.be.equal(balanceBefore);
+      }
     }
     if (type === 'ReFungible') {
       expect(await getBalance(api, collectionId, to, tokenId) >= value).to.be.true;
