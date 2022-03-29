@@ -283,7 +283,7 @@ homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'unique-node'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.9.17'
+version = '0.9.18'
 
 [[bin]]
 name = 'unique-collator'
@@ -312,7 +312,7 @@ pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier.git", branc
 unique-rpc = { default-features = false, path = "../rpc" }
 
 [features]
-default = ["unique-runtime", "quartz-runtime"]
+default = []
 runtime-benchmarks = [
     'unique-runtime/runtime-benchmarks',
     'polkadot-service/runtime-benchmarks',

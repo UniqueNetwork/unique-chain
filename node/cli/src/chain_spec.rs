@@ -128,14 +128,14 @@ where
 pub fn development_config() -> OpalChainSpec {
 	let mut properties = Map::new();
 	properties.insert("tokenSymbol".into(), "OPL".into());
-	properties.insert("tokenDecimals".into(), 15.into());
+	properties.insert("tokenDecimals".into(), 18.into());
 	properties.insert("ss58Format".into(), 42.into());
 
 	OpalChainSpec::from_genesis(
 		// Name
-		"Development",
+		"OPAL by UNIQUE",
 		// ID
-		"dev",
+		"opal_dev",
 		ChainType::Local,
 		move || {
 			testnet_genesis(
@@ -171,11 +171,16 @@ pub fn development_config() -> OpalChainSpec {
 }
 
 pub fn local_testnet_rococo_config() -> OpalChainSpec {
+	let mut properties = Map::new();
+	properties.insert("tokenSymbol".into(), "OPL".into());
+	properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("ss58Format".into(), 42.into());
+
 	OpalChainSpec::from_genesis(
 		// Name
-		"Local Testnet",
+		"OPAL by UNIQUE",
 		// ID
-		"local_testnet",
+		"opal_local",
 		ChainType::Local,
 		move || {
 			testnet_genesis(
@@ -211,7 +216,7 @@ pub fn local_testnet_rococo_config() -> OpalChainSpec {
 		None,
 		None,
 		// Properties
-		None,
+		Some(properties),
 		// Extensions
 		Extensions {
 			relay_chain: "rococo-local".into(),
