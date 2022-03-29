@@ -48,7 +48,9 @@ pub use pallet_transaction_payment::{
 };
 // A few exports that help ease life for downstream crates.
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_evm::{EnsureAddressTruncated, HashedAddressMapping, Runner, account::CrossAccountId as _};
+pub use pallet_evm::{
+	EnsureAddressTruncated, HashedAddressMapping, Runner, account::CrossAccountId as _,
+};
 pub use frame_support::{
 	construct_runtime, match_type,
 	dispatch::DispatchResult,
