@@ -61,9 +61,16 @@ use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
 use unique_runtime_common::types::{AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block};
 
-/// Native executor instance.
+/// Unique native executor instance.
+#[cfg(feature = "unique-runtime")]
 pub struct UniqueRuntimeExecutor;
+
+#[cfg(feature = "quartz-runtime")]
+/// Quartz native executor instance.
+
 pub struct QuartzRuntimeExecutor;
+
+/// Opal native executor instance.
 pub struct OpalRuntimeExecutor;
 
 #[cfg(feature = "unique-runtime")]
