@@ -135,7 +135,7 @@ pub fn development_config() -> OpalChainSpec {
 		// Name
 		"OPAL by UNIQUE",
 		// ID
-		"opl_dev",
+		"opal_dev",
 		ChainType::Local,
 		move || {
 			testnet_genesis(
@@ -175,12 +175,12 @@ pub fn local_testnet_rococo_config() -> OpalChainSpec {
 	properties.insert("tokenSymbol".into(), "OPL".into());
 	properties.insert("tokenDecimals".into(), 18.into());
 	properties.insert("ss58Format".into(), 42.into());
-	
+
 	OpalChainSpec::from_genesis(
 		// Name
 		"OPAL by UNIQUE",
 		// ID
-		"opl_local",
+		"opal_local",
 		ChainType::Local,
 		move || {
 			testnet_genesis(
