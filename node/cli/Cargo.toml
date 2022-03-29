@@ -312,7 +312,7 @@ pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier.git", branc
 unique-rpc = { default-features = false, path = "../rpc" }
 
 [features]
-default = ["unique-runtime", "quartz-runtime"]
+default = []
 runtime-benchmarks = [
     'unique-runtime/runtime-benchmarks',
     'polkadot-service/runtime-benchmarks',
