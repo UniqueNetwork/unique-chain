@@ -392,6 +392,7 @@ pub fn run() -> Result<()> {
 		}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
+			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
 				let extensions = chain_spec::Extensions::try_get(&*config.chain_spec);
@@ -455,7 +456,7 @@ pub fn run() -> Result<()> {
 				);
 
 				start_node_using_chain_runtime! {
-					start_node(config, polkadot_config, para_id)
+					start_node(config, polkadot_config, collator_options, para_id)
 						.await
 						.map(|r| r.0)
 						.map_err(Into::into)
