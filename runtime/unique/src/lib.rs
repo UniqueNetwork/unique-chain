@@ -114,6 +114,7 @@ use sp_runtime::traits::CheckedConversion;
 use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
 
 pub const RUNTIME_NAME: &str = "unique";
+pub const TOKEN_SYMBOL: &str = "UNQ";
 
 type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
 
