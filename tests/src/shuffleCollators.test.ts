@@ -14,23 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import privateKey from './substrate/privateKey';
 import usingApi, { submitTransactionAsync } from './substrate/substrate-api';
 import waitNewBlocks from './substrate/wait-new-blocks';
 import {expect} from 'chai';
 import { getGenericResult } from './util/helpers';
-//import find from 'find-process';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
 let charlie: IKeyringPair;
 let dave: IKeyringPair;
 let eve: IKeyringPair;
-
-const alice_port = 31200;
-const bob_port = 31201;
 
 describe('Integration Test: Dynamic shuffling of collators', () => {
     before(async () => {    
@@ -85,6 +80,21 @@ describe('Integration Test: Dynamic shuffling of collators', () => {
             let newValidators = (await api.query.session.validators()).toJSON();
             expect(newValidators).to.contain(charlie.address).and.contain(dave.address);
             expect(newValidators).to.be.length(2);
+
+            // todo add delay to check that new blocks are authored by these
+        });
+    });
+
+    after(async () => {
+        await usingApi(async (api) => {
+            const tx = api.tx.collatorSelection.setInvulnerables([
+                alice.address,
+                bob.address
+            ]);
+            const sudoTx = api.tx.sudo.sudo(tx as any);
+            const events = await submitTransactionAsync(alice, sudoTx);
+            const result = getGenericResult(events);
+            expect(result.success).to.be.true;
         });
     });
 });
