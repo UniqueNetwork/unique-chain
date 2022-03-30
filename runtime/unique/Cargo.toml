@@ -27,6 +27,7 @@ runtime-benchmarks = [
     'pallet-evm-migration/runtime-benchmarks',
     'pallet-evm-coder-substrate/runtime-benchmarks',
     'pallet-balances/runtime-benchmarks',
+	"pallet-collator-selection/runtime-benchmarks",
     'pallet-timestamp/runtime-benchmarks',
     'pallet-common/runtime-benchmarks',
     'pallet-structure/runtime-benchmarks',
@@ -67,6 +68,9 @@ std = [
     # 'pallet-contracts-primitives/std',
     # 'pallet-contracts-rpc-runtime-api/std',
     # 'pallet-contract-helpers/std',
+	"pallet-authorship/std",
+	'pallet-collator-selection/std',
+	"pallet-session/std",
     'pallet-randomness-collective-flip/std',
     'pallet-sudo/std',
     'pallet-timestamp/std',
@@ -187,6 +191,21 @@ version = '1.0.130'
 default-features = false
 git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.27"
+
+[dependencies.pallet-collator-selection]
+default-features = false
+git = 'https://github.com/paritytech/cumulus'
+branch = 'polkadot-v0.9.27'
+
+[dependencies.pallet-authorship]
+default-features = false
+git = 'https://github.com/paritytech/substrate'
+branch = 'polkadot-v0.9.27'
+
+[dependencies.pallet-session]
+default-features = false
+git = 'https://github.com/paritytech/substrate'
+branch = 'polkadot-v0.9.27'
 
 [dependencies.pallet-balances]
 default-features = false

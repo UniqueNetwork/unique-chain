@@ -108,9 +108,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.61"
+version = "1.0.62"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "508b352bb5c066aac251f6daf6b36eccd03e8a88e8081cd44959ea277a3af9a8"
+checksum = "1485d4d2cc45e7b201ee3767015c96faa5904387c9d87c6efdd0fb511f12d305"
 
 [[package]]
 name = "approx"
@@ -213,10 +213,11 @@ dependencies = [
 
 [[package]]
 name = "async-io"
-version = "1.7.0"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5e18f61464ae81cde0a23e713ae8fd299580c54d697a35820cfd0625b8b0e07"
+checksum = "0ab006897723d9352f63e2b13047177c3982d8d79709d713ce7747a8f19fd1b0"
 dependencies = [
+ "autocfg",
  "concurrent-queue",
  "futures-lite",
  "libc",
@@ -241,11 +242,12 @@ dependencies = [
 
 [[package]]
 name = "async-process"
-version = "1.4.0"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf2c06e30a24e8c78a3987d07f0930edf76ef35e027e7bdb063fccafdad1f60c"
+checksum = "02111fd8655a613c25069ea89fc8d9bb89331fa77486eb3bc059ee757cfa481c"
 dependencies = [
  "async-io",
+ "autocfg",
  "blocking",
  "cfg-if 1.0.0",
  "event-listener",
@@ -717,9 +719,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.10.0"
+version = "3.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37ccbd214614c6783386c1af30caf03192f17891059cecc394b4fb119e363de3"
+checksum = "c1ad822118d20d2c234f427000d5acc36eabe1e29a348c89b63dd60b13f28e5d"
 
 [[package]]
 name = "byte-slice-cast"
@@ -1045,9 +1047,9 @@ dependencies = [
 
 [[package]]
 name = "cpufeatures"
-version = "0.2.2"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59a6001667ab124aebae2a495118e11d30984c3a653e99d86d58971708cf5e4b"
+checksum = "dc948ebb96241bb40ab73effeb80d9f93afaad49359d159a5e61be51619fe813"
 dependencies = [
  "libc",
 ]
@@ -2021,9 +2023,9 @@ dependencies = [
 
 [[package]]
 name = "either"
-version = "1.7.0"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f107b87b6afc2a64fd13cac55fe06d6c8859f12d4b14cbcdd2c67d0976781be"
+checksum = "90e5c1c8368803113bf0c9584fc495a58b86dc8a29edbf8fe877d21d9507e797"
 
 [[package]]
 name = "elliptic-curve"
@@ -2345,7 +2347,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "async-trait",
  "fc-db",
@@ -2364,7 +2366,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "fp-storage",
  "kvdb-rocksdb",
@@ -2380,7 +2382,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "fc-db",
  "fp-consensus",
@@ -2397,7 +2399,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2437,7 +2439,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2578,7 +2580,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "ethereum",
  "parity-scale-codec 3.1.5",
@@ -2590,7 +2592,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "evm",
  "frame-support",
@@ -2604,7 +2606,7 @@ dependencies = [
 [[package]]
 name = "fp-evm-mapping"
 version = "0.1.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "frame-support",
  "sp-core",
@@ -2613,7 +2615,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2630,7 +2632,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "ethereum",
  "frame-support",
@@ -2646,7 +2648,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "parity-scale-codec 3.1.5",
 ]
@@ -2897,9 +2899,9 @@ dependencies = [
 
 [[package]]
 name = "fs-err"
-version = "2.7.0"
+version = "2.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bd79fa345a495d3ae89fb7165fec01c0e72f41821d642dda363a1e97975652e"
+checksum = "64db3e262960f0662f43a6366788d5f10f7f244b8f7d7d987f560baf5ded5c50"
 
 [[package]]
 name = "fs-swap"
@@ -3197,9 +3199,9 @@ dependencies = [
 
 [[package]]
 name = "h2"
-version = "0.3.13"
+version = "0.3.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37a82c6d637fc9515a4694bbf1cb2457b79d81ce52b3108bdeea58b07dd34a57"
+checksum = "5ca32592cf21ac7ccab1825cd87f6c9b3d9022c44d086172ed0966bec8af30be"
 dependencies = [
  "bytes",
  "fnv",
@@ -3417,9 +3419,9 @@ dependencies = [
 
 [[package]]
 name = "iana-time-zone"
-version = "0.1.45"
+version = "0.1.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef5528d9c2817db4e10cc78f8d4c8228906e5854f389ff6b076cee3572a09d35"
+checksum = "ad2bfd338099682614d3ee3fe0cd72e0b6a41ca6a87f6a74a3bd593c91650501"
 dependencies = [
  "android_system_properties",
  "core-foundation-sys",
@@ -3554,9 +3556,9 @@ checksum = "ec58677acfea8a15352d42fc87d11d63596ade9239e0a7c9352914417515dbe6"
 
 [[package]]
 name = "io-lifetimes"
-version = "0.7.2"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24c3f4eff5495aee4c0399d7b6a0dc2b6e81be84242ffbfcf253ebacccc1d0cb"
+checksum = "1ea37f355c05dde75b84bba2d767906ad522e97cd9e2eef2be7a4ab7fb442c06"
 
 [[package]]
 name = "ip_network"
@@ -3936,9 +3938,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.131"
+version = "0.2.132"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04c3b4822ccebfa39c02fc03d1534441b22ead323fa0f48bb7ddd8e6ba076a40"
+checksum = "8371e4e5341c3a96db127eb2465ac681ced4c433e01dd0e938adbef26ba93ba5"
 
 [[package]]
 name = "libloading"
@@ -5160,9 +5162,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.13.0"
+version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1"
+checksum = "074864da206b4973b84eb91683020dbefd6a8c3f0f38e054d93954e891935e4e"
 
 [[package]]
 name = "opal-runtime"
@@ -5192,8 +5194,10 @@ dependencies = [
  "log",
  "orml-vesting",
  "pallet-aura",
+ "pallet-authorship",
  "pallet-balances",
  "pallet-base-fee",
+ "pallet-collator-selection",
  "pallet-common",
  "pallet-configuration",
  "pallet-ethereum",
@@ -5209,6 +5213,7 @@ dependencies = [
  "pallet-refungible",
  "pallet-rmrk-core",
  "pallet-rmrk-equip",
+ "pallet-session",
  "pallet-structure",
  "pallet-sudo",
  "pallet-template-transaction-payment",
@@ -5445,7 +5450,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -5530,6 +5535,26 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-collator-selection"
+version = "3.0.0"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.27#66b684f88eba6c755651b8c47dccad2c2d9ac3db"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-authorship",
+ "pallet-session",
+ "parity-scale-codec 3.1.5",
+ "rand 0.8.5",
+ "scale-info",
+ "serde",
+ "sp-runtime",
+ "sp-staking",
  "sp-std",
 ]
 
@@ -5660,7 +5685,7 @@ dependencies = [
 [[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -5689,7 +5714,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "evm",
  "fp-evm",
@@ -6806,9 +6831,9 @@ checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
 name = "pest"
-version = "2.2.1"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69486e2b8c2d2aeb9762db7b4e00b0331156393555cff467f4163ff06821eef8"
+checksum = "4b0560d531d1febc25a3c9398a62a71256c0178f2e3443baedd9ad4bb8c9deb4"
 dependencies = [
  "thiserror",
  "ucd-trie",
@@ -6816,9 +6841,9 @@ dependencies = [
 
 [[package]]
 name = "pest_derive"
-version = "2.2.1"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b13570633aff33c6d22ce47dd566b10a3b9122c2fe9d8e7501895905be532b91"
+checksum = "905708f7f674518498c1f8d644481440f476d39ca6ecae83319bba7c6c12da91"
 dependencies = [
  "pest",
  "pest_generator",
@@ -6826,9 +6851,9 @@ dependencies = [
 
 [[package]]
 name = "pest_generator"
-version = "2.2.1"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3c567e5702efdc79fb18859ea74c3eb36e14c43da7b8c1f098a4ed6514ec7a0"
+checksum = "5803d8284a629cc999094ecd630f55e91b561a1d1ba75e233b00ae13b91a69ad"
 dependencies = [
  "pest",
  "pest_meta",
@@ -6839,9 +6864,9 @@ dependencies = [
 
 [[package]]
 name = "pest_meta"
-version = "2.2.1"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5eb32be5ee3bbdafa8c7a18b0a8a8d962b66cfa2ceee4037f49267a50ee821fe"
+checksum = "1538eb784f07615c6d9a8ab061089c6c54a344c5b4301db51990ca1c241e8c04"
 dependencies = [
  "once_cell",
  "pest",
@@ -8142,10 +8167,11 @@ dependencies = [
 
 [[package]]
 name = "polling"
-version = "2.2.0"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "685404d509889fade3e86fe3a5803bca2ec09b0c0778d5ada6ec8bf7a8de5259"
+checksum = "899b00b9c8ab553c743b3e11e87c5c7d423b2a2de229ba95b24a756344748011"
 dependencies = [
+ "autocfg",
  "cfg-if 1.0.0",
  "libc",
  "log",
@@ -8397,8 +8423,10 @@ dependencies = [
  "log",
  "orml-vesting",
  "pallet-aura",
+ "pallet-authorship",
  "pallet-balances",
  "pallet-base-fee",
+ "pallet-collator-selection",
  "pallet-common",
  "pallet-configuration",
  "pallet-ethereum",
@@ -8414,6 +8442,7 @@ dependencies = [
  "pallet-refungible",
  "pallet-rmrk-core",
  "pallet-rmrk-equip",
+ "pallet-session",
  "pallet-structure",
  "pallet-sudo",
  "pallet-template-transaction-payment",
@@ -9004,13 +9033,13 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.35.7"
+version = "0.35.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d51cc38aa10f6bbb377ed28197aa052aa4e2b762c22be9d3153d01822587e787"
+checksum = "72c825b8aa8010eb9ee99b75f05e10180b9278d161583034d7574c9d617aeada"
 dependencies = [
  "bitflags",
  "errno",
- "io-lifetimes 0.7.2",
+ "io-lifetimes 0.7.3",
  "libc",
  "linux-raw-sys 0.0.46",
  "windows-sys",
@@ -9567,7 +9596,7 @@ dependencies = [
  "once_cell",
  "parity-scale-codec 3.1.5",
  "parity-wasm 0.42.2",
- "rustix 0.35.7",
+ "rustix 0.35.9",
  "sc-allocator",
  "sc-executor-common",
  "sp-runtime-interface",
@@ -10260,9 +10289,9 @@ dependencies = [
 
 [[package]]
 name = "security-framework"
-version = "2.6.1"
+version = "2.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2dc14f172faf8a0194a3aded622712b0de276821addc574fa54fc0a1167e10dc"
+checksum = "2bc1bb97804af6631813c55739f771071e0f2ed33ee20b68c86ec505d906356c"
 dependencies = [
  "bitflags",
  "core-foundation",
@@ -10316,18 +10345,18 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.143"
+version = "1.0.144"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53e8e5d5b70924f74ff5c6d64d9a5acd91422117c60f48c4e07855238a254553"
+checksum = "0f747710de3dcd43b88c9168773254e809d8ddbdf9653b84e2554ab219f17860"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.143"
+version = "1.0.144"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3d8e8de557aee63c26b85b947f5e59b690d0454c753f3adeb5cd7835ab88391"
+checksum = "94ed3a816fb1d101812f83e789f888322c34e291f894f19590dc310963e87a00"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -10336,9 +10365,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.83"
+version = "1.0.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38dd04e3c8279e75b31ef29dbdceebfe5ad89f4d0937213c53f7d49d01b3d5a7"
+checksum = "e55a28e3aaef9d5ce0506d0a14dbba8054ddc7e499ef522dd8b26859ec9d4a44"
 dependencies = [
  "itoa 1.0.3",
  "ryu",
@@ -11306,9 +11335,9 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
 name = "ss58-registry"
-version = "1.25.0"
+version = "1.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a039906277e0d8db996cd9d1ef19278c10209d994ecfc1025ced16342873a17c"
+checksum = "1c8a1e645fa0bd3e81a90e592a677f7ada3182ac338c4a71cd9ec0ba911f6abb"
 dependencies = [
  "Inflector",
  "num-format",
@@ -12386,8 +12415,10 @@ dependencies = [
  "log",
  "orml-vesting",
  "pallet-aura",
+ "pallet-authorship",
  "pallet-balances",
  "pallet-base-fee",
+ "pallet-collator-selection",
  "pallet-common",
  "pallet-configuration",
  "pallet-ethereum",
@@ -12403,6 +12434,7 @@ dependencies = [
  "pallet-refungible",
  "pallet-rmrk-core",
  "pallet-rmrk-equip",
+ "pallet-session",
  "pallet-structure",
  "pallet-sudo",
  "pallet-template-transaction-payment",
@@ -12473,7 +12505,7 @@ checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
 name = "up-common"
-version = "0.9.25"
+version = "0.9.27"
 dependencies = [
  "fp-rpc",
  "frame-support",

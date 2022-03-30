@@ -189,6 +189,9 @@ impl CrossAccountId<u64> for TestCrossAccountId {
 	fn conv_eq(&self, other: &Self) -> bool {
 		self.as_sub() == other.as_sub()
 	}
+	fn is_canonical_substrate(&self) -> bool {
+		todo!()
+	}
 }
 
 impl Default for TestCrossAccountId {

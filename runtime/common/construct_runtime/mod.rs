@@ -32,8 +32,11 @@ macro_rules! construct_runtime {
                 ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
                 ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
-                Aura: pallet_aura::{Pallet, Config<T>} = 22,
-                AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 23,
+                Authorship: pallet_authorship::{Pallet, Call, Storage} = 22,
+                CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 23,
+                Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 24,
+                Aura: pallet_aura::{Pallet, Config<T>} = 25,
+                AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 26,
 
                 Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
                 RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 31,

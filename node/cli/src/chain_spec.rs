@@ -24,6 +24,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::map::Map;
 
 use up_common::types::opaque::*;
+use up_common::constants::EXISTENTIAL_DEPOSIT;
 
 #[cfg(feature = "unique-runtime")]
 pub use unique_runtime as default_runtime;
@@ -146,7 +147,7 @@ macro_rules! testnet_genesis {
 	(
 		$runtime:path,
 		$root_key:expr,
-		$initial_authorities:expr,
+		$initial_invulnerables:expr,
 		$endowed_accounts:expr,
 		$id:expr
 	) => {{
@@ -175,9 +176,31 @@ macro_rules! testnet_genesis {
 				parachain_id: $id.into(),
 			},
 			parachain_system: Default::default(),
-			aura: AuraConfig {
-				authorities: $initial_authorities,
+			collator_selection: CollatorSelectionConfig {
+				invulnerables: $initial_invulnerables
+					.iter()
+					.cloned()
+					.map(|(acc, _)| acc)
+					.collect(),
+				candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
+				..Default::default()
 			},
+			session: SessionConfig {
+				keys: $initial_invulnerables
+					.into_iter()
+					.map(|(acc, aura)| {
+						(
+							acc.clone(),          // account id
+							acc,                  // validator id
+							SessionKeys { aura }, // session keys
+						)
+					})
+					.collect(),
+			},
+			aura: Default::default(),
+			/*aura: AuraConfig {
+				authorities: $initial_authorities,
+			},*/
 			aura_ext: Default::default(),
 			evm: EVMConfig {
 				accounts: BTreeMap::new(),
@@ -217,8 +240,14 @@ pub fn development_config() -> DefaultChainSpec {
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![
-					get_from_seed::<AuraId>("Alice"),
-					get_from_seed::<AuraId>("Bob"),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						get_from_seed::<AuraId>("Alice"),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						get_from_seed::<AuraId>("Bob"),
+					),
 				],
 				// Pre-funded accounts
 				vec![
@@ -285,8 +314,14 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![
-					get_from_seed::<AuraId>("Alice"),
-					get_from_seed::<AuraId>("Bob"),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						get_from_seed::<AuraId>("Alice"),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						get_from_seed::<AuraId>("Bob"),
+					),
 				],
 				// Pre-funded accounts
 				vec![

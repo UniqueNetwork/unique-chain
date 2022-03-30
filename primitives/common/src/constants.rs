@@ -35,6 +35,8 @@ pub const MILLIUNIQUE: Balance = 1_000 * MICROUNIQUE;
 pub const CENTIUNIQUE: Balance = 10 * MILLIUNIQUE;
 pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
 
+pub const EXISTENTIAL_DEPOSIT: u128 = 0;
+
 // Targeting 0.1 UNQ per transfer
 pub const WEIGHT_TO_FEE_COEFF: u32 = /*<weight2fee>*/207_163_598/*</weight2fee>*/;
 
