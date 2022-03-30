@@ -85,7 +85,6 @@
     "parachains": [
         {
             "bin": "../unique-chain/target/release/unique-collator",
-            "id": "1000",
             "balance": "1000000000000000000000000",
             "nodes": [
                 {
@@ -105,6 +104,42 @@
                     "wsPort": 9945,
                     "rpcPort": 9934,
                     "name": "bob",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                },
+                {
+                    "port": 31202,
+                    "wsPort": 9946,
+                    "rpcPort": 9935,
+                    "name": "charlie",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                },
+                {
+                    "port": 31203,
+                    "wsPort": 9947,
+                    "rpcPort": 9936,
+                    "name": "dave",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                },
+                {
+                    "port": 31204,
+                    "wsPort": 9948,
+                    "rpcPort": 9937,
+                    "name": "eve",
                     "flags": [
                         "--rpc-cors=all",
                         "--unsafe-rpc-external",

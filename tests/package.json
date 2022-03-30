@@ -75,6 +75,7 @@
     "testScheduler": "mocha --timeout 9999999 -r ts-node/register ./**/scheduler.test.ts",
     "testSchedulingEVM": "mocha --timeout 9999999 -r ts-node/register ./**/eth/scheduling.test.ts",
     "testXcmTransfer": "mocha --timeout 9999999 -r ts-node/register ./**/xcmTransfer.test.ts",
+    "testShuffleCollators": "mocha --timeout 9999999 -r ts-node/register ./**/shuffleCollators.test.ts",
     "testPalletPresence": "mocha --timeout 9999999 -r ts-node/register ./**/pallet-presence.test.ts",
     "testBlockProduction": "mocha --timeout 9999999 -r ts-node/register ./**/block-production.test.ts",
     "testEnableDisableTransfers": "mocha --timeout 9999999 -r ts-node/register ./**/enableDisableTransfer.test.ts",
