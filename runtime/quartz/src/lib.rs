@@ -122,7 +122,8 @@ use xcm_executor::traits::{MatchesFungible, WeightTrader};
 
 use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
 
-pub const RUNTIME_NAME: &str = "Quartz";
+pub const RUNTIME_NAME: &str = "quartz";
+pub const TOKEN_SYMBOL: &str = "QTZ";
 
 type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
 
@@ -159,7 +160,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!(RUNTIME_NAME),
 	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 917004,
+	spec_version: 918000,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -823,6 +824,7 @@ impl cumulus_pallet_xcm::Config for Runtime {
 }
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
+	type WeightInfo = ();
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;

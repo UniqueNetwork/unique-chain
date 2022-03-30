@@ -99,7 +99,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 impl SubstrateCli for Cli {
 	// TODO use args
 	fn impl_name() -> String {
-		"Unique Node".into()
+		format!("{} Node", Self::node_name())
 	}
 
 	fn impl_version() -> String {
@@ -108,10 +108,11 @@ impl SubstrateCli for Cli {
 	// TODO use args
 	fn description() -> String {
 		format!(
-			"Unique Node\n\nThe command-line arguments provided first will be \
+			"{} Node\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
 		{} [parachain-args] -- [relaychain-args]",
+			Self::node_name(),
 			Self::executable_name()
 		)
 	}
@@ -150,7 +151,7 @@ impl SubstrateCli for Cli {
 impl SubstrateCli for RelayChainCli {
 	// TODO use args
 	fn impl_name() -> String {
-		"Unique Node".into()
+		format!("{} Node", Cli::node_name())
 	}
 
 	fn impl_version() -> String {
@@ -158,11 +159,13 @@ impl SubstrateCli for RelayChainCli {
 	}
 	// TODO use args
 	fn description() -> String {
-		"Unique Node\n\nThe command-line arguments provided first will be \
-		passed to the parachain node, while the arguments provided after -- will be passed \
-		to the relaychain node.\n\n\
-		parachain-collator [parachain-args] -- [relaychain-args]"
-			.into()
+		format!(
+			"{} Node\n\nThe command-line arguments provided first will be \
+			passed to the parachain node, while the arguments provided after -- will be passed \
+			to the relaychain node.\n\n\
+			parachain-collator [parachain-args] -- [relaychain-args]",
+			Cli::node_name()
+		)
 	}
 
 	fn author() -> String {
@@ -389,6 +392,7 @@ pub fn run() -> Result<()> {
 		}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
+			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
 				let extensions = chain_spec::Extensions::try_get(&*config.chain_spec);
@@ -452,7 +456,7 @@ pub fn run() -> Result<()> {
 				);
 
 				start_node_using_chain_runtime! {
-					start_node(config, polkadot_config, para_id)
+					start_node(config, polkadot_config, collator_options, para_id)
 						.await
 						.map(|r| r.0)
 						.map_err(Into::into)
