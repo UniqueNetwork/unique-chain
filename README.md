@@ -155,13 +155,13 @@ assetRegistry -> registerForeignAsset(location, metadata)
 location:
 	V0(X2(Parent, Parachain(PARA_ID)))
 metadata:
-	name         OPL
-	symbol       OPL
+	name         QTZ
+	symbol       QTZ
 	decimals     18
 minimalBalance	 1
 ```
 
-### Next, we can send tokens from Opal to Karura:
+### Next, we can send tokens from Quartz to Karura:
 ```
 polkadotXcm -> reserveTransferAssets
 dest:
@@ -179,7 +179,7 @@ weightLimit:
 The result will be displayed in ChainState
 tokens -> accounts
 
-### To send tokens from Karura to Opal:
+### To send tokens from Karura to Quartz:
 ```
 xtokens -> transfer
 

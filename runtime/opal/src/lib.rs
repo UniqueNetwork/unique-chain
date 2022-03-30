@@ -216,11 +216,15 @@ parameter_types! {
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u8 = 42;
+	/*
+	255 - Quartz
+	42 - Opal
+	*/
+	pub const SS58Prefix: u8 = 255;
 }
 
 parameter_types! {
-	pub const ChainId: u64 = 8882;
+	pub const ChainId: u64 = 8881;
 }
 
 pub struct FixedFee;
