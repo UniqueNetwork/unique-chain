@@ -32,7 +32,7 @@ let eve: IKeyringPair;
 const alice_port = 31200;
 const bob_port = 31201;
 
-describe('Make me a big great cloud', () => {
+describe('Integration Test: Dynamic shuffling of collators', () => {
     before(async () => {    
         await usingApi(async () => {
             alice = privateKey('//Alice');
@@ -43,38 +43,36 @@ describe('Make me a big great cloud', () => {
         });
     });
 
-    it('Can\\t stand the heat', async () => {
-        // let alice_processes = await find('port', alice_port);
-        // expect(alice_processes).to.be.length.above(0);
-        // alice_processes = alice_processes.filter((process) => process.name.includes('unique'));
-        // expect(alice_processes).to.be.length(1);
-
-        // let alice_pid = alice_processes[0].pid;
-        // process.kill(alice_pid, 'SIGINT');
-        // console.log(alice_pid)
-
+    it('Change invulnerables and make sure they start producing blocks', async () => {
         await usingApi(async (api) => {
-            /*const currentDesiredCandidates = (await api.query.collatorSelection.desiredCandidates() as any).toBigInt();
-            if (currentDesiredCandidates < )*/
-            const tx = api.tx.session.setKeys(
+            const txC = api.tx.session.setKeys(
                 '0x' + Buffer.from(charlie.addressRaw).toString('hex'),
                 '0x0'
             );
-            const events = await submitTransactionAsync(charlie, tx);
+            const eventsC = await submitTransactionAsync(charlie, txC);
+            const resultC = getGenericResult(eventsC);
+            expect(resultC.success).to.be.true;
+
+            const txD = api.tx.session.setKeys(
+                '0x' + Buffer.from(dave.addressRaw).toString('hex'),
+                '0x0'
+            );
+            const eventsD = await submitTransactionAsync(dave, txD);
+            const resultD = getGenericResult(eventsD);
+            expect(resultD.success).to.be.true;
+
+            const tx = api.tx.collatorSelection.setInvulnerables([
+                charlie.address,
+                dave.address
+            ]);
+            const sudoTx = api.tx.sudo.sudo(tx as any);
+            const events = await submitTransactionAsync(alice, sudoTx);
             const result = getGenericResult(events);
             expect(result.success).to.be.true;
 
-            const tx2 = api.tx.collatorSelection.setInvulnerables([
-                bob.address,
-                charlie.address
-            ]);
-            const sudoTx = api.tx.sudo.sudo(tx2 as any);
-            const events2 = await submitTransactionAsync(alice, sudoTx);
-            const result2 = getGenericResult(events2);
-            expect(result2.success).to.be.true;
-
             let newInvulnerables = (await api.query.collatorSelection.invulnerables()).toJSON();
-            expect(newInvulnerables).to.contain(charlie.address);
+            expect(newInvulnerables).to.contain(charlie.address).and.contain(dave.address);
+            expect(newInvulnerables).to.be.length(2);
 
             const expectedSessionIndex = (await api.query.session.currentIndex() as any).toNumber() + 2;
             let currentSessionIndex = -1;
@@ -83,6 +81,10 @@ describe('Make me a big great cloud', () => {
                 currentSessionIndex = (await api.query.session.currentIndex() as any).toNumber();
                 // todo implement a timeout in case new blocks are not being produced
             }
+
+            let newValidators = (await api.query.session.validators()).toJSON();
+            expect(newValidators).to.contain(charlie.address).and.contain(dave.address);
+            expect(newValidators).to.be.length(2);
         });
     });
 });
