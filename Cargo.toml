@@ -5,11 +5,8 @@ members = [
     'pallets/*',
     'client/*',
     'primitives/*',
+    'runtime/*',
     'crates/*',
-]
-exclude = [
-    "runtime/unique",
-    "runtime/quartz"
 ]
 [profile.release]
 panic = 'unwind'
