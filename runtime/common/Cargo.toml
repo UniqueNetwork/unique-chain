@@ -70,3 +70,6 @@ branch = 'polkadot-v0.9.18'
 default-features = false
 git = "https://github.com/uniquenetwork/frontier.git"
 branch = "unique-polkadot-v0.9.18"
+
+[dependencies]
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }

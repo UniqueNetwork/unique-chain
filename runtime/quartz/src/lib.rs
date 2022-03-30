@@ -116,7 +116,7 @@ use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
 
 pub const RUNTIME_NAME: &str = "Quartz";
 
-type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
+type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 
 impl RuntimeInstance for Runtime {
 	type CrossAccountId = self::CrossAccountId;
@@ -844,9 +844,6 @@ parameter_types! {
 
 impl pallet_common::Config for Runtime {
 	type Event = Event;
-	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
-	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type CrossAccountId = pallet_common::account::BasicCrossAccountId<Self>;
 
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
@@ -917,8 +914,6 @@ type SponsorshipHandler = (
 impl pallet_evm_transaction_payment::Config for Runtime {
 	type EvmSponsorshipHandler = EvmSponsorshipHandler;
 	type Currency = Balances;
-	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 }
 
 impl pallet_charge_transaction::Config for Runtime {

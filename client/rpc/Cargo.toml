@@ -19,4 +19,3 @@ sp-core = { default-features = false, git = "https://github.com/paritytech/subst
 sp-rpc = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.18" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.18" }
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
-frame-common = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "feature/300" }

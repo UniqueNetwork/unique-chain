@@ -213,7 +213,7 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.getSponsoringRateLimit(flipper.options.address).call()).to.be.equals('7200');
   });
 
-  itWeb3.only('Sponsoring evm address from substrate collection', async ({api, web3}) => {
+  itWeb3('Sponsoring evm address from substrate collection', async ({api, web3}) => {
     const owner = privateKey('//Alice');
     const userEth = createEthAccount(web3);
     const collectionId = await createCollectionExpectSuccess();

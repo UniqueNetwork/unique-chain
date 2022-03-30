@@ -401,7 +401,6 @@ pallet-base-fee = { default-features = false, git = "https://github.com/uniquene
 fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
 fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
 fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "feature/300" }
-frame-common = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "feature/300" }
 
 ################################################################################
 # Build Dependencies

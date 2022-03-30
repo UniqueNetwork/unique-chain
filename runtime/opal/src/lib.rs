@@ -116,7 +116,7 @@ use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
 
 pub const RUNTIME_NAME: &str = "Opal";
 
-type CrossAccountId = frame_common::account::BasicCrossAccountId<Runtime>;
+type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 
 impl RuntimeInstance for Runtime {
 	type CrossAccountId = self::CrossAccountId;
