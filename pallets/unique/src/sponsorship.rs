@@ -246,7 +246,12 @@ where
 				..
 			} => {
 				let (sponsor, collection) = load(*collection_id)?;
-				withdraw_create_item::<T>(&collection, who, data).map(|()| sponsor)
+				withdraw_create_item::<T>(
+					&collection,
+					&T::CrossAccountId::from_sub(who.clone()),
+					data,
+				)
+				.map(|()| sponsor)
 			}
 			Call::transfer {
 				collection_id,
