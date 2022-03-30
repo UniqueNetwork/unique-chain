@@ -27,7 +27,7 @@ Wider Unique Ecosystem (most of it was developed during Hackusama):
 -   [Unique Wallet and UI](https://uniqueapps.usetech.com/#/nft)
 -   [NFT Asset for Unity Framework](https://github.com/usetech-llc/nft_unity)
 
-Please see our [walk-thorugh instructions](doc/hackusama_walk_through.md) to try everything out!
+Please see our [walk-through instructions](doc/hackusama_walk_through.md) to try everything out!
 
 ## Application Development
 
@@ -62,13 +62,18 @@ rustup target add wasm32-unknown-unknown --toolchain nightly-2021-11-11
 ```
 
 5. Build:
-```bash
-cargo build
-```
 
-optionally, build in release:
+Opal
 ```bash
 cargo build --release
+```
+Quartz
+```bash
+cargo build --features=quartz-runtime --release
+```
+Unique
+```bash
+cargo build --features=unique-runtime --release
 ```
 
 ## Building as Parachain locally
@@ -86,7 +91,7 @@ git clone https://github.com/paritytech/polkadot-launch
 ```
 git clone https://github.com/paritytech/polkadot.git
 cd polkadot
-git checkout release-v0.9.17
+git checkout release-v0.9.18
 cargo build --release
 ```
 
@@ -158,7 +163,7 @@ To get started, you need to open inbound and outbound hrmp channels.
 ```
 assetRegistry -> registerForeignAsset(location, metadata)
 location:
-	V0(X2(Parent, Parachain(PARA_ID))) 
+	V0(X2(Parent, Parachain(PARA_ID)))
 metadata:
 	name         QTZ
 	symbol       QTZ
@@ -170,19 +175,19 @@ minimalBalance	 1
 ```
 polkadotXcm -> reserveTransferAssets
 dest:
-	V0(X2(Parent, Parachain(<KARURA_PARA_ID>))) 
+	V0(X2(Parent, Parachain(<KARURA_PARA_ID>)))
 beneficiary:
 	X1(AccountId(Any, <ACCOUNT>))
 assets:
 	V1(Concrete(0,Here), Fungible(<AMOUNT>))
-feeAssetItem: 
-	0	
+feeAssetItem:
+	0
 weightLimit:
 	<LIMIT>
-```	
+```
 
-The result will be displayed in ChainState   
-tokens -> accounts	
+The result will be displayed in ChainState
+tokens -> accounts
 
 ### To send tokens from Karura to Quartz:
 ```
@@ -197,7 +202,7 @@ amount:
 dest:
 	V1
 	(
-		Parents:1, 
+		Parents:1,
 		X2(Parachain(<KARURA_PARA_ID>), AccountId(Any, <ACCOUNT>)
 	)
 destWeight:

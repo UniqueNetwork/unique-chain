@@ -94,5 +94,8 @@
       "contract",
       "artifacts"
     ]
+  },
+  "resolutions": {
+    "simple-get": "^4.0.1"
   }
 }

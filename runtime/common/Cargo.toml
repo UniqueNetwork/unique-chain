@@ -1,0 +1,72 @@
+[package]
+authors = ['Unique Network <support@uniquenetwork.io>']
+description = 'Unique Runtime Common'
+edition = '2021'
+homepage = 'https://unique.network'
+license = 'All Rights Reserved'
+name = 'unique-runtime-common'
+repository = 'https://github.com/UniqueNetwork/unique-chain'
+version = '0.9.18'
+
+[features]
+default = ['std']
+std = [
+    'sp-core/std',
+    'sp-runtime/std',
+    'codec/std',
+    'frame-support/std',
+    'frame-system/std',
+    'sp-consensus-aura/std',
+    'pallet-common/std',
+    'fp-rpc/std',
+]
+runtime-benchmarks = [
+    'sp-runtime/runtime-benchmarks',
+    'frame-support/runtime-benchmarks',
+    'frame-system/runtime-benchmarks',
+]
+
+[dependencies.sp-core]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+branch = 'polkadot-v0.9.18'
+
+[dependencies.sp-runtime]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+branch = 'polkadot-v0.9.18'
+
+[dependencies.codec]
+default-features = false
+features = ['derive']
+package = 'parity-scale-codec'
+version = '3.1.2'
+
+[dependencies.scale-info]
+default-features = false
+features = ["derive"]
+version = "2.0.1"
+
+[dependencies.frame-support]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+branch = 'polkadot-v0.9.18'
+
+[dependencies.frame-system]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+branch = 'polkadot-v0.9.18'
+
+[dependencies.pallet-common]
+default-features = false
+path = "../../pallets/common"
+
+[dependencies.sp-consensus-aura]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+branch = 'polkadot-v0.9.18'
+
+[dependencies.fp-rpc]
+default-features = false
+git = "https://github.com/uniquenetwork/frontier.git"
+branch = "unique-polkadot-v0.9.18"
