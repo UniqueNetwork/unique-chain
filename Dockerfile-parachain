@@ -1,5 +1,5 @@
 # ===== Rust builder =====
-FROM phusion/baseimage:focal-1.0.0 as rust-builder
+FROM phusion/baseimage:focal-1.1.0 as rust-builder
 LABEL maintainer="Unique.Network"
 
 ARG RUST_TOOLCHAIN=nightly-2021-11-11
@@ -77,7 +77,7 @@ RUN git clone -b $POLKA_VERSION --depth 1 https://github.com/paritytech/polkadot
 
 # ===== RUN ======
 
-FROM phusion/baseimage:focal-1.0.0
+FROM phusion/baseimage:focal-1.1.0
 
 ARG PROFILE=release
 
