@@ -62,8 +62,18 @@ rustup target add wasm32-unknown-unknown --toolchain nightly-2021-11-11
 ```
 
 5. Build:
+
+Opal
 ```bash
-cargo build --features=unique-runtime,quartz-runtime --release
+cargo build --release
+```
+Quartz
+```bash
+cargo build --features=quartz-runtime --release
+```
+Unique
+```bash
+cargo build --features=unique-runtime --release
 ```
 
 ## Building as Parachain locally
