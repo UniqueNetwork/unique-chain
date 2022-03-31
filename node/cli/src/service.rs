@@ -24,7 +24,11 @@ use std::time::Duration;
 use std::pin::Pin;
 use fc_rpc_core::types::FeeHistoryCache;
 use futures::Future;
-use futures::{Stream, StreamExt, stream::select, task::{Context, Poll}};
+use futures::{
+	Stream, StreamExt,
+	stream::select,
+	task::{Context, Poll},
+};
 use futures_timer::Delay;
 
 use unique_rpc::overrides_handle;
@@ -116,7 +120,7 @@ impl NativeExecutionDispatch for OpalRuntimeExecutor {
 
 pub struct AutosealInterval {
 	duration: Duration,
-	delay_handle: Pin<Box<Delay>>
+	delay_handle: Pin<Box<Delay>>,
 }
 
 impl AutosealInterval {
@@ -127,7 +131,7 @@ impl AutosealInterval {
 
 		Ok(Self {
 			duration,
-			delay_handle: Box::pin(Delay::new(duration))
+			delay_handle: Box::pin(Delay::new(duration)),
 		})
 	}
 }
@@ -143,7 +147,7 @@ impl Stream for AutosealInterval {
 
 				Poll::Ready(Some(()))
 			}
-			Poll::Pending => Poll::Pending
+			Poll::Pending => Poll::Pending,
 		}
 	}
 }
@@ -836,35 +840,32 @@ where
 			telemetry.as_ref().map(|x| x.handle()),
 		);
 
-		let transactions_commands_stream: Box<dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin> =
-			Box::new(
-				transaction_pool
-					.pool()
-					.validated_pool()
-					.import_notification_stream()
-					.map(|_| EngineCommand::SealNewBlock {
-						create_empty: true,
-						finalize: false,
-						parent_hash: None,
-						sender: None,
-					}),
-			);
-
-		let autoseal_interval = Box::pin(autoseal_interval);
-		let idle_commands_stream: Box<dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin> =
-			Box::new(
-				autoseal_interval.map(|_| EngineCommand::SealNewBlock {
+		let transactions_commands_stream: Box<
+			dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin,
+		> = Box::new(
+			transaction_pool
+				.pool()
+				.validated_pool()
+				.import_notification_stream()
+				.map(|_| EngineCommand::SealNewBlock {
 					create_empty: true,
 					finalize: false,
 					parent_hash: None,
 					sender: None,
-				})
-			);
-
-		let commands_stream = select(
-			transactions_commands_stream,
-			idle_commands_stream
+				}),
 		);
+
+		let autoseal_interval = Box::pin(autoseal_interval);
+		let idle_commands_stream: Box<
+			dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin,
+		> = Box::new(autoseal_interval.map(|_| EngineCommand::SealNewBlock {
+			create_empty: true,
+			finalize: false,
+			parent_hash: None,
+			sender: None,
+		}));
+
+		let commands_stream = select(transactions_commands_stream, idle_commands_stream);
 
 		let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 		let client_set_aside_for_cidp = client.clone();
