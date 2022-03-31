@@ -23,13 +23,12 @@ use std::collections::BTreeMap;
 use std::time::Duration;
 use std::pin::Pin;
 use fc_rpc_core::types::FeeHistoryCache;
-use futures::Future;
 use futures::{
 	Stream, StreamExt,
 	stream::select,
 	task::{Context, Poll},
 };
-use futures_timer::Delay;
+use tokio::time::Interval;
 
 use unique_rpc::overrides_handle;
 
@@ -119,36 +118,23 @@ impl NativeExecutionDispatch for OpalRuntimeExecutor {
 }
 
 pub struct AutosealInterval {
-	duration: Duration,
-	delay_handle: Pin<Box<Delay>>,
+	interval: Interval,
 }
 
 impl AutosealInterval {
-	pub fn new(duration: Duration) -> Result<Self, String> {
-		if duration.is_zero() {
-			return Err("Invalid autoseal interval: 0 seconds".into());
-		}
+	pub fn new(config: &Configuration, interval: Duration) -> Self {
+		let _tokio_runtime = config.tokio_handle.enter();
+		let interval = tokio::time::interval(interval);
 
-		Ok(Self {
-			duration,
-			delay_handle: Box::pin(Delay::new(duration)),
-		})
+		Self { interval }
 	}
 }
 
 impl Stream for AutosealInterval {
-	type Item = ();
+	type Item = tokio::time::Instant;
 
 	fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-		match self.delay_handle.as_mut().poll(cx) {
-			Poll::Ready(_) => {
-				let duration = self.duration;
-				self.delay_handle.reset(duration);
-
-				Poll::Ready(Some(()))
-			}
-			Poll::Pending => Poll::Pending,
-		}
+		self.interval.poll_tick(cx).map(Some)
 	}
 }
 
@@ -753,7 +739,7 @@ where
 /// the parachain inherent
 pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch>(
 	config: Configuration,
-	autoseal_interval: AutosealInterval,
+	autoseal_interval: Duration,
 ) -> sc_service::error::Result<TaskManager>
 where
 	Runtime: RuntimeInstance + Send + Sync + 'static,
@@ -855,7 +841,7 @@ where
 				}),
 		);
 
-		let autoseal_interval = Box::pin(autoseal_interval);
+		let autoseal_interval = Box::pin(AutosealInterval::new(&config, autoseal_interval));
 		let idle_commands_stream: Box<
 			dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin,
 		> = Box::new(autoseal_interval.map(|_| EngineCommand::SealNewBlock {

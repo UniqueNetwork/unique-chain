@@ -294,13 +294,13 @@ targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
 futures = '0.3.17'
-futures-timer = '3.0.2'
 log = '0.4.14'
 flexi_logger = "0.15.7"
 parking_lot = '0.11.2'
 clap = "3.1.2"
 jsonrpc-core = '18.0.0'
 jsonrpc-pubsub = "18.0.0"
+tokio = { version = "1.17.0", features = ["time"] }
 
 fc-rpc-core = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
 fc-consensus = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }

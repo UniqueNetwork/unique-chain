@@ -35,7 +35,7 @@
 use crate::{
 	chain_spec::{self, RuntimeId, RuntimeIdentification, ServiceId, ServiceIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, start_node, start_dev_node, AutosealInterval},
+	service::{new_partial, start_node, start_dev_node},
 };
 
 #[cfg(feature = "unique-runtime")]
@@ -405,8 +405,7 @@ pub fn run() -> Result<()> {
 				if is_dev_service {
 					info!("Running Dev service");
 
-					let autoseal_interval =
-						AutosealInterval::new(Duration::from_millis(cli.idle_autoseal_interval))?;
+					let autoseal_interval = Duration::from_millis(cli.idle_autoseal_interval);
 
 					return start_node_using_chain_runtime! {
 						start_dev_node(config, autoseal_interval).map_err(Into::into)
