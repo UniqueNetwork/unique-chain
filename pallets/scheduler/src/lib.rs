@@ -440,7 +440,7 @@ pub mod pallet {
 						Err(err) => Err(err.error),
 					},
 					Err(_) => {
-						log::info!(
+						log::error!(
 							target: "runtime::scheduler",
 							"Warning: Scheduler has failed to execute a post-dispatch transaction. \
 							This block might have become invalid.");
