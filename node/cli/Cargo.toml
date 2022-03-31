@@ -294,6 +294,7 @@ targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
 futures = '0.3.17'
+futures-timer = '3.0.2'
 log = '0.4.14'
 flexi_logger = "0.15.7"
 parking_lot = '0.11.2'
