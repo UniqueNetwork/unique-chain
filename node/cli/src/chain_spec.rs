@@ -77,7 +77,7 @@ impl RuntimeIdentification for Box<dyn sc_service::ChainSpec> {
 		}
 
 		#[cfg(feature = "quartz-runtime")]
-		if self.id().starts_with("quartz") || self.id().starts_with("qtz"){
+		if self.id().starts_with("quartz") || self.id().starts_with("qtz") {
 			return RuntimeId::Quartz;
 		}
 
