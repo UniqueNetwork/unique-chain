@@ -24,7 +24,7 @@ use sp_std::prelude::*;
 use up_sponsorship::SponsorshipHandler;
 use core::marker::PhantomData;
 use core::convert::TryInto;
-use up_data_structs::TokenId;
+use up_data_structs::{TokenId, CreateItemData, CreateNftData};
 use up_evm_mapping::EvmBackwardsAddressMapping;
 use pallet_common::account::CrossAccountId;
 
@@ -60,7 +60,7 @@ impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for UniqueEthSponsorsh
 						let _token_id: TokenId = token_id.try_into().ok()?;
 						withdraw_create_item::<T>(
 							&collection,
-							who.as_sub(),
+							&who,
 							&CreateItemData::NFT(CreateNftData::default()),
 						)
 						.map(|()| sponsor)

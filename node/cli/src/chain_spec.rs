@@ -72,12 +72,12 @@ pub trait RuntimeIdentification {
 impl RuntimeIdentification for Box<dyn sc_service::ChainSpec> {
 	fn runtime_id(&self) -> RuntimeId {
 		#[cfg(feature = "unique-runtime")]
-		if self.id().starts_with("unique") {
+		if self.id().starts_with("unique") || self.id().starts_with("unq") {
 			return RuntimeId::Unique;
 		}
 
 		#[cfg(feature = "quartz-runtime")]
-		if self.id().starts_with("quartz") {
+		if self.id().starts_with("quartz") || self.id().starts_with("qtz") {
 			return RuntimeId::Quartz;
 		}
 
