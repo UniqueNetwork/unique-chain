@@ -478,36 +478,6 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Anonymously schedule a task.
-		#[pallet::weight(<T as Config>::WeightInfo::schedule(T::MaxScheduledPerBlock::get()))]
-		pub fn schedule(
-			origin: OriginFor<T>,
-			when: T::BlockNumber,
-			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-			priority: schedule::Priority,
-			call: Box<CallOrHashOf<T>>,
-		) -> DispatchResult {
-			T::ScheduleOrigin::ensure_origin(origin.clone())?;
-			let origin = <T as Config>::Origin::from(origin);
-			Self::do_schedule(
-				DispatchTime::At(when),
-				maybe_periodic,
-				priority,
-				origin.caller().clone(),
-				*call,
-			)?;
-			Ok(())
-		}
-
-		/// Cancel an anonymously scheduled task.
-		#[pallet::weight(<T as Config>::WeightInfo::cancel(T::MaxScheduledPerBlock::get()))]
-		pub fn cancel(origin: OriginFor<T>, when: T::BlockNumber, index: u32) -> DispatchResult {
-			T::ScheduleOrigin::ensure_origin(origin.clone())?;
-			let origin = <T as Config>::Origin::from(origin);
-			Self::do_cancel(Some(origin.caller().clone()), (when, index))?;
-			Ok(())
-		}
-
 		/// Schedule a named task.
 		#[pallet::weight(<T as Config>::WeightInfo::schedule_named(T::MaxScheduledPerBlock::get()))]
 		pub fn schedule_named(
@@ -537,31 +507,6 @@ pub mod pallet {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
 			let origin = <T as Config>::Origin::from(origin);
 			Self::do_cancel_named(Some(origin.caller().clone()), id)?;
-			Ok(())
-		}
-
-		/// Anonymously schedule a task after a delay.
-		///
-		/// # <weight>
-		/// Same as [`schedule`].
-		/// # </weight>
-		#[pallet::weight(<T as Config>::WeightInfo::schedule(T::MaxScheduledPerBlock::get()))]
-		pub fn schedule_after(
-			origin: OriginFor<T>,
-			after: T::BlockNumber,
-			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-			priority: schedule::Priority,
-			call: Box<CallOrHashOf<T>>,
-		) -> DispatchResult {
-			T::ScheduleOrigin::ensure_origin(origin.clone())?;
-			let origin = <T as Config>::Origin::from(origin);
-			Self::do_schedule(
-				DispatchTime::After(after),
-				maybe_periodic,
-				priority,
-				origin.caller().clone(),
-				*call,
-			)?;
 			Ok(())
 		}
 
