@@ -37,7 +37,7 @@ import {expect} from 'chai';
 
 const PRICE = 2000n;
 
-describe.only('Matcher contract usage', () => {
+describe('Matcher contract usage', () => {
   itWeb3('With UNQ', async ({api, web3}) => {
     const alice = privateKey('//Alice');
     const matcherOwner = await createEthAccountWithBalance(api, web3);
