@@ -301,13 +301,13 @@ clap = "3.1.2"
 jsonrpc-core = '18.0.0'
 jsonrpc-pubsub = "18.0.0"
 
-fc-rpc-core = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
-fc-consensus = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
-fc-mapping-sync = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
-fc-rpc = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
-fc-db = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
-fp-rpc = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
-pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
+fc-rpc-core = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
+fc-consensus = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
+fc-mapping-sync = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
+fc-rpc = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
+fc-db = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
+fp-rpc = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
+pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
 
 unique-rpc = { default-features = false, path = "../rpc" }
 
