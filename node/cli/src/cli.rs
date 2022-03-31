@@ -109,7 +109,7 @@ pub struct Cli {
 	/// an empty block will be sealed automatically
 	/// after the `--idle-autoseal-interval` milliseconds.
 	///
-	/// Default interval is 500 milliseconds
+	/// The default interval is 500 milliseconds
 	#[structopt(default_value = "500", long)]
 	pub idle_autoseal_interval: u64,
 
