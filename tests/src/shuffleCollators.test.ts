@@ -16,85 +16,89 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import privateKey from './substrate/privateKey';
-import usingApi, { submitTransactionAsync } from './substrate/substrate-api';
+import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
 import waitNewBlocks from './substrate/wait-new-blocks';
 import {expect} from 'chai';
-import { getGenericResult } from './util/helpers';
+import {getBlockNumber, getGenericResult} from './util/helpers';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
 let charlie: IKeyringPair;
 let dave: IKeyringPair;
-let eve: IKeyringPair;
+//let eve: IKeyringPair;
 
 describe('Integration Test: Dynamic shuffling of collators', () => {
-    before(async () => {    
-        await usingApi(async () => {
-            alice = privateKey('//Alice');
-            bob = privateKey('//Bob');
-            charlie = privateKey('//Charlie');
-            dave = privateKey('//Dave');
-            eve = privateKey('//Eve');
-        });
+  before(async () => {    
+    await usingApi(async () => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
+      dave = privateKey('//Dave');
+      //eve = privateKey('//Eve');
     });
+  });
 
-    it('Change invulnerables and make sure they start producing blocks', async () => {
-        await usingApi(async (api) => {
-            const txC = api.tx.session.setKeys(
-                '0x' + Buffer.from(charlie.addressRaw).toString('hex'),
-                '0x0'
-            );
-            const eventsC = await submitTransactionAsync(charlie, txC);
-            const resultC = getGenericResult(eventsC);
-            expect(resultC.success).to.be.true;
+  it('Change invulnerables and make sure they start producing blocks', async () => {
+    await usingApi(async (api) => {
+      const txC = api.tx.session.setKeys(
+        '0x' + Buffer.from(charlie.addressRaw).toString('hex'),
+        '0x0',
+      );
+      const eventsC = await submitTransactionAsync(charlie, txC);
+      const resultC = getGenericResult(eventsC);
+      expect(resultC.success).to.be.true;
 
-            const txD = api.tx.session.setKeys(
-                '0x' + Buffer.from(dave.addressRaw).toString('hex'),
-                '0x0'
-            );
-            const eventsD = await submitTransactionAsync(dave, txD);
-            const resultD = getGenericResult(eventsD);
-            expect(resultD.success).to.be.true;
+      const txD = api.tx.session.setKeys(
+        '0x' + Buffer.from(dave.addressRaw).toString('hex'),
+        '0x0',
+      );
+      const eventsD = await submitTransactionAsync(dave, txD);
+      const resultD = getGenericResult(eventsD);
+      expect(resultD.success).to.be.true;
 
-            const tx = api.tx.collatorSelection.setInvulnerables([
-                charlie.address,
-                dave.address
-            ]);
-            const sudoTx = api.tx.sudo.sudo(tx as any);
-            const events = await submitTransactionAsync(alice, sudoTx);
-            const result = getGenericResult(events);
-            expect(result.success).to.be.true;
+      const tx = api.tx.collatorSelection.setInvulnerables([
+        charlie.address,
+        dave.address,
+      ]);
+      const sudoTx = api.tx.sudo.sudo(tx as any);
+      const events = await submitTransactionAsync(alice, sudoTx);
+      const result = getGenericResult(events);
+      expect(result.success).to.be.true;
 
-            let newInvulnerables = (await api.query.collatorSelection.invulnerables()).toJSON();
-            expect(newInvulnerables).to.contain(charlie.address).and.contain(dave.address);
-            expect(newInvulnerables).to.be.length(2);
+      const newInvulnerables = (await api.query.collatorSelection.invulnerables()).toJSON();
+      expect(newInvulnerables).to.contain(charlie.address).and.contain(dave.address);
+      expect(newInvulnerables).to.be.length(2);
 
-            const expectedSessionIndex = (await api.query.session.currentIndex() as any).toNumber() + 2;
-            let currentSessionIndex = -1;
-            while (currentSessionIndex < expectedSessionIndex) {
-                await waitNewBlocks(api, 1);
-                currentSessionIndex = (await api.query.session.currentIndex() as any).toNumber();
-                // todo implement a timeout in case new blocks are not being produced
-            }
+      const expectedSessionIndex = (await api.query.session.currentIndex() as any).toNumber() + 2;
+      let currentSessionIndex = -1;
+      while (currentSessionIndex < expectedSessionIndex) {
+        await waitNewBlocks(api, 1);
+        currentSessionIndex = (await api.query.session.currentIndex() as any).toNumber();
+        // todo implement a timeout in case new blocks are not being produced? session length needed
+      }
 
-            let newValidators = (await api.query.session.validators()).toJSON();
-            expect(newValidators).to.contain(charlie.address).and.contain(dave.address);
-            expect(newValidators).to.be.length(2);
+      const newValidators = (await api.query.session.validators()).toJSON();
+      expect(newValidators).to.contain(charlie.address).and.contain(dave.address);
+      expect(newValidators).to.be.length(2);
 
-            // todo add delay to check that new blocks are authored by these
-        });
+      const lastBlockNumber = await getBlockNumber(api);
+      await waitNewBlocks(api, 1);
+      const lastCharlieBlock = (await api.query.collatorSelection.lastAuthoredBlock(charlie.address) as any).toNumber();
+      const lastDaveBlock = (await api.query.collatorSelection.lastAuthoredBlock(dave.address) as any).toNumber();
+      expect(lastCharlieBlock >= lastBlockNumber || lastDaveBlock >= lastBlockNumber).to.be.true;
     });
+  });
 
-    after(async () => {
-        await usingApi(async (api) => {
-            const tx = api.tx.collatorSelection.setInvulnerables([
-                alice.address,
-                bob.address
-            ]);
-            const sudoTx = api.tx.sudo.sudo(tx as any);
-            const events = await submitTransactionAsync(alice, sudoTx);
-            const result = getGenericResult(events);
-            expect(result.success).to.be.true;
-        });
+  after(async () => {
+    await usingApi(async (api) => {
+      const tx = api.tx.collatorSelection.setInvulnerables([
+        alice.address,
+        bob.address,
+      ]);
+      const sudoTx = api.tx.sudo.sudo(tx as any);
+      const events = await submitTransactionAsync(alice, sudoTx);
+      const result = getGenericResult(events);
+      expect(result.success).to.be.true;
     });
+  });
 });

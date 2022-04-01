@@ -224,7 +224,7 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 					.collect::<Vec<_>>(),
 			)
 			.expect("Existing collators/invulnerables are more than MaxInvulnerables");
-			
+
 			<pallet_collator_selection::Invulnerables<Runtime>>::put(bounded_invulnerables);
 			<pallet_collator_selection::DesiredCandidates<Runtime>>::put(0);
 			<pallet_collator_selection::CandidacyBond<Runtime>>::put(EXISTENTIAL_DEPOSIT * 16);
@@ -248,7 +248,7 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 				// todo exercise caution, the following is taken from genesis
 				if frame_system::Pallet::<Runtime>::inc_consumers_without_limit(&account).is_err() {
 					log::warn!(
-						"We have entered an error with incrementing consumers without limit"
+						"We have entered an error with incrementing consumers without limit during the migration"
 					);
 					// This will leak a provider reference, however it only happens once (at
 					// genesis) so it's really not a big deal and we assume that the user wants to
