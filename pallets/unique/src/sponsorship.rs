@@ -103,7 +103,7 @@ pub fn withdraw_transfer<T: Config>(
 
 pub fn withdraw_create_item<T: Config>(
 	collection: &CollectionHandle<T>,
-	who: &T::AccountId,
+	who: &T::CrossAccountId,
 	_properties: &CreateItemData,
 ) -> Option<()> {
 	if _properties.data_size() as u32 > collection.limits.sponsored_data_size() {
@@ -120,14 +120,14 @@ pub fn withdraw_create_item<T: Config>(
 			CreateItemData::ReFungible(_) => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 		});
 
-	if let Some(last_tx_block) = <CreateItemBasket<T>>::get((collection.id, &who)) {
+	if let Some(last_tx_block) = <CreateItemBasket<T>>::get((collection.id, who.as_sub())) {
 		let timeout = last_tx_block + limit.into();
 		if block_number < timeout {
 			return None;
 		}
 	}
 
-	CreateItemBasket::<T>::insert((collection.id, who.clone()), block_number);
+	CreateItemBasket::<T>::insert((collection.id, who.as_sub()), block_number);
 
 	Some(())
 }
@@ -246,7 +246,12 @@ where
 				..
 			} => {
 				let (sponsor, collection) = load(*collection_id)?;
-				withdraw_create_item::<T>(&collection, who, data).map(|()| sponsor)
+				withdraw_create_item::<T>(
+					&collection,
+					&T::CrossAccountId::from_sub(who.clone()),
+					data,
+				)
+				.map(|()| sponsor)
 			}
 			Call::transfer {
 				collection_id,

@@ -21,8 +21,14 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::collections::BTreeMap;
 use std::time::Duration;
+use std::pin::Pin;
 use fc_rpc_core::types::FeeHistoryCache;
-use futures::StreamExt;
+use futures::{
+	Stream, StreamExt,
+	stream::select,
+	task::{Context, Poll},
+};
+use tokio::time::Interval;
 
 use unique_rpc::overrides_handle;
 
@@ -61,9 +67,16 @@ use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
 use unique_runtime_common::types::{AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block};
 
-/// Native executor instance.
+/// Unique native executor instance.
+#[cfg(feature = "unique-runtime")]
 pub struct UniqueRuntimeExecutor;
+
+#[cfg(feature = "quartz-runtime")]
+/// Quartz native executor instance.
+
 pub struct QuartzRuntimeExecutor;
+
+/// Opal native executor instance.
 pub struct OpalRuntimeExecutor;
 
 #[cfg(feature = "unique-runtime")]
@@ -101,6 +114,27 @@ impl NativeExecutionDispatch for OpalRuntimeExecutor {
 
 	fn native_version() -> sc_executor::NativeVersion {
 		opal_runtime::native_version()
+	}
+}
+
+pub struct AutosealInterval {
+	interval: Interval,
+}
+
+impl AutosealInterval {
+	pub fn new(config: &Configuration, interval: Duration) -> Self {
+		let _tokio_runtime = config.tokio_handle.enter();
+		let interval = tokio::time::interval(interval);
+
+		Self { interval }
+	}
+}
+
+impl Stream for AutosealInterval {
+	type Item = tokio::time::Instant;
+
+	fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+		self.interval.poll_tick(cx).map(Some)
 	}
 }
 
@@ -705,6 +739,7 @@ where
 /// the parachain inherent
 pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch>(
 	config: Configuration,
+	autoseal_interval: Duration,
 ) -> sc_service::error::Result<TaskManager>
 where
 	Runtime: RuntimeInstance + Send + Sync + 'static,
@@ -728,7 +763,6 @@ where
 		+ sp_consensus_aura::AuraApi<Block, AuraId>,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
-	use futures::Stream;
 	use sc_consensus_manual_seal::{run_manual_seal, EngineCommand, ManualSealParams};
 	use fc_consensus::FrontierBlockImport;
 	use sc_client_api::HeaderBackend;
@@ -792,20 +826,32 @@ where
 			telemetry.as_ref().map(|x| x.handle()),
 		);
 
-		let commands_stream: Box<dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin> =
-			Box::new(
-				// This bit cribbed from the implementation of instant seal.
-				transaction_pool
-					.pool()
-					.validated_pool()
-					.import_notification_stream()
-					.map(|_| EngineCommand::SealNewBlock {
-						create_empty: true, // was false in Moonbeam
-						finalize: false,
-						parent_hash: None,
-						sender: None,
-					}),
-			);
+		let transactions_commands_stream: Box<
+			dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin,
+		> = Box::new(
+			transaction_pool
+				.pool()
+				.validated_pool()
+				.import_notification_stream()
+				.map(|_| EngineCommand::SealNewBlock {
+					create_empty: true,
+					finalize: false,
+					parent_hash: None,
+					sender: None,
+				}),
+		);
+
+		let autoseal_interval = Box::pin(AutosealInterval::new(&config, autoseal_interval));
+		let idle_commands_stream: Box<
+			dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin,
+		> = Box::new(autoseal_interval.map(|_| EngineCommand::SealNewBlock {
+			create_empty: true,
+			finalize: false,
+			parent_hash: None,
+			sender: None,
+		}));
+
+		let commands_stream = select(transactions_commands_stream, idle_commands_stream);
 
 		let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 		let client_set_aside_for_cidp = client.clone();

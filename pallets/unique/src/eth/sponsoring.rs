@@ -26,8 +26,12 @@ use core::marker::PhantomData;
 use core::convert::TryInto;
 use up_data_structs::TokenId;
 use pallet_evm::account::CrossAccountId;
+use up_data_structs::{TokenId, CreateItemData, CreateNftData};
+use up_evm_mapping::EvmBackwardsAddressMapping;
 
-use pallet_nonfungible::erc::{UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721Call};
+use pallet_nonfungible::erc::{
+	UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721MintableCall, ERC721Call,
+};
 use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};
 use up_data_structs::{CreateItemData, CreateNftData};
 
@@ -49,6 +53,18 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 					) => {
 						let token_id: TokenId = token_id.try_into().ok()?;
 						withdraw_transfer::<T>(&collection, &who, &token_id).map(|()| sponsor)
+					}
+					UniqueNFTCall::ERC721Mintable(
+						ERC721MintableCall::Mint { token_id, .. }
+						| ERC721MintableCall::MintWithTokenUri { token_id, .. },
+					) => {
+						let _token_id: TokenId = token_id.try_into().ok()?;
+						withdraw_create_item::<T>(
+							&collection,
+							&who,
+							&CreateItemData::NFT(CreateNftData::default()),
+						)
+						.map(|()| sponsor)
 					}
 					UniqueNFTCall::ERC721(ERC721Call::TransferFrom { token_id, from, .. }) => {
 						let token_id: TokenId = token_id.try_into().ok()?;

@@ -104,6 +104,15 @@ pub struct Cli {
 	#[structopt(flatten)]
 	pub run: cumulus_client_cli::RunCmd,
 
+	/// When running the node in the `--dev` mode and
+	/// there is no transaction in the transaction pool,
+	/// an empty block will be sealed automatically
+	/// after the `--idle-autoseal-interval` milliseconds.
+	///
+	/// The default interval is 500 milliseconds
+	#[structopt(default_value = "500", long)]
+	pub idle_autoseal_interval: u64,
+
 	/// Relaychain arguments
 	#[structopt(raw = true)]
 	pub relaychain_args: Vec<String>,
