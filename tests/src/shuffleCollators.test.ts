@@ -71,6 +71,7 @@ describe('Integration Test: Dynamic shuffling of collators', () => {
 
       const expectedSessionIndex = (await api.query.session.currentIndex() as any).toNumber() + 2;
       let currentSessionIndex = -1;
+      console.log('Waiting for the session after the next. This might take a while...');
       while (currentSessionIndex < expectedSessionIndex) {
         await waitNewBlocks(api, 1);
         currentSessionIndex = (await api.query.session.currentIndex() as any).toNumber();
