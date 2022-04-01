@@ -116,7 +116,8 @@ use sp_runtime::traits::CheckedConversion;
 
 use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
 
-pub const RUNTIME_NAME: &str = "Quartz";
+pub const RUNTIME_NAME: &str = "quartz";
+pub const TOKEN_SYMBOL: &str = "QTZ";
 
 type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 
@@ -153,7 +154,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!(RUNTIME_NAME),
 	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 917004,
+	spec_version: 918001,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
