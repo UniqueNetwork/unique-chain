@@ -138,7 +138,7 @@ describe('Scheduling token and balance transfers', () => {
       await scheduleTransferExpectSuccess(collectionId, tokenId, zeroBalance, alice, 1, waitForBlocks, makeScheduledId());
 
       // Get rid of the account's funds before the scheduled transaction takes place
-      const balanceTx2 = api.tx.balances.transfer(alice.address, UNIQUE * 68n / 100n);
+      const balanceTx2 = api.tx.balances.transfer(alice.address, UNIQUE * 68n / 100n); // approximate value less than the operation fee
       const events = await submitTransactionAsync(zeroBalance, balanceTx2);
       expect(getGenericResult(events).success).to.be.true;
       /*const emptyBalanceTx = api.tx.balances.setBalance(zeroBalance.address, 0, 0); // do not null reserved?
@@ -169,10 +169,13 @@ describe('Scheduling token and balance transfers', () => {
       const waitForBlocks = 5;
       await scheduleTransferExpectSuccess(collectionId, tokenId, alice, zeroBalance, 1, waitForBlocks, makeScheduledId());
 
-      const emptyBalanceSponsorTx = api.tx.balances.setBalance(zeroBalance.address, 0, 0);
+      const balanceTx2 = api.tx.balances.transfer(alice.address, UNIQUE * 72n / 100n); // approximate value less than the operation fee
+      const events = await submitTransactionAsync(zeroBalance, balanceTx2);
+      expect(getGenericResult(events).success).to.be.true;
+      /*const emptyBalanceSponsorTx = api.tx.balances.setBalance(zeroBalance.address, 0, 0);
       const sudoTx = api.tx.sudo.sudo(emptyBalanceSponsorTx as any);
       const events = await submitTransactionAsync(alice, sudoTx);
-      expect(getGenericResult(events).success).to.be.true;
+      expect(getGenericResult(events).success).to.be.true;*/
 
       // Wait for a certain number of blocks, save for the ones that already happened while accepting the late transactions
       await waitNewBlocks(waitForBlocks - 3);
@@ -181,7 +184,7 @@ describe('Scheduling token and balance transfers', () => {
     });
   });
 
-  it.skip('Exceeding sponsor rate limit without having enough funds prevents scheduling a periodic transaction', async () => {
+  it('Exceeding sponsor rate limit without having enough funds prevents scheduling a periodic transaction', async () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
