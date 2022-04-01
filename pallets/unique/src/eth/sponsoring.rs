@@ -24,16 +24,12 @@ use sp_std::prelude::*;
 use up_sponsorship::SponsorshipHandler;
 use core::marker::PhantomData;
 use core::convert::TryInto;
-use up_data_structs::TokenId;
 use pallet_evm::account::CrossAccountId;
 use up_data_structs::{TokenId, CreateItemData, CreateNftData};
-use up_evm_mapping::EvmBackwardsAddressMapping;
-
 use pallet_nonfungible::erc::{
 	UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721MintableCall, ERC721Call,
 };
 use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};
-use up_data_structs::{CreateItemData, CreateNftData};
 
 pub struct UniqueEthSponsorshipHandler<T: Config>(PhantomData<*const T>);
 impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
@@ -76,18 +72,6 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 						withdraw_approve::<T>(&collection, who.as_sub(), &token_id)
 							.map(|()| sponsor)
 					}
-					UniqueNFTCall::ERC721Mintable(call) => match call {
-						pallet_nonfungible::erc::ERC721MintableCall::Mint { .. }
-						| pallet_nonfungible::erc::ERC721MintableCall::MintWithTokenUri {
-							..
-						} => withdraw_create_item(
-							&collection,
-							who.as_sub(),
-							&CreateItemData::NFT(CreateNftData::default()),
-						)
-						.map(|()| sponsor),
-						_ => None,
-					},
 					_ => None,
 				}
 			}
