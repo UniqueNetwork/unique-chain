@@ -1111,9 +1111,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.1.6"
+version = "3.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8c93436c21e4698bacadf42917db28b23017027a4deccb35dbe47a7e7840123"
+checksum = "71c47df61d9e16dc010b55dba1952a57d8c215dbb533fd13cdd13369aac73b1c"
 dependencies = [
  "atty",
  "bitflags",
@@ -1128,9 +1128,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "3.1.4"
+version = "3.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da95d038ede1a964ce99f49cbe27a7fb538d1da595e4b4f70b8c8f338d17bf16"
+checksum = "a3aab4734e083b809aaf5794e14e756d1c798d2c69c7f7de7a09a2f5214993c1"
 dependencies = [
  "heck 0.4.0",
  "proc-macro-error",
@@ -1913,9 +1913,9 @@ dependencies = [
 
 [[package]]
 name = "darling"
-version = "0.13.1"
+version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0d720b8683f8dd83c65155f0530560cba68cd2bf395f6513a483caee57ff7f4"
+checksum = "4e92cb285610dd935f60ee8b4d62dd1988bd12b7ea50579bd6a138201525318e"
 dependencies = [
  "darling_core",
  "darling_macro",
@@ -1923,9 +1923,9 @@ dependencies = [
 
 [[package]]
 name = "darling_core"
-version = "0.13.1"
+version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a340f241d2ceed1deb47ae36c4144b2707ec7dd0b649f894cb39bb595986324"
+checksum = "5c29e95ab498b18131ea460b2c0baa18cbf041231d122b0b7bfebef8c8e88989"
 dependencies = [
  "fnv",
  "ident_case",
@@ -1937,9 +1937,9 @@ dependencies = [
 
 [[package]]
 name = "darling_macro"
-version = "0.13.1"
+version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72c41b3b7352feb3211a0d743dc5700a4e3b60f51bd2b368892d1e0f9a95f44b"
+checksum = "b21dd6b221dd547528bd6fb15f1a3b7ab03b9a06f76bff288a8c629bcfbe7f0e"
 dependencies = [
  "darling_core",
  "quote",
@@ -2484,7 +2484,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#28e11d419537bde416bc84b1604b4d0f3da879e0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -2511,7 +2511,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#28e11d419537bde416bc84b1604b4d0f3da879e0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "fp-storage",
  "kvdb",
@@ -2527,7 +2527,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#28e11d419537bde416bc84b1604b4d0f3da879e0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "fc-consensus",
  "fc-db",
@@ -2545,7 +2545,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#28e11d419537bde416bc84b1604b4d0f3da879e0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2591,7 +2591,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#28e11d419537bde416bc84b1604b4d0f3da879e0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2725,7 +2725,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#28e11d419537bde416bc84b1604b4d0f3da879e0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
@@ -2739,7 +2739,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#28e11d419537bde416bc84b1604b4d0f3da879e0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "evm",
  "impl-trait-for-tuples",
@@ -2753,7 +2753,7 @@ dependencies = [
 [[package]]
 name = "fp-evm-mapping"
 version = "0.1.0"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#28e11d419537bde416bc84b1604b4d0f3da879e0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "frame-support",
  "sp-core",
@@ -2762,7 +2762,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#28e11d419537bde416bc84b1604b4d0f3da879e0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2779,7 +2779,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#28e11d419537bde416bc84b1604b4d0f3da879e0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "ethereum",
  "frame-support",
@@ -2796,7 +2796,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#28e11d419537bde416bc84b1604b4d0f3da879e0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 
 [[package]]
 name = "frame-benchmarking"
@@ -3317,9 +3317,9 @@ dependencies = [
 
 [[package]]
 name = "h2"
-version = "0.3.12"
+version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62eeb471aa3e3c9197aa4bfeabfe02982f6dc96f750486c0bb0009ac58b26d2b"
+checksum = "37a82c6d637fc9515a4694bbf1cb2457b79d81ce52b3108bdeea58b07dd34a57"
 dependencies = [
  "bytes 1.1.0",
  "fnv",
@@ -3330,7 +3330,7 @@ dependencies = [
  "indexmap",
  "slab",
  "tokio 1.17.0",
- "tokio-util",
+ "tokio-util 0.7.1",
  "tracing",
 ]
 
@@ -3915,7 +3915,7 @@ dependencies = [
  "log",
  "tokio 1.17.0",
  "tokio-stream",
- "tokio-util",
+ "tokio-util 0.6.9",
  "unicase",
 ]
 
@@ -3985,7 +3985,7 @@ dependencies = [
  "thiserror",
  "tokio 1.17.0",
  "tokio-rustls 0.23.3",
- "tokio-util",
+ "tokio-util 0.6.9",
  "tracing",
  "webpki-roots 0.22.2",
 ]
@@ -4006,7 +4006,7 @@ dependencies = [
  "thiserror",
  "tokio 1.17.0",
  "tokio-rustls 0.23.3",
- "tokio-util",
+ "tokio-util 0.6.9",
  "tracing",
  "webpki-roots 0.22.2",
 ]
@@ -4167,7 +4167,7 @@ dependencies = [
  "thiserror",
  "tokio 1.17.0",
  "tokio-rustls 0.22.0",
- "tokio-util",
+ "tokio-util 0.6.9",
 ]
 
 [[package]]
@@ -5841,7 +5841,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#28e11d419537bde416bc84b1604b4d0f3da879e0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6068,7 +6068,7 @@ dependencies = [
 [[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#28e11d419537bde416bc84b1604b4d0f3da879e0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -6099,7 +6099,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#28e11d419537bde416bc84b1604b4d0f3da879e0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "evm",
  "evm-gasometer",
@@ -6688,7 +6688,7 @@ dependencies = [
 [[package]]
 name = "pallet-template-transaction-payment"
 version = "3.0.0"
-source = "git+https://github.com/UniqueNetwork/pallet-sponsoring?branch=polkadot-v0.9.18#e914a799e5ff1c18383a614ea99e87dd7f3f446e"
+source = "git+https://github.com/UniqueNetwork/pallet-sponsoring?branch=polkadot-v0.9.18#7bc842b35a53f762ee6ee89e5f5bef84a284c9f4"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -12110,6 +12110,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-util"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0edfdeb067411dba2044da6d1cb2df793dd35add7888d73c16e3381ded401764"
+dependencies = [
+ "bytes 1.1.0",
+ "futures-core",
+ "futures-sink",
+ "pin-project-lite 0.2.8",
+ "tokio 1.17.0",
+ "tracing",
+]
+
+[[package]]
 name = "toml"
 version = "0.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12716,7 +12730,7 @@ dependencies = [
 [[package]]
 name = "up-sponsorship"
 version = "0.1.0"
-source = "git+https://github.com/UniqueNetwork/pallet-sponsoring?branch=polkadot-v0.9.18#e914a799e5ff1c18383a614ea99e87dd7f3f446e"
+source = "git+https://github.com/UniqueNetwork/pallet-sponsoring?branch=polkadot-v0.9.18#7bc842b35a53f762ee6ee89e5f5bef84a284c9f4"
 dependencies = [
  "impl-trait-for-tuples",
 ]
