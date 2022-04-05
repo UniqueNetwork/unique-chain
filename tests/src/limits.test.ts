@@ -409,20 +409,20 @@ describe.only('Effective collection limits', () => {
         expect(limits).to.be.any;
         
         // Check that limits is undefined
-        expect(limits.accountTokenOwnershipLimit.isNone).to.be.true;
-        expect(limits.sponsoredDataSize.isNone).to.be.true;
-        expect(limits.sponsoredDataRateLimit.isNone).to.be.true;
-        expect(limits.tokenLimit.isNone).to.be.true;
-        expect(limits.sponsorTransferTimeout.isNone).to.be.true;
-        expect(limits.sponsorApproveTimeout.isNone).to.be.true;
-        expect(limits.ownerCanTransfer.isNone).to.be.true;
-        expect(limits.ownerCanDestroy.isNone).to.be.true;
-        expect(limits.transfersEnabled.isNone).to.be.true;
+        expect(limits.accountTokenOwnershipLimit.toHuman()).to.be.null;
+        expect(limits.sponsoredDataSize.toHuman()).to.be.null;
+        expect(limits.sponsoredDataRateLimit.toHuman()).to.be.null;
+        expect(limits.tokenLimit.toHuman()).to.be.null;
+        expect(limits.sponsorTransferTimeout.toHuman()).to.be.null;
+        expect(limits.sponsorApproveTimeout.toHuman()).to.be.null;
+        expect(limits.ownerCanTransfer.toHuman()).to.be.null;
+        expect(limits.ownerCanDestroy.toHuman()).to.be.null;
+        expect(limits.transfersEnabled.toHuman()).to.be.null;
       }
 
       {
         const limits = await api.rpc.unique.effectiveCollectionLimits(11111);
-        expect(limits.isNone).to.be.true;
+        expect(limits.toHuman()).to.be.null;
       }
 
       {
@@ -430,16 +430,15 @@ describe.only('Effective collection limits', () => {
         expect(limitsOpt.isNone).to.be.false;
         const limits = limitsOpt.unwrap();
 
-        console.log(limits);
-        expect(limits.accountTokenOwnershipLimit.isSome).to.be.true;
-        expect(limits.sponsoredDataSize.isSome).to.be.true;
-        expect(limits.sponsoredDataRateLimit.isSome).to.be.true;
-        expect(limits.tokenLimit.isSome).to.be.true;
-        expect(limits.sponsorTransferTimeout.isSome).to.be.true;
-        expect(limits.sponsorApproveTimeout.isSome).to.be.true;
-        expect(limits.ownerCanTransfer.isSome).to.be.true;
-        expect(limits.ownerCanDestroy.isSome).to.be.true;
-        expect(limits.transfersEnabled.isSome).to.be.true;
+        expect(limits.accountTokenOwnershipLimit.toHuman()).to.be.eq('100,000');
+        expect(limits.sponsoredDataSize.toHuman()).to.be.eq('2,048');
+        expect(limits.sponsoredDataRateLimit.toHuman()).to.be.eq('SponsoringDisabled');
+        expect(limits.tokenLimit.toHuman()).to.be.eq('4,294,967,295');
+        expect(limits.sponsorTransferTimeout.toHuman()).to.be.eq('5');
+        expect(limits.sponsorApproveTimeout.toHuman()).to.be.eq('5');
+        expect(limits.ownerCanTransfer.toHuman()).to.be.true;
+        expect(limits.ownerCanDestroy.toHuman()).to.be.true;
+        expect(limits.transfersEnabled.toHuman()).to.be.true;
       }
     });
   });

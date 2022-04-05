@@ -428,7 +428,8 @@ impl<T: Config> Pallet<T> {
 			return None;
 		}
 
-		let limits = collection.unwrap().limits;
+		let collection = collection.unwrap();
+		let limits = collection.limits;
 		let effective_limits = CollectionLimits {
 			account_token_ownership_limit: Some(limits.account_token_ownership_limit()),
 			sponsored_data_size: Some(limits.sponsored_data_size()),
@@ -438,7 +439,13 @@ impl<T: Config> Pallet<T> {
 					.unwrap_or(SponsoringRateLimit::SponsoringDisabled),
 			),
 			token_limit: Some(limits.token_limit()),
-			sponsor_transfer_timeout: Some(limits.sponsor_transfer_timeout(MAX_SPONSOR_TIMEOUT)),
+			sponsor_transfer_timeout: Some(limits.sponsor_transfer_timeout(
+				match collection.mode {
+					CollectionMode::NFT => NFT_SPONSOR_TRANSFER_TIMEOUT,
+					CollectionMode::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+					CollectionMode::ReFungible => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+				},
+			)),
 			sponsor_approve_timeout: Some(limits.sponsor_approve_timeout()),
 			owner_can_transfer: Some(limits.owner_can_transfer()),
 			owner_can_destroy: Some(limits.owner_can_destroy()),
