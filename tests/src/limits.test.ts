@@ -395,10 +395,8 @@ describe('Collection zero limits (ReFungible)', () => {
     expect(aliceBalanceAfterSponsoredTransaction1 < aliceBalanceBefore).to.be.true;
     //expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
   });
-});
-
-describe('Effective collection limits', () => {
-  it('Test1', async () => {
+  
+  it('Effective collection limits', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       
@@ -419,17 +417,17 @@ describe('Effective collection limits', () => {
         expect(limits.ownerCanDestroy.toHuman()).to.be.null;
         expect(limits.transfersEnabled.toHuman()).to.be.null;
       }
-
+  
       {
         const limits = await api.rpc.unique.effectiveCollectionLimits(11111);
         expect(limits.toHuman()).to.be.null;
       }
-
+  
       {
         const limitsOpt = await api.rpc.unique.effectiveCollectionLimits(collectionId);
         expect(limitsOpt.isNone).to.be.false;
         const limits = limitsOpt.unwrap();
-
+  
         expect(limits.accountTokenOwnershipLimit.toHuman()).to.be.eq('100,000');
         expect(limits.sponsoredDataSize.toHuman()).to.be.eq('2,048');
         expect(limits.sponsoredDataRateLimit.toHuman()).to.be.eq('SponsoringDisabled');
@@ -443,3 +441,5 @@ describe('Effective collection limits', () => {
     });
   });
 });
+
+
