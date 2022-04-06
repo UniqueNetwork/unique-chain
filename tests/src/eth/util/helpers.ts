@@ -29,6 +29,7 @@ import config from '../../config';
 import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
 import getBalance from '../../substrate/get-balance';
+import waitNewBlocks from '../../substrate/wait-new-blocks';
 
 export const GAS_ARGS = {gas: 2500000};
 
@@ -287,6 +288,8 @@ export async function recordEthFee(api: ApiPromise, user: string, call: () => Pr
 
   await call();
 
+  // In dev mode, the transaction might not finish processing in time
+  await waitNewBlocks(api, 1);
   const after = await ethBalanceViaSub(api, user);
 
   // Can't use .to.be.less, because chai doesn't supports bigint
