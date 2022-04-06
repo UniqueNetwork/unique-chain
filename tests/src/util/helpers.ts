@@ -37,6 +37,7 @@ export type CrossAccountId = {
 } | {
   Ethereum: string,
 };
+
 export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {
   if (typeof input === 'string') {
     if (input.length === 48 || input.length === 47) {
@@ -343,15 +344,12 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
     // Run the CreateCollection transaction
     const alicePrivateKey = privateKey('//Alice');
     const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any});
-    const events = await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
-    const result = getCreateCollectionResult(events);
+    await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
 
     // Get number of collections after the transaction
     const collectionCountAfter = await getCreatedCollectionCount(api);
 
     // What to expect
-    // tslint:disable-next-line:no-unused-expression
-    expect(result.success).to.be.false;
     expect(collectionCountAfter).to.be.equal(collectionCountBefore, 'Error: Collection with incorrect data created.');
   });
 }
@@ -763,6 +761,7 @@ transferFromExpectSuccess(
   type = 'NFT',
 ) {
   await usingApi(async (api: ApiPromise) => {
+    const from = normalizeAccountId(accountFrom);
     const to = normalizeAccountId(accountTo);
     let balanceBefore = 0n;
     if (type === 'Fungible') {
@@ -778,7 +777,11 @@ transferFromExpectSuccess(
     }
     if (type === 'Fungible') {
       const balanceAfter = await getBalance(api, collectionId, to, tokenId);
-      expect(balanceAfter - balanceBefore).to.be.equal(BigInt(value));
+      if (JSON.stringify(to) !== JSON.stringify(from)) {
+        expect(balanceAfter - balanceBefore).to.be.equal(BigInt(value));
+      } else {
+        expect(balanceAfter).to.be.equal(balanceBefore);
+      }
     }
     if (type === 'ReFungible') {
       expect(await getBalance(api, collectionId, to, tokenId)).to.be.equal(BigInt(value));
@@ -833,6 +836,13 @@ getFreeBalance(account: IKeyringPair): Promise<bigint> {
   return balance;
 }
 
+export async function transferBalanceTo(api: ApiPromise, source: IKeyringPair, target: string, amount = 1000n * UNIQUE) {
+  const tx = api.tx.balances.transfer(target, amount);
+  const events = await submitTransactionAsync(source, tx);
+  const result = getGenericResult(events);
+  expect(result.success).to.be.true;
+}
+
 export async function
 scheduleTransferExpectSuccess(
   collectionId: number,
@@ -877,6 +887,7 @@ transferExpectSuccess(
   type = 'NFT',
 ) {
   await usingApi(async (api: ApiPromise) => {
+    const from = normalizeAccountId(sender);
     const to = normalizeAccountId(recipient);
 
     let balanceBefore = 0n;
@@ -898,7 +909,11 @@ transferExpectSuccess(
     }
     if (type === 'Fungible') {
       const balanceAfter = await getBalance(api, collectionId, to, tokenId);
-      expect(balanceAfter - balanceBefore).to.be.equal(BigInt(value));
+      if (JSON.stringify(to) !== JSON.stringify(from)) {
+        expect(balanceAfter - balanceBefore).to.be.equal(BigInt(value));
+      } else {
+        expect(balanceAfter).to.be.equal(balanceBefore);
+      }
     }
     if (type === 'ReFungible') {
       expect(await getBalance(api, collectionId, to, tokenId) >= value).to.be.true;

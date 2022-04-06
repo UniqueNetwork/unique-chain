@@ -25,8 +25,8 @@ use sp_runtime::{
 };
 use pallet_transaction_payment::{CurrencyAdapter};
 use frame_system as system;
-use pallet_evm::{AddressMapping, runner::stack::MaybeMirroredLog};
-use pallet_common::account::{EvmBackwardsAddressMapping, CrossAccountId};
+use pallet_evm::{AddressMapping, runner::stack::MaybeMirroredLog, account::CrossAccountId};
+use fp_evm_mapping::EvmBackwardsAddressMapping;
 use codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use up_data_structs::ConstU32;
@@ -191,13 +191,15 @@ impl pallet_evm_coder_substrate::Config for Test {
 
 impl pallet_common::Config for Test {
 	type Event = ();
-	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
-	type EvmAddressMapping = TestEvmAddressMapping;
-	type CrossAccountId = TestCrossAccountId;
-
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
+}
+
+impl pallet_evm::account::Config for Test {
+	type CrossAccountId = TestCrossAccountId;
+	type EvmAddressMapping = TestEvmAddressMapping;
+	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
 }
 
 impl pallet_fungible::Config for Test {

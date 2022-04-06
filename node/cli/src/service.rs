@@ -21,8 +21,14 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::collections::BTreeMap;
 use std::time::Duration;
+use std::pin::Pin;
 use fc_rpc_core::types::FeeHistoryCache;
-use futures::StreamExt;
+use futures::{
+	Stream, StreamExt,
+	stream::select,
+	task::{Context, Poll},
+};
+use tokio::time::Interval;
 
 use unique_rpc::overrides_handle;
 
@@ -34,10 +40,12 @@ use cumulus_client_consensus_common::ParachainConsensus;
 use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
 };
+use cumulus_client_cli::CollatorOptions;
 use cumulus_client_network::BlockAnnounceValidator;
 use cumulus_primitives_core::ParaId;
-use cumulus_relay_chain_interface::RelayChainInterface;
-use cumulus_relay_chain_local::build_relay_chain_interface;
+use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
+use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
+use cumulus_relay_chain_rpc_interface::RelayChainRPCInterface;
 
 // Substrate Imports
 use sc_client_api::ExecutorProvider;
@@ -46,11 +54,12 @@ use sc_executor::NativeExecutionDispatch;
 use sc_network::NetworkService;
 use sc_service::{BasePath, Configuration, PartialComponents, Role, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
-use sp_consensus::SlotData;
 use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
 use sc_client_api::BlockchainEvents;
+
+use polkadot_service::CollatorPair;
 
 // Frontier Imports
 use fc_rpc_core::types::FilterPool;
@@ -58,9 +67,16 @@ use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
 use unique_runtime_common::types::{AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block};
 
-/// Native executor instance.
+/// Unique native executor instance.
+#[cfg(feature = "unique-runtime")]
 pub struct UniqueRuntimeExecutor;
+
+#[cfg(feature = "quartz-runtime")]
+/// Quartz native executor instance.
+
 pub struct QuartzRuntimeExecutor;
+
+/// Opal native executor instance.
 pub struct OpalRuntimeExecutor;
 
 #[cfg(feature = "unique-runtime")]
@@ -98,6 +114,27 @@ impl NativeExecutionDispatch for OpalRuntimeExecutor {
 
 	fn native_version() -> sc_executor::NativeVersion {
 		opal_runtime::native_version()
+	}
+}
+
+pub struct AutosealInterval {
+	interval: Interval,
+}
+
+impl AutosealInterval {
+	pub fn new(config: &Configuration, interval: Duration) -> Self {
+		let _tokio_runtime = config.tokio_handle.enter();
+		let interval = tokio::time::interval(interval);
+
+		Self { interval }
+	}
+}
+
+impl Stream for AutosealInterval {
+	type Item = tokio::time::Instant;
+
+	fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+		self.interval.poll_tick(cx).map(Some)
 	}
 }
 
@@ -257,6 +294,30 @@ where
 	Ok(params)
 }
 
+async fn build_relay_chain_interface(
+	polkadot_config: Configuration,
+	parachain_config: &Configuration,
+	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
+	task_manager: &mut TaskManager,
+	collator_options: CollatorOptions,
+) -> RelayChainResult<(
+	Arc<(dyn RelayChainInterface + 'static)>,
+	Option<CollatorPair>,
+)> {
+	match collator_options.relay_chain_rpc_url {
+		Some(relay_chain_url) => Ok((
+			Arc::new(RelayChainRPCInterface::new(relay_chain_url).await?) as Arc<_>,
+			None,
+		)),
+		None => build_inprocess_relay_chain(
+			polkadot_config,
+			parachain_config,
+			telemetry_worker_handle,
+			task_manager,
+		),
+	}
+}
+
 /// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
 ///
 /// This is the actual implementation that is abstract over the executor and the runtime api.
@@ -264,6 +325,7 @@ where
 async fn start_node_impl<Runtime, RuntimeApi, ExecutorDispatch, BIQ, BIC>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
+	collator_options: CollatorOptions,
 	id: ParaId,
 	build_import_queue: BIQ,
 	build_consensus: BIC,
@@ -325,12 +387,18 @@ where
 	let backend = params.backend.clone();
 	let mut task_manager = params.task_manager;
 
-	let (relay_chain_interface, collator_key) =
-		build_relay_chain_interface(polkadot_config, telemetry_worker_handle, &mut task_manager)
-			.map_err(|e| match e {
-				polkadot_service::Error::Sub(x) => x,
-				s => format!("{}", s).into(),
-			})?;
+	let (relay_chain_interface, collator_key) = build_relay_chain_interface(
+		polkadot_config,
+		&parachain_config,
+		telemetry_worker_handle,
+		&mut task_manager,
+		collator_options.clone(),
+	)
+	.await
+	.map_err(|e| match e {
+		RelayChainError::ServiceError(polkadot_service::Error::Sub(x)) => x,
+		s => s.to_string().into(),
+	})?;
 
 	let block_announce_validator = BlockAnnounceValidator::new(relay_chain_interface.clone(), id);
 
@@ -455,7 +523,7 @@ where
 			spawner,
 			parachain_consensus,
 			import_queue,
-			collator_key,
+			collator_key: collator_key.expect("Command line arguments do not allow this. qed"),
 			relay_chain_interface,
 			relay_chain_slot_duration,
 		};
@@ -470,6 +538,7 @@ where
 			import_queue,
 			relay_chain_interface,
 			relay_chain_slot_duration,
+			collator_options,
 		};
 
 		start_full_node(params)?;
@@ -518,9 +587,9 @@ where
 			let time = sp_timestamp::InherentDataProvider::from_system_time();
 
 			let slot =
-				sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
+				sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
 					*time,
-					slot_duration.slot_duration(),
+					slot_duration,
 				);
 
 			Ok((time, slot))
@@ -537,6 +606,7 @@ where
 pub async fn start_node<Runtime, RuntimeApi, ExecutorDispatch>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
+	collator_options: CollatorOptions,
 	id: ParaId,
 ) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, ExecutorDispatch>>)>
 where
@@ -564,6 +634,7 @@ where
 	start_node_impl::<Runtime, RuntimeApi, ExecutorDispatch, _, _>(
 		parachain_config,
 		polkadot_config,
+		collator_options,
 		id,
 		parachain_build_import_queue,
 		|client,
@@ -609,9 +680,9 @@ where
 						let time = sp_timestamp::InherentDataProvider::from_system_time();
 
 						let slot =
-						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
+						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
 							*time,
-							slot_duration.slot_duration(),
+							slot_duration,
 						);
 
 						let parachain_inherent = parachain_inherent.ok_or_else(|| {
@@ -628,7 +699,7 @@ where
 				sync_oracle,
 				keystore,
 				force_authoring,
-				slot_duration: *slot_duration,
+				slot_duration,
 				// We got around 500ms for proposing
 				block_proposal_slot_portion: SlotProportion::new(1f32 / 24f32),
 				telemetry,
@@ -668,6 +739,7 @@ where
 /// the parachain inherent
 pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch>(
 	config: Configuration,
+	autoseal_interval: Duration,
 ) -> sc_service::error::Result<TaskManager>
 where
 	Runtime: RuntimeInstance + Send + Sync + 'static,
@@ -691,7 +763,6 @@ where
 		+ sp_consensus_aura::AuraApi<Block, AuraId>,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
-	use futures::Stream;
 	use sc_consensus_manual_seal::{run_manual_seal, EngineCommand, ManualSealParams};
 	use fc_consensus::FrontierBlockImport;
 	use sc_client_api::HeaderBackend;
@@ -755,20 +826,32 @@ where
 			telemetry.as_ref().map(|x| x.handle()),
 		);
 
-		let commands_stream: Box<dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin> =
-			Box::new(
-				// This bit cribbed from the implementation of instant seal.
-				transaction_pool
-					.pool()
-					.validated_pool()
-					.import_notification_stream()
-					.map(|_| EngineCommand::SealNewBlock {
-						create_empty: true, // was false in Moonbeam
-						finalize: false,
-						parent_hash: None,
-						sender: None,
-					}),
-			);
+		let transactions_commands_stream: Box<
+			dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin,
+		> = Box::new(
+			transaction_pool
+				.pool()
+				.validated_pool()
+				.import_notification_stream()
+				.map(|_| EngineCommand::SealNewBlock {
+					create_empty: true,
+					finalize: false,
+					parent_hash: None,
+					sender: None,
+				}),
+		);
+
+		let autoseal_interval = Box::pin(AutosealInterval::new(&config, autoseal_interval));
+		let idle_commands_stream: Box<
+			dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin,
+		> = Box::new(autoseal_interval.map(|_| EngineCommand::SealNewBlock {
+			create_empty: true,
+			finalize: false,
+			parent_hash: None,
+			sender: None,
+		}));
+
+		let commands_stream = select(transactions_commands_stream, idle_commands_stream);
 
 		let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 		let client_set_aside_for_cidp = client.clone();
@@ -809,9 +892,9 @@ where
 						};
 
 						let slot =
-						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
+						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
 							*time,
-							slot_duration.slot_duration(),
+							slot_duration,
 						);
 
 						Ok((time, slot, mocked_parachain))

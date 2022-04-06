@@ -15,8 +15,10 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use crate::chain_spec;
-use std::path::PathBuf;
+use std::{path::PathBuf, env};
 use clap::Parser;
+
+const NODE_NAME_ENV: &str = "UNIQUE_NODE_NAME";
 
 /// Sub-commands supported by the collator.
 #[derive(Debug, Parser)]
@@ -102,9 +104,36 @@ pub struct Cli {
 	#[structopt(flatten)]
 	pub run: cumulus_client_cli::RunCmd,
 
+	/// When running the node in the `--dev` mode and
+	/// there is no transaction in the transaction pool,
+	/// an empty block will be sealed automatically
+	/// after the `--idle-autoseal-interval` milliseconds.
+	///
+	/// The default interval is 500 milliseconds
+	#[structopt(default_value = "500", long)]
+	pub idle_autoseal_interval: u64,
+
 	/// Relaychain arguments
 	#[structopt(raw = true)]
 	pub relaychain_args: Vec<String>,
+}
+
+impl Cli {
+	pub fn node_name() -> String {
+		match env::var(NODE_NAME_ENV).ok() {
+			Some(name) => name,
+			None => {
+				if cfg!(feature = "unique-runtime") {
+					"Unique"
+				} else if cfg!(feature = "quartz-runtime") {
+					"Quartz"
+				} else {
+					"Opal"
+				}
+			}
+			.into(),
+		}
+	}
 }
 
 #[derive(Debug)]

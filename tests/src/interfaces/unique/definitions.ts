@@ -22,7 +22,7 @@ type RpcParam = {
   isOptional?: true;
 };
 
-const CROSS_ACCOUNT_ID_TYPE = 'PalletCommonAccountBasicCrossAccountIdRepr';
+const CROSS_ACCOUNT_ID_TYPE = 'PalletEvmAccountBasicCrossAccountIdRepr';
 
 const collectionParam = {name: 'collection', type: 'u32'};
 const tokenParam = {name: 'tokenId', type: 'u32'};
@@ -38,8 +38,8 @@ const fun = (description: string, params: RpcParam[], type: string) => ({
 export default {
   types,
   rpc: {
-    adminlist: fun('Get admin list', [collectionParam], 'Vec<PalletCommonAccountBasicCrossAccountIdRepr>'),
-    allowlist: fun('Get allowlist', [collectionParam], 'Vec<PalletCommonAccountBasicCrossAccountIdRepr>'),
+    adminlist: fun('Get admin list', [collectionParam], 'Vec<PalletEvmAccountBasicCrossAccountIdRepr>'),
+    allowlist: fun('Get allowlist', [collectionParam], 'Vec<PalletEvmAccountBasicCrossAccountIdRepr>'),
 
     accountTokens: fun('Get tokens owned by account', [collectionParam, crossAccountParam()], 'Vec<u32>'),
     collectionTokens: fun('Get tokens contained in collection', [collectionParam], 'Vec<u32>'),

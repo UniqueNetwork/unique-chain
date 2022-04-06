@@ -19,7 +19,7 @@
 use core::ops::{Deref, DerefMut};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_std::vec::Vec;
-use account::CrossAccountId;
+use pallet_evm::account::CrossAccountId;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo},
 	ensure, fail,
@@ -38,7 +38,6 @@ use up_data_structs::{
 pub use pallet::*;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
-pub mod account;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod erc;
@@ -163,19 +162,16 @@ impl<T: Config> CollectionHandle<T> {
 pub mod pallet {
 	use super::*;
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key};
-	use account::CrossAccountId;
+	use pallet_evm::account;
 	use frame_support::traits::Currency;
 	use up_data_structs::TokenId;
 	use scale_info::TypeInfo;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config + TypeInfo {
+	pub trait Config:
+		frame_system::Config + pallet_evm_coder_substrate::Config + TypeInfo + account::Config
+	{
 		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
-
-		type CrossAccountId: CrossAccountId<Self::AccountId>;
-
-		type EvmAddressMapping: pallet_evm::AddressMapping<Self::AccountId>;
-		type EvmBackwardsAddressMapping: up_evm_mapping::EvmBackwardsAddressMapping<Self::AccountId>;
 
 		type Currency: Currency<Self::AccountId>;
 

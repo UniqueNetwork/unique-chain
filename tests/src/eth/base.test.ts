@@ -34,7 +34,8 @@ describe('Contract calls', () => {
     const userB = createEthAccount(web3);
 
     const cost = await recordEthFee(api, userA, () => web3.eth.sendTransaction({from: userA, to: userB, value: '1000000', ...GAS_ARGS}));
-    expect(cost - await ethBalanceViaSub(api, userB) < BigInt(0.2 * Number(UNIQUE))).to.be.true;
+    const balanceB = await ethBalanceViaSub(api, userB);
+    expect(cost - balanceB < BigInt(0.2 * Number(UNIQUE))).to.be.true;
   });
 
   itWeb3('NFT transfer is close to 0.15 UNQ', async ({web3, api}) => {
