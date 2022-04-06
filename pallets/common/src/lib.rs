@@ -33,7 +33,7 @@ use up_data_structs::{
 	TokenId, Weight, WithdrawReasons, CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode,
 	NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
-	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData,
+	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData, SponsoringRateLimit,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -416,6 +416,39 @@ impl<T: Config> Pallet<T> {
 			destroyed: destroyed.0,
 			alive: created.0 - destroyed.0,
 		}
+	}
+
+	pub fn effective_collection_limits(collection: CollectionId) -> Option<CollectionLimits> {
+		let collection = <CollectionById<T>>::get(collection);
+		if collection.is_none() {
+			return None;
+		}
+
+		let collection = collection.unwrap();
+		let limits = collection.limits;
+		let effective_limits = CollectionLimits {
+			account_token_ownership_limit: Some(limits.account_token_ownership_limit()),
+			sponsored_data_size: Some(limits.sponsored_data_size()),
+			sponsored_data_rate_limit: Some(
+				limits
+					.sponsored_data_rate_limit
+					.unwrap_or(SponsoringRateLimit::SponsoringDisabled),
+			),
+			token_limit: Some(limits.token_limit()),
+			sponsor_transfer_timeout: Some(limits.sponsor_transfer_timeout(
+				match collection.mode {
+					CollectionMode::NFT => NFT_SPONSOR_TRANSFER_TIMEOUT,
+					CollectionMode::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+					CollectionMode::ReFungible => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+				},
+			)),
+			sponsor_approve_timeout: Some(limits.sponsor_approve_timeout()),
+			owner_can_transfer: Some(limits.owner_can_transfer()),
+			owner_can_destroy: Some(limits.owner_can_destroy()),
+			transfers_enabled: Some(limits.transfers_enabled()),
+		};
+
+		Some(effective_limits)
 	}
 }
 

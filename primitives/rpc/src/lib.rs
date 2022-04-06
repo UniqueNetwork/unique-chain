@@ -16,7 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use up_data_structs::{CollectionId, TokenId, Collection, CollectionStats};
+use up_data_structs::{CollectionId, TokenId, Collection, CollectionStats, CollectionLimits};
 use sp_std::vec::Vec;
 use sp_core::H160;
 use codec::Decode;
@@ -59,5 +59,6 @@ sp_api::decl_runtime_apis! {
 		fn last_token_id(collection: CollectionId) -> Result<TokenId>;
 		fn collection_by_id(collection: CollectionId) -> Result<Option<Collection<AccountId>>>;
 		fn collection_stats() -> Result<CollectionStats>;
+		fn effective_collection_limits(collection_id: CollectionId) -> Result<Option<CollectionLimits>>;
 	}
 }

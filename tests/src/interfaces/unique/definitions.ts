@@ -55,5 +55,6 @@ export default {
     collectionById: fun('Get collection by specified id', [collectionParam], 'Option<UpDataStructsCollection>'),
     collectionStats: fun('Get collection stats', [], 'UpDataStructsCollectionStats'),
     allowed: fun('Check if user is allowed to use collection', [collectionParam, crossAccountParam()], 'bool'),
+    effectiveCollectionLimits: fun('Get effective collection limits', [collectionParam], 'Option<UpDataStructsCollectionLimits>'),
   },
 };
