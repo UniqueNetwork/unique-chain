@@ -400,13 +400,12 @@ describe('Collection zero limits (ReFungible)', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       
-      {
+      { // Check that limits is undefined
         const collection = await api.rpc.unique.collectionById(collectionId);
         expect(collection.isSome).to.be.true;
         const limits = collection.unwrap().limits;
         expect(limits).to.be.any;
         
-        // Check that limits is undefined
         expect(limits.accountTokenOwnershipLimit.toHuman()).to.be.null;
         expect(limits.sponsoredDataSize.toHuman()).to.be.null;
         expect(limits.sponsoredDataRateLimit.toHuman()).to.be.null;
@@ -418,12 +417,12 @@ describe('Collection zero limits (ReFungible)', () => {
         expect(limits.transfersEnabled.toHuman()).to.be.null;
       }
   
-      {
+      { // Check that limits is undefined for non-existent collection
         const limits = await api.rpc.unique.effectiveCollectionLimits(11111);
         expect(limits.toHuman()).to.be.null;
       }
   
-      {
+      { // Check that default values defined for collection limits
         const limitsOpt = await api.rpc.unique.effectiveCollectionLimits(collectionId);
         expect(limitsOpt.isNone).to.be.false;
         const limits = limitsOpt.unwrap();
@@ -437,6 +436,29 @@ describe('Collection zero limits (ReFungible)', () => {
         expect(limits.ownerCanTransfer.toHuman()).to.be.true;
         expect(limits.ownerCanDestroy.toHuman()).to.be.true;
         expect(limits.transfersEnabled.toHuman()).to.be.true;
+      }
+
+      { //Check the values for collection limits
+        await setCollectionLimitsExpectSuccess(alice, collectionId, {
+          accountTokenOwnershipLimit: 99_999,
+          sponsoredDataSize: 1024,
+          tokenLimit: 123,
+          transfersEnabled: false,
+        });
+
+        const limitsOpt = await api.rpc.unique.effectiveCollectionLimits(collectionId);
+        expect(limitsOpt.isNone).to.be.false;
+        const limits = limitsOpt.unwrap();
+  
+        expect(limits.accountTokenOwnershipLimit.toHuman()).to.be.eq('99,999');
+        expect(limits.sponsoredDataSize.toHuman()).to.be.eq('1,024');
+        expect(limits.sponsoredDataRateLimit.toHuman()).to.be.eq('SponsoringDisabled');
+        expect(limits.tokenLimit.toHuman()).to.be.eq('123');
+        expect(limits.sponsorTransferTimeout.toHuman()).to.be.eq('5');
+        expect(limits.sponsorApproveTimeout.toHuman()).to.be.eq('5');
+        expect(limits.ownerCanTransfer.toHuman()).to.be.true;
+        expect(limits.ownerCanDestroy.toHuman()).to.be.true;
+        expect(limits.transfersEnabled.toHuman()).to.be.false;
       }
     });
   });
