@@ -14,13 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+extern crate alloc;
 use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
 };
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
 use frame_support::BoundedVec;
-use up_data_structs::TokenId;
+use up_data_structs::{TokenId, SchemaVersion};
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_core::{H160, U256};
 use sp_std::{vec::Vec, vec};
@@ -34,6 +35,10 @@ use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
 	SelfWeightOf, weights::WeightInfo,
 };
+
+fn error_unsupported_shema_version() -> Error {
+	alloc::format!("Unsupported shema version! Support only {:?}", SchemaVersion::ImageURL).as_str().into()
+}
 
 #[derive(ToLog)]
 pub enum ERC721Events {
@@ -72,25 +77,37 @@ pub enum ERC721MintableEvents {
 #[solidity_interface(name = "ERC721Metadata")]
 impl<T: Config> NonfungibleHandle<T> {
 	fn name(&self) -> Result<string> {
-		Ok(decode_utf16(self.name.iter().copied())
-			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-			.collect::<string>())
+		if let SchemaVersion::ImageURL = self.schema_version {
+			Ok(decode_utf16(self.name.iter().copied())
+				.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
+				.collect::<string>())
+        } else {
+            Err(error_unsupported_shema_version())
+        }
 	}
 	fn symbol(&self) -> Result<string> {
-		Ok(string::from_utf8_lossy(&self.token_prefix).into())
+		if let SchemaVersion::ImageURL = self.schema_version {
+			Ok(string::from_utf8_lossy(&self.token_prefix).into())
+        } else {
+            Err(error_unsupported_shema_version())
+        }
 	}
 
 	/// Returns token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
-		self.consume_store_reads(1)?;
-		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
-		Ok(string::from_utf8_lossy(
-			&<TokenData<T>>::get((self.id, token_id))
-				.ok_or("token not found")?
-				.const_data,
-		)
-		.into())
+		if let SchemaVersion::ImageURL = self.schema_version {
+			self.consume_store_reads(1)?;
+			let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+			Ok(string::from_utf8_lossy(
+				&<TokenData<T>>::get((self.id, token_id))
+					.ok_or("token not found")?
+					.const_data,
+			)
+			.into())
+        } else {
+            Err(error_unsupported_shema_version())
+        }
 	}
 }
 
@@ -270,30 +287,34 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_id: uint256,
 		token_uri: string,
 	) -> Result<bool> {
-		let caller = T::CrossAccountId::from_eth(caller);
-		let to = T::CrossAccountId::from_eth(to);
-		let token_id: u32 = token_id.try_into().map_err(|_| "amount overflow")?;
-		if <TokensMinted<T>>::get(self.id)
-			.checked_add(1)
-			.ok_or("item id overflow")?
-			!= token_id
-		{
-			return Err("item id should be next".into());
-		}
-
-		<Pallet<T>>::create_item(
-			self,
-			&caller,
-			CreateItemData::<T> {
-				const_data: Vec::<u8>::from(token_uri)
-					.try_into()
-					.map_err(|_| "token uri is too long")?,
-				variable_data: BoundedVec::default(),
-				owner: to,
-			},
-		)
-		.map_err(dispatch_to_evm::<T>)?;
-		Ok(true)
+		if let SchemaVersion::ImageURL = self.schema_version {
+			let caller = T::CrossAccountId::from_eth(caller);
+			let to = T::CrossAccountId::from_eth(to);
+			let token_id: u32 = token_id.try_into().map_err(|_| "amount overflow")?;
+			if <TokensMinted<T>>::get(self.id)
+				.checked_add(1)
+				.ok_or("item id overflow")?
+				!= token_id
+			{
+				return Err("item id should be next".into());
+			}
+	
+			<Pallet<T>>::create_item(
+				self,
+				&caller,
+				CreateItemData::<T> {
+					const_data: Vec::<u8>::from(token_uri)
+						.try_into()
+						.map_err(|_| "token uri is too long")?,
+					variable_data: BoundedVec::default(),
+					owner: to,
+				},
+			)
+			.map_err(dispatch_to_evm::<T>)?;
+			Ok(true)
+        } else {
+            Err(error_unsupported_shema_version())
+        }
 	}
 
 	/// Not implemented
@@ -411,31 +432,35 @@ impl<T: Config> NonfungibleHandle<T> {
 		to: address,
 		tokens: Vec<(uint256, string)>,
 	) -> Result<bool> {
-		let caller = T::CrossAccountId::from_eth(caller);
-		let to = T::CrossAccountId::from_eth(to);
-		let mut expected_index = <TokensMinted<T>>::get(self.id)
-			.checked_add(1)
-			.ok_or("item id overflow")?;
-
-		let mut data = Vec::with_capacity(tokens.len());
-		for (id, token_uri) in tokens {
-			let id: u32 = id.try_into().map_err(|_| "token id overflow")?;
-			if id != expected_index {
-				panic!("item id should be next ({}) but got {}", expected_index, id);
+		if let SchemaVersion::ImageURL = self.schema_version {
+			let caller = T::CrossAccountId::from_eth(caller);
+			let to = T::CrossAccountId::from_eth(to);
+			let mut expected_index = <TokensMinted<T>>::get(self.id)
+				.checked_add(1)
+				.ok_or("item id overflow")?;
+	
+			let mut data = Vec::with_capacity(tokens.len());
+			for (id, token_uri) in tokens {
+				let id: u32 = id.try_into().map_err(|_| "token id overflow")?;
+				if id != expected_index {
+					panic!("item id should be next ({}) but got {}", expected_index, id);
+				}
+				expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
+	
+				data.push(CreateItemData::<T> {
+					const_data: Vec::<u8>::from(token_uri)
+						.try_into()
+						.map_err(|_| "token uri is too long")?,
+					variable_data: vec![].try_into().unwrap(),
+					owner: to.clone(),
+				});
 			}
-			expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
-
-			data.push(CreateItemData::<T> {
-				const_data: Vec::<u8>::from(token_uri)
-					.try_into()
-					.map_err(|_| "token uri is too long")?,
-				variable_data: vec![].try_into().unwrap(),
-				owner: to.clone(),
-			});
-		}
-
-		<Pallet<T>>::create_multiple_items(self, &caller, data).map_err(dispatch_to_evm::<T>)?;
-		Ok(true)
+	
+			<Pallet<T>>::create_multiple_items(self, &caller, data).map_err(dispatch_to_evm::<T>)?;
+			Ok(true)
+        } else {
+            Err(error_unsupported_shema_version())
+        }
 	}
 }
 
