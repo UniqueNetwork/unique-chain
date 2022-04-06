@@ -48,7 +48,9 @@ pub use pallet_transaction_payment::{
 };
 // A few exports that help ease life for downstream crates.
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_evm::{EnsureAddressTruncated, HashedAddressMapping, Runner};
+pub use pallet_evm::{
+	EnsureAddressTruncated, HashedAddressMapping, Runner, account::CrossAccountId as _,
+};
 pub use frame_support::{
 	construct_runtime, match_type,
 	dispatch::DispatchResult,
@@ -117,17 +119,32 @@ use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
 pub const RUNTIME_NAME: &str = "opal";
 pub const TOKEN_SYMBOL: &str = "OPL";
 
-type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
+type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 
 impl RuntimeInstance for Runtime {
 	type CrossAccountId = self::CrossAccountId;
-
 	type TransactionConverter = self::TransactionConverter;
 
 	fn get_transaction_converter() -> TransactionConverter {
 		TransactionConverter
 	}
 }
+
+/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
+/// never know...
+pub type AccountIndex = u32;
+
+/// Balance of an account.
+pub type Balance = u128;
+
+/// Index of a transaction in the chain.
+pub type Index = u32;
+
+/// A hash of some data used by the chain.
+pub type Hash = sp_core::H256;
+
+/// Digest item type.
+pub type DigestItem = generic::DigestItem;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -256,6 +273,12 @@ impl GasWeightMapping for FixedGasWeightMapping {
 	fn weight_to_gas(weight: Weight) -> u64 {
 		weight / WeightPerGas::get()
 	}
+}
+
+impl pallet_evm::account::Config for Runtime {
+	type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Self>;
+	type EvmAddressMapping = pallet_evm::HashedAddressMapping<Self::Hashing>;
+	type EvmBackwardsAddressMapping = fp_evm_mapping::MapBackwardsAddressTruncated;
 }
 
 impl pallet_evm::Config for Runtime {
@@ -845,10 +868,6 @@ parameter_types! {
 
 impl pallet_common::Config for Runtime {
 	type Event = Event;
-	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
-	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type CrossAccountId = pallet_common::account::BasicCrossAccountId<Self>;
-
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
@@ -912,8 +931,6 @@ type SponsorshipHandler = (
 impl pallet_evm_transaction_payment::Config for Runtime {
 	type EvmSponsorshipHandler = EvmSponsorshipHandler;
 	type Currency = Balances;
-	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 }
 
 impl pallet_charge_transaction::Config for Runtime {

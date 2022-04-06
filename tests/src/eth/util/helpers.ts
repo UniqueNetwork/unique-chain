@@ -242,6 +242,12 @@ export async function deployCollector(web3: Web3, deployer: string) {
   return collector;
 }
 
+/** 
+ * pallet evm_contract_helpers
+ * @param web3 
+ * @param caller - eth address
+ * @returns 
+ */
 export function contractHelpers(web3: Web3, caller: string) {
   return new web3.eth.Contract(contractHelpersAbi as any, '0x842899ECF380553E8a4de75bF534cdf6fBF64049', {from: caller, ...GAS_ARGS});
 }
