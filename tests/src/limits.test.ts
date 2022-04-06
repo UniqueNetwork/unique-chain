@@ -397,7 +397,7 @@ describe('Collection zero limits (ReFungible)', () => {
   });
 });
 
-describe.only('Effective collection limits', () => {
+describe('Effective collection limits', () => {
   it('Test1', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
