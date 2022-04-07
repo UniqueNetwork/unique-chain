@@ -17,6 +17,7 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.20" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.20" }
 pallet-common = { default-features = false, path = '../common' }
+pallet-structure = { default-features = false, path = '../structure' }
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 pallet-evm-coder-substrate = { default-features = false, path = '../evm-coder-substrate' }
@@ -36,6 +37,7 @@ std = [
     "sp-std/std",
     "up-data-structs/std",
     "pallet-common/std",
+    "pallet-structure/std",
     "evm-coder/std",
     "ethereum/std",
     "pallet-evm-coder-substrate/std",
