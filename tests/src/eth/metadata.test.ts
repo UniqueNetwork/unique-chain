@@ -67,7 +67,7 @@ describe('Fungible metadata', () => {
   });
 });
 
-describe.only('Support ERC721Metadata', () => {
+describe('Support ERC721Metadata', () => {
   itWeb3('Check unsupport ERC721Metadata ShemaVersion::Unique', async ({web3, api}) => {
     const collectionId = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},

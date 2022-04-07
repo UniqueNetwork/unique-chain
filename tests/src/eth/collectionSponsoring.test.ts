@@ -1,19 +1,16 @@
 import privateKey from '../substrate/privateKey';
 import {addToAllowListExpectSuccess, confirmSponsorshipExpectSuccess, createCollectionExpectSuccess, enablePublicMintingExpectSuccess, setCollectionSponsorExpectSuccess} from '../util/helpers';
-import {itWeb3, transferBalanceToEth, subToEth, createEthAccount, collectionIdToAddress, GAS_ARGS, normalizeEvents} from './util/helpers';
+import {itWeb3, createEthAccount, collectionIdToAddress, GAS_ARGS, normalizeEvents} from './util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import {expect} from 'chai';
 
 describe('evm collection sponsoring', () => {
-  itWeb3('sponsors mint transactions', async ({api, web3}) => {
+  itWeb3('sponsors mint transactions', async ({web3}) => {
     const alice = privateKey('//Alice');
 
     const collection = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collection, alice.address);
     await confirmSponsorshipExpectSuccess(collection);
-
-    // Wouldn't be needed after CORE-300
-    await transferBalanceToEth(api, alice, subToEth(alice.address));
 
     const minter = createEthAccount(web3);
     expect(await web3.eth.getBalance(minter)).to.equal('0');
