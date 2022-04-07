@@ -72,6 +72,8 @@ describe.only('Support ERC721Metadata', () => {
     const collectionId = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
       shemaVersion: 'Unique',
+      name: 'some_name',
+      tokenPrefix: 'some_prefix',
     });
     const collection = await api.rpc.unique.collectionById(collectionId);
     expect(collection.isSome).to.be.true;
@@ -86,8 +88,8 @@ describe.only('Support ERC721Metadata', () => {
     const address = collectionIdToAddress(collectionId);
     const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
 
-    await expect(contract.methods.name().call()).to.be.rejectedWith('Unsupported shema version! Support only ImageURL');
-    await expect(contract.methods.symbol().call()).to.be.rejectedWith('Unsupported shema version! Support only ImageURL');
+    expect(await contract.methods.name().call()).to.be.eq('some_name');
+    expect(await contract.methods.symbol().call()).to.be.eq('some_prefix');
 
     const receiver = createEthAccount(web3);
     const nextTokenId = await contract.methods.nextTokenId().call();
@@ -131,28 +133,78 @@ describe.only('Support ERC721Metadata', () => {
     expect(await contract.methods.symbol().call()).to.be.eq('some_prefix');
 
     const receiver = createEthAccount(web3);
-    const nextTokenId = await contract.methods.nextTokenId().call();
-    expect(nextTokenId).to.be.equal('1');
-    const result = await contract.methods.mintWithTokenURI(
-      receiver,
-      nextTokenId,
-      'Test URI',
-    ).send({from: caller});
-    const events = normalizeEvents(result.events);
-
-    expect(events).to.be.deep.equal([
-      {
-        address,
-        event: 'Transfer',
-        args: {
-          from: '0x0000000000000000000000000000000000000000',
-          to: receiver,
-          tokenId: nextTokenId,
+    { // mintWithTokenURI
+      const nextTokenId = await contract.methods.nextTokenId().call();
+      expect(nextTokenId).to.be.equal('1');
+      const result = await contract.methods.mintWithTokenURI(
+        receiver,
+        nextTokenId,
+        'Test URI',
+      ).send({from: caller});
+      const events = normalizeEvents(result.events);
+  
+      expect(events).to.be.deep.equal([
+        {
+          address,
+          event: 'Transfer',
+          args: {
+            from: '0x0000000000000000000000000000000000000000',
+            to: receiver,
+            tokenId: nextTokenId,
+          },
         },
-      },
-    ]);
+      ]);
+  
+      expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+    }
 
-    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+    { // mintBulkWithTokenURI
+      const nextTokenId = await contract.methods.nextTokenId().call();
+      expect(nextTokenId).to.be.equal('2');
+      const result = await contract.methods.mintBulkWithTokenURI(
+        receiver,
+        [
+          [nextTokenId, 'Test URI 0'],
+          [+nextTokenId + 1, 'Test URI 1'],
+          [+nextTokenId + 2, 'Test URI 2'],
+        ],
+      ).send({from: caller});
+      const events = normalizeEvents(result.events);
+
+      expect(events).to.be.deep.equal([
+        {
+          address,
+          event: 'Transfer',
+          args: {
+            from: '0x0000000000000000000000000000000000000000',
+            to: receiver,
+            tokenId: nextTokenId,
+          },
+        },
+        {
+          address,
+          event: 'Transfer',
+          args: {
+            from: '0x0000000000000000000000000000000000000000',
+            to: receiver,
+            tokenId: String(+nextTokenId + 1),
+          },
+        },
+        {
+          address,
+          event: 'Transfer',
+          args: {
+            from: '0x0000000000000000000000000000000000000000',
+            to: receiver,
+            tokenId: String(+nextTokenId + 2),
+          },
+        },
+      ]);
+
+      expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI 0');
+      expect(await contract.methods.tokenURI(+nextTokenId + 1).call()).to.be.equal('Test URI 1');
+      expect(await contract.methods.tokenURI(+nextTokenId + 2).call()).to.be.equal('Test URI 2');
+    }
   });
 });
 

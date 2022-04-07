@@ -77,20 +77,14 @@ pub enum ERC721MintableEvents {
 #[solidity_interface(name = "ERC721Metadata")]
 impl<T: Config> NonfungibleHandle<T> {
 	fn name(&self) -> Result<string> {
-		if let SchemaVersion::ImageURL = self.schema_version {
-			Ok(decode_utf16(self.name.iter().copied())
-				.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-				.collect::<string>())
-        } else {
-            Err(error_unsupported_shema_version())
-        }
+		Ok(decode_utf16(self.name.iter().copied())
+			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
+			.collect::<string>())
+
 	}
+	
 	fn symbol(&self) -> Result<string> {
-		if let SchemaVersion::ImageURL = self.schema_version {
-			Ok(string::from_utf8_lossy(&self.token_prefix).into())
-        } else {
-            Err(error_unsupported_shema_version())
-        }
+		Ok(string::from_utf8_lossy(&self.token_prefix).into())
 	}
 
 	/// Returns token's const_metadata
