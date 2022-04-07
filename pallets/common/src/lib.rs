@@ -33,7 +33,7 @@ use up_data_structs::{
 	COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, TokenId, CollectionStats, MAX_TOKEN_OWNERSHIP,
 	CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
-	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData, SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField,
+	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData, SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField, PhantomType,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -415,8 +415,8 @@ pub mod pallet {
 
 	/// Not used by code, exists only to provide some types to metadata
 	#[pallet::storage]
-	pub type DummyStorageValue<T> =
-		StorageValue<Value = (CollectionStats, CollectionId, TokenId), QueryKind = OptionQuery>;
+	pub type DummyStorageValue<T: Config> =
+		StorageValue<Value = (CollectionStats, CollectionId, TokenId, PhantomType<RpcCollection<T::AccountId>>), QueryKind = OptionQuery>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {

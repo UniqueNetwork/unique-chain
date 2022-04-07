@@ -52,7 +52,7 @@ export default {
     constMetadata: fun('Get token constant metadata', [collectionParam, tokenParam], 'Vec<u8>'),
     variableMetadata: fun('Get token variable metadata', [collectionParam, tokenParam], 'Vec<u8>'),
     tokenExists: fun('Check if token exists', [collectionParam, tokenParam], 'bool'),
-    collectionById: fun('Get collection by specified id', [collectionParam], 'Option<UpDataStructsCollection>'),
+    collectionById: fun('Get collection by specified id', [collectionParam], 'Option<UpDataStructsRpcCollection>'),
     collectionStats: fun('Get collection stats', [], 'UpDataStructsCollectionStats'),
     allowed: fun('Check if user is allowed to use collection', [collectionParam, crossAccountParam()], 'bool'),
     nextSponsored: fun('Get number of blocks when sponsored transaction is available', [collectionParam, crossAccountParam(), tokenParam], 'Option<u64>'),

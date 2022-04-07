@@ -583,3 +583,24 @@ pub struct CollectionStats {
 	pub destroyed: u32,
 	pub alive: u32,
 }
+
+#[derive(Encode, Decode, PartialEq, Clone, Debug)]
+pub struct PhantomType<T>(core::marker::PhantomData<T>);
+
+impl<T: TypeInfo + 'static> TypeInfo for PhantomType<T> {
+	type Identity = PhantomType<T>;
+
+	fn type_info() -> scale_info::Type {
+		use scale_info::{Type, Path, build::{FieldsBuilder, UnnamedFields}};
+		Type::builder()
+			.path(Path::new("up_data_structs", "PhantomType"))
+			.composite(<FieldsBuilder<UnnamedFields>>::default().field(|b|
+				b.ty::<[T ;0]>()
+			))
+	}
+}
+impl<T> MaxEncodedLen for PhantomType<T> {
+	fn max_encoded_len() -> usize {
+		0
+	}
+}
