@@ -84,6 +84,7 @@ std = [
     'serde',
     'pallet-inflation/std',
     'pallet-common/std',
+    'pallet-structure/std',
     'pallet-fungible/std',
     'pallet-refungible/std',
     'pallet-nonfungible/std',
@@ -398,6 +399,7 @@ up-rpc = { path = "../../primitives/rpc", default-features = false }
 pallet-inflation = { path = '../../pallets/inflation', default-features = false }
 up-data-structs = { path = '../../primitives/data-structs', default-features = false }
 pallet-common = { default-features = false, path = "../../pallets/common" }
+pallet-structure = { default-features = false, path = "../../pallets/structure" }
 pallet-fungible = { default-features = false, path = "../../pallets/fungible" }
 pallet-refungible = { default-features = false, path = "../../pallets/refungible" }
 pallet-nonfungible = { default-features = false, path = "../../pallets/nonfungible" }

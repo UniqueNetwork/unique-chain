@@ -1,0 +1,29 @@
+[package]
+name = "pallet-structure"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
+frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
+sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.17' }
+pallet-common = { path = "../common", default-features = false }
+parity-scale-codec = { version = "2.0.0", default-features = false, features = [
+	"derive",
+] }
+scale-info = { version = "1.0.0", default-features = false, features = [
+	"derive",
+] }
+up-data-structs = { path = "../../primitives/data-structs", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+	"frame-support/std",
+	"frame-system/std",
+	"sp-std/std",
+	"pallet-common/std",
+	"scale-info/std",
+	"parity-scale-codec/std",
+	"up-data-structs/std",
+]
