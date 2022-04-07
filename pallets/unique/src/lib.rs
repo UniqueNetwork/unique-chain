@@ -43,7 +43,7 @@ use up_data_structs::{
 	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
 	AccessMode, CreateItemData, CollectionLimits, CollectionId, CollectionMode, TokenId,
 	SchemaVersion, SponsorshipState, MetaUpdatePermission, CreateCollectionData, CustomDataLimit,
-	CreateItemExData, budget,
+	CreateItemExData, budget, CollectionField,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
@@ -1004,16 +1004,16 @@ decl_module! {
 			schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_owner_or_admin(&sender)?;
+			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 
-			target_collection.offchain_schema = schema;
+			// =========
+
+			<PalletCommon<T>>::set_field(&collection, &sender, CollectionField::OffchainSchema, schema.into_inner())?;
 
 			<Pallet<T>>::deposit_event(Event::<T>::OffchainSchemaSet(
 				collection_id
 			));
-
-			target_collection.save()
+			Ok(())
 		}
 
 		/// Set const on-chain data schema.
@@ -1036,16 +1036,16 @@ decl_module! {
 			schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_owner_or_admin(&sender)?;
+			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 
-			target_collection.const_on_chain_schema = schema;
+			// =========
+
+			<PalletCommon<T>>::set_field(&collection, &sender, CollectionField::ConstOnChainSchema, schema.into_inner())?;
 
 			<Pallet<T>>::deposit_event(Event::<T>::ConstOnChainSchemaSet(
 				collection_id
 			));
-
-			target_collection.save()
+			Ok(())
 		}
 
 		/// Set variable on-chain data schema.
@@ -1068,16 +1068,16 @@ decl_module! {
 			schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_owner_or_admin(&sender)?;
+			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 
-			target_collection.variable_on_chain_schema = schema;
+			// =========
+
+			<PalletCommon<T>>::set_field(&collection, &sender, CollectionField::VariableOnChainSchema, schema.into_inner())?;
 
 			<Pallet<T>>::deposit_event(Event::<T>::VariableOnChainSchemaSet(
 				collection_id
 			));
-
-			target_collection.save()
+			Ok(())
 		}
 
 		#[weight = <SelfWeightOf<T>>::set_collection_limits()]

@@ -78,6 +78,9 @@ pub const OFFCHAIN_SCHEMA_LIMIT: u32 = 8192;
 pub const VARIABLE_ON_CHAIN_SCHEMA_LIMIT: u32 = 8192;
 pub const CONST_ON_CHAIN_SCHEMA_LIMIT: u32 = 32768;
 
+pub const COLLECTION_FIELD_LIMIT: u32 = CONST_ON_CHAIN_SCHEMA_LIMIT;
+// u32::max is not const: OFFCHAIN_SCHEMA_LIMIT.max(VARIABLE_ON_CHAIN_SCHEMA_LIMIT).max(CONST_ON_CHAIN_SCHEMA_LIMIT);
+
 pub const MAX_COLLECTION_NAME_LENGTH: u32 = 64;
 pub const MAX_COLLECTION_DESCRIPTION_LENGTH: u32 = 256;
 pub const MAX_TOKEN_PREFIX_LENGTH: u32 = 16;
@@ -248,22 +251,21 @@ impl<T> Default for SponsorshipState<T> {
 	}
 }
 
+/// Used in storage
 #[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct Collection<AccountId> {
 	pub owner: AccountId,
 	pub mode: CollectionMode,
 	pub access: AccessMode,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	pub name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	pub description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	pub token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
 	pub mint_mode: bool,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
+
+	#[version(..2)]
 	pub offchain_schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
+
 	pub schema_version: SchemaVersion,
 	pub sponsorship: SponsorshipState<AccountId>,
 
@@ -272,11 +274,40 @@ pub struct Collection<AccountId> {
 	#[version(2.., upper(limits.into()))]
 	pub limits: CollectionLimitsVersion2,
 
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
+	#[version(..2)]
 	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
+	#[version(..2)]
 	pub const_on_chain_schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>,
+
 	pub meta_update_permission: MetaUpdatePermission,
+}
+
+/// Used in RPC calls
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub struct RpcCollection<AccountId> {
+	pub owner: AccountId,
+	pub mode: CollectionMode,
+	pub access: AccessMode,
+	pub name: Vec<u16>,
+	pub description: Vec<u16>,
+	pub token_prefix: Vec<u8>,
+	pub mint_mode: bool,
+	pub offchain_schema: Vec<u8>,
+	pub schema_version: SchemaVersion,
+	pub sponsorship: SponsorshipState<AccountId>,
+	pub limits: CollectionLimits,
+	pub variable_on_chain_schema: Vec<u8>,
+	pub const_on_chain_schema: Vec<u8>,
+	pub meta_update_permission: MetaUpdatePermission,
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub enum CollectionField {
+	VariableOnChainSchema,
+	ConstOnChainSchema,
+	OffchainSchema,
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Debug, Derivative, MaxEncodedLen)]

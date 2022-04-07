@@ -29,11 +29,11 @@ use frame_support::{
 };
 use pallet_evm::GasWeightMapping;
 use up_data_structs::{
-	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, MAX_TOKEN_PREFIX_LENGTH,
+	COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, CollectionId, CreateItemData, MAX_TOKEN_PREFIX_LENGTH,
 	COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, TokenId, CollectionStats, MAX_TOKEN_OWNERSHIP,
 	CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
-	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData, SponsoringRateLimit, budget::Budget,
+	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData, SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -352,6 +352,9 @@ pub mod pallet {
 		OnlyOwnerAllowedToNest,
 		/// Only tokens from specific collections may nest tokens under this
 		SourceCollectionIsNotAllowedToNest,
+
+		/// Tried to store more data than allowed in collection field
+		CollectionFieldSizeExceeded,
 	}
 
 	#[pallet::storage]
@@ -367,6 +370,17 @@ pub mod pallet {
 		Key = CollectionId,
 		Value = Collection<<T as frame_system::Config>::AccountId>,
 		QueryKind = OptionQuery,
+	>;
+
+	/// Large variable-size collection fields are extracted here
+	#[pallet::storage]
+	pub type CollectionData<T> = StorageNMap<
+		Key = (
+			Key<Twox64Concat, CollectionId>,
+			Key<Twox64Concat, CollectionField>,
+		),
+		Value = BoundedVec<u8, ConstU32<COLLECTION_FIELD_LIMIT>>,
+		QueryKind = ValueQuery,
 	>;
 
 	#[pallet::storage]
@@ -409,7 +423,26 @@ pub mod pallet {
 		fn on_runtime_upgrade() -> Weight {
 			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
 				use up_data_structs::{CollectionVersion1, CollectionVersion2};
-				<CollectionById<T>>::translate_values::<CollectionVersion1<T::AccountId>, _>(|v| {
+				<CollectionById<T>>::translate::<CollectionVersion1<T::AccountId>, _>(|id, v| {
+					Self::set_field_raw(
+						id,
+						CollectionField::OffchainSchema,
+						v.offchain_schema.clone().into_inner(),
+					)
+					.expect("data has lower bounds than field");
+					Self::set_field_raw(
+						id,
+						CollectionField::VariableOnChainSchema,
+						v.variable_on_chain_schema.clone().into_inner(),
+					)
+					.expect("data has lower bounds than field");
+					Self::set_field_raw(
+						id,
+						CollectionField::ConstOnChainSchema,
+						v.const_on_chain_schema.clone().into_inner(),
+					)
+					.expect("data has lower bounds than field");
+
 					Some(CollectionVersion2::from(v))
 				});
 			}
@@ -483,6 +516,50 @@ impl<T: Config> Pallet<T> {
 
 		Some(effective_limits)
 	}
+
+	pub fn rpc_collection(collection: CollectionId) -> Option<RpcCollection<T::AccountId>> {
+		let Collection {
+			name,
+			description,
+			owner,
+			mode,
+			access,
+			token_prefix,
+			mint_mode,
+			schema_version,
+			sponsorship,
+			limits,
+			meta_update_permission,
+		} = <CollectionById<T>>::get(collection)?;
+		Some(RpcCollection {
+			name: name.into_inner(),
+			description: description.into_inner(),
+			owner,
+			mode,
+			access,
+			token_prefix: token_prefix.into_inner(),
+			mint_mode,
+			schema_version,
+			sponsorship,
+			limits,
+			meta_update_permission,
+			offchain_schema: <CollectionData<T>>::get((
+				collection,
+				CollectionField::OffchainSchema,
+			))
+			.into_inner(),
+			const_on_chain_schema: <CollectionData<T>>::get((
+				collection,
+				CollectionField::ConstOnChainSchema,
+			))
+			.into_inner(),
+			variable_on_chain_schema: <CollectionData<T>>::get((
+				collection,
+				CollectionField::VariableOnChainSchema,
+			))
+			.into_inner(),
+		})
+	}
 }
 
 impl<T: Config> Pallet<T> {
@@ -520,14 +597,11 @@ impl<T: Config> Pallet<T> {
 			access: data.access.unwrap_or_default(),
 			description: data.description,
 			token_prefix: data.token_prefix,
-			offchain_schema: data.offchain_schema,
 			schema_version: data.schema_version.unwrap_or_default(),
 			sponsorship: data
 				.pending_sponsor
 				.map(SponsorshipState::Unconfirmed)
 				.unwrap_or_default(),
-			variable_on_chain_schema: data.variable_on_chain_schema,
-			const_on_chain_schema: data.const_on_chain_schema,
 			limits: data
 				.limits
 				.map(|limits| Self::clamp_limits(data.mode.clone(), &Default::default(), limits))
@@ -557,6 +631,24 @@ impl<T: Config> Pallet<T> {
 		<CreatedCollectionCount<T>>::put(created_count);
 		<Pallet<T>>::deposit_event(Event::CollectionCreated(id, data.mode.id(), owner.clone()));
 		<CollectionById<T>>::insert(id, collection);
+		Self::set_field_raw(
+			id,
+			CollectionField::OffchainSchema,
+			data.offchain_schema.into_inner(),
+		)
+		.expect("data has lower bounds than field");
+		Self::set_field_raw(
+			id,
+			CollectionField::VariableOnChainSchema,
+			data.variable_on_chain_schema.into_inner(),
+		)
+		.expect("data has lower bounds than field");
+		Self::set_field_raw(
+			id,
+			CollectionField::ConstOnChainSchema,
+			data.const_on_chain_schema.into_inner(),
+		)
+		.expect("data has lower bounds than field");
 		Ok(id)
 	}
 
@@ -579,12 +671,42 @@ impl<T: Config> Pallet<T> {
 
 		<DestroyedCollectionCount<T>>::put(destroyed_collections);
 		<CollectionById<T>>::remove(collection.id);
+		<CollectionData<T>>::remove_prefix((collection.id,), None);
 		<AdminAmount<T>>::remove(collection.id);
 		<IsAdmin<T>>::remove_prefix((collection.id,), None);
 		<Allowlist<T>>::remove_prefix((collection.id,), None);
 
 		<Pallet<T>>::deposit_event(Event::CollectionDestroyed(collection.id));
 		Ok(())
+	}
+
+	fn set_field_raw(
+		collection_id: CollectionId,
+		field: CollectionField,
+		value: Vec<u8>,
+	) -> DispatchResult {
+		if !value.is_empty() {
+			<CollectionData<T>>::insert(
+				(collection_id, field),
+				BoundedVec::try_from(value).map_err(|_| <Error<T>>::CollectionFieldSizeExceeded)?,
+			)
+		} else {
+			<CollectionData<T>>::remove((collection_id, field));
+		}
+		Ok(())
+	}
+
+	pub fn set_field(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		field: CollectionField,
+		value: Vec<u8>,
+	) -> DispatchResult {
+		collection.check_is_owner_or_admin(sender)?;
+
+		// =========
+
+		Self::set_field_raw(collection.id, field, value)
 	}
 
 	pub fn toggle_allowlist(

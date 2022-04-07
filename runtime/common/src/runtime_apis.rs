@@ -58,8 +58,8 @@ macro_rules! impl_common_runtime_apis {
                 fn last_token_id(collection: CollectionId) -> Result<TokenId, DispatchError> {
                     dispatch_unique_runtime!(collection.last_token_id())
                 }
-                fn collection_by_id(collection: CollectionId) -> Result<Option<Collection<AccountId>>, DispatchError> {
-                    Ok(<pallet_common::CollectionById<Runtime>>::get(collection))
+                fn collection_by_id(collection: CollectionId) -> Result<Option<RpcCollection<AccountId>>, DispatchError> {
+                    Ok(<pallet_common::Pallet<Runtime>>::rpc_collection(collection))
                 }
                 fn collection_stats() -> Result<CollectionStats, DispatchError> {
                     Ok(<pallet_common::Pallet<Runtime>>::collection_stats())
