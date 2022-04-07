@@ -17,6 +17,7 @@ pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.20" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.20" }
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.20" }
+up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
 
 [dependencies.codec]
 default-features = false

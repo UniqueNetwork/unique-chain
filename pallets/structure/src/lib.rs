@@ -6,7 +6,13 @@ use frame_support::dispatch::DispatchError;
 use frame_support::fail;
 pub use pallet::*;
 use pallet_common::{dispatch::CollectionDispatch, CollectionHandle};
-use up_data_structs::{CollectionId, TokenId, mapping::TokenAddressMapping};
+use up_data_structs::{CollectionId, TokenId, mapping::TokenAddressMapping, budget::Budget};
+
+#[cfg(feature = "runtime-benchmarks")]
+pub mod benchmarking;
+pub mod weights;
+
+pub type SelfWeightOf<T> = <T as crate::Config>::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -35,6 +41,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_common::Config {
+		type WeightInfo: weights::WeightInfo;
 		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
 		type Call: Parameter + UnfilteredDispatchable<Origin = Self::Origin> + GetDispatchInfo;
 	}
@@ -127,10 +134,10 @@ impl<T: Config> Pallet<T> {
 	pub fn find_topmost_owner(
 		collection: CollectionId,
 		token: TokenId,
-		max_depth: u32,
+		budget: &dyn Budget,
 	) -> Result<T::CrossAccountId, DispatchError> {
 		let owner = Self::parent_chain(collection, token)
-			.take(max_depth as usize)
+			.take_while(|_| budget.consume())
 			.find(|p| matches!(p, Ok(Parent::Normal(_) | Parent::TokenNotFound)))
 			.ok_or(<Error<T>>::DepthLimit)??;
 
@@ -145,7 +152,7 @@ impl<T: Config> Pallet<T> {
 		user: T::CrossAccountId,
 		collection: CollectionId,
 		token: TokenId,
-		max_depth: u32,
+		budget: &dyn Budget,
 	) -> Result<bool, DispatchError> {
 		let target_parent = match T::CrossTokenAddressMapping::address_to_token(&user) {
 			Some((collection, token)) => Parent::Token(collection, token),
@@ -153,7 +160,7 @@ impl<T: Config> Pallet<T> {
 		};
 
 		Ok(Self::parent_chain(collection, token)
-			.take(max_depth as usize)
+			.take_while(|_| budget.consume())
 			.any(|parent| Ok(&target_parent) == parent.as_ref()))
 	}
 }

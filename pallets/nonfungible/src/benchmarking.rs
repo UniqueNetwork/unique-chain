@@ -20,7 +20,7 @@ use crate::{Pallet, Config, NonfungibleHandle};
 use sp_std::prelude::*;
 use pallet_common::benchmarking::{create_collection_raw, create_data, create_var_data};
 use frame_benchmarking::{benchmarks, account};
-use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, CUSTOM_DATA_LIMIT};
+use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, CUSTOM_DATA_LIMIT, budget::Unlimited};
 use pallet_common::bench_init;
 use core::convert::TryInto;
 
@@ -115,7 +115,7 @@ benchmarks! {
 		};
 		let item = create_max_item(&collection, &owner, sender.clone())?;
 		<Pallet<T>>::set_allowance(&collection, &sender, item, Some(&spender))?;
-	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, item)?}
+	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, item, &Unlimited)?}
 
 	burn_from {
 		bench_init!{
@@ -124,7 +124,7 @@ benchmarks! {
 		};
 		let item = create_max_item(&collection, &owner, sender.clone())?;
 		<Pallet<T>>::set_allowance(&collection, &sender, item, Some(&burner))?;
-	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, item)?}
+	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, item, &Unlimited)?}
 
 	set_variable_metadata {
 		let b in 0..CUSTOM_DATA_LIMIT;

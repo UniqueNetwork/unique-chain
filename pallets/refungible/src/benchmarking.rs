@@ -20,7 +20,7 @@ use crate::{Pallet, Config, RefungibleHandle};
 use sp_std::prelude::*;
 use pallet_common::benchmarking::{create_collection_raw, create_data, create_var_data};
 use frame_benchmarking::{benchmarks, account};
-use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, CUSTOM_DATA_LIMIT};
+use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, CUSTOM_DATA_LIMIT, budget::Unlimited};
 use pallet_common::bench_init;
 use core::convert::TryInto;
 use core::iter::IntoIterator;
@@ -165,7 +165,7 @@ benchmarks! {
 		};
 		let item = create_max_item(&collection, &owner, [(sender.clone(), 200), (receiver.clone(), 200)])?;
 		<Pallet<T>>::set_allowance(&collection, &sender, &spender, item, 100)?;
-	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, item, 100)?}
+	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, item, 100, &Unlimited)?}
 	// Target account is created
 	transfer_from_creating {
 		bench_init!{
@@ -174,7 +174,7 @@ benchmarks! {
 		};
 		let item = create_max_item(&collection, &owner, [(sender.clone(), 200)])?;
 		<Pallet<T>>::set_allowance(&collection, &sender, &spender, item, 100)?;
-	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, item, 100)?}
+	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, item, 100, &Unlimited)?}
 	// Source account is destroyed
 	transfer_from_removing {
 		bench_init!{
@@ -183,7 +183,7 @@ benchmarks! {
 		};
 		let item = create_max_item(&collection, &owner, [(sender.clone(), 200), (receiver.clone(), 200)])?;
 		<Pallet<T>>::set_allowance(&collection, &sender, &spender, item, 200)?;
-	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, item, 200)?}
+	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, item, 200, &Unlimited)?}
 	// Source account destroyed, target created
 	transfer_from_creating_removing {
 		bench_init!{
@@ -192,7 +192,7 @@ benchmarks! {
 		};
 		let item = create_max_item(&collection, &owner, [(sender.clone(), 200)])?;
 		<Pallet<T>>::set_allowance(&collection, &sender, &spender, item, 200)?;
-	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, item, 200)?}
+	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, item, 200, &Unlimited)?}
 
 	// Both source account and token is destroyed
 	burn_from {
@@ -202,7 +202,7 @@ benchmarks! {
 		};
 		let item = create_max_item(&collection, &owner, [(sender.clone(), 200)])?;
 		<Pallet<T>>::set_allowance(&collection, &sender, &burner, item, 200)?;
-	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, item, 200)?}
+	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, item, 200, &Unlimited)?}
 
 	set_variable_metadata {
 		let b in 0..CUSTOM_DATA_LIMIT;

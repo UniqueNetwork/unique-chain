@@ -43,7 +43,7 @@ use up_data_structs::{
 	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
 	AccessMode, CreateItemData, CollectionLimits, CollectionId, CollectionMode, TokenId,
 	SchemaVersion, SponsorshipState, MetaUpdatePermission, CreateCollectionData, CustomDataLimit,
-	CreateItemExData,
+	CreateItemExData, budget,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
@@ -807,8 +807,9 @@ decl_module! {
 		#[transactional]
 		pub fn burn_from(origin, collection_id: CollectionId, from: T::CrossAccountId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let budget = budget::Value::new(2);
 
-			dispatch_call::<T, _>(collection_id, |d| d.burn_from(sender, from, item_id, value))
+			dispatch_call::<T, _>(collection_id, |d| d.burn_from(sender, from, item_id, value, &budget))
 		}
 
 		/// Change ownership of the token.
@@ -888,8 +889,9 @@ decl_module! {
 		#[transactional]
 		pub fn transfer_from(origin, from: T::CrossAccountId, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let budget = budget::Value::new(2);
 
-			dispatch_call::<T, _>(collection_id, |d| d.transfer_from(sender, from, recipient, item_id, value))
+			dispatch_call::<T, _>(collection_id, |d| d.transfer_from(sender, from, recipient, item_id, value, &budget))
 		}
 
 		/// Set off-chain data schema.

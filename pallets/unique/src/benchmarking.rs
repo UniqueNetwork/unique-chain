@@ -19,8 +19,8 @@
 use super::*;
 use crate::Pallet;
 use frame_system::RawOrigin;
+use frame_support::traits::{tokens::currency::Currency, Get};
 use frame_benchmarking::{benchmarks, account};
-use up_data_structs::*;
 use sp_runtime::DispatchError;
 use pallet_common::benchmarking::{create_data, create_var_data, create_u16_data};
 
@@ -173,6 +173,7 @@ benchmarks! {
 			owner_can_transfer: Some(true),
 			sponsored_data_rate_limit: None,
 			transfers_enabled: Some(true),
+			nesting_rule: None,
 		};
 	}: set_collection_limits(RawOrigin::Signed(caller.clone()), collection, cl)
 
