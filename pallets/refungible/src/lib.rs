@@ -26,6 +26,7 @@ use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
 	CollectionHandle, dispatch::CollectionDispatch,
 };
+use pallet_structure::Pallet as PalletStructure;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use core::ops::Deref;
@@ -64,7 +65,9 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_common::Config {
+	pub trait Config:
+		frame_system::Config + pallet_common::Config + pallet_structure::Config
+	{
 		type WeightInfo: WeightInfo;
 	}
 
@@ -534,22 +537,29 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn transfer_from(
+	/// Returns allowance, which should be set after transaction
+	fn check_allowed(
 		collection: &RefungibleHandle<T>,
 		spender: &T::CrossAccountId,
 		from: &T::CrossAccountId,
-		to: &T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
-	) -> DispatchResult {
+	) -> Result<Option<u128>, DispatchError> {
 		if spender.conv_eq(from) {
-			return Self::transfer(collection, from, to, token, amount);
+			return Ok(None);
 		}
 		if collection.access == AccessMode::AllowList {
 			// `from`, `to` checked in [`transfer`]
 			collection.check_allowlist(spender)?;
 		}
-
+		if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
+			// TODO: should collection owner be allowed to perform this transfer?
+			ensure!(
+				<PalletStructure<T>>::indirectly_owned(spender.clone(), source.0, source.1, 1)?,
+				<CommonError<T>>::ApprovedValueTooLow,
+			);
+			return Ok(None);
+		}
 		let allowance =
 			<Allowance<T>>::get((collection.id, token, from, &spender)).checked_sub(amount);
 		if allowance.is_none() {
@@ -558,6 +568,18 @@ impl<T: Config> Pallet<T> {
 				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
+		Ok(allowance)
+	}
+
+	pub fn transfer_from(
+		collection: &RefungibleHandle<T>,
+		spender: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResult {
+		let allowance = Self::check_allowed(collection, spender, from, token, amount)?;
 
 		// =========
 
@@ -575,22 +597,7 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult {
-		if spender.conv_eq(from) {
-			return Self::burn(collection, from, token, amount);
-		}
-		if collection.access == AccessMode::AllowList {
-			// `from` checked in [`burn`]
-			collection.check_allowlist(spender)?;
-		}
-
-		let allowance =
-			<Allowance<T>>::get((collection.id, token, from, &spender)).checked_sub(amount);
-		if allowance.is_none() {
-			ensure!(
-				collection.ignores_allowance(spender),
-				<CommonError<T>>::ApprovedValueTooLow
-			);
-		}
+		let allowance = Self::check_allowed(collection, spender, from, token, amount)?;
 
 		// =========
 
