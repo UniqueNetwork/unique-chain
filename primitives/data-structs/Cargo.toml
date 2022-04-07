@@ -24,6 +24,7 @@ sp-core = { default-features = false, git = "https://github.com/paritytech/subst
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.20" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.20" }
 derivative = "2.2.0"
+struct-versioning = { path = "../../crates/struct-versioning" }
 
 [features]
 default = ["std"]
