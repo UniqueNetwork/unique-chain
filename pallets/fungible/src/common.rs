@@ -17,7 +17,7 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
-use up_data_structs::{TokenId, CreateItemExData, budget::Budget};
+use up_data_structs::{TokenId, CollectionId, CreateItemExData, budget::Budget};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::ArithmeticError;
 use sp_std::{vec::Vec, vec};
@@ -78,10 +78,11 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
 		data: up_data_structs::CreateItemData,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		match data {
 			up_data_structs::CreateItemData::Fungible(data) => with_weight(
-				<Pallet<T>>::create_item(self, &sender, (to, data.value)),
+				<Pallet<T>>::create_item(self, &sender, (to, data.value), nesting_budget),
 				<CommonWeights<T>>::create_item(),
 			),
 			_ => fail!(<Error<T>>::NotFungibleDataUsedToMintFungibleCollectionToken),
@@ -93,6 +94,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
 		data: Vec<up_data_structs::CreateItemData>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		let mut sum: u128 = 0;
 		for data in data {
@@ -107,7 +109,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		}
 
 		with_weight(
-			<Pallet<T>>::create_item(self, &sender, (to, sum)),
+			<Pallet<T>>::create_item(self, &sender, (to, sum), nesting_budget),
 			<CommonWeights<T>>::create_item(),
 		)
 	}
@@ -116,6 +118,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		&self,
 		sender: <T>::CrossAccountId,
 		data: up_data_structs::CreateItemExData<<T>::CrossAccountId>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		let weight = <CommonWeights<T>>::create_multiple_items_ex(&data);
 		let data = match data {
@@ -124,7 +127,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		};
 
 		with_weight(
-			<Pallet<T>>::create_multiple_items(self, &sender, data.into_inner()),
+			<Pallet<T>>::create_multiple_items(self, &sender, data.into_inner(), nesting_budget),
 			weight,
 		)
 	}
@@ -152,6 +155,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		to: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
@@ -159,7 +163,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		);
 
 		with_weight(
-			<Pallet<T>>::transfer(self, &from, &to, amount),
+			<Pallet<T>>::transfer(self, &from, &to, amount, nesting_budget),
 			<CommonWeights<T>>::transfer(),
 		)
 	}
@@ -230,11 +234,12 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		fail!(<Error<T>>::FungibleItemsDontHaveData)
 	}
 
-	fn nest_token(
+	fn check_nesting(
 		&self,
 		_sender: <T>::CrossAccountId,
-		_from: (up_data_structs::CollectionId, TokenId),
+		_from: CollectionId,
 		_under: TokenId,
+		_budget: &dyn Budget,
 	) -> sp_runtime::DispatchResult {
 		fail!(<Error<T>>::FungibleDisallowsNesting)
 	}

@@ -723,17 +723,20 @@ pub trait CommonCollectionOperations<T: Config> {
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
 		data: CreateItemData,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn create_multiple_items(
 		&self,
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
 		data: Vec<CreateItemData>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn create_multiple_items_ex(
 		&self,
 		sender: T::CrossAccountId,
 		data: CreateItemExData<T::CrossAccountId>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn burn_item(
 		&self,
@@ -748,6 +751,7 @@ pub trait CommonCollectionOperations<T: Config> {
 		to: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn approve(
 		&self,
@@ -781,11 +785,12 @@ pub trait CommonCollectionOperations<T: Config> {
 		data: BoundedVec<u8, CustomDataLimit>,
 	) -> DispatchResultWithPostInfo;
 
-	fn nest_token(
+	fn check_nesting(
 		&self,
 		sender: T::CrossAccountId,
-		from: (CollectionId, TokenId),
+		from: CollectionId,
 		under: TokenId,
+		budget: &dyn Budget,
 	) -> DispatchResult;
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId>;

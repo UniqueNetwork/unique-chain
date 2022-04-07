@@ -256,6 +256,10 @@ impl<T: Config> NonfungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id: u32 = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
 		if <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
 			.ok_or("item id overflow")?
@@ -272,6 +276,7 @@ impl<T: Config> NonfungibleHandle<T> {
 				variable_data: BoundedVec::default(),
 				owner: to,
 			},
+			&budget,
 		)
 		.map_err(dispatch_to_evm::<T>)?;
 
@@ -296,6 +301,10 @@ impl<T: Config> NonfungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id: u32 = token_id.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
 		if <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
 			.ok_or("item id overflow")?
@@ -314,6 +323,7 @@ impl<T: Config> NonfungibleHandle<T> {
 				variable_data: BoundedVec::default(),
 				owner: to,
 			},
+			&budget,
 		)
 		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
@@ -338,8 +348,11 @@ impl<T: Config> NonfungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, token).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer(self, &caller, &to, token, &budget).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
@@ -409,6 +422,9 @@ impl<T: Config> NonfungibleHandle<T> {
 		let mut expected_index = <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
 			.ok_or("item id overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		let total_tokens = token_ids.len();
 		for id in token_ids.into_iter() {
@@ -426,7 +442,8 @@ impl<T: Config> NonfungibleHandle<T> {
 			})
 			.collect();
 
-		<Pallet<T>>::create_multiple_items(self, &caller, data).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::create_multiple_items(self, &caller, data, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -447,6 +464,9 @@ impl<T: Config> NonfungibleHandle<T> {
 		let mut expected_index = <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
 			.ok_or("item id overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		let mut data = Vec::with_capacity(tokens.len());
 		for (id, token_uri) in tokens {
@@ -465,7 +485,8 @@ impl<T: Config> NonfungibleHandle<T> {
 			});
 		}
 
-		<Pallet<T>>::create_multiple_items(self, &caller, data).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::create_multiple_items(self, &caller, data, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 }

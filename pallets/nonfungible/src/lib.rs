@@ -251,6 +251,7 @@ impl<T: Config> Pallet<T> {
 		from: &T::CrossAccountId,
 		to: &T::CrossAccountId,
 		token: TokenId,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		ensure!(
 			collection.limits.transfers_enabled(),
@@ -295,10 +296,10 @@ impl<T: Config> Pallet<T> {
 			let dispatch = T::CollectionDispatch::dispatch(handle);
 			let dispatch = dispatch.as_dyn();
 
-			// =========
-
-			dispatch.nest_token(from.clone(), (collection.id, token), target.1)?;
+			dispatch.check_nesting(from.clone(), collection.id, target.1, nesting_budget)?;
 		}
+
+		// =========
 
 		<TokenData<T>>::insert(
 			(collection.id, token),
@@ -340,6 +341,7 @@ impl<T: Config> Pallet<T> {
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		data: Vec<CreateItemData<T>>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
@@ -377,6 +379,16 @@ impl<T: Config> Pallet<T> {
 				*balance <= collection.limits.account_token_ownership_limit(),
 				<CommonError<T>>::AccountTokenLimitExceeded,
 			);
+		}
+
+		for (to, _) in balances.iter() {
+			if let Some(target) = T::CrossTokenAddressMapping::address_to_token(to) {
+				let handle = <CollectionHandle<T>>::try_get(target.0)?;
+				let dispatch = T::CollectionDispatch::dispatch(handle);
+				let dispatch = dispatch.as_dyn();
+
+				dispatch.check_nesting(sender.clone(), collection.id, target.1, nesting_budget)?;
+			}
 		}
 
 		// =========
@@ -556,7 +568,7 @@ impl<T: Config> Pallet<T> {
 		// =========
 
 		// Allowance is reset in [`transfer`]
-		Self::transfer(collection, from, to, token)
+		Self::transfer(collection, from, to, token, nesting_budget)
 	}
 
 	pub fn burn_from(
@@ -595,35 +607,34 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn nest_token(
+	pub fn check_nesting(
 		handle: &NonfungibleHandle<T>,
 		sender: T::CrossAccountId,
 		from: CollectionId,
 		under: TokenId,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		fn ensure_sender_allowed<T: Config>(
 			collection: CollectionId,
 			token: TokenId,
 			sender: T::CrossAccountId,
+			budget: &dyn Budget,
 		) -> DispatchResult {
 			ensure!(
-				<TokenData<T>>::get((collection, token))
-					.ok_or(<CommonError<T>>::TokenNotFound)?
-					.owner
-					.conv_eq(&sender),
+				<PalletStructure<T>>::indirectly_owned(sender, collection, token, budget)?,
 				<CommonError<T>>::OnlyOwnerAllowedToNest,
 			);
 			Ok(())
 		}
 		match handle.limits.nesting_rule() {
 			NestingRule::Disabled => fail!(<CommonError<T>>::NestingIsDisabled),
-			NestingRule::Owner => ensure_sender_allowed::<T>(from, under, sender)?,
+			NestingRule::Owner => ensure_sender_allowed::<T>(from, under, sender, nesting_budget)?,
 			NestingRule::OwnerRestricted(whitelist) => {
 				ensure!(
 					whitelist.contains(&from),
 					<CommonError<T>>::SourceCollectionIsNotAllowedToNest
 				);
-				ensure_sender_allowed::<T>(from, under, sender)?
+				ensure_sender_allowed::<T>(from, under, sender, nesting_budget)?
 			}
 		}
 		Ok(())
@@ -634,7 +645,8 @@ impl<T: Config> Pallet<T> {
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		data: CreateItemData<T>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::create_multiple_items(collection, sender, vec![data])
+		Self::create_multiple_items(collection, sender, vec![data], nesting_budget)
 	}
 }

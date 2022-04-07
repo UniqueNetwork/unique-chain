@@ -193,6 +193,7 @@ impl<T: Config> Pallet<T> {
 		from: &T::CrossAccountId,
 		to: &T::CrossAccountId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		ensure!(
 			collection.limits.transfers_enabled(),
@@ -223,10 +224,10 @@ impl<T: Config> Pallet<T> {
 			let dispatch = T::CollectionDispatch::dispatch(handle);
 			let dispatch = dispatch.as_dyn();
 
-			// =========
-
-			dispatch.nest_token(from.clone(), (collection.id, TokenId::default()), target.1)?;
+			dispatch.check_nesting(from.clone(), collection.id, target.1, nesting_budget)?;
 		}
+
+		// =========
 
 		if let Some(balance_to) = balance_to {
 			// from != to
@@ -257,6 +258,7 @@ impl<T: Config> Pallet<T> {
 		collection: &FungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		data: BTreeMap<T::CrossAccountId, u128>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
@@ -283,6 +285,16 @@ impl<T: Config> Pallet<T> {
 			*v = <Balance<T>>::get((collection.id, &k))
 				.checked_add(*v)
 				.ok_or(ArithmeticError::Overflow)?;
+		}
+
+		for (to, _) in balances.iter() {
+			if let Some(target) = T::CrossTokenAddressMapping::address_to_token(to) {
+				let handle = <CollectionHandle<T>>::try_get(target.0)?;
+				let dispatch = T::CollectionDispatch::dispatch(handle);
+				let dispatch = dispatch.as_dyn();
+
+				dispatch.check_nesting(sender.clone(), collection.id, target.1, nesting_budget)?;
+			}
 		}
 
 		// =========
@@ -407,7 +419,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		Self::transfer(collection, from, to, amount)?;
+		Self::transfer(collection, from, to, amount, nesting_budget)?;
 		if let Some(allowance) = allowance {
 			Self::set_allowance_unchecked(collection, from, spender, allowance);
 		}
@@ -437,7 +449,13 @@ impl<T: Config> Pallet<T> {
 		collection: &FungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		data: CreateItemData<T>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::create_multiple_items(collection, sender, [(data.0, data.1)].into_iter().collect())
+		Self::create_multiple_items(
+			collection,
+			sender,
+			[(data.0, data.1)].into_iter().collect(),
+			nesting_budget,
+		)
 	}
 }

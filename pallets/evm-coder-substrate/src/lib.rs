@@ -55,7 +55,6 @@ pub mod pallet {
 
 	use frame_system::ensure_signed;
 	pub use frame_support::dispatch::DispatchResult;
-	use frame_support::{pallet_prelude::*, traits::PalletInfo};
 	use frame_system::pallet_prelude::*;
 
 	/// DispatchError is opaque, but we need to somehow extract correct error in case of OutOfGas failure

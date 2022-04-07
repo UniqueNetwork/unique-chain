@@ -693,8 +693,9 @@ decl_module! {
 		#[transactional]
 		pub fn create_item(origin, collection_id: CollectionId, owner: T::CrossAccountId, data: CreateItemData) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let budget = budget::Value::new(2);
 
-			dispatch_call::<T, _>(collection_id, |d| d.create_item(sender, owner, data))
+			dispatch_call::<T, _>(collection_id, |d| d.create_item(sender, owner, data, &budget))
 		}
 
 		/// This method creates multiple items in a collection created with CreateCollection method.
@@ -720,16 +721,18 @@ decl_module! {
 		pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::CrossAccountId, items_data: Vec<CreateItemData>) -> DispatchResultWithPostInfo {
 			ensure!(!items_data.is_empty(), Error::<T>::EmptyArgument);
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let budget = budget::Value::new(2);
 
-			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items(sender, owner, items_data))
+			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items(sender, owner, items_data, &budget))
 		}
 
 		#[weight = <CommonWeights<T>>::create_multiple_items_ex(&data)]
 		#[transactional]
 		pub fn create_multiple_items_ex(origin, collection_id: CollectionId, data: CreateItemExData<T::CrossAccountId>) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let budget = budget::Value::new(2);
 
-			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items_ex(sender, data))
+			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items_ex(sender, data, &budget))
 		}
 
 		// TODO! transaction weight
@@ -839,8 +842,9 @@ decl_module! {
 		#[transactional]
 		pub fn transfer(origin, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let budget = budget::Value::new(2);
 
-			dispatch_call::<T, _>(collection_id, |d| d.transfer(sender, recipient, item_id, value))
+			dispatch_call::<T, _>(collection_id, |d| d.transfer(sender, recipient, item_id, value, &budget))
 		}
 
 		/// Set, change, or remove approved address to transfer the ownership of the NFT.

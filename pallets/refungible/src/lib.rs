@@ -289,6 +289,7 @@ impl<T: Config> Pallet<T> {
 		to: &T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		ensure!(
 			collection.limits.transfers_enabled(),
@@ -351,10 +352,10 @@ impl<T: Config> Pallet<T> {
 			let dispatch = T::CollectionDispatch::dispatch(handle);
 			let dispatch = dispatch.as_dyn();
 
-			// =========
-
-			dispatch.nest_token(from.clone(), (collection.id, token), target.1)?;
+			dispatch.check_nesting(from.clone(), collection.id, target.1, nesting_budget)?;
 		}
+
+		// =========
 
 		if let Some(balance_to) = balance_to {
 			// from != to
@@ -389,6 +390,7 @@ impl<T: Config> Pallet<T> {
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		data: Vec<CreateRefungibleExData<T::CrossAccountId>>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
@@ -450,6 +452,23 @@ impl<T: Config> Pallet<T> {
 					*balance <= collection.limits.account_token_ownership_limit(),
 					<CommonError<T>>::AccountTokenLimitExceeded,
 				);
+			}
+		}
+
+		for token in data.iter() {
+			for (to, _) in token.users.iter() {
+				if let Some(target) = T::CrossTokenAddressMapping::address_to_token(to) {
+					let handle = <CollectionHandle<T>>::try_get(target.0)?;
+					let dispatch = T::CollectionDispatch::dispatch(handle);
+					let dispatch = dispatch.as_dyn();
+
+					dispatch.check_nesting(
+						sender.clone(),
+						collection.id,
+						target.1,
+						nesting_budget,
+					)?;
+				}
 			}
 		}
 
@@ -591,7 +610,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		Self::transfer(collection, from, to, token, amount)?;
+		Self::transfer(collection, from, to, token, amount, nesting_budget)?;
 		if let Some(allowance) = allowance {
 			Self::set_allowance_unchecked(collection, from, spender, token, allowance);
 		}
@@ -648,7 +667,8 @@ impl<T: Config> Pallet<T> {
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		data: CreateRefungibleExData<T::CrossAccountId>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::create_multiple_items(collection, sender, vec![data])
+		Self::create_multiple_items(collection, sender, vec![data], nesting_budget)
 	}
 }

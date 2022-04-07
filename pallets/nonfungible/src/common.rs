@@ -89,9 +89,15 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
 		data: up_data_structs::CreateItemData,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
-			<Pallet<T>>::create_item(self, &sender, map_create_data::<T>(data, &to)?),
+			<Pallet<T>>::create_item(
+				self,
+				&sender,
+				map_create_data::<T>(data, &to)?,
+				nesting_budget,
+			),
 			<CommonWeights<T>>::create_item(),
 		)
 	}
@@ -101,6 +107,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
 		data: Vec<up_data_structs::CreateItemData>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		let data = data
 			.into_iter()
@@ -109,7 +116,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 		let amount = data.len();
 		with_weight(
-			<Pallet<T>>::create_multiple_items(self, &sender, data),
+			<Pallet<T>>::create_multiple_items(self, &sender, data, nesting_budget),
 			<CommonWeights<T>>::create_multiple_items(amount as u32),
 		)
 	}
@@ -118,6 +125,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		&self,
 		sender: <T>::CrossAccountId,
 		data: up_data_structs::CreateItemExData<<T>::CrossAccountId>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		let weight = <CommonWeights<T>>::create_multiple_items_ex(&data);
 		let data = match data {
@@ -126,7 +134,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		};
 
 		with_weight(
-			<Pallet<T>>::create_multiple_items(self, &sender, data.into_inner()),
+			<Pallet<T>>::create_multiple_items(self, &sender, data.into_inner(), nesting_budget),
 			weight,
 		)
 	}
@@ -154,11 +162,12 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		to: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		ensure!(amount <= 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
 		if amount == 1 {
 			with_weight(
-				<Pallet<T>>::transfer(self, &from, &to, token),
+				<Pallet<T>>::transfer(self, &from, &to, token, nesting_budget),
 				<CommonWeights<T>>::transfer(),
 			)
 		} else {
@@ -239,13 +248,14 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		)
 	}
 
-	fn nest_token(
+	fn check_nesting(
 		&self,
 		sender: T::CrossAccountId,
-		(from, _): (CollectionId, TokenId),
+		from: CollectionId,
 		under: TokenId,
+		budget: &dyn Budget,
 	) -> sp_runtime::DispatchResult {
-		<Pallet<T>>::nest_token(self, sender, from, under)
+		<Pallet<T>>::check_nesting(self, sender, from, under, budget)
 	}
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId> {
