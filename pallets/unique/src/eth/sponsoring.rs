@@ -25,6 +25,7 @@ use up_sponsorship::SponsorshipHandler;
 use core::marker::PhantomData;
 use core::convert::TryInto;
 use pallet_evm::account::CrossAccountId;
+use up_data_structs::{TokenId, CreateItemData, CreateNftData};
 
 use pallet_nonfungible::erc::{
 	UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721MintableCall, ERC721Call,

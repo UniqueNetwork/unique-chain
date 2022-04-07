@@ -58,7 +58,7 @@ pub use frame_support::{
 	traits::{
 		tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Everything,
 		Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier,
-		OnUnbalanced, Randomness, FindAuthor,
+		OnUnbalanced, Randomness, FindAuthor, ConstU32, Imbalance,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -66,6 +66,7 @@ pub use frame_support::{
 		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients, ConstantMultiplier,
 	},
 };
+use unique_runtime_common::dispatch::{CollectionDispatchT, CollectionDispatch};
 use up_data_structs::*;
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
@@ -92,6 +93,7 @@ pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 // Polkadot imports
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
+use up_data_structs::mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping};
 use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
@@ -274,8 +276,8 @@ impl pallet_evm::Config for Runtime {
 	type Event = Event;
 	type OnMethodCall = (
 		pallet_evm_migration::OnMethodCall<Self>,
-		pallet_unique::UniqueErcSupport<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
+		CollectionDispatchT<Self>,
 	);
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
@@ -851,6 +853,16 @@ impl pallet_common::Config for Runtime {
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
+	type CollectionDispatch = CollectionDispatchT<Self>;
+
+	type EvmTokenAddressMapping = EvmTokenAddressMapping;
+	type CrossTokenAddressMapping = CrossTokenAddressMapping<Self::AccountId>;
+}
+
+impl pallet_structure::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type WeightInfo = pallet_structure::weights::SubstrateWeight<Self>;
 }
 
 impl pallet_evm::account::Config for Runtime {
@@ -979,6 +991,7 @@ construct_runtime!(
 		Fungible: pallet_fungible::{Pallet, Storage} = 67,
 		Refungible: pallet_refungible::{Pallet, Storage} = 68,
 		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
+		Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
@@ -1105,9 +1118,7 @@ impl fp_self_contained::SelfContainedCall for Call {
 
 macro_rules! dispatch_unique_runtime {
 	($collection:ident.$method:ident($($name:ident),*)) => {{
-		use pallet_unique::dispatch::Dispatched;
-
-		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
+		let collection = <Runtime as pallet_common::Config>::CollectionDispatch::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
 		let dispatch = collection.as_dyn();
 
 		Ok(dispatch.$method($($name),*))

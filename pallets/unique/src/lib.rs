@@ -26,20 +26,12 @@ extern crate alloc;
 
 pub use serde::{Serialize, Deserialize};
 
-pub use frame_support::{
-	construct_runtime, decl_module, decl_storage, decl_error, decl_event,
+use frame_support::{
+	decl_module, decl_storage, decl_error, decl_event,
 	dispatch::DispatchResult,
-	ensure, fail, parameter_types,
-	traits::{
-		ExistenceRequirement, Get, Imbalance, KeyOwnerProofSystem, OnUnbalanced, Randomness,
-		IsSubType, WithdrawReasons,
-	},
-	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchInfo, GetDispatchInfo, IdentityFee, Pays, PostDispatchInfo, Weight,
-		WeightToFeePolynomial, DispatchClass,
-	},
-	StorageValue, transactional,
+	ensure,
+	weights::{Weight},
+	transactional,
 	pallet_prelude::{DispatchResultWithPostInfo, ConstU32},
 	BoundedVec,
 };
@@ -47,17 +39,17 @@ use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{sp_std::prelude::Vec};
 use up_data_structs::{
-	MAX_DECIMAL_POINTS, VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT,
-	OFFCHAIN_SCHEMA_LIMIT, MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH,
-	MAX_TOKEN_PREFIX_LENGTH, AccessMode, CreateItemData, CollectionLimits, CollectionId,
-	CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
-	CreateCollectionData, CustomDataLimit, CreateItemExData,
+	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT,
+	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
+	AccessMode, CreateItemData, CollectionLimits, CollectionId, CollectionMode, TokenId,
+	SchemaVersion, SponsorshipState, MetaUpdatePermission, CreateCollectionData, CustomDataLimit,
+	CreateItemExData,
 };
-use pallet_common::{CollectionHandle, Pallet as PalletCommon, Error as CommonError, CommonWeightInfo};
 use pallet_evm::account::CrossAccountId;
-use pallet_refungible::{Pallet as PalletRefungible, RefungibleHandle};
-use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
-use pallet_nonfungible::{Pallet as PalletNonfungible, NonfungibleHandle};
+use pallet_common::{
+	CollectionHandle, Pallet as PalletCommon, Error as CommonError, CommonWeightInfo,
+	dispatch::dispatch_call, dispatch::CollectionDispatch,
+};
 
 #[cfg(test)]
 mod mock;
@@ -70,12 +62,8 @@ mod sponsorship;
 pub use sponsorship::{UniqueSponsorshipHandler, UniqueSponsorshipPredict};
 pub use eth::sponsoring::UniqueEthSponsorshipHandler;
 
-pub use eth::UniqueErcSupport;
-
 pub mod common;
 use common::CommonWeights;
-pub mod dispatch;
-use dispatch::dispatch_call;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -352,19 +340,11 @@ decl_module! {
 		#[weight = <SelfWeightOf<T>>::create_collection()]
 		#[transactional]
 		pub fn create_collection_ex(origin, data: CreateCollectionData<T::AccountId>) -> DispatchResult {
-			let owner = ensure_signed(origin)?;
+			let sender = ensure_signed(origin)?;
 
-			let _id = match data.mode {
-				CollectionMode::NFT => {<PalletNonfungible<T>>::init_collection(owner, data)?},
-				CollectionMode::Fungible(decimal_points) => {
-					// check params
-					ensure!(decimal_points <= MAX_DECIMAL_POINTS, Error::<T>::CollectionDecimalPointLimitExceeded);
-					<PalletFungible<T>>::init_collection(owner, data)?
-				}
-				CollectionMode::ReFungible => {
-					<PalletRefungible<T>>::init_collection(owner, data)?
-				}
-			};
+			// =========
+
+			T::CollectionDispatch::create(sender, data)?;
 
 			Ok(())
 		}
@@ -382,17 +362,11 @@ decl_module! {
 		#[transactional]
 		pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			collection.check_is_owner(&sender)?;
 
 			// =========
 
-			match collection.mode {
-				CollectionMode::ReFungible => PalletRefungible::destroy_collection(RefungibleHandle::cast(collection), &sender)?,
-				CollectionMode::Fungible(_) => PalletFungible::destroy_collection(FungibleHandle::cast(collection), &sender)?,
-				CollectionMode::NFT => PalletNonfungible::destroy_collection(NonfungibleHandle::cast(collection), &sender)?,
-			}
+			T::CollectionDispatch::destroy(sender, collection)?;
 
 			<NftTransferBasket<T>>::remove_prefix(collection_id, None);
 			<FungibleTransferBasket<T>>::remove_prefix(collection_id, None);
