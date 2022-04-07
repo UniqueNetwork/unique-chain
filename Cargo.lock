@@ -2484,7 +2484,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18#7c8ce8f83e0c8a5b57655622b721f8655b161903"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -2511,7 +2511,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18#7c8ce8f83e0c8a5b57655622b721f8655b161903"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "fp-storage",
  "kvdb",
@@ -2527,7 +2527,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18#7c8ce8f83e0c8a5b57655622b721f8655b161903"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "fc-consensus",
  "fc-db",
@@ -2545,7 +2545,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18#7c8ce8f83e0c8a5b57655622b721f8655b161903"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2591,7 +2591,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18#7c8ce8f83e0c8a5b57655622b721f8655b161903"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2725,7 +2725,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18#7c8ce8f83e0c8a5b57655622b721f8655b161903"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
@@ -2739,7 +2739,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18#7c8ce8f83e0c8a5b57655622b721f8655b161903"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "evm",
  "impl-trait-for-tuples",
@@ -2751,9 +2751,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "fp-evm-mapping"
+version = "0.1.0"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
+dependencies = [
+ "frame-support",
+ "sp-core",
+]
+
+[[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18#7c8ce8f83e0c8a5b57655622b721f8655b161903"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2770,7 +2779,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18#7c8ce8f83e0c8a5b57655622b721f8655b161903"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "ethereum",
  "frame-support",
@@ -2787,7 +2796,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18#7c8ce8f83e0c8a5b57655622b721f8655b161903"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 
 [[package]]
 name = "frame-benchmarking"
@@ -5577,6 +5586,7 @@ dependencies = [
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "derivative",
+ "fp-evm-mapping",
  "fp-rpc",
  "fp-self-contained",
  "frame-benchmarking",
@@ -5636,7 +5646,6 @@ dependencies = [
  "substrate-wasm-builder",
  "unique-runtime-common",
  "up-data-structs",
- "up-evm-mapping",
  "up-rpc",
  "xcm",
  "xcm-builder",
@@ -5835,7 +5844,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18#7c8ce8f83e0c8a5b57655622b721f8655b161903"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5988,6 +5997,7 @@ name = "pallet-common"
 version = "0.1.0"
 dependencies = [
  "evm-coder",
+ "fp-evm-mapping",
  "frame-support",
  "frame-system",
  "pallet-evm",
@@ -5999,7 +6009,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "up-data-structs",
- "up-evm-mapping",
 ]
 
 [[package]]
@@ -6062,13 +6071,14 @@ dependencies = [
 [[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18#7c8ce8f83e0c8a5b57655622b721f8655b161903"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "ethereum",
  "ethereum-types",
  "evm",
  "fp-consensus",
  "fp-evm",
+ "fp-evm-mapping",
  "fp-rpc",
  "fp-self-contained",
  "fp-storage",
@@ -6092,12 +6102,13 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18#7c8ce8f83e0c8a5b57655622b721f8655b161903"
+source = "git+https://github.com/uniquenetwork/frontier.git?branch=unique-polkadot-v0.9.18-2#82310d1dd3189f34bd901a9ac894ad33eca5cf89"
 dependencies = [
  "evm",
  "evm-gasometer",
  "evm-runtime",
  "fp-evm",
+ "fp-evm-mapping",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6141,6 +6152,7 @@ name = "pallet-evm-contract-helpers"
 version = "0.1.0"
 dependencies = [
  "evm-coder",
+ "fp-evm-mapping",
  "frame-support",
  "frame-system",
  "log",
@@ -6176,6 +6188,7 @@ name = "pallet-evm-transaction-payment"
 version = "0.1.0"
 dependencies = [
  "fp-evm",
+ "fp-evm-mapping",
  "frame-support",
  "frame-system",
  "pallet-ethereum",
@@ -6186,7 +6199,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "up-evm-mapping",
  "up-sponsorship",
 ]
 
@@ -6200,6 +6212,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-common",
+ "pallet-evm",
  "pallet-evm-coder-substrate",
  "pallet-structure",
  "parity-scale-codec",
@@ -6427,6 +6440,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-common",
+ "pallet-evm",
  "pallet-evm-coder-substrate",
  "pallet-structure",
  "parity-scale-codec",
@@ -6544,6 +6558,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-common",
+ "pallet-evm",
  "pallet-structure",
  "parity-scale-codec",
  "scale-info",
@@ -6817,6 +6832,7 @@ dependencies = [
  "ethereum",
  "evm-coder",
  "fp-evm",
+ "fp-evm-mapping",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6843,7 +6859,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "up-data-structs",
- "up-evm-mapping",
  "up-sponsorship",
 ]
 
@@ -8726,6 +8741,7 @@ dependencies = [
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "derivative",
+ "fp-evm-mapping",
  "fp-rpc",
  "fp-self-contained",
  "frame-executive",
@@ -8782,7 +8798,6 @@ dependencies = [
  "substrate-wasm-builder",
  "unique-runtime-common",
  "up-data-structs",
- "up-evm-mapping",
  "up-rpc",
  "xcm",
  "xcm-builder",
@@ -12380,6 +12395,7 @@ dependencies = [
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "pallet-common",
+ "pallet-evm",
  "parity-scale-codec",
  "sp-api",
  "sp-blockchain",
@@ -12591,6 +12607,7 @@ dependencies = [
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "derivative",
+ "fp-evm-mapping",
  "fp-rpc",
  "fp-self-contained",
  "frame-benchmarking",
@@ -12650,7 +12667,6 @@ dependencies = [
  "substrate-wasm-builder",
  "unique-runtime-common",
  "up-data-structs",
- "up-evm-mapping",
  "up-rpc",
  "xcm",
  "xcm-builder",
@@ -12732,6 +12748,7 @@ dependencies = [
  "derivative",
  "frame-support",
  "frame-system",
+ "pallet-evm",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -12739,17 +12756,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "struct-versioning",
- "up-evm-mapping",
-]
-
-[[package]]
-name = "up-evm-mapping"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
 ]
 
 [[package]]
@@ -12757,6 +12763,7 @@ name = "up-rpc"
 version = "0.1.0"
 dependencies = [
  "pallet-common",
+ "pallet-evm",
  "parity-scale-codec",
  "sp-api",
  "sp-core",

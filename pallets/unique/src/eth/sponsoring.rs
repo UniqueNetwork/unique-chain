@@ -31,7 +31,6 @@ use pallet_nonfungible::erc::{
 	UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721MintableCall, ERC721Call,
 };
 use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};
-use up_data_structs::{TokenId, CreateItemData, CreateNftData};
 
 pub struct UniqueEthSponsorshipHandler<T: Config>(PhantomData<*const T>);
 impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>

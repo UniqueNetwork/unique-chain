@@ -24,8 +24,8 @@ use up_data_structs::{
 	budget::Budget,
 };
 use pallet_common::{
-	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
-	CollectionHandle, dispatch::CollectionDispatch,
+	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, CollectionHandle,
+	dispatch::CollectionDispatch,
 };
 use pallet_structure::Pallet as PalletStructure;
 use pallet_evm_coder_substrate::WithRecorder;

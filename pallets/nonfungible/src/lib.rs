@@ -24,8 +24,8 @@ use up_data_structs::{
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
-	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent,
-	CollectionHandle, dispatch::CollectionDispatch,
+	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
+	dispatch::CollectionDispatch,
 };
 use pallet_structure::Pallet as PalletStructure;
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};

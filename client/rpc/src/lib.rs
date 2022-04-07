@@ -19,7 +19,7 @@ use std::sync::Arc;
 use codec::Decode;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
-use up_data_structs::{RpcCollection, Collection, CollectionId, CollectionStats, CollectionLimits, TokenId};
+use up_data_structs::{RpcCollection, CollectionId, CollectionStats, CollectionLimits, TokenId};
 use sp_api::{BlockId, BlockT, ProvideRuntimeApi, ApiExt};
 use sp_blockchain::HeaderBackend;
 use up_rpc::UniqueApi as UniqueRuntimeApi;

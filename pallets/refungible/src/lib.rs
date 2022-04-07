@@ -23,8 +23,8 @@ use up_data_structs::{
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
-	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
-	CollectionHandle, dispatch::CollectionDispatch,
+	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, CollectionHandle,
+	dispatch::CollectionDispatch,
 };
 use pallet_structure::Pallet as PalletStructure;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};

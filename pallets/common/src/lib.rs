@@ -29,11 +29,13 @@ use frame_support::{
 };
 use pallet_evm::GasWeightMapping;
 use up_data_structs::{
-	COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, CollectionId, CreateItemData, MAX_TOKEN_PREFIX_LENGTH,
-	COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, TokenId, CollectionStats, MAX_TOKEN_OWNERSHIP,
-	CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
-	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData, SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField, PhantomType,
+	COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, CollectionId, CreateItemData,
+	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, TokenId,
+	CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT,
+	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT,
+	CUSTOM_DATA_LIMIT, CollectionLimits, CustomDataLimit, CreateCollectionData, SponsorshipState,
+	CreateItemExData, SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField,
+	PhantomType,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -162,7 +164,6 @@ impl<T: Config> CollectionHandle<T> {
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key};
 	use pallet_evm::account;
 	use dispatch::CollectionDispatch;
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
@@ -170,7 +171,6 @@ pub mod pallet {
 	use frame_support::traits::Currency;
 	use up_data_structs::{TokenId, mapping::TokenAddressMapping};
 	use scale_info::TypeInfo;
-	use up_evm_mapping::CrossAccountId;
 
 	#[pallet::config]
 	pub trait Config:
@@ -519,6 +519,7 @@ impl<T: Config> Pallet<T> {
 			owner_can_transfer: Some(limits.owner_can_transfer()),
 			owner_can_destroy: Some(limits.owner_can_destroy()),
 			transfers_enabled: Some(limits.transfers_enabled()),
+			nesting_rule: Some(limits.nesting_rule().clone()),
 		};
 
 		Some(effective_limits)

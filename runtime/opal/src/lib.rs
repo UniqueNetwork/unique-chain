@@ -67,7 +67,7 @@ pub use frame_support::{
 	},
 };
 use up_data_structs::mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping};
-use up_data_structs::{CollectionId, TokenId, CollectionStats, RpcCollection};
+use up_data_structs::{CollectionId, TokenId, CollectionStats, CollectionLimits, RpcCollection};
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
 use frame_system::{

@@ -3,7 +3,7 @@ use core::marker::PhantomData;
 use sp_core::H160;
 
 use crate::{CollectionId, TokenId};
-use up_evm_mapping::CrossAccountId;
+use pallet_evm::account::CrossAccountId;
 
 pub trait TokenAddressMapping<Address> {
 	fn token_to_address(collection: CollectionId, token: TokenId) -> Address;
