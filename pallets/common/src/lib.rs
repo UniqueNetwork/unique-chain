@@ -165,8 +165,10 @@ pub mod pallet {
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key};
 	use pallet_evm::account;
 	use dispatch::CollectionDispatch;
+	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
+	use frame_system::pallet_prelude::*;
 	use frame_support::traits::Currency;
-	use up_data_structs::TokenId;
+	use up_data_structs::{TokenId, mapping::TokenAddressMapping};
 	use scale_info::TypeInfo;
 	use up_evm_mapping::CrossAccountId;
 
@@ -185,6 +187,9 @@ pub mod pallet {
 		type CollectionDispatch: CollectionDispatch<Self>;
 
 		type TreasuryAccountId: Get<Self::AccountId>;
+
+		type EvmTokenAddressMapping: TokenAddressMapping<H160>;
+		type CrossTokenAddressMapping: TokenAddressMapping<Self::CrossAccountId>;
 	}
 
 	#[pallet::pallet]

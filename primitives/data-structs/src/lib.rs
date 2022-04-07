@@ -20,34 +20,23 @@ use core::{
 	convert::{TryFrom, TryInto},
 	fmt,
 };
-use frame_support::storage::bounded_btree_map::BoundedBTreeMap;
-use sp_std::collections::btree_map::BTreeMap;
+use frame_support::{
+	storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
+	traits::ConstU16,
+};
+use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 
 #[cfg(feature = "serde")]
-pub use serde::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize};
 
 use sp_core::U256;
 use sp_runtime::{ArithmeticError, sp_std::prelude::Vec};
 use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
-pub use frame_support::{
-	BoundedVec, construct_runtime, decl_event, decl_module, decl_storage, decl_error,
-	dispatch::DispatchResult,
-	ensure, fail, parameter_types,
-	traits::{
-		Currency, ExistenceRequirement, Get, Imbalance, KeyOwnerProofSystem, OnUnbalanced,
-		Randomness, IsSubType, WithdrawReasons,
-	},
-	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchInfo, GetDispatchInfo, IdentityFee, Pays, PostDispatchInfo, Weight,
-		WeightToFeePolynomial, DispatchClass,
-	},
-	StorageValue, transactional,
-	pallet_prelude::ConstU32,
-};
+use frame_support::{BoundedVec, traits::ConstU32};
 use derivative::Derivative;
 use scale_info::TypeInfo;
 
+pub mod mapping;
 mod migration;
 
 pub const MAX_DECIMAL_POINTS: DecimalPoints = 30;

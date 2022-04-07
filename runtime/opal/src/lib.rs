@@ -66,6 +66,7 @@ pub use frame_support::{
 		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients, ConstantMultiplier,
 	},
 };
+use up_data_structs::mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping};
 use up_data_structs::{CollectionId, TokenId, CollectionStats, Collection};
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]

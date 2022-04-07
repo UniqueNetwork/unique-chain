@@ -56,13 +56,27 @@ export async function usingWeb3<T>(cb: (web3: Web3) => Promise<T> | T): Promise<
   }
 }
 
-export function collectionIdToAddress(address: number): string {
-  if (address >= 0xffffffff || address < 0) throw new Error('id overflow');
+function encodeIntBE(v: number): number[] {
+  if (v >= 0xffffffff || v < 0) throw new Error('id overflow');
+  return [
+    v >> 24,
+    (v >> 16) & 0xff,
+    (v >> 8) & 0xff,
+    v & 0xff,
+  ];
+}
+
+export function collectionIdToAddress(collection: number): string {
   const buf = Buffer.from([0x17, 0xc4, 0xe6, 0x45, 0x3c, 0xc4, 0x9a, 0xaa, 0xae, 0xac, 0xa8, 0x94, 0xe6, 0xd9, 0x68, 0x3e,
-    address >> 24,
-    (address >> 16) & 0xff,
-    (address >> 8) & 0xff,
-    address & 0xff,
+    ...encodeIntBE(collection),
+  ]);
+  return Web3.utils.toChecksumAddress('0x' + buf.toString('hex'));
+}
+
+export function tokenIdToAddress(collection: number, token: number): string {
+  const buf = Buffer.from([0xf8, 0x23, 0x8c, 0xcf, 0xff, 0x8e, 0xd8, 0x87, 0x46, 0x3f, 0xd5, 0xe0,
+    ...encodeIntBE(collection),
+    ...encodeIntBE(token),
   ]);
   return Web3.utils.toChecksumAddress('0x' + buf.toString('hex'));
 }
