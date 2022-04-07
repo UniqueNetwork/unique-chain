@@ -41,7 +41,7 @@ branch = "polkadot-v0.9.20"
 [dependencies.sp-std]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.17'
+branch = 'polkadot-v0.9.18'
 
 [dependencies.sp-runtime]
 default-features = false
@@ -96,7 +96,7 @@ path = "../../primitives/data-structs"
 [dependencies.pallet-evm]
 default-features = false
 git = "https://github.com/uniquenetwork/frontier.git"
-branch = "unique-polkadot-v0.9.17"
+branch = "unique-polkadot-v0.9.18"
 
 [dependencies.sp-consensus-aura]
 default-features = false
