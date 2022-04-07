@@ -17,7 +17,7 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
-use up_data_structs::{TokenId, CustomDataLimit, CreateItemExData};
+use up_data_structs::{TokenId, CustomDataLimit, CreateItemExData, CollectionId};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
@@ -235,6 +235,15 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			<Pallet<T>>::set_variable_metadata(self, &sender, token, data),
 			<CommonWeights<T>>::set_variable_metadata(len as u32),
 		)
+	}
+
+	fn nest_token(
+		&self,
+		sender: T::CrossAccountId,
+		(from, _): (CollectionId, TokenId),
+		under: TokenId,
+	) -> sp_runtime::DispatchResult {
+		<Pallet<T>>::nest_token(self, sender, from, under)
 	}
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId> {

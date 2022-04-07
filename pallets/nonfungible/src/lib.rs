@@ -17,12 +17,16 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use erc::ERC721Events;
-use frame_support::{BoundedVec, ensure};
+use frame_support::{BoundedVec, ensure, fail};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
+	mapping::TokenAddressMapping, NestingRule,
 };
-use pallet_common::{Error as CommonError, Pallet as PalletCommon, Event as CommonEvent};
 use pallet_evm::account::CrossAccountId;
+use pallet_common::{
+	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent,
+	CollectionHandle, dispatch::CollectionDispatch,
+};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
@@ -282,7 +286,15 @@ impl<T: Config> Pallet<T> {
 			None
 		};
 
-		// =========
+		if let Some(target) = T::CrossTokenAddressMapping::address_to_token(to) {
+			let handle = <CollectionHandle<T>>::try_get(target.0)?;
+			let dispatch = T::CollectionDispatch::dispatch(handle);
+			let dispatch = dispatch.as_dyn();
+
+			// =========
+
+			dispatch.nest_token(from.clone(), (collection.id, token), target.1)?;
+		}
 
 		<TokenData<T>>::insert(
 			(collection.id, token),
@@ -564,6 +576,40 @@ impl<T: Config> Pallet<T> {
 				..token_data
 			},
 		);
+		Ok(())
+	}
+
+	pub fn nest_token(
+		handle: &NonfungibleHandle<T>,
+		sender: T::CrossAccountId,
+		from: CollectionId,
+		under: TokenId,
+	) -> DispatchResult {
+		fn ensure_sender_allowed<T: Config>(
+			collection: CollectionId,
+			token: TokenId,
+			sender: T::CrossAccountId,
+		) -> DispatchResult {
+			ensure!(
+				<TokenData<T>>::get((collection, token))
+					.ok_or(<CommonError<T>>::TokenNotFound)?
+					.owner
+					.conv_eq(&sender),
+				<CommonError<T>>::OnlyOwnerAllowedToNest,
+			);
+			Ok(())
+		}
+		match handle.limits.nesting_rule() {
+			NestingRule::Disabled => fail!(<CommonError<T>>::NestingIsDisabled),
+			NestingRule::Owner => ensure_sender_allowed::<T>(from, under, sender)?,
+			NestingRule::OwnerRestricted(whitelist) => {
+				ensure!(
+					whitelist.contains(&from),
+					<CommonError<T>>::SourceCollectionIsNotAllowedToNest
+				);
+				ensure_sender_allowed::<T>(from, under, sender)?
+			}
+		}
 		Ok(())
 	}
 

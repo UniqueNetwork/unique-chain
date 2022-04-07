@@ -345,6 +345,13 @@ pub mod pallet {
 
 		/// Not sufficient founds to perform action
 		NotSufficientFounds,
+
+		/// Collection has nesting disabled
+		NestingIsDisabled,
+		/// Only owner may nest tokens under this collection
+		OnlyOwnerAllowedToNest,
+		/// Only tokens from specific collections may nest tokens under this
+		SourceCollectionIsNotAllowedToNest,
 	}
 
 	#[pallet::storage]
@@ -400,8 +407,6 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
-			let mut weight = 0;
-
 			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
 				use up_data_structs::{CollectionVersion1, CollectionVersion2};
 				<CollectionById<T>>::translate_values::<CollectionVersion1<T::AccountId>, _>(|v| {
@@ -409,7 +414,7 @@ pub mod pallet {
 				});
 			}
 
-			weight
+			0
 		}
 	}
 }
@@ -773,6 +778,13 @@ pub trait CommonCollectionOperations<T: Config> {
 		token: TokenId,
 		data: BoundedVec<u8, CustomDataLimit>,
 	) -> DispatchResultWithPostInfo;
+
+	fn nest_token(
+		&self,
+		sender: T::CrossAccountId,
+		from: (CollectionId, TokenId),
+		under: TokenId,
+	) -> DispatchResult;
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId>;
 	fn token_exists(&self, token: TokenId) -> bool;
