@@ -591,12 +591,13 @@ impl<T: TypeInfo + 'static> TypeInfo for PhantomType<T> {
 	type Identity = PhantomType<T>;
 
 	fn type_info() -> scale_info::Type {
-		use scale_info::{Type, Path, build::{FieldsBuilder, UnnamedFields}};
+		use scale_info::{
+			Type, Path,
+			build::{FieldsBuilder, UnnamedFields},
+		};
 		Type::builder()
 			.path(Path::new("up_data_structs", "PhantomType"))
-			.composite(<FieldsBuilder<UnnamedFields>>::default().field(|b|
-				b.ty::<[T ;0]>()
-			))
+			.composite(<FieldsBuilder<UnnamedFields>>::default().field(|b| b.ty::<[T; 0]>()))
 	}
 }
 impl<T> MaxEncodedLen for PhantomType<T> {

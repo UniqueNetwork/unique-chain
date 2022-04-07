@@ -415,8 +415,15 @@ pub mod pallet {
 
 	/// Not used by code, exists only to provide some types to metadata
 	#[pallet::storage]
-	pub type DummyStorageValue<T: Config> =
-		StorageValue<Value = (CollectionStats, CollectionId, TokenId, PhantomType<RpcCollection<T::AccountId>>), QueryKind = OptionQuery>;
+	pub type DummyStorageValue<T: Config> = StorageValue<
+		Value = (
+			CollectionStats,
+			CollectionId,
+			TokenId,
+			PhantomType<RpcCollection<T::AccountId>>,
+		),
+		QueryKind = OptionQuery,
+	>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
