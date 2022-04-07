@@ -29,6 +29,7 @@ runtime-benchmarks = [
     'pallet-balances/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
     'pallet-common/runtime-benchmarks',
+    'pallet-structure/runtime-benchmarks',
     'pallet-fungible/runtime-benchmarks',
     'pallet-refungible/runtime-benchmarks',
     'pallet-nonfungible/runtime-benchmarks',

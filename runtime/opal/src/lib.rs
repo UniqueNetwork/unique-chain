@@ -886,6 +886,7 @@ impl pallet_common::Config for Runtime {
 impl pallet_structure::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
+	type WeightInfo = pallet_structure::weights::SubstrateWeight<Self>;
 }
 
 impl pallet_fungible::Config for Runtime {

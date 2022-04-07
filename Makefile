@@ -57,5 +57,9 @@ bench-refungible:
 bench-nonfungible:
 	make _bench PALLET=nonfungible
 
+.PHONY: bench-structure
+bench-structure:
+	make _bench PALLET=structure
+
 .PHONY: bench
-bench: bench-evm-migration bench-unique bench-fungible bench-refungible bench-nonfungible
+bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible
