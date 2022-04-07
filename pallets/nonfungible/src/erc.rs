@@ -37,7 +37,12 @@ use crate::{
 };
 
 fn error_unsupported_shema_version() -> Error {
-	alloc::format!("Unsupported shema version! Support only {:?}", SchemaVersion::ImageURL).as_str().into()
+	alloc::format!(
+		"Unsupported shema version! Support only {:?}",
+		SchemaVersion::ImageURL
+	)
+	.as_str()
+	.into()
 }
 
 #[derive(ToLog)]
@@ -80,9 +85,8 @@ impl<T: Config> NonfungibleHandle<T> {
 		Ok(decode_utf16(self.name.iter().copied())
 			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
 			.collect::<string>())
-
 	}
-	
+
 	fn symbol(&self) -> Result<string> {
 		Ok(string::from_utf8_lossy(&self.token_prefix).into())
 	}
@@ -99,9 +103,9 @@ impl<T: Config> NonfungibleHandle<T> {
 					.const_data,
 			)
 			.into())
-        } else {
-            Err(error_unsupported_shema_version())
-        }
+		} else {
+			Err(error_unsupported_shema_version())
+		}
 	}
 }
 
@@ -292,7 +296,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			{
 				return Err("item id should be next".into());
 			}
-	
+
 			<Pallet<T>>::create_item(
 				self,
 				&caller,
@@ -306,9 +310,9 @@ impl<T: Config> NonfungibleHandle<T> {
 			)
 			.map_err(dispatch_to_evm::<T>)?;
 			Ok(true)
-        } else {
-            Err(error_unsupported_shema_version())
-        }
+		} else {
+			Err(error_unsupported_shema_version())
+		}
 	}
 
 	/// Not implemented
@@ -432,7 +436,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			let mut expected_index = <TokensMinted<T>>::get(self.id)
 				.checked_add(1)
 				.ok_or("item id overflow")?;
-	
+
 			let mut data = Vec::with_capacity(tokens.len());
 			for (id, token_uri) in tokens {
 				let id: u32 = id.try_into().map_err(|_| "token id overflow")?;
@@ -440,7 +444,7 @@ impl<T: Config> NonfungibleHandle<T> {
 					panic!("item id should be next ({}) but got {}", expected_index, id);
 				}
 				expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
-	
+
 				data.push(CreateItemData::<T> {
 					const_data: Vec::<u8>::from(token_uri)
 						.try_into()
@@ -449,12 +453,13 @@ impl<T: Config> NonfungibleHandle<T> {
 					owner: to.clone(),
 				});
 			}
-	
-			<Pallet<T>>::create_multiple_items(self, &caller, data).map_err(dispatch_to_evm::<T>)?;
+
+			<Pallet<T>>::create_multiple_items(self, &caller, data)
+				.map_err(dispatch_to_evm::<T>)?;
 			Ok(true)
-        } else {
-            Err(error_unsupported_shema_version())
-        }
+		} else {
+			Err(error_unsupported_shema_version())
+		}
 	}
 }
 
