@@ -38,6 +38,11 @@ runtime-benchmarks = [
     'sp-runtime/runtime-benchmarks',
     'xcm-builder/runtime-benchmarks',
 ]
+try-runtime = [
+    'frame-try-runtime',
+    'frame-executive/try-runtime',
+    'frame-system/try-runtime',
+]
 std = [
     'codec/std',
     'cumulus-pallet-aura-ext/std',
@@ -46,6 +51,7 @@ std = [
     'cumulus-pallet-xcmp-queue/std',
     'cumulus-primitives-core/std',
     'cumulus-primitives-utility/std',
+    'frame-try-runtime/std',
     'frame-executive/std',
     'frame-support/std',
     'frame-system/std',
@@ -120,6 +126,12 @@ default-features = false
 git = "https://github.com/paritytech/substrate"
 optional = true
 branch = "polkadot-v0.9.20"
+
+[dependencies.frame-try-runtime]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+optional = true
+branch = 'polkadot-v0.9.17'
 
 [dependencies.frame-executive]
 default-features = false
@@ -375,6 +387,7 @@ default-features = false
 # local dependencies
 
 [dependencies]
+log = { version = "0.4.16", default-features = false }
 unique-runtime-common = { path = "../common", default-features = false }
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
