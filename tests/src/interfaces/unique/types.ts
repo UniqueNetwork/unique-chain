@@ -1429,7 +1429,7 @@ export interface PalletUniqueCall extends Enum {
   readonly isSetCollectionLimits: boolean;
   readonly asSetCollectionLimits: {
     readonly collectionId: u32;
-    readonly newLimit: UpDataStructsCollectionLimitsVersion2;
+    readonly newLimit: UpDataStructsCollectionLimits;
   } & Struct;
   readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'SetPublicAccessMode' | 'SetMintPermission' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetVariableMetaData' | 'SetMetaUpdatePermissionFlag' | 'SetSchemaVersion' | 'SetOffchainSchema' | 'SetConstOnChainSchema' | 'SetVariableOnChainSchema' | 'SetCollectionLimits';
 }
@@ -1595,7 +1595,7 @@ export interface PalletXcmEvent extends Enum {
 }
 
 /** @name PhantomTypeUpDataStructs */
-export interface PhantomTypeUpDataStructs extends Vec<Lookup309> {}
+export interface PhantomTypeUpDataStructs extends Vec<Lookup308> {}
 
 /** @name PolkadotCorePrimitivesInboundDownwardMessage */
 export interface PolkadotCorePrimitivesInboundDownwardMessage extends Struct {
@@ -1775,6 +1775,21 @@ export interface UpDataStructsAccessMode extends Enum {
   readonly type: 'Normal' | 'AllowList';
 }
 
+/** @name UpDataStructsCollection */
+export interface UpDataStructsCollection extends Struct {
+  readonly owner: AccountId32;
+  readonly mode: UpDataStructsCollectionMode;
+  readonly access: UpDataStructsAccessMode;
+  readonly name: Vec<u16>;
+  readonly description: Vec<u16>;
+  readonly tokenPrefix: Bytes;
+  readonly mintMode: bool;
+  readonly schemaVersion: UpDataStructsSchemaVersion;
+  readonly sponsorship: UpDataStructsSponsorshipState;
+  readonly limits: UpDataStructsCollectionLimits;
+  readonly metaUpdatePermission: UpDataStructsMetaUpdatePermission;
+}
+
 /** @name UpDataStructsCollectionField */
 export interface UpDataStructsCollectionField extends Enum {
   readonly isVariableOnChainSchema: boolean;
@@ -1783,8 +1798,8 @@ export interface UpDataStructsCollectionField extends Enum {
   readonly type: 'VariableOnChainSchema' | 'ConstOnChainSchema' | 'OffchainSchema';
 }
 
-/** @name UpDataStructsCollectionLimitsVersion2 */
-export interface UpDataStructsCollectionLimitsVersion2 extends Struct {
+/** @name UpDataStructsCollectionLimits */
+export interface UpDataStructsCollectionLimits extends Struct {
   readonly accountTokenOwnershipLimit: Option<u32>;
   readonly sponsoredDataSize: Option<u32>;
   readonly sponsoredDataRateLimit: Option<UpDataStructsSponsoringRateLimit>;
@@ -1813,21 +1828,6 @@ export interface UpDataStructsCollectionStats extends Struct {
   readonly alive: u32;
 }
 
-/** @name UpDataStructsCollectionVersion2 */
-export interface UpDataStructsCollectionVersion2 extends Struct {
-  readonly owner: AccountId32;
-  readonly mode: UpDataStructsCollectionMode;
-  readonly access: UpDataStructsAccessMode;
-  readonly name: Vec<u16>;
-  readonly description: Vec<u16>;
-  readonly tokenPrefix: Bytes;
-  readonly mintMode: bool;
-  readonly schemaVersion: UpDataStructsSchemaVersion;
-  readonly sponsorship: UpDataStructsSponsorshipState;
-  readonly limits: UpDataStructsCollectionLimitsVersion2;
-  readonly metaUpdatePermission: UpDataStructsMetaUpdatePermission;
-}
-
 /** @name UpDataStructsCreateCollectionData */
 export interface UpDataStructsCreateCollectionData extends Struct {
   readonly mode: UpDataStructsCollectionMode;
@@ -1838,7 +1838,7 @@ export interface UpDataStructsCreateCollectionData extends Struct {
   readonly offchainSchema: Bytes;
   readonly schemaVersion: Option<UpDataStructsSchemaVersion>;
   readonly pendingSponsor: Option<AccountId32>;
-  readonly limits: Option<UpDataStructsCollectionLimitsVersion2>;
+  readonly limits: Option<UpDataStructsCollectionLimits>;
   readonly variableOnChainSchema: Bytes;
   readonly constOnChainSchema: Bytes;
   readonly metaUpdatePermission: Option<UpDataStructsMetaUpdatePermission>;
@@ -1929,7 +1929,7 @@ export interface UpDataStructsRpcCollection extends Struct {
   readonly offchainSchema: Bytes;
   readonly schemaVersion: UpDataStructsSchemaVersion;
   readonly sponsorship: UpDataStructsSponsorshipState;
-  readonly limits: UpDataStructsCollectionLimitsVersion2;
+  readonly limits: UpDataStructsCollectionLimits;
   readonly variableOnChainSchema: Bytes;
   readonly constOnChainSchema: Bytes;
   readonly metaUpdatePermission: UpDataStructsMetaUpdatePermission;

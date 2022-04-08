@@ -594,9 +594,11 @@ impl<T: TypeInfo + 'static> TypeInfo for PhantomType<T> {
 		use scale_info::{
 			Type, Path,
 			build::{FieldsBuilder, UnnamedFields},
+			type_params,
 		};
 		Type::builder()
 			.path(Path::new("up_data_structs", "PhantomType"))
+			.type_params(type_params!(T))
 			.composite(<FieldsBuilder<UnnamedFields>>::default().field(|b| b.ty::<[T; 0]>()))
 	}
 }

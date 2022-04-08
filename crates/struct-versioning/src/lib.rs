@@ -198,7 +198,11 @@ pub fn versioned(attr: TokenStream, input: TokenStream) -> TokenStream {
 	let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 	let mut out = Vec::new();
 	for version in attr.first_version..=attr.current_version {
-		let name = format_ident!("{}Version{}", &input.ident, version);
+		let name = if version == attr.current_version {
+			input.ident.clone()	
+		} else {
+			format_ident!("{}Version{}", &input.ident, version)
+		};
 		let current_fields = fields
 			.iter()
 			.filter_map(|(ver, field)| ver.exists_on(version).then(|| field));
@@ -291,7 +295,7 @@ pub fn versioned(attr: TokenStream, input: TokenStream) -> TokenStream {
 	quote! {
 		#(#out)*
 
-		#vis type #ident #ty_generics = #last_version #ty_generics;
+		#vis type #last_version #ty_generics = #ident #ty_generics;
 	}
 	.into()
 }
