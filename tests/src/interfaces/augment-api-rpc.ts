@@ -619,6 +619,10 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Get token variable metadata
        **/
       variableMetadata: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Bytes>>;
+      /**
+       * nextSponsored transaction
+       **/
+      nextSponsored: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array,  account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<u64>>>;
     };
     web3: {
       /**

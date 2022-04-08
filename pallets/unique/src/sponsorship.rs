@@ -301,3 +301,80 @@ where
 		}
 	}
 }
+
+use crate::SponsorshipPredict;
+use up_data_structs::SponsorshipState;
+pub struct UniqueSponsorshipPredict<T>(PhantomData<T>);
+
+impl<T> SponsorshipPredict<T> for UniqueSponsorshipPredict<T>
+where
+	T: Config,
+{
+	fn predict(collection_id: CollectionId, who: T::CrossAccountId, token: TokenId) -> Option<u64>
+	where
+		u64: From<<T as frame_system::Config>::BlockNumber>,
+	{
+		let collection = <CollectionHandle<T>>::try_get(collection_id).ok()?;
+
+		// preliminary sponsoring correctness check
+		match collection.sponsorship {
+			SponsorshipState::Disabled | SponsorshipState::Unconfirmed(_) => return None,
+			_ => (),
+		}
+
+		// sponsor timeout
+		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
+		let limit = collection
+			.limits
+			.sponsor_transfer_timeout(match collection.mode {
+				CollectionMode::NFT => NFT_SPONSOR_TRANSFER_TIMEOUT,
+				CollectionMode::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+				CollectionMode::ReFungible => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+			});
+
+		let last_tx_block = match collection.mode {
+			CollectionMode::NFT => <NftTransferBasket<T>>::get(collection.id, token),
+			CollectionMode::Fungible(_) => {
+				<FungibleTransferBasket<T>>::get(collection.id, who.as_sub())
+			}
+			CollectionMode::ReFungible => {
+				<ReFungibleTransferBasket<T>>::get((collection.id, token, who.as_sub()))
+			}
+		};
+
+		if let Some(last_tx_block) = last_tx_block {
+			let timeout = last_tx_block + limit.into();
+			if block_number < timeout {
+				return Some((timeout - block_number).into());
+			}
+			return Some(0);
+		}
+
+		let token_exists = match collection.mode {
+			CollectionMode::NFT => {
+				<pallet_nonfungible::TokenData<T>>::contains_key((collection.id, token))
+			}
+			CollectionMode::Fungible(_) => true,
+			CollectionMode::ReFungible => {
+				<pallet_refungible::TotalSupply<T>>::contains_key((collection.id, token))
+			}
+		};
+
+		if token_exists {
+			Some(0)
+		} else {
+			None
+		}
+
+		// // existance check
+		// match collection.mode {
+		// 	CollectionMode::NFT => <NftTransferBasket<T>>::get(collection.id, token),
+		// 	CollectionMode::Fungible(_) => {
+		// 		<FungibleTransferBasket<T>>::get(collection.id, who.as_sub())
+		// 	}
+		// 	CollectionMode::ReFungible => {
+		// 		<ReFungibleTransferBasket<T>>::get((collection.id, token, who.as_sub()))
+		// 	}
+		// };
+	}
+}

@@ -119,6 +119,15 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 	) -> Result<Option<Collection<AccountId>>>;
 	#[rpc(name = "unique_collectionStats")]
 	fn collection_stats(&self, at: Option<BlockHash>) -> Result<CollectionStats>;
+
+	#[rpc(name = "unique_nextSponsored")]
+	fn next_sponsored(
+		&self,
+		collection: CollectionId,
+		account: CrossAccountId,
+		token: TokenId,
+		at: Option<BlockHash>,
+	) -> Result<Option<u64>>;
 }
 
 pub struct Unique<C, P> {
@@ -222,4 +231,5 @@ where
 	pass_method!(last_token_id(collection: CollectionId) -> TokenId);
 	pass_method!(collection_by_id(collection: CollectionId) -> Option<Collection<AccountId>>);
 	pass_method!(collection_stats() -> CollectionStats);
+	pass_method!(next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Option<u64>);
 }
