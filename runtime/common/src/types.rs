@@ -42,7 +42,7 @@ pub type DigestItem = generic::DigestItem;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 
 pub trait RuntimeInstance {
-	type CrossAccountId: pallet_common::account::CrossAccountId<sp_runtime::AccountId32>
+	type CrossAccountId: pallet_evm::account::CrossAccountId<sp_runtime::AccountId32>
 		+ Send
 		+ Sync
 		+ 'static;

@@ -30,7 +30,7 @@ use up_data_structs::{
 	NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId,
 };
 use pallet_common::{CollectionHandle};
-use pallet_common::account::CrossAccountId;
+use pallet_evm::account::CrossAccountId;
 
 pub fn withdraw_transfer<T: Config>(
 	collection: &CollectionHandle<T>,

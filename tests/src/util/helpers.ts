@@ -344,15 +344,12 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
     // Run the CreateCollection transaction
     const alicePrivateKey = privateKey('//Alice');
     const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any});
-    const events = await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
-    const result = getCreateCollectionResult(events);
+    await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
 
     // Get number of collections after the transaction
     const collectionCountAfter = await getCreatedCollectionCount(api);
 
     // What to expect
-    // tslint:disable-next-line:no-unused-expression
-    expect(result.success).to.be.false;
     expect(collectionCountAfter).to.be.equal(collectionCountBefore, 'Error: Collection with incorrect data created.');
   });
 }
@@ -837,6 +834,13 @@ getFreeBalance(account: IKeyringPair): Promise<bigint> {
   });
 
   return balance;
+}
+
+export async function transferBalanceTo(api: ApiPromise, source: IKeyringPair, target: string, amount = 1000n * UNIQUE) {
+  const tx = api.tx.balances.transfer(target, amount);
+  const events = await submitTransactionAsync(source, tx);
+  const result = getGenericResult(events);
+  expect(result.success).to.be.true;
 }
 
 export async function
