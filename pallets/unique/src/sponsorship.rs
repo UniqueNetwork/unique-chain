@@ -365,16 +365,5 @@ where
 		} else {
 			None
 		}
-
-		// // existance check
-		// match collection.mode {
-		// 	CollectionMode::NFT => <NftTransferBasket<T>>::get(collection.id, token),
-		// 	CollectionMode::Fungible(_) => {
-		// 		<FungibleTransferBasket<T>>::get(collection.id, who.as_sub())
-		// 	}
-		// 	CollectionMode::ReFungible => {
-		// 		<ReFungibleTransferBasket<T>>::get((collection.id, token, who.as_sub()))
-		// 	}
-		// };
 	}
 }
