@@ -4,7 +4,7 @@ import privateKey from '../substrate/privateKey';
 import usingApi from '../substrate/substrate-api';
 import {createCollectionExpectSuccess, createItemExpectSuccess, getTokenOwner, getTopmostTokenOwner, setCollectionLimitsExpectSuccess, transferExpectSuccess, transferFromExpectSuccess} from '../util/helpers';
 
-describe.only('nesting', () => {
+describe('nesting', () => {
   it('allows to nest/unnest token', async () => {
     await usingApi(async api => {
       const alice = privateKey('//Alice');

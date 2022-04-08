@@ -985,14 +985,18 @@ export async function getTokenOwner(
   collectionId: number,
   token: number,
 ): Promise<CrossAccountId> {
-  return normalizeAccountId((await api.rpc.unique.tokenOwner(collectionId, token)).toJSON() as any);
+  const owner = (await api.rpc.unique.tokenOwner(collectionId, token)).toJSON() as any;
+  if (owner == null) throw new Error('owner == null');
+  return normalizeAccountId(owner);
 }
 export async function getTopmostTokenOwner(
   api: ApiPromise,
   collectionId: number,
   token: number,
 ): Promise<CrossAccountId> {
-  return normalizeAccountId((await api.rpc.unique.topmostTokenOwner(collectionId, token)).toJSON() as any);
+  const owner = (await api.rpc.unique.topmostTokenOwner(collectionId, token)).toJSON() as any;
+  if (owner == null) throw new Error('owner == null');
+  return normalizeAccountId(owner);
 }
 export async function isTokenExists(
   api: ApiPromise,
