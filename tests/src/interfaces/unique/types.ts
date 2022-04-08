@@ -449,6 +449,9 @@ export interface FpRpcTransactionStatus extends Struct {
 /** @name FrameSupportPalletId */
 export interface FrameSupportPalletId extends U8aFixed {}
 
+/** @name FrameSupportStorageBoundedBTreeSet */
+export interface FrameSupportStorageBoundedBTreeSet extends Vec<u32> {}
+
 /** @name FrameSupportTokensMiscBalanceStatus */
 export interface FrameSupportTokensMiscBalanceStatus extends Enum {
   readonly isFree: boolean;
@@ -890,7 +893,11 @@ export interface PalletCommonError extends Enum {
   readonly isAddressIsZero: boolean;
   readonly isUnsupportedOperation: boolean;
   readonly isNotSufficientFounds: boolean;
-  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'TokenVariableDataLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds';
+  readonly isNestingIsDisabled: boolean;
+  readonly isOnlyOwnerAllowedToNest: boolean;
+  readonly isSourceCollectionIsNotAllowedToNest: boolean;
+  readonly isCollectionFieldSizeExceeded: boolean;
+  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'TokenVariableDataLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'NestingIsDisabled' | 'OnlyOwnerAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded';
 }
 
 /** @name PalletCommonEvent */
@@ -1069,7 +1076,8 @@ export interface PalletFungibleError extends Enum {
   readonly isNotFungibleDataUsedToMintFungibleCollectionToken: boolean;
   readonly isFungibleItemsHaveNoId: boolean;
   readonly isFungibleItemsDontHaveData: boolean;
-  readonly type: 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'FungibleItemsHaveNoId' | 'FungibleItemsDontHaveData';
+  readonly isFungibleDisallowsNesting: boolean;
+  readonly type: 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'FungibleItemsHaveNoId' | 'FungibleItemsDontHaveData' | 'FungibleDisallowsNesting';
 }
 
 /** @name PalletInflationCall */
@@ -1099,13 +1107,32 @@ export interface PalletNonfungibleItemData extends Struct {
 export interface PalletRefungibleError extends Enum {
   readonly isNotRefungibleDataUsedToMintFungibleCollectionToken: boolean;
   readonly isWrongRefungiblePieces: boolean;
-  readonly type: 'NotRefungibleDataUsedToMintFungibleCollectionToken' | 'WrongRefungiblePieces';
+  readonly isRefungibleDisallowsNesting: boolean;
+  readonly type: 'NotRefungibleDataUsedToMintFungibleCollectionToken' | 'WrongRefungiblePieces' | 'RefungibleDisallowsNesting';
 }
 
 /** @name PalletRefungibleItemData */
 export interface PalletRefungibleItemData extends Struct {
   readonly constData: Bytes;
   readonly variableData: Bytes;
+}
+
+/** @name PalletStructureCall */
+export interface PalletStructureCall extends Null {}
+
+/** @name PalletStructureError */
+export interface PalletStructureError extends Enum {
+  readonly isOuroborosDetected: boolean;
+  readonly isDepthLimit: boolean;
+  readonly isTokenNotFound: boolean;
+  readonly type: 'OuroborosDetected' | 'DepthLimit' | 'TokenNotFound';
+}
+
+/** @name PalletStructureEvent */
+export interface PalletStructureEvent extends Enum {
+  readonly isExecuted: boolean;
+  readonly asExecuted: Result<Null, SpRuntimeDispatchError>;
+  readonly type: 'Executed';
 }
 
 /** @name PalletSudoCall */
@@ -1402,7 +1429,7 @@ export interface PalletUniqueCall extends Enum {
   readonly isSetCollectionLimits: boolean;
   readonly asSetCollectionLimits: {
     readonly collectionId: u32;
-    readonly newLimit: UpDataStructsCollectionLimits;
+    readonly newLimit: UpDataStructsCollectionLimitsVersion2;
   } & Struct;
   readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'SetPublicAccessMode' | 'SetMintPermission' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetVariableMetaData' | 'SetMetaUpdatePermissionFlag' | 'SetSchemaVersion' | 'SetOffchainSchema' | 'SetConstOnChainSchema' | 'SetVariableOnChainSchema' | 'SetCollectionLimits';
 }
@@ -1566,6 +1593,9 @@ export interface PalletXcmEvent extends Enum {
   readonly asNotifyTargetMigrationFail: ITuple<[XcmVersionedMultiLocation, u64]>;
   readonly type: 'Attempted' | 'Sent' | 'UnexpectedResponse' | 'ResponseReady' | 'Notified' | 'NotifyOverweight' | 'NotifyDispatchError' | 'NotifyDecodeFailed' | 'InvalidResponder' | 'InvalidResponderVersion' | 'ResponseTaken' | 'AssetsTrapped' | 'VersionChangeNotified' | 'SupportedVersionChanged' | 'NotifyTargetSendFail' | 'NotifyTargetMigrationFail';
 }
+
+/** @name PhantomTypeUpDataStructs */
+export interface PhantomTypeUpDataStructs extends Vec<Lookup309> {}
 
 /** @name PolkadotCorePrimitivesInboundDownwardMessage */
 export interface PolkadotCorePrimitivesInboundDownwardMessage extends Struct {
@@ -1745,26 +1775,16 @@ export interface UpDataStructsAccessMode extends Enum {
   readonly type: 'Normal' | 'AllowList';
 }
 
-/** @name UpDataStructsCollection */
-export interface UpDataStructsCollection extends Struct {
-  readonly owner: AccountId32;
-  readonly mode: UpDataStructsCollectionMode;
-  readonly access: UpDataStructsAccessMode;
-  readonly name: Vec<u16>;
-  readonly description: Vec<u16>;
-  readonly tokenPrefix: Bytes;
-  readonly mintMode: bool;
-  readonly offchainSchema: Bytes;
-  readonly schemaVersion: UpDataStructsSchemaVersion;
-  readonly sponsorship: UpDataStructsSponsorshipState;
-  readonly limits: UpDataStructsCollectionLimits;
-  readonly variableOnChainSchema: Bytes;
-  readonly constOnChainSchema: Bytes;
-  readonly metaUpdatePermission: UpDataStructsMetaUpdatePermission;
+/** @name UpDataStructsCollectionField */
+export interface UpDataStructsCollectionField extends Enum {
+  readonly isVariableOnChainSchema: boolean;
+  readonly isConstOnChainSchema: boolean;
+  readonly isOffchainSchema: boolean;
+  readonly type: 'VariableOnChainSchema' | 'ConstOnChainSchema' | 'OffchainSchema';
 }
 
-/** @name UpDataStructsCollectionLimits */
-export interface UpDataStructsCollectionLimits extends Struct {
+/** @name UpDataStructsCollectionLimitsVersion2 */
+export interface UpDataStructsCollectionLimitsVersion2 extends Struct {
   readonly accountTokenOwnershipLimit: Option<u32>;
   readonly sponsoredDataSize: Option<u32>;
   readonly sponsoredDataRateLimit: Option<UpDataStructsSponsoringRateLimit>;
@@ -1774,6 +1794,7 @@ export interface UpDataStructsCollectionLimits extends Struct {
   readonly ownerCanTransfer: Option<bool>;
   readonly ownerCanDestroy: Option<bool>;
   readonly transfersEnabled: Option<bool>;
+  readonly nestingRule: Option<UpDataStructsNestingRule>;
 }
 
 /** @name UpDataStructsCollectionMode */
@@ -1792,6 +1813,21 @@ export interface UpDataStructsCollectionStats extends Struct {
   readonly alive: u32;
 }
 
+/** @name UpDataStructsCollectionVersion2 */
+export interface UpDataStructsCollectionVersion2 extends Struct {
+  readonly owner: AccountId32;
+  readonly mode: UpDataStructsCollectionMode;
+  readonly access: UpDataStructsAccessMode;
+  readonly name: Vec<u16>;
+  readonly description: Vec<u16>;
+  readonly tokenPrefix: Bytes;
+  readonly mintMode: bool;
+  readonly schemaVersion: UpDataStructsSchemaVersion;
+  readonly sponsorship: UpDataStructsSponsorshipState;
+  readonly limits: UpDataStructsCollectionLimitsVersion2;
+  readonly metaUpdatePermission: UpDataStructsMetaUpdatePermission;
+}
+
 /** @name UpDataStructsCreateCollectionData */
 export interface UpDataStructsCreateCollectionData extends Struct {
   readonly mode: UpDataStructsCollectionMode;
@@ -1802,7 +1838,7 @@ export interface UpDataStructsCreateCollectionData extends Struct {
   readonly offchainSchema: Bytes;
   readonly schemaVersion: Option<UpDataStructsSchemaVersion>;
   readonly pendingSponsor: Option<AccountId32>;
-  readonly limits: Option<UpDataStructsCollectionLimits>;
+  readonly limits: Option<UpDataStructsCollectionLimitsVersion2>;
   readonly variableOnChainSchema: Bytes;
   readonly constOnChainSchema: Bytes;
   readonly metaUpdatePermission: Option<UpDataStructsMetaUpdatePermission>;
@@ -1870,6 +1906,33 @@ export interface UpDataStructsMetaUpdatePermission extends Enum {
   readonly isAdmin: boolean;
   readonly isNone: boolean;
   readonly type: 'ItemOwner' | 'Admin' | 'None';
+}
+
+/** @name UpDataStructsNestingRule */
+export interface UpDataStructsNestingRule extends Enum {
+  readonly isDisabled: boolean;
+  readonly isOwner: boolean;
+  readonly isOwnerRestricted: boolean;
+  readonly asOwnerRestricted: FrameSupportStorageBoundedBTreeSet;
+  readonly type: 'Disabled' | 'Owner' | 'OwnerRestricted';
+}
+
+/** @name UpDataStructsRpcCollection */
+export interface UpDataStructsRpcCollection extends Struct {
+  readonly owner: AccountId32;
+  readonly mode: UpDataStructsCollectionMode;
+  readonly access: UpDataStructsAccessMode;
+  readonly name: Vec<u16>;
+  readonly description: Vec<u16>;
+  readonly tokenPrefix: Bytes;
+  readonly mintMode: bool;
+  readonly offchainSchema: Bytes;
+  readonly schemaVersion: UpDataStructsSchemaVersion;
+  readonly sponsorship: UpDataStructsSponsorshipState;
+  readonly limits: UpDataStructsCollectionLimitsVersion2;
+  readonly variableOnChainSchema: Bytes;
+  readonly constOnChainSchema: Bytes;
+  readonly metaUpdatePermission: UpDataStructsMetaUpdatePermission;
 }
 
 /** @name UpDataStructsSchemaVersion */

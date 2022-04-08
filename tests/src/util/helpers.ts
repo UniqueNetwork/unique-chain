@@ -27,7 +27,7 @@ import {alicesPublicKey} from '../accounts';
 import privateKey from '../substrate/privateKey';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
-import {UpDataStructsCollection} from '@polkadot/types/lookup';
+import {UpDataStructsRpcCollection} from '@polkadot/types/lookup';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -987,6 +987,13 @@ export async function getTokenOwner(
 ): Promise<CrossAccountId> {
   return normalizeAccountId((await api.rpc.unique.tokenOwner(collectionId, token)).toJSON() as any);
 }
+export async function getTopmostTokenOwner(
+  api: ApiPromise,
+  collectionId: number,
+  token: number,
+): Promise<CrossAccountId> {
+  return normalizeAccountId((await api.rpc.unique.topmostTokenOwner(collectionId, token)).toJSON() as any);
+}
 export async function isTokenExists(
   api: ApiPromise,
   collectionId: number,
@@ -1256,7 +1263,7 @@ export async function removeFromAllowListExpectFailure(sender: IKeyringPair, col
 }
 
 export const getDetailedCollectionInfo = async (api: ApiPromise, collectionId: number)
-  : Promise<UpDataStructsCollection | null> => {
+  : Promise<UpDataStructsRpcCollection | null> => {
   return (await api.rpc.unique.collectionById(collectionId)).unwrapOr(null);
 };
 
@@ -1265,7 +1272,7 @@ export const getCreatedCollectionCount = async (api: ApiPromise): Promise<number
   return (await api.rpc.unique.collectionStats()).created.toNumber();
 };
 
-export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId: number): Promise<UpDataStructsCollection> {
+export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId: number): Promise<UpDataStructsRpcCollection> {
   return (await api.rpc.unique.collectionById(collectionId)).unwrap();
 }
 

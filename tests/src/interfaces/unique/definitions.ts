@@ -49,6 +49,7 @@ export default {
     balance: fun('Get amount of specific account token', [collectionParam, crossAccountParam(), tokenParam], 'u128'),
     allowance: fun('Get allowed amount', [collectionParam, crossAccountParam('sender'), crossAccountParam('spender'), tokenParam], 'u128'),
     tokenOwner: fun('Get token owner', [collectionParam, tokenParam], CROSS_ACCOUNT_ID_TYPE),
+    topmostTokenOwner: fun('Get token owner, in case of nested token - find parent recursive', [collectionParam, tokenParam], CROSS_ACCOUNT_ID_TYPE),
     constMetadata: fun('Get token constant metadata', [collectionParam, tokenParam], 'Vec<u8>'),
     variableMetadata: fun('Get token variable metadata', [collectionParam, tokenParam], 'Vec<u8>'),
     tokenExists: fun('Check if token exists', [collectionParam, tokenParam], 'bool'),

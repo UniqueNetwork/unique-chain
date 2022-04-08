@@ -73,6 +73,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       CollectionDescriptionLimitExceeded: AugmentedError<ApiType>;
       /**
+       * Tried to store more data than allowed in collection field
+       **/
+      CollectionFieldSizeExceeded: AugmentedError<ApiType>;
+      /**
        * Collection limit bounds per collection exceeded
        **/
       CollectionLimitBoundsExceeded: AugmentedError<ApiType>;
@@ -101,6 +105,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       MustBeTokenOwner: AugmentedError<ApiType>;
       /**
+       * Collection has nesting disabled
+       **/
+      NestingIsDisabled: AugmentedError<ApiType>;
+      /**
        * No permission to perform action
        **/
       NoPermission: AugmentedError<ApiType>;
@@ -109,6 +117,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotSufficientFounds: AugmentedError<ApiType>;
       /**
+       * Only owner may nest tokens under this collection
+       **/
+      OnlyOwnerAllowedToNest: AugmentedError<ApiType>;
+      /**
        * Tried to enable permissions which are only permitted to be disabled
        **/
       OwnerPermissionsCantBeReverted: AugmentedError<ApiType>;
@@ -116,6 +128,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Collection is not in mint mode.
        **/
       PublicMintingNotAllowed: AugmentedError<ApiType>;
+      /**
+       * Only tokens from specific collections may nest tokens under this
+       **/
+      SourceCollectionIsNotAllowedToNest: AugmentedError<ApiType>;
       /**
        * Item not exists.
        **/
@@ -236,6 +252,10 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     fungible: {
+      /**
+       * Fungible token does not support nested
+       **/
+      FungibleDisallowsNesting: AugmentedError<ApiType>;
       /**
        * Tried to set data for fungible item
        **/
@@ -373,9 +393,31 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotRefungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
       /**
+       * Refungible token can't nest other tokens
+       **/
+      RefungibleDisallowsNesting: AugmentedError<ApiType>;
+      /**
        * Maximum refungibility exceeded
        **/
       WrongRefungiblePieces: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    structure: {
+      /**
+       * While searched for owner, encountered depth limit
+       **/
+      DepthLimit: AugmentedError<ApiType>;
+      /**
+       * While searched for owner, got already checked account
+       **/
+      OuroborosDetected: AugmentedError<ApiType>;
+      /**
+       * While searched for owner, found token owner by not-yet-existing token
+       **/
+      TokenNotFound: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

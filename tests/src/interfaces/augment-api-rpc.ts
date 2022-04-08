@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsCollection, UpDataStructsCollectionLimits, UpDataStructsCollectionStats } from './unique';
+import type { PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsCollectionLimitsVersion2, UpDataStructsCollectionStats, UpDataStructsRpcCollection } from './unique';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u128, u32, u64 } from '@polkadot/types-codec';
@@ -601,7 +601,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get collection by specified id
        **/
-      collectionById: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsCollection>>>;
+      collectionById: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsRpcCollection>>>;
       /**
        * Get collection stats
        **/
@@ -617,7 +617,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get effective collection limits
        **/
-      effectiveCollectionLimits: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsCollectionLimits>>>;
+      effectiveCollectionLimits: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsCollectionLimitsVersion2>>>;
       /**
        * Get last token id
        **/
@@ -634,6 +634,10 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Get token owner
        **/
       tokenOwner: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<PalletEvmAccountBasicCrossAccountIdRepr>>;
+      /**
+       * Get token owner, in case of nested token - find parent recursive
+       **/
+      topmostTokenOwner: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<PalletEvmAccountBasicCrossAccountIdRepr>>;
       /**
        * Get token variable metadata
        **/

@@ -5,7 +5,7 @@ import type { ApiTypes } from '@polkadot/api-base/types';
 import type { BTreeMap, Bytes, Option, U256, Vec, bool, u128, u16, u32, u64 } from '@polkadot/types-codec';
 import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
-import type { CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueQueueConfigData, EthereumBlock, EthereumReceiptReceiptV3, EthereumTransactionTransactionV2, FpRpcTransactionStatus, FrameSupportWeightsPerDispatchClassU64, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemPhase, OrmlVestingVestingSchedule, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesReleases, PalletBalancesReserveData, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmContractHelpersSponsoringModeT, PalletNonfungibleItemData, PalletRefungibleItemData, PalletTransactionPaymentReleases, PalletTreasuryProposal, PolkadotCorePrimitivesOutboundHrmpMessage, PolkadotPrimitivesV2AbridgedHostConfiguration, PolkadotPrimitivesV2PersistedValidationData, PolkadotPrimitivesV2UpgradeRestriction, SpRuntimeDigest, SpTrieStorageProof, UpDataStructsCollection, UpDataStructsCollectionStats } from '@polkadot/types/lookup';
+import type { CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueQueueConfigData, EthereumBlock, EthereumReceiptReceiptV3, EthereumTransactionTransactionV2, FpRpcTransactionStatus, FrameSupportWeightsPerDispatchClassU64, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemPhase, OrmlVestingVestingSchedule, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesReleases, PalletBalancesReserveData, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmContractHelpersSponsoringModeT, PalletNonfungibleItemData, PalletRefungibleItemData, PalletTransactionPaymentReleases, PalletTreasuryProposal, PhantomTypeUpDataStructs, PolkadotCorePrimitivesOutboundHrmpMessage, PolkadotPrimitivesV1AbridgedHostConfiguration, PolkadotPrimitivesV1PersistedValidationData, PolkadotPrimitivesV1UpgradeRestriction, SpRuntimeDigest, SpTrieStorageProof, UpDataStructsCollectionField, UpDataStructsCollectionStats, UpDataStructsCollectionVersion2 } from '@polkadot/types/lookup';
 import type { Observable } from '@polkadot/types/types';
 
 declare module '@polkadot/api-base/types/storage' {
@@ -13,25 +13,25 @@ declare module '@polkadot/api-base/types/storage' {
     balances: {
       /**
        * The Balances pallet example of storing the balance of an account.
-       * 
+       *
        * # Example
-       * 
+       *
        * ```nocompile
        * impl pallet_balances::Config for Runtime {
        * type AccountStore = StorageMapShim<Self::Account<Runtime>, frame_system::Provider<Runtime>, AccountId, Self::AccountData<Balance>>
        * }
        * ```
-       * 
+       *
        * You can also store the balance of an account in the `System` pallet.
-       * 
+       *
        * # Example
-       * 
+       *
        * ```nocompile
        * impl pallet_balances::Config for Runtime {
        * type AccountStore = System
        * }
        * ```
-       * 
+       *
        * But this comes with tradeoffs, storing account balances in the system pallet stores
        * `frame_system` data alongside the account data contrary to storing account balances in the
        * `Balances` pallet, which uses a `StorageMap` to store balances data only.
@@ -49,7 +49,7 @@ declare module '@polkadot/api-base/types/storage' {
       reserves: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesReserveData>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
       /**
        * Storage version of the pallet.
-       * 
+       *
        * This is set to v2.0.0 for new networks.
        **/
       storageVersion: AugmentedQuery<ApiType, () => Observable<PalletBalancesReleases>, []> & QueryableStorageEntry<ApiType, []>;
@@ -77,13 +77,17 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * Collection info
        **/
-      collectionById: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Option<UpDataStructsCollection>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
+      collectionById: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Option<UpDataStructsCollectionVersion2>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
+      /**
+       * Large variable-size collection fields are extracted here
+       **/
+      collectionData: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: UpDataStructsCollectionField | 'VariableOnChainSchema' | 'ConstOnChainSchema' | 'OffchainSchema' | number | Uint8Array) => Observable<Bytes>, [u32, UpDataStructsCollectionField]> & QueryableStorageEntry<ApiType, [u32, UpDataStructsCollectionField]>;
       createdCollectionCount: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       destroyedCollectionCount: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Not used by code, exists only to provide some types to metadata
        **/
-      dummyStorageValue: AugmentedQuery<ApiType, () => Observable<Option<ITuple<[UpDataStructsCollectionStats, u32, u32]>>>, []> & QueryableStorageEntry<ApiType, []>;
+      dummyStorageValue: AugmentedQuery<ApiType, () => Observable<Option<ITuple<[UpDataStructsCollectionStats, u32, u32, PhantomTypeUpDataStructs]>>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * List of collection admins
        **/
@@ -245,7 +249,7 @@ declare module '@polkadot/api-base/types/storage' {
       authorizedUpgrade: AugmentedQuery<ApiType, () => Observable<Option<H256>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * A custom head data that should be returned as result of `validate_block`.
-       * 
+       *
        * See [`Pallet::set_custom_validation_head_data`] for more information.
        **/
       customValidationHeadData: AugmentedQuery<ApiType, () => Observable<Option<Bytes>>, []> & QueryableStorageEntry<ApiType, []>;
@@ -255,35 +259,35 @@ declare module '@polkadot/api-base/types/storage' {
       didSetValidationCode: AugmentedQuery<ApiType, () => Observable<bool>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * The parachain host configuration that was obtained from the relay parent.
-       * 
+       *
        * This field is meant to be updated each block with the validation data inherent. Therefore,
        * before processing of the inherent, e.g. in `on_initialize` this data may be stale.
-       * 
+       *
        * This data is also absent from the genesis.
        **/
       hostConfiguration: AugmentedQuery<ApiType, () => Observable<Option<PolkadotPrimitivesV2AbridgedHostConfiguration>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * HRMP messages that were sent in a block.
-       * 
+       *
        * This will be cleared in `on_initialize` of each new block.
        **/
       hrmpOutboundMessages: AugmentedQuery<ApiType, () => Observable<Vec<PolkadotCorePrimitivesOutboundHrmpMessage>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * HRMP watermark that was set in a block.
-       * 
+       *
        * This will be cleared in `on_initialize` of each new block.
        **/
       hrmpWatermark: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * The last downward message queue chain head we have observed.
-       * 
+       *
        * This value is loaded before and saved after processing inbound downward messages carried
        * by the system inherent.
        **/
       lastDmqMqcHead: AugmentedQuery<ApiType, () => Observable<H256>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * The message queue chain heads we have observed per each channel incoming channel.
-       * 
+       *
        * This value is loaded before and saved after processing inbound downward messages carried
        * by the system inherent.
        **/
@@ -291,7 +295,7 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * Validation code that is set by the parachain and is to be communicated to collator and
        * consequently the relay-chain.
-       * 
+       *
        * This will be cleared in `on_initialize` of each new block if no other pallet already set
        * the value.
        **/
@@ -302,35 +306,35 @@ declare module '@polkadot/api-base/types/storage' {
       pendingUpwardMessages: AugmentedQuery<ApiType, () => Observable<Vec<Bytes>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * In case of a scheduled upgrade, this storage field contains the validation code to be applied.
-       * 
+       *
        * As soon as the relay chain gives us the go-ahead signal, we will overwrite the [`:code`][well_known_keys::CODE]
        * which will result the next block process with the new validation code. This concludes the upgrade process.
-       * 
+       *
        * [well_known_keys::CODE]: sp_core::storage::well_known_keys::CODE
        **/
       pendingValidationCode: AugmentedQuery<ApiType, () => Observable<Bytes>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Number of downward messages processed in a block.
-       * 
+       *
        * This will be cleared in `on_initialize` of each new block.
        **/
       processedDownwardMessages: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * The state proof for the last relay parent block.
-       * 
+       *
        * This field is meant to be updated each block with the validation data inherent. Therefore,
        * before processing of the inherent, e.g. in `on_initialize` this data may be stale.
-       * 
+       *
        * This data is also absent from the genesis.
        **/
       relayStateProof: AugmentedQuery<ApiType, () => Observable<Option<SpTrieStorageProof>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * The snapshot of some state related to messaging relevant to the current parachain as per
        * the relay parent.
-       * 
+       *
        * This field is meant to be updated each block with the validation data inherent. Therefore,
        * before processing of the inherent, e.g. in `on_initialize` this data may be stale.
-       * 
+       *
        * This data is also absent from the genesis.
        **/
       relevantMessagingState: AugmentedQuery<ApiType, () => Observable<Option<CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot>>, []> & QueryableStorageEntry<ApiType, []>;
@@ -348,7 +352,7 @@ declare module '@polkadot/api-base/types/storage' {
        * An option which indicates if the relay-chain restricts signalling a validation code upgrade.
        * In other words, if this is `Some` and [`NewValidationCode`] is `Some` then the produced
        * candidate will be invalid.
-       * 
+       *
        * This storage item is a mirror of the corresponding value for the current parachain from the
        * relay-chain. This value is ephemeral which means it doesn't hit the storage. This value is
        * set after the inherent.
@@ -356,7 +360,7 @@ declare module '@polkadot/api-base/types/storage' {
       upgradeRestrictionSignal: AugmentedQuery<ApiType, () => Observable<Option<PolkadotPrimitivesV2UpgradeRestriction>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Upward messages that were sent in a block.
-       * 
+       *
        * This will be cleared in `on_initialize` of each new block.
        **/
       upwardMessages: AugmentedQuery<ApiType, () => Observable<Vec<Bytes>>, []> & QueryableStorageEntry<ApiType, []>;
@@ -400,6 +404,12 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       [key: string]: QueryableStorageEntry<ApiType>;
     };
+    structure: {
+      /**
+       * Generic query
+       **/
+      [key: string]: QueryableStorageEntry<ApiType>;
+    };
     sudo: {
       /**
        * The `AccountId` of the sudo key.
@@ -437,10 +447,10 @@ declare module '@polkadot/api-base/types/storage' {
       eventCount: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Events deposited for the current block.
-       * 
+       *
        * NOTE: The item is unbound and should therefore never be read on chain.
        * It could otherwise inflate the PoV size of a block.
-       * 
+       *
        * Events have a large in-memory size. Box the events to not go out-of-memory
        * just in case someone still reads them from within the runtime.
        **/
@@ -448,11 +458,11 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * Mapping between a topic (represented by T::Hash) and a vector of indexes
        * of events in the `<Events<T>>` list.
-       * 
+       *
        * All topic vectors have deterministic storage locations depending on the topic. This
        * allows light-clients to leverage the changes trie storage tracking mechanism and
        * in case of changes fetch the list of events of interest.
-       * 
+       *
        * The value has the type `(T::BlockNumber, EventIndex)` because if we used only just
        * the `EventIndex` then in case if the topic has the same contents on the next block
        * no notification will be triggered thus the event might be lost.
@@ -577,7 +587,7 @@ declare module '@polkadot/api-base/types/storage' {
     vesting: {
       /**
        * Vesting schedules of an account.
-       * 
+       *
        * VestingSchedules: map AccountId => Vec<VestingSchedule>
        **/
       vestingSchedules: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<Vec<OrmlVestingVestingSchedule>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
@@ -610,7 +620,7 @@ declare module '@polkadot/api-base/types/storage' {
       outboundXcmpStatus: AugmentedQuery<ApiType, () => Observable<Vec<CumulusPalletXcmpQueueOutboundChannelDetails>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * The messages that exceeded max individual message weight budget.
-       * 
+       *
        * These message stay in this storage map until they are manually dispatched via
        * `service_overweight`.
        **/
