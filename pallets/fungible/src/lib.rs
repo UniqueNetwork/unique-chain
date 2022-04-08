@@ -19,9 +19,8 @@
 use core::ops::Deref;
 use frame_support::{ensure};
 use up_data_structs::{AccessMode, CollectionId, TokenId, CreateCollectionData};
-use pallet_common::{
-	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
-};
+use pallet_common::{Error as CommonError, Event as CommonEvent, Pallet as PalletCommon};
+use pallet_evm::account::CrossAccountId;
 use pallet_evm_coder_substrate::WithRecorder;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
@@ -36,7 +35,7 @@ pub mod common;
 pub mod erc;
 pub mod weights;
 
-pub type CreateItemData<T> = (<T as pallet_common::Config>::CrossAccountId, u128);
+pub type CreateItemData<T> = (<T as pallet_evm::account::Config>::CrossAccountId, u128);
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 #[frame_support::pallet]

@@ -53,10 +53,8 @@ use up_data_structs::{
 	CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
 	CreateCollectionData, CustomDataLimit, CreateItemExData,
 };
-use pallet_common::{
-	account::CrossAccountId, CollectionHandle, Pallet as PalletCommon, Error as CommonError,
-	CommonWeightInfo,
-};
+use pallet_common::{CollectionHandle, Pallet as PalletCommon, Error as CommonError, CommonWeightInfo};
+use pallet_evm::account::CrossAccountId;
 use pallet_refungible::{Pallet as PalletRefungible, RefungibleHandle};
 use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
 use pallet_nonfungible::{Pallet as PalletNonfungible, NonfungibleHandle};
@@ -122,7 +120,7 @@ decl_event! {
 	pub enum Event<T>
 	where
 		<T as frame_system::Config>::AccountId,
-		<T as pallet_common::Config>::CrossAccountId,
+		<T as pallet_evm::account::Config>::CrossAccountId,
 	{
 		/// Collection sponsor was removed
 		///

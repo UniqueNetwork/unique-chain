@@ -105,6 +105,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NoPermission: AugmentedError<ApiType>;
       /**
+       * Not sufficient founds to perform action
+       **/
+      NotSufficientFounds: AugmentedError<ApiType>;
+      /**
        * Tried to enable permissions which are only permitted to be disabled
        **/
       OwnerPermissionsCantBeReverted: AugmentedError<ApiType>;

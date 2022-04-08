@@ -16,7 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use up_data_structs::{CollectionId, TokenId, Collection, CollectionStats};
+use up_data_structs::{CollectionId, TokenId, Collection, CollectionStats, CollectionLimits};
 use sp_std::vec::Vec;
 use sp_core::H160;
 use codec::Decode;
@@ -28,7 +28,7 @@ sp_api::decl_runtime_apis! {
 	#[api_version(2)]
 	pub trait UniqueApi<CrossAccountId, AccountId> where
 		AccountId: Decode,
-		CrossAccountId: pallet_common::account::CrossAccountId<AccountId>,
+		CrossAccountId: pallet_evm::account::CrossAccountId<AccountId>,
 	{
 		#[changed_in(2)]
 		fn token_owner(collection: CollectionId, token: TokenId) -> Result<CrossAccountId>;
@@ -60,5 +60,6 @@ sp_api::decl_runtime_apis! {
 		fn collection_by_id(collection: CollectionId) -> Result<Option<Collection<AccountId>>>;
 		fn collection_stats() -> Result<CollectionStats>;
 		fn next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<Option<u64>>;
+		fn effective_collection_limits(collection_id: CollectionId) -> Result<Option<CollectionLimits>>;
 	}
 }

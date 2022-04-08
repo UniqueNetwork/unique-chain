@@ -654,6 +654,9 @@ export interface FrameSystemPhase extends Enum {
   readonly type: 'ApplyExtrinsic' | 'Finalization' | 'Initialization';
 }
 
+/** @name OpalRuntimeRuntime */
+export interface OpalRuntimeRuntime extends Null {}
+
 /** @name OrmlVestingModuleCall */
 export interface OrmlVestingModuleCall extends Enum {
   readonly isClaim: boolean;
@@ -858,15 +861,6 @@ export interface PalletBalancesReserveData extends Struct {
   readonly amount: u128;
 }
 
-/** @name PalletCommonAccountBasicCrossAccountIdRepr */
-export interface PalletCommonAccountBasicCrossAccountIdRepr extends Enum {
-  readonly isSubstrate: boolean;
-  readonly asSubstrate: AccountId32;
-  readonly isEthereum: boolean;
-  readonly asEthereum: H160;
-  readonly type: 'Substrate' | 'Ethereum';
-}
-
 /** @name PalletCommonError */
 export interface PalletCommonError extends Enum {
   readonly isCollectionNotFound: boolean;
@@ -892,7 +886,8 @@ export interface PalletCommonError extends Enum {
   readonly isCantApproveMoreThanOwned: boolean;
   readonly isAddressIsZero: boolean;
   readonly isUnsupportedOperation: boolean;
-  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'TokenVariableDataLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation';
+  readonly isNotSufficientFounds: boolean;
+  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'TokenVariableDataLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds';
 }
 
 /** @name PalletCommonEvent */
@@ -902,13 +897,13 @@ export interface PalletCommonEvent extends Enum {
   readonly isCollectionDestroyed: boolean;
   readonly asCollectionDestroyed: u32;
   readonly isItemCreated: boolean;
-  readonly asItemCreated: ITuple<[u32, u32, PalletCommonAccountBasicCrossAccountIdRepr, u128]>;
+  readonly asItemCreated: ITuple<[u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
   readonly isItemDestroyed: boolean;
-  readonly asItemDestroyed: ITuple<[u32, u32, PalletCommonAccountBasicCrossAccountIdRepr, u128]>;
+  readonly asItemDestroyed: ITuple<[u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
   readonly isTransfer: boolean;
-  readonly asTransfer: ITuple<[u32, u32, PalletCommonAccountBasicCrossAccountIdRepr, PalletCommonAccountBasicCrossAccountIdRepr, u128]>;
+  readonly asTransfer: ITuple<[u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
   readonly isApproved: boolean;
-  readonly asApproved: ITuple<[u32, u32, PalletCommonAccountBasicCrossAccountIdRepr, PalletCommonAccountBasicCrossAccountIdRepr, u128]>;
+  readonly asApproved: ITuple<[u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
   readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'ItemCreated' | 'ItemDestroyed' | 'Transfer' | 'Approved';
 }
 
@@ -933,6 +928,15 @@ export interface PalletEthereumEvent extends Enum {
   readonly isExecuted: boolean;
   readonly asExecuted: ITuple<[H160, H160, H256, EvmCoreErrorExitReason]>;
   readonly type: 'Executed';
+}
+
+/** @name PalletEvmAccountBasicCrossAccountIdRepr */
+export interface PalletEvmAccountBasicCrossAccountIdRepr extends Enum {
+  readonly isSubstrate: boolean;
+  readonly asSubstrate: AccountId32;
+  readonly isEthereum: boolean;
+  readonly asEthereum: H160;
+  readonly type: 'Substrate' | 'Ethereum';
 }
 
 /** @name PalletEvmCall */
@@ -1085,7 +1089,7 @@ export interface PalletNonfungibleError extends Enum {
 export interface PalletNonfungibleItemData extends Struct {
   readonly constData: Bytes;
   readonly variableData: Bytes;
-  readonly owner: PalletCommonAccountBasicCrossAccountIdRepr;
+  readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
 }
 
 /** @name PalletRefungibleError */
@@ -1259,12 +1263,12 @@ export interface PalletUniqueCall extends Enum {
   readonly isAddToAllowList: boolean;
   readonly asAddToAllowList: {
     readonly collectionId: u32;
-    readonly address: PalletCommonAccountBasicCrossAccountIdRepr;
+    readonly address: PalletEvmAccountBasicCrossAccountIdRepr;
   } & Struct;
   readonly isRemoveFromAllowList: boolean;
   readonly asRemoveFromAllowList: {
     readonly collectionId: u32;
-    readonly address: PalletCommonAccountBasicCrossAccountIdRepr;
+    readonly address: PalletEvmAccountBasicCrossAccountIdRepr;
   } & Struct;
   readonly isSetPublicAccessMode: boolean;
   readonly asSetPublicAccessMode: {
@@ -1284,12 +1288,12 @@ export interface PalletUniqueCall extends Enum {
   readonly isAddCollectionAdmin: boolean;
   readonly asAddCollectionAdmin: {
     readonly collectionId: u32;
-    readonly newAdminId: PalletCommonAccountBasicCrossAccountIdRepr;
+    readonly newAdminId: PalletEvmAccountBasicCrossAccountIdRepr;
   } & Struct;
   readonly isRemoveCollectionAdmin: boolean;
   readonly asRemoveCollectionAdmin: {
     readonly collectionId: u32;
-    readonly accountId: PalletCommonAccountBasicCrossAccountIdRepr;
+    readonly accountId: PalletEvmAccountBasicCrossAccountIdRepr;
   } & Struct;
   readonly isSetCollectionSponsor: boolean;
   readonly asSetCollectionSponsor: {
@@ -1307,13 +1311,13 @@ export interface PalletUniqueCall extends Enum {
   readonly isCreateItem: boolean;
   readonly asCreateItem: {
     readonly collectionId: u32;
-    readonly owner: PalletCommonAccountBasicCrossAccountIdRepr;
+    readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
     readonly data: UpDataStructsCreateItemData;
   } & Struct;
   readonly isCreateMultipleItems: boolean;
   readonly asCreateMultipleItems: {
     readonly collectionId: u32;
-    readonly owner: PalletCommonAccountBasicCrossAccountIdRepr;
+    readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
     readonly itemsData: Vec<UpDataStructsCreateItemData>;
   } & Struct;
   readonly isCreateMultipleItemsEx: boolean;
@@ -1335,28 +1339,28 @@ export interface PalletUniqueCall extends Enum {
   readonly isBurnFrom: boolean;
   readonly asBurnFrom: {
     readonly collectionId: u32;
-    readonly from: PalletCommonAccountBasicCrossAccountIdRepr;
+    readonly from: PalletEvmAccountBasicCrossAccountIdRepr;
     readonly itemId: u32;
     readonly value: u128;
   } & Struct;
   readonly isTransfer: boolean;
   readonly asTransfer: {
-    readonly recipient: PalletCommonAccountBasicCrossAccountIdRepr;
+    readonly recipient: PalletEvmAccountBasicCrossAccountIdRepr;
     readonly collectionId: u32;
     readonly itemId: u32;
     readonly value: u128;
   } & Struct;
   readonly isApprove: boolean;
   readonly asApprove: {
-    readonly spender: PalletCommonAccountBasicCrossAccountIdRepr;
+    readonly spender: PalletEvmAccountBasicCrossAccountIdRepr;
     readonly collectionId: u32;
     readonly itemId: u32;
     readonly amount: u128;
   } & Struct;
   readonly isTransferFrom: boolean;
   readonly asTransferFrom: {
-    readonly from: PalletCommonAccountBasicCrossAccountIdRepr;
-    readonly recipient: PalletCommonAccountBasicCrossAccountIdRepr;
+    readonly from: PalletEvmAccountBasicCrossAccountIdRepr;
+    readonly recipient: PalletEvmAccountBasicCrossAccountIdRepr;
     readonly collectionId: u32;
     readonly itemId: u32;
     readonly value: u128;
@@ -1413,7 +1417,7 @@ export interface PalletUniqueRawEvent extends Enum {
   readonly isCollectionSponsorRemoved: boolean;
   readonly asCollectionSponsorRemoved: u32;
   readonly isCollectionAdminAdded: boolean;
-  readonly asCollectionAdminAdded: ITuple<[u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
+  readonly asCollectionAdminAdded: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
   readonly isCollectionOwnedChanged: boolean;
   readonly asCollectionOwnedChanged: ITuple<[u32, AccountId32]>;
   readonly isCollectionSponsorSet: boolean;
@@ -1423,11 +1427,11 @@ export interface PalletUniqueRawEvent extends Enum {
   readonly isSponsorshipConfirmed: boolean;
   readonly asSponsorshipConfirmed: ITuple<[u32, AccountId32]>;
   readonly isCollectionAdminRemoved: boolean;
-  readonly asCollectionAdminRemoved: ITuple<[u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
+  readonly asCollectionAdminRemoved: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
   readonly isAllowListAddressRemoved: boolean;
-  readonly asAllowListAddressRemoved: ITuple<[u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
+  readonly asAllowListAddressRemoved: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
   readonly isAllowListAddressAdded: boolean;
-  readonly asAllowListAddressAdded: ITuple<[u32, PalletCommonAccountBasicCrossAccountIdRepr]>;
+  readonly asAllowListAddressAdded: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
   readonly isCollectionLimitSet: boolean;
   readonly asCollectionLimitSet: u32;
   readonly isMintPermissionSet: boolean;
@@ -1722,9 +1726,6 @@ export interface SpVersionRuntimeVersion extends Struct {
   readonly stateVersion: u8;
 }
 
-/** @name UniqueRuntimeRuntime */
-export interface UniqueRuntimeRuntime extends Null {}
-
 /** @name UpDataStructsAccessMode */
 export interface UpDataStructsAccessMode extends Enum {
   readonly isNormal: boolean;
@@ -1816,7 +1817,7 @@ export interface UpDataStructsCreateItemExData extends Enum {
   readonly isNft: boolean;
   readonly asNft: Vec<UpDataStructsCreateNftExData>;
   readonly isFungible: boolean;
-  readonly asFungible: BTreeMap<PalletCommonAccountBasicCrossAccountIdRepr,u128>;
+  readonly asFungible: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr,u128>;
   readonly isRefungibleMultipleItems: boolean;
   readonly asRefungibleMultipleItems: Vec<UpDataStructsCreateRefungibleExData>;
   readonly isRefungibleMultipleOwners: boolean;
@@ -1834,7 +1835,7 @@ export interface UpDataStructsCreateNftData extends Struct {
 export interface UpDataStructsCreateNftExData extends Struct {
   readonly constData: Bytes;
   readonly variableData: Bytes;
-  readonly owner: PalletCommonAccountBasicCrossAccountIdRepr;
+  readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
 }
 
 /** @name UpDataStructsCreateReFungibleData */
@@ -1848,7 +1849,7 @@ export interface UpDataStructsCreateReFungibleData extends Struct {
 export interface UpDataStructsCreateRefungibleExData extends Struct {
   readonly constData: Bytes;
   readonly variableData: Bytes;
-  readonly users: BTreeMap<PalletCommonAccountBasicCrossAccountIdRepr, u128>;
+  readonly users: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>;
 }
 
 /** @name UpDataStructsMetaUpdatePermission */
