@@ -943,11 +943,11 @@ transferExpectFailure(
   collectionId: number,
   tokenId: number,
   sender: IKeyringPair,
-  recipient: IKeyringPair,
+  recipient: IKeyringPair | CrossAccountId,
   value: number | bigint = 1,
 ) {
   await usingApi(async (api: ApiPromise) => {
-    const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value);
+    const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient), collectionId, tokenId, value);
     const events = await expect(submitTransactionExpectFailAsync(sender, transferTx)).to.be.rejected;
     const result = getGenericResult(events);
     // if (events && Array.isArray(events)) {
@@ -1090,7 +1090,7 @@ export async function createItemExpectSuccess(sender: IKeyringPair, collectionId
   return newItemId;
 }
 
-export async function createItemExpectFailure(sender: IKeyringPair, collectionId: number, createMode: string, owner: string = sender.address) {
+export async function createItemExpectFailure(sender: IKeyringPair, collectionId: number, createMode: string, owner: CrossAccountId | string = sender.address) {
   await usingApi(async (api) => {
     const tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), createMode);
 
