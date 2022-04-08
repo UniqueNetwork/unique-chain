@@ -628,13 +628,13 @@ impl<T: Config> Pallet<T> {
 		}
 		match handle.limits.nesting_rule() {
 			NestingRule::Disabled => fail!(<CommonError<T>>::NestingIsDisabled),
-			NestingRule::Owner => ensure_sender_allowed::<T>(from, under, sender, nesting_budget)?,
+			NestingRule::Owner => ensure_sender_allowed::<T>(handle.id, under, sender, nesting_budget)?,
 			NestingRule::OwnerRestricted(whitelist) => {
 				ensure!(
 					whitelist.contains(&from),
 					<CommonError<T>>::SourceCollectionIsNotAllowedToNest
 				);
-				ensure_sender_allowed::<T>(from, under, sender, nesting_budget)?
+				ensure_sender_allowed::<T>(handle.id, under, sender, nesting_budget)?
 			}
 		}
 		Ok(())
