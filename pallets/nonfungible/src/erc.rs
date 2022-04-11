@@ -457,8 +457,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			});
 		}
 
-		<Pallet<T>>::create_multiple_items(self, &caller, data)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::create_multiple_items(self, &caller, data).map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 }
