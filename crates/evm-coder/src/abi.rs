@@ -26,7 +26,7 @@ use primitive_types::{H160, U256};
 
 use crate::{
 	execution::{Error, ResultWithPostInfo, WithPostDispatchInfo},
-	types::string,
+	types::{string, self},
 };
 use crate::execution::Result;
 
@@ -46,7 +46,7 @@ impl<'i> AbiReader<'i> {
 			offset: 0,
 		}
 	}
-	pub fn new_call(buf: &'i [u8]) -> Result<(u32, Self)> {
+	pub fn new_call(buf: &'i [u8]) -> Result<(types::bytes4, Self)> {
 		if buf.len() < 4 {
 			return Err(Error::Error(ExitError::OutOfOffset));
 		}
@@ -54,7 +54,7 @@ impl<'i> AbiReader<'i> {
 		method_id.copy_from_slice(&buf[0..4]);
 
 		Ok((
-			u32::from_be_bytes(method_id),
+			method_id,
 			Self {
 				buf,
 				subresult_offset: 4,
@@ -63,25 +63,50 @@ impl<'i> AbiReader<'i> {
 		))
 	}
 
-	fn read_padleft<const S: usize>(&mut self) -> Result<[u8; S]> {
-		if self.buf.len() - self.offset < ABI_ALIGNMENT {
+	fn read_pad<const S: usize>(buf: &[u8], offset: usize, pad_start: usize, pad_size: usize, block_start: usize, block_size: usize) -> Result<[u8; S]> {
+		if buf.len() - offset < ABI_ALIGNMENT {
 			return Err(Error::Error(ExitError::OutOfOffset));
 		}
 		let mut block = [0; S];
 		// Verify padding is empty
-		if !self.buf[self.offset..self.offset + ABI_ALIGNMENT - S]
+		if !buf[pad_start..pad_size]
 			.iter()
 			.all(|&v| v == 0)
 		{
 			return Err(Error::Error(ExitError::InvalidRange));
 		}
 		block.copy_from_slice(
-			&self.buf[self.offset + ABI_ALIGNMENT - S..self.offset + ABI_ALIGNMENT],
+			&buf[block_start..block_size],
 		);
-		self.offset += ABI_ALIGNMENT;
 		Ok(block)
 	}
 
+	fn read_padleft<const S: usize>(&mut self) -> Result<[u8; S]> {
+		let offset = self.offset;
+		self.offset += ABI_ALIGNMENT;
+		Self::read_pad(
+			self.buf,
+			offset,
+			offset, 
+			offset + ABI_ALIGNMENT - S,
+			offset + ABI_ALIGNMENT - S,
+			offset + ABI_ALIGNMENT
+		)
+	}
+
+	fn read_padright<const S: usize>(&mut self) -> Result<[u8; S]> {
+		let offset = self.offset;
+		self.offset += ABI_ALIGNMENT;
+		Self::read_pad(
+			self.buf,
+			offset,
+			offset + S, 
+			offset + ABI_ALIGNMENT,
+			offset,
+			offset + S
+		)
+	}
+	
 	pub fn address(&mut self) -> Result<H160> {
 		Ok(H160(self.read_padleft()?))
 	}
@@ -96,7 +121,7 @@ impl<'i> AbiReader<'i> {
 	}
 
 	pub fn bytes4(&mut self) -> Result<[u8; 4]> {
-		self.read_padleft()
+		self.read_padright()
 	}
 
 	pub fn bytes(&mut self) -> Result<Vec<u8>> {
@@ -268,6 +293,7 @@ impl_abi_readable!(u32, uint32);
 impl_abi_readable!(u64, uint64);
 impl_abi_readable!(u128, uint128);
 impl_abi_readable!(U256, uint256);
+impl_abi_readable!([u8; 4], bytes4);
 impl_abi_readable!(H160, address);
 impl_abi_readable!(Vec<u8>, bytes);
 impl_abi_readable!(bool, bool);
@@ -466,7 +492,7 @@ pub mod test {
 			"
 		))
 		.unwrap();
-		assert_eq!(call, 0x50bb4e7f);
+		assert_eq!(call, u32::to_be_bytes(0x50bb4e7f));
 		assert_eq!(
 			format!("{:?}", decoder.address().unwrap()),
 			"0xad2c0954693c2b5404b7e50967d3481bea432374"
@@ -505,7 +531,7 @@ pub mod test {
 			"
 		))
 		.unwrap();
-		assert_eq!(call, 0x36543006);
+		assert_eq!(call, u32::to_be_bytes(0x36543006));
 		let _ = decoder.address().unwrap();
 		let data =
 			<AbiReader<'_> as AbiRead<Vec<(uint256, string)>>>::abi_read(&mut decoder).unwrap();

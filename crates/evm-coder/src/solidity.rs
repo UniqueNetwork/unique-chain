@@ -103,6 +103,7 @@ solidity_type_name! {
 	uint64 => "uint64" true = "0",
 	uint128 => "uint128" true = "0",
 	uint256 => "uint256" true = "0",
+	bytes4 => "bytes4" true = "bytes4(0)",
 	address => "address" true = "0x0000000000000000000000000000000000000000",
 	string => "string" false = "\"\"",
 	bytes => "bytes" false = "hex\"\"",
@@ -473,7 +474,7 @@ impl SolidityFunctions for Tuple {
 }
 
 pub struct SolidityInterface<F: SolidityFunctions> {
-	pub selector: u32,
+	pub selector: bytes4,
 	pub name: &'static str,
 	pub is: &'static [&'static str],
 	pub functions: F,
@@ -486,8 +487,9 @@ impl<F: SolidityFunctions> SolidityInterface<F> {
 		out: &mut impl fmt::Write,
 		tc: &TypeCollector,
 	) -> fmt::Result {
-		if self.selector != 0 {
-			writeln!(out, "// Selector: {:0>8x}", self.selector)?;
+		const ZERO_BYTES: [u8; 4] = [0; 4];
+		if self.selector != ZERO_BYTES {
+			writeln!(out, "// Selector: {:0>8x}", u32::from_be_bytes(self.selector))?;
 		}
 		if is_impl {
 			write!(out, "contract ")?;

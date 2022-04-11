@@ -57,7 +57,7 @@ impl Is {
 	fn expand_interface_id(&self) -> proc_macro2::TokenStream {
 		let pascal_call_name = &self.pascal_call_name;
 		quote! {
-			interface_id ^= #pascal_call_name::interface_id();
+			interface_id ^= u32::from_be_bytes(#pascal_call_name::interface_id());
 		}
 	}
 
@@ -540,18 +540,18 @@ impl Method {
 
 	fn expand_const(&self) -> proc_macro2::TokenStream {
 		let screaming_name = &self.screaming_name;
-		let selector = self.selector;
+		let selector = u32::to_be_bytes(self.selector);
 		let selector_str = &self.selector_str;
 		quote! {
 			#[doc = #selector_str]
-			const #screaming_name: u32 = #selector;
+			const #screaming_name: ::evm_coder::types::bytes4 = [#(#selector,)*];
 		}
 	}
 
 	fn expand_interface_id(&self) -> proc_macro2::TokenStream {
 		let screaming_name = &self.screaming_name;
 		quote! {
-			interface_id ^= Self::#screaming_name;
+			interface_id ^= u32::from_be_bytes(Self::#screaming_name);
 		}
 	}
 
@@ -831,14 +831,14 @@ impl SolidityInterface {
 				#(
 					#consts
 				)*
-				pub fn interface_id() -> u32 {
+				pub fn interface_id() -> ::evm_coder::types::bytes4 {
 					let mut interface_id = 0;
 					#(#interface_id)*
 					#(#inline_interface_id)*
-					interface_id
+					u32::to_be_bytes(interface_id)
 				}
-				pub fn supports_interface(interface_id: u32) -> bool {
-					interface_id != 0xffffff && (
+				pub fn supports_interface(interface_id: ::evm_coder::types::bytes4) -> bool {
+					interface_id != u32::to_be_bytes(0xffffff) && (
 						interface_id == ::evm_coder::ERC165Call::INTERFACE_ID ||
 						interface_id == Self::interface_id()
 						#(
@@ -884,7 +884,7 @@ impl SolidityInterface {
 				}
 			}
 			impl #gen_ref ::evm_coder::Call for #call_name #gen_ref {
-				fn parse(method_id: u32, reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::execution::Result<Option<Self>> {
+				fn parse(method_id: ::evm_coder::types::bytes4, reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::execution::Result<Option<Self>> {
 					use ::evm_coder::abi::AbiRead;
 					match method_id {
 						::evm_coder::ERC165Call::INTERFACE_ID => return Ok(
