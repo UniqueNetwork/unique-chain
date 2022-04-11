@@ -98,7 +98,7 @@ describe('Support ERC721Metadata', () => {
       receiver,
       nextTokenId,
       'Test URI',
-    ).send({from: caller})).to.be.rejected;
+    ).call({from: caller})).to.be.rejectedWith('Unsupported shema version! Support only ImageURL');
 
     await expect(contract.methods.mintBulkWithTokenURI(
       receiver,
@@ -107,7 +107,7 @@ describe('Support ERC721Metadata', () => {
         [+nextTokenId + 1, 'Test URI 1'],
         [+nextTokenId + 2, 'Test URI 2'],
       ],
-    ).send({from: caller})).to.be.rejected;
+    ).call({from: caller})).to.be.rejectedWith('Unsupported shema version! Support only ImageURL');
   });
 
   itWeb3('Check support ERC721Metadata for ShemaVersion::ImageURL', async ({web3, api}) => {

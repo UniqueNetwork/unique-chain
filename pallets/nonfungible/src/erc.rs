@@ -94,18 +94,18 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// Returns token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
-		if let SchemaVersion::ImageURL = self.schema_version {
-			self.consume_store_reads(1)?;
-			let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
-			Ok(string::from_utf8_lossy(
-				&<TokenData<T>>::get((self.id, token_id))
-					.ok_or("token not found")?
-					.const_data,
-			)
-			.into())
-		} else {
-			Err(error_unsupported_shema_version())
+		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
+			return Err(error_unsupported_shema_version());
 		}
+
+		self.consume_store_reads(1)?;
+		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+		Ok(string::from_utf8_lossy(
+			&<TokenData<T>>::get((self.id, token_id))
+				.ok_or("token not found")?
+				.const_data,
+		)
+		.into())
 	}
 }
 
@@ -285,34 +285,34 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_id: uint256,
 		token_uri: string,
 	) -> Result<bool> {
-		if let SchemaVersion::ImageURL = self.schema_version {
-			let caller = T::CrossAccountId::from_eth(caller);
-			let to = T::CrossAccountId::from_eth(to);
-			let token_id: u32 = token_id.try_into().map_err(|_| "amount overflow")?;
-			if <TokensMinted<T>>::get(self.id)
-				.checked_add(1)
-				.ok_or("item id overflow")?
-				!= token_id
-			{
-				return Err("item id should be next".into());
-			}
-
-			<Pallet<T>>::create_item(
-				self,
-				&caller,
-				CreateItemData::<T> {
-					const_data: Vec::<u8>::from(token_uri)
-						.try_into()
-						.map_err(|_| "token uri is too long")?,
-					variable_data: BoundedVec::default(),
-					owner: to,
-				},
-			)
-			.map_err(dispatch_to_evm::<T>)?;
-			Ok(true)
-		} else {
-			Err(error_unsupported_shema_version())
+		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
+			return Err(error_unsupported_shema_version());
 		}
+
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = T::CrossAccountId::from_eth(to);
+		let token_id: u32 = token_id.try_into().map_err(|_| "amount overflow")?;
+		if <TokensMinted<T>>::get(self.id)
+			.checked_add(1)
+			.ok_or("item id overflow")?
+			!= token_id
+		{
+			return Err("item id should be next".into());
+		}
+
+		<Pallet<T>>::create_item(
+			self,
+			&caller,
+			CreateItemData::<T> {
+				const_data: Vec::<u8>::from(token_uri)
+					.try_into()
+					.map_err(|_| "token uri is too long")?,
+				variable_data: BoundedVec::default(),
+				owner: to,
+			},
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
 	}
 
 	/// Not implemented
@@ -430,36 +430,36 @@ impl<T: Config> NonfungibleHandle<T> {
 		to: address,
 		tokens: Vec<(uint256, string)>,
 	) -> Result<bool> {
-		if let SchemaVersion::ImageURL = self.schema_version {
-			let caller = T::CrossAccountId::from_eth(caller);
-			let to = T::CrossAccountId::from_eth(to);
-			let mut expected_index = <TokensMinted<T>>::get(self.id)
-				.checked_add(1)
-				.ok_or("item id overflow")?;
-
-			let mut data = Vec::with_capacity(tokens.len());
-			for (id, token_uri) in tokens {
-				let id: u32 = id.try_into().map_err(|_| "token id overflow")?;
-				if id != expected_index {
-					panic!("item id should be next ({}) but got {}", expected_index, id);
-				}
-				expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
-
-				data.push(CreateItemData::<T> {
-					const_data: Vec::<u8>::from(token_uri)
-						.try_into()
-						.map_err(|_| "token uri is too long")?,
-					variable_data: vec![].try_into().unwrap(),
-					owner: to.clone(),
-				});
-			}
-
-			<Pallet<T>>::create_multiple_items(self, &caller, data)
-				.map_err(dispatch_to_evm::<T>)?;
-			Ok(true)
-		} else {
-			Err(error_unsupported_shema_version())
+		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
+			return Err(error_unsupported_shema_version());
 		}
+
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = T::CrossAccountId::from_eth(to);
+		let mut expected_index = <TokensMinted<T>>::get(self.id)
+			.checked_add(1)
+			.ok_or("item id overflow")?;
+
+		let mut data = Vec::with_capacity(tokens.len());
+		for (id, token_uri) in tokens {
+			let id: u32 = id.try_into().map_err(|_| "token id overflow")?;
+			if id != expected_index {
+				panic!("item id should be next ({}) but got {}", expected_index, id);
+			}
+			expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
+
+			data.push(CreateItemData::<T> {
+				const_data: Vec::<u8>::from(token_uri)
+					.try_into()
+					.map_err(|_| "token uri is too long")?,
+				variable_data: vec![].try_into().unwrap(),
+				owner: to.clone(),
+			});
+		}
+
+		<Pallet<T>>::create_multiple_items(self, &caller, data)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
 	}
 }
 
