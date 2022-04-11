@@ -489,7 +489,11 @@ impl<F: SolidityFunctions> SolidityInterface<F> {
 	) -> fmt::Result {
 		const ZERO_BYTES: [u8; 4] = [0; 4];
 		if self.selector != ZERO_BYTES {
-			writeln!(out, "// Selector: {:0>8x}", u32::from_be_bytes(self.selector))?;
+			writeln!(
+				out,
+				"// Selector: {:0>8x}",
+				u32::from_be_bytes(self.selector)
+			)?;
 		}
 		if is_impl {
 			write!(out, "contract ")?;

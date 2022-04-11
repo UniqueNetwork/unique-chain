@@ -63,21 +63,23 @@ impl<'i> AbiReader<'i> {
 		))
 	}
 
-	fn read_pad<const S: usize>(buf: &[u8], offset: usize, pad_start: usize, pad_size: usize, block_start: usize, block_size: usize) -> Result<[u8; S]> {
+	fn read_pad<const S: usize>(
+		buf: &[u8],
+		offset: usize,
+		pad_start: usize,
+		pad_size: usize,
+		block_start: usize,
+		block_size: usize,
+	) -> Result<[u8; S]> {
 		if buf.len() - offset < ABI_ALIGNMENT {
 			return Err(Error::Error(ExitError::OutOfOffset));
 		}
 		let mut block = [0; S];
 		// Verify padding is empty
-		if !buf[pad_start..pad_size]
-			.iter()
-			.all(|&v| v == 0)
-		{
+		if !buf[pad_start..pad_size].iter().all(|&v| v == 0) {
 			return Err(Error::Error(ExitError::InvalidRange));
 		}
-		block.copy_from_slice(
-			&buf[block_start..block_size],
-		);
+		block.copy_from_slice(&buf[block_start..block_size]);
 		Ok(block)
 	}
 
@@ -87,10 +89,10 @@ impl<'i> AbiReader<'i> {
 		Self::read_pad(
 			self.buf,
 			offset,
-			offset, 
+			offset,
 			offset + ABI_ALIGNMENT - S,
 			offset + ABI_ALIGNMENT - S,
-			offset + ABI_ALIGNMENT
+			offset + ABI_ALIGNMENT,
 		)
 	}
 
@@ -100,13 +102,13 @@ impl<'i> AbiReader<'i> {
 		Self::read_pad(
 			self.buf,
 			offset,
-			offset + S, 
+			offset + S,
 			offset + ABI_ALIGNMENT,
 			offset,
-			offset + S
+			offset + S,
 		)
 	}
-	
+
 	pub fn address(&mut self) -> Result<H160> {
 		Ok(H160(self.read_padleft()?))
 	}
