@@ -29,6 +29,7 @@ use up_data_structs::{
 	CollectionId, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MetaUpdatePermission,
 	NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId,
 };
+use sp_runtime::traits::Saturating;
 use pallet_common::{CollectionHandle};
 use pallet_evm::account::CrossAccountId;
 
@@ -315,12 +316,7 @@ where
 		u64: From<<T as frame_system::Config>::BlockNumber>,
 	{
 		let collection = <CollectionHandle<T>>::try_get(collection_id).ok()?;
-
-		// preliminary sponsoring correctness check
-		match collection.sponsorship {
-			SponsorshipState::Disabled | SponsorshipState::Unconfirmed(_) => return None,
-			_ => (),
-		}
+		let _ = collection.sponsorship.sponsor()?;
 
 		// sponsor timeout
 		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
@@ -343,11 +339,12 @@ where
 		};
 
 		if let Some(last_tx_block) = last_tx_block {
-			let timeout = last_tx_block + limit.into();
-			if block_number < timeout {
-				return Some((timeout - block_number).into());
-			}
-			return Some(0);
+			return Some(
+				last_tx_block
+					.saturating_add(limit.into())
+					.saturating_sub(block_number)
+					.into(),
+			);
 		}
 
 		let token_exists = match collection.mode {

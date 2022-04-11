@@ -626,7 +626,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * nextSponsored transaction
        **/
-      nextSponsored: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array,  account: PalletCommonAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<u64>>>;
+      nextSponsored: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array,  account:  AccountId | string | Uint8Array | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<u64>>>;
     };
     web3: {
       /**
