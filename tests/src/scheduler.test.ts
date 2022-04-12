@@ -45,7 +45,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 
 chai.use(chaiAsPromised);
 
-describe('Scheduling token and balance transfers', () => {
+describe.skip('Scheduling token and balance transfers', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let scheduledIdBase: string;

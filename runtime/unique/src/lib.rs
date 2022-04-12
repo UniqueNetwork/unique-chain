@@ -37,7 +37,7 @@ use sp_runtime::{
 	traits::{
 		Applyable, BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating,
 		CheckedConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion,
-		Zero, Member, SignedExtension,
+		Zero, Member,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
 	ApplyExtrinsicResult, RuntimeAppPublic, SaturatedConversion, DispatchErrorWithPostInfo,
@@ -918,7 +918,7 @@ impl pallet_unq_scheduler::Config for Runtime {
 type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
 use frame_support::traits::NamedReservableCurrency;
 
-fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> SignedExtra {
+fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> SignedExtraScheduler {
 	(
 		frame_system::CheckSpecVersion::<Runtime>::new(),
 		frame_system::CheckGenesis::<Runtime>::new(),
@@ -927,7 +927,8 @@ fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> Sign
 			from,
 		)),
 		frame_system::CheckWeight::<Runtime>::new(),
-		pallet_charge_transaction::ChargeTransactionPayment::<Runtime>::new(0),
+		// sponsoring transaction logic
+		// pallet_charge_transaction::ChargeTransactionPayment::<Runtime>::new(0),
 	)
 }
 
@@ -957,13 +958,14 @@ where
 		let extrinsic = fp_self_contained::CheckedExtrinsic::<
 			AccountId,
 			Call,
-			SignedExtra,
+			SignedExtraScheduler,
 			SelfContainedSignedInfo,
 		> {
-			signed: CheckedSignature::<AccountId, SignedExtra, SelfContainedSignedInfo>::Signed(
-				signer.clone().into(),
-				get_signed_extras(signer.into()),
-			),
+			signed:
+				CheckedSignature::<AccountId, SignedExtraScheduler, SelfContainedSignedInfo>::Signed(
+					signer.clone().into(),
+					get_signed_extras(signer.into()),
+				),
 			function: call.into(),
 		};
 
@@ -977,23 +979,13 @@ where
 		count: u32,
 	) -> Result<(), DispatchError> {
 		let dispatch_info = call.get_dispatch_info();
-		let fee_charger = ChargeTransactionPayment::new(0);
-		let pre = match fee_charger.pre_dispatch(
-			&sponsor.clone().into(),
-			&call.into(),
-			&dispatch_info,
-			0,
-		) {
-			Ok(p) => p,
-			Err(_) => fail!("failed to get pre dispatch info"),
-		};
+		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0)
+			.saturating_mul(count.into());
 
-		let count: u128 = count.into();
-		let total_fee: u128 = pre.2.map(|imbalance| imbalance.peek()).unwrap() * count;
 		<Balances as NamedReservableCurrency<AccountId>>::reserve_named(
 			&id,
 			&(sponsor.into()),
-			total_fee,
+			weight.into(),
 		)
 	}
 
@@ -1003,24 +995,12 @@ where
 		call: <T as pallet_unq_scheduler::Config>::Call,
 	) -> Result<u128, DispatchError> {
 		let dispatch_info = call.get_dispatch_info();
-		let fee_charger = ChargeTransactionPayment::new(0);
-		let pre = match fee_charger.pre_dispatch(
-			&sponsor.clone().into(),
-			&call.into(),
-			&dispatch_info,
-			0,
-		) {
-			Ok(p) => p,
-			Err(_) => fail!("failed to get pre dispatch info"),
-		};
-
-		let single_fee: u128 = pre.2.map(|imbalance| imbalance.peek()).unwrap();
-
+		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0);
 		Ok(
 			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
 				&id,
 				&(sponsor.into()),
-				single_fee,
+				weight.into(),
 			),
 		)
 	}
@@ -1172,6 +1152,14 @@ pub type SignedExtra = (
 	frame_system::CheckWeight<Runtime>,
 	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
+);
+pub type SignedExtraScheduler = (
+	frame_system::CheckSpecVersion<Runtime>,
+	frame_system::CheckGenesis<Runtime>,
+	frame_system::CheckEra<Runtime>,
+	frame_system::CheckNonce<Runtime>,
+	frame_system::CheckWeight<Runtime>,
+	// pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =

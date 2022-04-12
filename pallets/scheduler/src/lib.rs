@@ -361,7 +361,6 @@ pub mod pallet {
 				} else {
 					false
 				};
-
 				let call = match s.call.as_value().cloned() {
 					Some(c) => c,
 					None => {
@@ -419,18 +418,18 @@ pub mod pallet {
 				)
 				.unwrap();
 
-				// if call have id and periodic, it was be reserved
-				if s.maybe_id.is_some() && s.maybe_periodic.is_some() {
-					let _ = T::CallExecutor::pay_for_call(
-						s.maybe_id.unwrap(),
-						sender.clone(),
-						call.clone(),
-					);
-				}
+				// // if call have id it was be reserved
+				// if s.maybe_id.is_some() {
+				// 	let _ = T::CallExecutor::pay_for_call(
+				// 		s.maybe_id.unwrap(),
+				// 		sender.clone(),
+				// 		call.clone(),
+				// 	);
+				// }
 
 				let r = T::CallExecutor::dispatch_call(sender, call.clone());
 
-				let mut actual_call_weight: Weight = item_weight; //PostDispatchInfo;
+				let mut actual_call_weight: Weight = item_weight;
 				let result: Result<_, DispatchError> = match r {
 					Ok(o) => match o {
 						Ok(di) => {
@@ -472,7 +471,8 @@ pub mod pallet {
 					Agenda::<T>::append(wake, Some(s));
 				}
 			}
-			total_weight
+			0
+			//total_weight
 		}
 	}
 
@@ -719,18 +719,18 @@ impl<T: Config> Pallet<T> {
 		};
 
 		// reserve balance for periodic execution
-		let sender =
-			ensure_signed(<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin).into())?;
-		let repeats = match maybe_periodic {
-			Some(p) => p.1,
-			None => 0,
-		};
-		let _ = T::CallExecutor::reserve_balance(
-			id.clone(),
-			sender,
-			call.as_value().unwrap().clone(),
-			repeats,
-		);
+		// let sender =
+		// 	ensure_signed(<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin).into())?;
+		// let repeats = match maybe_periodic {
+		// 	Some(p) => p.1,
+		// 	None => 1,
+		// };
+		// let _ = T::CallExecutor::reserve_balance(
+		// 	id.clone(),
+		// 	sender,
+		// 	call.as_value().unwrap().clone(),
+		// 	repeats,
+		// );
 
 		Agenda::<T>::append(when, Some(s));
 		let index = Agenda::<T>::decode_len(when).unwrap_or(1) as u32 - 1;
@@ -755,13 +755,13 @@ impl<T: Config> Pallet<T> {
 								return Err(BadOrigin.into());
 							}
 							// release balance reserve
-							let sender = ensure_signed(
-								<<T as Config>::Origin as From<T::PalletsOrigin>>::from(
-									origin.unwrap(),
-								)
-								.into(),
-							)?;
-							let _ = T::CallExecutor::cancel_reserve(id, sender);
+							// let sender = ensure_signed(
+							// 	<<T as Config>::Origin as From<T::PalletsOrigin>>::from(
+							// 		origin.unwrap(),
+							// 	)
+							// 	.into(),
+							// )?;
+							// let _ = T::CallExecutor::cancel_reserve(id, sender);
 
 							s.call.ensure_unrequested::<T::PreimageProvider>();
 						}
