@@ -33,6 +33,7 @@ sp_api::decl_runtime_apis! {
 		fn token_owner(collection: CollectionId, token: TokenId) -> Result<CrossAccountId>;
 
 		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Result<Vec<TokenId>>;
+		fn collection_tokens(collection: CollectionId) -> Result<Vec<TokenId>>;
 		fn token_exists(collection: CollectionId, token: TokenId) -> Result<bool>;
 
 		fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>>;
@@ -40,7 +41,6 @@ sp_api::decl_runtime_apis! {
 		fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>>;
 		fn variable_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>>;
 
-		fn collection_tokens(collection: CollectionId) -> Result<u32>;
 		fn account_balance(collection: CollectionId, account: CrossAccountId) -> Result<u32>;
 		fn balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<u128>;
 		fn allowance(

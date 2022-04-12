@@ -273,6 +273,12 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 			.collect()
 	}
 
+	fn collection_tokens(&self) -> Vec<TokenId> {
+		<TokenData<T>>::iter_prefix((self.id,))
+			.map(|(id, _)| id)
+			.collect()
+	}
+
 	fn token_exists(&self, token: TokenId) -> bool {
 		<Pallet<T>>::token_exists(self, token)
 	}
@@ -293,10 +299,6 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		<TokenData<T>>::get((self.id, token))
 			.variable_data
 			.into_inner()
-	}
-
-	fn collection_tokens(&self) -> u32 {
-		<Pallet<T>>::total_supply(self)
 	}
 
 	fn account_balance(&self, account: T::CrossAccountId) -> u32 {

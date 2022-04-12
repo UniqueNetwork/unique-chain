@@ -270,8 +270,8 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		Vec::new()
 	}
 
-	fn collection_tokens(&self) -> u32 {
-		1
+	fn collection_tokens(&self) -> Vec<TokenId> {
+		vec![TokenId::default()]
 	}
 
 	fn account_balance(&self, account: T::CrossAccountId) -> u32 {

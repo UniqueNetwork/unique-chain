@@ -33,7 +33,7 @@ macro_rules! impl_common_runtime_apis {
                     dispatch_unique_runtime!(collection.variable_metadata(token))
                 }
 
-                fn collection_tokens(collection: CollectionId) -> Result<u32, DispatchError> {
+                fn collection_tokens(collection: CollectionId) -> Result<Vec<TokenId>, DispatchError> {
                     dispatch_unique_runtime!(collection.collection_tokens())
                 }
                 fn account_balance(collection: CollectionId, account: CrossAccountId) -> Result<u32, DispatchError> {

@@ -924,6 +924,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> DispatchResult;
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId>;
+	fn collection_tokens(&self) -> Vec<TokenId>;
 	fn token_exists(&self, token: TokenId) -> bool;
 	fn last_token_id(&self) -> TokenId;
 
@@ -931,8 +932,6 @@ pub trait CommonCollectionOperations<T: Config> {
 	fn const_metadata(&self, token: TokenId) -> Vec<u8>;
 	fn variable_metadata(&self, token: TokenId) -> Vec<u8>;
 
-	/// How many tokens collection contains (Applicable to nonfungible/refungible)
-	fn collection_tokens(&self) -> u32;
 	/// Amount of different tokens account has (Applicable to nonfungible/refungible)
 	fn account_balance(&self, account: T::CrossAccountId) -> u32;
 	/// Amount of specific token account have (Applicable to fungible/refungible)

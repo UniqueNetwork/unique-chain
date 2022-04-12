@@ -33,6 +33,12 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		account: CrossAccountId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<TokenId>>;
+	#[rpc(name = "unique_collectionTokens")]
+	fn collection_tokens(
+		&self,
+		collection: CollectionId,
+		at: Option<BlockHash>,
+	) -> Result<Vec<TokenId>>;
 	#[rpc(name = "unique_tokenExists")]
 	fn token_exists(
 		&self,
@@ -70,8 +76,6 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Vec<u8>>;
 
-	#[rpc(name = "unique_collectionTokens")]
-	fn collection_tokens(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<u32>;
 	#[rpc(name = "unique_accountBalance")]
 	fn account_balance(
 		&self,
@@ -226,6 +230,7 @@ where
 	CrossAccountId: pallet_evm::account::CrossAccountId<AccountId>,
 {
 	pass_method!(account_tokens(collection: CollectionId, account: CrossAccountId) -> Vec<TokenId>);
+	pass_method!(collection_tokens(collection: CollectionId) -> Vec<TokenId>);
 	pass_method!(token_exists(collection: CollectionId, token: TokenId) -> bool);
 	pass_method!(
 		token_owner(collection: CollectionId, token: TokenId) -> Option<CrossAccountId>;
@@ -234,7 +239,6 @@ where
 	pass_method!(topmost_token_owner(collection: CollectionId, token: TokenId) -> Option<CrossAccountId>);
 	pass_method!(const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
 	pass_method!(variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
-	pass_method!(collection_tokens(collection: CollectionId) -> u32);
 	pass_method!(account_balance(collection: CollectionId, account: CrossAccountId) -> u32);
 	pass_method!(balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> String => |v| v.to_string());
 	pass_method!(allowance(collection: CollectionId, sender: CrossAccountId, spender: CrossAccountId, token: TokenId) -> String => |v| v.to_string());
