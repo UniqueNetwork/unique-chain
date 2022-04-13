@@ -67,6 +67,10 @@ export function collectionIdToAddress(address: number): string {
   return Web3.utils.toChecksumAddress('0x' + buf.toString('hex'));
 }
 
+export function collectionIdFromAddress(address: string): number {
+  return Number('0x' + address.substring(address.length - 8));
+}
+
 export function createEthAccount(web3: Web3) {
   const account = web3.eth.accounts.create();
   web3.eth.accounts.wallet.add(account.privateKey);

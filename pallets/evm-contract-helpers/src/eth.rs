@@ -15,7 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use core::marker::PhantomData;
-use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
+use evm_coder::{abi::AbiWriter, execution::*, generate_stubgen, solidity_interface, types::*, ToLog};
+use ethereum as _;
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure,
@@ -38,6 +39,16 @@ impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
 	fn into_recorder(self) -> SubstrateRecorder<T> {
 		self.0
 	}
+}
+
+#[derive(ToLog)]
+pub enum ContractHelperEvent {
+	CollectionCreated {
+		#[indexed]
+		owner: address,
+		#[indexed]
+		collection_id: address,
+	},
 }
 
 #[solidity_interface(name = "ContractHelpers")]
@@ -125,6 +136,21 @@ impl<T: Config> ContractHelpers<T> {
 		<Pallet<T>>::ensure_owner(contract_address, caller)?;
 		<Pallet<T>>::toggle_allowed(contract_address, user, allowed);
 		Ok(())
+	}
+
+	fn create_721_collection(&self, caller: caller) -> Result<address> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let collection_id = <pallet_nonfungible::Pallet<T>>::init_collection(
+			caller.as_sub().clone(),
+			Default::default(),
+		)
+		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		let address = pallet_common::eth::collection_id_to_address(collection_id);
+		self.0.log_mirrored(ContractHelperEvent::CollectionCreated {
+			owner: *caller.as_eth(),
+			collection_id: address,
+		});
+		Ok(address)
 	}
 }
 
