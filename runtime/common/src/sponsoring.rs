@@ -14,11 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{
-	Config, Call, CreateItemBasket, VariableMetaDataBasket, ReFungibleTransferBasket,
-	FungibleTransferBasket, NftTransferBasket, CreateItemData, CollectionMode, NftApproveBasket,
-	FungibleApproveBasket, RefungibleApproveBasket,
-};
 use core::marker::PhantomData;
 use up_sponsorship::SponsorshipHandler;
 use frame_support::{
@@ -27,13 +22,24 @@ use frame_support::{
 };
 use up_data_structs::{
 	CollectionId, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MetaUpdatePermission,
-	NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId,
+	NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId, CollectionMode,
+	CreateItemData,
 };
 use sp_runtime::traits::Saturating;
 use pallet_common::{CollectionHandle};
 use pallet_evm::account::CrossAccountId;
+use pallet_unique::{
+	Call as UniqueCall, Config as UniqueConfig, FungibleApproveBasket, RefungibleApproveBasket,
+	NftApproveBasket, VariableMetaDataBasket, CreateItemBasket, ReFungibleTransferBasket,
+	FungibleTransferBasket, NftTransferBasket,
+};
+use pallet_fungible::Config as FungibleConfig;
+use pallet_nonfungible::Config as NonfungibleConfig;
+use pallet_refungible::Config as RefungibleConfig;
 
-pub fn withdraw_transfer<T: Config>(
+pub fn withdraw_transfer<
+	T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig,
+>(
 	collection: &CollectionHandle<T>,
 	who: &T::CrossAccountId,
 	item_id: &TokenId,
@@ -102,7 +108,9 @@ pub fn withdraw_transfer<T: Config>(
 	Some(())
 }
 
-pub fn withdraw_create_item<T: Config>(
+pub fn withdraw_create_item<
+	T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig,
+>(
 	collection: &CollectionHandle<T>,
 	who: &T::CrossAccountId,
 	_properties: &CreateItemData,
@@ -133,7 +141,9 @@ pub fn withdraw_create_item<T: Config>(
 	Some(())
 }
 
-pub fn withdraw_set_variable_meta_data<T: Config>(
+pub fn withdraw_set_variable_meta_data<
+	T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig,
+>(
 	who: &T::CrossAccountId,
 	collection: &CollectionHandle<T>,
 	item_id: &TokenId,
@@ -190,7 +200,7 @@ pub fn withdraw_set_variable_meta_data<T: Config>(
 	Some(())
 }
 
-pub fn withdraw_approve<T: Config>(
+pub fn withdraw_approve<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>(
 	collection: &CollectionHandle<T>,
 	who: &T::AccountId,
 	item_id: &TokenId,
@@ -227,7 +237,7 @@ pub fn withdraw_approve<T: Config>(
 	Some(())
 }
 
-fn load<T: Config>(id: CollectionId) -> Option<(T::AccountId, CollectionHandle<T>)> {
+fn load<T: UniqueConfig>(id: CollectionId) -> Option<(T::AccountId, CollectionHandle<T>)> {
 	let collection = CollectionHandle::new(id)?;
 	let sponsor = collection.sponsorship.sponsor().cloned()?;
 	Some((sponsor, collection))
@@ -236,12 +246,12 @@ fn load<T: Config>(id: CollectionId) -> Option<(T::AccountId, CollectionHandle<T
 pub struct UniqueSponsorshipHandler<T>(PhantomData<T>);
 impl<T, C> SponsorshipHandler<T::AccountId, C> for UniqueSponsorshipHandler<T>
 where
-	T: Config,
-	C: IsSubType<Call<T>>,
+	T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig,
+	C: IsSubType<UniqueCall<T>>,
 {
 	fn get_sponsor(who: &T::AccountId, call: &C) -> Option<T::AccountId> {
-		match IsSubType::<Call<T>>::is_sub_type(call)? {
-			Call::create_item {
+		match IsSubType::<UniqueCall<T>>::is_sub_type(call)? {
+			UniqueCall::create_item {
 				collection_id,
 				data,
 				..
@@ -254,7 +264,7 @@ where
 				)
 				.map(|()| sponsor)
 			}
-			Call::transfer {
+			UniqueCall::transfer {
 				collection_id,
 				item_id,
 				..
@@ -267,7 +277,7 @@ where
 				)
 				.map(|()| sponsor)
 			}
-			Call::transfer_from {
+			UniqueCall::transfer_from {
 				collection_id,
 				item_id,
 				from,
@@ -276,7 +286,7 @@ where
 				let (sponsor, collection) = load(*collection_id)?;
 				withdraw_transfer::<T>(&collection, from, item_id).map(|()| sponsor)
 			}
-			Call::approve {
+			UniqueCall::approve {
 				collection_id,
 				item_id,
 				..
@@ -284,7 +294,7 @@ where
 				let (sponsor, collection) = load(*collection_id)?;
 				withdraw_approve::<T>(&collection, who, item_id).map(|()| sponsor)
 			}
-			Call::set_variable_meta_data {
+			UniqueCall::set_variable_meta_data {
 				collection_id,
 				item_id,
 				data,

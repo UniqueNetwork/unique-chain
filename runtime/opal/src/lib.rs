@@ -120,6 +120,9 @@ use unique_runtime_common::{
 	types::*,
 	constants::*,
 	dispatch::{CollectionDispatchT, CollectionDispatch},
+	sponsoring::UniqueSponsorshipHandler,
+	eth_sponsoring::UniqueEthSponsorshipHandler,
+	weights::CommonWeights,
 };
 
 pub const RUNTIME_NAME: &str = "opal";
@@ -902,6 +905,7 @@ impl pallet_nonfungible::Config for Runtime {
 impl pallet_unique::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
+	type CommonWeightInfo = CommonWeights<Self>;
 }
 
 parameter_types! {
@@ -923,11 +927,11 @@ impl pallet_inflation::Config for Runtime {
 // }
 
 type EvmSponsorshipHandler = (
-	pallet_unique::UniqueEthSponsorshipHandler<Runtime>,
+	UniqueEthSponsorshipHandler<Runtime>,
 	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
 );
 type SponsorshipHandler = (
-	pallet_unique::UniqueSponsorshipHandler<Runtime>,
+	UniqueSponsorshipHandler<Runtime>,
 	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
 	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
 );

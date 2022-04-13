@@ -18,12 +18,10 @@ use core::marker::PhantomData;
 use frame_support::{weights::Weight};
 use pallet_common::{CommonWeightInfo, dispatch::dispatch_weight};
 
-use pallet_fungible::{common::CommonWeights as FungibleWeights};
-use pallet_nonfungible::{common::CommonWeights as NonfungibleWeights};
-use pallet_refungible::{common::CommonWeights as RefungibleWeights};
+use pallet_fungible::{Config as FungibleConfig, common::CommonWeights as FungibleWeights};
+use pallet_nonfungible::{Config as NonfungibleConfig, common::CommonWeights as NonfungibleWeights};
+use pallet_refungible::{Config as RefungibleConfig, common::CommonWeights as RefungibleWeights};
 use up_data_structs::CreateItemExData;
-
-use crate::Config;
 
 macro_rules! max_weight_of {
 	($method:ident ( $($args:tt)* )) => {
@@ -33,8 +31,13 @@ macro_rules! max_weight_of {
 	};
 }
 
-pub struct CommonWeights<T: Config>(PhantomData<T>);
-impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
+pub struct CommonWeights<T>(PhantomData<T>)
+where
+	T: FungibleConfig + NonfungibleConfig + RefungibleConfig;
+impl<T> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T>
+where
+	T: FungibleConfig + NonfungibleConfig + RefungibleConfig,
+{
 	fn create_item() -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(create_item())
 	}

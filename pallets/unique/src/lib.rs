@@ -22,10 +22,6 @@
 	clippy::unused_unit
 )]
 
-extern crate alloc;
-
-pub use serde::{Serialize, Deserialize};
-
 use frame_support::{
 	decl_module, decl_storage, decl_error, decl_event,
 	dispatch::DispatchResult,
@@ -51,20 +47,6 @@ use pallet_common::{
 	dispatch::dispatch_call, dispatch::CollectionDispatch,
 };
 
-#[cfg(test)]
-mod mock;
-
-#[cfg(test)]
-mod tests;
-
-mod eth;
-mod sponsorship;
-pub use sponsorship::{UniqueSponsorshipHandler, UniqueSponsorshipPredict};
-pub use eth::sponsoring::UniqueEthSponsorshipHandler;
-
-pub mod common;
-use common::CommonWeights;
-
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 pub mod weights;
@@ -88,20 +70,12 @@ decl_error! {
 	}
 }
 
-pub trait Config:
-	system::Config
-	+ pallet_evm_coder_substrate::Config
-	+ pallet_common::Config
-	+ pallet_nonfungible::Config
-	+ pallet_refungible::Config
-	+ pallet_fungible::Config
-	+ Sized
-	+ TypeInfo
-{
+pub trait Config: system::Config + pallet_common::Config + Sized + TypeInfo {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
+	type CommonWeightInfo: CommonWeightInfo<Self::CrossAccountId>;
 }
 
 decl_event! {
@@ -689,7 +663,7 @@ decl_module! {
 		/// * owner: Address, initial owner of the NFT.
 		///
 		/// * data: Token data to store on chain.
-		#[weight = <CommonWeights<T>>::create_item()]
+		#[weight = T::CommonWeightInfo::create_item()]
 		#[transactional]
 		pub fn create_item(origin, collection_id: CollectionId, owner: T::CrossAccountId, data: CreateItemData) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -716,7 +690,7 @@ decl_module! {
 		/// * itemsData: Array items properties. Each property is an array of bytes itself, see [create_item].
 		///
 		/// * owner: Address, initial owner of the NFT.
-		#[weight = <CommonWeights<T>>::create_multiple_items(items_data.len() as u32)]
+		#[weight = T::CommonWeightInfo::create_multiple_items(items_data.len() as u32)]
 		#[transactional]
 		pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::CrossAccountId, items_data: Vec<CreateItemData>) -> DispatchResultWithPostInfo {
 			ensure!(!items_data.is_empty(), Error::<T>::EmptyArgument);
@@ -726,7 +700,7 @@ decl_module! {
 			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items(sender, owner, items_data, &budget))
 		}
 
-		#[weight = <CommonWeights<T>>::create_multiple_items_ex(&data)]
+		#[weight = T::CommonWeightInfo::create_multiple_items_ex(&data)]
 		#[transactional]
 		pub fn create_multiple_items_ex(origin, collection_id: CollectionId, data: CreateItemExData<T::CrossAccountId>) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -774,7 +748,7 @@ decl_module! {
 		/// * collection_id: ID of the collection.
 		///
 		/// * item_id: ID of NFT to burn.
-		#[weight = <CommonWeights<T>>::burn_item()]
+		#[weight = T::CommonWeightInfo::burn_item()]
 		#[transactional]
 		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -806,7 +780,7 @@ decl_module! {
 		/// * item_id: ID of NFT to burn.
 		///
 		/// * from: owner of item
-		#[weight = <CommonWeights<T>>::burn_from()]
+		#[weight = T::CommonWeightInfo::burn_from()]
 		#[transactional]
 		pub fn burn_from(origin, collection_id: CollectionId, from: T::CrossAccountId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -838,7 +812,7 @@ decl_module! {
 		///     * Non-Fungible Mode: Ignored
 		///     * Fungible Mode: Must specify transferred amount
 		///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
-		#[weight = <CommonWeights<T>>::transfer()]
+		#[weight = T::CommonWeightInfo::transfer()]
 		#[transactional]
 		pub fn transfer(origin, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -862,7 +836,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * item_id: ID of the item.
-		#[weight = <CommonWeights<T>>::approve()]
+		#[weight = T::CommonWeightInfo::approve()]
 		#[transactional]
 		pub fn approve(origin, spender: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -889,7 +863,7 @@ decl_module! {
 		/// * item_id: ID of the item.
 		///
 		/// * value: Amount to transfer.
-		#[weight = <CommonWeights<T>>::transfer_from()]
+		#[weight = T::CommonWeightInfo::transfer_from()]
 		#[transactional]
 		pub fn transfer_from(origin, from: T::CrossAccountId, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -910,7 +884,7 @@ decl_module! {
 		/// * collection_id.
 		///
 		/// * schema: String representing the offchain data schema.
-		#[weight = <CommonWeights<T>>::set_variable_metadata(data.len() as u32)]
+		#[weight = T::CommonWeightInfo::set_variable_metadata(data.len() as u32)]
 		#[transactional]
 		pub fn set_variable_meta_data (
 			origin,

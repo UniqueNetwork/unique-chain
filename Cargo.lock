@@ -6829,37 +6829,18 @@ dependencies = [
 name = "pallet-unique"
 version = "0.1.0"
 dependencies = [
- "ethereum",
- "evm-coder",
- "fp-evm",
- "fp-evm-mapping",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal",
- "pallet-balances",
  "pallet-common",
- "pallet-ethereum",
  "pallet-evm",
- "pallet-evm-coder-substrate",
- "pallet-fungible",
- "pallet-nonfungible",
- "pallet-randomness-collective-flip",
- "pallet-refungible",
- "pallet-timestamp",
- "pallet-transaction-payment",
  "parity-scale-codec",
- "primitive-types",
- "rlp",
  "scale-info",
- "serde",
- "sp-api",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
  "up-data-structs",
- "up-sponsorship",
 ]
 
 [[package]]
@@ -11918,6 +11899,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "tests"
+version = "0.1.0"
+dependencies = [
+ "fp-evm-mapping",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-common",
+ "pallet-ethereum",
+ "pallet-evm",
+ "pallet-evm-coder-substrate",
+ "pallet-fungible",
+ "pallet-nonfungible",
+ "pallet-refungible",
+ "pallet-structure",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "pallet-unique",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "unique-runtime-common",
+ "up-data-structs",
+]
+
+[[package]]
 name = "textwrap"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12677,6 +12687,7 @@ dependencies = [
 name = "unique-runtime-common"
 version = "0.9.18"
 dependencies = [
+ "evm-coder",
  "fp-rpc",
  "frame-support",
  "frame-system",
@@ -12693,6 +12704,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "up-data-structs",
+ "up-sponsorship",
 ]
 
 [[package]]

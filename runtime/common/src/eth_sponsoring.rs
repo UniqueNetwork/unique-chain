@@ -16,7 +16,6 @@
 
 //! Implements EVM sponsoring logic via TransactionValidityHack
 
-use crate::{Config, sponsorship::*};
 use evm_coder::{Call, abi::AbiReader};
 use pallet_common::{CollectionHandle, eth::map_eth_to_id};
 use sp_core::H160;
@@ -25,16 +24,22 @@ use up_sponsorship::SponsorshipHandler;
 use core::marker::PhantomData;
 use core::convert::TryInto;
 use pallet_evm::account::CrossAccountId;
-use up_data_structs::{TokenId, CreateItemData, CreateNftData};
+use up_data_structs::{TokenId, CreateItemData, CreateNftData, CollectionMode};
+use pallet_unique::Config as UniqueConfig;
+
+use crate::sponsoring::*;
 
 use pallet_nonfungible::erc::{
 	UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721MintableCall, ERC721Call,
 };
 use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};
+use pallet_fungible::Config as FungibleConfig;
+use pallet_nonfungible::Config as NonfungibleConfig;
+use pallet_refungible::Config as RefungibleConfig;
 
-pub struct UniqueEthSponsorshipHandler<T: Config>(PhantomData<*const T>);
-impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
-	for UniqueEthSponsorshipHandler<T>
+pub struct UniqueEthSponsorshipHandler<T: UniqueConfig>(PhantomData<*const T>);
+impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
+	SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)> for UniqueEthSponsorshipHandler<T>
 {
 	fn get_sponsor(who: &T::CrossAccountId, call: &(H160, Vec<u8>)) -> Option<T::CrossAccountId> {
 		let collection_id = map_eth_to_id(&call.0)?;
@@ -42,7 +47,7 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 		let sponsor = collection.sponsorship.sponsor()?.clone();
 		let (method_id, mut reader) = AbiReader::new_call(&call.1).ok()?;
 		Some(T::CrossAccountId::from_sub(match &collection.mode {
-			crate::CollectionMode::NFT => {
+			CollectionMode::NFT => {
 				let call = <UniqueNFTCall<T>>::parse(method_id, &mut reader).ok()??;
 				match call {
 					UniqueNFTCall::ERC721UniqueExtensions(
@@ -76,7 +81,7 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 					_ => None,
 				}
 			}
-			crate::CollectionMode::Fungible(_) => {
+			CollectionMode::Fungible(_) => {
 				let call = <UniqueFungibleCall<T>>::parse(method_id, &mut reader).ok()??;
 				#[allow(clippy::single_match)]
 				match call {

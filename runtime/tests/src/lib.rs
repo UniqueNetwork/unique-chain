@@ -16,9 +16,12 @@
 
 #![allow(clippy::from_over_into)]
 
-use crate as pallet_template;
 use sp_core::{H160, H256};
-use frame_support::{parameter_types, traits::Everything, weights::IdentityFee};
+use frame_support::{
+	parameter_types,
+	traits::{Everything, ConstU32},
+	weights::IdentityFee,
+};
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	testing::Header,
@@ -27,12 +30,17 @@ use pallet_transaction_payment::{CurrencyAdapter};
 use frame_system as system;
 use pallet_evm::{AddressMapping, runner::stack::MaybeMirroredLog, account::CrossAccountId};
 use fp_evm_mapping::EvmBackwardsAddressMapping;
-use codec::{Encode, Decode, MaxEncodedLen};
+use parity_scale_codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use up_data_structs::ConstU32;
+
+use unique_runtime_common::{dispatch::CollectionDispatchT, weights::CommonWeights};
+use up_data_structs::mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+
+#[cfg(test)]
+mod tests;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -42,7 +50,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		TemplateModule: pallet_template::{Pallet, Call, Storage},
+		Unique: pallet_unique::{Pallet, Call, Storage},
 		Balances: pallet_balances::{Pallet, Call, Storage},
 		Common: pallet_common::{Pallet, Storage, Event<T>},
 		Fungible: pallet_fungible::{Pallet, Storage},
@@ -188,6 +196,10 @@ impl pallet_common::Config for Test {
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
+
+	type CollectionDispatch = CollectionDispatchT<Self>;
+	type EvmTokenAddressMapping = EvmTokenAddressMapping;
+	type CrossTokenAddressMapping = CrossTokenAddressMapping<Self::AccountId>;
 }
 
 impl pallet_evm::account::Config for Test {
@@ -196,6 +208,11 @@ impl pallet_evm::account::Config for Test {
 	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
 }
 
+impl pallet_structure::Config for Test {
+	type WeightInfo = ();
+	type Event = ();
+	type Call = Call;
+}
 impl pallet_fungible::Config for Test {
 	type WeightInfo = ();
 }
@@ -206,9 +223,10 @@ impl pallet_nonfungible::Config for Test {
 	type WeightInfo = ();
 }
 
-impl pallet_template::Config for Test {
+impl pallet_unique::Config for Test {
 	type Event = ();
 	type WeightInfo = ();
+	type CommonWeightInfo = CommonWeights<Self>;
 }
 
 // Build genesis storage according to the mock runtime.
