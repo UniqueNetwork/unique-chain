@@ -72,6 +72,9 @@ export function collectionIdToAddress(collection: number): string {
   ]);
   return Web3.utils.toChecksumAddress('0x' + buf.toString('hex'));
 }
+export function collectionIdFromAddress(address: string): number {
+  return Number('0x' + address.substring(address.length - 8));
+}
 
 export function tokenIdToAddress(collection: number, token: number): string {
   const buf = Buffer.from([0xf8, 0x23, 0x8c, 0xcf, 0xff, 0x8e, 0xd8, 0x87, 0x46, 0x3f, 0xd5, 0xe0,
@@ -84,7 +87,6 @@ export function tokenIdToCross(collection: number, token: number): CrossAccountI
   return {
     Ethereum: tokenIdToAddress(collection, token),
   };
-}
 
 export function createEthAccount(web3: Web3) {
   const account = web3.eth.accounts.create();

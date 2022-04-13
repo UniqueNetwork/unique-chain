@@ -12,7 +12,7 @@ interface ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-// Selector: 7b4866f9
+// Selector: e123b7a8
 interface ContractHelpers is Dummy, ERC165 {
 	// Selector: contractOwner(address) 5152b14c
 	function contractOwner(address contractAddress)
@@ -71,4 +71,7 @@ interface ContractHelpers is Dummy, ERC165 {
 		address user,
 		bool allowed
 	) external;
+
+	// Selector: create721Collection() 9a6bd151
+	function create721Collection() external view returns (address);
 }

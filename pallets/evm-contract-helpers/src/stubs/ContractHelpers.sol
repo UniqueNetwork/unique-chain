@@ -21,7 +21,7 @@ contract ERC165 is Dummy {
 	}
 }
 
-// Selector: 7b4866f9
+// Selector: e123b7a8
 contract ContractHelpers is Dummy, ERC165 {
 	// Selector: contractOwner(address) 5152b14c
 	function contractOwner(address contractAddress)
@@ -143,5 +143,12 @@ contract ContractHelpers is Dummy, ERC165 {
 		user;
 		allowed;
 		dummy = 0;
+	}
+
+	// Selector: create721Collection() 9a6bd151
+	function create721Collection() public view returns (address) {
+		require(false, stub_error);
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
 	}
 }
