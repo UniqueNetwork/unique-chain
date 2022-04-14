@@ -244,6 +244,10 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		fail!(<Error<T>>::FungibleDisallowsNesting)
 	}
 
+	fn collection_tokens(&self) -> Vec<TokenId> {
+		vec![TokenId::default()]
+	}
+
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId> {
 		if <Balance<T>>::get((self.id, account)) != 0 {
 			vec![TokenId::default()]
@@ -270,8 +274,8 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		Vec::new()
 	}
 
-	fn collection_tokens(&self) -> Vec<TokenId> {
-		vec![TokenId::default()]
+	fn total_supply(&self) -> u32 {
+		1
 	}
 
 	fn account_balance(&self, account: T::CrossAccountId) -> u32 {

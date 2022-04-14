@@ -14,6 +14,9 @@ macro_rules! impl_common_runtime_apis {
                 fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Result<Vec<TokenId>, DispatchError> {
                     dispatch_unique_runtime!(collection.account_tokens(account))
                 }
+                fn collection_tokens(collection: CollectionId) -> Result<Vec<TokenId>, DispatchError> {
+                    dispatch_unique_runtime!(collection.collection_tokens())
+                }
                 fn token_exists(collection: CollectionId, token: TokenId) -> Result<bool, DispatchError> {
                     dispatch_unique_runtime!(collection.token_exists(token))
                 }
@@ -33,8 +36,8 @@ macro_rules! impl_common_runtime_apis {
                     dispatch_unique_runtime!(collection.variable_metadata(token))
                 }
 
-                fn collection_tokens(collection: CollectionId) -> Result<Vec<TokenId>, DispatchError> {
-                    dispatch_unique_runtime!(collection.collection_tokens())
+                fn total_supply(collection: CollectionId) -> Result<u32, DispatchError> {
+                    dispatch_unique_runtime!(collection.total_supply())
                 }
                 fn account_balance(collection: CollectionId, account: CrossAccountId) -> Result<u32, DispatchError> {
                     dispatch_unique_runtime!(collection.account_balance(account))

@@ -45,6 +45,7 @@ export default {
     collectionTokens: fun('Get tokens contained in collection', [collectionParam], 'Vec<u32>'),
 
     lastTokenId: fun('Get last token id', [collectionParam], 'u32'),
+    totalSupply: fun('Get amount of unique collection tokens', [collectionParam], 'u32'),
     accountBalance: fun('Get amount of different user tokens', [collectionParam, crossAccountParam()], 'u32'),
     balance: fun('Get amount of specific account token', [collectionParam, crossAccountParam(), tokenParam], 'u128'),
     allowance: fun('Get allowed amount', [collectionParam, crossAccountParam('sender'), crossAccountParam('spender'), tokenParam], 'u128'),

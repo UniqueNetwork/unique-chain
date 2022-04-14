@@ -932,6 +932,8 @@ pub trait CommonCollectionOperations<T: Config> {
 	fn const_metadata(&self, token: TokenId) -> Vec<u8>;
 	fn variable_metadata(&self, token: TokenId) -> Vec<u8>;
 
+	/// Amount of unique collection tokens
+	fn total_supply(&self) -> u32;
 	/// Amount of different tokens account has (Applicable to nonfungible/refungible)
 	fn account_balance(&self, account: T::CrossAccountId) -> u32;
 	/// Amount of specific token account have (Applicable to fungible/refungible)

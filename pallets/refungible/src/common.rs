@@ -301,6 +301,10 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 			.into_inner()
 	}
 
+	fn total_supply(&self) -> u32 {
+		<Pallet<T>>::total_supply(self)
+	}
+
 	fn account_balance(&self, account: T::CrossAccountId) -> u32 {
 		<AccountBalance<T>>::get((self.id, account))
 	}

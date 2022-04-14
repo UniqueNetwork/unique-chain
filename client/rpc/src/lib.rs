@@ -76,6 +76,12 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Vec<u8>>;
 
+	#[rpc(name = "unique_totalSupply")]
+	fn total_supply(
+		&self,
+		collection: CollectionId,
+		at: Option<BlockHash>,
+	) -> Result<u32>;
 	#[rpc(name = "unique_accountBalance")]
 	fn account_balance(
 		&self,
@@ -239,6 +245,8 @@ where
 	pass_method!(topmost_token_owner(collection: CollectionId, token: TokenId) -> Option<CrossAccountId>);
 	pass_method!(const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
 	pass_method!(variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
+
+	pass_method!(total_supply(collection: CollectionId) -> u32);
 	pass_method!(account_balance(collection: CollectionId, account: CrossAccountId) -> u32);
 	pass_method!(balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> String => |v| v.to_string());
 	pass_method!(allowance(collection: CollectionId, sender: CrossAccountId, spender: CrossAccountId, token: TokenId) -> String => |v| v.to_string());
