@@ -34,6 +34,7 @@
     "testCollision": "mocha --timeout 9999999 -r ts-node/register ./src/collision-tests/*.test.ts",
     "testEvent": "mocha --timeout 9999999 -r ts-node/register ./src/check-event/*.test.ts",
     "testNesting": "mocha --timeout 9999999 -r ts-node/register ./**/nesting/**.test.ts",
+    "testMigrationStructure": "mocha --timeout 9999999 -r ts-node/register ./**/nesting/migration-check.test.ts",
     "testAddCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/addCollectionAdmin.test.ts",
     "testSetSchemaVersion": "mocha --timeout 9999999 -r ts-node/register ./**/setSchemaVersion.test.ts",
     "testSetVariableMetaData": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetaData.test.ts",
