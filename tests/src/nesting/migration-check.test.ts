@@ -7,27 +7,27 @@ import {strToUTF16} from '../util/util';
 import waitNewBlocks from '../substrate/wait-new-blocks';
 
 // todo skip
-describe.skip('Migration testing for pallet-common', () => {
+describe('Migration testing for pallet-common', () => {
   let alice: IKeyringPair;
   
   before(async() => {
-    await usingApi(async api => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
     });
   });
 
   it('Preserves collection settings', async () => {
-    let old_version: number;
-    let collection_id: number;
-    let collection_old: any;
+    let oldVersion: number;
+    let collectionId: number;
+    let collectionOld: any;
 
     await usingApi(async api => {
       // Create a collection for comparison before and after the upgrade
       const tx = api.tx.unique.createCollectionEx({
         mode: 'NFT',
         access: 'AllowList',
-        name: strToUTF16("Mojave Pictures"),
-        description: strToUTF16("$2.2 billion power plant!"),
+        name: strToUTF16('Mojave Pictures'),
+        description: strToUTF16('$2.2 billion power plant!'),
         tokenPrefix: '0x0002030',
         offchainSchema: '0x111111',
         schemaVersion: 'Unique',
@@ -40,53 +40,61 @@ describe.skip('Migration testing for pallet-common', () => {
       });
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateCollectionResult(events);
-      collection_id = result.collectionId;
+      collectionId = result.collectionId;
 
       // Get the pre-upgrade collection info
-      collection_old = (await api.query.common.collectionById(collection_id)).toJSON();
+      collectionOld = (await api.query.common.collectionById(collectionId)).toJSON();
 
       // Get the pre-upgrade spec version
-      old_version = (api.consts.system.version.toJSON() as any).specVersion;
+      oldVersion = (api.consts.system.version.toJSON() as any).specVersion;
     });
 
-    console.log(`Now waiting for the parachain upgrade from ${old_version!}...`);
+    console.log(`Now waiting for the parachain upgrade from ${oldVersion!}...`);
 
-    let new_version = old_version!;
-    let connection_fail_counter = 0;
+    let newVersion = oldVersion!;
+    let connectionFailCounter = 0;
+
+    // Cooperate with polkadot-launch if it's running (assuming custom name change), and send a custom signal
+    const find = require('find-process');
+    find('name', 'polkadot-launch', true).then(function (list: [any]) {
+      for (let proc of list) {
+        process.kill(proc.pid, 'SIGUSR1');
+      }
+    })
 
     // And wait for the parachain upgrade
-    while (new_version == old_version! && connection_fail_counter < 2) {
+    while (newVersion == oldVersion! && connectionFailCounter < 2) {
       try {
         await usingApi(async api => {
           await waitNewBlocks(api);
-          new_version = (api.consts.system.version.toJSON() as any).specVersion;
+          newVersion = (api.consts.system.version.toJSON() as any).specVersion;
         });
       } catch (_) {
-        connection_fail_counter++;
-        await new Promise( resolve => setTimeout(resolve, 12000) );
+        connectionFailCounter++;
+        await new Promise(resolve => setTimeout(resolve, 12000));
       }
     }
 
     await usingApi(async api => {
-      const collection_new = (await api.query.common.collectionById(collection_id)).toJSON() as any;
+      const collectionNew = (await api.query.common.collectionById(collectionId)).toJSON() as any;
       
       // Make sure the extra fields are what they should be
-      const variable_on_chain_schema = await api.query.common.collectionData(collection_id, "VariableOnChainSchema");
-      const const_on_chain_schema = await api.query.common.collectionData(collection_id, "ConstOnChainSchema");
-      const offchain_schema = await api.query.common.collectionData(collection_id, "OffchainSchema");
+      const variableOnChainSchema = await api.query.common.collectionData(collectionId, 'VariableOnChainSchema');
+      const constOnChainSchema = await api.query.common.collectionData(collectionId, 'ConstOnChainSchema');
+      const offchainSchema = await api.query.common.collectionData(collectionId, 'OffchainSchema');
 
-      expect(variable_on_chain_schema.toHex()).to.be.deep.equal((collection_old.variableOnChainSchema));
-      expect(const_on_chain_schema.toHex()).to.be.deep.equal(collection_old.constOnChainSchema);
-      expect(offchain_schema.toHex()).to.be.deep.equal(collection_old.offchainSchema);
-      expect(collection_new).to.have.nested.property('limits.nestingRule');
+      expect(variableOnChainSchema.toHex()).to.be.deep.equal((collectionOld.variableOnChainSchema));
+      expect(constOnChainSchema.toHex()).to.be.deep.equal(collectionOld.constOnChainSchema);
+      expect(offchainSchema.toHex()).to.be.deep.equal(collectionOld.offchainSchema);
+      expect(collectionNew).to.have.nested.property('limits.nestingRule');
 
       // Get rid of extra fields to perform comparison on the rest of the collection
-      delete collection_new.limits.nestingRule;
-      delete collection_old.constOnChainSchema;
-      delete collection_old.offchainSchema;
-      delete collection_old.variableOnChainSchema;
+      delete collectionNew.limits.nestingRule;
+      delete collectionOld.constOnChainSchema;
+      delete collectionOld.offchainSchema;
+      delete collectionOld.variableOnChainSchema;
 
-      expect(collection_new).to.be.deep.equal(collection_old);
+      expect(collectionNew).to.be.deep.equal(collectionOld);
     });
   });
 });
