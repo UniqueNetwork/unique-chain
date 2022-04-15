@@ -1,33 +1,50 @@
 .PHONY: _help
 _help:
 	@echo "regenerate_solidity - generate stubs/interfaces for contracts defined in native (via evm-coder)"
-	@echo "evm_stubs - recompile contract stubs"
+	@echo "evm_stubs - recompile contract stubs and ABI"
 	@echo "bench - run frame-benchmarking"
 	@echo "  bench-evm-migration"
 	@echo "  bench-unique"
 
-.PHONY: regenerate_solidity
-regenerate_solidity:
-	PACKAGE=pallet-fungible NAME=erc::gen_iface OUTPUT=./tests/src/eth/api/UniqueFungible.sol ./.maintain/scripts/generate_api.sh
-	PACKAGE=pallet-nonfungible NAME=erc::gen_iface OUTPUT=./tests/src/eth/api/UniqueNFT.sol ./.maintain/scripts/generate_api.sh
-	PACKAGE=pallet-evm-contract-helpers NAME=eth::contract_helpers_iface OUTPUT=./tests/src/eth/api/ContractHelpers.sol ./.maintain/scripts/generate_api.sh
-
-	PACKAGE=pallet-fungible NAME=erc::gen_impl OUTPUT=./pallets/fungible/src/stubs/UniqueFungible.sol ./.maintain/scripts/generate_api.sh
-	PACKAGE=pallet-nonfungible NAME=erc::gen_impl OUTPUT=./pallets/nonfungible/src/stubs/UniqueNFT.sol ./.maintain/scripts/generate_api.sh
-	PACKAGE=pallet-evm-contract-helpers NAME=eth::contract_helpers_impl OUTPUT=./pallets/evm-contract-helpers/src/stubs/ContractHelpers.sol ./.maintain/scripts/generate_api.sh
-
 FUNGIBLE_EVM_STUBS=./pallets/fungible/src/stubs
+FUNGIBLE_EVM_ABI=./tests/src/eth/fungibleAbi.json
+
 NONFUNGIBLE_EVM_STUBS=./pallets/nonfungible/src/stubs
+NONFUNGIBLE_EVM_ABI=./tests/src/eth/nonFungibleAbi.json
+
 CONTRACT_HELPERS_STUBS=./pallets/evm-contract-helpers/src/stubs/
+CONTRACT_HELPERS_ABI=./tests/src/eth/util/contractHelpersAbi.json
 
-$(FUNGIBLE_EVM_STUBS)/UniqueFungible.raw: $(FUNGIBLE_EVM_STUBS)/UniqueFungible.sol
-	INPUT=$< OUTPUT=$@ ./.maintain/scripts/compile_stub.sh
-$(NONFUNGIBLE_EVM_STUBS)/UniqueNFT.raw: $(NONFUNGIBLE_EVM_STUBS)/UniqueNFT.sol
-	INPUT=$< OUTPUT=$@ ./.maintain/scripts/compile_stub.sh
-$(CONTRACT_HELPERS_STUBS)/ContractHelpers.raw: $(CONTRACT_HELPERS_STUBS)/ContractHelpers.sol
-	INPUT=$< OUTPUT=$@ ./.maintain/scripts/compile_stub.sh
+TESTS_API=./tests/src/eth/api/
 
-evm_stubs: $(FUNGIBLE_EVM_STUBS)/UniqueFungible.raw $(NONFUNGIBLE_EVM_STUBS)/UniqueNFT.raw $(CONTRACT_HELPERS_STUBS)/ContractHelpers.raw
+.PHONY: regenerate_solidity
+regenerate_solidity: UniqueFungible.sol UniqueNFT.sol ContractHelpers.sol
+
+UniqueFungible.sol:
+	PACKAGE=pallet-fungible NAME=erc::gen_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
+	PACKAGE=pallet-fungible NAME=erc::gen_impl OUTPUT=$(FUNGIBLE_EVM_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
+
+UniqueNFT.sol:
+	PACKAGE=pallet-nonfungible NAME=erc::gen_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
+	PACKAGE=pallet-nonfungible NAME=erc::gen_impl OUTPUT=$(NONFUNGIBLE_EVM_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
+
+ContractHelpers.sol:
+	PACKAGE=pallet-evm-contract-helpers NAME=eth::contract_helpers_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
+	PACKAGE=pallet-evm-contract-helpers NAME=eth::contract_helpers_impl OUTPUT=$(CONTRACT_HELPERS_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
+
+UniqueFungible: UniqueFungible.sol
+	INPUT=$(FUNGIBLE_EVM_STUBS)/$< OUTPUT=$(FUNGIBLE_EVM_STUBS)/UniqueFungible.raw ./.maintain/scripts/compile_stub.sh
+	INPUT=$(FUNGIBLE_EVM_STUBS)/$< OUTPUT=$(FUNGIBLE_EVM_ABI) ./.maintain/scripts/generate_abi.sh
+
+UniqueNFT: UniqueNFT.sol
+	INPUT=$(NONFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(NONFUNGIBLE_EVM_STUBS)/UniqueNFT.raw ./.maintain/scripts/compile_stub.sh
+	INPUT=$(NONFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(NONFUNGIBLE_EVM_ABI) ./.maintain/scripts/generate_abi.sh
+
+ContractHelpers: ContractHelpers.sol
+	INPUT=$(CONTRACT_HELPERS_STUBS)/$< OUTPUT=$(CONTRACT_HELPERS_STUBS)/ContractHelpers.raw ./.maintain/scripts/compile_stub.sh
+	INPUT=$(CONTRACT_HELPERS_STUBS)/$< OUTPUT=$(CONTRACT_HELPERS_ABI) ./.maintain/scripts/generate_abi.sh
+
+evm_stubs: UniqueFungible UniqueNFT ContractHelpers
 
 .PHONY: _bench
 _bench:
