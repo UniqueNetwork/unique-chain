@@ -15,9 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {
-  collectionIdFromAddress, 
   collectionIdToAddress, 
-  contractHelpers, 
   createEthAccount, 
   createEthAccountWithBalance, 
   deployFlipper, 
@@ -28,7 +26,7 @@ import {
   usingWeb3,
 } from './util/helpers';
 import {expect} from 'chai';
-import {createCollectionExpectSuccess, createItemExpectSuccess, getCreatedCollectionCount, getDetailedCollectionInfo, UNIQUE} from '../util/helpers';
+import {createCollectionExpectSuccess, createItemExpectSuccess, UNIQUE} from '../util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import privateKey from '../substrate/privateKey';
 import {Contract} from 'web3-eth-contract';
@@ -122,30 +120,5 @@ describe('ERC165 tests', async () => {
 
   itWeb3('ERC165 support', async ({web3}) => {
     expect(await contract(web3).methods.supportsInterface('0x01ffc9a7').call()).to.be.true;
-  });
-});
-
-describe.only('Create collection from EVM', () => {
-  itWeb3('Create collection', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
-    const helpers = contractHelpers(web3, owner);
-    const collectionName = 'CollectionEVM';
-    const description = 'Some description';
-    const tokenPrefix = 'token prefix';
-
-    const collectionCountBefore = await getCreatedCollectionCount(api);
-    const result = await helpers.methods
-      .create721Collection(collectionName, description, tokenPrefix)
-      .send();
-    const collectionCountAfter = await getCreatedCollectionCount(api);
-
-    const collectionId = collectionIdFromAddress(result.events[0].raw.topics[2]);
-    expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
-    expect(collectionId).to.be.eq(collectionCountAfter);
-    
-    const collection = (await getDetailedCollectionInfo(api, collectionId))!;
-    expect(collection.name.map(v => String.fromCharCode(v.toNumber())).join('')).to.be.eq(collectionName);
-    expect(collection.description.map(v => String.fromCharCode(v.toNumber())).join('')).to.be.eq(description);
-    expect(collection.tokenPrefix.toHuman()).to.be.eq(tokenPrefix);
   });
 });
