@@ -16,9 +16,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[macro_use(format)]
-extern crate alloc;
-
 use codec::{Decode, Encode, MaxEncodedLen};
 pub use pallet::*;
 pub use eth::*;
