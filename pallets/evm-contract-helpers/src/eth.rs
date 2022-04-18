@@ -20,20 +20,15 @@ use ethereum as _;
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure,
-	account::CrossAccountId, Pallet as PalletEvm
+	account::CrossAccountId
 };
 use sp_core::H160;
-use up_data_structs::{
-	CreateCollectionData, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	MAX_COLLECTION_NAME_LENGTH,
-};
 use crate::{
 	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringRateLimit, SponsoringModeT,
 };
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
 use sp_std::vec::Vec;
-use alloc::format;
 
 struct ContractHelpers<T: Config>(SubstrateRecorder<T>);
 impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
@@ -142,56 +137,6 @@ impl<T: Config> ContractHelpers<T> {
 		<Pallet<T>>::toggle_allowed(contract_address, user, allowed);
 		Ok(())
 	}
-
-	fn create_721_collection(
-		&self,
-		caller: caller,
-		name: string,
-		description: string,
-		token_prefix: string,
-	) -> Result<address> {
-		let caller = T::CrossAccountId::from_eth(caller);
-		let name = name
-			.encode_utf16()
-			.collect::<Vec<u16>>()
-			.try_into()
-			.map_err(|_| error_feild_too_long("name", MAX_COLLECTION_NAME_LENGTH))?;
-		let description = description
-			.encode_utf16()
-			.collect::<Vec<u16>>()
-			.try_into()
-			.map_err(|_| error_feild_too_long("description", MAX_COLLECTION_DESCRIPTION_LENGTH))?;
-		let token_prefix = token_prefix
-			.into_bytes()
-			.try_into()
-			.map_err(|_| error_feild_too_long("token_prefix", MAX_TOKEN_PREFIX_LENGTH))?;
-
-		let data = CreateCollectionData {
-			name,
-			description,
-			token_prefix,
-			..Default::default()
-		};
-
-		let collection_id =
-			<pallet_nonfungible::Pallet<T>>::init_collection(caller.as_sub().clone(), data)
-				.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-
-		let address = pallet_common::eth::collection_id_to_address(collection_id);
-
-		<PalletEvm<T>>::deposit_log(
-			ContractHelperEvent::CollectionCreated {
-				owner: *caller.as_eth(),
-				collection_id: address,
-			}
-			.to_log(address),
-		);
-		Ok(address)
-	}
-}
-
-fn error_feild_too_long(feild: &str, bound: u32) -> Error {
-	Error::Revert(format!("{} is too long. Max length is {}.", feild, bound))
 }
 
 pub struct HelpersOnMethodCall<T: Config>(PhantomData<*const T>);

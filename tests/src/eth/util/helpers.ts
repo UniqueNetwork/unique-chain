@@ -28,6 +28,7 @@ import * as solc from 'solc';
 import config from '../../config';
 import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
+import collectionAbi from '../collectionAbi.json';
 import getBalance from '../../substrate/get-balance';
 import waitNewBlocks from '../../substrate/wait-new-blocks';
 
@@ -271,6 +272,16 @@ export async function deployCollector(web3: Web3, deployer: string) {
  */
 export function contractHelpers(web3: Web3, caller: string) {
   return new web3.eth.Contract(contractHelpersAbi as any, '0x842899ECF380553E8a4de75bF534cdf6fBF64049', {from: caller, ...GAS_ARGS});
+}
+
+/** 
+ * pallet evm_collection
+ * @param web3 
+ * @param caller - eth address
+ * @returns 
+ */
+export function collectionHelper(web3: Web3, caller: string) {
+  return new web3.eth.Contract(collectionAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, ...GAS_ARGS});
 }
 
 /**

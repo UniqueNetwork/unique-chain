@@ -79,7 +79,7 @@ use sp_arithmetic::{
 };
 use smallvec::smallvec;
 use codec::{Encode, Decode};
-use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping};
+use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
 	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating},
@@ -278,6 +278,7 @@ impl pallet_evm::Config for Runtime {
 		pallet_evm_migration::OnMethodCall<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
 		CollectionDispatchT<Self>,
+		pallet_evm_collection::CollectionOnMethodCall<Self>,
 	);
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
@@ -951,11 +952,20 @@ parameter_types! {
 	pub const HelpersContractAddress: H160 = H160([
 		0x84, 0x28, 0x99, 0xec, 0xf3, 0x80, 0x55, 0x3e, 0x8a, 0x4d, 0xe7, 0x5b, 0xf5, 0x34, 0xcd, 0xf6, 0xfb, 0xf6, 0x40, 0x49,
 	]);
+		
+	// 0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f
+	pub const EvmCollectionAddress: H160 = H160([
+		0x6c, 0x4e, 0x9f, 0xe1, 0xae, 0x37, 0xa4, 0x1e, 0x93, 0xce, 0xe4, 0x29, 0xe8, 0xe1, 0x88, 0x1a, 0xbd, 0xcb, 0xb5, 0x4f,
+	]);
 }
 
 impl pallet_evm_contract_helpers::Config for Runtime {
 	type ContractAddress = HelpersContractAddress;
 	type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
+}
+
+impl pallet_evm_collection::Config for Runtime {
+	type ContractAddress = EvmCollectionAddress;
 }
 
 construct_runtime!(
@@ -1010,6 +1020,7 @@ construct_runtime!(
 		EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage} = 151,
 		EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
 		EvmMigration: pallet_evm_migration::{Pallet, Call, Storage} = 153,
+		EvmCollection: pallet_evm_collection::{Pallet} = 154,
 	}
 );
 

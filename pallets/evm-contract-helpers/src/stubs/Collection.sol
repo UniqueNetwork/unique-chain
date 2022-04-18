@@ -21,7 +21,7 @@ contract ERC165 is Dummy {
 	}
 }
 
-// Selector: 7b4866f9
+// Selector: 61f17ed8
 contract ContractHelpers is Dummy, ERC165 {
 	// Selector: contractOwner(address) 5152b14c
 	function contractOwner(address contractAddress)
@@ -143,5 +143,50 @@ contract ContractHelpers is Dummy, ERC165 {
 		user;
 		allowed;
 		dummy = 0;
+	}
+
+	// Selector: create721Collection(string,string,string) 951c0151
+	function create721Collection(
+		string memory name,
+		string memory description,
+		string memory tokenPrefix
+	) public view returns (address) {
+		require(false, stub_error);
+		name;
+		description;
+		tokenPrefix;
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
+	// Selector: setSponsor(address,address) f01fba93
+	function setSponsor(address collectionId, address sponsor) public pure {
+		require(false, stub_error);
+		collectionId;
+		sponsor;
+	}
+
+	// Selector: setOffchainShema(string) c3aa408b
+	function setOffchainShema(string memory shema) public pure {
+		require(false, stub_error);
+		shema;
+	}
+
+	// Selector: setConstOnChainSchema(string) b284d8df
+	function setConstOnChainSchema(string memory shema) public pure {
+		require(false, stub_error);
+		shema;
+	}
+
+	// Selector: setVariableOnChainSchema(string) 7c5f0fea
+	function setVariableOnChainSchema(string memory shema) public pure {
+		require(false, stub_error);
+		shema;
+	}
+
+	// Selector: setLimits(string) 72cb345d
+	function setLimits(string memory limits) public pure {
+		require(false, stub_error);
+		limits;
 	}
 }

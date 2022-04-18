@@ -16,12 +16,12 @@
 
 import {expect} from 'chai';
 import {getCreatedCollectionCount, getDetailedCollectionInfo} from '../util/helpers';
-import {collectionIdFromAddress, contractHelpers, createEthAccountWithBalance, itWeb3} from './util/helpers';
+import {collectionHelper, collectionIdFromAddress, contractHelpers, createEthAccountWithBalance, itWeb3} from './util/helpers';
 
 describe('Create collection from EVM', () => {
   itWeb3('Create collection', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
-    const helpers = contractHelpers(web3, owner);
+    const helpers = collectionHelper(web3, owner);
     const collectionName = 'CollectionEVM';
     const description = 'Some description';
     const tokenPrefix = 'token prefix';
