@@ -501,6 +501,7 @@ decl_module! {
 				mode
 			));
 
+			target_collection.submit_logs();
 			target_collection.save()
 		}
 
@@ -532,6 +533,7 @@ decl_module! {
 				collection_id
 			));
 
+			target_collection.submit_logs();
 			target_collection.save()
 		}
 
@@ -561,6 +563,7 @@ decl_module! {
 				new_owner
 			));
 
+			target_collection.submit_logs();
 			target_collection.save()
 		}
 
@@ -641,6 +644,7 @@ decl_module! {
 				new_sponsor
 			));
 
+			target_collection.submit_logs();
 			target_collection.save()
 		}
 
@@ -669,6 +673,7 @@ decl_module! {
 				sender
 			));
 
+			target_collection.submit_logs();
 			target_collection.save()
 		}
 
@@ -694,6 +699,7 @@ decl_module! {
 			<Pallet<T>>::deposit_event(Event::<T>::CollectionSponsorRemoved(
 				collection_id
 			));
+			target_collection.submit_logs();
 			target_collection.save()
 		}
 
@@ -781,6 +787,7 @@ decl_module! {
 			// =========
 
 			target_collection.limits.transfers_enabled = Some(value);
+			target_collection.submit_logs();
 			target_collection.save()
 		}
 
@@ -968,6 +975,7 @@ decl_module! {
 
 			target_collection.meta_update_permission = value;
 
+			target_collection.submit_logs();
 			target_collection.save()
 		}
 
@@ -1001,6 +1009,7 @@ decl_module! {
 				collection_id
 			));
 
+			target_collection.submit_logs();
 			target_collection.save()
 		}
 
@@ -1033,6 +1042,7 @@ decl_module! {
 				collection_id
 			));
 
+			target_collection.submit_logs();
 			target_collection.save()
 		}
 
@@ -1065,6 +1075,7 @@ decl_module! {
 				collection_id
 			));
 
+			target_collection.submit_logs();
 			target_collection.save()
 		}
 
@@ -1097,6 +1108,7 @@ decl_module! {
 				collection_id
 			));
 
+			target_collection.submit_logs();
 			target_collection.save()
 		}
 
@@ -1118,6 +1130,7 @@ decl_module! {
 				collection_id
 			));
 
+			target_collection.submit_logs();
 			target_collection.save()
 		}
 	}

@@ -93,11 +93,10 @@ impl<T: Config> CollectionHandle<T> {
 					.saturating_mul(writes),
 			))
 	}
-	pub fn submit_logs(self) {
+	pub fn submit_logs(&self) {
 		self.recorder.submit_logs()
 	}
 	pub fn save(self) -> DispatchResult {
-		self.recorder.submit_logs();
 		<CollectionById<T>>::insert(self.id, self.collection);
 		Ok(())
 	}
