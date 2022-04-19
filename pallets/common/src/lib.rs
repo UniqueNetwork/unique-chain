@@ -18,7 +18,7 @@
 
 use core::ops::{Deref, DerefMut};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use sp_std::vec::Vec;
+use sp_std::{vec::Vec, rc::Rc};
 use pallet_evm::account::CrossAccountId;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo},
@@ -47,14 +47,14 @@ pub mod eth;
 pub struct CollectionHandle<T: Config> {
 	pub id: CollectionId,
 	collection: Collection<T::AccountId>,
-	pub recorder: SubstrateRecorder<T>,
+	pub recorder: Rc<SubstrateRecorder<T>>,
 }
 impl<T: Config> WithRecorder<T> for CollectionHandle<T> {
 	fn recorder(&self) -> &SubstrateRecorder<T> {
 		&self.recorder
 	}
-	fn into_recorder(self) -> SubstrateRecorder<T> {
-		self.recorder
+	fn into_recorder(self) -> Rc<SubstrateRecorder<T>> {
+		self.recorder.clone()
 	}
 }
 impl<T: Config> CollectionHandle<T> {
@@ -62,7 +62,7 @@ impl<T: Config> CollectionHandle<T> {
 		<CollectionById<T>>::get(id).map(|collection| Self {
 			id,
 			collection,
-			recorder: SubstrateRecorder::new(eth::collection_id_to_address(id), gas_limit),
+			recorder: Rc::new(SubstrateRecorder::new(eth::collection_id_to_address(id), gas_limit)),
 		})
 	}
 	pub fn new(id: CollectionId) -> Option<Self> {

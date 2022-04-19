@@ -24,7 +24,7 @@ use pallet_evm::account::CrossAccountId;
 use pallet_evm_coder_substrate::WithRecorder;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
-use sp_std::collections::btree_map::BTreeMap;
+use sp_std::{collections::btree_map::BTreeMap, rc::Rc};
 
 pub use pallet::*;
 
@@ -102,7 +102,7 @@ impl<T: Config> WithRecorder<T> for FungibleHandle<T> {
 	fn recorder(&self) -> &pallet_evm_coder_substrate::SubstrateRecorder<T> {
 		self.0.recorder()
 	}
-	fn into_recorder(self) -> pallet_evm_coder_substrate::SubstrateRecorder<T> {
+	fn into_recorder(self) -> Rc<pallet_evm_coder_substrate::SubstrateRecorder<T>> {
 		self.0.into_recorder()
 	}
 }

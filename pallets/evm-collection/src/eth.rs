@@ -31,16 +31,16 @@ use up_data_structs::{
 use crate::{Config, Pallet};
 use frame_support::traits::Get;
 
-use sp_std::vec::Vec;
+use sp_std::{vec::Vec, rc::Rc};
 use alloc::format;
 
-struct EvmCollection<T: Config>(SubstrateRecorder<T>);
+struct EvmCollection<T: Config>(Rc<SubstrateRecorder<T>>);
 impl<T: Config> WithRecorder<T> for EvmCollection<T> {
 	fn recorder(&self) -> &SubstrateRecorder<T> {
 		&self.0
 	}
 
-	fn into_recorder(self) -> SubstrateRecorder<T> {
+	fn into_recorder(self) -> Rc<SubstrateRecorder<T>> {
 		self.0
 	}
 }
@@ -152,7 +152,7 @@ impl<T: Config> OnMethodCall<T> for CollectionOnMethodCall<T> {
 			return None;
 		}
 
-		let helpers = EvmCollection::<T>(SubstrateRecorder::<T>::new(*target, gas_left));
+		let helpers = EvmCollection::<T>(Rc::new(SubstrateRecorder::<T>::new(*target, gas_left)));
 		pallet_evm_coder_substrate::call(*source, helpers, value, input)
 	}
 

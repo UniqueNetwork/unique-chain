@@ -26,9 +26,8 @@ use pallet_evm::account::CrossAccountId;
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
-use sp_std::{vec::Vec, vec};
+use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap, rc::Rc};
 use core::ops::Deref;
-use sp_std::collections::btree_map::BTreeMap;
 use codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
@@ -130,7 +129,7 @@ impl<T: Config> WithRecorder<T> for NonfungibleHandle<T> {
 	fn recorder(&self) -> &SubstrateRecorder<T> {
 		self.0.recorder()
 	}
-	fn into_recorder(self) -> SubstrateRecorder<T> {
+	fn into_recorder(self) -> Rc<SubstrateRecorder<T>> {
 		self.0.into_recorder()
 	}
 }

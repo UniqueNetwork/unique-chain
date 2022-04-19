@@ -42,9 +42,8 @@ pub mod pallet {
 	use frame_system::ensure_signed;
 	pub use frame_support::dispatch::DispatchResult;
 	use pallet_ethereum::EthereumTransactionSender;
-	use sp_std::cell::RefCell;
-	use sp_std::vec::Vec;
-	use sp_core::H160;
+	use sp_std::{cell::RefCell, vec::Vec, rc::Rc};
+	use sp_core::{H160};
 	use frame_support::{pallet_prelude::*, traits::PalletInfo};
 	use frame_system::pallet_prelude::*;
 
@@ -228,7 +227,7 @@ pub mod pallet {
 
 	pub trait WithRecorder<T: Config> {
 		fn recorder(&self) -> &SubstrateRecorder<T>;
-		fn into_recorder(self) -> SubstrateRecorder<T>;
+		fn into_recorder(self) -> Rc<SubstrateRecorder<T>>;
 	}
 
 	/// Helper to simplify implementing bridge between evm-coder definitions and pallet-evm

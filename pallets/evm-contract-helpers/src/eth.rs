@@ -28,15 +28,15 @@ use crate::{
 };
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
-use sp_std::vec::Vec;
+use sp_std::{vec::Vec, rc::Rc};
 
-struct ContractHelpers<T: Config>(SubstrateRecorder<T>);
+struct ContractHelpers<T: Config>(Rc<SubstrateRecorder<T>>);
 impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
 	fn recorder(&self) -> &SubstrateRecorder<T> {
 		&self.0
 	}
 
-	fn into_recorder(self) -> SubstrateRecorder<T> {
+	fn into_recorder(self) -> Rc<SubstrateRecorder<T>> {
 		self.0
 	}
 }
@@ -173,7 +173,7 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 			return None;
 		}
 
-		let helpers = ContractHelpers::<T>(SubstrateRecorder::<T>::new(*target, gas_left));
+		let helpers = ContractHelpers::<T>(Rc::new(SubstrateRecorder::<T>::new(*target, gas_left)));
 		pallet_evm_coder_substrate::call(*source, helpers, value, input)
 	}
 
