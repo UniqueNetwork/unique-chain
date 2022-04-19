@@ -36,6 +36,7 @@ const requiredPallets = [
   'parachaininfo',
   'evm',
   'evmcodersubstrate',
+  'evmcollection',
   'evmcontracthelpers',
   'evmmigration',
   'evmtransactionpayment',
