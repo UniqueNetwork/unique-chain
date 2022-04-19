@@ -116,8 +116,8 @@ pub mod pallet {
 				.borrow_mut()
 				.push(MaybeMirroredLog::mirrored(log.to_log(self.contract)))
 		}
-		pub fn retrieve_logs(self) -> Vec<MaybeMirroredLog> {
-			self.logs.into_inner()
+		pub fn retrieve_logs(&self) -> Vec<MaybeMirroredLog> {
+			self.logs.replace(Default::default())
 		}
 
 		pub fn gas_left(&self) -> u64 {
@@ -163,7 +163,7 @@ pub mod pallet {
 		}
 
 		pub fn evm_to_precompile_output(
-			self,
+			&self,
 			result: evm_coder::execution::Result<Option<AbiWriter>>,
 		) -> Option<PrecompileResult> {
 			use evm_coder::execution::Error;
@@ -191,7 +191,7 @@ pub mod pallet {
 			})
 		}
 
-		pub fn submit_logs(self) {
+		pub fn submit_logs(&self) {
 			let logs = self.retrieve_logs();
 			if logs.is_empty() {
 				return;
@@ -243,7 +243,7 @@ pub mod pallet {
 		input: &[u8],
 	) -> Option<PrecompileResult> {
 		let result = call_internal(caller, &mut e, value, input);
-		e.into_recorder().evm_to_precompile_output(result)
+		e.recorder().evm_to_precompile_output(result)
 	}
 
 	fn call_internal<
