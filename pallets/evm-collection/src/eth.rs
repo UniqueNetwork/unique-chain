@@ -31,7 +31,7 @@ use up_data_structs::{
 use crate::{Config, Pallet};
 use frame_support::traits::Get;
 
-use sp_std::vec::Vec;
+use sp_std::{vec::Vec, rc::Rc};
 use alloc::format;
 
 struct EvmCollection<T: Config>(SubstrateRecorder<T>);

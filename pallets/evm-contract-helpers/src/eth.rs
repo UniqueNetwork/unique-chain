@@ -28,7 +28,7 @@ use crate::{
 };
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
-use sp_std::vec::Vec;
+use sp_std::{vec::Vec, rc::Rc};
 
 struct ContractHelpers<T: Config>(SubstrateRecorder<T>);
 impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
