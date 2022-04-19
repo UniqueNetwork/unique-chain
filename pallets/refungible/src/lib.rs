@@ -352,7 +352,12 @@ impl<T: Config> Pallet<T> {
 			let dispatch = T::CollectionDispatch::dispatch(handle);
 			let dispatch = dispatch.as_dyn();
 
-			dispatch.check_nesting(from.clone(), collection.id, target.1, nesting_budget)?;
+			dispatch.check_nesting(
+				from.clone(),
+				(collection.id, token),
+				target.1,
+				nesting_budget,
+			)?;
 		}
 
 		// =========
@@ -455,7 +460,8 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 
-		for token in data.iter() {
+		for (i, token) in data.iter().enumerate() {
+			let token_id = TokenId(first_token_id + i as u32 + 1);
 			for (to, _) in token.users.iter() {
 				if let Some(target) = T::CrossTokenAddressMapping::address_to_token(to) {
 					let handle = <CollectionHandle<T>>::try_get(target.0)?;
@@ -464,7 +470,7 @@ impl<T: Config> Pallet<T> {
 
 					dispatch.check_nesting(
 						sender.clone(),
-						collection.id,
+						(collection.id, token_id),
 						target.1,
 						nesting_budget,
 					)?;
@@ -575,10 +581,11 @@ impl<T: Config> Pallet<T> {
 		if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
 			// TODO: should collection owner be allowed to perform this transfer?
 			ensure!(
-				<PalletStructure<T>>::indirectly_owned(
+				<PalletStructure<T>>::check_indirectly_owned(
 					spender.clone(),
 					source.0,
 					source.1,
+					None,
 					nesting_budget
 				)?,
 				<CommonError<T>>::ApprovedValueTooLow,

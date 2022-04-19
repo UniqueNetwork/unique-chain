@@ -71,7 +71,7 @@ pub mod pallet {
 #[derive(PartialEq)]
 pub enum Parent<CrossAccountId> {
 	/// Token owned by normal account
-	Normal(CrossAccountId),
+	User(CrossAccountId),
 	/// Passed token not found
 	TokenNotFound,
 	/// Token owner is another token (target token still may not exist)
@@ -94,7 +94,7 @@ impl<T: Config> Pallet<T> {
 		Ok(match handle.token_owner(token) {
 			Some(owner) => match T::CrossTokenAddressMapping::address_to_token(&owner) {
 				Some((collection, token)) => Parent::Token(collection, token),
-				None => Parent::Normal(owner),
+				None => Parent::User(owner),
 			},
 			None => Parent::TokenNotFound,
 		})
@@ -137,29 +137,46 @@ impl<T: Config> Pallet<T> {
 	) -> Result<T::CrossAccountId, DispatchError> {
 		let owner = Self::parent_chain(collection, token)
 			.take_while(|_| budget.consume())
-			.find(|p| matches!(p, Ok(Parent::Normal(_) | Parent::TokenNotFound)))
+			.find(|p| matches!(p, Ok(Parent::User(_) | Parent::TokenNotFound)))
 			.ok_or(<Error<T>>::DepthLimit)??;
 
 		Ok(match owner {
-			Parent::Normal(v) => v,
+			Parent::User(v) => v,
 			_ => fail!(<Error<T>>::TokenNotFound),
 		})
 	}
 
 	/// Check if token indirectly owned by specified user
-	pub fn indirectly_owned(
+	pub fn check_indirectly_owned(
 		user: T::CrossAccountId,
 		collection: CollectionId,
 		token: TokenId,
+		for_nest: Option<(CollectionId, TokenId)>,
 		budget: &dyn Budget,
 	) -> Result<bool, DispatchError> {
 		let target_parent = match T::CrossTokenAddressMapping::address_to_token(&user) {
 			Some((collection, token)) => Parent::Token(collection, token),
-			None => Parent::Normal(user),
+			None => Parent::User(user),
 		};
 
-		Ok(Self::parent_chain(collection, token)
-			.take_while(|_| budget.consume())
-			.any(|parent| Ok(&target_parent) == parent.as_ref()))
+		// Tried to nest token in itself
+		if Some((collection, token)) == for_nest {
+			return Err(<Error<T>>::OuroborosDetected.into());
+		}
+
+		for parent in Self::parent_chain(collection, token).take_while(|_| budget.consume()) {
+			match parent? {
+				// Tried to nest token in chain, which has this token as one of parents
+				Parent::Token(collection, token) if Some((collection, token)) == for_nest => {
+					return Err(<Error<T>>::OuroborosDetected.into())
+				}
+				// Found needed parent, token is indirecty owned
+				v if v == target_parent => return Ok(true),
+				Parent::TokenNotFound => return Ok(false),
+				_ => {}
+			}
+		}
+
+		Err(<Error<T>>::DepthLimit.into())
 	}
 }

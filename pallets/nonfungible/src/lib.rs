@@ -296,7 +296,12 @@ impl<T: Config> Pallet<T> {
 			let dispatch = T::CollectionDispatch::dispatch(handle);
 			let dispatch = dispatch.as_dyn();
 
-			dispatch.check_nesting(from.clone(), collection.id, target.1, nesting_budget)?;
+			dispatch.check_nesting(
+				from.clone(),
+				(collection.id, token),
+				target.1,
+				nesting_budget,
+			)?;
 		}
 
 		// =========
@@ -381,13 +386,18 @@ impl<T: Config> Pallet<T> {
 			);
 		}
 
-		for (to, _) in balances.iter() {
-			if let Some(target) = T::CrossTokenAddressMapping::address_to_token(to) {
+		for (i, data) in data.iter().enumerate() {
+			let token = TokenId(first_token + i as u32 + 1);
+			if let Some(target) = T::CrossTokenAddressMapping::address_to_token(&data.owner) {
 				let handle = <CollectionHandle<T>>::try_get(target.0)?;
 				let dispatch = T::CollectionDispatch::dispatch(handle);
 				let dispatch = dispatch.as_dyn();
-
-				dispatch.check_nesting(sender.clone(), collection.id, target.1, nesting_budget)?;
+				dispatch.check_nesting(
+					sender.clone(),
+					(collection.id, token),
+					target.1,
+					nesting_budget,
+				)?;
 			}
 		}
 
@@ -535,10 +545,11 @@ impl<T: Config> Pallet<T> {
 		if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
 			// TODO: should collection owner be allowed to perform this transfer?
 			ensure!(
-				<PalletStructure<T>>::indirectly_owned(
+				<PalletStructure<T>>::check_indirectly_owned(
 					spender.clone(),
 					source.0,
 					source.1,
+					None,
 					nesting_budget
 				)?,
 				<CommonError<T>>::ApprovedValueTooLow,
@@ -610,31 +621,40 @@ impl<T: Config> Pallet<T> {
 	pub fn check_nesting(
 		handle: &NonfungibleHandle<T>,
 		sender: T::CrossAccountId,
-		from: CollectionId,
+		from: (CollectionId, TokenId),
 		under: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		fn ensure_sender_allowed<T: Config>(
 			collection: CollectionId,
 			token: TokenId,
+			for_nest: (CollectionId, TokenId),
 			sender: T::CrossAccountId,
 			budget: &dyn Budget,
 		) -> DispatchResult {
 			ensure!(
-				<PalletStructure<T>>::indirectly_owned(sender, collection, token, budget)?,
+				<PalletStructure<T>>::check_indirectly_owned(
+					sender,
+					collection,
+					token,
+					Some(for_nest),
+					budget
+				)?,
 				<CommonError<T>>::OnlyOwnerAllowedToNest,
 			);
 			Ok(())
 		}
 		match handle.limits.nesting_rule() {
 			NestingRule::Disabled => fail!(<CommonError<T>>::NestingIsDisabled),
-			NestingRule::Owner => ensure_sender_allowed::<T>(handle.id, under, sender, nesting_budget)?,
+			NestingRule::Owner => {
+				ensure_sender_allowed::<T>(handle.id, under, from, sender, nesting_budget)?
+			}
 			NestingRule::OwnerRestricted(whitelist) => {
 				ensure!(
-					whitelist.contains(&from),
+					whitelist.contains(&from.0),
 					<CommonError<T>>::SourceCollectionIsNotAllowedToNest
 				);
-				ensure_sender_allowed::<T>(handle.id, under, sender, nesting_budget)?
+				ensure_sender_allowed::<T>(handle.id, under, from, sender, nesting_budget)?
 			}
 		}
 		Ok(())

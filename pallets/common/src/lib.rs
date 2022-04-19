@@ -918,7 +918,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	fn check_nesting(
 		&self,
 		sender: T::CrossAccountId,
-		from: CollectionId,
+		from: (CollectionId, TokenId),
 		under: TokenId,
 		budget: &dyn Budget,
 	) -> DispatchResult;

@@ -77,11 +77,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 	) -> Result<Vec<u8>>;
 
 	#[rpc(name = "unique_totalSupply")]
-	fn total_supply(
-		&self,
-		collection: CollectionId,
-		at: Option<BlockHash>,
-	) -> Result<u32>;
+	fn total_supply(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<u32>;
 	#[rpc(name = "unique_accountBalance")]
 	fn account_balance(
 		&self,

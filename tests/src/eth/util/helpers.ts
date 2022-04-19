@@ -23,7 +23,7 @@ import Web3 from 'web3';
 import usingApi, {submitTransactionAsync} from '../../substrate/substrate-api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
-import {getGenericResult, UNIQUE} from '../../util/helpers';
+import {CrossAccountId, getGenericResult, UNIQUE} from '../../util/helpers';
 import * as solc from 'solc';
 import config from '../../config';
 import privateKey from '../../substrate/privateKey';
@@ -79,6 +79,11 @@ export function tokenIdToAddress(collection: number, token: number): string {
     ...encodeIntBE(token),
   ]);
   return Web3.utils.toChecksumAddress('0x' + buf.toString('hex'));
+}
+export function tokenIdToCross(collection: number, token: number): CrossAccountId {
+  return {
+    Ethereum: tokenIdToAddress(collection, token),
+  };
 }
 
 export function createEthAccount(web3: Web3) {

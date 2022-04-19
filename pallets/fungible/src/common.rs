@@ -237,7 +237,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	fn check_nesting(
 		&self,
 		_sender: <T>::CrossAccountId,
-		_from: CollectionId,
+		_from: (CollectionId, TokenId),
 		_under: TokenId,
 		_budget: &dyn Budget,
 	) -> sp_runtime::DispatchResult {
