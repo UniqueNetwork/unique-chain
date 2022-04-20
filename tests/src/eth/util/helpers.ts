@@ -69,7 +69,15 @@ export function collectionIdToAddress(address: number): string {
 }
 
 export function collectionIdFromAddress(address: string): number {
+  if (!address.startsWith('0x'))
+    throw 'address not starts with "0x"';
+  if (address.length > 42)
+    throw 'address length is more than 20 bytes';
   return Number('0x' + address.substring(address.length - 8));
+}
+
+export function normalizeAddress(address: string): string {
+  return '0x' + address.substring(address.length - 40);
 }
 
 export function createEthAccount(web3: Web3) {

@@ -637,7 +637,7 @@ decl_module! {
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner(&sender)?;
 
-			target_collection.sponsorship = SponsorshipState::Unconfirmed(new_sponsor.clone());
+			target_collection.set_sponsor(new_sponsor.clone());
 
 			<Pallet<T>>::deposit_event(Event::<T>::CollectionSponsorSet(
 				collection_id,
