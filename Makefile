@@ -21,7 +21,7 @@ COLLECTION_ABI=./tests/src/eth/collectionAbi.json
 TESTS_API=./tests/src/eth/api/
 
 .PHONY: regenerate_solidity
-regenerate_solidity: UniqueFungible.sol UniqueNFT.sol ContractHelpers.sol
+regenerate_solidity: UniqueFungible.sol UniqueNFT.sol ContractHelpers.sol Collection.sol
 
 UniqueFungible.sol:
 	PACKAGE=pallet-fungible NAME=erc::gen_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
@@ -36,8 +36,8 @@ ContractHelpers.sol:
 	PACKAGE=pallet-evm-contract-helpers NAME=eth::contract_helpers_impl OUTPUT=$(CONTRACT_HELPERS_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
 
 Collection.sol:
-	PACKAGE=pallet-evm-collection NAME=eth::contract_helpers_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
-	PACKAGE=pallet-evm-collection NAME=eth::contract_helpers_impl OUTPUT=$(COLLECTION_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
+	PACKAGE=pallet-evm-collection NAME=eth::collection_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
+	PACKAGE=pallet-evm-collection NAME=eth::collection_impl OUTPUT=$(COLLECTION_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
 
 UniqueFungible: UniqueFungible.sol
 	INPUT=$(FUNGIBLE_EVM_STUBS)/$< OUTPUT=$(FUNGIBLE_EVM_STUBS)/UniqueFungible.raw ./.maintain/scripts/compile_stub.sh

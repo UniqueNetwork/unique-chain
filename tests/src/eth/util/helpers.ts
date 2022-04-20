@@ -74,7 +74,15 @@ export function collectionIdToAddress(collection: number): string {
   return Web3.utils.toChecksumAddress('0x' + buf.toString('hex'));
 }
 export function collectionIdFromAddress(address: string): number {
-  return Number('0x' + address.substring(address.length - 8));
+  if (!address.startsWith('0x'))
+    throw 'address not starts with "0x"';
+  if (address.length > 42)
+    throw 'address length is more than 20 bytes';
+    return Number('0x' + address.substring(address.length - 8));
+}
+  
+export function normalizeAddress(address: string): string {
+  return '0x' + address.substring(address.length - 40);
 }
 
 export function tokenIdToAddress(collection: number, token: number): string {

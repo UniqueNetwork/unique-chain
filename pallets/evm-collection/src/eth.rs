@@ -17,7 +17,7 @@
 use core::marker::PhantomData;
 use evm_coder::{abi::AbiWriter, execution::*, generate_stubgen, solidity_interface, types::*, ToLog};
 use ethereum as _;
-use pallet_common::CollectionById;
+use pallet_common::{CollectionById, CollectionHandle};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure,
@@ -26,7 +26,7 @@ use pallet_evm::{
 use sp_core::H160;
 use up_data_structs::{
 	CreateCollectionData, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	MAX_COLLECTION_NAME_LENGTH,
+	MAX_COLLECTION_NAME_LENGTH, SponsorshipState,
 };
 use crate::{Config, Pallet};
 use frame_support::traits::Get;
@@ -57,6 +57,7 @@ pub enum CollectionEvent {
 
 #[solidity_interface(name = "Collection")]
 impl<T: Config> EvmCollection<T> {
+
 	fn create_721_collection(
 		&self,
 		caller: caller,
@@ -102,15 +103,27 @@ impl<T: Config> EvmCollection<T> {
 		Ok(address)
 	}
 
-	// fn set_sponsor(collection_id: address, sponsor: address) -> Result<void> {
-	// 	let collection_id =
-	// 		pallet_common::eth::map_eth_to_id(&collection_id).ok_or(Error::Revert("".into()))?;
-	// 	let mut collection = <CollectionById<T>>::get(collection_id).ok_or(Error::Revert("".into()))?;
-	// 	let sponsor = T::CrossAccountId::from_eth(sponsor);
-	// 	collection.sponsorship = SponsorshipState::Unconfirmed(sponsor.as_sub().clone());
-	// 	<CollectionById<T>>::insert(collection_id, collection);
-	// 	Ok(())
-	// }
+	fn set_sponsor(
+		&self,
+		caller: caller,
+		contract_address: address,
+		sponsor: address,
+	) -> Result<void> {
+		let collection_id =
+			pallet_common::eth::map_eth_to_id(&contract_address).ok_or(Error::Revert("".into()))?;
+		let mut collection =
+			pallet_common::CollectionHandle::new_with_recorder(collection_id, self.0.clone())
+				.ok_or(Error::Revert("".into()))?;
+		
+		let caller = T::CrossAccountId::from_eth(caller);
+		collection.check_is_owner(&caller).map_err(|e| Error::Revert(format!("{:?}", e)))?;
+
+		let sponsor = T::CrossAccountId::from_eth(sponsor);
+		collection.set_sponsor(sponsor.as_sub().clone());
+		collection
+			.save()
+			.map_err(|e| Error::Revert(format!("{:?}", e)))
+	}
 
 	// fn set_offchain_shema(shema: string) -> Result<void> {
 	// 	Ok(())

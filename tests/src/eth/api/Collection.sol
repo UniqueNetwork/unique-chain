@@ -12,70 +12,15 @@ interface ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-// Selector: ee5467a8
+// Selector: 6503bbc2
 interface Collection is Dummy, ERC165 {
-	// Selector: contractOwner(address) 5152b14c
-	function contractOwner(address contractAddress)
-		external
-		view
-		returns (address);
-
-	// Selector: sponsoringEnabled(address) 6027dc61
-	function sponsoringEnabled(address contractAddress)
-		external
-		view
-		returns (bool);
-
-	// Deprecated
-	//
-	// Selector: toggleSponsoring(address,bool) fcac6d86
-	function toggleSponsoring(address contractAddress, bool enabled) external;
-
-	// Selector: setSponsoringMode(address,uint8) fde8a560
-	function setSponsoringMode(address contractAddress, uint8 mode) external;
-
-	// Selector: sponsoringMode(address) b70c7267
-	function sponsoringMode(address contractAddress)
-		external
-		view
-		returns (uint8);
-
-	// Selector: setSponsoringRateLimit(address,uint32) 77b6c908
-	function setSponsoringRateLimit(address contractAddress, uint32 rateLimit)
-		external;
-
-	// Selector: getSponsoringRateLimit(address) 610cfabd
-	function getSponsoringRateLimit(address contractAddress)
-		external
-		view
-		returns (uint32);
-
-	// Selector: allowed(address,address) 5c658165
-	function allowed(address contractAddress, address user)
-		external
-		view
-		returns (bool);
-
-	// Selector: allowlistEnabled(address) c772ef6c
-	function allowlistEnabled(address contractAddress)
-		external
-		view
-		returns (bool);
-
-	// Selector: toggleAllowlist(address,bool) 36de20f5
-	function toggleAllowlist(address contractAddress, bool enabled) external;
-
-	// Selector: toggleAllowed(address,address,bool) 4706cc1c
-	function toggleAllowed(
-		address contractAddress,
-		address user,
-		bool allowed
-	) external;
-
 	// Selector: create721Collection(string,string,string) 951c0151
 	function create721Collection(
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
 	) external view returns (address);
+
+	// Selector: setSponsor(address,address) f01fba93
+	function setSponsor(address contractAddress, address sponsor) external view;
 }
