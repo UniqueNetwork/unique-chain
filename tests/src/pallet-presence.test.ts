@@ -49,7 +49,7 @@ const requiredPallets = [
   'unique',
   'nonfungible',
   'refungible',
-  //'scheduler',
+  'scheduler',
   'charging',
 ];
 
