@@ -36,9 +36,9 @@ use crate::{
 	SelfWeightOf, weights::WeightInfo,
 };
 
-fn error_unsupported_shema_version() -> Error {
+fn error_unsupported_schema_version() -> Error {
 	alloc::format!(
-		"Unsupported shema version! Support only {:?}",
+		"Unsupported schema version! Support only {:?}",
 		SchemaVersion::ImageURL
 	)
 	.as_str()
@@ -95,7 +95,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
 		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
-			return Err(error_unsupported_shema_version());
+			return Err(error_unsupported_schema_version());
 		}
 
 		self.consume_store_reads(1)?;
@@ -286,7 +286,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_uri: string,
 	) -> Result<bool> {
 		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
-			return Err(error_unsupported_shema_version());
+			return Err(error_unsupported_schema_version());
 		}
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -431,7 +431,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		tokens: Vec<(uint256, string)>,
 	) -> Result<bool> {
 		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
-			return Err(error_unsupported_shema_version());
+			return Err(error_unsupported_schema_version());
 		}
 
 		let caller = T::CrossAccountId::from_eth(caller);

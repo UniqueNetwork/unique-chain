@@ -68,10 +68,10 @@ describe('Fungible metadata', () => {
 });
 
 describe('Support ERC721Metadata', () => {
-  itWeb3('Check unsupport ERC721Metadata ShemaVersion::Unique', async ({web3, api}) => {
+  itWeb3('Check unsupport ERC721Metadata SchemaVersion::Unique', async ({web3, api}) => {
     const collectionId = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
-      shemaVersion: 'Unique',
+      schemaVersion: 'Unique',
       name: 'some_name',
       tokenPrefix: 'some_prefix',
     });
@@ -98,7 +98,7 @@ describe('Support ERC721Metadata', () => {
       receiver,
       nextTokenId,
       'Test URI',
-    ).call({from: caller})).to.be.rejectedWith('Unsupported shema version! Support only ImageURL');
+    ).call({from: caller})).to.be.rejectedWith('Unsupported schema version! Support only ImageURL');
 
     await expect(contract.methods.mintBulkWithTokenURI(
       receiver,
@@ -107,10 +107,10 @@ describe('Support ERC721Metadata', () => {
         [+nextTokenId + 1, 'Test URI 1'],
         [+nextTokenId + 2, 'Test URI 2'],
       ],
-    ).call({from: caller})).to.be.rejectedWith('Unsupported shema version! Support only ImageURL');
+    ).call({from: caller})).to.be.rejectedWith('Unsupported schema version! Support only ImageURL');
   });
 
-  itWeb3('Check support ERC721Metadata for ShemaVersion::ImageURL', async ({web3, api}) => {
+  itWeb3('Check support ERC721Metadata for SchemaVersion::ImageURL', async ({web3, api}) => {
     const collectionId = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
       name: 'some_name',
