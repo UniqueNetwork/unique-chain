@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsCollection, UpDataStructsCollectionStats, UpDataStructsCollectionLimits } from './unique';
+import type { PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsCollection, UpDataStructsCollectionLimits, UpDataStructsCollectionStats } from './unique';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u128, u32, u64 } from '@polkadot/types-codec';

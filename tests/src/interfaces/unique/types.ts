@@ -6,6 +6,9 @@ import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill } from '@polkadot/types/interfaces/runtime';
 import type { Event } from '@polkadot/types/interfaces/system';
 
+/** @name BTreeSet */
+export interface BTreeSet extends Vec<Bytes> {}
+
 /** @name CumulusPalletDmpQueueCall */
 export interface CumulusPalletDmpQueueCall extends Enum {
   readonly isServiceOverweight: boolean;
@@ -299,7 +302,7 @@ export interface EthereumReceiptReceiptV3 extends Enum {
 /** @name EthereumTransactionAccessListItem */
 export interface EthereumTransactionAccessListItem extends Struct {
   readonly address: H160;
-  readonly slots: Vec<H256>;
+  readonly storageKeys: Vec<H256>;
 }
 
 /** @name EthereumTransactionEip1559Transaction */
@@ -1711,7 +1714,7 @@ export interface SpRuntimeTokenError extends Enum {
 
 /** @name SpTrieStorageProof */
 export interface SpTrieStorageProof extends Struct {
-  readonly trieNodes: Vec<Bytes>;
+  readonly trieNodes: BTreeSet;
 }
 
 /** @name SpVersionRuntimeVersion */
