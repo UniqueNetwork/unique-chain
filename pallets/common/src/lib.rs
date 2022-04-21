@@ -113,6 +113,15 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn set_sponsor(&mut self, sponsor: T::AccountId) {
 		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor);
 	}
+	
+	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> bool {
+		if self.collection.sponsorship.pending_sponsor() != Some(sender) {
+			return false;
+		};
+
+		self.collection.sponsorship = SponsorshipState::Confirmed(sender.clone());
+		true
+	}
 }
 impl<T: Config> Deref for CollectionHandle<T> {
 	type Target = Collection<T::AccountId>;

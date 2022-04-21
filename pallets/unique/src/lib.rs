@@ -662,11 +662,9 @@ decl_module! {
 
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			ensure!(
-				target_collection.sponsorship.pending_sponsor() == Some(&sender),
+				target_collection.confirm_sponsorship(&sender),
 				Error::<T>::ConfirmUnsetSponsorFail
 			);
-
-			target_collection.sponsorship = SponsorshipState::Confirmed(sender.clone());
 
 			<Pallet<T>>::deposit_event(Event::<T>::SponsorshipConfirmed(
 				collection_id,
