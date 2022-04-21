@@ -19,7 +19,7 @@
 use core::ops::{Deref, DerefMut};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_std::vec::Vec;
-use account::CrossAccountId;
+use pallet_evm::account::CrossAccountId;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo},
 	ensure, fail,
@@ -33,12 +33,11 @@ use up_data_structs::{
 	TokenId, Weight, WithdrawReasons, CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode,
 	NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
-	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData,
+	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData, SponsoringRateLimit,
 };
 pub use pallet::*;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
-pub mod account;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod erc;
@@ -163,19 +162,16 @@ impl<T: Config> CollectionHandle<T> {
 pub mod pallet {
 	use super::*;
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key};
-	use account::CrossAccountId;
+	use pallet_evm::account;
 	use frame_support::traits::Currency;
 	use up_data_structs::TokenId;
 	use scale_info::TypeInfo;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config + TypeInfo {
+	pub trait Config:
+		frame_system::Config + pallet_evm_coder_substrate::Config + TypeInfo + account::Config
+	{
 		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
-
-		type CrossAccountId: CrossAccountId<Self::AccountId>;
-
-		type EvmAddressMapping: pallet_evm::AddressMapping<Self::AccountId>;
-		type EvmBackwardsAddressMapping: up_evm_mapping::EvmBackwardsAddressMapping<Self::AccountId>;
 
 		type Currency: Currency<Self::AccountId>;
 
@@ -420,6 +416,39 @@ impl<T: Config> Pallet<T> {
 			destroyed: destroyed.0,
 			alive: created.0 - destroyed.0,
 		}
+	}
+
+	pub fn effective_collection_limits(collection: CollectionId) -> Option<CollectionLimits> {
+		let collection = <CollectionById<T>>::get(collection);
+		if collection.is_none() {
+			return None;
+		}
+
+		let collection = collection.unwrap();
+		let limits = collection.limits;
+		let effective_limits = CollectionLimits {
+			account_token_ownership_limit: Some(limits.account_token_ownership_limit()),
+			sponsored_data_size: Some(limits.sponsored_data_size()),
+			sponsored_data_rate_limit: Some(
+				limits
+					.sponsored_data_rate_limit
+					.unwrap_or(SponsoringRateLimit::SponsoringDisabled),
+			),
+			token_limit: Some(limits.token_limit()),
+			sponsor_transfer_timeout: Some(limits.sponsor_transfer_timeout(
+				match collection.mode {
+					CollectionMode::NFT => NFT_SPONSOR_TRANSFER_TIMEOUT,
+					CollectionMode::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+					CollectionMode::ReFungible => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+				},
+			)),
+			sponsor_approve_timeout: Some(limits.sponsor_approve_timeout()),
+			owner_can_transfer: Some(limits.owner_can_transfer()),
+			owner_can_destroy: Some(limits.owner_can_destroy()),
+			transfers_enabled: Some(limits.transfers_enabled()),
+		};
+
+		Some(effective_limits)
 	}
 }
 

@@ -41,12 +41,12 @@ sc-transaction-pool = { git = 'https://github.com/paritytech/substrate.git', bra
 substrate-frame-rpc-system = { git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.18' }
 tokio = { version = "0.2.25", features = ["macros", "sync"] }
 
-pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
-fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
-fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
-fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
-fc-db = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
-fc-mapping-sync = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18" }
+pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
+fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
+fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
+fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
+fc-db = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
+fc-mapping-sync = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
 
 pallet-common = { default-features = false, path = "../../pallets/common" }
 unique-runtime-common = { default-features = false, path = "../../runtime/common" }

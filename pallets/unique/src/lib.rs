@@ -53,10 +53,8 @@ use up_data_structs::{
 	CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
 	CreateCollectionData, CustomDataLimit, CreateItemExData,
 };
-use pallet_common::{
-	account::CrossAccountId, CollectionHandle, Pallet as PalletCommon, Error as CommonError,
-	CommonWeightInfo,
-};
+use pallet_common::{CollectionHandle, Pallet as PalletCommon, Error as CommonError, CommonWeightInfo};
+use pallet_evm::account::CrossAccountId;
 use pallet_refungible::{Pallet as PalletRefungible, RefungibleHandle};
 use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
 use pallet_nonfungible::{Pallet as PalletNonfungible, NonfungibleHandle};
@@ -69,7 +67,7 @@ mod tests;
 
 mod eth;
 mod sponsorship;
-pub use sponsorship::UniqueSponsorshipHandler;
+pub use sponsorship::{UniqueSponsorshipHandler, UniqueSponsorshipPredict};
 pub use eth::sponsoring::UniqueEthSponsorshipHandler;
 
 pub use eth::UniqueErcSupport;
@@ -83,6 +81,12 @@ use dispatch::dispatch_call;
 mod benchmarking;
 pub mod weights;
 use weights::WeightInfo;
+
+pub trait SponsorshipPredict<T: Config> {
+	fn predict(collection: CollectionId, account: T::CrossAccountId, token: TokenId) -> Option<u64>
+	where
+		u64: From<<T as frame_system::Config>::BlockNumber>;
+}
 
 decl_error! {
 	/// Error for non-fungible-token module.
@@ -116,7 +120,7 @@ decl_event! {
 	pub enum Event<T>
 	where
 		<T as frame_system::Config>::AccountId,
-		<T as pallet_common::Config>::CrossAccountId,
+		<T as pallet_evm::account::Config>::CrossAccountId,
 	{
 		/// Collection sponsor was removed
 		///

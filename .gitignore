@@ -11,6 +11,7 @@ einstein_key_file
 *store_key*.json
 
 /.idea/
+/.cargo/
 
 tests/.vscode
 cumulus-parachain/

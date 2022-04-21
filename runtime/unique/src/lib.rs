@@ -48,7 +48,9 @@ pub use pallet_transaction_payment::{
 };
 // A few exports that help ease life for downstream crates.
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_evm::{EnsureAddressTruncated, HashedAddressMapping, Runner};
+pub use pallet_evm::{
+	EnsureAddressTruncated, HashedAddressMapping, Runner, account::CrossAccountId as _,
+};
 pub use frame_support::{
 	construct_runtime, match_type,
 	dispatch::DispatchResult,
@@ -116,7 +118,7 @@ use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
 pub const RUNTIME_NAME: &str = "unique";
 pub const TOKEN_SYMBOL: &str = "UNQ";
 
-type CrossAccountId = pallet_common::account::BasicCrossAccountId<Runtime>;
+type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 
 impl RuntimeInstance for Runtime {
 	type CrossAccountId = self::CrossAccountId;
@@ -151,7 +153,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!(RUNTIME_NAME),
 	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 918001,
+	spec_version: 918010,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -844,13 +846,15 @@ parameter_types! {
 
 impl pallet_common::Config for Runtime {
 	type Event = Event;
-	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
-	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type CrossAccountId = pallet_common::account::BasicCrossAccountId<Self>;
-
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
+}
+
+impl pallet_evm::account::Config for Runtime {
+	type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Self>;
+	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
+	type EvmBackwardsAddressMapping = fp_evm_mapping::MapBackwardsAddressTruncated;
 }
 
 impl pallet_fungible::Config for Runtime {
@@ -911,8 +915,6 @@ type SponsorshipHandler = (
 impl pallet_evm_transaction_payment::Config for Runtime {
 	type EvmSponsorshipHandler = EvmSponsorshipHandler;
 	type Currency = Balances;
-	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type EvmBackwardsAddressMapping = up_evm_mapping::MapBackwardsAddressTruncated;
 }
 
 impl pallet_charge_transaction::Config for Runtime {
