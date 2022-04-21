@@ -352,15 +352,12 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
     // Run the CreateCollection transaction
     const alicePrivateKey = privateKey('//Alice');
     const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any});
-    const events = await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
-    const result = getCreateCollectionResult(events);
+    await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
 
     // Get number of collections after the transaction
     const collectionCountAfter = await getCreatedCollectionCount(api);
 
     // What to expect
-    // tslint:disable-next-line:no-unused-expression
-    expect(result.success).to.be.false;
     expect(collectionCountAfter).to.be.equal(collectionCountBefore, 'Error: Collection with incorrect data created.');
   });
 }
@@ -619,6 +616,15 @@ export async function setContractSponsoringRateLimitExpectFailure(sender: IKeyri
   });
 }
 
+export async function getNextSponsored(
+  api: ApiPromise,
+  collectionId: number,
+  account: string | CrossAccountId,
+  tokenId: number,
+): Promise<number> {
+  return Number((await api.rpc.unique.nextSponsored(collectionId, account, tokenId)).unwrapOr(-1));
+}
+
 export async function toggleContractAllowlistExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, value = true) {
   await usingApi(async (api) => {
     const tx = api.tx.unique.toggleContractAllowList(contractAddress, value);
@@ -845,6 +851,13 @@ getFreeBalance(account: IKeyringPair): Promise<bigint> {
   });
 
   return balance;
+}
+
+export async function transferBalanceTo(api: ApiPromise, source: IKeyringPair, target: string, amount = 1000n * UNIQUE) {
+  const tx = api.tx.balances.transfer(target, amount);
+  const events = await submitTransactionAsync(source, tx);
+  const result = getGenericResult(events);
+  expect(result.success).to.be.true;
 }
 
 export async function

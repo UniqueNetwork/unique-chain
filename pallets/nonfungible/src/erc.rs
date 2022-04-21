@@ -26,9 +26,9 @@ use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_core::{H160, U256};
 use sp_std::{vec::Vec, vec};
 use pallet_common::{
-	account::CrossAccountId,
 	erc::{CommonEvmHandler, PrecompileResult},
 };
+use pallet_evm::account::CrossAccountId;
 use pallet_evm_coder_substrate::call;
 
 use crate::{
