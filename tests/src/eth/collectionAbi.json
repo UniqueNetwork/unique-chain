@@ -1,6 +1,19 @@
 [
   {
     "inputs": [
+      {
+        "internalType": "address",
+        "name": "collectionAddress",
+        "type": "address"
+      }
+    ],
+    "name": "confirmSponsorship",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "string", "name": "name", "type": "string" },
       { "internalType": "string", "name": "description", "type": "string" },
       { "internalType": "string", "name": "tokenPrefix", "type": "string" }
@@ -14,12 +27,54 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "contractAddress",
+        "name": "collectionAddress",
+        "type": "address"
+      },
+      { "internalType": "string", "name": "constOnChain", "type": "string" }
+    ],
+    "name": "setConstOnChainSchema",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "collectionAddress",
+        "type": "address"
+      },
+      { "internalType": "string", "name": "shema", "type": "string" }
+    ],
+    "name": "setOffchainShema",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "collectionAddress",
         "type": "address"
       },
       { "internalType": "address", "name": "sponsor", "type": "address" }
     ],
     "name": "setSponsor",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "collectionAddress",
+        "type": "address"
+      },
+      { "internalType": "string", "name": "variable", "type": "string" }
+    ],
+    "name": "setVariableOnChainSchema",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"

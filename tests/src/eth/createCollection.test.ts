@@ -57,10 +57,47 @@ describe('Create collection from EVM', () => {
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const sponsor = await createEthAccountWithBalance(api, web3);
     result = await helper.methods.setSponsor(collectionIdAddress, sponsor).send();
-    const collection = (await getDetailedCollectionInfo(api, collectionId))!;
+    let collection = (await getDetailedCollectionInfo(api, collectionId))!;
     expect(collection.sponsorship.isUnconfirmed).to.be.true;
     expect(collection.sponsorship.asUnconfirmed.toHuman()).to.be.eq(evmToAddress(sponsor));
+    await expect(helper.methods.confirmSponsorship(collectionIdAddress).call()).to.be.rejectedWith('Caller is not set as sponsor');
+    const sponsorHelper = collectionHelper(web3, sponsor);
+    await sponsorHelper.methods.confirmSponsorship(collectionIdAddress).send();
+    collection = (await getDetailedCollectionInfo(api, collectionId))!;
+    expect(collection.sponsorship.isConfirmed).to.be.true;
+    expect(collection.sponsorship.asConfirmed.toHuman()).to.be.eq(evmToAddress(sponsor));
   });
-
-
+  
+  itWeb3('Set offchain shema', async ({api, web3}) => {
+    const owner = await createEthAccountWithBalance(api, web3);
+    const helper = collectionHelper(web3, owner);
+    let result = await helper.methods.create721Collection('Shema collection', '2', '2').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const shema = 'Some shema';
+    result = await helper.methods.setOffchainShema(collectionIdAddress, shema).send();
+    const collection = (await getDetailedCollectionInfo(api, collectionId))!;
+    expect(collection.offchainSchema.toHuman()).to.be.eq(shema);
+  });
+  
+  itWeb3('Set variable on chain schema', async ({api, web3}) => {
+    const owner = await createEthAccountWithBalance(api, web3);
+    const helper = collectionHelper(web3, owner);
+    let result = await helper.methods.create721Collection('Variable collection', '3', '3').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const variable = 'Some variable';
+    result = await helper.methods.setVariableOnChainSchema(collectionIdAddress, variable).send();
+    const collection = (await getDetailedCollectionInfo(api, collectionId))!;
+    expect(collection.variableOnChainSchema.toHuman()).to.be.eq(variable);
+  });
+  
+  itWeb3('Set const on chain schema', async ({api, web3}) => {
+    const owner = await createEthAccountWithBalance(api, web3);
+    const helper = collectionHelper(web3, owner);
+    let result = await helper.methods.create721Collection('Const collection', '4', '4').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const constShema = 'Some const';
+    result = await helper.methods.setConstOnChainSchema(collectionIdAddress, constShema).send();
+    const collection = (await getDetailedCollectionInfo(api, collectionId))!;
+    expect(collection.constOnChainSchema.toHuman()).to.be.eq(constShema);
+  });
 });
