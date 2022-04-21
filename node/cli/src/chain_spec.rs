@@ -72,12 +72,12 @@ pub trait RuntimeIdentification {
 impl RuntimeIdentification for Box<dyn sc_service::ChainSpec> {
 	fn runtime_id(&self) -> RuntimeId {
 		#[cfg(feature = "unique-runtime")]
-		if self.id().starts_with("unique") {
+		if self.id().starts_with("unique") || self.id().starts_with("unq") {
 			return RuntimeId::Unique;
 		}
 
 		#[cfg(feature = "quartz-runtime")]
-		if self.id().starts_with("quartz") {
+		if self.id().starts_with("quartz") || self.id().starts_with("qtz") {
 			return RuntimeId::Quartz;
 		}
 
@@ -212,6 +212,16 @@ pub fn development_config() -> OpalChainSpec {
 				vec![
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<sr25519::Public>("Dave"),
+					get_account_id_from_seed::<sr25519::Public>("Eve"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
 				1000
 			)

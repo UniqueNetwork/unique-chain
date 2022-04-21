@@ -14,26 +14,36 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+extern crate alloc;
 use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
 };
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
 use frame_support::BoundedVec;
-use up_data_structs::TokenId;
+use up_data_structs::{TokenId, SchemaVersion};
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_core::{H160, U256};
 use sp_std::{vec::Vec, vec};
 use pallet_common::{
-	account::CrossAccountId,
 	erc::{CommonEvmHandler, PrecompileResult},
 };
+use pallet_evm::account::CrossAccountId;
 use pallet_evm_coder_substrate::call;
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
 	SelfWeightOf, weights::WeightInfo,
 };
+
+fn error_unsupported_schema_version() -> Error {
+	alloc::format!(
+		"Unsupported schema version! Support only {:?}",
+		SchemaVersion::ImageURL
+	)
+	.as_str()
+	.into()
+}
 
 #[derive(ToLog)]
 pub enum ERC721Events {
@@ -76,6 +86,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
 			.collect::<string>())
 	}
+
 	fn symbol(&self) -> Result<string> {
 		Ok(string::from_utf8_lossy(&self.token_prefix).into())
 	}
@@ -83,6 +94,10 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// Returns token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
+		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
+			return Err(error_unsupported_schema_version());
+		}
+
 		self.consume_store_reads(1)?;
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		Ok(string::from_utf8_lossy(
@@ -270,6 +285,10 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_id: uint256,
 		token_uri: string,
 	) -> Result<bool> {
+		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
+			return Err(error_unsupported_schema_version());
+		}
+
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id: u32 = token_id.try_into().map_err(|_| "amount overflow")?;
@@ -411,6 +430,10 @@ impl<T: Config> NonfungibleHandle<T> {
 		to: address,
 		tokens: Vec<(uint256, string)>,
 	) -> Result<bool> {
+		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
+			return Err(error_unsupported_schema_version());
+		}
+
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let mut expected_index = <TokensMinted<T>>::get(self.id)

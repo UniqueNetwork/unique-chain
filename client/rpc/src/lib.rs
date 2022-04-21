@@ -19,7 +19,7 @@ use std::sync::Arc;
 use codec::Decode;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
-use up_data_structs::{Collection, CollectionId, CollectionStats, TokenId};
+use up_data_structs::{Collection, CollectionId, CollectionStats, CollectionLimits, TokenId};
 use sp_api::{BlockId, BlockT, ProvideRuntimeApi, ApiExt};
 use sp_blockchain::HeaderBackend;
 use up_rpc::UniqueApi as UniqueRuntimeApi;
@@ -119,6 +119,21 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 	) -> Result<Option<Collection<AccountId>>>;
 	#[rpc(name = "unique_collectionStats")]
 	fn collection_stats(&self, at: Option<BlockHash>) -> Result<CollectionStats>;
+
+	#[rpc(name = "unique_nextSponsored")]
+	fn next_sponsored(
+		&self,
+		collection: CollectionId,
+		account: CrossAccountId,
+		token: TokenId,
+		at: Option<BlockHash>,
+	) -> Result<Option<u64>>;
+	#[rpc(name = "unique_effectiveCollectionLimits")]
+	fn effective_collection_limits(
+		&self,
+		collection_id: CollectionId,
+		at: Option<BlockHash>,
+	) -> Result<Option<CollectionLimits>>;
 }
 
 pub struct Unique<C, P> {
@@ -201,7 +216,7 @@ where
 	AccountId: Decode,
 	C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	C::Api: UniqueRuntimeApi<Block, CrossAccountId, AccountId>,
-	CrossAccountId: pallet_common::account::CrossAccountId<AccountId>,
+	CrossAccountId: pallet_evm::account::CrossAccountId<AccountId>,
 {
 	pass_method!(account_tokens(collection: CollectionId, account: CrossAccountId) -> Vec<TokenId>);
 	pass_method!(token_exists(collection: CollectionId, token: TokenId) -> bool);
@@ -222,4 +237,6 @@ where
 	pass_method!(last_token_id(collection: CollectionId) -> TokenId);
 	pass_method!(collection_by_id(collection: CollectionId) -> Option<Collection<AccountId>>);
 	pass_method!(collection_stats() -> CollectionStats);
+	pass_method!(next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Option<u64>);
+	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>);
 }

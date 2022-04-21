@@ -24,24 +24,24 @@ use sp_std::prelude::*;
 use up_sponsorship::SponsorshipHandler;
 use core::marker::PhantomData;
 use core::convert::TryInto;
-use up_data_structs::TokenId;
-use up_evm_mapping::EvmBackwardsAddressMapping;
-use pallet_common::account::CrossAccountId;
+use pallet_evm::account::CrossAccountId;
 
-use pallet_nonfungible::erc::{UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721Call};
+use pallet_nonfungible::erc::{
+	UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721MintableCall, ERC721Call,
+};
 use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};
+use up_data_structs::{TokenId, CreateItemData, CreateNftData};
 
 pub struct UniqueEthSponsorshipHandler<T: Config>(PhantomData<*const T>);
-impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for UniqueEthSponsorshipHandler<T> {
-	fn get_sponsor(who: &H160, call: &(H160, Vec<u8>)) -> Option<H160> {
+impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
+	for UniqueEthSponsorshipHandler<T>
+{
+	fn get_sponsor(who: &T::CrossAccountId, call: &(H160, Vec<u8>)) -> Option<T::CrossAccountId> {
 		let collection_id = map_eth_to_id(&call.0)?;
 		let collection = <CollectionHandle<T>>::new(collection_id)?;
 		let sponsor = collection.sponsorship.sponsor()?.clone();
-		let sponsor =
-			<T as pallet_common::Config>::EvmBackwardsAddressMapping::from_account_id(sponsor);
-		let who = T::CrossAccountId::from_eth(*who);
 		let (method_id, mut reader) = AbiReader::new_call(&call.1).ok()?;
-		match &collection.mode {
+		Some(T::CrossAccountId::from_sub(match &collection.mode {
 			crate::CollectionMode::NFT => {
 				let call = <UniqueNFTCall<T>>::parse(method_id, &mut reader).ok()??;
 				match call {
@@ -50,6 +50,18 @@ impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for UniqueEthSponsorsh
 					) => {
 						let token_id: TokenId = token_id.try_into().ok()?;
 						withdraw_transfer::<T>(&collection, &who, &token_id).map(|()| sponsor)
+					}
+					UniqueNFTCall::ERC721Mintable(
+						ERC721MintableCall::Mint { token_id, .. }
+						| ERC721MintableCall::MintWithTokenUri { token_id, .. },
+					) => {
+						let _token_id: TokenId = token_id.try_into().ok()?;
+						withdraw_create_item::<T>(
+							&collection,
+							&who,
+							&CreateItemData::NFT(CreateNftData::default()),
+						)
+						.map(|()| sponsor)
 					}
 					UniqueNFTCall::ERC721(ERC721Call::TransferFrom { token_id, from, .. }) => {
 						let token_id: TokenId = token_id.try_into().ok()?;
@@ -69,7 +81,7 @@ impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for UniqueEthSponsorsh
 				#[allow(clippy::single_match)]
 				match call {
 					UniqueFungibleCall::ERC20(ERC20Call::Transfer { .. }) => {
-						withdraw_transfer::<T>(&collection, &who, &TokenId::default())
+						withdraw_transfer::<T>(&collection, who, &TokenId::default())
 							.map(|()| sponsor)
 					}
 					UniqueFungibleCall::ERC20(ERC20Call::TransferFrom { from, .. }) => {
@@ -85,6 +97,6 @@ impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for UniqueEthSponsorsh
 				}
 			}
 			_ => None,
-		}
+		}?))
 	}
 }

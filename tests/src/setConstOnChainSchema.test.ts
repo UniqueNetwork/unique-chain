@@ -32,16 +32,16 @@ const expect = chai.expect;
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
-let shema: any;
-let largeShema: any;
+let schema: any;
+let largeSchema: any;
 
 before(async () => {
   await usingApi(async () => {
     const keyring = new Keyring({type: 'sr25519'});
     alice = keyring.addFromUri('//Alice');
     bob = keyring.addFromUri('//Bob');
-    shema = '0x31';
-    largeShema = new Array(1024 * 1024 + 10).fill(0xff);
+    schema = '0x31';
+    largeSchema = new Array(1024 * 1024 + 10).fill(0xff);
   });
 });
 describe('Integration Test ext. setConstOnChainSchema()', () => {
@@ -51,8 +51,8 @@ describe('Integration Test ext. setConstOnChainSchema()', () => {
       const collectionId = await createCollectionExpectSuccess();
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.eq(alice.address);
-      const setShema = api.tx.unique.setConstOnChainSchema(collectionId, shema);
-      await submitTransactionAsync(alice, setShema);
+      const setSchema = api.tx.unique.setConstOnChainSchema(collectionId, schema);
+      await submitTransactionAsync(alice, setSchema);
     });
   });
 
@@ -62,18 +62,18 @@ describe('Integration Test ext. setConstOnChainSchema()', () => {
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.eq(alice.address);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const setShema = api.tx.unique.setConstOnChainSchema(collectionId, shema);
-      await submitTransactionAsync(bob, setShema);
+      const setSchema = api.tx.unique.setConstOnChainSchema(collectionId, schema);
+      await submitTransactionAsync(bob, setSchema);
     });
   });
 
   it('Checking collection data using the ConstOnChainSchema parameter', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const setShema = api.tx.unique.setConstOnChainSchema(collectionId, shema);
-      await submitTransactionAsync(alice, setShema);
+      const setSchema = api.tx.unique.setConstOnChainSchema(collectionId, schema);
+      await submitTransactionAsync(alice, setSchema);
       const collection = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collection.constOnChainSchema.toString()).to.be.eq(shema);
+      expect(collection.constOnChainSchema.toString()).to.be.eq(schema);
     });
   });
 });
@@ -84,8 +84,8 @@ describe('Negative Integration Test ext. setConstOnChainSchema()', () => {
     await usingApi(async (api) => {
       // tslint:disable-next-line: radix
       const collectionId = await getCreatedCollectionCount(api) + 1;
-      const setShema = api.tx.unique.setConstOnChainSchema(collectionId, shema);
-      await expect(submitTransactionExpectFailAsync(alice, setShema)).to.be.rejected;
+      const setSchema = api.tx.unique.setConstOnChainSchema(collectionId, schema);
+      await expect(submitTransactionExpectFailAsync(alice, setSchema)).to.be.rejected;
     });
   });
 
@@ -93,16 +93,16 @@ describe('Negative Integration Test ext. setConstOnChainSchema()', () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
       await destroyCollectionExpectSuccess(collectionId);
-      const setShema = api.tx.unique.setConstOnChainSchema(collectionId, shema);
-      await expect(submitTransactionExpectFailAsync(alice, setShema)).to.be.rejected;
+      const setSchema = api.tx.unique.setConstOnChainSchema(collectionId, schema);
+      await expect(submitTransactionExpectFailAsync(alice, setSchema)).to.be.rejected;
     });
   });
 
   it('Set invalid data in schema (size too large:> 1MB)', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess();
-      const setShema = api.tx.unique.setConstOnChainSchema(collectionId, largeShema);
-      await expect(submitTransactionExpectFailAsync(alice, setShema)).to.be.rejected;
+      const setSchema = api.tx.unique.setConstOnChainSchema(collectionId, largeSchema);
+      await expect(submitTransactionExpectFailAsync(alice, setSchema)).to.be.rejected;
     });
   });
 
@@ -111,8 +111,8 @@ describe('Negative Integration Test ext. setConstOnChainSchema()', () => {
       const collectionId = await createCollectionExpectSuccess();
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.eq(alice.address);
-      const setShema = api.tx.unique.setConstOnChainSchema(collectionId, shema);
-      await expect(submitTransactionExpectFailAsync(bob, setShema)).to.be.rejected;
+      const setSchema = api.tx.unique.setConstOnChainSchema(collectionId, schema);
+      await expect(submitTransactionExpectFailAsync(bob, setSchema)).to.be.rejected;
     });
   });
 

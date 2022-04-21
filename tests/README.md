@@ -20,7 +20,7 @@ cargo build --release
 git clone https://github.com/paritytech/polkadot-launch && cd polkadot-launch
 ```
 
-5. Run launch-test-env.sh from the root of this project
+5. Run launch-testnet.sh from the root of this project
 
 
 ## How to run tests
