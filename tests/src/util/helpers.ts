@@ -268,7 +268,7 @@ export type CreateCollectionParams = {
   name: string,
   description: string,
   tokenPrefix: string,
-  shemaVersion: string,
+  schemaVersion: string,
 };
 
 const defaultCreateCollectionParams: CreateCollectionParams = {
@@ -276,11 +276,11 @@ const defaultCreateCollectionParams: CreateCollectionParams = {
   mode: {type: 'NFT'},
   name: 'name',
   tokenPrefix: 'prefix',
-  shemaVersion: 'ImageURL',
+  schemaVersion: 'ImageURL',
 };
 
 export async function createCollectionExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
-  const {name, description, mode, tokenPrefix, shemaVersion} = {...defaultCreateCollectionParams, ...params};
+  const {name, description, mode, tokenPrefix, schemaVersion} = {...defaultCreateCollectionParams, ...params};
 
   let collectionId = 0;
   await usingApi(async (api) => {
@@ -304,7 +304,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
       description: strToUTF16(description), 
       tokenPrefix: strToUTF16(tokenPrefix), 
       mode: modeprm as any,
-      schemaVersion: shemaVersion,
+      schemaVersion: schemaVersion,
     });
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getCreateCollectionResult(events);
