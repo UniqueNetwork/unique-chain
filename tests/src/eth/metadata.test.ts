@@ -16,8 +16,11 @@
 
 import {expect} from 'chai';
 import {createCollectionExpectSuccess} from '../util/helpers';
-import {collectionIdToAddress, createEthAccountWithBalance, GAS_ARGS, itWeb3} from './util/helpers';
+import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents} from './util/helpers';
 import fungibleMetadataAbi from './fungibleMetadataAbi.json';
+import privateKey from '../substrate/privateKey';
+import {submitTransactionAsync} from '../substrate/substrate-api';
+import nonFungibleAbi from './nonFungibleAbi.json';
 
 describe('Common metadata', () => {
   itWeb3('Returns collection name', async ({api, web3}) => {
@@ -63,3 +66,145 @@ describe('Fungible metadata', () => {
     expect(+decimals).to.equal(6);
   });
 });
+
+describe('Support ERC721Metadata', () => {
+  itWeb3('Check unsupport ERC721Metadata SchemaVersion::Unique', async ({web3, api}) => {
+    const collectionId = await createCollectionExpectSuccess({
+      mode: {type: 'NFT'},
+      schemaVersion: 'Unique',
+      name: 'some_name',
+      tokenPrefix: 'some_prefix',
+    });
+    const collection = await api.rpc.unique.collectionById(collectionId);
+    expect(collection.isSome).to.be.true;
+    expect(collection.unwrap().schemaVersion.toHuman()).to.be.eq('Unique');
+
+    const alice = privateKey('//Alice');
+
+    const caller = await createEthAccountWithBalance(api, web3);
+    const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, {Ethereum: caller});
+    await submitTransactionAsync(alice, changeAdminTx);
+
+    const address = collectionIdToAddress(collectionId);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
+
+    expect(await contract.methods.name().call()).to.be.eq('some_name');
+    expect(await contract.methods.symbol().call()).to.be.eq('some_prefix');
+
+    const receiver = createEthAccount(web3);
+    const nextTokenId = await contract.methods.nextTokenId().call();
+    expect(nextTokenId).to.be.equal('1');
+    await expect(contract.methods.mintWithTokenURI(
+      receiver,
+      nextTokenId,
+      'Test URI',
+    ).call({from: caller})).to.be.rejectedWith('Unsupported schema version! Support only ImageURL');
+
+    await expect(contract.methods.mintBulkWithTokenURI(
+      receiver,
+      [
+        [nextTokenId, 'Test URI 0'],
+        [+nextTokenId + 1, 'Test URI 1'],
+        [+nextTokenId + 2, 'Test URI 2'],
+      ],
+    ).call({from: caller})).to.be.rejectedWith('Unsupported schema version! Support only ImageURL');
+  });
+
+  itWeb3('Check support ERC721Metadata for SchemaVersion::ImageURL', async ({web3, api}) => {
+    const collectionId = await createCollectionExpectSuccess({
+      mode: {type: 'NFT'},
+      name: 'some_name',
+      tokenPrefix: 'some_prefix',
+    });
+    const collection = await api.rpc.unique.collectionById(collectionId);
+    expect(collection.isSome).to.be.true;
+    expect(collection.unwrap().schemaVersion.toHuman()).to.be.eq('ImageURL');
+
+    const alice = privateKey('//Alice');
+
+    const caller = await createEthAccountWithBalance(api, web3);
+    const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, {Ethereum: caller});
+    await submitTransactionAsync(alice, changeAdminTx);
+
+    const address = collectionIdToAddress(collectionId);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
+    
+    expect(await contract.methods.name().call()).to.be.eq('some_name');
+    expect(await contract.methods.symbol().call()).to.be.eq('some_prefix');
+
+    const receiver = createEthAccount(web3);
+    { // mintWithTokenURI
+      const nextTokenId = await contract.methods.nextTokenId().call();
+      expect(nextTokenId).to.be.equal('1');
+      const result = await contract.methods.mintWithTokenURI(
+        receiver,
+        nextTokenId,
+        'Test URI',
+      ).send({from: caller});
+      const events = normalizeEvents(result.events);
+  
+      expect(events).to.be.deep.equal([
+        {
+          address,
+          event: 'Transfer',
+          args: {
+            from: '0x0000000000000000000000000000000000000000',
+            to: receiver,
+            tokenId: nextTokenId,
+          },
+        },
+      ]);
+  
+      expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+    }
+
+    { // mintBulkWithTokenURI
+      const nextTokenId = await contract.methods.nextTokenId().call();
+      expect(nextTokenId).to.be.equal('2');
+      const result = await contract.methods.mintBulkWithTokenURI(
+        receiver,
+        [
+          [nextTokenId, 'Test URI 0'],
+          [+nextTokenId + 1, 'Test URI 1'],
+          [+nextTokenId + 2, 'Test URI 2'],
+        ],
+      ).send({from: caller});
+      const events = normalizeEvents(result.events);
+
+      expect(events).to.be.deep.equal([
+        {
+          address,
+          event: 'Transfer',
+          args: {
+            from: '0x0000000000000000000000000000000000000000',
+            to: receiver,
+            tokenId: nextTokenId,
+          },
+        },
+        {
+          address,
+          event: 'Transfer',
+          args: {
+            from: '0x0000000000000000000000000000000000000000',
+            to: receiver,
+            tokenId: String(+nextTokenId + 1),
+          },
+        },
+        {
+          address,
+          event: 'Transfer',
+          args: {
+            from: '0x0000000000000000000000000000000000000000',
+            to: receiver,
+            tokenId: String(+nextTokenId + 2),
+          },
+        },
+      ]);
+
+      expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI 0');
+      expect(await contract.methods.tokenURI(+nextTokenId + 1).call()).to.be.equal('Test URI 1');
+      expect(await contract.methods.tokenURI(+nextTokenId + 2).call()).to.be.equal('Test URI 2');
+    }
+  });
+});
+

@@ -268,6 +268,7 @@ export type CreateCollectionParams = {
   name: string,
   description: string,
   tokenPrefix: string,
+  schemaVersion: string,
 };
 
 const defaultCreateCollectionParams: CreateCollectionParams = {
@@ -275,10 +276,11 @@ const defaultCreateCollectionParams: CreateCollectionParams = {
   mode: {type: 'NFT'},
   name: 'name',
   tokenPrefix: 'prefix',
+  schemaVersion: 'ImageURL',
 };
 
 export async function createCollectionExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
-  const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
+  const {name, description, mode, tokenPrefix, schemaVersion} = {...defaultCreateCollectionParams, ...params};
 
   let collectionId = 0;
   await usingApi(async (api) => {
@@ -297,7 +299,13 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
       modeprm = {refungible: null};
     }
 
-    const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any});
+    const tx = api.tx.unique.createCollectionEx({
+      name: strToUTF16(name), 
+      description: strToUTF16(description), 
+      tokenPrefix: strToUTF16(tokenPrefix), 
+      mode: modeprm as any,
+      schemaVersion: schemaVersion,
+    });
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getCreateCollectionResult(events);
 
