@@ -608,6 +608,15 @@ export async function setContractSponsoringRateLimitExpectFailure(sender: IKeyri
   });
 }
 
+export async function getNextSponsored(
+  api: ApiPromise,
+  collectionId: number,
+  account: string | CrossAccountId,
+  tokenId: number,
+): Promise<number> {
+  return Number((await api.rpc.unique.nextSponsored(collectionId, account, tokenId)).unwrapOr(-1));
+}
+
 export async function toggleContractAllowlistExpectSuccess(sender: IKeyringPair, contractAddress: AccountId | string, value = true) {
   await usingApi(async (api) => {
     const tx = api.tx.unique.toggleContractAllowList(contractAddress, value);

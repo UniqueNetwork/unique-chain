@@ -69,6 +69,13 @@ macro_rules! impl_common_runtime_apis {
                 fn collection_stats() -> Result<CollectionStats, DispatchError> {
                     Ok(<pallet_common::Pallet<Runtime>>::collection_stats())
                 }
+                fn next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<Option<u64>, DispatchError> {
+                    Ok(<pallet_unique::UniqueSponsorshipPredict<Runtime> as
+                            pallet_unique::SponsorshipPredict<Runtime>>::predict(
+                        collection,
+                        account,
+                        token))
+                }
 
                 fn effective_collection_limits(collection: CollectionId) -> Result<Option<CollectionLimits>, DispatchError> {
                     Ok(<pallet_common::Pallet<Runtime>>::effective_collection_limits(collection))
