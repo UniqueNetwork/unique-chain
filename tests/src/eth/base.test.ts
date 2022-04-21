@@ -14,11 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, deployFlipper, ethBalanceViaSub, GAS_ARGS, itWeb3, recordEthFee} from './util/helpers';
+import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, deployFlipper, ethBalanceViaSub, GAS_ARGS, itWeb3, recordEthFee, usingWeb3} from './util/helpers';
 import {expect} from 'chai';
 import {createCollectionExpectSuccess, createItemExpectSuccess, UNIQUE} from '../util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import privateKey from '../substrate/privateKey';
+import {Contract} from 'web3-eth-contract';
+import Web3 from 'web3';
 
 describe('Contract calls', () => {
   itWeb3('Call of simple contract fee is less than 0.2 UNQ', async ({web3, api}) => {
@@ -58,5 +60,55 @@ describe('Contract calls', () => {
     const tolerance = 0.00002;
 
     expect(Math.abs(fee - expectedFee)).to.be.lessThan(tolerance);
+  });
+});
+
+describe('ERC165 tests', async () => {
+  // https://eips.ethereum.org/EIPS/eip-165
+
+  let collection: number;
+  let minter: string;
+
+  function contract(web3: Web3): Contract {
+    return new web3.eth.Contract(nonFungibleAbi as any, collectionIdToAddress(collection), {from: minter, ...GAS_ARGS});
+  }
+
+  before(async () => {
+    await usingWeb3 (async (web3) => {
+      collection = await createCollectionExpectSuccess();
+      minter = createEthAccount(web3);
+    });
+  });
+  
+  itWeb3('interfaceID == 0xffffffff always false', async ({web3}) => {
+    expect(await contract(web3).methods.supportsInterface('0xffffffff').call()).to.be.false;
+  });
+
+  itWeb3('ERC721 support', async ({web3}) => {
+    expect(await contract(web3).methods.supportsInterface('0x58800161').call()).to.be.true;
+  });
+
+  itWeb3('ERC721Metadata support', async ({web3}) => {
+    expect(await contract(web3).methods.supportsInterface('0x5b5e139f').call()).to.be.true;
+  });
+
+  itWeb3('ERC721Mintable support', async ({web3}) => {
+    expect(await contract(web3).methods.supportsInterface('0x68ccfe89').call()).to.be.true;
+  });
+
+  itWeb3('ERC721Enumerable support', async ({web3}) => {
+    expect(await contract(web3).methods.supportsInterface('0x780e9d63').call()).to.be.true;
+  });
+
+  itWeb3('ERC721UniqueExtensions support', async ({web3}) => {
+    expect(await contract(web3).methods.supportsInterface('0xe562194d').call()).to.be.true;
+  });
+
+  itWeb3('ERC721Burnable support', async ({web3}) => {
+    expect(await contract(web3).methods.supportsInterface('0x42966c68').call()).to.be.true;
+  });
+
+  itWeb3('ERC165 support', async ({web3}) => {
+    expect(await contract(web3).methods.supportsInterface('0x01ffc9a7').call()).to.be.true;
   });
 });
