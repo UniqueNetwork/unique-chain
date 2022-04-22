@@ -12,7 +12,7 @@ interface ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-// Selector: d32d5104
+// Selector: 037b69c8
 interface Collection is Dummy, ERC165 {
 	// Selector: create721Collection(string,string,string) 951c0151
 	function create721Collection(
@@ -45,4 +45,9 @@ interface Collection is Dummy, ERC165 {
 		address collectionAddress,
 		string memory constOnChain
 	) external view;
+
+	// Selector: setLimits(address,string) d05638cc
+	function setLimits(address collectionAddress, string memory limitsJson)
+		external
+		view;
 }

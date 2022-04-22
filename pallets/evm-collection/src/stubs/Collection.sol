@@ -21,7 +21,7 @@ contract ERC165 is Dummy {
 	}
 }
 
-// Selector: d32d5104
+// Selector: 037b69c8
 contract Collection is Dummy, ERC165 {
 	// Selector: create721Collection(string,string,string) 951c0151
 	function create721Collection(
@@ -85,6 +85,17 @@ contract Collection is Dummy, ERC165 {
 		require(false, stub_error);
 		collectionAddress;
 		constOnChain;
+		dummy;
+	}
+
+	// Selector: setLimits(address,string) d05638cc
+	function setLimits(address collectionAddress, string memory limitsJson)
+		public
+		view
+	{
+		require(false, stub_error);
+		collectionAddress;
+		limitsJson;
 		dummy;
 	}
 }

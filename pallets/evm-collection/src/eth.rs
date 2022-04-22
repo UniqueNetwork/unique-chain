@@ -115,7 +115,7 @@ impl<T: Config> EvmCollection<T> {
 	fn confirm_sponsorship(&self, caller: caller, collection_address: address) -> Result<void> {
 		let (_, mut collection) = collection_from_address(collection_address, &self.0)?;
 		let caller = T::CrossAccountId::from_eth(caller);
-		if !collection.confirm_sponsorship(caller.as_sub()) { 
+		if !collection.confirm_sponsorship(caller.as_sub()) {
 			return Err(Error::Revert("Caller is not set as sponsor".into()));
 		}
 		save(collection)
@@ -170,9 +170,20 @@ impl<T: Config> EvmCollection<T> {
 		save(collection)
 	}
 
-	// fn set_limits(&self, caller: caller, limits: string) -> Result<void> {
-	// 	Ok(())
-	// }
+	fn set_limits(
+		&self,
+		caller: caller,
+		collection_address: address,
+		limits_json: string,
+	) -> Result<void> {
+		let (_, mut collection) = collection_from_address(collection_address, &self.0)?;
+		check_is_owner(caller, &collection)?;
+
+		let limits = serde_json::from_str(limits_json.as_ref())
+			.map_err(|e| Error::Revert(format!("Parse JSON error: {}", e)))?;
+		collection.limits = limits;
+		save(collection)
+	}
 }
 
 fn error_feild_too_long(feild: &str, bound: u32) -> Error {
