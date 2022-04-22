@@ -6091,6 +6091,7 @@ dependencies = [
  "pallet-nonfungible",
  "parity-scale-codec 3.1.2",
  "scale-info",
+ "serde_json",
  "sp-core",
  "sp-runtime",
  "sp-std",

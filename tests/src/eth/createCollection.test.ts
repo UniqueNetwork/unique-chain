@@ -100,4 +100,45 @@ describe('Create collection from EVM', () => {
     const collection = (await getDetailedCollectionInfo(api, collectionId))!;
     expect(collection.constOnChainSchema.toHuman()).to.be.eq(constShema);
   });
+
+  itWeb3('Set limits', async ({api, web3}) => {
+    const owner = await createEthAccountWithBalance(api, web3);
+    const helper = collectionHelper(web3, owner);
+    const result = await helper.methods.create721Collection('Const collection', '4', '4').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const limits = {
+      accountTokenOwnershipLimit: 1000,
+      sponsoredDataSize: 1024,
+      // sponsoredDataRateLimit: { sponsoringDisabled: null },
+      tokenLimit: 1000000,
+      sponsorTransferTimeout: 6,
+      sponsorApproveTimeout: 6,
+      ownerCanTransfer: false,
+      ownerCanDestroy: false,
+      transfersEnabled: false,
+    };
+    const limitsJson = '{' +
+      '"account_token_ownership_limit": '+ limits.accountTokenOwnershipLimit +',' +
+      '"sponsored_data_size": ' + limits.sponsoredDataSize + ',' +
+      // '"sponsored_data_rate_limit": { sponsoringDisabled: null },' +
+      '"token_limit": ' + limits.tokenLimit + ',' +
+      '"sponsor_transfer_timeout": ' + limits.sponsorTransferTimeout + ',' +
+      '"sponsor_approve_timeout": ' + limits.sponsorApproveTimeout + ',' +
+      '"owner_can_transfer": ' + limits.ownerCanTransfer + ',' +
+      '"owner_can_destroy": ' + limits.ownerCanDestroy + ',' +
+      '"transfers_enabled": ' + limits.transfersEnabled +
+    '}';
+
+    await helper.methods.setLimits(collectionIdAddress, limitsJson).send();
+    
+    const collection = (await getDetailedCollectionInfo(api, collectionId))!;
+    expect(collection.limits.accountTokenOwnershipLimit.unwrap().toNumber()).to.be.eq(limits.accountTokenOwnershipLimit);
+    expect(collection.limits.sponsoredDataSize.unwrap().toNumber()).to.be.eq(limits.sponsoredDataSize);
+    expect(collection.limits.tokenLimit.unwrap().toNumber()).to.be.eq(limits.tokenLimit);
+    expect(collection.limits.sponsorTransferTimeout.unwrap().toNumber()).to.be.eq(limits.sponsorTransferTimeout);
+    expect(collection.limits.sponsorApproveTimeout.unwrap().toNumber()).to.be.eq(limits.sponsorApproveTimeout);
+    expect(collection.limits.ownerCanTransfer.toHuman()).to.be.eq(limits.ownerCanTransfer);
+    expect(collection.limits.ownerCanDestroy.toHuman()).to.be.eq(limits.ownerCanDestroy);
+    expect(collection.limits.transfersEnabled.toHuman()).to.be.eq(limits.transfersEnabled);
+  });
 });

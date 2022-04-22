@@ -112,21 +112,74 @@ impl<T: Config> EvmCollection<T> {
 	// 	Ok(())
 	// }
 
-	// fn set_offchain_shema(shema: string) -> Result<void> {
-	// 	Ok(())
-	// }
+	fn set_offchain_shema(shema: string) -> Result<void> {
+		let shema = shema
+			.into_bytes()
+			.try_into()
+			.map_err(|_| error_feild_too_long(stringify!(shema), OFFCHAIN_SCHEMA_LIMIT))?;
+		collection.offchain_schema = shema;
+		save(collection)
+	}
 
-	// fn set_const_on_chain_schema(shema: string) -> Result<void> {
-	// 	Ok(())
-	// }
+	fn confirm_sponsorship(&self, caller: caller, collection_address: address) -> Result<void> {
+		let (_, mut collection) = collection_from_address(collection_address, &self.0)?;
+		let caller = T::CrossAccountId::from_eth(caller);
+		if !collection.confirm_sponsorship(caller.as_sub()) {
+			return Err(Error::Revert("Caller is not set as sponsor".into()));
+		}
+		save(collection)
+	}
 
 	// fn set_variable_on_chain_schema(shema: string) -> Result<void> {
 	// 	Ok(())
 	// }
 
-	// fn set_limits(limits: string) -> Result<void> {
-	// 	Ok(())
-	// }
+	fn set_variable_on_chain_schema(
+		&self,
+		caller: caller,
+		collection_address: address,
+		variable: string,
+	) -> Result<void> {
+		let (_, mut collection) = collection_from_address(collection_address, &self.0)?;
+		check_is_owner(caller, &collection)?;
+
+		let variable = variable.into_bytes().try_into().map_err(|_| {
+			error_feild_too_long(stringify!(variable), VARIABLE_ON_CHAIN_SCHEMA_LIMIT)
+		})?;
+		collection.variable_on_chain_schema = variable;
+		save(collection)
+	}
+
+	fn set_const_on_chain_schema(
+		&self,
+		caller: caller,
+		collection_address: address,
+		const_on_chain: string,
+	) -> Result<void> {
+		let (_, mut collection) = collection_from_address(collection_address, &self.0)?;
+		check_is_owner(caller, &collection)?;
+
+		let const_on_chain = const_on_chain.into_bytes().try_into().map_err(|_| {
+			error_feild_too_long(stringify!(const_on_chain), CONST_ON_CHAIN_SCHEMA_LIMIT)
+		})?;
+		collection.const_on_chain_schema = const_on_chain;
+		save(collection)
+	}
+
+	fn set_limits(
+		&self,
+		caller: caller,
+		collection_address: address,
+		limits_json: string,
+	) -> Result<void> {
+		let (_, mut collection) = collection_from_address(collection_address, &self.0)?;
+		check_is_owner(caller, &collection)?;
+
+		let limits = serde_json::from_str(limits_json.as_ref())
+			.map_err(|e| Error::Revert(format!("Parse JSON error: {}", e)))?;
+		collection.limits = limits;
+		save(collection)
+	}
 }
 
 fn error_feild_too_long(feild: &str, bound: u32) -> Error {

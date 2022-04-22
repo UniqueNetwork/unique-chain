@@ -44,6 +44,20 @@
         "name": "collectionAddress",
         "type": "address"
       },
+      { "internalType": "string", "name": "limitsJson", "type": "string" }
+    ],
+    "name": "setLimits",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "collectionAddress",
+        "type": "address"
+      },
       { "internalType": "string", "name": "shema", "type": "string" }
     ],
     "name": "setOffchainShema",
