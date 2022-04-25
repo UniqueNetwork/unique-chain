@@ -22,8 +22,8 @@ use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{OnMethodCall, PrecompileResult, account::CrossAccountId};
 use up_data_structs::{
 	CreateCollectionData, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	MAX_COLLECTION_NAME_LENGTH, OFFCHAIN_SCHEMA_LIMIT, CollectionId,
-	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT,
+	MAX_COLLECTION_NAME_LENGTH, OFFCHAIN_SCHEMA_LIMIT, VARIABLE_ON_CHAIN_SCHEMA_LIMIT,
+	CONST_ON_CHAIN_SCHEMA_LIMIT,
 };
 use crate::{Config};
 use frame_support::traits::Get;
@@ -104,7 +104,7 @@ impl<T: Config> EvmCollection<T> {
 		collection_address: address,
 		sponsor: address,
 	) -> Result<void> {
-		let (_, mut collection) = collection_from_address(collection_address, &self.0)?;
+		let mut collection = collection_from_address(collection_address, &self.0)?;
 		check_is_owner(caller, &collection)?;
 
 		let sponsor = T::CrossAccountId::from_eth(sponsor);
@@ -113,7 +113,7 @@ impl<T: Config> EvmCollection<T> {
 	}
 
 	fn confirm_sponsorship(&self, caller: caller, collection_address: address) -> Result<void> {
-		let (_, mut collection) = collection_from_address(collection_address, &self.0)?;
+		let mut collection = collection_from_address(collection_address, &self.0)?;
 		let caller = T::CrossAccountId::from_eth(caller);
 		if !collection.confirm_sponsorship(caller.as_sub()) {
 			return Err(Error::Revert("Caller is not set as sponsor".into()));
@@ -127,7 +127,7 @@ impl<T: Config> EvmCollection<T> {
 		collection_address: address,
 		shema: string,
 	) -> Result<void> {
-		let (_, mut collection) = collection_from_address(collection_address, &self.0)?;
+		let mut collection = collection_from_address(collection_address, &self.0)?;
 		check_is_owner(caller, &collection)?;
 
 		let shema = shema
@@ -144,7 +144,7 @@ impl<T: Config> EvmCollection<T> {
 		collection_address: address,
 		variable: string,
 	) -> Result<void> {
-		let (_, mut collection) = collection_from_address(collection_address, &self.0)?;
+		let mut collection = collection_from_address(collection_address, &self.0)?;
 		check_is_owner(caller, &collection)?;
 
 		let variable = variable.into_bytes().try_into().map_err(|_| {
@@ -160,7 +160,7 @@ impl<T: Config> EvmCollection<T> {
 		collection_address: address,
 		const_on_chain: string,
 	) -> Result<void> {
-		let (_, mut collection) = collection_from_address(collection_address, &self.0)?;
+		let mut collection = collection_from_address(collection_address, &self.0)?;
 		check_is_owner(caller, &collection)?;
 
 		let const_on_chain = const_on_chain.into_bytes().try_into().map_err(|_| {
@@ -176,7 +176,7 @@ impl<T: Config> EvmCollection<T> {
 		collection_address: address,
 		limits_json: string,
 	) -> Result<void> {
-		let (_, mut collection) = collection_from_address(collection_address, &self.0)?;
+		let mut collection = collection_from_address(collection_address, &self.0)?;
 		check_is_owner(caller, &collection)?;
 
 		let limits = serde_json::from_str(limits_json.as_ref())
@@ -193,13 +193,13 @@ fn error_feild_too_long(feild: &str, bound: u32) -> Error {
 fn collection_from_address<T: Config>(
 	collection_address: address,
 	recorder: &Rc<SubstrateRecorder<T>>,
-) -> Result<(CollectionId, CollectionHandle<T>)> {
-	let collection_id =
-		pallet_common::eth::map_eth_to_id(&collection_address).ok_or(Error::Revert("".into()))?;
+) -> Result<CollectionHandle<T>> {
+	let collection_id = pallet_common::eth::map_eth_to_id(&collection_address)
+		.ok_or(Error::Revert("Bad ETH prefix".into()))?;
 	let collection =
 		pallet_common::CollectionHandle::new_with_recorder(collection_id, recorder.clone())
 			.ok_or(Error::Revert("Create collection handle error".into()))?;
-	Ok((collection_id, collection))
+	Ok(collection)
 }
 
 fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -> Result<()> {
