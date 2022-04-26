@@ -539,3 +539,33 @@ describe('NFT: Substrate calls', () => {
     ]);
   });
 });
+
+describe('Common metadata', () => {
+  itWeb3('Returns collection name', async ({api, web3}) => {
+    const collection = await createCollectionExpectSuccess({
+      name: 'token name',
+      mode: {type: 'NFT'},
+    });
+    const caller = await createEthAccountWithBalance(api, web3);
+
+    const address = collectionIdToAddress(collection);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
+    const name = await contract.methods.name().call();
+
+    expect(name).to.equal('token name');
+  });
+
+  itWeb3('Returns symbol name', async ({api, web3}) => {
+    const collection = await createCollectionExpectSuccess({
+      tokenPrefix: 'TOK',
+      mode: {type: 'NFT'},
+    });
+    const caller = await createEthAccountWithBalance(api, web3);
+
+    const address = collectionIdToAddress(collection);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
+    const symbol = await contract.methods.symbol().call();
+
+    expect(symbol).to.equal('TOK');
+  });
+});
