@@ -18,7 +18,7 @@ use core::marker::PhantomData;
 use evm_coder::{abi::AbiWriter, execution::*, generate_stubgen, solidity_interface, types::*, ToLog};
 use ethereum as _;
 use pallet_common::CollectionById;
-use pallet_common::CollectionHandle;
+use pallet_common::{CollectionHandle};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure,
@@ -113,13 +113,11 @@ impl<T: Config> EvmCollection<T> {
 		let mut collection = collection_from_address(collection_address, &self.0)?;
 		check_is_owner(caller, &collection)?;
 
-	fn set_offchain_shema(shema: string) -> Result<void> {
-		let shema = shema
-			.into_bytes()
-			.try_into()
-			.map_err(|_| error_feild_too_long(stringify!(shema), OFFCHAIN_SCHEMA_LIMIT))?;
-		collection.offchain_schema = shema;
-		save(collection)
+		let sponsor = T::CrossAccountId::from_eth(sponsor);
+		collection.set_sponsor(sponsor.as_sub().clone());
+		collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		Ok(()).map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		Ok(())
 	}
 
 	fn confirm_sponsorship(&self, caller: caller, collection_address: address) -> Result<void> {
@@ -128,7 +126,8 @@ impl<T: Config> EvmCollection<T> {
 		if !collection.confirm_sponsorship(caller.as_sub()) {
 			return Err(Error::Revert("Caller is not set as sponsor".into()));
 		}
-		save(collection)
+		collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		Ok(())
 	}
 
 	fn set_offchain_shema(
@@ -144,8 +143,9 @@ impl<T: Config> EvmCollection<T> {
 			.into_bytes()
 			.try_into()
 			.map_err(|_| error_feild_too_long(stringify!(shema), OFFCHAIN_SCHEMA_LIMIT))?;
-		collection.offchain_schema = shema;
-		save(collection)
+		// collection.offchain_schema = shema;
+		collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		Ok(())
 	}
 
 	fn set_variable_on_chain_schema(
@@ -160,8 +160,9 @@ impl<T: Config> EvmCollection<T> {
 		let variable = variable.into_bytes().try_into().map_err(|_| {
 			error_feild_too_long(stringify!(variable), VARIABLE_ON_CHAIN_SCHEMA_LIMIT)
 		})?;
-		collection.variable_on_chain_schema = variable;
-		save(collection)
+		// collection.variable_on_chain_schema = variable;
+		collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		Ok(())
 	}
 
 	fn set_const_on_chain_schema(
@@ -176,8 +177,9 @@ impl<T: Config> EvmCollection<T> {
 		let const_on_chain = const_on_chain.into_bytes().try_into().map_err(|_| {
 			error_feild_too_long(stringify!(const_on_chain), CONST_ON_CHAIN_SCHEMA_LIMIT)
 		})?;
-		collection.const_on_chain_schema = const_on_chain;
-		save(collection)
+		// collection.const_on_chain_schema = const_on_chain;
+		collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		Ok(())
 	}
 
 	fn set_limits(
@@ -192,7 +194,8 @@ impl<T: Config> EvmCollection<T> {
 		let limits = serde_json::from_str(limits_json.as_ref())
 			.map_err(|e| Error::Revert(format!("Parse JSON error: {}", e)))?;
 		collection.limits = limits;
-		save(collection)
+		collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		Ok(())
 	}
 }
 
@@ -202,12 +205,12 @@ fn error_feild_too_long(feild: &str, bound: u32) -> Error {
 
 fn collection_from_address<T: Config>(
 	collection_address: address,
-	recorder: &Rc<SubstrateRecorder<T>>,
+	recorder: &SubstrateRecorder<T>,
 ) -> Result<CollectionHandle<T>> {
 	let collection_id = pallet_common::eth::map_eth_to_id(&collection_address)
 		.ok_or(Error::Revert("Contract is not an unique collection".into()))?;
 	let collection =
-		pallet_common::CollectionHandle::new_with_recorder(collection_id, recorder.clone())
+		pallet_common::CollectionHandle::new_with_gas_limit(collection_id, recorder.gas_left())
 			.ok_or(Error::Revert("Create collection handle error".into()))?;
 	Ok(collection)
 }
@@ -218,12 +221,6 @@ fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -
 		.check_is_owner(&caller)
 		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 	Ok(())
-}
-
-fn save<T: Config>(collection: CollectionHandle<T>) -> Result<()> {
-	Ok(collection
-		.save()
-		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?)
 }
 
 pub struct CollectionOnMethodCall<T: Config>(PhantomData<*const T>);

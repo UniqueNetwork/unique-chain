@@ -150,7 +150,7 @@ describe('Create collection from EVM', () => {
     let result = await helper.methods.create721Collection('Mint collection', '6', '6').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const receiver = createEthAccount(web3);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, collectionIdAddress.toLowerCase(), {from: owner, ...GAS_ARGS});
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, collectionIdAddress, {from: owner, ...GAS_ARGS});
     const nextTokenId = await contract.methods.nextTokenId().call();
 
     expect(nextTokenId).to.be.equal('1');
