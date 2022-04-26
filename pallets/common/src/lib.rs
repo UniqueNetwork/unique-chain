@@ -62,7 +62,10 @@ impl<T: Config> CollectionHandle<T> {
 		<CollectionById<T>>::get(id).map(|collection| Self {
 			id,
 			collection,
-			recorder: Rc::new(SubstrateRecorder::new(eth::collection_id_to_address(id), gas_limit)),
+			recorder: Rc::new(SubstrateRecorder::new(
+				eth::collection_id_to_address(id),
+				gas_limit,
+			)),
 		})
 	}
 
@@ -113,7 +116,7 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn set_sponsor(&mut self, sponsor: T::AccountId) {
 		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor);
 	}
-	
+
 	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> bool {
 		if self.collection.sponsorship.pending_sponsor() != Some(sender) {
 			return false;

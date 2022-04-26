@@ -101,7 +101,7 @@ describe('Create collection from EVM', () => {
     expect(collection.constOnChainSchema.toHuman()).to.be.eq(constShema);
   });
 
-  itWeb3.only('Set limits', async ({api, web3}) => {
+  itWeb3('Set limits', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
     const helper = collectionHelper(web3, owner);
     const result = await helper.methods.create721Collection('Const collection', '4', '4').send();

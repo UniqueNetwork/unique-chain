@@ -18,22 +18,22 @@
 
 extern crate alloc;
 
-use codec::{Decode, Encode, MaxEncodedLen};
 pub use pallet::*;
 pub use eth::*;
-use scale_info::TypeInfo;
 pub mod eth;
 
 #[frame_support::pallet]
 pub mod pallet {
 	pub use super::*;
-	use evm_coder::execution::Result;
 	use frame_support::pallet_prelude::*;
 	use sp_core::H160;
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_evm::account::Config + pallet_nonfungible::Config
+		frame_system::Config
+		+ pallet_evm_coder_substrate::Config
+		+ pallet_evm::account::Config
+		+ pallet_nonfungible::Config
 	{
 		type ContractAddress: Get<H160>;
 	}
@@ -47,7 +47,6 @@ pub mod pallet {
 	#[pallet::pallet]
 	// #[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
-
 
 	impl<T: Config> Pallet<T> {}
 }
