@@ -205,7 +205,7 @@ fn collection_from_address<T: Config>(
 	recorder: &Rc<SubstrateRecorder<T>>,
 ) -> Result<CollectionHandle<T>> {
 	let collection_id = pallet_common::eth::map_eth_to_id(&collection_address)
-		.ok_or(Error::Revert("Bad ETH prefix".into()))?;
+		.ok_or(Error::Revert("Contract is not an unique collection".into()))?;
 	let collection =
 		pallet_common::CollectionHandle::new_with_recorder(collection_id, recorder.clone())
 			.ok_or(Error::Revert("Create collection handle error".into()))?;
@@ -216,14 +216,14 @@ fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -
 	let caller = T::CrossAccountId::from_eth(caller);
 	collection
 		.check_is_owner(&caller)
-		.map_err(|e| Error::Revert(format!("{:?}", e)))?;
+		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 	Ok(())
 }
 
 fn save<T: Config>(collection: CollectionHandle<T>) -> Result<()> {
-	collection
+	Ok(collection
 		.save()
-		.map_err(|e| Error::Revert(format!("{:?}", e)))
+		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?)
 }
 
 pub struct CollectionOnMethodCall<T: Config>(PhantomData<*const T>);
@@ -243,7 +243,6 @@ impl<T: Config> OnMethodCall<T> for CollectionOnMethodCall<T> {
 		input: &[u8],
 		value: sp_core::U256,
 	) -> Option<PrecompileResult> {
-		// TODO: Extract to another OnMethodCall handler
 		if target != &T::ContractAddress::get() {
 			return None;
 		}
