@@ -22,7 +22,7 @@ use frame_support::traits::{Currency, IsSubType};
 pub use pallet::*;
 use pallet_evm::{EVMCurrencyAdapter, EnsureAddressOrigin, account::CrossAccountId};
 use sp_core::{H160, U256};
-use sp_runtime::TransactionOutcome;
+use sp_runtime::{TransactionOutcome, DispatchError};
 use up_sponsorship::SponsorshipHandler;
 
 #[frame_support::pallet]
@@ -63,11 +63,13 @@ impl<T: Config> fp_evm::TransactionValidityHack<T::CrossAccountId> for Transacti
 				// This method is only used for checking, we shouldn't touch storage in it
 				frame_support::storage::with_transaction(|| {
 					let origin_sub = T::CrossAccountId::from_eth(origin);
-					TransactionOutcome::Rollback(T::EvmSponsorshipHandler::get_sponsor(
+					TransactionOutcome::Rollback(Ok::<_, DispatchError>(T::EvmSponsorshipHandler::get_sponsor(
 						&origin_sub,
 						&(*target, input.clone()),
-					))
+					)))
 				})
+				// FIXME: it may fail with DispatchError in case of depth limit
+				.ok()?
 			}
 			_ => None,
 		}
@@ -146,11 +148,13 @@ where
 				// Effects from EvmSponsorshipHandler are applied in OnChargeEvmTransaction by pallet_evm::runner
 				// TODO: Should we implement simulation mode (test, but do not apply effects) in `up-sponsorship`?
 				let sponsor = frame_support::storage::with_transaction(|| {
-					TransactionOutcome::Rollback(T::EvmSponsorshipHandler::get_sponsor(
+					TransactionOutcome::Rollback(Ok::<_, DispatchError>(T::EvmSponsorshipHandler::get_sponsor(
 						&who,
 						&(*target, input.clone()),
-					))
-				})?;
+					)))
+				})
+				// FIXME: it may fail with DispatchError in case of depth limit
+				.map_err(|e| panic!("err?!")).ok()??;
 				Some(sponsor.as_sub().clone())
 			}
 			_ => None,

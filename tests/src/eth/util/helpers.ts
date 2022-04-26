@@ -31,7 +31,7 @@ import contractHelpersAbi from './contractHelpersAbi.json';
 import getBalance from '../../substrate/get-balance';
 import waitNewBlocks from '../../substrate/wait-new-blocks';
 
-export const GAS_ARGS = {gas: 2500000};
+export const GAS_ARGS = {gas: 2500000, maxPriorityFeePerGas: 0};
 
 export enum SponsoringMode {
   Disabled = 0,

@@ -4,7 +4,7 @@
 [package]
 authors = ['Unique Network <support@uniquenetwork.io>']
 description = 'Unique Inflation Pallet'
-edition = '2018'
+edition = '2021'
 homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'pallet-inflation'
@@ -42,38 +42,38 @@ version = '3.1.2'
 [dependencies.frame-benchmarking]
 default-features = false
 optional = true
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = 'https://github.com/paritytech/substrate'
+branch = 'master'
 
 [dependencies.frame-support]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = 'https://github.com/paritytech/substrate'
+branch = 'master'
 
 [dependencies.frame-system]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = 'https://github.com/paritytech/substrate'
+branch = 'master'
 
 [dependencies.pallet-balances]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = 'https://github.com/paritytech/substrate'
+branch = 'master'
 
 [dependencies.pallet-timestamp]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = 'https://github.com/paritytech/substrate'
+branch = 'master'
 
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = 'https://github.com/paritytech/substrate'
+branch = 'master'
 
 [dependencies.sp-std]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = 'https://github.com/paritytech/substrate'
+branch = 'master'
 
 [dependencies.serde]
 default-features = false
@@ -82,18 +82,18 @@ version = '1.0.130'
 
 [dependencies.sp-runtime]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = 'https://github.com/paritytech/substrate'
+branch = 'master'
 
 [dependencies.sp-core]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = 'https://github.com/paritytech/substrate'
+branch = 'master'
 
 [dependencies.sp-io]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = 'https://github.com/paritytech/substrate'
+branch = 'master'
 
 [dependencies]
 scale-info = { version = "2.0.1", default-features = false, features = [

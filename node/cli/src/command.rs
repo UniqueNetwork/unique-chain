@@ -325,7 +325,7 @@ pub fn run() -> Result<()> {
 			})
 		}
 		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
-			Ok(cmd.run(components.client, components.backend))
+			Ok(cmd.run(components.client, components.backend, None))
 		}),
 		Some(Subcommand::ExportGenesisState(params)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
@@ -371,25 +371,8 @@ pub fn run() -> Result<()> {
 
 			Ok(())
 		}
-		Some(Subcommand::Benchmark(cmd)) => {
-			if cfg!(feature = "runtime-benchmarks") {
-				let runner = cli.create_runner(cmd)?;
-				runner.sync_run(|config| match config.chain_spec.runtime_id() {
-					#[cfg(feature = "unique-runtime")]
-					RuntimeId::Unique => cmd.run::<Block, UniqueRuntimeExecutor>(config),
 
-					#[cfg(feature = "quartz-runtime")]
-					RuntimeId::Quartz => cmd.run::<Block, QuartzRuntimeExecutor>(config),
-
-					RuntimeId::Opal => cmd.run::<Block, OpalRuntimeExecutor>(config),
-					RuntimeId::Unknown(chain) => Err(no_runtime_err!(chain).into()),
-				})
-			} else {
-				Err("Benchmarking wasn't enabled when building the node. \
-				You can enable it with `--features runtime-benchmarks`."
-					.into())
-			}
-		}
+		Some(Subcommand::Benchmark(_cmd)) => todo!(),
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
@@ -426,7 +409,7 @@ pub fn run() -> Result<()> {
 				let para_id = ParaId::from(para_id);
 
 				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(
+					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account(
 						&para_id,
 					);
 

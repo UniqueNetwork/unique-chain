@@ -44,8 +44,7 @@ pub mod pallet {
 	use pallet_ethereum::EthereumTransactionSender;
 	use sp_std::cell::RefCell;
 	use sp_std::vec::Vec;
-	use sp_core::{H160, H256};
-	use ethereum::TransactionV2;
+	use sp_core::H160;
 	use frame_support::{pallet_prelude::*, traits::PalletInfo};
 	use frame_system::pallet_prelude::*;
 
@@ -81,21 +80,6 @@ pub mod pallet {
 	// From instabul hardfork configuration: https://github.com/rust-blockchain/evm/blob/fd4fd6acc0ca3208d6770fdb3ba407c94cdf97c6/runtime/src/lib.rs#L284
 	pub const G_SLOAD_WORD: u64 = 800;
 	pub const G_SSTORE_WORD: u64 = 20000;
-
-	pub fn generate_transaction() -> TransactionV2 {
-		use ethereum::{TransactionV0, TransactionAction, TransactionSignature};
-		TransactionV2::Legacy(TransactionV0 {
-			nonce: 0.into(),
-			gas_price: 0.into(),
-			gas_limit: 0.into(),
-			action: TransactionAction::Call(H160([0; 20])),
-			value: 0.into(),
-			// zero selector, this transaction always has same sender, so all data should be acquired from logs
-			input: Vec::from([0, 0, 0, 0]),
-			// if v is not 27 - then we need to pass some other validity checks
-			signature: TransactionSignature::new(27, H256([0x88; 32]), H256([0x88; 32])).unwrap(),
-		})
-	}
 
 	#[derive(Default)]
 	pub struct SubstrateRecorder<T: Config> {
@@ -214,7 +198,6 @@ pub mod pallet {
 			}
 			T::EthereumTransactionSender::submit_logs_transaction(
 				Default::default(),
-				generate_transaction(),
 				logs,
 			)
 		}
@@ -229,9 +212,10 @@ pub mod pallet {
 						.expect("evm-coder-substrate is a pallet, which should be added to runtime")
 						as u8 =>
 			{
-				match error {
-					v if v == Error::<T>::OutOfGas.as_u8() => ExError::Error(ExitError::OutOfGas),
-					v if v == Error::<T>::OutOfFund.as_u8() => ExError::Error(ExitError::OutOfFund),
+				let mut read = &error as &[u8];
+				match Error::<T>::decode(&mut read) {
+					Ok(Error::<T>::OutOfGas) => ExError::Error(ExitError::OutOfGas),
+					Ok(Error::<T>::OutOfFund) => ExError::Error(ExitError::OutOfFund),
 					_ => unreachable!("this pallet only defines two possible errors"),
 				}
 			}
@@ -239,7 +223,7 @@ pub mod pallet {
 				message: Some(msg), ..
 			}) => ExError::Revert(msg.into()),
 			DispatchError::Module(ModuleError { index, error, .. }) => {
-				ExError::Revert(format!("error {} in pallet {}", error, index))
+				ExError::Revert(format!("error {:?} in pallet {}", error, index))
 			}
 			e => ExError::Revert(format!("substrate error: {:?}", e)),
 		}

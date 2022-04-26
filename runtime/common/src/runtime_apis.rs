@@ -46,11 +46,6 @@ macro_rules! impl_common_runtime_apis {
                     dispatch_unique_runtime!(collection.allowance(sender, spender, token))
                 }
 
-                fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
-                    <pallet_unique::UniqueErcSupport<Runtime>>::get_code(&account)
-                        .or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account))
-                        .or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
-                }
                 fn adminlist(collection: CollectionId) -> Result<Vec<CrossAccountId>, DispatchError> {
                     Ok(<pallet_common::Pallet<Runtime>>::adminlist(collection))
                 }
@@ -271,6 +266,14 @@ macro_rules! impl_common_runtime_apis {
 
                 fn elasticity() -> Option<Permill> {
                     None
+                }
+            }
+
+            impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
+                fn convert_transaction(transaction: pallet_ethereum::Transaction) -> <Block as BlockT>::Extrinsic  {
+                    UncheckedExtrinsic::new_unsigned(
+                        pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
+                    )
                 }
             }
 
