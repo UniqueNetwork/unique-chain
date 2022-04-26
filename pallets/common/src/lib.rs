@@ -188,7 +188,9 @@ pub fn save_substrate<T: Config>(handle: CollectionHandle<T>) -> DispatchResult 
 }
 
 pub fn save_eth<T: Config>(handle: CollectionHandle<T>) -> evm_coder::execution::Result<()> {
-	Ok(handle.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?)
+	Ok(handle
+		.save()
+		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?)
 }
 
 #[frame_support::pallet]

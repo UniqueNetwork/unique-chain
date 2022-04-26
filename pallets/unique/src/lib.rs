@@ -53,7 +53,10 @@ use up_data_structs::{
 	CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
 	CreateCollectionData, CustomDataLimit, CreateItemExData,
 };
-use pallet_common::{CollectionHandle, Pallet as PalletCommon, Error as CommonError, CommonWeightInfo, save_substrate};
+use pallet_common::{
+	CollectionHandle, Pallet as PalletCommon, Error as CommonError, CommonWeightInfo,
+	save_substrate,
+};
 use pallet_evm::account::CrossAccountId;
 use pallet_refungible::{Pallet as PalletRefungible, RefungibleHandle};
 use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
