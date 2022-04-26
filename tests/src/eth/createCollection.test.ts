@@ -14,11 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+import nonFungibleAbi from './nonFungibleAbi.json';
 import {ApiPromise} from '@polkadot/api';
 import {evmToAddress} from '@polkadot/util-crypto';
 import {expect} from 'chai';
 import {getCreatedCollectionCount, getDetailedCollectionInfo} from '../util/helpers';
-import {collectionHelper, collectionIdFromAddress, createEthAccount, createEthAccountWithBalance, itWeb3, normalizeAddress} from './util/helpers';
+import {
+  collectionHelper,
+  collectionIdFromAddress,
+  collectionIdToAddress,
+  createEthAccount,
+  createEthAccountWithBalance,
+  GAS_ARGS,
+  itWeb3,
+  normalizeAddress,
+  normalizeEvents,
+} from './util/helpers';
 
 async function getCollectionAddressFromResult(api: ApiPromise, result: any) {
   const collectionIdAddress = normalizeAddress(result.events[0].raw.topics[2]);
@@ -104,7 +115,7 @@ describe('Create collection from EVM', () => {
   itWeb3('Set limits', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
     const helper = collectionHelper(web3, owner);
-    const result = await helper.methods.create721Collection('Const collection', '4', '4').send();
+    const result = await helper.methods.create721Collection('Const collection', '5', '5').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const limits = {
       accountTokenOwnershipLimit: 1000,
@@ -131,6 +142,45 @@ describe('Create collection from EVM', () => {
     expect(collection.limits.ownerCanTransfer.toHuman()).to.be.eq(limits.ownerCanTransfer);
     expect(collection.limits.ownerCanDestroy.toHuman()).to.be.eq(limits.ownerCanDestroy);
     expect(collection.limits.transfersEnabled.toHuman()).to.be.eq(limits.transfersEnabled);
+  });
+
+  itWeb3('Check tokenURI', async ({web3, api}) => {
+    const owner = await createEthAccountWithBalance(api, web3);
+    const helper = collectionHelper(web3, owner);
+    let result = await helper.methods.create721Collection('Mint collection', '6', '6').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const receiver = createEthAccount(web3);
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, collectionIdAddress.toLowerCase(), {from: owner, ...GAS_ARGS});
+    const nextTokenId = await contract.methods.nextTokenId().call();
+
+    expect(nextTokenId).to.be.equal('1');
+    result = await contract.methods.mintWithTokenURI(
+      receiver,
+      nextTokenId,
+      'Test URI',
+    ).send();
+
+    const events = normalizeEvents(result.events);
+    const address = collectionIdToAddress(collectionId);
+
+    expect(events).to.be.deep.equal([
+      {
+        address,
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: receiver,
+          tokenId: nextTokenId,
+        },
+      },
+    ]);
+
+    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+
+    // TODO: this wont work right now, need release 919000 first
+    // await helper.methods.setOffchainShema(collectionIdAddress, 'https://offchain-service.local/token-info/{id}').send();
+    // const tokenUri = await contract.methods.tokenURI(nextTokenId).call();
+    // expect(tokenUri).to.be.equal(`https://offchain-service.local/token-info/${nextTokenId}`);
   });
 });
 
