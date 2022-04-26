@@ -18,6 +18,7 @@ use core::marker::PhantomData;
 use evm_coder::{abi::AbiWriter, execution::*, generate_stubgen, solidity_interface, types::*, ToLog};
 use ethereum as _;
 use pallet_common::CollectionById;
+use pallet_common::CollectionHandle;
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure,

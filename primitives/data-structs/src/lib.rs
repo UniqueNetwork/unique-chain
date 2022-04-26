@@ -368,30 +368,30 @@ pub type CollectionPropertiesVec =
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionLimits {
-	#[serde(alias="accountTokenOwnershipLimit")]
+	#[serde(alias = "accountTokenOwnershipLimit")]
 	pub account_token_ownership_limit: Option<u32>,
-	#[serde(alias="sponsoredDataSize")]
+	#[serde(alias = "sponsoredDataSize")]
 	pub sponsored_data_size: Option<u32>,
 
 	/// FIXME should we delete this or repurpose it?
 	/// None - setVariableMetadata is not sponsored
 	/// Some(v) - setVariableMetadata is sponsored
 	///           if there is v block between txs
-	#[serde(alias="sponsoredDataRateLimit")]
+	#[serde(alias = "sponsoredDataRateLimit")]
 	pub sponsored_data_rate_limit: Option<SponsoringRateLimit>,
-	#[serde(alias="tokenLimit")]
+	#[serde(alias = "tokenLimit")]
 	pub token_limit: Option<u32>,
-	
+
 	// Timeouts for item types in passed blocks
-	#[serde(alias="sponsorTransferTimeout")]
+	#[serde(alias = "sponsorTransferTimeout")]
 	pub sponsor_transfer_timeout: Option<u32>,
-	#[serde(alias="sponsorApproveTimeout")]
+	#[serde(alias = "sponsorApproveTimeout")]
 	pub sponsor_approve_timeout: Option<u32>,
-	#[serde(alias="ownerCanTransfer")]
+	#[serde(alias = "ownerCanTransfer")]
 	pub owner_can_transfer: Option<bool>,
-	#[serde(alias="ownerCanDestroy")]
+	#[serde(alias = "ownerCanDestroy")]
 	pub owner_can_destroy: Option<bool>,
-	#[serde(alias="transfersEnabled")]
+	#[serde(alias = "transfersEnabled")]
 	pub transfers_enabled: Option<bool>,
 }
 
