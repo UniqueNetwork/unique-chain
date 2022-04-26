@@ -53,7 +53,7 @@ use up_data_structs::{
 	CollectionMode, TokenId, SchemaVersion, SponsorshipState, MetaUpdatePermission,
 	CreateCollectionData, CustomDataLimit, CreateItemExData,
 };
-use pallet_common::{CollectionHandle, Pallet as PalletCommon, Error as CommonError, CommonWeightInfo};
+use pallet_common::{CollectionHandle, Pallet as PalletCommon, Error as CommonError, CommonWeightInfo, save_substrate};
 use pallet_evm::account::CrossAccountId;
 use pallet_refungible::{Pallet as PalletRefungible, RefungibleHandle};
 use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
@@ -501,8 +501,7 @@ decl_module! {
 				mode
 			));
 
-			target_collection.submit_logs();
-			target_collection.save()
+			save_substrate(target_collection)
 		}
 
 		/// Allows Anyone to create tokens if:
@@ -533,8 +532,7 @@ decl_module! {
 				collection_id
 			));
 
-			target_collection.submit_logs();
-			target_collection.save()
+			save_substrate(target_collection)
 		}
 
 		/// Change the owner of the collection.
@@ -563,8 +561,7 @@ decl_module! {
 				new_owner
 			));
 
-			target_collection.submit_logs();
-			target_collection.save()
+			save_substrate(target_collection)
 		}
 
 		/// Adds an admin of the Collection.
@@ -644,8 +641,7 @@ decl_module! {
 				new_sponsor
 			));
 
-			target_collection.submit_logs();
-			target_collection.save()
+			save_substrate(target_collection)
 		}
 
 		/// # Permissions
@@ -671,8 +667,7 @@ decl_module! {
 				sender
 			));
 
-			target_collection.submit_logs();
-			target_collection.save()
+			save_substrate(target_collection)
 		}
 
 		/// Switch back to pay-per-own-transaction model.
@@ -697,8 +692,7 @@ decl_module! {
 			<Pallet<T>>::deposit_event(Event::<T>::CollectionSponsorRemoved(
 				collection_id
 			));
-			target_collection.submit_logs();
-			target_collection.save()
+			save_substrate(target_collection)
 		}
 
 		/// This method creates a concrete instance of NFT Collection created with CreateCollection method.
@@ -785,8 +779,7 @@ decl_module! {
 			// =========
 
 			target_collection.limits.transfers_enabled = Some(value);
-			target_collection.submit_logs();
-			target_collection.save()
+			save_substrate(target_collection)
 		}
 
 		/// Destroys a concrete instance of NFT.
@@ -973,8 +966,7 @@ decl_module! {
 
 			target_collection.meta_update_permission = value;
 
-			target_collection.submit_logs();
-			target_collection.save()
+			save_substrate(target_collection)
 		}
 
 		/// Set schema standard
@@ -1007,8 +999,7 @@ decl_module! {
 				collection_id
 			));
 
-			target_collection.submit_logs();
-			target_collection.save()
+			save_substrate(target_collection)
 		}
 
 		/// Set off-chain data schema.
@@ -1040,8 +1031,7 @@ decl_module! {
 				collection_id
 			));
 
-			target_collection.submit_logs();
-			target_collection.save()
+			save_substrate(target_collection)
 		}
 
 		/// Set const on-chain data schema.
@@ -1073,8 +1063,7 @@ decl_module! {
 				collection_id
 			));
 
-			target_collection.submit_logs();
-			target_collection.save()
+			save_substrate(target_collection)
 		}
 
 		/// Set variable on-chain data schema.
@@ -1106,8 +1095,7 @@ decl_module! {
 				collection_id
 			));
 
-			target_collection.submit_logs();
-			target_collection.save()
+			save_substrate(target_collection)
 		}
 
 		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
@@ -1128,8 +1116,7 @@ decl_module! {
 				collection_id
 			));
 
-			target_collection.submit_logs();
-			target_collection.save()
+			save_substrate(target_collection)
 		}
 	}
 }

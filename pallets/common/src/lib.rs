@@ -108,7 +108,7 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn submit_logs(&self) {
 		self.recorder.submit_logs()
 	}
-	pub fn save(self) -> DispatchResult {
+	fn save(self) -> DispatchResult {
 		<CollectionById<T>>::insert(self.id, self.collection);
 		Ok(())
 	}
@@ -180,6 +180,15 @@ impl<T: Config> CollectionHandle<T> {
 			MetaUpdatePermission::None => fail!(<Error<T>>::NoPermission),
 		}
 	}
+}
+
+pub fn save_substrate<T: Config>(handle: CollectionHandle<T>) -> DispatchResult {
+	handle.submit_logs();
+	handle.save()
+}
+
+pub fn save_eth<T: Config>(handle: CollectionHandle<T>) -> evm_coder::execution::Result<()> {
+	Ok(handle.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?)
 }
 
 #[frame_support::pallet]
