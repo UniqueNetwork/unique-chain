@@ -231,11 +231,11 @@ describe('(!negative tests!) Create collection from EVM', () => {
       .call()).to.be.rejectedWith('NotSufficientFounds');
   });
 
-  itWeb3('(!negative test!) Collection address (Bad ETH prefix)', async ({api, web3}) => {
+  itWeb3('(!negative test!) Collection address (Contract is not an unique collection)', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
     const helper = collectionHelper(web3, owner);
     const collectionAddressWithBadPrefix = '0x00112233445566778899AABBCCDDEEFF00112233';
-    const EXPECTED_ERROR = 'Bad ETH prefix';
+    const EXPECTED_ERROR = 'Contract is not an unique collection';
     {
       const sponsor = await createEthAccountWithBalance(api, web3);
       await expect(helper.methods
