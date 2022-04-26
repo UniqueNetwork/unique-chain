@@ -335,19 +335,28 @@ pub struct ReFungibleItemType<AccountId> {
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionLimits {
+	#[serde(alias="accountTokenOwnershipLimit")]
 	pub account_token_ownership_limit: Option<u32>,
+	#[serde(alias="sponsoredDataSize")]
 	pub sponsored_data_size: Option<u32>,
 	/// None - setVariableMetadata is not sponsored
 	/// Some(v) - setVariableMetadata is sponsored
 	///           if there is v block between txs
+	#[serde(alias="sponsoredDataRateLimit")]
 	pub sponsored_data_rate_limit: Option<SponsoringRateLimit>,
+	#[serde(alias="tokenLimit")]
 	pub token_limit: Option<u32>,
-
+	
 	// Timeouts for item types in passed blocks
+	#[serde(alias="sponsorTransferTimeout")]
 	pub sponsor_transfer_timeout: Option<u32>,
+	#[serde(alias="sponsorApproveTimeout")]
 	pub sponsor_approve_timeout: Option<u32>,
+	#[serde(alias="ownerCanTransfer")]
 	pub owner_can_transfer: Option<bool>,
+	#[serde(alias="ownerCanDestroy")]
 	pub owner_can_destroy: Option<bool>,
+	#[serde(alias="transfersEnabled")]
 	pub transfers_enabled: Option<bool>,
 }
 
