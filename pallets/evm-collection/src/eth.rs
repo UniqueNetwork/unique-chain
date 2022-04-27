@@ -121,20 +121,20 @@ impl<T: Config> EvmCollection<T> {
 		save_eth(collection)
 	}
 
-	fn set_offchain_shema(
+	fn set_offchain_schema(
 		&self,
 		caller: caller,
 		collection_address: address,
-		shema: string,
+		schema: string,
 	) -> Result<void> {
 		let mut collection = collection_from_address(collection_address, &self.0)?;
 		check_is_owner(caller, &collection)?;
 
-		let shema = shema
+		let schema = schema
 			.into_bytes()
 			.try_into()
-			.map_err(|_| error_feild_too_long(stringify!(shema), OFFCHAIN_SCHEMA_LIMIT))?;
-		collection.offchain_schema = shema;
+			.map_err(|_| error_feild_too_long(stringify!(schema), OFFCHAIN_SCHEMA_LIMIT))?;
+		collection.offchain_schema = schema;
 		save_eth(collection)
 	}
 

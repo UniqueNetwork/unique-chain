@@ -60,7 +60,7 @@
       },
       { "internalType": "string", "name": "shema", "type": "string" }
     ],
-    "name": "setOffchainShema",
+    "name": "setOffchainSchema",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"
