@@ -130,20 +130,20 @@ impl<T: Config> EvmCollection<T> {
 		Ok(())
 	}
 
-	fn set_offchain_shema(
+	fn set_offchain_schema(
 		&self,
 		caller: caller,
 		collection_address: address,
-		shema: string,
+		schema: string,
 	) -> Result<void> {
 		let mut collection = collection_from_address(collection_address, &self.0)?;
 		check_is_owner(caller, &collection)?;
 
-		let shema = shema
+		let schema = schema
 			.into_bytes()
 			.try_into()
 			.map_err(|_| error_feild_too_long(stringify!(shema), OFFCHAIN_SCHEMA_LIMIT))?;
-		// collection.offchain_schema = shema;
+		// collection.offchain_schema = schema;
 		collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 		Ok(())
 	}
