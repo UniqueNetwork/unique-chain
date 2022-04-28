@@ -154,7 +154,7 @@ where
 					)))
 				})
 				// FIXME: it may fail with DispatchError in case of depth limit
-				.map_err(|e| panic!("err?!")).ok()??;
+				.ok()??;
 				Some(sponsor.as_sub().clone())
 			}
 			_ => None,

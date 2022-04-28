@@ -444,7 +444,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		for (id, token_uri) in tokens {
 			let id: u32 = id.try_into().map_err(|_| "token id overflow")?;
 			if id != expected_index {
-				panic!("item id should be next ({}) but got {}", expected_index, id);
+				return Err("item id should be next".into());
 			}
 			expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
 
