@@ -196,10 +196,7 @@ pub mod pallet {
 			if logs.is_empty() {
 				return;
 			}
-			T::EthereumTransactionSender::submit_logs_transaction(
-				Default::default(),
-				logs,
-			)
+			T::EthereumTransactionSender::submit_logs_transaction(Default::default(), logs)
 		}
 	}
 

@@ -93,7 +93,6 @@ pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	pub block_data_cache: Arc<EthBlockDataCache<Block>>,
 }
 
-
 pub fn overrides_handle<C, BE, R>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
 where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
