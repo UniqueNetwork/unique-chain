@@ -243,7 +243,7 @@ pub fn development_config() -> OpalChainSpec {
 	)
 }
 
-pub fn local_testnet_rococo_config() -> DefaultChainSpec {
+pub fn local_testnet_config() -> DefaultChainSpec {
 	let mut properties = Map::new();
 	properties.insert("tokenSymbol".into(), default_runtime::TOKEN_SYMBOL.into());
 	properties.insert("tokenDecimals".into(), 18.into());
@@ -305,7 +305,7 @@ pub fn local_testnet_rococo_config() -> DefaultChainSpec {
 		Some(properties),
 		// Extensions
 		Extensions {
-			relay_chain: "rococo-local".into(),
+			relay_chain: "westend-local".into(),
 			para_id: 1000,
 		},
 	)

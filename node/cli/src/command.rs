@@ -76,7 +76,7 @@ macro_rules! no_runtime_err {
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
 		"dev" => Box::new(chain_spec::development_config()),
-		"" | "local" => Box::new(chain_spec::local_testnet_rococo_config()),
+		"" | "local" => Box::new(chain_spec::local_testnet_config()),
 		path => {
 			let path = std::path::PathBuf::from(path);
 			let chain_spec = Box::new(chain_spec::OpalChainSpec::from_json_file(path.clone())?)
