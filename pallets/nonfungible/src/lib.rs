@@ -265,12 +265,11 @@ impl<T: Config> Pallet<T> {
 			.map(|p| p.clone())
 			.unwrap_or(PropertyPermission::None);
 
+		let token_data = <TokenData<T>>::get((collection.id, token_id))
+			.ok_or(<CommonError<T>>::TokenNotFound)?;
+
 		let check_token_owner = || -> DispatchResult {
-			let token_data = <TokenData<T>>::get((collection.id, token_id))
-				.ok_or(<CommonError<T>>::TokenNotFound)?;
-
 			ensure!(&token_data.owner == sender, <CommonError<T>>::NoPermission);
-
 			Ok(())
 		};
 
@@ -302,6 +301,27 @@ impl<T: Config> Pallet<T> {
 		));
 
 		Ok(())
+	}
+
+	pub fn change_token_properties(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		properties: Vec<Property>,
+	) -> DispatchResult {
+		for property in properties {
+			Self::change_token_property(collection, sender, token_id, property)?;
+		}
+
+		Ok(())
+	}
+
+	pub fn change_collection_properties(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		properties: Vec<Property>,
+	) -> DispatchResult {
+		<PalletCommon<T>>::change_collection_properties(collection, sender, properties)
 	}
 
 	pub fn transfer(

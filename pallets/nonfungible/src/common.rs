@@ -50,8 +50,12 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::burn_item()
 	}
 
-	fn set_property() -> Weight {
-		<SelfWeightOf<T>>::set_property()
+	fn change_collection_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::change_collection_properties(amount)
+	}
+
+	fn change_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::change_token_properties(amount)
 	}
 
 	fn transfer() -> Weight {
@@ -142,6 +146,33 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		with_weight(
 			<Pallet<T>>::create_multiple_items(self, &sender, data.into_inner(), nesting_budget),
 			weight,
+		)
+	}
+
+	fn change_collection_properties(
+		&self,
+		sender: T::CrossAccountId,
+		properties: Vec<Property>,
+	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::change_collection_properties(properties.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::change_collection_properties(self, &sender, properties),
+			weight
+		)
+	}
+
+	fn change_token_properties(
+		&self,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		properties: Vec<Property>,
+	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::change_token_properties(properties.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::change_token_properties(self, &sender, token_id, properties),
+			weight
 		)
 	}
 
@@ -239,32 +270,6 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		} else {
 			Ok(().into())
 		}
-	}
-
-	fn change_collection_property(
-		&self,
-		sender: T::CrossAccountId,
-		property: Property,
-	) -> DispatchResultWithPostInfo {
-		// let token_id = None;
-		with_weight(
-			// <Pallet<T>>::change_property(self, &sender, token_id, property),
-			Ok(()),
-			<CommonWeights<T>>::set_property(),
-		)
-	}
-
-	fn change_token_property(
-		&self,
-		sender: T::CrossAccountId,
-		token_id: TokenId,
-		property: Property,
-	) -> DispatchResultWithPostInfo {
-		with_weight(
-			// <Pallet<T>>::change_property(self, &sender, Some(token_id), property),
-			Ok(()),
-			<CommonWeights<T>>::set_property(),
-		)
 	}
 
 	fn set_variable_metadata(

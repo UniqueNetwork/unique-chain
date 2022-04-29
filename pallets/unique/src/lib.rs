@@ -694,6 +694,35 @@ decl_module! {
 			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items(sender, owner, items_data, &budget))
 		}
 
+		#[weight = T::CommonWeightInfo::change_collection_properties(properties.len() as u32)]
+		#[transactional]
+		pub fn change_collection_properties(
+			origin,
+			collection_id: CollectionId,
+			properties: Vec<Property>
+		) -> DispatchResultWithPostInfo {
+			ensure!(!properties.is_empty(), Error::<T>::EmptyArgument);
+
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+
+			dispatch_call::<T, _>(collection_id, |d| d.change_collection_properties(sender, properties))
+		}
+
+		#[weight = T::CommonWeightInfo::change_token_properties(properties.len() as u32)]
+		#[transactional]
+		pub fn change_token_properties(
+			origin,
+			collection_id: CollectionId,
+			token_id: TokenId,
+			properties: Vec<Property>
+		) -> DispatchResultWithPostInfo {
+			ensure!(!properties.is_empty(), Error::<T>::EmptyArgument);
+
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+
+			dispatch_call::<T, _>(collection_id, |d| d.change_token_properties(sender, token_id, properties))
+		}
+
 		#[weight = T::CommonWeightInfo::create_multiple_items_ex(&data)]
 		#[transactional]
 		pub fn create_multiple_items_ex(origin, collection_id: CollectionId, data: CreateItemExData<T::CrossAccountId>) -> DispatchResultWithPostInfo {

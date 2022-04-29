@@ -736,7 +736,24 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		collection.check_is_owner_or_admin(sender)?;
 
-		CollectionProperties::<T>::get(collection.id).try_change_property(property)?;
+		CollectionProperties::<T>::try_mutate(
+			collection.id,
+			|properties| properties.try_change_property(property.clone())
+		)?;
+
+		<Pallet<T>>::deposit_event(Event::CollectionPropertySet(collection.id, property));
+
+		Ok(())
+	}
+
+	pub fn change_collection_properties(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		properties: Vec<Property>,
+	) -> DispatchResult {
+		for property in properties {
+			Self::change_collection_property(collection, sender, property)?;
+		}
 
 		Ok(())
 	}
@@ -909,7 +926,8 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn create_multiple_items(amount: u32) -> Weight;
 	fn create_multiple_items_ex(cost: &CreateItemExData<CrossAccountId>) -> Weight;
 	fn burn_item() -> Weight;
-	fn set_property() -> Weight;
+	fn change_collection_properties(amount: u32) -> Weight;
+	fn change_token_properties(amount: u32) -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
@@ -945,17 +963,17 @@ pub trait CommonCollectionOperations<T: Config> {
 		amount: u128,
 	) -> DispatchResultWithPostInfo;
 
-	fn change_collection_property(
+	fn change_collection_properties(
 		&self,
 		sender: T::CrossAccountId,
-		property: Property,
+		properties: Vec<Property>,
 	) -> DispatchResultWithPostInfo;
 
-	fn change_token_property(
+	fn change_token_properties(
 		&self,
 		sender: T::CrossAccountId,
 		token_id: TokenId,
-		property: Property,
+		property: Vec<Property>,
 	) -> DispatchResultWithPostInfo;
 
 	fn transfer(

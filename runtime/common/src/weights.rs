@@ -54,8 +54,12 @@ where
 		dispatch_weight::<T>() + max_weight_of!(burn_item())
 	}
 
-	fn set_property() -> Weight {
-		dispatch_weight::<T>() + max_weight_of!(set_property())
+	fn change_collection_properties(amount: u32) -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(change_collection_properties(amount))
+	}
+
+	fn change_token_properties(amount: u32) -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(change_token_properties(amount))
 	}
 
 	fn transfer() -> Weight {
