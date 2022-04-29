@@ -20,7 +20,7 @@ use sp_std::collections::btree_map::BTreeMap;
 use frame_support::{dispatch::DispatchResultWithPostInfo, fail, weights::Weight, BoundedVec};
 use up_data_structs::{
 	CollectionId, TokenId, CustomDataLimit, CreateItemExData, CreateRefungibleExData,
-	budget::Budget,
+	budget::Budget, Property,
 };
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
@@ -64,6 +64,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn burn_item() -> Weight {
 		max_weight_of!(burn_item_partial(), burn_item_fully())
+	}
+
+	fn set_property() -> Weight {
+		<SelfWeightOf<T>>::set_property()
 	}
 
 	fn transfer() -> Weight {
@@ -242,6 +246,23 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 			<Pallet<T>>::burn_from(self, &sender, &from, token, amount, nesting_budget),
 			<CommonWeights<T>>::burn_from(),
 		)
+	}
+
+	fn change_collection_property(
+		&self,
+		_sender: T::CrossAccountId,
+		_property: Property,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::PropertiesNotAllowed)
+	}
+
+	fn change_token_property(
+		&self,
+		_sender: T::CrossAccountId,
+		_token_id: TokenId,
+		_property: Property,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::PropertiesNotAllowed)
 	}
 
 	fn set_variable_metadata(

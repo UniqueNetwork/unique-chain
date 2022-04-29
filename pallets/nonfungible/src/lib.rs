@@ -20,7 +20,7 @@ use erc::ERC721Events;
 use frame_support::{BoundedVec, ensure, fail};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
-	mapping::TokenAddressMapping, NestingRule, budget::Budget,
+	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
@@ -92,6 +92,14 @@ pub mod pallet {
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
 		Value = ItemData<T::CrossAccountId>,
 		QueryKind = OptionQuery,
+	>;
+
+	#[pallet::storage]
+	pub type TokenProperties<T: Config> = StorageNMap<
+		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
+		Value = up_data_structs::Properties,
+		QueryKind = ValueQuery,
+		OnEmpty = up_data_structs::TokenProperties,
 	>;
 
 	/// Used to enumerate tokens owned by account
@@ -243,6 +251,56 @@ impl<T: Config> Pallet<T> {
 			token_data.owner,
 			1,
 		));
+		Ok(())
+	}
+
+	pub fn change_token_property(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		property: Property,
+	) -> DispatchResult {
+		let permission = <PalletCommon<T>>::property_permission(collection.id)
+			.get(&property.key)
+			.map(|p| p.clone())
+			.unwrap_or(PropertyPermission::None);
+
+		let check_token_owner = || -> DispatchResult {
+			let token_data = <TokenData<T>>::get((collection.id, token_id))
+				.ok_or(<CommonError<T>>::TokenNotFound)?;
+
+			ensure!(&token_data.owner == sender, <CommonError<T>>::NoPermission);
+
+			Ok(())
+		};
+
+		let is_property_exists = TokenProperties::<T>::get((collection.id, token_id))
+			.get_property(&property.key)
+			.is_some();
+
+		match (permission, is_property_exists) {
+			(PropertyPermission::AdminConst, false) => {
+				collection.check_is_owner_or_admin(sender)?
+			}
+			(PropertyPermission::Admin, _) => collection.check_is_owner_or_admin(sender)?,
+			(PropertyPermission::ItemOwnerConst, false) => check_token_owner()?,
+			(PropertyPermission::ItemOwner, _) => check_token_owner()?,
+			(PropertyPermission::ItemOwnerOrAdmin, _) => {
+				check_token_owner().or(collection.check_is_owner_or_admin(sender))?;
+			}
+			_ => return Err(<CommonError<T>>::NoPermission.into()),
+		}
+
+		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
+			properties.try_change_property(property.clone())
+		})?;
+
+		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
+			collection.id,
+			token_id,
+			property,
+		));
+
 		Ok(())
 	}
 

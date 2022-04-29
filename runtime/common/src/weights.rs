@@ -54,6 +54,10 @@ where
 		dispatch_weight::<T>() + max_weight_of!(burn_item())
 	}
 
+	fn set_property() -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(set_property())
+	}
+
 	fn transfer() -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(transfer())
 	}

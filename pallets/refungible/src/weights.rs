@@ -38,6 +38,7 @@ pub trait WeightInfo {
 	fn create_multiple_items_ex_multiple_owners(b: u32, ) -> Weight;
 	fn burn_item_partial() -> Weight;
 	fn burn_item_fully() -> Weight;
+	fn set_property() -> Weight;
 	fn transfer_normal() -> Weight;
 	fn transfer_creating() -> Weight;
 	fn transfer_removing() -> Weight;
@@ -129,6 +130,12 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
+
+	fn set_property() -> Weight {
+		// Error
+		0
+	}
+
 	// Storage: Refungible Balance (r:2 w:2)
 	fn transfer_normal() -> Weight {
 		(19_766_000 as Weight)
@@ -297,6 +304,12 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
+
+	fn set_property() -> Weight {
+		// Error
+		0
+	}
+
 	// Storage: Refungible Balance (r:2 w:2)
 	fn transfer_normal() -> Weight {
 		(19_766_000 as Weight)

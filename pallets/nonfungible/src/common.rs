@@ -17,7 +17,9 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
-use up_data_structs::{TokenId, CustomDataLimit, CreateItemExData, CollectionId, budget::Budget};
+use up_data_structs::{
+	TokenId, CustomDataLimit, CreateItemExData, CollectionId, budget::Budget, Property,
+};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
@@ -46,6 +48,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn burn_item() -> Weight {
 		<SelfWeightOf<T>>::burn_item()
+	}
+
+	fn set_property() -> Weight {
+		<SelfWeightOf<T>>::set_property()
 	}
 
 	fn transfer() -> Weight {
@@ -233,6 +239,32 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		} else {
 			Ok(().into())
 		}
+	}
+
+	fn change_collection_property(
+		&self,
+		sender: T::CrossAccountId,
+		property: Property,
+	) -> DispatchResultWithPostInfo {
+		// let token_id = None;
+		with_weight(
+			// <Pallet<T>>::change_property(self, &sender, token_id, property),
+			Ok(()),
+			<CommonWeights<T>>::set_property(),
+		)
+	}
+
+	fn change_token_property(
+		&self,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		property: Property,
+	) -> DispatchResultWithPostInfo {
+		with_weight(
+			// <Pallet<T>>::change_property(self, &sender, Some(token_id), property),
+			Ok(()),
+			<CommonWeights<T>>::set_property(),
+		)
 	}
 
 	fn set_variable_metadata(

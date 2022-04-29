@@ -61,6 +61,8 @@ pub mod pallet {
 		FungibleItemsDontHaveData,
 		/// Fungible token does not support nested
 		FungibleDisallowsNesting,
+		/// Item properties are not allowed
+		PropertiesNotAllowed,
 	}
 
 	#[pallet::config]

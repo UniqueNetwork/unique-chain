@@ -18,7 +18,7 @@
 
 use core::ops::{Deref, DerefMut};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use sp_std::vec::Vec;
+use sp_std::{vec::Vec, collections::btree_map::BTreeMap};
 use pallet_evm::account::CrossAccountId;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Weight, PostDispatchInfo},
@@ -35,7 +35,8 @@ use up_data_structs::{
 	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT,
 	CUSTOM_DATA_LIMIT, CollectionLimits, CustomDataLimit, CreateCollectionData, SponsorshipState,
 	CreateItemExData, SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField,
-	PhantomType,
+	PhantomType, Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyPermission,
+	PropertiesError,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -288,6 +289,10 @@ pub mod pallet {
 			T::CrossAccountId,
 			u128,
 		),
+
+		CollectionPropertySet(CollectionId, Property),
+
+		TokenPropertySet(CollectionId, TokenId, Property),
 	}
 
 	#[pallet::error]
@@ -319,7 +324,6 @@ pub mod pallet {
 		CollectionLimitBoundsExceeded,
 		/// Tried to enable permissions which are only permitted to be disabled
 		OwnerPermissionsCantBeReverted,
-
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
 		/// Account token limit exceeded per collection
@@ -370,6 +374,25 @@ pub mod pallet {
 		Key = CollectionId,
 		Value = Collection<<T as frame_system::Config>::AccountId>,
 		QueryKind = OptionQuery,
+	>;
+
+	/// Collection properties
+	#[pallet::storage]
+	pub type CollectionProperties<T> = StorageMap<
+		Hasher = Blake2_128Concat,
+		Key = CollectionId,
+		Value = Properties,
+		QueryKind = ValueQuery,
+		OnEmpty = up_data_structs::CollectionProperties,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn property_permission)]
+	pub type CollectionPropertyPermissions<T> = StorageMap<
+		Hasher = Blake2_128Concat,
+		Key = CollectionId,
+		Value = PropertiesPermissionMap,
+		QueryKind = ValueQuery,
 	>;
 
 	/// Large variable-size collection fields are extracted here
@@ -538,6 +561,7 @@ impl<T: Config> Pallet<T> {
 			sponsorship,
 			limits,
 			meta_update_permission,
+			..
 		} = <CollectionById<T>>::get(collection)?;
 		Some(RpcCollection {
 			name: name.into_inner(),
@@ -615,7 +639,24 @@ impl<T: Config> Pallet<T> {
 				.map(|limits| Self::clamp_limits(data.mode.clone(), &Default::default(), limits))
 				.unwrap_or_else(|| Ok(CollectionLimits::default()))?,
 			meta_update_permission: data.meta_update_permission.unwrap_or_default(),
+			// token_property_permissions: data.token_property_permissions.unwrap_or_default(),
+			// properties: Properties::from_collection_props_vec(data.properties)?
 		};
+
+		CollectionProperties::<T>::insert(
+			id,
+			Properties::from_collection_props_vec(data.properties)?,
+		);
+
+		let token_props_permissions: PropertiesPermissionMap = data
+			.token_property_permissions
+			.into_iter()
+			.map(|property| (property.key, property.permission))
+			.collect::<BTreeMap<_, _>>()
+			.try_into()
+			.map_err(|_| PropertiesError::PropertyLimitReached)?;
+
+		CollectionPropertyPermissions::<T>::insert(id, token_props_permissions);
 
 		// Take a (non-refundable) deposit of collection creation
 		{
@@ -685,6 +726,34 @@ impl<T: Config> Pallet<T> {
 		<Allowlist<T>>::remove_prefix((collection.id,), None);
 
 		<Pallet<T>>::deposit_event(Event::CollectionDestroyed(collection.id));
+		Ok(())
+	}
+
+	pub fn change_collection_property(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property: Property,
+	) -> DispatchResult {
+		collection.check_is_owner_or_admin(sender)?;
+
+		CollectionProperties::<T>::get(collection.id).try_change_property(property)?;
+
+		Ok(())
+	}
+
+	pub fn change_property_permission(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_key: PropertyKey,
+		permission: PropertyPermission,
+	) -> DispatchResult {
+		collection.check_is_owner_or_admin(sender)?;
+
+		CollectionPropertyPermissions::<T>::try_mutate(collection.id, |permissions| {
+			permissions.try_insert(property_key, permission)
+		})
+		.map_err(|_| PropertiesError::PropertyLimitReached)?;
+
 		Ok(())
 	}
 
@@ -840,6 +909,7 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn create_multiple_items(amount: u32) -> Weight;
 	fn create_multiple_items_ex(cost: &CreateItemExData<CrossAccountId>) -> Weight;
 	fn burn_item() -> Weight;
+	fn set_property() -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
@@ -873,6 +943,19 @@ pub trait CommonCollectionOperations<T: Config> {
 		sender: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+	) -> DispatchResultWithPostInfo;
+
+	fn change_collection_property(
+		&self,
+		sender: T::CrossAccountId,
+		property: Property,
+	) -> DispatchResultWithPostInfo;
+
+	fn change_token_property(
+		&self,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		property: Property,
 	) -> DispatchResultWithPostInfo;
 
 	fn transfer(
