@@ -401,6 +401,9 @@ macro_rules! impl_common_runtime_apis {
                         hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
                         // System Events
                         hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
+
+                        // Transactional depth
+                        hex_literal::hex!("3a7472616e73616374696f6e5f6c6576656c3a").to_vec().into(),
                     ];
 
                     let mut batches = Vec::<BenchmarkBatch>::new();

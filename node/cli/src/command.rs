@@ -371,8 +371,47 @@ pub fn run() -> Result<()> {
 
 			Ok(())
 		}
+		#[cfg(feature = "unique-runtime")]
+		Some(Subcommand::Benchmark(cmd)) => {
+			use frame_benchmarking_cli::BenchmarkCmd;
+			let runner = cli.create_runner(cmd)?;
+			// Switch on the concrete benchmark sub-command-
+			match cmd {
+				BenchmarkCmd::Pallet(cmd) => {
+					if cfg!(feature = "runtime-benchmarks") {
+						runner.sync_run(|config| cmd.run::<Block, UniqueRuntimeExecutor>(config))
+					} else {
+						Err("Benchmarking wasn't enabled when building the node. \
+					You can enable it with `--features runtime-benchmarks`."
+							.into())
+					}
+				}
+				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
+					let partials = new_partial::<
+						unique_runtime::RuntimeApi,
+						UniqueRuntimeExecutor,
+						_,
+					>(&config, crate::service::parachain_build_import_queue)?;
+					cmd.run(partials.client)
+				}),
+				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
+					let partials = new_partial::<
+						unique_runtime::RuntimeApi,
+						UniqueRuntimeExecutor,
+						_,
+					>(&config, crate::service::parachain_build_import_queue)?;
+					let db = partials.backend.expose_db();
+					let storage = partials.backend.expose_storage();
 
-		Some(Subcommand::Benchmark(_cmd)) => todo!(),
+					cmd.run(config, partials.client.clone(), db, storage)
+				}),
+				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+			}
+		}
+		#[cfg(not(feature = "unique-runtime"))]
+		Some(Subcommand::Benchmark(..)) => {
+			Err("benchmarking is only available with unique runtime enabled".into())
+		}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
