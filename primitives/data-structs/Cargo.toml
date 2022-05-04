@@ -18,11 +18,11 @@ codec = { package = "parity-scale-codec", version = "3.1.2", default-features = 
 serde = { version = "1.0.130", features = [
   'derive',
 ], default-features = false, optional = true }
-frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
-frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
-sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
-sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
-sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
 derivative = "2.2.0"
 
 [features]

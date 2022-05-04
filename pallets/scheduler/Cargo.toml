@@ -15,19 +15,19 @@ codec = { package = "parity-scale-codec", version = "3.1.2", default-features = 
 scale-info = { version = "2.0.1", default-features = false, features = [
 	"derive",
 ] }
-frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
-frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
-sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
-sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
-sp-io = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate', branch = 'master' }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
 
-up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'master' }
+up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.19" }
 log = { version = "0.4.14", default-features = false }
 
 [dev-dependencies]
-sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
-substrate-test-utils = { git = 'https://github.com/paritytech/substrate', branch = 'master' }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
 
 [features]
 default = ["std"]

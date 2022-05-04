@@ -117,35 +117,35 @@ version = '3.1.2'
 
 [dependencies.frame-benchmarking]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
+git = "https://github.com/paritytech/substrate"
 optional = true
-branch = 'master'
+branch = "polkadot-v0.9.19"
 
 [dependencies.frame-executive]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.frame-support]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.frame-system]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.frame-system-benchmarking]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
+git = "https://github.com/paritytech/substrate"
 optional = true
-branch = 'master'
+branch = "polkadot-v0.9.19"
 
 [dependencies.frame-system-rpc-runtime-api]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.hex-literal]
 optional = true
@@ -159,13 +159,13 @@ version = '1.0.130'
 
 [dependencies.pallet-aura]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.pallet-balances]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 # Contracts specific packages
 # [dependencies.pallet-contracts]
@@ -188,33 +188,33 @@ branch = 'master'
 
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.pallet-sudo]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.pallet-timestamp]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.pallet-transaction-payment]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.pallet-transaction-payment-rpc-runtime-api]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.pallet-treasury]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 # [dependencies.pallet-vesting]
 # default-features = false
@@ -223,68 +223,68 @@ branch = 'master'
 
 [dependencies.sp-arithmetic]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.sp-api]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.sp-block-builder]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.sp-core]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.sp-consensus-aura]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.sp-inherents]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.sp-io]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.sp-offchain]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.sp-runtime]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.sp-session]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.sp-std]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.sp-transaction-pool]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.sp-version]
 default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
 
 [dependencies.smallvec]
 version = '1.6.1'
@@ -294,80 +294,80 @@ version = '1.6.1'
 
 [dependencies.parachain-info]
 default-features = false
-git = 'https://github.com/paritytech/cumulus'
-branch = 'master'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.19"
 
 [dependencies.cumulus-pallet-aura-ext]
-git = 'https://github.com/paritytech/cumulus'
-branch = 'master'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.19"
 default-features = false
 
 [dependencies.cumulus-pallet-parachain-system]
-git = 'https://github.com/paritytech/cumulus'
-branch = 'master'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.19"
 default-features = false
 
 [dependencies.cumulus-primitives-core]
-git = 'https://github.com/paritytech/cumulus'
-branch = 'master'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.19"
 default-features = false
 
 [dependencies.cumulus-pallet-xcm]
-git = 'https://github.com/paritytech/cumulus'
-branch = 'master'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.19"
 default-features = false
 
 [dependencies.cumulus-pallet-dmp-queue]
-git = 'https://github.com/paritytech/cumulus'
-branch = 'master'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.19"
 default-features = false
 
 [dependencies.cumulus-pallet-xcmp-queue]
-git = 'https://github.com/paritytech/cumulus'
-branch = 'master'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.19"
 default-features = false
 
 [dependencies.cumulus-primitives-utility]
-git = 'https://github.com/paritytech/cumulus'
-branch = 'master'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.19"
 default-features = false
 
 [dependencies.cumulus-primitives-timestamp]
-git = 'https://github.com/paritytech/cumulus'
-branch = 'master'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.19"
 default-features = false
 
 ################################################################################
 # Polkadot dependencies
 
 [dependencies.polkadot-parachain]
-git = 'https://github.com/paritytech/polkadot'
-branch = 'master'
+git = "https://github.com/paritytech/polkadot"
+branch = "release-v0.9.19"
 default-features = false
 
 [dependencies.xcm]
-git = 'https://github.com/paritytech/polkadot'
-branch = 'master'
+git = "https://github.com/paritytech/polkadot"
+branch = "release-v0.9.19"
 default-features = false
 
 [dependencies.xcm-builder]
-git = 'https://github.com/paritytech/polkadot'
-branch = 'master'
+git = "https://github.com/paritytech/polkadot"
+branch = "release-v0.9.19"
 default-features = false
 
 [dependencies.xcm-executor]
-git = 'https://github.com/paritytech/polkadot'
-branch = 'master'
+git = "https://github.com/paritytech/polkadot"
+branch = "release-v0.9.19"
 default-features = false
 
 [dependencies.pallet-xcm]
-git = 'https://github.com/paritytech/polkadot'
-branch = 'master'
+git = "https://github.com/paritytech/polkadot"
+branch = "release-v0.9.19"
 default-features = false
 
 [dependencies.orml-vesting]
-git = 'https://github.com/uniquenetwork/open-runtime-module-library'
-branch = 'master'
+git = "https://github.com/uniquenetwork/open-runtime-module-library"
+branch = "unique-polkadot-v0.9.19"
 version = "0.4.1-dev"
 default-features = false
 
@@ -390,21 +390,21 @@ pallet-refungible = { default-features = false, path = "../../pallets/refungible
 pallet-nonfungible = { default-features = false, path = "../../pallets/nonfungible" }
 pallet-unq-scheduler = { path = '../../pallets/scheduler', default-features = false }
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
-pallet-charge-transaction = { git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'master', package = "pallet-template-transaction-payment", default-features = false, version = '3.0.0' }
+pallet-charge-transaction = { git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.19", package = "pallet-template-transaction-payment", default-features = false, version = "3.0.0" }
 pallet-evm-migration = { path = '../../pallets/evm-migration', default-features = false }
 pallet-evm-contract-helpers = { path = '../../pallets/evm-contract-helpers', default-features = false }
 pallet-evm-transaction-payment = { path = '../../pallets/evm-transaction-payment', default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "master" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "master" }
-pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "master" }
-fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "master" }
-fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "master" }
-fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "master" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.19" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.19" }
+pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.19" }
+fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.19" }
+fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.19" }
+fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.19" }
 
 ################################################################################
 # Build Dependencies
 
 [build-dependencies.substrate-wasm-builder]
-git = 'https://github.com/paritytech/substrate'
-branch = 'master'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"

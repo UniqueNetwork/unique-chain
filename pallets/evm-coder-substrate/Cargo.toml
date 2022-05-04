@@ -8,15 +8,15 @@ edition = "2021"
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
 ] }
-sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
-sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
 ethereum = { version = "0.12.0", default-features = false }
 evm-coder = { default-features = false, path = "../../crates/evm-coder" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "master" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "master" }
-frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
-frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'master' }
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate', branch = 'master' }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.19" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.19" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
 
 [dependencies.codec]
 default-features = false
