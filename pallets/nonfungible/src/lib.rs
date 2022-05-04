@@ -21,6 +21,7 @@ use frame_support::{BoundedVec, ensure, fail};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
+	PropertyKeyPermission,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
@@ -322,6 +323,18 @@ impl<T: Config> Pallet<T> {
 		properties: Vec<Property>,
 	) -> DispatchResult {
 		<PalletCommon<T>>::change_collection_properties(collection, sender, properties)
+	}
+
+	pub fn change_property_permissions(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_permissions: Vec<PropertyKeyPermission>
+	) -> DispatchResult {
+		<PalletCommon<T>>::change_property_permissions(
+			collection,
+			sender,
+			property_permissions,
+		)
 	}
 
 	pub fn transfer(

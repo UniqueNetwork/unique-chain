@@ -38,6 +38,7 @@ pub trait WeightInfo {
 	fn burn_item() -> Weight;
 	fn change_collection_properties(amount: u32) -> Weight;
 	fn change_token_properties(amount: u32) -> Weight;
+	fn change_property_permissions(amount: u32) -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
@@ -99,6 +100,11 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	}
 
 	fn change_token_properties(amount: u32) -> Weight {
+		// TODO calculate appropriate weight
+		(50_000_000 as Weight).saturating_mul(amount as Weight)
+	}
+
+	fn change_property_permissions(amount: u32) -> Weight {
 		// TODO calculate appropriate weight
 		(50_000_000 as Weight).saturating_mul(amount as Weight)
 	}
@@ -199,6 +205,11 @@ impl WeightInfo for () {
 	}
 
 	fn change_token_properties(amount: u32) -> Weight {
+		// TODO calculate appropriate weight
+		(50_000_000 as Weight).saturating_mul(amount as Weight)
+	}
+
+	fn change_property_permissions(amount: u32) -> Weight {
 		// TODO calculate appropriate weight
 		(50_000_000 as Weight).saturating_mul(amount as Weight)
 	}

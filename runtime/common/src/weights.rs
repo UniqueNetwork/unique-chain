@@ -62,6 +62,10 @@ where
 		dispatch_weight::<T>() + max_weight_of!(change_token_properties(amount))
 	}
 
+	fn change_property_permissions(amount: u32) -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(change_property_permissions(amount))
+	}
+
 	fn transfer() -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(transfer())
 	}

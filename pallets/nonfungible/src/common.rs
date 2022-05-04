@@ -18,7 +18,7 @@ use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
 use up_data_structs::{
-	TokenId, CustomDataLimit, CreateItemExData, CollectionId, budget::Budget, Property,
+	TokenId, CustomDataLimit, CreateItemExData, CollectionId, budget::Budget, Property, PropertyKeyPermission,
 };
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
@@ -56,6 +56,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn change_token_properties(amount: u32) -> Weight {
 		<SelfWeightOf<T>>::change_token_properties(amount)
+	}
+
+	fn change_property_permissions(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::change_property_permissions(amount)
 	}
 
 	fn transfer() -> Weight {
@@ -172,6 +176,19 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 		with_weight(
 			<Pallet<T>>::change_token_properties(self, &sender, token_id, properties),
+			weight
+		)
+	}
+
+	fn change_property_permissions(
+		&self,
+		sender: &T::CrossAccountId,
+		property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::change_property_permissions(property_permissions.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::change_property_permissions(self, sender, property_permissions),
 			weight
 		)
 	}

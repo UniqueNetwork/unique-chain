@@ -21,7 +21,7 @@ use up_data_structs::{TokenId, CollectionId, CreateItemExData, budget::Budget};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::ArithmeticError;
 use sp_std::{vec::Vec, vec};
-use up_data_structs::{CustomDataLimit, Property};
+use up_data_structs::{CustomDataLimit, Property, PropertyKeyPermission,};
 
 use crate::{
 	Allowance, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf, weights::WeightInfo,
@@ -56,6 +56,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn change_token_properties(amount: u32) -> Weight {
 		<SelfWeightOf<T>>::change_token_properties(amount)
+	}
+
+	fn change_property_permissions(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::change_property_permissions(amount)
 	}
 
 	fn transfer() -> Weight {
@@ -246,6 +250,14 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		_sender: T::CrossAccountId,
 		_token_id: TokenId,
 		_property: Vec<Property>,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::PropertiesNotAllowed)
+	}
+
+	fn change_property_permissions(
+		&self,
+		_sender: &T::CrossAccountId,
+		_property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResultWithPostInfo {
 		fail!(<Error<T>>::PropertiesNotAllowed)
 	}

@@ -20,7 +20,7 @@ use sp_std::collections::btree_map::BTreeMap;
 use frame_support::{dispatch::DispatchResultWithPostInfo, fail, weights::Weight, BoundedVec};
 use up_data_structs::{
 	CollectionId, TokenId, CustomDataLimit, CreateItemExData, CreateRefungibleExData,
-	budget::Budget, Property,
+	budget::Budget, Property, PropertyKeyPermission,
 };
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
@@ -72,6 +72,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn change_token_properties(amount: u32) -> Weight {
 		<SelfWeightOf<T>>::change_token_properties(amount)
+	}
+
+	fn change_property_permissions(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::change_property_permissions(amount)
 	}
 
 	fn transfer() -> Weight {
@@ -265,6 +269,14 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		_sender: T::CrossAccountId,
 		_token_id: TokenId,
 		_property: Vec<Property>,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::PropertiesNotAllowed)
+	}
+
+	fn change_property_permissions(
+		&self,
+		_sender: &T::CrossAccountId,
+		_property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResultWithPostInfo {
 		fail!(<Error<T>>::PropertiesNotAllowed)
 	}
