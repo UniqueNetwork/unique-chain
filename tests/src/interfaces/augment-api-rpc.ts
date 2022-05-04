@@ -393,6 +393,60 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       queryInfo: AugmentedRpc<(extrinsic: Bytes | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<RuntimeDispatchInfo>>;
     };
+    rmrk: {
+      /**
+       * Get tokens owned by an account in a collection
+       **/
+      accountTokens: AugmentedRpc<(accountId: AccountId32 | string | Uint8Array, collectionId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<u32>>>;
+      /**
+       * Get base info
+       **/
+      base: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<RmrkTraitsBaseBaseInfo>>>;
+      /**
+       * Get all Base's parts
+       **/
+      baseParts: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTraitsPartPartType>>>;
+      /**
+       * Get collection by id
+       **/
+      collectionById: AugmentedRpc<(id: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<RmrkTraitsCollectionCollectionInfo>>>;
+      /**
+       * Get collection properties
+       **/
+      collectionProperties: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTraitsPropertyPropertyInfo>>>;
+      /**
+       * Get the latest created collection id
+       **/
+      lastCollectionIdx: AugmentedRpc<(at?: Hash | string | Uint8Array) => Observable<u32>>;
+      /**
+       * Get NFT by collection id and NFT id
+       **/
+      nftById: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<RmrkTraitsNftNftInfo>>>;
+      /**
+       * Get NFT children
+       **/
+      nftChildren: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTraitsNftNftChild>>>;
+      /**
+       * Get NFT properties
+       **/
+      nftProperties: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTraitsPropertyPropertyInfo>>>;
+      /**
+       * Get NFT resource priorities
+       **/
+      nftResourcePriorities: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<Bytes>>>;
+      /**
+       * Get NFT resources
+       **/
+      nftResources: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTraitsResourceResourceInfo>>>;
+      /**
+       * Get Base's theme names
+       **/
+      themeNames: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<Bytes>>>;
+      /**
+       * Get Theme's keys values
+       **/
+      themes: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, themeName: Vec<Bytes> | (Bytes | string | Uint8Array)[], keys: Option<Vec<Bytes>> | null | object | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<RmrkTraitsTheme>>>;
+    };
     rpc: {
       /**
        * Retrieves the list of RPC methods that are exposed by the node

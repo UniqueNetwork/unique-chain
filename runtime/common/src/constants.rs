@@ -37,4 +37,16 @@ parameter_types! {
 	pub const DefaultSponsoringRateLimit: BlockNumber = 1 * DAYS;
 
 	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE; // Targeting 0.1 Unique per NFT transfer
+
+	// RMRK constants
+	#[derive(PartialEq)]
+	pub const RmrkStringLimit: u32 = 128;
+	#[derive(Eq, PartialEq)]
+	pub const RmrkCollectionSymbolLimit: u32 = 100;
+	#[derive(Eq, PartialEq)]
+	pub const RmrkResourceSymbolLimit: u32 = 10;
+	#[derive(Eq, PartialEq)]
+	pub const RmrkKeyLimit: u32 = 32;
+	#[derive(Eq, PartialEq)]
+	pub const RmrkValueLimit: u32 = 256;
 }

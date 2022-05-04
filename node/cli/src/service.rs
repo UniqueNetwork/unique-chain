@@ -65,7 +65,23 @@ use polkadot_service::CollatorPair;
 use fc_rpc_core::types::FilterPool;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
-use unique_runtime_common::types::{AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block};
+use unique_runtime_common::types::{
+	AuraId,
+	RuntimeInstance,
+	AccountId,
+	Balance,
+	Index,
+	Hash,
+	Block,
+	// RMRK
+	RmrkCollectionInfo,
+	RmrkInstanceInfo,
+	RmrkResourceInfo,
+	RmrkPropertyInfo,
+	RmrkBaseInfo,
+	RmrkPartType,
+	RmrkTheme,
+};
 
 /// Unique native executor instance.
 #[cfg(feature = "unique-runtime")]
@@ -347,7 +363,17 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
-		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		+ rmrk_rpc::RmrkApi<
+			Block,
+			AccountId,
+			RmrkCollectionInfo,
+			RmrkInstanceInfo,
+			RmrkResourceInfo, // todo done, but for reference
+			RmrkPropertyInfo,
+			RmrkBaseInfo,
+			RmrkPartType,
+			RmrkTheme,
+		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>,
@@ -628,7 +654,17 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
-		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		+ rmrk_rpc::RmrkApi<
+			Block,
+			AccountId,
+			RmrkCollectionInfo,
+			RmrkInstanceInfo,
+			RmrkResourceInfo, // todo done, but for reference
+			RmrkPropertyInfo,
+			RmrkBaseInfo,
+			RmrkPartType,
+			RmrkTheme,
+		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
@@ -761,7 +797,17 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
-		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		+ rmrk_rpc::RmrkApi<
+			Block,
+			AccountId,
+			RmrkCollectionInfo,
+			RmrkInstanceInfo,
+			RmrkResourceInfo, // todo done, but for reference
+			RmrkPropertyInfo,
+			RmrkBaseInfo,
+			RmrkPartType,
+			RmrkTheme,
+		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>

@@ -49,6 +49,11 @@ fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwor
 fc-db = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
 fc-mapping-sync = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
 
+# RMRK
+# todo git
+rmrk-rpc = { git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "test/tests-basic-infrastructure" } 
+# rmrk-traits = { default-features = false, git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "test/tests-basic-infrastructure" } 
+
 pallet-common = { default-features = false, path = "../../pallets/common" }
 unique-runtime-common = { default-features = false, path = "../../runtime/common" }
 pallet-unique = { path = "../../pallets/unique" }

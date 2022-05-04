@@ -276,6 +276,14 @@ git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.21"
 
 ################################################################################
+# RMRK dependencies
+
+# todo git
+[dependencies.rmrk-rpc]
+git = "https://github.com/UniqueNetwork/rmrk-substrate.git"
+branch = "test/tests-basic-infrastructure"
+
+################################################################################
 # Package
 
 [package]

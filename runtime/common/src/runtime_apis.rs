@@ -126,6 +126,83 @@ macro_rules! impl_common_runtime_apis {
                 }
             }
 
+            impl rmrk_rpc::RmrkApi<
+                Block,
+                AccountId,
+                RmrkCollectionInfo,
+                RmrkInstanceInfo,
+                RmrkResourceInfo,
+                RmrkPropertyInfo,
+                RmrkBaseInfo,
+                RmrkPartType,
+                RmrkTheme
+            > for Runtime {
+                fn last_collection_idx() -> Result<RmrkCollectionId, DispatchError> {
+                    Ok(<pallet_common::CreatedCollectionCount<Runtime>>::get().0)
+                }
+                fn collection_by_id(collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo>, DispatchError> {
+                    use frame_support::BoundedVec;
+
+                    let collection_id = CollectionId(collection_id);
+                    let collection = match <pallet_common::CollectionById<Runtime>>::get(collection_id) {
+                        Some(c) => c,
+                        None => return Ok(None)
+                    };
+                    let nfts_count: Result<u32, DispatchError> = dispatch_unique_runtime!(collection_id.total_supply());
+                    Ok(Some(RmrkCollectionInfo {
+                        issuer: collection.owner,
+                        metadata: BoundedVec::<u8, RmrkStringLimit>::default(), // todo take from Properties, not implemented yet
+                        max: Some(collection.limits.token_limit()), // must have some effective limits
+                        symbol: BoundedVec::<u8, RmrkCollectionSymbolLimit>::try_from(collection.token_prefix.into_inner()).unwrap_or_default() /*{
+                            Ok(s) => s,
+                            Err(_) => return Err(pallet_common::Error::<Runtime>::CollectionTokenPrefixLimitExceeded)
+                        }*/,
+                        nfts_count: nfts_count? // todo <Runtime>::total_supply(collection_id)
+                    }))
+                }
+                fn nft_by_id(collection_id: RmrkCollectionId, nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo>, DispatchError> {
+                    todo!()
+                }
+                fn account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
+                    let cross_account_id = CrossAccountId::from_sub(account_id);
+                    let collection_id = CollectionId(collection_id);
+                    Ok(
+                        (dispatch_unique_runtime!(collection_id.account_tokens(cross_account_id)) as Result<Vec<TokenId>, DispatchError>)?
+                        // todo <Runtime>::account_tokens(collection_id, cross_account_id)
+                        .into_iter()
+                        .map(|token| token.0)
+                        .collect::<Vec<_>>()
+                    )
+                }
+                fn nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
+                    todo!()
+                }
+                fn collection_properties(collection_id: RmrkCollectionId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+                    todo!()
+                }
+                fn nft_properties(collection_id: RmrkCollectionId, nft_id: RmrkNftId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+                    todo!()
+                }
+                fn nft_resources(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
+                    todo!()
+                }
+                fn nft_resource_priorities(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkResourceId>, DispatchError> {
+                    todo!()
+                }
+                fn base(base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo>, DispatchError> {
+                    todo!()
+                }
+                fn base_parts(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
+                    todo!()
+                }
+                fn theme_names(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
+                    todo!()
+                }
+                fn theme(base_id: RmrkBaseId, theme_name: RmrkThemeName, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Option<RmrkTheme>, DispatchError> {
+                    todo!()
+                }
+            }
+
             impl sp_api::Core<Block> for Runtime {
                 fn version() -> RuntimeVersion {
                     VERSION
