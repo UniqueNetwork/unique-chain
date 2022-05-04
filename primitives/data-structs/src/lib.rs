@@ -720,6 +720,17 @@ impl Properties {
 		Ok(())
 	}
 
+	pub fn remove_property(&mut self, key: &PropertyKey) {
+		let property = self.map.get(key);
+
+		if let Some(value) = property {
+			let value_len = value.len() as u32;
+
+			self.map.remove(key);
+			self.consumed_space -= value_len;
+		}
+	}
+
 	pub fn get_property(&self, key: &PropertyKey) -> Option<&PropertyValue> {
 		self.map.get(key)
 	}

@@ -294,6 +294,8 @@ pub mod pallet {
 
 		TokenPropertySet(CollectionId, TokenId, Property),
 
+		TokenPropertyDeleted(CollectionId, TokenId, PropertyKey),
+
 		PropertyPermissionSet(CollectionId, PropertyKeyPermission),
 	}
 
@@ -738,10 +740,9 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		collection.check_is_owner_or_admin(sender)?;
 
-		CollectionProperties::<T>::try_mutate(
-			collection.id,
-			|properties| properties.try_set_property(property.clone())
-		)?;
+		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
+			properties.try_set_property(property.clone())
+		})?;
 
 		Self::deposit_event(Event::CollectionPropertySet(collection.id, property));
 
@@ -763,13 +764,16 @@ impl<T: Config> Pallet<T> {
 	pub fn set_property_permission(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
-		property_permission: PropertyKeyPermission
+		property_permission: PropertyKeyPermission,
 	) -> DispatchResult {
 		collection.check_is_owner_or_admin(sender)?;
 
 		let all_permissions = CollectionPropertyPermissions::<T>::get(collection.id);
 		let current_permission = all_permissions.get(&property_permission.key);
-		if matches![current_permission, Some(PropertyPermission::AdminConst | PropertyPermission::ItemOwnerConst)] {
+		if matches![
+			current_permission,
+			Some(PropertyPermission::AdminConst | PropertyPermission::ItemOwnerConst)
+		] {
 			return Err(<Error<T>>::NoPermission.into());
 		}
 
@@ -779,7 +783,10 @@ impl<T: Config> Pallet<T> {
 		})
 		.map_err(|_| PropertiesError::PropertyLimitReached)?;
 
-		Self::deposit_event(Event::PropertyPermissionSet(collection.id, property_permission));
+		Self::deposit_event(Event::PropertyPermissionSet(
+			collection.id,
+			property_permission,
+		));
 
 		Ok(())
 	}
@@ -787,7 +794,7 @@ impl<T: Config> Pallet<T> {
 	pub fn set_property_permissions(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
-		property_permissions: Vec<PropertyKeyPermission>
+		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResult {
 		for prop_pemission in property_permissions {
 			Self::set_property_permission(collection, sender, prop_pemission)?;
@@ -950,6 +957,7 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn burn_item() -> Weight;
 	fn set_collection_properties(amount: u32) -> Weight;
 	fn set_token_properties(amount: u32) -> Weight;
+	fn delete_token_properties(amount: u32) -> Weight;
 	fn set_property_permissions(amount: u32) -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
@@ -995,6 +1003,12 @@ pub trait CommonCollectionOperations<T: Config> {
 		sender: T::CrossAccountId,
 		token_id: TokenId,
 		property: Vec<Property>,
+	) -> DispatchResultWithPostInfo;
+	fn delete_token_properties(
+		&self,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		property_keys: Vec<PropertyKey>,
 	) -> DispatchResultWithPostInfo;
 	fn set_property_permissions(
 		&self,

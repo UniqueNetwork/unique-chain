@@ -39,7 +39,7 @@ use up_data_structs::{
 	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
 	AccessMode, CreateItemData, CollectionLimits, CollectionId, CollectionMode, TokenId,
 	SchemaVersion, SponsorshipState, MetaUpdatePermission, CreateCollectionData, CustomDataLimit,
-	CreateItemExData, budget, CollectionField, Property, PropertyKeyPermission,
+	CreateItemExData, budget, CollectionField, Property, PropertyKey, PropertyKeyPermission,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
@@ -721,6 +721,21 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
 			dispatch_call::<T, _>(collection_id, |d| d.set_token_properties(sender, token_id, properties))
+		}
+
+		#[weight = T::CommonWeightInfo::delete_token_properties(properties.len() as u32)]
+		#[transactional]
+		pub fn delete_token_properties(
+			origin,
+			collection_id: CollectionId,
+			token_id: TokenId,
+			properties: Vec<PropertyKey>
+		) -> DispatchResultWithPostInfo {
+			ensure!(!properties.is_empty(), Error::<T>::EmptyArgument);
+
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+
+			dispatch_call::<T, _>(collection_id, |d| d.delete_token_properties(sender, token_id, properties))
 		}
 
 		#[weight = T::CommonWeightInfo::set_property_permissions(property_permissions.len() as u32)]

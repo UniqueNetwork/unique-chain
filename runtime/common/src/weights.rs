@@ -62,6 +62,10 @@ where
 		dispatch_weight::<T>() + max_weight_of!(set_token_properties(amount))
 	}
 
+	fn delete_token_properties(amount: u32) -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(delete_token_properties(amount))
+	}
+
 	fn set_property_permissions(amount: u32) -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(set_property_permissions(amount))
 	}

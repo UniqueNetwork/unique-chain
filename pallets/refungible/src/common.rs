@@ -20,7 +20,7 @@ use sp_std::collections::btree_map::BTreeMap;
 use frame_support::{dispatch::DispatchResultWithPostInfo, fail, weights::Weight, BoundedVec};
 use up_data_structs::{
 	CollectionId, TokenId, CustomDataLimit, CreateItemExData, CreateRefungibleExData,
-	budget::Budget, Property, PropertyKeyPermission,
+	budget::Budget, Property, PropertyKey, PropertyKeyPermission,
 };
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
@@ -72,6 +72,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn set_token_properties(amount: u32) -> Weight {
 		<SelfWeightOf<T>>::set_token_properties(amount)
+	}
+
+	fn delete_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::delete_token_properties(amount)
 	}
 
 	fn set_property_permissions(amount: u32) -> Weight {
@@ -277,6 +281,15 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		&self,
 		_sender: &T::CrossAccountId,
 		_property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::PropertiesNotAllowed)
+	}
+
+	fn delete_token_properties(
+		&self,
+		_sender: T::CrossAccountId,
+		_token_id: TokenId,
+		_property_keys: Vec<PropertyKey>,
 	) -> DispatchResultWithPostInfo {
 		fail!(<Error<T>>::PropertiesNotAllowed)
 	}

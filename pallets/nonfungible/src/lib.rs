@@ -21,7 +21,7 @@ use frame_support::{BoundedVec, ensure, fail};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
-	PropertyKeyPermission,
+	PropertyKey, PropertyKeyPermission,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
@@ -261,35 +261,7 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		property: Property,
 	) -> DispatchResult {
-		let permission = <PalletCommon<T>>::property_permission(collection.id)
-			.get(&property.key)
-			.map(|p| p.clone())
-			.unwrap_or(PropertyPermission::None);
-
-		let token_data = <TokenData<T>>::get((collection.id, token_id))
-			.ok_or(<CommonError<T>>::TokenNotFound)?;
-
-		let check_token_owner = || -> DispatchResult {
-			ensure!(&token_data.owner == sender, <CommonError<T>>::NoPermission);
-			Ok(())
-		};
-
-		let is_property_exists = TokenProperties::<T>::get((collection.id, token_id))
-			.get_property(&property.key)
-			.is_some();
-
-		match (permission, is_property_exists) {
-			(PropertyPermission::AdminConst, false) => {
-				collection.check_is_owner_or_admin(sender)?
-			}
-			(PropertyPermission::Admin, _) => collection.check_is_owner_or_admin(sender)?,
-			(PropertyPermission::ItemOwnerConst, false) => check_token_owner()?,
-			(PropertyPermission::ItemOwner, _) => check_token_owner()?,
-			(PropertyPermission::ItemOwnerOrAdmin, _) => {
-				check_token_owner().or(collection.check_is_owner_or_admin(sender))?;
-			}
-			_ => return Err(<CommonError<T>>::NoPermission.into()),
-		}
+		Self::check_token_change_permission(collection, sender, token_id, &property.key)?;
 
 		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
 			properties.try_set_property(property.clone())
@@ -317,6 +289,75 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	pub fn delete_token_property(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		property_key: PropertyKey,
+	) -> DispatchResult {
+		Self::check_token_change_permission(collection, sender, token_id, &property_key)?;
+
+		<TokenProperties<T>>::mutate((collection.id, token_id), |properties| {
+			properties.remove_property(&property_key);
+		});
+
+		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertyDeleted(
+			collection.id,
+			token_id,
+			property_key,
+		));
+
+		Ok(())
+	}
+
+	fn check_token_change_permission(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		property_key: &PropertyKey,
+	) -> DispatchResult {
+		let permission = <PalletCommon<T>>::property_permission(collection.id)
+			.get(property_key)
+			.map(|p| p.clone())
+			.unwrap_or(PropertyPermission::None);
+
+		let token_data = <TokenData<T>>::get((collection.id, token_id))
+			.ok_or(<CommonError<T>>::TokenNotFound)?;
+
+		let check_token_owner = || -> DispatchResult {
+			ensure!(&token_data.owner == sender, <CommonError<T>>::NoPermission);
+			Ok(())
+		};
+
+		let is_property_exists = TokenProperties::<T>::get((collection.id, token_id))
+			.get_property(property_key)
+			.is_some();
+
+		match (permission, is_property_exists) {
+			(PropertyPermission::AdminConst, false) => collection.check_is_owner_or_admin(sender),
+			(PropertyPermission::Admin, _) => collection.check_is_owner_or_admin(sender),
+			(PropertyPermission::ItemOwnerConst, false) => check_token_owner(),
+			(PropertyPermission::ItemOwner, _) => check_token_owner(),
+			(PropertyPermission::ItemOwnerOrAdmin, _) => {
+				check_token_owner().or(collection.check_is_owner_or_admin(sender))
+			}
+			_ => Err(<CommonError<T>>::NoPermission.into()),
+		}
+	}
+
+	pub fn delete_token_properties(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResult {
+		for key in property_keys {
+			Self::delete_token_property(collection, sender, token_id, key)?;
+		}
+
+		Ok(())
+	}
+
 	pub fn set_collection_properties(
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
@@ -328,13 +369,9 @@ impl<T: Config> Pallet<T> {
 	pub fn set_property_permissions(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
-		property_permissions: Vec<PropertyKeyPermission>
+		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResult {
-		<PalletCommon<T>>::set_property_permissions(
-			collection,
-			sender,
-			property_permissions,
-		)
+		<PalletCommon<T>>::set_property_permissions(collection, sender, property_permissions)
 	}
 
 	pub fn transfer(

@@ -18,7 +18,8 @@ use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
 use up_data_structs::{
-	TokenId, CustomDataLimit, CreateItemExData, CollectionId, budget::Budget, Property, PropertyKeyPermission,
+	TokenId, CustomDataLimit, CreateItemExData, CollectionId, budget::Budget, Property,
+	PropertyKey, PropertyKeyPermission,
 };
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
@@ -56,6 +57,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn set_token_properties(amount: u32) -> Weight {
 		<SelfWeightOf<T>>::set_token_properties(amount)
+	}
+
+	fn delete_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::delete_token_properties(amount)
 	}
 
 	fn set_property_permissions(amount: u32) -> Weight {
@@ -162,7 +167,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 		with_weight(
 			<Pallet<T>>::set_collection_properties(self, &sender, properties),
-			weight
+			weight,
 		)
 	}
 
@@ -176,7 +181,21 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 		with_weight(
 			<Pallet<T>>::set_token_properties(self, &sender, token_id, properties),
-			weight
+			weight,
+		)
+	}
+
+	fn delete_token_properties(
+		&self,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::delete_token_properties(property_keys.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::delete_token_properties(self, &sender, token_id, property_keys),
+			weight,
 		)
 	}
 
@@ -185,11 +204,12 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResultWithPostInfo {
-		let weight = <CommonWeights<T>>::set_property_permissions(property_permissions.len() as u32);
+		let weight =
+			<CommonWeights<T>>::set_property_permissions(property_permissions.len() as u32);
 
 		with_weight(
 			<Pallet<T>>::set_property_permissions(self, sender, property_permissions),
-			weight
+			weight,
 		)
 	}
 
