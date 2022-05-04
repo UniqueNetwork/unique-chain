@@ -292,6 +292,8 @@ pub mod pallet {
 
 		CollectionPropertySet(CollectionId, Property),
 
+		CollectionPropertyDeleted(CollectionId, PropertyKey),
+
 		TokenPropertySet(CollectionId, TokenId, Property),
 
 		TokenPropertyDeleted(CollectionId, TokenId, PropertyKey),
@@ -761,6 +763,34 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	pub fn delete_collection_property(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_key: PropertyKey,
+	) -> DispatchResult {
+		collection.check_is_owner_or_admin(sender)?;
+
+		CollectionProperties::<T>::mutate(collection.id, |properties| {
+			properties.remove_property(&property_key);
+		});
+
+		Self::deposit_event(Event::CollectionPropertyDeleted(collection.id, property_key));
+
+		Ok(())
+	}
+
+	pub fn delete_collection_properties(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResult {
+		for key in property_keys {
+			Self::delete_collection_property(collection, sender, key)?;
+		}
+
+		Ok(())
+	}
+
 	pub fn set_property_permission(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
@@ -956,6 +986,7 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn create_multiple_items_ex(cost: &CreateItemExData<CrossAccountId>) -> Weight;
 	fn burn_item() -> Weight;
 	fn set_collection_properties(amount: u32) -> Weight;
+	fn delete_collection_properties(amount: u32) -> Weight;
 	fn set_token_properties(amount: u32) -> Weight;
 	fn delete_token_properties(amount: u32) -> Weight;
 	fn set_property_permissions(amount: u32) -> Weight;
@@ -997,6 +1028,11 @@ pub trait CommonCollectionOperations<T: Config> {
 		&self,
 		sender: T::CrossAccountId,
 		properties: Vec<Property>,
+	) -> DispatchResultWithPostInfo;
+	fn delete_collection_properties(
+		&self,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
 	) -> DispatchResultWithPostInfo;
 	fn set_token_properties(
 		&self,

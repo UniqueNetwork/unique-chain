@@ -366,6 +366,14 @@ impl<T: Config> Pallet<T> {
 		<PalletCommon<T>>::set_collection_properties(collection, sender, properties)
 	}
 
+	pub fn delete_collection_properties(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResult {
+		<PalletCommon<T>>::delete_collection_properties(collection, sender, property_keys)
+	}
+
 	pub fn set_property_permissions(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,

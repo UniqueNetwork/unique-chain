@@ -36,6 +36,7 @@ pub trait WeightInfo {
 	fn create_multiple_items_ex(b: u32, ) -> Weight;
 	fn burn_item() -> Weight;
 	fn set_collection_properties(amount: u32) -> Weight;
+	fn delete_collection_properties(amount: u32) -> Weight;
 	fn set_token_properties(amount: u32) -> Weight;
 	fn delete_token_properties(amount: u32) -> Weight;
 	fn set_property_permissions(amount: u32) -> Weight;
@@ -75,6 +76,11 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	}
 
 	fn set_collection_properties(_amount: u32) -> Weight {
+		// Error
+		0
+	}
+
+	fn delete_collection_properties(_amount: u32) -> Weight {
 		// Error
 		0
 	}
@@ -153,6 +159,11 @@ impl WeightInfo for () {
 	}
 
 	fn set_collection_properties(_amount: u32) -> Weight {
+		// Error
+		0
+	}
+
+	fn delete_collection_properties(_amount: u32) -> Weight {
 		// Error
 		0
 	}

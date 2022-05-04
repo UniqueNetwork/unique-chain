@@ -55,6 +55,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::set_collection_properties(amount)
 	}
 
+	fn delete_collection_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::delete_collection_properties(amount)
+	}
+
 	fn set_token_properties(amount: u32) -> Weight {
 		<SelfWeightOf<T>>::set_token_properties(amount)
 	}
@@ -168,6 +172,19 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		with_weight(
 			<Pallet<T>>::set_collection_properties(self, &sender, properties),
 			weight,
+		)
+	}
+
+	fn delete_collection_properties(
+		&self,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::delete_collection_properties(property_keys.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::delete_collection_properties(self, &sender, property_keys),
+			weight
 		)
 	}
 

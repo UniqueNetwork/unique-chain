@@ -708,6 +708,20 @@ decl_module! {
 			dispatch_call::<T, _>(collection_id, |d| d.set_collection_properties(sender, properties))
 		}
 
+		#[weight = T::CommonWeightInfo::delete_collection_properties(property_keys.len() as u32)]
+		#[transactional]
+		pub fn delete_collection_properties(
+			origin,
+			collection_id: CollectionId,
+			property_keys: Vec<PropertyKey>,
+		) -> DispatchResultWithPostInfo {
+			ensure!(!property_keys.is_empty(), Error::<T>::EmptyArgument);
+
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+
+			dispatch_call::<T, _>(collection_id, |d| d.delete_collection_properties(&sender, property_keys))
+		}
+
 		#[weight = T::CommonWeightInfo::set_token_properties(properties.len() as u32)]
 		#[transactional]
 		pub fn set_token_properties(
@@ -723,19 +737,19 @@ decl_module! {
 			dispatch_call::<T, _>(collection_id, |d| d.set_token_properties(sender, token_id, properties))
 		}
 
-		#[weight = T::CommonWeightInfo::delete_token_properties(properties.len() as u32)]
+		#[weight = T::CommonWeightInfo::delete_token_properties(property_keys.len() as u32)]
 		#[transactional]
 		pub fn delete_token_properties(
 			origin,
 			collection_id: CollectionId,
 			token_id: TokenId,
-			properties: Vec<PropertyKey>
+			property_keys: Vec<PropertyKey>
 		) -> DispatchResultWithPostInfo {
-			ensure!(!properties.is_empty(), Error::<T>::EmptyArgument);
+			ensure!(!property_keys.is_empty(), Error::<T>::EmptyArgument);
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_call::<T, _>(collection_id, |d| d.delete_token_properties(sender, token_id, properties))
+			dispatch_call::<T, _>(collection_id, |d| d.delete_token_properties(sender, token_id, property_keys))
 		}
 
 		#[weight = T::CommonWeightInfo::set_property_permissions(property_permissions.len() as u32)]

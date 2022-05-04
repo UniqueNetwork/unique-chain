@@ -70,6 +70,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::set_collection_properties(amount)
 	}
 
+	fn delete_collection_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::delete_collection_properties(amount)
+	}
+
 	fn set_token_properties(amount: u32) -> Weight {
 		<SelfWeightOf<T>>::set_token_properties(amount)
 	}
@@ -264,6 +268,14 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		&self,
 		_sender: T::CrossAccountId,
 		_property: Vec<Property>,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::PropertiesNotAllowed)
+	}
+
+	fn delete_collection_properties(
+		&self,
+		_sender: &T::CrossAccountId,
+		_property_keys: Vec<PropertyKey>,
 	) -> DispatchResultWithPostInfo {
 		fail!(<Error<T>>::PropertiesNotAllowed)
 	}
