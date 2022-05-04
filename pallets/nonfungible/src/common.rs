@@ -50,16 +50,16 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::burn_item()
 	}
 
-	fn change_collection_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::change_collection_properties(amount)
+	fn set_collection_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_collection_properties(amount)
 	}
 
-	fn change_token_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::change_token_properties(amount)
+	fn set_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_token_properties(amount)
 	}
 
-	fn change_property_permissions(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::change_property_permissions(amount)
+	fn set_property_permissions(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_property_permissions(amount)
 	}
 
 	fn transfer() -> Weight {
@@ -153,42 +153,42 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		)
 	}
 
-	fn change_collection_properties(
+	fn set_collection_properties(
 		&self,
 		sender: T::CrossAccountId,
 		properties: Vec<Property>,
 	) -> DispatchResultWithPostInfo {
-		let weight = <CommonWeights<T>>::change_collection_properties(properties.len() as u32);
+		let weight = <CommonWeights<T>>::set_collection_properties(properties.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::change_collection_properties(self, &sender, properties),
+			<Pallet<T>>::set_collection_properties(self, &sender, properties),
 			weight
 		)
 	}
 
-	fn change_token_properties(
+	fn set_token_properties(
 		&self,
 		sender: T::CrossAccountId,
 		token_id: TokenId,
 		properties: Vec<Property>,
 	) -> DispatchResultWithPostInfo {
-		let weight = <CommonWeights<T>>::change_token_properties(properties.len() as u32);
+		let weight = <CommonWeights<T>>::set_token_properties(properties.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::change_token_properties(self, &sender, token_id, properties),
+			<Pallet<T>>::set_token_properties(self, &sender, token_id, properties),
 			weight
 		)
 	}
 
-	fn change_property_permissions(
+	fn set_property_permissions(
 		&self,
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResultWithPostInfo {
-		let weight = <CommonWeights<T>>::change_property_permissions(property_permissions.len() as u32);
+		let weight = <CommonWeights<T>>::set_property_permissions(property_permissions.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::change_property_permissions(self, sender, property_permissions),
+			<Pallet<T>>::set_property_permissions(self, sender, property_permissions),
 			weight
 		)
 	}

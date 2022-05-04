@@ -38,9 +38,9 @@ pub trait WeightInfo {
 	fn create_multiple_items_ex_multiple_owners(b: u32, ) -> Weight;
 	fn burn_item_partial() -> Weight;
 	fn burn_item_fully() -> Weight;
-	fn change_collection_properties(amount: u32) -> Weight;
-	fn change_token_properties(amount: u32) -> Weight;
-	fn change_property_permissions(amount: u32) -> Weight;
+	fn set_collection_properties(amount: u32) -> Weight;
+	fn set_token_properties(amount: u32) -> Weight;
+	fn set_property_permissions(amount: u32) -> Weight;
 	fn transfer_normal() -> Weight;
 	fn transfer_creating() -> Weight;
 	fn transfer_removing() -> Weight;
@@ -133,17 +133,17 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
 
-	fn change_collection_properties(amount: u32) -> Weight {
+	fn set_collection_properties(amount: u32) -> Weight {
 		// Error
 		0
 	}
 
-	fn change_token_properties(amount: u32) -> Weight {
+	fn set_token_properties(amount: u32) -> Weight {
 		// Error
 		0
 	}
 
-	fn change_property_permissions(amount: u32) -> Weight {
+	fn set_property_permissions(amount: u32) -> Weight {
 		// Error
 		0
 	}
@@ -317,17 +317,17 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
 
-	fn change_collection_properties(amount: u32) -> Weight {
+	fn set_collection_properties(amount: u32) -> Weight {
 		// Error
 		0
 	}
 
-	fn change_token_properties(amount: u32) -> Weight {
+	fn set_token_properties(amount: u32) -> Weight {
 		// Error
 		0
 	}
 
-	fn change_property_permissions(amount: u32) -> Weight {
+	fn set_property_permissions(amount: u32) -> Weight {
 		// Error
 		0
 	}

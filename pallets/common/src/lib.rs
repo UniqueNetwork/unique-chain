@@ -731,7 +731,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn change_collection_property(
+	pub fn set_collection_property(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		property: Property,
@@ -740,7 +740,7 @@ impl<T: Config> Pallet<T> {
 
 		CollectionProperties::<T>::try_mutate(
 			collection.id,
-			|properties| properties.try_change_property(property.clone())
+			|properties| properties.try_set_property(property.clone())
 		)?;
 
 		Self::deposit_event(Event::CollectionPropertySet(collection.id, property));
@@ -748,19 +748,19 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn change_collection_properties(
+	pub fn set_collection_properties(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		properties: Vec<Property>,
 	) -> DispatchResult {
 		for property in properties {
-			Self::change_collection_property(collection, sender, property)?;
+			Self::set_collection_property(collection, sender, property)?;
 		}
 
 		Ok(())
 	}
 
-	pub fn change_property_permission(
+	pub fn set_property_permission(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		property_permission: PropertyKeyPermission
@@ -784,13 +784,13 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn change_property_permissions(
+	pub fn set_property_permissions(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>
 	) -> DispatchResult {
 		for prop_pemission in property_permissions {
-			Self::change_property_permission(collection, sender, prop_pemission)?;
+			Self::set_property_permission(collection, sender, prop_pemission)?;
 		}
 
 		Ok(())
@@ -948,9 +948,9 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn create_multiple_items(amount: u32) -> Weight;
 	fn create_multiple_items_ex(cost: &CreateItemExData<CrossAccountId>) -> Weight;
 	fn burn_item() -> Weight;
-	fn change_collection_properties(amount: u32) -> Weight;
-	fn change_token_properties(amount: u32) -> Weight;
-	fn change_property_permissions(amount: u32) -> Weight;
+	fn set_collection_properties(amount: u32) -> Weight;
+	fn set_token_properties(amount: u32) -> Weight;
+	fn set_property_permissions(amount: u32) -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
@@ -985,18 +985,18 @@ pub trait CommonCollectionOperations<T: Config> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResultWithPostInfo;
-	fn change_collection_properties(
+	fn set_collection_properties(
 		&self,
 		sender: T::CrossAccountId,
 		properties: Vec<Property>,
 	) -> DispatchResultWithPostInfo;
-	fn change_token_properties(
+	fn set_token_properties(
 		&self,
 		sender: T::CrossAccountId,
 		token_id: TokenId,
 		property: Vec<Property>,
 	) -> DispatchResultWithPostInfo;
-	fn change_property_permissions(
+	fn set_property_permissions(
 		&self,
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,

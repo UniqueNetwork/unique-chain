@@ -36,9 +36,9 @@ pub trait WeightInfo {
 	fn create_multiple_items(b: u32, ) -> Weight;
 	fn create_multiple_items_ex(b: u32, ) -> Weight;
 	fn burn_item() -> Weight;
-	fn change_collection_properties(amount: u32) -> Weight;
-	fn change_token_properties(amount: u32) -> Weight;
-	fn change_property_permissions(amount: u32) -> Weight;
+	fn set_collection_properties(amount: u32) -> Weight;
+	fn set_token_properties(amount: u32) -> Weight;
+	fn set_property_permissions(amount: u32) -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
@@ -94,17 +94,17 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 
-	fn change_collection_properties(amount: u32) -> Weight {
+	fn set_collection_properties(amount: u32) -> Weight {
 		// TODO calculate appropriate weight
 		(50_000_000 as Weight).saturating_mul(amount as Weight)
 	}
 
-	fn change_token_properties(amount: u32) -> Weight {
+	fn set_token_properties(amount: u32) -> Weight {
 		// TODO calculate appropriate weight
 		(50_000_000 as Weight).saturating_mul(amount as Weight)
 	}
 
-	fn change_property_permissions(amount: u32) -> Weight {
+	fn set_property_permissions(amount: u32) -> Weight {
 		// TODO calculate appropriate weight
 		(50_000_000 as Weight).saturating_mul(amount as Weight)
 	}
@@ -199,17 +199,17 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
 
-	fn change_collection_properties(amount: u32) -> Weight {
+	fn set_collection_properties(amount: u32) -> Weight {
 		// TODO calculate appropriate weight
 		(50_000_000 as Weight).saturating_mul(amount as Weight)
 	}
 
-	fn change_token_properties(amount: u32) -> Weight {
+	fn set_token_properties(amount: u32) -> Weight {
 		// TODO calculate appropriate weight
 		(50_000_000 as Weight).saturating_mul(amount as Weight)
 	}
 
-	fn change_property_permissions(amount: u32) -> Weight {
+	fn set_property_permissions(amount: u32) -> Weight {
 		// TODO calculate appropriate weight
 		(50_000_000 as Weight).saturating_mul(amount as Weight)
 	}

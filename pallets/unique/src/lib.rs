@@ -694,9 +694,9 @@ decl_module! {
 			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items(sender, owner, items_data, &budget))
 		}
 
-		#[weight = T::CommonWeightInfo::change_collection_properties(properties.len() as u32)]
+		#[weight = T::CommonWeightInfo::set_collection_properties(properties.len() as u32)]
 		#[transactional]
-		pub fn change_collection_properties(
+		pub fn set_collection_properties(
 			origin,
 			collection_id: CollectionId,
 			properties: Vec<Property>
@@ -705,12 +705,12 @@ decl_module! {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_call::<T, _>(collection_id, |d| d.change_collection_properties(sender, properties))
+			dispatch_call::<T, _>(collection_id, |d| d.set_collection_properties(sender, properties))
 		}
 
-		#[weight = T::CommonWeightInfo::change_token_properties(properties.len() as u32)]
+		#[weight = T::CommonWeightInfo::set_token_properties(properties.len() as u32)]
 		#[transactional]
-		pub fn change_token_properties(
+		pub fn set_token_properties(
 			origin,
 			collection_id: CollectionId,
 			token_id: TokenId,
@@ -720,12 +720,12 @@ decl_module! {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_call::<T, _>(collection_id, |d| d.change_token_properties(sender, token_id, properties))
+			dispatch_call::<T, _>(collection_id, |d| d.set_token_properties(sender, token_id, properties))
 		}
 
-		#[weight = T::CommonWeightInfo::change_property_permissions(property_permissions.len() as u32)]
+		#[weight = T::CommonWeightInfo::set_property_permissions(property_permissions.len() as u32)]
 		#[transactional]
-		pub fn change_property_permissions(
+		pub fn set_property_permissions(
 			origin,
 			collection_id: CollectionId,
 			property_permissions: Vec<PropertyKeyPermission>,
@@ -734,7 +734,7 @@ decl_module! {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_call::<T, _>(collection_id, |d| d.change_property_permissions(&sender, property_permissions))
+			dispatch_call::<T, _>(collection_id, |d| d.set_property_permissions(&sender, property_permissions))
 		}
 
 		#[weight = T::CommonWeightInfo::create_multiple_items_ex(&data)]

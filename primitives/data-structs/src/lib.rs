@@ -698,13 +698,13 @@ impl Properties {
 		let mut props = Self::new(MAX_COLLECTION_PROPERTIES_SIZE);
 
 		for property in data.into_iter() {
-			props.try_change_property(property)?;
+			props.try_set_property(property)?;
 		}
 
 		Ok(props)
 	}
 
-	pub fn try_change_property(&mut self, property: Property) -> Result<(), PropertiesError> {
+	pub fn try_set_property(&mut self, property: Property) -> Result<(), PropertiesError> {
 		let value_len = property.value.len();
 
 		if self.consumed_space as usize + value_len > self.space_limit as usize {
@@ -740,17 +740,3 @@ impl Get<Properties> for TokenProperties {
 		Properties::new(MAX_TOKEN_PROPERTIES_SIZE)
 	}
 }
-
-// #[cfg(not(feature = "std"))]
-// fn properties_map_debug(_properties: &PropertiesMap, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-// 	write!(f, "<properties>")
-// }
-
-// #[cfg(not(feature = "std"))]
-// fn opt_properties_permissions_map_debug(properties: &Option<PropertiesPermissionMap>, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-// 	if properties.is_some() {
-// 		write!(f, "Some(<properties permissions>)")
-// 	 } else {
-// 		write!(f, "None")
-// 	}
-// }

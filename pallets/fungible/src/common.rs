@@ -50,16 +50,16 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::burn_item()
 	}
 
-	fn change_collection_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::change_collection_properties(amount)
+	fn set_collection_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_collection_properties(amount)
 	}
 
-	fn change_token_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::change_token_properties(amount)
+	fn set_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_token_properties(amount)
 	}
 
-	fn change_property_permissions(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::change_property_permissions(amount)
+	fn set_property_permissions(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_property_permissions(amount)
 	}
 
 	fn transfer() -> Weight {
@@ -237,7 +237,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		)
 	}
 
-	fn change_collection_properties(
+	fn set_collection_properties(
 		&self,
 		_sender: T::CrossAccountId,
 		_property: Vec<Property>,
@@ -245,7 +245,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		fail!(<Error<T>>::PropertiesNotAllowed)
 	}
 
-	fn change_token_properties(
+	fn set_token_properties(
 		&self,
 		_sender: T::CrossAccountId,
 		_token_id: TokenId,
@@ -254,7 +254,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		fail!(<Error<T>>::PropertiesNotAllowed)
 	}
 
-	fn change_property_permissions(
+	fn set_property_permissions(
 		&self,
 		_sender: &T::CrossAccountId,
 		_property_permissions: Vec<PropertyKeyPermission>,

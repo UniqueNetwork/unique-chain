@@ -255,7 +255,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn change_token_property(
+	pub fn set_token_property(
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
@@ -292,7 +292,7 @@ impl<T: Config> Pallet<T> {
 		}
 
 		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
-			properties.try_change_property(property.clone())
+			properties.try_set_property(property.clone())
 		})?;
 
 		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
@@ -304,33 +304,33 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn change_token_properties(
+	pub fn set_token_properties(
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties: Vec<Property>,
 	) -> DispatchResult {
 		for property in properties {
-			Self::change_token_property(collection, sender, token_id, property)?;
+			Self::set_token_property(collection, sender, token_id, property)?;
 		}
 
 		Ok(())
 	}
 
-	pub fn change_collection_properties(
+	pub fn set_collection_properties(
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		properties: Vec<Property>,
 	) -> DispatchResult {
-		<PalletCommon<T>>::change_collection_properties(collection, sender, properties)
+		<PalletCommon<T>>::set_collection_properties(collection, sender, properties)
 	}
 
-	pub fn change_property_permissions(
+	pub fn set_property_permissions(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>
 	) -> DispatchResult {
-		<PalletCommon<T>>::change_property_permissions(
+		<PalletCommon<T>>::set_property_permissions(
 			collection,
 			sender,
 			property_permissions,
