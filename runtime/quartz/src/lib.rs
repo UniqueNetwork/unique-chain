@@ -280,7 +280,7 @@ impl pallet_evm::Config for Runtime {
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type OnChargeTransaction = pallet_evm_transaction_payment::OnChargeTransaction<Self>;
+	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, DealWithFees>;
 	type TransactionValidityHack = pallet_evm_transaction_payment::TransactionValidityHack<Self>;
 	type FindAuthor = EthereumFindAuthor<Aura>;
 }
