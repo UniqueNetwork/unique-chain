@@ -365,6 +365,10 @@ pub mod pallet {
 
 		/// Tried to store more data than allowed in collection field
 		CollectionFieldSizeExceeded,
+
+		NoSpaceForProperty,
+
+		PropertyLimitReached,
 	}
 
 	#[pallet::storage]
@@ -651,7 +655,10 @@ impl<T: Config> Pallet<T> {
 
 		CollectionProperties::<T>::insert(
 			id,
-			Properties::from_collection_props_vec(data.properties)?,
+			Properties::from_collection_props_vec(data.properties)
+				.map_err(|e| -> Error::<T> {
+					e.into()
+				})?,
 		);
 
 		let token_props_permissions: PropertiesPermissionMap = data
@@ -660,7 +667,9 @@ impl<T: Config> Pallet<T> {
 			.map(|property| (property.key, property.permission))
 			.collect::<BTreeMap<_, _>>()
 			.try_into()
-			.map_err(|_| PropertiesError::PropertyLimitReached)?;
+			.map_err(|_| -> Error::<T> {
+				PropertiesError::PropertyLimitReached.into()
+			})?;
 
 		CollectionPropertyPermissions::<T>::insert(id, token_props_permissions);
 
@@ -744,6 +753,9 @@ impl<T: Config> Pallet<T> {
 
 		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
 			properties.try_set_property(property.clone())
+		})
+		.map_err(|e| -> Error::<T> {
+			e.into()
 		})?;
 
 		Self::deposit_event(Event::CollectionPropertySet(collection.id, property));
@@ -811,7 +823,9 @@ impl<T: Config> Pallet<T> {
 			let property_permission = property_permission.clone();
 			permissions.try_insert(property_permission.key, property_permission.permission)
 		})
-		.map_err(|_| PropertiesError::PropertyLimitReached)?;
+		.map_err(|_| -> Error::<T> {
+			PropertiesError::PropertyLimitReached.into()
+		})?;
 
 		Self::deposit_event(Event::PropertyPermissionSet(
 			collection.id,
@@ -1131,5 +1145,14 @@ pub fn with_weight(res: DispatchResult, weight: Weight) -> DispatchResultWithPos
 	match res {
 		Ok(()) => Ok(post_info),
 		Err(error) => Err(DispatchErrorWithPostInfo { post_info, error }),
+	}
+}
+
+impl<T: Config> From<PropertiesError> for Error<T> {
+	fn from(error: PropertiesError) -> Self {
+		match error {
+			PropertiesError::NoSpaceForProperty => Self::NoSpaceForProperty,
+			PropertiesError::PropertyLimitReached => Self::PropertyLimitReached,
+		}
 	}
 }

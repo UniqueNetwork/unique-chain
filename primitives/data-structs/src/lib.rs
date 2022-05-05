@@ -660,17 +660,6 @@ pub enum PropertiesError {
 	PropertyLimitReached,
 }
 
-impl From<PropertiesError> for DispatchError {
-	fn from(error: PropertiesError) -> Self {
-		match error {
-			PropertiesError::NoSpaceForProperty => DispatchError::Other("no space for property"),
-			PropertiesError::PropertyLimitReached => {
-				DispatchError::Other("property key limit reached")
-			}
-		}
-	}
-}
-
 pub type PropertiesMap =
 	BoundedBTreeMap<PropertyKey, PropertyValue, ConstU32<MAX_PROPERTIES_PER_ITEM>>;
 pub type PropertiesPermissionMap =

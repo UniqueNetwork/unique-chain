@@ -265,6 +265,8 @@ impl<T: Config> Pallet<T> {
 
 		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
 			properties.try_set_property(property.clone())
+		}).map_err(|e| -> CommonError::<T> {
+			e.into()
 		})?;
 
 		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
