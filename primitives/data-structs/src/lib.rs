@@ -634,6 +634,7 @@ pub type PropertyKey = BoundedVec<u8, ConstU32<MAX_PROPERTY_KEY_LENGTH>>;
 pub type PropertyValue = BoundedVec<u8, ConstU32<MAX_PROPERTY_VALUE_LENGTH>>;
 
 #[derive(Encode, Decode, TypeInfo, Debug, MaxEncodedLen, PartialEq, Clone)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum PropertyPermission {
 	None,
 	AdminConst,
@@ -644,14 +645,21 @@ pub enum PropertyPermission {
 }
 
 #[derive(Encode, Decode, Debug, TypeInfo, Clone, PartialEq, MaxEncodedLen)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct Property {
+	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	pub key: PropertyKey,
+
+	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	pub value: PropertyValue,
 }
 
 #[derive(Encode, Decode, TypeInfo, Debug, MaxEncodedLen, PartialEq, Clone)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct PropertyKeyPermission {
+	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	pub key: PropertyKey,
+
 	pub permission: PropertyPermission,
 }
 
@@ -722,6 +730,10 @@ impl Properties {
 
 	pub fn get_property(&self, key: &PropertyKey) -> Option<&PropertyValue> {
 		self.map.get(key)
+	}
+
+	pub fn iter(&self) -> impl Iterator<Item = (&PropertyKey, &PropertyValue)> {
+		self.map.iter()
 	}
 }
 

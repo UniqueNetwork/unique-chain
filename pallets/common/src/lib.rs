@@ -388,6 +388,7 @@ pub mod pallet {
 
 	/// Collection properties
 	#[pallet::storage]
+	#[pallet::getter(fn collection_properties)]
 	pub type CollectionProperties<T> = StorageMap<
 		Hasher = Blake2_128Concat,
 		Key = CollectionId,
@@ -397,7 +398,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn property_permission)]
+	#[pallet::getter(fn property_permissions)]
 	pub type CollectionPropertyPermissions<T> = StorageMap<
 		Hasher = Blake2_128Concat,
 		Key = CollectionId,
@@ -656,9 +657,7 @@ impl<T: Config> Pallet<T> {
 		CollectionProperties::<T>::insert(
 			id,
 			Properties::from_collection_props_vec(data.properties)
-				.map_err(|e| -> Error::<T> {
-					e.into()
-				})?,
+				.map_err(|e| -> Error<T> { e.into() })?,
 		);
 
 		let token_props_permissions: PropertiesPermissionMap = data
@@ -667,9 +666,7 @@ impl<T: Config> Pallet<T> {
 			.map(|property| (property.key, property.permission))
 			.collect::<BTreeMap<_, _>>()
 			.try_into()
-			.map_err(|_| -> Error::<T> {
-				PropertiesError::PropertyLimitReached.into()
-			})?;
+			.map_err(|_| -> Error<T> { PropertiesError::PropertyLimitReached.into() })?;
 
 		CollectionPropertyPermissions::<T>::insert(id, token_props_permissions);
 
@@ -754,9 +751,7 @@ impl<T: Config> Pallet<T> {
 		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
 			properties.try_set_property(property.clone())
 		})
-		.map_err(|e| -> Error::<T> {
-			e.into()
-		})?;
+		.map_err(|e| -> Error<T> { e.into() })?;
 
 		Self::deposit_event(Event::CollectionPropertySet(collection.id, property));
 
@@ -786,7 +781,10 @@ impl<T: Config> Pallet<T> {
 			properties.remove_property(&property_key);
 		});
 
-		Self::deposit_event(Event::CollectionPropertyDeleted(collection.id, property_key));
+		Self::deposit_event(Event::CollectionPropertyDeleted(
+			collection.id,
+			property_key,
+		));
 
 		Ok(())
 	}
@@ -823,9 +821,7 @@ impl<T: Config> Pallet<T> {
 			let property_permission = property_permission.clone();
 			permissions.try_insert(property_permission.key, property_permission.permission)
 		})
-		.map_err(|_| -> Error::<T> {
-			PropertiesError::PropertyLimitReached.into()
-		})?;
+		.map_err(|_| -> Error<T> { PropertiesError::PropertyLimitReached.into() })?;
 
 		Self::deposit_event(Event::PropertyPermissionSet(
 			collection.id,

@@ -19,7 +19,10 @@ use std::sync::Arc;
 use codec::Decode;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
-use up_data_structs::{RpcCollection, CollectionId, CollectionStats, CollectionLimits, TokenId};
+use up_data_structs::{
+	RpcCollection, CollectionId, CollectionStats, CollectionLimits, TokenId, Property, PropertyKey,
+	PropertyKeyPermission,
+};
 use sp_api::{BlockId, BlockT, ProvideRuntimeApi, ApiExt};
 use sp_blockchain::HeaderBackend;
 use up_rpc::UniqueApi as UniqueRuntimeApi;
@@ -75,6 +78,31 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<u8>>;
+
+	#[rpc(name = "unique_collectionProperties")]
+	fn collection_properties(
+		&self,
+		collection: CollectionId,
+		keys: Vec<String>,
+		at: Option<BlockHash>,
+	) -> Result<Vec<Property>>;
+
+	#[rpc(name = "unique_tokenProperties")]
+	fn token_properties(
+		&self,
+		collection: CollectionId,
+		token_id: TokenId,
+		properties: Vec<String>,
+		at: Option<BlockHash>,
+	) -> Result<Vec<Property>>;
+
+	#[rpc(name = "unique_propertyPermissions")]
+	fn property_permissions(
+		&self,
+		collection: CollectionId,
+		keys: Vec<String>,
+		at: Option<BlockHash>,
+	) -> Result<Vec<PropertyKeyPermission>>;
 
 	#[rpc(name = "unique_totalSupply")]
 	fn total_supply(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<u32>;
@@ -177,7 +205,9 @@ impl From<Error> for i64 {
 
 macro_rules! pass_method {
 	(
-		$method_name:ident($($name:ident: $ty:ty),* $(,)?) -> $result:ty $(=> $mapper:expr)?
+		$method_name:ident(
+			$($(#[map(|$map_arg:ident| $map:expr)])? $name:ident: $ty:ty),* $(,)?
+		) -> $result:ty $(=> $mapper:expr)?
 		$(; changed_in $ver:expr, $changed_method_name:ident ($($changed_name:expr), * $(,)?) => $fixer:expr)*
 	) => {
 		fn $method_name(
@@ -205,7 +235,7 @@ macro_rules! pass_method {
 			let result = $(if _api_version < $ver {
 				api.$changed_method_name(&at, $($changed_name),*).map(|r| r.map($fixer))
 			} else)*
-			{ api.$method_name(&at, $($name),*) };
+			{ api.$method_name(&at, $($((|$map_arg: $ty| $map))? ($name)),*) };
 
 			let result = result.map_err(|e| RpcError {
 				code: ErrorCode::ServerError(Error::RuntimeError.into()),
@@ -242,6 +272,28 @@ where
 	pass_method!(const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
 	pass_method!(variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
 
+	pass_method!(collection_properties(
+		collection: CollectionId,
+
+		#[map(|keys| string_keys_to_bytes_keys(keys))]
+		keys: Vec<String>
+	) -> Vec<Property>);
+
+	pass_method!(token_properties(
+		collection: CollectionId,
+		token_id: TokenId,
+
+		#[map(|keys| string_keys_to_bytes_keys(keys))]
+		properties: Vec<String>
+	) -> Vec<Property>);
+
+	pass_method!(property_permissions(
+		collection: CollectionId,
+
+		#[map(|keys| string_keys_to_bytes_keys(keys))]
+		keys: Vec<String>
+	) -> Vec<PropertyKeyPermission>);
+
 	pass_method!(total_supply(collection: CollectionId) -> u32);
 	pass_method!(account_balance(collection: CollectionId, account: CrossAccountId) -> u32);
 	pass_method!(balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> String => |v| v.to_string());
@@ -255,4 +307,8 @@ where
 	pass_method!(collection_stats() -> CollectionStats);
 	pass_method!(next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Option<u64>);
 	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>);
+}
+
+fn string_keys_to_bytes_keys(keys: Vec<String>) -> Vec<Vec<u8>> {
+	keys.into_iter().map(|key| key.into_bytes()).collect()
 }

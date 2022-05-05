@@ -184,7 +184,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 		with_weight(
 			<Pallet<T>>::delete_collection_properties(self, &sender, property_keys),
-			weight
+			weight,
 		)
 	}
 

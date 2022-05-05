@@ -96,6 +96,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn token_properties)]
 	pub type TokenProperties<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
 		Value = up_data_structs::Properties,
@@ -265,9 +266,8 @@ impl<T: Config> Pallet<T> {
 
 		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
 			properties.try_set_property(property.clone())
-		}).map_err(|e| -> CommonError::<T> {
-			e.into()
-		})?;
+		})
+		.map_err(|e| -> CommonError<T> { e.into() })?;
 
 		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
 			collection.id,
@@ -318,7 +318,7 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		property_key: &PropertyKey,
 	) -> DispatchResult {
-		let permission = <PalletCommon<T>>::property_permission(collection.id)
+		let permission = <PalletCommon<T>>::property_permissions(collection.id)
 			.get(property_key)
 			.map(|p| p.clone())
 			.unwrap_or(PropertyPermission::None);
