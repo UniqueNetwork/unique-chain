@@ -105,8 +105,8 @@ export interface CumulusPalletParachainSystemEvent extends Enum {
 export interface CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot extends Struct {
   readonly dmqMqcHead: H256;
   readonly relayDispatchQueueSize: ITuple<[u32, u32]>;
-  readonly ingressChannels: Vec<ITuple<[u32, PolkadotPrimitivesV2AbridgedHrmpChannel]>>;
-  readonly egressChannels: Vec<ITuple<[u32, PolkadotPrimitivesV2AbridgedHrmpChannel]>>;
+  readonly ingressChannels: Vec<ITuple<[u32, PolkadotPrimitivesV1AbridgedHrmpChannel]>>;
+  readonly egressChannels: Vec<ITuple<[u32, PolkadotPrimitivesV1AbridgedHrmpChannel]>>;
 }
 
 /** @name CumulusPalletXcmCall */
@@ -235,7 +235,7 @@ export interface CumulusPalletXcmpQueueQueueConfigData extends Struct {
 
 /** @name CumulusPrimitivesParachainInherentParachainInherentData */
 export interface CumulusPrimitivesParachainInherentParachainInherentData extends Struct {
-  readonly validationData: PolkadotPrimitivesV2PersistedValidationData;
+  readonly validationData: PolkadotPrimitivesV1PersistedValidationData;
   readonly relayChainState: SpTrieStorageProof;
   readonly downwardMessages: Vec<PolkadotCorePrimitivesInboundDownwardMessage>;
   readonly horizontalMessages: BTreeMap<u32, Vec<PolkadotCorePrimitivesInboundHrmpMessage>>;
@@ -383,6 +383,7 @@ export interface EvmCoreErrorExitError extends Enum {
   readonly isCallTooDeep: boolean;
   readonly isCreateCollision: boolean;
   readonly isCreateContractLimit: boolean;
+  readonly isInvalidCode: boolean;
   readonly isOutOfOffset: boolean;
   readonly isOutOfGas: boolean;
   readonly isOutOfFund: boolean;
@@ -390,8 +391,7 @@ export interface EvmCoreErrorExitError extends Enum {
   readonly isCreateEmpty: boolean;
   readonly isOther: boolean;
   readonly asOther: Text;
-  readonly isInvalidCode: boolean;
-  readonly type: 'StackUnderflow' | 'StackOverflow' | 'InvalidJump' | 'InvalidRange' | 'DesignatedInvalid' | 'CallTooDeep' | 'CreateCollision' | 'CreateContractLimit' | 'OutOfOffset' | 'OutOfGas' | 'OutOfFund' | 'PcUnderflow' | 'CreateEmpty' | 'Other' | 'InvalidCode';
+  readonly type: 'StackUnderflow' | 'StackOverflow' | 'InvalidJump' | 'InvalidRange' | 'DesignatedInvalid' | 'CallTooDeep' | 'CreateCollision' | 'CreateContractLimit' | 'InvalidCode' | 'OutOfOffset' | 'OutOfGas' | 'OutOfFund' | 'PcUnderflow' | 'CreateEmpty' | 'Other';
 }
 
 /** @name EvmCoreErrorExitFatal */
@@ -894,7 +894,9 @@ export interface PalletCommonError extends Enum {
   readonly isOnlyOwnerAllowedToNest: boolean;
   readonly isSourceCollectionIsNotAllowedToNest: boolean;
   readonly isCollectionFieldSizeExceeded: boolean;
-  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'TokenVariableDataLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'NestingIsDisabled' | 'OnlyOwnerAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded';
+  readonly isNoSpaceForProperty: boolean;
+  readonly isPropertyLimitReached: boolean;
+  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'TokenVariableDataLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'NestingIsDisabled' | 'OnlyOwnerAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached';
 }
 
 /** @name PalletCommonEvent */
@@ -911,7 +913,17 @@ export interface PalletCommonEvent extends Enum {
   readonly asTransfer: ITuple<[u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
   readonly isApproved: boolean;
   readonly asApproved: ITuple<[u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
-  readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'ItemCreated' | 'ItemDestroyed' | 'Transfer' | 'Approved';
+  readonly isCollectionPropertySet: boolean;
+  readonly asCollectionPropertySet: ITuple<[u32, UpDataStructsProperty]>;
+  readonly isCollectionPropertyDeleted: boolean;
+  readonly asCollectionPropertyDeleted: ITuple<[u32, Bytes]>;
+  readonly isTokenPropertySet: boolean;
+  readonly asTokenPropertySet: ITuple<[u32, u32, UpDataStructsProperty]>;
+  readonly isTokenPropertyDeleted: boolean;
+  readonly asTokenPropertyDeleted: ITuple<[u32, u32, Bytes]>;
+  readonly isPropertyPermissionSet: boolean;
+  readonly asPropertyPermissionSet: ITuple<[u32, UpDataStructsPropertyKeyPermission]>;
+  readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'ItemCreated' | 'ItemDestroyed' | 'Transfer' | 'Approved' | 'CollectionPropertySet' | 'CollectionPropertyDeleted' | 'TokenPropertySet' | 'TokenPropertyDeleted' | 'PropertyPermissionSet';
 }
 
 /** @name PalletEthereumCall */
@@ -1074,7 +1086,8 @@ export interface PalletFungibleError extends Enum {
   readonly isFungibleItemsHaveNoId: boolean;
   readonly isFungibleItemsDontHaveData: boolean;
   readonly isFungibleDisallowsNesting: boolean;
-  readonly type: 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'FungibleItemsHaveNoId' | 'FungibleItemsDontHaveData' | 'FungibleDisallowsNesting';
+  readonly isPropertiesNotAllowed: boolean;
+  readonly type: 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'FungibleItemsHaveNoId' | 'FungibleItemsDontHaveData' | 'FungibleDisallowsNesting' | 'PropertiesNotAllowed';
 }
 
 /** @name PalletInflationCall */
@@ -1105,7 +1118,8 @@ export interface PalletRefungibleError extends Enum {
   readonly isNotRefungibleDataUsedToMintFungibleCollectionToken: boolean;
   readonly isWrongRefungiblePieces: boolean;
   readonly isRefungibleDisallowsNesting: boolean;
-  readonly type: 'NotRefungibleDataUsedToMintFungibleCollectionToken' | 'WrongRefungiblePieces' | 'RefungibleDisallowsNesting';
+  readonly isPropertiesNotAllowed: boolean;
+  readonly type: 'NotRefungibleDataUsedToMintFungibleCollectionToken' | 'WrongRefungiblePieces' | 'RefungibleDisallowsNesting' | 'PropertiesNotAllowed';
 }
 
 /** @name PalletRefungibleItemData */
@@ -1347,6 +1361,33 @@ export interface PalletUniqueCall extends Enum {
     readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
     readonly itemsData: Vec<UpDataStructsCreateItemData>;
   } & Struct;
+  readonly isSetCollectionProperties: boolean;
+  readonly asSetCollectionProperties: {
+    readonly collectionId: u32;
+    readonly properties: Vec<UpDataStructsProperty>;
+  } & Struct;
+  readonly isDeleteCollectionProperties: boolean;
+  readonly asDeleteCollectionProperties: {
+    readonly collectionId: u32;
+    readonly propertyKeys: Vec<Bytes>;
+  } & Struct;
+  readonly isSetTokenProperties: boolean;
+  readonly asSetTokenProperties: {
+    readonly collectionId: u32;
+    readonly tokenId: u32;
+    readonly properties: Vec<UpDataStructsProperty>;
+  } & Struct;
+  readonly isDeleteTokenProperties: boolean;
+  readonly asDeleteTokenProperties: {
+    readonly collectionId: u32;
+    readonly tokenId: u32;
+    readonly propertyKeys: Vec<Bytes>;
+  } & Struct;
+  readonly isSetPropertyPermissions: boolean;
+  readonly asSetPropertyPermissions: {
+    readonly collectionId: u32;
+    readonly propertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
+  } & Struct;
   readonly isCreateMultipleItemsEx: boolean;
   readonly asCreateMultipleItemsEx: {
     readonly collectionId: u32;
@@ -1428,7 +1469,7 @@ export interface PalletUniqueCall extends Enum {
     readonly collectionId: u32;
     readonly newLimit: UpDataStructsCollectionLimits;
   } & Struct;
-  readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'SetPublicAccessMode' | 'SetMintPermission' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetVariableMetaData' | 'SetMetaUpdatePermissionFlag' | 'SetSchemaVersion' | 'SetOffchainSchema' | 'SetConstOnChainSchema' | 'SetVariableOnChainSchema' | 'SetCollectionLimits';
+  readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'SetPublicAccessMode' | 'SetMintPermission' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetVariableMetaData' | 'SetMetaUpdatePermissionFlag' | 'SetSchemaVersion' | 'SetOffchainSchema' | 'SetConstOnChainSchema' | 'SetVariableOnChainSchema' | 'SetCollectionLimits';
 }
 
 /** @name PalletUniqueError */
@@ -1592,7 +1633,7 @@ export interface PalletXcmEvent extends Enum {
 }
 
 /** @name PhantomTypeUpDataStructs */
-export interface PhantomTypeUpDataStructs extends Vec<Lookup309> {}
+export interface PhantomTypeUpDataStructs extends Vec<Lookup326> {}
 
 /** @name PolkadotCorePrimitivesInboundDownwardMessage */
 export interface PolkadotCorePrimitivesInboundDownwardMessage extends Struct {
@@ -1620,8 +1661,8 @@ export interface PolkadotParachainPrimitivesXcmpMessageFormat extends Enum {
   readonly type: 'ConcatenatedVersionedXcm' | 'ConcatenatedEncodedBlob' | 'Signals';
 }
 
-/** @name PolkadotPrimitivesV2AbridgedHostConfiguration */
-export interface PolkadotPrimitivesV2AbridgedHostConfiguration extends Struct {
+/** @name PolkadotPrimitivesV1AbridgedHostConfiguration */
+export interface PolkadotPrimitivesV1AbridgedHostConfiguration extends Struct {
   readonly maxCodeSize: u32;
   readonly maxHeadDataSize: u32;
   readonly maxUpwardQueueCount: u32;
@@ -1633,8 +1674,8 @@ export interface PolkadotPrimitivesV2AbridgedHostConfiguration extends Struct {
   readonly validationUpgradeDelay: u32;
 }
 
-/** @name PolkadotPrimitivesV2AbridgedHrmpChannel */
-export interface PolkadotPrimitivesV2AbridgedHrmpChannel extends Struct {
+/** @name PolkadotPrimitivesV1AbridgedHrmpChannel */
+export interface PolkadotPrimitivesV1AbridgedHrmpChannel extends Struct {
   readonly maxCapacity: u32;
   readonly maxTotalSize: u32;
   readonly maxMessageSize: u32;
@@ -1643,16 +1684,16 @@ export interface PolkadotPrimitivesV2AbridgedHrmpChannel extends Struct {
   readonly mqcHead: Option<H256>;
 }
 
-/** @name PolkadotPrimitivesV2PersistedValidationData */
-export interface PolkadotPrimitivesV2PersistedValidationData extends Struct {
+/** @name PolkadotPrimitivesV1PersistedValidationData */
+export interface PolkadotPrimitivesV1PersistedValidationData extends Struct {
   readonly parentHead: Bytes;
   readonly relayParentNumber: u32;
   readonly relayParentStorageRoot: H256;
   readonly maxPovSize: u32;
 }
 
-/** @name PolkadotPrimitivesV2UpgradeRestriction */
-export interface PolkadotPrimitivesV2UpgradeRestriction extends Enum {
+/** @name PolkadotPrimitivesV1UpgradeRestriction */
+export interface PolkadotPrimitivesV1UpgradeRestriction extends Enum {
   readonly isPresent: boolean;
   readonly type: 'Present';
 }
@@ -1707,15 +1748,13 @@ export interface SpRuntimeDispatchError extends Enum {
   readonly asToken: SpRuntimeTokenError;
   readonly isArithmetic: boolean;
   readonly asArithmetic: SpRuntimeArithmeticError;
-  readonly isTransactional: boolean;
-  readonly asTransactional: SpRuntimeTransactionalError;
-  readonly type: 'Other' | 'CannotLookup' | 'BadOrigin' | 'Module' | 'ConsumerRemaining' | 'NoProviders' | 'TooManyConsumers' | 'Token' | 'Arithmetic' | 'Transactional';
+  readonly type: 'Other' | 'CannotLookup' | 'BadOrigin' | 'Module' | 'ConsumerRemaining' | 'NoProviders' | 'TooManyConsumers' | 'Token' | 'Arithmetic';
 }
 
 /** @name SpRuntimeModuleError */
 export interface SpRuntimeModuleError extends Struct {
   readonly index: u8;
-  readonly error: U8aFixed;
+  readonly error: u8;
 }
 
 /** @name SpRuntimeMultiSignature */
@@ -1739,13 +1778,6 @@ export interface SpRuntimeTokenError extends Enum {
   readonly isFrozen: boolean;
   readonly isUnsupported: boolean;
   readonly type: 'NoFunds' | 'WouldDie' | 'BelowMinimum' | 'CannotCreate' | 'UnknownAsset' | 'Frozen' | 'Unsupported';
-}
-
-/** @name SpRuntimeTransactionalError */
-export interface SpRuntimeTransactionalError extends Enum {
-  readonly isLimitReached: boolean;
-  readonly isNoLayer: boolean;
-  readonly type: 'LimitReached' | 'NoLayer';
 }
 
 /** @name SpTrieStorageProof */
@@ -1839,6 +1871,8 @@ export interface UpDataStructsCreateCollectionData extends Struct {
   readonly variableOnChainSchema: Bytes;
   readonly constOnChainSchema: Bytes;
   readonly metaUpdatePermission: Option<UpDataStructsMetaUpdatePermission>;
+  readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
+  readonly properties: Vec<UpDataStructsProperty>;
 }
 
 /** @name UpDataStructsCreateFungibleData */
@@ -1912,6 +1946,36 @@ export interface UpDataStructsNestingRule extends Enum {
   readonly isOwnerRestricted: boolean;
   readonly asOwnerRestricted: FrameSupportStorageBoundedBTreeSet;
   readonly type: 'Disabled' | 'Owner' | 'OwnerRestricted';
+}
+
+/** @name UpDataStructsProperties */
+export interface UpDataStructsProperties extends Struct {
+  readonly map: BTreeMap<Bytes, Bytes>;
+  readonly consumedSpace: u32;
+  readonly spaceLimit: u32;
+}
+
+/** @name UpDataStructsProperty */
+export interface UpDataStructsProperty extends Struct {
+  readonly key: Bytes;
+  readonly value: Bytes;
+}
+
+/** @name UpDataStructsPropertyKeyPermission */
+export interface UpDataStructsPropertyKeyPermission extends Struct {
+  readonly key: Bytes;
+  readonly permission: UpDataStructsPropertyPermission;
+}
+
+/** @name UpDataStructsPropertyPermission */
+export interface UpDataStructsPropertyPermission extends Enum {
+  readonly isNone: boolean;
+  readonly isAdminConst: boolean;
+  readonly isAdmin: boolean;
+  readonly isItemOwnerConst: boolean;
+  readonly isItemOwner: boolean;
+  readonly isItemOwnerOrAdmin: boolean;
+  readonly type: 'None' | 'AdminConst' | 'Admin' | 'ItemOwnerConst' | 'ItemOwner' | 'ItemOwnerOrAdmin';
 }
 
 /** @name UpDataStructsRpcCollection */
