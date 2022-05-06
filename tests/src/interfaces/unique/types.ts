@@ -1,13 +1,10 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { BTreeMap, Bytes, Compact, Enum, Null, Option, Result, Struct, Text, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { BTreeMap, BTreeSet, Bytes, Compact, Enum, Null, Option, Result, Struct, Text, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill } from '@polkadot/types/interfaces/runtime';
 import type { Event } from '@polkadot/types/interfaces/system';
-
-/** @name BTreeSet */
-export interface BTreeSet extends BTreeSet<Bytes> {}
 
 /** @name CumulusPalletDmpQueueCall */
 export interface CumulusPalletDmpQueueCall extends Enum {
@@ -450,7 +447,7 @@ export interface FpRpcTransactionStatus extends Struct {
 export interface FrameSupportPalletId extends U8aFixed {}
 
 /** @name FrameSupportStorageBoundedBTreeSet */
-export interface FrameSupportStorageBoundedBTreeSet extends Vec<u32> {}
+export interface FrameSupportStorageBoundedBTreeSet extends BTreeSet<u32> {}
 
 /** @name FrameSupportTokensMiscBalanceStatus */
 export interface FrameSupportTokensMiscBalanceStatus extends Enum {
@@ -1595,7 +1592,7 @@ export interface PalletXcmEvent extends Enum {
 }
 
 /** @name PhantomTypeUpDataStructs */
-export interface PhantomTypeUpDataStructs extends Vec<Lookup308> {}
+export interface PhantomTypeUpDataStructs extends Vec<Lookup309> {}
 
 /** @name PolkadotCorePrimitivesInboundDownwardMessage */
 export interface PolkadotCorePrimitivesInboundDownwardMessage extends Struct {
@@ -1753,7 +1750,7 @@ export interface SpRuntimeTransactionalError extends Enum {
 
 /** @name SpTrieStorageProof */
 export interface SpTrieStorageProof extends Struct {
-  readonly trieNodes: BTreeSet;
+  readonly trieNodes: BTreeSet<Bytes>;
 }
 
 /** @name SpVersionRuntimeVersion */

@@ -18,7 +18,7 @@
 
 use core::marker::PhantomData;
 use fp_evm::WithdrawReason;
-use frame_support::traits::{Currency, IsSubType};
+use frame_support::traits::IsSubType;
 pub use pallet::*;
 use pallet_evm::{EnsureAddressOrigin, account::CrossAccountId};
 use sp_core::H160;

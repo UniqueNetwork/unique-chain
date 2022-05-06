@@ -52,12 +52,6 @@ mod benchmarking;
 pub mod weights;
 use weights::WeightInfo;
 
-pub trait SponsorshipPredict<T: Config> {
-	fn predict(collection: CollectionId, account: T::CrossAccountId, token: TokenId) -> Option<u64>
-	where
-		u64: From<<T as frame_system::Config>::BlockNumber>;
-}
-
 decl_error! {
 	/// Error for non-fungible-token module.
 	pub enum Error for Module<T: Config> {

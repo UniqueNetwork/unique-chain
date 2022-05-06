@@ -37,9 +37,10 @@ use pallet_fungible::Config as FungibleConfig;
 use pallet_nonfungible::Config as NonfungibleConfig;
 use pallet_refungible::Config as RefungibleConfig;
 
-pub fn withdraw_transfer<
-	T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig,
->(
+pub trait Config: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig {}
+impl<T> Config for T where T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig {}
+
+pub fn withdraw_transfer<T: Config>(
 	collection: &CollectionHandle<T>,
 	who: &T::CrossAccountId,
 	item_id: &TokenId,
@@ -108,9 +109,7 @@ pub fn withdraw_transfer<
 	Some(())
 }
 
-pub fn withdraw_create_item<
-	T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig,
->(
+pub fn withdraw_create_item<T: Config>(
 	collection: &CollectionHandle<T>,
 	who: &T::CrossAccountId,
 	_properties: &CreateItemData,
@@ -141,9 +140,7 @@ pub fn withdraw_create_item<
 	Some(())
 }
 
-pub fn withdraw_set_variable_meta_data<
-	T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig,
->(
+pub fn withdraw_set_variable_meta_data<T: Config>(
 	who: &T::CrossAccountId,
 	collection: &CollectionHandle<T>,
 	item_id: &TokenId,
@@ -200,7 +197,7 @@ pub fn withdraw_set_variable_meta_data<
 	Some(())
 }
 
-pub fn withdraw_approve<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>(
+pub fn withdraw_approve<T: Config>(
 	collection: &CollectionHandle<T>,
 	who: &T::AccountId,
 	item_id: &TokenId,
@@ -246,7 +243,7 @@ fn load<T: UniqueConfig>(id: CollectionId) -> Option<(T::AccountId, CollectionHa
 pub struct UniqueSponsorshipHandler<T>(PhantomData<T>);
 impl<T, C> SponsorshipHandler<T::AccountId, C> for UniqueSponsorshipHandler<T>
 where
-	T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig,
+	T: Config,
 	C: IsSubType<UniqueCall<T>>,
 {
 	fn get_sponsor(who: &T::AccountId, call: &C) -> Option<T::AccountId> {
@@ -313,13 +310,15 @@ where
 	}
 }
 
-use crate::SponsorshipPredict;
+pub trait SponsorshipPredict<T: Config> {
+	fn predict(collection: CollectionId, account: T::CrossAccountId, token: TokenId) -> Option<u64>
+	where
+		u64: From<<T as frame_system::Config>::BlockNumber>;
+}
+
 pub struct UniqueSponsorshipPredict<T>(PhantomData<T>);
 
-impl<T> SponsorshipPredict<T> for UniqueSponsorshipPredict<T>
-where
-	T: Config,
-{
+impl<T: Config> SponsorshipPredict<T> for UniqueSponsorshipPredict<T> {
 	fn predict(collection_id: CollectionId, who: T::CrossAccountId, token: TokenId) -> Option<u64>
 	where
 		u64: From<<T as frame_system::Config>::BlockNumber>,
@@ -360,7 +359,7 @@ where
 			CollectionMode::NFT => {
 				<pallet_nonfungible::TokenData<T>>::contains_key((collection.id, token))
 			}
-			CollectionMode::Fungible(_) => true,
+			CollectionMode::Fungible(_) => token == TokenId::default(),
 			CollectionMode::ReFungible => {
 				<pallet_refungible::TotalSupply<T>>::contains_key((collection.id, token))
 			}

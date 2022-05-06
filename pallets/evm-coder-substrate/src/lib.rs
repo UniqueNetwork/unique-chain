@@ -26,6 +26,7 @@ use core::marker::PhantomData;
 use sp_std::cell::RefCell;
 use sp_std::vec::Vec;
 
+use codec::Decode;
 use frame_support::pallet_prelude::DispatchError;
 use frame_support::traits::PalletInfo;
 use frame_support::{ensure, sp_runtime::ModuleError};
@@ -34,8 +35,7 @@ use pallet_evm::{
 	ExitError, ExitRevert, ExitSucceed, GasWeightMapping, PrecompileFailure, PrecompileOutput,
 	PrecompileResult, runner::stack::MaybeMirroredLog,
 };
-use ethereum::TransactionV2;
-use sp_core::{H160, H256};
+use sp_core::H160;
 use pallet_ethereum::EthereumTransactionSender;
 // #[cfg(feature = "runtime-benchmarks")]
 // pub mod benchmarking;
@@ -90,21 +90,6 @@ pub mod pallet {
 // From instabul hardfork configuration: https://github.com/rust-blockchain/evm/blob/fd4fd6acc0ca3208d6770fdb3ba407c94cdf97c6/runtime/src/lib.rs#L284
 pub const G_SLOAD_WORD: u64 = 800;
 pub const G_SSTORE_WORD: u64 = 20000;
-
-pub fn generate_transaction() -> TransactionV2 {
-	use ethereum::{TransactionV0, TransactionAction, TransactionSignature};
-	TransactionV2::Legacy(TransactionV0 {
-		nonce: 0.into(),
-		gas_price: 0.into(),
-		gas_limit: 0.into(),
-		action: TransactionAction::Call(H160([0; 20])),
-		value: 0.into(),
-		// zero selector, this transaction always has same sender, so all data should be acquired from logs
-		input: Vec::from([0, 0, 0, 0]),
-		// if v is not 27 - then we need to pass some other validity checks
-		signature: TransactionSignature::new(27, H256([0x88; 32]), H256([0x88; 32])).unwrap(),
-	})
-}
 
 pub struct GasCallsBudget<'r, T: Config> {
 	recorder: &'r SubstrateRecorder<T>,
@@ -247,11 +232,7 @@ impl<T: Config> SubstrateRecorder<T> {
 		if logs.is_empty() {
 			return;
 		}
-		T::EthereumTransactionSender::submit_logs_transaction(
-			Default::default(),
-			generate_transaction(),
-			logs,
-		)
+		T::EthereumTransactionSender::submit_logs_transaction(Default::default(), logs)
 	}
 }
 
@@ -264,9 +245,10 @@ pub fn dispatch_to_evm<T: Config>(err: DispatchError) -> evm_coder::execution::E
 					.expect("evm-coder-substrate is a pallet, which should be added to runtime")
 					as u8 =>
 		{
-			match error {
-				v if v == Error::<T>::OutOfGas.as_u8() => ExError::Error(ExitError::OutOfGas),
-				v if v == Error::<T>::OutOfFund.as_u8() => ExError::Error(ExitError::OutOfFund),
+			let mut read = &error as &[u8];
+			match Error::<T>::decode(&mut read) {
+				Ok(Error::<T>::OutOfGas) => ExError::Error(ExitError::OutOfGas),
+				Ok(Error::<T>::OutOfFund) => ExError::Error(ExitError::OutOfFund),
 				_ => unreachable!("this pallet only defines two possible errors"),
 			}
 		}
@@ -274,7 +256,7 @@ pub fn dispatch_to_evm<T: Config>(err: DispatchError) -> evm_coder::execution::E
 			message: Some(msg), ..
 		}) => ExError::Revert(msg.into()),
 		DispatchError::Module(ModuleError { index, error, .. }) => {
-			ExError::Revert(format!("error {} in pallet {}", error, index))
+			ExError::Revert(format!("error {:?} in pallet {}", error, index))
 		}
 		e => ExError::Revert(format!("substrate error: {:?}", e)),
 	}

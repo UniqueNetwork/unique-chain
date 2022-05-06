@@ -23,8 +23,8 @@ git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.20"
 
 [dependencies.try-runtime-cli]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = 'https://github.com/paritytech/substrate'
+branch = 'polkadot-v0.9.20'
 
 [dependencies.pallet-transaction-payment-rpc]
 git = "https://github.com/paritytech/substrate"

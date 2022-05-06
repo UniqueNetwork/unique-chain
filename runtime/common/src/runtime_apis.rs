@@ -73,8 +73,8 @@ macro_rules! impl_common_runtime_apis {
                     Ok(<pallet_common::Pallet<Runtime>>::collection_stats())
                 }
                 fn next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<Option<u64>, DispatchError> {
-                    Ok(<pallet_unique::UniqueSponsorshipPredict<Runtime> as
-                            pallet_unique::SponsorshipPredict<Runtime>>::predict(
+                    Ok(<$crate::sponsoring::UniqueSponsorshipPredict<Runtime> as
+                            $crate::sponsoring::SponsorshipPredict<Runtime>>::predict(
                         collection,
                         account,
                         token))

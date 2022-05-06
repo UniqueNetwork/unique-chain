@@ -639,6 +639,10 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       topmostTokenOwner: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<PalletEvmAccountBasicCrossAccountIdRepr>>>;
       /**
+       * Get amount of unique collection tokens
+       **/
+      totalSupply: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
+      /**
        * Get token variable metadata
        **/
       variableMetadata: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Bytes>>;

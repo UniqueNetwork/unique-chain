@@ -131,9 +131,9 @@ branch = "polkadot-v0.9.20"
 
 [dependencies.frame-try-runtime]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
+git = 'https://github.com/paritytech/substrate'
 optional = true
-branch = 'polkadot-v0.9.18'
+branch = 'polkadot-v0.9.20'
 
 [dependencies.frame-executive]
 default-features = false
