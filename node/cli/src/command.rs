@@ -405,6 +405,7 @@ pub fn run() -> Result<()> {
 
 					cmd.run(config, partials.client.clone(), db, storage)
 				}),
+				BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| cmd.run(&config)),
 				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
 			}
 		}
