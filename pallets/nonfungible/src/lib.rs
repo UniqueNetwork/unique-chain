@@ -321,7 +321,7 @@ impl<T: Config> Pallet<T> {
 		let permission = <PalletCommon<T>>::property_permissions(collection.id)
 			.get(property_key)
 			.map(|p| p.clone())
-			.unwrap_or(PropertyPermission::None);
+			.unwrap_or(PropertyPermission::none());
 
 		let token_data = <TokenData<T>>::get((collection.id, token_id))
 			.ok_or(<CommonError<T>>::TokenNotFound)?;
@@ -335,15 +335,28 @@ impl<T: Config> Pallet<T> {
 			.get_property(property_key)
 			.is_some();
 
-		match (permission, is_property_exists) {
-			(PropertyPermission::AdminConst, false) => collection.check_is_owner_or_admin(sender),
-			(PropertyPermission::Admin, _) => collection.check_is_owner_or_admin(sender),
-			(PropertyPermission::ItemOwnerConst, false) => check_token_owner(),
-			(PropertyPermission::ItemOwner, _) => check_token_owner(),
-			(PropertyPermission::ItemOwnerOrAdmin, _) => {
-				check_token_owner().or(collection.check_is_owner_or_admin(sender))
+		match permission {
+			PropertyPermission { mutable: false, .. } if is_property_exists => {
+				Err(<CommonError<T>>::NoPermission.into())
 			}
-			_ => Err(<CommonError<T>>::NoPermission.into()),
+
+			PropertyPermission {
+				collection_admin,
+				token_owner,
+				..
+			} => {
+				let mut check_result = Err(<CommonError<T>>::NoPermission.into());
+
+				if collection_admin {
+					check_result = collection.check_is_owner_or_admin(sender);
+				}
+
+				if token_owner {
+					check_result.or(check_token_owner())
+				} else {
+					check_result
+				}
+			}
 		}
 	}
 

@@ -812,7 +812,7 @@ impl<T: Config> Pallet<T> {
 		let current_permission = all_permissions.get(&property_permission.key);
 		if matches![
 			current_permission,
-			Some(PropertyPermission::AdminConst | PropertyPermission::ItemOwnerConst)
+			Some(PropertyPermission { mutable: false, .. })
 		] {
 			return Err(<Error<T>>::NoPermission.into());
 		}

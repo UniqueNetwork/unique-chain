@@ -635,13 +635,20 @@ pub type PropertyValue = BoundedVec<u8, ConstU32<MAX_PROPERTY_VALUE_LENGTH>>;
 
 #[derive(Encode, Decode, TypeInfo, Debug, MaxEncodedLen, PartialEq, Clone)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-pub enum PropertyPermission {
-	None,
-	AdminConst,
-	Admin,
-	ItemOwnerConst,
-	ItemOwner,
-	ItemOwnerOrAdmin,
+pub struct PropertyPermission {
+	pub mutable: bool,
+	pub collection_admin: bool,
+	pub token_owner: bool,
+}
+
+impl PropertyPermission {
+	pub fn none() -> Self {
+		Self {
+			mutable: true,
+			collection_admin: false,
+			token_owner: false,
+		}
+	}
 }
 
 #[derive(Encode, Decode, Debug, TypeInfo, Clone, PartialEq, MaxEncodedLen)]
