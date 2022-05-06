@@ -271,9 +271,9 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotFungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
       /**
-       * Item properties are not allowed
+       * Setting item properties is not allowed
        **/
-      PropertiesNotAllowed: AugmentedError<ApiType>;
+      SettingPropertiesNotAllowed: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -399,13 +399,13 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotRefungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
       /**
-       * Item properties are not allowed
-       **/
-      PropertiesNotAllowed: AugmentedError<ApiType>;
-      /**
        * Refungible token can't nest other tokens
        **/
       RefungibleDisallowsNesting: AugmentedError<ApiType>;
+      /**
+       * Setting item properties is not allowed
+       **/
+      SettingPropertiesNotAllowed: AugmentedError<ApiType>;
       /**
        * Maximum refungibility exceeded
        **/

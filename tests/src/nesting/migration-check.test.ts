@@ -5,6 +5,8 @@ import {getCreateCollectionResult} from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 import {strToUTF16} from '../util/util';
 import waitNewBlocks from '../substrate/wait-new-blocks';
+// Used for polkadot-launch signalling
+import find from 'find-process';
 
 // todo skip
 describe('Migration testing for pallet-common', () => {
@@ -54,13 +56,12 @@ describe('Migration testing for pallet-common', () => {
     let newVersion = oldVersion!;
     let connectionFailCounter = 0;
 
-    // Cooperate with polkadot-launch if it's running (assuming custom name change), and send a custom signal
-    const find = require('find-process');
-    find('name', 'polkadot-launch', true).then(function (list: [any]) {
-      for (let proc of list) {
+    // Cooperate with polkadot-launch if it's running (assuming custom name change to 'polkadot-launch'), and send a custom signal
+    find('name', 'polkadot-launch', true).then((list) => {
+      for (const proc of list) {
         process.kill(proc.pid, 'SIGUSR1');
       }
-    })
+    });
 
     // And wait for the parachain upgrade
     while (newVersion == oldVersion! && connectionFailCounter < 2) {

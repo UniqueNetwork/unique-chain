@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { BTreeMap, BTreeSet, Bytes, Compact, Enum, Null, Option, Result, Struct, Text, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { BTreeMap, Bytes, Compact, Enum, Null, Option, Result, Struct, Text, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill } from '@polkadot/types/interfaces/runtime';
 import type { Event } from '@polkadot/types/interfaces/system';
@@ -447,7 +447,7 @@ export interface FpRpcTransactionStatus extends Struct {
 export interface FrameSupportPalletId extends U8aFixed {}
 
 /** @name FrameSupportStorageBoundedBTreeSet */
-export interface FrameSupportStorageBoundedBTreeSet extends BTreeSet<u32> {}
+export interface FrameSupportStorageBoundedBTreeSet extends Vec<u32> {}
 
 /** @name FrameSupportTokensMiscBalanceStatus */
 export interface FrameSupportTokensMiscBalanceStatus extends Enum {
@@ -1086,8 +1086,8 @@ export interface PalletFungibleError extends Enum {
   readonly isFungibleItemsHaveNoId: boolean;
   readonly isFungibleItemsDontHaveData: boolean;
   readonly isFungibleDisallowsNesting: boolean;
-  readonly isPropertiesNotAllowed: boolean;
-  readonly type: 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'FungibleItemsHaveNoId' | 'FungibleItemsDontHaveData' | 'FungibleDisallowsNesting' | 'PropertiesNotAllowed';
+  readonly isSettingPropertiesNotAllowed: boolean;
+  readonly type: 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'FungibleItemsHaveNoId' | 'FungibleItemsDontHaveData' | 'FungibleDisallowsNesting' | 'SettingPropertiesNotAllowed';
 }
 
 /** @name PalletInflationCall */
@@ -1118,8 +1118,8 @@ export interface PalletRefungibleError extends Enum {
   readonly isNotRefungibleDataUsedToMintFungibleCollectionToken: boolean;
   readonly isWrongRefungiblePieces: boolean;
   readonly isRefungibleDisallowsNesting: boolean;
-  readonly isPropertiesNotAllowed: boolean;
-  readonly type: 'NotRefungibleDataUsedToMintFungibleCollectionToken' | 'WrongRefungiblePieces' | 'RefungibleDisallowsNesting' | 'PropertiesNotAllowed';
+  readonly isSettingPropertiesNotAllowed: boolean;
+  readonly type: 'NotRefungibleDataUsedToMintFungibleCollectionToken' | 'WrongRefungiblePieces' | 'RefungibleDisallowsNesting' | 'SettingPropertiesNotAllowed';
 }
 
 /** @name PalletRefungibleItemData */
@@ -1632,8 +1632,11 @@ export interface PalletXcmEvent extends Enum {
   readonly type: 'Attempted' | 'Sent' | 'UnexpectedResponse' | 'ResponseReady' | 'Notified' | 'NotifyOverweight' | 'NotifyDispatchError' | 'NotifyDecodeFailed' | 'InvalidResponder' | 'InvalidResponderVersion' | 'ResponseTaken' | 'AssetsTrapped' | 'VersionChangeNotified' | 'SupportedVersionChanged' | 'NotifyTargetSendFail' | 'NotifyTargetMigrationFail';
 }
 
-/** @name PhantomTypeUpDataStructs */
-export interface PhantomTypeUpDataStructs extends Vec<Lookup326> {}
+/** @name PhantomTypeUpDataStructsRpcCollection */
+export interface PhantomTypeUpDataStructsRpcCollection extends Vec<Lookup330> {}
+
+/** @name PhantomTypeUpDataStructsTokenData */
+export interface PhantomTypeUpDataStructsTokenData extends Vec<Lookup326> {}
 
 /** @name PolkadotCorePrimitivesInboundDownwardMessage */
 export interface PolkadotCorePrimitivesInboundDownwardMessage extends Struct {
@@ -1782,7 +1785,7 @@ export interface SpRuntimeTokenError extends Enum {
 
 /** @name SpTrieStorageProof */
 export interface SpTrieStorageProof extends Struct {
-  readonly trieNodes: BTreeSet<Bytes>;
+  readonly trieNodes: Vec<Bytes>;
 }
 
 /** @name SpVersionRuntimeVersion */
@@ -1908,12 +1911,14 @@ export interface UpDataStructsCreateItemExData extends Enum {
 export interface UpDataStructsCreateNftData extends Struct {
   readonly constData: Bytes;
   readonly variableData: Bytes;
+  readonly properties: Vec<UpDataStructsProperty>;
 }
 
 /** @name UpDataStructsCreateNftExData */
 export interface UpDataStructsCreateNftExData extends Struct {
   readonly constData: Bytes;
   readonly variableData: Bytes;
+  readonly properties: Vec<UpDataStructsProperty>;
   readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
 }
 
@@ -1968,14 +1973,10 @@ export interface UpDataStructsPropertyKeyPermission extends Struct {
 }
 
 /** @name UpDataStructsPropertyPermission */
-export interface UpDataStructsPropertyPermission extends Enum {
-  readonly isNone: boolean;
-  readonly isAdminConst: boolean;
-  readonly isAdmin: boolean;
-  readonly isItemOwnerConst: boolean;
-  readonly isItemOwner: boolean;
-  readonly isItemOwnerOrAdmin: boolean;
-  readonly type: 'None' | 'AdminConst' | 'Admin' | 'ItemOwnerConst' | 'ItemOwner' | 'ItemOwnerOrAdmin';
+export interface UpDataStructsPropertyPermission extends Struct {
+  readonly mutable: bool;
+  readonly collectionAdmin: bool;
+  readonly tokenOwner: bool;
 }
 
 /** @name UpDataStructsRpcCollection */
@@ -2019,6 +2020,13 @@ export interface UpDataStructsSponsorshipState extends Enum {
   readonly isConfirmed: boolean;
   readonly asConfirmed: AccountId32;
   readonly type: 'Disabled' | 'Unconfirmed' | 'Confirmed';
+}
+
+/** @name UpDataStructsTokenData */
+export interface UpDataStructsTokenData extends Struct {
+  readonly constData: Bytes;
+  readonly properties: Vec<UpDataStructsProperty>;
+  readonly owner: Option<PalletEvmAccountBasicCrossAccountIdRepr>;
 }
 
 /** @name XcmDoubleEncoded */

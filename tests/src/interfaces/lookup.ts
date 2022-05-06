@@ -23,7 +23,7 @@ export default {
    * Lookup10: sp_trie::storage_proof::StorageProof
    **/
   SpTrieStorageProof: {
-    trieNodes: 'BTreeSet<Bytes>'
+    trieNodes: 'Vec<Bytes>'
   },
   /**
    * Lookup13: cumulus_pallet_parachain_system::relay_state_snapshot::MessagingStateSnapshot
@@ -1469,7 +1469,7 @@ export default {
   /**
    * Lookup171: frame_support::storage::bounded_btree_set::BoundedBTreeSet<up_data_structs::CollectionId, S>
    **/
-  FrameSupportStorageBoundedBTreeSet: 'BTreeSet<u32>',
+  FrameSupportStorageBoundedBTreeSet: 'Vec<u32>',
   /**
    * Lookup177: up_data_structs::MetaUpdatePermission
    **/
@@ -1487,7 +1487,9 @@ export default {
    * Lookup181: up_data_structs::PropertyPermission
    **/
   UpDataStructsPropertyPermission: {
-    _enum: ['None', 'AdminConst', 'Admin', 'ItemOwnerConst', 'ItemOwner', 'ItemOwnerOrAdmin']
+    mutable: 'bool',
+    collectionAdmin: 'bool',
+    tokenOwner: 'bool'
   },
   /**
    * Lookup184: up_data_structs::Property
@@ -1520,7 +1522,8 @@ export default {
    **/
   UpDataStructsCreateNftData: {
     constData: 'Bytes',
-    variableData: 'Bytes'
+    variableData: 'Bytes',
+    properties: 'Vec<UpDataStructsProperty>'
   },
   /**
    * Lookup191: up_data_structs::CreateFungibleData
@@ -1553,6 +1556,7 @@ export default {
   UpDataStructsCreateNftExData: {
     constData: 'Bytes',
     variableData: 'Bytes',
+    properties: 'Vec<UpDataStructsProperty>',
     owner: 'PalletEvmAccountBasicCrossAccountIdRepr'
   },
   /**
@@ -2324,11 +2328,23 @@ export default {
     alive: 'u32'
   },
   /**
-   * Lookup325: PhantomType::up_data_structs<up_data_structs::RpcCollection<sp_core::crypto::AccountId32>>
+   * Lookup325: PhantomType::up_data_structs<up_data_structs::TokenData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>>
    **/
-  PhantomTypeUpDataStructs: '[Lookup326;0]',
+  PhantomTypeUpDataStructsTokenData: '[Lookup326;0]',
   /**
-   * Lookup326: up_data_structs::RpcCollection<sp_core::crypto::AccountId32>
+   * Lookup326: up_data_structs::TokenData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+   **/
+  UpDataStructsTokenData: {
+    constData: 'Bytes',
+    properties: 'Vec<UpDataStructsProperty>',
+    owner: 'Option<PalletEvmAccountBasicCrossAccountIdRepr>'
+  },
+  /**
+   * Lookup329: PhantomType::up_data_structs<up_data_structs::RpcCollection<sp_core::crypto::AccountId32>>
+   **/
+  PhantomTypeUpDataStructsRpcCollection: '[Lookup330;0]',
+  /**
+   * Lookup330: up_data_structs::RpcCollection<sp_core::crypto::AccountId32>
    **/
   UpDataStructsRpcCollection: {
     owner: 'AccountId32',
@@ -2347,32 +2363,32 @@ export default {
     metaUpdatePermission: 'UpDataStructsMetaUpdatePermission'
   },
   /**
-   * Lookup328: pallet_common::pallet::Error<T>
+   * Lookup332: pallet_common::pallet::Error<T>
    **/
   PalletCommonError: {
     _enum: ['CollectionNotFound', 'MustBeTokenOwner', 'NoPermission', 'PublicMintingNotAllowed', 'AddressNotInAllowlist', 'CollectionNameLimitExceeded', 'CollectionDescriptionLimitExceeded', 'CollectionTokenPrefixLimitExceeded', 'TotalCollectionsLimitExceeded', 'TokenVariableDataLimitExceeded', 'CollectionAdminCountExceeded', 'CollectionLimitBoundsExceeded', 'OwnerPermissionsCantBeReverted', 'TransferNotAllowed', 'AccountTokenLimitExceeded', 'CollectionTokenLimitExceeded', 'MetadataFlagFrozen', 'TokenNotFound', 'TokenValueTooLow', 'ApprovedValueTooLow', 'CantApproveMoreThanOwned', 'AddressIsZero', 'UnsupportedOperation', 'NotSufficientFounds', 'NestingIsDisabled', 'OnlyOwnerAllowedToNest', 'SourceCollectionIsNotAllowedToNest', 'CollectionFieldSizeExceeded', 'NoSpaceForProperty', 'PropertyLimitReached']
   },
   /**
-   * Lookup330: pallet_fungible::pallet::Error<T>
+   * Lookup334: pallet_fungible::pallet::Error<T>
    **/
   PalletFungibleError: {
-    _enum: ['NotFungibleDataUsedToMintFungibleCollectionToken', 'FungibleItemsHaveNoId', 'FungibleItemsDontHaveData', 'FungibleDisallowsNesting', 'PropertiesNotAllowed']
+    _enum: ['NotFungibleDataUsedToMintFungibleCollectionToken', 'FungibleItemsHaveNoId', 'FungibleItemsDontHaveData', 'FungibleDisallowsNesting', 'SettingPropertiesNotAllowed']
   },
   /**
-   * Lookup331: pallet_refungible::ItemData
+   * Lookup335: pallet_refungible::ItemData
    **/
   PalletRefungibleItemData: {
     constData: 'Bytes',
     variableData: 'Bytes'
   },
   /**
-   * Lookup335: pallet_refungible::pallet::Error<T>
+   * Lookup339: pallet_refungible::pallet::Error<T>
    **/
   PalletRefungibleError: {
-    _enum: ['NotRefungibleDataUsedToMintFungibleCollectionToken', 'WrongRefungiblePieces', 'RefungibleDisallowsNesting', 'PropertiesNotAllowed']
+    _enum: ['NotRefungibleDataUsedToMintFungibleCollectionToken', 'WrongRefungiblePieces', 'RefungibleDisallowsNesting', 'SettingPropertiesNotAllowed']
   },
   /**
-   * Lookup336: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+   * Lookup340: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
   PalletNonfungibleItemData: {
     constData: 'Bytes',
@@ -2380,25 +2396,25 @@ export default {
     owner: 'PalletEvmAccountBasicCrossAccountIdRepr'
   },
   /**
-   * Lookup337: pallet_nonfungible::pallet::Error<T>
+   * Lookup341: pallet_nonfungible::pallet::Error<T>
    **/
   PalletNonfungibleError: {
     _enum: ['NotNonfungibleDataUsedToMintFungibleCollectionToken', 'NonfungibleItemsHaveNoAmount']
   },
   /**
-   * Lookup338: pallet_structure::pallet::Error<T>
+   * Lookup342: pallet_structure::pallet::Error<T>
    **/
   PalletStructureError: {
     _enum: ['OuroborosDetected', 'DepthLimit', 'TokenNotFound']
   },
   /**
-   * Lookup340: pallet_evm::pallet::Error<T>
+   * Lookup344: pallet_evm::pallet::Error<T>
    **/
   PalletEvmError: {
     _enum: ['BalanceLow', 'FeeOverflow', 'PaymentOverflow', 'WithdrawFailed', 'GasPriceTooLow', 'InvalidNonce']
   },
   /**
-   * Lookup343: fp_rpc::TransactionStatus
+   * Lookup347: fp_rpc::TransactionStatus
    **/
   FpRpcTransactionStatus: {
     transactionHash: 'H256',
@@ -2410,11 +2426,11 @@ export default {
     logsBloom: 'EthbloomBloom'
   },
   /**
-   * Lookup346: ethbloom::Bloom
+   * Lookup350: ethbloom::Bloom
    **/
   EthbloomBloom: '[u8;256]',
   /**
-   * Lookup348: ethereum::receipt::ReceiptV3
+   * Lookup352: ethereum::receipt::ReceiptV3
    **/
   EthereumReceiptReceiptV3: {
     _enum: {
@@ -2424,7 +2440,7 @@ export default {
     }
   },
   /**
-   * Lookup349: ethereum::receipt::EIP658ReceiptData
+   * Lookup353: ethereum::receipt::EIP658ReceiptData
    **/
   EthereumReceiptEip658ReceiptData: {
     statusCode: 'u8',
@@ -2433,7 +2449,7 @@ export default {
     logs: 'Vec<EthereumLog>'
   },
   /**
-   * Lookup350: ethereum::block::Block<ethereum::transaction::TransactionV2>
+   * Lookup354: ethereum::block::Block<ethereum::transaction::TransactionV2>
    **/
   EthereumBlock: {
     header: 'EthereumHeader',
@@ -2441,7 +2457,7 @@ export default {
     ommers: 'Vec<EthereumHeader>'
   },
   /**
-   * Lookup351: ethereum::header::Header
+   * Lookup355: ethereum::header::Header
    **/
   EthereumHeader: {
     parentHash: 'H256',
@@ -2461,41 +2477,41 @@ export default {
     nonce: 'EthereumTypesHashH64'
   },
   /**
-   * Lookup352: ethereum_types::hash::H64
+   * Lookup356: ethereum_types::hash::H64
    **/
   EthereumTypesHashH64: '[u8;8]',
   /**
-   * Lookup357: pallet_ethereum::pallet::Error<T>
+   * Lookup361: pallet_ethereum::pallet::Error<T>
    **/
   PalletEthereumError: {
     _enum: ['InvalidSignature', 'PreLogExists']
   },
   /**
-   * Lookup358: pallet_evm_coder_substrate::pallet::Error<T>
+   * Lookup362: pallet_evm_coder_substrate::pallet::Error<T>
    **/
   PalletEvmCoderSubstrateError: {
     _enum: ['OutOfGas', 'OutOfFund']
   },
   /**
-   * Lookup359: pallet_evm_contract_helpers::SponsoringModeT
+   * Lookup363: pallet_evm_contract_helpers::SponsoringModeT
    **/
   PalletEvmContractHelpersSponsoringModeT: {
     _enum: ['Disabled', 'Allowlisted', 'Generous']
   },
   /**
-   * Lookup361: pallet_evm_contract_helpers::pallet::Error<T>
+   * Lookup365: pallet_evm_contract_helpers::pallet::Error<T>
    **/
   PalletEvmContractHelpersError: {
     _enum: ['NoPermission']
   },
   /**
-   * Lookup362: pallet_evm_migration::pallet::Error<T>
+   * Lookup366: pallet_evm_migration::pallet::Error<T>
    **/
   PalletEvmMigrationError: {
     _enum: ['AccountNotEmpty', 'AccountIsNotMigrating']
   },
   /**
-   * Lookup364: sp_runtime::MultiSignature
+   * Lookup368: sp_runtime::MultiSignature
    **/
   SpRuntimeMultiSignature: {
     _enum: {
@@ -2505,39 +2521,39 @@ export default {
     }
   },
   /**
-   * Lookup365: sp_core::ed25519::Signature
+   * Lookup369: sp_core::ed25519::Signature
    **/
   SpCoreEd25519Signature: '[u8;64]',
   /**
-   * Lookup367: sp_core::sr25519::Signature
+   * Lookup371: sp_core::sr25519::Signature
    **/
   SpCoreSr25519Signature: '[u8;64]',
   /**
-   * Lookup368: sp_core::ecdsa::Signature
+   * Lookup372: sp_core::ecdsa::Signature
    **/
   SpCoreEcdsaSignature: '[u8;65]',
   /**
-   * Lookup371: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+   * Lookup375: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
    **/
   FrameSystemExtensionsCheckSpecVersion: 'Null',
   /**
-   * Lookup372: frame_system::extensions::check_genesis::CheckGenesis<T>
+   * Lookup376: frame_system::extensions::check_genesis::CheckGenesis<T>
    **/
   FrameSystemExtensionsCheckGenesis: 'Null',
   /**
-   * Lookup375: frame_system::extensions::check_nonce::CheckNonce<T>
+   * Lookup379: frame_system::extensions::check_nonce::CheckNonce<T>
    **/
   FrameSystemExtensionsCheckNonce: 'Compact<u32>',
   /**
-   * Lookup376: frame_system::extensions::check_weight::CheckWeight<T>
+   * Lookup380: frame_system::extensions::check_weight::CheckWeight<T>
    **/
   FrameSystemExtensionsCheckWeight: 'Null',
   /**
-   * Lookup377: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
+   * Lookup381: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
    **/
   PalletTemplateTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
   /**
-   * Lookup378: opal_runtime::Runtime
+   * Lookup382: opal_runtime::Runtime
    **/
   OpalRuntimeRuntime: 'Null'
 };

@@ -10,7 +10,6 @@ import {
   getTopmostTokenOwner, 
   normalizeAccountId, 
   setCollectionLimitsExpectSuccess, 
-  transferExpectFailure, 
   transferExpectSuccess, 
 } from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';

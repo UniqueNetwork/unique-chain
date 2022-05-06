@@ -54,13 +54,26 @@ export default {
     topmostTokenOwner: fun('Get token owner, in case of nested token - find parent recursive', [collectionParam, tokenParam], `Option<${CROSS_ACCOUNT_ID_TYPE}>`),
     constMetadata: fun('Get token constant metadata', [collectionParam, tokenParam], 'Vec<u8>'),
     variableMetadata: fun('Get token variable metadata', [collectionParam, tokenParam], 'Vec<u8>'),
-
     collectionProperties: fun(
       'Get collection properties',
       [collectionParam, propertyKeysParam],
       'Vec<UpDataStructsProperty>',
     ),
-
+    tokenProperties: fun(
+      'Get token properties',
+      [collectionParam, tokenParam, propertyKeysParam],
+      'Vec<UpDataStructsProperty>',
+    ),
+    propertyPermissions: fun(
+      'Get property permissions',
+      [collectionParam, propertyKeysParam],
+      'Vec<UpDataStructsPropertyKeyPermission>',
+    ),
+    tokenData: fun(
+      'Get token data',
+      [collectionParam, tokenParam, propertyKeysParam],
+      'UpDataStructsTokenData',
+    ),
     tokenExists: fun('Check if token exists', [collectionParam, tokenParam], 'bool'),
     collectionById: fun('Get collection by specified id', [collectionParam], 'Option<UpDataStructsRpcCollection>'),
     collectionStats: fun('Get collection stats', [], 'UpDataStructsCollectionStats'),
