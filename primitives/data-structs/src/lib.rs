@@ -29,7 +29,7 @@ use frame_support::{
 use serde::{Serialize, Deserialize};
 
 use sp_core::U256;
-use sp_runtime::{ArithmeticError, sp_std::prelude::Vec, DispatchError};
+use sp_runtime::{ArithmeticError, sp_std::prelude::Vec};
 use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
 use frame_support::{BoundedVec, traits::ConstU32};
 use derivative::Derivative;
@@ -486,6 +486,10 @@ pub struct CreateNftData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
+
+	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
+	#[derivative(Debug(format_with = "bounded::vec_debug"))]
+	pub properties: CollectionPropertiesVec,
 }
 
 #[derive(Encode, Decode, MaxEncodedLen, Default, Debug, Clone, PartialEq, TypeInfo)]
@@ -536,6 +540,8 @@ pub struct CreateNftExData<CrossAccountId> {
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
+	#[derivative(Debug(format_with = "bounded::vec_debug"))]
+	pub properties: CollectionPropertiesVec,
 	pub owner: CrossAccountId,
 }
 

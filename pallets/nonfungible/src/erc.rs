@@ -274,6 +274,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			CreateItemData::<T> {
 				const_data: BoundedVec::default(),
 				variable_data: BoundedVec::default(),
+				properties: BoundedVec::default(),
 				owner: to,
 			},
 			&budget,
@@ -321,6 +322,7 @@ impl<T: Config> NonfungibleHandle<T> {
 					.try_into()
 					.map_err(|_| "token uri is too long")?,
 				variable_data: BoundedVec::default(),
+				properties: BoundedVec::default(),
 				owner: to,
 			},
 			&budget,
@@ -438,6 +440,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			.map(|_| CreateItemData::<T> {
 				const_data: BoundedVec::default(),
 				variable_data: BoundedVec::default(),
+				properties: BoundedVec::default(),
 				owner: to.clone(),
 			})
 			.collect();
@@ -481,6 +484,7 @@ impl<T: Config> NonfungibleHandle<T> {
 					.try_into()
 					.map_err(|_| "token uri is too long")?,
 				variable_data: vec![].try_into().unwrap(),
+				properties: BoundedVec::default(),
 				owner: to.clone(),
 			});
 		}

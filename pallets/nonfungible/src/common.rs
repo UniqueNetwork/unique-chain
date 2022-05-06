@@ -100,6 +100,7 @@ fn map_create_data<T: Config>(
 		up_data_structs::CreateItemData::NFT(data) => Ok(CreateItemData::<T> {
 			const_data: data.const_data,
 			variable_data: data.variable_data,
+			properties: data.properties,
 			owner: to.clone(),
 		}),
 		_ => fail!(<Error<T>>::NotNonfungibleDataUsedToMintFungibleCollectionToken),

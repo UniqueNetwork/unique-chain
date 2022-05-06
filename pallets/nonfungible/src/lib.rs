@@ -21,7 +21,7 @@ use frame_support::{BoundedVec, ensure, fail};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
-	PropertyKey, PropertyKeyPermission,
+	PropertyKey, PropertyKeyPermission, Properties,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
@@ -99,7 +99,7 @@ pub mod pallet {
 	#[pallet::getter(fn token_properties)]
 	pub type TokenProperties<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
-		Value = up_data_structs::Properties,
+		Value = Properties,
 		QueryKind = ValueQuery,
 		OnEmpty = up_data_structs::TokenProperties,
 	>;
@@ -570,6 +570,13 @@ impl<T: Config> Pallet<T> {
 				},
 			);
 			<Owned<T>>::insert((collection.id, &data.owner, token), true);
+
+			Self::set_token_properties(
+				collection,
+				sender,
+				TokenId(token),
+				data.properties.into_inner(),
+			)?;
 
 			collection.log_mirrored(ERC721Events::Transfer {
 				from: H160::default(),
