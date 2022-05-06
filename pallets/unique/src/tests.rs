@@ -18,7 +18,6 @@
 use super::*;
 use crate::mock::*;
 use crate::{AccessMode, CollectionMode};
-use sp_runtime::AccountId32;
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, CollectionId, CreateItemData, CreateFungibleData, CreateNftData,
 	CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission,

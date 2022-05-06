@@ -2,8 +2,8 @@
 # Build Dependencies
 
 [build-dependencies.substrate-build-script-utils]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 ################################################################################
 # Substrate Dependecies
@@ -15,151 +15,151 @@ package = 'parity-scale-codec'
 version = '3.1.2'
 
 [dependencies.frame-benchmarking]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.frame-benchmarking-cli]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.pallet-transaction-payment-rpc]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.substrate-prometheus-endpoint]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-basic-authorship]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-chain-spec]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-cli]
 features = ['wasmtime']
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-client-api]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-consensus]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-consensus-aura]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-executor]
 features = ['wasmtime']
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-finality-grandpa]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-keystore]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-rpc]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-rpc-api]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-service]
 features = ['wasmtime']
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-telemetry]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-transaction-pool]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-tracing]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-block-builder]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-api]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-blockchain]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-consensus]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-consensus-aura]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-core]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-finality-grandpa]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-inherents]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-keystore]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-offchain]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-runtime]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-session]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-timestamp]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-transaction-pool]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sp-trie]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.substrate-frame-rpc-system]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.sc-network]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 [dependencies.serde]
 features = ['derive']
@@ -169,77 +169,77 @@ version = '1.0.130'
 version = '1.0.68'
 
 [dependencies.sc-consensus-manual-seal]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 ################################################################################
 # Cumulus dependencies
 
 [dependencies.cumulus-client-consensus-aura]
-git = 'https://github.com/paritytech/cumulus.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.20"
 
 [dependencies.cumulus-client-consensus-common]
-git = 'https://github.com/paritytech/cumulus.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.20"
 
 [dependencies.cumulus-client-collator]
-git = 'https://github.com/paritytech/cumulus.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.20"
 
 [dependencies.cumulus-client-cli]
-git = 'https://github.com/paritytech/cumulus.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.20"
 
 [dependencies.cumulus-client-network]
-git = 'https://github.com/paritytech/cumulus.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.20"
 
 [dependencies.cumulus-primitives-core]
-git = 'https://github.com/paritytech/cumulus.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.20"
 
 [dependencies.cumulus-primitives-parachain-inherent]
-git = 'https://github.com/paritytech/cumulus.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.20"
 
 [dependencies.cumulus-client-service]
-git = 'https://github.com/paritytech/cumulus.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.20"
 
 [dependencies.cumulus-relay-chain-interface]
-git = 'https://github.com/paritytech/cumulus.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.20"
 
 [dependencies.cumulus-relay-chain-inprocess-interface]
-git = 'https://github.com/paritytech/cumulus.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.20"
 
 [dependencies.cumulus-relay-chain-rpc-interface]
-git = 'https://github.com/paritytech/cumulus.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.20"
 
 ################################################################################
 # Polkadot dependencies
 [dependencies.polkadot-primitives]
 git = "https://github.com/paritytech/polkadot"
-branch = 'release-v0.9.18'
+branch = "release-v0.9.20"
 
 [dependencies.polkadot-service]
 git = "https://github.com/paritytech/polkadot"
-branch = 'release-v0.9.18'
+branch = "release-v0.9.20"
 
 [dependencies.polkadot-cli]
 git = "https://github.com/paritytech/polkadot"
-branch = 'release-v0.9.18'
+branch = "release-v0.9.20"
 
 [dependencies.polkadot-test-service]
 git = "https://github.com/paritytech/polkadot"
-branch = 'release-v0.9.18'
+branch = "release-v0.9.20"
 
 [dependencies.polkadot-parachain]
 git = "https://github.com/paritytech/polkadot"
-branch = 'release-v0.9.18'
+branch = "release-v0.9.20"
 
 
 ################################################################################
@@ -268,8 +268,8 @@ default-features = false
 path = "../../primitives/rpc"
 
 [dependencies.pallet-transaction-payment-rpc-runtime-api]
-git = 'https://github.com/paritytech/substrate.git'
-branch = 'polkadot-v0.9.18'
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.20"
 
 ################################################################################
 # Package
@@ -283,7 +283,7 @@ homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'unique-node'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.9.18'
+version = '0.9.20'
 
 [[bin]]
 name = 'unique-collator'
@@ -302,13 +302,13 @@ jsonrpc-core = '18.0.0'
 jsonrpc-pubsub = "18.0.0"
 tokio = { version = "1.17.0", features = ["time"] }
 
-fc-rpc-core = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
-fc-consensus = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
-fc-mapping-sync = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
-fc-rpc = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
-fc-db = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
-fp-rpc = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
-pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
+fc-rpc-core = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.20" }
+fc-consensus = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.20" }
+fc-mapping-sync = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.20" }
+fc-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.20" }
+fc-db = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.20" }
+fp-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.20" }
+pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.20" }
 
 unique-rpc = { default-features = false, path = "../rpc" }
 

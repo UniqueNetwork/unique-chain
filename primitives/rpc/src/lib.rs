@@ -18,7 +18,6 @@
 
 use up_data_structs::{CollectionId, TokenId, Collection, CollectionStats, CollectionLimits};
 use sp_std::vec::Vec;
-use sp_core::H160;
 use codec::Decode;
 use sp_runtime::DispatchError;
 
@@ -50,15 +49,13 @@ sp_api::decl_runtime_apis! {
 			token: TokenId,
 		) -> Result<u128>;
 
-		/// Used for ethereum integration
-		fn eth_contract_code(account: H160) -> Option<Vec<u8>>;
-
 		fn adminlist(collection: CollectionId) -> Result<Vec<CrossAccountId>>;
 		fn allowlist(collection: CollectionId) -> Result<Vec<CrossAccountId>>;
 		fn allowed(collection: CollectionId, user: CrossAccountId) -> Result<bool>;
 		fn last_token_id(collection: CollectionId) -> Result<TokenId>;
 		fn collection_by_id(collection: CollectionId) -> Result<Option<Collection<AccountId>>>;
 		fn collection_stats() -> Result<CollectionStats>;
+		fn next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<Option<u64>>;
 		fn effective_collection_limits(collection_id: CollectionId) -> Result<Option<CollectionLimits>>;
 	}
 }

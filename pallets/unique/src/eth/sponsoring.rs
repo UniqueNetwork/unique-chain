@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-//! Implements EVM sponsoring logic via OnChargeEVMTransaction
+//! Implements EVM sponsoring logic via TransactionValidityHack
 
 use crate::{Config, sponsorship::*};
 use evm_coder::{Call, abi::AbiReader};

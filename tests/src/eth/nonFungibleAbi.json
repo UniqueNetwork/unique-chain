@@ -466,9 +466,9 @@
     {
         "inputs": [
             {
-                "internalType": "uint32",
+                "internalType": "bytes4",
                 "name": "interfaceId",
-                "type": "uint32"
+                "type": "bytes4"
             }
         ],
         "name": "supportsInterface",

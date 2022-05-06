@@ -7,7 +7,7 @@ import type { AccountId32, Call, H160, H256, MultiAddress, Perbill } from '@polk
 import type { Event } from '@polkadot/types/interfaces/system';
 
 /** @name BTreeSet */
-export interface BTreeSet extends Vec<Bytes> {}
+export interface BTreeSet extends BTreeSet<Bytes> {}
 
 /** @name CumulusPalletDmpQueueCall */
 export interface CumulusPalletDmpQueueCall extends Enum {
@@ -108,8 +108,8 @@ export interface CumulusPalletParachainSystemEvent extends Enum {
 export interface CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot extends Struct {
   readonly dmqMqcHead: H256;
   readonly relayDispatchQueueSize: ITuple<[u32, u32]>;
-  readonly ingressChannels: Vec<ITuple<[u32, PolkadotPrimitivesV1AbridgedHrmpChannel]>>;
-  readonly egressChannels: Vec<ITuple<[u32, PolkadotPrimitivesV1AbridgedHrmpChannel]>>;
+  readonly ingressChannels: Vec<ITuple<[u32, PolkadotPrimitivesV2AbridgedHrmpChannel]>>;
+  readonly egressChannels: Vec<ITuple<[u32, PolkadotPrimitivesV2AbridgedHrmpChannel]>>;
 }
 
 /** @name CumulusPalletXcmCall */
@@ -238,7 +238,7 @@ export interface CumulusPalletXcmpQueueQueueConfigData extends Struct {
 
 /** @name CumulusPrimitivesParachainInherentParachainInherentData */
 export interface CumulusPrimitivesParachainInherentParachainInherentData extends Struct {
-  readonly validationData: PolkadotPrimitivesV1PersistedValidationData;
+  readonly validationData: PolkadotPrimitivesV2PersistedValidationData;
   readonly relayChainState: SpTrieStorageProof;
   readonly downwardMessages: Vec<PolkadotCorePrimitivesInboundDownwardMessage>;
   readonly horizontalMessages: BTreeMap<u32, Vec<PolkadotCorePrimitivesInboundHrmpMessage>>;
@@ -386,7 +386,6 @@ export interface EvmCoreErrorExitError extends Enum {
   readonly isCallTooDeep: boolean;
   readonly isCreateCollision: boolean;
   readonly isCreateContractLimit: boolean;
-  readonly isInvalidCode: boolean;
   readonly isOutOfOffset: boolean;
   readonly isOutOfGas: boolean;
   readonly isOutOfFund: boolean;
@@ -394,7 +393,8 @@ export interface EvmCoreErrorExitError extends Enum {
   readonly isCreateEmpty: boolean;
   readonly isOther: boolean;
   readonly asOther: Text;
-  readonly type: 'StackUnderflow' | 'StackOverflow' | 'InvalidJump' | 'InvalidRange' | 'DesignatedInvalid' | 'CallTooDeep' | 'CreateCollision' | 'CreateContractLimit' | 'InvalidCode' | 'OutOfOffset' | 'OutOfGas' | 'OutOfFund' | 'PcUnderflow' | 'CreateEmpty' | 'Other';
+  readonly isInvalidCode: boolean;
+  readonly type: 'StackUnderflow' | 'StackOverflow' | 'InvalidJump' | 'InvalidRange' | 'DesignatedInvalid' | 'CallTooDeep' | 'CreateCollision' | 'CreateContractLimit' | 'OutOfOffset' | 'OutOfGas' | 'OutOfFund' | 'PcUnderflow' | 'CreateEmpty' | 'Other' | 'InvalidCode';
 }
 
 /** @name EvmCoreErrorExitFatal */
@@ -1593,8 +1593,8 @@ export interface PolkadotParachainPrimitivesXcmpMessageFormat extends Enum {
   readonly type: 'ConcatenatedVersionedXcm' | 'ConcatenatedEncodedBlob' | 'Signals';
 }
 
-/** @name PolkadotPrimitivesV1AbridgedHostConfiguration */
-export interface PolkadotPrimitivesV1AbridgedHostConfiguration extends Struct {
+/** @name PolkadotPrimitivesV2AbridgedHostConfiguration */
+export interface PolkadotPrimitivesV2AbridgedHostConfiguration extends Struct {
   readonly maxCodeSize: u32;
   readonly maxHeadDataSize: u32;
   readonly maxUpwardQueueCount: u32;
@@ -1606,8 +1606,8 @@ export interface PolkadotPrimitivesV1AbridgedHostConfiguration extends Struct {
   readonly validationUpgradeDelay: u32;
 }
 
-/** @name PolkadotPrimitivesV1AbridgedHrmpChannel */
-export interface PolkadotPrimitivesV1AbridgedHrmpChannel extends Struct {
+/** @name PolkadotPrimitivesV2AbridgedHrmpChannel */
+export interface PolkadotPrimitivesV2AbridgedHrmpChannel extends Struct {
   readonly maxCapacity: u32;
   readonly maxTotalSize: u32;
   readonly maxMessageSize: u32;
@@ -1616,16 +1616,16 @@ export interface PolkadotPrimitivesV1AbridgedHrmpChannel extends Struct {
   readonly mqcHead: Option<H256>;
 }
 
-/** @name PolkadotPrimitivesV1PersistedValidationData */
-export interface PolkadotPrimitivesV1PersistedValidationData extends Struct {
+/** @name PolkadotPrimitivesV2PersistedValidationData */
+export interface PolkadotPrimitivesV2PersistedValidationData extends Struct {
   readonly parentHead: Bytes;
   readonly relayParentNumber: u32;
   readonly relayParentStorageRoot: H256;
   readonly maxPovSize: u32;
 }
 
-/** @name PolkadotPrimitivesV1UpgradeRestriction */
-export interface PolkadotPrimitivesV1UpgradeRestriction extends Enum {
+/** @name PolkadotPrimitivesV2UpgradeRestriction */
+export interface PolkadotPrimitivesV2UpgradeRestriction extends Enum {
   readonly isPresent: boolean;
   readonly type: 'Present';
 }
@@ -1680,13 +1680,15 @@ export interface SpRuntimeDispatchError extends Enum {
   readonly asToken: SpRuntimeTokenError;
   readonly isArithmetic: boolean;
   readonly asArithmetic: SpRuntimeArithmeticError;
-  readonly type: 'Other' | 'CannotLookup' | 'BadOrigin' | 'Module' | 'ConsumerRemaining' | 'NoProviders' | 'TooManyConsumers' | 'Token' | 'Arithmetic';
+  readonly isTransactional: boolean;
+  readonly asTransactional: SpRuntimeTransactionalError;
+  readonly type: 'Other' | 'CannotLookup' | 'BadOrigin' | 'Module' | 'ConsumerRemaining' | 'NoProviders' | 'TooManyConsumers' | 'Token' | 'Arithmetic' | 'Transactional';
 }
 
 /** @name SpRuntimeModuleError */
 export interface SpRuntimeModuleError extends Struct {
   readonly index: u8;
-  readonly error: u8;
+  readonly error: U8aFixed;
 }
 
 /** @name SpRuntimeMultiSignature */
@@ -1710,6 +1712,13 @@ export interface SpRuntimeTokenError extends Enum {
   readonly isFrozen: boolean;
   readonly isUnsupported: boolean;
   readonly type: 'NoFunds' | 'WouldDie' | 'BelowMinimum' | 'CannotCreate' | 'UnknownAsset' | 'Frozen' | 'Unsupported';
+}
+
+/** @name SpRuntimeTransactionalError */
+export interface SpRuntimeTransactionalError extends Enum {
+  readonly isLimitReached: boolean;
+  readonly isNoLayer: boolean;
+  readonly type: 'LimitReached' | 'NoLayer';
 }
 
 /** @name SpTrieStorageProof */

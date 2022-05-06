@@ -704,44 +704,63 @@ mod tests {
 	use frame_system::{EnsureRoot, EnsureSignedBy};
 	use crate as scheduler;
 
-	mod logger {
-		use super::*;
+	#[frame_support::pallet]
+	pub mod logger {
+		use super::{OriginCaller, OriginTrait};
+		use frame_support::pallet_prelude::*;
+		use frame_system::pallet_prelude::*;
 		use std::cell::RefCell;
 
 		thread_local! {
 			static LOG: RefCell<Vec<(OriginCaller, u32)>> = RefCell::new(Vec::new());
 		}
-		pub trait Config: system::Config {
-			type Event: From<Event> + Into<<Self as system::Config>::Event>;
+		pub fn log() -> Vec<(OriginCaller, u32)> {
+			LOG.with(|log| log.borrow().clone())
 		}
-		decl_event! {
-			pub enum Event {
-				Logged(u32, Weight),
+
+		#[pallet::pallet]
+		#[pallet::generate_store(pub(super) trait Store)]
+		pub struct Pallet<T>(PhantomData<T>);
+
+		#[pallet::hooks]
+		impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+
+		#[pallet::config]
+		pub trait Config: frame_system::Config {
+			type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		}
+
+		#[pallet::event]
+		#[pallet::generate_deposit(pub(super) fn deposit_event)]
+		pub enum Event<T: Config> {
+			Logged(u32, Weight),
+		}
+
+		#[pallet::call]
+		impl<T: Config> Pallet<T>
+		where
+			<T as frame_system::Config>::Origin: OriginTrait<PalletsOrigin = OriginCaller>,
+		{
+			#[pallet::weight(*weight)]
+			pub fn log(origin: OriginFor<T>, i: u32, weight: Weight) -> DispatchResult {
+				Self::deposit_event(Event::Logged(i, weight));
+				LOG.with(|log| {
+					log.borrow_mut().push((origin.caller().clone(), i));
+				});
+				Ok(())
 			}
-		}
-		decl_module! {
-			pub struct Module<T: Config> for enum Call
-			where
-				origin: <T as system::Config>::Origin,
-				<T as system::Config>::Origin: OriginTrait<PalletsOrigin = OriginCaller>
-			{
-				fn deposit_event() = default;
 
-				#[weight = *weight]
-				fn log(origin, i: u32, weight: Weight) {
-					Self::deposit_event(Event::Logged(i, weight));
-					LOG.with(|log| {
-						log.borrow_mut().push((origin.caller().clone(), i));
-					})
-				}
-
-				#[weight = *weight]
-				fn log_without_filter(origin, i: u32, weight: Weight) {
-					Self::deposit_event(Event::Logged(i, weight));
-					LOG.with(|log| {
-						log.borrow_mut().push((origin.caller().clone(), i));
-					})
-				}
+			#[pallet::weight(*weight)]
+			pub fn log_without_filter(
+				origin: OriginFor<T>,
+				i: u32,
+				weight: Weight,
+			) -> DispatchResult {
+				Self::deposit_event(Event::Logged(i, weight));
+				LOG.with(|log| {
+					log.borrow_mut().push((origin.caller().clone(), i));
+				});
+				Ok(())
 			}
 		}
 	}
@@ -756,7 +775,7 @@ mod tests {
 			UncheckedExtrinsic = UncheckedExtrinsic,
 		{
 			System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-			Logger: logger::{Pallet, Call, Event},
+			Logger: logger::{Pallet, Call, Event<T>},
 			Scheduler: scheduler::{Pallet, Call, Storage, Event<T>},
 		}
 	);
