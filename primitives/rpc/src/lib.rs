@@ -17,7 +17,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use up_data_structs::{
-	CollectionId, TokenId, RpcCollection, CollectionStats, CollectionLimits, Property, PropertyKey,
+	CollectionId, TokenId, RpcCollection, CollectionStats, CollectionLimits, Property,
 	PropertyKeyPermission,
 };
 use sp_std::vec::Vec;

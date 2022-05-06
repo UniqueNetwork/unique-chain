@@ -20,7 +20,7 @@ use codec::Decode;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
 use up_data_structs::{
-	RpcCollection, CollectionId, CollectionStats, CollectionLimits, TokenId, Property, PropertyKey,
+	RpcCollection, CollectionId, CollectionStats, CollectionLimits, TokenId, Property,
 	PropertyKeyPermission,
 };
 use sp_api::{BlockId, BlockT, ProvideRuntimeApi, ApiExt};
