@@ -31,8 +31,8 @@ evm_stubs: $(FUNGIBLE_EVM_STUBS)/UniqueFungible.raw $(NONFUNGIBLE_EVM_STUBS)/Uni
 
 .PHONY: _bench
 _bench:
-	cargo run --release --features runtime-benchmarks -- \
-	benchmark --pallet pallet-$(PALLET) \
+	cargo run --release --features runtime-benchmarks,unique-runtime -- \
+	benchmark pallet --pallet pallet-$(PALLET) \
 	--wasm-execution compiled --extrinsic '*' \
 	--template .maintain/frame-weight-template.hbs --steps=50 --repeat=200 --heap-pages=4096 \
 	--output=./pallets/$(PALLET)/src/weights.rs

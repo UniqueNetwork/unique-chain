@@ -205,7 +205,11 @@ describe('Sponsoring EVM contracts', () => {
     expect(await flipper.methods.getValue().call()).to.be.true;
     expect(await web3.eth.getBalance(caller)).to.be.equals(originalCallerBalance);
 
+    const newFlipperBalance = await web3.eth.getBalance(flipper.options.address);
+    expect(newFlipperBalance).to.be.not.equals(originalFlipperBalance);
+
     await flipper.methods.flip().send({from: caller});
+    expect(await web3.eth.getBalance(flipper.options.address)).to.be.equal(newFlipperBalance);
     expect(await web3.eth.getBalance(caller)).to.be.not.equals(originalCallerBalance);
   });
 

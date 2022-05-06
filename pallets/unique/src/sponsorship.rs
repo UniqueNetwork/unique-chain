@@ -304,7 +304,6 @@ where
 }
 
 use crate::SponsorshipPredict;
-use up_data_structs::SponsorshipState;
 pub struct UniqueSponsorshipPredict<T>(PhantomData<T>);
 
 impl<T> SponsorshipPredict<T> for UniqueSponsorshipPredict<T>
