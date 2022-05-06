@@ -336,11 +336,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		Vec::new()
 	}
 
-	fn token_properties(
-		&self,
-		_token_id: TokenId,
-		_keys: Vec<PropertyKey>
-	) -> Vec<Property> {
+	fn token_properties(&self, _token_id: TokenId, _keys: Vec<PropertyKey>) -> Vec<Property> {
 		Vec::new()
 	}
 

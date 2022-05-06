@@ -363,11 +363,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 			.into_inner()
 	}
 
-	fn token_properties(
-		&self,
-		_token_id: TokenId,
-		_keys: Vec<PropertyKey>
-	) -> Vec<Property> {
+	fn token_properties(&self, _token_id: TokenId, _keys: Vec<PropertyKey>) -> Vec<Property> {
 		Vec::new()
 	}
 
