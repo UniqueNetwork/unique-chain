@@ -36,7 +36,7 @@ use up_data_structs::{
 	CUSTOM_DATA_LIMIT, CollectionLimits, CustomDataLimit, CreateCollectionData, SponsorshipState,
 	CreateItemExData, SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField,
 	PhantomType, Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyPermission,
-	PropertiesError, PropertyKeyPermission,
+	PropertiesError, PropertyKeyPermission, TokenData,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -454,6 +454,7 @@ pub mod pallet {
 			CollectionStats,
 			CollectionId,
 			TokenId,
+			PhantomType<TokenData<T::CrossAccountId>>,
 			PhantomType<RpcCollection<T::AccountId>>,
 		),
 		QueryKind = OptionQuery,
@@ -843,6 +844,57 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	pub fn bytes_keys_to_property_keys(keys: Vec<Vec<u8>>) -> Result<Vec<PropertyKey>, DispatchError> {
+		keys.into_iter()
+			.map(|key| -> Result<PropertyKey, DispatchError> {
+				// TODO Fix error
+				key.try_into().map_err(|_| DispatchError::Other("Can't read property key"))
+			})
+			.collect::<Result<Vec<PropertyKey>, DispatchError>>()
+	}
+
+	pub fn filter_collection_properties(
+		collection_id: CollectionId,
+		keys: Vec<PropertyKey>
+	) -> Result<Vec<Property>, DispatchError> {
+		let properties = Self::collection_properties(collection_id);
+
+		let properties = keys.into_iter()
+			.filter_map(|key| {
+				properties.get_property(&key)
+					.map(|value| {
+						Property {
+							key,
+							value: value.clone()
+						}
+					})
+			})
+			.collect();
+
+		Ok(properties)
+	}
+
+	pub fn filter_property_permissions(
+		collection_id: CollectionId,
+		keys: Vec<PropertyKey>
+	) -> Result<Vec<PropertyKeyPermission>, DispatchError> {
+		let permissions = Self::property_permissions(collection_id);
+
+		let key_permissions = keys.into_iter()
+			.filter_map(|key| {
+				permissions.get(&key)
+					.map(|permission| {
+						PropertyKeyPermission {
+							key,
+							permission: permission.clone()
+						}
+					})
+			})
+			.collect();
+
+		Ok(key_permissions)
+	}
+
 	fn set_field_raw(
 		collection_id: CollectionId,
 		field: CollectionField,
@@ -1117,7 +1169,11 @@ pub trait CommonCollectionOperations<T: Config> {
 	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
 	fn const_metadata(&self, token: TokenId) -> Vec<u8>;
 	fn variable_metadata(&self, token: TokenId) -> Vec<u8>;
-
+	fn token_properties(
+		&self,
+		token_id: TokenId,
+		keys: Vec<PropertyKey>
+	) -> Vec<Property>;
 	/// Amount of unique collection tokens
 	fn total_supply(&self) -> u32;
 	/// Amount of different tokens account has (Applicable to nonfungible/refungible)

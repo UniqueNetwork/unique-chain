@@ -7,14 +7,6 @@ macro_rules! impl_common_runtime_apis {
             $($custom_apis:tt)+
         )?
     ) => {
-        fn bytes_keys_to_property_keys(keys: Vec<Vec<u8>>) -> Result<Vec<PropertyKey>, DispatchError> {
-            keys.into_iter()
-                .map(|key| -> Result<PropertyKey, DispatchError> {
-                    key.try_into().map_err(|_| DispatchError::Other("Can't read property key"))
-                })
-                .collect::<Result<Vec<PropertyKey>, DispatchError>>()
-        }
-
         impl_runtime_apis! {
             $($($custom_apis)+)?
 
@@ -48,23 +40,9 @@ macro_rules! impl_common_runtime_apis {
                     collection: CollectionId,
                     keys: Vec<Vec<u8>>
                 ) -> Result<Vec<Property>, DispatchError> {
-                    let keys = bytes_keys_to_property_keys(keys)?;
+                    let keys = pallet_common::Pallet::<Runtime>::bytes_keys_to_property_keys(keys)?;
 
-                    let properties = pallet_common::Pallet::<Runtime>::collection_properties(collection);
-
-                    let properties = keys.into_iter()
-                        .filter_map(|key| {
-                            properties.get_property(&key)
-                                .map(|value| {
-                                    Property {
-                                        key,
-                                        value: value.clone()
-                                    }
-                                })
-                        })
-                        .collect();
-
-                    Ok(properties)
+                    pallet_common::Pallet::<Runtime>::filter_collection_properties(collection, keys)
                 }
 
                 fn token_properties(
@@ -72,46 +50,31 @@ macro_rules! impl_common_runtime_apis {
                     token_id: TokenId,
                     keys: Vec<Vec<u8>>
                 ) -> Result<Vec<Property>, DispatchError> {
-                    let keys = bytes_keys_to_property_keys(keys)?;
-
-                    let properties = pallet_nonfungible::Pallet::<Runtime>::token_properties((collection, token_id));
-
-                    let properties = keys.into_iter()
-                        .filter_map(|key| {
-                            properties.get_property(&key)
-                                .map(|value| {
-                                    Property {
-                                        key,
-                                        value: value.clone()
-                                    }
-                                })
-                        })
-                        .collect();
-
-                    Ok(properties)
+                    let keys = pallet_common::Pallet::<Runtime>::bytes_keys_to_property_keys(keys)?;
+                    dispatch_unique_runtime!(collection.token_properties(token_id, keys))
                 }
 
                 fn property_permissions(
                     collection: CollectionId,
                     keys: Vec<Vec<u8>>
                 ) -> Result<Vec<PropertyKeyPermission>, DispatchError> {
-                    let keys = bytes_keys_to_property_keys(keys)?;
+                    let keys = pallet_common::Pallet::<Runtime>::bytes_keys_to_property_keys(keys)?;
 
-                    let permissions = pallet_common::Pallet::<Runtime>::property_permissions(collection);
+                    pallet_common::Pallet::<Runtime>::filter_property_permissions(collection, keys)
+                }
 
-                    let key_permissions = keys.into_iter()
-                        .filter_map(|key| {
-                            permissions.get(&key)
-                                .map(|permission| {
-                                    PropertyKeyPermission {
-                                        key,
-                                        permission: permission.clone()
-                                    }
-                                })
-                        })
-                        .collect();
+                fn token_data(
+                    collection: CollectionId,
+                    token_id: TokenId,
+                    keys: Vec<Vec<u8>>
+                ) -> Result<TokenData<CrossAccountId>, DispatchError> {
+                    let token_data = TokenData {
+                        const_data: Self::const_metadata(collection, token_id)?,
+                        properties: Self::token_properties(collection, token_id, keys)?,
+                        owner: Self::token_owner(collection, token_id)?
+                    };
 
-                    Ok(key_permissions)
+                    Ok(token_data)
                 }
 
                 fn total_supply(collection: CollectionId) -> Result<u32, DispatchError> {

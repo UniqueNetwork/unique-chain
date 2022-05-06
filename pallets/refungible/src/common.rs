@@ -269,7 +269,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		_sender: T::CrossAccountId,
 		_property: Vec<Property>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::PropertiesNotAllowed)
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
 
 	fn delete_collection_properties(
@@ -277,7 +277,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		_sender: &T::CrossAccountId,
 		_property_keys: Vec<PropertyKey>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::PropertiesNotAllowed)
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
 
 	fn set_token_properties(
@@ -286,7 +286,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		_token_id: TokenId,
 		_property: Vec<Property>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::PropertiesNotAllowed)
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
 
 	fn set_property_permissions(
@@ -294,7 +294,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		_sender: &T::CrossAccountId,
 		_property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::PropertiesNotAllowed)
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
 
 	fn delete_token_properties(
@@ -303,7 +303,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		_token_id: TokenId,
 		_property_keys: Vec<PropertyKey>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::PropertiesNotAllowed)
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
 
 	fn set_variable_metadata(
@@ -361,6 +361,14 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		<TokenData<T>>::get((self.id, token))
 			.variable_data
 			.into_inner()
+	}
+
+	fn token_properties(
+		&self,
+		_token_id: TokenId,
+		_keys: Vec<PropertyKey>
+	) -> Vec<Property> {
+		Vec::new()
 	}
 
 	fn total_supply(&self) -> u32 {

@@ -386,6 +386,26 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			.into_inner()
 	}
 
+	fn token_properties(
+		&self,
+		token_id: TokenId,
+		keys: Vec<PropertyKey>
+	) -> Vec<Property> {
+		let properties = <Pallet<T>>::token_properties((self.id, token_id));
+
+		keys.into_iter()
+			.filter_map(|key| {
+				properties.get_property(&key)
+					.map(|value| {
+						Property {
+							key,
+							value: value.clone()
+						}
+					})
+			})
+			.collect()
+	}
+
 	fn total_supply(&self) -> u32 {
 		<Pallet<T>>::total_supply(self)
 	}

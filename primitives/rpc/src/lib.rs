@@ -18,7 +18,7 @@
 
 use up_data_structs::{
 	CollectionId, TokenId, RpcCollection, CollectionStats, CollectionLimits, Property,
-	PropertyKeyPermission,
+	PropertyKeyPermission, TokenData,
 };
 use sp_std::vec::Vec;
 use codec::Decode;
@@ -56,6 +56,8 @@ sp_api::decl_runtime_apis! {
 			collection: CollectionId,
 			properties: Vec<Vec<u8>>
 		) -> Result<Vec<PropertyKeyPermission>>;
+
+		fn token_data(collection: CollectionId, token_id: TokenId, keys: Vec<Vec<u8>>) -> Result<TokenData<CrossAccountId>>;
 
 		fn total_supply(collection: CollectionId) -> Result<u32>;
 		fn account_balance(collection: CollectionId, account: CrossAccountId) -> Result<u32>;

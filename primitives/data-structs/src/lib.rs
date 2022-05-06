@@ -173,6 +173,14 @@ impl TryFrom<U256> for TokenId {
 	}
 }
 
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub struct TokenData<CrossAccountId> {
+	pub const_data: Vec<u8>,
+	pub properties: Vec<Property>,
+	pub owner: Option<CrossAccountId>,
+}
+
 pub struct OverflowError;
 impl From<OverflowError> for &'static str {
 	fn from(_: OverflowError) -> Self {

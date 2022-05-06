@@ -21,7 +21,7 @@ use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
 use up_data_structs::{
 	RpcCollection, CollectionId, CollectionStats, CollectionLimits, TokenId, Property,
-	PropertyKeyPermission,
+	PropertyKeyPermission, TokenData,
 };
 use sp_api::{BlockId, BlockT, ProvideRuntimeApi, ApiExt};
 use sp_blockchain::HeaderBackend;
@@ -103,6 +103,15 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		keys: Vec<String>,
 		at: Option<BlockHash>,
 	) -> Result<Vec<PropertyKeyPermission>>;
+
+	#[rpc(name = "unique_tokenData")]
+	fn token_data(
+		&self,
+		collection: CollectionId,
+		token_id: TokenId,
+		keys: Vec<String>,
+		at: Option<BlockHash>,
+	) -> Result<TokenData<CrossAccountId>>;
 
 	#[rpc(name = "unique_totalSupply")]
 	fn total_supply(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<u32>;
@@ -293,6 +302,14 @@ where
 		#[map(|keys| string_keys_to_bytes_keys(keys))]
 		keys: Vec<String>
 	) -> Vec<PropertyKeyPermission>);
+
+	pass_method!(token_data(
+		collection: CollectionId,
+		token_id: TokenId,
+
+		#[map(|keys| string_keys_to_bytes_keys(keys))]
+		keys: Vec<String>,
+	) -> TokenData<CrossAccountId>);
 
 	pass_method!(total_supply(collection: CollectionId) -> u32);
 	pass_method!(account_balance(collection: CollectionId, account: CrossAccountId) -> u32);
