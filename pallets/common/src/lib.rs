@@ -366,9 +366,14 @@ pub mod pallet {
 		/// Tried to store more data than allowed in collection field
 		CollectionFieldSizeExceeded,
 
+		/// Tried to store more property data than allowed
 		NoSpaceForProperty,
 
+		/// Tried to store more property keys than allowed
 		PropertyLimitReached,
+
+		/// Unable to read array of unbounded keys
+		UnableToReadUnboundedKeys,
 	}
 
 	#[pallet::storage]
@@ -865,9 +870,8 @@ impl<T: Config> Pallet<T> {
 	) -> Result<Vec<PropertyKey>, DispatchError> {
 		keys.into_iter()
 			.map(|key| -> Result<PropertyKey, DispatchError> {
-				// TODO Fix error
 				key.try_into()
-					.map_err(|_| DispatchError::Other("Can't read property key"))
+					.map_err(|_| <Error<T>>::UnableToReadUnboundedKeys.into())
 			})
 			.collect::<Result<Vec<PropertyKey>, DispatchError>>()
 	}
