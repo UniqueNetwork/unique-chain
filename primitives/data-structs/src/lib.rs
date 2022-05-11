@@ -329,6 +329,8 @@ pub struct RpcCollection<AccountId> {
 	pub variable_on_chain_schema: Vec<u8>,
 	pub const_on_chain_schema: Vec<u8>,
 	pub meta_update_permission: MetaUpdatePermission,
+	pub token_property_permissions: Vec<PropertyKeyPermission>,
+	pub properties: Vec<Property>,
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen)]

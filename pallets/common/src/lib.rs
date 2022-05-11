@@ -36,7 +36,7 @@ use up_data_structs::{
 	CUSTOM_DATA_LIMIT, CollectionLimits, CustomDataLimit, CreateCollectionData, SponsorshipState,
 	CreateItemExData, SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField,
 	PhantomType, Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyPermission,
-	PropertiesError, PropertyKeyPermission, TokenData,
+	PropertiesError, PropertyKeyPermission, TokenData, CollectionPropertiesPermissionsVec,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -573,8 +573,24 @@ impl<T: Config> Pallet<T> {
 			sponsorship,
 			limits,
 			meta_update_permission,
-			..
 		} = <CollectionById<T>>::get(collection)?;
+
+		let token_property_permissions = <CollectionPropertyPermissions<T>>::get(collection)
+			.iter()
+			.map(|(key, permission)| PropertyKeyPermission {
+				key: key.clone(),
+				permission: permission.clone(),
+			})
+			.collect();
+
+		let properties = <CollectionProperties<T>>::get(collection)
+			.iter()
+			.map(|(key, value)| Property {
+				key: key.clone(),
+				value: value.clone()
+			})
+			.collect();
+
 		Some(RpcCollection {
 			name: name.into_inner(),
 			description: description.into_inner(),
@@ -602,6 +618,8 @@ impl<T: Config> Pallet<T> {
 				CollectionField::VariableOnChainSchema,
 			))
 			.into_inner(),
+			token_property_permissions,
+			properties,
 		})
 	}
 }
@@ -651,8 +669,6 @@ impl<T: Config> Pallet<T> {
 				.map(|limits| Self::clamp_limits(data.mode.clone(), &Default::default(), limits))
 				.unwrap_or_else(|| Ok(CollectionLimits::default()))?,
 			meta_update_permission: data.meta_update_permission.unwrap_or_default(),
-			// token_property_permissions: data.token_property_permissions.unwrap_or_default(),
-			// properties: Properties::from_collection_props_vec(data.properties)?
 		};
 
 		CollectionProperties::<T>::insert(
