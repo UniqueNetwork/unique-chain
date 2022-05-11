@@ -29,12 +29,12 @@ runtime-benchmarks = [
 [dependencies.sp-core]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.20"
+branch = "polkadot-v0.9.21"
 
 [dependencies.sp-runtime]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.20"
+branch = "polkadot-v0.9.21"
 
 [dependencies.codec]
 default-features = false
@@ -50,12 +50,12 @@ version = "2.0.1"
 [dependencies.frame-support]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.20"
+branch = "polkadot-v0.9.21"
 
 [dependencies.frame-system]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.20"
+branch = "polkadot-v0.9.21"
 
 [dependencies.pallet-common]
 default-features = false
@@ -64,12 +64,12 @@ path = "../../pallets/common"
 [dependencies.sp-consensus-aura]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.20"
+branch = "polkadot-v0.9.21"
 
 [dependencies.fp-rpc]
 default-features = false
 git = "https://github.com/uniquenetwork/frontier"
-branch = "unique-polkadot-v0.9.20"
+branch = "unique-polkadot-v0.9.21"
 
 [dependencies]
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.20" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
