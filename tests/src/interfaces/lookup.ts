@@ -2367,7 +2367,9 @@ export default {
     limits: 'UpDataStructsCollectionLimits',
     variableOnChainSchema: 'Bytes',
     constOnChainSchema: 'Bytes',
-    metaUpdatePermission: 'UpDataStructsMetaUpdatePermission'
+    metaUpdatePermission: 'UpDataStructsMetaUpdatePermission',
+    tokenPropertyPermissions: 'Vec<UpDataStructsPropertyKeyPermission>',
+    properties: 'Vec<UpDataStructsProperty>'
   },
   /**
    * Lookup333: pallet_common::pallet::Error<T>

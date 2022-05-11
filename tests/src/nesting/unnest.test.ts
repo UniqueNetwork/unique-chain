@@ -19,8 +19,10 @@ let bob: IKeyringPair;
 
 describe('Integration Test: Unnesting', () => {
   before(async () => {
-    alice = privateKey('//Alice');
-    bob = privateKey('//Bob');
+    await usingApi(async api => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+    });
   });
 
   it('Allows the owner to successfully unnest a token', async () => {
@@ -57,8 +59,10 @@ describe('Integration Test: Unnesting', () => {
 
 describe('Negative Test: Unnesting', () => {
   before(async () => {
-    alice = privateKey('//Alice');
-    bob = privateKey('//Bob');
+    await usingApi(async api => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+    });
   });
   
   it('Disallows a non-owner to unnest/burn a token', async () => {

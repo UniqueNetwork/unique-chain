@@ -2570,6 +2570,8 @@ declare module '@polkadot/types/lookup' {
     readonly variableOnChainSchema: Bytes;
     readonly constOnChainSchema: Bytes;
     readonly metaUpdatePermission: UpDataStructsMetaUpdatePermission;
+    readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
+    readonly properties: Vec<UpDataStructsProperty>;
   }
 
   /** @name PalletCommonError (333) */

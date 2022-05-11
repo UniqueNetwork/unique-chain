@@ -23,8 +23,10 @@ let bob: IKeyringPair;
 
 describe('Integration Test: Nesting', () => {
   before(async () => {
-    alice = privateKey('//Alice');
-    bob = privateKey('//Bob');
+    await usingApi(async api => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+    });
   });
 
   // ---------- Non-Fungible ----------
@@ -208,8 +210,10 @@ describe('Integration Test: Nesting', () => {
 
 describe('Negative Test: Nesting', async() => {
   before(async () => {
-    alice = privateKey('//Alice');
-    bob = privateKey('//Bob');
+    await usingApi(async api => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+    });
   });
 
   // ---------- Non-Fungible ----------

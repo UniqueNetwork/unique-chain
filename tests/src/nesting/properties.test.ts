@@ -18,8 +18,10 @@ let charlie: IKeyringPair;
 
 describe('Integration Test: Collection Properties', () => {
   before(async () => {
-    alice = privateKey('//Alice');
-    bob = privateKey('//Bob');
+    await usingApi(async api => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+    });
   });
 
   it('Reads properties from a collection', async () => {
@@ -111,8 +113,10 @@ describe('Integration Test: Collection Properties', () => {
 
 describe('Negative Integration Test: Collection Properties', () => {
   before(async () => {
-    alice = privateKey('//Alice');
-    bob = privateKey('//Bob');
+    await usingApi(async api => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+    });
   });
   
   it('Fails to set properties in a collection if not its onwer/administrator', async () => {
@@ -192,8 +196,10 @@ describe('Negative Integration Test: Collection Properties', () => {
 
 describe('Integration Test: Access Rights to Token Properties', () => {
   before(async () => {
-    alice = privateKey('//Alice');
-    bob = privateKey('//Bob');
+    await usingApi(async api => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+    });
   });
   
   it('Reads access rights to properties of a collection', async () => {
@@ -256,8 +262,10 @@ describe('Integration Test: Access Rights to Token Properties', () => {
 
 describe('Negative Integration Test: Access Rights to Token Properties', () => {
   before(async () => {
-    alice = privateKey('//Alice');
-    bob = privateKey('//Bob');
+    await usingApi(async api => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+    });
   });
 
   it('Prevents from setting access rights to properties of a collection if not an onwer/admin', async () => {
@@ -330,18 +338,20 @@ describe('Integration Test: Token Properties', () => {
   let permissions: {permission: any, signers: IKeyringPair[]}[];
 
   before(async () => {
-    alice = privateKey('//Alice');
-    bob = privateKey('//Bob');
-    charlie = privateKey('//Charlie');
+    await usingApi(async api => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
 
-    permissions = [
-      {permission: {mutable: true, collectionAdmin: true}, signers: [alice, bob]},
-      {permission: {mutable: false, collectionAdmin: true}, signers: [alice, bob]},
-      {permission: {mutable: true, tokenOwner: true}, signers: [charlie]},
-      {permission: {mutable: false, tokenOwner: true}, signers: [charlie]},
-      {permission: {mutable: true, collectionAdmin: true, tokenOwner: true}, signers: [alice, bob, charlie]},
-      {permission: {mutable: false, collectionAdmin: true, tokenOwner: true}, signers: [alice, bob, charlie]},
-    ];
+      permissions = [
+        {permission: {mutable: true, collectionAdmin: true}, signers: [alice, bob]},
+        {permission: {mutable: false, collectionAdmin: true}, signers: [alice, bob]},
+        {permission: {mutable: true, tokenOwner: true}, signers: [charlie]},
+        {permission: {mutable: false, tokenOwner: true}, signers: [charlie]},
+        {permission: {mutable: true, collectionAdmin: true, tokenOwner: true}, signers: [alice, bob, charlie]},
+        {permission: {mutable: false, collectionAdmin: true, tokenOwner: true}, signers: [alice, bob, charlie]},
+      ];
+    });
   });
 
   beforeEach(async () => {
@@ -491,19 +501,21 @@ describe('Negative Integration Test: Token Properties', () => {
   let constitution: {permission: any, signers: IKeyringPair[], sinner: IKeyringPair}[];
 
   before(async () => {
-    alice = privateKey('//Alice');
-    bob = privateKey('//Bob');
-    charlie = privateKey('//Charlie');
-    const dave = privateKey('//Dave');
+    await usingApi(async api => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+      charlie = privateKey('//Charlie');
+      const dave = privateKey('//Dave');
 
-    constitution = [
-      {permission: {mutable: true, collectionAdmin: true}, signers: [alice, bob], sinner: charlie},
-      {permission: {mutable: false, collectionAdmin: true}, signers: [alice, bob], sinner: charlie},
-      {permission: {mutable: true, tokenOwner: true}, signers: [charlie], sinner: alice},
-      {permission: {mutable: false, tokenOwner: true}, signers: [charlie], sinner: alice},
-      {permission: {mutable: true, collectionAdmin: true, tokenOwner: true}, signers: [alice, bob, charlie], sinner: dave},
-      {permission: {mutable: false, collectionAdmin: true, tokenOwner: true}, signers: [alice, bob, charlie], sinner: dave},
-    ];
+      constitution = [
+        {permission: {mutable: true, collectionAdmin: true}, signers: [alice, bob], sinner: charlie},
+        {permission: {mutable: false, collectionAdmin: true}, signers: [alice, bob], sinner: charlie},
+        {permission: {mutable: true, tokenOwner: true}, signers: [charlie], sinner: alice},
+        {permission: {mutable: false, tokenOwner: true}, signers: [charlie], sinner: alice},
+        {permission: {mutable: true, collectionAdmin: true, tokenOwner: true}, signers: [alice, bob, charlie], sinner: dave},
+        {permission: {mutable: false, collectionAdmin: true, tokenOwner: true}, signers: [alice, bob, charlie], sinner: dave},
+      ];
+    });
   });
 
   beforeEach(async () => {
