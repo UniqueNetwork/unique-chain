@@ -391,10 +391,11 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 		keys.into_iter()
 			.filter_map(|key| {
-				properties.get_property(&key).map(|value| Property {
-					key,
-					value: value.clone(),
-				})
+				properties.get(&key)
+					.map(|value| Property {
+						key,
+						value: value.clone(),
+					})
 			})
 			.collect()
 	}

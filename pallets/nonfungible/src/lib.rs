@@ -21,7 +21,7 @@ use frame_support::{BoundedVec, ensure, fail};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
-	PropertyKey, PropertyKeyPermission, Properties,
+	PropertyKey, PropertyKeyPermission, Properties, TrySet,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
@@ -265,7 +265,8 @@ impl<T: Config> Pallet<T> {
 		Self::check_token_change_permission(collection, sender, token_id, &property.key)?;
 
 		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
-			properties.try_set_property(property.clone())
+			let property = property.clone();
+			properties.try_set(property.key, property.value)
 		})
 		.map_err(|e| -> CommonError<T> { e.into() })?;
 
@@ -299,9 +300,9 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		Self::check_token_change_permission(collection, sender, token_id, &property_key)?;
 
-		<TokenProperties<T>>::mutate((collection.id, token_id), |properties| {
-			properties.remove_property(&property_key);
-		});
+		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
+			properties.remove(&property_key)
+		}).map_err(|e| -> CommonError<T> { e.into() })?;
 
 		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertyDeleted(
 			collection.id,
@@ -332,7 +333,7 @@ impl<T: Config> Pallet<T> {
 		};
 
 		let is_property_exists = TokenProperties::<T>::get((collection.id, token_id))
-			.get_property(property_key)
+			.get(property_key)
 			.is_some();
 
 		match permission {

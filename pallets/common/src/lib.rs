@@ -18,7 +18,7 @@
 
 use core::ops::{Deref, DerefMut};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use sp_std::{vec::Vec, collections::btree_map::BTreeMap};
+use sp_std::vec::Vec;
 use pallet_evm::account::CrossAccountId;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Weight, PostDispatchInfo},
@@ -36,7 +36,7 @@ use up_data_structs::{
 	CUSTOM_DATA_LIMIT, CollectionLimits, CustomDataLimit, CreateCollectionData, SponsorshipState,
 	CreateItemExData, SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField,
 	PhantomType, Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyPermission,
-	PropertiesError, PropertyKeyPermission, TokenData, CollectionPropertiesPermissionsVec,
+	PropertiesError, PropertyKeyPermission, TokenData, TrySet,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -374,6 +374,9 @@ pub mod pallet {
 
 		/// Unable to read array of unbounded keys
 		UnableToReadUnboundedKeys,
+
+		/// Only ASCII letters, digits, and '_', '-' are allowed
+		InvalidCharacterInPropertyKey,
 	}
 
 	#[pallet::storage]
@@ -676,19 +679,20 @@ impl<T: Config> Pallet<T> {
 			meta_update_permission: data.meta_update_permission.unwrap_or_default(),
 		};
 
-		CollectionProperties::<T>::insert(
-			id,
-			Properties::from_collection_props_vec(data.properties)
-				.map_err(|e| -> Error<T> { e.into() })?,
-		);
+		let mut collection_properties = up_data_structs::CollectionProperties::get();
+		collection_properties.try_set_from_iter(
+			data.properties.into_iter()
+				.map(|p| (p.key, p.value))
+		).map_err(|e| -> Error<T> { e.into() })?;
 
-		let token_props_permissions: PropertiesPermissionMap = data
-			.token_property_permissions
+		CollectionProperties::<T>::insert(id, collection_properties);
+
+		let mut token_props_permissions = PropertiesPermissionMap::new();
+		token_props_permissions.try_set_from_iter(
+			data.token_property_permissions
 			.into_iter()
 			.map(|property| (property.key, property.permission))
-			.collect::<BTreeMap<_, _>>()
-			.try_into()
-			.map_err(|_| -> Error<T> { PropertiesError::PropertyLimitReached.into() })?;
+		).map_err(|e| -> Error<T> { e.into() })?;
 
 		CollectionPropertyPermissions::<T>::insert(id, token_props_permissions);
 
@@ -771,7 +775,8 @@ impl<T: Config> Pallet<T> {
 		collection.check_is_owner_or_admin(sender)?;
 
 		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
-			properties.try_set_property(property.clone())
+			let property = property.clone();
+			properties.try_set(property.key, property.value)
 		})
 		.map_err(|e| -> Error<T> { e.into() })?;
 
@@ -799,9 +804,9 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		collection.check_is_owner_or_admin(sender)?;
 
-		CollectionProperties::<T>::mutate(collection.id, |properties| {
-			properties.remove_property(&property_key);
-		});
+		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
+			properties.remove(&property_key)
+		}).map_err(|e| -> Error<T> { e.into() })?;
 
 		Self::deposit_event(Event::CollectionPropertyDeleted(
 			collection.id,
@@ -841,7 +846,7 @@ impl<T: Config> Pallet<T> {
 
 		CollectionPropertyPermissions::<T>::try_mutate(collection.id, |permissions| {
 			let property_permission = property_permission.clone();
-			permissions.try_insert(property_permission.key, property_permission.permission)
+			permissions.try_set(property_permission.key, property_permission.permission)
 		})
 		.map_err(|_| -> Error<T> { PropertiesError::PropertyLimitReached.into() })?;
 
@@ -876,6 +881,19 @@ impl<T: Config> Pallet<T> {
 			.collect::<Result<Vec<PropertyKey>, DispatchError>>()
 	}
 
+	pub fn check_property_key(key: &PropertyKey) -> Result<(), DispatchError> {
+		let key_str = sp_std::str::from_utf8(key.as_slice())
+			.map_err(|_| <Error<T>>::InvalidCharacterInPropertyKey)?;
+
+		for ch in key_str.chars() {
+			if !ch.is_ascii_alphanumeric() && ch != '_' && ch != '-' {
+				return Err(<Error<T>>::InvalidCharacterInPropertyKey.into());
+			}
+		}
+
+		Ok(())
+	}
+
 	pub fn filter_collection_properties(
 		collection_id: CollectionId,
 		keys: Vec<PropertyKey>,
@@ -885,10 +903,11 @@ impl<T: Config> Pallet<T> {
 		let properties = keys
 			.into_iter()
 			.filter_map(|key| {
-				properties.get_property(&key).map(|value| Property {
-					key,
-					value: value.clone(),
-				})
+				properties.get(&key)
+					.map(|value| Property {
+						key,
+						value: value.clone(),
+					})
 			})
 			.collect();
 
@@ -1222,6 +1241,7 @@ impl<T: Config> From<PropertiesError> for Error<T> {
 		match error {
 			PropertiesError::NoSpaceForProperty => Self::NoSpaceForProperty,
 			PropertiesError::PropertyLimitReached => Self::PropertyLimitReached,
+			PropertiesError::InvalidCharacterInPropertyKey => Self::InvalidCharacterInPropertyKey,
 		}
 	}
 }

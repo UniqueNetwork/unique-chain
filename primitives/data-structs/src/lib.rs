@@ -689,16 +689,82 @@ pub struct PropertyKeyPermission {
 pub enum PropertiesError {
 	NoSpaceForProperty,
 	PropertyLimitReached,
+	InvalidCharacterInPropertyKey,
 }
 
-pub type PropertiesMap =
-	BoundedBTreeMap<PropertyKey, PropertyValue, ConstU32<MAX_PROPERTIES_PER_ITEM>>;
-pub type PropertiesPermissionMap =
-	BoundedBTreeMap<PropertyKey, PropertyPermission, ConstU32<MAX_PROPERTIES_PER_ITEM>>;
+pub trait TrySet: Sized {
+	type Value;
+
+	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError>;
+
+	fn try_set_from_iter<I>(&mut self, iter: I) -> Result<(), PropertiesError>
+	where
+		I: Iterator<Item=(PropertyKey, Self::Value)>
+	{
+		for (key, value) in iter {
+			self.try_set(key, value)?;
+		}
+
+		Ok(())
+	}
+}
+
+#[derive(Encode, Decode, TypeInfo, Derivative, Clone, PartialEq, MaxEncodedLen)]
+#[derivative(Default(bound = ""))]
+pub struct PropertiesMap<Value>(BoundedBTreeMap<PropertyKey, Value, ConstU32<MAX_PROPERTIES_PER_ITEM>>);
+
+impl<Value> PropertiesMap<Value> {
+	pub fn new() -> Self {
+		Self(BoundedBTreeMap::new())
+	}
+
+	pub fn remove(&mut self, key: &PropertyKey) -> Result<Option<Value>, PropertiesError> {
+		Self::check_property_key(key)?;
+
+		Ok(self.0.remove(key))
+	}
+
+	pub fn get(&self, key: &PropertyKey) -> Option<&Value> {
+		self.0.get(key)
+	}
+
+	pub fn iter(&self) -> impl Iterator<Item = (&PropertyKey, &Value)> {
+		self.0.iter()
+	}
+
+	fn check_property_key(key: &PropertyKey) -> Result<(), PropertiesError> {
+		let key_str = sp_std::str::from_utf8(key.as_slice())
+			.map_err(|_| PropertiesError::InvalidCharacterInPropertyKey)?;
+
+		for ch in key_str.chars() {
+			if !ch.is_ascii_alphanumeric() && ch != '_' && ch != '-' {
+				return Err(PropertiesError::InvalidCharacterInPropertyKey);
+			}
+		}
+
+		Ok(())
+	}
+}
+
+impl<Value> TrySet for PropertiesMap<Value> {
+	type Value = Value;
+
+	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError> {
+		Self::check_property_key(&key)?;
+
+		self.0
+			.try_insert(key, value)
+			.map_err(|_| PropertiesError::PropertyLimitReached)?;
+
+		Ok(())
+	}
+}
+
+pub type PropertiesPermissionMap = PropertiesMap<PropertyPermission>;
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, MaxEncodedLen)]
 pub struct Properties {
-	map: PropertiesMap,
+	map: PropertiesMap<PropertyValue>,
 	consumed_space: u32,
 	space_limit: u32,
 }
@@ -706,57 +772,47 @@ pub struct Properties {
 impl Properties {
 	pub fn new(space_limit: u32) -> Self {
 		Self {
-			map: BoundedBTreeMap::new(),
+			map: PropertiesMap::new(),
 			consumed_space: 0,
 			space_limit,
 		}
 	}
 
-	pub fn from_collection_props_vec(
-		data: CollectionPropertiesVec,
-	) -> Result<Self, PropertiesError> {
-		let mut props = Self::new(MAX_COLLECTION_PROPERTIES_SIZE);
+	pub fn remove(&mut self, key: &PropertyKey) -> Result<Option<PropertyValue>, PropertiesError> {
+		let value = self.map.remove(key)?;
 
-		for property in data.into_iter() {
-			props.try_set_property(property)?;
-		}
-
-		Ok(props)
-	}
-
-	pub fn try_set_property(&mut self, property: Property) -> Result<(), PropertiesError> {
-		let value_len = property.value.len();
-
-		if self.consumed_space as usize + value_len > self.space_limit as usize {
-			return Err(PropertiesError::NoSpaceForProperty);
-		}
-
-		self.map
-			.try_insert(property.key, property.value)
-			.map_err(|_| PropertiesError::PropertyLimitReached)?;
-
-		self.consumed_space += value_len as u32;
-
-		Ok(())
-	}
-
-	pub fn remove_property(&mut self, key: &PropertyKey) {
-		let property = self.map.get(key);
-
-		if let Some(value) = property {
+		if let Some(ref value) = value {
 			let value_len = value.len() as u32;
-
-			self.map.remove(key);
 			self.consumed_space -= value_len;
 		}
+
+		Ok(value)
 	}
 
-	pub fn get_property(&self, key: &PropertyKey) -> Option<&PropertyValue> {
+	pub fn get(&self, key: &PropertyKey) -> Option<&PropertyValue> {
 		self.map.get(key)
 	}
 
 	pub fn iter(&self) -> impl Iterator<Item = (&PropertyKey, &PropertyValue)> {
 		self.map.iter()
+	}
+}
+
+impl TrySet for Properties {
+	type Value = PropertyValue;
+
+	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError> {
+		let value_len = value.len();
+
+		if self.consumed_space as usize + value_len > self.space_limit as usize {
+			return Err(PropertiesError::NoSpaceForProperty);
+		}
+
+		self.map.try_set(key, value)?;
+
+		self.consumed_space += value_len as u32;
+
+		Ok(())
 	}
 }
 
