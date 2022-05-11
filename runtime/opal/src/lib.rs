@@ -54,7 +54,7 @@ pub use pallet_evm::{
 	EnsureAddressTruncated, HashedAddressMapping, Runner, account::CrossAccountId as _,
 };
 pub use frame_support::{
-	construct_runtime, match_type,
+	construct_runtime, match_types,
 	dispatch::DispatchResult,
 	PalletId, parameter_types, StorageValue, ConsensusEngineId,
 	traits::{
@@ -65,7 +65,7 @@ pub use frame_support::{
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, DispatchInfo, GetDispatchInfo, IdentityFee, Pays, PostDispatchInfo, Weight,
-		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients, ConstantMultiplier,
 	},
 };
 use pallet_unq_scheduler::DispatchCall;
@@ -82,7 +82,7 @@ use sp_arithmetic::{
 use smallvec::smallvec;
 // use scale_info::TypeInfo;
 use codec::{Encode, Decode};
-use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
+use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
 	traits::{
@@ -176,7 +176,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!(RUNTIME_NAME),
 	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 918010,
+	spec_version: 920000,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -308,7 +308,7 @@ impl pallet_evm::Config for Runtime {
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type OnChargeTransaction = pallet_evm_transaction_payment::OnChargeTransaction<Self>;
+	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, DealWithFees>;
 	type TransactionValidityHack = pallet_evm_transaction_payment::TransactionValidityHack<Self>;
 	type FindAuthor = EthereumFindAuthor<Aura>;
 }
@@ -333,7 +333,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 
 impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
-	type StateRoot = pallet_ethereum::IntermediateStateRoot;
+	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 }
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
@@ -502,7 +502,7 @@ where
 
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees>;
-	type TransactionByteFee = TransactionByteFee;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = LinearFee<Balance>;
 	type FeeMultiplierUpdate = ();
@@ -681,7 +681,7 @@ parameter_types! {
 	pub const MaxAuthorities: u32 = 100_000;
 }
 
-match_type! {
+match_types! {
 	pub type ParentOrParentsUnitPlurality: impl Contains<MultiLocation> = {
 		MultiLocation { parents: 1, interior: Here } |
 		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Unit, .. }) }
@@ -984,7 +984,7 @@ where
 		<Balances as NamedReservableCurrency<AccountId>>::reserve_named(
 			&id,
 			&(sponsor.into()),
-			weight.into(),
+			weight,
 		)
 	}
 
@@ -999,7 +999,7 @@ where
 			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
 				&id,
 				&(sponsor.into()),
-				weight.into(),
+				weight,
 			),
 		)
 	}

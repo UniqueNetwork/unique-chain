@@ -46,11 +46,6 @@ macro_rules! impl_common_runtime_apis {
                     dispatch_unique_runtime!(collection.allowance(sender, spender, token))
                 }
 
-                fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
-                    <pallet_unique::UniqueErcSupport<Runtime>>::get_code(&account)
-                        .or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account))
-                        .or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
-                }
                 fn adminlist(collection: CollectionId) -> Result<Vec<CrossAccountId>, DispatchError> {
                     Ok(<pallet_common::Pallet<Runtime>>::adminlist(collection))
                 }
@@ -191,6 +186,7 @@ macro_rules! impl_common_runtime_apis {
                         None
                     };
 
+                    let is_transactional = false;
                     <Runtime as pallet_evm::Config>::Runner::call(
                         CrossAccountId::from_eth(from),
                         to,
@@ -201,6 +197,7 @@ macro_rules! impl_common_runtime_apis {
                         max_priority_fee_per_gas,
                         nonce,
                         access_list.unwrap_or_default(),
+                        is_transactional,
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
                     ).map_err(|err| err.into())
                 }
@@ -225,6 +222,7 @@ macro_rules! impl_common_runtime_apis {
                         None
                     };
 
+                    let is_transactional = false;
                     <Runtime as pallet_evm::Config>::Runner::create(
                         CrossAccountId::from_eth(from),
                         data,
@@ -234,6 +232,7 @@ macro_rules! impl_common_runtime_apis {
                         max_priority_fee_per_gas,
                         nonce,
                         access_list.unwrap_or_default(),
+                        is_transactional,
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
                     ).map_err(|err| err.into())
                 }
@@ -271,6 +270,14 @@ macro_rules! impl_common_runtime_apis {
 
                 fn elasticity() -> Option<Permill> {
                     None
+                }
+            }
+
+            impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
+                fn convert_transaction(transaction: pallet_ethereum::Transaction) -> <Block as BlockT>::Extrinsic  {
+                    UncheckedExtrinsic::new_unsigned(
+                        pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
+                    )
                 }
             }
 
@@ -398,6 +405,9 @@ macro_rules! impl_common_runtime_apis {
                         hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
                         // System Events
                         hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
+
+                        // Transactional depth
+                        hex_literal::hex!("3a7472616e73616374696f6e5f6c6576656c3a").to_vec().into(),
                     ];
 
                     let mut batches = Vec::<BenchmarkBatch>::new();

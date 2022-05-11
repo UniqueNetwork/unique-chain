@@ -15,14 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! # Scheduler
-//! A Pallet for scheduling dispatches.
-//!
-//! - [`Config`]
-//! - [`Call`]
-//! - [`Pallet`]
-//!
-//! ## Overview
+//! # Schedulerdo_reschedule
 //!
 //! This Pallet exposes capabilities for scheduling dispatches to occur at a
 //! specified block number or at a specified period. These scheduled dispatches
@@ -55,7 +48,17 @@ mod benchmarking;
 
 pub mod weights;
 
+use sp_core::H160;
 use codec::{Codec, Decode, Encode};
+use frame_system::{self as system, ensure_signed};
+pub use pallet::*;
+use scale_info::TypeInfo;
+use sp_runtime::{
+	traits::{BadOrigin, One, Saturating, Zero},
+	RuntimeDebug, DispatchErrorWithPostInfo,
+};
+use sp_std::{borrow::Borrow, cmp::Ordering, marker::PhantomData, prelude::*};
+
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult, Dispatchable, Parameter},
 	traits::{
@@ -65,15 +68,7 @@ use frame_support::{
 	},
 	weights::{GetDispatchInfo, Weight},
 };
-use frame_system::{self as system, ensure_signed};
-pub use pallet::*;
-use scale_info::TypeInfo;
-use sp_runtime::{
-	traits::{BadOrigin, One, Saturating, Zero},
-	RuntimeDebug, DispatchErrorWithPostInfo,
-};
-use sp_std::{borrow::Borrow, cmp::Ordering, marker::PhantomData, prelude::*};
-use sp_core::H160;
+
 pub use weights::WeightInfo;
 
 /// Just a simple index for naming period tasks.

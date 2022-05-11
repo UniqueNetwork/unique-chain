@@ -101,13 +101,12 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: u64 = 1;
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
 impl pallet_transaction_payment::Config for Test {
 	type OnChargeTransaction = CurrencyAdapter<pallet_balances::Pallet<Test>, ()>;
-	type TransactionByteFee = TransactionByteFee;
+	type LengthToFee = IdentityFee<u64>;
 	type WeightToFee = IdentityFee<u64>;
 	type FeeMultiplierUpdate = ();
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
@@ -176,12 +175,7 @@ impl Default for TestCrossAccountId {
 
 pub struct TestEtheremTransactionSender;
 impl pallet_ethereum::EthereumTransactionSender for TestEtheremTransactionSender {
-	fn submit_logs_transaction(
-		_source: H160,
-		_tx: pallet_ethereum::Transaction,
-		_logs: Vec<MaybeMirroredLog>,
-	) {
-	}
+	fn submit_logs_transaction(_source: H160, _logs: Vec<MaybeMirroredLog>) {}
 }
 
 impl pallet_evm_coder_substrate::Config for Test {
