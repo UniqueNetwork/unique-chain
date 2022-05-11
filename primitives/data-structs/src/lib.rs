@@ -426,7 +426,7 @@ impl CollectionLimits {
 		}
 	}
 	pub fn nesting_rule(&self) -> &NestingRule {
-		static DEFAULT: NestingRule = NestingRule::Owner;
+		static DEFAULT: NestingRule = NestingRule::Disabled;
 		self.nesting_rule.as_ref().unwrap_or(&DEFAULT)
 	}
 }
