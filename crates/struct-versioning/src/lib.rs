@@ -199,7 +199,7 @@ pub fn versioned(attr: TokenStream, input: TokenStream) -> TokenStream {
 	let mut out = Vec::new();
 	for version in attr.first_version..=attr.current_version {
 		let name = if version == attr.current_version {
-			input.ident.clone()	
+			input.ident.clone()
 		} else {
 			format_ident!("{}Version{}", &input.ident, version)
 		};

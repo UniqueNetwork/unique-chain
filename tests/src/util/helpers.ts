@@ -17,15 +17,15 @@
 import '../interfaces/augment-api-rpc';
 import '../interfaces/augment-api-query';
 import {ApiPromise, Keyring} from '@polkadot/api';
-import type {AccountId, EventRecord} from '@polkadot/types/interfaces';
-import {IKeyringPair} from '@polkadot/types/types';
+import type {AccountId, EventRecord, Event} from '@polkadot/types/interfaces';
+import {AnyTuple, IEvent, IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
 import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {alicesPublicKey} from '../accounts';
 import privateKey from '../substrate/privateKey';
-import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
+import {default as usingApi, executeTransaction, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
 import {UpDataStructsRpcCollection} from '@polkadot/types/lookup';
 
@@ -105,7 +105,6 @@ interface CreateItemResult {
 }
 
 interface TransferResult {
-  success: boolean;
   collectionId: number;
   itemId: number;
   sender?: CrossAccountId;
@@ -168,6 +167,12 @@ export function uniqueEventMessage(events: EventRecord[]): IGetMessage {
   return result;
 }
 
+export function getEvent<T extends Event>(events: EventRecord[], check: (event: IEvent<AnyTuple>) => event is T): T | undefined {
+  const event = events.find(r => check(r.event));
+  if (!event) return;
+  return event.event as T;
+}
+
 export function getGenericResult(events: EventRecord[]): GenericResult {
   const result: GenericResult = {
     success: false,
@@ -225,27 +230,20 @@ export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
   return result;
 }
 
-export function getTransferResult(events: EventRecord[]): TransferResult {
-  const result: TransferResult = {
-    success: false,
-    collectionId: 0,
-    itemId: 0,
-    value: 0n,
-  };
-
-  events.forEach(({event: {data, method, section}}) => {
-    if (method === 'ExtrinsicSuccess') {
-      result.success = true;
-    } else if (section === 'common' && method === 'Transfer') {
-      result.collectionId = +data[0].toString();
-      result.itemId = +data[1].toString();
-      result.sender = normalizeAccountId(data[2].toJSON() as any);
-      result.recipient = normalizeAccountId(data[3].toJSON() as any);
-      result.value = BigInt(data[4].toString());
+export function getTransferResult(api: ApiPromise, events: EventRecord[]): TransferResult {
+  for (const {event} of events) {
+    if (api.events.common.Transfer.is(event)) {
+      const [collection, token, sender, recipient, value] = event.data;
+      return {
+        collectionId: collection.toNumber(),
+        itemId: token.toNumber(),
+        sender: normalizeAccountId(sender.toJSON() as any),
+        recipient: normalizeAccountId(recipient.toJSON() as any),
+        value: value.toBigInt(),
+      };
     }
-  });
-
-  return result;
+  }
+  throw new Error('no transfer event');
 }
 
 interface Nft {
@@ -300,9 +298,9 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     }
 
     const tx = api.tx.unique.createCollectionEx({
-      name: strToUTF16(name), 
-      description: strToUTF16(description), 
-      tokenPrefix: strToUTF16(tokenPrefix), 
+      name: strToUTF16(name),
+      description: strToUTF16(description),
+      tokenPrefix: strToUTF16(tokenPrefix),
       mode: modeprm as any,
       schemaVersion: schemaVersion,
     });
@@ -912,15 +910,15 @@ transferExpectSuccess(
       balanceBefore = await getBalance(api, collectionId, to, tokenId);
     }
     const transferTx = api.tx.unique.transfer(to, collectionId, tokenId, value);
-    const events = await submitTransactionAsync(sender, transferTx);
-    const result = getTransferResult(events);
-    // tslint:disable-next-line:no-unused-expression
-    expect(result.success).to.be.true;
+    const events = await executeTransaction(api, sender, transferTx);
+
+    const result = getTransferResult(api, events);
     expect(result.collectionId).to.be.equal(collectionId);
     expect(result.itemId).to.be.equal(tokenId);
     expect(result.sender).to.be.deep.equal(normalizeAccountId(sender.address));
     expect(result.recipient).to.be.deep.equal(to);
     expect(result.value).to.be.equal(BigInt(value));
+
     if (type === 'NFT') {
       expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(to);
     }
