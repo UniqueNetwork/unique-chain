@@ -271,7 +271,7 @@ impl<T: Config> Pallet<T> {
 			let property = property.clone();
 			properties.try_set(property.key, property.value)
 		})
-		.map_err(|e| -> CommonError<T> { e.into() })?;
+		.map_err(<CommonError<T>>::from)?;
 
 		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
 			collection.id,
@@ -306,7 +306,7 @@ impl<T: Config> Pallet<T> {
 		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
 			properties.remove(&property_key)
 		})
-		.map_err(|e| -> CommonError<T> { e.into() })?;
+		.map_err(<CommonError<T>>::from)?;
 
 		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertyDeleted(
 			collection.id,
