@@ -12821,7 +12821,7 @@ dependencies = [
 
 [[package]]
 name = "unique-runtime"
-version = "0.9.18"
+version = "0.9.21"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
