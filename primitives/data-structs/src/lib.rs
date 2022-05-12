@@ -22,6 +22,7 @@ use core::{
 };
 use frame_support::{
 	storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
+	traits::Get,
 };
 
 #[cfg(feature = "serde")]
@@ -84,6 +85,26 @@ pub const COLLECTION_FIELD_LIMIT: u32 = CONST_ON_CHAIN_SCHEMA_LIMIT;
 pub const MAX_COLLECTION_NAME_LENGTH: u32 = 64;
 pub const MAX_COLLECTION_DESCRIPTION_LENGTH: u32 = 256;
 pub const MAX_TOKEN_PREFIX_LENGTH: u32 = 16;
+
+pub const MAX_PROPERTY_KEY_LENGTH: u32 = 256;
+pub const MAX_PROPERTY_VALUE_LENGTH: u32 = 32768;
+pub const MAX_PROPERTIES_PER_ITEM: u32 = 64;
+
+// pub const MAX_PROPERTY_KEYS_OVERALL_LENGTH: u32 = MAX_PROPERTY_KEY_LENGTH * MAX_PROPERTIES_PER_ITEM;
+pub const MAX_COLLECTION_PROPERTIES_SIZE: u32 = 40960;
+pub const MAX_TOKEN_PROPERTIES_SIZE: u32 = 32768;
+
+pub const MAX_COLLECTION_PROPERTIES_ENCODE_LEN: u32 =
+	MAX_PROPERTIES_PER_ITEM * MAX_PROPERTY_KEY_LENGTH + MAX_COLLECTION_PROPERTIES_SIZE;
+
+pub struct MaxPropertiesPermissionsEncodeLen;
+
+impl Get<u32> for MaxPropertiesPermissionsEncodeLen {
+	fn get() -> u32 {
+		MAX_PROPERTIES_PER_ITEM * MAX_PROPERTY_KEY_LENGTH
+			+ <PropertyPermission as MaxEncodedLen>::max_encoded_len() as u32
+	}
+}
 
 /// How much items can be created per single
 /// create_many call
@@ -150,6 +171,14 @@ impl TryFrom<U256> for TokenId {
 	fn try_from(value: U256) -> Result<Self, Self::Error> {
 		Ok(TokenId(value.try_into().map_err(|_| "too large token id")?))
 	}
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub struct TokenData<CrossAccountId> {
+	pub const_data: Vec<u8>,
+	pub properties: Vec<Property>,
+	pub owner: Option<CrossAccountId>,
 }
 
 pub struct OverflowError;
@@ -300,6 +329,8 @@ pub struct RpcCollection<AccountId> {
 	pub variable_on_chain_schema: Vec<u8>,
 	pub const_on_chain_schema: Vec<u8>,
 	pub meta_update_permission: MetaUpdatePermission,
+	pub token_property_permissions: Vec<PropertyKeyPermission>,
+	pub properties: Vec<Property>,
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
@@ -310,30 +341,31 @@ pub enum CollectionField {
 	OffchainSchema,
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Debug, Derivative, MaxEncodedLen)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-#[derivative(Default(bound = ""))]
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Derivative, MaxEncodedLen)]
+#[derivative(Debug, Default(bound = ""))]
 pub struct CreateCollectionData<AccountId> {
 	#[derivative(Default(value = "CollectionMode::NFT"))]
 	pub mode: CollectionMode,
 	pub access: Option<AccessMode>,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	pub name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	pub description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	pub token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	pub offchain_schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
 	pub schema_version: Option<SchemaVersion>,
 	pub pending_sponsor: Option<AccountId>,
 	pub limits: Option<CollectionLimits>,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	pub const_on_chain_schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>,
 	pub meta_update_permission: Option<MetaUpdatePermission>,
+	pub token_property_permissions: CollectionPropertiesPermissionsVec,
+	pub properties: CollectionPropertiesVec,
 }
+
+pub type CollectionPropertiesPermissionsVec =
+	BoundedVec<PropertyKeyPermission, MaxPropertiesPermissionsEncodeLen>;
+
+pub type CollectionPropertiesVec =
+	BoundedVec<Property, ConstU32<MAX_COLLECTION_PROPERTIES_ENCODE_LEN>>;
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
@@ -464,6 +496,10 @@ pub struct CreateNftData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
+
+	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
+	#[derivative(Debug(format_with = "bounded::vec_debug"))]
+	pub properties: CollectionPropertiesVec,
 }
 
 #[derive(Encode, Decode, MaxEncodedLen, Default, Debug, Clone, PartialEq, TypeInfo)]
@@ -514,6 +550,8 @@ pub struct CreateNftExData<CrossAccountId> {
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
+	#[derivative(Debug(format_with = "bounded::vec_debug"))]
+	pub properties: CollectionPropertiesVec,
 	pub owner: CrossAccountId,
 }
 
@@ -605,5 +643,191 @@ impl<T: TypeInfo + 'static> TypeInfo for PhantomType<T> {
 impl<T> MaxEncodedLen for PhantomType<T> {
 	fn max_encoded_len() -> usize {
 		0
+	}
+}
+
+pub type PropertyKey = BoundedVec<u8, ConstU32<MAX_PROPERTY_KEY_LENGTH>>;
+pub type PropertyValue = BoundedVec<u8, ConstU32<MAX_PROPERTY_VALUE_LENGTH>>;
+
+#[derive(Encode, Decode, TypeInfo, Debug, MaxEncodedLen, PartialEq, Clone)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub struct PropertyPermission {
+	pub mutable: bool,
+	pub collection_admin: bool,
+	pub token_owner: bool,
+}
+
+impl PropertyPermission {
+	pub fn none() -> Self {
+		Self {
+			mutable: true,
+			collection_admin: false,
+			token_owner: false,
+		}
+	}
+}
+
+#[derive(Encode, Decode, Debug, TypeInfo, Clone, PartialEq, MaxEncodedLen)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub struct Property {
+	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
+	pub key: PropertyKey,
+
+	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
+	pub value: PropertyValue,
+}
+
+#[derive(Encode, Decode, TypeInfo, Debug, MaxEncodedLen, PartialEq, Clone)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub struct PropertyKeyPermission {
+	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
+	pub key: PropertyKey,
+
+	pub permission: PropertyPermission,
+}
+
+pub enum PropertiesError {
+	NoSpaceForProperty,
+	PropertyLimitReached,
+	InvalidCharacterInPropertyKey,
+}
+
+pub trait TrySet: Sized {
+	type Value;
+
+	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError>;
+
+	fn try_set_from_iter<I>(&mut self, iter: I) -> Result<(), PropertiesError>
+	where
+		I: Iterator<Item=(PropertyKey, Self::Value)>
+	{
+		for (key, value) in iter {
+			self.try_set(key, value)?;
+		}
+
+		Ok(())
+	}
+}
+
+#[derive(Encode, Decode, TypeInfo, Derivative, Clone, PartialEq, MaxEncodedLen)]
+#[derivative(Default(bound = ""))]
+pub struct PropertiesMap<Value>(BoundedBTreeMap<PropertyKey, Value, ConstU32<MAX_PROPERTIES_PER_ITEM>>);
+
+impl<Value> PropertiesMap<Value> {
+	pub fn new() -> Self {
+		Self(BoundedBTreeMap::new())
+	}
+
+	pub fn remove(&mut self, key: &PropertyKey) -> Result<Option<Value>, PropertiesError> {
+		Self::check_property_key(key)?;
+
+		Ok(self.0.remove(key))
+	}
+
+	pub fn get(&self, key: &PropertyKey) -> Option<&Value> {
+		self.0.get(key)
+	}
+
+	pub fn iter(&self) -> impl Iterator<Item = (&PropertyKey, &Value)> {
+		self.0.iter()
+	}
+
+	fn check_property_key(key: &PropertyKey) -> Result<(), PropertiesError> {
+		let key_str = sp_std::str::from_utf8(key.as_slice())
+			.map_err(|_| PropertiesError::InvalidCharacterInPropertyKey)?;
+
+		for ch in key_str.chars() {
+			if !ch.is_ascii_alphanumeric() && ch != '_' && ch != '-' {
+				return Err(PropertiesError::InvalidCharacterInPropertyKey);
+			}
+		}
+
+		Ok(())
+	}
+}
+
+impl<Value> TrySet for PropertiesMap<Value> {
+	type Value = Value;
+
+	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError> {
+		Self::check_property_key(&key)?;
+
+		self.0
+			.try_insert(key, value)
+			.map_err(|_| PropertiesError::PropertyLimitReached)?;
+
+		Ok(())
+	}
+}
+
+pub type PropertiesPermissionMap = PropertiesMap<PropertyPermission>;
+
+#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, MaxEncodedLen)]
+pub struct Properties {
+	map: PropertiesMap<PropertyValue>,
+	consumed_space: u32,
+	space_limit: u32,
+}
+
+impl Properties {
+	pub fn new(space_limit: u32) -> Self {
+		Self {
+			map: PropertiesMap::new(),
+			consumed_space: 0,
+			space_limit,
+		}
+	}
+
+	pub fn remove(&mut self, key: &PropertyKey) -> Result<Option<PropertyValue>, PropertiesError> {
+		let value = self.map.remove(key)?;
+
+		if let Some(ref value) = value {
+			let value_len = value.len() as u32;
+			self.consumed_space -= value_len;
+		}
+
+		Ok(value)
+	}
+
+	pub fn get(&self, key: &PropertyKey) -> Option<&PropertyValue> {
+		self.map.get(key)
+	}
+
+	pub fn iter(&self) -> impl Iterator<Item = (&PropertyKey, &PropertyValue)> {
+		self.map.iter()
+	}
+}
+
+impl TrySet for Properties {
+	type Value = PropertyValue;
+
+	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError> {
+		let value_len = value.len();
+
+		if self.consumed_space as usize + value_len > self.space_limit as usize {
+			return Err(PropertiesError::NoSpaceForProperty);
+		}
+
+		self.map.try_set(key, value)?;
+
+		self.consumed_space += value_len as u32;
+
+		Ok(())
+	}
+}
+
+pub struct CollectionProperties;
+
+impl Get<Properties> for CollectionProperties {
+	fn get() -> Properties {
+		Properties::new(MAX_COLLECTION_PROPERTIES_SIZE)
+	}
+}
+
+pub struct TokenProperties;
+
+impl Get<Properties> for TokenProperties {
+	fn get() -> Properties {
+		Properties::new(MAX_TOKEN_PROPERTIES_SIZE)
 	}
 }

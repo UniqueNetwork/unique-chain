@@ -19,7 +19,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import privateKey from './substrate/privateKey';
-import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
+import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync, executeTransaction} from './substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
   destroyCollectionExpectSuccess,
@@ -33,6 +33,8 @@ import {
   getVariableMetadata,
   getConstMetadata,
   getCreatedCollectionCount,
+  createCollectionWithPropsExpectSuccess,
+  getCreateItemsResult,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -45,7 +47,9 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       const alice = privateKey('//Alice');
-      const args = [{NFT: ['0x31', '0x31']}, {NFT: ['0x32', '0x32']}, {NFT: ['0x33', '0x33']}];
+      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
+        {Nft: {const_data: '0x32', variable_data: '0x32'}},
+        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await submitTransactionAsync(alice, createMultipleItemsTx);
@@ -135,6 +139,114 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(result.success).to.be.true;
     });
   });
+
+  it('Create  0x31, 0x32, 0x33 items in active NFT with property Admin', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const collectionId = await createCollectionExpectSuccess();
+      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
+      expect(itemsListIndexBefore).to.be.equal(0);
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
+      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
+        {Nft: {const_data: '0x32', variable_data: '0x32'}},
+        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
+      const createMultipleItemsTx = api.tx.unique
+        .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
+      await submitTransactionAsync(alice, createMultipleItemsTx);
+      const itemsListIndexAfter = await getLastTokenId(api, collectionId);
+      expect(itemsListIndexAfter).to.be.equal(3);
+
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setPropertyPermissions(collectionId, [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]), 
+      )).to.not.be.rejected;
+
+      expect(await getTokenOwner(api, collectionId, 1)).to.be.deep.equal(normalizeAccountId(alice.address));
+      expect(await getTokenOwner(api, collectionId, 2)).to.be.deep.equal(normalizeAccountId(alice.address));
+      expect(await getTokenOwner(api, collectionId, 3)).to.be.deep.equal(normalizeAccountId(alice.address));
+
+      expect(await getConstMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
+      expect(await getConstMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
+      expect(await getConstMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
+
+      expect(await getVariableMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
+      expect(await getVariableMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
+      expect(await getVariableMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
+    });
+  });
+
+  it('Create  0x31, 0x32, 0x33 items in active NFT with property AdminConst', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const collectionId = await createCollectionExpectSuccess();
+      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
+      expect(itemsListIndexBefore).to.be.equal(0);
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
+      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
+        {Nft: {const_data: '0x32', variable_data: '0x32'}},
+        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
+      const createMultipleItemsTx = api.tx.unique
+        .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
+      await submitTransactionAsync(alice, createMultipleItemsTx);
+      const itemsListIndexAfter = await getLastTokenId(api, collectionId);
+      expect(itemsListIndexAfter).to.be.equal(3);
+
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setPropertyPermissions(collectionId, [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]), 
+      )).to.not.be.rejected;
+
+      expect(await getTokenOwner(api, collectionId, 1)).to.be.deep.equal(normalizeAccountId(alice.address));
+      expect(await getTokenOwner(api, collectionId, 2)).to.be.deep.equal(normalizeAccountId(alice.address));
+      expect(await getTokenOwner(api, collectionId, 3)).to.be.deep.equal(normalizeAccountId(alice.address));
+
+      expect(await getConstMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
+      expect(await getConstMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
+      expect(await getConstMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
+
+      expect(await getVariableMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
+      expect(await getVariableMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
+      expect(await getVariableMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
+    });
+  });
+
+  it('Create  0x31, 0x32, 0x33 items in active NFT with property itemOwnerOrAdmin', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const collectionId = await createCollectionExpectSuccess();
+      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
+      expect(itemsListIndexBefore).to.be.equal(0);
+      const alice = privateKey('//Alice');
+      const bob = privateKey('//Bob');
+      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
+        {Nft: {const_data: '0x32', variable_data: '0x32'}},
+        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
+      const createMultipleItemsTx = api.tx.unique
+        .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
+      await submitTransactionAsync(alice, createMultipleItemsTx);
+      const itemsListIndexAfter = await getLastTokenId(api, collectionId);
+      expect(itemsListIndexAfter).to.be.equal(3);
+
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setPropertyPermissions(collectionId, [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]), 
+      )).to.not.be.rejected;
+
+      expect(await getTokenOwner(api, collectionId, 1)).to.be.deep.equal(normalizeAccountId(alice.address));
+      expect(await getTokenOwner(api, collectionId, 2)).to.be.deep.equal(normalizeAccountId(alice.address));
+      expect(await getTokenOwner(api, collectionId, 3)).to.be.deep.equal(normalizeAccountId(alice.address));
+
+      expect(await getConstMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
+      expect(await getConstMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
+      expect(await getConstMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
+
+      expect(await getVariableMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
+      expect(await getVariableMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
+      expect(await getVariableMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
+    });
+  });
 });
 
 describe('Integration Test createMultipleItems(collection_id, owner, items_data) with collection admin permissions:', () => {
@@ -155,7 +267,9 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const args = [{NFT: ['0x31', '0x31']}, {NFT: ['0x32', '0x32']}, {NFT: ['0x33', '0x33']}];
+      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
+        {Nft: {const_data: '0x32', variable_data: '0x32'}},
+        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(bob.address), args);
       await submitTransactionAsync(bob, createMultipleItemsTx);
@@ -245,7 +359,9 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       const collectionId = await createCollectionExpectSuccess();
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const args = [{NFT: ['0x31', '0x31']}, {NFT: ['0x32', '0x32']}, {NFT: ['0x33', '0x33']}];
+      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
+        {Nft: {const_data: '0x32', variable_data: '0x32'}},
+        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await expect(submitTransactionAsync(bob, createMultipleItemsTx)).to.be.rejected;
@@ -359,6 +475,148 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       ];
       const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTx)).to.be.rejected;
+    });
+  });
+
+  it('No editing rights', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const collectionId = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}],
+        propPerm:   [{key: 'key1', mutable: true, collectionAdmin: false, tokenOwner: false}]});
+      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
+      expect(itemsListIndexBefore).to.be.equal(0);
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
+        {Nft: {const_data: '0x32', variable_data: '0x32'}},
+        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
+      
+      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
+
+      const events = await submitTransactionAsync(alice, createMultipleItemsTx);
+      const result = getCreateItemsResult(events);
+
+      for (const elem of result) {
+        await expect(executeTransaction(
+          api, 
+          bob, 
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]), 
+        )).to.be.rejected;
+      }
+
+      // await expect(submitTransactionAsync(bob, createMultipleItemsTx)).to.be.rejected;
+    });
+  });
+
+  it('User doesnt have editing rights', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const collectionId = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}],
+        propPerm:   [{key: 'key1', mutable: false, collectionAdmin: false, tokenOwner: false}]});
+      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
+      expect(itemsListIndexBefore).to.be.equal(0);
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
+        {Nft: {const_data: '0x32', variable_data: '0x32'}},
+        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
+      
+      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
+
+      const events = await submitTransactionAsync(alice, createMultipleItemsTx);
+      const result = getCreateItemsResult(events);
+
+      for (const elem of result) {
+        await expect(executeTransaction(
+          api, 
+          bob, 
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]), 
+        )).to.be.rejected;
+      }
+    });
+  });
+
+  it('Adding property without access rights', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const collectionId = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}]});
+      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+      expect(itemsListIndexBefore).to.be.equal(0);
+      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
+        {Nft: {const_data: '0x32', variable_data: '0x32'}},
+        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
+      
+      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
+
+      const events = await submitTransactionAsync(alice, createMultipleItemsTx);
+      const result = getCreateItemsResult(events);
+
+      for (const elem of result) {
+        await expect(executeTransaction(
+          api, 
+          bob, 
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]), 
+        )).to.be.rejected;
+      }
+    });
+  });
+
+  it('Adding more than 64 prps', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const collectionId = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}],
+        propPerm:   [{key: 'key1', mutable: true, collectionAdmin: true, tokenOwner: false}]});
+      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
+      expect(itemsListIndexBefore).to.be.equal(0);
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+
+      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
+        {Nft: {const_data: '0x32', variable_data: '0x32'}},
+        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
+      
+      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
+      const events = await submitTransactionAsync(alice, createMultipleItemsTx);
+
+      const result = getCreateItemsResult(events);
+      
+      const prps = [];
+      
+      for (let i = 0; i < 65; i++) {
+        prps.push({key: `key${i}`, value: `value${i}`});
+      }
+
+      await expect(executeTransaction(api, bob, api.tx.unique.setCollectionProperties(collectionId, prps))).to.be.rejectedWith(/common\.PropertyLimitReached/);
+      
+      for (const elem of result) {
+        await expect(executeTransaction(
+          api, 
+          bob, 
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, prps), 
+        )).to.be.rejected;
+      }
+    });
+  });
+
+  it('Trying to add bigger property than allowed', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      const collectionId = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}],
+        propPerm:   [{key: 'key1', mutable: true, collectionAdmin: false, tokenOwner: false}]});
+      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
+      expect(itemsListIndexBefore).to.be.equal(0);
+      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
+        {Nft: {const_data: '0x32', variable_data: '0x32'}},
+        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
+      
+      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
+
+      const events = await submitTransactionAsync(alice, createMultipleItemsTx);
+      const result = getCreateItemsResult(events);
+
+
+      await expect(executeTransaction(api, alice, api.tx.unique.setCollectionProperties(collectionId, [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]))).to.be.rejectedWith(/common\.NoSpaceForProperty/);
+
+      for (const elem of result) {
+        await expect(executeTransaction(
+          api, 
+          bob, 
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]), 
+        )).to.be.rejected;
+      }
     });
   });
 });

@@ -39,7 +39,7 @@ use up_data_structs::{
 	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
 	AccessMode, CreateItemData, CollectionLimits, CollectionId, CollectionMode, TokenId,
 	SchemaVersion, SponsorshipState, MetaUpdatePermission, CreateCollectionData, CustomDataLimit,
-	CreateItemExData, budget, CollectionField,
+	CreateItemExData, budget, CollectionField, Property, PropertyKey, PropertyKeyPermission,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
@@ -692,6 +692,78 @@ decl_module! {
 			let budget = budget::Value::new(2);
 
 			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items(sender, owner, items_data, &budget))
+		}
+
+		#[weight = T::CommonWeightInfo::set_collection_properties(properties.len() as u32)]
+		#[transactional]
+		pub fn set_collection_properties(
+			origin,
+			collection_id: CollectionId,
+			properties: Vec<Property>
+		) -> DispatchResultWithPostInfo {
+			ensure!(!properties.is_empty(), Error::<T>::EmptyArgument);
+
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+
+			dispatch_call::<T, _>(collection_id, |d| d.set_collection_properties(sender, properties))
+		}
+
+		#[weight = T::CommonWeightInfo::delete_collection_properties(property_keys.len() as u32)]
+		#[transactional]
+		pub fn delete_collection_properties(
+			origin,
+			collection_id: CollectionId,
+			property_keys: Vec<PropertyKey>,
+		) -> DispatchResultWithPostInfo {
+			ensure!(!property_keys.is_empty(), Error::<T>::EmptyArgument);
+
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+
+			dispatch_call::<T, _>(collection_id, |d| d.delete_collection_properties(&sender, property_keys))
+		}
+
+		#[weight = T::CommonWeightInfo::set_token_properties(properties.len() as u32)]
+		#[transactional]
+		pub fn set_token_properties(
+			origin,
+			collection_id: CollectionId,
+			token_id: TokenId,
+			properties: Vec<Property>
+		) -> DispatchResultWithPostInfo {
+			ensure!(!properties.is_empty(), Error::<T>::EmptyArgument);
+
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+
+			dispatch_call::<T, _>(collection_id, |d| d.set_token_properties(sender, token_id, properties))
+		}
+
+		#[weight = T::CommonWeightInfo::delete_token_properties(property_keys.len() as u32)]
+		#[transactional]
+		pub fn delete_token_properties(
+			origin,
+			collection_id: CollectionId,
+			token_id: TokenId,
+			property_keys: Vec<PropertyKey>
+		) -> DispatchResultWithPostInfo {
+			ensure!(!property_keys.is_empty(), Error::<T>::EmptyArgument);
+
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+
+			dispatch_call::<T, _>(collection_id, |d| d.delete_token_properties(sender, token_id, property_keys))
+		}
+
+		#[weight = T::CommonWeightInfo::set_property_permissions(property_permissions.len() as u32)]
+		#[transactional]
+		pub fn set_property_permissions(
+			origin,
+			collection_id: CollectionId,
+			property_permissions: Vec<PropertyKeyPermission>,
+		) -> DispatchResultWithPostInfo {
+			ensure!(!property_permissions.is_empty(), Error::<T>::EmptyArgument);
+
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+
+			dispatch_call::<T, _>(collection_id, |d| d.set_property_permissions(&sender, property_permissions))
 		}
 
 		#[weight = T::CommonWeightInfo::create_multiple_items_ex(&data)]

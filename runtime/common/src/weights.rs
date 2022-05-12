@@ -54,6 +54,26 @@ where
 		dispatch_weight::<T>() + max_weight_of!(burn_item())
 	}
 
+	fn set_collection_properties(amount: u32) -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(set_collection_properties(amount))
+	}
+
+	fn delete_collection_properties(amount: u32) -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(delete_collection_properties(amount))
+	}
+
+	fn set_token_properties(amount: u32) -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(set_token_properties(amount))
+	}
+
+	fn delete_token_properties(amount: u32) -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(delete_token_properties(amount))
+	}
+
+	fn set_property_permissions(amount: u32) -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(set_property_permissions(amount))
+	}
+
 	fn transfer() -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(transfer())
 	}

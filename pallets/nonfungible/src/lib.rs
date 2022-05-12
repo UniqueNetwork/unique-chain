@@ -20,7 +20,8 @@ use erc::ERC721Events;
 use frame_support::{BoundedVec, ensure, fail};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
-	mapping::TokenAddressMapping, NestingRule, budget::Budget,
+	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
+	PropertyKey, PropertyKeyPermission, Properties, TrySet,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
@@ -92,6 +93,15 @@ pub mod pallet {
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
 		Value = ItemData<T::CrossAccountId>,
 		QueryKind = OptionQuery,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn token_properties)]
+	pub type TokenProperties<T: Config> = StorageNMap<
+		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
+		Value = Properties,
+		QueryKind = ValueQuery,
+		OnEmpty = up_data_structs::TokenProperties,
 	>;
 
 	/// Used to enumerate tokens owned by account
@@ -244,6 +254,148 @@ impl<T: Config> Pallet<T> {
 			1,
 		));
 		Ok(())
+	}
+
+	pub fn set_token_property(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		property: Property,
+	) -> DispatchResult {
+		Self::check_token_change_permission(collection, sender, token_id, &property.key)?;
+
+		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
+			let property = property.clone();
+			properties.try_set(property.key, property.value)
+		})
+		.map_err(|e| -> CommonError<T> { e.into() })?;
+
+		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
+			collection.id,
+			token_id,
+			property,
+		));
+
+		Ok(())
+	}
+
+	pub fn set_token_properties(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		properties: Vec<Property>,
+	) -> DispatchResult {
+		for property in properties {
+			Self::set_token_property(collection, sender, token_id, property)?;
+		}
+
+		Ok(())
+	}
+
+	pub fn delete_token_property(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		property_key: PropertyKey,
+	) -> DispatchResult {
+		Self::check_token_change_permission(collection, sender, token_id, &property_key)?;
+
+		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
+			properties.remove(&property_key)
+		}).map_err(|e| -> CommonError<T> { e.into() })?;
+
+		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertyDeleted(
+			collection.id,
+			token_id,
+			property_key,
+		));
+
+		Ok(())
+	}
+
+	fn check_token_change_permission(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		property_key: &PropertyKey,
+	) -> DispatchResult {
+		let permission = <PalletCommon<T>>::property_permissions(collection.id)
+			.get(property_key)
+			.map(|p| p.clone())
+			.unwrap_or(PropertyPermission::none());
+
+		let token_data = <TokenData<T>>::get((collection.id, token_id))
+			.ok_or(<CommonError<T>>::TokenNotFound)?;
+
+		let check_token_owner = || -> DispatchResult {
+			ensure!(&token_data.owner == sender, <CommonError<T>>::NoPermission);
+			Ok(())
+		};
+
+		let is_property_exists = TokenProperties::<T>::get((collection.id, token_id))
+			.get(property_key)
+			.is_some();
+
+		match permission {
+			PropertyPermission { mutable: false, .. } if is_property_exists => {
+				Err(<CommonError<T>>::NoPermission.into())
+			}
+
+			PropertyPermission {
+				collection_admin,
+				token_owner,
+				..
+			} => {
+				let mut check_result = Err(<CommonError<T>>::NoPermission.into());
+
+				if collection_admin {
+					check_result = collection.check_is_owner_or_admin(sender);
+				}
+
+				if token_owner {
+					check_result.or(check_token_owner())
+				} else {
+					check_result
+				}
+			}
+		}
+	}
+
+	pub fn delete_token_properties(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResult {
+		for key in property_keys {
+			Self::delete_token_property(collection, sender, token_id, key)?;
+		}
+
+		Ok(())
+	}
+
+	pub fn set_collection_properties(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		properties: Vec<Property>,
+	) -> DispatchResult {
+		<PalletCommon<T>>::set_collection_properties(collection, sender, properties)
+	}
+
+	pub fn delete_collection_properties(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResult {
+		<PalletCommon<T>>::delete_collection_properties(collection, sender, property_keys)
+	}
+
+	pub fn set_property_permissions(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResult {
+		<PalletCommon<T>>::set_property_permissions(collection, sender, property_permissions)
 	}
 
 	pub fn transfer(
@@ -419,6 +571,13 @@ impl<T: Config> Pallet<T> {
 				},
 			);
 			<Owned<T>>::insert((collection.id, &data.owner, token), true);
+
+			Self::set_token_properties(
+				collection,
+				sender,
+				TokenId(token),
+				data.properties.into_inner(),
+			)?;
 
 			collection.log_mirrored(ERC721Events::Transfer {
 				from: H160::default(),

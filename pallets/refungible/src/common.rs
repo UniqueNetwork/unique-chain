@@ -20,7 +20,7 @@ use sp_std::collections::btree_map::BTreeMap;
 use frame_support::{dispatch::DispatchResultWithPostInfo, fail, weights::Weight, BoundedVec};
 use up_data_structs::{
 	CollectionId, TokenId, CustomDataLimit, CreateItemExData, CreateRefungibleExData,
-	budget::Budget,
+	budget::Budget, Property, PropertyKey, PropertyKeyPermission,
 };
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
@@ -64,6 +64,26 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn burn_item() -> Weight {
 		max_weight_of!(burn_item_partial(), burn_item_fully())
+	}
+
+	fn set_collection_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_collection_properties(amount)
+	}
+
+	fn delete_collection_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::delete_collection_properties(amount)
+	}
+
+	fn set_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_token_properties(amount)
+	}
+
+	fn delete_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::delete_token_properties(amount)
+	}
+
+	fn set_property_permissions(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_property_permissions(amount)
 	}
 
 	fn transfer() -> Weight {
@@ -244,6 +264,48 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		)
 	}
 
+	fn set_collection_properties(
+		&self,
+		_sender: T::CrossAccountId,
+		_property: Vec<Property>,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+	}
+
+	fn delete_collection_properties(
+		&self,
+		_sender: &T::CrossAccountId,
+		_property_keys: Vec<PropertyKey>,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+	}
+
+	fn set_token_properties(
+		&self,
+		_sender: T::CrossAccountId,
+		_token_id: TokenId,
+		_property: Vec<Property>,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+	}
+
+	fn set_property_permissions(
+		&self,
+		_sender: &T::CrossAccountId,
+		_property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+	}
+
+	fn delete_token_properties(
+		&self,
+		_sender: T::CrossAccountId,
+		_token_id: TokenId,
+		_property_keys: Vec<PropertyKey>,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+	}
+
 	fn set_variable_metadata(
 		&self,
 		sender: T::CrossAccountId,
@@ -299,6 +361,10 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		<TokenData<T>>::get((self.id, token))
 			.variable_data
 			.into_inner()
+	}
+
+	fn token_properties(&self, _token_id: TokenId, _keys: Vec<PropertyKey>) -> Vec<Property> {
+		Vec::new()
 	}
 
 	fn total_supply(&self) -> u32 {

@@ -17,7 +17,10 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
-use up_data_structs::{TokenId, CustomDataLimit, CreateItemExData, CollectionId, budget::Budget};
+use up_data_structs::{
+	TokenId, CustomDataLimit, CreateItemExData, CollectionId, budget::Budget, Property,
+	PropertyKey, PropertyKeyPermission,
+};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
@@ -46,6 +49,26 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn burn_item() -> Weight {
 		<SelfWeightOf<T>>::burn_item()
+	}
+
+	fn set_collection_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_collection_properties(amount)
+	}
+
+	fn delete_collection_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::delete_collection_properties(amount)
+	}
+
+	fn set_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_token_properties(amount)
+	}
+
+	fn delete_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::delete_token_properties(amount)
+	}
+
+	fn set_property_permissions(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_property_permissions(amount)
 	}
 
 	fn transfer() -> Weight {
@@ -77,6 +100,7 @@ fn map_create_data<T: Config>(
 		up_data_structs::CreateItemData::NFT(data) => Ok(CreateItemData::<T> {
 			const_data: data.const_data,
 			variable_data: data.variable_data,
+			properties: data.properties,
 			owner: to.clone(),
 		}),
 		_ => fail!(<Error<T>>::NotNonfungibleDataUsedToMintFungibleCollectionToken),
@@ -135,6 +159,74 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 		with_weight(
 			<Pallet<T>>::create_multiple_items(self, &sender, data.into_inner(), nesting_budget),
+			weight,
+		)
+	}
+
+	fn set_collection_properties(
+		&self,
+		sender: T::CrossAccountId,
+		properties: Vec<Property>,
+	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::set_collection_properties(properties.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::set_collection_properties(self, &sender, properties),
+			weight,
+		)
+	}
+
+	fn delete_collection_properties(
+		&self,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::delete_collection_properties(property_keys.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::delete_collection_properties(self, &sender, property_keys),
+			weight,
+		)
+	}
+
+	fn set_token_properties(
+		&self,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		properties: Vec<Property>,
+	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::set_token_properties(properties.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::set_token_properties(self, &sender, token_id, properties),
+			weight,
+		)
+	}
+
+	fn delete_token_properties(
+		&self,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::delete_token_properties(property_keys.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::delete_token_properties(self, &sender, token_id, property_keys),
+			weight,
+		)
+	}
+
+	fn set_property_permissions(
+		&self,
+		sender: &T::CrossAccountId,
+		property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResultWithPostInfo {
+		let weight =
+			<CommonWeights<T>>::set_property_permissions(property_permissions.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::set_property_permissions(self, sender, property_permissions),
 			weight,
 		)
 	}
@@ -292,6 +384,20 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			.map(|t| t.variable_data)
 			.unwrap_or_default()
 			.into_inner()
+	}
+
+	fn token_properties(&self, token_id: TokenId, keys: Vec<PropertyKey>) -> Vec<Property> {
+		let properties = <Pallet<T>>::token_properties((self.id, token_id));
+
+		keys.into_iter()
+			.filter_map(|key| {
+				properties.get(&key)
+					.map(|value| Property {
+						key,
+						value: value.clone(),
+					})
+			})
+			.collect()
 	}
 
 	fn total_supply(&self) -> u32 {

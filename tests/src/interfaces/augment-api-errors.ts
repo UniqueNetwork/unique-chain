@@ -112,6 +112,7 @@ declare module '@polkadot/api-base/types/errors' {
        * No permission to perform action
        **/
       NoPermission: AugmentedError<ApiType>;
+      NoSpaceForProperty: AugmentedError<ApiType>;
       /**
        * Not sufficient founds to perform action
        **/
@@ -124,6 +125,7 @@ declare module '@polkadot/api-base/types/errors' {
        * Tried to enable permissions which are only permitted to be disabled
        **/
       OwnerPermissionsCantBeReverted: AugmentedError<ApiType>;
+      PropertyLimitReached: AugmentedError<ApiType>;
       /**
        * Collection is not in mint mode.
        **/
@@ -269,6 +271,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotFungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
       /**
+       * Setting item properties is not allowed
+       **/
+      SettingPropertiesNotAllowed: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
@@ -396,6 +402,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Refungible token can't nest other tokens
        **/
       RefungibleDisallowsNesting: AugmentedError<ApiType>;
+      /**
+       * Setting item properties is not allowed
+       **/
+      SettingPropertiesNotAllowed: AugmentedError<ApiType>;
       /**
        * Maximum refungibility exceeded
        **/

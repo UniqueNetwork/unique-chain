@@ -206,6 +206,37 @@ export function getCreateCollectionResult(events: EventRecord[]): CreateCollecti
   return result;
 }
 
+export function getCreateItemsResult(events: EventRecord[]): CreateItemResult[] {
+  let success = false;
+  let collectionId = 0;
+  let itemId = 0;
+  let recipient;
+
+  const results : CreateItemResult[]  = [];
+
+  events.forEach(({event: {data, method, section}}) => {
+    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
+    if (method == 'ExtrinsicSuccess') {
+      success = true;
+    } else if ((section == 'common') && (method == 'ItemCreated')) {
+      collectionId = parseInt(data[0].toString(), 10);
+      itemId = parseInt(data[1].toString(), 10);
+      recipient = normalizeAccountId(data[2].toJSON() as any);
+
+      const itemRes: CreateItemResult = {
+        success,
+        collectionId,
+        itemId,
+        recipient,
+      };
+
+      results.push(itemRes);
+    }
+  });
+
+  return results;
+}
+
 export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
   let success = false;
   let collectionId = 0;
@@ -261,12 +292,26 @@ interface ReFungible {
 
 type CollectionMode = Nft | Fungible | ReFungible;
 
+export type Property = {
+  key: any,
+  value: any,
+};
+
+type PropertyPermission = {
+  key: any,
+  mutable: boolean;
+  collectionAdmin: boolean;
+  tokenOwner: boolean;
+}
+
 export type CreateCollectionParams = {
   mode: CollectionMode,
   name: string,
   description: string,
   tokenPrefix: string,
   schemaVersion: string,
+  properties?: Array<Property>,
+  propPerm?: Array<PropertyPermission>
 };
 
 const defaultCreateCollectionParams: CreateCollectionParams = {
@@ -329,6 +374,86 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
   });
 
   return collectionId;
+}
+
+export async function createCollectionWithPropsExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
+  const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
+
+  let collectionId = 0;
+  await usingApi(async (api) => {
+    // Get number of collections before the transaction
+    const collectionCountBefore = await getCreatedCollectionCount(api);
+
+    // Run the CreateCollection transaction
+    const alicePrivateKey = privateKey('//Alice');
+
+    let modeprm = {};
+    if (mode.type === 'NFT') {
+      modeprm = {nft: null};
+    } else if (mode.type === 'Fungible') {
+      modeprm = {fungible: mode.decimalPoints};
+    } else if (mode.type === 'ReFungible') {
+      modeprm = {refungible: null};
+    }
+
+    const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any, properties: params.properties, tokenPropertyPermissions: params.propPerm});
+    const events = await submitTransactionAsync(alicePrivateKey, tx);
+    const result = getCreateCollectionResult(events);
+
+    // Get number of collections after the transaction
+    const collectionCountAfter = await getCreatedCollectionCount(api);
+
+    // Get the collection
+    const collection = await queryCollectionExpectSuccess(api, result.collectionId);
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.true;
+    expect(result.collectionId).to.be.equal(collectionCountAfter);
+    // tslint:disable-next-line:no-unused-expression
+    expect(collection).to.be.not.null;
+    expect(collectionCountAfter).to.be.equal(collectionCountBefore + 1, 'Error: NFT collection NOT created.');
+    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicesPublicKey));
+    expect(utf16ToStr(collection.name.toJSON() as any)).to.be.equal(name);
+    expect(utf16ToStr(collection.description.toJSON() as any)).to.be.equal(description);
+    expect(hexToStr(collection.tokenPrefix.toJSON())).to.be.equal(tokenPrefix);
+
+
+    collectionId = result.collectionId;
+  });
+
+  return collectionId;
+}
+
+export async function createCollectionWithPropsExpectFailure(params: Partial<CreateCollectionParams> = {}) {
+  const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
+
+  const collectionId = 0;
+  await usingApi(async (api) => {
+    // Get number of collections before the transaction
+    const collectionCountBefore = await getCreatedCollectionCount(api);
+
+    // Run the CreateCollection transaction
+    const alicePrivateKey = privateKey('//Alice');
+
+    let modeprm = {};
+    if (mode.type === 'NFT') {
+      modeprm = {nft: null};
+    } else if (mode.type === 'Fungible') {
+      modeprm = {fungible: mode.decimalPoints};
+    } else if (mode.type === 'ReFungible') {
+      modeprm = {refungible: null};
+    }
+
+    const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any, properties: params.properties, tokenPropertyPermissions: params.propPerm});
+    await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
+
+
+    // Get number of collections after the transaction
+    const collectionCountAfter = await getCreatedCollectionCount(api);
+
+    expect(collectionCountAfter).to.be.equal(collectionCountBefore, 'Error: Collection with incorrect data created.');
+  });
 }
 
 export async function createCollectionExpectFailure(params: Partial<CreateCollectionParams> = {}) {

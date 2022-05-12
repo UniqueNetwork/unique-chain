@@ -35,7 +35,8 @@ use up_data_structs::{
 	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT,
 	CUSTOM_DATA_LIMIT, CollectionLimits, CustomDataLimit, CreateCollectionData, SponsorshipState,
 	CreateItemExData, SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField,
-	PhantomType,
+	PhantomType, Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyPermission,
+	PropertiesError, PropertyKeyPermission, TokenData, TrySet,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -288,6 +289,16 @@ pub mod pallet {
 			T::CrossAccountId,
 			u128,
 		),
+
+		CollectionPropertySet(CollectionId, Property),
+
+		CollectionPropertyDeleted(CollectionId, PropertyKey),
+
+		TokenPropertySet(CollectionId, TokenId, Property),
+
+		TokenPropertyDeleted(CollectionId, TokenId, PropertyKey),
+
+		PropertyPermissionSet(CollectionId, PropertyKeyPermission),
 	}
 
 	#[pallet::error]
@@ -319,7 +330,6 @@ pub mod pallet {
 		CollectionLimitBoundsExceeded,
 		/// Tried to enable permissions which are only permitted to be disabled
 		OwnerPermissionsCantBeReverted,
-
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
 		/// Account token limit exceeded per collection
@@ -355,6 +365,18 @@ pub mod pallet {
 
 		/// Tried to store more data than allowed in collection field
 		CollectionFieldSizeExceeded,
+
+		/// Tried to store more property data than allowed
+		NoSpaceForProperty,
+
+		/// Tried to store more property keys than allowed
+		PropertyLimitReached,
+
+		/// Unable to read array of unbounded keys
+		UnableToReadUnboundedKeys,
+
+		/// Only ASCII letters, digits, and '_', '-' are allowed
+		InvalidCharacterInPropertyKey,
 	}
 
 	#[pallet::storage]
@@ -370,6 +392,26 @@ pub mod pallet {
 		Key = CollectionId,
 		Value = Collection<<T as frame_system::Config>::AccountId>,
 		QueryKind = OptionQuery,
+	>;
+
+	/// Collection properties
+	#[pallet::storage]
+	#[pallet::getter(fn collection_properties)]
+	pub type CollectionProperties<T> = StorageMap<
+		Hasher = Blake2_128Concat,
+		Key = CollectionId,
+		Value = Properties,
+		QueryKind = ValueQuery,
+		OnEmpty = up_data_structs::CollectionProperties,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn property_permissions)]
+	pub type CollectionPropertyPermissions<T> = StorageMap<
+		Hasher = Blake2_128Concat,
+		Key = CollectionId,
+		Value = PropertiesPermissionMap,
+		QueryKind = ValueQuery,
 	>;
 
 	/// Large variable-size collection fields are extracted here
@@ -420,6 +462,7 @@ pub mod pallet {
 			CollectionStats,
 			CollectionId,
 			TokenId,
+			PhantomType<TokenData<T::CrossAccountId>>,
 			PhantomType<RpcCollection<T::AccountId>>,
 		),
 		QueryKind = OptionQuery,
@@ -539,6 +582,23 @@ impl<T: Config> Pallet<T> {
 			limits,
 			meta_update_permission,
 		} = <CollectionById<T>>::get(collection)?;
+
+		let token_property_permissions = <CollectionPropertyPermissions<T>>::get(collection)
+			.iter()
+			.map(|(key, permission)| PropertyKeyPermission {
+				key: key.clone(),
+				permission: permission.clone(),
+			})
+			.collect();
+
+		let properties = <CollectionProperties<T>>::get(collection)
+			.iter()
+			.map(|(key, value)| Property {
+				key: key.clone(),
+				value: value.clone()
+			})
+			.collect();
+
 		Some(RpcCollection {
 			name: name.into_inner(),
 			description: description.into_inner(),
@@ -566,6 +626,8 @@ impl<T: Config> Pallet<T> {
 				CollectionField::VariableOnChainSchema,
 			))
 			.into_inner(),
+			token_property_permissions,
+			properties,
 		})
 	}
 }
@@ -616,6 +678,23 @@ impl<T: Config> Pallet<T> {
 				.unwrap_or_else(|| Ok(CollectionLimits::default()))?,
 			meta_update_permission: data.meta_update_permission.unwrap_or_default(),
 		};
+
+		let mut collection_properties = up_data_structs::CollectionProperties::get();
+		collection_properties.try_set_from_iter(
+			data.properties.into_iter()
+				.map(|p| (p.key, p.value))
+		).map_err(|e| -> Error<T> { e.into() })?;
+
+		CollectionProperties::<T>::insert(id, collection_properties);
+
+		let mut token_props_permissions = PropertiesPermissionMap::new();
+		token_props_permissions.try_set_from_iter(
+			data.token_property_permissions
+			.into_iter()
+			.map(|property| (property.key, property.permission))
+		).map_err(|e| -> Error<T> { e.into() })?;
+
+		CollectionPropertyPermissions::<T>::insert(id, token_props_permissions);
 
 		// Take a (non-refundable) deposit of collection creation
 		{
@@ -686,6 +765,174 @@ impl<T: Config> Pallet<T> {
 
 		<Pallet<T>>::deposit_event(Event::CollectionDestroyed(collection.id));
 		Ok(())
+	}
+
+	pub fn set_collection_property(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property: Property,
+	) -> DispatchResult {
+		collection.check_is_owner_or_admin(sender)?;
+
+		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
+			let property = property.clone();
+			properties.try_set(property.key, property.value)
+		})
+		.map_err(|e| -> Error<T> { e.into() })?;
+
+		Self::deposit_event(Event::CollectionPropertySet(collection.id, property));
+
+		Ok(())
+	}
+
+	pub fn set_collection_properties(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		properties: Vec<Property>,
+	) -> DispatchResult {
+		for property in properties {
+			Self::set_collection_property(collection, sender, property)?;
+		}
+
+		Ok(())
+	}
+
+	pub fn delete_collection_property(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_key: PropertyKey,
+	) -> DispatchResult {
+		collection.check_is_owner_or_admin(sender)?;
+
+		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
+			properties.remove(&property_key)
+		}).map_err(|e| -> Error<T> { e.into() })?;
+
+		Self::deposit_event(Event::CollectionPropertyDeleted(
+			collection.id,
+			property_key,
+		));
+
+		Ok(())
+	}
+
+	pub fn delete_collection_properties(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResult {
+		for key in property_keys {
+			Self::delete_collection_property(collection, sender, key)?;
+		}
+
+		Ok(())
+	}
+
+	pub fn set_property_permission(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_permission: PropertyKeyPermission,
+	) -> DispatchResult {
+		collection.check_is_owner_or_admin(sender)?;
+
+		let all_permissions = CollectionPropertyPermissions::<T>::get(collection.id);
+		let current_permission = all_permissions.get(&property_permission.key);
+		if matches![
+			current_permission,
+			Some(PropertyPermission { mutable: false, .. })
+		] {
+			return Err(<Error<T>>::NoPermission.into());
+		}
+
+		CollectionPropertyPermissions::<T>::try_mutate(collection.id, |permissions| {
+			let property_permission = property_permission.clone();
+			permissions.try_set(property_permission.key, property_permission.permission)
+		})
+		.map_err(|_| -> Error<T> { PropertiesError::PropertyLimitReached.into() })?;
+
+		Self::deposit_event(Event::PropertyPermissionSet(
+			collection.id,
+			property_permission,
+		));
+
+		Ok(())
+	}
+
+	pub fn set_property_permissions(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResult {
+		for prop_pemission in property_permissions {
+			Self::set_property_permission(collection, sender, prop_pemission)?;
+		}
+
+		Ok(())
+	}
+
+	pub fn bytes_keys_to_property_keys(
+		keys: Vec<Vec<u8>>,
+	) -> Result<Vec<PropertyKey>, DispatchError> {
+		keys.into_iter()
+			.map(|key| -> Result<PropertyKey, DispatchError> {
+				key.try_into()
+					.map_err(|_| <Error<T>>::UnableToReadUnboundedKeys.into())
+			})
+			.collect::<Result<Vec<PropertyKey>, DispatchError>>()
+	}
+
+	pub fn check_property_key(key: &PropertyKey) -> Result<(), DispatchError> {
+		let key_str = sp_std::str::from_utf8(key.as_slice())
+			.map_err(|_| <Error<T>>::InvalidCharacterInPropertyKey)?;
+
+		for ch in key_str.chars() {
+			if !ch.is_ascii_alphanumeric() && ch != '_' && ch != '-' {
+				return Err(<Error<T>>::InvalidCharacterInPropertyKey.into());
+			}
+		}
+
+		Ok(())
+	}
+
+	pub fn filter_collection_properties(
+		collection_id: CollectionId,
+		keys: Vec<PropertyKey>,
+	) -> Result<Vec<Property>, DispatchError> {
+		let properties = Self::collection_properties(collection_id);
+
+		let properties = keys
+			.into_iter()
+			.filter_map(|key| {
+				properties.get(&key)
+					.map(|value| Property {
+						key,
+						value: value.clone(),
+					})
+			})
+			.collect();
+
+		Ok(properties)
+	}
+
+	pub fn filter_property_permissions(
+		collection_id: CollectionId,
+		keys: Vec<PropertyKey>,
+	) -> Result<Vec<PropertyKeyPermission>, DispatchError> {
+		let permissions = Self::property_permissions(collection_id);
+
+		let key_permissions = keys
+			.into_iter()
+			.filter_map(|key| {
+				permissions
+					.get(&key)
+					.map(|permission| PropertyKeyPermission {
+						key,
+						permission: permission.clone(),
+					})
+			})
+			.collect();
+
+		Ok(key_permissions)
 	}
 
 	fn set_field_raw(
@@ -840,6 +1087,11 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn create_multiple_items(amount: u32) -> Weight;
 	fn create_multiple_items_ex(cost: &CreateItemExData<CrossAccountId>) -> Weight;
 	fn burn_item() -> Weight;
+	fn set_collection_properties(amount: u32) -> Weight;
+	fn delete_collection_properties(amount: u32) -> Weight;
+	fn set_token_properties(amount: u32) -> Weight;
+	fn delete_token_properties(amount: u32) -> Weight;
+	fn set_property_permissions(amount: u32) -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
@@ -874,7 +1126,33 @@ pub trait CommonCollectionOperations<T: Config> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResultWithPostInfo;
-
+	fn set_collection_properties(
+		&self,
+		sender: T::CrossAccountId,
+		properties: Vec<Property>,
+	) -> DispatchResultWithPostInfo;
+	fn delete_collection_properties(
+		&self,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResultWithPostInfo;
+	fn set_token_properties(
+		&self,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		property: Vec<Property>,
+	) -> DispatchResultWithPostInfo;
+	fn delete_token_properties(
+		&self,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResultWithPostInfo;
+	fn set_property_permissions(
+		&self,
+		sender: &T::CrossAccountId,
+		property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResultWithPostInfo;
 	fn transfer(
 		&self,
 		sender: T::CrossAccountId,
@@ -931,7 +1209,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
 	fn const_metadata(&self, token: TokenId) -> Vec<u8>;
 	fn variable_metadata(&self, token: TokenId) -> Vec<u8>;
-
+	fn token_properties(&self, token_id: TokenId, keys: Vec<PropertyKey>) -> Vec<Property>;
 	/// Amount of unique collection tokens
 	fn total_supply(&self) -> u32;
 	/// Amount of different tokens account has (Applicable to nonfungible/refungible)
@@ -955,5 +1233,15 @@ pub fn with_weight(res: DispatchResult, weight: Weight) -> DispatchResultWithPos
 	match res {
 		Ok(()) => Ok(post_info),
 		Err(error) => Err(DispatchErrorWithPostInfo { post_info, error }),
+	}
+}
+
+impl<T: Config> From<PropertiesError> for Error<T> {
+	fn from(error: PropertiesError) -> Self {
+		match error {
+			PropertiesError::NoSpaceForProperty => Self::NoSpaceForProperty,
+			PropertiesError::PropertyLimitReached => Self::PropertyLimitReached,
+			PropertiesError::InvalidCharacterInPropertyKey => Self::InvalidCharacterInPropertyKey,
+		}
 	}
 }

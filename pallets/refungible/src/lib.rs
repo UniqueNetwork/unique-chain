@@ -62,6 +62,8 @@ pub mod pallet {
 		WrongRefungiblePieces,
 		/// Refungible token can't nest other tokens
 		RefungibleDisallowsNesting,
+		/// Setting item properties is not allowed
+		SettingPropertiesNotAllowed,
 	}
 
 	#[pallet::config]

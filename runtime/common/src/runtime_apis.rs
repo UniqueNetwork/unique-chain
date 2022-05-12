@@ -36,6 +36,47 @@ macro_rules! impl_common_runtime_apis {
                     dispatch_unique_runtime!(collection.variable_metadata(token))
                 }
 
+                fn collection_properties(
+                    collection: CollectionId,
+                    keys: Vec<Vec<u8>>
+                ) -> Result<Vec<Property>, DispatchError> {
+                    let keys = pallet_common::Pallet::<Runtime>::bytes_keys_to_property_keys(keys)?;
+
+                    pallet_common::Pallet::<Runtime>::filter_collection_properties(collection, keys)
+                }
+
+                fn token_properties(
+                    collection: CollectionId,
+                    token_id: TokenId,
+                    keys: Vec<Vec<u8>>
+                ) -> Result<Vec<Property>, DispatchError> {
+                    let keys = pallet_common::Pallet::<Runtime>::bytes_keys_to_property_keys(keys)?;
+                    dispatch_unique_runtime!(collection.token_properties(token_id, keys))
+                }
+
+                fn property_permissions(
+                    collection: CollectionId,
+                    keys: Vec<Vec<u8>>
+                ) -> Result<Vec<PropertyKeyPermission>, DispatchError> {
+                    let keys = pallet_common::Pallet::<Runtime>::bytes_keys_to_property_keys(keys)?;
+
+                    pallet_common::Pallet::<Runtime>::filter_property_permissions(collection, keys)
+                }
+
+                fn token_data(
+                    collection: CollectionId,
+                    token_id: TokenId,
+                    keys: Vec<Vec<u8>>
+                ) -> Result<TokenData<CrossAccountId>, DispatchError> {
+                    let token_data = TokenData {
+                        const_data: Self::const_metadata(collection, token_id)?,
+                        properties: Self::token_properties(collection, token_id, keys)?,
+                        owner: Self::token_owner(collection, token_id)?
+                    };
+
+                    Ok(token_data)
+                }
+
                 fn total_supply(collection: CollectionId) -> Result<u32, DispatchError> {
                     dispatch_unique_runtime!(collection.total_supply())
                 }
