@@ -76,6 +76,7 @@ pub const SPONSOR_APPROVE_TIMEOUT: u32 = 5;
 
 // Schema limits
 pub const OFFCHAIN_SCHEMA_LIMIT: u32 = 8192;
+pub const VARIABLE_ON_CHAIN_SCHEMA_LIMIT: u32 = 8192;
 pub const CONST_ON_CHAIN_SCHEMA_LIMIT: u32 = 32768;
 
 pub const COLLECTION_FIELD_LIMIT: u32 = CONST_ON_CHAIN_SCHEMA_LIMIT;
@@ -300,6 +301,9 @@ pub struct Collection<AccountId> {
 	pub limits: CollectionLimitsVersion1, // Collection private restrictions
 	#[version(2.., upper(limits.into()))]
 	pub limits: CollectionLimitsVersion2,
+
+	#[version(..2)]
+	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
 
 	#[version(..2)]
 	pub const_on_chain_schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>,
