@@ -265,8 +265,8 @@ impl pallet_evm::Config for Runtime {
 	type FeeCalculator = FixedFee;
 	type GasWeightMapping = FixedGasWeightMapping;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
-	type CallOrigin = EnsureAddressTruncated;
-	type WithdrawOrigin = EnsureAddressTruncated;
+	type CallOrigin = EnsureAddressTruncated<Self>;
+	type WithdrawOrigin = EnsureAddressTruncated<Self>;
 	type AddressMapping = HashedAddressMapping<Self::Hashing>;
 	type PrecompilesType = ();
 	type PrecompilesValue = ();
