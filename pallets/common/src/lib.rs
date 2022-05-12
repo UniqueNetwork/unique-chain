@@ -290,15 +290,15 @@ pub mod pallet {
 			u128,
 		),
 
-		CollectionPropertySet(CollectionId, Property),
+		CollectionPropertySet(CollectionId, PropertyKey),
 
 		CollectionPropertyDeleted(CollectionId, PropertyKey),
 
-		TokenPropertySet(CollectionId, TokenId, Property),
+		TokenPropertySet(CollectionId, TokenId, PropertyKey),
 
 		TokenPropertyDeleted(CollectionId, TokenId, PropertyKey),
 
-		PropertyPermissionSet(CollectionId, PropertyKeyPermission),
+		PropertyPermissionSet(CollectionId, PropertyKey),
 	}
 
 	#[pallet::error]
@@ -764,7 +764,7 @@ impl<T: Config> Pallet<T> {
 		})
 		.map_err(|e| -> Error<T> { e.into() })?;
 
-		Self::deposit_event(Event::CollectionPropertySet(collection.id, property));
+		Self::deposit_event(Event::CollectionPropertySet(collection.id, property.key));
 
 		Ok(())
 	}
@@ -837,7 +837,7 @@ impl<T: Config> Pallet<T> {
 
 		Self::deposit_event(Event::PropertyPermissionSet(
 			collection.id,
-			property_permission,
+			property_permission.key,
 		));
 
 		Ok(())

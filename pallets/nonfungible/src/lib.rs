@@ -276,7 +276,7 @@ impl<T: Config> Pallet<T> {
 		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
 			collection.id,
 			token_id,
-			property,
+			property.key,
 		));
 
 		Ok(())
