@@ -84,7 +84,7 @@ use sp_arithmetic::{
 };
 use smallvec::smallvec;
 use codec::{Encode, Decode};
-use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping};
+use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
 	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating},

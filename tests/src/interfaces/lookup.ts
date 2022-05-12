@@ -26,6 +26,10 @@ export default {
     trieNodes: 'BTreeSet<Bytes>'
   },
   /**
+   * Lookup11: BTreeSet<T>
+   **/
+  BTreeSet: 'Vec<Bytes>',
+  /**
    * Lookup13: cumulus_pallet_parachain_system::relay_state_snapshot::MessagingStateSnapshot
    **/
   CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot: {

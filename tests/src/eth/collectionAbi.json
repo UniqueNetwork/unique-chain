@@ -58,7 +58,7 @@
         "name": "collectionAddress",
         "type": "address"
       },
-      { "internalType": "string", "name": "shema", "type": "string" }
+      { "internalType": "string", "name": "schema", "type": "string" }
     ],
     "name": "setOffchainSchema",
     "outputs": [],

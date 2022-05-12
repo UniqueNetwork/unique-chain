@@ -6,6 +6,9 @@ import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
 import type { Event } from '@polkadot/types/interfaces/system';
 
+/** @name BTreeSet */
+export interface BTreeSet extends Vec<Bytes> {}
+
 /** @name CumulusPalletDmpQueueCall */
 export interface CumulusPalletDmpQueueCall extends Enum {
   readonly isServiceOverweight: boolean;
@@ -1010,6 +1013,12 @@ export interface PalletEvmCoderSubstrateError extends Enum {
   readonly isOutOfGas: boolean;
   readonly isOutOfFund: boolean;
   readonly type: 'OutOfGas' | 'OutOfFund';
+}
+
+/** @name PalletEvmCollectionError */
+export interface PalletEvmCollectionError extends Enum {
+  readonly isNoPermission: boolean;
+  readonly type: 'NoPermission';
 }
 
 /** @name PalletEvmContractHelpersError */

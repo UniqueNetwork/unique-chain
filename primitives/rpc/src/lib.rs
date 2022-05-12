@@ -23,6 +23,7 @@ use up_data_structs::{
 use sp_std::vec::Vec;
 use codec::Decode;
 use sp_runtime::DispatchError;
+use sp_core::H160;
 
 type Result<T> = core::result::Result<T, DispatchError>;
 
@@ -71,6 +72,7 @@ sp_api::decl_runtime_apis! {
 			token: TokenId,
 		) -> Result<u128>;
 
+		fn eth_contract_code(account: H160) -> Option<Vec<u8>>;
 		fn adminlist(collection: CollectionId) -> Result<Vec<CrossAccountId>>;
 		fn allowlist(collection: CollectionId) -> Result<Vec<CrossAccountId>>;
 		fn allowed(collection: CollectionId, user: CrossAccountId) -> Result<bool>;

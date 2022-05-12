@@ -56,13 +56,13 @@ contract Collection is Dummy, ERC165 {
 	}
 
 	// Selector: setOffchainSchema(address,string) 2c9d9d70
-	function setOffchainSchema(address collectionAddress, string memory shema)
+	function setOffchainSchema(address collectionAddress, string memory schema)
 		public
 		view
 	{
 		require(false, stub_error);
 		collectionAddress;
-		shema;
+		schema;
 		dummy;
 	}
 

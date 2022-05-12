@@ -26,6 +26,9 @@ declare module '@polkadot/types/lookup' {
     readonly trieNodes: BTreeSet<Bytes>;
   }
 
+  /** @name BTreeSet (11) */
+  export interface BTreeSet extends Vec<Bytes> {}
+
   /** @name CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot (13) */
   export interface CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot extends Struct {
     readonly dmqMqcHead: H256;
