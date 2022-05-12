@@ -28,7 +28,7 @@ evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 pallet-common = { default-features = false, path = '../../pallets/common' }
 pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }
 pallet-nonfungible = { default-features = false, path = '../../pallets/nonfungible' }
-up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
+up-data-structs = { default-features = false, path = '../../primitives/data-structs', features = ['serde1'] }
 
 [dependencies.codec]
 default-features = false

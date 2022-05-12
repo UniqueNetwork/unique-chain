@@ -30,7 +30,7 @@ interface Collection is Dummy, ERC165 {
 	function confirmSponsorship(address collectionAddress) external view;
 
 	// Selector: setOffchainSchema(address,string) 2c9d9d70
-	function setOffchainSchema(address collectionAddress, string memory shema)
+	function setOffchainSchema(address collectionAddress, string memory schema)
 		external
 		view;
 

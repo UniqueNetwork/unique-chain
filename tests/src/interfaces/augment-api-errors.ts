@@ -217,6 +217,16 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    evmCollection: {
+      /**
+       * This method is only executable by owner
+       **/
+      NoPermission: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     evmContractHelpers: {
       /**
        * This method is only executable by owner

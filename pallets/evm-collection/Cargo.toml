@@ -13,15 +13,15 @@ log = { default-features = false, version = "0.4.14" }
 serde_json = { version = "1.0.68", default-features = false, features = ["alloc"] }
 
 # Substrate
-frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.18' }
-frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.18' }
-sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.18' }
-sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.18' }
-sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.18' }
+frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.20' }
+frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.20' }
+sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.20' }
+sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.20' }
+sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.20' }
 
 # Unique
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
-fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.18-2" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.20" }
+fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier.git", branch = "unique-polkadot-v0.9.20" }
 
 # Locals
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
