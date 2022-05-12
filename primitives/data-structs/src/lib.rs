@@ -683,6 +683,7 @@ pub enum PropertiesError {
 	NoSpaceForProperty,
 	PropertyLimitReached,
 	InvalidCharacterInPropertyKey,
+	EmptyPropertyKey,
 }
 
 pub trait TrySet: Sized {
@@ -728,12 +729,17 @@ impl<Value> PropertiesMap<Value> {
 	}
 
 	fn check_property_key(key: &PropertyKey) -> Result<(), PropertiesError> {
-		let key_str = sp_std::str::from_utf8(key.as_slice())
-			.map_err(|_| PropertiesError::InvalidCharacterInPropertyKey)?;
+		if key.is_empty() {
+			return Err(PropertiesError::EmptyPropertyKey);
+		}
 
-		for ch in key_str.chars() {
-			if !ch.is_ascii_alphanumeric() && ch != '_' && ch != '-' {
-				return Err(PropertiesError::InvalidCharacterInPropertyKey);
+		for byte in key.as_slice().iter() {
+			match char::from_u32(*byte as u32) {
+				Some(ch)
+					if ch.is_ascii_alphanumeric()
+					|| ch == '_'
+					|| ch == '-' => { /* OK */ },
+				_ => return Err(PropertiesError::InvalidCharacterInPropertyKey)
 			}
 		}
 

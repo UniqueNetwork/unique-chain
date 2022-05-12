@@ -377,6 +377,9 @@ pub mod pallet {
 
 		/// Only ASCII letters, digits, and '_', '-' are allowed
 		InvalidCharacterInPropertyKey,
+
+		/// Empty property keys are forbidden
+		EmptyPropertyKey,
 	}
 
 	#[pallet::storage]
@@ -1226,6 +1229,7 @@ impl<T: Config> From<PropertiesError> for Error<T> {
 			PropertiesError::NoSpaceForProperty => Self::NoSpaceForProperty,
 			PropertiesError::PropertyLimitReached => Self::PropertyLimitReached,
 			PropertiesError::InvalidCharacterInPropertyKey => Self::InvalidCharacterInPropertyKey,
+			PropertiesError::EmptyPropertyKey => Self::EmptyPropertyKey,
 		}
 	}
 }
