@@ -833,7 +833,7 @@ impl<T: Config> Pallet<T> {
 			let property_permission = property_permission.clone();
 			permissions.try_set(property_permission.key, property_permission.permission)
 		})
-		.map_err(|_| -> Error<T> { PropertiesError::PropertyLimitReached.into() })?;
+		.map_err(|e| -> Error<T> { e.into() })?;
 
 		Self::deposit_event(Event::PropertyPermissionSet(
 			collection.id,
