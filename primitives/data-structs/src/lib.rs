@@ -699,7 +699,7 @@ pub trait TrySet: Sized {
 
 	fn try_set_from_iter<I>(&mut self, iter: I) -> Result<(), PropertiesError>
 	where
-		I: Iterator<Item=(PropertyKey, Self::Value)>
+		I: Iterator<Item = (PropertyKey, Self::Value)>,
 	{
 		for (key, value) in iter {
 			self.try_set(key, value)?;
@@ -711,7 +711,9 @@ pub trait TrySet: Sized {
 
 #[derive(Encode, Decode, TypeInfo, Derivative, Clone, PartialEq, MaxEncodedLen)]
 #[derivative(Default(bound = ""))]
-pub struct PropertiesMap<Value>(BoundedBTreeMap<PropertyKey, Value, ConstU32<MAX_PROPERTIES_PER_ITEM>>);
+pub struct PropertiesMap<Value>(
+	BoundedBTreeMap<PropertyKey, Value, ConstU32<MAX_PROPERTIES_PER_ITEM>>,
+);
 
 impl<Value> PropertiesMap<Value> {
 	pub fn new() -> Self {

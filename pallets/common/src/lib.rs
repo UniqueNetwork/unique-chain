@@ -595,7 +595,7 @@ impl<T: Config> Pallet<T> {
 			.iter()
 			.map(|(key, value)| Property {
 				key: key.clone(),
-				value: value.clone()
+				value: value.clone(),
 			})
 			.collect();
 
@@ -680,19 +680,20 @@ impl<T: Config> Pallet<T> {
 		};
 
 		let mut collection_properties = up_data_structs::CollectionProperties::get();
-		collection_properties.try_set_from_iter(
-			data.properties.into_iter()
-				.map(|p| (p.key, p.value))
-		).map_err(|e| -> Error<T> { e.into() })?;
+		collection_properties
+			.try_set_from_iter(data.properties.into_iter().map(|p| (p.key, p.value)))
+			.map_err(|e| -> Error<T> { e.into() })?;
 
 		CollectionProperties::<T>::insert(id, collection_properties);
 
 		let mut token_props_permissions = PropertiesPermissionMap::new();
-		token_props_permissions.try_set_from_iter(
-			data.token_property_permissions
-			.into_iter()
-			.map(|property| (property.key, property.permission))
-		).map_err(|e| -> Error<T> { e.into() })?;
+		token_props_permissions
+			.try_set_from_iter(
+				data.token_property_permissions
+					.into_iter()
+					.map(|property| (property.key, property.permission)),
+			)
+			.map_err(|e| -> Error<T> { e.into() })?;
 
 		CollectionPropertyPermissions::<T>::insert(id, token_props_permissions);
 
@@ -806,7 +807,8 @@ impl<T: Config> Pallet<T> {
 
 		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
 			properties.remove(&property_key)
-		}).map_err(|e| -> Error<T> { e.into() })?;
+		})
+		.map_err(|e| -> Error<T> { e.into() })?;
 
 		Self::deposit_event(Event::CollectionPropertyDeleted(
 			collection.id,
@@ -903,11 +905,10 @@ impl<T: Config> Pallet<T> {
 		let properties = keys
 			.into_iter()
 			.filter_map(|key| {
-				properties.get(&key)
-					.map(|value| Property {
-						key,
-						value: value.clone(),
-					})
+				properties.get(&key).map(|value| Property {
+					key,
+					value: value.clone(),
+				})
 			})
 			.collect();
 

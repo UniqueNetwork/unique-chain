@@ -110,6 +110,9 @@ impl<T: Config> FungibleHandle<T> {
 	pub fn into_inner(self) -> pallet_common::CollectionHandle<T> {
 		self.0
 	}
+	pub fn common_mut(&mut self) -> &mut pallet_common::CollectionHandle<T> {
+		&mut self.0
+	}
 }
 impl<T: Config> WithRecorder<T> for FungibleHandle<T> {
 	fn recorder(&self) -> &pallet_evm_coder_substrate::SubstrateRecorder<T> {

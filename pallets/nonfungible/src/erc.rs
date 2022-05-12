@@ -26,7 +26,8 @@ use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_core::{H160, U256};
 use sp_std::{vec::Vec, vec};
 use pallet_common::{
-	erc::{CommonEvmHandler, PrecompileResult},
+	erc::{CommonEvmHandler, PrecompileResult, CollectionPropertiesCall},
+	CollectionHandle,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_evm_coder_substrate::call;
@@ -504,6 +505,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		ERC721UniqueExtensions,
 		ERC721Mintable,
 		ERC721Burnable,
+		via("CollectionHandle<T>", common_mut, CollectionProperties)
 	)
 )]
 impl<T: Config> NonfungibleHandle<T> {}

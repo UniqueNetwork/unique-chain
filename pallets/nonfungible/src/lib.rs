@@ -142,6 +142,9 @@ impl<T: Config> NonfungibleHandle<T> {
 	pub fn into_inner(self) -> pallet_common::CollectionHandle<T> {
 		self.0
 	}
+	pub fn common_mut(&mut self) -> &mut pallet_common::CollectionHandle<T> {
+		&mut self.0
+	}
 }
 impl<T: Config> WithRecorder<T> for NonfungibleHandle<T> {
 	fn recorder(&self) -> &SubstrateRecorder<T> {
@@ -302,7 +305,8 @@ impl<T: Config> Pallet<T> {
 
 		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
 			properties.remove(&property_key)
-		}).map_err(|e| -> CommonError<T> { e.into() })?;
+		})
+		.map_err(|e| -> CommonError<T> { e.into() })?;
 
 		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertyDeleted(
 			collection.id,

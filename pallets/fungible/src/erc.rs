@@ -24,6 +24,7 @@ use sp_std::vec::Vec;
 use pallet_evm::account::CrossAccountId;
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
+use pallet_common::{CollectionHandle, erc::CollectionPropertiesCall};
 
 use crate::{
 	Allowance, Balance, Config, FungibleHandle, Pallet, SelfWeightOf, TotalSupply,
@@ -144,7 +145,14 @@ impl<T: Config> FungibleHandle<T> {
 	}
 }
 
-#[solidity_interface(name = "UniqueFungible", is(ERC20))]
+#[solidity_interface(
+	name = "UniqueFungible",
+	is(
+		ERC20,
+		ERC20UniqueExtensions,
+		via("CollectionHandle<T>", common_mut, CollectionProperties)
+	)
+)]
 impl<T: Config> FungibleHandle<T> {}
 
 generate_stubgen!(gen_impl, UniqueFungibleCall<()>, true);
