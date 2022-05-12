@@ -10,7 +10,7 @@ homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'unique-runtime'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.9.18'
+version = '0.9.21'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
