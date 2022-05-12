@@ -2423,45 +2423,6 @@ fn set_const_on_chain_schema() {
 			)),
 			b"test const on chain schema".to_vec()
 		);
-		assert_eq!(
-			<pallet_common::CollectionData<Test>>::get((
-				collection_id,
-				CollectionField::VariableOnChainSchema
-			)),
-			b"".to_vec()
-		);
-	});
-}
-
-#[test]
-fn set_variable_on_chain_schema() {
-	new_test_ext().execute_with(|| {
-		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-
-		let origin1 = Origin::signed(1);
-		assert_ok!(Unique::set_variable_on_chain_schema(
-			origin1,
-			collection_id,
-			b"test variable on chain schema"
-				.to_vec()
-				.try_into()
-				.unwrap()
-		));
-
-		assert_eq!(
-			<pallet_common::CollectionData<Test>>::get((
-				collection_id,
-				CollectionField::ConstOnChainSchema
-			)),
-			b"".to_vec()
-		);
-		assert_eq!(
-			<pallet_common::CollectionData<Test>>::get((
-				collection_id,
-				CollectionField::VariableOnChainSchema
-			)),
-			b"test variable on chain schema".to_vec()
-		);
 	});
 }
 

@@ -40,20 +40,20 @@ describe('integration test: ext. createCollection():', () => {
   });
 
   it('create new collection with properties #1', async () => {
-    await createCollectionWithPropsExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'}, 
-      properties: [{key: 'key1', value: 'val1'}], 
+    await createCollectionWithPropsExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'},
+      properties: [{key: 'key1', value: 'val1'}],
       propPerm:   [{key: 'key1', tokenOwner: true, mutable: false, collectionAdmin: true}]});
   });
 
   it('create new collection with properties #2', async () => {
-    await createCollectionWithPropsExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'}, 
-      properties: [{key: 'key1', value: 'val1'}], 
+    await createCollectionWithPropsExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'},
+      properties: [{key: 'key1', value: 'val1'}],
       propPerm:   [{key: 'key1', tokenOwner: false, mutable: true, collectionAdmin: false}]});
   });
 
   it('create new collection with properties #3', async () => {
-    await createCollectionWithPropsExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'}, 
-      properties: [{key: 'key1', value: 'val1'}], 
+    await createCollectionWithPropsExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'},
+      properties: [{key: 'key1', value: 'val1'}],
       propPerm:   [{key: 'key1', tokenOwner: true, mutable: false, collectionAdmin: false}]});
   });
 
@@ -73,7 +73,6 @@ describe('integration test: ext. createCollection():', () => {
         limits: {
           accountTokenOwnershipLimit: 3,
         },
-        variableOnChainSchema: '0x222222',
         constOnChainSchema: '0x333333',
         metaUpdatePermission: 'Admin',
       });
@@ -91,7 +90,6 @@ describe('integration test: ext. createCollection():', () => {
       expect(collection.schemaVersion.isUnique).to.be.true;
       expect(collection.sponsorship.asUnconfirmed.toString()).to.equal(bob.address);
       expect(collection.limits.accountTokenOwnershipLimit.unwrap().toNumber()).to.equal(3);
-      expect(collection.variableOnChainSchema.toString()).to.equal('0x222222');
       expect(collection.constOnChainSchema.toString()).to.equal('0x333333');
       expect(collection.metaUpdatePermission.isAdmin).to.be.true;
     });

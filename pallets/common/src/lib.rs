@@ -482,12 +482,6 @@ pub mod pallet {
 					.expect("data has lower bounds than field");
 					Self::set_field_raw(
 						id,
-						CollectionField::VariableOnChainSchema,
-						v.variable_on_chain_schema.clone().into_inner(),
-					)
-					.expect("data has lower bounds than field");
-					Self::set_field_raw(
-						id,
 						CollectionField::ConstOnChainSchema,
 						v.const_on_chain_schema.clone().into_inner(),
 					)
@@ -621,11 +615,6 @@ impl<T: Config> Pallet<T> {
 				CollectionField::ConstOnChainSchema,
 			))
 			.into_inner(),
-			variable_on_chain_schema: <CollectionData<T>>::get((
-				collection,
-				CollectionField::VariableOnChainSchema,
-			))
-			.into_inner(),
 			token_property_permissions,
 			properties,
 		})
@@ -723,12 +712,6 @@ impl<T: Config> Pallet<T> {
 			id,
 			CollectionField::OffchainSchema,
 			data.offchain_schema.into_inner(),
-		)
-		.expect("data has lower bounds than field");
-		Self::set_field_raw(
-			id,
-			CollectionField::VariableOnChainSchema,
-			data.variable_on_chain_schema.into_inner(),
 		)
 		.expect("data has lower bounds than field");
 		Self::set_field_raw(

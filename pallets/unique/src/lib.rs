@@ -35,7 +35,7 @@ use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{sp_std::prelude::Vec};
 use up_data_structs::{
-	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT,
+	CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT,
 	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
 	AccessMode, CreateItemData, CollectionLimits, CollectionId, CollectionMode, TokenId,
 	SchemaVersion, SponsorshipState, MetaUpdatePermission, CreateCollectionData, CustomDataLimit,
@@ -191,13 +191,6 @@ decl_event! {
 		///
 		/// * collection_id: Globally unique collection identifier.
 		SchemaVersionSet(CollectionId),
-
-		/// Variable on chain schema was set
-		///
-		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
-		VariableOnChainSchemaSet(CollectionId),
 	}
 }
 
@@ -1083,38 +1076,6 @@ decl_module! {
 			<PalletCommon<T>>::set_field(&collection, &sender, CollectionField::ConstOnChainSchema, schema.into_inner())?;
 
 			<Pallet<T>>::deposit_event(Event::<T>::ConstOnChainSchemaSet(
-				collection_id
-			));
-			Ok(())
-		}
-
-		/// Set variable on-chain data schema.
-		///
-		/// # Permissions
-		///
-		/// * Collection Owner
-		/// * Collection Admin
-		///
-		/// # Arguments
-		///
-		/// * collection_id.
-		///
-		/// * schema: String representing the variable on-chain data schema.
-		#[weight = <SelfWeightOf<T>>::set_const_on_chain_schema(schema.len() as u32)]
-		#[transactional]
-		pub fn set_variable_on_chain_schema (
-			origin,
-			collection_id: CollectionId,
-			schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>
-		) -> DispatchResult {
-			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-
-			// =========
-
-			<PalletCommon<T>>::set_field(&collection, &sender, CollectionField::VariableOnChainSchema, schema.into_inner())?;
-
-			<Pallet<T>>::deposit_event(Event::<T>::VariableOnChainSchemaSet(
 				collection_id
 			));
 			Ok(())

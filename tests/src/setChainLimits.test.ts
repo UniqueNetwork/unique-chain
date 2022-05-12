@@ -44,7 +44,6 @@ describe.skip('Negative Integration Test setChainLimits', () => {
         fungibleSponsorTransferTimeout: 1,
         refungibleSponsorTransferTimeout: 1,
         offchainSchemaLimit: 1,
-        variableOnChainSchemaLimit: 1,
         constOnChainSchemaLimit: 1,
       };
     });

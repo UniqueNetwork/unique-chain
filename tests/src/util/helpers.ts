@@ -136,7 +136,6 @@ export interface IChainLimits {
   fungibleSponsorTransferTimeout: number;
   refungibleSponsorTransferTimeout: number;
   offchainSchemaLimit: number;
-  variableOnChainSchemaLimit: number;
   constOnChainSchemaLimit: number;
 }
 

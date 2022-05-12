@@ -11,7 +11,7 @@ import find from 'find-process';
 // todo skip
 describe('Migration testing for pallet-common', () => {
   let alice: IKeyringPair;
-  
+
   before(async() => {
     await usingApi(async () => {
       alice = privateKey('//Alice');
@@ -36,7 +36,6 @@ describe('Migration testing for pallet-common', () => {
         limits: {
           accountTokenOwnershipLimit: 3,
         },
-        variableOnChainSchema: '0x222222',
         constOnChainSchema: '0x333333',
         metaUpdatePermission: 'Admin',
       });
@@ -78,13 +77,11 @@ describe('Migration testing for pallet-common', () => {
 
     await usingApi(async api => {
       const collectionNew = (await api.query.common.collectionById(collectionId)).toJSON() as any;
-      
+
       // Make sure the extra fields are what they should be
-      const variableOnChainSchema = await api.query.common.collectionData(collectionId, 'VariableOnChainSchema');
       const constOnChainSchema = await api.query.common.collectionData(collectionId, 'ConstOnChainSchema');
       const offchainSchema = await api.query.common.collectionData(collectionId, 'OffchainSchema');
 
-      expect(variableOnChainSchema.toHex()).to.be.deep.equal((collectionOld.variableOnChainSchema));
       expect(constOnChainSchema.toHex()).to.be.deep.equal(collectionOld.constOnChainSchema);
       expect(offchainSchema.toHex()).to.be.deep.equal(collectionOld.offchainSchema);
       expect(collectionNew).to.have.nested.property('limits.nestingRule');
@@ -93,10 +90,8 @@ describe('Migration testing for pallet-common', () => {
       delete collectionNew.limits.nestingRule;
       delete collectionOld.constOnChainSchema;
       delete collectionOld.offchainSchema;
-      delete collectionOld.variableOnChainSchema;
 
       expect(collectionNew).to.be.deep.equal(collectionOld);
     });
   });
 });
-  

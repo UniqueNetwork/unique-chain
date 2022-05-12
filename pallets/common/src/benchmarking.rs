@@ -19,7 +19,7 @@ use crate::{Config, CollectionHandle};
 use up_data_structs::{
 	CollectionMode, CreateCollectionData, CollectionId, MAX_COLLECTION_NAME_LENGTH,
 	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, OFFCHAIN_SCHEMA_LIMIT,
-	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT,
+	CONST_ON_CHAIN_SCHEMA_LIMIT,
 };
 use frame_support::{
 	traits::{Currency, Get},
@@ -67,7 +67,6 @@ pub fn create_collection_raw<T: Config, R>(
 	let description = create_u16_data::<MAX_COLLECTION_DESCRIPTION_LENGTH>();
 	let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
 	let offchain_schema = create_data::<OFFCHAIN_SCHEMA_LIMIT>();
-	let variable_on_chain_schema = create_data::<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>();
 	let const_on_chain_schema = create_data::<CONST_ON_CHAIN_SCHEMA_LIMIT>();
 	handler(
 		owner,
@@ -77,7 +76,6 @@ pub fn create_collection_raw<T: Config, R>(
 			description,
 			token_prefix,
 			offchain_schema,
-			variable_on_chain_schema,
 			const_on_chain_schema,
 			..Default::default()
 		},

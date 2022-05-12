@@ -76,11 +76,9 @@ pub const SPONSOR_APPROVE_TIMEOUT: u32 = 5;
 
 // Schema limits
 pub const OFFCHAIN_SCHEMA_LIMIT: u32 = 8192;
-pub const VARIABLE_ON_CHAIN_SCHEMA_LIMIT: u32 = 8192;
 pub const CONST_ON_CHAIN_SCHEMA_LIMIT: u32 = 32768;
 
 pub const COLLECTION_FIELD_LIMIT: u32 = CONST_ON_CHAIN_SCHEMA_LIMIT;
-// u32::max is not const: OFFCHAIN_SCHEMA_LIMIT.max(VARIABLE_ON_CHAIN_SCHEMA_LIMIT).max(CONST_ON_CHAIN_SCHEMA_LIMIT);
 
 pub const MAX_COLLECTION_NAME_LENGTH: u32 = 64;
 pub const MAX_COLLECTION_DESCRIPTION_LENGTH: u32 = 256;
@@ -304,8 +302,6 @@ pub struct Collection<AccountId> {
 	pub limits: CollectionLimitsVersion2,
 
 	#[version(..2)]
-	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
-	#[version(..2)]
 	pub const_on_chain_schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>,
 
 	pub meta_update_permission: MetaUpdatePermission,
@@ -326,7 +322,6 @@ pub struct RpcCollection<AccountId> {
 	pub schema_version: SchemaVersion,
 	pub sponsorship: SponsorshipState<AccountId>,
 	pub limits: CollectionLimits,
-	pub variable_on_chain_schema: Vec<u8>,
 	pub const_on_chain_schema: Vec<u8>,
 	pub meta_update_permission: MetaUpdatePermission,
 	pub token_property_permissions: Vec<PropertyKeyPermission>,
@@ -336,7 +331,6 @@ pub struct RpcCollection<AccountId> {
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum CollectionField {
-	VariableOnChainSchema,
 	ConstOnChainSchema,
 	OffchainSchema,
 }
@@ -354,7 +348,6 @@ pub struct CreateCollectionData<AccountId> {
 	pub schema_version: Option<SchemaVersion>,
 	pub pending_sponsor: Option<AccountId>,
 	pub limits: Option<CollectionLimits>,
-	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
 	pub const_on_chain_schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>,
 	pub meta_update_permission: Option<MetaUpdatePermission>,
 	pub token_property_permissions: CollectionPropertiesPermissionsVec,

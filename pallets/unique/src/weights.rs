@@ -47,7 +47,6 @@ pub trait WeightInfo {
 	fn set_transfers_enabled_flag() -> Weight;
 	fn set_offchain_schema(b: u32, ) -> Weight;
 	fn set_const_on_chain_schema(b: u32, ) -> Weight;
-	fn set_variable_on_chain_schema(b: u32, ) -> Weight;
 	fn set_schema_version() -> Weight;
 	fn set_collection_limits() -> Weight;
 	fn set_meta_update_permission_flag() -> Weight;
@@ -156,12 +155,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_const_on_chain_schema(_b: u32, ) -> Weight {
 		(14_984_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	// Storage: Common CollectionById (r:1 w:1)
-	fn set_variable_on_chain_schema(_b: u32, ) -> Weight {
-		(15_196_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -287,12 +280,6 @@ impl WeightInfo for () {
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_const_on_chain_schema(_b: u32, ) -> Weight {
 		(14_984_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-	}
-	// Storage: Common CollectionById (r:1 w:1)
-	fn set_variable_on_chain_schema(_b: u32, ) -> Weight {
-		(15_196_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
