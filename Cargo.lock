@@ -5476,7 +5476,7 @@ checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
 
 [[package]]
 name = "opal-runtime"
-version = "0.9.20"
+version = "0.9.21"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -8763,7 +8763,7 @@ dependencies = [
 
 [[package]]
 name = "quartz-runtime"
-version = "0.9.20"
+version = "0.9.21"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -12683,7 +12683,7 @@ checksum = "957e51f3646910546462e67d5f7599b9e4fb8acdd304b087a6494730f9eebf04"
 
 [[package]]
 name = "unique-node"
-version = "0.9.20"
+version = "0.9.21"
 dependencies = [
  "clap",
  "cumulus-client-cli",
@@ -12902,7 +12902,7 @@ dependencies = [
 
 [[package]]
 name = "unique-runtime-common"
-version = "0.9.20"
+version = "0.9.21"
 dependencies = [
  "evm-coder",
  "fp-rpc",
