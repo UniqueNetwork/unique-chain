@@ -172,8 +172,11 @@ impl<T: Config> Pallet<T> {
 				}
 				// Found needed parent, token is indirecty owned
 				v if v == target_parent => return Ok(true),
+				// Token is owned by other user
+				Parent::User(_) => return Ok(false),
 				Parent::TokenNotFound => return Ok(false),
-				_ => {}
+				// Continue parent chain
+				Parent::Token(_, _) => {}
 			}
 		}
 
