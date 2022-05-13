@@ -6114,7 +6114,7 @@ dependencies = [
  "pallet-nonfungible",
  "parity-scale-codec",
  "scale-info",
- "serde_json",
+ "serde-json-core",
  "sp-core",
  "sp-runtime",
  "sp-std",
@@ -10774,6 +10774,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "61ea8d54c77f8315140a05f4c7237403bf38b72704d031543aa1d16abbf517d1"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde-json-core"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8014aeea272bca0f0779778d43253f2f3375b414185b30e6ecc4d3e4a9994781"
+dependencies = [
+ "ryu",
+ "serde",
 ]
 
 [[package]]

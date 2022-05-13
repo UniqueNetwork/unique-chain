@@ -191,9 +191,9 @@ impl<T: Config> EvmCollection<T> {
 		let mut collection = collection_from_address(collection_address, &self.0)?;
 		check_is_owner(caller, &collection)?;
 
-		let limits = serde_json::from_str(limits_json.as_ref())
+		let limits = serde_json_core::from_str(limits_json.as_ref())
 			.map_err(|e| Error::Revert(format!("Parse JSON error: {}", e)))?;
-		collection.limits = limits;
+		collection.limits = limits.0;
 		collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 		Ok(())
 	}
