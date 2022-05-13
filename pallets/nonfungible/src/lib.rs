@@ -361,7 +361,7 @@ impl<T: Config> Pallet<T> {
 				}
 
 				if token_owner {
-					check_result.and_then(|()| check_token_owner())
+					check_result.or_else(|_| check_token_owner())
 				} else {
 					check_result
 				}
