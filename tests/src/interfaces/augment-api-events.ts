@@ -4,7 +4,7 @@
 import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Bytes, Null, Option, Result, U256, U8aFixed, u128, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
-import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, SpRuntimeDispatchError, UpDataStructsAccessMode, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, XcmV1MultiLocation, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, SpRuntimeDispatchError, UpDataStructsAccessMode, XcmV1MultiLocation, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/events' {
   export interface AugmentedEvents<ApiType extends ApiTypes> {
@@ -90,7 +90,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       CollectionDestroyed: AugmentedEvent<ApiType, [u32]>;
       CollectionPropertyDeleted: AugmentedEvent<ApiType, [u32, Bytes]>;
-      CollectionPropertySet: AugmentedEvent<ApiType, [u32, UpDataStructsProperty]>;
+      CollectionPropertySet: AugmentedEvent<ApiType, [u32, Bytes]>;
       /**
        * New item was created.
        * 
@@ -119,9 +119,9 @@ declare module '@polkadot/api-base/types/events' {
        * * amount: Always 1 for NFT
        **/
       ItemDestroyed: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
-      PropertyPermissionSet: AugmentedEvent<ApiType, [u32, UpDataStructsPropertyKeyPermission]>;
+      PropertyPermissionSet: AugmentedEvent<ApiType, [u32, Bytes]>;
       TokenPropertyDeleted: AugmentedEvent<ApiType, [u32, u32, Bytes]>;
-      TokenPropertySet: AugmentedEvent<ApiType, [u32, u32, UpDataStructsProperty]>;
+      TokenPropertySet: AugmentedEvent<ApiType, [u32, u32, Bytes]>;
       /**
        * Item was transferred
        * 
@@ -617,14 +617,6 @@ declare module '@polkadot/api-base/types/events' {
        * * sponsor:  New sponsor address.
        **/
       SponsorshipConfirmed: AugmentedEvent<ApiType, [u32, AccountId32]>;
-      /**
-       * Variable on chain schema was set
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       **/
-      VariableOnChainSchemaSet: AugmentedEvent<ApiType, [u32]>;
       /**
        * Generic event
        **/

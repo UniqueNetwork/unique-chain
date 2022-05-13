@@ -97,6 +97,14 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       CollectionTokenPrefixLimitExceeded: AugmentedError<ApiType>;
       /**
+       * Empty property keys are forbidden
+       **/
+      EmptyPropertyKey: AugmentedError<ApiType>;
+      /**
+       * Only ASCII letters, digits, and '_', '-' are allowed
+       **/
+      InvalidCharacterInPropertyKey: AugmentedError<ApiType>;
+      /**
        * Metadata flag frozen
        **/
       MetadataFlagFrozen: AugmentedError<ApiType>;
@@ -112,6 +120,9 @@ declare module '@polkadot/api-base/types/errors' {
        * No permission to perform action
        **/
       NoPermission: AugmentedError<ApiType>;
+      /**
+       * Tried to store more property data than allowed
+       **/
       NoSpaceForProperty: AugmentedError<ApiType>;
       /**
        * Not sufficient founds to perform action
@@ -125,6 +136,9 @@ declare module '@polkadot/api-base/types/errors' {
        * Tried to enable permissions which are only permitted to be disabled
        **/
       OwnerPermissionsCantBeReverted: AugmentedError<ApiType>;
+      /**
+       * Tried to store more property keys than allowed
+       **/
       PropertyLimitReached: AugmentedError<ApiType>;
       /**
        * Collection is not in mint mode.
@@ -154,6 +168,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Collection settings not allowing items transferring
        **/
       TransferNotAllowed: AugmentedError<ApiType>;
+      /**
+       * Unable to read array of unbounded keys
+       **/
+      UnableToReadUnboundedKeys: AugmentedError<ApiType>;
       /**
        * Target collection doesn't supports this operation
        **/
