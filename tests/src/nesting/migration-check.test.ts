@@ -18,7 +18,7 @@ describe('Migration testing for pallet-common', () => {
     });
   });
 
-  it('Preserves collection settings', async () => {
+  it('Preserves collection settings after migration', async () => {
     let oldVersion: number;
     let collectionId: number;
     let collectionOld: any;
@@ -71,6 +71,7 @@ describe('Migration testing for pallet-common', () => {
         });
       } catch (_) {
         connectionFailCounter++;
+        console.log(`Still waiting for the parachain upgrade from ${oldVersion!}...`);
         await new Promise(resolve => setTimeout(resolve, 12000));
       }
     }

@@ -6,11 +6,13 @@ import {
   createCollectionExpectSuccess,
   createItemExpectFailure,
   createItemExpectSuccess,
+  getBalance,
   getTokenOwner,
   getTopmostTokenOwner,
   normalizeAccountId,
   setCollectionLimitsExpectSuccess,
   transferExpectSuccess,
+  transferFromExpectSuccess,
 } from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 
@@ -25,7 +27,7 @@ describe('Integration Test: Unnesting', () => {
     });
   });
 
-  it('Allows the owner to successfully unnest a token', async () => {
+  it('NFT: allows the owner to successfully unnest a token', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await setCollectionLimitsExpectSuccess(alice, collection, {nestingRule: 'Owner'});
@@ -40,7 +42,7 @@ describe('Integration Test: Unnesting', () => {
         api,
         alice,
         api.tx.unique.transferFrom(normalizeAccountId(targetAddress), normalizeAccountId(alice), collection, nestedToken, 1),
-      )).to.not.be.rejected;
+      ), 'while unnesting').to.not.be.rejected;
       expect(await getTokenOwner(api, collection, nestedToken)).to.be.deep.equal({Substrate: alice.address});
 
       // Nest and burn
@@ -48,13 +50,64 @@ describe('Integration Test: Unnesting', () => {
       await expect(executeTransaction(
         api,
         alice,
-        api.tx.unique.burnFrom(collection, normalizeAccountId(alice.address), nestedToken, 1),
-      )).to.not.be.rejected;
-      await expect(getTokenOwner(api, collection, nestedToken)).to.be.rejected; // 'owner == null'
+        api.tx.unique.burnFrom(collection, normalizeAccountId(targetAddress), nestedToken, 1),
+      ), 'while burning').to.not.be.rejected;
+      await expect(getTokenOwner(api, collection, nestedToken)).to.be.rejected;
     });
   });
 
-  // todo refungible-fungible test just in case
+  it('Fungible: allows the owner to successfully unnest a token', async () => {
+    await usingApi(async api => {
+      const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await setCollectionLimitsExpectSuccess(alice, collection, {nestingRule: 'Owner'});
+      const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
+      const targetAddress = {Ethereum: tokenIdToAddress(collection, targetToken)};
+
+      const collectionFT = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+      const nestedToken = await createItemExpectSuccess(alice, collectionFT, 'Fungible');
+
+      // Nest and unnest
+      await transferExpectSuccess(collectionFT, nestedToken, alice, targetAddress, 1, 'Fungible');
+      await transferFromExpectSuccess(collectionFT, nestedToken, alice, targetAddress, alice, 1, 'Fungible');
+
+      // Nest and burn
+      await transferExpectSuccess(collectionFT, nestedToken, alice, targetAddress, 1, 'Fungible');
+      const balanceBefore = await getBalance(api, collectionFT, normalizeAccountId(targetAddress), nestedToken);
+      await expect(executeTransaction(
+        api,
+        alice,
+        api.tx.unique.burnFrom(collectionFT, normalizeAccountId(targetAddress), nestedToken, 1),
+      ), 'while burning').to.not.be.rejected;
+      const balanceAfter = await getBalance(api, collectionFT, normalizeAccountId(targetAddress), nestedToken);
+      expect(balanceAfter + BigInt(1)).to.be.equal(balanceBefore);
+    });
+  });
+
+  it('ReFungible: allows the owner to successfully unnest a token', async () => {
+    await usingApi(async api => {
+      const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await setCollectionLimitsExpectSuccess(alice, collection, {nestingRule: 'Owner'});
+      const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
+      const targetAddress = {Ethereum: tokenIdToAddress(collection, targetToken)};
+
+      const collectionRFT = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+      const nestedToken = await createItemExpectSuccess(alice, collectionRFT, 'ReFungible');
+
+      // Nest and unnest
+      await transferExpectSuccess(collectionRFT, nestedToken, alice, targetAddress, 1, 'ReFungible');
+      await transferFromExpectSuccess(collectionRFT, nestedToken, alice, targetAddress, alice, 1, 'ReFungible');
+
+      // Nest and burn
+      await transferExpectSuccess(collectionRFT, nestedToken, alice, targetAddress, 1, 'ReFungible');
+      await expect(executeTransaction(
+        api,
+        alice,
+        api.tx.unique.burnFrom(collectionRFT, normalizeAccountId(targetAddress), nestedToken, 1),
+      ), 'while burning').to.not.be.rejected;
+      const balance = await getBalance(api, collectionRFT, normalizeAccountId(targetAddress), nestedToken);
+      expect(balance).to.be.equal(0n);
+    });
+  });
 });
 
 describe('Negative Test: Unnesting', () => {
@@ -80,8 +133,7 @@ describe('Negative Test: Unnesting', () => {
         api,
         bob,
         api.tx.unique.transferFrom(normalizeAccountId(targetAddress), normalizeAccountId(bob), collection, nestedToken, 1),
-      )).to.be.rejectedWith(/^common\.ApprovedValueTooLow$/);
-      //await transferFromExpectSuccess(collection, nestedToken, bob, targetAddress, {Substrate: bob.address});
+      ), 'while unnesting').to.be.rejectedWith(/^structure\.DepthLimit$/); // todo ApprovedValueTooLow?
       expect(await getTokenOwner(api, collection, nestedToken)).to.be.deep.equal({Ethereum: tokenIdToAddress(collection, targetToken).toLowerCase()});
 
       // Try to burn
@@ -89,31 +141,15 @@ describe('Negative Test: Unnesting', () => {
         api,
         bob,
         api.tx.unique.burnFrom(collection, normalizeAccountId(bob.address), nestedToken, 1),
-      )).to.not.be.rejectedWith(/^common\.ApprovedValueTooLow$/);
+      ), 'while burning').to.not.be.rejectedWith(/^common\.ApprovedValueTooLow$/);
       expect(await getTokenOwner(api, collection, nestedToken)).to.be.deep.equal({Ethereum: tokenIdToAddress(collection, targetToken).toLowerCase()});
     });
   });
 
-  it('Disallows excessive token nesting', async () => {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionLimitsExpectSuccess(alice, collection, {nestingRule: 'Owner'});
-      const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
-
-      // Create a nested token matryoshka
-      const nestedToken1 = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: tokenIdToAddress(collection, targetToken)});
-      const nestedToken2 = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: tokenIdToAddress(collection, nestedToken1)});
-      // The nesting depth is limited by 2
-      await createItemExpectFailure(alice, collection, 'NFT', {Ethereum: tokenIdToAddress(collection, nestedToken2)});
-
-      expect(await getTopmostTokenOwner(api, collection, nestedToken2)).to.be.deep.equal({Substrate: alice.address});
-    });
-  });
-
-  // todo another test for creating excessive depth matryoshka with Ethereum, move this one to nest ^
+  // todo another test for creating excessive depth matryoshka with Ethereum?
 
   // Recursive nesting
-  it('Prevents ouroboros creation', async () => {
+  it('Prevents Ouroboros creation', async () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await setCollectionLimitsExpectSuccess(alice, collection, {nestingRule: 'Owner'});
     const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');

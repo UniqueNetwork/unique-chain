@@ -14,7 +14,7 @@ import {getCreateCollectionResult, transferExpectSuccess} from '../util/helpers'
  * ```
  */
 async function buildComplexObjectGraph(api: ApiPromise, sender: IKeyringPair): Promise<number> {
-  const events = await executeTransaction(api, sender, api.tx.unique.createCollectionEx({mode: 'NFT'}));
+  const events = await executeTransaction(api, sender, api.tx.unique.createCollectionEx({mode: 'NFT', limits: {nestingRule: 'Owner'}}));
   const {collectionId} = getCreateCollectionResult(events);
 
   await executeTransaction(api, sender, api.tx.unique.createMultipleItemsEx(collectionId, {NFT: Array(8).fill({owner: {Substrate: sender.address}})}));
@@ -32,20 +32,26 @@ async function buildComplexObjectGraph(api: ApiPromise, sender: IKeyringPair): P
   return collectionId;
 }
 
-describe('graphs', () => {
-  it('ouroboros can\'t be created in graph', async () => {
+describe('Graphs', () => {
+  it('Ouroboros can\'t be created in a complex graph', async () => {
     await usingApi(async api => {
       const alice = privateKey('//Alice');
       const collection = await buildComplexObjectGraph(api, alice);
 
       // to self
-      await expect(executeTransaction(api, alice, api.tx.unique.transfer(tokenIdToCross(collection, 1), collection, 1, 1)))
-        .to.be.rejectedWith(/structure\.OuroborosDetected/);
+      await expect(
+        executeTransaction(api, alice, api.tx.unique.transfer(tokenIdToCross(collection, 1), collection, 1, 1)),
+        'first transaction',  
+      ).to.be.rejectedWith(/structure\.OuroborosDetected/);
       // to nested part of graph
-      await expect(executeTransaction(api, alice, api.tx.unique.transfer(tokenIdToCross(collection, 5), collection, 1, 1)))
-        .to.be.rejectedWith(/structure\.OuroborosDetected/);
-      await expect(executeTransaction(api, alice, api.tx.unique.transfer(tokenIdToCross(collection, 8), collection, 2, 1)))
-        .to.be.rejectedWith(/structure\.OuroborosDetected/);
+      await expect(
+        executeTransaction(api, alice, api.tx.unique.transfer(tokenIdToCross(collection, 5), collection, 1, 1)),
+        'second transaction',
+      ).to.be.rejectedWith(/structure\.OuroborosDetected/);
+      await expect(
+        executeTransaction(api, alice, api.tx.unique.transfer(tokenIdToCross(collection, 8), collection, 2, 1)),
+        'third transaction',
+      ).to.be.rejectedWith(/structure\.OuroborosDetected/);
     });
   });
 });

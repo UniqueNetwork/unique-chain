@@ -51,13 +51,13 @@ describe('Integration Test: Collection Properties', () => {
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setCollectionProperties(collectionId, [{key: 'black hole'}]), 
+        api.tx.unique.setCollectionProperties(collectionId, [{key: 'black_hole'}]), 
       )).to.not.be.rejected;
 
-      const properties = (await api.rpc.unique.collectionProperties(collectionId, ['electron', 'black hole'])).toJSON();
+      const properties = (await api.rpc.unique.collectionProperties(collectionId, ['electron', 'black_hole'])).toHuman();
       expect(properties).to.be.deep.equal([
-        {key: `0x${Buffer.from('electron').toString('hex')}`, value: `0x${Buffer.from('come bond').toString('hex')}`},
-        {key: `0x${Buffer.from('black hole').toString('hex')}`, value: `0x${Buffer.from('').toString('hex')}`},
+        {key: 'electron', value: 'come bond'},
+        {key: 'black_hole', value: ''},
       ]);
     });
   });
@@ -69,20 +69,20 @@ describe('Integration Test: Collection Properties', () => {
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setCollectionProperties(collection, [{key: 'electron', value: 'come bond'}, {key: 'black hole'}]), 
+        api.tx.unique.setCollectionProperties(collection, [{key: 'electron', value: 'come bond'}, {key: 'black_hole'}]), 
       )).to.not.be.rejected;
 
       // Mutate the properties
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setCollectionProperties(collection, [{key: 'electron', value: 'bonded'}, {key: 'black hole', value: 'LIGO'}]), 
+        api.tx.unique.setCollectionProperties(collection, [{key: 'electron', value: 'bonded'}, {key: 'black_hole', value: 'LIGO'}]), 
       )).to.not.be.rejected;
 
-      const properties = (await api.rpc.unique.collectionProperties(collection, ['electron', 'black hole'])).toJSON();
+      const properties = (await api.rpc.unique.collectionProperties(collection, ['electron', 'black_hole'])).toHuman();
       expect(properties).to.be.deep.equal([
-        {key: `0x${Buffer.from('electron').toString('hex')}`, value: `0x${Buffer.from('bonded').toString('hex')}`},
-        {key: `0x${Buffer.from('black hole').toString('hex')}`, value: `0x${Buffer.from('LIGO').toString('hex')}`},
+        {key: 'electron', value: 'bonded'},
+        {key: 'black_hole', value: 'LIGO'},
       ]);
     });
   });
@@ -94,7 +94,7 @@ describe('Integration Test: Collection Properties', () => {
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setCollectionProperties(collection, [{key: 'electron', value: 'come bond'}, {key: 'black hole', value: 'LIGO'}]), 
+        api.tx.unique.setCollectionProperties(collection, [{key: 'electron', value: 'come bond'}, {key: 'black_hole', value: 'LIGO'}]), 
       )).to.not.be.rejected;
 
       await expect(executeTransaction(
@@ -103,9 +103,9 @@ describe('Integration Test: Collection Properties', () => {
         api.tx.unique.deleteCollectionProperties(collection, ['electron']), 
       )).to.not.be.rejected;
 
-      const properties = (await api.rpc.unique.collectionProperties(collection, ['electron', 'black hole'])).toJSON();
+      const properties = (await api.rpc.unique.collectionProperties(collection, ['electron', 'black_hole'])).toHuman();
       expect(properties).to.be.deep.equal([
-        {key: `0x${Buffer.from('black hole').toString('hex')}`, value: `0x${Buffer.from('LIGO').toString('hex')}`},
+        {key: 'black_hole', value: 'LIGO'},
       ]);
     });
   });
@@ -126,7 +126,7 @@ describe('Negative Integration Test: Collection Properties', () => {
       await expect(executeTransaction(
         api, 
         bob, 
-        api.tx.unique.setCollectionProperties(collection, [{key: 'electron', value: 'come bond'}, {key: 'black hole', value: 'LIGO'}]), 
+        api.tx.unique.setCollectionProperties(collection, [{key: 'electron', value: 'come bond'}, {key: 'black_hole', value: 'LIGO'}]), 
       )).to.be.rejectedWith(/common\.NoPermission/);
   
       const properties = (await api.query.common.collectionProperties(collection)).toJSON();
@@ -158,7 +158,7 @@ describe('Negative Integration Test: Collection Properties', () => {
         alice, 
         api.tx.unique.setCollectionProperties(collection, [
           {key: 'electron', value: 'low high '.repeat(Math.ceil(spaceLimit! / 18))}, 
-          {key: 'black hole', value: '0'.repeat(Math.ceil(spaceLimit! / 2))}, 
+          {key: 'black_hole', value: '0'.repeat(Math.ceil(spaceLimit! / 2))}, 
         ]), 
       )).to.be.rejectedWith(/common\.NoSpaceForProperty/);
 
@@ -174,7 +174,7 @@ describe('Negative Integration Test: Collection Properties', () => {
       const propertiesToBeSet = [];
       for (let i = 0; i < 65; i++) {
         propertiesToBeSet.push({
-          key: 'electron ' + i,
+          key: 'electron_' + i,
           value: Math.random() > 0.5 ? 'high' : 'low',
         });
       }
@@ -188,6 +188,55 @@ describe('Negative Integration Test: Collection Properties', () => {
       const properties = (await api.query.common.collectionProperties(collection)).toJSON();
       expect(properties.map).to.be.empty;
       expect(properties.consumedSpace).to.equal(0);
+    });
+  });
+
+  it('Fails to set properties with invalid names', async () => {
+    await usingApi(async api => {
+      const collection = await createCollectionExpectSuccess();
+
+      const invalidProperties = [
+        [{key: 'electron', value: 'negative'}, {key: 'string theory', value: 'understandable'}],
+        [{key: 'Mr.Sandman', value: 'Bring me a gene'}],
+        [{key: 'déjà vu', value: 'hmm...'}],
+      ];
+
+      for (let i = 0; i < invalidProperties.length; i++) {
+        await expect(executeTransaction(
+          api, 
+          alice, 
+          api.tx.unique.setCollectionProperties(collection, invalidProperties[i]), 
+        ), `on rejecting the new badly-named property #${i}`).to.be.rejectedWith(/common\.InvalidCharacterInPropertyKey/);
+      }
+
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setCollectionProperties(collection, [{key: '', value: 'nothing must not exist'}]), 
+      ), `on rejecting an unnamed property`).to.be.rejectedWith(/common\.EmptyPropertyKey/);
+
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setCollectionProperties(collection, [
+          {key: 'CRISPR-Cas9', value: 'rewriting nature!'}
+        ]), 
+      ), 'on setting the correctly-but-still-badly-named property').to.not.be.rejected;
+
+      const keys = invalidProperties.flatMap(propertySet => propertySet.map(property => property.key)).concat('CRISPR-Cas9').concat('');
+
+      const properties = (await api.rpc.unique.collectionProperties(collection, keys)).toHuman();
+      expect(properties).to.be.deep.equal([
+        {key: 'CRISPR-Cas9', value: 'rewriting nature!'},
+      ]);
+
+      for (let i = 0; i < invalidProperties.length; i++) {
+        await expect(executeTransaction(
+          api, 
+          alice, 
+          api.tx.unique.deleteCollectionProperties(collection, invalidProperties[i].map(propertySet => propertySet.key)), 
+        ), `on trying to delete the non-existent badly-named property #${i}`).to.be.rejectedWith(/common\.InvalidCharacterInPropertyKey/);
+      }
     });
   });
 });
@@ -228,10 +277,10 @@ describe('Integration Test: Access Rights to Token Properties', () => {
         api.tx.unique.setPropertyPermissions(collection, [{key: 'mindgame', permission: {collectionAdmin: true, tokenOwner: false}}]), 
       )).to.not.be.rejected;
 
-      const propertyRights = (await api.rpc.unique.propertyPermissions(collection, ['skullduggery', 'mindgame'])).toJSON();
+      const propertyRights = (await api.rpc.unique.propertyPermissions(collection, ['skullduggery', 'mindgame'])).toHuman();
       expect(propertyRights).to.be.deep.equal([
-        {key: `0x${Buffer.from('skullduggery').toString('hex')}`, permission: {'mutable': true, 'collectionAdmin': false, 'tokenOwner': false}},
-        {key: `0x${Buffer.from('mindgame').toString('hex')}`, permission: {'mutable': false, 'collectionAdmin': true, 'tokenOwner': false}},
+        {key: 'skullduggery', permission: {'mutable': true, 'collectionAdmin': false, 'tokenOwner': false}},
+        {key: 'mindgame', permission: {'mutable': false, 'collectionAdmin': true, 'tokenOwner': false}},
       ]);
     });
   });
@@ -252,9 +301,9 @@ describe('Integration Test: Access Rights to Token Properties', () => {
         api.tx.unique.setPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: false, tokenOwner: true}}]), 
       )).to.not.be.rejected;
 
-      const propertyRights = (await api.rpc.unique.propertyPermissions(collection, ['skullduggery'])).toJSON();
+      const propertyRights = (await api.rpc.unique.propertyPermissions(collection, ['skullduggery'])).toHuman();
       expect(propertyRights).to.be.deep.equal([
-        {key: `0x${Buffer.from('skullduggery').toString('hex')}`, permission: {'mutable': false, 'collectionAdmin': false, 'tokenOwner': true}},
+        {key: 'skullduggery', permission: {'mutable': false, 'collectionAdmin': false, 'tokenOwner': true}},
       ]);
     });
   });
@@ -290,7 +339,7 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
       const constitution = [];
       for (let i = 0; i < 65; i++) {
         constitution.push({
-          key: 'property ' + i,
+          key: 'property_' + i,
           permission: Math.random() > 0.5 ? {mutable: true, collectionAdmin: true, tokenOwner: true} : {},
         });
       }
@@ -322,9 +371,51 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
         api.tx.unique.setPropertyPermissions(collection, [{key: 'skullduggery', permission: {}}]), 
       )).to.be.rejectedWith(/common\.NoPermission/);
 
-      const propertyRights = (await api.rpc.unique.propertyPermissions(collection, ['skullduggery'])).toJSON();
+      const propertyRights = (await api.rpc.unique.propertyPermissions(collection, ['skullduggery'])).toHuman();
       expect(propertyRights).to.deep.equal([
-        {key: `0x${Buffer.from('skullduggery').toString('hex')}`, permission: {'mutable': false, 'collectionAdmin': false, 'tokenOwner': true}},
+        {key: 'skullduggery', permission: {'mutable': false, 'collectionAdmin': false, 'tokenOwner': true}},
+      ]);
+    });
+  });
+
+  it('Prevents adding properties with invalid names', async () => {
+    await usingApi(async api => {
+      const collection = await createCollectionExpectSuccess();
+
+      const invalidProperties = [
+        [{key: 'skullduggery', permission: {tokenOwner: true}}, {key: 'im possible', permission: {collectionAdmin: true}}],
+        [{key: 'G#4', permission: {tokenOwner: true}}],
+        [{key: 'HÆMILTON', permission: {mutable: false, collectionAdmin: true, tokenOwner: true}}],
+      ];
+
+      for (let i = 0; i < invalidProperties.length; i++) {
+        await expect(executeTransaction(
+          api, 
+          alice, 
+          api.tx.unique.setPropertyPermissions(collection, invalidProperties[i]), 
+        ), `on setting the new badly-named property #${i}`).to.be.rejectedWith(/common\.InvalidCharacterInPropertyKey/);
+      }
+
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setPropertyPermissions(collection, [{key: '', permission: {}}]), 
+      ), `on rejecting an unnamed property`).to.be.rejectedWith(/common\.EmptyPropertyKey/);
+
+      const correctKey = '--0x03116e387820CA05'; // PolkadotJS would parse this as an already encoded hex-string
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setPropertyPermissions(collection, [
+          {key: correctKey, permission: {collectionAdmin: true}},
+        ]), 
+      ), 'on setting the correctly-but-still-badly-named property').to.not.be.rejected;
+
+      const keys = invalidProperties.flatMap(propertySet => propertySet.map(property => property.key)).concat(correctKey).concat('');
+
+      const propertyRights = (await api.rpc.unique.propertyPermissions(collection, keys)).toHuman();
+      expect(propertyRights).to.be.deep.equal([
+        {key: correctKey, permission: {mutable: false, collectionAdmin: true, tokenOwner: false}},
       ]);
     });
   });
@@ -361,7 +452,7 @@ describe('Integration Test: Token Properties', () => {
     await transferExpectSuccess(collection, token, alice, charlie);
   });
   
-  it('Reads properties of a token', async () => {
+  it('Reads yet empty properties of a token', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess();
       const token = await createItemExpectSuccess(alice, collection, 'NFT');
@@ -381,7 +472,7 @@ describe('Integration Test: Token Properties', () => {
       let i = 0;
       for (const permission of permissions) {
         for (const signer of permission.signers) {
-          const key = i + ' ' + signer.address;
+          const key = i + '_' + signer.address;
           propertyKeys.push(key);
 
           await expect(executeTransaction(
@@ -400,11 +491,11 @@ describe('Integration Test: Token Properties', () => {
         i++;
       }
 
-      const properties = (await api.rpc.unique.tokenProperties(collection, token, propertyKeys)).toJSON() as any[];
-      const tokensData = (await api.rpc.unique.tokenData(collection, token, propertyKeys)).toJSON().properties as any[];
+      const properties = (await api.rpc.unique.tokenProperties(collection, token, propertyKeys)).toHuman() as any[];
+      const tokensData = (await api.rpc.unique.tokenData(collection, token, propertyKeys)).toHuman().properties as any[];
       for (let i = 0; i < properties.length; i++) {
-        expect(properties[i].value).to.be.equal(`0x${Buffer.from('Serotonin increase').toString('hex')}`);
-        expect(tokensData[i].value).to.be.equal(`0x${Buffer.from('Serotonin increase').toString('hex')}`);
+        expect(properties[i].value).to.be.equal('Serotonin increase');
+        expect(tokensData[i].value).to.be.equal('Serotonin increase');
       }
     });
   });
@@ -417,7 +508,7 @@ describe('Integration Test: Token Properties', () => {
         if (!permission.permission.mutable) continue;
         
         for (const signer of permission.signers) {
-          const key = i + ' ' + signer.address;
+          const key = i + '_' + signer.address;
           propertyKeys.push(key);
 
           await expect(executeTransaction(
@@ -442,11 +533,11 @@ describe('Integration Test: Token Properties', () => {
         i++;
       }
 
-      const properties = (await api.rpc.unique.tokenProperties(collection, token, propertyKeys)).toJSON() as any[];
-      const tokensData = (await api.rpc.unique.tokenData(collection, token, propertyKeys)).toJSON().properties as any[];
+      const properties = (await api.rpc.unique.tokenProperties(collection, token, propertyKeys)).toHuman() as any[];
+      const tokensData = (await api.rpc.unique.tokenData(collection, token, propertyKeys)).toHuman().properties as any[];
       for (let i = 0; i < properties.length; i++) {
-        expect(properties[i].value).to.be.equal(`0x${Buffer.from('Serotonin stable').toString('hex')}`);
-        expect(tokensData[i].value).to.be.equal(`0x${Buffer.from('Serotonin stable').toString('hex')}`);
+        expect(properties[i].value).to.be.equal('Serotonin stable');
+        expect(tokensData[i].value).to.be.equal('Serotonin stable');
       }
     });
   });
@@ -460,7 +551,7 @@ describe('Integration Test: Token Properties', () => {
         if (!permission.permission.mutable) continue;
         
         for (const signer of permission.signers) {
-          const key = i + ' ' + signer.address;
+          const key = i + '_' + signer.address;
           propertyKeys.push(key);
 
           await expect(executeTransaction(
@@ -532,13 +623,13 @@ describe('Negative Integration Test: Token Properties', () => {
         await expect(executeTransaction(
           api, 
           alice, 
-          api.tx.unique.setPropertyPermissions(collection, [{key: i, permission: passage.permission}]), 
+          api.tx.unique.setPropertyPermissions(collection, [{key: `${i}`, permission: passage.permission}]), 
         ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
 
         await expect(executeTransaction(
           api, 
           signer, 
-          api.tx.unique.setTokenProperties(collection, token, [{key: i, value: 'Serotonin increase'}]), 
+          api.tx.unique.setTokenProperties(collection, token, [{key: `${i}`, value: 'Serotonin increase'}]), 
         ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
 
         i++;
@@ -558,17 +649,16 @@ describe('Negative Integration Test: Token Properties', () => {
         await expect(executeTransaction(
           api, 
           forbiddance.sinner, 
-          api.tx.unique.setTokenProperties(collection, token, [{key: i, value: 'Serotonin down'}]), 
+          api.tx.unique.setTokenProperties(collection, token, [{key: `${i}`, value: 'Serotonin down'}]), 
         ), `on failing to change property ${i} by ${forbiddance.sinner.address}`).to.be.rejectedWith(/common\.NoPermission/);
 
         await expect(executeTransaction(
           api, 
           forbiddance.sinner, 
-          api.tx.unique.deleteTokenProperties(collection, token, [forbiddance.permission]), 
+          api.tx.unique.deleteTokenProperties(collection, token, [`${i}`]), 
         ), `on failing to delete property ${i} by ${forbiddance.sinner.address}`).to.be.rejectedWith(/common\.NoPermission/);
       }
 
-      // todo RPC?
       const properties = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON();
       expect(properties.consumedSpace).to.be.equal(originalSpace);
     });
@@ -584,7 +674,7 @@ describe('Negative Integration Test: Token Properties', () => {
         await expect(executeTransaction(
           api, 
           permission.signers[0], 
-          api.tx.unique.setTokenProperties(collection, token, [{key: i, value: 'Serotonin down'}]), 
+          api.tx.unique.setTokenProperties(collection, token, [{key: `${i}`, value: 'Serotonin down'}]), 
         ), `on failing to change property ${i} by ${permission.signers[0].address}`).to.be.rejectedWith(/common\.NoPermission/);
 
         await expect(executeTransaction(
@@ -594,7 +684,6 @@ describe('Negative Integration Test: Token Properties', () => {
         ), `on failing to delete property ${i} by ${permission.signers[0].address}`).to.be.rejectedWith(/common\.NoPermission/);
       }
 
-      // todo RPC?
       const properties = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON();
       expect(properties.consumedSpace).to.be.equal(originalSpace);
     });
@@ -632,8 +721,8 @@ describe('Negative Integration Test: Token Properties', () => {
         api, 
         alice, 
         api.tx.unique.setPropertyPermissions(collection, [
-          {key: 'a holy book', permission: {collectionAdmin: true, tokenOwner: true}}, 
-          {key: 'young years', permission: {collectionAdmin: true, tokenOwner: true}},
+          {key: 'a_holy_book', permission: {collectionAdmin: true, tokenOwner: true}}, 
+          {key: 'young_years', permission: {collectionAdmin: true, tokenOwner: true}},
         ]), 
       ), 'on setting a new non-permitted property').to.not.be.rejected;
 
@@ -643,7 +732,7 @@ describe('Negative Integration Test: Token Properties', () => {
         await expect(executeTransaction(
           api, 
           alice, 
-          api.tx.unique.setCollectionProperties(collection, [{key: 'a holy book', value: 'word '.repeat(6554)}]), 
+          api.tx.unique.setCollectionProperties(collection, [{key: 'a_holy_book', value: 'word '.repeat(6554)}]), 
         )).to.be.rejected;
       }
 
@@ -651,12 +740,12 @@ describe('Negative Integration Test: Token Properties', () => {
         api, 
         alice, 
         api.tx.unique.setTokenProperties(collection, token, [
-          {key: 'a holy book', value: 'word '.repeat(3277)}, 
-          {key: 'young years', value: 'neverending'.repeat(1490)},
+          {key: 'a_holy_book', value: 'word '.repeat(3277)}, 
+          {key: 'young_years', value: 'neverending'.repeat(1490)},
         ]), 
       )).to.be.rejectedWith(/common\.NoSpaceForProperty/);
 
-      expect((await api.rpc.unique.tokenProperties(collection, token, ['a holy book', 'young years'])).toJSON()).to.be.empty;
+      expect((await api.rpc.unique.tokenProperties(collection, token, ['a_holy_book', 'young years'])).toJSON()).to.be.empty;
       const propertiesMap = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON();
       expect(propertiesMap.consumedSpace).to.be.equal(originalSpace);
     });

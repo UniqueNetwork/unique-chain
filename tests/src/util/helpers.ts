@@ -903,7 +903,7 @@ transferFromExpectSuccess(
     const from = normalizeAccountId(accountFrom);
     const to = normalizeAccountId(accountTo);
     let balanceBefore = 0n;
-    if (type === 'Fungible') {
+    if (type === 'Fungible' || type === 'ReFungible') {
       balanceBefore = await getBalance(api, collectionId, to, tokenId);
     }
     const transferFromTx = api.tx.unique.transferFrom(normalizeAccountId(accountFrom), to, collectionId, tokenId, value);
@@ -923,7 +923,7 @@ transferFromExpectSuccess(
       }
     }
     if (type === 'ReFungible') {
-      expect(await getBalance(api, collectionId, to, tokenId)).to.be.equal(BigInt(value));
+      expect(await getBalance(api, collectionId, to, tokenId)).to.be.equal(balanceBefore + BigInt(value));
     }
   });
 }
