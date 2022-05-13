@@ -144,7 +144,6 @@ describe('Negative integration test: ext. createItem():', () => {
 
   it('User doesnt have editing rights', async () => {
     await usingApi(async api => {
-      const createMode = 'NFT';
       const newCollectionID = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'key1', mutable: true, collectionAdmin: false, tokenOwner: false}]});
       const token = await createItemExpectSuccess(alice, newCollectionID, 'NFT');
 

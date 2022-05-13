@@ -146,7 +146,6 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
       const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
         {Nft: {const_data: '0x32', variable_data: '0x32'}},
         {Nft: {const_data: '0x33', variable_data: '0x33'}}];
@@ -182,7 +181,6 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
       const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
         {Nft: {const_data: '0x32', variable_data: '0x32'}},
         {Nft: {const_data: '0x33', variable_data: '0x33'}}];
@@ -218,7 +216,6 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
       const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
         {Nft: {const_data: '0x32', variable_data: '0x32'}},
         {Nft: {const_data: '0x33', variable_data: '0x33'}}];

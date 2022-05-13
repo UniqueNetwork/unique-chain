@@ -8,8 +8,8 @@ import waitNewBlocks from '../substrate/wait-new-blocks';
 // Used for polkadot-launch signalling
 import find from 'find-process';
 
-// todo skip
-describe('Migration testing for pallet-common', () => {
+// todo un-skip for migrations
+describe.skip('Migration testing for pallet-common', () => {
   let alice: IKeyringPair;
 
   before(async() => {
@@ -63,16 +63,33 @@ describe('Migration testing for pallet-common', () => {
     });
 
     // And wait for the parachain upgrade
-    while (newVersion == oldVersion! && connectionFailCounter < 2) {
-      try {
-        await usingApi(async api => {
-          await waitNewBlocks(api);
-          newVersion = (api.consts.system.version.toJSON() as any).specVersion;
-        });
-      } catch (_) {
-        connectionFailCounter++;
-        console.log(`Still waiting for the parachain upgrade from ${oldVersion!}...`);
-        await new Promise(resolve => setTimeout(resolve, 12000));
+    {
+      // Catch warnings like 'RPC methods not decorated' and keep the 'waiting' message in front
+      const stdlog = console.warn.bind(console);
+      let warnCount = 0;
+      console.warn = function(...args){
+        if (arguments.length <= 2 || !args[2].includes('RPC methods not decorated')) {
+          warnCount++;
+          stdlog.apply(console, args as any);
+        }
+      };
+
+      let oldWarnCount = 0;
+      while (newVersion == oldVersion! && connectionFailCounter < 2) {
+        try {
+          await usingApi(async api => {
+            await waitNewBlocks(api);
+            newVersion = (api.consts.system.version.toJSON() as any).specVersion;
+            if (warnCount > oldWarnCount) {
+              console.log(`Still waiting for the parachain upgrade from ${oldVersion!}...`);
+              oldWarnCount = warnCount;
+            }
+            await new Promise(resolve => setTimeout(resolve, 6000));
+          });
+        } catch (_) {
+          connectionFailCounter++;
+          await new Promise(resolve => setTimeout(resolve, 12000));
+        }
       }
     }
 

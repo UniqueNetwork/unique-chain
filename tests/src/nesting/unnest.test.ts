@@ -4,11 +4,9 @@ import privateKey from '../substrate/privateKey';
 import usingApi, {executeTransaction} from '../substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
-  createItemExpectFailure,
   createItemExpectSuccess,
   getBalance,
   getTokenOwner,
-  getTopmostTokenOwner,
   normalizeAccountId,
   setCollectionLimitsExpectSuccess,
   transferExpectSuccess,
@@ -21,7 +19,7 @@ let bob: IKeyringPair;
 
 describe('Integration Test: Unnesting', () => {
   before(async () => {
-    await usingApi(async api => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
     });
@@ -112,7 +110,7 @@ describe('Integration Test: Unnesting', () => {
 
 describe('Negative Test: Unnesting', () => {
   before(async () => {
-    await usingApi(async api => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
     });
@@ -133,7 +131,7 @@ describe('Negative Test: Unnesting', () => {
         api,
         bob,
         api.tx.unique.transferFrom(normalizeAccountId(targetAddress), normalizeAccountId(bob), collection, nestedToken, 1),
-      ), 'while unnesting').to.be.rejectedWith(/^structure\.DepthLimit$/); // todo ApprovedValueTooLow?
+      ), 'while unnesting').to.be.rejectedWith(/^common\.ApprovedValueTooLow$/);
       expect(await getTokenOwner(api, collection, nestedToken)).to.be.deep.equal({Ethereum: tokenIdToAddress(collection, targetToken).toLowerCase()});
 
       // Try to burn

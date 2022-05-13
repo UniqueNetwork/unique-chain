@@ -18,7 +18,7 @@ let charlie: IKeyringPair;
 
 describe('Integration Test: Collection Properties', () => {
   before(async () => {
-    await usingApi(async api => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
     });
@@ -113,7 +113,7 @@ describe('Integration Test: Collection Properties', () => {
 
 describe('Negative Integration Test: Collection Properties', () => {
   before(async () => {
-    await usingApi(async api => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
     });
@@ -213,13 +213,13 @@ describe('Negative Integration Test: Collection Properties', () => {
         api, 
         alice, 
         api.tx.unique.setCollectionProperties(collection, [{key: '', value: 'nothing must not exist'}]), 
-      ), `on rejecting an unnamed property`).to.be.rejectedWith(/common\.EmptyPropertyKey/);
+      ), 'on rejecting an unnamed property').to.be.rejectedWith(/common\.EmptyPropertyKey/);
 
       await expect(executeTransaction(
         api, 
         alice, 
         api.tx.unique.setCollectionProperties(collection, [
-          {key: 'CRISPR-Cas9', value: 'rewriting nature!'}
+          {key: 'CRISPR-Cas9', value: 'rewriting nature!'},
         ]), 
       ), 'on setting the correctly-but-still-badly-named property').to.not.be.rejected;
 
@@ -245,7 +245,7 @@ describe('Negative Integration Test: Collection Properties', () => {
 
 describe('Integration Test: Access Rights to Token Properties', () => {
   before(async () => {
-    await usingApi(async api => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
     });
@@ -311,7 +311,7 @@ describe('Integration Test: Access Rights to Token Properties', () => {
 
 describe('Negative Integration Test: Access Rights to Token Properties', () => {
   before(async () => {
-    await usingApi(async api => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
     });
@@ -400,7 +400,7 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
         api, 
         alice, 
         api.tx.unique.setPropertyPermissions(collection, [{key: '', permission: {}}]), 
-      ), `on rejecting an unnamed property`).to.be.rejectedWith(/common\.EmptyPropertyKey/);
+      ), 'on rejecting an unnamed property').to.be.rejectedWith(/common\.EmptyPropertyKey/);
 
       const correctKey = '--0x03116e387820CA05'; // PolkadotJS would parse this as an already encoded hex-string
       await expect(executeTransaction(
@@ -429,7 +429,7 @@ describe('Integration Test: Token Properties', () => {
   let permissions: {permission: any, signers: IKeyringPair[]}[];
 
   before(async () => {
-    await usingApi(async api => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
       charlie = privateKey('//Charlie');
@@ -446,10 +446,12 @@ describe('Integration Test: Token Properties', () => {
   });
 
   beforeEach(async () => {
-    collection = await createCollectionExpectSuccess();
-    token = await createItemExpectSuccess(alice, collection, 'NFT');
-    await addCollectionAdminExpectSuccess(alice, collection, bob.address);
-    await transferExpectSuccess(collection, token, alice, charlie);
+    await usingApi(async () => {
+      collection = await createCollectionExpectSuccess();
+      token = await createItemExpectSuccess(alice, collection, 'NFT');
+      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
+      await transferExpectSuccess(collection, token, alice, charlie);
+    });
   });
   
   it('Reads yet empty properties of a token', async () => {
@@ -592,7 +594,7 @@ describe('Negative Integration Test: Token Properties', () => {
   let constitution: {permission: any, signers: IKeyringPair[], sinner: IKeyringPair}[];
 
   before(async () => {
-    await usingApi(async api => {
+    await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
       charlie = privateKey('//Charlie');

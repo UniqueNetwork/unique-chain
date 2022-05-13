@@ -427,7 +427,6 @@ export async function createCollectionWithPropsExpectSuccess(params: Partial<Cre
 export async function createCollectionWithPropsExpectFailure(params: Partial<CreateCollectionParams> = {}) {
   const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
 
-  const collectionId = 0;
   await usingApi(async (api) => {
     // Get number of collections before the transaction
     const collectionCountBefore = await getCreatedCollectionCount(api);
