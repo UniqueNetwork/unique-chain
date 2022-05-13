@@ -41,6 +41,18 @@ function defaultApiOptions(): ApiOptions {
     },
     rpc: {
       unique: defs.unique.rpc,
+      eth: {
+        feeHistory: {
+          description: 'Dummy',
+          params: [],
+          type: 'u8',
+        },
+        maxPriorityFeePerGas: {
+          description: 'Dummy',
+          params: [],
+          type: 'u8',
+        },
+      },
     },
   };
 }
