@@ -306,13 +306,13 @@ jsonrpc-core = '18.0.0'
 jsonrpc-pubsub = "18.0.0"
 tokio = { version = "1.17.0", features = ["time"] }
 
-fc-rpc-core = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
-fc-consensus = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
-fc-mapping-sync = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
-fc-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
-fc-db = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
-fp-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
-pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
+fc-rpc-core = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+fc-consensus = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+fc-mapping-sync = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+fc-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+fc-db = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+fp-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
 
 unique-rpc = { default-features = false, path = "../rpc" }
 

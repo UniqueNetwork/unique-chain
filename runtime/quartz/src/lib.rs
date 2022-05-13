@@ -793,7 +793,6 @@ pub type XcmRouter = (
 );
 
 impl pallet_evm_coder_substrate::Config for Runtime {
-	type EthereumTransactionSender = pallet_ethereum::Pallet<Self>;
 	type GasWeightMapping = FixedGasWeightMapping;
 }
 
@@ -1048,6 +1047,7 @@ pub type SignedExtra = (
 	frame_system::CheckWeight<Runtime>,
 	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
+	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =

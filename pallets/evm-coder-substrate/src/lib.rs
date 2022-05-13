@@ -24,7 +24,6 @@ use frame_support::dispatch::Weight;
 
 use core::marker::PhantomData;
 use sp_std::cell::RefCell;
-use sp_std::vec::Vec;
 
 use codec::Decode;
 use frame_support::pallet_prelude::DispatchError;
@@ -33,15 +32,13 @@ use frame_support::{ensure, sp_runtime::ModuleError};
 use up_data_structs::budget;
 use pallet_evm::{
 	ExitError, ExitRevert, ExitSucceed, GasWeightMapping, PrecompileFailure, PrecompileOutput,
-	PrecompileResult, runner::stack::MaybeMirroredLog,
+	PrecompileResult,
 };
 use sp_core::H160;
-use pallet_ethereum::EthereumTransactionSender;
 // #[cfg(feature = "runtime-benchmarks")]
 // pub mod benchmarking;
 
 use evm_coder::{
-	ToLog,
 	abi::{AbiReader, AbiWrite, AbiWriter},
 	execution::{self, Result},
 	types::{Msg, value},
@@ -70,7 +67,6 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type EthereumTransactionSender: pallet_ethereum::EthereumTransactionSender;
 		type GasWeightMapping: pallet_evm::GasWeightMapping;
 	}
 
@@ -107,41 +103,18 @@ impl<T: Config> budget::Budget for GasCallsBudget<'_, T> {
 
 #[derive(Default)]
 pub struct SubstrateRecorder<T: Config> {
-	contract: H160,
-	logs: RefCell<Vec<MaybeMirroredLog>>,
 	initial_gas: u64,
 	gas_limit: RefCell<u64>,
 	_phantom: PhantomData<*const T>,
 }
 
 impl<T: Config> SubstrateRecorder<T> {
-	pub fn new(contract: H160, gas_limit: u64) -> Self {
+	pub fn new(gas_limit: u64) -> Self {
 		Self {
-			contract,
-			logs: RefCell::new(Vec::new()),
 			initial_gas: gas_limit,
 			gas_limit: RefCell::new(gas_limit),
 			_phantom: PhantomData,
 		}
-	}
-
-	pub fn is_empty(&self) -> bool {
-		self.logs.borrow().is_empty()
-	}
-	// Logs emitted with log_direct appear as substrate evm.Log event
-	pub fn log_direct(&self, log: impl ToLog) {
-		self.logs
-			.borrow_mut()
-			.push(MaybeMirroredLog::direct(log.to_log(self.contract)))
-	}
-	/// If log already has substrate equivalent - then we don't need to emit evm.Log
-	pub fn log_mirrored(&self, log: impl ToLog) {
-		self.logs
-			.borrow_mut()
-			.push(MaybeMirroredLog::mirrored(log.to_log(self.contract)))
-	}
-	pub fn retrieve_logs(self) -> Vec<MaybeMirroredLog> {
-		self.logs.into_inner()
 	}
 
 	pub fn gas_left(&self) -> u64 {
@@ -207,8 +180,8 @@ impl<T: Config> SubstrateRecorder<T> {
 			Ok(Some(v)) => Ok(PrecompileOutput {
 				exit_status: ExitSucceed::Returned,
 				cost: self.initial_gas - self.gas_left(),
-				// TODO: preserve mirroring status
-				logs: self.retrieve_logs().into_iter().map(|l| l.log).collect(),
+				// We don't use this interface
+				logs: sp_std::vec![],
 				output: v.finish(),
 			}),
 			Ok(None) => return None,
@@ -225,14 +198,6 @@ impl<T: Config> SubstrateRecorder<T> {
 			Err(Error::Fatal(f)) => Err(f.into()),
 			Err(Error::Error(e)) => Err(e.into()),
 		})
-	}
-
-	pub fn submit_logs(self) {
-		let logs = self.retrieve_logs();
-		if logs.is_empty() {
-			return;
-		}
-		T::EthereumTransactionSender::submit_logs_transaction(Default::default(), logs)
 	}
 }
 

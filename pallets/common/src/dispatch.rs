@@ -52,8 +52,6 @@ pub fn dispatch_call<
 		}) => *weight += dispatch_weight::<T>(),
 		_ => {}
 	}
-
-	dispatched.into_inner().submit_logs();
 	result
 }
 

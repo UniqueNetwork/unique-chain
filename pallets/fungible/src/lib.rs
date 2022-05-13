@@ -17,6 +17,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use core::ops::Deref;
+use evm_coder::ToLog;
 use frame_support::{ensure};
 use pallet_evm::account::CrossAccountId;
 use up_data_structs::{
@@ -25,8 +26,9 @@ use up_data_structs::{
 };
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, CollectionHandle,
-	dispatch::CollectionDispatch,
+	dispatch::CollectionDispatch, eth::collection_id_to_address,
 };
+use pallet_evm::Pallet as PalletEvm;
 use pallet_structure::Pallet as PalletStructure;
 use pallet_evm_coder_substrate::WithRecorder;
 use sp_core::H160;
@@ -67,7 +69,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_common::Config + pallet_structure::Config
+		frame_system::Config + pallet_common::Config + pallet_structure::Config + pallet_evm::Config
 	{
 		type WeightInfo: WeightInfo;
 	}
@@ -179,11 +181,14 @@ impl<T: Config> Pallet<T> {
 		}
 		<TotalSupply<T>>::insert(collection.id, total_supply);
 
-		collection.log_mirrored(ERC20Events::Transfer {
-			from: *owner.as_eth(),
-			to: H160::default(),
-			value: amount.into(),
-		});
+		<PalletEvm<T>>::deposit_log(
+			ERC20Events::Transfer {
+				from: *owner.as_eth(),
+				to: H160::default(),
+				value: amount.into(),
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
 		<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
 			collection.id,
 			TokenId::default(),
@@ -249,11 +254,14 @@ impl<T: Config> Pallet<T> {
 			<Balance<T>>::insert((collection.id, to), balance_to);
 		}
 
-		collection.log_mirrored(ERC20Events::Transfer {
-			from: *from.as_eth(),
-			to: *to.as_eth(),
-			value: amount.into(),
-		});
+		<PalletEvm<T>>::deposit_log(
+			ERC20Events::Transfer {
+				from: *from.as_eth(),
+				to: *to.as_eth(),
+				value: amount.into(),
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
 		<PalletCommon<T>>::deposit_event(CommonEvent::Transfer(
 			collection.id,
 			TokenId::default(),
@@ -318,11 +326,14 @@ impl<T: Config> Pallet<T> {
 		for (user, amount) in balances {
 			<Balance<T>>::insert((collection.id, &user), amount);
 
-			collection.log_mirrored(ERC20Events::Transfer {
-				from: H160::default(),
-				to: *user.as_eth(),
-				value: amount.into(),
-			});
+			<PalletEvm<T>>::deposit_log(
+				ERC20Events::Transfer {
+					from: H160::default(),
+					to: *user.as_eth(),
+					value: amount.into(),
+				}
+				.to_log(collection_id_to_address(collection.id)),
+			);
 			<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
 				collection.id,
 				TokenId::default(),
@@ -346,11 +357,14 @@ impl<T: Config> Pallet<T> {
 			<Allowance<T>>::insert((collection.id, owner, spender), amount);
 		}
 
-		collection.log_mirrored(ERC20Events::Approval {
-			owner: *owner.as_eth(),
-			spender: *spender.as_eth(),
-			value: amount.into(),
-		});
+		<PalletEvm<T>>::deposit_log(
+			ERC20Events::Approval {
+				owner: *owner.as_eth(),
+				spender: *spender.as_eth(),
+				value: amount.into(),
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
 		<PalletCommon<T>>::deposit_event(CommonEvent::Approved(
 			collection.id,
 			TokenId(0),

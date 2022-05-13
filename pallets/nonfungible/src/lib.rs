@@ -17,16 +17,17 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use erc::ERC721Events;
+use evm_coder::ToLog;
 use frame_support::{BoundedVec, ensure, fail};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
 	PropertyKey, PropertyKeyPermission, Properties, TrySet,
 };
-use pallet_evm::account::CrossAccountId;
+use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
-	dispatch::CollectionDispatch,
+	dispatch::CollectionDispatch, eth::collection_id_to_address,
 };
 use pallet_structure::Pallet as PalletStructure;
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
@@ -72,7 +73,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_common::Config + pallet_structure::Config
+		frame_system::Config + pallet_common::Config + pallet_structure::Config + pallet_evm::Config
 	{
 		type WeightInfo: WeightInfo;
 	}
@@ -245,11 +246,14 @@ impl<T: Config> Pallet<T> {
 			));
 		}
 
-		collection.log_mirrored(ERC721Events::Transfer {
-			from: *token_data.owner.as_eth(),
-			to: H160::default(),
-			token_id: token.into(),
-		});
+		<PalletEvm<T>>::deposit_log(
+			ERC721Events::Transfer {
+				from: *token_data.owner.as_eth(),
+				to: H160::default(),
+				token_id: token.into(),
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
 		<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
 			collection.id,
 			token,
@@ -357,7 +361,7 @@ impl<T: Config> Pallet<T> {
 				}
 
 				if token_owner {
-					check_result.or(check_token_owner())
+					check_result.and_then(|()| check_token_owner())
 				} else {
 					check_result
 				}
@@ -483,11 +487,14 @@ impl<T: Config> Pallet<T> {
 		}
 		Self::set_allowance_unchecked(collection, from, token, None, true);
 
-		collection.log_mirrored(ERC721Events::Transfer {
-			from: *from.as_eth(),
-			to: *to.as_eth(),
-			token_id: token.into(),
-		});
+		<PalletEvm<T>>::deposit_log(
+			ERC721Events::Transfer {
+				from: *from.as_eth(),
+				to: *to.as_eth(),
+				token_id: token.into(),
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
 		<PalletCommon<T>>::deposit_event(CommonEvent::Transfer(
 			collection.id,
 			token,
@@ -583,11 +590,14 @@ impl<T: Config> Pallet<T> {
 				data.properties.into_inner(),
 			)?;
 
-			collection.log_mirrored(ERC721Events::Transfer {
-				from: H160::default(),
-				to: *data.owner.as_eth(),
-				token_id: token.into(),
-			});
+			<PalletEvm<T>>::deposit_log(
+				ERC721Events::Transfer {
+					from: H160::default(),
+					to: *data.owner.as_eth(),
+					token_id: token.into(),
+				}
+				.to_log(collection_id_to_address(collection.id)),
+			);
 			<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
 				collection.id,
 				TokenId(token),
@@ -610,11 +620,14 @@ impl<T: Config> Pallet<T> {
 			<Allowance<T>>::insert((collection.id, token), spender);
 			// In ERC721 there is only one possible approved user of token, so we set
 			// approved user to spender
-			collection.log_mirrored(ERC721Events::Approval {
-				owner: *sender.as_eth(),
-				approved: *spender.as_eth(),
-				token_id: token.into(),
-			});
+			<PalletEvm<T>>::deposit_log(
+				ERC721Events::Approval {
+					owner: *sender.as_eth(),
+					approved: *spender.as_eth(),
+					token_id: token.into(),
+				}
+				.to_log(collection_id_to_address(collection.id)),
+			);
 			// In Unique chain, any token can have any amount of approved users, so we need to
 			// set allowance of old owner to 0, and allowance of new owner to 1
 			if old_spender.as_ref() != Some(spender) {
@@ -640,11 +653,14 @@ impl<T: Config> Pallet<T> {
 			if !assume_implicit_eth {
 				// In ERC721 there is only one possible approved user of token, so we set
 				// approved user to zero address
-				collection.log_mirrored(ERC721Events::Approval {
-					owner: *sender.as_eth(),
-					approved: H160::default(),
-					token_id: token.into(),
-				});
+				<PalletEvm<T>>::deposit_log(
+					ERC721Events::Approval {
+						owner: *sender.as_eth(),
+						approved: H160::default(),
+						token_id: token.into(),
+					}
+					.to_log(collection_id_to_address(collection.id)),
+				);
 			}
 			// In Unique chain, any token can have any amount of approved users, so we need to
 			// set allowance of old owner to 0

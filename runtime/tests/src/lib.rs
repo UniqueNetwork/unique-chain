@@ -16,10 +16,10 @@
 
 #![allow(clippy::from_over_into)]
 
-use sp_core::{H160, H256};
+use sp_core::{H256, U256};
 use frame_support::{
 	parameter_types,
-	traits::{Everything, ConstU32},
+	traits::{Everything, ConstU32, ConstU64},
 	weights::IdentityFee,
 };
 use sp_runtime::{
@@ -28,7 +28,9 @@ use sp_runtime::{
 };
 use pallet_transaction_payment::{CurrencyAdapter};
 use frame_system as system;
-use pallet_evm::{AddressMapping, runner::stack::MaybeMirroredLog, account::CrossAccountId};
+use pallet_evm::{
+	AddressMapping, account::CrossAccountId, EnsureAddressNever, SubstrateBlockHashMapping,
+};
 use fp_evm_mapping::EvmBackwardsAddressMapping;
 use parity_scale_codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -181,13 +183,31 @@ impl Default for TestCrossAccountId {
 	}
 }
 
-pub struct TestEtheremTransactionSender;
-impl pallet_ethereum::EthereumTransactionSender for TestEtheremTransactionSender {
-	fn submit_logs_transaction(_source: H160, _logs: Vec<MaybeMirroredLog>) {}
+parameter_types! {
+	pub BlockGasLimit: U256 = 0u32.into();
 }
 
+impl pallet_evm::Config for Test {
+	type Event = ();
+	type FeeCalculator = ();
+	type GasWeightMapping = ();
+	type CallOrigin = EnsureAddressNever<Self::CrossAccountId>;
+	type WithdrawOrigin = EnsureAddressNever<Self::CrossAccountId>;
+	type AddressMapping = TestEvmAddressMapping;
+	type Currency = Balances;
+	type PrecompilesType = ();
+	type PrecompilesValue = ();
+	type Runner = pallet_evm::runner::stack::Runner<Self>;
+	type ChainId = ConstU64<0>;
+	type BlockGasLimit = BlockGasLimit;
+	type OnMethodCall = ();
+	type OnCreate = ();
+	type OnChargeTransaction = ();
+	type FindAuthor = ();
+	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
+	type TransactionValidityHack = ();
+}
 impl pallet_evm_coder_substrate::Config for Test {
-	type EthereumTransactionSender = TestEtheremTransactionSender;
 	type GasWeightMapping = ();
 }
 

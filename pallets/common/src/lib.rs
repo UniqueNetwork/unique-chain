@@ -66,7 +66,7 @@ impl<T: Config> CollectionHandle<T> {
 		<CollectionById<T>>::get(id).map(|collection| Self {
 			id,
 			collection,
-			recorder: SubstrateRecorder::new(eth::collection_id_to_address(id), gas_limit),
+			recorder: SubstrateRecorder::new(gas_limit),
 		})
 	}
 	pub fn new(id: CollectionId) -> Option<Self> {
@@ -74,12 +74,6 @@ impl<T: Config> CollectionHandle<T> {
 	}
 	pub fn try_get(id: CollectionId) -> Result<Self, DispatchError> {
 		Ok(Self::new(id).ok_or(<Error<T>>::CollectionNotFound)?)
-	}
-	pub fn log_mirrored(&self, log: impl evm_coder::ToLog) {
-		self.recorder.log_mirrored(log)
-	}
-	pub fn log_direct(&self, log: impl evm_coder::ToLog) {
-		self.recorder.log_direct(log)
 	}
 	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
@@ -97,11 +91,7 @@ impl<T: Config> CollectionHandle<T> {
 					.saturating_mul(writes),
 			))
 	}
-	pub fn submit_logs(self) {
-		self.recorder.submit_logs()
-	}
 	pub fn save(self) -> DispatchResult {
-		self.recorder.submit_logs();
 		<CollectionById<T>>::insert(self.id, self.collection);
 		Ok(())
 	}

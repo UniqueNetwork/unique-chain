@@ -34,6 +34,10 @@ function defaultApiOptions(): ApiOptions {
         extrinsic: {},
         payload: {},
       },
+      FakeTransactionFinalizer: {
+        extrinsic: {},
+        payload: {},
+      },
     },
     rpc: {
       unique: defs.unique.rpc,

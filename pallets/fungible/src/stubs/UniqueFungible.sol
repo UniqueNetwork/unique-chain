@@ -8,13 +8,8 @@ contract Dummy {
 	uint8 dummy;
 	string stub_error = "this contract is implemented in native";
 }
-
 contract ERC165 is Dummy {
-	function supportsInterface(bytes4 interfaceID)
-		external
-		view
-		returns (bool)
-	{
+	function supportsInterface(bytes4 interfaceID) external view returns (bool) {
 		require(false, stub_error);
 		interfaceID;
 		return true;
@@ -24,11 +19,36 @@ contract ERC165 is Dummy {
 // Inline
 contract ERC20Events {
 	event Transfer(address indexed from, address indexed to, uint256 value);
-	event Approval(
-		address indexed owner,
-		address indexed spender,
-		uint256 value
-	);
+	event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// Selector: 56fd500b
+contract CollectionProperties is Dummy, ERC165 {
+	// Selector: setProperty(string,string) 62d9491f
+	function setProperty(string memory key, string memory value) public {
+		require(false, stub_error);
+		key;
+		value;
+		dummy = 0;
+	}
+	// Selector: deleteProperty(string) 34241914
+	function deleteProperty(string memory key) public {
+		require(false, stub_error);
+		key;
+		dummy = 0;
+	}
+}
+
+// Selector: 79cc6790
+contract ERC20UniqueExtensions is Dummy, ERC165 {
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		from;
+		amount;
+		dummy = 0;
+		return false;
+	}
 }
 
 // Selector: 942e8b22
@@ -39,28 +59,24 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return "";
 	}
-
 	// Selector: symbol() 95d89b41
 	function symbol() public view returns (string memory) {
 		require(false, stub_error);
 		dummy;
 		return "";
 	}
-
 	// Selector: totalSupply() 18160ddd
 	function totalSupply() public view returns (uint256) {
 		require(false, stub_error);
 		dummy;
 		return 0;
 	}
-
 	// Selector: decimals() 313ce567
 	function decimals() public view returns (uint8) {
 		require(false, stub_error);
 		dummy;
 		return 0;
 	}
-
 	// Selector: balanceOf(address) 70a08231
 	function balanceOf(address owner) public view returns (uint256) {
 		require(false, stub_error);
@@ -68,7 +84,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return 0;
 	}
-
 	// Selector: transfer(address,uint256) a9059cbb
 	function transfer(address to, uint256 amount) public returns (bool) {
 		require(false, stub_error);
@@ -77,13 +92,8 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy = 0;
 		return false;
 	}
-
 	// Selector: transferFrom(address,address,uint256) 23b872dd
-	function transferFrom(
-		address from,
-		address to,
-		uint256 amount
-	) public returns (bool) {
+	function transferFrom(address from, address to, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		from;
 		to;
@@ -91,7 +101,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy = 0;
 		return false;
 	}
-
 	// Selector: approve(address,uint256) 095ea7b3
 	function approve(address spender, uint256 amount) public returns (bool) {
 		require(false, stub_error);
@@ -100,13 +109,8 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy = 0;
 		return false;
 	}
-
 	// Selector: allowance(address,address) dd62ed3e
-	function allowance(address owner, address spender)
-		public
-		view
-		returns (uint256)
-	{
+	function allowance(address owner, address spender) public view returns (uint256) {
 		require(false, stub_error);
 		owner;
 		spender;
@@ -115,4 +119,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 	}
 }
 
-contract UniqueFungible is Dummy, ERC165, ERC20 {}
+contract UniqueFungible is Dummy, ERC165, ERC20, ERC20UniqueExtensions, CollectionProperties {
+}
+
