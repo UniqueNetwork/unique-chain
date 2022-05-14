@@ -71,13 +71,6 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<u8>>;
-	#[rpc(name = "unique_variableMetadata")]
-	fn variable_metadata(
-		&self,
-		collection: CollectionId,
-		token: TokenId,
-		at: Option<BlockHash>,
-	) -> Result<Vec<u8>>;
 
 	#[rpc(name = "unique_collectionProperties")]
 	fn collection_properties(
@@ -279,7 +272,6 @@ where
 	);
 	pass_method!(topmost_token_owner(collection: CollectionId, token: TokenId) -> Option<CrossAccountId>);
 	pass_method!(const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
-	pass_method!(variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
 
 	pass_method!(collection_properties(
 		collection: CollectionId,

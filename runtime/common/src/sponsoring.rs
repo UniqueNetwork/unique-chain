@@ -21,7 +21,7 @@ use frame_support::{
 	storage::{StorageMap, StorageDoubleMap, StorageNMap},
 };
 use up_data_structs::{
-	CollectionId, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MetaUpdatePermission,
+	CollectionId, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 	NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId, CollectionMode,
 	CreateItemData,
 };
@@ -30,7 +30,7 @@ use pallet_common::{CollectionHandle};
 use pallet_evm::account::CrossAccountId;
 use pallet_unique::{
 	Call as UniqueCall, Config as UniqueConfig, FungibleApproveBasket, RefungibleApproveBasket,
-	NftApproveBasket, VariableMetaDataBasket, CreateItemBasket, ReFungibleTransferBasket,
+	NftApproveBasket, CreateItemBasket, ReFungibleTransferBasket,
 	FungibleTransferBasket, NftTransferBasket,
 };
 use pallet_fungible::Config as FungibleConfig;
@@ -140,63 +140,6 @@ pub fn withdraw_create_item<T: Config>(
 	Some(())
 }
 
-pub fn withdraw_set_variable_meta_data<T: Config>(
-	who: &T::CrossAccountId,
-	collection: &CollectionHandle<T>,
-	item_id: &TokenId,
-	data: &[u8],
-) -> Option<()> {
-	// TODO: make it work for admins
-	if collection.meta_update_permission != MetaUpdatePermission::ItemOwner {
-		return None;
-	}
-	// preliminary sponsoring correctness check
-	match collection.mode {
-		CollectionMode::NFT => {
-			let owner = pallet_nonfungible::TokenData::<T>::get((collection.id, item_id))?.owner;
-			if !owner.conv_eq(who) {
-				return None;
-			}
-		}
-		CollectionMode::Fungible(_) => {
-			if item_id != &TokenId::default() {
-				return None;
-			}
-			if <pallet_fungible::Balance<T>>::get((collection.id, who)) == 0 {
-				return None;
-			}
-		}
-		CollectionMode::ReFungible => {
-			if !<pallet_refungible::Owned<T>>::get((collection.id, who, item_id)) {
-				return None;
-			}
-		}
-	}
-
-	// Can't sponsor fungible collection, this tx will be rejected
-	// as invalid
-	if matches!(collection.mode, CollectionMode::Fungible(_)) {
-		return None;
-	}
-	if data.len() > collection.limits.sponsored_data_size() as usize {
-		return None;
-	}
-
-	let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
-	let limit = collection.limits.sponsored_data_rate_limit()?;
-
-	if let Some(last_tx_block) = VariableMetaDataBasket::<T>::get(collection.id, item_id) {
-		let timeout = last_tx_block + limit.into();
-		if block_number < timeout {
-			return None;
-		}
-	}
-
-	<VariableMetaDataBasket<T>>::insert(collection.id, item_id, block_number);
-
-	Some(())
-}
-
 pub fn withdraw_approve<T: Config>(
 	collection: &CollectionHandle<T>,
 	who: &T::AccountId,
@@ -290,20 +233,6 @@ where
 			} => {
 				let (sponsor, collection) = load(*collection_id)?;
 				withdraw_approve::<T>(&collection, who, item_id).map(|()| sponsor)
-			}
-			UniqueCall::set_variable_meta_data {
-				collection_id,
-				item_id,
-				data,
-			} => {
-				let (sponsor, collection) = load(*collection_id)?;
-				withdraw_set_variable_meta_data::<T>(
-					&T::CrossAccountId::from_sub(who.clone()),
-					&collection,
-					item_id,
-					data,
-				)
-				.map(|()| sponsor)
 			}
 			_ => None,
 		}

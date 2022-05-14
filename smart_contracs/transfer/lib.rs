@@ -58,14 +58,12 @@ impl ink_env::chain_extension::FromStatusCode for NftErrorCode {
 pub enum CreateItemData {
     Nft {
         const_data: Vec<u8>,
-        variable_data: Vec<u8>,
     },
     Fungible {
         value: u128,
     },
     ReFungible {
         const_data: Vec<u8>,
-        variable_data: Vec<u8>,
         pieces: u128,
     },
 }
@@ -88,8 +86,6 @@ pub trait NftChainExtension {
     fn approve(spender: DefaultAccountId, collection_id: u32, item_id: u32, amount: u128);
     #[ink(extension = 4, returns_result = false)]
     fn transfer_from(owner: DefaultAccountId, recipient: DefaultAccountId, collection_id: u32, item_id: u32, amount: u128);
-    #[ink(extension = 5, returns_result = false)]
-    fn set_variable_meta_data(collection_id: u32, item_id: u32, data: Vec<u8>);
     #[ink(extension = 6, returns_result = false)]
     fn toggle_allow_list(collection_id: u32, address: DefaultAccountId, allowlisted: bool);
 }
@@ -143,12 +139,6 @@ mod nft_transfer {
             let _ = self.env()
                 .extension()
                 .transfer_from(owner, recipient, collection_id, item_id, amount);
-        }
-        #[ink(message)]
-        pub fn set_variable_meta_data(&mut self, collection_id: u32, item_id: u32, data: Vec<u8>) {
-            let _ = self.env()
-                .extension()
-                .set_variable_meta_data(collection_id, item_id, data);
         }
         #[ink(message)]
         pub fn toggle_allow_list(&mut self, collection_id: u32, address: AccountId, allowlisted: bool) {

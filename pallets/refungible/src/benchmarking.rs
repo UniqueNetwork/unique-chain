@@ -31,10 +31,8 @@ fn create_max_item_data<CrossAccountId: Ord>(
 	users: impl IntoIterator<Item = (CrossAccountId, u128)>,
 ) -> CreateRefungibleExData<CrossAccountId> {
 	let const_data = create_data::<CUSTOM_DATA_LIMIT>();
-	let variable_data = create_data::<CUSTOM_DATA_LIMIT>();
 	CreateRefungibleExData {
 		const_data,
-		variable_data,
 		users: users
 			.into_iter()
 			.collect::<BTreeMap<_, _>>()
@@ -203,14 +201,4 @@ benchmarks! {
 		let item = create_max_item(&collection, &owner, [(sender.clone(), 200)])?;
 		<Pallet<T>>::set_allowance(&collection, &sender, &burner, item, 200)?;
 	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, item, 200, &Unlimited)?}
-
-	set_variable_metadata {
-		let b in 0..CUSTOM_DATA_LIMIT;
-		bench_init!{
-			owner: sub; collection: collection(owner);
-			sender: cross_from_sub(owner);
-		};
-		let item = create_max_item(&collection, &sender, [(sender.clone(), 200)])?;
-		let data = create_var_data(b).try_into().unwrap();
-	}: {<Pallet<T>>::set_variable_metadata(&collection, &sender, item, data)?}
 }

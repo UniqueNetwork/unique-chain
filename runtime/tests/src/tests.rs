@@ -47,7 +47,6 @@ fn add_balance(user: u64, value: u64) {
 fn default_nft_data() -> CreateNftData {
 	CreateNftData {
 		const_data: vec![1, 2, 3].try_into().unwrap(),
-		variable_data: vec![3, 2, 1].try_into().unwrap(),
 	}
 }
 
@@ -58,7 +57,6 @@ fn default_fungible_data() -> CreateFungibleData {
 fn default_re_fungible_data() -> CreateReFungibleData {
 	CreateReFungibleData {
 		const_data: vec![1, 2, 3].try_into().unwrap(),
-		variable_data: vec![3, 2, 1].try_into().unwrap(),
 		pieces: 1023,
 	}
 }
@@ -215,7 +213,6 @@ fn create_nft_item() {
 
 		let item = <pallet_nonfungible::TokenData<Test>>::get((collection_id, 1)).unwrap();
 		assert_eq!(item.const_data, data.const_data.into_inner());
-		assert_eq!(item.variable_data, data.variable_data.into_inner());
 	});
 }
 
@@ -247,7 +244,6 @@ fn create_nft_multiple_items() {
 			))
 			.unwrap();
 			assert_eq!(item.const_data.to_vec(), data.const_data.into_inner());
-			assert_eq!(item.variable_data.to_vec(), data.variable_data.into_inner());
 		}
 	});
 }
@@ -263,7 +259,6 @@ fn create_refungible_item() {
 		let balance =
 			<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(1)));
 		assert_eq!(item.const_data, data.const_data.into_inner());
-		assert_eq!(item.variable_data, data.variable_data.into_inner());
 		assert_eq!(balance, 1023);
 	});
 }
@@ -299,7 +294,6 @@ fn create_multiple_refungible_items() {
 			let balance =
 				<pallet_refungible::Balance<Test>>::get((CollectionId(1), TokenId(1), account(1)));
 			assert_eq!(item.const_data.to_vec(), data.const_data.into_inner());
-			assert_eq!(item.variable_data.to_vec(), data.variable_data.into_inner());
 			assert_eq!(balance, 1023);
 		}
 	});
@@ -413,7 +407,6 @@ fn transfer_refungible_item() {
 		create_test_item(collection_id, &data.clone().into());
 		let item = <pallet_refungible::TokenData<Test>>::get((collection_id, TokenId(1)));
 		assert_eq!(item.const_data, data.const_data.into_inner());
-		assert_eq!(item.variable_data, data.variable_data.into_inner());
 		assert_eq!(
 			<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))),
 			1
@@ -2427,117 +2420,6 @@ fn set_const_on_chain_schema() {
 }
 
 #[test]
-fn set_variable_meta_data_on_nft_token_stores_variable_meta_data() {
-	new_test_ext().execute_with(|| {
-		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-
-		let origin1 = Origin::signed(1);
-
-		let data = default_nft_data();
-		create_test_item(CollectionId(1), &data.into());
-
-		let variable_data = b"test data".to_vec();
-		assert_ok!(Unique::set_variable_meta_data(
-			origin1,
-			collection_id,
-			TokenId(1),
-			variable_data.clone().try_into().unwrap()
-		));
-
-		assert_eq!(
-			<pallet_nonfungible::TokenData<Test>>::get((collection_id, 1))
-				.unwrap()
-				.variable_data,
-			variable_data
-		);
-	});
-}
-
-#[test]
-fn set_variable_meta_data_on_re_fungible_token_stores_variable_meta_data() {
-	new_test_ext().execute_with(|| {
-		let collection_id = create_test_collection(&CollectionMode::ReFungible, CollectionId(1));
-
-		let origin1 = Origin::signed(1);
-
-		let data = default_re_fungible_data();
-		create_test_item(collection_id, &data.into());
-
-		let variable_data = b"test data".to_vec();
-		assert_ok!(Unique::set_variable_meta_data(
-			origin1,
-			collection_id,
-			TokenId(1),
-			variable_data.clone().try_into().unwrap()
-		));
-
-		assert_eq!(
-			<pallet_refungible::TokenData<Test>>::get((collection_id, TokenId(1))).variable_data,
-			variable_data
-		);
-	});
-}
-
-#[test]
-fn set_variable_meta_data_on_fungible_token_fails() {
-	new_test_ext().execute_with(|| {
-		let collection_id = create_test_collection(&CollectionMode::Fungible(3), CollectionId(1));
-
-		let origin1 = Origin::signed(1);
-
-		let data = default_fungible_data();
-		create_test_item(collection_id, &data.into());
-
-		let variable_data = b"test data".to_vec();
-		assert_noop!(
-			Unique::set_variable_meta_data(
-				origin1,
-				collection_id,
-				TokenId(0),
-				variable_data.try_into().unwrap()
-			)
-			.map_err(|e| e.error),
-			<pallet_fungible::Error<Test>>::FungibleItemsDontHaveData
-		);
-	});
-}
-
-#[test]
-fn set_variable_meta_data_on_nft_with_item_owner_permission_flag() {
-	new_test_ext().execute_with(|| {
-		//default_limits();
-
-		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-
-		let origin1 = Origin::signed(1);
-
-		let data = default_nft_data();
-		create_test_item(collection_id, &data.into());
-
-		assert_ok!(Unique::set_meta_update_permission_flag(
-			origin1.clone(),
-			collection_id,
-			MetaUpdatePermission::ItemOwner,
-		));
-
-		let variable_data = b"ten chars.".to_vec();
-		assert_ok!(Unique::set_variable_meta_data(
-			origin1,
-			collection_id,
-			TokenId(1),
-			variable_data.clone().try_into().unwrap()
-		));
-
-		assert_eq!(
-			<pallet_nonfungible::TokenData<Test>>::get((collection_id, TokenId(1)))
-				.unwrap()
-				.variable_data,
-			variable_data
-		);
-	});
-}
-
-#[test]
 fn collection_transfer_flag_works() {
 	new_test_ext().execute_with(|| {
 		let origin1 = Origin::signed(1);
@@ -2590,105 +2472,6 @@ fn collection_transfer_flag_works() {
 }
 
 #[test]
-fn set_variable_meta_data_on_nft_with_admin_flag() {
-	new_test_ext().execute_with(|| {
-		// default_limits();
-
-		let collection_id =
-			create_test_collection_for_owner(&CollectionMode::NFT, 2, CollectionId(1));
-
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
-
-		assert_ok!(Unique::set_mint_permission(
-			origin2.clone(),
-			collection_id,
-			true
-		));
-		assert_ok!(Unique::add_to_allow_list(
-			origin2.clone(),
-			collection_id,
-			account(1)
-		));
-
-		assert_ok!(Unique::add_collection_admin(
-			origin2.clone(),
-			collection_id,
-			account(1)
-		));
-
-		let data = default_nft_data();
-		create_test_item(collection_id, &data.into());
-
-		assert_ok!(Unique::set_meta_update_permission_flag(
-			origin2.clone(),
-			collection_id,
-			MetaUpdatePermission::Admin,
-		));
-
-		let variable_data = b"test.".to_vec();
-		assert_ok!(Unique::set_variable_meta_data(
-			origin1,
-			collection_id,
-			TokenId(1),
-			variable_data.clone().try_into().unwrap()
-		));
-
-		assert_eq!(
-			<pallet_nonfungible::TokenData<Test>>::get((collection_id, 1))
-				.unwrap()
-				.variable_data,
-			variable_data
-		);
-	});
-}
-
-#[test]
-fn set_variable_meta_data_on_nft_with_admin_flag_neg() {
-	new_test_ext().execute_with(|| {
-		// default_limits();
-
-		let collection_id =
-			create_test_collection_for_owner(&CollectionMode::NFT, 2, CollectionId(1));
-
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
-
-		assert_ok!(Unique::set_mint_permission(
-			origin2.clone(),
-			collection_id,
-			true
-		));
-		assert_ok!(Unique::add_to_allow_list(
-			origin2.clone(),
-			collection_id,
-			account(1)
-		));
-
-		let data = default_nft_data();
-		create_test_item(collection_id, &data.into());
-
-		assert_ok!(Unique::set_meta_update_permission_flag(
-			origin2.clone(),
-			collection_id,
-			MetaUpdatePermission::Admin,
-		));
-
-		let variable_data = b"test.".to_vec();
-		assert_noop!(
-			Unique::set_variable_meta_data(
-				origin1,
-				collection_id,
-				TokenId(1),
-				variable_data.try_into().unwrap()
-			)
-			.map_err(|e| e.error),
-			CommonError::<Test>::NoPermission
-		);
-	});
-}
-
-#[test]
 fn set_variable_meta_flag_after_freeze() {
 	new_test_ext().execute_with(|| {
 		// default_limits();
@@ -2710,38 +2493,6 @@ fn set_variable_meta_flag_after_freeze() {
 				MetaUpdatePermission::Admin
 			),
 			CommonError::<Test>::MetadataFlagFrozen
-		);
-	});
-}
-
-#[test]
-fn set_variable_meta_data_on_nft_with_none_flag_neg() {
-	new_test_ext().execute_with(|| {
-		// default_limits();
-
-		let collection_id =
-			create_test_collection_for_owner(&CollectionMode::NFT, 1, CollectionId(1));
-		let origin1 = Origin::signed(1);
-
-		let data = default_nft_data();
-		create_test_item(collection_id, &data.into());
-
-		assert_ok!(Unique::set_meta_update_permission_flag(
-			origin1.clone(),
-			collection_id,
-			MetaUpdatePermission::None,
-		));
-
-		let variable_data = b"test.".to_vec();
-		assert_noop!(
-			Unique::set_variable_meta_data(
-				origin1.clone(),
-				collection_id,
-				TokenId(1),
-				variable_data.try_into().unwrap()
-			)
-			.map_err(|e| e.error),
-			CommonError::<Test>::NoPermission
 		);
 	});
 }
