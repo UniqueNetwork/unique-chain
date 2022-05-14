@@ -111,7 +111,7 @@ describe.skip('Chain extensions', () => {
       await addToAllowListExpectSuccess(alice, collectionId, contract.address);
       await addToAllowListExpectSuccess(alice, collectionId, bob.address);
 
-      const transferTx = contract.tx.createItem(value, gasLimit, bob.address, collectionId, {Nft: {const_data: '0x010203', variable_data: '0x020304'}});
+      const transferTx = contract.tx.createItem(value, gasLimit, bob.address, collectionId, {Nft: {const_data: '0x010203'}});
       const events = await submitTransactionAsync(alice, transferTx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
@@ -121,7 +121,6 @@ describe.skip('Chain extensions', () => {
         {
           owner: bob.address,
           constData: '0x010203',
-          variableData: '0x020304',
         },
       ]);
     });
@@ -140,9 +139,9 @@ describe.skip('Chain extensions', () => {
       await addToAllowListExpectSuccess(alice, collectionId, bob.address);
 
       const transferTx = contract.tx.createMultipleItems(value, gasLimit, bob.address, collectionId, [
-        {Nft: {const_data: '0x010203', variable_data: '0x020304'}},
-        {Nft: {const_data: '0x010204', variable_data: '0x020305'}},
-        {Nft: {const_data: '0x010205', variable_data: '0x020306'}},
+        {Nft: {const_data: '0x010203'}},
+        {Nft: {const_data: '0x010204'}},
+        {Nft: {const_data: '0x010205'}},
       ]);
       const events = await submitTransactionAsync(alice, transferTx);
       const result = getGenericResult(events);
@@ -155,17 +154,14 @@ describe.skip('Chain extensions', () => {
         {
           Owner: bob.address,
           ConstData: '0x010203',
-          VariableData: '0x020304',
         },
         {
           Owner: bob.address,
           ConstData: '0x010204',
-          VariableData: '0x020305',
         },
         {
           Owner: bob.address,
           ConstData: '0x010205',
-          VariableData: '0x020306',
         },
       ]);
     });
@@ -208,24 +204,6 @@ describe.skip('Chain extensions', () => {
 
       const token: any = (await api.query.unique.nftItemList(collectionId, tokenId) as any).unwrap();
       expect(token.owner.toString()).to.be.equal(charlie.address);
-    });
-  });
-
-  it('SetVariableMetaData CE', async () => {
-    await usingApi(async api => {
-      const alice = privateKey('//Alice');
-
-      const collectionId = await createCollectionExpectSuccess();
-      const [contract] = await deployTransferContract(api);
-      const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', contract.address.toString());
-
-      const transferTx = contract.tx.setVariableMetaData(value, gasLimit, collectionId, tokenId, '0x121314');
-      const events = await submitTransactionAsync(alice, transferTx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
-
-      const token: any = (await api.query.unique.nftItemList(collectionId, tokenId) as any).unwrap();
-      expect(token.variableData.toString()).to.be.equal('0x121314');
     });
   });
 
