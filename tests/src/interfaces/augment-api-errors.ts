@@ -157,10 +157,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       TokenValueTooLow: AugmentedError<ApiType>;
       /**
-       * variable_data exceeded data limit.
-       **/
-      TokenVariableDataLimitExceeded: AugmentedError<ApiType>;
-      /**
        * Total collections bound exceeded.
        **/
       TotalCollectionsLimitExceeded: AugmentedError<ApiType>;
