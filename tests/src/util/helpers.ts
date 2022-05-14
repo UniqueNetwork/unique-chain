@@ -142,7 +142,6 @@ export interface IChainLimits {
 export interface IReFungibleTokenDataType {
   owner: IReFungibleOwner[];
   constData: number[];
-  variableData: number[];
 }
 
 export function uniqueEventMessage(events: EventRecord[]): IGetMessage {
@@ -794,23 +793,6 @@ export async function removeFromContractAllowListExpectFailure(sender: IKeyringP
   });
 }
 
-export async function setVariableMetaDataExpectSuccess(sender: IKeyringPair, collectionId: number, itemId: number, data: number[]) {
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setVariableMetaData(collectionId, itemId, '0x' + Buffer.from(data).toString('hex'));
-    const events = await submitTransactionAsync(sender, tx);
-    const result = getGenericResult(events);
-
-    expect(result.success).to.be.true;
-  });
-}
-
-export async function setVariableMetaDataExpectFailure(sender: IKeyringPair, collectionId: number, itemId: number, data: number[]) {
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setVariableMetaData(collectionId, itemId, '0x' + Buffer.from(data).toString('hex'));
-    await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
-  });
-}
-
 export async function setOffchainSchemaExpectSuccess(sender: IKeyringPair, collectionId: number, data: number[]) {
   await usingApi(async (api) => {
     const tx = api.tx.unique.setOffchainSchema(collectionId, '0x' + Buffer.from(data).toString('hex'));
@@ -1138,13 +1120,6 @@ export async function getAdminList(
 ): Promise<string[]> {
   return (await api.rpc.unique.adminlist(collectionId)).toHuman() as any;
 }
-export async function getVariableMetadata(
-  api: ApiPromise,
-  collectionId: number,
-  tokenId: number,
-): Promise<number[]> {
-  return [...(await api.rpc.unique.variableMetadata(collectionId, tokenId))];
-}
 export async function getConstMetadata(
   api: ApiPromise,
   collectionId: number,
@@ -1182,10 +1157,10 @@ export async function createItemExpectSuccess(sender: IKeyringPair, collectionId
       const createData = {fungible: {value: 10}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     } else if (createMode === 'ReFungible') {
-      const createData = {refungible: {const_data: [], variable_data: [], pieces: 100}};
+      const createData = {refungible: {const_data: [], pieces: 100}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     } else {
-      const createData = {nft: {const_data: [], variable_data: []}};
+      const createData = {nft: {const_data: []}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     }
 

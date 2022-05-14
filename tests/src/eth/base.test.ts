@@ -79,7 +79,7 @@ describe('ERC165 tests', async () => {
       minter = createEthAccount(web3);
     });
   });
-  
+
   itWeb3('interfaceID == 0xffffffff always false', async ({web3}) => {
     expect(await contract(web3).methods.supportsInterface('0xffffffff').call()).to.be.false;
   });
@@ -101,7 +101,7 @@ describe('ERC165 tests', async () => {
   });
 
   itWeb3('ERC721UniqueExtensions support', async ({web3}) => {
-    expect(await contract(web3).methods.supportsInterface('0xe562194d').call()).to.be.true;
+    expect(await contract(web3).methods.supportsInterface('0xd74d154f').call()).to.be.true;
   });
 
   itWeb3('ERC721Burnable support', async ({web3}) => {

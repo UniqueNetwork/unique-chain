@@ -148,29 +148,17 @@ contract UniqueNFTProxy is UniqueNFT {
         return proxied.nextTokenId();
     }
 
-    function supportsInterface(uint32 interfaceId)
+    function burnFrom(address from, uint256 tokenId) external override {
+        return proxied.burnFrom(from, tokenId);
+    }
+
+    function supportsInterface(bytes4 interfaceId)
         external
         view
         override
         returns (bool)
     {
         return proxied.supportsInterface(interfaceId);
-    }
-
-    function setVariableMetadata(uint256 tokenId, bytes memory data)
-        external
-        override
-    {
-        return proxied.setVariableMetadata(tokenId, data);
-    }
-
-    function getVariableMetadata(uint256 tokenId)
-        external
-        view
-        override
-        returns (bytes memory)
-    {
-        return proxied.getVariableMetadata(tokenId);
     }
 
     function mintBulk(address to, uint256[] memory tokenIds)
@@ -187,5 +175,13 @@ contract UniqueNFTProxy is UniqueNFT {
         returns (bool)
     {
         return proxied.mintBulkWithTokenURI(to, tokens);
+    }
+
+    function setProperty(string memory key, string memory value) external override {
+        return proxied.setProperty(key, value);
+    }
+
+	function deleteProperty(string memory key) external override {
+        return proxied.deleteProperty(key);
     }
 }
