@@ -16,12 +16,12 @@
 
 use core::marker::PhantomData;
 
-use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
+use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use up_data_structs::{TokenId, CollectionId, CreateItemExData, budget::Budget};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::ArithmeticError;
 use sp_std::{vec::Vec, vec};
-use up_data_structs::{CustomDataLimit, Property, PropertyKey, PropertyKeyPermission};
+use up_data_structs::{Property, PropertyKey, PropertyKeyPermission};
 
 use crate::{
 	Allowance, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf, weights::WeightInfo,
@@ -84,11 +84,6 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn burn_from() -> Weight {
 		<SelfWeightOf<T>>::burn_from()
-	}
-
-	fn set_variable_metadata(_bytes: u32) -> Weight {
-		// Error
-		0
 	}
 }
 
@@ -287,15 +282,6 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
 
-	fn set_variable_metadata(
-		&self,
-		_sender: T::CrossAccountId,
-		_token: TokenId,
-		_data: BoundedVec<u8, CustomDataLimit>,
-	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::FungibleItemsDontHaveData)
-	}
-
 	fn check_nesting(
 		&self,
 		_sender: <T>::CrossAccountId,
@@ -330,9 +316,6 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		None
 	}
 	fn const_metadata(&self, _token: TokenId) -> Vec<u8> {
-		Vec::new()
-	}
-	fn variable_metadata(&self, _token: TokenId) -> Vec<u8> {
 		Vec::new()
 	}
 

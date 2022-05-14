@@ -61,6 +61,24 @@ contract ERC721Burnable is Dummy, ERC165 {
 	}
 }
 
+// Selector: 56fd500b
+contract CollectionProperties is Dummy, ERC165 {
+	// Selector: setProperty(string,string) 62d9491f
+	function setProperty(string memory key, string memory value) public {
+		require(false, stub_error);
+		key;
+		value;
+		dummy = 0;
+	}
+
+	// Selector: deleteProperty(string) 34241914
+	function deleteProperty(string memory key) public {
+		require(false, stub_error);
+		key;
+		dummy = 0;
+	}
+}
+
 // Selector: 58800161
 contract ERC721 is Dummy, ERC165, ERC721Events {
 	// Selector: balanceOf(address) 70a08231
@@ -276,7 +294,7 @@ contract ERC721Enumerable is Dummy, ERC165 {
 	}
 }
 
-// Selector: e562194d
+// Selector: d74d154f
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	// Selector: transfer(address,uint256) a9059cbb
 	function transfer(address to, uint256 tokenId) public {
@@ -299,26 +317,6 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 		require(false, stub_error);
 		dummy;
 		return 0;
-	}
-
-	// Selector: setVariableMetadata(uint256,bytes) d4eac26d
-	function setVariableMetadata(uint256 tokenId, bytes memory data) public {
-		require(false, stub_error);
-		tokenId;
-		data;
-		dummy = 0;
-	}
-
-	// Selector: getVariableMetadata(uint256) e6c5ce6f
-	function getVariableMetadata(uint256 tokenId)
-		public
-		view
-		returns (bytes memory)
-	{
-		require(false, stub_error);
-		tokenId;
-		dummy;
-		return hex"";
 	}
 
 	// Selector: mintBulk(address,uint256[]) 44a9945e
@@ -354,5 +352,6 @@ contract UniqueNFT is
 	ERC721Enumerable,
 	ERC721UniqueExtensions,
 	ERC721Mintable,
-	ERC721Burnable
+	ERC721Burnable,
+	CollectionProperties
 {}

@@ -24,7 +24,7 @@ use frame_support::BoundedVec;
 use up_data_structs::{TokenId, SchemaVersion};
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_core::{H160, U256};
-use sp_std::{vec::Vec, vec};
+use sp_std::vec::Vec;
 use pallet_common::{
 	erc::{CommonEvmHandler, PrecompileResult, CollectionPropertiesCall},
 	CollectionHandle,
@@ -274,7 +274,6 @@ impl<T: Config> NonfungibleHandle<T> {
 			&caller,
 			CreateItemData::<T> {
 				const_data: BoundedVec::default(),
-				variable_data: BoundedVec::default(),
 				properties: BoundedVec::default(),
 				owner: to,
 			},
@@ -322,7 +321,6 @@ impl<T: Config> NonfungibleHandle<T> {
 				const_data: Vec::<u8>::from(token_uri)
 					.try_into()
 					.map_err(|_| "token uri is too long")?,
-				variable_data: BoundedVec::default(),
 				properties: BoundedVec::default(),
 				owner: to,
 			},
@@ -387,37 +385,6 @@ impl<T: Config> NonfungibleHandle<T> {
 			.into())
 	}
 
-	#[weight(<SelfWeightOf<T>>::set_variable_metadata(data.len() as u32))]
-	fn set_variable_metadata(
-		&mut self,
-		caller: caller,
-		token_id: uint256,
-		data: bytes,
-	) -> Result<void> {
-		let caller = T::CrossAccountId::from_eth(caller);
-		let token = token_id.try_into()?;
-
-		<Pallet<T>>::set_variable_metadata(
-			self,
-			&caller,
-			token,
-			data.try_into()
-				.map_err(|_| "metadata size exceeded limit")?,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
-		Ok(())
-	}
-
-	fn get_variable_metadata(&self, token_id: uint256) -> Result<bytes> {
-		self.consume_store_reads(1)?;
-		let token: TokenId = token_id.try_into()?;
-
-		Ok(<TokenData<T>>::get((self.id, token))
-			.ok_or("token not found")?
-			.variable_data
-			.into_inner())
-	}
-
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(token_ids.len() as u32))]
 	fn mint_bulk(&mut self, caller: caller, to: address, token_ids: Vec<uint256>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -440,7 +407,6 @@ impl<T: Config> NonfungibleHandle<T> {
 		let data = (0..total_tokens)
 			.map(|_| CreateItemData::<T> {
 				const_data: BoundedVec::default(),
-				variable_data: BoundedVec::default(),
 				properties: BoundedVec::default(),
 				owner: to.clone(),
 			})
@@ -484,7 +450,6 @@ impl<T: Config> NonfungibleHandle<T> {
 				const_data: Vec::<u8>::from(token_uri)
 					.try_into()
 					.map_err(|_| "token uri is too long")?,
-				variable_data: vec![].try_into().unwrap(),
 				properties: BoundedVec::default(),
 				owner: to.clone(),
 			});

@@ -49,17 +49,22 @@ pub mod weights;
 pub type CreateItemData<T> = CreateNftExData<<T as pallet_evm::account::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
+#[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub struct ItemData<CrossAccountId> {
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
+
+	#[version(..2)]
 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
+
 	pub owner: CrossAccountId,
 }
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key};
+	use frame_support::{Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
+	use frame_system::pallet_prelude::*;
 	use up_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;
 
@@ -78,7 +83,10 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
@@ -133,6 +141,19 @@ pub mod pallet {
 		Value = T::CrossAccountId,
 		QueryKind = OptionQuery,
 	>;
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> Weight {
+			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
+				<TokenData<T>>::translate_values::<ItemDataVersion1<T::CrossAccountId>, _>(|v| {
+					Some(<ItemDataVersion2<T::CrossAccountId>>::from(v))
+				})
+			}
+
+			0
+		}
+	}
 }
 
 pub struct NonfungibleHandle<T: Config>(pallet_common::CollectionHandle<T>);
@@ -577,7 +598,6 @@ impl<T: Config> Pallet<T> {
 				(collection.id, token),
 				ItemData {
 					const_data: data.const_data,
-					variable_data: data.variable_data,
 					owner: data.owner.clone(),
 				},
 			);
@@ -773,28 +793,6 @@ impl<T: Config> Pallet<T> {
 		// =========
 
 		Self::burn(collection, from, token)
-	}
-
-	pub fn set_variable_metadata(
-		collection: &NonfungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		token: TokenId,
-		data: BoundedVec<u8, CustomDataLimit>,
-	) -> DispatchResult {
-		let token_data =
-			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
-		collection.check_can_update_meta(sender, &token_data.owner)?;
-
-		// =========
-
-		<TokenData<T>>::insert(
-			(collection.id, token),
-			ItemData {
-				variable_data: data,
-				..token_data
-			},
-		);
-		Ok(())
 	}
 
 	pub fn check_nesting(

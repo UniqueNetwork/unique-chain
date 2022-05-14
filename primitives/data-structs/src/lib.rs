@@ -364,28 +364,6 @@ pub type CollectionPropertiesPermissionsVec =
 pub type CollectionPropertiesVec =
 	BoundedVec<Property, ConstU32<MAX_COLLECTION_PROPERTIES_ENCODE_LEN>>;
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-pub struct NftItemType<AccountId> {
-	pub owner: AccountId,
-	pub const_data: Vec<u8>,
-	pub variable_data: Vec<u8>,
-}
-
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-pub struct FungibleItemType {
-	pub value: u128,
-}
-
-#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-pub struct ReFungibleItemType<AccountId> {
-	pub owner: Vec<Ownership<AccountId>>,
-	pub const_data: Vec<u8>,
-	pub variable_data: Vec<u8>,
-}
-
 /// All fields are wrapped in `Option`s, where None means chain default
 #[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
@@ -393,6 +371,8 @@ pub struct ReFungibleItemType<AccountId> {
 pub struct CollectionLimits {
 	pub account_token_ownership_limit: Option<u32>,
 	pub sponsored_data_size: Option<u32>,
+
+	/// FIXME should we delete this or repurpose it?
 	/// None - setVariableMetadata is not sponsored
 	/// Some(v) - setVariableMetadata is sponsored
 	///           if there is v block between txs
@@ -490,9 +470,6 @@ pub struct CreateNftData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
-	#[derivative(Debug(format_with = "bounded::vec_debug"))]
-	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
@@ -512,9 +489,6 @@ pub struct CreateReFungibleData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
-	#[derivative(Debug(format_with = "bounded::vec_debug"))]
-	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 	pub pieces: u128,
 }
 
@@ -546,8 +520,6 @@ pub struct CreateNftExData<CrossAccountId> {
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
-	pub variable_data: BoundedVec<u8, CustomDataLimit>,
-	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub properties: CollectionPropertiesVec,
 	pub owner: CrossAccountId,
 }
@@ -557,8 +529,6 @@ pub struct CreateNftExData<CrossAccountId> {
 pub struct CreateRefungibleExData<CrossAccountId> {
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
-	#[derivative(Debug(format_with = "bounded::vec_debug"))]
-	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 	#[derivative(Debug(format_with = "bounded::map_debug"))]
 	pub users: BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
 }
@@ -586,8 +556,8 @@ pub enum CreateItemExData<CrossAccountId> {
 impl CreateItemData {
 	pub fn data_size(&self) -> usize {
 		match self {
-			CreateItemData::NFT(data) => data.variable_data.len() + data.const_data.len(),
-			CreateItemData::ReFungible(data) => data.variable_data.len() + data.const_data.len(),
+			CreateItemData::NFT(data) => data.const_data.len(),
+			CreateItemData::ReFungible(data) => data.const_data.len(),
 			_ => 0,
 		}
 	}

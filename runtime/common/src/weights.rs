@@ -86,10 +86,6 @@ where
 		dispatch_weight::<T>() + max_weight_of!(transfer_from())
 	}
 
-	fn set_variable_metadata(bytes: u32) -> Weight {
-		dispatch_weight::<T>() + max_weight_of!(set_variable_metadata(bytes))
-	}
-
 	fn burn_from() -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(burn_from())
 	}

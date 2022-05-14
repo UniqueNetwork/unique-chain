@@ -33,7 +33,7 @@ use up_data_structs::{
 	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, TokenId,
 	CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT,
 	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT,
-	CUSTOM_DATA_LIMIT, CollectionLimits, CustomDataLimit, CreateCollectionData, SponsorshipState,
+	CUSTOM_DATA_LIMIT, CollectionLimits, CreateCollectionData, SponsorshipState,
 	CreateItemExData, SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField,
 	PhantomType, Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyPermission,
 	PropertiesError, PropertyKeyPermission, TokenData, TrySet,
@@ -312,8 +312,6 @@ pub mod pallet {
 		CollectionTokenPrefixLimitExceeded,
 		/// Total collections bound exceeded.
 		TotalCollectionsLimitExceeded,
-		/// variable_data exceeded data limit.
-		TokenVariableDataLimitExceeded,
 		/// Exceeded max admin count
 		CollectionAdminCountExceeded,
 		/// Collection limit bounds per collection exceeded
@@ -1073,7 +1071,6 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
 	fn burn_from() -> Weight;
-	fn set_variable_metadata(bytes: u32) -> Weight;
 }
 
 pub trait CommonCollectionOperations<T: Config> {
@@ -1163,13 +1160,6 @@ pub trait CommonCollectionOperations<T: Config> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 
-	fn set_variable_metadata(
-		&self,
-		sender: T::CrossAccountId,
-		token: TokenId,
-		data: BoundedVec<u8, CustomDataLimit>,
-	) -> DispatchResultWithPostInfo;
-
 	fn check_nesting(
 		&self,
 		sender: T::CrossAccountId,
@@ -1185,7 +1175,6 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
 	fn const_metadata(&self, token: TokenId) -> Vec<u8>;
-	fn variable_metadata(&self, token: TokenId) -> Vec<u8>;
 	fn token_properties(&self, token_id: TokenId, keys: Vec<PropertyKey>) -> Vec<Property>;
 	/// Amount of unique collection tokens
 	fn total_supply(&self) -> u32;

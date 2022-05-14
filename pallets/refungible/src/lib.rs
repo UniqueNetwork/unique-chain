@@ -41,16 +41,20 @@ pub mod erc;
 pub mod weights;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
+#[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Default, TypeInfo, MaxEncodedLen)]
 pub struct ItemData {
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
+
+	#[version(..2)]
 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 }
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key};
+	use frame_support::{Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
+	use frame_system::pallet_prelude::*;
 	use up_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;
 
@@ -73,7 +77,10 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
@@ -146,6 +153,19 @@ pub mod pallet {
 		Value = u128,
 		QueryKind = ValueQuery,
 	>;
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> Weight {
+			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
+				<TokenData<T>>::translate_values::<ItemDataVersion1, _>(|v| {
+					Some(<ItemDataVersion2>::from(v))
+				})
+			}
+
+			0
+		}
+	}
 }
 
 pub struct RefungibleHandle<T: Config>(pallet_common::CollectionHandle<T>);
@@ -494,7 +514,6 @@ impl<T: Config> Pallet<T> {
 				(collection.id, token_id),
 				ItemData {
 					const_data: token.const_data,
-					variable_data: token.variable_data,
 				},
 			);
 			for (user, amount) in token.users.into_iter() {
@@ -643,31 +662,6 @@ impl<T: Config> Pallet<T> {
 		if let Some(allowance) = allowance {
 			Self::set_allowance_unchecked(collection, from, spender, token, allowance);
 		}
-		Ok(())
-	}
-
-	pub fn set_variable_metadata(
-		collection: &RefungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		token: TokenId,
-		data: BoundedVec<u8, CustomDataLimit>,
-	) -> DispatchResult {
-		collection.check_can_update_meta(
-			sender,
-			&T::CrossAccountId::from_sub(collection.owner.clone()),
-		)?;
-
-		let token_data = <TokenData<T>>::get((collection.id, token));
-
-		// =========
-
-		<TokenData<T>>::insert(
-			(collection.id, token),
-			ItemData {
-				variable_data: data,
-				..token_data
-			},
-		);
 		Ok(())
 	}
 

@@ -53,7 +53,6 @@ pub trait WeightInfo {
 	fn transfer_from_removing() -> Weight;
 	fn transfer_from_creating_removing() -> Weight;
 	fn burn_from() -> Weight;
-	fn set_variable_metadata(b: u32, ) -> Weight;
 }
 
 /// Weights for pallet_refungible using the Substrate node and recommended hardware.
@@ -243,12 +242,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
-	// Storage: Refungible TokenData (r:1 w:1)
-	fn set_variable_metadata(_b: u32, ) -> Weight {
-		(7_364_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
 }
 
 // For backwards compatibility and tests
@@ -436,11 +429,5 @@ impl WeightInfo for () {
 		(42_043_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
-	}
-	// Storage: Refungible TokenData (r:1 w:1)
-	fn set_variable_metadata(_b: u32, ) -> Weight {
-		(7_364_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }

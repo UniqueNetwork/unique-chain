@@ -16,9 +16,9 @@
 
 use core::marker::PhantomData;
 
-use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, BoundedVec};
+use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use up_data_structs::{
-	TokenId, CustomDataLimit, CreateItemExData, CollectionId, budget::Budget, Property,
+	TokenId, CreateItemExData, CollectionId, budget::Budget, Property,
 	PropertyKey, PropertyKeyPermission,
 };
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
@@ -86,10 +86,6 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn burn_from() -> Weight {
 		<SelfWeightOf<T>>::burn_from()
 	}
-
-	fn set_variable_metadata(bytes: u32) -> Weight {
-		<SelfWeightOf<T>>::set_variable_metadata(bytes)
-	}
 }
 
 fn map_create_data<T: Config>(
@@ -99,7 +95,6 @@ fn map_create_data<T: Config>(
 	match data {
 		up_data_structs::CreateItemData::NFT(data) => Ok(CreateItemData::<T> {
 			const_data: data.const_data,
-			variable_data: data.variable_data,
 			properties: data.properties,
 			owner: to.clone(),
 		}),
@@ -327,19 +322,6 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		}
 	}
 
-	fn set_variable_metadata(
-		&self,
-		sender: T::CrossAccountId,
-		token: TokenId,
-		data: BoundedVec<u8, CustomDataLimit>,
-	) -> DispatchResultWithPostInfo {
-		let len = data.len();
-		with_weight(
-			<Pallet<T>>::set_variable_metadata(self, &sender, token, data),
-			<CommonWeights<T>>::set_variable_metadata(len as u32),
-		)
-	}
-
 	fn check_nesting(
 		&self,
 		sender: T::CrossAccountId,
@@ -376,12 +358,6 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 	fn const_metadata(&self, token: TokenId) -> Vec<u8> {
 		<TokenData<T>>::get((self.id, token))
 			.map(|t| t.const_data)
-			.unwrap_or_default()
-			.into_inner()
-	}
-	fn variable_metadata(&self, token: TokenId) -> Vec<u8> {
-		<TokenData<T>>::get((self.id, token))
-			.map(|t| t.variable_data)
 			.unwrap_or_default()
 			.into_inner()
 	}

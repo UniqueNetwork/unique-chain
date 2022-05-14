@@ -32,9 +32,6 @@ macro_rules! impl_common_runtime_apis {
                 fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
                     dispatch_unique_runtime!(collection.const_metadata(token))
                 }
-                fn variable_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
-                    dispatch_unique_runtime!(collection.variable_metadata(token))
-                }
 
                 fn collection_properties(
                     collection: CollectionId,

@@ -45,7 +45,6 @@ pub trait WeightInfo {
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
 	fn burn_from() -> Weight;
-	fn set_variable_metadata(b: u32, ) -> Weight;
 }
 
 /// Weights for pallet_nonfungible using the Substrate node and recommended hardware.
@@ -156,12 +155,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
-	// Storage: Nonfungible TokenData (r:1 w:1)
-	fn set_variable_metadata(_b: u32, ) -> Weight {
-		(7_700_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
 }
 
 // For backwards compatibility and tests
@@ -270,11 +263,5 @@ impl WeightInfo for () {
 		(27_580_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
-	}
-	// Storage: Nonfungible TokenData (r:1 w:1)
-	fn set_variable_metadata(_b: u32, ) -> Weight {
-		(7_700_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }
