@@ -37,7 +37,6 @@ describe.skip('Migration testing for pallet-common', () => {
           accountTokenOwnershipLimit: 3,
         },
         constOnChainSchema: '0x333333',
-        metaUpdatePermission: 'Admin',
       });
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateCollectionResult(events);

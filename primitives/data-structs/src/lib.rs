@@ -308,6 +308,7 @@ pub struct Collection<AccountId> {
 	#[version(..2)]
 	pub const_on_chain_schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>,
 
+	#[version(..2)]
 	pub meta_update_permission: MetaUpdatePermission,
 }
 
@@ -327,7 +328,6 @@ pub struct RpcCollection<AccountId> {
 	pub sponsorship: SponsorshipState<AccountId>,
 	pub limits: CollectionLimits,
 	pub const_on_chain_schema: Vec<u8>,
-	pub meta_update_permission: MetaUpdatePermission,
 	pub token_property_permissions: Vec<PropertyKeyPermission>,
 	pub properties: Vec<Property>,
 }
@@ -353,7 +353,6 @@ pub struct CreateCollectionData<AccountId> {
 	pub pending_sponsor: Option<AccountId>,
 	pub limits: Option<CollectionLimits>,
 	pub const_on_chain_schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>,
-	pub meta_update_permission: Option<MetaUpdatePermission>,
 	pub token_property_permissions: CollectionPropertiesPermissionsVec,
 	pub properties: CollectionPropertiesVec,
 }
@@ -493,17 +492,10 @@ pub struct CreateReFungibleData {
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum MetaUpdatePermission {
 	ItemOwner,
 	Admin,
 	None,
-}
-
-impl Default for MetaUpdatePermission {
-	fn default() -> Self {
-		Self::ItemOwner
-	}
 }
 
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]

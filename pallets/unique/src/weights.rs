@@ -49,7 +49,6 @@ pub trait WeightInfo {
 	fn set_const_on_chain_schema(b: u32, ) -> Weight;
 	fn set_schema_version() -> Weight;
 	fn set_collection_limits() -> Weight;
-	fn set_meta_update_permission_flag() -> Weight;
 }
 
 /// Weights for pallet_unique using the Substrate node and recommended hardware.
@@ -170,12 +169,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
-	// Storage: Common CollectionById (r:1 w:1)
-	fn set_meta_update_permission_flag() -> Weight {
-		(7_214_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
 }
 
 // For backwards compatibility and tests
@@ -292,12 +285,6 @@ impl WeightInfo for () {
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_collection_limits() -> Weight {
 		(15_339_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-	}
-	// Storage: Common CollectionById (r:1 w:1)
-	fn set_meta_update_permission_flag() -> Weight {
-		(7_214_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}

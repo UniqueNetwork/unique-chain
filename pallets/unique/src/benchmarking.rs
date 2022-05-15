@@ -168,9 +168,4 @@ benchmarks! {
 			nesting_rule: None,
 		};
 	}: set_collection_limits(RawOrigin::Signed(caller.clone()), collection, cl)
-
-	set_meta_update_permission_flag {
-		let caller: T::AccountId = account("caller", 0, SEED);
-		let collection = create_nft_collection::<T>(caller.clone())?;
-	}: _(RawOrigin::Signed(caller.clone()), collection, MetaUpdatePermission::Admin)
 }
