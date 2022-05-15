@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import privateKey from '../substrate/privateKey';
-import {approveExpectSuccess, burnItemExpectSuccess, createCollectionExpectSuccess, createItemExpectSuccess, transferExpectSuccess, transferFromExpectSuccess, UNIQUE, setMetadataUpdatePermissionFlagExpectSuccess} from '../util/helpers';
+import {approveExpectSuccess, burnItemExpectSuccess, createCollectionExpectSuccess, createItemExpectSuccess, transferExpectSuccess, transferFromExpectSuccess, UNIQUE} from '../util/helpers';
 import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, transferBalanceToEth} from './util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import {expect} from 'chai';

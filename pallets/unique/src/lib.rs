@@ -38,12 +38,12 @@ use up_data_structs::{
 	CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT,
 	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
 	AccessMode, CreateItemData, CollectionLimits, CollectionId, CollectionMode, TokenId,
-	SchemaVersion, SponsorshipState, MetaUpdatePermission, CreateCollectionData,
+	SchemaVersion, SponsorshipState, CreateCollectionData,
 	CreateItemExData, budget, CollectionField, Property, PropertyKey, PropertyKeyPermission,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
-	CollectionHandle, Pallet as PalletCommon, Error as CommonError, CommonWeightInfo,
+	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo,
 	dispatch::dispatch_call, dispatch::CollectionDispatch,
 };
 
@@ -925,34 +925,6 @@ decl_module! {
 			let budget = budget::Value::new(2);
 
 			dispatch_call::<T, _>(collection_id, |d| d.transfer_from(sender, from, recipient, item_id, value, &budget))
-		}
-
-		/// Set meta_update_permission value for particular collection
-		///
-		/// # Permissions
-		///
-		/// * Collection Owner.
-		///
-		/// # Arguments
-		///
-		/// * collection_id: ID of the collection.
-		///
-		/// * value: New flag value.
-		#[weight = <SelfWeightOf<T>>::set_meta_update_permission_flag()]
-		#[transactional]
-		pub fn set_meta_update_permission_flag(origin, collection_id: CollectionId, value: MetaUpdatePermission) -> DispatchResult {
-			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-
-			ensure!(
-				target_collection.meta_update_permission != MetaUpdatePermission::None,
-				<CommonError<T>>::MetadataFlagFrozen,
-			);
-			target_collection.check_is_owner(&sender)?;
-
-			target_collection.meta_update_permission = value;
-
-			target_collection.save()
 		}
 
 		/// Set schema standard

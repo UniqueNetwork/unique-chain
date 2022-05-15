@@ -22,7 +22,7 @@ use sp_std::vec::Vec;
 use pallet_evm::account::CrossAccountId;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Weight, PostDispatchInfo},
-	ensure, fail,
+	ensure,
 	traits::{Imbalance, Get, Currency, WithdrawReasons, ExistenceRequirement},
 	BoundedVec,
 	weights::Pays,
@@ -30,7 +30,7 @@ use frame_support::{
 use pallet_evm::GasWeightMapping;
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, CollectionId, CreateItemData,
-	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, TokenId,
+	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, TokenId,
 	CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT,
 	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT,
 	CUSTOM_DATA_LIMIT, CollectionLimits, CreateCollectionData, SponsorshipState,
@@ -134,21 +134,6 @@ impl<T: Config> CollectionHandle<T> {
 			<Error<T>>::AddressNotInAllowlist
 		);
 		Ok(())
-	}
-
-	pub fn check_can_update_meta(
-		&self,
-		subject: &T::CrossAccountId,
-		item_owner: &T::CrossAccountId,
-	) -> DispatchResult {
-		match self.meta_update_permission {
-			MetaUpdatePermission::ItemOwner => {
-				ensure!(subject == item_owner, <Error<T>>::NoPermission);
-				Ok(())
-			}
-			MetaUpdatePermission::Admin => self.check_is_owner_or_admin(subject),
-			MetaUpdatePermission::None => fail!(<Error<T>>::NoPermission),
-		}
 	}
 }
 
@@ -565,7 +550,6 @@ impl<T: Config> Pallet<T> {
 			schema_version,
 			sponsorship,
 			limits,
-			meta_update_permission,
 		} = <CollectionById<T>>::get(collection)?;
 
 		let token_property_permissions = <CollectionPropertyPermissions<T>>::get(collection)
@@ -595,7 +579,6 @@ impl<T: Config> Pallet<T> {
 			schema_version,
 			sponsorship,
 			limits,
-			meta_update_permission,
 			offchain_schema: <CollectionData<T>>::get((
 				collection,
 				CollectionField::OffchainSchema,
@@ -656,7 +639,6 @@ impl<T: Config> Pallet<T> {
 				.limits
 				.map(|limits| Self::clamp_limits(data.mode.clone(), &Default::default(), limits))
 				.unwrap_or_else(|| Ok(CollectionLimits::default()))?,
-			meta_update_permission: data.meta_update_permission.unwrap_or_default(),
 		};
 
 		let mut collection_properties = up_data_structs::CollectionProperties::get();

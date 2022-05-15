@@ -18,7 +18,7 @@
 use crate::{Test, TestCrossAccountId, CollectionCreationPrice, Origin, Unique, new_test_ext};
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, CollectionId, CreateItemData, CreateFungibleData, CreateNftData,
-	CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission,
+	CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT,
 	TokenId, MAX_TOKEN_OWNERSHIP, CreateCollectionData, CollectionField, SchemaVersion,
 	CollectionMode, AccessMode,
 };
@@ -2467,32 +2467,6 @@ fn collection_transfer_flag_works() {
 		assert_eq!(
 			<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(2))),
 			1
-		);
-	});
-}
-
-#[test]
-fn set_variable_meta_flag_after_freeze() {
-	new_test_ext().execute_with(|| {
-		// default_limits();
-
-		let collection_id =
-			create_test_collection_for_owner(&CollectionMode::NFT, 2, CollectionId(1));
-
-		let origin2 = Origin::signed(2);
-
-		assert_ok!(Unique::set_meta_update_permission_flag(
-			origin2.clone(),
-			collection_id,
-			MetaUpdatePermission::None,
-		));
-		assert_noop!(
-			Unique::set_meta_update_permission_flag(
-				origin2.clone(),
-				collection_id,
-				MetaUpdatePermission::Admin
-			),
-			CommonError::<Test>::MetadataFlagFrozen
 		);
 	});
 }
