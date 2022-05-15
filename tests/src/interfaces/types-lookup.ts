@@ -1493,11 +1493,6 @@ declare module '@polkadot/types/lookup' {
       readonly itemId: u32;
       readonly value: u128;
     } & Struct;
-    readonly isSetMetaUpdatePermissionFlag: boolean;
-    readonly asSetMetaUpdatePermissionFlag: {
-      readonly collectionId: u32;
-      readonly value: UpDataStructsMetaUpdatePermission;
-    } & Struct;
     readonly isSetSchemaVersion: boolean;
     readonly asSetSchemaVersion: {
       readonly collectionId: u32;
@@ -1518,7 +1513,7 @@ declare module '@polkadot/types/lookup' {
       readonly collectionId: u32;
       readonly newLimit: UpDataStructsCollectionLimits;
     } & Struct;
-    readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'SetPublicAccessMode' | 'SetMintPermission' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetMetaUpdatePermissionFlag' | 'SetSchemaVersion' | 'SetOffchainSchema' | 'SetConstOnChainSchema' | 'SetCollectionLimits';
+    readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'SetPublicAccessMode' | 'SetMintPermission' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetSchemaVersion' | 'SetOffchainSchema' | 'SetConstOnChainSchema' | 'SetCollectionLimits';
   }
 
   /** @name UpDataStructsCollectionMode (156) */
@@ -1542,7 +1537,6 @@ declare module '@polkadot/types/lookup' {
     readonly pendingSponsor: Option<AccountId32>;
     readonly limits: Option<UpDataStructsCollectionLimits>;
     readonly constOnChainSchema: Bytes;
-    readonly metaUpdatePermission: Option<UpDataStructsMetaUpdatePermission>;
     readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
     readonly properties: Vec<UpDataStructsProperty>;
   }
@@ -1565,6 +1559,7 @@ declare module '@polkadot/types/lookup' {
   export interface UpDataStructsCollectionLimits extends Struct {
     readonly accountTokenOwnershipLimit: Option<u32>;
     readonly sponsoredDataSize: Option<u32>;
+    readonly sponsoredDataRateLimit: Option<UpDataStructsSponsoringRateLimit>;
     readonly tokenLimit: Option<u32>;
     readonly sponsorTransferTimeout: Option<u32>;
     readonly sponsorApproveTimeout: Option<u32>;
@@ -1574,7 +1569,15 @@ declare module '@polkadot/types/lookup' {
     readonly nestingRule: Option<UpDataStructsNestingRule>;
   }
 
-  /** @name UpDataStructsNestingRule (168) */
+  /** @name UpDataStructsSponsoringRateLimit (167) */
+  export interface UpDataStructsSponsoringRateLimit extends Enum {
+    readonly isSponsoringDisabled: boolean;
+    readonly isBlocks: boolean;
+    readonly asBlocks: u32;
+    readonly type: 'SponsoringDisabled' | 'Blocks';
+  }
+
+  /** @name UpDataStructsNestingRule (170) */
   export interface UpDataStructsNestingRule extends Enum {
     readonly isDisabled: boolean;
     readonly isOwner: boolean;
@@ -1583,16 +1586,8 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Disabled' | 'Owner' | 'OwnerRestricted';
   }
 
-  /** @name FrameSupportStorageBoundedBTreeSet (169) */
+  /** @name FrameSupportStorageBoundedBTreeSet (171) */
   export interface FrameSupportStorageBoundedBTreeSet extends BTreeSet<u32> {}
-
-  /** @name UpDataStructsMetaUpdatePermission (175) */
-  export interface UpDataStructsMetaUpdatePermission extends Enum {
-    readonly isItemOwner: boolean;
-    readonly isAdmin: boolean;
-    readonly isNone: boolean;
-    readonly type: 'ItemOwner' | 'Admin' | 'None';
-  }
 
   /** @name UpDataStructsPropertyKeyPermission (177) */
   export interface UpDataStructsPropertyKeyPermission extends Struct {
@@ -2479,7 +2474,6 @@ declare module '@polkadot/types/lookup' {
     readonly schemaVersion: UpDataStructsSchemaVersion;
     readonly sponsorship: UpDataStructsSponsorshipState;
     readonly limits: UpDataStructsCollectionLimits;
-    readonly metaUpdatePermission: UpDataStructsMetaUpdatePermission;
   }
 
   /** @name UpDataStructsSponsorshipState (309) */
@@ -2546,7 +2540,6 @@ declare module '@polkadot/types/lookup' {
     readonly sponsorship: UpDataStructsSponsorshipState;
     readonly limits: UpDataStructsCollectionLimits;
     readonly constOnChainSchema: Bytes;
-    readonly metaUpdatePermission: UpDataStructsMetaUpdatePermission;
     readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
     readonly properties: Vec<UpDataStructsProperty>;
   }

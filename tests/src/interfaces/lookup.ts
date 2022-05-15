@@ -1360,10 +1360,6 @@ export default {
         itemId: 'u32',
         value: 'u128',
       },
-      set_meta_update_permission_flag: {
-        collectionId: 'u32',
-        value: 'UpDataStructsMetaUpdatePermission',
-      },
       set_schema_version: {
         collectionId: 'u32',
         version: 'UpDataStructsSchemaVersion',
@@ -1406,7 +1402,6 @@ export default {
     pendingSponsor: 'Option<AccountId32>',
     limits: 'Option<UpDataStructsCollectionLimits>',
     constOnChainSchema: 'Bytes',
-    metaUpdatePermission: 'Option<UpDataStructsMetaUpdatePermission>',
     tokenPropertyPermissions: 'Vec<UpDataStructsPropertyKeyPermission>',
     properties: 'Vec<UpDataStructsProperty>'
   },
@@ -1428,6 +1423,7 @@ export default {
   UpDataStructsCollectionLimits: {
     accountTokenOwnershipLimit: 'Option<u32>',
     sponsoredDataSize: 'Option<u32>',
+    sponsoredDataRateLimit: 'Option<UpDataStructsSponsoringRateLimit>',
     tokenLimit: 'Option<u32>',
     sponsorTransferTimeout: 'Option<u32>',
     sponsorApproveTimeout: 'Option<u32>',
@@ -1437,7 +1433,16 @@ export default {
     nestingRule: 'Option<UpDataStructsNestingRule>'
   },
   /**
-   * Lookup168: up_data_structs::NestingRule
+   * Lookup167: up_data_structs::SponsoringRateLimit
+   **/
+  UpDataStructsSponsoringRateLimit: {
+    _enum: {
+      SponsoringDisabled: 'Null',
+      Blocks: 'u32'
+    }
+  },
+  /**
+   * Lookup170: up_data_structs::NestingRule
    **/
   UpDataStructsNestingRule: {
     _enum: {
@@ -1447,15 +1452,9 @@ export default {
     }
   },
   /**
-   * Lookup169: frame_support::storage::bounded_btree_set::BoundedBTreeSet<up_data_structs::CollectionId, S>
+   * Lookup171: frame_support::storage::bounded_btree_set::BoundedBTreeSet<up_data_structs::CollectionId, S>
    **/
   FrameSupportStorageBoundedBTreeSet: 'BTreeSet<u32>',
-  /**
-   * Lookup175: up_data_structs::MetaUpdatePermission
-   **/
-  UpDataStructsMetaUpdatePermission: {
-    _enum: ['ItemOwner', 'Admin', 'None']
-  },
   /**
    * Lookup177: up_data_structs::PropertyKeyPermission
    **/
@@ -2274,8 +2273,7 @@ export default {
     mintMode: 'bool',
     schemaVersion: 'UpDataStructsSchemaVersion',
     sponsorship: 'UpDataStructsSponsorshipState',
-    limits: 'UpDataStructsCollectionLimits',
-    metaUpdatePermission: 'UpDataStructsMetaUpdatePermission'
+    limits: 'UpDataStructsCollectionLimits'
   },
   /**
    * Lookup309: up_data_structs::SponsorshipState<sp_core::crypto::AccountId32>
@@ -2349,7 +2347,6 @@ export default {
     sponsorship: 'UpDataStructsSponsorshipState',
     limits: 'UpDataStructsCollectionLimits',
     constOnChainSchema: 'Bytes',
-    metaUpdatePermission: 'UpDataStructsMetaUpdatePermission',
     tokenPropertyPermissions: 'Vec<UpDataStructsPropertyKeyPermission>',
     properties: 'Vec<UpDataStructsProperty>'
   },
