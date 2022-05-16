@@ -95,6 +95,38 @@
                     ]
                 }
             ]
+        },
+        {
+            "bin": "../cumulus/target/release/polkadot-collator",
+            "id": "1000",
+            "chain": "statemint-local",
+            "balance": "1000000000000000000000000",
+            "nodes": [
+                {
+                    "port": 41200,
+                    "wsPort": 19944,
+                    "rpcPort": 19933,
+                    "name": "alice",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                },
+                {
+                    "port": 41201,
+                    "wsPort": 19945,
+                    "rpcPort": 19934,
+                    "name": "bob",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                }
+            ]
         }
     ],
     "simpleParachains": [],

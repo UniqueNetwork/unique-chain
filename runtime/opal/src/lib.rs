@@ -941,6 +941,13 @@ impl pallet_charge_transaction::Config for Runtime {
 //	 type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
 // }
 
+impl pallet_foreing_assets::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type RegisterOrigin = frame_system::EnsureRoot<AccountId>; //EnsureRootOrHalfGeneralCouncil;
+	type WeightInfo = ();//weights::module_asset_registry::WeightInfo<Runtime>;
+}
+
 parameter_types! {
 	// 0x842899ECF380553E8a4de75bF534cdf6fBF64049
 	pub const HelpersContractAddress: H160 = H160([
@@ -993,6 +1000,7 @@ construct_runtime!(
 		Fungible: pallet_fungible::{Pallet, Storage} = 67,
 		Refungible: pallet_refungible::{Pallet, Storage} = 68,
 		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
+		ForeingAssets: pallet_foreing_assets::{Pallet, Call, Storage, Event<T>} = 70,
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,

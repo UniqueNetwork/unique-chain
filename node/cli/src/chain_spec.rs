@@ -223,7 +223,7 @@ pub fn development_config() -> OpalChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
-				1000
+				5000
 			)
 		},
 		// Bootnodes
@@ -238,7 +238,7 @@ pub fn development_config() -> OpalChainSpec {
 		// Extensions
 		Extensions {
 			relay_chain: "rococo-dev".into(),
-			para_id: 1000,
+			para_id: 5000,
 		},
 	)
 }
@@ -291,7 +291,7 @@ pub fn local_testnet_rococo_config() -> DefaultChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
-				1000
+				5000
 			)
 		},
 		// Bootnodes
@@ -306,7 +306,7 @@ pub fn local_testnet_rococo_config() -> DefaultChainSpec {
 		// Extensions
 		Extensions {
 			relay_chain: "rococo-local".into(),
-			para_id: 1000,
+			para_id: 5000,
 		},
 	)
 }

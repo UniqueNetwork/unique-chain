@@ -84,6 +84,7 @@ std = [
     'pallet-unique/std',
     'pallet-unq-scheduler/std',
     'pallet-charge-transaction/std',
+    "pallet-foreing-assets/std",
     'up-data-structs/std',
     'sp-api/std',
     'sp-block-builder/std',
@@ -389,6 +390,7 @@ pallet-common = { default-features = false, path = "../../pallets/common" }
 pallet-fungible = { default-features = false, path = "../../pallets/fungible" }
 pallet-refungible = { default-features = false, path = "../../pallets/refungible" }
 pallet-nonfungible = { default-features = false, path = "../../pallets/nonfungible" }
+pallet-foreing-assets = { default-features = false, path = "../../pallets/foreing-assets" }
 pallet-unq-scheduler = { path = '../../pallets/scheduler', default-features = false }
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
 pallet-charge-transaction = { git = "https://github.com/UniqueNetwork/pallet-sponsoring", branch = 'polkadot-v0.9.18', package = "pallet-template-transaction-payment", default-features = false, version = '3.0.0' }

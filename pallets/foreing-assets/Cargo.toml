@@ -1,7 +1,7 @@
 [package]
-name = "module-asset-registry"
-version = "2.5.1"
-authors = ["Acala Developers"]
+name = "pallet-foreing-assets"
+version = "0.1.0"
+license = "GPLv3"
 edition = "2021"
 
 [dependencies]
@@ -14,6 +14,7 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", default-features = false }
 #primitives = { package = "acala-primitives", path = "../../primitives", default-features = false }
+up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
 
 xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.18", default-features = false }
 xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.18", default-features = false }
@@ -44,6 +45,7 @@ std = [
 	"sp-std/std",
 	"frame-support/std",
 	"frame-system/std",
+	"up-data-structs/std",
 	# "primitives/std",
 	# "xcm/std",
 	# "xcm-builder/std",
