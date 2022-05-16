@@ -18,7 +18,7 @@
 
 use erc::ERC721Events;
 use evm_coder::ToLog;
-use frame_support::{BoundedVec, ensure, fail};
+use frame_support::{BoundedVec, ensure, fail, transactional};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
@@ -307,6 +307,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	#[transactional]
 	pub fn set_token_properties(
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
@@ -390,6 +391,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	#[transactional]
 	pub fn delete_token_properties(
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,

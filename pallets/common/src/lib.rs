@@ -26,6 +26,7 @@ use frame_support::{
 	traits::{Imbalance, Get, Currency, WithdrawReasons, ExistenceRequirement},
 	BoundedVec,
 	weights::Pays,
+	transactional,
 };
 use pallet_evm::GasWeightMapping;
 use up_data_structs::{
@@ -742,6 +743,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	#[transactional]
 	pub fn set_collection_properties(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
@@ -774,6 +776,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	#[transactional]
 	pub fn delete_collection_properties(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
@@ -816,6 +819,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	#[transactional]
 	pub fn set_property_permissions(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
@@ -837,19 +841,6 @@ impl<T: Config> Pallet<T> {
 					.map_err(|_| <Error<T>>::UnableToReadUnboundedKeys.into())
 			})
 			.collect::<Result<Vec<PropertyKey>, DispatchError>>()
-	}
-
-	pub fn check_property_key(key: &PropertyKey) -> Result<(), DispatchError> {
-		let key_str = sp_std::str::from_utf8(key.as_slice())
-			.map_err(|_| <Error<T>>::InvalidCharacterInPropertyKey)?;
-
-		for ch in key_str.chars() {
-			if !ch.is_ascii_alphanumeric() && ch != '_' && ch != '-' {
-				return Err(<Error<T>>::InvalidCharacterInPropertyKey.into());
-			}
-		}
-
-		Ok(())
 	}
 
 	pub fn filter_collection_properties(
