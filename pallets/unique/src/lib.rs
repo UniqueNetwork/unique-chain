@@ -238,6 +238,11 @@ decl_storage! {
 		pub ReFungibleTransferBasket get(fn refungible_transfer_basket): nmap hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId, hasher(twox_64_concat) T::AccountId => Option<T::BlockNumber>;
 		//#endregion
 
+		/// Variable metadata sponsoring
+		/// Collection id (controlled?2), token id (controlled?2)
+		#[deprecated]
+		pub VariableMetaDataBasket get(fn variable_meta_data_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber>;
+
 		/// Approval sponsoring
 		pub NftApproveBasket get(fn nft_approve_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber>;
 		pub FungibleApproveBasket get(fn fungible_approve_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(twox_64_concat) T::AccountId => Option<T::BlockNumber>;
@@ -255,6 +260,14 @@ decl_module! {
 		fn deposit_event() = default;
 
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
+			0
+		}
+
+		fn on_runtime_upgrade() -> Weight {
+			let limit = None;
+
+			<VariableMetaDataBasket<T>>::remove_all(limit);
+
 			0
 		}
 
