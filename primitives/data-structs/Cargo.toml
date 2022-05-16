@@ -40,6 +40,6 @@ std = [
   "sp-std/std",
   "pallet-evm/std",
 ]
-serde1 = ["serde"]
+serde1 = ["serde/alloc"]
 limit-testing = []
 runtime-benchmarks = []

@@ -72,7 +72,6 @@ sp_api::decl_runtime_apis! {
 			token: TokenId,
 		) -> Result<u128>;
 
-		fn eth_contract_code(account: H160) -> Option<Vec<u8>>;
 		fn adminlist(collection: CollectionId) -> Result<Vec<CrossAccountId>>;
 		fn allowlist(collection: CollectionId) -> Result<Vec<CrossAccountId>>;
 		fn allowed(collection: CollectionId, user: CrossAccountId) -> Result<bool>;

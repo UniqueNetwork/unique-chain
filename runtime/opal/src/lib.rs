@@ -50,6 +50,7 @@ pub use pallet_transaction_payment::{
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_evm::{
 	EnsureAddressTruncated, HashedAddressMapping, Runner, account::CrossAccountId as _, OnMethodCall,
+	Account as EVMAccount, FeeCalculator, GasWeightMapping,
 };
 pub use frame_support::{
 	construct_runtime, match_types,
@@ -79,7 +80,6 @@ use sp_arithmetic::{
 };
 use smallvec::smallvec;
 use codec::{Encode, Decode};
-use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
 	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating},

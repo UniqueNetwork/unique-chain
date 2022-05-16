@@ -27,8 +27,7 @@ use pallet_evm::{
 use sp_core::H160;
 use up_data_structs::{
 	CreateCollectionData, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	MAX_COLLECTION_NAME_LENGTH, OFFCHAIN_SCHEMA_LIMIT, VARIABLE_ON_CHAIN_SCHEMA_LIMIT,
-	CONST_ON_CHAIN_SCHEMA_LIMIT,
+	MAX_COLLECTION_NAME_LENGTH,
 };
 use crate::{Config, Pallet};
 use frame_support::traits::Get;
@@ -48,7 +47,7 @@ impl<T: Config> WithRecorder<T> for EvmCollection<T> {
 }
 
 #[derive(ToLog)]
-pub enum CollectionEvent {
+pub enum EthCollectionEvent {
 	CollectionCreated {
 		#[indexed]
 		owner: address,
@@ -95,7 +94,7 @@ impl<T: Config> EvmCollection<T> {
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
 		<PalletEvm<T>>::deposit_log(
-			CollectionEvent::CollectionCreated {
+			EthCollectionEvent::CollectionCreated {
 				owner: *caller.as_eth(),
 				collection_id: address,
 			}
@@ -126,58 +125,6 @@ impl<T: Config> EvmCollection<T> {
 		if !collection.confirm_sponsorship(caller.as_sub()) {
 			return Err(Error::Revert("Caller is not set as sponsor".into()));
 		}
-		collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-		Ok(())
-	}
-
-	fn set_offchain_schema(
-		&self,
-		caller: caller,
-		collection_address: address,
-		schema: string,
-	) -> Result<void> {
-		let mut collection = collection_from_address(collection_address, &self.0)?;
-		check_is_owner(caller, &collection)?;
-
-		let schema = schema
-			.into_bytes()
-			.try_into()
-			.map_err(|_| error_feild_too_long(stringify!(shema), OFFCHAIN_SCHEMA_LIMIT))?;
-		// collection.offchain_schema = schema;
-		collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-		Ok(())
-	}
-
-	fn set_variable_on_chain_schema(
-		&self,
-		caller: caller,
-		collection_address: address,
-		variable: string,
-	) -> Result<void> {
-		let mut collection = collection_from_address(collection_address, &self.0)?;
-		check_is_owner(caller, &collection)?;
-
-		let variable = variable.into_bytes().try_into().map_err(|_| {
-			error_feild_too_long(stringify!(variable), VARIABLE_ON_CHAIN_SCHEMA_LIMIT)
-		})?;
-		// collection.variable_on_chain_schema = variable;
-		collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-		Ok(())
-	}
-
-	fn set_const_on_chain_schema(
-		&self,
-		caller: caller,
-		collection_address: address,
-		const_on_chain: string,
-	) -> Result<void> {
-		let mut collection = collection_from_address(collection_address, &self.0)?;
-		check_is_owner(caller, &collection)?;
-
-		let const_on_chain = const_on_chain.into_bytes().try_into().map_err(|_| {
-			error_feild_too_long(stringify!(const_on_chain), CONST_ON_CHAIN_SCHEMA_LIMIT)
-		})?;
-		// collection.const_on_chain_schema = const_on_chain;
 		collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 		Ok(())
 	}

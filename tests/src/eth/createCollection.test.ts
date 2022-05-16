@@ -78,39 +78,6 @@ describe('Create collection from EVM', () => {
     expect(collection.sponsorship.isConfirmed).to.be.true;
     expect(collection.sponsorship.asConfirmed.toHuman()).to.be.eq(evmToAddress(sponsor));
   });
-  
-  itWeb3('Set offchain schema', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
-    const helper = collectionHelper(web3, owner);
-    let result = await helper.methods.create721Collection('Schema collection', '2', '2').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const schema = 'Some schema';
-    result = await helper.methods.setOffchainSchema(collectionIdAddress, schema).send();
-    const collection = (await getDetailedCollectionInfo(api, collectionId))!;
-    expect(collection.offchainSchema.toHuman()).to.be.eq(schema);
-  });
-  
-  itWeb3('Set variable on chain schema', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
-    const helper = collectionHelper(web3, owner);
-    let result = await helper.methods.create721Collection('Variable collection', '3', '3').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const variable = 'Some variable';
-    result = await helper.methods.setVariableOnChainSchema(collectionIdAddress, variable).send();
-    const collection = (await getDetailedCollectionInfo(api, collectionId))!;
-    expect(collection.variableOnChainSchema.toHuman()).to.be.eq(variable);
-  });
-  
-  itWeb3('Set const on chain schema', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
-    const helper = collectionHelper(web3, owner);
-    let result = await helper.methods.create721Collection('Const collection', '4', '4').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const constSchema = 'Some const';
-    result = await helper.methods.setConstOnChainSchema(collectionIdAddress, constSchema).send();
-    const collection = (await getDetailedCollectionInfo(api, collectionId))!;
-    expect(collection.constOnChainSchema.toHuman()).to.be.eq(constSchema);
-  });
 
   itWeb3('Set limits', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
@@ -248,24 +215,6 @@ describe('(!negative tests!) Create collection from EVM', () => {
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
     {
-      const schema = 'Some schema';
-      await expect(helper.methods
-        .setOffchainSchema(collectionAddressWithBadPrefix, schema)
-        .call()).to.be.rejectedWith(EXPECTED_ERROR);
-    }
-    {
-      const variable = 'Some variable';
-      await expect(helper.methods
-        .setVariableOnChainSchema(collectionAddressWithBadPrefix, variable)
-        .call()).to.be.rejectedWith(EXPECTED_ERROR);
-    }
-    {
-      const constData = 'Some const';
-      await expect(helper.methods
-        .setConstOnChainSchema(collectionAddressWithBadPrefix, constData)
-        .call()).to.be.rejectedWith(EXPECTED_ERROR);
-    }
-    {
       const limits = '{"account_token_ownership_limit":1000}';
       await expect(helper.methods
         .setLimits(collectionAddressWithBadPrefix, limits)
@@ -293,65 +242,11 @@ describe('(!negative tests!) Create collection from EVM', () => {
         .call()).to.be.rejectedWith('Caller is not set as sponsor');
     }
     {
-      const schema = 'Some schema';
-      await expect(helperFromNotOwner.methods
-        .setOffchainSchema(collectionIdAddress, schema)
-        .call()).to.be.rejectedWith(EXPECTED_ERROR);
-    }
-    {
-      const variable = 'Some variable';
-      await expect(helperFromNotOwner.methods
-        .setVariableOnChainSchema(collectionIdAddress, variable)
-        .call()).to.be.rejectedWith(EXPECTED_ERROR);
-    }
-    {
-      const constData = 'Some const';
-      await expect(helperFromNotOwner.methods
-        .setConstOnChainSchema(collectionIdAddress, constData)
-        .call()).to.be.rejectedWith(EXPECTED_ERROR);
-    }
-    {
       const limits = '{"account_token_ownership_limit":1000}';
       await expect(helperFromNotOwner.methods
         .setLimits(collectionIdAddress, limits)
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
-  });
-
-  itWeb3('(!negative test!) Set offchain schema (length limit)', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
-    const helper = collectionHelper(web3, owner);
-    const result = await helper.methods.create721Collection('Schema collection', 'A', 'A').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const OFFCHAIN_SCHEMA_LIMIT = 8192;
-    const schema = 'A'.repeat(OFFCHAIN_SCHEMA_LIMIT + 1);
-    await expect(helper.methods
-      .setOffchainSchema(collectionIdAddress, schema)
-      .call()).to.be.rejectedWith('schema is too long. Max length is ' + OFFCHAIN_SCHEMA_LIMIT);
-  });
-
-  itWeb3('(!negative test!) Set variable on chain schema (length limit)', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
-    const helper = collectionHelper(web3, owner);
-    const result = await helper.methods.create721Collection('Schema collection', 'A', 'A').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const VARIABLE_ON_CHAIN_SCHEMA_LIMIT = 8192;
-    const variable = 'A'.repeat(VARIABLE_ON_CHAIN_SCHEMA_LIMIT + 1);
-    await expect(helper.methods
-      .setVariableOnChainSchema(collectionIdAddress, variable)
-      .call()).to.be.rejectedWith('variable is too long. Max length is ' + VARIABLE_ON_CHAIN_SCHEMA_LIMIT);
-  });
-
-  itWeb3('(!negative test!) Set const on chain schema (length limit)', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
-    const helper = collectionHelper(web3, owner);
-    const result = await helper.methods.create721Collection('Schema collection', 'A', 'A').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const CONST_ON_CHAIN_SCHEMA_LIMIT = 32768;
-    const constData = 'A'.repeat(CONST_ON_CHAIN_SCHEMA_LIMIT + 1);
-    await expect(helper.methods
-      .setConstOnChainSchema(collectionIdAddress, constData)
-      .call()).to.be.rejectedWith('const_on_chain is too long. Max length is ' + CONST_ON_CHAIN_SCHEMA_LIMIT);
   });
 
   itWeb3('(!negative test!) Set limits', async ({api, web3}) => {
