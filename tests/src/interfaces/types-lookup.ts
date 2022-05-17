@@ -26,9 +26,6 @@ declare module '@polkadot/types/lookup' {
     readonly trieNodes: BTreeSet<Bytes>;
   }
 
-  /** @name BTreeSet (11) */
-  export interface BTreeSet extends Vec<Bytes> {}
-
   /** @name CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot (13) */
   export interface CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot extends Struct {
     readonly dmqMqcHead: H256;
@@ -3042,7 +3039,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'AccountNotEmpty' | 'AccountIsNotMigrating';
   }
 
-  /** @name SpRuntimeMultiSignature (423) */
+  /** @name SpRuntimeMultiSignature (334) */
   export interface SpRuntimeMultiSignature extends Enum {
     readonly isEd25519: boolean;
     readonly asEd25519: SpCoreEd25519Signature;
@@ -3053,31 +3050,31 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Ed25519' | 'Sr25519' | 'Ecdsa';
   }
 
-  /** @name SpCoreEd25519Signature (424) */
+  /** @name SpCoreEd25519Signature (335) */
   export interface SpCoreEd25519Signature extends U8aFixed {}
 
-  /** @name SpCoreSr25519Signature (426) */
+  /** @name SpCoreSr25519Signature (337) */
   export interface SpCoreSr25519Signature extends U8aFixed {}
 
-  /** @name SpCoreEcdsaSignature (427) */
+  /** @name SpCoreEcdsaSignature (338) */
   export interface SpCoreEcdsaSignature extends U8aFixed {}
 
-  /** @name FrameSystemExtensionsCheckSpecVersion (430) */
+  /** @name FrameSystemExtensionsCheckSpecVersion (341) */
   export type FrameSystemExtensionsCheckSpecVersion = Null;
 
-  /** @name FrameSystemExtensionsCheckGenesis (431) */
+  /** @name FrameSystemExtensionsCheckGenesis (342) */
   export type FrameSystemExtensionsCheckGenesis = Null;
 
-  /** @name FrameSystemExtensionsCheckNonce (434) */
+  /** @name FrameSystemExtensionsCheckNonce (345) */
   export interface FrameSystemExtensionsCheckNonce extends Compact<u32> {}
 
-  /** @name FrameSystemExtensionsCheckWeight (435) */
+  /** @name FrameSystemExtensionsCheckWeight (346) */
   export type FrameSystemExtensionsCheckWeight = Null;
 
-  /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (436) */
+  /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (347) */
   export interface PalletTemplateTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
 
-  /** @name OpalRuntimeRuntime (437) */
+  /** @name OpalRuntimeRuntime (348) */
   export type OpalRuntimeRuntime = Null;
 
   /** @name PalletEthereumFakeTransactionFinalizer (438) */

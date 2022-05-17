@@ -26,10 +26,6 @@ export default {
     trieNodes: 'BTreeSet<Bytes>'
   },
   /**
-   * Lookup11: BTreeSet<T>
-   **/
-  BTreeSet: 'Vec<Bytes>',
-  /**
    * Lookup13: cumulus_pallet_parachain_system::relay_state_snapshot::MessagingStateSnapshot
    **/
   CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot: {
@@ -2805,7 +2801,7 @@ export default {
     _enum: ['AccountNotEmpty', 'AccountIsNotMigrating']
   },
   /**
-   * Lookup423: sp_runtime::MultiSignature
+   * Lookup334: sp_runtime::MultiSignature
    **/
   SpRuntimeMultiSignature: {
     _enum: {
@@ -2815,39 +2811,39 @@ export default {
     }
   },
   /**
-   * Lookup424: sp_core::ed25519::Signature
+   * Lookup335: sp_core::ed25519::Signature
    **/
   SpCoreEd25519Signature: '[u8;64]',
   /**
-   * Lookup426: sp_core::sr25519::Signature
+   * Lookup337: sp_core::sr25519::Signature
    **/
   SpCoreSr25519Signature: '[u8;64]',
   /**
-   * Lookup427: sp_core::ecdsa::Signature
+   * Lookup338: sp_core::ecdsa::Signature
    **/
   SpCoreEcdsaSignature: '[u8;65]',
   /**
-   * Lookup430: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+   * Lookup341: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
    **/
   FrameSystemExtensionsCheckSpecVersion: 'Null',
   /**
-   * Lookup431: frame_system::extensions::check_genesis::CheckGenesis<T>
+   * Lookup342: frame_system::extensions::check_genesis::CheckGenesis<T>
    **/
   FrameSystemExtensionsCheckGenesis: 'Null',
   /**
-   * Lookup434: frame_system::extensions::check_nonce::CheckNonce<T>
+   * Lookup345: frame_system::extensions::check_nonce::CheckNonce<T>
    **/
   FrameSystemExtensionsCheckNonce: 'Compact<u32>',
   /**
-   * Lookup435: frame_system::extensions::check_weight::CheckWeight<T>
+   * Lookup346: frame_system::extensions::check_weight::CheckWeight<T>
    **/
   FrameSystemExtensionsCheckWeight: 'Null',
   /**
-   * Lookup436: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
+   * Lookup347: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
    **/
   PalletTemplateTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
   /**
-   * Lookup437: opal_runtime::Runtime
+   * Lookup348: opal_runtime::Runtime
    **/
   OpalRuntimeRuntime: 'Null',
   /**

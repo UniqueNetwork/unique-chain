@@ -30,20 +30,6 @@
         "name": "collectionAddress",
         "type": "address"
       },
-      { "internalType": "string", "name": "constOnChain", "type": "string" }
-    ],
-    "name": "setConstOnChainSchema",
-    "outputs": [],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "collectionAddress",
-        "type": "address"
-      },
       { "internalType": "string", "name": "limitsJson", "type": "string" }
     ],
     "name": "setLimits",
@@ -58,37 +44,9 @@
         "name": "collectionAddress",
         "type": "address"
       },
-      { "internalType": "string", "name": "schema", "type": "string" }
-    ],
-    "name": "setOffchainSchema",
-    "outputs": [],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "collectionAddress",
-        "type": "address"
-      },
       { "internalType": "address", "name": "sponsor", "type": "address" }
     ],
     "name": "setSponsor",
-    "outputs": [],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "collectionAddress",
-        "type": "address"
-      },
-      { "internalType": "string", "name": "variable", "type": "string" }
-    ],
-    "name": "setVariableOnChainSchema",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"

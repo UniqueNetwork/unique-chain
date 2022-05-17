@@ -7,7 +7,7 @@ import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill } fr
 import type { Event } from '@polkadot/types/interfaces/system';
 
 /** @name BTreeSet */
-export interface BTreeSet extends Vec<Bytes> {}
+export interface BTreeSet extends BTreeSet<Bytes> {}
 
 /** @name CumulusPalletDmpQueueCall */
 export interface CumulusPalletDmpQueueCall extends Enum {
@@ -1013,12 +1013,6 @@ export interface PalletEvmCoderSubstrateError extends Enum {
   readonly isOutOfGas: boolean;
   readonly isOutOfFund: boolean;
   readonly type: 'OutOfGas' | 'OutOfFund';
-}
-
-/** @name PalletEvmCollectionError */
-export interface PalletEvmCollectionError extends Enum {
-  readonly isNoPermission: boolean;
-  readonly type: 'NoPermission';
 }
 
 /** @name PalletEvmContractHelpersError */

@@ -21,7 +21,7 @@ contract ERC165 is Dummy {
 	}
 }
 
-// Selector: f83ad95b
+// Selector: 1e95830f
 contract Collection is Dummy, ERC165 {
 	// Selector: create721Collection(string,string,string) 951c0151
 	function create721Collection(
@@ -52,39 +52,6 @@ contract Collection is Dummy, ERC165 {
 	function confirmSponsorship(address collectionAddress) public view {
 		require(false, stub_error);
 		collectionAddress;
-		dummy;
-	}
-
-	// Selector: setOffchainSchema(address,string) 2c9d9d70
-	function setOffchainSchema(address collectionAddress, string memory schema)
-		public
-		view
-	{
-		require(false, stub_error);
-		collectionAddress;
-		schema;
-		dummy;
-	}
-
-	// Selector: setVariableOnChainSchema(address,string) 582691c3
-	function setVariableOnChainSchema(
-		address collectionAddress,
-		string memory variable
-	) public view {
-		require(false, stub_error);
-		collectionAddress;
-		variable;
-		dummy;
-	}
-
-	// Selector: setConstOnChainSchema(address,string) 921456e7
-	function setConstOnChainSchema(
-		address collectionAddress,
-		string memory constOnChain
-	) public view {
-		require(false, stub_error);
-		collectionAddress;
-		constOnChain;
 		dummy;
 	}
 

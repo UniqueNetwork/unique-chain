@@ -5504,7 +5504,6 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-coder-substrate",
- "pallet-evm-collection",
  "pallet-evm-contract-helpers",
  "pallet-evm-migration",
  "pallet-evm-transaction-payment",
@@ -6071,29 +6070,6 @@ dependencies = [
  "parity-scale-codec 3.1.2",
  "scale-info",
  "sp-core",
- "sp-std",
- "up-data-structs",
-]
-
-[[package]]
-name = "pallet-evm-collection"
-version = "0.1.0"
-dependencies = [
- "ethereum",
- "evm-coder",
- "fp-evm-mapping",
- "frame-support",
- "frame-system",
- "log",
- "pallet-common",
- "pallet-evm",
- "pallet-evm-coder-substrate",
- "pallet-nonfungible",
- "parity-scale-codec 3.1.2",
- "scale-info",
- "serde-json-core",
- "sp-core",
- "sp-runtime",
  "sp-std",
  "up-data-structs",
 ]
@@ -6849,6 +6825,8 @@ dependencies = [
  "pallet-evm",
  "parity-scale-codec 3.1.2",
  "scale-info",
+ "serde",
+ "serde-json-core",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -8808,7 +8786,6 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-coder-substrate",
- "pallet-evm-collection",
  "pallet-evm-contract-helpers",
  "pallet-evm-migration",
  "pallet-evm-transaction-payment",
@@ -12880,7 +12857,6 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-coder-substrate",
- "pallet-evm-collection",
  "pallet-evm-contract-helpers",
  "pallet-evm-migration",
  "pallet-evm-transaction-payment",

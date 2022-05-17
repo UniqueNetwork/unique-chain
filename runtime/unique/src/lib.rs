@@ -85,6 +85,7 @@ use sp_arithmetic::{
 use smallvec::smallvec;
 use codec::{Encode, Decode};
 use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
+use pallet_unique::pallet_evm_collection;
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
 	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating},
@@ -1025,7 +1026,6 @@ construct_runtime!(
 		EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage} = 151,
 		EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
 		EvmMigration: pallet_evm_migration::{Pallet, Call, Storage} = 153,
-		EvmCollection: pallet_evm_collection::{Pallet} = 154,
 	}
 );
 

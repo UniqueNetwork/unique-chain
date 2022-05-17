@@ -75,7 +75,6 @@ std = [
     'pallet-evm/std',
     'pallet-evm-migration/std',
     'pallet-evm-contract-helpers/std',
-    'pallet-evm-collection/std',
     'pallet-evm-transaction-payment/std',
     'pallet-evm-coder-substrate/std',
     'pallet-ethereum/std',
@@ -415,7 +414,6 @@ pallet-unq-scheduler = { path = '../../pallets/scheduler', default-features = fa
 pallet-charge-transaction = { git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.21", package = "pallet-template-transaction-payment", default-features = false, version = "3.0.0" }
 pallet-evm-migration = { path = '../../pallets/evm-migration', default-features = false }
 pallet-evm-contract-helpers = { path = '../../pallets/evm-contract-helpers', default-features = false }
-pallet-evm-collection = { path = '../../pallets/evm-collection', default-features = false }
 pallet-evm-transaction-payment = { path = '../../pallets/evm-transaction-payment', default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }

@@ -19,6 +19,8 @@ default = ['std']
 runtime-benchmarks = ['frame-benchmarking', 'pallet-common/runtime-benchmarks']
 std = [
     'codec/std',
+    'serde/std',
+    'serde-json-core/std',
     'frame-support/std',
     'frame-system/std',
     'pallet-evm/std',
@@ -59,6 +61,20 @@ branch = "polkadot-v0.9.21"
 default-features = false
 git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.21"
+
+# [dependencies.pallet-transaction-payment]
+# default-features = false
+# git = "https://github.com/paritytech/substrate"
+# branch = "polkadot-v0.9.21"
+
+[dependencies.serde]
+default-features = false
+features = ['derive']
+version = '1.0.130'
+
+[dependencies.serde-json-core]
+default-features = false
+version = "0.4"
 
 [dependencies.sp-runtime]
 default-features = false
