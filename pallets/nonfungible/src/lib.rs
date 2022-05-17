@@ -63,7 +63,9 @@ pub struct ItemData<CrossAccountId> {
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
+	use frame_support::{
+		Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, traits::StorageVersion,
+	};
 	use frame_system::pallet_prelude::*;
 	use up_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;
@@ -427,6 +429,14 @@ impl<T: Config> Pallet<T> {
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResult {
 		<PalletCommon<T>>::set_property_permissions(collection, sender, property_permissions)
+	}
+
+	pub fn set_property_permission(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		permission: PropertyKeyPermission,
+	) -> DispatchResult {
+		<PalletCommon<T>>::set_property_permission(collection, sender, permission)
 	}
 
 	pub fn transfer(

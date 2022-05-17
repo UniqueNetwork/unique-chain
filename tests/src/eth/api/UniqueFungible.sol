@@ -22,15 +22,6 @@ interface ERC20Events {
 	);
 }
 
-// Selector: 56fd500b
-interface CollectionProperties is Dummy, ERC165 {
-	// Selector: setProperty(string,string) 62d9491f
-	function setProperty(string memory key, string memory value) external;
-
-	// Selector: deleteProperty(string) 34241914
-	function deleteProperty(string memory key) external;
-}
-
 // Selector: 79cc6790
 interface ERC20UniqueExtensions is Dummy, ERC165 {
 	// Selector: burnFrom(address,uint256) 79cc6790
@@ -72,6 +63,24 @@ interface ERC20 is Dummy, ERC165, ERC20Events {
 		external
 		view
 		returns (uint256);
+}
+
+// Selector: 9b5e29c5
+interface CollectionProperties is Dummy, ERC165 {
+	// Selector: setCollectionProperty(string,bytes) 2f073f66
+	function setCollectionProperty(string memory key, bytes memory value)
+		external;
+
+	// Selector: deleteCollectionProperty(string) 7b7debce
+	function deleteCollectionProperty(string memory key) external;
+
+	// Throws error if key not found
+	//
+	// Selector: collectionProperty(string) cf24fd6d
+	function collectionProperty(string memory key)
+		external
+		view
+		returns (bytes memory);
 }
 
 interface UniqueFungible is

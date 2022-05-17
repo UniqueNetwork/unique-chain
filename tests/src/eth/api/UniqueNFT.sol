@@ -42,19 +42,39 @@ interface ERC721MintableEvents {
 	event MintingFinished();
 }
 
+// Selector: 41369377
+interface TokenProperties is Dummy, ERC165 {
+	// Selector: setTokenPropertyPermission(string,bool,bool,bool) 222d97fa
+	function setTokenPropertyPermission(
+		string memory key,
+		bool isMutable,
+		bool collectionAdmin,
+		bool tokenOwner
+	) external;
+
+	// Selector: setProperty(uint256,string,bytes) 1752d67b
+	function setProperty(
+		uint256 tokenId,
+		string memory key,
+		bytes memory value
+	) external;
+
+	// Selector: deleteProperty(uint256,string) 066111d1
+	function deleteProperty(uint256 tokenId, string memory key) external;
+
+	// Throws error if key not found
+	//
+	// Selector: property(uint256,string) 7228c327
+	function property(uint256 tokenId, string memory key)
+		external
+		view
+		returns (bytes memory);
+}
+
 // Selector: 42966c68
 interface ERC721Burnable is Dummy, ERC165 {
 	// Selector: burn(uint256) 42966c68
 	function burn(uint256 tokenId) external;
-}
-
-// Selector: 56fd500b
-interface CollectionProperties is Dummy, ERC165 {
-	// Selector: setProperty(string,string) 62d9491f
-	function setProperty(string memory key, string memory value) external;
-
-	// Selector: deleteProperty(string) 34241914
-	function deleteProperty(string memory key) external;
 }
 
 // Selector: 58800161
@@ -171,6 +191,24 @@ interface ERC721Enumerable is Dummy, ERC165 {
 	function totalSupply() external view returns (uint256);
 }
 
+// Selector: 9b5e29c5
+interface CollectionProperties is Dummy, ERC165 {
+	// Selector: setCollectionProperty(string,bytes) 2f073f66
+	function setCollectionProperty(string memory key, bytes memory value)
+		external;
+
+	// Selector: deleteCollectionProperty(string) 7b7debce
+	function deleteCollectionProperty(string memory key) external;
+
+	// Throws error if key not found
+	//
+	// Selector: collectionProperty(string) cf24fd6d
+	function collectionProperty(string memory key)
+		external
+		view
+		returns (bytes memory);
+}
+
 // Selector: d74d154f
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// Selector: transfer(address,uint256) a9059cbb
@@ -202,5 +240,6 @@ interface UniqueNFT is
 	ERC721UniqueExtensions,
 	ERC721Mintable,
 	ERC721Burnable,
-	CollectionProperties
+	CollectionProperties,
+	TokenProperties
 {}

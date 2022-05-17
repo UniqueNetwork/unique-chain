@@ -31,12 +31,12 @@ use frame_support::{
 use pallet_evm::GasWeightMapping;
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, CollectionId, CreateItemData,
-	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, TokenId,
-	CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT,
+	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, TokenId, CollectionStats,
+	MAX_TOKEN_OWNERSHIP, CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT,
 	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT,
-	CUSTOM_DATA_LIMIT, CollectionLimits, CreateCollectionData, SponsorshipState,
-	CreateItemExData, SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField,
-	PhantomType, Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyPermission,
+	CUSTOM_DATA_LIMIT, CollectionLimits, CreateCollectionData, SponsorshipState, CreateItemExData,
+	SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField, PhantomType,
+	Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyPermission,
 	PropertiesError, PropertyKeyPermission, TokenData, TrySet,
 };
 pub use pallet::*;
