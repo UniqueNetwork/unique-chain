@@ -49,7 +49,6 @@ describe('EVM collection properties', () => {
     const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
 
     const value = await contract.methods.collectionProperty('testKey').call();
-
     expect(value).to.equal(web3.utils.toHex('testValue'));
   });
 });
