@@ -80,7 +80,7 @@ use sp_arithmetic::{
 };
 use smallvec::smallvec;
 use codec::{Encode, Decode};
-use pallet_unique::pallet_evm_collection;
+use pallet_unique::eth::evm_collection;
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
 	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating},
@@ -307,7 +307,7 @@ impl pallet_evm::Config for Runtime {
 		pallet_evm_migration::OnMethodCall<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
 		CollectionDispatchT<Self>,
-		pallet_evm_collection::CollectionOnMethodCall<Self>,
+		evm_collection::CollectionOnMethodCall<Self>,
 	);
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
@@ -988,7 +988,7 @@ impl pallet_evm_contract_helpers::Config for Runtime {
 	type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
 }
 
-impl pallet_evm_collection::Config for Runtime {
+impl evm_collection::Config for Runtime {
 	type ContractAddress = EvmCollectionAddress;
 }
 

@@ -46,7 +46,7 @@ use pallet_common::{
 	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_call,
 	dispatch::CollectionDispatch,
 };
-pub use eth::pallet_evm_collection;
+pub use eth::evm_collection;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
