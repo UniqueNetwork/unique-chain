@@ -700,12 +700,12 @@ impl<Value> PropertiesMap<Value> {
 		}
 
 		for byte in key.as_slice().iter() {
-			match char::from_u32(*byte as u32) {
-				Some(ch)
-					if ch.is_ascii_alphanumeric()
-					|| ch == '_'
-					|| ch == '-' => { /* OK */ },
-				_ => return Err(PropertiesError::InvalidCharacterInPropertyKey)
+			let byte = *byte;
+
+			if !byte.is_ascii_alphanumeric()
+				&& byte != b'_'
+				&& byte != b'-' {
+				return Err(PropertiesError::InvalidCharacterInPropertyKey)
 			}
 		}
 
