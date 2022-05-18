@@ -66,8 +66,11 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+        /* Unique-specific events */
         CorruptedCollectionType,
         NotRmrkCollection,
+
+        /* RMRK compatible events */
         CollectionNotEmpty,
         NoAvailableCollectionId,
         CollectionUnknown,
