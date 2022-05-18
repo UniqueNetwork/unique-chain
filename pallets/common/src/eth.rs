@@ -37,3 +37,7 @@ pub fn collection_id_to_address(id: CollectionId) -> H160 {
 	out[16..20].copy_from_slice(&u32::to_be_bytes(id.0));
 	H160(out)
 }
+
+pub fn is_collection(address: &H160) -> bool {
+	address[0..16] == ETH_COLLECTION_PREFIX
+}

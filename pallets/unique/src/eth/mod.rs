@@ -318,6 +318,10 @@ pub mod evm_collection {
 			input: &[u8],
 			value: sp_core::U256,
 		) -> Option<PrecompileResult> {
+			if !pallet_common::eth::is_collection(target) {
+				return None;
+			}
+
 			let helpers = EvmCollection::<T>(Rc::new(SubstrateRecorder::<T>::new(*target, gas_left)));
 			pallet_evm_coder_substrate::call(*source, helpers, value, input)
 		}

@@ -31,6 +31,7 @@ import {
   normalizeAddress,
   normalizeEvents,
 } from './util/helpers';
+import util from 'util';
 
 async function getCollectionAddressFromResult(api: ApiPromise, result: any) {
   const collectionIdAddress = normalizeAddress(result.events[0].raw.topics[2]);
@@ -201,18 +202,18 @@ describe('(!negative tests!) Create collection from EVM', () => {
       .call()).to.be.rejectedWith('NotSufficientFounds');
   });
 
-  itWeb3('(!negative test!) Collection address (Contract is not an unique collection)', async ({api, web3}) => {
+  itWeb3('(!negative test!) Collection address (Create collection handle error)', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
-    const collectionAddressWithBadPrefix = '0x00112233445566778899AABBCCDDEEFF00112233';
-    const collectionEvm = evmCollection(web3, owner, collectionAddressWithBadPrefix);
-    const EXPECTED_ERROR = 'Contract is not an unique collection';
+    const collectionAddressForNonexistentCollection = '0x17C4E6453CC49AAAAEACA894E6D9683E00112233';
+    const collectionEvm = evmCollection(web3, owner, collectionAddressForNonexistentCollection);
+    const EXPECTED_ERROR = 'Create collection handle error';
     {
       const sponsor = await createEthAccountWithBalance(api, web3);
       await expect(collectionEvm.methods
         .setSponsor(sponsor)
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
       
-      const sponsorCollection = evmCollection(web3, sponsor, collectionAddressWithBadPrefix);
+      const sponsorCollection = evmCollection(web3, sponsor, collectionAddressForNonexistentCollection);
       await expect(sponsorCollection.methods
         .confirmSponsorship()
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
