@@ -657,6 +657,12 @@ pub struct Property {
 	pub value: PropertyValue,
 }
 
+impl Into<(PropertyKey, PropertyValue)> for Property {
+	fn into(self) -> (PropertyKey, PropertyValue) {
+		(self.key, self.value)
+	}
+}
+
 #[derive(Encode, Decode, TypeInfo, Debug, MaxEncodedLen, PartialEq, Clone)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct PropertyKeyPermission {
@@ -664,6 +670,12 @@ pub struct PropertyKeyPermission {
 	pub key: PropertyKey,
 
 	pub permission: PropertyPermission,
+}
+
+impl Into<(PropertyKey, PropertyPermission)> for PropertyKeyPermission {
+	fn into(self) -> (PropertyKey, PropertyPermission) {
+		(self.key, self.permission)
+	}
 }
 
 pub enum PropertiesError {
@@ -704,15 +716,17 @@ pub trait TrySetProperty: Sized {
 		value: Self::Value,
 	) -> Result<(), PropertiesError>;
 
-	fn try_scoped_set_from_iter<I>(
+	fn try_scoped_set_from_iter<I, KV>(
 		&mut self,
 		scope: PropertyScope,
 		iter: I,
 	) -> Result<(), PropertiesError>
 	where
-		I: Iterator<Item = (PropertyKey, Self::Value)>,
+		I: Iterator<Item=KV>,
+		KV: Into<(PropertyKey, Self::Value)>
 	{
-		for (key, value) in iter {
+		for kv in iter {
+			let (key, value) = kv.into();
 			self.try_scoped_set(scope, key, value)?;
 		}
 
@@ -723,9 +737,10 @@ pub trait TrySetProperty: Sized {
 		self.try_scoped_set(PropertyScope::None, key, value)
 	}
 
-	fn try_set_from_iter<I>(&mut self, iter: I) -> Result<(), PropertiesError>
+	fn try_set_from_iter<I, KV>(&mut self, iter: I) -> Result<(), PropertiesError>
 	where
-		I: Iterator<Item = (PropertyKey, Self::Value)>,
+		I: Iterator<Item=KV>,
+		KV: Into<(PropertyKey, Self::Value)>
 	{
 		self.try_scoped_set_from_iter(PropertyScope::None, iter)
 	}
