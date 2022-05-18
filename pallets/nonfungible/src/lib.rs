@@ -22,7 +22,7 @@ use frame_support::{BoundedVec, ensure, fail, transactional};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
-	PropertyKey, PropertyKeyPermission, Properties, TrySet,
+	PropertyKey, PropertyKeyPermission, Properties, TrySetProperty,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{

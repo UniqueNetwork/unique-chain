@@ -37,7 +37,7 @@ use up_data_structs::{
 	CUSTOM_DATA_LIMIT, CollectionLimits, CreateCollectionData, SponsorshipState, CreateItemExData,
 	SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField, PhantomType,
 	Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyPermission,
-	PropertiesError, PropertyKeyPermission, TokenData, TrySet,
+	PropertiesError, PropertyKeyPermission, TokenData, TrySetProperty,
 };
 pub use pallet::*;
 use sp_core::H160;
@@ -346,8 +346,8 @@ pub mod pallet {
 		/// Tried to store more property keys than allowed
 		PropertyLimitReached,
 
-		/// Unable to read array of unbounded keys
-		UnableToReadUnboundedKeys,
+		/// Property key is too long
+		PropertyKeyIsTooLong,
 
 		/// Only ASCII letters, digits, and '_', '-' are allowed
 		InvalidCharacterInPropertyKey,
@@ -838,7 +838,7 @@ impl<T: Config> Pallet<T> {
 		keys.into_iter()
 			.map(|key| -> Result<PropertyKey, DispatchError> {
 				key.try_into()
-					.map_err(|_| <Error<T>>::UnableToReadUnboundedKeys.into())
+					.map_err(|_| <Error<T>>::PropertyKeyIsTooLong.into())
 			})
 			.collect::<Result<Vec<PropertyKey>, DispatchError>>()
 	}
@@ -1181,6 +1181,7 @@ impl<T: Config> From<PropertiesError> for Error<T> {
 			PropertiesError::NoSpaceForProperty => Self::NoSpaceForProperty,
 			PropertiesError::PropertyLimitReached => Self::PropertyLimitReached,
 			PropertiesError::InvalidCharacterInPropertyKey => Self::InvalidCharacterInPropertyKey,
+			PropertiesError::PropertyKeyIsTooLong => Self::PropertyKeyIsTooLong,
 			PropertiesError::EmptyPropertyKey => Self::EmptyPropertyKey,
 		}
 	}

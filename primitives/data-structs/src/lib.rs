@@ -649,23 +649,64 @@ pub enum PropertiesError {
 	NoSpaceForProperty,
 	PropertyLimitReached,
 	InvalidCharacterInPropertyKey,
+	PropertyKeyIsTooLong,
 	EmptyPropertyKey,
 }
 
-pub trait TrySet: Sized {
+#[derive(Clone, Copy)]
+pub enum PropertyScope {
+	None,
+	Rmrk,
+}
+
+impl PropertyScope {
+	fn apply(self, key: PropertyKey) -> Result<PropertyKey, PropertiesError> {
+		let scope_str: &[u8] = match self {
+			Self::None => return Ok(key),
+			Self::Rmrk => b"rmrk",
+		};
+
+		[scope_str, b":", key.as_slice()]
+			.concat()
+			.try_into()
+			.map_err(|_| PropertiesError::PropertyKeyIsTooLong)
+	}
+}
+
+pub trait TrySetProperty: Sized {
 	type Value;
 
-	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError>;
+	fn try_scoped_set(
+		&mut self,
+		scope: PropertyScope,
+		key: PropertyKey,
+		value: Self::Value
+	) -> Result<(), PropertiesError>;
+
+	fn try_scoped_set_from_iter<I>(
+		&mut self,
+		scope: PropertyScope,
+		iter: I
+	) -> Result<(), PropertiesError>
+	where
+		I: Iterator<Item=(PropertyKey, Self::Value)>
+	{
+		for (key, value) in iter {
+			self.try_scoped_set(scope, key, value)?;
+		}
+
+		Ok(())
+	}
+
+	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError> {
+		self.try_scoped_set(PropertyScope::None, key, value)
+	}
 
 	fn try_set_from_iter<I>(&mut self, iter: I) -> Result<(), PropertiesError>
 	where
 		I: Iterator<Item = (PropertyKey, Self::Value)>,
 	{
-		for (key, value) in iter {
-			self.try_set(key, value)?;
-		}
-
-		Ok(())
+		self.try_scoped_set_from_iter(PropertyScope::None, iter)
 	}
 }
 
@@ -713,12 +754,18 @@ impl<Value> PropertiesMap<Value> {
 	}
 }
 
-impl<Value> TrySet for PropertiesMap<Value> {
+impl<Value> TrySetProperty for PropertiesMap<Value> {
 	type Value = Value;
 
-	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError> {
+	fn try_scoped_set(
+		&mut self,
+		scope: PropertyScope,
+		key: PropertyKey,
+		value: Self::Value
+	) -> Result<(), PropertiesError> {
 		Self::check_property_key(&key)?;
 
+		let key = scope.apply(key)?;
 		self.0
 			.try_insert(key, value)
 			.map_err(|_| PropertiesError::PropertyLimitReached)?;
@@ -765,17 +812,22 @@ impl Properties {
 	}
 }
 
-impl TrySet for Properties {
+impl TrySetProperty for Properties {
 	type Value = PropertyValue;
 
-	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError> {
+	fn try_scoped_set(
+		&mut self,
+		scope: PropertyScope,
+		key: PropertyKey,
+		value: Self::Value
+	) -> Result<(), PropertiesError> {
 		let value_len = value.len();
 
 		if self.consumed_space as usize + value_len > self.space_limit as usize {
 			return Err(PropertiesError::NoSpaceForProperty);
 		}
 
-		self.map.try_set(key, value)?;
+		self.map.try_scoped_set(scope, key, value)?;
 
 		self.consumed_space += value_len as u32;
 
