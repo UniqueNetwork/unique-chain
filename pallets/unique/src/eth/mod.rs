@@ -107,7 +107,7 @@ pub mod evm_collection {
 	};
 	use frame_support::traits::Get;
 	use sp_core::H160;
-	use pallet_common::{CollectionHandle, save_eth};
+	use pallet_common::{CollectionHandle, save_eth, pallet::CollectionById};
 	
 	use sp_std::{vec::Vec, rc::Rc};
 	use alloc::format;
@@ -176,6 +176,15 @@ pub mod evm_collection {
 				collection_id: address,
 			});
 			Ok(address)
+		}
+
+		fn is_collection_exist(&self, _caller: caller, collection_address: address) -> Result<bool> {
+			if let Some(id) = pallet_common::eth::map_eth_to_id(&collection_address) {
+				let collection_id = id;
+				return Ok(<CollectionById<T>>::contains_key(collection_id));
+			}
+
+			Ok(false)
 		}
 	}
 	

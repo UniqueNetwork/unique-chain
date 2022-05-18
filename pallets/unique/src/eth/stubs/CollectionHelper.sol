@@ -21,7 +21,7 @@ contract ERC165 is Dummy {
 	}
 }
 
-// Selector: 951c0151
+// Selector: 56c215c5
 contract CollectionHelper is Dummy, ERC165 {
 	// Selector: create721Collection(string,string,string) 951c0151
 	function create721Collection(
@@ -35,5 +35,17 @@ contract CollectionHelper is Dummy, ERC165 {
 		tokenPrefix;
 		dummy;
 		return 0x0000000000000000000000000000000000000000;
+	}
+
+	// Selector: isCollectionExist(address) c3de1494
+	function isCollectionExist(address collectionAddress)
+		public
+		view
+		returns (bool)
+	{
+		require(false, stub_error);
+		collectionAddress;
+		dummy;
+		return false;
 	}
 }

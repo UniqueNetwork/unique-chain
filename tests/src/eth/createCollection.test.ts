@@ -31,7 +31,6 @@ import {
   normalizeAddress,
   normalizeEvents,
 } from './util/helpers';
-import util from 'util';
 
 async function getCollectionAddressFromResult(api: ApiPromise, result: any) {
   const collectionIdAddress = normalizeAddress(result.events[0].raw.topics[2]);
@@ -61,6 +60,25 @@ describe('Create collection from EVM', () => {
     expect(collection.description.map(v => String.fromCharCode(v.toNumber())).join('')).to.be.eq(description);
     expect(collection.tokenPrefix.toHuman()).to.be.eq(tokenPrefix);
     expect(collection.schemaVersion.type).to.be.eq('ImageURL');
+  });
+
+  itWeb3('Check collection address exist', async ({api, web3}) => {
+    const owner = await createEthAccountWithBalance(api, web3);
+    const collectionHelper = evmCollectionHelper(web3, owner);
+  
+    const expectedCollectionId = await getCreatedCollectionCount(api) + 1;
+    const expectedCollectionAddress = collectionIdToAddress(expectedCollectionId);
+    expect(await collectionHelper.methods
+      .isCollectionExist(expectedCollectionAddress)
+      .call()).to.be.false;
+
+    await collectionHelper.methods
+      .create721Collection('A', 'A', 'A')
+      .send();
+    
+    expect(await collectionHelper.methods
+      .isCollectionExist(expectedCollectionAddress)
+      .call()).to.be.true;
   });
   
   itWeb3('Set sponsorship', async ({api, web3}) => {
