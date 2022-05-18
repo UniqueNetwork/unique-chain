@@ -112,7 +112,6 @@ pub mod evm_collection {
 	use sp_std::{vec::Vec, rc::Rc};
 	use alloc::format;
 	
-	// #[pallet::config]
 	pub trait Config:
 		frame_system::Config
 		+ pallet_evm_coder_substrate::Config
@@ -122,8 +121,8 @@ pub mod evm_collection {
 		type ContractAddress: Get<H160>;
 	}
 
-	struct EvmCollection<T: Config>(Rc<SubstrateRecorder<T>>);
-	impl<T: Config> WithRecorder<T> for EvmCollection<T> {
+	struct EvmCollectionHelper<T: Config>(Rc<SubstrateRecorder<T>>);
+	impl<T: Config> WithRecorder<T> for EvmCollectionHelper<T> {
 		fn recorder(&self) -> &SubstrateRecorder<T> {
 			&self.0
 		}
@@ -132,19 +131,9 @@ pub mod evm_collection {
 			self.0
 		}
 	}
-	
-	#[derive(ToLog)]
-	pub enum EthCollectionEvent {
-		CollectionCreated {
-			#[indexed]
-			owner: address,
-			#[indexed]
-			collection_id: address,
-		},
-	}
-	
-	#[solidity_interface(name = "Collection")]
-	impl<T: Config> EvmCollection<T> {
+
+	#[solidity_interface(name = "CollectionHelper")]
+	impl<T: Config> EvmCollectionHelper<T> {
 		fn create_721_collection(
 			&self,
 			caller: caller,
@@ -188,14 +177,37 @@ pub mod evm_collection {
 			});
 			Ok(address)
 		}
+	}
 	
+	struct EvmCollection<T: Config>(Rc<SubstrateRecorder<T>>);
+	impl<T: Config> WithRecorder<T> for EvmCollection<T> {
+		fn recorder(&self) -> &SubstrateRecorder<T> {
+			&self.0
+		}
+	
+		fn into_recorder(self) -> Rc<SubstrateRecorder<T>> {
+			self.0
+		}
+	}
+	
+	#[derive(ToLog)]
+	pub enum EthCollectionEvent {
+		CollectionCreated {
+			#[indexed]
+			owner: address,
+			#[indexed]
+			collection_id: address,
+		},
+	}
+	
+	#[solidity_interface(name = "Collection")]
+	impl<T: Config> EvmCollection<T> {
 		fn set_sponsor(
 			&self,
 			caller: caller,
-			collection_address: address,
 			sponsor: address,
 		) -> Result<void> {
-			let mut collection = collection_from_address(collection_address, &self.0)?;
+			let mut collection = collection_from_address(self.contract_address(caller).unwrap(), &self.0)?;
 			check_is_owner(caller, &collection)?;
 	
 			let sponsor = T::CrossAccountId::from_eth(sponsor);
@@ -203,8 +215,8 @@ pub mod evm_collection {
 			save_eth(collection)
 		}
 	
-		fn confirm_sponsorship(&self, caller: caller, collection_address: address) -> Result<void> {
-			let mut collection = collection_from_address(collection_address, &self.0)?;
+		fn confirm_sponsorship(&self, caller: caller) -> Result<void> {
+			let mut collection = collection_from_address(self.contract_address(caller).unwrap(), &self.0)?;
 			let caller = T::CrossAccountId::from_eth(caller);
 			if !collection.confirm_sponsorship(caller.as_sub()) {
 				return Err(Error::Revert("Caller is not set as sponsor".into()));
@@ -215,16 +227,19 @@ pub mod evm_collection {
 		fn set_limits(
 			&self,
 			caller: caller,
-			collection_address: address,
 			limits_json: string,
 		) -> Result<void> {
-			let mut collection = collection_from_address(collection_address, &self.0)?;
+			let mut collection = collection_from_address(self.contract_address(caller).unwrap(), &self.0)?;
 			check_is_owner(caller, &collection)?;
 	
 			let limits = serde_json_core::from_str(limits_json.as_ref())
 				.map_err(|e| Error::Revert(format!("Parse JSON error: {}", e)))?;
 			collection.limits = limits.0;
 			save_eth(collection)
+		}
+
+		fn contract_address(&self, _caller: caller) -> Result<address> {
+			Ok(self.0.contract())
 		}
 	}
 	
@@ -251,9 +266,9 @@ pub mod evm_collection {
 			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 		Ok(())
 	}
-	
-	pub struct CollectionOnMethodCall<T: Config>(PhantomData<*const T>);
-	impl<T: Config> OnMethodCall<T> for CollectionOnMethodCall<T> {
+
+	pub struct CollectionHelperOnMethodCall<T: Config>(PhantomData<*const T>);
+	impl<T: Config> OnMethodCall<T> for CollectionHelperOnMethodCall<T> {
 		fn is_reserved(contract: &sp_core::H160) -> bool {
 			contract == &T::ContractAddress::get()
 		}
@@ -273,6 +288,36 @@ pub mod evm_collection {
 				return None;
 			}
 	
+			let helpers = EvmCollectionHelper::<T>(Rc::new(SubstrateRecorder::<T>::new(*target, gas_left)));
+			pallet_evm_coder_substrate::call(*source, helpers, value, input)
+		}
+	
+		fn get_code(contract: &sp_core::H160) -> Option<Vec<u8>> {
+			(contract == &T::ContractAddress::get())
+				.then(|| include_bytes!("./stubs/CollectionHelper.raw").to_vec())
+		}
+	}
+	
+	generate_stubgen!(collection_helper_impl, CollectionHelperCall<()>, true);
+	generate_stubgen!(collection_helper_iface, CollectionHelperCall<()>, false);
+	
+	pub struct CollectionOnMethodCall<T: Config>(PhantomData<*const T>);
+	impl<T: Config> OnMethodCall<T> for CollectionOnMethodCall<T> {
+		fn is_reserved(contract: &sp_core::H160) -> bool {
+			contract == &T::ContractAddress::get()
+		}
+	
+		fn is_used(contract: &sp_core::H160) -> bool {
+			contract == &T::ContractAddress::get()
+		}
+	
+		fn call(
+			source: &sp_core::H160,
+			target: &sp_core::H160,
+			gas_left: u64,
+			input: &[u8],
+			value: sp_core::U256,
+		) -> Option<PrecompileResult> {
 			let helpers = EvmCollection::<T>(Rc::new(SubstrateRecorder::<T>::new(*target, gas_left)));
 			pallet_evm_coder_substrate::call(*source, helpers, value, input)
 		}

@@ -29,6 +29,7 @@ import config from '../../config';
 import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
 import collectionAbi from '../collectionAbi.json';
+import collectionHelperAbi from '../collectionHelperAbi.json';
 import getBalance from '../../substrate/get-balance';
 import waitNewBlocks from '../../substrate/wait-new-blocks';
 
@@ -283,13 +284,23 @@ export function contractHelpers(web3: Web3, caller: string) {
 }
 
 /** 
- * pallet evm_collection
+ * evm collection helper
  * @param web3 
  * @param caller - eth address
  * @returns 
  */
-export function collectionHelper(web3: Web3, caller: string) {
-  return new web3.eth.Contract(collectionAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, ...GAS_ARGS});
+export function evmCollectionHelper(web3: Web3, caller: string) {
+  return new web3.eth.Contract(collectionHelperAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, ...GAS_ARGS});
+}
+
+/** 
+ * evm collection
+ * @param web3 
+ * @param caller - eth address
+ * @returns 
+ */
+export function evmCollection(web3: Web3, caller: string, collection: string) {
+  return new web3.eth.Contract(collectionAbi as any, collection, {from: caller, ...GAS_ARGS});
 }
 
 /**

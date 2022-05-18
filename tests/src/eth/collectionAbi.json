@@ -1,35 +1,20 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "collectionAddress",
-        "type": "address"
-      }
-    ],
+    "inputs": [],
     "name": "confirmSponsorship",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "string", "name": "name", "type": "string" },
-      { "internalType": "string", "name": "description", "type": "string" },
-      { "internalType": "string", "name": "tokenPrefix", "type": "string" }
-    ],
-    "name": "create721Collection",
+    "inputs": [],
+    "name": "contractAddress",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      {
-        "internalType": "address",
-        "name": "collectionAddress",
-        "type": "address"
-      },
       { "internalType": "string", "name": "limitsJson", "type": "string" }
     ],
     "name": "setLimits",
@@ -39,11 +24,6 @@
   },
   {
     "inputs": [
-      {
-        "internalType": "address",
-        "name": "collectionAddress",
-        "type": "address"
-      },
       { "internalType": "address", "name": "sponsor", "type": "address" }
     ],
     "name": "setSponsor",

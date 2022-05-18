@@ -21,48 +21,32 @@ contract ERC165 is Dummy {
 	}
 }
 
-// Selector: 1e95830f
+// Selector: 15cc740e
 contract Collection is Dummy, ERC165 {
-	// Selector: create721Collection(string,string,string) 951c0151
-	function create721Collection(
-		string memory name,
-		string memory description,
-		string memory tokenPrefix
-	) public view returns (address) {
+	// Selector: setSponsor(address) 59753fb1
+	function setSponsor(address sponsor) public view {
 		require(false, stub_error);
-		name;
-		description;
-		tokenPrefix;
-		dummy;
-		return 0x0000000000000000000000000000000000000000;
-	}
-
-	// Selector: setSponsor(address,address) f01fba93
-	function setSponsor(address collectionAddress, address sponsor)
-		public
-		view
-	{
-		require(false, stub_error);
-		collectionAddress;
 		sponsor;
 		dummy;
 	}
 
-	// Selector: confirmSponsorship(address) abc00001
-	function confirmSponsorship(address collectionAddress) public view {
+	// Selector: confirmSponsorship() c8c6a056
+	function confirmSponsorship() public view {
 		require(false, stub_error);
-		collectionAddress;
 		dummy;
 	}
 
-	// Selector: setLimits(address,string) d05638cc
-	function setLimits(address collectionAddress, string memory limitsJson)
-		public
-		view
-	{
+	// Selector: setLimits(string) 72cb345d
+	function setLimits(string memory limitsJson) public view {
 		require(false, stub_error);
-		collectionAddress;
 		limitsJson;
 		dummy;
+	}
+
+	// Selector: contractAddress() f6b4dfb4
+	function contractAddress() public view returns (address) {
+		require(false, stub_error);
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
 	}
 }

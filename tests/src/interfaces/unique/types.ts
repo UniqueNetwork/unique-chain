@@ -6,9 +6,6 @@ import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
 import type { Event } from '@polkadot/types/interfaces/system';
 
-/** @name BTreeSet */
-export interface BTreeSet extends BTreeSet<Bytes> {}
-
 /** @name CumulusPalletDmpQueueCall */
 export interface CumulusPalletDmpQueueCall extends Enum {
   readonly isServiceOverweight: boolean;

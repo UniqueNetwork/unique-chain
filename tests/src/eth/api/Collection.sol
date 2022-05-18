@@ -12,25 +12,17 @@ interface ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-// Selector: 1e95830f
+// Selector: 15cc740e
 interface Collection is Dummy, ERC165 {
-	// Selector: create721Collection(string,string,string) 951c0151
-	function create721Collection(
-		string memory name,
-		string memory description,
-		string memory tokenPrefix
-	) external view returns (address);
+	// Selector: setSponsor(address) 59753fb1
+	function setSponsor(address sponsor) external view;
 
-	// Selector: setSponsor(address,address) f01fba93
-	function setSponsor(address collectionAddress, address sponsor)
-		external
-		view;
+	// Selector: confirmSponsorship() c8c6a056
+	function confirmSponsorship() external view;
 
-	// Selector: confirmSponsorship(address) abc00001
-	function confirmSponsorship(address collectionAddress) external view;
+	// Selector: setLimits(string) 72cb345d
+	function setLimits(string memory limitsJson) external view;
 
-	// Selector: setLimits(address,string) d05638cc
-	function setLimits(address collectionAddress, string memory limitsJson)
-		external
-		view;
+	// Selector: contractAddress() f6b4dfb4
+	function contractAddress() external view returns (address);
 }

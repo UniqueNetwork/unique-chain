@@ -308,6 +308,7 @@ impl pallet_evm::Config for Runtime {
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
 		CollectionDispatchT<Self>,
 		evm_collection::CollectionOnMethodCall<Self>,
+		evm_collection::CollectionHelperOnMethodCall<Self>,
 	);
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
@@ -978,7 +979,7 @@ parameter_types! {
 	]);
 
 	// 0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f
-	pub const EvmCollectionAddress: H160 = H160([
+	pub const EvmCollectionHelperAddress: H160 = H160([
 		0x6c, 0x4e, 0x9f, 0xe1, 0xae, 0x37, 0xa4, 0x1e, 0x93, 0xce, 0xe4, 0x29, 0xe8, 0xe1, 0x88, 0x1a, 0xbd, 0xcb, 0xb5, 0x4f,
 	]);
 }
@@ -989,7 +990,7 @@ impl pallet_evm_contract_helpers::Config for Runtime {
 }
 
 impl evm_collection::Config for Runtime {
-	type ContractAddress = EvmCollectionAddress;
+	type ContractAddress = EvmCollectionHelperAddress;
 }
 
 construct_runtime!(

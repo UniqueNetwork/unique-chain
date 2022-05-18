@@ -18,6 +18,9 @@ CONTRACT_HELPERS_ABI=./tests/src/eth/util/contractHelpersAbi.json
 COLLECTION_STUBS=./pallets/unique/src/eth/stubs/
 COLLECTION_ABI=./tests/src/eth/collectionAbi.json
 
+COLLECTION_HELPER_STUBS=$(COLLECTION_STUBS)
+COLLECTION_HELPER_ABI=./tests/src/eth/collectionHelperAbi.json
+
 TESTS_API=./tests/src/eth/api/
 
 .PHONY: regenerate_solidity
@@ -36,8 +39,12 @@ ContractHelpers.sol:
 	PACKAGE=pallet-evm-contract-helpers NAME=eth::contract_helpers_impl OUTPUT=$(CONTRACT_HELPERS_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
 
 Collection.sol:
-	PACKAGE=pallet-unique NAME=eth::pallet_evm_collection::collection_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
-	PACKAGE=pallet-unique NAME=eth::pallet_evm_collection::collection_impl OUTPUT=$(COLLECTION_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
+	PACKAGE=pallet-unique NAME=eth::evm_collection::collection_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
+	PACKAGE=pallet-unique NAME=eth::evm_collection::collection_impl OUTPUT=$(COLLECTION_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
+
+CollectionHelper.sol:
+	PACKAGE=pallet-unique NAME=eth::evm_collection::collection_helper_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
+	PACKAGE=pallet-unique NAME=eth::evm_collection::collection_helper_impl OUTPUT=$(COLLECTION_HELPER_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
 
 UniqueFungible: UniqueFungible.sol
 	INPUT=$(FUNGIBLE_EVM_STUBS)/$< OUTPUT=$(FUNGIBLE_EVM_STUBS)/UniqueFungible.raw ./.maintain/scripts/compile_stub.sh
@@ -55,7 +62,11 @@ Collection: Collection.sol
 	INPUT=$(COLLECTION_STUBS)/$< OUTPUT=$(COLLECTION_STUBS)/Collection.raw ./.maintain/scripts/compile_stub.sh
 	INPUT=$(COLLECTION_STUBS)/$< OUTPUT=$(COLLECTION_ABI) ./.maintain/scripts/generate_abi.sh
 
-evm_stubs: UniqueFungible UniqueNFT ContractHelpers Collection
+CollectionHelper: CollectionHelper.sol
+	INPUT=$(COLLECTION_HELPER_STUBS)/$< OUTPUT=$(COLLECTION_HELPER_STUBS)/CollectionHelper.raw ./.maintain/scripts/compile_stub.sh
+	INPUT=$(COLLECTION_HELPER_STUBS)/$< OUTPUT=$(COLLECTION_HELPER_ABI) ./.maintain/scripts/generate_abi.sh
+
+evm_stubs: UniqueFungible UniqueNFT ContractHelpers Collection CollectionHelper
 
 .PHONY: _bench
 _bench:
