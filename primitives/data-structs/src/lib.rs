@@ -678,6 +678,7 @@ impl Into<(PropertyKey, PropertyPermission)> for PropertyKeyPermission {
 	}
 }
 
+#[derive(Debug)]
 pub enum PropertiesError {
 	NoSpaceForProperty,
 	PropertyLimitReached,
@@ -693,7 +694,7 @@ pub enum PropertyScope {
 }
 
 impl PropertyScope {
-	fn apply(self, key: PropertyKey) -> Result<PropertyKey, PropertiesError> {
+	pub fn apply(self, key: PropertyKey) -> Result<PropertyKey, PropertiesError> {
 		let scope_str: &[u8] = match self {
 			Self::None => return Ok(key),
 			Self::Rmrk => b"rmrk",

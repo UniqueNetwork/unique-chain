@@ -1,18 +1,23 @@
 use super::*;
 use codec::{Encode, Decode};
+use frame_support::dispatch::Vec;
 use pallet_nonfungible::NonfungibleHandle;
 
 #[macro_export]
 macro_rules! rmrk_property {
     ($key:ident, $value:expr) => {
         Property {
-            key: rmrk_property!($key),
+            key: rmrk_property!(@raw $key),
             value: $value.into()
         }
     };
 
-    ($key:ident) => {
+    (@raw $key:ident) => {
         RmrkProperty::$key.to_key()
+    };
+
+    ($key:ident) => {
+        PropertyScope::Rmrk.apply(rmrk_property!(@raw $key)).unwrap()
     };
 }
 
