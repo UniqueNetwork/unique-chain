@@ -257,6 +257,7 @@ impl<T: Config> Pallet<T> {
 		<Owned<T>>::remove((collection.id, &token_data.owner, token));
 		<TokensBurnt<T>>::insert(collection.id, burnt);
 		<TokenData<T>>::remove((collection.id, token));
+		<TokenProperties<T>>::remove((collection.id, token));
 		let old_spender = <Allowance<T>>::take((collection.id, token));
 
 		if let Some(old_spender) = old_spender {
