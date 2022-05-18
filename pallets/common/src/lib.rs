@@ -64,6 +64,7 @@ use up_data_structs::{
 	PropertyKeyPermission,
 	TokenData,
 	TrySetProperty,
+	PropertyScope,
 	// RMRK
 	RmrkCollectionInfo,
 	RmrkInstanceInfo,
@@ -689,18 +690,14 @@ impl<T: Config> Pallet<T> {
 
 		let mut collection_properties = up_data_structs::CollectionProperties::get();
 		collection_properties
-			.try_set_from_iter(data.properties.into_iter().map(|p| (p.key, p.value)))
+			.try_set_from_iter(data.properties.into_iter())
 			.map_err(<Error<T>>::from)?;
 
 		CollectionProperties::<T>::insert(id, collection_properties);
 
 		let mut token_props_permissions = PropertiesPermissionMap::new();
 		token_props_permissions
-			.try_set_from_iter(
-				data.token_property_permissions
-					.into_iter()
-					.map(|property| (property.key, property.permission)),
-			)
+			.try_set_from_iter(data.token_property_permissions.into_iter())
 			.map_err(<Error<T>>::from)?;
 
 		CollectionPropertyPermissions::<T>::insert(id, token_props_permissions);
@@ -784,6 +781,33 @@ impl<T: Config> Pallet<T> {
 		.map_err(<Error<T>>::from)?;
 
 		Self::deposit_event(Event::CollectionPropertySet(collection.id, property.key));
+
+		Ok(())
+	}
+
+	pub fn set_scoped_collection_property(
+		collection: &CollectionHandle<T>,
+		scope: PropertyScope,
+		property: Property,
+	) -> DispatchResult {
+		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
+			properties.try_scoped_set(scope, property.key, property.value)
+		})
+		.map_err(<Error<T>>::from)?;
+
+		Ok(())
+	}
+
+	#[transactional]
+	pub fn set_scoped_collection_properties(
+		collection: &CollectionHandle<T>,
+		scope: PropertyScope,
+		properties: impl Iterator<Item=Property>,
+	) -> DispatchResult {
+		CollectionProperties::<T>::try_mutate(collection.id, |stored_properties| {
+			stored_properties.try_scoped_set_from_iter(scope, properties)
+		})
+		.map_err(<Error<T>>::from)?;
 
 		Ok(())
 	}
