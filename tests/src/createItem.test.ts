@@ -23,13 +23,14 @@ import {
   createItemExpectSuccess,
   addCollectionAdminExpectSuccess,
   createCollectionWithPropsExpectSuccess,
+  createItemWithPropsExpectSuccess,
 } from './util/helpers';
 
 const expect = chai.expect;
 let alice: IKeyringPair;
 let bob: IKeyringPair;
 
-describe('integration test: ext. createItem():', () => {
+describe('integration test: ext. ():', () => {
   before(async () => {
     await usingApi(async () => {
       const keyring = new Keyring({type: 'sr25519'});
@@ -75,28 +76,25 @@ describe('integration test: ext. createItem():', () => {
   it('Set property Admin', async () => {
     const createMode = 'NFT';
     const newCollectionID = await createCollectionWithPropsExpectSuccess({mode: {type: createMode}, 
-      properties: [{key: 'key1', value: 'val1'}], 
-      propPerm:   [{key: 'key1', mutable: true, collectionAdmin: true, tokenOwner: false}]});
+      propPerm:   [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]});
     
-    await createItemExpectSuccess(alice, newCollectionID, createMode);
+    await createItemWithPropsExpectSuccess(alice, newCollectionID, createMode, [{key: 'k', value: 't2'}]);
   });
 
   it('Set property AdminConst', async () => {
     const createMode = 'NFT';
     const newCollectionID = await createCollectionWithPropsExpectSuccess({mode: {type: createMode}, 
-      properties: [{key: 'key1', value: 'val1'}], 
-      propPerm:   [{key: 'key1', mutable: false, collectionAdmin: true, tokenOwner: false}]});
+      propPerm:   [{key: 'key1', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]});
     
-    await createItemExpectSuccess(alice, newCollectionID, createMode);
+    await createItemWithPropsExpectSuccess(alice, newCollectionID, createMode, [{key: 'key1', value: 'val1'}]);
   });
 
   it('Set property itemOwnerOrAdmin', async () => {
     const createMode = 'NFT';
-    const newCollectionID = await createCollectionWithPropsExpectSuccess({mode: {type: createMode}, 
-      properties: [{key: 'key1', value: 'val1'}], 
-      propPerm:   [{key: 'key1', mutable: true, collectionAdmin: true, tokenOwner: true}]});
+    const newCollectionID = await createCollectionWithPropsExpectSuccess({mode: {type: createMode},
+      propPerm:   [{key: 'key1', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]});
     
-    await createItemExpectSuccess(alice, newCollectionID, createMode);
+    await createItemWithPropsExpectSuccess(alice, newCollectionID, createMode, [{key: 'key1', value: 'val1'}]);
   });
 });
 
@@ -129,7 +127,7 @@ describe('Negative integration test: ext. createItem():', () => {
     await usingApi(async api => {
       const createMode = 'NFT';
       const newCollectionID = await createCollectionWithPropsExpectSuccess({mode: {type: createMode}, 
-        propPerm:   [{key: 'key1', mutable: false, collectionAdmin: false, tokenOwner: false}]});
+        propPerm:   [{key: 'key1', permission: {mutable: false, collectionAdmin: false, tokenOwner: false}}]});
 
       const token = await createItemExpectSuccess(alice, newCollectionID, 'NFT');
       await addCollectionAdminExpectSuccess(alice, newCollectionID, bob.address);
@@ -144,7 +142,7 @@ describe('Negative integration test: ext. createItem():', () => {
 
   it('User doesnt have editing rights', async () => {
     await usingApi(async api => {
-      const newCollectionID = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'key1', mutable: true, collectionAdmin: false, tokenOwner: false}]});
+      const newCollectionID = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'key1', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}]});
       const token = await createItemExpectSuccess(alice, newCollectionID, 'NFT');
 
       await expect(executeTransaction(

@@ -27,7 +27,7 @@ import {alicesPublicKey} from '../accounts';
 import privateKey from '../substrate/privateKey';
 import {default as usingApi, executeTransaction, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
-import {UpDataStructsRpcCollection} from '@polkadot/types/lookup';
+import {UpDataStructsRpcCollection, UpDataStructsCreateItemData} from '@polkadot/types/lookup';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -295,11 +295,15 @@ export type Property = {
   value: any,
 };
 
-type PropertyPermission = {
-  key: any,
+type Permission = {
   mutable: boolean;
   collectionAdmin: boolean;
   tokenOwner: boolean;
+}
+
+type PropertyPermission = {
+  key: any;
+  permission: Permission;
 }
 
 export type CreateCollectionParams = {
@@ -1121,6 +1125,65 @@ export async function createFungibleItemExpectSuccess(
     expect(result.success).to.be.true;
     return result.itemId;
   });
+}
+
+export async function createMultipleItemsWithPropsExpectSuccess(sender: IKeyringPair, collectionId: number, itemsData: any, owner: CrossAccountId | string = sender.address) {
+  await usingApi(async (api) => {
+    const to = normalizeAccountId(owner);
+    const tx = api.tx.unique.createMultipleItems(collectionId, to, itemsData);
+
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getCreateItemsResult(events);
+
+    for (let res of result) {
+      expect(await api.rpc.unique.tokenProperties(collectionId, res.itemId)).not.to.be.empty;
+    }
+  });
+}
+
+export async function createItemWithPropsExpectSuccess(sender: IKeyringPair, collectionId: number, createMode: string, props:  Array<Property>, owner: CrossAccountId | string = sender.address) {
+  let newItemId = 0;
+  await usingApi(async (api) => {
+    const to = normalizeAccountId(owner);
+    const itemCountBefore = await getLastTokenId(api, collectionId);
+    const itemBalanceBefore = await getBalance(api, collectionId, to, newItemId);
+
+    let tx;
+    if (createMode === 'Fungible') {
+      const createData = {fungible: {value: 10}};
+      tx = api.tx.unique.createItem(collectionId, to, createData as any);
+    } else if (createMode === 'ReFungible') {
+      const createData = {refungible: {const_data: [], pieces: 100}};
+      tx = api.tx.unique.createItem(collectionId, to, createData as any);
+    } else {
+      const data = api.createType('UpDataStructsCreateItemData', { NFT: { constData: 'test', properties: props}});
+      tx = api.tx.unique.createItem(collectionId, to, data as UpDataStructsCreateItemData);
+    }
+
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getCreateItemResult(events);
+
+    const itemCountAfter = await getLastTokenId(api, collectionId);
+    const itemBalanceAfter = await getBalance(api, collectionId, to, newItemId);
+
+    if (createMode === 'NFT') {
+      expect(await api.rpc.unique.tokenProperties(collectionId, result.itemId)).not.to.be.empty;
+    }
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.true;
+    if (createMode === 'Fungible') {
+      expect(itemBalanceAfter - itemBalanceBefore).to.be.equal(10n);
+    } else {
+      expect(itemCountAfter).to.be.equal(itemCountBefore + 1);
+    }
+    expect(collectionId).to.be.equal(result.collectionId);
+    expect(itemCountAfter.toString()).to.be.equal(result.itemId.toString());
+    expect(to).to.be.deep.equal(result.recipient);
+    newItemId = result.itemId;
+  });
+  return newItemId;
 }
 
 export async function createItemExpectSuccess(sender: IKeyringPair, collectionId: number, createMode: string, owner: CrossAccountId | string = sender.address) {

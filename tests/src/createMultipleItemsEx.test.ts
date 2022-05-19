@@ -48,8 +48,8 @@ describe('createMultipleItemsEx', () => {
     });
   });
 
-  it('createMultipleItemsEx with property Admin', async () => {
-    const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+  it.only('createMultipleItemsEx with property Admin', async () => {
+    const collection = await createCollectionWithPropsExpectSuccess({mode: {type: 'NFT'}, propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]});
     const alice = privateKey('//Alice');
     const bob = privateKey('//Bob');
     const charlie = privateKey('//Charlie');
@@ -57,33 +57,30 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
-          constData: '0x0000',
+          constData: '0x1111',
+          properties: [{key: 'k', value: 'v1'}],
         }, {
           owner: {substrate: bob.address},
           constData: '0x2222',
+          properties: [{key: 'k', value: 'v2'}],
         }, {
           owner: {substrate: charlie.address},
           constData: '0x4444',
+          properties: [{key: 'k', value: 'v3'}],
         },
       ];
-
-      await expect(executeTransaction(
-        api,
-        alice,
-        api.tx.unique.setPropertyPermissions(collection, [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]),
-      )).to.not.be.rejected;
 
       await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
         NFT: data,
       }));
-      const tokens = await api.query.nonfungible.tokenData.entries(collection);
-      const json = tokens.map(([, token]) => token.toJSON());
-      expect(json).to.be.deep.equal(data);
+      for (let i = 1; i < 4; i++) {
+        expect(await api.rpc.unique.tokenProperties(collection, i)).not.to.be.empty;
+      }
     });
   });
 
   it('createMultipleItemsEx with property AdminConst', async () => {
-    const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+    const collection = await createCollectionWithPropsExpectSuccess({mode: {type: 'NFT'}, propPerm: [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]});
     const alice = privateKey('//Alice');
     const bob = privateKey('//Bob');
     const charlie = privateKey('//Charlie');
@@ -92,33 +89,29 @@ describe('createMultipleItemsEx', () => {
         {
           owner: {substrate: alice.address},
           constData: '0x0000',
+          properties: [{key: 'k', value: 'v1'}],
         }, {
           owner: {substrate: bob.address},
           constData: '0x2222',
+          properties: [{key: 'k', value: 'v2'}],
         }, {
           owner: {substrate: charlie.address},
           constData: '0x4444',
+          properties: [{key: 'k', value: 'v3'}],
         },
       ];
-      await expect(executeTransaction(
-        api,
-        alice,
-        api.tx.unique.setPropertyPermissions(collection, [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]),
-      )).to.not.be.rejected;
 
       await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
         NFT: data,
       }));
-
-
-      const tokens = await api.query.nonfungible.tokenData.entries(collection);
-      const json = tokens.map(([, token]) => token.toJSON());
-      expect(json).to.be.deep.equal(data);
+      for (let i = 1; i < 4; i++) {
+        expect(await api.rpc.unique.tokenProperties(collection, i)).not.to.be.empty;
+      }
     });
   });
 
   it('createMultipleItemsEx with property itemOwnerOrAdmin', async () => {
-    const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+    const collection = await createCollectionWithPropsExpectSuccess({mode: {type: 'NFT'}, propPerm: [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: true}}]});
     const alice = privateKey('//Alice');
     const bob = privateKey('//Bob');
     const charlie = privateKey('//Charlie');
@@ -127,34 +120,30 @@ describe('createMultipleItemsEx', () => {
         {
           owner: {substrate: alice.address},
           constData: '0x0000',
+          properties: [{key: 'k', value: 'v1'}],
         }, {
           owner: {substrate: bob.address},
           constData: '0x2222',
+          properties: [{key: 'k', value: 'v2'}],
         }, {
           owner: {substrate: charlie.address},
           constData: '0x4444',
+          properties: [{key: 'k', value: 'v3'}],
         },
       ];
-      await expect(executeTransaction(
-        api,
-        alice,
-        api.tx.unique.setPropertyPermissions(collection, [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]),
-      )).to.not.be.rejected;
 
       await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
         NFT: data,
       }));
-
-
-      const tokens = await api.query.nonfungible.tokenData.entries(collection);
-      const json = tokens.map(([, token]) => token.toJSON());
-      expect(json).to.be.deep.equal(data);
+      for (let i = 1; i < 4; i++) {
+        expect(await api.rpc.unique.tokenProperties(collection, i)).not.to.be.empty;
+      }
     });
   });
 
   it('No editing rights', async () => {
     const collection = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}],
-      propPerm:   [{key: 'key1', mutable: true, collectionAdmin: false, tokenOwner: false}]});
+      propPerm:   [{key: 'key1', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}]});
     const alice = privateKey('//Alice');
     const bob = privateKey('//Bob');
     const charlie = privateKey('//Charlie');
@@ -188,7 +177,7 @@ describe('createMultipleItemsEx', () => {
 
   it('User doesnt have editing rights', async () => {
     const collection = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}],
-      propPerm:   [{key: 'key1', mutable: false, collectionAdmin: false, tokenOwner: false}]});
+      propPerm:   [{key: 'key1', permission: {mutable: false, collectionAdmin: false, tokenOwner: false}}]});
     const alice = privateKey('//Alice');
     const bob = privateKey('//Bob');
     const charlie = privateKey('//Charlie');
