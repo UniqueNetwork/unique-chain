@@ -28,12 +28,7 @@ const SEED: u32 = 1;
 
 fn create_max_item_data<T: Config>(owner: T::CrossAccountId) -> CreateItemData<T> {
 	let const_data = create_data::<CUSTOM_DATA_LIMIT>();
-	let variable_data = create_data::<CUSTOM_DATA_LIMIT>();
-	CreateItemData::<T> {
-		const_data,
-		variable_data,
-		owner,
-	}
+	CreateItemData::<T> { const_data, owner }
 }
 fn create_max_item<T: Config>(
 	collection: &NonfungibleHandle<T>,
@@ -125,14 +120,4 @@ benchmarks! {
 		let item = create_max_item(&collection, &owner, sender.clone())?;
 		<Pallet<T>>::set_allowance(&collection, &sender, item, Some(&burner))?;
 	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, item, &Unlimited)?}
-
-	set_variable_metadata {
-		let b in 0..CUSTOM_DATA_LIMIT;
-		bench_init!{
-			owner: sub; collection: collection(owner);
-			owner: cross_from_sub; sender: cross_sub;
-		};
-		let item = create_max_item(&collection, &owner, sender.clone())?;
-		let data = create_var_data(b).try_into().unwrap();
-	}: {<Pallet<T>>::set_variable_metadata(&collection, &sender, item, data)?}
 }

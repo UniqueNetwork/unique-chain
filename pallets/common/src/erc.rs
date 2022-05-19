@@ -21,7 +21,7 @@ use sp_core::{H160, U256};
 use sp_std::vec::Vec;
 use up_data_structs::Property;
 
-use crate::{Pallet, CollectionHandle, Config};
+use crate::{Pallet, CollectionHandle, Config, CollectionProperties};
 
 /// Does not always represent a full collection, for RFT it is either
 /// collection (Implementing ERC721), or specific collection token (Implementing ERC20)
@@ -33,24 +33,35 @@ pub trait CommonEvmHandler {
 
 #[solidity_interface(name = "CollectionProperties")]
 impl<T: Config> CollectionHandle<T> {
-	fn set_property(&mut self, caller: caller, key: string, value: string) -> Result<()> {
-		<Pallet<T>>::set_collection_property(
-			self,
-			&T::CrossAccountId::from_eth(caller),
-			Property {
-				key: <Vec<u8>>::from(key)
-					.try_into()
-					.map_err(|_| "key too large")?,
-				value: <Vec<u8>>::from(value)
-					.try_into()
-					.map_err(|_| "value too large")?,
-			},
-		)
-		.map_err(dispatch_to_evm::<T>)?;
-		Ok(())
+	fn set_collection_property(&mut self, caller: caller, key: string, value: bytes) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let key = <Vec<u8>>::from(key)
+			.try_into()
+			.map_err(|_| "key too large")?;
+		let value = value.try_into().map_err(|_| "value too large")?;
+
+		<Pallet<T>>::set_collection_property(self, &caller, Property { key, value })
+			.map_err(dispatch_to_evm::<T>)
 	}
 
-	fn delete_property(&mut self, caller: caller, key: string) -> Result<()> {
-		self.set_property(caller, key, string::new())
+	fn delete_collection_property(&mut self, caller: caller, key: string) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let key = <Vec<u8>>::from(key)
+			.try_into()
+			.map_err(|_| "key too large")?;
+
+		<Pallet<T>>::delete_collection_property(self, &caller, key).map_err(dispatch_to_evm::<T>)
+	}
+
+	/// Throws error if key not found
+	fn collection_property(&self, key: string) -> Result<bytes> {
+		let key = <Vec<u8>>::from(key)
+			.try_into()
+			.map_err(|_| "key too large")?;
+
+		let props = <CollectionProperties<T>>::get(self.id);
+		let prop = props.get(&key).ok_or("key not found")?;
+
+		Ok(prop.to_vec())
 	}
 }

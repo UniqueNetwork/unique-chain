@@ -40,7 +40,6 @@
     "testMigrationStructure": "mocha --timeout 9999999 -r ts-node/register ./**/nesting/migration-check.test.ts",
     "testAddCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/addCollectionAdmin.test.ts",
     "testSetSchemaVersion": "mocha --timeout 9999999 -r ts-node/register ./**/setSchemaVersion.test.ts",
-    "testSetVariableMetaData": "mocha --timeout 9999999 -r ts-node/register ./**/setVariableMetaData.test.ts",
     "testSetCollectionLimits": "mocha --timeout 9999999 -r ts-node/register ./**/setCollectionLimits.test.ts",
     "testSetCollectionSponsor": "mocha --timeout 9999999 -r ts-node/register ./**/setCollectionSponsor.test.ts",
     "testConfirmSponsorship": "mocha --timeout 9999999 -r ts-node/register ./**/confirmSponsorship.test.ts",

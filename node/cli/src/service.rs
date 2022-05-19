@@ -65,25 +65,12 @@ use polkadot_service::CollatorPair;
 use fc_rpc_core::types::FilterPool;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
-use unique_runtime_common::types::{
-	AuraId,
-	RuntimeInstance,
-	AccountId,
-	Balance,
-	Index,
-	Hash,
-	Block,
-};
+use unique_runtime_common::types::{AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block};
 
 // RMRK
 use up_data_structs::{
-	RmrkCollectionInfo,
-	RmrkInstanceInfo,
-	RmrkResourceInfo,
-	RmrkPropertyInfo,
-	RmrkBaseInfo,
-	RmrkPartType,
-	RmrkTheme,
+	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo,
+	RmrkPartType, RmrkTheme,
 };
 
 /// Unique native executor instance.

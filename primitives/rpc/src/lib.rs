@@ -42,22 +42,25 @@ sp_api::decl_runtime_apis! {
 		fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>>;
 		fn topmost_token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>>;
 		fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>>;
-		fn variable_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>>;
 
-		fn collection_properties(collection: CollectionId, properties: Vec<Vec<u8>>) -> Result<Vec<Property>>;
+		fn collection_properties(collection: CollectionId, properties: Option<Vec<Vec<u8>>>) -> Result<Vec<Property>>;
 
 		fn token_properties(
 			collection: CollectionId,
 			token_id: TokenId,
-			properties: Vec<Vec<u8>>
+			properties: Option<Vec<Vec<u8>>>
 		) -> Result<Vec<Property>>;
 
 		fn property_permissions(
 			collection: CollectionId,
-			properties: Vec<Vec<u8>>
+			properties: Option<Vec<Vec<u8>>>
 		) -> Result<Vec<PropertyKeyPermission>>;
 
-		fn token_data(collection: CollectionId, token_id: TokenId, keys: Vec<Vec<u8>>) -> Result<TokenData<CrossAccountId>>;
+		fn token_data(
+			collection: CollectionId,
+			token_id: TokenId,
+			keys: Option<Vec<Vec<u8>>>
+		) -> Result<TokenData<CrossAccountId>>;
 
 		fn total_supply(collection: CollectionId) -> Result<u32>;
 		fn account_balance(collection: CollectionId, account: CrossAccountId) -> Result<u32>;

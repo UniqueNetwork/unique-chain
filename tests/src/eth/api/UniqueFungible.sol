@@ -22,6 +22,12 @@ interface ERC20Events {
 	);
 }
 
+// Selector: 79cc6790
+interface ERC20UniqueExtensions is Dummy, ERC165 {
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 amount) external returns (bool);
+}
+
 // Selector: 942e8b22
 interface ERC20 is Dummy, ERC165, ERC20Events {
 	// Selector: name() 06fdde03
@@ -59,4 +65,28 @@ interface ERC20 is Dummy, ERC165, ERC20Events {
 		returns (uint256);
 }
 
-interface UniqueFungible is Dummy, ERC165, ERC20 {}
+// Selector: 9b5e29c5
+interface CollectionProperties is Dummy, ERC165 {
+	// Selector: setCollectionProperty(string,bytes) 2f073f66
+	function setCollectionProperty(string memory key, bytes memory value)
+		external;
+
+	// Selector: deleteCollectionProperty(string) 7b7debce
+	function deleteCollectionProperty(string memory key) external;
+
+	// Throws error if key not found
+	//
+	// Selector: collectionProperty(string) cf24fd6d
+	function collectionProperty(string memory key)
+		external
+		view
+		returns (bytes memory);
+}
+
+interface UniqueFungible is
+	Dummy,
+	ERC165,
+	ERC20,
+	ERC20UniqueExtensions,
+	CollectionProperties
+{}

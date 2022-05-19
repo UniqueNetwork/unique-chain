@@ -30,15 +30,12 @@ describe('createMultipleItemsEx', () => {
         {
           owner: {substrate: alice.address},
           constData: '0x0000',
-          variableData: '0x1111',
         }, {
           owner: {substrate: bob.address},
           constData: '0x2222',
-          variableData: '0x3333',
         }, {
           owner: {substrate: charlie.address},
           constData: '0x4444',
-          variableData: '0x5555',
         },
       ];
 
@@ -61,22 +58,19 @@ describe('createMultipleItemsEx', () => {
         {
           owner: {substrate: alice.address},
           constData: '0x0000',
-          variableData: '0x1111',
         }, {
           owner: {substrate: bob.address},
           constData: '0x2222',
-          variableData: '0x3333',
         }, {
           owner: {substrate: charlie.address},
           constData: '0x4444',
-          variableData: '0x5555',
         },
       ];
 
       await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setPropertyPermissions(collection, [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]), 
+        api,
+        alice,
+        api.tx.unique.setPropertyPermissions(collection, [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]),
       )).to.not.be.rejected;
 
       await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
@@ -98,27 +92,24 @@ describe('createMultipleItemsEx', () => {
         {
           owner: {substrate: alice.address},
           constData: '0x0000',
-          variableData: '0x1111',
         }, {
           owner: {substrate: bob.address},
           constData: '0x2222',
-          variableData: '0x3333',
         }, {
           owner: {substrate: charlie.address},
           constData: '0x4444',
-          variableData: '0x5555',
         },
       ];
       await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setPropertyPermissions(collection, [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]), 
+        api,
+        alice,
+        api.tx.unique.setPropertyPermissions(collection, [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]),
       )).to.not.be.rejected;
 
       await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
         NFT: data,
       }));
-      
+
 
       const tokens = await api.query.nonfungible.tokenData.entries(collection);
       const json = tokens.map(([, token]) => token.toJSON());
@@ -136,27 +127,24 @@ describe('createMultipleItemsEx', () => {
         {
           owner: {substrate: alice.address},
           constData: '0x0000',
-          variableData: '0x1111',
         }, {
           owner: {substrate: bob.address},
           constData: '0x2222',
-          variableData: '0x3333',
         }, {
           owner: {substrate: charlie.address},
           constData: '0x4444',
-          variableData: '0x5555',
         },
       ];
       await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setPropertyPermissions(collection, [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]), 
+        api,
+        alice,
+        api.tx.unique.setPropertyPermissions(collection, [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]),
       )).to.not.be.rejected;
 
       await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
         NFT: data,
       }));
-      
+
 
       const tokens = await api.query.nonfungible.tokenData.entries(collection);
       const json = tokens.map(([, token]) => token.toJSON());
@@ -184,15 +172,15 @@ describe('createMultipleItemsEx', () => {
 
       const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
       await executeTransaction(api, alice, tx);
-      
+
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateItemsResult(events);
-      
+
       for (const elem of result) {
         await expect(executeTransaction(
-          api, 
-          bob, 
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]), 
+          api,
+          bob,
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]),
         )).to.be.rejected;
       }
     });
@@ -218,15 +206,15 @@ describe('createMultipleItemsEx', () => {
 
       const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
       await executeTransaction(api, alice, tx);
-      
+
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateItemsResult(events);
-      
+
       for (const elem of result) {
         await expect(executeTransaction(
-          api, 
-          bob, 
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]), 
+          api,
+          bob,
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]),
         )).to.be.rejected;
       }
     });
@@ -251,15 +239,15 @@ describe('createMultipleItemsEx', () => {
 
       const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
       await executeTransaction(api, alice, tx);
-      
+
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateItemsResult(events);
-      
+
       for (const elem of result) {
         await expect(executeTransaction(
-          api, 
-          bob, 
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]), 
+          api,
+          bob,
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]),
         )).to.be.rejected;
       }
     });
@@ -284,24 +272,24 @@ describe('createMultipleItemsEx', () => {
 
       const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
       await executeTransaction(api, alice, tx);
-      
+
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateItemsResult(events);
 
       const prps = [];
-      
+
       for (let i = 0; i < 65; i++) {
         prps.push({key: `key${i}`, value: `value${i}`});
       }
 
       await expect(executeTransaction(api, bob, api.tx.unique.setCollectionProperties(collection, prps))).to.be.rejectedWith(/common\.PropertyLimitReached/);
 
-      
+
       for (const elem of result) {
         await expect(executeTransaction(
-          api, 
-          bob, 
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, prps), 
+          api,
+          bob,
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, prps),
         )).to.be.rejected;
       }
     });
@@ -326,7 +314,7 @@ describe('createMultipleItemsEx', () => {
 
       const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
       await executeTransaction(api, alice, tx);
-      
+
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateItemsResult(events);
 
@@ -334,12 +322,12 @@ describe('createMultipleItemsEx', () => {
 
       await expect(executeTransaction(api, bob, api.tx.unique.setCollectionProperties(collection, prps))).to.be.rejectedWith(/common\.NoSpaceForProperty/);
 
-      
+
       for (const elem of result) {
         await expect(executeTransaction(
-          api, 
-          bob, 
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, prps), 
+          api,
+          bob,
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, prps),
         )).to.be.rejected;
       }
     });
@@ -355,15 +343,12 @@ describe('createMultipleItemsEx', () => {
         {
           owner: {substrate: alice.address},
           constData: '0x0000',
-          variableData: '0x1111',
         }, {
           owner: {substrate: bob.address},
           constData: '0x2222',
-          variableData: '0x3333',
         }, {
           owner: {substrate: charlie.address},
           constData: '0x4444',
-          variableData: '0x5555',
         },
       ];
 
@@ -386,15 +371,12 @@ describe('createMultipleItemsEx', () => {
         {
           owner: {substrate: alice.address},
           constData: '0x0000',
-          variableData: '0x1111',
         }, {
           owner: {substrate: bob.address},
           constData: '0x2222',
-          variableData: '0x3333',
         }, {
           owner: {substrate: charlie.address},
           constData: '0x4444',
-          variableData: '0x5555',
         },
       ];
 

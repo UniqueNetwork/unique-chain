@@ -32,15 +32,14 @@ macro_rules! impl_common_runtime_apis {
                 fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
                     dispatch_unique_runtime!(collection.const_metadata(token))
                 }
-                fn variable_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
-                    dispatch_unique_runtime!(collection.variable_metadata(token))
-                }
 
                 fn collection_properties(
                     collection: CollectionId,
-                    keys: Vec<Vec<u8>>
+                    keys: Option<Vec<Vec<u8>>>
                 ) -> Result<Vec<Property>, DispatchError> {
-                    let keys = pallet_common::Pallet::<Runtime>::bytes_keys_to_property_keys(keys)?;
+                    let keys = keys.map(
+                        |keys| pallet_common::Pallet::<Runtime>::bytes_keys_to_property_keys(keys)
+                    ).transpose()?;
 
                     pallet_common::Pallet::<Runtime>::filter_collection_properties(collection, keys)
                 }
@@ -48,17 +47,22 @@ macro_rules! impl_common_runtime_apis {
                 fn token_properties(
                     collection: CollectionId,
                     token_id: TokenId,
-                    keys: Vec<Vec<u8>>
+                    keys: Option<Vec<Vec<u8>>>
                 ) -> Result<Vec<Property>, DispatchError> {
-                    let keys = pallet_common::Pallet::<Runtime>::bytes_keys_to_property_keys(keys)?;
+                    let keys = keys.map(
+                        |keys| pallet_common::Pallet::<Runtime>::bytes_keys_to_property_keys(keys)
+                    ).transpose()?;
+
                     dispatch_unique_runtime!(collection.token_properties(token_id, keys))
                 }
 
                 fn property_permissions(
                     collection: CollectionId,
-                    keys: Vec<Vec<u8>>
+                    keys: Option<Vec<Vec<u8>>>
                 ) -> Result<Vec<PropertyKeyPermission>, DispatchError> {
-                    let keys = pallet_common::Pallet::<Runtime>::bytes_keys_to_property_keys(keys)?;
+                    let keys = keys.map(
+                        |keys| pallet_common::Pallet::<Runtime>::bytes_keys_to_property_keys(keys)
+                    ).transpose()?;
 
                     pallet_common::Pallet::<Runtime>::filter_property_permissions(collection, keys)
                 }
@@ -66,7 +70,7 @@ macro_rules! impl_common_runtime_apis {
                 fn token_data(
                     collection: CollectionId,
                     token_id: TokenId,
-                    keys: Vec<Vec<u8>>
+                    keys: Option<Vec<Vec<u8>>>
                 ) -> Result<TokenData<CrossAccountId>, DispatchError> {
                     let token_data = TokenData {
                         const_data: Self::const_metadata(collection, token_id)?,
@@ -232,7 +236,7 @@ macro_rules! impl_common_runtime_apis {
                                     })
                                 })
                                 .collect();
-        
+
                             properties
                         }
                         None => {
@@ -253,7 +257,7 @@ macro_rules! impl_common_runtime_apis {
                     let token_id = TokenId(nft_id);
 
 		            let properties = pallet_nonfungible::Pallet::<Runtime>::token_properties((collection_id, token_id)); // todo look into usage of nonfungible
-                    
+
                     return Ok(match filter_keys {
                         Some(keys) => {
                             let keys = pallet_common::Pallet::<Runtime>::bytes_keys_to_property_keys(keys)?;
@@ -266,7 +270,7 @@ macro_rules! impl_common_runtime_apis {
                                     })
                                 })
                                 .collect();
-        
+
                             properties
                         }
                         None => {
@@ -300,7 +304,7 @@ macro_rules! impl_common_runtime_apis {
                     let keys = pallet_common::Pallet::<Runtime>::bytes_keys_to_property_keys(
                         Vec::from([String::from("rmrk:base-type").into_bytes()])
                     )?;
-                    let properties = pallet_common::Pallet::<Runtime>::filter_collection_properties(collection_id, keys)?;
+                    let properties = pallet_common::Pallet::<Runtime>::filter_collection_properties(collection_id, Some(keys))?;
                     //ensure!(properties.len() == 1); // todo make sure it's fine to have ensure in place // no access to errors from here? displace?
 
                     Ok(Some( RmrkBaseInfo {

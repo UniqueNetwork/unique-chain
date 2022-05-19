@@ -322,3 +322,15 @@ export async function recordEthFee(api: ApiPromise, user: string, call: () => Pr
 
   return before - after;
 }
+
+type ElementOf<A> = A extends readonly (infer T)[] ? T : never;
+// I want a fancier api, not a memory efficiency
+export function* cartesian<T extends Array<Array<any>>, R extends Array<any>>(internalRest: [...R], ...args: [...T]): Generator<[...R, ...{[K in keyof T]: ElementOf<T[K]>}]> {
+  if(args.length === 0) {
+    yield internalRest as any;
+    return;
+  }
+  for(const value of args[0]) {
+    yield* cartesian([...internalRest, value], ...args.slice(1)) as any;
+  }
+}

@@ -22,7 +22,8 @@ use core::{
 };
 use frame_support::{
 	storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
-	traits::Get, parameter_types,
+	traits::Get,
+	parameter_types,
 };
 
 #[cfg(feature = "serde")]
@@ -40,7 +41,10 @@ use rmrk_types::{
 	CollectionInfo, NftInfo, ResourceInfo, PropertyInfo, BaseInfo, PartType, Theme, ThemeProperty,
 };
 pub use rmrk_types::{
-	primitives::{CollectionId as RmrkCollectionId, NftId as RmrkNftId, BaseId as RmrkBaseId, PartId as RmrkPartId, ResourceId as RmrkResourceId},
+	primitives::{
+		CollectionId as RmrkCollectionId, NftId as RmrkNftId, BaseId as RmrkBaseId,
+		PartId as RmrkPartId, ResourceId as RmrkResourceId,
+	},
 	NftChild as RmrkNftChild, AccountIdOrCollectionNftTuple as RmrkAccountIdOrCollectionNftTuple,
 };
 
@@ -85,6 +89,7 @@ pub const SPONSOR_APPROVE_TIMEOUT: u32 = 5;
 
 // Schema limits
 pub const OFFCHAIN_SCHEMA_LIMIT: u32 = 8192;
+pub const VARIABLE_ON_CHAIN_SCHEMA_LIMIT: u32 = 8192;
 pub const CONST_ON_CHAIN_SCHEMA_LIMIT: u32 = 32768;
 
 pub const COLLECTION_FIELD_LIMIT: u32 = CONST_ON_CHAIN_SCHEMA_LIMIT;
@@ -318,8 +323,12 @@ pub struct Collection<AccountId> {
 	pub limits: CollectionLimitsVersion2,
 
 	#[version(..2)]
+	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
+
+	#[version(..2)]
 	pub const_on_chain_schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>,
 
+	#[version(..2)]
 	pub meta_update_permission: MetaUpdatePermission,
 }
 
@@ -339,7 +348,6 @@ pub struct RpcCollection<AccountId> {
 	pub sponsorship: SponsorshipState<AccountId>,
 	pub limits: CollectionLimits,
 	pub const_on_chain_schema: Vec<u8>,
-	pub meta_update_permission: MetaUpdatePermission,
 	pub token_property_permissions: Vec<PropertyKeyPermission>,
 	pub properties: Vec<Property>,
 }
@@ -365,7 +373,6 @@ pub struct CreateCollectionData<AccountId> {
 	pub pending_sponsor: Option<AccountId>,
 	pub limits: Option<CollectionLimits>,
 	pub const_on_chain_schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>,
-	pub meta_update_permission: Option<MetaUpdatePermission>,
 	pub token_property_permissions: CollectionPropertiesPermissionsVec,
 	pub properties: CollectionPropertiesVec,
 }
@@ -376,28 +383,6 @@ pub type CollectionPropertiesPermissionsVec =
 pub type CollectionPropertiesVec =
 	BoundedVec<Property, ConstU32<MAX_COLLECTION_PROPERTIES_ENCODE_LEN>>;
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-pub struct NftItemType<AccountId> {
-	pub owner: AccountId,
-	pub const_data: Vec<u8>,
-	pub variable_data: Vec<u8>,
-}
-
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-pub struct FungibleItemType {
-	pub value: u128,
-}
-
-#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-pub struct ReFungibleItemType<AccountId> {
-	pub owner: Vec<Ownership<AccountId>>,
-	pub const_data: Vec<u8>,
-	pub variable_data: Vec<u8>,
-}
-
 /// All fields are wrapped in `Option`s, where None means chain default
 #[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
@@ -405,6 +390,8 @@ pub struct ReFungibleItemType<AccountId> {
 pub struct CollectionLimits {
 	pub account_token_ownership_limit: Option<u32>,
 	pub sponsored_data_size: Option<u32>,
+
+	/// FIXME should we delete this or repurpose it?
 	/// None - setVariableMetadata is not sponsored
 	/// Some(v) - setVariableMetadata is sponsored
 	///           if there is v block between txs
@@ -502,9 +489,6 @@ pub struct CreateNftData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
-	#[derivative(Debug(format_with = "bounded::vec_debug"))]
-	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
@@ -524,24 +508,14 @@ pub struct CreateReFungibleData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
-	#[derivative(Debug(format_with = "bounded::vec_debug"))]
-	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 	pub pieces: u128,
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum MetaUpdatePermission {
 	ItemOwner,
 	Admin,
 	None,
-}
-
-impl Default for MetaUpdatePermission {
-	fn default() -> Self {
-		Self::ItemOwner
-	}
 }
 
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]
@@ -558,8 +532,6 @@ pub struct CreateNftExData<CrossAccountId> {
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
-	pub variable_data: BoundedVec<u8, CustomDataLimit>,
-	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub properties: CollectionPropertiesVec,
 	pub owner: CrossAccountId,
 }
@@ -569,8 +541,6 @@ pub struct CreateNftExData<CrossAccountId> {
 pub struct CreateRefungibleExData<CrossAccountId> {
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
-	#[derivative(Debug(format_with = "bounded::vec_debug"))]
-	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 	#[derivative(Debug(format_with = "bounded::map_debug"))]
 	pub users: BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
 }
@@ -598,8 +568,8 @@ pub enum CreateItemExData<CrossAccountId> {
 impl CreateItemData {
 	pub fn data_size(&self) -> usize {
 		match self {
-			CreateItemData::NFT(data) => data.variable_data.len() + data.const_data.len(),
-			CreateItemData::ReFungible(data) => data.variable_data.len() + data.const_data.len(),
+			CreateItemData::NFT(data) => data.const_data.len(),
+			CreateItemData::ReFungible(data) => data.const_data.len(),
 			_ => 0,
 		}
 	}
@@ -700,23 +670,64 @@ pub enum PropertiesError {
 	NoSpaceForProperty,
 	PropertyLimitReached,
 	InvalidCharacterInPropertyKey,
+	PropertyKeyIsTooLong,
 	EmptyPropertyKey,
 }
 
-pub trait TrySet: Sized {
+#[derive(Clone, Copy)]
+pub enum PropertyScope {
+	None,
+	Rmrk,
+}
+
+impl PropertyScope {
+	fn apply(self, key: PropertyKey) -> Result<PropertyKey, PropertiesError> {
+		let scope_str: &[u8] = match self {
+			Self::None => return Ok(key),
+			Self::Rmrk => b"rmrk",
+		};
+
+		[scope_str, b":", key.as_slice()]
+			.concat()
+			.try_into()
+			.map_err(|_| PropertiesError::PropertyKeyIsTooLong)
+	}
+}
+
+pub trait TrySetProperty: Sized {
 	type Value;
 
-	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError>;
+	fn try_scoped_set(
+		&mut self,
+		scope: PropertyScope,
+		key: PropertyKey,
+		value: Self::Value,
+	) -> Result<(), PropertiesError>;
+
+	fn try_scoped_set_from_iter<I>(
+		&mut self,
+		scope: PropertyScope,
+		iter: I,
+	) -> Result<(), PropertiesError>
+	where
+		I: Iterator<Item = (PropertyKey, Self::Value)>,
+	{
+		for (key, value) in iter {
+			self.try_scoped_set(scope, key, value)?;
+		}
+
+		Ok(())
+	}
+
+	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError> {
+		self.try_scoped_set(PropertyScope::None, key, value)
+	}
 
 	fn try_set_from_iter<I>(&mut self, iter: I) -> Result<(), PropertiesError>
 	where
 		I: Iterator<Item = (PropertyKey, Self::Value)>,
 	{
-		for (key, value) in iter {
-			self.try_set(key, value)?;
-		}
-
-		Ok(())
+		self.try_scoped_set_from_iter(PropertyScope::None, iter)
 	}
 }
 
@@ -751,12 +762,10 @@ impl<Value> PropertiesMap<Value> {
 		}
 
 		for byte in key.as_slice().iter() {
-			match char::from_u32(*byte as u32) {
-				Some(ch)
-					if ch.is_ascii_alphanumeric()
-					|| ch == '_'
-					|| ch == '-' => { /* OK */ },
-				_ => return Err(PropertiesError::InvalidCharacterInPropertyKey)
+			let byte = *byte;
+
+			if !byte.is_ascii_alphanumeric() && byte != b'_' && byte != b'-' {
+				return Err(PropertiesError::InvalidCharacterInPropertyKey);
 			}
 		}
 
@@ -764,12 +773,18 @@ impl<Value> PropertiesMap<Value> {
 	}
 }
 
-impl<Value> TrySet for PropertiesMap<Value> {
+impl<Value> TrySetProperty for PropertiesMap<Value> {
 	type Value = Value;
 
-	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError> {
+	fn try_scoped_set(
+		&mut self,
+		scope: PropertyScope,
+		key: PropertyKey,
+		value: Self::Value,
+	) -> Result<(), PropertiesError> {
 		Self::check_property_key(&key)?;
 
+		let key = scope.apply(key)?;
 		self.0
 			.try_insert(key, value)
 			.map_err(|_| PropertiesError::PropertyLimitReached)?;
@@ -816,17 +831,22 @@ impl Properties {
 	}
 }
 
-impl TrySet for Properties {
+impl TrySetProperty for Properties {
 	type Value = PropertyValue;
 
-	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError> {
+	fn try_scoped_set(
+		&mut self,
+		scope: PropertyScope,
+		key: PropertyKey,
+		value: Self::Value,
+	) -> Result<(), PropertiesError> {
 		let value_len = value.len();
 
 		if self.consumed_space as usize + value_len > self.space_limit as usize {
 			return Err(PropertiesError::NoSpaceForProperty);
 		}
 
-		self.map.try_set(key, value)?;
+		self.map.try_scoped_set(scope, key, value)?;
 
 		self.consumed_space += value_len as u32;
 
@@ -869,30 +889,19 @@ parameter_types! {
 	pub const RmrkPartsLimit: u32 = 3;
 }
 
-pub type RmrkCollectionInfo<AccountId> = CollectionInfo<
-	RmrkString,
-	BoundedVec<u8, RmrkCollectionSymbolLimit>,
-	AccountId
->;
-pub type RmrkInstanceInfo<AccountId> = NftInfo<
-	AccountId, 
-	Permill,
-	RmrkString
->;
-pub type RmrkResourceInfo = ResourceInfo::<
+pub type RmrkCollectionInfo<AccountId> =
+	CollectionInfo<RmrkString, BoundedVec<u8, RmrkCollectionSymbolLimit>, AccountId>;
+pub type RmrkInstanceInfo<AccountId> = NftInfo<AccountId, Permill, RmrkString>;
+pub type RmrkResourceInfo = ResourceInfo<
 	BoundedVec<u8, RmrkResourceSymbolLimit>,
 	RmrkString,
-	BoundedVec<RmrkPartId, RmrkPartsLimit>
+	BoundedVec<RmrkPartId, RmrkPartsLimit>,
 >;
-pub type RmrkPropertyInfo = PropertyInfo<
-	BoundedVec<u8, RmrkKeyLimit>, 
-	BoundedVec<u8, RmrkValueLimit>
->;
+pub type RmrkPropertyInfo =
+	PropertyInfo<BoundedVec<u8, RmrkKeyLimit>, BoundedVec<u8, RmrkValueLimit>>;
 pub type RmrkBaseInfo<AccountId> = BaseInfo<AccountId, RmrkString>;
-pub type RmrkPartType = PartType<
-	RmrkString,
-	BoundedVec<RmrkCollectionId, RmrkMaxCollectionsEquippablePerPart>
->;
+pub type RmrkPartType =
+	PartType<RmrkString, BoundedVec<RmrkCollectionId, RmrkMaxCollectionsEquippablePerPart>>;
 pub type RmrkTheme = Theme<RmrkString, Vec<ThemeProperty<RmrkString>>>;
 
 pub type RmrkRpcString = Vec<u8>;

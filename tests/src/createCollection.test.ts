@@ -74,7 +74,6 @@ describe('integration test: ext. createCollection():', () => {
           accountTokenOwnershipLimit: 3,
         },
         constOnChainSchema: '0x333333',
-        metaUpdatePermission: 'Admin',
       });
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateCollectionResult(events);
@@ -91,7 +90,6 @@ describe('integration test: ext. createCollection():', () => {
       expect(collection.sponsorship.asUnconfirmed.toString()).to.equal(bob.address);
       expect(collection.limits.accountTokenOwnershipLimit.unwrap().toNumber()).to.equal(3);
       expect(collection.constOnChainSchema.toString()).to.equal('0x333333');
-      expect(collection.metaUpdatePermission.isAdmin).to.be.true;
     });
   });
 });

@@ -26,7 +26,7 @@ const CROSS_ACCOUNT_ID_TYPE = 'PalletEvmAccountBasicCrossAccountIdRepr';
 
 const collectionParam = {name: 'collection', type: 'u32'};
 const tokenParam = {name: 'tokenId', type: 'u32'};
-const propertyKeysParam = {name: 'propertyKeys', type: 'Vec<String>'};
+const propertyKeysParam = {name: 'propertyKeys', type: 'Vec<String>', isOptional: true};
 const crossAccountParam = (name = 'account') => ({name, type: CROSS_ACCOUNT_ID_TYPE});
 const atParam = {name: 'at', type: 'Hash', isOptional: true};
 

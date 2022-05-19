@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import privateKey from '../../substrate/privateKey';
-import {createCollectionExpectSuccess, createItemExpectSuccess, setVariableMetaDataExpectSuccess, setMetadataUpdatePermissionFlagExpectSuccess} from '../../util/helpers';
+import {createCollectionExpectSuccess, createItemExpectSuccess} from '../../util/helpers';
 import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents} from '../util/helpers';
 import nonFungibleAbi from '../nonFungibleAbi.json';
 import {expect} from 'chai';
@@ -333,36 +333,5 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
       const balance = await contract.methods.balanceOf(receiver).call();
       expect(+balance).to.equal(1);
     }
-  });
-
-  itWeb3('Can perform getVariableMetadata', async ({web3, api}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKey('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3);
-
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS}));
-    const item = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: contract.options.address});
-    await setMetadataUpdatePermissionFlagExpectSuccess(alice, collection, 'Admin');
-    await setVariableMetaDataExpectSuccess(alice, collection, item, [1, 2, 3]);
-
-    expect(await contract.methods.getVariableMetadata(item).call()).to.be.equal('0x010203');
-  });
-
-  itWeb3('Can perform setVariableMetadata', async ({web3, api}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKey('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3);
-
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS}));
-    const item = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: contract.options.address});
-
-    expect(await contract.methods.setVariableMetadata(item, '0x010203').send({from: caller}));
-    expect(await contract.methods.getVariableMetadata(item).call()).to.be.equal('0x010203');
   });
 });

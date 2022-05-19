@@ -6391,6 +6391,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
+ "struct-versioning",
  "up-data-structs",
 ]
 
@@ -6508,6 +6509,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
+ "struct-versioning",
  "up-data-structs",
 ]
 

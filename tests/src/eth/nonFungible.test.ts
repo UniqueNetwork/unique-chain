@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import privateKey from '../substrate/privateKey';
-import {approveExpectSuccess, burnItemExpectSuccess, createCollectionExpectSuccess, createItemExpectSuccess, setVariableMetaDataExpectSuccess, transferExpectSuccess, transferFromExpectSuccess, UNIQUE, setMetadataUpdatePermissionFlagExpectSuccess} from '../util/helpers';
+import {approveExpectSuccess, burnItemExpectSuccess, createCollectionExpectSuccess, createItemExpectSuccess, transferExpectSuccess, transferFromExpectSuccess, UNIQUE} from '../util/helpers';
 import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, transferBalanceToEth} from './util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import {expect} from 'chai';
@@ -331,41 +331,6 @@ describe('NFT: Plain calls', () => {
       const balance = await contract.methods.balanceOf(receiver).call();
       expect(+balance).to.equal(1);
     }
-  });
-
-  itWeb3('Can perform getVariableMetadata', async ({web3, api}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKey('//Alice');
-
-    const owner = await createEthAccountWithBalance(api, web3);
-
-    const item = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: owner});
-    await setMetadataUpdatePermissionFlagExpectSuccess(alice, collection, 'Admin');
-    await setVariableMetaDataExpectSuccess(alice, collection, item, [1, 2, 3]);
-
-    const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: owner, ...GAS_ARGS});
-
-    expect(await contract.methods.getVariableMetadata(item).call()).to.be.equal('0x010203');
-  });
-
-  itWeb3('Can perform setVariableMetadata', async ({web3, api}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKey('//Alice');
-
-    const owner = await createEthAccountWithBalance(api, web3);
-
-    const item = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: owner});
-
-    const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: owner, ...GAS_ARGS});
-
-    expect(await contract.methods.setVariableMetadata(item, '0x010203').send({from: owner}));
-    expect(await contract.methods.getVariableMetadata(item).call()).to.be.equal('0x010203');
   });
 });
 

@@ -22,23 +22,56 @@ use sp_std::vec::Vec;
 use pallet_evm::account::CrossAccountId;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Weight, PostDispatchInfo},
-	ensure, fail,
+	ensure,
 	traits::{Imbalance, Get, Currency, WithdrawReasons, ExistenceRequirement},
 	BoundedVec,
 	weights::Pays,
+	transactional,
 };
 use pallet_evm::GasWeightMapping;
 use up_data_structs::{
-	COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, CollectionId, CreateItemData,
-	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, TokenId,
-	CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT,
-	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT,
-	CUSTOM_DATA_LIMIT, CollectionLimits, CustomDataLimit, CreateCollectionData, SponsorshipState,
-	CreateItemExData, SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField,
-	PhantomType, Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyPermission,
-	PropertiesError, PropertyKeyPermission, TokenData, TrySet,
+	COLLECTION_NUMBER_LIMIT,
+	Collection,
+	RpcCollection,
+	CollectionId,
+	CreateItemData,
+	MAX_TOKEN_PREFIX_LENGTH,
+	COLLECTION_ADMINS_LIMIT,
+	TokenId,
+	CollectionStats,
+	MAX_TOKEN_OWNERSHIP,
+	CollectionMode,
+	NFT_SPONSOR_TRANSFER_TIMEOUT,
+	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	MAX_SPONSOR_TIMEOUT,
+	CUSTOM_DATA_LIMIT,
+	CollectionLimits,
+	CreateCollectionData,
+	SponsorshipState,
+	CreateItemExData,
+	SponsoringRateLimit,
+	budget::Budget,
+	COLLECTION_FIELD_LIMIT,
+	CollectionField,
+	PhantomType,
+	Property,
+	Properties,
+	PropertiesPermissionMap,
+	PropertyKey,
+	PropertyPermission,
+	PropertiesError,
+	PropertyKeyPermission,
+	TokenData,
+	TrySetProperty,
 	// RMRK
-	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo, RmrkPartType, RmrkTheme,
+	RmrkCollectionInfo,
+	RmrkInstanceInfo,
+	RmrkResourceInfo,
+	RmrkPropertyInfo,
+	RmrkBaseInfo,
+	RmrkPartType,
+	RmrkTheme,
 	RmrkNftChild,
 };
 
@@ -138,21 +171,6 @@ impl<T: Config> CollectionHandle<T> {
 			<Error<T>>::AddressNotInAllowlist
 		);
 		Ok(())
-	}
-
-	pub fn check_can_update_meta(
-		&self,
-		subject: &T::CrossAccountId,
-		item_owner: &T::CrossAccountId,
-	) -> DispatchResult {
-		match self.meta_update_permission {
-			MetaUpdatePermission::ItemOwner => {
-				ensure!(subject == item_owner, <Error<T>>::NoPermission);
-				Ok(())
-			}
-			MetaUpdatePermission::Admin => self.check_is_owner_or_admin(subject),
-			MetaUpdatePermission::None => fail!(<Error<T>>::NoPermission),
-		}
 	}
 }
 
@@ -316,8 +334,6 @@ pub mod pallet {
 		CollectionTokenPrefixLimitExceeded,
 		/// Total collections bound exceeded.
 		TotalCollectionsLimitExceeded,
-		/// variable_data exceeded data limit.
-		TokenVariableDataLimitExceeded,
 		/// Exceeded max admin count
 		CollectionAdminCountExceeded,
 		/// Collection limit bounds per collection exceeded
@@ -366,8 +382,8 @@ pub mod pallet {
 		/// Tried to store more property keys than allowed
 		PropertyLimitReached,
 
-		/// Unable to read array of unbounded keys
-		UnableToReadUnboundedKeys,
+		/// Property key is too long
+		PropertyKeyIsTooLong,
 
 		/// Only ASCII letters, digits, and '_', '-' are allowed
 		InvalidCharacterInPropertyKey,
@@ -580,7 +596,6 @@ impl<T: Config> Pallet<T> {
 			schema_version,
 			sponsorship,
 			limits,
-			meta_update_permission,
 		} = <CollectionById<T>>::get(collection)?;
 
 		let token_property_permissions = <CollectionPropertyPermissions<T>>::get(collection)
@@ -610,7 +625,6 @@ impl<T: Config> Pallet<T> {
 			schema_version,
 			sponsorship,
 			limits,
-			meta_update_permission,
 			offchain_schema: <CollectionData<T>>::get((
 				collection,
 				CollectionField::OffchainSchema,
@@ -671,7 +685,6 @@ impl<T: Config> Pallet<T> {
 				.limits
 				.map(|limits| Self::clamp_limits(data.mode.clone(), &Default::default(), limits))
 				.unwrap_or_else(|| Ok(CollectionLimits::default()))?,
-			meta_update_permission: data.meta_update_permission.unwrap_or_default(),
 		};
 
 		let mut collection_properties = up_data_structs::CollectionProperties::get();
@@ -775,6 +788,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	#[transactional]
 	pub fn set_collection_properties(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
@@ -807,6 +821,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	#[transactional]
 	pub fn delete_collection_properties(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
@@ -849,6 +864,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	#[transactional]
 	pub fn set_property_permissions(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
@@ -867,60 +883,69 @@ impl<T: Config> Pallet<T> {
 		keys.into_iter()
 			.map(|key| -> Result<PropertyKey, DispatchError> {
 				key.try_into()
-					.map_err(|_| <Error<T>>::UnableToReadUnboundedKeys.into())
+					.map_err(|_| <Error<T>>::PropertyKeyIsTooLong.into())
 			})
 			.collect::<Result<Vec<PropertyKey>, DispatchError>>()
 	}
 
-	pub fn check_property_key(key: &PropertyKey) -> Result<(), DispatchError> {
-		let key_str = sp_std::str::from_utf8(key.as_slice())
-			.map_err(|_| <Error<T>>::InvalidCharacterInPropertyKey)?;
-
-		for ch in key_str.chars() {
-			if !ch.is_ascii_alphanumeric() && ch != '_' && ch != '-' {
-				return Err(<Error<T>>::InvalidCharacterInPropertyKey.into());
-			}
-		}
-
-		Ok(())
-	}
-
 	pub fn filter_collection_properties(
 		collection_id: CollectionId,
-		keys: Vec<PropertyKey>,
+		keys: Option<Vec<PropertyKey>>,
 	) -> Result<Vec<Property>, DispatchError> {
 		let properties = Self::collection_properties(collection_id);
 
 		let properties = keys
-			.into_iter()
-			.filter_map(|key| {
-				properties.get(&key).map(|value| Property {
-					key,
-					value: value.clone(),
-				})
+			.map(|keys| {
+				keys.into_iter()
+					.filter_map(|key| {
+						properties.get(&key).map(|value| Property {
+							key,
+							value: value.clone(),
+						})
+					})
+					.collect()
 			})
-			.collect();
+			.unwrap_or_else(|| {
+				properties
+					.iter()
+					.map(|(key, value)| Property {
+						key: key.clone(),
+						value: value.clone(),
+					})
+					.collect()
+			});
 
 		Ok(properties)
 	}
 
 	pub fn filter_property_permissions(
 		collection_id: CollectionId,
-		keys: Vec<PropertyKey>,
+		keys: Option<Vec<PropertyKey>>,
 	) -> Result<Vec<PropertyKeyPermission>, DispatchError> {
 		let permissions = Self::property_permissions(collection_id);
 
 		let key_permissions = keys
-			.into_iter()
-			.filter_map(|key| {
+			.map(|keys| {
+				keys.into_iter()
+					.filter_map(|key| {
+						permissions
+							.get(&key)
+							.map(|permission| PropertyKeyPermission {
+								key,
+								permission: permission.clone(),
+							})
+					})
+					.collect()
+			})
+			.unwrap_or_else(|| {
 				permissions
-					.get(&key)
-					.map(|permission| PropertyKeyPermission {
-						key,
+					.iter()
+					.map(|(key, permission)| PropertyKeyPermission {
+						key: key.clone(),
 						permission: permission.clone(),
 					})
-			})
-			.collect();
+					.collect()
+			});
 
 		Ok(key_permissions)
 	}
@@ -1086,7 +1111,6 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
 	fn burn_from() -> Weight;
-	fn set_variable_metadata(bytes: u32) -> Weight;
 }
 
 pub trait CommonCollectionOperations<T: Config> {
@@ -1176,13 +1200,6 @@ pub trait CommonCollectionOperations<T: Config> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 
-	fn set_variable_metadata(
-		&self,
-		sender: T::CrossAccountId,
-		token: TokenId,
-		data: BoundedVec<u8, CustomDataLimit>,
-	) -> DispatchResultWithPostInfo;
-
 	fn check_nesting(
 		&self,
 		sender: T::CrossAccountId,
@@ -1198,8 +1215,7 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
 	fn const_metadata(&self, token: TokenId) -> Vec<u8>;
-	fn variable_metadata(&self, token: TokenId) -> Vec<u8>;
-	fn token_properties(&self, token_id: TokenId, keys: Vec<PropertyKey>) -> Vec<Property>;
+	fn token_properties(&self, token_id: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property>;
 	/// Amount of unique collection tokens
 	fn total_supply(&self) -> u32;
 	/// Amount of different tokens account has (Applicable to nonfungible/refungible)
@@ -1232,6 +1248,7 @@ impl<T: Config> From<PropertiesError> for Error<T> {
 			PropertiesError::NoSpaceForProperty => Self::NoSpaceForProperty,
 			PropertiesError::PropertyLimitReached => Self::PropertyLimitReached,
 			PropertiesError::InvalidCharacterInPropertyKey => Self::InvalidCharacterInPropertyKey,
+			PropertiesError::PropertyKeyIsTooLong => Self::PropertyKeyIsTooLong,
 			PropertiesError::EmptyPropertyKey => Self::EmptyPropertyKey,
 		}
 	}

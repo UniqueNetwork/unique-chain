@@ -35,16 +35,16 @@ use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{sp_std::prelude::Vec};
 use up_data_structs::{
-	CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT,
-	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	AccessMode, CreateItemData, CollectionLimits, CollectionId, CollectionMode, TokenId,
-	SchemaVersion, SponsorshipState, MetaUpdatePermission, CreateCollectionData, CustomDataLimit,
-	CreateItemExData, budget, CollectionField, Property, PropertyKey, PropertyKeyPermission,
+	CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT, MAX_COLLECTION_NAME_LENGTH,
+	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, AccessMode, CreateItemData,
+	CollectionLimits, CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState,
+	CreateCollectionData, CreateItemExData, budget, CollectionField, Property, PropertyKey,
+	PropertyKeyPermission,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
-	CollectionHandle, Pallet as PalletCommon, Error as CommonError, CommonWeightInfo,
-	dispatch::dispatch_call, dispatch::CollectionDispatch,
+	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_call,
+	dispatch::CollectionDispatch,
 };
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -240,7 +240,9 @@ decl_storage! {
 
 		/// Variable metadata sponsoring
 		/// Collection id (controlled?2), token id (controlled?2)
+		#[deprecated]
 		pub VariableMetaDataBasket get(fn variable_meta_data_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber>;
+
 		/// Approval sponsoring
 		pub NftApproveBasket get(fn nft_approve_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber>;
 		pub FungibleApproveBasket get(fn fungible_approve_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(twox_64_concat) T::AccountId => Option<T::BlockNumber>;
@@ -258,6 +260,14 @@ decl_module! {
 		fn deposit_event() = default;
 
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
+			0
+		}
+
+		fn on_runtime_upgrade() -> Weight {
+			let limit = None;
+
+			<VariableMetaDataBasket<T>>::remove_all(limit);
+
 			0
 		}
 
@@ -333,7 +343,6 @@ decl_module! {
 			<FungibleTransferBasket<T>>::remove_prefix(collection_id, None);
 			<ReFungibleTransferBasket<T>>::remove_prefix((collection_id,), None);
 
-			<VariableMetaDataBasket<T>>::remove_prefix(collection_id, None);
 			<NftApproveBasket<T>>::remove_prefix(collection_id, None);
 			<FungibleApproveBasket<T>>::remove_prefix(collection_id, None);
 			<RefungibleApproveBasket<T>>::remove_prefix((collection_id,), None);
@@ -929,59 +938,6 @@ decl_module! {
 			let budget = budget::Value::new(2);
 
 			dispatch_call::<T, _>(collection_id, |d| d.transfer_from(sender, from, recipient, item_id, value, &budget))
-		}
-
-		/// Set off-chain data schema.
-		///
-		/// # Permissions
-		///
-		/// * Collection Owner
-		/// * Collection Admin
-		///
-		/// # Arguments
-		///
-		/// * collection_id.
-		///
-		/// * schema: String representing the offchain data schema.
-		#[weight = T::CommonWeightInfo::set_variable_metadata(data.len() as u32)]
-		#[transactional]
-		pub fn set_variable_meta_data (
-			origin,
-			collection_id: CollectionId,
-			item_id: TokenId,
-			data: BoundedVec<u8, CustomDataLimit>,
-		) -> DispatchResultWithPostInfo {
-			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-
-			dispatch_call::<T, _>(collection_id, |d| d.set_variable_metadata(sender, item_id, data))
-		}
-
-		/// Set meta_update_permission value for particular collection
-		///
-		/// # Permissions
-		///
-		/// * Collection Owner.
-		///
-		/// # Arguments
-		///
-		/// * collection_id: ID of the collection.
-		///
-		/// * value: New flag value.
-		#[weight = <SelfWeightOf<T>>::set_meta_update_permission_flag()]
-		#[transactional]
-		pub fn set_meta_update_permission_flag(origin, collection_id: CollectionId, value: MetaUpdatePermission) -> DispatchResult {
-			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-
-			ensure!(
-				target_collection.meta_update_permission != MetaUpdatePermission::None,
-				<CommonError<T>>::MetadataFlagFrozen,
-			);
-			target_collection.check_is_owner(&sender)?;
-
-			target_collection.meta_update_permission = value;
-
-			target_collection.save()
 		}
 
 		/// Set schema standard

@@ -30,7 +30,6 @@ import {
   getBalance,
   getTokenOwner,
   getLastTokenId,
-  getVariableMetadata,
   getConstMetadata,
   getCreatedCollectionCount,
   createCollectionWithPropsExpectSuccess,
@@ -47,9 +46,9 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       const alice = privateKey('//Alice');
-      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
-        {Nft: {const_data: '0x32', variable_data: '0x32'}},
-        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
+      const args = [{Nft: {const_data: '0x31'}},
+        {Nft: {const_data: '0x32'}},
+        {Nft: {const_data: '0x33'}}];
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await submitTransactionAsync(alice, createMultipleItemsTx);
@@ -63,10 +62,6 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(await getConstMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
       expect(await getConstMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
       expect(await getConstMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
-
-      expect(await getVariableMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
-      expect(await getVariableMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
-      expect(await getVariableMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
     });
   });
 
@@ -97,9 +92,9 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(itemsListIndexBefore).to.be.equal(0);
       const alice = privateKey('//Alice');
       const args = [
-        {ReFungible: {const_data: [0x31], variable_data: [0x31], pieces: 1}},
-        {ReFungible: {const_data: [0x32], variable_data: [0x32], pieces: 1}},
-        {ReFungible: {const_data: [0x33], variable_data: [0x33], pieces: 1}},
+        {ReFungible: {const_data: [0x31], pieces: 1}},
+        {ReFungible: {const_data: [0x32], pieces: 1}},
+        {ReFungible: {const_data: [0x33], pieces: 1}},
       ];
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
@@ -114,10 +109,6 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(await getConstMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
       expect(await getConstMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
       expect(await getConstMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
-
-      expect(await getVariableMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
-      expect(await getVariableMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
-      expect(await getVariableMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
     });
   });
 
@@ -130,8 +121,8 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
         tokenLimit: 2,
       });
       const args = [
-        {NFT: {const_data: 'A', variable_data: 'A'}},
-        {NFT: {const_data: 'B', variable_data: 'B'}},
+        {NFT: {const_data: 'A'}},
+        {NFT: {const_data: 'B'}},
       ];
       const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       const events = await submitTransactionAsync(alice, createMultipleItemsTx);
@@ -146,9 +137,10 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       const alice = privateKey('//Alice');
-      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
-        {Nft: {const_data: '0x32', variable_data: '0x32'}},
-        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
+      const bob = privateKey('//Bob');
+      const args = [{Nft: {const_data: '0x31'}},
+        {Nft: {const_data: '0x32'}},
+        {Nft: {const_data: '0x33'}}];
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await submitTransactionAsync(alice, createMultipleItemsTx);
@@ -156,9 +148,9 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(itemsListIndexAfter).to.be.equal(3);
 
       await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setPropertyPermissions(collectionId, [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]), 
+        api,
+        alice,
+        api.tx.unique.setPropertyPermissions(collectionId, [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]),
       )).to.not.be.rejected;
 
       expect(await getTokenOwner(api, collectionId, 1)).to.be.deep.equal(normalizeAccountId(alice.address));
@@ -168,10 +160,6 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(await getConstMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
       expect(await getConstMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
       expect(await getConstMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
-
-      expect(await getVariableMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
-      expect(await getVariableMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
-      expect(await getVariableMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
     });
   });
 
@@ -181,9 +169,10 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       const alice = privateKey('//Alice');
-      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
-        {Nft: {const_data: '0x32', variable_data: '0x32'}},
-        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
+      const bob = privateKey('//Bob');
+      const args = [{Nft: {const_data: '0x31'}},
+        {Nft: {const_data: '0x32'}},
+        {Nft: {const_data: '0x33'}}];
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await submitTransactionAsync(alice, createMultipleItemsTx);
@@ -191,9 +180,9 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(itemsListIndexAfter).to.be.equal(3);
 
       await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setPropertyPermissions(collectionId, [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]), 
+        api,
+        alice,
+        api.tx.unique.setPropertyPermissions(collectionId, [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]),
       )).to.not.be.rejected;
 
       expect(await getTokenOwner(api, collectionId, 1)).to.be.deep.equal(normalizeAccountId(alice.address));
@@ -203,10 +192,6 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(await getConstMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
       expect(await getConstMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
       expect(await getConstMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
-
-      expect(await getVariableMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
-      expect(await getVariableMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
-      expect(await getVariableMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
     });
   });
 
@@ -216,9 +201,10 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       const alice = privateKey('//Alice');
-      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
-        {Nft: {const_data: '0x32', variable_data: '0x32'}},
-        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
+      const bob = privateKey('//Bob');
+      const args = [{Nft: {const_data: '0x31'}},
+        {Nft: {const_data: '0x32'}},
+        {Nft: {const_data: '0x33'}}];
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await submitTransactionAsync(alice, createMultipleItemsTx);
@@ -226,9 +212,9 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(itemsListIndexAfter).to.be.equal(3);
 
       await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setPropertyPermissions(collectionId, [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]), 
+        api,
+        alice,
+        api.tx.unique.setPropertyPermissions(collectionId, [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]),
       )).to.not.be.rejected;
 
       expect(await getTokenOwner(api, collectionId, 1)).to.be.deep.equal(normalizeAccountId(alice.address));
@@ -238,10 +224,6 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(await getConstMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
       expect(await getConstMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
       expect(await getConstMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
-
-      expect(await getVariableMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
-      expect(await getVariableMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
-      expect(await getVariableMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
     });
   });
 });
@@ -264,9 +246,9 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
-        {Nft: {const_data: '0x32', variable_data: '0x32'}},
-        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
+      const args = [{Nft: {const_data: '0x31'}},
+        {Nft: {const_data: '0x32'}},
+        {Nft: {const_data: '0x33'}}];
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(bob.address), args);
       await submitTransactionAsync(bob, createMultipleItemsTx);
@@ -280,10 +262,6 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(await getConstMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
       expect(await getConstMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
       expect(await getConstMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
-
-      expect(await getVariableMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
-      expect(await getVariableMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
-      expect(await getVariableMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
     });
   });
 
@@ -314,9 +292,9 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(itemsListIndexBefore).to.be.equal(0);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
       const args = [
-        {ReFungible: {const_data: [0x31], variable_data: [0x31], pieces: 1}},
-        {ReFungible: {const_data: [0x32], variable_data: [0x32], pieces: 1}},
-        {ReFungible: {const_data: [0x33], variable_data: [0x33], pieces: 1}},
+        {ReFungible: {const_data: [0x31], pieces: 1}},
+        {ReFungible: {const_data: [0x32], pieces: 1}},
+        {ReFungible: {const_data: [0x33], pieces: 1}},
       ];
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(bob.address), args);
@@ -331,10 +309,6 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       expect(await getConstMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
       expect(await getConstMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
       expect(await getConstMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
-
-      expect(await getVariableMetadata(api, collectionId, 1)).to.be.deep.equal([0x31]);
-      expect(await getVariableMetadata(api, collectionId, 2)).to.be.deep.equal([0x32]);
-      expect(await getVariableMetadata(api, collectionId, 3)).to.be.deep.equal([0x33]);
     });
   });
 });
@@ -356,9 +330,9 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       const collectionId = await createCollectionExpectSuccess();
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
-        {Nft: {const_data: '0x32', variable_data: '0x32'}},
-        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
+      const args = [{Nft: {const_data: '0x31'}},
+        {Nft: {const_data: '0x32'}},
+        {Nft: {const_data: '0x33'}}];
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await expect(submitTransactionAsync(bob, createMultipleItemsTx)).to.be.rejected;
@@ -387,9 +361,9 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       const args = [
-        {ReFungible: {const_data: [0x31], variable_data: [0x31], pieces: 1}},
-        {ReFungible: {const_data: [0x32], variable_data: [0x32], pieces: 1}},
-        {ReFungible: {const_data: [0x33], variable_data: [0x33], pieces: 1}},
+        {ReFungible: {const_data: [0x31], pieces: 1}},
+        {ReFungible: {const_data: [0x32], pieces: 1}},
+        {ReFungible: {const_data: [0x33], pieces: 1}},
       ];
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
@@ -412,9 +386,9 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       const collectionId = await createCollectionExpectSuccess();
       const alice = privateKey('//Alice');
       const args = [
-        {NFT: {const_data: 'A'.repeat(2049), variable_data: 'A'.repeat(2049)}},
-        {NFT: {const_data: 'B'.repeat(2049), variable_data: 'B'.repeat(2049)}},
-        {NFT: {const_data: 'C'.repeat(2049), variable_data: 'C'.repeat(2049)}},
+        {NFT: {const_data: 'A'.repeat(2049)}},
+        {NFT: {const_data: 'B'.repeat(2049)}},
+        {NFT: {const_data: 'C'.repeat(2049)}},
       ];
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
@@ -424,9 +398,9 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       const collectionIdReFungible =
         await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const argsReFungible = [
-        {ReFungible: ['1'.repeat(2049), '1'.repeat(2049), 10]},
-        {ReFungible: ['2'.repeat(2049), '2'.repeat(2049), 10]},
-        {ReFungible: ['3'.repeat(2049), '3'.repeat(2049), 10]},
+        {ReFungible: ['1'.repeat(2049), 10]},
+        {ReFungible: ['2'.repeat(2049), 10]},
+        {ReFungible: ['3'.repeat(2049), 10]},
       ];
       const createMultipleItemsTxFungible = api.tx.unique
         .createMultipleItems(collectionIdReFungible, normalizeAccountId(alice.address), argsReFungible);
@@ -449,9 +423,8 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
     await usingApi(async (api: ApiPromise) => {
       const collectionId = await createCollectionExpectSuccess();
       const args = [
-        {NFT: {const_data: 'A', variable_data: 'A'}},
-        {NFT: {const_data: 'B', variable_data: 'B'.repeat(2049)}},
-        {NFT: {const_data: 'C'.repeat(2049), variable_data: 'C'}},
+        {NFT: {const_data: 'A'}},
+        {NFT: {const_data: 'B'.repeat(2049)}},
       ];
       const createMultipleItemsTx = await api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
@@ -467,8 +440,8 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
         tokenLimit: 1,
       });
       const args = [
-        {NFT: {const_data: 'A', variable_data: 'A'}},
-        {NFT: {const_data: 'B', variable_data: 'B'}},
+        {NFT: {const_data: 'A'}},
+        {NFT: {const_data: 'B'}},
       ];
       const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTx)).to.be.rejected;
@@ -482,10 +455,10 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
-        {Nft: {const_data: '0x32', variable_data: '0x32'}},
-        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
-      
+      const args = [{Nft: {const_data: '0x31'}},
+        {Nft: {const_data: '0x32'}},
+        {Nft: {const_data: '0x33'}}];
+
       const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
 
       const events = await submitTransactionAsync(alice, createMultipleItemsTx);
@@ -493,9 +466,9 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
 
       for (const elem of result) {
         await expect(executeTransaction(
-          api, 
-          bob, 
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]), 
+          api,
+          bob,
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]),
         )).to.be.rejected;
       }
 
@@ -510,10 +483,10 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
-        {Nft: {const_data: '0x32', variable_data: '0x32'}},
-        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
-      
+      const args = [{Nft: {const_data: '0x31'}},
+        {Nft: {const_data: '0x32'}},
+        {Nft: {const_data: '0x33'}}];
+
       const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
 
       const events = await submitTransactionAsync(alice, createMultipleItemsTx);
@@ -521,9 +494,9 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
 
       for (const elem of result) {
         await expect(executeTransaction(
-          api, 
-          bob, 
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]), 
+          api,
+          bob,
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]),
         )).to.be.rejected;
       }
     });
@@ -535,10 +508,10 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
-        {Nft: {const_data: '0x32', variable_data: '0x32'}},
-        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
-      
+      const args = [{Nft: {const_data: '0x31'}},
+        {Nft: {const_data: '0x32'}},
+        {Nft: {const_data: '0x33'}}];
+
       const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
 
       const events = await submitTransactionAsync(alice, createMultipleItemsTx);
@@ -546,9 +519,9 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
 
       for (const elem of result) {
         await expect(executeTransaction(
-          api, 
-          bob, 
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]), 
+          api,
+          bob,
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]),
         )).to.be.rejected;
       }
     });
@@ -562,28 +535,28 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       expect(itemsListIndexBefore).to.be.equal(0);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
 
-      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
-        {Nft: {const_data: '0x32', variable_data: '0x32'}},
-        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
-      
+      const args = [{Nft: {const_data: '0x31'}},
+        {Nft: {const_data: '0x32'}},
+        {Nft: {const_data: '0x33'}}];
+
       const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       const events = await submitTransactionAsync(alice, createMultipleItemsTx);
 
       const result = getCreateItemsResult(events);
-      
+
       const prps = [];
-      
+
       for (let i = 0; i < 65; i++) {
         prps.push({key: `key${i}`, value: `value${i}`});
       }
 
       await expect(executeTransaction(api, bob, api.tx.unique.setCollectionProperties(collectionId, prps))).to.be.rejectedWith(/common\.PropertyLimitReached/);
-      
+
       for (const elem of result) {
         await expect(executeTransaction(
-          api, 
-          bob, 
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, prps), 
+          api,
+          bob,
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, prps),
         )).to.be.rejected;
       }
     });
@@ -595,10 +568,10 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
         propPerm:   [{key: 'key1', mutable: true, collectionAdmin: false, tokenOwner: false}]});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const args = [{Nft: {const_data: '0x31', variable_data: '0x31'}},
-        {Nft: {const_data: '0x32', variable_data: '0x32'}},
-        {Nft: {const_data: '0x33', variable_data: '0x33'}}];
-      
+      const args = [{Nft: {const_data: '0x31'}},
+        {Nft: {const_data: '0x32'}},
+        {Nft: {const_data: '0x33'}}];
+
       const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
 
       const events = await submitTransactionAsync(alice, createMultipleItemsTx);
@@ -609,9 +582,9 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
 
       for (const elem of result) {
         await expect(executeTransaction(
-          api, 
-          bob, 
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]), 
+          api,
+          bob,
+          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]),
         )).to.be.rejected;
       }
     });

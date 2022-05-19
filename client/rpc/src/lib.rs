@@ -30,8 +30,8 @@ use up_rpc::UniqueApi as UniqueRuntimeApi;
 // RMRK
 use rmrk_rpc::RmrkApi as RmrkRuntimeApi;
 use up_data_structs::{
-	RmrkCollectionId, RmrkNftId, RmrkBaseId, RmrkNftChild,
-	RmrkThemeName, RmrkPropertyKey, RmrkResourceId
+	RmrkCollectionId, RmrkNftId, RmrkBaseId, RmrkNftChild, RmrkThemeName, RmrkPropertyKey,
+	RmrkResourceId,
 };
 
 pub use rmrk_unique_rpc::RmrkApi;
@@ -80,19 +80,12 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<u8>>;
-	#[rpc(name = "unique_variableMetadata")]
-	fn variable_metadata(
-		&self,
-		collection: CollectionId,
-		token: TokenId,
-		at: Option<BlockHash>,
-	) -> Result<Vec<u8>>;
 
 	#[rpc(name = "unique_collectionProperties")]
 	fn collection_properties(
 		&self,
 		collection: CollectionId,
-		keys: Vec<String>,
+		keys: Option<Vec<String>>,
 		at: Option<BlockHash>,
 	) -> Result<Vec<Property>>;
 
@@ -101,7 +94,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		&self,
 		collection: CollectionId,
 		token_id: TokenId,
-		properties: Vec<String>,
+		keys: Option<Vec<String>>,
 		at: Option<BlockHash>,
 	) -> Result<Vec<Property>>;
 
@@ -109,7 +102,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 	fn property_permissions(
 		&self,
 		collection: CollectionId,
-		keys: Vec<String>,
+		keys: Option<Vec<String>>,
 		at: Option<BlockHash>,
 	) -> Result<Vec<PropertyKeyPermission>>;
 
@@ -118,7 +111,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		&self,
 		collection: CollectionId,
 		token_id: TokenId,
-		keys: Vec<String>,
+		keys: Option<Vec<String>>,
 		at: Option<BlockHash>,
 	) -> Result<TokenData<CrossAccountId>>;
 
@@ -429,10 +422,6 @@ where
 	pass_method!(
 		const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>, unique_api
 	);
-	pass_method!(
-		variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>,
-		unique_api
-	);
 	pass_method!(total_supply(collection: CollectionId) -> u32, unique_api);
 	pass_method!(account_balance(collection: CollectionId, account: CrossAccountId) -> u32, unique_api);
 	pass_method!(balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> String => |v| v.to_string(), unique_api);
@@ -445,7 +434,7 @@ where
 		collection: CollectionId,
 
 		#[map(|keys| string_keys_to_bytes_keys(keys))]
-		keys: Vec<String>
+		keys: Option<Vec<String>>
 	) -> Vec<Property>, unique_api);
 
 	pass_method!(token_properties(
@@ -453,14 +442,14 @@ where
 		token_id: TokenId,
 
 		#[map(|keys| string_keys_to_bytes_keys(keys))]
-		properties: Vec<String>
+		keys: Option<Vec<String>>
 	) -> Vec<Property>, unique_api);
 
 	pass_method!(property_permissions(
 		collection: CollectionId,
 
 		#[map(|keys| string_keys_to_bytes_keys(keys))]
-		keys: Vec<String>
+		keys: Option<Vec<String>>
 	) -> Vec<PropertyKeyPermission>, unique_api);
 
 	pass_method!(token_data(
@@ -468,7 +457,7 @@ where
 		token_id: TokenId,
 
 		#[map(|keys| string_keys_to_bytes_keys(keys))]
-		keys: Vec<String>,
+		keys: Option<Vec<String>>,
 	) -> TokenData<CrossAccountId>, unique_api);
 
 	pass_method!(adminlist(collection: CollectionId) -> Vec<CrossAccountId>, unique_api);
@@ -549,6 +538,6 @@ where
 	pass_method!(theme(base_id: RmrkBaseId, theme_name: RmrkThemeName, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Option<Theme>, rmrk_api);
 }
 
-fn string_keys_to_bytes_keys(keys: Vec<String>) -> Vec<Vec<u8>> {
-	keys.into_iter().map(|key| key.into_bytes()).collect()
+fn string_keys_to_bytes_keys(keys: Option<Vec<String>>) -> Option<Vec<Vec<u8>>> {
+	keys.map(|keys| keys.into_iter().map(|key| key.into_bytes()).collect())
 }

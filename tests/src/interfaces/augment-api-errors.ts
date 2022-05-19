@@ -137,6 +137,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       OwnerPermissionsCantBeReverted: AugmentedError<ApiType>;
       /**
+       * Property key is too long
+       **/
+      PropertyKeyIsTooLong: AugmentedError<ApiType>;
+      /**
        * Tried to store more property keys than allowed
        **/
       PropertyLimitReached: AugmentedError<ApiType>;
@@ -157,10 +161,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       TokenValueTooLow: AugmentedError<ApiType>;
       /**
-       * variable_data exceeded data limit.
-       **/
-      TokenVariableDataLimitExceeded: AugmentedError<ApiType>;
-      /**
        * Total collections bound exceeded.
        **/
       TotalCollectionsLimitExceeded: AugmentedError<ApiType>;
@@ -168,10 +168,6 @@ declare module '@polkadot/api-base/types/errors' {
        * Collection settings not allowing items transferring
        **/
       TransferNotAllowed: AugmentedError<ApiType>;
-      /**
-       * Unable to read array of unbounded keys
-       **/
-      UnableToReadUnboundedKeys: AugmentedError<ApiType>;
       /**
        * Target collection doesn't supports this operation
        **/

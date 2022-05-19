@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsCollectionLimits, UpDataStructsCollectionStats, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, UpDataStructsRpcCollection, UpDataStructsTokenData } from './unique';
+import type { PalletEvmAccountBasicCrossAccountIdRepr, RmrkTypesBaseInfo, RmrkTypesCollectionInfo, RmrkTypesNftChild, RmrkTypesNftInfo, RmrkTypesPartType, RmrkTypesPropertyInfo, RmrkTypesResourceInfo, RmrkTypesTheme, UpDataStructsCollectionLimits, UpDataStructsCollectionStats, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, UpDataStructsRpcCollection, UpDataStructsTokenData } from './unique';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u128, u32, u64 } from '@polkadot/types-codec';
@@ -401,19 +401,19 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get base info
        **/
-      base: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<RmrkTraitsBaseBaseInfo>>>;
+      base: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<RmrkTypesBaseInfo>>>;
       /**
        * Get all Base's parts
        **/
-      baseParts: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTraitsPartPartType>>>;
+      baseParts: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTypesPartType>>>;
       /**
        * Get collection by id
        **/
-      collectionById: AugmentedRpc<(id: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<RmrkTraitsCollectionCollectionInfo>>>;
+      collectionById: AugmentedRpc<(id: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<RmrkTypesCollectionInfo>>>;
       /**
        * Get collection properties
        **/
-      collectionProperties: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTraitsPropertyPropertyInfo>>>;
+      collectionProperties: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTypesPropertyInfo>>>;
       /**
        * Get the latest created collection id
        **/
@@ -421,15 +421,15 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get NFT by collection id and NFT id
        **/
-      nftById: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<RmrkTraitsNftNftInfo>>>;
+      nftById: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<RmrkTypesNftInfo>>>;
       /**
        * Get NFT children
        **/
-      nftChildren: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTraitsNftNftChild>>>;
+      nftChildren: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTypesNftChild>>>;
       /**
        * Get NFT properties
        **/
-      nftProperties: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTraitsPropertyPropertyInfo>>>;
+      nftProperties: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTypesPropertyInfo>>>;
       /**
        * Get NFT resource priorities
        **/
@@ -437,7 +437,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get NFT resources
        **/
-      nftResources: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTraitsResourceResourceInfo>>>;
+      nftResources: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<RmrkTypesResourceInfo>>>;
       /**
        * Get Base's theme names
        **/
@@ -445,7 +445,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get Theme's keys values
        **/
-      themes: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, themeName: Text | string, keys: Option<Vec<Text>> | null | object | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<RmrkTraitsTheme>>>;
+      themes: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, themeName: Text | string, keys: Option<Vec<Text>> | null | object | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<RmrkTypesTheme>>>;
     };
     rpc: {
       /**
@@ -659,7 +659,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get collection properties
        **/
-      collectionProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
+      collectionProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
       /**
        * Get collection stats
        **/
@@ -687,11 +687,11 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get property permissions
        **/
-      propertyPermissions: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsPropertyKeyPermission>>>;
+      propertyPermissions: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsPropertyKeyPermission>>>;
       /**
        * Get token data
        **/
-      tokenData: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<UpDataStructsTokenData>>;
+      tokenData: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<UpDataStructsTokenData>>;
       /**
        * Check if token exists
        **/
@@ -703,7 +703,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get token properties
        **/
-      tokenProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
+      tokenProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
       /**
        * Get token owner, in case of nested token - find parent recursive
        **/

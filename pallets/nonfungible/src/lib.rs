@@ -18,11 +18,11 @@
 
 use erc::ERC721Events;
 use evm_coder::ToLog;
-use frame_support::{BoundedVec, ensure, fail};
+use frame_support::{BoundedVec, ensure, fail, transactional};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
-	PropertyKey, PropertyKeyPermission, Properties, TrySet,
+	PropertyKey, PropertyKeyPermission, Properties, TrySetProperty,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
@@ -49,17 +49,24 @@ pub mod weights;
 pub type CreateItemData<T> = CreateNftExData<<T as pallet_evm::account::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
+#[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub struct ItemData<CrossAccountId> {
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
+
+	#[version(..2)]
 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
+
 	pub owner: CrossAccountId,
 }
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key};
+	use frame_support::{
+		Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, traits::StorageVersion,
+	};
+	use frame_system::pallet_prelude::*;
 	use up_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;
 
@@ -78,7 +85,10 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
@@ -133,6 +143,19 @@ pub mod pallet {
 		Value = T::CrossAccountId,
 		QueryKind = OptionQuery,
 	>;
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> Weight {
+			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
+				<TokenData<T>>::translate_values::<ItemDataVersion1<T::CrossAccountId>, _>(|v| {
+					Some(<ItemDataVersion2<T::CrossAccountId>>::from(v))
+				})
+			}
+
+			0
+		}
+	}
 }
 
 pub struct NonfungibleHandle<T: Config>(pallet_common::CollectionHandle<T>);
@@ -286,6 +309,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	#[transactional]
 	pub fn set_token_properties(
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
@@ -329,8 +353,8 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let permission = <PalletCommon<T>>::property_permissions(collection.id)
 			.get(property_key)
-			.map(|p| p.clone())
-			.unwrap_or(PropertyPermission::none());
+			.cloned()
+			.unwrap_or_else(PropertyPermission::none);
 
 		let token_data = <TokenData<T>>::get((collection.id, token_id))
 			.ok_or(<CommonError<T>>::TokenNotFound)?;
@@ -369,6 +393,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	#[transactional]
 	pub fn delete_token_properties(
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
@@ -404,6 +429,14 @@ impl<T: Config> Pallet<T> {
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResult {
 		<PalletCommon<T>>::set_property_permissions(collection, sender, property_permissions)
+	}
+
+	pub fn set_property_permission(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		permission: PropertyKeyPermission,
+	) -> DispatchResult {
+		<PalletCommon<T>>::set_property_permission(collection, sender, permission)
 	}
 
 	pub fn transfer(
@@ -577,7 +610,6 @@ impl<T: Config> Pallet<T> {
 				(collection.id, token),
 				ItemData {
 					const_data: data.const_data,
-					variable_data: data.variable_data,
 					owner: data.owner.clone(),
 				},
 			);
@@ -773,28 +805,6 @@ impl<T: Config> Pallet<T> {
 		// =========
 
 		Self::burn(collection, from, token)
-	}
-
-	pub fn set_variable_metadata(
-		collection: &NonfungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		token: TokenId,
-		data: BoundedVec<u8, CustomDataLimit>,
-	) -> DispatchResult {
-		let token_data =
-			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
-		collection.check_can_update_meta(sender, &token_data.owner)?;
-
-		// =========
-
-		<TokenData<T>>::insert(
-			(collection.id, token),
-			ItemData {
-				variable_data: data,
-				..token_data
-			},
-		);
-		Ok(())
 	}
 
 	pub fn check_nesting(

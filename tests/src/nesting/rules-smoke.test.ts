@@ -23,7 +23,7 @@ describe('nesting check', () => {
       nestTarget = {Ethereum: tokenIdToAddress(collection, token)};
     });
   });
-  
+
   it('called for fungible', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'Fungible',decimalPoints:0}});
@@ -39,7 +39,7 @@ describe('nesting check', () => {
   it('called for nonfungible', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await expect(executeTransaction(api, alice, api.tx.unique.createItem(collection, nestTarget, {NFT: {ConstData: [], VariableData: {}}})))
+      await expect(executeTransaction(api, alice, api.tx.unique.createItem(collection, nestTarget, {NFT: {ConstData: []}})))
         .to.be.rejectedWith(/^common\.SourceCollectionIsNotAllowedToNest$/);
 
       const token = await createItemExpectSuccess(alice, collection, 'NFT', {Substrate: alice.address});
@@ -51,7 +51,7 @@ describe('nesting check', () => {
   it('called for refungible', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-      await expect(executeTransaction(api, alice, api.tx.unique.createItem(collection, nestTarget, {ReFungible: {ConstData: [], VariableData: {}}})))
+      await expect(executeTransaction(api, alice, api.tx.unique.createItem(collection, nestTarget, {ReFungible: {ConstData: []}})))
         .to.be.rejectedWith(/^common\.SourceCollectionIsNotAllowedToNest$/);
 
       const token = await createItemExpectSuccess(alice, collection, 'ReFungible', {Substrate: alice.address});
@@ -60,4 +60,3 @@ describe('nesting check', () => {
     });
   });
 });
-  
