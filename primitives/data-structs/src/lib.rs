@@ -905,8 +905,20 @@ parameter_types! {
 	pub const RmrkPartsLimit: u32 = 3;
 }
 
-pub type RmrkCollectionInfo<AccountId> =
-	CollectionInfo<RmrkString, BoundedVec<u8, RmrkCollectionSymbolLimit>, AccountId>;
+impl From<RmrkCollectionId> for CollectionId {
+	fn from(id: RmrkCollectionId) -> Self {
+		Self(id)
+	}
+}
+
+impl From<RmrkNftId> for TokenId {
+	fn from(id: RmrkNftId) -> Self {
+		Self(id)
+	}
+}
+
+pub type RmrkCollectionSymbol = BoundedVec<u8, RmrkCollectionSymbolLimit>;
+pub type RmrkCollectionInfo<AccountId> = CollectionInfo<RmrkString, RmrkCollectionSymbol, AccountId>;
 pub type RmrkInstanceInfo<AccountId> = NftInfo<AccountId, Permill, RmrkString>;
 pub type RmrkResourceInfo = ResourceInfo<
 	BoundedVec<u8, RmrkResourceSymbolLimit>,

@@ -4,9 +4,11 @@ use pallet_nonfungible::NonfungibleHandle;
 
 macro_rules! impl_rmrk_value {
     ($enum_name:path, decode_error: $error:ident) => {
-        impl From<$enum_name> for PropertyValue {
-            fn from(e: $enum_name) -> Self {
-                e.encode().try_into().unwrap()
+        impl IntoPropertyValue for $enum_name {
+            fn into_property_value(self) -> Result<PropertyValue, MiscError> {
+                self.encode()
+                    .try_into()
+                    .map_err(|_| MiscError::RmrkPropertyValueIsTooLong)
             }
         }
 
@@ -25,12 +27,14 @@ macro_rules! impl_rmrk_value {
 }
 
 pub enum MiscError {
+    RmrkPropertyValueIsTooLong,
     CorruptedCollectionType,
 }
 
 impl<T: Config> From<MiscError> for Error<T> {
     fn from(error: MiscError) -> Self {
         match error {
+            MiscError::RmrkPropertyValueIsTooLong => Self::RmrkPropertyValueIsTooLong,
             MiscError::CorruptedCollectionType => Self::CorruptedCollectionType,
         }
     }
@@ -46,6 +50,18 @@ impl<T: Config> IntoNftCollection<T> for CollectionHandle<T> {
             CollectionMode::NFT => Ok(NonfungibleHandle::cast(self)),
             _ => Err(<Error<T>>::NotRmrkCollection)
         }
+    }
+}
+
+pub trait IntoPropertyValue {
+    fn into_property_value(self) -> Result<PropertyValue, MiscError>;
+}
+
+impl<L: Get<u32>> IntoPropertyValue for BoundedVec<u8, L> {
+    fn into_property_value(self) -> Result<PropertyValue, MiscError> {
+        self.into_inner()
+            .try_into()
+            .map_err(|_| MiscError::RmrkPropertyValueIsTooLong)
     }
 }
 

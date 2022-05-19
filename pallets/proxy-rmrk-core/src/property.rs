@@ -36,7 +36,7 @@ impl RmrkProperty {
         macro_rules! key {
             ($($component:expr),+) => {
                 PropertyKey::try_from([$(key!(@ &$component)),+].concat())
-                    .map_err(|_| <Error<T>>::RmrkPropertyIsTooLong)
+                    .map_err(|_| <Error<T>>::RmrkPropertyKeyIsTooLong)
             };
 
             (@ $key:expr) => {
@@ -75,12 +75,17 @@ impl RmrkProperty {
 
 #[macro_export]
 macro_rules! rmrk_property {
-    (Config=$cfg:ty, $key:ident: $value:expr) => {
-        rmrk_property!(@$cfg, $key).map(|key| Property {
+    (Config=$cfg:ty, $key:ident: $value:expr) => {{
+        let key = rmrk_property!(@$cfg, $key)?;
+
+        let value = $value.into_property_value()
+            .map_err(<$crate::Error<$cfg>>::from)?;
+
+        Ok::<_, $crate::Error<$cfg>>(Property {
             key,
-            value: $value.into()
+            value,
         })
-    };
+    }};
 
     (@$cfg:ty, $key:ident) => {
         $crate::RmrkProperty::$key.to_key::<$cfg>()
@@ -88,6 +93,6 @@ macro_rules! rmrk_property {
 
     (Config=$cfg:ty, $key:ident) => {
         PropertyScope::Rmrk.apply(rmrk_property!(@$cfg, $key)?)
-            .map_err(|_| <$crate::Error<$cfg>>::RmrkPropertyIsTooLong)
+            .map_err(|_| <$crate::Error<$cfg>>::RmrkPropertyKeyIsTooLong)
     };
 }
