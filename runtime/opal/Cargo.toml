@@ -33,7 +33,7 @@ runtime-benchmarks = [
     'pallet-fungible/runtime-benchmarks',
     'pallet-refungible/runtime-benchmarks',
     'pallet-nonfungible/runtime-benchmarks',
-    'pallet-rmrk-proxy/runtime-benchmarks',
+    'pallet-proxy-rmrk-core/runtime-benchmarks',
     'pallet-unique/runtime-benchmarks',
     'pallet-inflation/runtime-benchmarks',
     'pallet-xcm/runtime-benchmarks',
@@ -90,7 +90,7 @@ std = [
     'pallet-fungible/std',
     'pallet-refungible/std',
     'pallet-nonfungible/std',
-    'pallet-rmrk-proxy/std',
+    'pallet-proxy-rmrk-core/std',
     'pallet-unique/std',
     'pallet-unq-scheduler/std',
     'pallet-charge-transaction/std',
@@ -417,7 +417,7 @@ pallet-structure = { default-features = false, path = "../../pallets/structure" 
 pallet-fungible = { default-features = false, path = "../../pallets/fungible" }
 pallet-refungible = { default-features = false, path = "../../pallets/refungible" }
 pallet-nonfungible = { default-features = false, path = "../../pallets/nonfungible" }
-pallet-rmrk-proxy = { default-features = false, path = "../../pallets/rmrk-core-proxy", package = "pallet-rmrk-core" }
+pallet-proxy-rmrk-core = { default-features = false, path = "../../pallets/proxy-rmrk-core", package = "pallet-rmrk-core" }
 pallet-unq-scheduler = { path = '../../pallets/scheduler', default-features = false }
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
 pallet-charge-transaction = { git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.21", package = "pallet-template-transaction-payment", default-features = false, version = "3.0.0" }
