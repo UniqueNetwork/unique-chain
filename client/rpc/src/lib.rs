@@ -76,7 +76,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 	fn collection_properties(
 		&self,
 		collection: CollectionId,
-		keys: Vec<String>,
+		keys: Option<Vec<String>>,
 		at: Option<BlockHash>,
 	) -> Result<Vec<Property>>;
 
@@ -85,7 +85,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		&self,
 		collection: CollectionId,
 		token_id: TokenId,
-		properties: Vec<String>,
+		keys: Option<Vec<String>>,
 		at: Option<BlockHash>,
 	) -> Result<Vec<Property>>;
 
@@ -93,7 +93,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 	fn property_permissions(
 		&self,
 		collection: CollectionId,
-		keys: Vec<String>,
+		keys: Option<Vec<String>>,
 		at: Option<BlockHash>,
 	) -> Result<Vec<PropertyKeyPermission>>;
 
@@ -102,7 +102,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		&self,
 		collection: CollectionId,
 		token_id: TokenId,
-		keys: Vec<String>,
+		keys: Option<Vec<String>>,
 		at: Option<BlockHash>,
 	) -> Result<TokenData<CrossAccountId>>;
 
@@ -277,7 +277,7 @@ where
 		collection: CollectionId,
 
 		#[map(|keys| string_keys_to_bytes_keys(keys))]
-		keys: Vec<String>
+		keys: Option<Vec<String>>
 	) -> Vec<Property>);
 
 	pass_method!(token_properties(
@@ -285,14 +285,14 @@ where
 		token_id: TokenId,
 
 		#[map(|keys| string_keys_to_bytes_keys(keys))]
-		properties: Vec<String>
+		keys: Option<Vec<String>>
 	) -> Vec<Property>);
 
 	pass_method!(property_permissions(
 		collection: CollectionId,
 
 		#[map(|keys| string_keys_to_bytes_keys(keys))]
-		keys: Vec<String>
+		keys: Option<Vec<String>>
 	) -> Vec<PropertyKeyPermission>);
 
 	pass_method!(token_data(
@@ -300,7 +300,7 @@ where
 		token_id: TokenId,
 
 		#[map(|keys| string_keys_to_bytes_keys(keys))]
-		keys: Vec<String>,
+		keys: Option<Vec<String>>,
 	) -> TokenData<CrossAccountId>);
 
 	pass_method!(total_supply(collection: CollectionId) -> u32);
@@ -318,6 +318,8 @@ where
 	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>);
 }
 
-fn string_keys_to_bytes_keys(keys: Vec<String>) -> Vec<Vec<u8>> {
-	keys.into_iter().map(|key| key.into_bytes()).collect()
+fn string_keys_to_bytes_keys(keys: Option<Vec<String>>) -> Option<Vec<Vec<u8>>> {
+	keys.map(|keys| {
+		keys.into_iter().map(|key| key.into_bytes()).collect()
+	})
 }

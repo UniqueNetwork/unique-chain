@@ -845,31 +845,39 @@ impl<T: Config> Pallet<T> {
 
 	pub fn filter_collection_properties(
 		collection_id: CollectionId,
-		keys: Vec<PropertyKey>,
+		keys: Option<Vec<PropertyKey>>,
 	) -> Result<Vec<Property>, DispatchError> {
 		let properties = Self::collection_properties(collection_id);
 
-		let properties = keys
-			.into_iter()
+		let properties = keys.map(|keys| {
+			keys.into_iter()
 			.filter_map(|key| {
 				properties.get(&key).map(|value| Property {
 					key,
 					value: value.clone(),
 				})
 			})
-			.collect();
+			.collect()
+		}).unwrap_or(
+			properties.iter()
+				.map(|(key, value)| Property {
+					key: key.clone(),
+					value: value.clone(),
+				})
+				.collect()
+		);
 
 		Ok(properties)
 	}
 
 	pub fn filter_property_permissions(
 		collection_id: CollectionId,
-		keys: Vec<PropertyKey>,
+		keys: Option<Vec<PropertyKey>>,
 	) -> Result<Vec<PropertyKeyPermission>, DispatchError> {
 		let permissions = Self::property_permissions(collection_id);
 
-		let key_permissions = keys
-			.into_iter()
+		let key_permissions = keys.map(|keys| {
+			keys.into_iter()
 			.filter_map(|key| {
 				permissions
 					.get(&key)
@@ -878,7 +886,15 @@ impl<T: Config> Pallet<T> {
 						permission: permission.clone(),
 					})
 			})
-			.collect();
+			.collect()
+		}).unwrap_or(
+			permissions.iter()
+				.map(|(key, permission)| PropertyKeyPermission {
+					key: key.clone(),
+					permission: permission.clone(),
+				})
+				.collect()
+		);
 
 		Ok(key_permissions)
 	}
@@ -1148,7 +1164,7 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
 	fn const_metadata(&self, token: TokenId) -> Vec<u8>;
-	fn token_properties(&self, token_id: TokenId, keys: Vec<PropertyKey>) -> Vec<Property>;
+	fn token_properties(&self, token_id: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property>;
 	/// Amount of unique collection tokens
 	fn total_supply(&self) -> u32;
 	/// Amount of different tokens account has (Applicable to nonfungible/refungible)

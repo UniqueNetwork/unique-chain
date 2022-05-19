@@ -362,10 +362,11 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			.into_inner()
 	}
 
-	fn token_properties(&self, token_id: TokenId, keys: Vec<PropertyKey>) -> Vec<Property> {
+	fn token_properties(&self, token_id: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property> {
 		let properties = <Pallet<T>>::token_properties((self.id, token_id));
 
-		keys.into_iter()
+		keys.map(|keys| {
+			keys.into_iter()
 			.filter_map(|key| {
 				properties.get(&key).map(|value| Property {
 					key,
@@ -373,6 +374,13 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				})
 			})
 			.collect()
+		}).unwrap_or(
+			properties.iter().map(|(key, value)| Property {
+				key: key.clone(),
+				value: value.clone(),
+			})
+			.collect()
+		)
 	}
 
 	fn total_supply(&self) -> u32 {
