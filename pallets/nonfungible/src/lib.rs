@@ -353,8 +353,8 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let permission = <PalletCommon<T>>::property_permissions(collection.id)
 			.get(property_key)
-			.map(|p| p.clone())
-			.unwrap_or(PropertyPermission::none());
+			.cloned()
+			.unwrap_or_else(PropertyPermission::none);
 
 		let token_data = <TokenData<T>>::get((collection.id, token_id))
 			.ok_or(<CommonError<T>>::TokenNotFound)?;

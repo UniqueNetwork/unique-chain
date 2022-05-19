@@ -179,7 +179,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		let weight = <CommonWeights<T>>::delete_collection_properties(property_keys.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::delete_collection_properties(self, &sender, property_keys),
+			<Pallet<T>>::delete_collection_properties(self, sender, property_keys),
 			weight,
 		)
 	}
@@ -374,8 +374,8 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				})
 			})
 			.collect()
-		}).unwrap_or(
-			properties.iter().map(|(key, value)| Property {
+		}).unwrap_or_else(
+			|| properties.iter().map(|(key, value)| Property {
 				key: key.clone(),
 				value: value.clone(),
 			})

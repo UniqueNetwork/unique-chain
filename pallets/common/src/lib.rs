@@ -858,8 +858,8 @@ impl<T: Config> Pallet<T> {
 				})
 			})
 			.collect()
-		}).unwrap_or(
-			properties.iter()
+		}).unwrap_or_else(
+			|| properties.iter()
 				.map(|(key, value)| Property {
 					key: key.clone(),
 					value: value.clone(),
@@ -887,8 +887,8 @@ impl<T: Config> Pallet<T> {
 					})
 			})
 			.collect()
-		}).unwrap_or(
-			permissions.iter()
+		}).unwrap_or_else(
+			|| permissions.iter()
 				.map(|(key, permission)| PropertyKeyPermission {
 					key: key.clone(),
 					permission: permission.clone(),
