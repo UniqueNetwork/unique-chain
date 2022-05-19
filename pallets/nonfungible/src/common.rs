@@ -19,7 +19,7 @@ use core::marker::PhantomData;
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use up_data_structs::{
 	TokenId, CreateItemExData, CollectionId, budget::Budget, Property, PropertyKey,
-	PropertyKeyPermission,
+	PropertyKeyPermission, PropertyValue,
 };
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
@@ -360,6 +360,12 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			.map(|t| t.const_data)
 			.unwrap_or_default()
 			.into_inner()
+	}
+
+	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {
+		<Pallet<T>>::token_properties((self.id, token_id))
+			.get(key)
+			.cloned()
 	}
 
 	fn token_properties(&self, token_id: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property> {

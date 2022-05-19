@@ -21,7 +21,7 @@ use up_data_structs::{TokenId, CollectionId, CreateItemExData, budget::Budget};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::ArithmeticError;
 use sp_std::{vec::Vec, vec};
-use up_data_structs::{Property, PropertyKey, PropertyKeyPermission};
+use up_data_structs::{Property, PropertyKey, PropertyValue, PropertyKeyPermission};
 
 use crate::{
 	Allowance, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf, weights::WeightInfo,
@@ -317,6 +317,10 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	}
 	fn const_metadata(&self, _token: TokenId) -> Vec<u8> {
 		Vec::new()
+	}
+
+	fn token_property(&self, _token_id: TokenId, _key: &PropertyKey) -> Option<PropertyValue> {
+		None
 	}
 
 	fn token_properties(
