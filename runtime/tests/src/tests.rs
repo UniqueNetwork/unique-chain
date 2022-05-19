@@ -47,6 +47,7 @@ fn add_balance(user: u64, value: u64) {
 fn default_nft_data() -> CreateNftData {
 	CreateNftData {
 		const_data: vec![1, 2, 3].try_into().unwrap(),
+		properties: vec![].try_into().unwrap(),
 	}
 }
 
