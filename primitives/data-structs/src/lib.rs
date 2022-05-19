@@ -924,4 +924,4 @@ pub type RmrkRpcString = Vec<u8>;
 pub type RmrkThemeName = RmrkRpcString;
 pub type RmrkPropertyKey = RmrkRpcString;
 
-type RmrkString = BoundedVec<u8, RmrkStringLimit>;
+pub type RmrkString = BoundedVec<u8, RmrkStringLimit>;

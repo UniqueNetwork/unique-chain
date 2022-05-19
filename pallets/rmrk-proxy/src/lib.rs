@@ -27,8 +27,10 @@ use pallet_evm::account::CrossAccountId;
 pub use pallet::*;
 
 pub mod misc;
+pub mod property;
 
 use misc::*;
+pub use property::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -69,6 +71,7 @@ pub mod pallet {
         /* Unique-specific events */
         CorruptedCollectionType,
         NotRmrkCollection,
+        RmrkPropertyIsTooLong,
 
         /* RMRK compatible events */
         CollectionNotEmpty,
@@ -113,8 +116,8 @@ pub mod pallet {
                 &collection,
                 PropertyScope::Rmrk,
                 [
-                    rmrk_property!(Metadata, metadata),
-                    rmrk_property!(CollectionType, CollectionType::Regular),
+                    rmrk_property!(Config=T, Metadata: metadata)?,
+                    rmrk_property!(Config=T, CollectionType: CollectionType::Regular)?,
                 ].into_iter()
             )?;
 
@@ -215,7 +218,7 @@ impl<T: Config> Pallet<T> {
 
     fn get_collection_type(collection_id: CollectionId) -> Result<CollectionType, DispatchError> {
         let collection_type: CollectionType = <PalletCommon<T>>::collection_properties(collection_id)
-            .get(&rmrk_property!(CollectionType))
+            .get(&rmrk_property!(Config=T, CollectionType)?)
             .ok_or(<Error<T>>::NotRmrkCollection)?
             .try_into()
             .map_err(<Error<T>>::from)?;
