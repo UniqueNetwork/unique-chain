@@ -386,6 +386,15 @@ version = "0.4.1-dev"
 default-features = false
 
 ################################################################################
+# RMRK dependencies
+
+# todo git
+[dependencies.rmrk-rpc]
+default-features = false
+git = "https://github.com/UniqueNetwork/rmrk-substrate.git"
+branch = "feature/separate-types-and-traits"
+
+################################################################################
 # local dependencies
 
 [dependencies]

@@ -18,8 +18,8 @@ use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use up_data_structs::{
-	TokenId, CreateItemExData, CollectionId, budget::Budget, Property,
-	PropertyKey, PropertyKeyPermission,
+	TokenId, CreateItemExData, CollectionId, budget::Budget, Property, PropertyKey,
+	PropertyKeyPermission,
 };
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
@@ -179,7 +179,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		let weight = <CommonWeights<T>>::delete_collection_properties(property_keys.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::delete_collection_properties(self, &sender, property_keys),
+			<Pallet<T>>::delete_collection_properties(self, sender, property_keys),
 			weight,
 		)
 	}
@@ -367,20 +367,23 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 		keys.map(|keys| {
 			keys.into_iter()
-			.filter_map(|key| {
-				properties.get(&key).map(|value| Property {
-					key,
+				.filter_map(|key| {
+					properties.get(&key).map(|value| Property {
+						key,
+						value: value.clone(),
+					})
+				})
+				.collect()
+		})
+		.unwrap_or_else(|| {
+			properties
+				.iter()
+				.map(|(key, value)| Property {
+					key: key.clone(),
 					value: value.clone(),
 				})
-			})
-			.collect()
-		}).unwrap_or(
-			properties.iter().map(|(key, value)| Property {
-				key: key.clone(),
-				value: value.clone(),
-			})
-			.collect()
-		)
+				.collect()
+		})
 	}
 
 	fn total_supply(&self) -> u32 {

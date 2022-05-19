@@ -257,6 +257,7 @@ impl<T: Config> Pallet<T> {
 		<Owned<T>>::remove((collection.id, &token_data.owner, token));
 		<TokensBurnt<T>>::insert(collection.id, burnt);
 		<TokenData<T>>::remove((collection.id, token));
+		<TokenProperties<T>>::remove((collection.id, token));
 		let old_spender = <Allowance<T>>::take((collection.id, token));
 
 		if let Some(old_spender) = old_spender {
@@ -353,8 +354,8 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let permission = <PalletCommon<T>>::property_permissions(collection.id)
 			.get(property_key)
-			.map(|p| p.clone())
-			.unwrap_or(PropertyPermission::none());
+			.cloned()
+			.unwrap_or_else(PropertyPermission::none);
 
 		let token_data = <TokenData<T>>::get((collection.id, token_id))
 			.ok_or(<CommonError<T>>::TokenNotFound)?;

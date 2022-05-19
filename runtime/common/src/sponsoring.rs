@@ -21,17 +21,16 @@ use frame_support::{
 	storage::{StorageMap, StorageDoubleMap, StorageNMap},
 };
 use up_data_structs::{
-	CollectionId, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-	NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId, CollectionMode,
-	CreateItemData,
+	CollectionId, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, NFT_SPONSOR_TRANSFER_TIMEOUT,
+	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId, CollectionMode, CreateItemData,
 };
 use sp_runtime::traits::Saturating;
 use pallet_common::{CollectionHandle};
 use pallet_evm::account::CrossAccountId;
 use pallet_unique::{
 	Call as UniqueCall, Config as UniqueConfig, FungibleApproveBasket, RefungibleApproveBasket,
-	NftApproveBasket, CreateItemBasket, ReFungibleTransferBasket,
-	FungibleTransferBasket, NftTransferBasket,
+	NftApproveBasket, CreateItemBasket, ReFungibleTransferBasket, FungibleTransferBasket,
+	NftTransferBasket,
 };
 use pallet_fungible::Config as FungibleConfig;
 use pallet_nonfungible::Config as NonfungibleConfig;

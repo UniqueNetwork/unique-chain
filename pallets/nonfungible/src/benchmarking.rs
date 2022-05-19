@@ -28,10 +28,7 @@ const SEED: u32 = 1;
 
 fn create_max_item_data<T: Config>(owner: T::CrossAccountId) -> CreateItemData<T> {
 	let const_data = create_data::<CUSTOM_DATA_LIMIT>();
-	CreateItemData::<T> {
-		const_data,
-		owner,
-	}
+	CreateItemData::<T> { const_data, owner }
 }
 fn create_max_item<T: Config>(
 	collection: &NonfungibleHandle<T>,

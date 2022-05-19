@@ -1448,13 +1448,9 @@ export default {
     _enum: {
       Disabled: 'Null',
       Owner: 'Null',
-      OwnerRestricted: 'FrameSupportStorageBoundedBTreeSet'
+      OwnerRestricted: 'BTreeSet<u32>'
     }
   },
-  /**
-   * Lookup171: frame_support::storage::bounded_btree_set::BoundedBTreeSet<up_data_structs::CollectionId, S>
-   **/
-  FrameSupportStorageBoundedBTreeSet: 'BTreeSet<u32>',
   /**
    * Lookup177: up_data_structs::PropertyKeyPermission
    **/
@@ -2351,56 +2347,212 @@ export default {
     properties: 'Vec<UpDataStructsProperty>'
   },
   /**
-   * Lookup333: pallet_common::pallet::Error<T>
+   * Lookup333: PhantomType::up_data_structs<rmrk_types::CollectionInfo<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>, sp_core::crypto::AccountId32>>
+   **/
+  PhantomTypeUpDataStructsCollectionInfo: '[Lookup334;0]',
+  /**
+   * Lookup334: rmrk_types::CollectionInfo<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>, sp_core::crypto::AccountId32>
+   **/
+  RmrkTypesCollectionInfo: {
+    issuer: 'AccountId32',
+    metadata: 'Bytes',
+    max: 'Option<u32>',
+    symbol: 'Bytes',
+    nftsCount: 'u32'
+  },
+  /**
+   * Lookup338: PhantomType::up_data_structs<rmrk_types::NftInfo<sp_core::crypto::AccountId32, sp_arithmetic::per_things::Permill, frame_support::storage::bounded_vec::BoundedVec<T, S>>>
+   **/
+  PhantomTypeUpDataStructsNftInfo: '[Lookup339;0]',
+  /**
+   * Lookup339: rmrk_types::NftInfo<sp_core::crypto::AccountId32, sp_arithmetic::per_things::Permill, frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   **/
+  RmrkTypesNftInfo: {
+    owner: 'RmrkTypesAccountIdOrCollectionNftTuple',
+    royalty: 'Option<RmrkTypesRoyaltyInfo>',
+    metadata: 'Bytes',
+    equipped: 'bool',
+    pending: 'bool'
+  },
+  /**
+   * Lookup340: rmrk_types::AccountIdOrCollectionNftTuple<sp_core::crypto::AccountId32>
+   **/
+  RmrkTypesAccountIdOrCollectionNftTuple: {
+    _enum: {
+      AccountId: 'AccountId32',
+      CollectionAndNftTuple: '(u32,u32)'
+    }
+  },
+  /**
+   * Lookup342: rmrk_types::RoyaltyInfo<sp_core::crypto::AccountId32, sp_arithmetic::per_things::Permill>
+   **/
+  RmrkTypesRoyaltyInfo: {
+    recipient: 'AccountId32',
+    amount: 'Permill'
+  },
+  /**
+   * Lookup344: PhantomType::up_data_structs<rmrk_types::ResourceInfo<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>>>
+   **/
+  PhantomTypeUpDataStructsResourceInfo: '[Lookup345;0]',
+  /**
+   * Lookup345: rmrk_types::ResourceInfo<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   **/
+  RmrkTypesResourceInfo: {
+    id: 'Bytes',
+    pending: 'bool',
+    pendingRemoval: 'bool',
+    parts: 'Option<Vec<u32>>',
+    base: 'Option<u32>',
+    src: 'Option<Bytes>',
+    metadata: 'Option<Bytes>',
+    slot: 'Option<u32>',
+    license: 'Option<Bytes>',
+    thumb: 'Option<Bytes>'
+  },
+  /**
+   * Lookup351: PhantomType::up_data_structs<rmrk_types::PropertyInfo<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>>>
+   **/
+  PhantomTypeUpDataStructsPropertyInfo: '[Lookup352;0]',
+  /**
+   * Lookup352: rmrk_types::PropertyInfo<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   **/
+  RmrkTypesPropertyInfo: {
+    key: 'Bytes',
+    value: 'Bytes'
+  },
+  /**
+   * Lookup356: PhantomType::up_data_structs<rmrk_types::BaseInfo<sp_core::crypto::AccountId32, frame_support::storage::bounded_vec::BoundedVec<T, S>>>
+   **/
+  PhantomTypeUpDataStructsBaseInfo: '[Lookup357;0]',
+  /**
+   * Lookup357: rmrk_types::BaseInfo<sp_core::crypto::AccountId32, frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   **/
+  RmrkTypesBaseInfo: {
+    issuer: 'AccountId32',
+    baseType: 'Bytes',
+    symbol: 'Bytes'
+  },
+  /**
+   * Lookup359: PhantomType::up_data_structs<rmrk_types::PartType<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>>>
+   **/
+  PhantomTypeUpDataStructsPartType: '[Lookup360;0]',
+  /**
+   * Lookup360: rmrk_types::PartType<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   **/
+  RmrkTypesPartType: {
+    _enum: {
+      FixedPart: 'RmrkTypesFixedPart',
+      SlotPart: 'RmrkTypesSlotPart'
+    }
+  },
+  /**
+   * Lookup362: rmrk_types::FixedPart<frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   **/
+  RmrkTypesFixedPart: {
+    id: 'u32',
+    z: 'u32',
+    src: 'Bytes'
+  },
+  /**
+   * Lookup363: rmrk_types::SlotPart<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   **/
+  RmrkTypesSlotPart: {
+    id: 'u32',
+    equippable: 'RmrkTypesEquippableList',
+    src: 'Bytes',
+    z: 'u32'
+  },
+  /**
+   * Lookup364: rmrk_types::EquippableList<frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   **/
+  RmrkTypesEquippableList: {
+    _enum: {
+      All: 'Null',
+      Empty: 'Null',
+      Custom: 'Vec<u32>'
+    }
+  },
+  /**
+   * Lookup366: PhantomType::up_data_structs<rmrk_types::Theme<frame_support::storage::bounded_vec::BoundedVec<T, S>, BoundedPropertyList>>
+   **/
+  PhantomTypeUpDataStructsTheme: '[Lookup367;0]',
+  /**
+   * Lookup367: rmrk_types::Theme<frame_support::storage::bounded_vec::BoundedVec<T, S>, BoundedPropertyList>
+   **/
+  RmrkTypesTheme: {
+    name: 'Bytes',
+    properties: 'Vec<RmrkTypesThemeProperty>',
+    inherit: 'bool'
+  },
+  /**
+   * Lookup369: rmrk_types::ThemeProperty<frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   **/
+  RmrkTypesThemeProperty: {
+    key: 'Bytes',
+    value: 'Bytes'
+  },
+  /**
+   * Lookup371: PhantomType::up_data_structs<rmrk_types::NftChild>
+   **/
+  PhantomTypeUpDataStructsNftChild: '[Lookup372;0]',
+  /**
+   * Lookup372: rmrk_types::NftChild
+   **/
+  RmrkTypesNftChild: {
+    collectionId: 'u32',
+    nftId: 'u32'
+  },
+  /**
+   * Lookup374: pallet_common::pallet::Error<T>
    **/
   PalletCommonError: {
     _enum: ['CollectionNotFound', 'MustBeTokenOwner', 'NoPermission', 'PublicMintingNotAllowed', 'AddressNotInAllowlist', 'CollectionNameLimitExceeded', 'CollectionDescriptionLimitExceeded', 'CollectionTokenPrefixLimitExceeded', 'TotalCollectionsLimitExceeded', 'CollectionAdminCountExceeded', 'CollectionLimitBoundsExceeded', 'OwnerPermissionsCantBeReverted', 'TransferNotAllowed', 'AccountTokenLimitExceeded', 'CollectionTokenLimitExceeded', 'MetadataFlagFrozen', 'TokenNotFound', 'TokenValueTooLow', 'ApprovedValueTooLow', 'CantApproveMoreThanOwned', 'AddressIsZero', 'UnsupportedOperation', 'NotSufficientFounds', 'NestingIsDisabled', 'OnlyOwnerAllowedToNest', 'SourceCollectionIsNotAllowedToNest', 'CollectionFieldSizeExceeded', 'NoSpaceForProperty', 'PropertyLimitReached', 'PropertyKeyIsTooLong', 'InvalidCharacterInPropertyKey', 'EmptyPropertyKey']
   },
   /**
-   * Lookup335: pallet_fungible::pallet::Error<T>
+   * Lookup376: pallet_fungible::pallet::Error<T>
    **/
   PalletFungibleError: {
     _enum: ['NotFungibleDataUsedToMintFungibleCollectionToken', 'FungibleItemsHaveNoId', 'FungibleItemsDontHaveData', 'FungibleDisallowsNesting', 'SettingPropertiesNotAllowed']
   },
   /**
-   * Lookup336: pallet_refungible::ItemData
+   * Lookup377: pallet_refungible::ItemData
    **/
   PalletRefungibleItemData: {
     constData: 'Bytes'
   },
   /**
-   * Lookup340: pallet_refungible::pallet::Error<T>
+   * Lookup381: pallet_refungible::pallet::Error<T>
    **/
   PalletRefungibleError: {
     _enum: ['NotRefungibleDataUsedToMintFungibleCollectionToken', 'WrongRefungiblePieces', 'RefungibleDisallowsNesting', 'SettingPropertiesNotAllowed']
   },
   /**
-   * Lookup341: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+   * Lookup382: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
   PalletNonfungibleItemData: {
     constData: 'Bytes',
     owner: 'PalletEvmAccountBasicCrossAccountIdRepr'
   },
   /**
-   * Lookup342: pallet_nonfungible::pallet::Error<T>
+   * Lookup383: pallet_nonfungible::pallet::Error<T>
    **/
   PalletNonfungibleError: {
     _enum: ['NotNonfungibleDataUsedToMintFungibleCollectionToken', 'NonfungibleItemsHaveNoAmount']
   },
   /**
-   * Lookup343: pallet_structure::pallet::Error<T>
+   * Lookup384: pallet_structure::pallet::Error<T>
    **/
   PalletStructureError: {
     _enum: ['OuroborosDetected', 'DepthLimit', 'TokenNotFound']
   },
   /**
-   * Lookup346: pallet_evm::pallet::Error<T>
+   * Lookup387: pallet_evm::pallet::Error<T>
    **/
   PalletEvmError: {
     _enum: ['BalanceLow', 'FeeOverflow', 'PaymentOverflow', 'WithdrawFailed', 'GasPriceTooLow', 'InvalidNonce']
   },
   /**
-   * Lookup349: fp_rpc::TransactionStatus
+   * Lookup390: fp_rpc::TransactionStatus
    **/
   FpRpcTransactionStatus: {
     transactionHash: 'H256',
@@ -2412,11 +2564,11 @@ export default {
     logsBloom: 'EthbloomBloom'
   },
   /**
-   * Lookup351: ethbloom::Bloom
+   * Lookup392: ethbloom::Bloom
    **/
   EthbloomBloom: '[u8;256]',
   /**
-   * Lookup353: ethereum::receipt::ReceiptV3
+   * Lookup394: ethereum::receipt::ReceiptV3
    **/
   EthereumReceiptReceiptV3: {
     _enum: {
@@ -2426,7 +2578,7 @@ export default {
     }
   },
   /**
-   * Lookup354: ethereum::receipt::EIP658ReceiptData
+   * Lookup395: ethereum::receipt::EIP658ReceiptData
    **/
   EthereumReceiptEip658ReceiptData: {
     statusCode: 'u8',
@@ -2435,7 +2587,7 @@ export default {
     logs: 'Vec<EthereumLog>'
   },
   /**
-   * Lookup355: ethereum::block::Block<ethereum::transaction::TransactionV2>
+   * Lookup396: ethereum::block::Block<ethereum::transaction::TransactionV2>
    **/
   EthereumBlock: {
     header: 'EthereumHeader',
@@ -2443,7 +2595,7 @@ export default {
     ommers: 'Vec<EthereumHeader>'
   },
   /**
-   * Lookup356: ethereum::header::Header
+   * Lookup397: ethereum::header::Header
    **/
   EthereumHeader: {
     parentHash: 'H256',
@@ -2463,41 +2615,41 @@ export default {
     nonce: 'EthereumTypesHashH64'
   },
   /**
-   * Lookup357: ethereum_types::hash::H64
+   * Lookup398: ethereum_types::hash::H64
    **/
   EthereumTypesHashH64: '[u8;8]',
   /**
-   * Lookup362: pallet_ethereum::pallet::Error<T>
+   * Lookup403: pallet_ethereum::pallet::Error<T>
    **/
   PalletEthereumError: {
     _enum: ['InvalidSignature', 'PreLogExists']
   },
   /**
-   * Lookup363: pallet_evm_coder_substrate::pallet::Error<T>
+   * Lookup404: pallet_evm_coder_substrate::pallet::Error<T>
    **/
   PalletEvmCoderSubstrateError: {
     _enum: ['OutOfGas', 'OutOfFund']
   },
   /**
-   * Lookup364: pallet_evm_contract_helpers::SponsoringModeT
+   * Lookup405: pallet_evm_contract_helpers::SponsoringModeT
    **/
   PalletEvmContractHelpersSponsoringModeT: {
     _enum: ['Disabled', 'Allowlisted', 'Generous']
   },
   /**
-   * Lookup366: pallet_evm_contract_helpers::pallet::Error<T>
+   * Lookup407: pallet_evm_contract_helpers::pallet::Error<T>
    **/
   PalletEvmContractHelpersError: {
     _enum: ['NoPermission']
   },
   /**
-   * Lookup367: pallet_evm_migration::pallet::Error<T>
+   * Lookup408: pallet_evm_migration::pallet::Error<T>
    **/
   PalletEvmMigrationError: {
     _enum: ['AccountNotEmpty', 'AccountIsNotMigrating']
   },
   /**
-   * Lookup369: sp_runtime::MultiSignature
+   * Lookup410: sp_runtime::MultiSignature
    **/
   SpRuntimeMultiSignature: {
     _enum: {
@@ -2507,43 +2659,43 @@ export default {
     }
   },
   /**
-   * Lookup370: sp_core::ed25519::Signature
+   * Lookup411: sp_core::ed25519::Signature
    **/
   SpCoreEd25519Signature: '[u8;64]',
   /**
-   * Lookup372: sp_core::sr25519::Signature
+   * Lookup413: sp_core::sr25519::Signature
    **/
   SpCoreSr25519Signature: '[u8;64]',
   /**
-   * Lookup373: sp_core::ecdsa::Signature
+   * Lookup414: sp_core::ecdsa::Signature
    **/
   SpCoreEcdsaSignature: '[u8;65]',
   /**
-   * Lookup376: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+   * Lookup417: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
    **/
   FrameSystemExtensionsCheckSpecVersion: 'Null',
   /**
-   * Lookup377: frame_system::extensions::check_genesis::CheckGenesis<T>
+   * Lookup418: frame_system::extensions::check_genesis::CheckGenesis<T>
    **/
   FrameSystemExtensionsCheckGenesis: 'Null',
   /**
-   * Lookup380: frame_system::extensions::check_nonce::CheckNonce<T>
+   * Lookup421: frame_system::extensions::check_nonce::CheckNonce<T>
    **/
   FrameSystemExtensionsCheckNonce: 'Compact<u32>',
   /**
-   * Lookup381: frame_system::extensions::check_weight::CheckWeight<T>
+   * Lookup422: frame_system::extensions::check_weight::CheckWeight<T>
    **/
   FrameSystemExtensionsCheckWeight: 'Null',
   /**
-   * Lookup382: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
+   * Lookup423: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
    **/
   PalletTemplateTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
   /**
-   * Lookup383: opal_runtime::Runtime
+   * Lookup424: opal_runtime::Runtime
    **/
   OpalRuntimeRuntime: 'Null',
   /**
-   * Lookup384: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
+   * Lookup425: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
    **/
   PalletEthereumFakeTransactionFinalizer: 'Null'
 };

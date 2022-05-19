@@ -30,15 +30,52 @@ use frame_support::{
 };
 use pallet_evm::GasWeightMapping;
 use up_data_structs::{
-	COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, CollectionId, CreateItemData,
-	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, TokenId, CollectionStats,
-	MAX_TOKEN_OWNERSHIP, CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT,
-	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT,
-	CUSTOM_DATA_LIMIT, CollectionLimits, CreateCollectionData, SponsorshipState, CreateItemExData,
-	SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField, PhantomType,
-	Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyPermission,
-	PropertiesError, PropertyKeyPermission, TokenData, TrySetProperty,
+	COLLECTION_NUMBER_LIMIT,
+	Collection,
+	RpcCollection,
+	CollectionId,
+	CreateItemData,
+	MAX_TOKEN_PREFIX_LENGTH,
+	COLLECTION_ADMINS_LIMIT,
+	TokenId,
+	CollectionStats,
+	MAX_TOKEN_OWNERSHIP,
+	CollectionMode,
+	NFT_SPONSOR_TRANSFER_TIMEOUT,
+	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	MAX_SPONSOR_TIMEOUT,
+	CUSTOM_DATA_LIMIT,
+	CollectionLimits,
+	CreateCollectionData,
+	SponsorshipState,
+	CreateItemExData,
+	SponsoringRateLimit,
+	budget::Budget,
+	COLLECTION_FIELD_LIMIT,
+	CollectionField,
+	PhantomType,
+	Property,
+	Properties,
+	PropertiesPermissionMap,
+	PropertyKey,
+	PropertyPermission,
+	PropertiesError,
+	PropertyKeyPermission,
+	TokenData,
+	TrySetProperty,
+	PropertyScope,
+	// RMRK
+	RmrkCollectionInfo,
+	RmrkInstanceInfo,
+	RmrkResourceInfo,
+	RmrkPropertyInfo,
+	RmrkBaseInfo,
+	RmrkPartType,
+	RmrkTheme,
+	RmrkNftChild,
 };
+
 pub use pallet::*;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
@@ -441,6 +478,15 @@ pub mod pallet {
 			TokenId,
 			PhantomType<TokenData<T::CrossAccountId>>,
 			PhantomType<RpcCollection<T::AccountId>>,
+			// RMRK
+			PhantomType<RmrkCollectionInfo<T::AccountId>>,
+			PhantomType<RmrkInstanceInfo<T::AccountId>>,
+			PhantomType<RmrkResourceInfo>,
+			PhantomType<RmrkPropertyInfo>,
+			PhantomType<RmrkBaseInfo<T::AccountId>>,
+			PhantomType<RmrkPartType>,
+			PhantomType<RmrkTheme>,
+			PhantomType<RmrkNftChild>,
 		),
 		QueryKind = OptionQuery,
 	>;
@@ -644,18 +690,14 @@ impl<T: Config> Pallet<T> {
 
 		let mut collection_properties = up_data_structs::CollectionProperties::get();
 		collection_properties
-			.try_set_from_iter(data.properties.into_iter().map(|p| (p.key, p.value)))
+			.try_set_from_iter(data.properties.into_iter())
 			.map_err(<Error<T>>::from)?;
 
 		CollectionProperties::<T>::insert(id, collection_properties);
 
 		let mut token_props_permissions = PropertiesPermissionMap::new();
 		token_props_permissions
-			.try_set_from_iter(
-				data.token_property_permissions
-					.into_iter()
-					.map(|property| (property.key, property.permission)),
-			)
+			.try_set_from_iter(data.token_property_permissions.into_iter())
 			.map_err(<Error<T>>::from)?;
 
 		CollectionPropertyPermissions::<T>::insert(id, token_props_permissions);
@@ -720,6 +762,7 @@ impl<T: Config> Pallet<T> {
 		<AdminAmount<T>>::remove(collection.id);
 		<IsAdmin<T>>::remove_prefix((collection.id,), None);
 		<Allowlist<T>>::remove_prefix((collection.id,), None);
+		<CollectionProperties<T>>::remove(collection.id);
 
 		<Pallet<T>>::deposit_event(Event::CollectionDestroyed(collection.id));
 		Ok(())
@@ -739,6 +782,33 @@ impl<T: Config> Pallet<T> {
 		.map_err(<Error<T>>::from)?;
 
 		Self::deposit_event(Event::CollectionPropertySet(collection.id, property.key));
+
+		Ok(())
+	}
+
+	pub fn set_scoped_collection_property(
+		collection: &CollectionHandle<T>,
+		scope: PropertyScope,
+		property: Property,
+	) -> DispatchResult {
+		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
+			properties.try_scoped_set(scope, property.key, property.value)
+		})
+		.map_err(<Error<T>>::from)?;
+
+		Ok(())
+	}
+
+	#[transactional]
+	pub fn set_scoped_collection_properties(
+		collection: &CollectionHandle<T>,
+		scope: PropertyScope,
+		properties: impl Iterator<Item=Property>,
+	) -> DispatchResult {
+		CollectionProperties::<T>::try_mutate(collection.id, |stored_properties| {
+			stored_properties.try_scoped_set_from_iter(scope, properties)
+		})
+		.map_err(<Error<T>>::from)?;
 
 		Ok(())
 	}
@@ -849,23 +919,26 @@ impl<T: Config> Pallet<T> {
 	) -> Result<Vec<Property>, DispatchError> {
 		let properties = Self::collection_properties(collection_id);
 
-		let properties = keys.map(|keys| {
-			keys.into_iter()
-			.filter_map(|key| {
-				properties.get(&key).map(|value| Property {
-					key,
-					value: value.clone(),
-				})
+		let properties = keys
+			.map(|keys| {
+				keys.into_iter()
+					.filter_map(|key| {
+						properties.get(&key).map(|value| Property {
+							key,
+							value: value.clone(),
+						})
+					})
+					.collect()
 			})
-			.collect()
-		}).unwrap_or(
-			properties.iter()
-				.map(|(key, value)| Property {
-					key: key.clone(),
-					value: value.clone(),
-				})
-				.collect()
-		);
+			.unwrap_or_else(|| {
+				properties
+					.iter()
+					.map(|(key, value)| Property {
+						key: key.clone(),
+						value: value.clone(),
+					})
+					.collect()
+			});
 
 		Ok(properties)
 	}
@@ -876,25 +949,28 @@ impl<T: Config> Pallet<T> {
 	) -> Result<Vec<PropertyKeyPermission>, DispatchError> {
 		let permissions = Self::property_permissions(collection_id);
 
-		let key_permissions = keys.map(|keys| {
-			keys.into_iter()
-			.filter_map(|key| {
+		let key_permissions = keys
+			.map(|keys| {
+				keys.into_iter()
+					.filter_map(|key| {
+						permissions
+							.get(&key)
+							.map(|permission| PropertyKeyPermission {
+								key,
+								permission: permission.clone(),
+							})
+					})
+					.collect()
+			})
+			.unwrap_or_else(|| {
 				permissions
-					.get(&key)
-					.map(|permission| PropertyKeyPermission {
-						key,
+					.iter()
+					.map(|(key, permission)| PropertyKeyPermission {
+						key: key.clone(),
 						permission: permission.clone(),
 					})
-			})
-			.collect()
-		}).unwrap_or(
-			permissions.iter()
-				.map(|(key, permission)| PropertyKeyPermission {
-					key: key.clone(),
-					permission: permission.clone(),
-				})
-				.collect()
-		);
+					.collect()
+			});
 
 		Ok(key_permissions)
 	}

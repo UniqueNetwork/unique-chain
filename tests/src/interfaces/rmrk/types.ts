@@ -2907,4 +2907,4 @@ export interface XcmVersionedXcm extends Enum {
   readonly type: 'V0' | 'V1' | 'V2';
 }
 
-export type PHANTOM_UNIQUE = 'unique';
+export type PHANTOM_RMRK = 'rmrk';

@@ -53,7 +53,10 @@ pub struct ItemData {
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
+	use frame_support::{
+		Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key,
+		traits::StorageVersion,
+	};
 	use frame_system::pallet_prelude::*;
 	use up_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;

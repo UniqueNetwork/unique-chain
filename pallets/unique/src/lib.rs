@@ -35,16 +35,16 @@ use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{sp_std::prelude::Vec};
 use up_data_structs::{
-	CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT,
-	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	AccessMode, CreateItemData, CollectionLimits, CollectionId, CollectionMode, TokenId,
-	SchemaVersion, SponsorshipState, CreateCollectionData,
-	CreateItemExData, budget, CollectionField, Property, PropertyKey, PropertyKeyPermission,
+	CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT, MAX_COLLECTION_NAME_LENGTH,
+	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, AccessMode, CreateItemData,
+	CollectionLimits, CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState,
+	CreateCollectionData, CreateItemExData, budget, CollectionField, Property, PropertyKey,
+	PropertyKeyPermission,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
-	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo,
-	dispatch::dispatch_call, dispatch::CollectionDispatch,
+	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_call,
+	dispatch::CollectionDispatch,
 };
 
 #[cfg(feature = "runtime-benchmarks")]

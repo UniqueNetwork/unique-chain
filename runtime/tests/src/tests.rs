@@ -18,9 +18,9 @@
 use crate::{Test, TestCrossAccountId, CollectionCreationPrice, Origin, Unique, new_test_ext};
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, CollectionId, CreateItemData, CreateFungibleData, CreateNftData,
-	CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT,
-	TokenId, MAX_TOKEN_OWNERSHIP, CreateCollectionData, CollectionField, SchemaVersion,
-	CollectionMode, AccessMode,
+	CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT, TokenId,
+	MAX_TOKEN_OWNERSHIP, CreateCollectionData, CollectionField, SchemaVersion, CollectionMode,
+	AccessMode,
 };
 use frame_support::{assert_noop, assert_ok, assert_err};
 use sp_std::convert::TryInto;
@@ -47,6 +47,7 @@ fn add_balance(user: u64, value: u64) {
 fn default_nft_data() -> CreateNftData {
 	CreateNftData {
 		const_data: vec![1, 2, 3].try_into().unwrap(),
+		properties: vec![].try_into().unwrap(),
 	}
 }
 

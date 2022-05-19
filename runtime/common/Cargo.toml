@@ -106,4 +106,9 @@ branch = "unique-polkadot-v0.9.21-logs"
 [dependencies]
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
-up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.21' }
+up-sponsorship = { default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring", branch = 'polkadot-v0.9.21' }
+
+# RMRK
+# todo git
+rmrk-rpc = { default-features = false, git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "feature/separate-types-and-traits" } 
+rmrk-types = { default-features = false, git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "feature/separate-types-and-traits" } 

@@ -19,8 +19,8 @@ use core::marker::PhantomData;
 use sp_std::collections::btree_map::BTreeMap;
 use frame_support::{dispatch::DispatchResultWithPostInfo, fail, weights::Weight};
 use up_data_structs::{
-	CollectionId, TokenId, CreateItemExData, CreateRefungibleExData,
-	budget::Budget, Property, PropertyKey, PropertyKeyPermission,
+	CollectionId, TokenId, CreateItemExData, CreateRefungibleExData, budget::Budget, Property,
+	PropertyKey, PropertyKeyPermission,
 };
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
@@ -340,7 +340,11 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 			.into_inner()
 	}
 
-	fn token_properties(&self, _token_id: TokenId, _keys: Option<Vec<PropertyKey>>) -> Vec<Property> {
+	fn token_properties(
+		&self,
+		_token_id: TokenId,
+		_keys: Option<Vec<PropertyKey>>,
+	) -> Vec<Property> {
 		Vec::new()
 	}
 
