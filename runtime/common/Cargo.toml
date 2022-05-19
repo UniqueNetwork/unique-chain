@@ -110,5 +110,5 @@ up-sponsorship = { default-features = false, git = "https://github.com/UniqueNet
 
 # RMRK
 # todo git
-rmrk-rpc = { default-features = false, git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "test/tests-basic-infrastructure" } 
-rmrk-traits = { default-features = false, git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "test/tests-basic-infrastructure" } 
+rmrk-rpc = { default-features = false, git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "feature/separate-types-and-traits" } 
+rmrk-types = { default-features = false, git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "feature/separate-types-and-traits" } 

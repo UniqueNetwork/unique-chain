@@ -23,5 +23,5 @@ pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork
 
 # RMRK
 # todo git
-rmrk-rpc = { git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "test/tests-basic-infrastructure" } 
-rmrk-traits = { git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "test/tests-basic-infrastructure" } 
+rmrk-rpc = { git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "feature/separate-types-and-traits" } 
+rmrk-types = { git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "feature/separate-types-and-traits" } 

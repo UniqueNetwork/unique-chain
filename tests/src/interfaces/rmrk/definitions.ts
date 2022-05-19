@@ -106,8 +106,8 @@ export default {
             'Get Theme\'s keys values',
             [
                 {name: 'baseId', type: 'u32'},
-                {name: 'themeName', type: 'Vec<Bytes>'},
-                {name: 'keys', type: 'Option<Vec<Bytes>>'}
+                {name: 'themeName', type: 'String'},
+                {name: 'keys', type: 'Option<Vec<String>>'}
             ],
             'Option<RmrkTraitsTheme>'
         )

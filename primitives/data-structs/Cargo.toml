@@ -27,6 +27,10 @@ derivative = { version = "2.2.0", features = ["use_core"] }
 struct-versioning = { path = "../../crates/struct-versioning" }
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
 
+# RMRK
+# todo git
+rmrk-types = { default-features = false, git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "feature/separate-types-and-traits" }
+
 [features]
 default = ["std"]
 std = [

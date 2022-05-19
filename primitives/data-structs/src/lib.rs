@@ -22,18 +22,27 @@ use core::{
 };
 use frame_support::{
 	storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
-	traits::Get,
+	traits::Get, parameter_types,
 };
 
 #[cfg(feature = "serde")]
 use serde::{Serialize, Deserialize};
 
 use sp_core::U256;
-use sp_runtime::{ArithmeticError, sp_std::prelude::Vec};
+use sp_runtime::{ArithmeticError, sp_std::prelude::Vec, Permill};
 use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
 use frame_support::{BoundedVec, traits::ConstU32};
 use derivative::Derivative;
 use scale_info::TypeInfo;
+
+// RMRK
+use rmrk_types::{
+	CollectionInfo, NftInfo, ResourceInfo, PropertyInfo, BaseInfo, PartType, Theme, ThemeProperty,
+};
+pub use rmrk_types::{
+	primitives::{CollectionId as RmrkCollectionId, NftId as RmrkNftId, BaseId as RmrkBaseId, PartId as RmrkPartId, ResourceId as RmrkResourceId},
+	NftChild as RmrkNftChild, AccountIdOrCollectionNftTuple as RmrkAccountIdOrCollectionNftTuple,
+};
 
 mod bounded;
 pub mod budget;
@@ -94,6 +103,13 @@ pub const MAX_TOKEN_PROPERTIES_SIZE: u32 = 32768;
 
 pub const MAX_COLLECTION_PROPERTIES_ENCODE_LEN: u32 =
 	MAX_PROPERTIES_PER_ITEM * MAX_PROPERTY_KEY_LENGTH + MAX_COLLECTION_PROPERTIES_SIZE;
+
+// RMRK constants
+pub const RMRK_STRING_LIMIT: u32 = 128;
+pub const RMRK_COLLECTION_SYMBOL_LIMIT: u32 = 100;
+pub const RMRK_RESOURCE_SYMBOL_LIMIT: u32 = 10;
+pub const RMRK_KEY_LIMIT: u32 = 32;
+pub const RMRK_VALUE_LIMIT: u32 = 256;
 
 pub struct MaxPropertiesPermissionsEncodeLen;
 
@@ -615,7 +631,8 @@ pub struct CollectionStats {
 	pub alive: u32,
 }
 
-#[derive(Encode, Decode, PartialEq, Clone, Debug)]
+#[derive(Encode, Decode, Clone, Debug)]
+#[cfg_attr(feature = "std", derive(PartialEq))]
 pub struct PhantomType<T>(core::marker::PhantomData<T>);
 
 impl<T: TypeInfo + 'static> TypeInfo for PhantomType<T> {
@@ -832,3 +849,54 @@ impl Get<Properties> for TokenProperties {
 		Properties::new(MAX_TOKEN_PROPERTIES_SIZE)
 	}
 }
+
+// RMRK
+// todo document?
+parameter_types! {
+	#[derive(PartialEq, TypeInfo)]
+	pub const RmrkStringLimit: u32 = 128;
+	#[derive(PartialEq)]
+	pub const RmrkCollectionSymbolLimit: u32 = 100;
+	#[derive(PartialEq)]
+	pub const RmrkResourceSymbolLimit: u32 = 10;
+	#[derive(PartialEq)]
+	pub const RmrkKeyLimit: u32 = 32;
+	#[derive(PartialEq)]
+	pub const RmrkValueLimit: u32 = 256;
+	#[derive(PartialEq)]
+	pub const RmrkMaxCollectionsEquippablePerPart: u32 = 100;
+	#[derive(PartialEq)]
+	pub const RmrkPartsLimit: u32 = 3;
+}
+
+pub type RmrkCollectionInfo<AccountId> = CollectionInfo<
+	RmrkString,
+	BoundedVec<u8, RmrkCollectionSymbolLimit>,
+	AccountId
+>;
+pub type RmrkInstanceInfo<AccountId> = NftInfo<
+	AccountId, 
+	Permill,
+	RmrkString
+>;
+pub type RmrkResourceInfo = ResourceInfo::<
+	BoundedVec<u8, RmrkResourceSymbolLimit>,
+	RmrkString,
+	BoundedVec<RmrkPartId, RmrkPartsLimit>
+>;
+pub type RmrkPropertyInfo = PropertyInfo<
+	BoundedVec<u8, RmrkKeyLimit>, 
+	BoundedVec<u8, RmrkValueLimit>
+>;
+pub type RmrkBaseInfo<AccountId> = BaseInfo<AccountId, RmrkString>;
+pub type RmrkPartType = PartType<
+	RmrkString,
+	BoundedVec<RmrkCollectionId, RmrkMaxCollectionsEquippablePerPart>
+>;
+pub type RmrkTheme = Theme<RmrkString, Vec<ThemeProperty<RmrkString>>>;
+
+pub type RmrkRpcString = Vec<u8>;
+pub type RmrkThemeName = RmrkRpcString;
+pub type RmrkPropertyKey = RmrkRpcString;
+
+type RmrkString = BoundedVec<u8, RmrkStringLimit>;

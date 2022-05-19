@@ -48,14 +48,10 @@ use unique_runtime_common::types::{
 	Block,
 	BlockNumber,
 	Balance,
-	// RMRK
-	RmrkCollectionInfo,
-	RmrkInstanceInfo,
-	RmrkResourceInfo,
-	RmrkPropertyInfo,
-	RmrkBaseInfo,
-	RmrkPartType,
-	RmrkTheme,
+};
+// RMRK
+use up_data_structs::{
+	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo, RmrkPartType, RmrkTheme, 
 };
 
 /// Public io handler for exporting into other modules
@@ -161,11 +157,11 @@ where
 	C::Api: rmrk_rpc::RmrkApi<
 		Block,
 		AccountId,
-		RmrkCollectionInfo,
-		RmrkInstanceInfo,
-		RmrkResourceInfo, // todo done, but for reference
+		RmrkCollectionInfo<AccountId>,
+		RmrkInstanceInfo<AccountId>,
+		RmrkResourceInfo,
 		RmrkPropertyInfo,
-		RmrkBaseInfo,
+		RmrkBaseInfo<AccountId>,
 		RmrkPartType,
 		RmrkTheme,
 	>,
@@ -239,7 +235,7 @@ where
 		fee_history_cache,
 	)));
 
-	// todo
+	// todo look into
 	//let unique = Unique::new(client.clone());
 	io.extend_with(UniqueApi::to_delegate(Unique::new(client.clone())));
 	io.extend_with(RmrkApi::to_delegate(Unique::new(client.clone())));

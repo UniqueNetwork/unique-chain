@@ -37,7 +37,11 @@ use up_data_structs::{
 	CreateItemExData, SponsoringRateLimit, budget::Budget, COLLECTION_FIELD_LIMIT, CollectionField,
 	PhantomType, Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyPermission,
 	PropertiesError, PropertyKeyPermission, TokenData, TrySet,
+	// RMRK
+	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo, RmrkPartType, RmrkTheme,
+	RmrkNftChild,
 };
+
 pub use pallet::*;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
@@ -457,6 +461,15 @@ pub mod pallet {
 			TokenId,
 			PhantomType<TokenData<T::CrossAccountId>>,
 			PhantomType<RpcCollection<T::AccountId>>,
+			// RMRK
+			PhantomType<RmrkCollectionInfo<T::AccountId>>,
+			PhantomType<RmrkInstanceInfo<T::AccountId>>,
+			PhantomType<RmrkResourceInfo>,
+			PhantomType<RmrkPropertyInfo>,
+			PhantomType<RmrkBaseInfo<T::AccountId>>,
+			PhantomType<RmrkPartType>,
+			PhantomType<RmrkTheme>,
+			PhantomType<RmrkNftChild>,
 		),
 		QueryKind = OptionQuery,
 	>;

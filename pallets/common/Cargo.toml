@@ -26,6 +26,10 @@ scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
 ] }
 
+# RMRK
+# todo git
+rmrk-types = { default-features = false, git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "feature/separate-types-and-traits" }
+
 [features]
 default = ["std"]
 std = [

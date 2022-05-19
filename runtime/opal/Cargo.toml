@@ -393,7 +393,7 @@ default-features = false
 [dependencies.rmrk-rpc]
 default-features = false
 git = "https://github.com/UniqueNetwork/rmrk-substrate.git"
-branch = "test/tests-basic-infrastructure"
+branch = "feature/separate-types-and-traits"
 
 ################################################################################
 # local dependencies

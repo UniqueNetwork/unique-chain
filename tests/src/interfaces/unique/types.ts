@@ -3,7 +3,7 @@
 
 import type { BTreeMap, BTreeSet, Bytes, Compact, Enum, Null, Option, Result, Struct, Text, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
-import type { AccountId32, Call, H160, H256, MultiAddress, Perbill } from '@polkadot/types/interfaces/runtime';
+import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
 import type { Event } from '@polkadot/types/interfaces/system';
 
 /** @name CumulusPalletDmpQueueCall */
@@ -445,6 +445,9 @@ export interface FpRpcTransactionStatus extends Struct {
 
 /** @name FrameSupportPalletId */
 export interface FrameSupportPalletId extends U8aFixed {}
+
+/** @name FrameSupportStorageBoundedBTreeSet */
+export interface FrameSupportStorageBoundedBTreeSet extends BTreeSet<u32> {}
 
 /** @name FrameSupportTokensMiscBalanceStatus */
 export interface FrameSupportTokensMiscBalanceStatus extends Enum {
@@ -948,6 +951,9 @@ export interface PalletEthereumEvent extends Enum {
   readonly asExecuted: ITuple<[H160, H160, H256, EvmCoreErrorExitReason]>;
   readonly type: 'Executed';
 }
+
+/** @name PalletEthereumFakeTransactionFinalizer */
+export interface PalletEthereumFakeTransactionFinalizer extends Null {}
 
 /** @name PalletEvmAccountBasicCrossAccountIdRepr */
 export interface PalletEvmAccountBasicCrossAccountIdRepr extends Enum {
@@ -1625,8 +1631,32 @@ export interface PalletXcmEvent extends Enum {
   readonly type: 'Attempted' | 'Sent' | 'UnexpectedResponse' | 'ResponseReady' | 'Notified' | 'NotifyOverweight' | 'NotifyDispatchError' | 'NotifyDecodeFailed' | 'InvalidResponder' | 'InvalidResponderVersion' | 'ResponseTaken' | 'AssetsTrapped' | 'VersionChangeNotified' | 'SupportedVersionChanged' | 'NotifyTargetSendFail' | 'NotifyTargetMigrationFail';
 }
 
+/** @name PhantomTypeUpDataStructsBaseInfo */
+export interface PhantomTypeUpDataStructsBaseInfo extends Vec<Lookup359> {}
+
+/** @name PhantomTypeUpDataStructsCollectionInfo */
+export interface PhantomTypeUpDataStructsCollectionInfo extends Vec<Lookup336> {}
+
+/** @name PhantomTypeUpDataStructsNftChild */
+export interface PhantomTypeUpDataStructsNftChild extends Vec<Lookup374> {}
+
+/** @name PhantomTypeUpDataStructsNftInfo */
+export interface PhantomTypeUpDataStructsNftInfo extends Vec<Lookup341> {}
+
+/** @name PhantomTypeUpDataStructsPartType */
+export interface PhantomTypeUpDataStructsPartType extends Vec<Lookup362> {}
+
+/** @name PhantomTypeUpDataStructsPropertyInfo */
+export interface PhantomTypeUpDataStructsPropertyInfo extends Vec<Lookup354> {}
+
+/** @name PhantomTypeUpDataStructsResourceInfo */
+export interface PhantomTypeUpDataStructsResourceInfo extends Vec<Lookup347> {}
+
 /** @name PhantomTypeUpDataStructsRpcCollection */
 export interface PhantomTypeUpDataStructsRpcCollection extends Vec<Lookup333> {}
+
+/** @name PhantomTypeUpDataStructsTheme */
+export interface PhantomTypeUpDataStructsTheme extends Vec<Lookup369> {}
 
 /** @name PhantomTypeUpDataStructsTokenData */
 export interface PhantomTypeUpDataStructsTokenData extends Vec<Lookup329> {}
@@ -1692,6 +1722,118 @@ export interface PolkadotPrimitivesV2PersistedValidationData extends Struct {
 export interface PolkadotPrimitivesV2UpgradeRestriction extends Enum {
   readonly isPresent: boolean;
   readonly type: 'Present';
+}
+
+/** @name RmrkTypesAccountIdOrCollectionNftTuple */
+export interface RmrkTypesAccountIdOrCollectionNftTuple extends Enum {
+  readonly isAccountId: boolean;
+  readonly asAccountId: AccountId32;
+  readonly isCollectionAndNftTuple: boolean;
+  readonly asCollectionAndNftTuple: ITuple<[u32, u32]>;
+  readonly type: 'AccountId' | 'CollectionAndNftTuple';
+}
+
+/** @name RmrkTypesBaseInfo */
+export interface RmrkTypesBaseInfo extends Struct {
+  readonly issuer: AccountId32;
+  readonly baseType: Bytes;
+  readonly symbol: Bytes;
+}
+
+/** @name RmrkTypesCollectionInfo */
+export interface RmrkTypesCollectionInfo extends Struct {
+  readonly issuer: AccountId32;
+  readonly metadata: Bytes;
+  readonly max: Option<u32>;
+  readonly symbol: Bytes;
+  readonly nftsCount: u32;
+}
+
+/** @name RmrkTypesEquippableList */
+export interface RmrkTypesEquippableList extends Enum {
+  readonly isAll: boolean;
+  readonly isEmpty: boolean;
+  readonly isCustom: boolean;
+  readonly asCustom: Vec<u32>;
+  readonly type: 'All' | 'Empty' | 'Custom';
+}
+
+/** @name RmrkTypesFixedPart */
+export interface RmrkTypesFixedPart extends Struct {
+  readonly id: u32;
+  readonly z: u32;
+  readonly src: Bytes;
+}
+
+/** @name RmrkTypesNftChild */
+export interface RmrkTypesNftChild extends Struct {
+  readonly collectionId: u32;
+  readonly nftId: u32;
+}
+
+/** @name RmrkTypesNftInfo */
+export interface RmrkTypesNftInfo extends Struct {
+  readonly owner: RmrkTypesAccountIdOrCollectionNftTuple;
+  readonly royalty: Option<RmrkTypesRoyaltyInfo>;
+  readonly metadata: Bytes;
+  readonly equipped: bool;
+  readonly pending: bool;
+}
+
+/** @name RmrkTypesPartType */
+export interface RmrkTypesPartType extends Enum {
+  readonly isFixedPart: boolean;
+  readonly asFixedPart: RmrkTypesFixedPart;
+  readonly isSlotPart: boolean;
+  readonly asSlotPart: RmrkTypesSlotPart;
+  readonly type: 'FixedPart' | 'SlotPart';
+}
+
+/** @name RmrkTypesPropertyInfo */
+export interface RmrkTypesPropertyInfo extends Struct {
+  readonly key: Bytes;
+  readonly value: Bytes;
+}
+
+/** @name RmrkTypesResourceInfo */
+export interface RmrkTypesResourceInfo extends Struct {
+  readonly id: Bytes;
+  readonly pending: bool;
+  readonly pendingRemoval: bool;
+  readonly parts: Option<Vec<u32>>;
+  readonly base: Option<u32>;
+  readonly src: Option<Bytes>;
+  readonly metadata: Option<Bytes>;
+  readonly slot: Option<u32>;
+  readonly license: Option<Bytes>;
+  readonly thumb: Option<Bytes>;
+}
+
+/** @name RmrkTypesRoyaltyInfo */
+export interface RmrkTypesRoyaltyInfo extends Struct {
+  readonly recipient: AccountId32;
+  readonly amount: Permill;
+}
+
+/** @name RmrkTypesSlotPart */
+export interface RmrkTypesSlotPart extends Struct {
+  readonly id: u32;
+  readonly equippable: RmrkTypesEquippableList;
+  readonly src: Bytes;
+  readonly z: u32;
+}
+
+/** @name RmrkTypesTheme */
+export interface RmrkTypesTheme extends Struct {
+  readonly name: Bytes;
+  readonly properties: Vec<RmrkTypesThemeProperty>;
+  readonly inherit: bool;
+}
+
+/** @name RmrkTypesThemeProperty */
+export interface RmrkTypesThemeProperty extends Struct {
+  readonly key: Bytes;
+  readonly value: Bytes;
 }
 
 /** @name SpCoreEcdsaSignature */
@@ -1949,7 +2091,7 @@ export interface UpDataStructsNestingRule extends Enum {
   readonly isDisabled: boolean;
   readonly isOwner: boolean;
   readonly isOwnerRestricted: boolean;
-  readonly asOwnerRestricted: BTreeSet<u32>;
+  readonly asOwnerRestricted: FrameSupportStorageBoundedBTreeSet;
   readonly type: 'Disabled' | 'Owner' | 'OwnerRestricted';
 }
 

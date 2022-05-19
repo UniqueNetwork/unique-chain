@@ -22,7 +22,7 @@ import type { MmrLeafProof } from '@polkadot/types/interfaces/mmr';
 import type { StorageKind } from '@polkadot/types/interfaces/offchain';
 import type { FeeDetails, RuntimeDispatchInfo } from '@polkadot/types/interfaces/payment';
 import type { RpcMethods } from '@polkadot/types/interfaces/rpc';
-import type { AccountId, BlockNumber, H160, H256, H64, Hash, Header, Index, Justification, KeyValue, SignedBlock, StorageData } from '@polkadot/types/interfaces/runtime';
+import type { AccountId, AccountId32, BlockNumber, H160, H256, H64, Hash, Header, Index, Justification, KeyValue, SignedBlock, StorageData } from '@polkadot/types/interfaces/runtime';
 import type { MigrationStatusResult, ReadProof, RuntimeVersion, TraceBlockResponse } from '@polkadot/types/interfaces/state';
 import type { ApplyExtrinsicResult, ChainProperties, ChainType, Health, NetworkState, NodeRole, PeerInfo, SyncState } from '@polkadot/types/interfaces/system';
 import type { IExtrinsic, Observable } from '@polkadot/types/types';
@@ -445,7 +445,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get Theme's keys values
        **/
-      themes: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, themeName: Vec<Bytes> | (Bytes | string | Uint8Array)[], keys: Option<Vec<Bytes>> | null | object | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<RmrkTraitsTheme>>>;
+      themes: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, themeName: Text | string, keys: Option<Vec<Text>> | null | object | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<RmrkTraitsTheme>>>;
     };
     rpc: {
       /**

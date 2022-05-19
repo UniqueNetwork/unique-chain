@@ -41,6 +41,7 @@ function defaultApiOptions(): ApiOptions {
     },
     rpc: {
       unique: defs.unique.rpc,
+      rmrk: defs.rmrk.rpc,
       eth: {
         feeHistory: {
           description: 'Dummy',

@@ -73,7 +73,10 @@ use unique_runtime_common::types::{
 	Index,
 	Hash,
 	Block,
-	// RMRK
+};
+
+// RMRK
+use up_data_structs::{
 	RmrkCollectionInfo,
 	RmrkInstanceInfo,
 	RmrkResourceInfo,
@@ -366,11 +369,11 @@ where
 		+ rmrk_rpc::RmrkApi<
 			Block,
 			AccountId,
-			RmrkCollectionInfo,
-			RmrkInstanceInfo,
-			RmrkResourceInfo, // todo done, but for reference
+			RmrkCollectionInfo<AccountId>,
+			RmrkInstanceInfo<AccountId>,
+			RmrkResourceInfo,
 			RmrkPropertyInfo,
-			RmrkBaseInfo,
+			RmrkBaseInfo<AccountId>,
 			RmrkPartType,
 			RmrkTheme,
 		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
@@ -657,11 +660,11 @@ where
 		+ rmrk_rpc::RmrkApi<
 			Block,
 			AccountId,
-			RmrkCollectionInfo,
-			RmrkInstanceInfo,
-			RmrkResourceInfo, // todo done, but for reference
+			RmrkCollectionInfo<AccountId>,
+			RmrkInstanceInfo<AccountId>,
+			RmrkResourceInfo,
 			RmrkPropertyInfo,
-			RmrkBaseInfo,
+			RmrkBaseInfo<AccountId>,
 			RmrkPartType,
 			RmrkTheme,
 		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
@@ -800,11 +803,11 @@ where
 		+ rmrk_rpc::RmrkApi<
 			Block,
 			AccountId,
-			RmrkCollectionInfo,
-			RmrkInstanceInfo,
-			RmrkResourceInfo, // todo done, but for reference
+			RmrkCollectionInfo<AccountId>,
+			RmrkInstanceInfo<AccountId>,
+			RmrkResourceInfo,
 			RmrkPropertyInfo,
-			RmrkBaseInfo,
+			RmrkBaseInfo<AccountId>,
 			RmrkPartType,
 			RmrkTheme,
 		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>

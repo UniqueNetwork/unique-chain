@@ -29,18 +29,12 @@ use up_rpc::UniqueApi as UniqueRuntimeApi;
 
 // RMRK
 use rmrk_rpc::RmrkApi as RmrkRuntimeApi;
-use rmrk_traits::{
-	primitives::{
-		CollectionId as RmrkCollectionId,
-		NftId as RmrkNftId,
-		BaseId as RmrkBaseId,
-		//ResourceId as RmrkResourceId,
-	},
-	NftChild as RmrkNftChild,
+use up_data_structs::{
+	RmrkCollectionId, RmrkNftId, RmrkBaseId, RmrkNftChild,
+	RmrkThemeName, RmrkPropertyKey, RmrkResourceId
 };
-pub use unique_runtime_common::types::{RmrkThemeName, RmrkPropertyKey, RmrkResourceId};
 
-pub use rmrk::RmrkApi;
+pub use rmrk_unique_rpc::RmrkApi;
 
 #[rpc]
 pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
@@ -201,10 +195,10 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 	) -> Result<Option<CollectionLimits>>;
 }
 
-mod rmrk {
+mod rmrk_unique_rpc {
 	use super::*;
 
-	#[rpc]
+	#[rpc(server)]
 	pub trait RmrkApi<
 		BlockHash,
 		AccountId,
@@ -319,7 +313,6 @@ mod rmrk {
 	}
 }
 
-// todo clone, derivative
 pub struct Unique<C, P> {
 	client: Arc<C>,
 	_marker: std::marker::PhantomData<P>,
@@ -365,7 +358,7 @@ macro_rules! pass_method {
 			let api = self.client.runtime_api();
 			let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 			let _api_version = if let Ok(Some(api_version)) =
-				api.api_version::<$runtime_api_macro!()>(&at)//<dyn $runtime_name $(<$($lt),+>)?>(&at)
+				api.api_version::<$runtime_api_macro!()>(&at)
 			{
 				api_version
 			} else {
@@ -415,7 +408,7 @@ where
 	Block: BlockT,
 	AccountId: Decode,
 	C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	C::Api: UniqueRuntimeApi<Block, CrossAccountId, AccountId>, // todo unique_api!() possible?
+	C::Api: UniqueRuntimeApi<Block, CrossAccountId, AccountId>,
 	CrossAccountId: pallet_evm::account::CrossAccountId<AccountId>,
 {
 	pass_method!(
@@ -433,11 +426,6 @@ where
 	pass_method!(
 		topmost_token_owner(collection: CollectionId, token: TokenId) -> Option<CrossAccountId>, unique_api
 	);
-	/*pass_method!(
-		token_owner(collection: CollectionId, token: TokenId) -> Option<CrossAccountId>,
-		UniqueRuntimeApi<Block, CrossAccountId, AccountId>;
-		changed_in 2, token_owner_before_version_2(collection, token) => |u| Some(u)
-	);*/
 	pass_method!(
 		const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>, unique_api
 	);
@@ -452,9 +440,6 @@ where
 		allowance(collection: CollectionId, sender: CrossAccountId, spender: CrossAccountId, token: TokenId) -> String => |v| v.to_string(),
 		unique_api
 	);
-	pass_method!(topmost_token_owner(collection: CollectionId, token: TokenId) -> Option<CrossAccountId>, unique_api);
-	pass_method!(const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>, unique_api);
-	pass_method!(variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>, unique_api);
 
 	pass_method!(collection_properties(
 		collection: CollectionId,
@@ -486,14 +471,6 @@ where
 		keys: Vec<String>,
 	) -> TokenData<CrossAccountId>, unique_api);
 
-	pass_method!(total_supply(collection: CollectionId) -> u32, unique_api);
-	pass_method!(account_balance(collection: CollectionId, account: CrossAccountId) -> u32, unique_api);
-	pass_method!(balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> String => |v| v.to_string(), unique_api);
-	pass_method!(
-		allowance(collection: CollectionId, sender: CrossAccountId, spender: CrossAccountId, token: TokenId) -> String => |v| v.to_string(), 
-		unique_api
-	); // todo format
-
 	pass_method!(adminlist(collection: CollectionId) -> Vec<CrossAccountId>, unique_api);
 	pass_method!(allowlist(collection: CollectionId) -> Vec<CrossAccountId>, unique_api);
 	pass_method!(allowed(collection: CollectionId, user: CrossAccountId) -> bool, unique_api);
@@ -517,7 +494,7 @@ impl<
 		PartType,
 		Theme,
 	>
-	rmrk::RmrkApi<
+	rmrk_unique_rpc::RmrkApi<
 		<Block as BlockT>::Hash,
 		AccountId,
 		CollectionInfo,
@@ -569,13 +546,6 @@ where
 	pass_method!(base(base_id: RmrkBaseId) -> Option<BaseInfo>, rmrk_api);
 	pass_method!(base_parts(base_id: RmrkBaseId) -> Vec<PartType>, rmrk_api);
 	pass_method!(theme_names(base_id: RmrkBaseId) -> Vec<RmrkThemeName>, rmrk_api);
-	/*fn theme(
-		&self,
-		base_id: RmrkBaseId,
-		theme_name: String,
-		filter_keys: Option<Vec<String>>,
-		at: Option<<Block as BlockT>::Hash>
-	) -> Result<Option<Theme>> {todo!()}*/
 	pass_method!(theme(base_id: RmrkBaseId, theme_name: RmrkThemeName, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Option<Theme>, rmrk_api);
 }
 

@@ -2,21 +2,8 @@ use sp_runtime::{
 	traits::{Verify, IdentifyAccount, BlakeTwo256},
 	generic, MultiSignature,
 };
-use sp_std::vec::Vec;
 
 pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-
-// RMRK
-pub use rmrk_traits::{
-	CollectionInfo, NftInfo, ResourceInfo, PropertyInfo, BaseInfo, PartType, Theme,
-	primitives::{CollectionId as RmrkCollectionId, NftId as RmrkNftId, BaseId as RmrkBaseId},
-	NftChild as RmrkNftChild,
-};
-
-pub use crate::constants::{
-	RmrkStringLimit, RmrkCollectionSymbolLimit, RmrkResourceSymbolLimit, RmrkKeyLimit,
-	RmrkValueLimit,
-};
 
 /// Opaque block header type.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
@@ -53,27 +40,6 @@ pub type Hash = sp_core::H256;
 pub type DigestItem = generic::DigestItem;
 
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-
-// RMRK
-// todo document
-pub type RmrkCollectionInfo = CollectionInfo<RmrkStringLimit, RmrkCollectionSymbolLimit, AccountId>;
-
-pub type RmrkInstanceInfo = NftInfo<AccountId, RmrkStringLimit>;
-
-pub type RmrkResourceInfo = ResourceInfo<RmrkResourceSymbolLimit, RmrkStringLimit>;
-
-pub type RmrkPropertyInfo = PropertyInfo<RmrkKeyLimit, RmrkValueLimit>;
-
-pub type RmrkBaseInfo = BaseInfo<AccountId, RmrkStringLimit>;
-
-pub type RmrkPartType = PartType<RmrkStringLimit>;
-
-pub type RmrkTheme = Theme<RmrkStringLimit>;
-
-pub type RmrkRpcString = Vec<u8>;
-pub type RmrkThemeName = RmrkRpcString;
-pub type RmrkPropertyKey = RmrkRpcString;
-pub type RmrkResourceId = RmrkRpcString;
 
 pub trait RuntimeInstance {
 	type CrossAccountId: pallet_evm::account::CrossAccountId<sp_runtime::AccountId32>
