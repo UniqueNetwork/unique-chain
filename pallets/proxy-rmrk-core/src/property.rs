@@ -62,6 +62,7 @@ impl RmrkProperty {
             Self::Thumb => key!("thumb"),
             Self::EquippedNft => key!("equipped-nft"),
             Self::BaseType => key!("base-type"),
+            // RmrkResourceId(/* Id type? */)
             // RmrkPartId(/* Id type? */)
             Self::EquippableList => key!("equippable-list"),
             Self::ZIndex => key!("z-index"),
