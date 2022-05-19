@@ -87,6 +87,6 @@ macro_rules! rmrk_property {
 
     (Config=$cfg:ty, $key:ident) => {
         PropertyScope::Rmrk.apply(rmrk_property!(@$cfg, $key)?)
-            .map_err(|_| <Error<T>>::RmrkPropertyIsTooLong)
+            .map_err(|_| <$crate::Error<$cfg>>::RmrkPropertyIsTooLong)
     };
 }
