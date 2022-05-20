@@ -1,31 +1,14 @@
 use super::*;
 use codec::{Encode, Decode};
-use frame_support::dispatch::Vec;
 use pallet_nonfungible::NonfungibleHandle;
-
-#[macro_export]
-macro_rules! rmrk_property {
-    ($key:ident, $value:expr) => {
-        Property {
-            key: rmrk_property!(@raw $key),
-            value: $value.into()
-        }
-    };
-
-    (@raw $key:ident) => {
-        RmrkProperty::$key.to_key()
-    };
-
-    ($key:ident) => {
-        PropertyScope::Rmrk.apply(rmrk_property!(@raw $key)).unwrap()
-    };
-}
 
 macro_rules! impl_rmrk_value {
     ($enum_name:path, decode_error: $error:ident) => {
-        impl Into<PropertyValue> for $enum_name {
-            fn into(self) -> PropertyValue {
-                self.encode().try_into().unwrap()
+        impl IntoPropertyValue for $enum_name {
+            fn into_property_value(self) -> Result<PropertyValue, MiscError> {
+                self.encode()
+                    .try_into()
+                    .map_err(|_| MiscError::RmrkPropertyValueIsTooLong)
             }
         }
 
@@ -44,12 +27,14 @@ macro_rules! impl_rmrk_value {
 }
 
 pub enum MiscError {
+    RmrkPropertyValueIsTooLong,
     CorruptedCollectionType,
 }
 
 impl<T: Config> From<MiscError> for Error<T> {
     fn from(error: MiscError) -> Self {
         match error {
+            MiscError::RmrkPropertyValueIsTooLong => Self::RmrkPropertyValueIsTooLong,
             MiscError::CorruptedCollectionType => Self::CorruptedCollectionType,
         }
     }
@@ -68,23 +53,15 @@ impl<T: Config> IntoNftCollection<T> for CollectionHandle<T> {
     }
 }
 
-pub enum RmrkProperty {
-    Metadata,
-    CollectionType,
+pub trait IntoPropertyValue {
+    fn into_property_value(self) -> Result<PropertyValue, MiscError>;
 }
 
-impl RmrkProperty {
-    pub fn to_key(self) -> PropertyKey {
-        let key = |str_key: &str| {
-            PropertyKey::try_from(
-                str_key.bytes().collect::<Vec<_>>()
-            ).unwrap()
-        };
-
-        match self {
-            Self::Metadata => key("metadata"),
-            Self::CollectionType => key("collection-type"),
-        }
+impl<L: Get<u32>> IntoPropertyValue for BoundedVec<u8, L> {
+    fn into_property_value(self) -> Result<PropertyValue, MiscError> {
+        self.into_inner()
+            .try_into()
+            .map_err(|_| MiscError::RmrkPropertyValueIsTooLong)
     }
 }
 

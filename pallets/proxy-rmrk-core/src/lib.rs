@@ -16,9 +16,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{pallet_prelude::*, transactional, BoundedVec, traits::ConstU32, dispatch::DispatchResult};
+use frame_support::{pallet_prelude::*, transactional, BoundedVec, dispatch::DispatchResult};
 use frame_system::{pallet_prelude::*, ensure_signed};
-use sp_runtime::DispatchError;
+use sp_runtime::{DispatchError, traits::StaticLookup};
 use up_data_structs::*;
 use pallet_common::{Pallet as PalletCommon, Error as CommonError, CollectionHandle, CommonCollectionOperations};
 use pallet_nonfungible::{Pallet as PalletNft, NonfungibleHandle};
@@ -27,8 +27,10 @@ use pallet_evm::account::CrossAccountId;
 pub use pallet::*;
 
 pub mod misc;
+pub mod property;
 
 use misc::*;
+pub use property::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -52,15 +54,20 @@ pub mod pallet {
 	pub enum Event<T: Config> {
         CollectionCreated {
 			issuer: T::AccountId,
-			collection_id: CollectionId,
+			collection_id: RmrkCollectionId,
 		},
         CollectionDestroyed {
 			issuer: T::AccountId,
-			collection_id: CollectionId,
+			collection_id: RmrkCollectionId,
+		},
+        IssuerChanged {
+			old_issuer: T::AccountId,
+			new_issuer: T::AccountId,
+			collection_id: RmrkCollectionId,
 		},
         CollectionLocked {
 			issuer: T::AccountId,
-			collection_id: CollectionId,
+			collection_id: RmrkCollectionId,
 		},
 	}
 
@@ -69,6 +76,8 @@ pub mod pallet {
         /* Unique-specific events */
         CorruptedCollectionType,
         NotRmrkCollection,
+        RmrkPropertyKeyIsTooLong,
+        RmrkPropertyValueIsTooLong,
 
         /* RMRK compatible events */
         CollectionNotEmpty,
@@ -82,9 +91,9 @@ pub mod pallet {
 		#[transactional]
 		pub fn create_collection(
 			origin: OriginFor<T>,
-			metadata: PropertyValue,
+			metadata: RmrkString,
 			max: Option<u32>,
-			symbol: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
+			symbol: RmrkCollectionSymbol,
 		) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
@@ -95,7 +104,9 @@ pub mod pallet {
 
             let data = CreateCollectionData {
                 limits,
-                token_prefix: symbol,
+                token_prefix: symbol.into_inner()
+                    .try_into()
+                    .map_err(|_| <CommonError<T>>::CollectionTokenPrefixLimitExceeded)?,
                 ..Default::default()
             };
 
@@ -113,12 +124,15 @@ pub mod pallet {
                 &collection,
                 PropertyScope::Rmrk,
                 [
-                    rmrk_property!(Metadata, metadata),
-                    rmrk_property!(CollectionType, CollectionType::Regular),
+                    rmrk_property!(Config=T, Metadata: metadata)?,
+                    rmrk_property!(Config=T, CollectionType: CollectionType::Regular)?,
                 ].into_iter()
             )?;
 
-            Self::deposit_event(Event::CollectionCreated { issuer: sender, collection_id });
+            Self::deposit_event(Event::CollectionCreated {
+                issuer: sender,
+                collection_id: collection_id.0
+            });
 
             Ok(())
         }
@@ -127,14 +141,16 @@ pub mod pallet {
 		#[transactional]
 		pub fn destroy_collection(
 			origin: OriginFor<T>,
-			collection_id: CollectionId,
+			collection_id: RmrkCollectionId,
 		) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             let cross_sender = T::CrossAccountId::from_sub(sender.clone());
 
-            let collection = Self::get_nft_collection(collection_id)?;
+            let unique_collection_id = collection_id.into();
 
-            Self::check_collection_type(collection_id, CollectionType::Regular)?;
+            let collection = Self::get_nft_collection(unique_collection_id)?;
+
+            Self::check_collection_type(unique_collection_id, CollectionType::Regular)?;
 
             ensure!(collection.total_supply() == 0, <Error<T>>::CollectionNotEmpty);
 
@@ -149,17 +165,25 @@ pub mod pallet {
 		#[transactional]
 		pub fn change_collection_issuer(
 			origin: OriginFor<T>,
-			collection_id: CollectionId,
-			new_issuer: T::AccountId,
+			collection_id: RmrkCollectionId,
+			new_issuer: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
+            let new_issuer = T::Lookup::lookup(new_issuer)?;
+
             Self::change_collection_owner(
-                collection_id,
+                collection_id.into(),
                 CollectionType::Regular,
-                sender,
-                new_issuer
+                sender.clone(),
+                new_issuer.clone()
             )?;
+
+            Self::deposit_event(Event::IssuerChanged {
+				old_issuer: sender,
+				new_issuer,
+				collection_id,
+			});
 
             Ok(())
         }
@@ -168,12 +192,12 @@ pub mod pallet {
 		#[transactional]
 		pub fn lock_collection(
 			origin: OriginFor<T>,
-			collection_id: CollectionId,
+			collection_id: RmrkCollectionId,
 		) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             let cross_sender = T::CrossAccountId::from_sub(sender.clone());
 
-            let collection = Self::get_nft_collection(collection_id)?;
+            let collection = Self::get_nft_collection(collection_id.into())?;
             collection.check_is_owner(&cross_sender)?;
 
             let token_count = collection.total_supply();
@@ -215,7 +239,7 @@ impl<T: Config> Pallet<T> {
 
     fn get_collection_type(collection_id: CollectionId) -> Result<CollectionType, DispatchError> {
         let collection_type: CollectionType = <PalletCommon<T>>::collection_properties(collection_id)
-            .get(&rmrk_property!(CollectionType))
+            .get(&rmrk_property!(Config=T, CollectionType)?)
             .ok_or(<Error<T>>::NotRmrkCollection)?
             .try_into()
             .map_err(<Error<T>>::from)?;

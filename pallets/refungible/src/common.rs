@@ -20,7 +20,7 @@ use sp_std::collections::btree_map::BTreeMap;
 use frame_support::{dispatch::DispatchResultWithPostInfo, fail, weights::Weight};
 use up_data_structs::{
 	CollectionId, TokenId, CreateItemExData, CreateRefungibleExData, budget::Budget, Property,
-	PropertyKey, PropertyKeyPermission,
+	PropertyKey, PropertyValue, PropertyKeyPermission,
 };
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
@@ -338,6 +338,10 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		<TokenData<T>>::get((self.id, token))
 			.const_data
 			.into_inner()
+	}
+
+	fn token_property(&self, _token_id: TokenId, _key: &PropertyKey) -> Option<PropertyValue> {
+		None
 	}
 
 	fn token_properties(

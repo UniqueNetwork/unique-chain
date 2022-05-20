@@ -901,7 +901,7 @@ impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
 }
 
-impl pallet_rmrk_proxy::Config for Runtime {
+impl pallet_proxy_rmrk_core::Config for Runtime {
 	type Event = Event;
 }
 
@@ -1017,7 +1017,7 @@ construct_runtime!(
 		Refungible: pallet_refungible::{Pallet, Storage} = 68,
 		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
 		Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
-		RmrkProxy: pallet_rmrk_proxy::{Pallet, Call, Storage, Event<T>} = 71,
+		ProxyRmrkCore: pallet_proxy_rmrk_core::{Pallet, Call, Storage, Event<T>} = 71,
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,

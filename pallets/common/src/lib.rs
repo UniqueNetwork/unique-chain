@@ -59,6 +59,7 @@ use up_data_structs::{
 	Properties,
 	PropertiesPermissionMap,
 	PropertyKey,
+	PropertyValue,
 	PropertyPermission,
 	PropertiesError,
 	PropertyKeyPermission,
@@ -902,6 +903,12 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	pub fn get_collection_property(collection_id: CollectionId, key: &PropertyKey) -> Option<PropertyValue> {
+		Self::collection_properties(collection_id)
+			.get(key)
+			.cloned()
+	}
+
 	pub fn bytes_keys_to_property_keys(
 		keys: Vec<Vec<u8>>,
 	) -> Result<Vec<PropertyKey>, DispatchError> {
@@ -1240,6 +1247,7 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
 	fn const_metadata(&self, token: TokenId) -> Vec<u8>;
+	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue>;
 	fn token_properties(&self, token_id: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property>;
 	/// Amount of unique collection tokens
 	fn total_supply(&self) -> u32;
