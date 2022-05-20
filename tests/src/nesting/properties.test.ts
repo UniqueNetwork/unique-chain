@@ -14,6 +14,51 @@ let alice: IKeyringPair;
 let bob: IKeyringPair;
 let charlie: IKeyringPair;
 
+describe('Composite Properties Test', () => {
+  before(async () => {
+    await usingApi(async () => {
+      alice = privateKey('//Alice');
+      bob = privateKey('//Bob');
+    });
+  });
+
+  it('Makes sure collectionById supplies required fields', async () => {
+    await usingApi(async api => {
+      const collectionId = await createCollectionExpectSuccess();
+
+      const collectionOption = await api.rpc.unique.collectionById(collectionId);
+      expect(collectionOption.isSome).to.be.true;
+      let collection = collectionOption.unwrap();
+      expect(collection.tokenPropertyPermissions.toHuman()).to.be.empty;
+      expect(collection.properties.toHuman()).to.be.empty;
+
+      const propertyPermissions = [
+        {key: 'mindgame', permission: {collectionAdmin: true, mutable: false, tokenOwner: true}},
+        {key: 'skullduggery', permission: {collectionAdmin: false, mutable: true, tokenOwner: false}},
+      ];
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setPropertyPermissions(collectionId, propertyPermissions), 
+      )).to.not.be.rejected;
+
+      const collectionProperties = [
+        {key: 'black_hole', value: 'LIGO'},
+        {key: 'electron', value: 'come bond'}, 
+      ];
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setCollectionProperties(collectionId, collectionProperties), 
+      )).to.not.be.rejected;
+
+      collection = (await api.rpc.unique.collectionById(collectionId)).unwrap();
+      expect(collection.tokenPropertyPermissions.toHuman()).to.be.deep.equal(propertyPermissions);
+      expect(collection.properties.toHuman()).to.be.deep.equal(collectionProperties);
+    });
+  });
+});
+
 // ---------- COLLECTION PROPERTIES
 
 describe('Integration Test: Collection Properties', () => {
