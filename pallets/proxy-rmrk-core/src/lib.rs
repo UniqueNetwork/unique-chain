@@ -75,7 +75,6 @@ pub mod pallet {
 	pub enum Error<T> {
         /* Unique-specific events */
         CorruptedCollectionType,
-        NotRmrkCollection,
         RmrkPropertyKeyIsTooLong,
         RmrkPropertyValueIsTooLong,
 
@@ -240,7 +239,7 @@ impl<T: Config> Pallet<T> {
     fn get_collection_type(collection_id: CollectionId) -> Result<CollectionType, DispatchError> {
         let collection_type: CollectionType = <PalletCommon<T>>::collection_properties(collection_id)
             .get(&rmrk_property!(Config=T, CollectionType)?)
-            .ok_or(<Error<T>>::NotRmrkCollection)?
+            .ok_or(<Error<T>>::CollectionUnknown)?
             .try_into()
             .map_err(<Error<T>>::from)?;
 

@@ -48,7 +48,7 @@ impl<T: Config> IntoNftCollection<T> for CollectionHandle<T> {
     fn into_nft_collection(self) -> Result<NonfungibleHandle<T>, Error<T>> {
         match self.mode {
             CollectionMode::NFT => Ok(NonfungibleHandle::cast(self)),
-            _ => Err(<Error<T>>::NotRmrkCollection)
+            _ => Err(<Error<T>>::CollectionUnknown)
         }
     }
 }
