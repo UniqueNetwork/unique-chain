@@ -50,6 +50,7 @@ pub use pallet_transaction_payment::{
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_evm::{
 	EnsureAddressTruncated, HashedAddressMapping, Runner, account::CrossAccountId as _, OnMethodCall,
+	Account as EVMAccount, FeeCalculator, GasWeightMapping,
 };
 pub use frame_support::{
 	construct_runtime, match_types,
@@ -84,8 +85,7 @@ use sp_arithmetic::{
 };
 use smallvec::smallvec;
 use codec::{Encode, Decode};
-use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
-use pallet_unique::evm_collection;
+use pallet_unique::eth::evm_collection;
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
 	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating},
@@ -121,7 +121,15 @@ use xcm_executor::traits::{MatchesFungible, WeightTrader};
 //use xcm_executor::traits::MatchesFungible;
 use sp_runtime::traits::CheckedConversion;
 
-use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
+use unique_runtime_common::{
+	impl_common_runtime_apis,
+	types::*,
+	constants::*,
+	dispatch::{CollectionDispatchT, CollectionDispatch},
+	sponsoring::UniqueSponsorshipHandler,
+	eth_sponsoring::UniqueEthSponsorshipHandler,
+	weights::CommonWeights,
+};
 
 pub const RUNTIME_NAME: &str = "unique";
 pub const TOKEN_SYMBOL: &str = "UNQ";

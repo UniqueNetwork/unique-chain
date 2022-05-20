@@ -66,7 +66,6 @@ pub use frame_support::{
 		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients, ConstantMultiplier,
 	},
 };
-use unique_runtime_common::dispatch::{CollectionDispatchT, CollectionDispatch};
 use up_data_structs::*;
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
@@ -79,8 +78,8 @@ use sp_arithmetic::{
 };
 use smallvec::smallvec;
 use codec::{Encode, Decode};
-use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
-use pallet_unique::evm_collection;
+use pallet_unique::eth::evm_collection;
+use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
 	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating},
@@ -117,7 +116,15 @@ use xcm_executor::traits::{MatchesFungible, WeightTrader};
 //use xcm_executor::traits::MatchesFungible;
 use sp_runtime::traits::CheckedConversion;
 
-use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
+use unique_runtime_common::{
+	impl_common_runtime_apis,
+	types::*,
+	constants::*,
+	dispatch::{CollectionDispatchT, CollectionDispatch},
+	sponsoring::UniqueSponsorshipHandler,
+	eth_sponsoring::UniqueEthSponsorshipHandler,
+	weights::CommonWeights,
+};
 
 pub const RUNTIME_NAME: &str = "quartz";
 pub const TOKEN_SYMBOL: &str = "QTZ";
@@ -894,6 +901,7 @@ impl pallet_proxy_rmrk_equip::Config for Runtime {
 impl pallet_unique::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
+	type CommonWeightInfo = CommonWeights<Self>;
 }
 
 parameter_types! {
@@ -915,11 +923,11 @@ impl pallet_inflation::Config for Runtime {
 // }
 
 type EvmSponsorshipHandler = (
-	pallet_unique::UniqueEthSponsorshipHandler<Runtime>,
+	UniqueEthSponsorshipHandler<Runtime>,
 	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
 );
 type SponsorshipHandler = (
-	pallet_unique::UniqueSponsorshipHandler<Runtime>,
+	UniqueSponsorshipHandler<Runtime>,
 	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
 	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
 );

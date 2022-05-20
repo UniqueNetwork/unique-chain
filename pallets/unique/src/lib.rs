@@ -22,6 +22,8 @@
 	clippy::unused_unit
 )]
 
+extern crate alloc;
+
 use frame_support::{
 	decl_module, decl_storage, decl_error, decl_event,
 	dispatch::DispatchResult,
@@ -46,7 +48,7 @@ use pallet_common::{
 	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_call,
 	dispatch::CollectionDispatch,
 };
-pub use eth::evm_collection;
+pub mod eth;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;

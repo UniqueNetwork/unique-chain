@@ -33,6 +33,22 @@ std = [
 limit-testing = ["up-data-structs/limit-testing"]
 
 ################################################################################
+# Standart Dependencies
+
+[dependencies.serde]
+default-features = false
+features = ['derive']
+version = '1.0.130'
+
+[dependencies.serde-json-core]
+default-features = false
+version = "0.4"
+
+[dependencies.ethereum]
+version = "0.12.0"
+default-features = false
+
+################################################################################
 # Substrate Dependencies
 
 [dependencies.codec]
@@ -67,15 +83,6 @@ branch = "polkadot-v0.9.21"
 # git = "https://github.com/paritytech/substrate"
 # branch = "polkadot-v0.9.21"
 
-[dependencies.serde]
-default-features = false
-features = ['derive']
-version = '1.0.130'
-
-[dependencies.serde-json-core]
-default-features = false
-version = "0.4"
-
 [dependencies.sp-runtime]
 default-features = false
 git = "https://github.com/paritytech/substrate"
@@ -91,7 +98,6 @@ default-features = false
 git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.21"
 
-
 ################################################################################
 # Local Dependencies
 [dependencies]
@@ -101,3 +107,6 @@ scale-info = { version = "2.0.1", default-features = false, features = [
 ] }
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
 pallet-common = { default-features = false, path = "../common" }
+evm-coder = { default-features = false, path = '../../crates/evm-coder' }
+pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }
+pallet-nonfungible = { default-features = false, path = '../../pallets/nonfungible' }
