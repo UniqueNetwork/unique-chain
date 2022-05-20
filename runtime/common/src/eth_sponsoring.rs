@@ -30,7 +30,7 @@ use pallet_unique::Config as UniqueConfig;
 use crate::sponsoring::*;
 
 use pallet_nonfungible::erc::{
-	UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721MintableCall, ERC721Call,
+	UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721MintableCall, ERC721Call, TokenPropertiesCall,
 };
 use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};
 use pallet_fungible::Config as FungibleConfig;
@@ -50,6 +50,17 @@ impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 			CollectionMode::NFT => {
 				let call = <UniqueNFTCall<T>>::parse(method_id, &mut reader).ok()??;
 				match call {
+					UniqueNFTCall::TokenProperties(
+						TokenPropertiesCall::SetProperty { token_id, key, value, .. },
+					) => {
+						let token_id: TokenId = token_id.try_into().ok()?;
+						withdraw_set_token_property::<T>(
+							&collection,
+							&who,
+							&token_id,
+							key.len() + value.len(),
+						).map(|()| sponsor)
+					}
 					UniqueNFTCall::ERC721UniqueExtensions(
 						ERC721UniqueExtensionsCall::Transfer { token_id, .. },
 					) => {

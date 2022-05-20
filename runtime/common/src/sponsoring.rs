@@ -29,8 +29,8 @@ use pallet_common::{CollectionHandle};
 use pallet_evm::account::CrossAccountId;
 use pallet_unique::{
 	Call as UniqueCall, Config as UniqueConfig, FungibleApproveBasket, RefungibleApproveBasket,
-	NftApproveBasket, CreateItemBasket, ReFungibleTransferBasket, FungibleTransferBasket,
-	NftTransferBasket,
+	NftApproveBasket, CreateItemBasket, ReFungibleTransferBasket,
+	FungibleTransferBasket, NftTransferBasket, TokenPropertyBasket,
 };
 use pallet_fungible::Config as FungibleConfig;
 use pallet_nonfungible::Config as NonfungibleConfig;
@@ -38,6 +38,51 @@ use pallet_refungible::Config as RefungibleConfig;
 
 pub trait Config: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig {}
 impl<T> Config for T where T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig {}
+
+// TODO: permission check?
+pub fn withdraw_set_token_property<T: Config>(
+	collection: &CollectionHandle<T>,
+	who: &T::CrossAccountId,
+	item_id: &TokenId,
+	data_size: usize,
+) -> Option<()> {
+	// preliminary sponsoring correctness check
+	match collection.mode {
+		CollectionMode::NFT => {
+			let owner = pallet_nonfungible::TokenData::<T>::get((collection.id, item_id))?.owner;
+			if !owner.conv_eq(who) {
+				return None;
+			}
+		}
+		CollectionMode::Fungible(_) => {
+			// Fungible tokens have no properties
+			return None;
+		}
+		CollectionMode::ReFungible => {
+			if !<pallet_refungible::Owned<T>>::get((collection.id, who, item_id)) {
+				return None;
+			}
+		}
+	}
+
+	if data_size > collection.limits.sponsored_data_size() as usize {
+		return None;
+	}
+
+	let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
+	let limit = collection.limits.sponsored_data_rate_limit()?;
+
+	if let Some(last_tx_block) = TokenPropertyBasket::<T>::get(collection.id, item_id) {
+		let timeout = last_tx_block + limit.into();
+		if block_number < timeout {
+			return None;
+		}
+	}
+
+	<TokenPropertyBasket<T>>::insert(collection.id, item_id, block_number);
+
+	Some(())
+}
 
 pub fn withdraw_transfer<T: Config>(
 	collection: &CollectionHandle<T>,
@@ -190,6 +235,22 @@ where
 {
 	fn get_sponsor(who: &T::AccountId, call: &C) -> Option<T::AccountId> {
 		match IsSubType::<UniqueCall<T>>::is_sub_type(call)? {
+			UniqueCall::set_token_properties {
+				collection_id,
+				token_id,
+				properties,
+				..
+			} => {
+				let (sponsor, collection) = load::<T>(*collection_id)?;
+				withdraw_set_token_property(
+					&collection,
+					&T::CrossAccountId::from_sub(who.clone()),
+					&token_id,
+					// No overflow may happen, as data larger than usize can't reach here
+					properties.iter().map(|p| p.key.len() + p.value.len()).sum()
+				)
+				.map(|()| sponsor)
+			}
 			UniqueCall::create_item {
 				collection_id,
 				data,
