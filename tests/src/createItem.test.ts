@@ -24,6 +24,7 @@ import {
   addCollectionAdminExpectSuccess,
   createCollectionWithPropsExpectSuccess,
   createItemWithPropsExpectSuccess,
+  createItemWithPropsExpectFailure,
 } from './util/helpers';
 
 const expect = chai.expect;
@@ -128,69 +129,47 @@ describe('Negative integration test: ext. createItem():', () => {
       const createMode = 'NFT';
       const newCollectionID = await createCollectionWithPropsExpectSuccess({mode: {type: createMode}, 
         propPerm:   [{key: 'key1', permission: {mutable: false, collectionAdmin: false, tokenOwner: false}}]});
-
-      const token = await createItemExpectSuccess(alice, newCollectionID, 'NFT');
       await addCollectionAdminExpectSuccess(alice, newCollectionID, bob.address);
 
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenProperties(newCollectionID, token, [{key: 'key1', value: 'v2'}]), 
-      )).to.be.rejected;
+      await createItemWithPropsExpectFailure(bob, newCollectionID, 'NFT', [{key: 'key1', value: 'v'}]);
     });
   });
 
   it('User doesnt have editing rights', async () => {
     await usingApi(async api => {
       const newCollectionID = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'key1', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}]});
-      const token = await createItemExpectSuccess(alice, newCollectionID, 'NFT');
-
-      await expect(executeTransaction(
-        api, 
-        bob, 
-        api.tx.unique.setTokenProperties(newCollectionID, token, [{key: 'key1', value: 'v2'}]), 
-      )).to.be.rejected;
+      await createItemWithPropsExpectFailure(bob, newCollectionID, 'NFT', [{key: 'key1', value: 'v'}]);
     });
   });
 
   it('Adding property without access rights', async () => {
     await usingApi(async api => {
-      const createMode = 'NFT';
-      const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode}});
-
-      const token = await createItemExpectSuccess(alice, newCollectionID, 'NFT');
+      const newCollectionID = await createCollectionWithPropsExpectSuccess();
       await addCollectionAdminExpectSuccess(alice, newCollectionID, bob.address);
-      
-      await expect(executeTransaction(
-        api, 
-        bob, 
-        api.tx.unique.setTokenProperties(newCollectionID, token, [{key: 'key1', value: 'v2'}]), 
-      )).to.be.rejected;
+
+      await createItemWithPropsExpectFailure(bob, newCollectionID, 'NFT', [{key: 'k', value: 'v'}]);
     });
   });
 
   it('Adding more than 64 prps', async () => {
     await usingApi(async api => {
-      const createMode = 'NFT';
-
       const prps = [];
 
       for (let i = 0; i < 65; i++) {
         prps.push({key: `key${i}`, value: `value${i}`});
       }
 
-      const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode}});
+      const newCollectionID = await createCollectionWithPropsExpectSuccess();
       
-      await expect(executeTransaction(api, alice, api.tx.unique.setCollectionProperties(newCollectionID, prps))).to.be.rejectedWith(/common\.PropertyLimitReached/);
+      createItemWithPropsExpectFailure(alice, newCollectionID, 'NFT', prps);
     });
   });
 
   it('Trying to add bigger property than allowed', async () => {
     await usingApi(async api => {
-      const createMode = 'NFT';
-      const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode}});
+      const newCollectionID = await createCollectionWithPropsExpectSuccess();
       
-      await expect(executeTransaction(api, alice, api.tx.unique.setCollectionProperties(newCollectionID, [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]))).to.be.rejectedWith(/common\.NoSpaceForProperty/);
+      createItemWithPropsExpectFailure(alice, newCollectionID, 'NFT', [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]);
     });
   });
 });

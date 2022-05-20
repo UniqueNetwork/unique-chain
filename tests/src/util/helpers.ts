@@ -1135,7 +1135,32 @@ export async function createMultipleItemsWithPropsExpectSuccess(sender: IKeyring
     const events = await submitTransactionAsync(sender, tx);
     const result = getCreateItemsResult(events);
 
-    for (let res of result) {
+    for (const res of result) {
+      expect(await api.rpc.unique.tokenProperties(collectionId, res.itemId)).not.to.be.empty;
+    }
+  });
+}
+
+export async function createMultipleItemsWithPropsExpectFailure(sender: IKeyringPair, collectionId: number, itemsData: any, owner: CrossAccountId | string = sender.address) {
+  await usingApi(async (api) => {
+    const to = normalizeAccountId(owner);
+    const tx = api.tx.unique.createMultipleItems(collectionId, to, itemsData);
+
+    const events = await expect(await submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getCreateItemsResult(events);
+
+    expect(result).to.be.equal(false);
+  });
+}
+
+export async function createMultipleItemsExWithPropsExpectSuccess(sender: IKeyringPair, collectionId: number, itemsData: any) {
+  await usingApi(async (api) => {
+    const tx = api.tx.unique.createMultipleItemsEx(collectionId, itemsData);
+
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getCreateItemsResult(events);
+
+    for (const res of result) {
       expect(await api.rpc.unique.tokenProperties(collectionId, res.itemId)).not.to.be.empty;
     }
   });
@@ -1156,7 +1181,7 @@ export async function createItemWithPropsExpectSuccess(sender: IKeyringPair, col
       const createData = {refungible: {const_data: [], pieces: 100}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     } else {
-      const data = api.createType('UpDataStructsCreateItemData', { NFT: { constData: 'test', properties: props}});
+      const data = api.createType('UpDataStructsCreateItemData', {NFT: {constData: 'test', properties: props}});
       tx = api.tx.unique.createItem(collectionId, to, data as UpDataStructsCreateItemData);
     }
 
@@ -1184,6 +1209,25 @@ export async function createItemWithPropsExpectSuccess(sender: IKeyringPair, col
     newItemId = result.itemId;
   });
   return newItemId;
+}
+
+export async function createItemWithPropsExpectFailure(sender: IKeyringPair, collectionId: number, createMode: string, props: Array<Property>, owner: CrossAccountId | string = sender.address) {
+  await usingApi(async (api) => {
+
+    let tx;
+    if (createMode === 'NFT') {
+      const data = api.createType('UpDataStructsCreateItemData', {NFT: {constData: 'test', properties: props}});
+      tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), data);
+    } else {
+      tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), createMode);
+    }
+
+
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getCreateItemResult(events);
+
+    expect(result.success).to.be.false;
+  });
 }
 
 export async function createItemExpectSuccess(sender: IKeyringPair, collectionId: number, createMode: string, owner: CrossAccountId | string = sender.address) {

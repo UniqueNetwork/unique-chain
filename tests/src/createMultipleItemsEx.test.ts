@@ -16,7 +16,7 @@
 
 import {expect} from 'chai';
 import privateKey from './substrate/privateKey';
-import usingApi, {executeTransaction, submitTransactionAsync} from './substrate/substrate-api';
+import usingApi, {executeTransaction, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import {createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess, addCollectionAdminExpectSuccess, getCreateItemsResult} from './util/helpers';
 
 describe('createMultipleItemsEx', () => {
@@ -48,7 +48,7 @@ describe('createMultipleItemsEx', () => {
     });
   });
 
-  it.only('createMultipleItemsEx with property Admin', async () => {
+  it('createMultipleItemsEx with property Admin', async () => {
     const collection = await createCollectionWithPropsExpectSuccess({mode: {type: 'NFT'}, propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]});
     const alice = privateKey('//Alice');
     const bob = privateKey('//Bob');
@@ -152,26 +152,20 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
+          properties: [{key: 'key1', value: 'v2'}],
         }, {
-          owner: {substrate: bob.address},
+          owner: {substrate: alice.address},
+          properties: [{key: 'key1', value: 'v2'}],
         }, {
-          owner: {substrate: charlie.address},
+          owner: {substrate: alice.address},
+          properties: [{key: 'key1', value: 'v2'}],
         },
       ];
 
       const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
-      await executeTransaction(api, alice, tx);
+      // await executeTransaction(api, alice, tx);
 
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getCreateItemsResult(events);
-
-      for (const elem of result) {
-        await expect(executeTransaction(
-          api,
-          bob,
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]),
-        )).to.be.rejected;
-      }
+      await submitTransactionExpectFailAsync(alice, tx);
     });
   });
 
@@ -186,26 +180,20 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
+          properties: [{key: 'key1', value: 'v2'}],
         }, {
-          owner: {substrate: bob.address},
+          owner: {substrate: alice.address},
+          properties: [{key: 'key1', value: 'v2'}],
         }, {
-          owner: {substrate: charlie.address},
+          owner: {substrate: alice.address},
+          properties: [{key: 'key1', value: 'v2'}],
         },
       ];
 
       const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
-      await executeTransaction(api, alice, tx);
+      // await executeTransaction(api, alice, tx);
 
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getCreateItemsResult(events);
-
-      for (const elem of result) {
-        await expect(executeTransaction(
-          api,
-          bob,
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]),
-        )).to.be.rejected;
-      }
+      await submitTransactionExpectFailAsync(alice, tx);
     });
   });
 
@@ -219,31 +207,32 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
+          properties: [{key: 'key1', value: 'v2'}],
         }, {
           owner: {substrate: bob.address},
+          properties: [{key: 'key1', value: 'v2'}],
         }, {
           owner: {substrate: charlie.address},
+          properties: [{key: 'key1', value: 'v2'}],
         },
       ];
 
       const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
-      await executeTransaction(api, alice, tx);
 
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getCreateItemsResult(events);
-
-      for (const elem of result) {
-        await expect(executeTransaction(
-          api,
-          bob,
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]),
-        )).to.be.rejected;
-      }
+      await submitTransactionExpectFailAsync(alice, tx);
     });
   });
 
   it('Adding more than 64 prps', async () => {
-    const collection = await createCollectionWithPropsExpectSuccess();
+    const prps = [{key: 'key', value: 'v'}];
+    const propPerm = [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}];
+
+    for (let i = 0; i < 65; i++) {
+      prps.push({key: `key${i}`, value: `value${i}`});
+      propPerm.push({key: `key${i}`, permission: {mutable: true, collectionAdmin: true, tokenOwner: true}});
+    }
+
+    const collection = await createCollectionWithPropsExpectSuccess({propPerm: propPerm});
     const alice = privateKey('//Alice');
     const bob = privateKey('//Bob');
     const charlie = privateKey('//Charlie');
@@ -252,40 +241,24 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
+          properties: prps,
         }, {
-          owner: {substrate: bob.address},
+          owner: {substrate: alice.address},
+          properties: prps,
         }, {
-          owner: {substrate: charlie.address},
+          owner: {substrate: alice.address},
+          properties: prps,
         },
       ];
 
       const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
-      await executeTransaction(api, alice, tx);
 
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getCreateItemsResult(events);
-
-      const prps = [];
-
-      for (let i = 0; i < 65; i++) {
-        prps.push({key: `key${i}`, value: `value${i}`});
-      }
-
-      await expect(executeTransaction(api, bob, api.tx.unique.setCollectionProperties(collection, prps))).to.be.rejectedWith(/common\.PropertyLimitReached/);
-
-
-      for (const elem of result) {
-        await expect(executeTransaction(
-          api,
-          bob,
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, prps),
-        )).to.be.rejected;
-      }
+      await submitTransactionExpectFailAsync(alice, tx);
     });
   });
 
   it('Trying to add bigger property than allowed', async () => {
-    const collection = await createCollectionWithPropsExpectSuccess();
+    const collection = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]});
     const alice = privateKey('//Alice');
     const bob = privateKey('//Bob');
     const charlie = privateKey('//Charlie');
@@ -293,32 +266,17 @@ describe('createMultipleItemsEx', () => {
     await usingApi(async (api) => {
       const data = [
         {
-          owner: {substrate: alice.address},
+          owner: {substrate: alice.address}, properties: [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}],
         }, {
-          owner: {substrate: bob.address},
+          owner: {substrate: bob.address}, properties: [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}],
         }, {
-          owner: {substrate: charlie.address},
+          owner: {substrate: charlie.address}, properties: [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}],
         },
       ];
 
       const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
-      await executeTransaction(api, alice, tx);
 
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getCreateItemsResult(events);
-
-      const prps = [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}];
-
-      await expect(executeTransaction(api, bob, api.tx.unique.setCollectionProperties(collection, prps))).to.be.rejectedWith(/common\.NoSpaceForProperty/);
-
-
-      for (const elem of result) {
-        await expect(executeTransaction(
-          api,
-          bob,
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, prps),
-        )).to.be.rejected;
-      }
+      await submitTransactionExpectFailAsync(alice, tx);
     });
   });
 

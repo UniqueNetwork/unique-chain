@@ -34,7 +34,8 @@ import {
   getCreatedCollectionCount,
   createCollectionWithPropsExpectSuccess,
   getCreateItemsResult,
-  createMultipleItemsWithPropsExpectSuccess
+  createMultipleItemsWithPropsExpectSuccess,
+  createMultipleItemsWithPropsExpectFailure,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -432,79 +433,44 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
   it('No editing rights', async () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionId = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}],
-        propPerm:   [{key: 'key1', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}]});
+        propPerm:   [{key: 'key1', permission: {mutable: false, collectionAdmin: false, tokenOwner: true}}]});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const args = [{Nft: {const_data: '0x31'}},
+      const args = [{Nft: {const_data: '0x31', properties: [{key: 'key1', value: 'v2'}]}},
         {Nft: {const_data: '0x32'}},
         {Nft: {const_data: '0x33'}}];
 
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-
-      const events = await submitTransactionAsync(alice, createMultipleItemsTx);
-      const result = getCreateItemsResult(events);
-
-      for (const elem of result) {
-        await expect(executeTransaction(
-          api,
-          bob,
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]),
-        )).to.be.rejected;
-      }
-
-      // await expect(submitTransactionAsync(bob, createMultipleItemsTx)).to.be.rejected;
+      await createMultipleItemsWithPropsExpectFailure(bob, collectionId, args);
     });
   });
 
   it('User doesnt have editing rights', async () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionId = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}],
-        propPerm:   [{key: 'key1', permission: {mutable: false, collectionAdmin: false, tokenOwner: false}}]});
+        propPerm:   [{key: 'key1', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}]});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const args = [{Nft: {const_data: '0x31'}},
+      const args = [{Nft: {const_data: '0x31', properties: [{key: 'key1', value: 'v2'}]}},
         {Nft: {const_data: '0x32'}},
         {Nft: {const_data: '0x33'}}];
 
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-
-      const events = await submitTransactionAsync(alice, createMultipleItemsTx);
-      const result = getCreateItemsResult(events);
-
-      for (const elem of result) {
-        await expect(executeTransaction(
-          api,
-          bob,
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]),
-        )).to.be.rejected;
-      }
+      await createMultipleItemsWithPropsExpectFailure(bob, collectionId, args);
     });
   });
 
   it('Adding property without access rights', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}]});
+      const collectionId = await createCollectionWithPropsExpectSuccess({properties: [{key: 'k', value: 'v1'}]});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const args = [{Nft: {const_data: '0x31'}},
+      const args = [{Nft: {const_data: '0x31', properties: [{key: 'k', value: 'v'}]}},
         {Nft: {const_data: '0x32'}},
         {Nft: {const_data: '0x33'}}];
 
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-
-      const events = await submitTransactionAsync(alice, createMultipleItemsTx);
-      const result = getCreateItemsResult(events);
-
-      for (const elem of result) {
-        await expect(executeTransaction(
-          api,
-          bob,
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'key1', value: 'v2'}]),
-        )).to.be.rejected;
-      }
+      await createMultipleItemsWithPropsExpectFailure(bob, collectionId, args);
     });
   });
 
@@ -516,58 +482,30 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       expect(itemsListIndexBefore).to.be.equal(0);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
 
-      const args = [{Nft: {const_data: '0x31'}},
-        {Nft: {const_data: '0x32'}},
-        {Nft: {const_data: '0x33'}}];
-
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-      const events = await submitTransactionAsync(alice, createMultipleItemsTx);
-
-      const result = getCreateItemsResult(events);
-
       const prps = [];
 
       for (let i = 0; i < 65; i++) {
         prps.push({key: `key${i}`, value: `value${i}`});
       }
 
-      await expect(executeTransaction(api, bob, api.tx.unique.setCollectionProperties(collectionId, prps))).to.be.rejectedWith(/common\.PropertyLimitReached/);
+      const args = [{Nft: {const_data: '0x31', properties: prps}},
+        {Nft: {const_data: '0x32', properties: prps}},
+        {Nft: {const_data: '0x33', properties: prps}}];
 
-      for (const elem of result) {
-        await expect(executeTransaction(
-          api,
-          bob,
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, prps),
-        )).to.be.rejected;
-      }
+      createMultipleItemsWithPropsExpectFailure(alice, collectionId, args);
     });
   });
 
   it('Trying to add bigger property than allowed', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}],
-        propPerm:   [{key: 'key1', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}]});
+      const collectionId = await createCollectionWithPropsExpectSuccess({propPerm:   [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const args = [{Nft: {const_data: '0x31'}},
-        {Nft: {const_data: '0x32'}},
-        {Nft: {const_data: '0x33'}}];
+      const args = [{Nft: {const_data: '0x31', properties: [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]}},
+        {Nft: {const_data: '0x32', properties: [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]}},
+        {Nft: {const_data: '0x33', properties: [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]}}];
 
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-
-      const events = await submitTransactionAsync(alice, createMultipleItemsTx);
-      const result = getCreateItemsResult(events);
-
-
-      await expect(executeTransaction(api, alice, api.tx.unique.setCollectionProperties(collectionId, [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]))).to.be.rejectedWith(/common\.NoSpaceForProperty/);
-
-      for (const elem of result) {
-        await expect(executeTransaction(
-          api,
-          bob,
-          api.tx.unique.setTokenProperties(elem.collectionId, elem.itemId, [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]),
-        )).to.be.rejected;
-      }
+      createMultipleItemsWithPropsExpectFailure(alice, collectionId, args);
     });
   });
 });
