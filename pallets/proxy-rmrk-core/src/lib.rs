@@ -75,6 +75,10 @@ pub mod pallet {
 			collection_id: RmrkCollectionId,
 			nft_id: RmrkNftId,
 		},
+        NFTBurned {
+			owner: T::AccountId,
+			nft_id: RmrkNftId,
+		},
 	}
 
 	#[pallet::error]
@@ -106,13 +110,14 @@ pub mod pallet {
 		) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
-            let limits = max.map(|max| CollectionLimits {
-                token_limit: Some(max),
+            let limits = CollectionLimits {
+                owner_can_transfer: Some(false),
+                token_limit: max,
                 ..Default::default()
-            });
+            };
 
             let data = CreateCollectionData {
-                limits,
+                limits: Some(limits),
                 token_prefix: symbol.into_inner()
                     .try_into()
                     .map_err(|_| <CommonError<T>>::CollectionTokenPrefixLimitExceeded)?,
@@ -265,6 +270,28 @@ pub mod pallet {
 
             Ok(())
         }
+
+        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[transactional]
+		pub fn burn_nft(
+			origin: OriginFor<T>,
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+            let cross_sender = T::CrossAccountId::from_sub(sender.clone());
+
+            Self::destroy_nft(
+                cross_sender,
+                collection_id.into(),
+                CollectionType::Regular,
+                nft_id.into()
+            )?;
+
+            Self::deposit_event(Event::NFTBurned { owner: sender, nft_id });
+
+            Ok(())
+        }
 	}
 }
 
@@ -309,6 +336,23 @@ impl<T: Config> Pallet<T> {
         )?;
 
         Ok(nft_id)
+    }
+
+    fn destroy_nft(
+        sender: T::CrossAccountId,
+        collection_id: CollectionId,
+        collection_type: CollectionType,
+        token_id: TokenId
+    ) -> DispatchResult {
+        let collection = Self::get_typed_nft_collection(
+            collection_id,
+            collection_type
+        )?;
+
+        <PalletNft<T>>::burn(&collection, &sender, token_id)
+            .map_err(Self::map_common_err_to_proxy)?;
+
+        Ok(())
     }
 
     fn change_collection_owner(
