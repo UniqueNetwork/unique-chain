@@ -48,6 +48,7 @@ pub use rmrk::{
 		PartId as RmrkPartId, ResourceId as RmrkResourceId,
 	},
 	NftChild as RmrkNftChild, AccountIdOrCollectionNftTuple as RmrkAccountIdOrCollectionNftTuple,
+	FixedPart as RmrkFixedPart, SlotPart as RmrkSlotPart, EquippableList as RmrkEquippableList,
 };
 
 mod bounded;
@@ -725,8 +726,8 @@ pub trait TrySetProperty: Sized {
 		iter: I,
 	) -> Result<(), PropertiesError>
 	where
-		I: Iterator<Item=KV>,
-		KV: Into<(PropertyKey, Self::Value)>
+		I: Iterator<Item = KV>,
+		KV: Into<(PropertyKey, Self::Value)>,
 	{
 		for kv in iter {
 			let (key, value) = kv.into();
@@ -742,8 +743,8 @@ pub trait TrySetProperty: Sized {
 
 	fn try_set_from_iter<I, KV>(&mut self, iter: I) -> Result<(), PropertiesError>
 	where
-		I: Iterator<Item=KV>,
-		KV: Into<(PropertyKey, Self::Value)>
+		I: Iterator<Item = KV>,
+		KV: Into<(PropertyKey, Self::Value)>,
 	{
 		self.try_scoped_set_from_iter(PropertyScope::None, iter)
 	}
@@ -920,7 +921,8 @@ impl From<RmrkNftId> for TokenId {
 }
 
 pub type RmrkCollectionSymbol = BoundedVec<u8, RmrkCollectionSymbolLimit>;
-pub type RmrkCollectionInfo<AccountId> = CollectionInfo<RmrkString, RmrkCollectionSymbol, AccountId>;
+pub type RmrkCollectionInfo<AccountId> =
+	CollectionInfo<RmrkString, RmrkCollectionSymbol, AccountId>;
 pub type RmrkInstanceInfo<AccountId> = NftInfo<AccountId, Permill, RmrkString>;
 pub type RmrkResourceInfo = ResourceInfo<
 	BoundedVec<u8, RmrkResourceSymbolLimit>,

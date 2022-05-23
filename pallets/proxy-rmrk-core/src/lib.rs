@@ -228,7 +228,7 @@ impl<T: Config> Pallet<T> {
         collection.save()
     }
 
-    fn get_nft_collection(collection_id: CollectionId) -> Result<NonfungibleHandle<T>, DispatchError> {
+    pub fn get_nft_collection(collection_id: CollectionId) -> Result<NonfungibleHandle<T>, DispatchError> {
         let collection = <CollectionHandle<T>>::try_get(collection_id)
             .map_err(|_| <Error<T>>::CollectionUnknown)?
             .into_nft_collection()?;
@@ -236,17 +236,34 @@ impl<T: Config> Pallet<T> {
         Ok(collection)
     }
 
-    fn get_collection_type(collection_id: CollectionId) -> Result<CollectionType, DispatchError> {
-        let collection_type: CollectionType = <PalletCommon<T>>::collection_properties(collection_id)
-            .get(&rmrk_property!(Config=T, key: CollectionType)?)
+    pub fn get_collection_property(collection_id: CollectionId, key: RmrkProperty) -> Result<PropertyValue, DispatchError> {
+        let collection_property = <PalletCommon<T>>::collection_properties(collection_id)
+            .get(&rmrk_property!(Config=T, key)?)
             .ok_or(<Error<T>>::CollectionUnknown)?
+            .clone();
+
+        Ok(collection_property)
+    }
+
+    pub fn get_collection_type(collection_id: CollectionId) -> Result<CollectionType, DispatchError> {
+        let value = Self::get_collection_property(collection_id, RmrkProperty::CollectionType)?;
+        let collection_type: CollectionType = (&value)
             .try_into()
             .map_err(<Error<T>>::from)?;
 
         Ok(collection_type)
     }
 
-    fn check_collection_type(collection_id: CollectionId, collection_type: CollectionType) -> DispatchResult {
+    pub fn get_nft_property(collection_id: CollectionId, nft_id: TokenId, key: RmrkProperty) -> Result<PropertyValue, DispatchError> {
+        let nft_property = <PalletNft<T>>::token_properties((collection_id, nft_id))
+            .get(&rmrk_property!(Config=T, key)?)
+            .ok_or(<Error<T>>::CollectionUnknown)? // todo is that right?
+            .clone();
+
+        Ok(nft_property)
+    }
+
+    pub fn check_collection_type(collection_id: CollectionId, collection_type: CollectionType) -> DispatchResult {
         let actual_type = Self::get_collection_type(collection_id)?;
         ensure!(actual_type == collection_type, <CommonError<T>>::NoPermission);
 
