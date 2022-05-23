@@ -108,7 +108,4 @@ pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 up-sponsorship = { default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring", branch = 'polkadot-v0.9.21' }
 
-# RMRK
-# todo git
-rmrk-rpc = { default-features = false, git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "feature/separate-types-and-traits" } 
-rmrk-types = { default-features = false, git = "https://github.com/UniqueNetwork/rmrk-substrate.git", branch = "feature/separate-types-and-traits" } 
+rmrk-rpc = { default-features = false, path = "../../primitives/rmrk-rpc" }

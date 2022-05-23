@@ -276,14 +276,6 @@ git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.21"
 
 ################################################################################
-# RMRK dependencies
-
-# todo git
-[dependencies.rmrk-rpc]
-git = "https://github.com/UniqueNetwork/rmrk-substrate.git"
-branch = "feature/separate-types-and-traits"
-
-################################################################################
 # Package
 
 [package]
@@ -323,6 +315,7 @@ fp-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-p
 pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
 
 unique-rpc = { default-features = false, path = "../rpc" }
+rmrk-rpc = { path = "../../primitives/rmrk-rpc" }
 
 [features]
 default = []

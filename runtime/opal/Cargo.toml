@@ -389,15 +389,6 @@ version = "0.4.1-dev"
 default-features = false
 
 ################################################################################
-# RMRK dependencies
-
-# todo git
-[dependencies.rmrk-rpc]
-default-features = false
-git = "https://github.com/UniqueNetwork/rmrk-substrate.git"
-branch = "feature/separate-types-and-traits"
-
-################################################################################
 # local dependencies
 
 [dependencies]
@@ -409,6 +400,7 @@ scale-info = { version = "2.0.1", default-features = false, features = [
 derivative = "2.2.0"
 pallet-unique = { path = '../../pallets/unique', default-features = false }
 up-rpc = { path = "../../primitives/rpc", default-features = false }
+rmrk-rpc = { path = "../../primitives/rmrk-rpc", default-features = false }
 fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
 pallet-inflation = { path = '../../pallets/inflation', default-features = false }
 up-data-structs = { path = '../../primitives/data-structs', default-features = false }
