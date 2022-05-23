@@ -161,7 +161,8 @@ pub mod pallet {
 
             ensure!(collection.total_supply() == 0, <Error<T>>::CollectionNotEmpty);
 
-            <PalletNft<T>>::destroy_collection(collection, &cross_sender)?;
+            <PalletNft<T>>::destroy_collection(collection, &cross_sender)
+                .map_err(Self::map_common_err_to_proxy)?;
 
             Self::deposit_event(Event::CollectionDestroyed { issuer: sender, collection_id });
 
@@ -208,7 +209,8 @@ pub mod pallet {
                 collection_id.into(),
                 CollectionType::Regular
             )?;
-            collection.check_is_owner(&cross_sender)?;
+
+            Self::check_collection_owner(&collection, &cross_sender)?;
 
             let token_count = collection.total_supply();
 
@@ -295,14 +297,7 @@ impl<T: Config> Pallet<T> {
             &sender,
             data,
             &budget,
-        ).map_err(|err| {
-            map_common_err_to_proxy!(
-                match err {
-                    NoPermission => NoPermission,
-                    CollectionTokenLimitExceeded => CollectionFullOrLocked
-                }
-            )
-        })?;
+        ).map_err(Self::map_common_err_to_proxy)?;
 
         let nft_id = <PalletNft<T>>::current_token_id(&collection);
 
@@ -322,14 +317,21 @@ impl<T: Config> Pallet<T> {
         sender: T::AccountId,
         new_owner: T::AccountId,
     ) -> DispatchResult {
-        let mut collection = Self::get_typed_nft_collection(
+        let collection = Self::get_typed_nft_collection(
             collection_id,
             collection_type
-        )?.into_inner();
-        collection.check_is_owner(&T::CrossAccountId::from_sub(sender))?;
+        )?;
+        Self::check_collection_owner(&collection, &T::CrossAccountId::from_sub(sender))?;
+
+        let mut collection = collection.into_inner();
 
         collection.owner = new_owner;
         collection.save()
+    }
+
+    fn check_collection_owner(collection: &NonfungibleHandle<T>, account: &T::CrossAccountId) -> DispatchResult {
+        collection.check_is_owner(account)
+            .map_err(Self::map_common_err_to_proxy)
     }
 
     pub fn get_nft_collection(collection_id: CollectionId) -> Result<NonfungibleHandle<T>, DispatchError> {
@@ -381,5 +383,14 @@ impl<T: Config> Pallet<T> {
         Self::check_collection_type(collection_id, collection_type)?;
 
         Self::get_nft_collection(collection_id)
+    }
+
+    fn map_common_err_to_proxy(err: DispatchError) -> DispatchError {
+        map_common_err_to_proxy! {
+            match err {
+                NoPermission => NoPermission,
+                CollectionTokenLimitExceeded => CollectionFullOrLocked
+            }
+        }
     }
 }
