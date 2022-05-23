@@ -23,7 +23,6 @@ use up_data_structs::{
 use sp_std::vec::Vec;
 use codec::Decode;
 use sp_runtime::DispatchError;
-use sp_core::H160;
 
 type Result<T> = core::result::Result<T, DispatchError>;
 

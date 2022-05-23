@@ -24,7 +24,7 @@ COLLECTION_HELPER_ABI=./tests/src/eth/collectionHelperAbi.json
 TESTS_API=./tests/src/eth/api/
 
 .PHONY: regenerate_solidity
-regenerate_solidity: UniqueFungible.sol UniqueNFT.sol ContractHelpers.sol Collection.sol
+regenerate_solidity: UniqueFungible.sol UniqueNFT.sol ContractHelpers.sol Collection.sol CollectionHelper.sol
 
 UniqueFungible.sol:
 	PACKAGE=pallet-fungible NAME=erc::gen_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh

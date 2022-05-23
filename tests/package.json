@@ -89,7 +89,7 @@
     "bignumber.js": "^9.0.2",
     "chai-as-promised": "^7.1.1",
     "find-process": "^1.4.7",
-    "solc": "^0.8.13",
+    "solc": "0.8.13",
     "web3": "^1.7.3"
   },
   "standard": {
