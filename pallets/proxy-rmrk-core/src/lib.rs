@@ -238,7 +238,7 @@ impl<T: Config> Pallet<T> {
 
     fn get_collection_type(collection_id: CollectionId) -> Result<CollectionType, DispatchError> {
         let collection_type: CollectionType = <PalletCommon<T>>::collection_properties(collection_id)
-            .get(&rmrk_property!(Config=T, CollectionType)?)
+            .get(&rmrk_property!(Config=T, key: CollectionType)?)
             .ok_or(<Error<T>>::CollectionUnknown)?
             .try_into()
             .map_err(<Error<T>>::from)?;
