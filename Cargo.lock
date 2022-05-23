@@ -5913,6 +5913,7 @@ version = "0.1.0"
 dependencies = [
  "evm-coder",
  "fp-evm-mapping",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-evm",
@@ -6649,6 +6650,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-common",
+ "pallet-evm",
  "parity-scale-codec 3.1.2",
  "scale-info",
  "sp-std",

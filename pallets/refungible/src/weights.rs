@@ -38,8 +38,6 @@ pub trait WeightInfo {
 	fn create_multiple_items_ex_multiple_owners(b: u32, ) -> Weight;
 	fn burn_item_partial() -> Weight;
 	fn burn_item_fully() -> Weight;
-	fn set_collection_properties(amount: u32) -> Weight;
-	fn delete_collection_properties(amount: u32) -> Weight;
 	fn set_token_properties(amount: u32) -> Weight;
 	fn delete_token_properties(amount: u32) -> Weight;
 	fn set_property_permissions(amount: u32) -> Weight;
@@ -132,16 +130,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		(32_489_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
-	}
-
-	fn set_collection_properties(_amount: u32) -> Weight {
-		// Error
-		0
-	}
-
-	fn delete_collection_properties(_amount: u32) -> Weight {
-		// Error
-		0
 	}
 
 	fn set_token_properties(_amount: u32) -> Weight {
@@ -320,16 +308,6 @@ impl WeightInfo for () {
 		(32_489_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
-	}
-
-	fn set_collection_properties(_amount: u32) -> Weight {
-		// Error
-		0
-	}
-
-	fn delete_collection_properties(_amount: u32) -> Weight {
-		// Error
-		0
 	}
 
 	fn set_token_properties(_amount: u32) -> Weight {

@@ -20,7 +20,7 @@ use sp_std::collections::btree_map::BTreeMap;
 use frame_support::{dispatch::DispatchResultWithPostInfo, fail, weights::Weight};
 use up_data_structs::{
 	CollectionId, TokenId, CreateItemExData, CreateRefungibleExData, budget::Budget, Property,
-	PropertyKey, PropertyValue, PropertyKeyPermission,
+	PropertyKey, PropertyValue, PropertyKeyPermission, CreateItemData,
 };
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::DispatchError;
@@ -46,8 +46,8 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::create_item()
 	}
 
-	fn create_multiple_items(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::create_multiple_items(amount)
+	fn create_multiple_items(data: &[CreateItemData]) -> Weight {
+		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32)
 	}
 
 	fn create_multiple_items_ex(call: &CreateItemExData<T::CrossAccountId>) -> Weight {
@@ -66,12 +66,14 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		max_weight_of!(burn_item_partial(), burn_item_fully())
 	}
 
-	fn set_collection_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::set_collection_properties(amount)
+	fn set_collection_properties(_amount: u32) -> Weight {
+		// Error
+		0
 	}
 
-	fn delete_collection_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::delete_collection_properties(amount)
+	fn delete_collection_properties(_amount: u32) -> Weight {
+		// Error
+		0
 	}
 
 	fn set_token_properties(amount: u32) -> Weight {
@@ -156,15 +158,15 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		data: Vec<up_data_structs::CreateItemData>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::create_multiple_items(&data);
 		let data = data
 			.into_iter()
 			.map(|d| map_create_data::<T>(d, &to))
 			.collect::<Result<Vec<_>, DispatchError>>()?;
 
-		let amount = data.len();
 		with_weight(
 			<Pallet<T>>::create_multiple_items(self, &sender, data, nesting_budget),
-			<CommonWeights<T>>::create_multiple_items(amount as u32),
+			weight,
 		)
 	}
 

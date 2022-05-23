@@ -21,7 +21,7 @@ use pallet_common::{CommonWeightInfo, dispatch::dispatch_weight};
 use pallet_fungible::{Config as FungibleConfig, common::CommonWeights as FungibleWeights};
 use pallet_nonfungible::{Config as NonfungibleConfig, common::CommonWeights as NonfungibleWeights};
 use pallet_refungible::{Config as RefungibleConfig, common::CommonWeights as RefungibleWeights};
-use up_data_structs::CreateItemExData;
+use up_data_structs::{CreateItemExData, CreateItemData};
 
 macro_rules! max_weight_of {
 	($method:ident ( $($args:tt)* )) => {
@@ -42,8 +42,8 @@ where
 		dispatch_weight::<T>() + max_weight_of!(create_item())
 	}
 
-	fn create_multiple_items(amount: u32) -> Weight {
-		dispatch_weight::<T>() + max_weight_of!(create_multiple_items(amount))
+	fn create_multiple_items(data: &[CreateItemData]) -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(create_multiple_items(data))
 	}
 
 	fn create_multiple_items_ex(data: &CreateItemExData<T::CrossAccountId>) -> Weight {

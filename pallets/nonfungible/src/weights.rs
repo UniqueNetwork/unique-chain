@@ -151,9 +151,34 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible AccountBalance (r:1 w:1)
 	// Storage: Nonfungible Owned (r:0 w:1)
 	fn burn_from() -> Weight {
-		(27_580_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+	}
+	// Storage: Common CollectionPropertyPermissions (r:1 w:1)
+	fn set_property_permissions(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 3_432_000
+			.saturating_add((126_888_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
+	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
+	// Storage: Nonfungible TokenData (r:1 w:0)
+	// Storage: Nonfungible TokenProperties (r:1 w:1)
+	fn set_token_properties(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 158_583_000
+			.saturating_add((4_707_700_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
+	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
+	// Storage: Nonfungible TokenData (r:1 w:0)
+	// Storage: Nonfungible TokenProperties (r:1 w:1)
+	fn delete_token_properties(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 169_018_000
+			.saturating_add((4_783_967_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 }
 
@@ -260,8 +285,33 @@ impl WeightInfo for () {
 	// Storage: Nonfungible AccountBalance (r:1 w:1)
 	// Storage: Nonfungible Owned (r:0 w:1)
 	fn burn_from() -> Weight {
-		(27_580_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+	}
+	// Storage: Common CollectionPropertyPermissions (r:1 w:1)
+	fn set_property_permissions(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 3_432_000
+			.saturating_add((126_888_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	}
+	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
+	// Storage: Nonfungible TokenData (r:1 w:0)
+	// Storage: Nonfungible TokenProperties (r:1 w:1)
+	fn set_token_properties(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 158_583_000
+			.saturating_add((4_707_700_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	}
+	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
+	// Storage: Nonfungible TokenData (r:1 w:0)
+	// Storage: Nonfungible TokenProperties (r:1 w:1)
+	fn delete_token_properties(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 169_018_000
+			.saturating_add((4_783_967_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }

@@ -15,11 +15,13 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use sp_std::vec::Vec;
-use crate::{Config, CollectionHandle};
+use crate::{Config, CollectionHandle, Pallet};
+use pallet_evm::account::CrossAccountId;
+use frame_benchmarking::{benchmarks, account};
 use up_data_structs::{
-	CollectionMode, CreateCollectionData, CollectionId, MAX_COLLECTION_NAME_LENGTH,
-	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, OFFCHAIN_SCHEMA_LIMIT,
-	CONST_ON_CHAIN_SCHEMA_LIMIT,
+	CollectionMode, CreateCollectionData, CollectionId, Property, PropertyKey, PropertyValue,
+	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
+	OFFCHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, MAX_PROPERTIES_PER_ITEM,
 };
 use frame_support::{
 	traits::{Currency, Get},
@@ -28,6 +30,8 @@ use frame_support::{
 };
 use core::convert::TryInto;
 use sp_runtime::DispatchError;
+
+const SEED: u32 = 1;
 
 pub fn create_data<const S: u32>() -> BoundedVec<u8, ConstU32<S>> {
 	create_var_data::<S>(S)
@@ -51,6 +55,22 @@ pub fn create_var_data<const S: u32>(size: u32) -> BoundedVec<u8, ConstU32<S>> {
 		.collect::<Vec<_>>()
 		.try_into()
 		.unwrap()
+}
+pub fn property_key(id: usize) -> PropertyKey {
+	#[cfg(not(feature = "std"))]
+	use alloc::string::ToString;
+	let mut data = create_data();
+	// No DerefMut available for .fill
+	for i in 0..data.len() {
+		data[i] = b'0';
+	}
+	let bytes = id.to_string();
+	let len = data.len();
+	data[len - bytes.len()..].copy_from_slice(&bytes.as_bytes());
+	data
+}
+pub fn property_value() -> PropertyValue {
+	create_data()
 }
 
 pub fn create_collection_raw<T: Config, R>(
@@ -82,6 +102,14 @@ pub fn create_collection_raw<T: Config, R>(
 	)
 	.and_then(CollectionHandle::try_get)
 	.map(cast)
+}
+fn create_collection<T: Config>(owner: T::AccountId) -> Result<CollectionHandle<T>, DispatchError> {
+	create_collection_raw(
+		owner,
+		CollectionMode::NFT,
+		|owner, data| <Pallet<T>>::init_collection(owner, data),
+		|h| h,
+	)
 }
 
 /// Helper macros, which handles all benchmarking preparation in semi-declarative way
@@ -124,4 +152,32 @@ macro_rules! bench_init {
 		bench_init!($($rest)*);
 	};
 	() => {}
+}
+
+benchmarks! {
+	set_collection_properties {
+		let b in 0..MAX_PROPERTIES_PER_ITEM;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub;
+		};
+		let props = (0..b).map(|p| Property {
+			key: property_key(p as usize),
+			value: property_value(),
+		}).collect::<Vec<_>>();
+	}: {<Pallet<T>>::set_collection_properties(&collection, &owner, props)?}
+
+	delete_collection_properties {
+		let b in 0..MAX_PROPERTIES_PER_ITEM;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub;
+		};
+		let props = (0..b).map(|p| Property {
+			key: property_key(p as usize),
+			value: property_value(),
+		}).collect::<Vec<_>>();
+		<Pallet<T>>::set_collection_properties(&collection, &owner, props)?;
+		let to_delete = (0..b).map(|p| property_key(p as usize)).collect::<Vec<_>>();
+	}: {<Pallet<T>>::delete_collection_properties(&collection, &owner, to_delete)?}
 }

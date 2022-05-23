@@ -16,6 +16,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
 use core::ops::{Deref, DerefMut};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_std::vec::Vec;
@@ -85,6 +87,9 @@ pub mod benchmarking;
 pub mod dispatch;
 pub mod erc;
 pub mod eth;
+pub mod weights;
+
+pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 #[must_use = "Should call submit_logs or save, otherwise some data will be lost for evm side"]
 pub struct CollectionHandle<T: Config> {
@@ -186,11 +191,13 @@ pub mod pallet {
 	use frame_support::traits::Currency;
 	use up_data_structs::{TokenId, mapping::TokenAddressMapping};
 	use scale_info::TypeInfo;
+	use weights::WeightInfo;
 
 	#[pallet::config]
 	pub trait Config:
 		frame_system::Config + pallet_evm_coder_substrate::Config + TypeInfo + account::Config
 	{
+		type WeightInfo: WeightInfo;
 		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
 
 		type Currency: Currency<Self::AccountId>;
@@ -804,7 +811,7 @@ impl<T: Config> Pallet<T> {
 	pub fn set_scoped_collection_properties(
 		collection: &CollectionHandle<T>,
 		scope: PropertyScope,
-		properties: impl Iterator<Item=Property>,
+		properties: impl Iterator<Item = Property>,
 	) -> DispatchResult {
 		CollectionProperties::<T>::try_mutate(collection.id, |stored_properties| {
 			stored_properties.try_scoped_set_from_iter(scope, properties)
@@ -903,10 +910,11 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn get_collection_property(collection_id: CollectionId, key: &PropertyKey) -> Option<PropertyValue> {
-		Self::collection_properties(collection_id)
-			.get(key)
-			.cloned()
+	pub fn get_collection_property(
+		collection_id: CollectionId,
+		key: &PropertyKey,
+	) -> Option<PropertyValue> {
+		Self::collection_properties(collection_id).get(key).cloned()
 	}
 
 	pub fn bytes_keys_to_property_keys(
@@ -1131,7 +1139,7 @@ macro_rules! unsupported {
 /// Worst cases
 pub trait CommonWeightInfo<CrossAccountId> {
 	fn create_item() -> Weight;
-	fn create_multiple_items(amount: u32) -> Weight;
+	fn create_multiple_items(amount: &[CreateItemData]) -> Weight;
 	fn create_multiple_items_ex(cost: &CreateItemExData<CrossAccountId>) -> Weight;
 	fn burn_item() -> Weight;
 	fn set_collection_properties(amount: u32) -> Weight;

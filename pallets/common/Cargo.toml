@@ -25,6 +25,7 @@ serde = { version = "1.0.130", default-features = false }
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
 ] }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
 
 [features]
 default = ["std"]
@@ -37,4 +38,6 @@ std = [
     "up-data-structs/std",
     "pallet-evm/std",
 ]
-runtime-benchmarks = []
+runtime-benchmarks = [
+    "frame-benchmarking"
+]

@@ -687,7 +687,7 @@ decl_module! {
 		/// * itemsData: Array items properties. Each property is an array of bytes itself, see [create_item].
 		///
 		/// * owner: Address, initial owner of the NFT.
-		#[weight = T::CommonWeightInfo::create_multiple_items(items_data.len() as u32)]
+		#[weight = T::CommonWeightInfo::create_multiple_items(&items_data)]
 		#[transactional]
 		pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::CrossAccountId, items_data: Vec<CreateItemData>) -> DispatchResultWithPostInfo {
 			ensure!(!items_data.is_empty(), Error::<T>::EmptyArgument);

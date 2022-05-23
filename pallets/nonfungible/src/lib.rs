@@ -18,7 +18,7 @@
 
 use erc::ERC721Events;
 use evm_coder::ToLog;
-use frame_support::{BoundedVec, ensure, fail, transactional};
+use frame_support::{BoundedVec, ensure, fail, transactional, storage::with_transaction};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
@@ -32,7 +32,7 @@ use pallet_common::{
 use pallet_structure::Pallet as PalletStructure;
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_core::H160;
-use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
+use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec};
 use core::ops::Deref;
 use sp_std::collections::btree_map::BTreeMap;
@@ -600,28 +600,37 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
+		with_transaction(|| {
+			for (i, data) in data.iter().enumerate() {
+				let token = first_token + i as u32 + 1;
+
+				<TokenData<T>>::insert(
+					(collection.id, token),
+					ItemData {
+						const_data: data.const_data.clone(),
+						owner: data.owner.clone(),
+					},
+				);
+
+				if let Err(e) = Self::set_token_properties(
+					collection,
+					sender,
+					TokenId(token),
+					data.properties.clone().into_inner(),
+				) {
+					return TransactionOutcome::Rollback(Err(e));
+				}
+			}
+			TransactionOutcome::Commit(Ok(()))
+		})?;
+
 		<TokensMinted<T>>::insert(collection.id, tokens_minted);
 		for (account, balance) in balances {
 			<AccountBalance<T>>::insert((collection.id, account), balance);
 		}
 		for (i, data) in data.into_iter().enumerate() {
 			let token = first_token + i as u32 + 1;
-
-			<TokenData<T>>::insert(
-				(collection.id, token),
-				ItemData {
-					const_data: data.const_data,
-					owner: data.owner.clone(),
-				},
-			);
 			<Owned<T>>::insert((collection.id, &data.owner, token), true);
-
-			Self::set_token_properties(
-				collection,
-				sender,
-				TokenId(token),
-				data.properties.into_inner(),
-			)?;
 
 			<PalletEvm<T>>::deposit_log(
 				ERC721Events::Transfer {

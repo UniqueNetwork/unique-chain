@@ -18,7 +18,7 @@ use super::*;
 use crate::{Pallet, Config, RefungibleHandle};
 
 use sp_std::prelude::*;
-use pallet_common::benchmarking::{create_collection_raw, create_data, create_var_data};
+use pallet_common::benchmarking::{create_collection_raw, create_data};
 use frame_benchmarking::{benchmarks, account};
 use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, CUSTOM_DATA_LIMIT, budget::Unlimited};
 use pallet_common::bench_init;
@@ -46,7 +46,7 @@ fn create_max_item<T: Config>(
 	users: impl IntoIterator<Item = (T::CrossAccountId, u128)>,
 ) -> Result<TokenId, DispatchError> {
 	let data: CreateRefungibleExData<T::CrossAccountId> = create_max_item_data(users);
-	<Pallet<T>>::create_item(&collection, sender, data)?;
+	<Pallet<T>>::create_item(&collection, sender, data, &Unlimited)?;
 	Ok(TokenId(<TokensMinted<T>>::get(&collection.id)))
 }
 
@@ -73,7 +73,7 @@ benchmarks! {
 			sender: cross_from_sub(owner); to: cross_sub;
 		};
 		let data = (0..b).map(|_| create_max_item_data([(to.clone(), 200)])).collect();
-	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data)?}
+	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data, &Unlimited)?}
 
 	create_multiple_items_ex_multiple_items {
 		let b in 0..MAX_ITEMS_PER_BATCH;
@@ -85,7 +85,7 @@ benchmarks! {
 			bench_init!(to: cross_sub(t););
 			create_max_item_data([(to, 200)])
 		}).collect();
-	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data)?}
+	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data, &Unlimited)?}
 
 	create_multiple_items_ex_multiple_owners {
 		let b in 0..MAX_ITEMS_PER_BATCH;
@@ -97,7 +97,7 @@ benchmarks! {
 			bench_init!(to: cross_sub(u););
 			(to, 200)
 		}))].try_into().unwrap();
-	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data)?}
+	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data, &Unlimited)?}
 
 	// Other user left, token data is kept
 	burn_item_partial {
@@ -122,7 +122,7 @@ benchmarks! {
 			sender: cross_from_sub(owner); receiver: cross_sub;
 		};
 		let item = create_max_item(&collection, &sender, [(sender.clone(), 200), (receiver.clone(), 200)])?;
-	}: {<Pallet<T>>::transfer(&collection, &sender, &receiver, item, 100)?}
+	}: {<Pallet<T>>::transfer(&collection, &sender, &receiver, item, 100, &Unlimited)?}
 	// Target account is created
 	transfer_creating {
 		bench_init!{
@@ -130,7 +130,7 @@ benchmarks! {
 			sender: cross_from_sub(owner); receiver: cross_sub;
 		};
 		let item = create_max_item(&collection, &sender, [(sender.clone(), 200)])?;
-	}: {<Pallet<T>>::transfer(&collection, &sender, &receiver, item, 100)?}
+	}: {<Pallet<T>>::transfer(&collection, &sender, &receiver, item, 100, &Unlimited)?}
 	// Source account is destroyed
 	transfer_removing {
 		bench_init!{
@@ -138,7 +138,7 @@ benchmarks! {
 			sender: cross_from_sub(owner); receiver: cross_sub;
 		};
 		let item = create_max_item(&collection, &sender, [(sender.clone(), 200), (receiver.clone(), 200)])?;
-	}: {<Pallet<T>>::transfer(&collection, &sender, &receiver, item, 200)?}
+	}: {<Pallet<T>>::transfer(&collection, &sender, &receiver, item, 200, &Unlimited)?}
 	// Source account destroyed, target created
 	transfer_creating_removing {
 		bench_init!{
@@ -146,7 +146,7 @@ benchmarks! {
 			sender: cross_from_sub(owner); receiver: cross_sub;
 		};
 		let item = create_max_item(&collection, &sender, [(sender.clone(), 200)])?;
-	}: {<Pallet<T>>::transfer(&collection, &sender, &receiver, item, 200)?}
+	}: {<Pallet<T>>::transfer(&collection, &sender, &receiver, item, 200, &Unlimited)?}
 
 	approve {
 		bench_init!{

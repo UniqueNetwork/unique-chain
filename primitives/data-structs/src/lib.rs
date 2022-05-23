@@ -861,7 +861,9 @@ impl TrySetProperty for Properties {
 	) -> Result<(), PropertiesError> {
 		let value_len = value.len();
 
-		if self.consumed_space as usize + value_len > self.space_limit as usize {
+		if self.consumed_space as usize + value_len > self.space_limit as usize
+			&& !cfg!(feature = "runtime-benchmarks")
+		{
 			return Err(PropertiesError::NoSpaceForProperty);
 		}
 

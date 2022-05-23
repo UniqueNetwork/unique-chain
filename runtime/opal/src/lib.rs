@@ -875,6 +875,7 @@ parameter_types! {
 }
 
 impl pallet_common::Config for Runtime {
+	type WeightInfo = pallet_common::weights::SubstrateWeight<Self>;
 	type Event = Event;
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;

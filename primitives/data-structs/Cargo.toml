@@ -42,3 +42,4 @@ std = [
 ]
 serde1 = ["serde"]
 limit-testing = []
+runtime-benchmarks = []

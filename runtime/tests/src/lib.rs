@@ -212,6 +212,7 @@ impl pallet_evm_coder_substrate::Config for Test {
 }
 
 impl pallet_common::Config for Test {
+	type WeightInfo = ();
 	type Event = ();
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;

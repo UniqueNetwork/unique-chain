@@ -29,8 +29,8 @@ use pallet_common::{CollectionHandle};
 use pallet_evm::account::CrossAccountId;
 use pallet_unique::{
 	Call as UniqueCall, Config as UniqueConfig, FungibleApproveBasket, RefungibleApproveBasket,
-	NftApproveBasket, CreateItemBasket, ReFungibleTransferBasket,
-	FungibleTransferBasket, NftTransferBasket, TokenPropertyBasket,
+	NftApproveBasket, CreateItemBasket, ReFungibleTransferBasket, FungibleTransferBasket,
+	NftTransferBasket, TokenPropertyBasket,
 };
 use pallet_fungible::Config as FungibleConfig;
 use pallet_nonfungible::Config as NonfungibleConfig;
@@ -247,7 +247,7 @@ where
 					&T::CrossAccountId::from_sub(who.clone()),
 					&token_id,
 					// No overflow may happen, as data larger than usize can't reach here
-					properties.iter().map(|p| p.key.len() + p.value.len()).sum()
+					properties.iter().map(|p| p.key.len() + p.value.len()).sum(),
 				)
 				.map(|()| sponsor)
 			}

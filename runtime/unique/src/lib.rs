@@ -66,7 +66,12 @@ pub use frame_support::{
 		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients, ConstantMultiplier,
 	},
 };
-use unique_runtime_common::dispatch::{CollectionDispatchT, CollectionDispatch};
+use unique_runtime_common::{
+	dispatch::{CollectionDispatchT, CollectionDispatch},
+	weights::CommonWeights,
+	sponsoring::UniqueSponsorshipHandler,
+	eth_sponsoring::UniqueEthSponsorshipHandler,
+};
 use up_data_structs::*;
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
@@ -846,6 +851,7 @@ parameter_types! {
 }
 
 impl pallet_common::Config for Runtime {
+	type WeightInfo = pallet_common::weights::SubstrateWeight<Self>;
 	type Event = Event;
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
@@ -881,6 +887,7 @@ impl pallet_nonfungible::Config for Runtime {
 impl pallet_unique::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
+	type CommonWeightInfo = CommonWeights<Self>;
 }
 
 parameter_types! {
@@ -902,11 +909,11 @@ impl pallet_inflation::Config for Runtime {
 // }
 
 type EvmSponsorshipHandler = (
-	pallet_unique::UniqueEthSponsorshipHandler<Runtime>,
+	UniqueEthSponsorshipHandler<Runtime>,
 	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
 );
 type SponsorshipHandler = (
-	pallet_unique::UniqueSponsorshipHandler<Runtime>,
+	UniqueSponsorshipHandler<Runtime>,
 	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
 	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
 );

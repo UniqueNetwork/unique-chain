@@ -21,7 +21,9 @@ use up_data_structs::{
 	TokenId, CreateItemExData, CollectionId, budget::Budget, Property, PropertyKey,
 	PropertyKeyPermission, PropertyValue,
 };
-use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
+use pallet_common::{
+	CommonCollectionOperations, CommonWeightInfo, with_weight, weights::WeightInfo as _,
+};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
 
@@ -38,13 +40,33 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn create_multiple_items_ex(data: &CreateItemExData<T::CrossAccountId>) -> Weight {
 		match data {
-			CreateItemExData::NFT(t) => <SelfWeightOf<T>>::create_multiple_items_ex(t.len() as u32),
+			CreateItemExData::NFT(t) => {
+				<SelfWeightOf<T>>::create_multiple_items_ex(t.len() as u32)
+					+ t.iter()
+						.map(|t| {
+							if t.properties.len() > 0 {
+								Self::set_token_properties(t.properties.len() as u32)
+							} else {
+								0
+							}
+						})
+						.sum::<u64>()
+			}
 			_ => 0,
 		}
 	}
 
-	fn create_multiple_items(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::create_multiple_items(amount)
+	fn create_multiple_items(data: &[up_data_structs::CreateItemData]) -> Weight {
+		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32)
+			+ data
+				.iter()
+				.filter_map(|t| match t {
+					up_data_structs::CreateItemData::NFT(n) if n.properties.len() > 0 => {
+						Some(Self::set_token_properties(n.properties.len() as u32))
+					}
+					_ => None,
+				})
+				.sum::<u64>()
 	}
 
 	fn burn_item() -> Weight {
@@ -52,11 +74,11 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn set_collection_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::set_collection_properties(amount)
+		<pallet_common::SelfWeightOf<T>>::set_collection_properties(amount)
 	}
 
 	fn delete_collection_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::delete_collection_properties(amount)
+		<pallet_common::SelfWeightOf<T>>::delete_collection_properties(amount)
 	}
 
 	fn set_token_properties(amount: u32) -> Weight {
@@ -128,15 +150,15 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		data: Vec<up_data_structs::CreateItemData>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::create_multiple_items(&data);
 		let data = data
 			.into_iter()
 			.map(|d| map_create_data::<T>(d, &to))
 			.collect::<Result<Vec<_>, DispatchError>>()?;
 
-		let amount = data.len();
 		with_weight(
 			<Pallet<T>>::create_multiple_items(self, &sender, data, nesting_budget),
-			<CommonWeights<T>>::create_multiple_items(amount as u32),
+			weight,
 		)
 	}
 

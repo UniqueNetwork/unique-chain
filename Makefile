@@ -41,6 +41,10 @@ _bench:
 bench-evm-migration:
 	make _bench PALLET=evm-migration
 
+.PHONY: bench-common
+bench-common:
+	make _bench PALLET=common
+
 .PHONY: bench-unique
 bench-unique:
 	make _bench PALLET=unique

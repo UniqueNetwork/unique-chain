@@ -50,16 +50,20 @@ impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 			CollectionMode::NFT => {
 				let call = <UniqueNFTCall<T>>::parse(method_id, &mut reader).ok()??;
 				match call {
-					UniqueNFTCall::TokenProperties(
-						TokenPropertiesCall::SetProperty { token_id, key, value, .. },
-					) => {
+					UniqueNFTCall::TokenProperties(TokenPropertiesCall::SetProperty {
+						token_id,
+						key,
+						value,
+						..
+					}) => {
 						let token_id: TokenId = token_id.try_into().ok()?;
 						withdraw_set_token_property::<T>(
 							&collection,
 							&who,
 							&token_id,
 							key.len() + value.len(),
-						).map(|()| sponsor)
+						)
+						.map(|()| sponsor)
 					}
 					UniqueNFTCall::ERC721UniqueExtensions(
 						ERC721UniqueExtensionsCall::Transfer { token_id, .. },

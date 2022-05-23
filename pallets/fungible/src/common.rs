@@ -17,7 +17,7 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
-use up_data_structs::{TokenId, CollectionId, CreateItemExData, budget::Budget};
+use up_data_structs::{TokenId, CollectionId, CreateItemExData, budget::Budget, CreateItemData};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
 use sp_runtime::ArithmeticError;
 use sp_std::{vec::Vec, vec};
@@ -33,7 +33,8 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::create_item()
 	}
 
-	fn create_multiple_items(_amount: u32) -> Weight {
+	fn create_multiple_items(_data: &[CreateItemData]) -> Weight {
+		// All items minted for the same user, so it works same as create_item
 		Self::create_item()
 	}
 
@@ -51,23 +52,28 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn set_collection_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::set_collection_properties(amount)
+		// Error
+		0
 	}
 
 	fn delete_collection_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::delete_collection_properties(amount)
+		// Error
+		0
 	}
 
 	fn set_token_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::set_token_properties(amount)
+		// Error
+		0
 	}
 
 	fn delete_token_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::delete_token_properties(amount)
+		// Error
+		0
 	}
 
 	fn set_property_permissions(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::set_property_permissions(amount)
+		// Error
+		0
 	}
 
 	fn transfer() -> Weight {
