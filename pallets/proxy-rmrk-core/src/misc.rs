@@ -1,17 +1,9 @@
 use super::*;
 use codec::{Encode, Decode};
-use pallet_nonfungible::NonfungibleHandle;
+use pallet_nonfungible::{NonfungibleHandle, ItemData};
 
 macro_rules! impl_rmrk_value {
     ($enum_name:path, decode_error: $error:ident) => {
-        impl IntoPropertyValue for $enum_name {
-            fn into_property_value(self) -> Result<PropertyValue, MiscError> {
-                self.encode()
-                    .try_into()
-                    .map_err(|_| MiscError::RmrkPropertyValueIsTooLong)
-            }
-        }
-
         impl TryFrom<&PropertyValue> for $enum_name {
             type Error = MiscError;
 
@@ -23,6 +15,19 @@ macro_rules! impl_rmrk_value {
             }
         }
 
+    };
+}
+
+#[macro_export]
+macro_rules! map_common_err_to_proxy {
+    (match $err:ident { $($common_err:ident => $proxy_err:ident),+ }) => {
+        $(
+            if $err == <CommonError<T>>::$common_err.into() {
+                return <Error<T>>::$proxy_err.into()
+            } else
+        )+ {
+            $err
+        }
     };
 }
 
@@ -57,11 +62,23 @@ pub trait IntoPropertyValue {
     fn into_property_value(self) -> Result<PropertyValue, MiscError>;
 }
 
-impl<L: Get<u32>> IntoPropertyValue for BoundedVec<u8, L> {
+impl<T: Encode> IntoPropertyValue for T {
     fn into_property_value(self) -> Result<PropertyValue, MiscError> {
-        self.into_inner()
+        self.encode()
             .try_into()
             .map_err(|_| MiscError::RmrkPropertyValueIsTooLong)
+    }
+}
+
+pub trait RmrkNft {
+    fn rmrk_nft_type(&self) -> Option<NftType>;
+}
+
+impl<CrossAccountId> RmrkNft for ItemData<CrossAccountId> {
+    fn rmrk_nft_type(&self) -> Option<NftType> {
+        let mut value = self.const_data.as_slice();
+
+        NftType::decode(&mut value).ok()
     }
 }
 
@@ -70,6 +87,15 @@ pub enum CollectionType {
     Regular,
     Resource,
     Base,
+}
+
+#[derive(Encode, Decode, PartialEq, Eq)]
+pub enum NftType {
+    Regular,
+    Resource,
+    FixedPart,
+    SlotPart,
+    Theme
 }
 
 impl_rmrk_value!(CollectionType, decode_error: CorruptedCollectionType);

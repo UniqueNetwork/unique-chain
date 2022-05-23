@@ -188,10 +188,9 @@ macro_rules! impl_common_runtime_apis {
                     };
 
                     let keys = [
-                        RmrkProperty::Royalty,
+                        RmrkProperty::RoyaltyInfo,
                         RmrkProperty::Metadata,
                         RmrkProperty::Equipped,
-                        RmrkProperty::Pending,
                         // ?? "rmrk:recipient", "rmrk:nft-type", "rmrk:resource-collection", "rmrk:resource-priorities"
                     ];
 
@@ -315,13 +314,13 @@ macro_rules! impl_common_runtime_apis {
                     let collection_id = CollectionId(collection_id);
                     let nft_id = TokenId(nft_id);
 
-                    let keys = [
-                        RmrkProperty::Royalty,
-                        RmrkProperty::Metadata,
-                        RmrkProperty::Equipped,
-                        RmrkProperty::Pending,
-                        // ?? "rmrk:recipient", "rmrk:nft-type", "rmrk:resource-collection", "rmrk:resource-priorities"
-                    ];
+                    // let keys = [
+                    //     RmrkProperty::Royalty,
+                    //     RmrkProperty::Metadata,
+                    //     RmrkProperty::Equipped,
+                    //     RmrkProperty::Pending,
+                    //     // ?? "rmrk:recipient", "rmrk:nft-type", "rmrk:resource-collection", "rmrk:resource-priorities"
+                    // ];
 
                     /*let resources = keys.into_iter().map(
                         |key| BoundedVec::try_from(

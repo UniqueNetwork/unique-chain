@@ -22,7 +22,7 @@ use frame_support::{BoundedVec, ensure, fail, transactional, storage::with_trans
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
-	PropertyKey, PropertyKeyPermission, Properties, TrySetProperty,
+	PropertyKey, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
@@ -192,6 +192,38 @@ impl<T: Config> Pallet<T> {
 	}
 	pub fn token_exists(collection: &NonfungibleHandle<T>, token: TokenId) -> bool {
 		<TokenData<T>>::contains_key((collection.id, token))
+	}
+
+	pub fn set_scoped_token_property(
+		collection: &CollectionHandle<T>,
+		token_id: TokenId,
+		scope: PropertyScope,
+		property: Property,
+	) -> DispatchResult {
+		TokenProperties::<T>::try_mutate((collection.id, token_id), |properties| {
+			properties.try_scoped_set(scope, property.key, property.value)
+		})
+		.map_err(<CommonError<T>>::from)?;
+
+		Ok(())
+	}
+
+	pub fn set_scoped_token_properties(
+		collection: &CollectionHandle<T>,
+		token_id: TokenId,
+		scope: PropertyScope,
+		properties: impl Iterator<Item=Property>,
+	) -> DispatchResult {
+		TokenProperties::<T>::try_mutate((collection.id, token_id), |stored_properties| {
+			stored_properties.try_scoped_set_from_iter(scope, properties)
+		})
+		.map_err(<CommonError<T>>::from)?;
+
+		Ok(())
+	}
+
+	pub fn current_token_id(collection: &CollectionHandle<T>) -> TokenId {
+		TokenId(<TokensMinted<T>>::get(collection.id))
 	}
 }
 
