@@ -36,15 +36,13 @@ pub trait WeightInfo {
 	fn create_multiple_items(b: u32, ) -> Weight;
 	fn create_multiple_items_ex(b: u32, ) -> Weight;
 	fn burn_item() -> Weight;
-	fn set_collection_properties(amount: u32) -> Weight;
-	fn delete_collection_properties(amount: u32) -> Weight;
-	fn set_token_properties(amount: u32) -> Weight;
-	fn delete_token_properties(amount: u32) -> Weight;
-	fn set_property_permissions(amount: u32) -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
 	fn burn_from() -> Weight;
+	fn set_property_permissions(b: u32) -> Weight;
+	fn set_token_properties(b: u32) -> Weight;
+	fn delete_token_properties(b: u32) -> Weight;
 }
 
 /// Weights for pallet_nonfungible using the Substrate node and recommended hardware.
@@ -95,31 +93,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 
-	fn set_collection_properties(amount: u32) -> Weight {
-		// TODO calculate appropriate weight
-		(50_000_000 as Weight).saturating_mul(amount as Weight)
-	}
-
-	fn delete_collection_properties(amount: u32) -> Weight {
-		// TODO calculate appropriate weight
-		(50_000_000 as Weight).saturating_mul(amount as Weight)
-	}
-
-	fn set_token_properties(amount: u32) -> Weight {
-		// TODO calculate appropriate weight
-		(50_000_000 as Weight).saturating_mul(amount as Weight)
-	}
-
-	fn delete_token_properties(amount: u32) -> Weight {
-		// TODO calculate appropriate weight
-		(50_000_000 as Weight).saturating_mul(amount as Weight)
-	}
-
-	fn set_property_permissions(amount: u32) -> Weight {
-		// TODO calculate appropriate weight
-		(50_000_000 as Weight).saturating_mul(amount as Weight)
-	}
-
 	// Storage: Nonfungible TokenData (r:1 w:1)
 	// Storage: Nonfungible AccountBalance (r:2 w:2)
 	// Storage: Nonfungible Allowance (r:1 w:0)
@@ -151,6 +124,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible AccountBalance (r:1 w:1)
 	// Storage: Nonfungible Owned (r:0 w:1)
 	fn burn_from() -> Weight {
+		(27_580_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
 	// Storage: Common CollectionPropertyPermissions (r:1 w:1)
 	fn set_property_permissions(b: u32, ) -> Weight {
@@ -229,31 +205,6 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
 
-	fn set_collection_properties(amount: u32) -> Weight {
-		// TODO calculate appropriate weight
-		(50_000_000 as Weight).saturating_mul(amount as Weight)
-	}
-
-	fn delete_collection_properties(amount: u32) -> Weight {
-		// TODO calculate appropriate weight
-		(50_000_000 as Weight).saturating_mul(amount as Weight)
-	}
-
-	fn set_token_properties(amount: u32) -> Weight {
-		// TODO calculate appropriate weight
-		(50_000_000 as Weight).saturating_mul(amount as Weight)
-	}
-
-	fn delete_token_properties(amount: u32) -> Weight {
-		// TODO calculate appropriate weight
-		(50_000_000 as Weight).saturating_mul(amount as Weight)
-	}
-
-	fn set_property_permissions(amount: u32) -> Weight {
-		// TODO calculate appropriate weight
-		(50_000_000 as Weight).saturating_mul(amount as Weight)
-	}
-
 	// Storage: Nonfungible TokenData (r:1 w:1)
 	// Storage: Nonfungible AccountBalance (r:2 w:2)
 	// Storage: Nonfungible Allowance (r:1 w:0)
@@ -285,6 +236,9 @@ impl WeightInfo for () {
 	// Storage: Nonfungible AccountBalance (r:1 w:1)
 	// Storage: Nonfungible Owned (r:0 w:1)
 	fn burn_from() -> Weight {
+		(27_580_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
 	// Storage: Common CollectionPropertyPermissions (r:1 w:1)
 	fn set_property_permissions(b: u32, ) -> Weight {
