@@ -29,6 +29,9 @@ std = [
     'sp-std/std',
     'sp-runtime/std',
     'frame-benchmarking/std',
+    'evm-coder/std',
+    'pallet-evm-coder-substrate/std',
+    'pallet-nonfungible/std',
 ]
 limit-testing = ["up-data-structs/limit-testing"]
 

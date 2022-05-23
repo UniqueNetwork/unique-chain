@@ -28,7 +28,7 @@ pub mod evm_collection {
 	use sp_core::H160;
 	use pallet_common::{CollectionHandle, CollectionById};
 	
-	use sp_std::{vec::Vec, rc::Rc};
+	use sp_std::vec::Vec;
 	use alloc::format;
 	
 	pub trait Config:

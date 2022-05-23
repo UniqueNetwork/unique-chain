@@ -79,7 +79,7 @@ export function collectionIdFromAddress(address: string): number {
     throw 'address not starts with "0x"';
   if (address.length > 42)
     throw 'address length is more than 20 bytes';
-    return Number('0x' + address.substring(address.length - 8));
+  return Number('0x' + address.substring(address.length - 8));
 }
   
 export function normalizeAddress(address: string): string {
@@ -97,6 +97,7 @@ export function tokenIdToCross(collection: number, token: number): CrossAccountI
   return {
     Ethereum: tokenIdToAddress(collection, token),
   };
+}
 
 export function createEthAccount(web3: Web3) {
   const account = web3.eth.accounts.create();

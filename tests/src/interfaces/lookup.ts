@@ -2505,16 +2505,8 @@ export default {
   /**
    * Lookup352: PhantomType::up_data_structs<up_data_structs::rmrk::CollectionInfo<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>, sp_core::crypto::AccountId32>>
    **/
-  PhantomTypeUpDataStructsCollectionInfo: '[Lookup353;0]',
-  /**
-   * Lookup353: up_data_structs::rmrk::CollectionInfo<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>, sp_core::crypto::AccountId32>
-   **/
-  UpDataStructsRmrkCollectionInfo: {
-    issuer: 'AccountId32',
-    metadata: 'Bytes',
-    max: 'Option<u32>',
-    symbol: 'Bytes',
-    nftsCount: 'u32'
+  PalletCommonError: {
+    _enum: ['CollectionNotFound', 'MustBeTokenOwner', 'NoPermission', 'PublicMintingNotAllowed', 'AddressNotInAllowlist', 'CollectionNameLimitExceeded', 'CollectionDescriptionLimitExceeded', 'CollectionTokenPrefixLimitExceeded', 'TotalCollectionsLimitExceeded', 'CollectionAdminCountExceeded', 'CollectionLimitBoundsExceeded', 'OwnerPermissionsCantBeReverted', 'TransferNotAllowed', 'AccountTokenLimitExceeded', 'CollectionTokenLimitExceeded', 'MetadataFlagFrozen', 'TokenNotFound', 'TokenValueTooLow', 'ApprovedValueTooLow', 'CantApproveMoreThanOwned', 'AddressIsZero', 'UnsupportedOperation', 'NotSufficientFounds', 'NestingIsDisabled', 'OnlyOwnerAllowedToNest', 'SourceCollectionIsNotAllowedToNest', 'CollectionFieldSizeExceeded', 'NoSpaceForProperty', 'PropertyLimitReached', 'PropertyKeyIsTooLong', 'InvalidCharacterInPropertyKey', 'EmptyPropertyKey']
   },
   /**
    * Lookup355: PhantomType::up_data_structs<up_data_structs::rmrk::NftInfo<sp_core::crypto::AccountId32, sp_arithmetic::per_things::Permill, frame_support::storage::bounded_vec::BoundedVec<T, S>>>
@@ -2801,7 +2793,7 @@ export default {
     _enum: ['AccountNotEmpty', 'AccountIsNotMigrating']
   },
   /**
-   * Lookup334: sp_runtime::MultiSignature
+   * Lookup369: sp_runtime::MultiSignature
    **/
   SpRuntimeMultiSignature: {
     _enum: {
@@ -2811,39 +2803,39 @@ export default {
     }
   },
   /**
-   * Lookup335: sp_core::ed25519::Signature
+   * Lookup370: sp_core::ed25519::Signature
    **/
   SpCoreEd25519Signature: '[u8;64]',
   /**
-   * Lookup337: sp_core::sr25519::Signature
+   * Lookup372: sp_core::sr25519::Signature
    **/
   SpCoreSr25519Signature: '[u8;64]',
   /**
-   * Lookup338: sp_core::ecdsa::Signature
+   * Lookup373: sp_core::ecdsa::Signature
    **/
   SpCoreEcdsaSignature: '[u8;65]',
   /**
-   * Lookup341: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+   * Lookup376: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
    **/
   FrameSystemExtensionsCheckSpecVersion: 'Null',
   /**
-   * Lookup342: frame_system::extensions::check_genesis::CheckGenesis<T>
+   * Lookup377: frame_system::extensions::check_genesis::CheckGenesis<T>
    **/
   FrameSystemExtensionsCheckGenesis: 'Null',
   /**
-   * Lookup345: frame_system::extensions::check_nonce::CheckNonce<T>
+   * Lookup380: frame_system::extensions::check_nonce::CheckNonce<T>
    **/
   FrameSystemExtensionsCheckNonce: 'Compact<u32>',
   /**
-   * Lookup346: frame_system::extensions::check_weight::CheckWeight<T>
+   * Lookup381: frame_system::extensions::check_weight::CheckWeight<T>
    **/
   FrameSystemExtensionsCheckWeight: 'Null',
   /**
-   * Lookup347: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
+   * Lookup382: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
    **/
   PalletTemplateTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
   /**
-   * Lookup348: opal_runtime::Runtime
+   * Lookup383: opal_runtime::Runtime
    **/
   OpalRuntimeRuntime: 'Null',
   /**
