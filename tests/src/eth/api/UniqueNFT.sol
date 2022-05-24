@@ -42,36 +42,6 @@ interface ERC721MintableEvents {
 	event MintingFinished();
 }
 
-// Selector: 38e33c60
-interface Collection is Dummy, ERC165 {
-	// Selector: setCollectionProperty(string,bytes) 2f073f66
-	function setCollectionProperty(string memory key, bytes memory value)
-		external;
-
-	// Selector: deleteCollectionProperty(string) 7b7debce
-	function deleteCollectionProperty(string memory key) external;
-
-	// Throws error if key not found
-	//
-	// Selector: collectionProperty(string) cf24fd6d
-	function collectionProperty(string memory key)
-		external
-		view
-		returns (bytes memory);
-
-	// Selector: ethSetSponsor(address) 8f9af356
-	function ethSetSponsor(address sponsor) external;
-
-	// Selector: ethConfirmSponsorship() a8580d1a
-	function ethConfirmSponsorship() external;
-
-	// Selector: setLimits(string) 72cb345d
-	function setLimits(string memory limitsJson) external view;
-
-	// Selector: contractAddress() f6b4dfb4
-	function contractAddress() external view returns (address);
-}
-
 // Selector: 41369377
 interface TokenProperties is Dummy, ERC165 {
 	// Selector: setTokenPropertyPermission(string,bool,bool,bool) 222d97fa
@@ -241,6 +211,36 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
 		external
 		returns (bool);
+}
+
+// Selector: f5652829
+interface Collection is Dummy, ERC165 {
+	// Selector: setCollectionProperty(string,bytes) 2f073f66
+	function setCollectionProperty(string memory key, bytes memory value)
+		external;
+
+	// Selector: deleteCollectionProperty(string) 7b7debce
+	function deleteCollectionProperty(string memory key) external;
+
+	// Throws error if key not found
+	//
+	// Selector: collectionProperty(string) cf24fd6d
+	function collectionProperty(string memory key)
+		external
+		view
+		returns (bytes memory);
+
+	// Selector: ethSetSponsor(address) 8f9af356
+	function ethSetSponsor(address sponsor) external;
+
+	// Selector: ethConfirmSponsorship() a8580d1a
+	function ethConfirmSponsorship() external;
+
+	// Selector: setLimit(string,string) bf4d2014
+	function setLimit(string memory limit, string memory value) external;
+
+	// Selector: contractAddress() f6b4dfb4
+	function contractAddress() external view returns (address);
 }
 
 interface UniqueNFT is

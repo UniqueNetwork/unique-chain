@@ -325,11 +325,12 @@
   },
   {
     "inputs": [
-      { "internalType": "string", "name": "limitsJson", "type": "string" }
+      { "internalType": "string", "name": "limit", "type": "string" },
+      { "internalType": "string", "name": "value", "type": "string" }
     ],
-    "name": "setLimits",
+    "name": "setLimit",
     "outputs": [],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

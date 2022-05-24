@@ -16,10 +16,11 @@
 
 use evm_coder::{solidity_interface, types::*, execution::{Result, Error}};
 pub use pallet_evm::{PrecompileOutput, PrecompileResult, account::CrossAccountId};
-use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder};
+use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_core::{H160, U256};
 use sp_std::vec::Vec;
-use up_data_structs::Property;
+use up_data_structs::{Property, SponsoringRateLimit};
+use alloc::format;
 
 use crate::{Pallet, CollectionHandle, Config, CollectionProperties};
 
@@ -87,37 +88,53 @@ impl<T: Config> CollectionHandle<T> {
 		Ok(())
 	}
 
-	fn set_limits(
-		&self,
+	fn set_limit(
+		&mut self,
 		caller: caller,
-		limits_json: string,
+		limit: string,
+		value: string,
 	) -> Result<void> {
-		// let mut collection = collection_from_address::<T>(self.contract_address(caller).unwrap(), self.1.gas_left())?;
-		// check_is_owner(caller, &collection)?;
+		check_is_owner(caller, self)?;
+		let mut limits = self.limits.clone();
 
-		// let limits = serde_json_core::from_str(limits_json.as_ref())
-		// 	.map_err(|e| Error::Revert(format!("Parse JSON error: {}", e)))?;
-		// collection.limits = limits.0;
-		// collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		match limit.as_str() {
+			"accountTokenOwnershipLimit" => {
+				limits.account_token_ownership_limit = parse_int(value)?;
+			},
+			"sponsoredDataSize" => {
+				limits.sponsored_data_size = parse_int(value)?;
+			},
+			"sponsoredDataRateLimit" => {
+				limits.sponsored_data_rate_limit = Some(SponsoringRateLimit::Blocks(parse_int(value)?.unwrap()));
+			},
+			"tokenLimit" => {
+				limits.token_limit = parse_int(value)?;
+			},
+			"sponsorTransferTimeout" => {
+				limits.sponsor_transfer_timeout = parse_int(value)?;
+			},
+			"sponsorApproveTimeout" => {
+				limits.sponsor_approve_timeout = parse_int(value)?;
+			},
+			"ownerCanTransfer" => {
+				limits.owner_can_transfer = parse_bool(value)?;
+			},
+			"ownerCanDestroy" => {
+				limits.owner_can_destroy = parse_bool(value)?;
+			},
+			"transfersEnabled" => {
+				limits.transfers_enabled = parse_bool(value)?;
+			},
+			_ => return Err(Error::Revert(format!("Unknown limit \"{}\"", limit)))
+		}
+		self.limits = limits;
+		save(self);
 		Ok(())
 	}
 
 	fn contract_address(&self, _caller: caller) -> Result<address> {
 		Ok(crate::eth::collection_id_to_address(self.id))
 	}
-}
-
-fn collection_from_address<T: Config>(
-	collection_address: address,
-	gas_limit: u64
-) -> Result<CollectionHandle<T>> {
-	let collection_id = crate::eth::map_eth_to_id(&collection_address)
-	.ok_or(Error::Revert("Contract is not an unique collection".into()))?;
-	let recorder = <SubstrateRecorder<T>>::new(gas_limit);
-	let collection =
-		CollectionHandle::new_with_recorder(collection_id, recorder)
-			.ok_or(Error::Revert("Create collection handle error".into()))?;
-	Ok(collection)
 }
 
 fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -> Result<()> {
@@ -130,4 +147,16 @@ fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -
 
 fn save<T: Config>(collection: &CollectionHandle<T>) {
 	<crate::CollectionById<T>>::insert(collection.id, collection.collection.clone());
+}
+
+fn parse_int(value: string) -> Result<Option<u32>> {
+	value.parse::<u32>()
+		.map_err(|e| Error::Revert(format!("Int value \"{}\" parse error: {}", value, e)))
+		.map(|value| Some(value))
+}
+
+fn parse_bool(value: string) -> Result<Option<bool>> {
+	value.parse::<bool>()
+		.map_err(|e| Error::Revert(format!("Bool value \"{}\" parse error: {}", value, e)))
+		.map(|value| Some(value))
 }
