@@ -110,17 +110,6 @@ pub mod evm_collection {
 		}
 	}
 	
-	struct EvmCollection<T: Config>(H160, SubstrateRecorder<T>);
-	impl<T: Config> WithRecorder<T> for EvmCollection<T> {
-		fn recorder(&self) -> &SubstrateRecorder<T> {
-			&self.1
-		}
-	
-		fn into_recorder(self) -> SubstrateRecorder<T> {
-			self.1
-		}
-	}
-	
 	#[derive(ToLog)]
 	pub enum EthCollectionEvent {
 		CollectionCreated {
@@ -129,77 +118,6 @@ pub mod evm_collection {
 			#[indexed]
 			collection_id: address,
 		},
-	}
-	
-	#[solidity_interface(name = "Collection")]
-	impl<T: Config> EvmCollection<T> {
-		fn set_sponsor(
-			&self,
-			caller: caller,
-			sponsor: address,
-		) -> Result<void> {
-			let mut collection = collection_from_address::<T>(self.contract_address(caller).unwrap(), self.1.gas_left())?;
-			check_is_owner(caller, &collection)?;
-	
-			let sponsor = T::CrossAccountId::from_eth(sponsor);
-			collection.set_sponsor(sponsor.as_sub().clone());
-			collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-		Ok(())
-		}
-	
-		fn confirm_sponsorship(&self, caller: caller) -> Result<void> {
-			let mut collection = collection_from_address::<T>(self.contract_address(caller).unwrap(), self.1.gas_left())?;
-			let caller = T::CrossAccountId::from_eth(caller);
-			if !collection.confirm_sponsorship(caller.as_sub()) {
-				return Err(Error::Revert("Caller is not set as sponsor".into()));
-			}
-			collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-		Ok(())
-		}
-	
-		fn set_limits(
-			&self,
-			caller: caller,
-			limits_json: string,
-		) -> Result<void> {
-			let mut collection = collection_from_address::<T>(self.contract_address(caller).unwrap(), self.1.gas_left())?;
-			check_is_owner(caller, &collection)?;
-	
-			let limits = serde_json_core::from_str(limits_json.as_ref())
-				.map_err(|e| Error::Revert(format!("Parse JSON error: {}", e)))?;
-			collection.limits = limits.0;
-			collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-		Ok(())
-		}
-
-		fn contract_address(&self, _caller: caller) -> Result<address> {
-			Ok(self.0)
-		}
-	}
-	
-	fn error_feild_too_long(feild: &str, bound: u32) -> Error {
-		Error::Revert(format!("{} is too long. Max length is {}.", feild, bound))
-	}
-	
-	fn collection_from_address<T: Config>(
-		collection_address: address,
-		gas_limit: u64
-	) -> Result<CollectionHandle<T>> {
-		let collection_id = pallet_common::eth::map_eth_to_id(&collection_address)
-		.ok_or(Error::Revert("Contract is not an unique collection".into()))?;
-		let recorder = <SubstrateRecorder<T>>::new(gas_limit);
-		let collection =
-			pallet_common::CollectionHandle::new_with_recorder(collection_id, recorder)
-				.ok_or(Error::Revert("Create collection handle error".into()))?;
-		Ok(collection)
-	}
-	
-	fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -> Result<()> {
-		let caller = T::CrossAccountId::from_eth(caller);
-		collection
-			.check_is_owner(&caller)
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-		Ok(())
 	}
 
 	pub struct CollectionHelperOnMethodCall<T: Config>(PhantomData<*const T>);
@@ -235,38 +153,8 @@ pub mod evm_collection {
 	
 	generate_stubgen!(collection_helper_impl, CollectionHelperCall<()>, true);
 	generate_stubgen!(collection_helper_iface, CollectionHelperCall<()>, false);
-	
-	pub struct CollectionOnMethodCall<T: Config>(PhantomData<*const T>);
-	impl<T: Config> OnMethodCall<T> for CollectionOnMethodCall<T> {
-		fn is_reserved(contract: &sp_core::H160) -> bool {
-			contract == &T::ContractAddress::get()
-		}
-	
-		fn is_used(contract: &sp_core::H160) -> bool {
-			contract == &T::ContractAddress::get()
-		}
-	
-		fn call(
-			source: &sp_core::H160,
-			target: &sp_core::H160,
-			gas_left: u64,
-			input: &[u8],
-			value: sp_core::U256,
-		) -> Option<PrecompileResult> {
-			if !pallet_common::eth::is_collection(target) {
-				return None;
-			}
 
-			let helpers = EvmCollection::<T>(*target, SubstrateRecorder::<T>::new(gas_left));
-			pallet_evm_coder_substrate::call(*source, helpers, value, input)
-		}
-	
-		fn get_code(contract: &sp_core::H160) -> Option<Vec<u8>> {
-			(contract == &T::ContractAddress::get())
-				.then(|| include_bytes!("./stubs/Collection.raw").to_vec())
-		}
+	fn error_feild_too_long(feild: &str, bound: u32) -> Error {
+		Error::Revert(format!("{} is too long. Max length is {}.", feild, bound))
 	}
-	
-	generate_stubgen!(collection_impl, CollectionCall<()>, true);
-	generate_stubgen!(collection_iface, CollectionCall<()>, false);
 }

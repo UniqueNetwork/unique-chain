@@ -51,6 +51,67 @@ contract ERC721MintableEvents {
 	event MintingFinished();
 }
 
+// Selector: 38e33c60
+contract Collection is Dummy, ERC165 {
+	// Selector: setCollectionProperty(string,bytes) 2f073f66
+	function setCollectionProperty(string memory key, bytes memory value)
+		public
+	{
+		require(false, stub_error);
+		key;
+		value;
+		dummy = 0;
+	}
+
+	// Selector: deleteCollectionProperty(string) 7b7debce
+	function deleteCollectionProperty(string memory key) public {
+		require(false, stub_error);
+		key;
+		dummy = 0;
+	}
+
+	// Throws error if key not found
+	//
+	// Selector: collectionProperty(string) cf24fd6d
+	function collectionProperty(string memory key)
+		public
+		view
+		returns (bytes memory)
+	{
+		require(false, stub_error);
+		key;
+		dummy;
+		return hex"";
+	}
+
+	// Selector: ethSetSponsor(address) 8f9af356
+	function ethSetSponsor(address sponsor) public {
+		require(false, stub_error);
+		sponsor;
+		dummy = 0;
+	}
+
+	// Selector: ethConfirmSponsorship() a8580d1a
+	function ethConfirmSponsorship() public {
+		require(false, stub_error);
+		dummy = 0;
+	}
+
+	// Selector: setLimits(string) 72cb345d
+	function setLimits(string memory limitsJson) public view {
+		require(false, stub_error);
+		limitsJson;
+		dummy;
+	}
+
+	// Selector: contractAddress() f6b4dfb4
+	function contractAddress() public view returns (address) {
+		require(false, stub_error);
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+}
+
 // Selector: 41369377
 contract TokenProperties is Dummy, ERC165 {
 	// Selector: setTokenPropertyPermission(string,bool,bool,bool) 222d97fa
@@ -330,40 +391,6 @@ contract ERC721Enumerable is Dummy, ERC165 {
 	}
 }
 
-// Selector: 9b5e29c5
-contract CollectionProperties is Dummy, ERC165 {
-	// Selector: setCollectionProperty(string,bytes) 2f073f66
-	function setCollectionProperty(string memory key, bytes memory value)
-		public
-	{
-		require(false, stub_error);
-		key;
-		value;
-		dummy = 0;
-	}
-
-	// Selector: deleteCollectionProperty(string) 7b7debce
-	function deleteCollectionProperty(string memory key) public {
-		require(false, stub_error);
-		key;
-		dummy = 0;
-	}
-
-	// Throws error if key not found
-	//
-	// Selector: collectionProperty(string) cf24fd6d
-	function collectionProperty(string memory key)
-		public
-		view
-		returns (bytes memory)
-	{
-		require(false, stub_error);
-		key;
-		dummy;
-		return hex"";
-	}
-}
-
 // Selector: d74d154f
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	// Selector: transfer(address,uint256) a9059cbb
@@ -423,6 +450,6 @@ contract UniqueNFT is
 	ERC721UniqueExtensions,
 	ERC721Mintable,
 	ERC721Burnable,
-	CollectionProperties,
+	Collection,
 	TokenProperties
 {}

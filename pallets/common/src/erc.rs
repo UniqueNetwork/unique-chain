@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use evm_coder::{solidity_interface, types::*, execution::Result};
+use evm_coder::{solidity_interface, types::*, execution::{Result, Error}};
 pub use pallet_evm::{PrecompileOutput, PrecompileResult, account::CrossAccountId};
-use pallet_evm_coder_substrate::dispatch_to_evm;
+use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder};
 use sp_core::{H160, U256};
 use sp_std::vec::Vec;
 use up_data_structs::Property;
@@ -31,7 +31,7 @@ pub trait CommonEvmHandler {
 	fn call(self, source: &H160, input: &[u8], value: U256) -> Option<PrecompileResult>;
 }
 
-#[solidity_interface(name = "CollectionProperties")]
+#[solidity_interface(name = "Collection")]
 impl<T: Config> CollectionHandle<T> {
 	fn set_collection_property(&mut self, caller: caller, key: string, value: bytes) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -64,4 +64,70 @@ impl<T: Config> CollectionHandle<T> {
 
 		Ok(prop.to_vec())
 	}
+
+	fn eth_set_sponsor(
+		&mut self,
+		caller: caller,
+		sponsor: address,
+	) -> Result<void> {
+		check_is_owner(caller, self)?;
+
+		let sponsor = T::CrossAccountId::from_eth(sponsor);
+		self.set_sponsor(sponsor.as_sub().clone());
+		save(self);
+		Ok(())
+	}
+
+	fn eth_confirm_sponsorship(&mut self, caller: caller) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		if !self.confirm_sponsorship(caller.as_sub()) {
+			return Err(Error::Revert("Caller is not set as sponsor".into()));
+		}
+		save(self);
+		Ok(())
+	}
+
+	fn set_limits(
+		&self,
+		caller: caller,
+		limits_json: string,
+	) -> Result<void> {
+		// let mut collection = collection_from_address::<T>(self.contract_address(caller).unwrap(), self.1.gas_left())?;
+		// check_is_owner(caller, &collection)?;
+
+		// let limits = serde_json_core::from_str(limits_json.as_ref())
+		// 	.map_err(|e| Error::Revert(format!("Parse JSON error: {}", e)))?;
+		// collection.limits = limits.0;
+		// collection.save().map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	fn contract_address(&self, _caller: caller) -> Result<address> {
+		Ok(crate::eth::collection_id_to_address(self.id))
+	}
+}
+
+fn collection_from_address<T: Config>(
+	collection_address: address,
+	gas_limit: u64
+) -> Result<CollectionHandle<T>> {
+	let collection_id = crate::eth::map_eth_to_id(&collection_address)
+	.ok_or(Error::Revert("Contract is not an unique collection".into()))?;
+	let recorder = <SubstrateRecorder<T>>::new(gas_limit);
+	let collection =
+		CollectionHandle::new_with_recorder(collection_id, recorder)
+			.ok_or(Error::Revert("Create collection handle error".into()))?;
+	Ok(collection)
+}
+
+fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -> Result<()> {
+	let caller = T::CrossAccountId::from_eth(caller);
+	collection
+		.check_is_owner(&caller)
+		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+	Ok(())
+}
+
+fn save<T: Config>(collection: &CollectionHandle<T>) {
+	<crate::CollectionById<T>>::insert(collection.id, collection.collection.clone());
 }

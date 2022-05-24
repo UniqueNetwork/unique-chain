@@ -286,7 +286,6 @@ impl pallet_evm::Config for Runtime {
 		pallet_evm_migration::OnMethodCall<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
 		CollectionDispatchT<Self>,
-		evm_collection::CollectionOnMethodCall<Self>,
 		evm_collection::CollectionHelperOnMethodCall<Self>,
 	);
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;

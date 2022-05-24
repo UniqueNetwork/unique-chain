@@ -20,7 +20,6 @@ runtime-benchmarks = ['frame-benchmarking', 'pallet-common/runtime-benchmarks']
 std = [
     'codec/std',
     'serde/std',
-    'serde-json-core/std',
     'frame-support/std',
     'frame-system/std',
     'pallet-evm/std',
@@ -42,10 +41,6 @@ limit-testing = ["up-data-structs/limit-testing"]
 default-features = false
 features = ['derive']
 version = '1.0.130'
-
-[dependencies.serde-json-core]
-default-features = false
-version = "0.4"
 
 [dependencies.ethereum]
 version = "0.12.0"

@@ -126,6 +126,13 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "contractAddress",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [{ "internalType": "string", "name": "key", "type": "string" }],
     "name": "deleteCollectionProperty",
     "outputs": [],
@@ -138,6 +145,22 @@
       { "internalType": "string", "name": "key", "type": "string" }
     ],
     "name": "deleteProperty",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "ethConfirmSponsorship",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "sponsor", "type": "address" }
+    ],
+    "name": "ethSetSponsor",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -298,6 +321,15 @@
     "name": "setCollectionProperty",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "limitsJson", "type": "string" }
+    ],
+    "name": "setLimits",
+    "outputs": [],
+    "stateMutability": "view",
     "type": "function"
   },
   {

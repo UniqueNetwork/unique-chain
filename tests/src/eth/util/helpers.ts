@@ -28,7 +28,7 @@ import * as solc from 'solc';
 import config from '../../config';
 import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
-import collectionAbi from '../collectionAbi.json';
+import collectionAbi from '../nonFungibleAbi.json';
 import collectionHelperAbi from '../collectionHelperAbi.json';
 import getBalance from '../../substrate/get-balance';
 import waitNewBlocks from '../../substrate/wait-new-blocks';

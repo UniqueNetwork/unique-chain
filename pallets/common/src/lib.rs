@@ -20,7 +20,7 @@ extern crate alloc;
 
 use core::ops::{Deref, DerefMut};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use sp_std::{vec::Vec, rc::Rc};
+use sp_std::vec::Vec;
 use pallet_evm::account::CrossAccountId;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Weight, PostDispatchInfo},

@@ -88,13 +88,13 @@ describe('Create collection from EVM', () => {
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const sponsor = await createEthAccountWithBalance(api, web3);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-    result = await collectionEvm.methods.setSponsor(sponsor).send();
+    result = await collectionEvm.methods.ethSetSponsor(sponsor).send();
     let collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
     expect(collectionSub.sponsorship.isUnconfirmed).to.be.true;
     expect(collectionSub.sponsorship.asUnconfirmed.toHuman()).to.be.eq(evmToAddress(sponsor));
-    await expect(collectionEvm.methods.confirmSponsorship().call()).to.be.rejectedWith('Caller is not set as sponsor');
+    await expect(collectionEvm.methods.ethConfirmSponsorship().call()).to.be.rejectedWith('Caller is not set as sponsor');
     const sponsorCollection = evmCollection(web3, sponsor, collectionIdAddress);
-    await sponsorCollection.methods.confirmSponsorship().send();
+    await sponsorCollection.methods.ethConfirmSponsorship().send();
     collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
     expect(collectionSub.sponsorship.isConfirmed).to.be.true;
     expect(collectionSub.sponsorship.asConfirmed.toHuman()).to.be.eq(evmToAddress(sponsor));
