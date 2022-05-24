@@ -148,17 +148,18 @@ macro_rules! impl_common_runtime_apis {
                     // TODO decide on displacement to palettes -- does RMRK belong there, spread across common and nonfungible?
                     use frame_support::BoundedVec;
                     use scale_info::prelude::string::String;
-                    use pallet_proxy_rmrk_core::RmrkProperty;
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::CollectionType};
 
-                    // todo check if this is a rmrk collection? or simply trust and provide anyway?
+                    // todo check if this is a rmrk standard collection? or simply trust and provide anyway?
                     // client-is-always-right / enforce authority and order ?
 
                     let collection_id = CollectionId(collection_id);
-                    let collection = <pallet_proxy_rmrk_core::Pallet<Runtime>>::get_nft_collection(collection_id)?;
-                    // todo Vec::from(["rmrk:metadata", "rmrk:collection-type"])
+                    let collection = <pallet_proxy_rmrk_core::Pallet<Runtime>>::get_typed_nft_collection(collection_id, CollectionType::Regular)?;
+                    
                     let metadata = BoundedVec::try_from(
                         <pallet_proxy_rmrk_core::Pallet<Runtime>>::get_collection_property(collection_id, RmrkProperty::Metadata)?.into_inner()
-                    ).map_err(|_| <pallet_common::Error<Runtime>>::PropertyKeyIsTooLong)?;//unwrap_or_default();
+                    ).map_err(|_| <pallet_common::Error<Runtime>>::PropertyKeyIsTooLong)?;
+
                     let nfts_count = (dispatch_unique_runtime!(collection_id.total_supply()) as Result<u32, DispatchError>)?; // todo? <Runtime>::total_supply(collection_id)
 
                     Ok(Some(RmrkCollectionInfo {
@@ -174,11 +175,11 @@ macro_rules! impl_common_runtime_apis {
                 fn nft_by_id(collection_id: RmrkCollectionId, nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo<AccountId>>, DispatchError> {
                     use frame_support::BoundedVec;
                     use up_data_structs::mapping::TokenAddressMapping;
-                    use pallet_proxy_rmrk_core::RmrkProperty;
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::RmrkDecode};
 
                     let collection_id = CollectionId(collection_id);
                     let nft_id = TokenId(nft_by_id);
-
+                    
                     let owner = match (dispatch_unique_runtime!(collection_id.token_owner(nft_id)) as Result<Option<CrossAccountId>, DispatchError>)? {
                         Some(owner) => match <Runtime as pallet_common::Config>::CrossTokenAddressMapping::address_to_token(&owner) {
                             Some((col, tok)) => RmrkAccountIdOrCollectionNftTuple::CollectionAndNftTuple(col.0, tok.0),
@@ -187,6 +188,7 @@ macro_rules! impl_common_runtime_apis {
                         None => return Ok(None)
                     };
 
+                    // todo displace querying property key array to rmrk proxy pallet
                     let keys = [
                         RmrkProperty::RoyaltyInfo,
                         RmrkProperty::Metadata,
@@ -196,19 +198,20 @@ macro_rules! impl_common_runtime_apis {
 
                     let properties = keys.into_iter().map(
                         |key| BoundedVec::try_from(
-                            // todo nft property, not collection
                             <pallet_proxy_rmrk_core::Pallet<Runtime>>::get_nft_property(collection_id, nft_id, key).unwrap().into_inner()
                         ).unwrap()
                     )
                     .collect::<Vec<RmrkString>>();
+                    
+                    let allowance = pallet_nonfungible::Allowance::<Runtime>::get((collection_id, nft_id));
 
                     Ok(Some(RmrkInstanceInfo {
                         owner: owner,
                         //recipient: , // prop?
-                        royalty: None,//Permill::from_percent(0), // prop, decode
+                        royalty: properties[0].clone().decode_property().unwrap(),
                         metadata: properties[1].clone(),
-                        equipped: false, // prop, decode
-                        pending: false, // prop, decode
+                        equipped: properties[2].clone().decode_property().unwrap(),
+                        pending: allowance.is_some(),
                     }))
                 }
                 fn account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
@@ -234,7 +237,7 @@ macro_rules! impl_common_runtime_apis {
                     Ok(
                         pallet_nonfungible::Owned::<Runtime>::iter_prefix((collection_id, cross_account_id))
                             .map(|(child_id, _)| RmrkNftChild {
-                                collection_id: collection_id.0, // todo make sure they're always from this collection
+                                collection_id: collection_id.0, // todo make sure they're always from this collection // spoiler: they're not
                                 nft_id: child_id.0,
                             })
                             .collect()
@@ -315,7 +318,7 @@ macro_rules! impl_common_runtime_apis {
                     let nft_id = TokenId(nft_id);
 
                     // let keys = [
-                    //     RmrkProperty::Royalty,
+                    //     RmrkProperty::RoyaltyInfo,
                     //     RmrkProperty::Metadata,
                     //     RmrkProperty::Equipped,
                     //     RmrkProperty::Pending,
@@ -339,10 +342,11 @@ macro_rules! impl_common_runtime_apis {
                 fn base(base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
                     use frame_support::BoundedVec;
                     use scale_info::prelude::string::String;
-                    use pallet_proxy_rmrk_core::RmrkProperty;
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::CollectionType};
 
                     let collection_id = CollectionId(base_id);
-                    let collection = <pallet_proxy_rmrk_core::Pallet<Runtime>>::get_nft_collection(collection_id)?;
+                    let collection = <pallet_proxy_rmrk_core::Pallet<Runtime>>::get_typed_nft_collection(collection_id, CollectionType::Base)?;
+                    // todo check prop for being a base
 
                     // todo export to macro? redundancy
                     let keys = [
@@ -368,46 +372,47 @@ macro_rules! impl_common_runtime_apis {
                 }
                 fn base_parts(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
                     use frame_support::BoundedVec;
-                    use pallet_proxy_rmrk_core::RmrkProperty;
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{RmrkNft, RmrkDecode}};
 
                     let collection_id = CollectionId(base_id);
-
-                    let keys = [
-                        //RmrkProperty::NftType)?,
-                        //RmrkProperty::PartId)?,
-                        RmrkProperty::Src,
-                        RmrkProperty::ZIndex,
-                        RmrkProperty::EquippableList,
-                    ];
+                    // todo check prop for being a base
 
                     let parts = (dispatch_unique_runtime!(collection_id.collection_tokens()) as Result<Vec<TokenId>, DispatchError>)?
                         .iter()
                         .filter_map(|token_id| {
-                            /*let properties = keys.into_iter().map(
+                            let nft_type = <pallet_nonfungible::TokenData<Runtime>>::get((collection_id, token_id))
+                                //.map_err(|_| ) // no need, tis a filter_map
+                                .unwrap()
+                                .rmrk_nft_type()?;
+                            
+                            // dislocate to rmrkproxycore and simply send an array of keys
+                            let keys = [
+                                //RmrkProperty::PartId)?,
+                                RmrkProperty::Src,
+                                RmrkProperty::ZIndex,
+                                RmrkProperty::EquippableList,
+                            ];
+                            
+                            let properties = keys.into_iter().map(
                                 |key| BoundedVec::try_from(
                                     <pallet_proxy_rmrk_core::Pallet<Runtime>>::get_nft_property(collection_id, *token_id, key).unwrap().into_inner()
                                 ).unwrap()
-                            ).collect::<Vec<RmrkString>>();*/
-
-                            // todo ping properties for "rmrk:nft-type"
-                            // if none, skip, None
-                            let nft_type = "fixed-part";
+                            ).collect::<Vec<RmrkString>>();
 
                             match nft_type {
-                                "fixed-part" => Some(RmrkPartType::FixedPart(RmrkFixedPart {
+                                FixedPart => Some(RmrkPartType::FixedPart(RmrkFixedPart {
                                     id: token_id.0,
-                                    src: BoundedVec::default(), // "rmrk:src"
-                                    z: 0, // "rmrk:z-index"
+                                    src: properties[0].clone().decode_property().unwrap(),
+                                    z: properties[1].clone().decode_property().unwrap(),
                                 })),
-                                "slot-part" => Some(RmrkPartType::SlotPart(RmrkSlotPart {
+                                SlotPart => Some(RmrkPartType::SlotPart(RmrkSlotPart {
                                     id: token_id.0,
-                                    equippable: RmrkEquippableList::Empty, // "rmrk:equippable-list" ?
-                                    src: BoundedVec::default(), // "rmrk:src"
-                                    z: 0, // "rmrk:z-index"
+                                    src: properties[0].clone().decode_property().unwrap(),
+                                    z: properties[1].clone().decode_property().unwrap(),
+                                    equippable: properties[2].clone().decode_property().unwrap(),
                                 })),
                                 _ => None
                             }
-
                         })
                         .collect();
 
@@ -415,24 +420,29 @@ macro_rules! impl_common_runtime_apis {
                 }
                 fn theme_names(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
                     use frame_support::BoundedVec;
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{RmrkNft, RmrkDecode}};
 
                     let collection_id = CollectionId(base_id);
+                    // todo make sure this is theme
 
                     let theme_names = (dispatch_unique_runtime!(collection_id.collection_tokens()) as Result<Vec<TokenId>, DispatchError>)?
                         .iter()
                         .filter_map(|token_id| {
-                            let properties = pallet_nonfungible::Pallet::<Runtime>::token_properties((collection_id, token_id));
-
-                            // todo ping property for "rmrk:nft-type"
-                            // if none or not "theme", skip, None
-                            let nft_type = "theme";
-                            // can't call dispatch_unique_runtime! from here??
-                            <pallet_nonfungible::TokenData<Runtime>>::get((collection_id, token_id))
-                                .map(|t| t.const_data.into_inner())
-                                //.unwrap_or_default()
-                            // todo rework to reduce independence
+                            let nft_type = <pallet_nonfungible::TokenData<Runtime>>::get((collection_id, token_id))
+                                .unwrap()
+                                .rmrk_nft_type()?;
+                            
+                            match nft_type {
+                                Theme => Some(
+                                    <pallet_proxy_rmrk_core::Pallet<Runtime>>::get_nft_property(
+                                        collection_id, *token_id, RmrkProperty::ThemeName
+                                    ).unwrap()
+                                    .into_inner()
+                                ),
+                                _ => None
+                            }
                         })
-                        .collect();
+                        .collect::<Vec<RmrkThemeName>>();
 
                     Ok(theme_names)
                 }

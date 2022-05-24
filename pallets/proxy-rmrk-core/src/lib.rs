@@ -420,7 +420,7 @@ impl<T: Config> Pallet<T> {
         Ok(())
     }
 
-    fn get_typed_nft_collection(
+    pub fn get_typed_nft_collection(
         collection_id: CollectionId,
         collection_type: CollectionType
     ) -> Result<NonfungibleHandle<T>, DispatchError> {

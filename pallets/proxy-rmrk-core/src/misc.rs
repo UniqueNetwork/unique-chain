@@ -82,6 +82,18 @@ impl<CrossAccountId> RmrkNft for ItemData<CrossAccountId> {
     }
 }
 
+pub trait RmrkDecode<T: Decode> {
+    fn decode_property(&self) -> Option<T>;
+}
+
+impl<T: Decode> RmrkDecode<T> for RmrkString {
+    fn decode_property(&self) -> Option<T> { // todo access runtime errors? // but then rmrk_nft_type must have it too
+        let mut value = self.as_slice();
+
+        T::decode(&mut value).ok()
+    }
+}
+
 #[derive(Encode, Decode, PartialEq, Eq)]
 pub enum CollectionType {
     Regular,
