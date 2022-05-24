@@ -46,6 +46,10 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 	}
 
+    #[pallet::storage]
+	#[pallet::getter(fn collection_index)]
+	pub type CollectionIndex<T: Config> = StorageValue<_, RmrkCollectionId, ValueQuery>;
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
@@ -142,6 +146,8 @@ pub mod pallet {
                     rmrk_property!(Config=T, CollectionType: CollectionType::Regular)?,
                 ].into_iter()
             )?;
+
+            <CollectionIndex<T>>::mutate(|n| *n += 1);
 
             Self::deposit_event(Event::CollectionCreated {
                 issuer: sender,
@@ -376,6 +382,10 @@ impl<T: Config> Pallet<T> {
     fn check_collection_owner(collection: &NonfungibleHandle<T>, account: &T::CrossAccountId) -> DispatchResult {
         collection.check_is_owner(account)
             .map_err(Self::map_common_err_to_proxy)
+    }
+
+    pub fn last_collection_idx() -> RmrkCollectionId {
+        <CollectionIndex<T>>::get()
     }
 
     pub fn get_nft_collection(collection_id: CollectionId) -> Result<NonfungibleHandle<T>, DispatchError> {
