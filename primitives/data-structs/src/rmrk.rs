@@ -1,6 +1,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
+use derivative::Derivative;
 
 #[cfg(feature = "std")]
 use serde::Serialize;
@@ -360,14 +361,18 @@ pub struct FixedPart<BoundedString> {
 }
 
 #[cfg_attr(feature = "std", derive(Serialize))]
-#[derive(Encode, Decode, Debug, Default, TypeInfo, Clone, PartialEq, Eq, MaxEncodedLen)]
+#[derive(Encode, Decode, Debug, Derivative, TypeInfo, Clone, PartialEq, Eq, MaxEncodedLen)]
 #[cfg_attr(
 	feature = "std",
 	serde(bound = "BoundedCollectionList: AsRef<[CollectionId]>")
 )]
+#[derivative(Default(bound=""))]
 pub enum EquippableList<BoundedCollectionList> {
 	All,
-	#[default] Empty,
+
+	#[derivative(Default)]
+	Empty,
+
 	Custom(
 		#[cfg_attr(feature = "std", serde(with = "serialize::vec"))]
 		BoundedCollectionList
