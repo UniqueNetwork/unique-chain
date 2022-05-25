@@ -105,12 +105,8 @@ pub const MAX_PROPERTY_KEY_LENGTH: u32 = 256;
 pub const MAX_PROPERTY_VALUE_LENGTH: u32 = 32768;
 pub const MAX_PROPERTIES_PER_ITEM: u32 = 64;
 
-// pub const MAX_PROPERTY_KEYS_OVERALL_LENGTH: u32 = MAX_PROPERTY_KEY_LENGTH * MAX_PROPERTIES_PER_ITEM;
 pub const MAX_COLLECTION_PROPERTIES_SIZE: u32 = 40960;
 pub const MAX_TOKEN_PROPERTIES_SIZE: u32 = 32768;
-
-pub const MAX_COLLECTION_PROPERTIES_ENCODE_LEN: u32 =
-	MAX_PROPERTIES_PER_ITEM * MAX_PROPERTY_KEY_LENGTH + MAX_COLLECTION_PROPERTIES_SIZE;
 
 // RMRK constants
 pub const RMRK_STRING_LIMIT: u32 = 128;
@@ -118,15 +114,6 @@ pub const RMRK_COLLECTION_SYMBOL_LIMIT: u32 = 100;
 pub const RMRK_RESOURCE_SYMBOL_LIMIT: u32 = 10;
 pub const RMRK_KEY_LIMIT: u32 = 32;
 pub const RMRK_VALUE_LIMIT: u32 = 256;
-
-pub struct MaxPropertiesPermissionsEncodeLen;
-
-impl Get<u32> for MaxPropertiesPermissionsEncodeLen {
-	fn get() -> u32 {
-		MAX_PROPERTIES_PER_ITEM * MAX_PROPERTY_KEY_LENGTH
-			+ <PropertyPermission as MaxEncodedLen>::max_encoded_len() as u32
-	}
-}
 
 /// How much items can be created per single
 /// create_many call
@@ -381,10 +368,10 @@ pub struct CreateCollectionData<AccountId> {
 }
 
 pub type CollectionPropertiesPermissionsVec =
-	BoundedVec<PropertyKeyPermission, MaxPropertiesPermissionsEncodeLen>;
+	BoundedVec<PropertyKeyPermission, ConstU32<MAX_PROPERTIES_PER_ITEM>>;
 
 pub type CollectionPropertiesVec =
-	BoundedVec<Property, ConstU32<MAX_COLLECTION_PROPERTIES_ENCODE_LEN>>;
+	BoundedVec<Property, ConstU32<MAX_PROPERTIES_PER_ITEM>>;
 
 /// All fields are wrapped in `Option`s, where None means chain default
 #[struct_versioning::versioned(version = 2, upper)]
