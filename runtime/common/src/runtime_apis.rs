@@ -347,7 +347,7 @@ macro_rules! impl_common_runtime_apis {
 
                 fn base_parts(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
                     use frame_support::BoundedVec;
-                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, NftType, RmrkNft, RmrkDecode}};
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, NftType, RmrkDecode}};
 
                     let collection_id = CollectionId(base_id);
                     if RmrkCore::ensure_collection_type(collection_id, CollectionType::Base).is_err() { return Ok(Vec::new()); }
@@ -379,7 +379,7 @@ macro_rules! impl_common_runtime_apis {
 
                 fn theme_names(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
                     use frame_support::BoundedVec;
-                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, RmrkNft, RmrkDecode}};
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, RmrkDecode}};
 
                     let collection_id = CollectionId(base_id);
                     if RmrkCore::ensure_collection_type(collection_id, CollectionType::Base).is_err() {
@@ -407,7 +407,7 @@ macro_rules! impl_common_runtime_apis {
                     use frame_support::BoundedVec;
                     use pallet_proxy_rmrk_core::{
                         RmrkProperty,
-                        misc::{CollectionType, NftType, RmrkNft, RmrkDecode}
+                        misc::{CollectionType, NftType, RmrkDecode}
                     };
 
                     let collection_id = CollectionId(base_id);

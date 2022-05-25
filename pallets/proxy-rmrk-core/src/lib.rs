@@ -33,6 +33,8 @@ pub mod property;
 use misc::*;
 pub use property::*;
 
+use RmrkProperty::*;
+
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
@@ -136,14 +138,12 @@ pub mod pallet {
 
             let collection_id = collection_id_res?;
 
-            let collection = Self::get_nft_collection(collection_id)?.into_inner();
-
             <PalletCommon<T>>::set_scoped_collection_properties(
-                &collection,
+                collection_id,
                 PropertyScope::Rmrk,
                 [
-                    rmrk_property!(Config=T, Metadata: metadata)?,
-                    rmrk_property!(Config=T, CollectionType: CollectionType::Regular)?,
+                    Self::rmrk_property(Metadata, &metadata)?,
+                    Self::rmrk_property(CollectionType, &misc::CollectionType::Regular)?,
                 ].into_iter()
             )?;
 
@@ -168,7 +168,7 @@ pub mod pallet {
 
             let unique_collection_id = collection_id.into();
 
-            let collection = Self::get_typed_nft_collection(unique_collection_id, CollectionType::Regular)?;
+            let collection = Self::get_typed_nft_collection(unique_collection_id, misc::CollectionType::Regular)?;
 
             ensure!(collection.total_supply() == 0, <Error<T>>::CollectionNotEmpty);
 
@@ -193,7 +193,7 @@ pub mod pallet {
 
             Self::change_collection_owner(
                 collection_id.into(),
-                CollectionType::Regular,
+                misc::CollectionType::Regular,
                 sender.clone(),
                 new_issuer.clone()
             )?;
@@ -218,7 +218,7 @@ pub mod pallet {
 
             let collection = Self::get_typed_nft_collection(
                 collection_id.into(),
-                CollectionType::Regular
+                misc::CollectionType::Regular
             )?;
 
             Self::check_collection_owner(&collection, &cross_sender)?;
@@ -253,20 +253,27 @@ pub mod pallet {
                 amount
             });
 
+            let collection = Self::get_typed_nft_collection(
+                collection_id.into(),
+                misc::CollectionType::Regular,
+            )?;
+
             let nft_id = Self::create_nft(
                 &sender,
                 &cross_owner,
-                collection_id.into(),
-                CollectionType::Regular,
+                &collection,
                 NftType::Regular,
                 [
-                    rmrk_property!(Config=T, RoyaltyInfo: royalty_info)?,
-                    rmrk_property!(Config=T, Metadata: metadata)?,
-                    rmrk_property!(Config=T, Equipped: false)?,
-                    rmrk_property!(Config=T, ResourceCollection: None::<CollectionId>)?,
-                    rmrk_property!(Config=T, ResourcePriorities: <Vec<u8>>::new())?,
+                    Self::rmrk_property(RoyaltyInfo, &royalty_info)?,
+                    Self::rmrk_property(Metadata, &metadata)?,
+                    Self::rmrk_property(Equipped, &false)?,
+                    Self::rmrk_property(ResourceCollection, &None::<CollectionId>)?,
+                    Self::rmrk_property(ResourcePriorities, &<Vec<u8>>::new())?,
                 ].into_iter()
-            )?;
+            ).map_err(|err| match err {
+                DispatchError::Arithmetic(_) => <Error<T>>::NoAvailableNftId.into(),
+                err => Self::map_common_err_to_proxy(err)
+            })?;
 
             Self::deposit_event(Event::NftMinted {
                 owner,
@@ -290,7 +297,7 @@ pub mod pallet {
             Self::destroy_nft(
                 cross_sender,
                 collection_id.into(),
-                CollectionType::Regular,
+                misc::CollectionType::Regular,
                 nft_id.into()
             )?;
 
@@ -302,19 +309,37 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+    pub fn rmrk_property_key(rmrk_key: RmrkProperty) -> Result<PropertyKey, DispatchError> {
+        let key = rmrk_key.to_key::<T>()?;
+
+        let scoped_key = PropertyScope::Rmrk.apply(key)
+            .map_err(|_| <Error<T>>::RmrkPropertyKeyIsTooLong)?;
+
+        Ok(scoped_key)
+    }
+
+    pub fn rmrk_property<E: Encode>(rmrk_key: RmrkProperty, value: &E) -> Result<Property, DispatchError> {
+        let key = rmrk_key.to_key::<T>()?;
+
+        let value = value.encode()
+            .try_into()
+            .map_err(|_| <Error<T>>::RmrkPropertyValueIsTooLong)?;
+
+        let property = Property {
+            key,
+            value,
+        };
+
+        Ok(property)
+    }
+
     pub fn create_nft(
         sender: &T::CrossAccountId,
         owner: &T::CrossAccountId,
-        collection_id: CollectionId,
-        collection_type: CollectionType,
+        collection: &NonfungibleHandle<T>,
         nft_type: NftType,
         properties: impl Iterator<Item=Property>
     ) -> Result<TokenId, DispatchError> {
-        let collection = Self::get_typed_nft_collection(
-            collection_id,
-            collection_type
-        )?;
-
         let data = CreateNftExData {
             const_data: nft_type.encode()
                 .try_into()
@@ -326,16 +351,16 @@ impl<T: Config> Pallet<T> {
         let budget = budget::Value::new(2);
 
         <PalletNft<T>>::create_item(
-            &collection,
+            collection,
             sender,
             data,
             &budget,
-        ).map_err(Self::map_common_err_to_proxy)?;
+        )?;
 
-        let nft_id = <PalletNft<T>>::current_token_id(&collection);
+        let nft_id = <PalletNft<T>>::current_token_id(collection.id);
 
         <PalletNft<T>>::set_scoped_token_properties(
-            &collection,
+            collection.id,
             nft_id,
             PropertyScope::Rmrk,
             properties
@@ -347,7 +372,7 @@ impl<T: Config> Pallet<T> {
     fn destroy_nft(
         sender: T::CrossAccountId,
         collection_id: CollectionId,
-        collection_type: CollectionType,
+        collection_type: misc::CollectionType,
         token_id: TokenId
     ) -> DispatchResult {
         let collection = Self::get_typed_nft_collection(
@@ -363,7 +388,7 @@ impl<T: Config> Pallet<T> {
 
     fn change_collection_owner(
         collection_id: CollectionId,
-        collection_type: CollectionType,
+        collection_type: misc::CollectionType,
         sender: T::AccountId,
         new_owner: T::AccountId,
     ) -> DispatchResult {
@@ -390,10 +415,12 @@ impl<T: Config> Pallet<T> {
 
     pub fn get_nft_collection(collection_id: CollectionId) -> Result<NonfungibleHandle<T>, DispatchError> {
         let collection = <CollectionHandle<T>>::try_get(collection_id)
-            .map_err(|_| <Error<T>>::CollectionUnknown)?
-            .into_nft_collection()?;
+            .map_err(|_| <Error<T>>::CollectionUnknown)?;
 
-        Ok(collection)
+        match collection.mode {
+            CollectionMode::NFT => Ok(NonfungibleHandle::cast(collection)),
+            _ => Err(<Error<T>>::CollectionUnknown.into())
+        }
     }
 
     // should this even be here, might displace it to common/nonfungible -- but they did not need it, only rmrk does
@@ -407,23 +434,23 @@ impl<T: Config> Pallet<T> {
 
     pub fn get_collection_property(collection_id: CollectionId, key: RmrkProperty) -> Result<PropertyValue, DispatchError> {
         let collection_property = <PalletCommon<T>>::collection_properties(collection_id)
-            .get(&rmrk_property!(Config=T, key)?)
+            .get(&Self::rmrk_property_key(key)?)
             .ok_or(<Error<T>>::CollectionUnknown)?
             .clone();
 
         Ok(collection_property)
     }
 
-    pub fn get_collection_type(collection_id: CollectionId) -> Result<CollectionType, DispatchError> {
-        let value = Self::get_collection_property(collection_id, RmrkProperty::CollectionType)?;
-        let collection_type: CollectionType = (&value)
-            .try_into()
-            .map_err(<Error<T>>::from)?;
+    pub fn get_collection_type(collection_id: CollectionId) -> Result<misc::CollectionType, DispatchError> {
+        let value = Self::get_collection_property(collection_id, CollectionType)?;
 
-        Ok(collection_type)
+        let mut value = value.as_slice();
+
+        misc::CollectionType::decode(&mut value)
+            .map_err(|_| <Error<T>>::CorruptedCollectionType.into())
     }
 
-    pub fn ensure_collection_type(collection_id: CollectionId, collection_type: CollectionType) -> DispatchResult {
+    pub fn ensure_collection_type(collection_id: CollectionId, collection_type: misc::CollectionType) -> DispatchResult {
         let actual_type = Self::get_collection_type(collection_id)?;
         ensure!(actual_type == collection_type, <CommonError<T>>::NoPermission);
 
@@ -432,7 +459,7 @@ impl<T: Config> Pallet<T> {
 
     pub fn get_nft_property(collection_id: CollectionId, nft_id: TokenId, key: RmrkProperty) -> Result<PropertyValue, DispatchError> {
         let nft_property = <PalletNft<T>>::token_properties((collection_id, nft_id))
-            .get(&rmrk_property!(Config=T, key)?)
+            .get(&Self::rmrk_property_key(key)?)
             .ok_or(<Error<T>>::NoAvailableNftId)?
             .clone();
 
@@ -440,10 +467,12 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn get_nft_type(collection_id: CollectionId, token_id: TokenId) -> Result<NftType, DispatchError> {
-        <TokenData<T>>::get((collection_id, token_id))
-            .unwrap()
-            .rmrk_nft_type()
-            .ok_or_else(|| <Error<T>>::NoAvailableNftId.into())
+        let token_data = <TokenData<T>>::get((collection_id, token_id))
+            .ok_or(<Error<T>>::NoAvailableNftId)?;
+
+        let mut const_data = token_data.const_data.as_slice();
+
+        NftType::decode(&mut const_data).map_err(|_| <Error<T>>::NoAvailableNftId.into())
     }
 
     pub fn ensure_nft_type(collection_id: CollectionId, token_id: TokenId, nft_type: NftType) -> DispatchResult {
@@ -466,7 +495,7 @@ impl<T: Config> Pallet<T> {
                     let value = Self::get_nft_property(
                         collection_id,
                         token_id,
-                        RmrkProperty::ThemeProperty(&key)
+                        ThemeProperty(&key)
                     ).ok()?.decode_or_default();
 
                     let property = RmrkThemeProperty {
@@ -491,7 +520,7 @@ impl<T: Config> Pallet<T> {
         collection_id: CollectionId,
         token_id: TokenId
     ) -> Result<impl Iterator<Item=RmrkThemeProperty>, DispatchError> {
-        let key_prefix = rmrk_property!(Config=T, key: ThemeProperty(&RmrkString::default()))?;
+        let key_prefix = Self::rmrk_property_key(ThemeProperty(&RmrkString::default()))?;
 
         let properties = <PalletNft<T>>::token_properties((collection_id, token_id))
             .into_iter()
@@ -514,7 +543,7 @@ impl<T: Config> Pallet<T> {
 
     pub fn get_typed_nft_collection(
         collection_id: CollectionId,
-        collection_type: CollectionType
+        collection_type: misc::CollectionType
     ) -> Result<NonfungibleHandle<T>, DispatchError> {
         Self::ensure_collection_type(collection_id, collection_type)?;
 

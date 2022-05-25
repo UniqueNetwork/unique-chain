@@ -30,7 +30,7 @@ use up_rpc::UniqueApi as UniqueRuntimeApi;
 // RMRK
 use rmrk_rpc::RmrkApi as RmrkRuntimeApi;
 use up_data_structs::{
-	RmrkCollectionId, RmrkNftId, RmrkBaseId, RmrkNftChild, RmrkThemeName, RmrkPropertyKey,
+	RmrkCollectionId, RmrkNftId, RmrkBaseId, RmrkNftChild, RmrkThemeName,
 	RmrkResourceId,
 };
 
@@ -248,7 +248,7 @@ mod rmrk_unique_rpc {
 		fn collection_properties(
 			&self,
 			collection_id: RmrkCollectionId,
-			filter_keys: Option<Vec<RmrkPropertyKey>>, //String
+			filter_keys: Option<Vec<String>>,
 			at: Option<BlockHash>,
 		) -> Result<Vec<PropertyInfo>>;
 
@@ -258,7 +258,7 @@ mod rmrk_unique_rpc {
 			&self,
 			collection_id: RmrkCollectionId,
 			nft_id: RmrkNftId,
-			filter_keys: Option<Vec<RmrkPropertyKey>>,
+			filter_keys: Option<Vec<String>>,
 			at: Option<BlockHash>,
 		) -> Result<Vec<PropertyInfo>>;
 
@@ -299,8 +299,8 @@ mod rmrk_unique_rpc {
 		fn theme(
 			&self,
 			base_id: RmrkBaseId,
-			theme_name: RmrkThemeName, // String
-			filter_keys: Option<Vec<RmrkPropertyKey>>,
+			theme_name: String,
+			filter_keys: Option<Vec<String>>,
 			at: Option<BlockHash>,
 		) -> Result<Option<Theme>>;
 	}
@@ -523,11 +523,22 @@ where
 	pass_method!(account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Vec<RmrkNftId>, rmrk_api);
 	pass_method!(nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Vec<RmrkNftChild>, rmrk_api);
 	pass_method!(
-		collection_properties(collection_id: RmrkCollectionId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Vec<PropertyInfo>,
+		collection_properties(
+			collection_id: RmrkCollectionId,
+
+			#[map(|keys| string_keys_to_bytes_keys(keys))]
+			filter_keys: Option<Vec<String>>
+		) -> Vec<PropertyInfo>,
 		rmrk_api
 	);
 	pass_method!(
-		nft_properties(collection_id: RmrkCollectionId, nft_id: RmrkNftId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Vec<PropertyInfo>,
+		nft_properties(
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+
+			#[map(|keys| string_keys_to_bytes_keys(keys))]
+			filter_keys: Option<Vec<String>>
+		) -> Vec<PropertyInfo>,
 		rmrk_api
 	);
 	pass_method!(nft_resources(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Vec<ResourceInfo>, rmrk_api);
@@ -535,7 +546,16 @@ where
 	pass_method!(base(base_id: RmrkBaseId) -> Option<BaseInfo>, rmrk_api);
 	pass_method!(base_parts(base_id: RmrkBaseId) -> Vec<PartType>, rmrk_api);
 	pass_method!(theme_names(base_id: RmrkBaseId) -> Vec<RmrkThemeName>, rmrk_api);
-	pass_method!(theme(base_id: RmrkBaseId, theme_name: RmrkThemeName, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Option<Theme>, rmrk_api);
+	pass_method!(
+		theme(
+			base_id: RmrkBaseId,
+
+			#[map(|n| n.into_bytes())]
+			theme_name: String,
+
+			#[map(|keys| string_keys_to_bytes_keys(keys))]
+			filter_keys: Option<Vec<String>>
+		) -> Option<Theme>, rmrk_api);
 }
 
 fn string_keys_to_bytes_keys(keys: Option<Vec<String>>) -> Option<Vec<Vec<u8>>> {

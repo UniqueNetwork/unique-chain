@@ -20,9 +20,9 @@ use frame_support::{pallet_prelude::*, transactional, BoundedVec, dispatch::Disp
 use frame_system::{pallet_prelude::*, ensure_signed};
 use sp_runtime::DispatchError;
 use up_data_structs::*;
-use pallet_common::{Pallet as PalletCommon, Error as CommonError, CollectionHandle};
-use pallet_rmrk_core::{Pallet as PalletCore, rmrk_property, misc::*};
-use pallet_nonfungible::{Pallet as PalletNft};
+use pallet_common::{Pallet as PalletCommon, Error as CommonError};
+use pallet_rmrk_core::{Pallet as PalletCore, misc::{self, *}, property::RmrkProperty::*};
+use pallet_nonfungible::{Pallet as PalletNft, NonfungibleHandle};
 use pallet_evm::account::CrossAccountId;
 
 pub use pallet::*;
@@ -48,6 +48,16 @@ pub mod pallet {
         TokenId
     >;
 
+    #[pallet::storage]
+	#[pallet::getter(fn base_has_default_theme)]
+    pub type BaseHasDefaultTheme<T: Config> = StorageMap<
+        _,
+        Twox64Concat,
+        CollectionId,
+        bool,
+        ValueQuery
+    >;
+
     #[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
@@ -63,7 +73,11 @@ pub mod pallet {
 
     #[pallet::error]
 	pub enum Error<T> {
+        PermissionError,
         NoAvailableBaseId,
+        NoAvailablePartId,
+        BaseDoesntExist,
+        NeedsDefaultThemeFirst,
     }
 
     #[pallet::call]
@@ -95,16 +109,16 @@ pub mod pallet {
 
             let collection_id = collection_id_res?;
 
-            let collection = <PalletCore<T>>::get_nft_collection(collection_id)?.into_inner();
-
             <PalletCommon<T>>::set_scoped_collection_properties(
-                &collection,
+                collection_id,
                 PropertyScope::Rmrk,
                 [
-                    rmrk_property!(Config=T, CollectionType: CollectionType::Base)?,
-                    rmrk_property!(Config=T, BaseType: base_type)?,
+                    <PalletCore<T>>::rmrk_property(CollectionType, &misc::CollectionType::Base)?,
+                    <PalletCore<T>>::rmrk_property(BaseType, &base_type)?,
                 ].into_iter()
             )?;
+
+            let collection = <PalletCore<T>>::get_nft_collection(collection_id)?;
 
             for part in parts {
                 let part_id = part.id();
@@ -117,14 +131,65 @@ pub mod pallet {
                 <InernalPartId<T>>::insert(collection_id, part_id, part_token_id);
 
                 <PalletNft<T>>::set_scoped_token_property(
-                    &collection,
+                    collection_id,
                     part_token_id,
                     PropertyScope::Rmrk,
-                    rmrk_property!(Config=T, ExternalPartId: part_id)?
+                    <PalletCore<T>>::rmrk_property(ExternalPartId, &part_id)?
                 )?;
             }
 
             Self::deposit_event(Event::BaseCreated { issuer: sender, base_id: collection_id.0 });
+
+            Ok(())
+        }
+
+        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+        #[transactional]
+		pub fn theme_add(
+			origin: OriginFor<T>,
+			base_id: RmrkBaseId,
+			theme: RmrkTheme,
+		) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+
+            let sender = T::CrossAccountId::from_sub(sender);
+            let owner = &sender;
+
+            let collection_id: CollectionId = base_id.into();
+
+            let collection = <PalletCore<T>>::get_typed_nft_collection(
+                collection_id,
+                misc::CollectionType::Base
+            ).map_err(|_| <Error<T>>::BaseDoesntExist)?;
+
+            if theme.name.as_slice() == b"default" {
+                <BaseHasDefaultTheme<T>>::insert(collection_id, true);
+            } else if !Self::base_has_default_theme(collection_id) {
+                return Err(<Error<T>>::NeedsDefaultThemeFirst.into());
+            }
+
+            let token_id = <PalletCore<T>>::create_nft(
+                &sender,
+                owner,
+                &collection,
+                NftType::Theme,
+                [
+                    <PalletCore<T>>::rmrk_property(ThemeName, &theme.name)?,
+                    <PalletCore<T>>::rmrk_property(ThemeInherit, &theme.inherit)?
+                ].into_iter()
+            ).map_err(|_| <Error<T>>::PermissionError)?;
+
+            for property in theme.properties {
+                <PalletNft<T>>::set_scoped_token_property(
+                    collection_id,
+                    token_id,
+                    PropertyScope::Rmrk,
+                    <PalletCore<T>>::rmrk_property(
+                        ThemeProperty(&property.key),
+                        &property.value
+                    )?
+                )?;
+            }
 
             Ok(())
         }
@@ -134,7 +199,7 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
     fn create_part(
         sender: &T::CrossAccountId,
-        collection: &CollectionHandle<T>,
+        collection: &NonfungibleHandle<T>,
         part: RmrkPartType
     ) -> Result<TokenId, DispatchError> {
         let owner = sender;
@@ -150,21 +215,23 @@ impl<T: Config> Pallet<T> {
         let token_id = <PalletCore<T>>::create_nft(
             sender,
             owner,
-            collection.id,
-            CollectionType::Base,
+            collection,
             nft_type,
             [
-                rmrk_property!(Config=T, Src: src)?,
-                rmrk_property!(Config=T, ZIndex: z_index)?
+                <PalletCore<T>>::rmrk_property(Src, &src)?,
+                <PalletCore<T>>::rmrk_property(ZIndex, &z_index)?
             ].into_iter()
-        )?;
+        ).map_err(|err| match err {
+            DispatchError::Arithmetic(_) => <Error<T>>::NoAvailablePartId.into(),
+            err => err
+        })?;
 
         if let RmrkPartType::SlotPart(part) = part {
             <PalletNft<T>>::set_scoped_token_property(
-                collection,
+                collection.id,
                 token_id,
                 PropertyScope::Rmrk,
-                rmrk_property!(Config=T, EquippableList: part.equippable)?
+                <PalletCore<T>>::rmrk_property(EquippableList, &part.equippable)?
             )?;
         }
 

@@ -795,11 +795,11 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn set_scoped_collection_property(
-		collection: &CollectionHandle<T>,
+		collection_id: CollectionId,
 		scope: PropertyScope,
 		property: Property,
 	) -> DispatchResult {
-		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
+		CollectionProperties::<T>::try_mutate(collection_id, |properties| {
 			properties.try_scoped_set(scope, property.key, property.value)
 		})
 		.map_err(<Error<T>>::from)?;
@@ -807,13 +807,12 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	#[transactional]
 	pub fn set_scoped_collection_properties(
-		collection: &CollectionHandle<T>,
+		collection_id: CollectionId,
 		scope: PropertyScope,
 		properties: impl Iterator<Item = Property>,
 	) -> DispatchResult {
-		CollectionProperties::<T>::try_mutate(collection.id, |stored_properties| {
+		CollectionProperties::<T>::try_mutate(collection_id, |stored_properties| {
 			stored_properties.try_scoped_set_from_iter(scope, properties)
 		})
 		.map_err(<Error<T>>::from)?;
