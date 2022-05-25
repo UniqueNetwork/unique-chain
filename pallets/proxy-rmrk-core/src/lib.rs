@@ -443,7 +443,7 @@ impl<T: Config> Pallet<T> {
         <TokenData<T>>::get((collection_id, token_id))
             .unwrap()
             .rmrk_nft_type()
-            .ok_or(<Error<T>>::NoAvailableNftId.into())
+            .ok_or_else(|| <Error<T>>::NoAvailableNftId.into())
     }
 
     pub fn ensure_nft_type(collection_id: CollectionId, token_id: TokenId, nft_type: NftType) -> DispatchResult {
@@ -451,6 +451,65 @@ impl<T: Config> Pallet<T> {
         ensure!(actual_type == nft_type, <CommonError<T>>::NoPermission);
 
         Ok(())
+    }
+
+    pub fn filter_theme_properties(
+        collection_id: CollectionId,
+        token_id: TokenId,
+        filter_keys: Option<Vec<RmrkPropertyKey>>
+    ) -> Result<Vec<RmrkThemeProperty>, DispatchError> {
+        filter_keys.map(|keys| {
+            let properties = keys.into_iter()
+                .filter_map(|key| {
+                    let key: RmrkString = key.try_into().ok()?;
+
+                    let value = Self::get_nft_property(
+                        collection_id,
+                        token_id,
+                        RmrkProperty::ThemeProperty(&key)
+                    ).ok()?.decode_or_default();
+
+                    let property = RmrkThemeProperty {
+                        key,
+                        value
+                    };
+
+                    Some(property)
+                })
+                .collect();
+
+            Ok(properties)
+        }).unwrap_or_else(|| {
+            let properties = Self::iterate_theme_properties(collection_id, token_id)?
+                .collect();
+
+            Ok(properties)
+        })
+    }
+
+    pub fn iterate_theme_properties(
+        collection_id: CollectionId,
+        token_id: TokenId
+    ) -> Result<impl Iterator<Item=RmrkThemeProperty>, DispatchError> {
+        let key_prefix = rmrk_property!(Config=T, key: ThemeProperty(&RmrkString::default()))?;
+
+        let properties = <PalletNft<T>>::token_properties((collection_id, token_id))
+            .into_iter()
+            .filter_map(move |(key, value)| {
+                let key = key.as_slice().strip_prefix(key_prefix.as_slice())?;
+
+                let key: RmrkString = key.to_vec().try_into().ok()?;
+                let value: RmrkString = value.decode_or_default();
+
+                let property = RmrkThemeProperty {
+                    key,
+                    value
+                };
+
+                Some(property)
+            });
+
+        Ok(properties)
     }
 
     pub fn get_typed_nft_collection(

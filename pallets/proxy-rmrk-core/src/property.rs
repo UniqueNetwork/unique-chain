@@ -1,7 +1,7 @@
 use super::*;
 use core::convert::AsRef;
 
-pub enum RmrkProperty {
+pub enum RmrkProperty<'r> {
     Metadata,
     CollectionType,
     RoyaltyInfo,
@@ -23,11 +23,11 @@ pub enum RmrkProperty {
     EquippableList,
     ZIndex,
     ThemeName,
-    ThemeProperty(RmrkString),
+    ThemeProperty(&'r RmrkString),
     ThemeInherit,
 }
 
-impl RmrkProperty {
+impl<'r> RmrkProperty<'r> {
     pub fn to_key<T: Config>(self) -> Result<PropertyKey, Error<T>> {
         fn get_bytes<T: AsRef<[u8]>>(container: &T) -> &[u8] {
             container.as_ref()

@@ -1149,7 +1149,7 @@ macro_rules! dispatch_unique_runtime {
 		let collection = <Runtime as pallet_common::Config>::CollectionDispatch::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
 		let dispatch = collection.as_dyn();
 
-		Ok(dispatch.$method($($name),*))
+		Ok::<_, DispatchError>(dispatch.$method($($name),*))
 	}};
 }
 

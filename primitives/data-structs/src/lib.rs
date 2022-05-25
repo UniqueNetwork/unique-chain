@@ -775,6 +775,10 @@ impl<Value> PropertiesMap<Value> {
 		self.0.iter()
 	}
 
+	pub fn into_iter(self) -> impl Iterator<Item = (PropertyKey, Value)> {
+		self.0.into_iter()
+	}
+
 	fn check_property_key(key: &PropertyKey) -> Result<(), PropertiesError> {
 		if key.is_empty() {
 			return Err(PropertiesError::EmptyPropertyKey);
@@ -847,6 +851,10 @@ impl Properties {
 
 	pub fn iter(&self) -> impl Iterator<Item = (&PropertyKey, &PropertyValue)> {
 		self.map.iter()
+	}
+
+	pub fn into_iter(self) -> impl Iterator<Item = (PropertyKey, PropertyValue)> {
+		self.map.into_iter()
 	}
 }
 
@@ -936,7 +944,8 @@ pub type RmrkPropertyInfo =
 pub type RmrkBaseInfo<AccountId> = BaseInfo<AccountId, RmrkString>;
 pub type RmrkPartType =
 	PartType<RmrkString, BoundedVec<RmrkCollectionId, RmrkMaxCollectionsEquippablePerPart>>;
-pub type RmrkTheme = Theme<RmrkString, Vec<ThemeProperty<RmrkString>>>;
+pub type RmrkThemeProperty = ThemeProperty<RmrkString>;
+pub type RmrkTheme = Theme<RmrkString, Vec<RmrkThemeProperty>>;
 
 pub type RmrkRpcString = Vec<u8>;
 pub type RmrkThemeName = RmrkRpcString;

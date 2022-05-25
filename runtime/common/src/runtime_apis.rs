@@ -184,7 +184,7 @@ macro_rules! impl_common_runtime_apis {
                         },
                         None => return Ok(None)
                     };
-                    
+
                     let allowance = pallet_nonfungible::Allowance::<Runtime>::get((collection_id, nft_id));
 
                     Ok(Some(RmrkInstanceInfo {
@@ -317,7 +317,7 @@ macro_rules! impl_common_runtime_apis {
                     if RmrkCore::ensure_nft_type(collection_id, nft_id, NftType::Resource).is_err() { return Ok(Vec::new()); }
 
                     Ok(Vec::new(/*[RmrkResourceInfo {
-                        
+
                     }]*/))
                 }
 
@@ -379,16 +379,18 @@ macro_rules! impl_common_runtime_apis {
 
                 fn theme_names(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
                     use frame_support::BoundedVec;
-                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{RmrkNft, RmrkDecode}};
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, RmrkNft, RmrkDecode}};
 
                     let collection_id = CollectionId(base_id);
-                    // todo make sure this is theme
+                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Base).is_err() {
+                        return Ok(Vec::new());
+                    }
 
-                    let theme_names = (dispatch_unique_runtime!(collection_id.collection_tokens()) as Result<Vec<TokenId>, DispatchError>)?
+                    let theme_names = (dispatch_unique_runtime!(collection_id.collection_tokens()))?
                         .iter()
                         .filter_map(|token_id| {
                             let nft_type = RmrkCore::get_nft_type(collection_id, *token_id).unwrap();
-                            
+
                             match nft_type {
                                 Theme => Some(
                                     RmrkCore::get_nft_property(collection_id, *token_id, RmrkProperty::ThemeName).unwrap().decode_or_default()
@@ -396,47 +398,59 @@ macro_rules! impl_common_runtime_apis {
                                 _ => None
                             }
                         })
-                        .collect::<Vec<RmrkThemeName>>();
+                        .collect();
 
                     Ok(theme_names)
                 }
 
                 fn theme(base_id: RmrkBaseId, theme_name: RmrkThemeName, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Option<RmrkTheme>, DispatchError> {
                     use frame_support::BoundedVec;
+                    use pallet_proxy_rmrk_core::{
+                        RmrkProperty,
+                        misc::{CollectionType, NftType, RmrkNft, RmrkDecode}
+                    };
 
                     let collection_id = CollectionId(base_id);
+                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Base).is_err() {
+                        return Ok(None);
+                    }
 
-                    // todo one theme. filter collection tokens according to theme name, should result in one
-                    // (is it possible to search with iter_prefix for part of a struct that satisfies?..)
-                    // filter properties according to filter_keys and load them into resulting theme.properties
-                    let themes = (dispatch_unique_runtime!(collection_id.collection_tokens()) as Result<Vec<TokenId>, DispatchError>)?
-                        .iter()
-                        .filter_map(|token_id| {
-                            let properties = Nonfungible::token_properties((collection_id, token_id));
+                    let theme_info = (dispatch_unique_runtime!(collection_id.collection_tokens()))?
+                        .into_iter()
+                        .find_map(|token_id| {
+                            RmrkCore::ensure_nft_type(collection_id, token_id, NftType::Theme).ok()?;
 
-                            // todo ping properties for "rmrk:nft-type"
-                            // if none, skip, None
-                            // ugh gonna go through ALL properties, searching for matches for "rmrk:theme-property-<key>"
-                            let nft_type = "theme";
-                            match nft_type {
-                                "theme" => Some(RmrkTheme {
-                                    name: BoundedVec::try_from(
-                                        <pallet_nonfungible::TokenData<Runtime>>::get((collection_id, token_id))
-                                            .map(|t| t.const_data)
-                                            .unwrap_or_default()
-                                            .into_inner()
-                                    ).unwrap(),
-                                    // todo? (dispatch_unique_runtime!(collection_id.const_metadata(token_id)) as Result<Vec<u8>, DispatchError>)?,
-                                    properties: Vec::new(), // pain in the ass
-                                    inherit: false, // "rmrk:theme-inherit"
-                                }),
-                                _ => None
+                            let name: RmrkString = RmrkCore::get_nft_property(
+                                collection_id, token_id, RmrkProperty::ThemeName
+                            ).ok()?.decode_or_default();
+
+                            if name == theme_name {
+                                Some((name, token_id))
+                            } else {
+                                None
                             }
-                        })
-                        .collect::<Vec<_>>();
+                        });
 
-                    // todo
-                    Ok(Some(themes[0].clone()))
+                    let (name, theme_id) = match theme_info {
+                        Some((name, theme_id)) => (name, theme_id),
+                        None => return Ok(None)
+                    };
+
+                    let properties = RmrkCore::filter_theme_properties(collection_id, theme_id, filter_keys)?;
+
+                    let inherit = RmrkCore::get_nft_property(
+                        collection_id,
+                        theme_id,
+                        RmrkProperty::ThemeInherit
+                    )?.decode_or_default();
+
+                    let theme = RmrkTheme {
+                        name,
+                        properties,
+                        inherit,
+                    };
+
+                    Ok(Some(theme))
                 }
             }
 
