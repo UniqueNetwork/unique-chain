@@ -405,7 +405,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		})
 		.unwrap_or_else(|| {
 			properties
-				.iter()
+				.into_iter()
 				.map(|(key, value)| Property {
 					key: key.clone(),
 					value: value.clone(),

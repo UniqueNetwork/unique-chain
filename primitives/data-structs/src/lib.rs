@@ -771,14 +771,6 @@ impl<Value> PropertiesMap<Value> {
 		self.0.get(key)
 	}
 
-	pub fn iter(&self) -> impl Iterator<Item = (&PropertyKey, &Value)> {
-		self.0.iter()
-	}
-
-	pub fn into_iter(self) -> impl Iterator<Item = (PropertyKey, Value)> {
-		self.0.into_iter()
-	}
-
 	fn check_property_key(key: &PropertyKey) -> Result<(), PropertiesError> {
 		if key.is_empty() {
 			return Err(PropertiesError::EmptyPropertyKey);
@@ -794,6 +786,21 @@ impl<Value> PropertiesMap<Value> {
 
 		Ok(())
 	}
+}
+
+impl<Value> IntoIterator for PropertiesMap<Value> {
+	type Item = (PropertyKey, Value);
+	type IntoIter = <
+		BoundedBTreeMap<
+			PropertyKey,
+			Value,
+			ConstU32<MAX_PROPERTIES_PER_ITEM>
+		> as IntoIterator
+	>::IntoIter;
+
+	fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
 }
 
 impl<Value> TrySetProperty for PropertiesMap<Value> {
@@ -848,14 +855,15 @@ impl Properties {
 	pub fn get(&self, key: &PropertyKey) -> Option<&PropertyValue> {
 		self.map.get(key)
 	}
+}
 
-	pub fn iter(&self) -> impl Iterator<Item = (&PropertyKey, &PropertyValue)> {
-		self.map.iter()
-	}
+impl IntoIterator for Properties {
+	type Item = (PropertyKey, PropertyValue);
+	type IntoIter = <PropertiesMap<PropertyValue> as IntoIterator>::IntoIter;
 
-	pub fn into_iter(self) -> impl Iterator<Item = (PropertyKey, PropertyValue)> {
-		self.map.into_iter()
-	}
+	fn into_iter(self) -> Self::IntoIter {
+        self.map.into_iter()
+    }
 }
 
 impl TrySetProperty for Properties {

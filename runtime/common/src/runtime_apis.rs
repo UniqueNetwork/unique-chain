@@ -257,7 +257,7 @@ macro_rules! impl_common_runtime_apis {
                         }
                         None => {
                             properties
-                                .iter()
+                                .into_iter()
                                 .filter_map(|(key, value)| Some(RmrkPropertyInfo {
                                     key: key.decode_or_default(),
                                     value: value.decode_or_default(),
@@ -296,7 +296,7 @@ macro_rules! impl_common_runtime_apis {
                         }
                         None => {
                             properties
-                                .iter()
+                                .into_iter()
                                 .filter_map(|(key, value)| Some(RmrkPropertyInfo {
                                     key: key.decode_or_default(),
                                     value: value.decode_or_default(),

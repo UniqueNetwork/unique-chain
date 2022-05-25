@@ -608,18 +608,18 @@ impl<T: Config> Pallet<T> {
 		} = <CollectionById<T>>::get(collection)?;
 
 		let token_property_permissions = <CollectionPropertyPermissions<T>>::get(collection)
-			.iter()
+			.into_iter()
 			.map(|(key, permission)| PropertyKeyPermission {
-				key: key.clone(),
-				permission: permission.clone(),
+				key,
+				permission,
 			})
 			.collect();
 
 		let properties = <CollectionProperties<T>>::get(collection)
-			.iter()
+			.into_iter()
 			.map(|(key, value)| Property {
-				key: key.clone(),
-				value: value.clone(),
+				key,
+				value,
 			})
 			.collect();
 
@@ -947,10 +947,10 @@ impl<T: Config> Pallet<T> {
 			})
 			.unwrap_or_else(|| {
 				properties
-					.iter()
+					.into_iter()
 					.map(|(key, value)| Property {
-						key: key.clone(),
-						value: value.clone(),
+						key,
+						value,
 					})
 					.collect()
 			});
@@ -979,10 +979,10 @@ impl<T: Config> Pallet<T> {
 			})
 			.unwrap_or_else(|| {
 				permissions
-					.iter()
+					.into_iter()
 					.map(|(key, permission)| PropertyKeyPermission {
-						key: key.clone(),
-						permission: permission.clone(),
+						key,
+						permission,
 					})
 					.collect()
 			});
