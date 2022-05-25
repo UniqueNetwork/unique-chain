@@ -416,6 +416,29 @@ pub enum PartType<BoundedString, BoundedCollectionList> {
 	SlotPart(SlotPart<BoundedString, BoundedCollectionList>),
 }
 
+impl<BoundedString, BoundedCollectionList> PartType<BoundedString, BoundedCollectionList> {
+	pub fn id(&self) -> PartId {
+		match self {
+			Self::FixedPart(part) => part.id,
+			Self::SlotPart(part) => part.id
+		}
+	}
+
+	pub fn src(&self) -> &BoundedString {
+		match self {
+			Self::FixedPart(part) => &part.src,
+			Self::SlotPart(part) => &part.src
+		}
+	}
+
+	pub fn z_index(&self) -> ZIndex {
+		match self {
+			Self::FixedPart(part) => part.z,
+			Self::SlotPart(part) => part.z
+		}
+	}
+}
+
 #[cfg_attr(feature = "std", derive(Eq, Serialize))]
 #[derive(Encode, Decode, Debug, TypeInfo, Clone, PartialEq)]
 #[cfg_attr(

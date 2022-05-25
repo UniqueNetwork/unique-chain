@@ -254,8 +254,8 @@ pub mod pallet {
             });
 
             let nft_id = Self::create_nft(
-                sender,
-                cross_owner,
+                &sender,
+                &cross_owner,
                 collection_id.into(),
                 CollectionType::Regular,
                 NftType::Regular,
@@ -302,9 +302,9 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-    fn create_nft(
-        sender: T::CrossAccountId,
-        owner: T::CrossAccountId,
+    pub fn create_nft(
+        sender: &T::CrossAccountId,
+        owner: &T::CrossAccountId,
         collection_id: CollectionId,
         collection_type: CollectionType,
         nft_type: NftType,
@@ -320,14 +320,14 @@ impl<T: Config> Pallet<T> {
                 .try_into()
                 .map_err(|_| <Error<T>>::NftTypeEncodeError)?,
             properties: BoundedVec::default(),
-            owner,
+            owner: owner.clone(),
         };
 
         let budget = budget::Value::new(2);
 
         <PalletNft<T>>::create_item(
             &collection,
-            &sender,
+            sender,
             data,
             &budget,
         ).map_err(Self::map_common_err_to_proxy)?;

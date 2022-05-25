@@ -347,27 +347,27 @@ macro_rules! impl_common_runtime_apis {
 
                 fn base_parts(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
                     use frame_support::BoundedVec;
-                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, RmrkNft, RmrkDecode}};
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, NftType, RmrkNft, RmrkDecode}};
 
                     let collection_id = CollectionId(base_id);
                     if RmrkCore::ensure_collection_type(collection_id, CollectionType::Base).is_err() { return Ok(Vec::new()); }
 
-                    let parts = (dispatch_unique_runtime!(collection_id.collection_tokens()) as Result<Vec<TokenId>, DispatchError>)?
-                        .iter()
+                    let parts = (dispatch_unique_runtime!(collection_id.collection_tokens()))?
+                        .into_iter()
                         .filter_map(|token_id| {
-                            let nft_type = RmrkCore::get_nft_type(collection_id, *token_id).unwrap();
+                            let nft_type = RmrkCore::get_nft_type(collection_id, token_id).ok()?;
 
                             match nft_type {
-                                FixedPart => Some(RmrkPartType::FixedPart(RmrkFixedPart {
-                                    id: token_id.0,
-                                    src: RmrkCore::get_nft_property(collection_id, *token_id, RmrkProperty::Src).unwrap().decode_or_default(),
-                                    z: RmrkCore::get_nft_property(collection_id, *token_id, RmrkProperty::ZIndex).unwrap().decode_or_default(),
+                                NftType::FixedPart => Some(RmrkPartType::FixedPart(RmrkFixedPart {
+                                    id: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::ExternalPartId).ok()?.decode_or_default(),
+                                    src: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::Src).ok()?.decode_or_default(),
+                                    z: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::ZIndex).ok()?.decode_or_default(),
                                 })),
-                                SlotPart => Some(RmrkPartType::SlotPart(RmrkSlotPart {
-                                    id: token_id.0,
-                                    src: RmrkCore::get_nft_property(collection_id, *token_id, RmrkProperty::Src).unwrap().decode_or_default(),
-                                    z: RmrkCore::get_nft_property(collection_id, *token_id, RmrkProperty::ZIndex).unwrap().decode_or_default(),
-                                    equippable: RmrkCore::get_nft_property(collection_id, *token_id, RmrkProperty::EquippableList).unwrap().decode_or_default(),
+                                NftType::SlotPart => Some(RmrkPartType::SlotPart(RmrkSlotPart {
+                                    id: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::ExternalPartId).ok()?.decode_or_default(),
+                                    src: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::Src).ok()?.decode_or_default(),
+                                    z: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::ZIndex).ok()?.decode_or_default(),
+                                    equippable: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::EquippableList).ok()?.decode_or_default(),
                                 })),
                                 _ => None
                             }

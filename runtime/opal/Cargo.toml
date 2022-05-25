@@ -91,6 +91,7 @@ std = [
     'pallet-refungible/std',
     'pallet-nonfungible/std',
     'pallet-proxy-rmrk-core/std',
+    'pallet-proxy-rmrk-equip/std',
     'pallet-unique/std',
     'pallet-unq-scheduler/std',
     'pallet-charge-transaction/std',
@@ -410,6 +411,7 @@ pallet-fungible = { default-features = false, path = "../../pallets/fungible" }
 pallet-refungible = { default-features = false, path = "../../pallets/refungible" }
 pallet-nonfungible = { default-features = false, path = "../../pallets/nonfungible" }
 pallet-proxy-rmrk-core = { default-features = false, path = "../../pallets/proxy-rmrk-core", package = "pallet-rmrk-core" }
+pallet-proxy-rmrk-equip = { default-features = false, path = "../../pallets/proxy-rmrk-equip", package = "pallet-rmrk-equip" }
 pallet-unq-scheduler = { path = '../../pallets/scheduler', default-features = false }
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
 pallet-charge-transaction = { git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.21", package = "pallet-template-transaction-payment", default-features = false, version = "3.0.0" }

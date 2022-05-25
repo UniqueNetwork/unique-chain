@@ -5513,6 +5513,7 @@ dependencies = [
  "pallet-randomness-collective-flip",
  "pallet-refungible",
  "pallet-rmrk-core",
+ "pallet-rmrk-equip",
  "pallet-structure",
  "pallet-sudo",
  "pallet-template-transaction-payment",
@@ -6524,6 +6525,25 @@ dependencies = [
  "pallet-common",
  "pallet-evm",
  "pallet-nonfungible",
+ "parity-scale-codec 3.1.2",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "up-data-structs",
+]
+
+[[package]]
+name = "pallet-rmrk-equip"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-common",
+ "pallet-evm",
+ "pallet-nonfungible",
+ "pallet-rmrk-core",
  "parity-scale-codec 3.1.2",
  "scale-info",
  "sp-core",

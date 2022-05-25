@@ -19,7 +19,7 @@ pub enum RmrkProperty<'r> {
     Thumb,
     EquippedNft,
     BaseType,
-    // // RmrkPartId(/* Id type? */)
+    ExternalPartId,
     EquippableList,
     ZIndex,
     ThemeName,
@@ -62,8 +62,7 @@ impl<'r> RmrkProperty<'r> {
             Self::Thumb => key!("thumb"),
             Self::EquippedNft => key!("equipped-nft"),
             Self::BaseType => key!("base-type"),
-            // RmrkResourceId(/* Id type? */)
-            // RmrkPartId(/* Id type? */)
+            Self::ExternalPartId => key!("ext-part-id"),
             Self::EquippableList => key!("equippable-list"),
             Self::ZIndex => key!("z-index"),
             Self::ThemeName => key!("theme-name"),
