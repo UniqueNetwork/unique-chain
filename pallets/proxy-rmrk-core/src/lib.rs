@@ -525,7 +525,9 @@ impl<T: Config> Pallet<T> {
         map_common_err_to_proxy! {
             match err {
                 NoPermission => NoPermission,
-                CollectionTokenLimitExceeded => CollectionFullOrLocked
+                CollectionTokenLimitExceeded => CollectionFullOrLocked,
+                PublicMintingNotAllowed => NoPermission,
+                TokenNotFound => NoAvailableNftId
             }
         }
     }
