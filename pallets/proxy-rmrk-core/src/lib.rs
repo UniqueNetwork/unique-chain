@@ -22,7 +22,7 @@ use sp_runtime::{DispatchError, Permill, traits::StaticLookup};
 use sp_std::vec::Vec;
 use up_data_structs::*;
 use pallet_common::{Pallet as PalletCommon, Error as CommonError, CollectionHandle, CommonCollectionOperations};
-use pallet_nonfungible::{Pallet as PalletNft, NonfungibleHandle};
+use pallet_nonfungible::{Pallet as PalletNft, NonfungibleHandle, TokenData};
 use pallet_evm::account::CrossAccountId;
 
 pub use pallet::*;
@@ -396,6 +396,15 @@ impl<T: Config> Pallet<T> {
         Ok(collection)
     }
 
+    // should this even be here, might displace it to common/nonfungible -- but they did not need it, only rmrk does
+    pub fn collection_exists(collection_id: CollectionId) -> bool {
+        <pallet_common::CollectionById<T>>::contains_key(collection_id)
+    }
+
+    pub fn nft_exists(collection_id: CollectionId, nft_id: TokenId) -> bool {
+        <TokenData<T>>::contains_key((collection_id, nft_id))
+    }
+
     pub fn get_collection_property(collection_id: CollectionId, key: RmrkProperty) -> Result<PropertyValue, DispatchError> {
         let collection_property = <PalletCommon<T>>::collection_properties(collection_id)
             .get(&rmrk_property!(Config=T, key)?)
@@ -414,6 +423,13 @@ impl<T: Config> Pallet<T> {
         Ok(collection_type)
     }
 
+    pub fn ensure_collection_type(collection_id: CollectionId, collection_type: CollectionType) -> DispatchResult {
+        let actual_type = Self::get_collection_type(collection_id)?;
+        ensure!(actual_type == collection_type, <CommonError<T>>::NoPermission);
+
+        Ok(())
+    }
+
     pub fn get_nft_property(collection_id: CollectionId, nft_id: TokenId, key: RmrkProperty) -> Result<PropertyValue, DispatchError> {
         let nft_property = <PalletNft<T>>::token_properties((collection_id, nft_id))
             .get(&rmrk_property!(Config=T, key)?)
@@ -423,9 +439,16 @@ impl<T: Config> Pallet<T> {
         Ok(nft_property)
     }
 
-    pub fn check_collection_type(collection_id: CollectionId, collection_type: CollectionType) -> DispatchResult {
-        let actual_type = Self::get_collection_type(collection_id)?;
-        ensure!(actual_type == collection_type, <CommonError<T>>::NoPermission);
+    pub fn get_nft_type(collection_id: CollectionId, token_id: TokenId) -> Result<NftType, DispatchError> {
+        <TokenData<T>>::get((collection_id, token_id))
+            .unwrap()
+            .rmrk_nft_type()
+            .ok_or(<Error<T>>::NoAvailableNftId.into())
+    }
+
+    pub fn ensure_nft_type(collection_id: CollectionId, token_id: TokenId, nft_type: NftType) -> DispatchResult {
+        let actual_type = Self::get_nft_type(collection_id, token_id)?;
+        ensure!(actual_type == nft_type, <CommonError<T>>::NoPermission);
 
         Ok(())
     }
@@ -434,7 +457,7 @@ impl<T: Config> Pallet<T> {
         collection_id: CollectionId,
         collection_type: CollectionType
     ) -> Result<NonfungibleHandle<T>, DispatchError> {
-        Self::check_collection_type(collection_id, collection_type)?;
+        Self::ensure_collection_type(collection_id, collection_type)?;
 
         Self::get_nft_collection(collection_id)
     }

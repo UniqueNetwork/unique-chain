@@ -82,15 +82,27 @@ impl<CrossAccountId> RmrkNft for ItemData<CrossAccountId> {
     }
 }
 
-pub trait RmrkDecode<T: Decode> {
-    fn decode_property(&self) -> Option<T>;
+pub trait RmrkDecode<T: Decode + Default, S> {
+    fn decode_or_default(&self) -> T;
 }
 
-impl<T: Decode> RmrkDecode<T> for RmrkString {
-    fn decode_property(&self) -> Option<T> { // todo access runtime errors? // but then rmrk_nft_type must have it too
+impl<T: Decode + Default, S> RmrkDecode<T, S> for BoundedVec<u8, S> {
+    fn decode_or_default(&self) -> T {
         let mut value = self.as_slice();
 
-        T::decode(&mut value).ok()
+        T::decode(&mut value).unwrap_or_default()
+    }
+}
+
+pub trait RmrkRebind<T, S> {
+    fn rebind(&self) -> BoundedVec<u8, S>;
+}
+
+impl<T, S> RmrkRebind<T, S> for BoundedVec<u8, T> where BoundedVec<u8, S>: TryFrom<Vec<u8>> {
+    fn rebind(&self) -> BoundedVec<u8, S> {
+        BoundedVec::<u8, S>::try_from(
+            self.clone().into_inner()
+        ).unwrap_or_default()
     }
 }
 

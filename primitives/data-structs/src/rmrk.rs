@@ -360,14 +360,14 @@ pub struct FixedPart<BoundedString> {
 }
 
 #[cfg_attr(feature = "std", derive(Serialize))]
-#[derive(Encode, Decode, Debug, TypeInfo, Clone, PartialEq, Eq, MaxEncodedLen)]
+#[derive(Encode, Decode, Debug, Default, TypeInfo, Clone, PartialEq, Eq, MaxEncodedLen)]
 #[cfg_attr(
 	feature = "std",
 	serde(bound = "BoundedCollectionList: AsRef<[CollectionId]>")
 )]
 pub enum EquippableList<BoundedCollectionList> {
 	All,
-	Empty,
+	#[default] Empty,
 	Custom(
 		#[cfg_attr(feature = "std", serde(with = "serialize::vec"))]
 		BoundedCollectionList
