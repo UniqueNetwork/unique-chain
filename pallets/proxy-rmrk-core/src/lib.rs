@@ -24,6 +24,7 @@ use up_data_structs::*;
 use pallet_common::{Pallet as PalletCommon, Error as CommonError, CollectionHandle, CommonCollectionOperations};
 use pallet_nonfungible::{Pallet as PalletNft, NonfungibleHandle, TokenData};
 use pallet_evm::account::CrossAccountId;
+use core::convert::AsRef;
 
 pub use pallet::*;
 
@@ -84,6 +85,12 @@ pub mod pallet {
         NFTBurned {
 			owner: T::AccountId,
 			nft_id: RmrkNftId,
+		},
+        PropertySet {
+			collection_id: RmrkCollectionId,
+			maybe_nft_id: Option<RmrkNftId>,
+			key: RmrkKeyString,
+			value: RmrkValueString,
 		},
 	}
 
@@ -291,7 +298,7 @@ pub mod pallet {
 			collection_id: RmrkCollectionId,
 			nft_id: RmrkNftId,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
             let cross_sender = T::CrossAccountId::from_sub(sender.clone());
 
             Self::destroy_nft(
@@ -302,6 +309,62 @@ pub mod pallet {
             )?;
 
             Self::deposit_event(Event::NFTBurned { owner: sender, nft_id });
+
+            Ok(())
+        }
+
+        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[transactional]
+		pub fn set_property(
+			origin: OriginFor<T>,
+			#[pallet::compact] rmrk_collection_id: RmrkCollectionId,
+			maybe_nft_id: Option<RmrkNftId>,
+			key: RmrkKeyString,
+			value: RmrkValueString,
+		) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            let sender = T::CrossAccountId::from_sub(sender);
+
+            let collection_id: CollectionId = rmrk_collection_id.into();
+
+            match maybe_nft_id {
+                Some(nft_id) => {
+                    let token_id: TokenId = nft_id.into();
+
+                    Self::ensure_nft_owner(collection_id, token_id, &sender)?;
+                    Self::ensure_nft_type(collection_id, token_id, NftType::Regular)?;
+
+                    <PalletNft<T>>::set_scoped_token_property(
+                        collection_id,
+                        token_id,
+                        PropertyScope::Rmrk,
+                        Self::rmrk_property(UserProperty(key.as_slice()), &value)?
+                    )?;
+                },
+                None => {
+                    let collection = Self::get_typed_nft_collection(
+                        collection_id,
+                        misc::CollectionType::Regular
+                    )?;
+
+                    Self::check_collection_owner(&collection, &sender)?;
+
+                    <PalletCommon<T>>::set_scoped_collection_property(
+                        collection_id,
+                        PropertyScope::Rmrk,
+                        Self::rmrk_property(UserProperty(key.as_slice()), &value)?
+                    )?;
+                }
+            }
+
+            Self::deposit_event(
+                Event::PropertySet {
+                    collection_id: rmrk_collection_id,
+                    maybe_nft_id,
+                    key,
+                    value
+                }
+            );
 
             Ok(())
         }
@@ -477,65 +540,91 @@ impl<T: Config> Pallet<T> {
 
     pub fn ensure_nft_type(collection_id: CollectionId, token_id: TokenId, nft_type: NftType) -> DispatchResult {
         let actual_type = Self::get_nft_type(collection_id, token_id)?;
-        ensure!(actual_type == nft_type, <CommonError<T>>::NoPermission);
+        ensure!(actual_type == nft_type, <Error<T>>::NoPermission);
 
         Ok(())
     }
 
-    pub fn filter_theme_properties(
+    pub fn ensure_nft_owner(
         collection_id: CollectionId,
         token_id: TokenId,
-        filter_keys: Option<Vec<RmrkPropertyKey>>
-    ) -> Result<Vec<RmrkThemeProperty>, DispatchError> {
+        possible_owner: &T::CrossAccountId
+    ) -> DispatchResult {
+        let token_data = <TokenData<T>>::get((collection_id, token_id))
+            .ok_or(<Error<T>>::NoAvailableNftId)?;
+
+        ensure!(token_data.owner == *possible_owner, <Error<T>>::NoPermission);
+
+        Ok(())
+    }
+
+    pub fn filter_user_properties<Key, Value, R, Mapper>(
+        collection_id: CollectionId,
+        token_id: Option<TokenId>,
+        filter_keys: Option<Vec<RmrkPropertyKey>>,
+        mapper: Mapper,
+    ) -> Result<Vec<R>, DispatchError>
+    where
+        Key: TryFrom<RmrkPropertyKey> + AsRef<[u8]>,
+        Value: Decode + Default,
+        Mapper: Fn(Key, Value) -> R
+    {
         filter_keys.map(|keys| {
             let properties = keys.into_iter()
                 .filter_map(|key| {
-                    let key: RmrkString = key.try_into().ok()?;
+                    let key: Key = key.try_into().ok()?;
 
-                    let value = Self::get_nft_property(
-                        collection_id,
-                        token_id,
-                        ThemeProperty(&key)
-                    ).ok()?.decode_or_default();
+                    let value = match token_id {
+                        Some(token_id) => Self::get_nft_property(
+                            collection_id,
+                            token_id,
+                            UserProperty(key.as_ref())
+                        ),
+                        None => Self::get_collection_property(
+                            collection_id,
+                            UserProperty(key.as_ref())
+                        )
+                    }.ok()?.decode_or_default();
 
-                    let property = RmrkThemeProperty {
-                        key,
-                        value
-                    };
-
-                    Some(property)
+                    Some(mapper(key, value))
                 })
                 .collect();
 
             Ok(properties)
         }).unwrap_or_else(|| {
-            let properties = Self::iterate_theme_properties(collection_id, token_id)?
+            let properties = Self::iterate_user_properties(collection_id, token_id, mapper)?
                 .collect();
 
             Ok(properties)
         })
     }
 
-    pub fn iterate_theme_properties(
+    pub fn iterate_user_properties<Key, Value, R, Mapper>(
         collection_id: CollectionId,
-        token_id: TokenId
-    ) -> Result<impl Iterator<Item=RmrkThemeProperty>, DispatchError> {
-        let key_prefix = Self::rmrk_property_key(ThemeProperty(&RmrkString::default()))?;
+        token_id: Option<TokenId>,
+        mapper: Mapper,
+    ) -> Result<impl Iterator<Item=R>, DispatchError>
+    where
+        Key: TryFrom<RmrkPropertyKey> + AsRef<[u8]>,
+        Value: Decode + Default,
+        Mapper: Fn(Key, Value) -> R
+    {
+        let key_prefix = Self::rmrk_property_key(UserProperty(b""))?;
 
-        let properties = <PalletNft<T>>::token_properties((collection_id, token_id))
+        let properties = match token_id {
+            Some(token_id) => <PalletNft<T>>::token_properties((collection_id, token_id)),
+            None => <PalletCommon<T>>::collection_properties(collection_id)
+        };
+
+        let properties = properties
             .into_iter()
             .filter_map(move |(key, value)| {
                 let key = key.as_slice().strip_prefix(key_prefix.as_slice())?;
 
-                let key: RmrkString = key.to_vec().try_into().ok()?;
-                let value: RmrkString = value.decode_or_default();
+                let key: Key = key.to_vec().try_into().ok()?;
+                let value: Value = value.decode_or_default();
 
-                let property = RmrkThemeProperty {
-                    key,
-                    value
-                };
-
-                Some(property)
+                Some(mapper(key, value))
             });
 
         Ok(properties)

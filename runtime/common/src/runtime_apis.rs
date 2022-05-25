@@ -232,78 +232,47 @@ macro_rules! impl_common_runtime_apis {
                 }
 
                 fn collection_properties(collection_id: RmrkCollectionId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
-                    use pallet_proxy_rmrk_core::misc::RmrkDecode;
+                    use pallet_proxy_rmrk_core::misc::CollectionType;
 
                     let collection_id = CollectionId(collection_id);
-                    if !RmrkCore::collection_exists(collection_id) { return Ok(Vec::new()); }
+                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Regular).is_err() {
+                        return Ok(Vec::new());
+                    }
 
-                    let properties = Common::collection_properties(collection_id);
-
-                    // todo repeated code
-                    return Ok(match filter_keys {
-                        Some(keys) => {
-                            let keys = Common::bytes_keys_to_property_keys(keys)?;
-                            let properties = keys
-                                .into_iter()
-                                .filter_map(|key| {
-                                    properties.get(&key).map(|value| RmrkPropertyInfo {
-                                        key: key.decode_or_default(),
-                                        value: value.decode_or_default(),
-                                    })
-                                })
-                                .collect();
-
-                            properties
+                    let properties = RmrkCore::filter_user_properties(
+                        collection_id,
+                        /* token_id = */ None,
+                        filter_keys,
+                        |key, value| RmrkPropertyInfo {
+                            key,
+                            value
                         }
-                        None => {
-                            properties
-                                .into_iter()
-                                .filter_map(|(key, value)| Some(RmrkPropertyInfo {
-                                    key: key.decode_or_default(),
-                                    value: value.decode_or_default(),
-                                }))
-                                .collect()
-                        }
-                    });
+                    )?;
+
+                    Ok(properties)
                 }
 
                 fn nft_properties(collection_id: RmrkCollectionId, nft_id: RmrkNftId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
-                    use frame_support::BoundedVec;
-                    use pallet_proxy_rmrk_core::misc::RmrkDecode;
+                    use pallet_proxy_rmrk_core::misc::NftType;
 
                     let collection_id = CollectionId(collection_id);
                     let token_id = TokenId(nft_id);
-                    if !RmrkCore::nft_exists(collection_id, token_id) { return Ok(Vec::new()); }
 
-		            let properties = Nonfungible::token_properties((collection_id, token_id));
-                    // todo look into this usage of pallet_nonfungible
+                    if RmrkCore::ensure_nft_type(collection_id, token_id, NftType::Regular).is_err() {
+                        return Ok(Vec::new());
+                    }
 
-                    // todo displace to a function? redundant code piece with collection props
-                    return Ok(match filter_keys {
-                        Some(keys) => {
-                            let keys = Common::bytes_keys_to_property_keys(keys)?;
-                            let properties = keys
-                                .into_iter()
-                                .filter_map(|key| {
-                                    properties.get(&key).map(|value| RmrkPropertyInfo {
-                                        key: key.decode_or_default(),
-                                        value: value.decode_or_default(),
-                                    })
-                                })
-                                .collect();
-
-                            properties
+		            let properties = RmrkCore::filter_user_properties(
+                        collection_id,
+                        Some(token_id),
+                        filter_keys,
+                        |key, value| RmrkPropertyInfo {
+                            key,
+                            value
                         }
-                        None => {
-                            properties
-                                .into_iter()
-                                .filter_map(|(key, value)| Some(RmrkPropertyInfo {
-                                    key: key.decode_or_default(),
-                                    value: value.decode_or_default(),
-                                }))
-                                .collect()
-                        }
-                    });
+                    )?;
+
+                    Ok(properties)
                 }
 
                 fn nft_resources(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
@@ -436,7 +405,15 @@ macro_rules! impl_common_runtime_apis {
                         None => return Ok(None)
                     };
 
-                    let properties = RmrkCore::filter_theme_properties(collection_id, theme_id, filter_keys)?;
+                    let properties = RmrkCore::filter_user_properties(
+                        collection_id,
+                        Some(theme_id),
+                        filter_keys,
+                        |key, value| RmrkThemeProperty {
+                            key,
+                            value
+                        }
+                    )?;
 
                     let inherit = RmrkCore::get_nft_property(
                         collection_id,

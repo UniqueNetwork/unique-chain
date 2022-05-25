@@ -934,8 +934,9 @@ pub type RmrkResourceInfo = ResourceInfo<
 	RmrkString,
 	BoundedVec<RmrkPartId, RmrkPartsLimit>,
 >;
-pub type RmrkPropertyInfo =
-	PropertyInfo<BoundedVec<u8, RmrkKeyLimit>, BoundedVec<u8, RmrkValueLimit>>;
+pub type RmrkKeyString = BoundedVec<u8, RmrkKeyLimit>;
+pub type RmrkValueString = BoundedVec<u8, RmrkValueLimit>;
+pub type RmrkPropertyInfo = PropertyInfo<RmrkKeyString, RmrkValueString>;
 pub type RmrkBaseInfo<AccountId> = BaseInfo<AccountId, RmrkString>;
 pub type RmrkPartType =
 	PartType<RmrkString, BoundedVec<RmrkCollectionId, RmrkMaxCollectionsEquippablePerPart>>;

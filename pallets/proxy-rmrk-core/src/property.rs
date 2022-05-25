@@ -23,8 +23,8 @@ pub enum RmrkProperty<'r> {
     EquippableList,
     ZIndex,
     ThemeName,
-    ThemeProperty(&'r RmrkString),
     ThemeInherit,
+    UserProperty(&'r [u8]),
 }
 
 impl<'r> RmrkProperty<'r> {
@@ -66,8 +66,8 @@ impl<'r> RmrkProperty<'r> {
             Self::EquippableList => key!("equippable-list"),
             Self::ZIndex => key!("z-index"),
             Self::ThemeName => key!("theme-name"),
-            Self::ThemeProperty(name) => key!("theme-property-", name),
             Self::ThemeInherit => key!("theme-inherit"),
+            Self::UserProperty(name) => key!("userprop-", name),
         }
     }
 }

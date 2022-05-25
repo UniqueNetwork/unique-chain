@@ -185,7 +185,7 @@ pub mod pallet {
                     token_id,
                     PropertyScope::Rmrk,
                     <PalletCore<T>>::rmrk_property(
-                        ThemeProperty(&property.key),
+                        UserProperty(property.key.as_slice()),
                         &property.value
                     )?
                 )?;
