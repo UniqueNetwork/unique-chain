@@ -332,15 +332,24 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id: collection to destroy.
-		#[weight = <SelfWeightOf<T>>::destroy_collection()]
+		#[weight =
+			<SelfWeightOf<T>>::destroy_collection()
+			+ <SelfWeightOf<T>>::burn_children_in_collection(*max_children_to_burn)
+		]
 		#[transactional]
-		pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
+		pub fn destroy_collection(
+			origin,
+			collection_id: CollectionId,
+			max_children_to_burn: u32,
+		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 
+			let budget = budget::Value::new(max_children_to_burn);
+
 			// =========
 
-			T::CollectionDispatch::destroy(sender, collection)?;
+			T::CollectionDispatch::destroy(sender, collection, &budget)?;
 
 			<NftTransferBasket<T>>::remove_prefix(collection_id, None);
 			<FungibleTransferBasket<T>>::remove_prefix(collection_id, None);

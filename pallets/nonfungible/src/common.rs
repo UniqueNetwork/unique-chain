@@ -264,6 +264,19 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		}
 	}
 
+	fn burn_item_unchecked(
+		&self,
+		owner:& T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> sp_runtime::DispatchResult {
+		if amount == 1 {
+			<Pallet<T>>::burn_item_unchecked(self, owner, token)
+		} else {
+			Ok(())
+		}
+	}
+
 	fn transfer(
 		&self,
 		from: T::CrossAccountId,

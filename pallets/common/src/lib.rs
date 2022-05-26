@@ -1169,6 +1169,12 @@ pub trait CommonCollectionOperations<T: Config> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResultWithPostInfo;
+	fn burn_item_unchecked(
+		&self,
+		owner: &T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResult;
 	fn set_collection_properties(
 		&self,
 		sender: T::CrossAccountId,

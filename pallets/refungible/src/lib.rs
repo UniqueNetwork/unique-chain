@@ -245,6 +245,25 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult {
+		Self::burn_item_unchecked(collection, owner, token, amount)?;
+
+		// TODO: ERC20 transfer event
+		<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
+			collection.id,
+			token,
+			owner.clone(),
+			amount,
+		));
+
+		Ok(())
+	}
+
+	pub fn burn_item_unchecked(
+		collection: &RefungibleHandle<T>,
+		owner: &T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResult {
 		let total_supply = <TotalSupply<T>>::get((collection.id, token))
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
@@ -299,13 +318,6 @@ impl<T: Config> Pallet<T> {
 			<Balance<T>>::insert((collection.id, token, owner), balance);
 		}
 		<TotalSupply<T>>::insert((collection.id, token), total_supply);
-		// TODO: ERC20 transfer event
-		<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
-			collection.id,
-			token,
-			owner.clone(),
-			amount,
-		));
 		Ok(())
 	}
 

@@ -170,6 +170,17 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		)
 	}
 
+	fn burn_item_unchecked(
+		&self,
+		owner: &T::CrossAccountId,
+		_token: TokenId,
+		amount: u128,
+	) -> sp_runtime::DispatchResult {
+		<Pallet<T>>::burn_item_unchecked(self, owner, amount)?;
+
+		Ok(())
+	}
+
 	fn transfer(
 		&self,
 		from: T::CrossAccountId,

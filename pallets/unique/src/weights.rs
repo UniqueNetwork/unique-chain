@@ -34,6 +34,7 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn create_collection() -> Weight;
 	fn destroy_collection() -> Weight;
+	fn burn_children_in_collection(max: u32) -> Weight;
 	fn add_to_allow_list() -> Weight;
 	fn remove_from_allow_list() -> Weight;
 	fn set_public_access_mode() -> Weight;
@@ -73,6 +74,12 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
+
+	fn burn_children_in_collection(max: u32) -> Weight {
+		// TODO
+		(50_000_000 as Weight).saturating_mul(max as Weight)
+	}
+
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Common Allowlist (r:0 w:1)
 	fn add_to_allow_list() -> Weight {
@@ -192,6 +199,12 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
+
+	fn burn_children_in_collection(max: u32) -> Weight {
+		// TODO
+		(50_000_000 as Weight).saturating_mul(max as Weight)
+	}
+
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Common Allowlist (r:0 w:1)
 	fn add_to_allow_list() -> Weight {
