@@ -27,7 +27,7 @@ use up_data_structs::{
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
-	dispatch::CollectionDispatch, eth::collection_id_to_address,
+	eth::collection_id_to_address,
 };
 use pallet_structure::Pallet as PalletStructure;
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
@@ -77,6 +77,8 @@ pub mod pallet {
 		NotNonfungibleDataUsedToMintFungibleCollectionToken,
 		/// Used amount > 1 with NFT
 		NonfungibleItemsHaveNoAmount,
+		/// Unable to burn NFT with children
+		CantBurnNftWithChildren,
 	}
 
 	#[pallet::config]
@@ -123,6 +125,19 @@ pub mod pallet {
 			Key<Twox64Concat, CollectionId>,
 			Key<Blake2_128Concat, T::CrossAccountId>,
 			Key<Twox64Concat, TokenId>,
+		),
+		Value = bool,
+		QueryKind = ValueQuery,
+	>;
+
+	/// Used to enumerate token's children
+	#[pallet::storage]
+	#[pallet::getter(fn token_children)]
+	pub type TokenChildren<T: Config> = StorageNMap<
+		Key = (
+			Key<Twox64Concat, CollectionId>,
+			Key<Twox64Concat, TokenId>,
+			Key<Twox64Concat, (CollectionId, TokenId)>,
 		),
 		Value = bool,
 		QueryKind = ValueQuery,
@@ -283,6 +298,7 @@ impl<T: Config> Pallet<T> {
 		PalletCommon::destroy_collection(collection.0, sender)?;
 
 		<TokenData<T>>::remove_prefix((id,), None);
+		<TokenChildren<T>>::remove_prefix((id,), None);
 		<Owned<T>>::remove_prefix((id,), None);
 		<TokensMinted<T>>::remove(id);
 		<TokensBurnt<T>>::remove(id);
@@ -308,6 +324,10 @@ impl<T: Config> Pallet<T> {
 			collection.check_allowlist(sender)?;
 		}
 
+		if Self::token_has_children(collection.id, token) {
+			return Err(<Error<T>>::CantBurnNftWithChildren.into());
+		}
+
 		let burnt = <TokensBurnt<T>>::get(collection.id)
 			.checked_add(1)
 			.ok_or(ArithmeticError::Overflow)?;
@@ -321,6 +341,11 @@ impl<T: Config> Pallet<T> {
 		} else {
 			<AccountBalance<T>>::insert((collection.id, token_data.owner.clone()), balance);
 		}
+
+		if let Some(owner) = T::CrossTokenAddressMapping::address_to_token(&token_data.owner) {
+			Self::unnest(owner, (collection.id, token));
+		}
+
 		// =========
 
 		<Owned<T>>::remove((collection.id, &token_data.owner, token));
@@ -554,18 +579,13 @@ impl<T: Config> Pallet<T> {
 			None
 		};
 
-		if let Some(target) = T::CrossTokenAddressMapping::address_to_token(to) {
-			let handle = <CollectionHandle<T>>::try_get(target.0)?;
-			let dispatch = T::CollectionDispatch::dispatch(handle);
-			let dispatch = dispatch.as_dyn();
-
-			dispatch.check_nesting(
-				from.clone(),
-				(collection.id, token),
-				target.1,
-				nesting_budget,
-			)?;
-		}
+		<PalletStructure<T>>::try_nest_if_sent_to_token(
+			from.clone(),
+			to,
+			collection.id,
+			token,
+			nesting_budget
+		)?;
 
 		// =========
 
@@ -654,17 +674,14 @@ impl<T: Config> Pallet<T> {
 
 		for (i, data) in data.iter().enumerate() {
 			let token = TokenId(first_token + i as u32 + 1);
-			if let Some(target) = T::CrossTokenAddressMapping::address_to_token(&data.owner) {
-				let handle = <CollectionHandle<T>>::try_get(target.0)?;
-				let dispatch = T::CollectionDispatch::dispatch(handle);
-				let dispatch = dispatch.as_dyn();
-				dispatch.check_nesting(
-					sender.clone(),
-					(collection.id, token),
-					target.1,
-					nesting_budget,
-				)?;
-			}
+
+			<PalletStructure<T>>::check_nesting(
+				sender.clone(),
+				&data.owner,
+				collection.id,
+				token,
+				nesting_budget,
+			)?;
 		}
 
 		// =========
@@ -680,6 +697,8 @@ impl<T: Config> Pallet<T> {
 						owner: data.owner.clone(),
 					},
 				);
+
+				<PalletStructure<T>>::nest_if_sent_to_token(&data.owner, collection.id, TokenId(token));
 
 				if let Err(e) = Self::set_token_properties(
 					collection,
@@ -926,6 +945,29 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 		Ok(())
+	}
+
+	fn nest(
+		under: (CollectionId, TokenId),
+		to_nest: (CollectionId, TokenId),
+	) {
+		<TokenChildren<T>>::insert(
+			(under.0, under.1, (to_nest.0, to_nest.1)),
+			true
+		);
+	}
+
+	fn unnest(
+		under: (CollectionId, TokenId),
+		to_unnest: (CollectionId, TokenId),
+	) {
+		<TokenChildren<T>>::remove(
+			(under.0, under.1, to_unnest)
+		);
+	}
+
+	fn token_has_children(collection_id: CollectionId, token_id: TokenId) -> bool {
+		<TokenChildren<T>>::iter_prefix((collection_id, token_id)).next().is_some()
 	}
 
 	/// Delegated to `create_multiple_items`

@@ -1,8 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use pallet_common::CommonCollectionOperations;
 use sp_std::collections::btree_set::BTreeSet;
 
-use frame_support::dispatch::DispatchError;
+use frame_support::dispatch::{DispatchError, DispatchResult};
 use frame_support::fail;
 pub use pallet::*;
 use pallet_common::{dispatch::CollectionDispatch, CollectionHandle};
@@ -174,12 +175,121 @@ impl<T: Config> Pallet<T> {
 				v if v == target_parent => return Ok(true),
 				// Token is owned by other user
 				Parent::User(_) => return Ok(false),
-				Parent::TokenNotFound => return Ok(false),
+				Parent::TokenNotFound => return Err(<Error<T>>::TokenNotFound.into()),
 				// Continue parent chain
 				Parent::Token(_, _) => {}
 			}
 		}
 
 		Err(<Error<T>>::DepthLimit.into())
+	}
+
+	pub fn check_nesting(
+		from: T::CrossAccountId,
+		under: &T::CrossAccountId,
+		collection_id: CollectionId,
+		token_id: TokenId,
+		nesting_budget: &dyn Budget
+	) -> DispatchResult {
+		Self::try_dispatched(
+			under,
+			|d, parent_id| d.check_nesting(
+				from,
+				(collection_id, token_id),
+				parent_id,
+				nesting_budget
+			)
+		)
+	}
+
+	pub fn try_nest_if_sent_to_token(
+		from: T::CrossAccountId,
+		under: &T::CrossAccountId,
+		collection_id: CollectionId,
+		token_id: TokenId,
+		nesting_budget: &dyn Budget
+	) -> DispatchResult {
+		Self::try_dispatched(
+			under,
+			|d, parent_id| {
+				d.check_nesting(
+					from,
+					(collection_id, token_id),
+					parent_id,
+					nesting_budget
+				)?;
+
+				d.nest(parent_id, (collection_id, token_id));
+
+				Ok(())
+			}
+		)
+	}
+
+	pub fn nest_if_sent_to_token(
+		owner: &T::CrossAccountId,
+		collection_id: CollectionId,
+		token_id: TokenId
+	) {
+		Self::dispatched(
+			owner,
+			|d, parent_id| d.nest(
+				parent_id,
+				(collection_id, token_id)
+			)
+		);
+	}
+
+	pub fn unnest_if_nested(
+		owner: &T::CrossAccountId,
+		collection_id: CollectionId,
+		token_id: TokenId
+	) {
+		Self::dispatched(
+			owner,
+			|d, parent_id| d.unnest(
+			parent_id,
+			(collection_id, token_id)
+			)
+		);
+	}
+
+	fn dispatched(
+		account: &T::CrossAccountId,
+		action: impl FnOnce(&dyn CommonCollectionOperations<T>, TokenId)
+	) {
+		Self::try_dispatched(
+			account,
+			|d, id| {
+				action(d, id);
+				Ok(())
+			}
+		).unwrap();
+	}
+
+	fn try_dispatched(
+		account: &T::CrossAccountId,
+		action: impl FnOnce(&dyn CommonCollectionOperations<T>, TokenId) -> DispatchResult
+	) -> DispatchResult {
+		let account = T::CrossTokenAddressMapping::address_to_token(account);
+
+		if account.is_none() {
+			return Ok(());
+		}
+
+		let account = account.unwrap();
+
+		let handle = <CollectionHandle<T>>::try_get(account.0);
+
+		if handle.is_err() {
+			return Ok(());
+		}
+
+		let handle = handle.unwrap();
+
+		let dispatch = T::CollectionDispatch::dispatch(handle);
+		let dispatch = dispatch.as_dyn();
+
+		action(dispatch, account.1)
 	}
 }

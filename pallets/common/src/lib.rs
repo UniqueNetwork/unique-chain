@@ -1237,6 +1237,18 @@ pub trait CommonCollectionOperations<T: Config> {
 		budget: &dyn Budget,
 	) -> DispatchResult;
 
+	fn nest(
+		&self,
+		_under: TokenId,
+		_to_nest: (CollectionId, TokenId)
+	) {}
+
+	fn unnest(
+		&self,
+		_under: TokenId,
+		_to_nest: (CollectionId, TokenId)
+	) {}
+
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId>;
 	fn collection_tokens(&self) -> Vec<TokenId>;
 	fn token_exists(&self, token: TokenId) -> bool;
