@@ -711,7 +711,7 @@ describe('Negative Integration Test: Token Properties', () => {
     });
   });
 
-  it('Forbids changing/deleting properties of a token if the property is permanent (constant)', async () => {
+  it('Forbids changing/deleting properties of a token if the property is permanent (immutable)', async () => {
     await usingApi(async api => {
       let i = -1;
       for (const permission of constitution) {

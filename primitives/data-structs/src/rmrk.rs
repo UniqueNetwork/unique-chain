@@ -154,7 +154,7 @@ pub struct PropertyInfo<BoundedKey, BoundedValue>
 	pub value: BoundedValue,
 }
 
-#[derive(Encode, Decode, Eq, PartialEq, Clone, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Default, Eq, PartialEq, Clone, Debug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[cfg_attr(
 	feature = "std",
@@ -275,7 +275,7 @@ pub struct SlotResource<BoundedString> {
 	pub thumb: Option<BoundedString>,
 }
 
-#[derive(Encode, Decode, Eq, PartialEq, Clone, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Derivative, Eq, PartialEq, Clone, Debug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[cfg_attr(
 	feature = "std",
@@ -286,7 +286,9 @@ pub struct SlotResource<BoundedString> {
 		"#
 	)
 )]
-pub enum ResourceTypes<BoundedString, BoundedParts> {
+#[derivative(Default(bound=""))]
+pub enum ResourceTypes<BoundedString: Default, BoundedParts> {
+	#[derivative(Default)]
 	Basic(BasicResource<BoundedString>),
 	Composable(ComposableResource<BoundedString, BoundedParts>),
 	Slot(SlotResource<BoundedString>),
@@ -305,7 +307,7 @@ pub enum ResourceTypes<BoundedString, BoundedParts> {
 		"#
 	)
 )]
-pub struct ResourceInfo<BoundedResource, BoundedString, BoundedParts> {
+pub struct ResourceInfo<BoundedResource, BoundedString: Default, BoundedParts> {
 	/// id is a 5-character string of reasonable uniqueness.
 	/// The combination of base ID and resource id should be unique across the entire RMRK
 	/// ecosystem which

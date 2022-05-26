@@ -486,9 +486,8 @@ impl<T: Config> Pallet<T> {
         }
     }
 
-    // should this even be here, might displace it to common/nonfungible -- but they did not need it, only rmrk does
     pub fn collection_exists(collection_id: CollectionId) -> bool {
-        <pallet_common::CollectionById<T>>::contains_key(collection_id)
+        <CollectionHandle<T>>::try_get(collection_id).is_ok()
     }
 
     pub fn nft_exists(collection_id: CollectionId, nft_id: TokenId) -> bool {

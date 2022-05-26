@@ -49,6 +49,7 @@ pub use rmrk::{
 	},
 	NftChild as RmrkNftChild, AccountIdOrCollectionNftTuple as RmrkAccountIdOrCollectionNftTuple,
 	FixedPart as RmrkFixedPart, SlotPart as RmrkSlotPart, EquippableList as RmrkEquippableList,
+	BasicResource as RmrkBasicResource, ComposableResource as RmrkComposableResource, SlotResource as RmrkSlotResource,
 };
 
 mod bounded;
@@ -925,23 +926,27 @@ impl From<RmrkNftId> for TokenId {
 	}
 }
 
-pub type RmrkCollectionSymbol = BoundedVec<u8, RmrkCollectionSymbolLimit>;
 pub type RmrkCollectionInfo<AccountId> =
 	CollectionInfo<RmrkString, RmrkCollectionSymbol, AccountId>;
 pub type RmrkInstanceInfo<AccountId> = NftInfo<AccountId, Permill, RmrkString>;
 pub type RmrkResourceInfo = ResourceInfo<
-	BoundedVec<u8, RmrkResourceSymbolLimit>,
+	RmrkBoundedResource,
 	RmrkString,
-	BoundedVec<RmrkPartId, RmrkPartsLimit>,
+	RmrkBoundedParts,
 >;
-pub type RmrkKeyString = BoundedVec<u8, RmrkKeyLimit>;
-pub type RmrkValueString = BoundedVec<u8, RmrkValueLimit>;
 pub type RmrkPropertyInfo = PropertyInfo<RmrkKeyString, RmrkValueString>;
 pub type RmrkBaseInfo<AccountId> = BaseInfo<AccountId, RmrkString>;
 pub type RmrkPartType =
 	PartType<RmrkString, BoundedVec<RmrkCollectionId, RmrkMaxCollectionsEquippablePerPart>>;
 pub type RmrkThemeProperty = ThemeProperty<RmrkString>;
 pub type RmrkTheme = Theme<RmrkString, Vec<RmrkThemeProperty>>;
+
+pub type RmrkCollectionSymbol = BoundedVec<u8, RmrkCollectionSymbolLimit>;
+pub type RmrkKeyString = BoundedVec<u8, RmrkKeyLimit>;
+pub type RmrkValueString = BoundedVec<u8, RmrkValueLimit>;
+
+type RmrkBoundedResource = BoundedVec<u8, RmrkResourceSymbolLimit>;
+type RmrkBoundedParts = BoundedVec<RmrkPartId, RmrkPartsLimit>;
 
 pub type RmrkRpcString = Vec<u8>;
 pub type RmrkThemeName = RmrkRpcString;
