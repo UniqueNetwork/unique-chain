@@ -187,7 +187,7 @@ describe('Create collection from EVM', () => {
       .isCollectionExist(collectionAddressForNonexistentCollection).call())
       .to.be.false;
     
-    const result = await collectionHelper.methods.create721Collection('Const collection', '5', '5').send();
+    const result = await collectionHelper.methods.create721Collection('Collection address exist', '7', '7').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     expect(await collectionHelper.methods
       .isCollectionExist(collectionIdAddress).call())

@@ -161,17 +161,21 @@ impl<T: Config> NonfungibleHandle<T> {
 		let key: string = "tokenURI".into(); //TODO: make static
 		let key: up_data_structs::PropertyKey = key.into_bytes().try_into()
 			.map_err(|_| Error::Revert("".into()))?;
-		let permission = get_permission::<T>(self.id, &key)?;
+		let permission = get_token_permission::<T>(self.id, &key)?;
 		if !permission.collection_admin {
 			return Err("Operation is not allowed".into());
 		}
 
 		self.consume_store_reads(1)?;
-		let _token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
-		Ok(string::from_utf8_lossy(
-			todo!()
-		)
-		.into())
+		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+
+		let properties = <TokenProperties<T>>::try_get((self.id, token_id))
+			.map_err(|_| Error::Revert("Token properties not found".into()))?;
+		if let Some(property) = properties.get(&key) {
+			return Ok(string::from_utf8_lossy(property).into());
+		}
+
+		Err("Property tokenURI not found".into())
 	}
 }
 
@@ -361,7 +365,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		let key: string = "tokenURI".into(); //TODO: make static
 		let key: up_data_structs::PropertyKey = key.into_bytes().try_into()
 			.map_err(|_| Error::Revert("".into()))?;
-		let permission = get_permission::<T>(self.id, &key)?;
+		let permission = get_token_permission::<T>(self.id, &key)?;
 		if !permission.collection_admin {
 			return Err("Operation is not allowed".into());
 		}
@@ -407,12 +411,13 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 }
 
-fn get_permission<T: Config>(collection_id: CollectionId, key: &PropertyKey) -> Result<PropertyPermission> {
+fn get_token_permission<T: Config>(collection_id: CollectionId, key: &PropertyKey) -> Result<PropertyPermission> {
 	let token_property_permissions = CollectionPropertyPermissions::<T>::try_get(collection_id)
 		.map_err(|_| Error::Revert("No permissions for collection".into()))?;
-	Ok(token_property_permissions.get(key)
+	let a = token_property_permissions.get(key)
 		.map(|p| p.clone())
-		.ok_or_else(|| Error::Revert("No permission for tokenURI".into()))?)
+		.ok_or_else(|| Error::Revert("No permission for tokenURI".into()))?;
+	Ok(a)
 }
 
 #[solidity_interface(name = "ERC721UniqueExtensions")]
