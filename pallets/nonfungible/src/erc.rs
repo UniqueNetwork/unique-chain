@@ -21,13 +21,13 @@ use core::{
 };
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
 use frame_support::BoundedVec;
-use up_data_structs::{TokenId, SchemaVersion, PropertyPermission, PropertyKeyPermission, Property};
+use up_data_structs::{TokenId, SchemaVersion, PropertyPermission, PropertyKeyPermission, Property, CollectionId, PropertyKey, CollectionPropertiesVec};
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_core::{H160, U256};
 use sp_std::vec::Vec;
 use pallet_common::{
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall},
-	CollectionHandle,
+	CollectionHandle, CollectionPropertyPermissions,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_evm_coder_substrate::call;
@@ -158,6 +158,14 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// Returns token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
+		let key: string = "tokenURI".into(); //TODO: make static
+		let key: up_data_structs::PropertyKey = key.into_bytes().try_into()
+			.map_err(|_| Error::Revert("".into()))?;
+		let permission = get_permission::<T>(self.id, &key)?;
+		if !permission.collection_admin {
+			return Err("Operation is not allowed".into());
+		}
+
 		self.consume_store_reads(1)?;
 		let _token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		Ok(string::from_utf8_lossy(
@@ -350,6 +358,14 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_id: uint256,
 		token_uri: string,
 	) -> Result<bool> {
+		let key: string = "tokenURI".into(); //TODO: make static
+		let key: up_data_structs::PropertyKey = key.into_bytes().try_into()
+			.map_err(|_| Error::Revert("".into()))?;
+		let permission = get_permission::<T>(self.id, &key)?;
+		if !permission.collection_admin {
+			return Err("Operation is not allowed".into());
+		}
+
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id: u32 = token_id.try_into().map_err(|_| "amount overflow")?;
@@ -365,13 +381,18 @@ impl<T: Config> NonfungibleHandle<T> {
 			return Err("item id should be next".into());
 		}
 
-		todo!("token uri");
+		let mut properties = CollectionPropertiesVec::default();
+		properties.try_push(Property{
+			key,
+			value: token_uri.into_bytes().try_into()
+				.map_err(|_| "token uri is too long")?
+		}).map_err(|e| Error::Revert(alloc::format!("Can't add property: {:?}", e)))?;
 
 		<Pallet<T>>::create_item(
 			self,
 			&caller,
 			CreateItemData::<T> {
-				properties: BoundedVec::default(),
+				properties,
 				owner: to,
 			},
 			&budget,
@@ -384,6 +405,14 @@ impl<T: Config> NonfungibleHandle<T> {
 	fn finish_minting(&mut self, _caller: caller) -> Result<bool> {
 		Err("not implementable".into())
 	}
+}
+
+fn get_permission<T: Config>(collection_id: CollectionId, key: &PropertyKey) -> Result<PropertyPermission> {
+	let token_property_permissions = CollectionPropertyPermissions::<T>::try_get(collection_id)
+		.map_err(|_| Error::Revert("No permissions for collection".into()))?;
+	Ok(token_property_permissions.get(key)
+		.map(|p| p.clone())
+		.ok_or_else(|| Error::Revert("No permission for tokenURI".into()))?)
 }
 
 #[solidity_interface(name = "ERC721UniqueExtensions")]

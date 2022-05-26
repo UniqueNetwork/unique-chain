@@ -78,10 +78,24 @@ pub mod evm_collection {
 				.try_into()
 				.map_err(|_| error_feild_too_long(stringify!(token_prefix), MAX_TOKEN_PREFIX_LENGTH))?;
 	
+			let key: string = "tokenURI".into(); //TODO: make static
+			let key: up_data_structs::PropertyKey = key.into_bytes().try_into().map_err(|_| Error::Revert("".into()))?;
+			let permission = up_data_structs::PropertyPermission {
+				mutable: true,
+				collection_admin: true,
+				token_owner: false,
+			};
+			let mut token_property_permissions = up_data_structs::CollectionPropertiesPermissionsVec::default();
+			token_property_permissions.try_push(up_data_structs::PropertyKeyPermission{
+				key,
+				permission,
+			}).map_err(|e| Error::Revert(format!("{:?}", e)))?;
+
 			let data = CreateCollectionData {
 				name,
 				description,
 				token_prefix,
+				token_property_permissions,
 				..Default::default()
 			};
 	
