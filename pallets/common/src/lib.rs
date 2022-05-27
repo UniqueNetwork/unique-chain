@@ -496,17 +496,20 @@ pub mod pallet {
 			CollectionStats,
 			CollectionId,
 			TokenId,
-			PhantomType<TokenData<T::CrossAccountId>>,
-			PhantomType<RpcCollection<T::AccountId>>,
-			// RMRK
-			PhantomType<RmrkCollectionInfo<T::AccountId>>,
-			PhantomType<RmrkInstanceInfo<T::AccountId>>,
-			PhantomType<RmrkResourceInfo>,
-			PhantomType<RmrkPropertyInfo>,
-			PhantomType<RmrkBaseInfo<T::AccountId>>,
-			PhantomType<RmrkPartType>,
-			PhantomType<RmrkTheme>,
-			PhantomType<RmrkNftChild>,
+			PhantomType<(
+				TokenData<T::CrossAccountId>,
+				RpcCollection<T::AccountId>,
+
+				// RMRK
+				RmrkCollectionInfo<T::AccountId>,
+				RmrkInstanceInfo<T::AccountId>,
+				RmrkResourceInfo,
+				RmrkPropertyInfo,
+				RmrkBaseInfo<T::AccountId>,
+				RmrkPartType,
+				RmrkTheme,
+				RmrkNftChild,
+			)>,
 		),
 		QueryKind = OptionQuery,
 	>;

@@ -4,7 +4,7 @@
 import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Bytes, Null, Option, Result, U256, U8aFixed, u128, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
-import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, SpRuntimeDispatchError, UpDataStructsAccessMode, XcmV1MultiLocation, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, SpRuntimeDispatchError, XcmV1MultiLocation, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/events' {
   export interface AugmentedEvents<ApiType extends ApiTypes> {
@@ -567,6 +567,7 @@ declare module '@polkadot/api-base/types/events' {
        * * owner:  New owner address.
        **/
       CollectionOwnedChanged: AugmentedEvent<ApiType, [u32, AccountId32]>;
+      CollectionPermissionSet: AugmentedEvent<ApiType, [u32]>;
       /**
        * Collection sponsor was removed
        * 
@@ -585,48 +586,6 @@ declare module '@polkadot/api-base/types/events' {
        * * owner:  New sponsor address.
        **/
       CollectionSponsorSet: AugmentedEvent<ApiType, [u32, AccountId32]>;
-      /**
-       * const on chain schema was set
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       **/
-      ConstOnChainSchemaSet: AugmentedEvent<ApiType, [u32]>;
-      /**
-       * Mint permission	was set
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       **/
-      MintPermissionSet: AugmentedEvent<ApiType, [u32]>;
-      /**
-       * Offchain schema was set
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       **/
-      OffchainSchemaSet: AugmentedEvent<ApiType, [u32]>;
-      /**
-       * Public access mode was set
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * mode: New access state.
-       **/
-      PublicAccessModeSet: AugmentedEvent<ApiType, [u32, UpDataStructsAccessMode]>;
-      /**
-       * Schema version was set
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       **/
-      SchemaVersionSet: AugmentedEvent<ApiType, [u32]>;
       /**
        * New sponsor was confirm
        * 

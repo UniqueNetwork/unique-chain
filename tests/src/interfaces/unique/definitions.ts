@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import types from '../lookup';
-
 type RpcParam = {
   name: string;
   type: string;
@@ -37,7 +35,7 @@ const fun = (description: string, params: RpcParam[], type: string) => ({
 });
 
 export default {
-  types,
+  types: {},
   rpc: {
     adminlist: fun('Get admin list', [collectionParam], 'Vec<PalletEvmAccountBasicCrossAccountIdRepr>'),
     allowlist: fun('Get allowlist', [collectionParam], 'Vec<PalletEvmAccountBasicCrossAccountIdRepr>'),
