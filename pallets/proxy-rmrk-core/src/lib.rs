@@ -403,10 +403,8 @@ impl<T: Config> Pallet<T> {
         nft_type: NftType,
         properties: impl Iterator<Item=Property>
     ) -> Result<TokenId, DispatchError> {
+        todo!("store nft type");
         let data = CreateNftExData {
-            const_data: nft_type.encode()
-                .try_into()
-                .map_err(|_| <Error<T>>::NftTypeEncodeError)?,
             properties: BoundedVec::default(),
             owner: owner.clone(),
         };
@@ -528,13 +526,8 @@ impl<T: Config> Pallet<T> {
         Ok(nft_property)
     }
 
-    pub fn get_nft_type(collection_id: CollectionId, token_id: TokenId) -> Result<NftType, DispatchError> {
-        let token_data = <TokenData<T>>::get((collection_id, token_id))
-            .ok_or(<Error<T>>::NoAvailableNftId)?;
-
-        let mut const_data = token_data.const_data.as_slice();
-
-        NftType::decode(&mut const_data).map_err(|_| <Error<T>>::NoAvailableNftId.into())
+    pub fn get_nft_type(_collection_id: CollectionId, _token_id: TokenId) -> Result<NftType, DispatchError> {
+        todo!("should get it from properties?")
     }
 
     pub fn ensure_nft_type(collection_id: CollectionId, token_id: TokenId, nft_type: NftType) -> DispatchResult {

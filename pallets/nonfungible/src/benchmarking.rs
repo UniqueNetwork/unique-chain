@@ -29,9 +29,7 @@ use pallet_common::bench_init;
 const SEED: u32 = 1;
 
 fn create_max_item_data<T: Config>(owner: T::CrossAccountId) -> CreateItemData<T> {
-	let const_data = create_data::<CUSTOM_DATA_LIMIT>();
 	CreateItemData::<T> {
-		const_data,
 		owner,
 		properties: Default::default(),
 	}

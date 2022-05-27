@@ -321,7 +321,7 @@ impl<T: Config> Pallet<T> {
 			<CommonError<T>>::TransferNotAllowed
 		);
 
-		if collection.access == AccessMode::AllowList {
+		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(from)?;
 			collection.check_allowlist(to)?;
 		}
@@ -424,7 +424,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
-				collection.mint_mode,
+				collection.permissions.mint_mode(),
 				<CommonError<T>>::PublicMintingNotAllowed
 			);
 			collection.check_allowlist(sender)?;
@@ -566,7 +566,7 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult {
-		if collection.access == AccessMode::AllowList {
+		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(sender)?;
 			collection.check_allowlist(spender)?;
 		}
@@ -598,7 +598,7 @@ impl<T: Config> Pallet<T> {
 		if spender.conv_eq(from) {
 			return Ok(None);
 		}
-		if collection.access == AccessMode::AllowList {
+		if collection.permissions.access() == AccessMode::AllowList {
 			// `from`, `to` checked in [`transfer`]
 			collection.check_allowlist(spender)?;
 		}

@@ -109,15 +109,6 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 }
 
-fn error_unsupported_schema_version() -> Error {
-	alloc::format!(
-		"Unsupported schema version! Support only {:?}",
-		SchemaVersion::ImageURL
-	)
-	.as_str()
-	.into()
-}
-
 #[derive(ToLog)]
 pub enum ERC721Events {
 	Transfer {
@@ -167,16 +158,10 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// Returns token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
-		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
-			return Err(error_unsupported_schema_version());
-		}
-
 		self.consume_store_reads(1)?;
-		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+		let _token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		Ok(string::from_utf8_lossy(
-			&<TokenData<T>>::get((self.id, token_id))
-				.ok_or("token not found")?
-				.const_data,
+			todo!()
 		)
 		.into())
 	}
@@ -344,7 +329,6 @@ impl<T: Config> NonfungibleHandle<T> {
 			self,
 			&caller,
 			CreateItemData::<T> {
-				const_data: BoundedVec::default(),
 				properties: BoundedVec::default(),
 				owner: to,
 			},
@@ -366,10 +350,6 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_id: uint256,
 		token_uri: string,
 	) -> Result<bool> {
-		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
-			return Err(error_unsupported_schema_version());
-		}
-
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id: u32 = token_id.try_into().map_err(|_| "amount overflow")?;
@@ -385,13 +365,12 @@ impl<T: Config> NonfungibleHandle<T> {
 			return Err("item id should be next".into());
 		}
 
+		todo!("token uri");
+
 		<Pallet<T>>::create_item(
 			self,
 			&caller,
 			CreateItemData::<T> {
-				const_data: Vec::<u8>::from(token_uri)
-					.try_into()
-					.map_err(|_| "token uri is too long")?,
 				properties: BoundedVec::default(),
 				owner: to,
 			},
@@ -477,7 +456,6 @@ impl<T: Config> NonfungibleHandle<T> {
 		}
 		let data = (0..total_tokens)
 			.map(|_| CreateItemData::<T> {
-				const_data: BoundedVec::default(),
 				properties: BoundedVec::default(),
 				owner: to.clone(),
 			})
@@ -496,10 +474,6 @@ impl<T: Config> NonfungibleHandle<T> {
 		to: address,
 		tokens: Vec<(uint256, string)>,
 	) -> Result<bool> {
-		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
-			return Err(error_unsupported_schema_version());
-		}
-
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let mut expected_index = <TokensMinted<T>>::get(self.id)
@@ -517,10 +491,8 @@ impl<T: Config> NonfungibleHandle<T> {
 			}
 			expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
 
+			todo!("token uri");
 			data.push(CreateItemData::<T> {
-				const_data: Vec::<u8>::from(token_uri)
-					.try_into()
-					.map_err(|_| "token uri is too long")?,
 				properties: BoundedVec::default(),
 				owner: to.clone(),
 			});

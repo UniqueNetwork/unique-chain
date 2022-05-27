@@ -86,8 +86,6 @@ pub fn create_collection_raw<T: Config, R>(
 	let name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
 	let description = create_u16_data::<MAX_COLLECTION_DESCRIPTION_LENGTH>();
 	let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
-	let offchain_schema = create_data::<OFFCHAIN_SCHEMA_LIMIT>();
-	let const_on_chain_schema = create_data::<CONST_ON_CHAIN_SCHEMA_LIMIT>();
 	handler(
 		owner,
 		CreateCollectionData {
@@ -95,8 +93,6 @@ pub fn create_collection_raw<T: Config, R>(
 			name,
 			description,
 			token_prefix,
-			offchain_schema,
-			const_on_chain_schema,
 			..Default::default()
 		},
 	)

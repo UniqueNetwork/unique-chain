@@ -33,7 +33,7 @@ use pallet_structure::Pallet as PalletStructure;
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
-use sp_std::{vec::Vec, vec};
+use sp_std::{vec::Vec, vec, collections::btree_set::BTreeSet};
 use core::ops::Deref;
 use sp_std::collections::btree_map::BTreeMap;
 use codec::{Encode, Decode, MaxEncodedLen};
@@ -52,6 +52,7 @@ pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 #[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub struct ItemData<CrossAccountId> {
+	#[version(..2)]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
 
 	#[version(..2)]
@@ -148,9 +149,45 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
 			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
-				<TokenData<T>>::translate_values::<ItemDataVersion1<T::CrossAccountId>, _>(|v| {
+				let mut had_consts = BTreeSet::new();
+				<TokenData<T>>::translate::<ItemDataVersion1<T::CrossAccountId>, _>(|(collection, token), v| {
+					let mut props = vec![];
+					if !v.const_data.is_empty() {
+						props.push(Property {
+							key: b"_old_constData".to_vec().try_into().unwrap(),
+							value: v.const_data.clone().into_inner().try_into().expect("const too long"),
+						});
+						had_consts.insert(collection);
+					}
+					if !v.variable_data.is_empty() {
+						props.push(Property {
+							key: b"_old_variableData".to_vec().try_into().unwrap(),
+							value: v.variable_data.clone().into_inner().try_into().expect("variable too long"),
+						})
+					}
+					if !props.is_empty() {
+						Self::set_scoped_token_properties(
+							collection,
+							token,
+							PropertyScope::None,
+							props.into_iter(),
+						).expect("existing token data exceeds property storage");
+					}
 					Some(<ItemDataVersion2<T::CrossAccountId>>::from(v))
-				})
+				});
+				for collection in had_consts {
+					<PalletCommon<T>>::set_property_permission_unchecked(
+						collection,
+						PropertyKeyPermission {
+							key: b"_old_constData".to_vec().try_into().unwrap(),
+							permission: PropertyPermission {
+								mutable: false,
+								collection_admin: true,
+								token_owner: false,
+							},
+						}
+					).expect("failed to configure permission");
+				}
 			}
 
 			0
@@ -267,7 +304,7 @@ impl<T: Config> Pallet<T> {
 			<CommonError<T>>::NoPermission
 		);
 
-		if collection.access == AccessMode::AllowList {
+		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(sender)?;
 		}
 
@@ -493,7 +530,7 @@ impl<T: Config> Pallet<T> {
 			<CommonError<T>>::NoPermission
 		);
 
-		if collection.access == AccessMode::AllowList {
+		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(from)?;
 			collection.check_allowlist(to)?;
 		}
@@ -579,7 +616,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
-				collection.mint_mode,
+				collection.permissions.mint_mode(),
 				<CommonError<T>>::PublicMintingNotAllowed
 			);
 			collection.check_allowlist(sender)?;
@@ -639,7 +676,7 @@ impl<T: Config> Pallet<T> {
 				<TokenData<T>>::insert(
 					(collection.id, token),
 					ItemData {
-						const_data: data.const_data.clone(),
+						// const_data: data.const_data.clone(),
 						owner: data.owner.clone(),
 					},
 				);
@@ -756,7 +793,7 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		spender: Option<&T::CrossAccountId>,
 	) -> DispatchResult {
-		if collection.access == AccessMode::AllowList {
+		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(sender)?;
 			if let Some(spender) = spender {
 				collection.check_allowlist(spender)?;
@@ -791,7 +828,7 @@ impl<T: Config> Pallet<T> {
 		if spender.conv_eq(from) {
 			return Ok(());
 		}
-		if collection.access == AccessMode::AllowList {
+		if collection.permissions.access() == AccessMode::AllowList {
 			// `from`, `to` checked in [`transfer`]
 			collection.check_allowlist(spender)?;
 		}
@@ -875,7 +912,7 @@ impl<T: Config> Pallet<T> {
 			);
 			Ok(())
 		}
-		match handle.limits.nesting_rule() {
+		match handle.permissions.nesting() {
 			NestingRule::Disabled => fail!(<CommonError<T>>::NestingIsDisabled),
 			NestingRule::Owner => {
 				ensure_sender_allowed::<T>(handle.id, under, from, sender, nesting_budget)?

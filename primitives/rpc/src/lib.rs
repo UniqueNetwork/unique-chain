@@ -41,7 +41,6 @@ sp_api::decl_runtime_apis! {
 
 		fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>>;
 		fn topmost_token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>>;
-		fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>>;
 
 		fn collection_properties(collection: CollectionId, properties: Option<Vec<Vec<u8>>>) -> Result<Vec<Property>>;
 

@@ -29,9 +29,6 @@ macro_rules! impl_common_runtime_apis {
 
                     Ok(Some(<pallet_structure::Pallet<Runtime>>::find_topmost_owner(collection, token, &budget)?))
                 }
-                fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
-                    dispatch_unique_runtime!(collection.const_metadata(token))
-                }
 
                 fn collection_properties(
                     collection: CollectionId,
@@ -73,7 +70,6 @@ macro_rules! impl_common_runtime_apis {
                     keys: Option<Vec<Vec<u8>>>
                 ) -> Result<TokenData<CrossAccountId>, DispatchError> {
                     let token_data = TokenData {
-                        const_data: Self::const_metadata(collection, token_id)?,
                         properties: Self::token_properties(collection, token_id, keys)?,
                         owner: Self::token_owner(collection, token_id)?
                     };

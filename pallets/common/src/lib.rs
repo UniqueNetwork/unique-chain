@@ -55,7 +55,6 @@ use up_data_structs::{
 	SponsoringRateLimit,
 	budget::Budget,
 	COLLECTION_FIELD_LIMIT,
-	CollectionField,
 	PhantomType,
 	Property,
 	Properties,
@@ -77,6 +76,8 @@ use up_data_structs::{
 	RmrkPartType,
 	RmrkTheme,
 	RmrkNftChild,
+	CollectionPermissions,
+	SchemaVersion,
 };
 
 pub use pallet::*;
@@ -436,17 +437,6 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Large variable-size collection fields are extracted here
-	#[pallet::storage]
-	pub type CollectionData<T> = StorageNMap<
-		Key = (
-			Key<Twox64Concat, CollectionId>,
-			Key<Twox64Concat, CollectionField>,
-		),
-		Value = BoundedVec<u8, ConstU32<COLLECTION_FIELD_LIMIT>>,
-		QueryKind = ValueQuery,
-	>;
-
 	#[pallet::storage]
 	pub type AdminAmount<T> = StorageMap<
 		Hasher = Blake2_128Concat,
@@ -505,19 +495,37 @@ pub mod pallet {
 			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
 				use up_data_structs::{CollectionVersion1, CollectionVersion2};
 				<CollectionById<T>>::translate::<CollectionVersion1<T::AccountId>, _>(|id, v| {
-					Self::set_field_raw(
+					let mut props = Vec::new();
+					if !v.offchain_schema.is_empty() {
+						props.push(Property {
+							key: b"_old_offchainSchema".to_vec().try_into().unwrap(),
+							value: v.offchain_schema.clone().into_inner().try_into().expect("offchain schema too big"),
+						});
+					}
+					if !v.variable_on_chain_schema.is_empty() {
+						props.push(Property {
+							key: b"_old_variableOnChainSchema".to_vec().try_into().unwrap(),
+							value: v.variable_on_chain_schema.clone().into_inner().try_into().expect("offchain schema too big"),
+						});
+					}
+					if !v.const_on_chain_schema.is_empty() {
+						props.push(Property {
+							key: b"_old_constOnChainSchema".to_vec().try_into().unwrap(),
+							value: v.const_on_chain_schema.clone().into_inner().try_into().expect("offchain schema too big"),
+						});
+					}
+					props.push(Property {
+						key: b"_old_schemaVersion".to_vec().try_into().unwrap(),
+						value: match v.schema_version {
+							SchemaVersion::ImageURL => b"ImageUrl".as_slice(),
+							SchemaVersion::Unique => b"Unique".as_slice(),
+						}.to_vec().try_into().unwrap(),
+					});
+					Self::set_scoped_collection_properties(
 						id,
-						CollectionField::OffchainSchema,
-						v.offchain_schema.clone().into_inner(),
-					)
-					.expect("data has lower bounds than field");
-					Self::set_field_raw(
-						id,
-						CollectionField::ConstOnChainSchema,
-						v.const_on_chain_schema.clone().into_inner(),
-					)
-					.expect("data has lower bounds than field");
-
+						PropertyScope::None,
+						props.into_iter(),
+					).expect("existing data larger than properties");
 					Some(CollectionVersion2::from(v))
 				});
 			}
@@ -587,7 +595,6 @@ impl<T: Config> Pallet<T> {
 			owner_can_transfer: Some(limits.owner_can_transfer()),
 			owner_can_destroy: Some(limits.owner_can_destroy()),
 			transfers_enabled: Some(limits.transfers_enabled()),
-			nesting_rule: Some(limits.nesting_rule().clone()),
 		};
 
 		Some(effective_limits)
@@ -599,12 +606,10 @@ impl<T: Config> Pallet<T> {
 			description,
 			owner,
 			mode,
-			access,
 			token_prefix,
-			mint_mode,
-			schema_version,
 			sponsorship,
 			limits,
+			permissions,
 		} = <CollectionById<T>>::get(collection)?;
 
 		let token_property_permissions = <CollectionPropertyPermissions<T>>::get(collection)
@@ -628,26 +633,43 @@ impl<T: Config> Pallet<T> {
 			description: description.into_inner(),
 			owner,
 			mode,
-			access,
 			token_prefix: token_prefix.into_inner(),
-			mint_mode,
-			schema_version,
 			sponsorship,
 			limits,
-			offchain_schema: <CollectionData<T>>::get((
-				collection,
-				CollectionField::OffchainSchema,
-			))
-			.into_inner(),
-			const_on_chain_schema: <CollectionData<T>>::get((
-				collection,
-				CollectionField::ConstOnChainSchema,
-			))
-			.into_inner(),
+			permissions,
 			token_property_permissions,
 			properties,
 		})
 	}
+}
+
+macro_rules! limit_default {
+	($old:ident, $new:ident, $($field:ident $(($arg:expr))? => $check:expr),* $(,)?) => {{
+		$(
+			if let Some($new) = $new.$field {
+				let $old = $old.$field($($arg)?);
+				let _ = $new;
+				let _ = $old;
+				$check
+			} else {
+				$new.$field = $old.$field
+			}
+		)*
+	}};
+}
+macro_rules! limit_default_clone {
+	($old:ident, $new:ident, $($field:ident $(($arg:expr))? => $check:expr),* $(,)?) => {{
+		$(
+			if let Some($new) = $new.$field.clone() {
+				let $old = $old.$field($($arg)?);
+				let _ = $new;
+				let _ = $old;
+				$check
+			} else {
+				$new.$field = $old.$field.clone()
+			}
+		)*
+	}};
 }
 
 impl<T: Config> Pallet<T> {
@@ -681,11 +703,8 @@ impl<T: Config> Pallet<T> {
 			owner: owner.clone(),
 			name: data.name,
 			mode: data.mode.clone(),
-			mint_mode: false,
-			access: data.access.unwrap_or_default(),
 			description: data.description,
 			token_prefix: data.token_prefix,
-			schema_version: data.schema_version.unwrap_or_default(),
 			sponsorship: data
 				.pending_sponsor
 				.map(SponsorshipState::Unconfirmed)
@@ -694,6 +713,10 @@ impl<T: Config> Pallet<T> {
 				.limits
 				.map(|limits| Self::clamp_limits(data.mode.clone(), &Default::default(), limits))
 				.unwrap_or_else(|| Ok(CollectionLimits::default()))?,
+			permissions: data
+				.permissions
+				.map(|permissions| Self::clamp_permissions(data.mode.clone(), &Default::default(), permissions))
+				.unwrap_or_else(|| Ok(CollectionPermissions::default()))?,
 		};
 
 		let mut collection_properties = up_data_structs::CollectionProperties::get();
@@ -732,18 +755,6 @@ impl<T: Config> Pallet<T> {
 		<CreatedCollectionCount<T>>::put(created_count);
 		<Pallet<T>>::deposit_event(Event::CollectionCreated(id, data.mode.id(), owner.clone()));
 		<CollectionById<T>>::insert(id, collection);
-		Self::set_field_raw(
-			id,
-			CollectionField::OffchainSchema,
-			data.offchain_schema.into_inner(),
-		)
-		.expect("data has lower bounds than field");
-		Self::set_field_raw(
-			id,
-			CollectionField::ConstOnChainSchema,
-			data.const_on_chain_schema.into_inner(),
-		)
-		.expect("data has lower bounds than field");
 		Ok(id)
 	}
 
@@ -766,7 +777,6 @@ impl<T: Config> Pallet<T> {
 
 		<DestroyedCollectionCount<T>>::put(destroyed_collections);
 		<CollectionById<T>>::remove(collection.id);
-		<CollectionData<T>>::remove_prefix((collection.id,), None);
 		<AdminAmount<T>>::remove(collection.id);
 		<IsAdmin<T>>::remove_prefix((collection.id,), None);
 		<Allowlist<T>>::remove_prefix((collection.id,), None);
@@ -863,6 +873,18 @@ impl<T: Config> Pallet<T> {
 			Self::delete_collection_property(collection, sender, key)?;
 		}
 
+		Ok(())
+	}
+
+	// For migrations
+	pub fn set_property_permission_unchecked(
+		collection: CollectionId,
+		property_permission: PropertyKeyPermission,
+	) -> DispatchResult {
+		<CollectionPropertyPermissions<T>>::try_mutate(collection, |permissions| {
+			permissions.try_set(property_permission.key, property_permission.permission)
+		})
+		.map_err(<Error<T>>::from)?;
 		Ok(())
 	}
 
@@ -989,35 +1011,6 @@ impl<T: Config> Pallet<T> {
 		Ok(key_permissions)
 	}
 
-	fn set_field_raw(
-		collection_id: CollectionId,
-		field: CollectionField,
-		value: Vec<u8>,
-	) -> DispatchResult {
-		if !value.is_empty() {
-			<CollectionData<T>>::insert(
-				(collection_id, field),
-				BoundedVec::try_from(value).map_err(|_| <Error<T>>::CollectionFieldSizeExceeded)?,
-			)
-		} else {
-			<CollectionData<T>>::remove((collection_id, field));
-		}
-		Ok(())
-	}
-
-	pub fn set_field(
-		collection: &CollectionHandle<T>,
-		sender: &T::CrossAccountId,
-		field: CollectionField,
-		value: Vec<u8>,
-	) -> DispatchResult {
-		collection.check_is_owner_or_admin(sender)?;
-
-		// =========
-
-		Self::set_field_raw(collection.id, field, value)
-	}
-
 	pub fn toggle_allowlist(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
@@ -1077,21 +1070,6 @@ impl<T: Config> Pallet<T> {
 		old_limit: &CollectionLimits,
 		mut new_limit: CollectionLimits,
 	) -> Result<CollectionLimits, DispatchError> {
-		macro_rules! limit_default {
-				($old:ident, $new:ident, $($field:ident $(($arg:expr))? => $check:expr),* $(,)?) => {{
-					$(
-						if let Some($new) = $new.$field {
-							let $old = $old.$field($($arg)?);
-							let _ = $new;
-							let _ = $old;
-							$check
-						} else {
-							$new.$field = $old.$field
-						}
-					)*
-				}};
-			}
-
 		limit_default!(old_limit, new_limit,
 			account_token_ownership_limit => ensure!(
 				new_limit <= MAX_TOKEN_OWNERSHIP,
@@ -1123,6 +1101,15 @@ impl<T: Config> Pallet<T> {
 			),
 			sponsored_data_rate_limit => {},
 			transfers_enabled => {},
+		);
+		Ok(new_limit)
+	}
+	pub fn clamp_permissions(
+		mode: CollectionMode,
+		old_limit: &CollectionPermissions,
+		mut new_limit: CollectionPermissions,
+	) -> Result<CollectionPermissions, DispatchError> {
+		limit_default_clone!(old_limit, new_limit,
 		);
 		Ok(new_limit)
 	}
@@ -1253,7 +1240,6 @@ pub trait CommonCollectionOperations<T: Config> {
 	fn last_token_id(&self) -> TokenId;
 
 	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
-	fn const_metadata(&self, token: TokenId) -> Vec<u8>;
 	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue>;
 	fn token_properties(&self, token_id: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property>;
 	/// Amount of unique collection tokens

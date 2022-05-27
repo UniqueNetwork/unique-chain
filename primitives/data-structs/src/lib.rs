@@ -186,7 +186,6 @@ impl TryFrom<U256> for TokenId {
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct TokenData<CrossAccountId> {
-	pub const_data: Vec<u8>,
 	pub properties: Vec<Property>,
 	pub owner: Option<CrossAccountId>,
 }
@@ -223,7 +222,7 @@ pub trait SponsoringResolve<AccountId, Call> {
 	fn resolve(who: &AccountId, call: &Call) -> Option<AccountId>;
 }
 
-#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Eq, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum AccessMode {
 	Normal,
@@ -296,22 +295,26 @@ impl<T> Default for SponsorshipState<T> {
 pub struct Collection<AccountId> {
 	pub owner: AccountId,
 	pub mode: CollectionMode,
+	#[version(..2)]
 	pub access: AccessMode,
 	pub name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
 	pub description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
 	pub token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
+
+	#[version(..2)]
 	pub mint_mode: bool,
 
 	#[version(..2)]
 	pub offchain_schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
 
+	#[version(..2)]
 	pub schema_version: SchemaVersion,
 	pub sponsorship: SponsorshipState<AccountId>,
 
-	#[version(..2)]
-	pub limits: CollectionLimitsVersion1, // Collection private restrictions
-	#[version(2.., upper(limits.into()))]
-	pub limits: CollectionLimitsVersion2,
+	pub limits: CollectionLimits,
+
+	#[version(2.., upper(Default::default()))]
+	pub permissions: CollectionPermissions,
 
 	#[version(..2)]
 	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
@@ -329,25 +332,14 @@ pub struct Collection<AccountId> {
 pub struct RpcCollection<AccountId> {
 	pub owner: AccountId,
 	pub mode: CollectionMode,
-	pub access: AccessMode,
 	pub name: Vec<u16>,
 	pub description: Vec<u16>,
 	pub token_prefix: Vec<u8>,
-	pub mint_mode: bool,
-	pub offchain_schema: Vec<u8>,
-	pub schema_version: SchemaVersion,
 	pub sponsorship: SponsorshipState<AccountId>,
 	pub limits: CollectionLimits,
-	pub const_on_chain_schema: Vec<u8>,
+	pub permissions: CollectionPermissions,
 	pub token_property_permissions: Vec<PropertyKeyPermission>,
 	pub properties: Vec<Property>,
-}
-
-#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-pub enum CollectionField {
-	ConstOnChainSchema,
-	OffchainSchema,
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Derivative, MaxEncodedLen)]
@@ -359,11 +351,9 @@ pub struct CreateCollectionData<AccountId> {
 	pub name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
 	pub description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
 	pub token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
-	pub offchain_schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
-	pub schema_version: Option<SchemaVersion>,
 	pub pending_sponsor: Option<AccountId>,
 	pub limits: Option<CollectionLimits>,
-	pub const_on_chain_schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>,
+	pub permissions: Option<CollectionPermissions>,
 	pub token_property_permissions: CollectionPropertiesPermissionsVec,
 	pub properties: CollectionPropertiesVec,
 }
@@ -375,7 +365,6 @@ pub type CollectionPropertiesVec =
 	BoundedVec<Property, ConstU32<MAX_PROPERTIES_PER_ITEM>>;
 
 /// All fields are wrapped in `Option`s, where None means chain default
-#[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionLimits {
@@ -395,9 +384,6 @@ pub struct CollectionLimits {
 	pub owner_can_transfer: Option<bool>,
 	pub owner_can_destroy: Option<bool>,
 	pub transfers_enabled: Option<bool>,
-
-	#[version(2.., upper(None))]
-	pub nesting_rule: Option<NestingRule>,
 }
 
 impl CollectionLimits {
@@ -444,9 +430,26 @@ impl CollectionLimits {
 			SponsoringRateLimit::Blocks(v) => Some(v.min(MAX_SPONSOR_TIMEOUT)),
 		}
 	}
-	pub fn nesting_rule(&self) -> &NestingRule {
+}
+
+#[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub struct CollectionPermissions {
+	pub access: Option<AccessMode>,
+	pub mint_mode: Option<bool>,
+	pub nesting: Option<NestingRule>,
+}
+
+impl CollectionPermissions {
+	pub fn access(&self) -> AccessMode {
+		self.access.unwrap_or(AccessMode::Normal)
+	}
+	pub fn mint_mode(&self) -> bool {
+		self.mint_mode.unwrap_or(false)
+	}
+	pub fn nesting(&self) -> &NestingRule {
 		static DEFAULT: NestingRule = NestingRule::Disabled;
-		self.nesting_rule.as_ref().unwrap_or(&DEFAULT)
+		self.nesting.as_ref().unwrap_or(&DEFAULT)
 	}
 }
 
@@ -520,8 +523,6 @@ pub enum CreateItemData {
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
 #[derivative(Debug)]
 pub struct CreateNftExData<CrossAccountId> {
-	#[derivative(Debug(format_with = "bounded::vec_debug"))]
-	pub const_data: BoundedVec<u8, CustomDataLimit>,
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub properties: CollectionPropertiesVec,
 	pub owner: CrossAccountId,

@@ -2399,28 +2399,6 @@ fn collection_admins_bound_neg() {
 // #endregion
 
 #[test]
-fn set_const_on_chain_schema() {
-	new_test_ext().execute_with(|| {
-		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-
-		let origin1 = Origin::signed(1);
-		assert_ok!(Unique::set_const_on_chain_schema(
-			origin1,
-			collection_id,
-			b"test const on chain schema".to_vec().try_into().unwrap()
-		));
-
-		assert_eq!(
-			<pallet_common::CollectionData<Test>>::get((
-				collection_id,
-				CollectionField::ConstOnChainSchema
-			)),
-			b"test const on chain schema".to_vec()
-		);
-	});
-}
-
-#[test]
 fn collection_transfer_flag_works() {
 	new_test_ext().execute_with(|| {
 		let origin1 = Origin::signed(1);

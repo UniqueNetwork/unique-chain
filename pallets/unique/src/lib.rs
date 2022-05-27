@@ -35,10 +35,10 @@ use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{sp_std::prelude::Vec};
 use up_data_structs::{
-	CONST_ON_CHAIN_SCHEMA_LIMIT, OFFCHAIN_SCHEMA_LIMIT, MAX_COLLECTION_NAME_LENGTH,
+	MAX_COLLECTION_NAME_LENGTH,
 	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, AccessMode, CreateItemData,
-	CollectionLimits, CollectionId, CollectionMode, TokenId, SchemaVersion, SponsorshipState,
-	CreateCollectionData, CreateItemExData, budget, CollectionField, Property, PropertyKey,
+	CollectionLimits, CollectionPermissions, CollectionId, CollectionMode, TokenId, SponsorshipState,
+	CreateCollectionData, CreateItemExData, budget, Property, PropertyKey,
 	PropertyKeyPermission,
 };
 use pallet_evm::account::CrossAccountId;
@@ -161,6 +161,8 @@ decl_event! {
 		///
 		/// * collection_id: Globally unique collection identifier.
 		CollectionLimitSet(CollectionId),
+
+		CollectionPermissionSet(CollectionId),
 
 		/// Mint permission	was set
 		///
@@ -417,67 +419,6 @@ decl_module! {
 			));
 
 			Ok(())
-		}
-
-		/// Toggle between normal and allow list access for the methods with access for `Anyone`.
-		///
-		/// # Permissions
-		///
-		/// * Collection Owner.
-		///
-		/// # Arguments
-		///
-		/// * collection_id.
-		///
-		/// * mode: [AccessMode]
-		#[weight = <SelfWeightOf<T>>::set_public_access_mode()]
-		#[transactional]
-		pub fn set_public_access_mode(origin, collection_id: CollectionId, mode: AccessMode) -> DispatchResult
-		{
-			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-
-			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_owner(&sender)?;
-
-			target_collection.access = mode.clone();
-
-			<Pallet<T>>::deposit_event(Event::<T>::PublicAccessModeSet(
-				collection_id,
-				mode
-			));
-
-			target_collection.save()
-		}
-
-		/// Allows Anyone to create tokens if:
-		/// * Allow List is enabled, and
-		/// * Address is added to allow list, and
-		/// * This method was called with True parameter
-		///
-		/// # Permissions
-		/// * Collection Owner
-		///
-		/// # Arguments
-		///
-		/// * collection_id.
-		///
-		/// * mint_permission: Boolean parameter. If True, allows minting to Anyone with conditions above.
-		#[weight = <SelfWeightOf<T>>::set_mint_permission()]
-		#[transactional]
-		pub fn set_mint_permission(origin, collection_id: CollectionId, mint_permission: bool) -> DispatchResult
-		{
-			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-
-			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_owner(&sender)?;
-
-			target_collection.mint_mode = mint_permission;
-
-			<Pallet<T>>::deposit_event(Event::<T>::MintPermissionSet(
-				collection_id
-			));
-
-			target_collection.save()
 		}
 
 		/// Change the owner of the collection.
@@ -941,103 +882,6 @@ decl_module! {
 			dispatch_call::<T, _>(collection_id, |d| d.transfer_from(sender, from, recipient, item_id, value, &budget))
 		}
 
-		/// Set schema standard
-		/// ImageURL
-		/// Unique
-		///
-		/// # Permissions
-		///
-		/// * Collection Owner
-		/// * Collection Admin
-		///
-		/// # Arguments
-		///
-		/// * collection_id.
-		///
-		/// * schema: SchemaVersion: enum
-		#[weight = <SelfWeightOf<T>>::set_schema_version()]
-		#[transactional]
-		pub fn set_schema_version(
-			origin,
-			collection_id: CollectionId,
-			version: SchemaVersion
-		) -> DispatchResult {
-			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_owner_or_admin(&sender)?;
-			target_collection.schema_version = version;
-
-			<Pallet<T>>::deposit_event(Event::<T>::SchemaVersionSet(
-				collection_id
-			));
-
-			target_collection.save()
-		}
-
-		/// Set off-chain data schema.
-		///
-		/// # Permissions
-		///
-		/// * Collection Owner
-		/// * Collection Admin
-		///
-		/// # Arguments
-		///
-		/// * collection_id.
-		///
-		/// * schema: String representing the offchain data schema.
-		#[weight = <SelfWeightOf<T>>::set_offchain_schema(schema.len() as u32)]
-		#[transactional]
-		pub fn set_offchain_schema(
-			origin,
-			collection_id: CollectionId,
-			schema: BoundedVec<u8, ConstU32<OFFCHAIN_SCHEMA_LIMIT>>,
-		) -> DispatchResult {
-			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-
-			// =========
-
-			<PalletCommon<T>>::set_field(&collection, &sender, CollectionField::OffchainSchema, schema.into_inner())?;
-
-			<Pallet<T>>::deposit_event(Event::<T>::OffchainSchemaSet(
-				collection_id
-			));
-			Ok(())
-		}
-
-		/// Set const on-chain data schema.
-		///
-		/// # Permissions
-		///
-		/// * Collection Owner
-		/// * Collection Admin
-		///
-		/// # Arguments
-		///
-		/// * collection_id.
-		///
-		/// * schema: String representing the const on-chain data schema.
-		#[weight = <SelfWeightOf<T>>::set_const_on_chain_schema(schema.len() as u32)]
-		#[transactional]
-		pub fn set_const_on_chain_schema (
-			origin,
-			collection_id: CollectionId,
-			schema: BoundedVec<u8, ConstU32<CONST_ON_CHAIN_SCHEMA_LIMIT>>
-		) -> DispatchResult {
-			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-
-			// =========
-
-			<PalletCommon<T>>::set_field(&collection, &sender, CollectionField::ConstOnChainSchema, schema.into_inner())?;
-
-			<Pallet<T>>::deposit_event(Event::<T>::ConstOnChainSchemaSet(
-				collection_id
-			));
-			Ok(())
-		}
-
 		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
 		#[transactional]
 		pub fn set_collection_limits(
@@ -1053,6 +897,27 @@ decl_module! {
 			target_collection.limits = <PalletCommon<T>>::clamp_limits(target_collection.mode.clone(), &old_limit, new_limit)?;
 
 			<Pallet<T>>::deposit_event(Event::<T>::CollectionLimitSet(
+				collection_id
+			));
+
+			target_collection.save()
+		}
+
+		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
+		#[transactional]
+		pub fn set_collection_permissions(
+			origin,
+			collection_id: CollectionId,
+			new_limit: CollectionPermissions,
+		) -> DispatchResult {
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			target_collection.check_is_owner(&sender)?;
+			let old_limit = &target_collection.permissions;
+
+			target_collection.permissions = <PalletCommon<T>>::clamp_permissions(target_collection.mode.clone(), &old_limit, new_limit)?;
+
+			<Pallet<T>>::deposit_event(Event::<T>::CollectionPermissionSet(
 				collection_id
 			));
 

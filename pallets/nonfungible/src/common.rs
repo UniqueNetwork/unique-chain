@@ -116,7 +116,6 @@ fn map_create_data<T: Config>(
 ) -> Result<CreateItemData<T>, DispatchError> {
 	match data {
 		up_data_structs::CreateItemData::NFT(data) => Ok(CreateItemData::<T> {
-			const_data: data.const_data,
 			properties: data.properties,
 			owner: to.clone(),
 		}),
@@ -376,12 +375,6 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId> {
 		<TokenData<T>>::get((self.id, token)).map(|t| t.owner)
-	}
-	fn const_metadata(&self, token: TokenId) -> Vec<u8> {
-		<TokenData<T>>::get((self.id, token))
-			.map(|t| t.const_data)
-			.unwrap_or_default()
-			.into_inner()
 	}
 
 	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {

@@ -51,27 +51,27 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::burn_item()
 	}
 
-	fn set_collection_properties(amount: u32) -> Weight {
+	fn set_collection_properties(_amount: u32) -> Weight {
 		// Error
 		0
 	}
 
-	fn delete_collection_properties(amount: u32) -> Weight {
+	fn delete_collection_properties(_amount: u32) -> Weight {
 		// Error
 		0
 	}
 
-	fn set_token_properties(amount: u32) -> Weight {
+	fn set_token_properties(_amount: u32) -> Weight {
 		// Error
 		0
 	}
 
-	fn delete_token_properties(amount: u32) -> Weight {
+	fn delete_token_properties(_amount: u32) -> Weight {
 		// Error
 		0
 	}
 
-	fn set_property_permissions(amount: u32) -> Weight {
+	fn set_property_permissions(_amount: u32) -> Weight {
 		// Error
 		0
 	}
@@ -320,9 +320,6 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 	fn token_owner(&self, _token: TokenId) -> Option<T::CrossAccountId> {
 		None
-	}
-	fn const_metadata(&self, _token: TokenId) -> Vec<u8> {
-		Vec::new()
 	}
 
 	fn token_property(&self, _token_id: TokenId, _key: &PropertyKey) -> Option<PropertyValue> {

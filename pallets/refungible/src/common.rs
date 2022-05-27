@@ -336,11 +336,6 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	fn token_owner(&self, _token: TokenId) -> Option<T::CrossAccountId> {
 		None
 	}
-	fn const_metadata(&self, token: TokenId) -> Vec<u8> {
-		<TokenData<T>>::get((self.id, token))
-			.const_data
-			.into_inner()
-	}
 
 	fn token_property(&self, _token_id: TokenId, _key: &PropertyKey) -> Option<PropertyValue> {
 		None
