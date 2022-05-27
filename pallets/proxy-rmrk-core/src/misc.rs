@@ -26,6 +26,18 @@ impl<T: Decode + Default, S> RmrkDecode<T, S> for BoundedVec<u8, S> {
     }
 }
 
+pub trait RmrkRebind<T, S> {
+    fn rebind(&self) -> BoundedVec<u8, S>;
+}
+
+impl<T, S> RmrkRebind<T, S> for BoundedVec<u8, T> where BoundedVec<u8, S>: TryFrom<Vec<u8>> {
+    fn rebind(&self) -> BoundedVec<u8, S> {
+        BoundedVec::<u8, S>::try_from(
+            self.clone().into_inner()
+        ).unwrap_or_default()
+    }
+}
+
 #[derive(Encode, Decode, PartialEq, Eq)]
 pub enum CollectionType {
     Regular,

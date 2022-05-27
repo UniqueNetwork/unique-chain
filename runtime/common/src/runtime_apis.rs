@@ -142,7 +142,7 @@ macro_rules! impl_common_runtime_apis {
                 }
 
                 fn collection_by_id(collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo<AccountId>>, DispatchError> {
-                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, RmrkDecode}};
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, RmrkDecode, RmrkRebind}};
 
                     let collection_id = CollectionId(collection_id);
                     let collection = match RmrkCore::get_typed_nft_collection(collection_id, CollectionType::Regular) {
@@ -156,7 +156,7 @@ macro_rules! impl_common_runtime_apis {
                         issuer: collection.owner.clone(),
                         metadata: RmrkCore::get_collection_property(collection_id, RmrkProperty::Metadata)?.decode_or_default(),
                         max: collection.limits.token_limit,
-                        symbol: collection.token_prefix.decode_or_default(),
+                        symbol: collection.token_prefix.rebind(),
                         nfts_count
                     }))
                 }
@@ -204,22 +204,21 @@ macro_rules! impl_common_runtime_apis {
                 }
 
                 fn nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
-                    use up_data_structs::mapping::TokenAddressMapping;
-
                     let collection_id = CollectionId(collection_id);
                     let nft_id = TokenId(nft_id);
                     if !RmrkCore::nft_exists(collection_id, nft_id) { return Ok(Vec::new()); }
 
-                    let cross_account_id = CrossAccountId::from_eth(
-                        EvmTokenAddressMapping::token_to_address(collection_id, nft_id)
-                    );
-
                     Ok(
-                        pallet_nonfungible::Owned::<Runtime>::iter_prefix((collection_id, cross_account_id))
-                            .map(|(child_id, _)| RmrkNftChild {
-                                collection_id: collection_id.0, // todo make sure they're always from this collection // spoiler: they're not
-                                nft_id: child_id.0,
-                            }).collect()
+                        pallet_nonfungible::TokenChildren::<Runtime>::iter_prefix((collection_id, nft_id))
+                            .filter_map(|(child_id, is_child)| 
+                                match is_child {
+                                    true => Some(RmrkNftChild {
+                                        collection_id: child_id.0.0,
+                                        nft_id: child_id.1.0,
+                                    }),
+                                    false => None,
+                                }
+                            ).collect()
                     )
                 }
 
@@ -332,7 +331,7 @@ macro_rules! impl_common_runtime_apis {
 
                 fn base(base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
                     use pallet_proxy_rmrk_core::{
-                        RmrkProperty, misc::{CollectionType, RmrkDecode},
+                        RmrkProperty, misc::{CollectionType, RmrkDecode, RmrkRebind},
                     };
 
                     let collection_id = CollectionId(base_id);
@@ -344,7 +343,7 @@ macro_rules! impl_common_runtime_apis {
                     Ok(Some(RmrkBaseInfo {
                         issuer: collection.owner.clone(),
                         base_type: RmrkCore::get_collection_property(collection_id, RmrkProperty::BaseType)?.decode_or_default(),
-                        symbol: collection.token_prefix.decode_or_default(),
+                        symbol: collection.token_prefix.rebind(),
                     }))
                 }
 
