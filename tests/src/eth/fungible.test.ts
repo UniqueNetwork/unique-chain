@@ -362,18 +362,3 @@ describe('Fungible: Substrate calls', () => {
     ]);
   });
 });
-
-describe('Fungible metadata', () => {
-  itWeb3('Returns fungible decimals', async ({api, web3}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'Fungible', decimalPoints: 6},
-    });
-    const caller = await createEthAccountWithBalance(api, web3);
-
-    const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(fungibleAbi as any, address, {from: caller, ...GAS_ARGS});
-    const decimals = await contract.methods.decimals().call();
-
-    expect(+decimals).to.equal(6);
-  });
-});

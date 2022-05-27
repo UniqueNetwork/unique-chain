@@ -6082,7 +6082,6 @@ dependencies = [
 name = "pallet-evm-contract-helpers"
 version = "0.1.0"
 dependencies = [
- "ethereum",
  "evm-coder",
  "fp-evm-mapping",
  "frame-support",
@@ -6091,7 +6090,6 @@ dependencies = [
  "pallet-common",
  "pallet-evm",
  "pallet-evm-coder-substrate",
- "pallet-nonfungible",
  "parity-scale-codec 3.1.2",
  "scale-info",
  "sp-core",

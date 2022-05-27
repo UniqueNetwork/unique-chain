@@ -36,17 +36,12 @@ import {
 import {
   addCollectionAdminExpectSuccess,
   createCollectionExpectSuccess,
-  getCreateCollectionResult,
   getDetailedCollectionInfo,
   transferBalanceTo,
 } from '../util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
-import {
-  submitTransactionAsync,
-} from '../substrate/substrate-api';
 import getBalance from '../substrate/get-balance';
-import {alicesPublicKey} from '../accounts';
-import { evmToAddress } from '@polkadot/util-crypto';
+import {evmToAddress} from '@polkadot/util-crypto';
 
 describe('Sponsoring EVM contracts', () => {
   itWeb3('Sponsoring can be set by the address that has deployed the contract', async ({api, web3}) => {

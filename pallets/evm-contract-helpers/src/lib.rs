@@ -31,10 +31,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config
-		+ pallet_evm_coder_substrate::Config
-		+ pallet_evm::account::Config
-		+ pallet_nonfungible::Config
+		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_evm::account::Config
 	{
 		type ContractAddress: Get<H160>;
 		type DefaultSponsoringRateLimit: Get<Self::BlockNumber>;

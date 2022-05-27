@@ -3039,7 +3039,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'AccountNotEmpty' | 'AccountIsNotMigrating';
   }
 
-  /** @name SpRuntimeMultiSignature (369) */
+  /** @name SpRuntimeMultiSignature (423) */
   export interface SpRuntimeMultiSignature extends Enum {
     readonly isEd25519: boolean;
     readonly asEd25519: SpCoreEd25519Signature;
@@ -3050,31 +3050,31 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Ed25519' | 'Sr25519' | 'Ecdsa';
   }
 
-  /** @name SpCoreEd25519Signature (370) */
+  /** @name SpCoreEd25519Signature (424) */
   export interface SpCoreEd25519Signature extends U8aFixed {}
 
-  /** @name SpCoreSr25519Signature (372) */
+  /** @name SpCoreSr25519Signature (426) */
   export interface SpCoreSr25519Signature extends U8aFixed {}
 
-  /** @name SpCoreEcdsaSignature (373) */
+  /** @name SpCoreEcdsaSignature (427) */
   export interface SpCoreEcdsaSignature extends U8aFixed {}
 
-  /** @name FrameSystemExtensionsCheckSpecVersion (376) */
+  /** @name FrameSystemExtensionsCheckSpecVersion (430) */
   export type FrameSystemExtensionsCheckSpecVersion = Null;
 
-  /** @name FrameSystemExtensionsCheckGenesis (377) */
+  /** @name FrameSystemExtensionsCheckGenesis (431) */
   export type FrameSystemExtensionsCheckGenesis = Null;
 
-  /** @name FrameSystemExtensionsCheckNonce (380) */
+  /** @name FrameSystemExtensionsCheckNonce (434) */
   export interface FrameSystemExtensionsCheckNonce extends Compact<u32> {}
 
-  /** @name FrameSystemExtensionsCheckWeight (381) */
+  /** @name FrameSystemExtensionsCheckWeight (435) */
   export type FrameSystemExtensionsCheckWeight = Null;
 
-  /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (382) */
+  /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (436) */
   export interface PalletTemplateTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
 
-  /** @name OpalRuntimeRuntime (383) */
+  /** @name OpalRuntimeRuntime (437) */
   export type OpalRuntimeRuntime = Null;
 
   /** @name PalletEthereumFakeTransactionFinalizer (438) */

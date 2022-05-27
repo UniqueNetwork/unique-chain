@@ -15,8 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use core::marker::PhantomData;
-use evm_coder::{abi::AbiWriter, execution::*, generate_stubgen, solidity_interface, types::*, ToLog};
-use ethereum as _;
+use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure,
@@ -39,16 +38,6 @@ impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
 	fn into_recorder(self) -> SubstrateRecorder<T> {
 		self.0
 	}
-}
-
-#[derive(ToLog)]
-pub enum ContractHelperEvent {
-	CollectionCreated {
-		#[indexed]
-		owner: address,
-		#[indexed]
-		collection_id: address,
-	},
 }
 
 #[solidity_interface(name = "ContractHelpers")]
