@@ -23,12 +23,12 @@ import Web3 from 'web3';
 import usingApi, {submitTransactionAsync} from '../../substrate/substrate-api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
-import {CrossAccountId, getGenericResult, UNIQUE} from '../../util/helpers';
+import {CrossAccountId, getDetailedCollectionInfo, getGenericResult, UNIQUE} from '../../util/helpers';
 import * as solc from 'solc';
 import config from '../../config';
 import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
-import collectionAbi from '../nonFungibleAbi.json';
+import nonFungibleAbi from '../nonFungibleAbi.json';
 import collectionHelperAbi from '../collectionHelperAbi.json';
 import getBalance from '../../substrate/get-balance';
 import waitNewBlocks from '../../substrate/wait-new-blocks';
@@ -66,6 +66,13 @@ function encodeIntBE(v: number): number[] {
     (v >> 8) & 0xff,
     v & 0xff,
   ];
+}
+
+export async function getCollectionAddressFromResult(api: ApiPromise, result: any) {
+  const collectionIdAddress = normalizeAddress(result.events[0].raw.topics[2]);
+  const collectionId = collectionIdFromAddress(collectionIdAddress);  
+  const collection = (await getDetailedCollectionInfo(api, collectionId))!;
+  return {collectionIdAddress, collectionId, collection};
 }
 
 export function collectionIdToAddress(collection: number): string {
@@ -301,7 +308,7 @@ export function evmCollectionHelper(web3: Web3, caller: string) {
  * @returns 
  */
 export function evmCollection(web3: Web3, caller: string, collection: string) {
-  return new web3.eth.Contract(collectionAbi as any, collection, {from: caller, ...GAS_ARGS});
+  return new web3.eth.Contract(nonFungibleAbi as any, collection, {from: caller, ...GAS_ARGS});
 }
 
 /**

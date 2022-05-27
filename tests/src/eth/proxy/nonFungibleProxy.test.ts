@@ -127,6 +127,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
       expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
     }
   });
+  
   itWeb3('Can perform mintBulk()', async ({web3, api}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
