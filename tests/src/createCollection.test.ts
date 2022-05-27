@@ -42,19 +42,19 @@ describe('integration test: ext. createCollection():', () => {
   it('create new collection with properties #1', async () => {
     await createCollectionWithPropsExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'},
       properties: [{key: 'key1', value: 'val1'}],
-      propPerm:   [{key: 'key1', tokenOwner: true, mutable: false, collectionAdmin: true}]});
+      propPerm:   [{key: 'key1', permission: {tokenOwner: true, mutable: false, collectionAdmin: true}}]});
   });
 
   it('create new collection with properties #2', async () => {
     await createCollectionWithPropsExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'},
       properties: [{key: 'key1', value: 'val1'}],
-      propPerm:   [{key: 'key1', tokenOwner: false, mutable: true, collectionAdmin: false}]});
+      propPerm:   [{key: 'key1', permission: {tokenOwner: true, mutable: false, collectionAdmin: true}}]});
   });
 
   it('create new collection with properties #3', async () => {
     await createCollectionWithPropsExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'NFT'},
       properties: [{key: 'key1', value: 'val1'}],
-      propPerm:   [{key: 'key1', tokenOwner: true, mutable: false, collectionAdmin: false}]});
+      propPerm:   [{key: 'key1', permission: {tokenOwner: true, mutable: false, collectionAdmin: true}}]});
   });
 
   it('Create new collection with extra fields', async () => {
