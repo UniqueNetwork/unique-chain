@@ -14,7 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, deployFlipper, ethBalanceViaSub, GAS_ARGS, itWeb3, recordEthFee, usingWeb3} from './util/helpers';
+import {
+  collectionIdToAddress, 
+  createEthAccount, 
+  createEthAccountWithBalance, 
+  deployFlipper, 
+  ethBalanceViaSub, 
+  GAS_ARGS, 
+  itWeb3, 
+  recordEthFee, 
+  usingWeb3,
+} from './util/helpers';
 import {expect} from 'chai';
 import {createCollectionExpectSuccess, createItemExpectSuccess, UNIQUE} from '../util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';

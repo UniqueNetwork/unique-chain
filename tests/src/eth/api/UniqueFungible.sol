@@ -65,8 +65,8 @@ interface ERC20 is Dummy, ERC165, ERC20Events {
 		returns (uint256);
 }
 
-// Selector: 9b5e29c5
-interface CollectionProperties is Dummy, ERC165 {
+// Selector: f5652829
+interface Collection is Dummy, ERC165 {
 	// Selector: setCollectionProperty(string,bytes) 2f073f66
 	function setCollectionProperty(string memory key, bytes memory value)
 		external;
@@ -81,6 +81,18 @@ interface CollectionProperties is Dummy, ERC165 {
 		external
 		view
 		returns (bytes memory);
+
+	// Selector: ethSetSponsor(address) 8f9af356
+	function ethSetSponsor(address sponsor) external;
+
+	// Selector: ethConfirmSponsorship() a8580d1a
+	function ethConfirmSponsorship() external;
+
+	// Selector: setLimit(string,string) bf4d2014
+	function setLimit(string memory limit, string memory value) external;
+
+	// Selector: contractAddress() f6b4dfb4
+	function contractAddress() external view returns (address);
 }
 
 interface UniqueFungible is
@@ -88,5 +100,5 @@ interface UniqueFungible is
 	ERC165,
 	ERC20,
 	ERC20UniqueExtensions,
-	CollectionProperties
+	Collection
 {}

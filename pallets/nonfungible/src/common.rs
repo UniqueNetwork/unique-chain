@@ -22,7 +22,7 @@ use up_data_structs::{
 	PropertyKeyPermission, PropertyValue,
 };
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, with_weight, weights::WeightInfo as _,
+	CommonCollectionOperations, CommonWeightInfo, with_weight, weights::WeightInfo as _
 };
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;

@@ -114,6 +114,15 @@ impl<T: Config> CollectionHandle<T> {
 			recorder: SubstrateRecorder::new(gas_limit),
 		})
 	}
+
+	pub fn new_with_recorder(id: CollectionId, recorder: SubstrateRecorder<T>) -> Option<Self> {
+		<CollectionById<T>>::get(id).map(|collection| Self {
+			id,
+			collection,
+			recorder,
+		})
+	}
+
 	pub fn new(id: CollectionId) -> Option<Self> {
 		Self::new_with_gas_limit(id, u64::MAX)
 	}
@@ -139,6 +148,19 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn save(self) -> DispatchResult {
 		<CollectionById<T>>::insert(self.id, self.collection);
 		Ok(())
+	}
+
+	pub fn set_sponsor(&mut self, sponsor: T::AccountId) {
+		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor);
+	}
+
+	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> bool {
+		if self.collection.sponsorship.pending_sponsor() != Some(sender) {
+			return false;
+		};
+
+		self.collection.sponsorship = SponsorshipState::Confirmed(sender.clone());
+		true
 	}
 }
 impl<T: Config> Deref for CollectionHandle<T> {

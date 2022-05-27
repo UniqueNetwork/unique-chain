@@ -23,11 +23,13 @@ import Web3 from 'web3';
 import usingApi, {submitTransactionAsync} from '../../substrate/substrate-api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
-import {CrossAccountId, getGenericResult, UNIQUE} from '../../util/helpers';
+import {CrossAccountId, getDetailedCollectionInfo, getGenericResult, UNIQUE} from '../../util/helpers';
 import * as solc from 'solc';
 import config from '../../config';
 import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
+import nonFungibleAbi from '../nonFungibleAbi.json';
+import collectionHelperAbi from '../collectionHelperAbi.json';
 import getBalance from '../../substrate/get-balance';
 import waitNewBlocks from '../../substrate/wait-new-blocks';
 
@@ -66,11 +68,29 @@ function encodeIntBE(v: number): number[] {
   ];
 }
 
+export async function getCollectionAddressFromResult(api: ApiPromise, result: any) {
+  const collectionIdAddress = normalizeAddress(result.events[0].raw.topics[2]);
+  const collectionId = collectionIdFromAddress(collectionIdAddress);  
+  const collection = (await getDetailedCollectionInfo(api, collectionId))!;
+  return {collectionIdAddress, collectionId, collection};
+}
+
 export function collectionIdToAddress(collection: number): string {
   const buf = Buffer.from([0x17, 0xc4, 0xe6, 0x45, 0x3c, 0xc4, 0x9a, 0xaa, 0xae, 0xac, 0xa8, 0x94, 0xe6, 0xd9, 0x68, 0x3e,
     ...encodeIntBE(collection),
   ]);
   return Web3.utils.toChecksumAddress('0x' + buf.toString('hex'));
+}
+export function collectionIdFromAddress(address: string): number {
+  if (!address.startsWith('0x'))
+    throw 'address not starts with "0x"';
+  if (address.length > 42)
+    throw 'address length is more than 20 bytes';
+  return Number('0x' + address.substring(address.length - 8));
+}
+  
+export function normalizeAddress(address: string): string {
+  return '0x' + address.substring(address.length - 40);
 }
 
 export function tokenIdToAddress(collection: number, token: number): string {
@@ -269,6 +289,26 @@ export async function deployCollector(web3: Web3, deployer: string) {
  */
 export function contractHelpers(web3: Web3, caller: string) {
   return new web3.eth.Contract(contractHelpersAbi as any, '0x842899ECF380553E8a4de75bF534cdf6fBF64049', {from: caller, ...GAS_ARGS});
+}
+
+/** 
+ * evm collection helper
+ * @param web3 
+ * @param caller - eth address
+ * @returns 
+ */
+export function evmCollectionHelper(web3: Web3, caller: string) {
+  return new web3.eth.Contract(collectionHelperAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, ...GAS_ARGS});
+}
+
+/** 
+ * evm collection
+ * @param web3 
+ * @param caller - eth address
+ * @returns 
+ */
+export function evmCollection(web3: Web3, caller: string, collection: string) {
+  return new web3.eth.Contract(nonFungibleAbi as any, collection, {from: caller, ...GAS_ARGS});
 }
 
 /**

@@ -88,7 +88,8 @@ describe('NFT (Via EVM proxy): Information getting', () => {
 });
 
 describe('NFT (Via EVM proxy): Plain calls', () => {
-  itWeb3('Can perform mint()', async ({web3, api}) => {
+  //TODO: CORE-302 add eth methods
+  itWeb3.skip('Can perform mint()', async ({web3, api}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
@@ -127,7 +128,9 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
       expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
     }
   });
-  itWeb3('Can perform mintBulk()', async ({web3, api}) => {
+  
+  //TODO: CORE-302 add eth methods
+  itWeb3.skip('Can perform mintBulk()', async ({web3, api}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });

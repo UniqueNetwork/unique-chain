@@ -22,6 +22,8 @@
 	clippy::unused_unit
 )]
 
+extern crate alloc;
+
 use frame_support::{
 	decl_module, decl_storage, decl_error, decl_event,
 	dispatch::DispatchResult,
@@ -46,6 +48,7 @@ use pallet_common::{
 	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_call,
 	dispatch::CollectionDispatch,
 };
+pub mod eth;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -520,7 +523,7 @@ decl_module! {
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner(&sender)?;
 
-			target_collection.sponsorship = SponsorshipState::Unconfirmed(new_sponsor.clone());
+			target_collection.set_sponsor(new_sponsor.clone());
 
 			<Pallet<T>>::deposit_event(Event::<T>::CollectionSponsorSet(
 				collection_id,
@@ -544,11 +547,9 @@ decl_module! {
 
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			ensure!(
-				target_collection.sponsorship.pending_sponsor() == Some(&sender),
+				target_collection.confirm_sponsorship(&sender),
 				Error::<T>::ConfirmUnsetSponsorFail
 			);
-
-			target_collection.sponsorship = SponsorshipState::Confirmed(sender.clone());
 
 			<Pallet<T>>::deposit_event(Event::<T>::SponsorshipConfirmed(
 				collection_id,

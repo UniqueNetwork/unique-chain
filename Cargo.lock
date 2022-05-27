@@ -4290,6 +4290,9 @@ name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+dependencies = [
+ "spin",
+]
 
 [[package]]
 name = "lazycell"
@@ -5467,9 +5470,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.11.0"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b10983b38c53aebdf33f542c6275b0f58a238129d00c4ae0e6fb59738d783ca"
+checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
 
 [[package]]
 name = "opal-runtime"
@@ -5917,6 +5920,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "lazy_static",
  "pallet-evm",
  "pallet-evm-coder-substrate",
  "parity-scale-codec 3.1.2",
@@ -6083,6 +6087,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
+ "pallet-common",
  "pallet-evm",
  "pallet-evm-coder-substrate",
  "parity-scale-codec 3.1.2",
@@ -6090,6 +6095,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
+ "up-data-structs",
  "up-sponsorship",
 ]
 
@@ -6814,13 +6820,18 @@ dependencies = [
 name = "pallet-unique"
 version = "0.1.0"
 dependencies = [
+ "ethereum",
+ "evm-coder",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-common",
  "pallet-evm",
+ "pallet-evm-coder-substrate",
+ "pallet-nonfungible",
  "parity-scale-codec 3.1.2",
  "scale-info",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -12005,9 +12016,9 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
 name = "target-lexicon"
-version = "0.12.3"
+version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7fa7e55043acb85fca6b3c01485a2eeb6b69c5d21002e273c79e465f43b7ac1"
+checksum = "c02424087780c9b71cc96799eaeddff35af2bc513278cda5c99fc1f5d026d3c1"
 
 [[package]]
 name = "tempfile"
