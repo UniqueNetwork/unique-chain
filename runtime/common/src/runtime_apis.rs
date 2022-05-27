@@ -25,7 +25,7 @@ macro_rules! impl_common_runtime_apis {
                     dispatch_unique_runtime!(collection.token_owner(token))
                 }
                 fn topmost_token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
-                    let budget = up_data_structs::budget::Value::new(5);
+                    let budget = up_data_structs::budget::Value::new(10);
 
                     Ok(Some(<pallet_structure::Pallet<Runtime>>::find_topmost_owner(collection, token, &budget)?))
                 }
@@ -210,7 +210,7 @@ macro_rules! impl_common_runtime_apis {
 
                     Ok(
                         pallet_nonfungible::TokenChildren::<Runtime>::iter_prefix((collection_id, nft_id))
-                            .filter_map(|(child_id, is_child)| 
+                            .filter_map(|(child_id, is_child)|
                                 match is_child {
                                     true => Some(RmrkNftChild {
                                         collection_id: child_id.0.0,
