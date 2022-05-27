@@ -313,6 +313,18 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		fail!(<Error<T>>::RefungibleDisallowsNesting)
 	}
 
+	fn nest(
+		&self,
+		_under: TokenId,
+		_to_nest: (CollectionId, TokenId)
+	) {}
+
+	fn unnest(
+		&self,
+		_under: TokenId,
+		_to_nest: (CollectionId, TokenId)
+	) {}
+
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId> {
 		<Owned<T>>::iter_prefix((self.id, account))
 			.map(|(id, _)| id)

@@ -1239,15 +1239,15 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	fn nest(
 		&self,
-		_under: TokenId,
-		_to_nest: (CollectionId, TokenId)
-	) {}
+		under: TokenId,
+		to_nest: (CollectionId, TokenId)
+	);
 
 	fn unnest(
 		&self,
-		_under: TokenId,
-		_to_nest: (CollectionId, TokenId)
-	) {}
+		under: TokenId,
+		to_nest: (CollectionId, TokenId)
+	);
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId>;
 	fn collection_tokens(&self) -> Vec<TokenId>;
