@@ -79,8 +79,6 @@ pub mod pallet {
 		NonfungibleItemsHaveNoAmount,
 		/// Unable to burn NFT with children
 		CantBurnNftWithChildren,
-		/// Unable to burn a collection containing NFTs that have children
-		CantBurnCollectionWithNestedTokens
 	}
 
 	#[pallet::config]
@@ -295,8 +293,8 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let id = collection.id;
 
-		if Self::collection_has_nested_tokens(id) {
-			return Err(<Error<T>>::CantBurnCollectionWithNestedTokens.into());
+		if Self::collection_has_tokens(id) {
+			return Err(<CommonError<T>>::CantDestroyNotEmptyCollection.into());
 		}
 
 		// =========
@@ -972,8 +970,8 @@ impl<T: Config> Pallet<T> {
 		);
 	}
 
-	fn collection_has_nested_tokens(collection_id: CollectionId) -> bool {
-		<TokenChildren<T>>::iter_prefix((collection_id,)).next().is_some()
+	fn collection_has_tokens(collection_id: CollectionId) -> bool {
+		<TokenData<T>>::iter_prefix((collection_id,)).next().is_some()
 	}
 
 	fn token_has_children(collection_id: CollectionId, token_id: TokenId) -> bool {

@@ -331,6 +331,8 @@ pub mod pallet {
 		MustBeTokenOwner,
 		/// No permission to perform action
 		NoPermission,
+		/// Destroying only empty collections is allowed
+		CantDestroyNotEmptyCollection,
 		/// Collection is not in mint mode.
 		PublicMintingNotAllowed,
 		/// Address is not in allow list.

@@ -145,6 +145,10 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let id = collection.id;
 
+		if Self::collection_has_tokens(id) {
+			return Err(<CommonError<T>>::CantDestroyNotEmptyCollection.into());
+		}
+
 		// =========
 
 		PalletCommon::destroy_collection(collection.0, sender)?;
@@ -153,6 +157,10 @@ impl<T: Config> Pallet<T> {
 		<Balance<T>>::remove_prefix((id,), None);
 		<Allowance<T>>::remove_prefix((id,), None);
 		Ok(())
+	}
+
+	fn collection_has_tokens(collection_id: CollectionId) -> bool {
+		<TotalSupply<T>>::get(collection_id) != 0
 	}
 
 	pub fn burn(
