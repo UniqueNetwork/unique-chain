@@ -526,7 +526,10 @@ pub mod pallet {
 						PropertyScope::None,
 						props.into_iter(),
 					).expect("existing data larger than properties");
-					Some(CollectionVersion2::from(v))
+					let mut new = CollectionVersion2::from(v.clone());
+					new.permissions.access = Some(v.access);
+					new.permissions.mint_mode = Some(v.mint_mode);
+					Some(new)
 				});
 			}
 
