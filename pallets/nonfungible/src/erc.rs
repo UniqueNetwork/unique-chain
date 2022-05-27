@@ -542,7 +542,6 @@ impl<T: Config> NonfungibleHandle<T> {
 			}
 			expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
 
-			todo!("token uri");
 			data.push(CreateItemData::<T> {
 				properties: BoundedVec::default(),
 				owner: to.clone(),
