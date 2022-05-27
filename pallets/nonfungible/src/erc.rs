@@ -158,9 +158,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// Returns token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
-		let key: string = "tokenURI".into(); //TODO: make static
-		let key: up_data_structs::PropertyKey = key.into_bytes().try_into()
-			.map_err(|_| Error::Revert("".into()))?;
+		let key = pallet_common::eth::KEY_TOKEN_URI.clone();
 		let permission = get_token_permission::<T>(self.id, &key)?;
 		if !permission.collection_admin {
 			return Err("Operation is not allowed".into());
@@ -362,9 +360,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_id: uint256,
 		token_uri: string,
 	) -> Result<bool> {
-		let key: string = "tokenURI".into(); //TODO: make static
-		let key: up_data_structs::PropertyKey = key.into_bytes().try_into()
-			.map_err(|_| Error::Revert("".into()))?;
+		let key = pallet_common::eth::KEY_TOKEN_URI.clone();
 		let permission = get_token_permission::<T>(self.id, &key)?;
 		if !permission.collection_admin {
 			return Err("Operation is not allowed".into());

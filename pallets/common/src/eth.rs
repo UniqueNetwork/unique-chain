@@ -17,6 +17,14 @@
 use up_data_structs::CollectionId;
 use sp_core::H160;
 
+lazy_static::lazy_static! {
+	pub static ref KEY_TOKEN_URI: up_data_structs::PropertyKey = {
+		let key: evm_coder::types::string = "tokenURI".into(); //TODO: make static
+		let key: up_data_structs::PropertyKey = key.into_bytes().try_into().expect("Can't create \"tokenURI\" key");
+		key
+	};
+}
+
 // 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection 1
 // TODO: Unhardcode prefix
 const ETH_COLLECTION_PREFIX: [u8; 16] = [

@@ -77,8 +77,7 @@ impl<T: Config> EvmCollectionHelper<T> {
 			.try_into()
 			.map_err(|_| error_feild_too_long(stringify!(token_prefix), MAX_TOKEN_PREFIX_LENGTH))?;
 
-		let key: string = "tokenURI".into(); //TODO: make static
-		let key: up_data_structs::PropertyKey = key.into_bytes().try_into().map_err(|_| Error::Revert("".into()))?;
+		let key = pallet_common::eth::KEY_TOKEN_URI.clone();
 		let permission = up_data_structs::PropertyPermission {
 			mutable: true,
 			collection_admin: true,
