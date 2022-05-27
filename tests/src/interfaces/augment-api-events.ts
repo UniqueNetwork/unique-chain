@@ -396,6 +396,26 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    rmrkCore: {
+      CollectionCreated: AugmentedEvent<ApiType, [AccountId32, u32]>;
+      CollectionDestroyed: AugmentedEvent<ApiType, [AccountId32, u32]>;
+      CollectionLocked: AugmentedEvent<ApiType, [AccountId32, u32]>;
+      IssuerChanged: AugmentedEvent<ApiType, [AccountId32, AccountId32, u32]>;
+      NFTBurned: AugmentedEvent<ApiType, [AccountId32, u32]>;
+      NftMinted: AugmentedEvent<ApiType, [AccountId32, u32, u32]>;
+      PropertySet: AugmentedEvent<ApiType, [u32, Option<u32>, Bytes, Bytes]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    rmrkEquip: {
+      BaseCreated: AugmentedEvent<ApiType, [AccountId32, u32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     structure: {
       /**
        * Executed call on behalf of token

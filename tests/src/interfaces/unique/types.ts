@@ -1128,6 +1128,145 @@ export interface PalletRefungibleItemData extends Struct {
   readonly constData: Bytes;
 }
 
+/** @name PalletRmrkCoreCall */
+export interface PalletRmrkCoreCall extends Enum {
+  readonly isCreateCollection: boolean;
+  readonly asCreateCollection: {
+    readonly metadata: Bytes;
+    readonly max: Option<u32>;
+    readonly symbol: Bytes;
+  } & Struct;
+  readonly isDestroyCollection: boolean;
+  readonly asDestroyCollection: {
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isChangeCollectionIssuer: boolean;
+  readonly asChangeCollectionIssuer: {
+    readonly collectionId: u32;
+    readonly newIssuer: MultiAddress;
+  } & Struct;
+  readonly isLockCollection: boolean;
+  readonly asLockCollection: {
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isMintNft: boolean;
+  readonly asMintNft: {
+    readonly owner: AccountId32;
+    readonly collectionId: u32;
+    readonly recipient: Option<AccountId32>;
+    readonly royaltyAmount: Option<Permill>;
+    readonly metadata: Bytes;
+  } & Struct;
+  readonly isBurnNft: boolean;
+  readonly asBurnNft: {
+    readonly collectionId: u32;
+    readonly nftId: u32;
+  } & Struct;
+  readonly isSetProperty: boolean;
+  readonly asSetProperty: {
+    readonly rmrkCollectionId: Compact<u32>;
+    readonly maybeNftId: Option<u32>;
+    readonly key: Bytes;
+    readonly value: Bytes;
+  } & Struct;
+  readonly type: 'CreateCollection' | 'DestroyCollection' | 'ChangeCollectionIssuer' | 'LockCollection' | 'MintNft' | 'BurnNft' | 'SetProperty';
+}
+
+/** @name PalletRmrkCoreError */
+export interface PalletRmrkCoreError extends Enum {
+  readonly isCorruptedCollectionType: boolean;
+  readonly isNftTypeEncodeError: boolean;
+  readonly isRmrkPropertyKeyIsTooLong: boolean;
+  readonly isRmrkPropertyValueIsTooLong: boolean;
+  readonly isCollectionNotEmpty: boolean;
+  readonly isNoAvailableCollectionId: boolean;
+  readonly isNoAvailableNftId: boolean;
+  readonly isCollectionUnknown: boolean;
+  readonly isNoPermission: boolean;
+  readonly isCollectionFullOrLocked: boolean;
+  readonly type: 'CorruptedCollectionType' | 'NftTypeEncodeError' | 'RmrkPropertyKeyIsTooLong' | 'RmrkPropertyValueIsTooLong' | 'CollectionNotEmpty' | 'NoAvailableCollectionId' | 'NoAvailableNftId' | 'CollectionUnknown' | 'NoPermission' | 'CollectionFullOrLocked';
+}
+
+/** @name PalletRmrkCoreEvent */
+export interface PalletRmrkCoreEvent extends Enum {
+  readonly isCollectionCreated: boolean;
+  readonly asCollectionCreated: {
+    readonly issuer: AccountId32;
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isCollectionDestroyed: boolean;
+  readonly asCollectionDestroyed: {
+    readonly issuer: AccountId32;
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isIssuerChanged: boolean;
+  readonly asIssuerChanged: {
+    readonly oldIssuer: AccountId32;
+    readonly newIssuer: AccountId32;
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isCollectionLocked: boolean;
+  readonly asCollectionLocked: {
+    readonly issuer: AccountId32;
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isNftMinted: boolean;
+  readonly asNftMinted: {
+    readonly owner: AccountId32;
+    readonly collectionId: u32;
+    readonly nftId: u32;
+  } & Struct;
+  readonly isNftBurned: boolean;
+  readonly asNftBurned: {
+    readonly owner: AccountId32;
+    readonly nftId: u32;
+  } & Struct;
+  readonly isPropertySet: boolean;
+  readonly asPropertySet: {
+    readonly collectionId: u32;
+    readonly maybeNftId: Option<u32>;
+    readonly key: Bytes;
+    readonly value: Bytes;
+  } & Struct;
+  readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'IssuerChanged' | 'CollectionLocked' | 'NftMinted' | 'NftBurned' | 'PropertySet';
+}
+
+/** @name PalletRmrkEquipCall */
+export interface PalletRmrkEquipCall extends Enum {
+  readonly isCreateBase: boolean;
+  readonly asCreateBase: {
+    readonly baseType: Bytes;
+    readonly symbol: Bytes;
+    readonly parts: Vec<UpDataStructsRmrkPartType>;
+  } & Struct;
+  readonly isThemeAdd: boolean;
+  readonly asThemeAdd: {
+    readonly baseId: u32;
+    readonly theme: UpDataStructsRmrkTheme;
+  } & Struct;
+  readonly type: 'CreateBase' | 'ThemeAdd';
+}
+
+/** @name PalletRmrkEquipError */
+export interface PalletRmrkEquipError extends Enum {
+  readonly isPermissionError: boolean;
+  readonly isNoAvailableBaseId: boolean;
+  readonly isNoAvailablePartId: boolean;
+  readonly isBaseDoesntExist: boolean;
+  readonly isNeedsDefaultThemeFirst: boolean;
+  readonly type: 'PermissionError' | 'NoAvailableBaseId' | 'NoAvailablePartId' | 'BaseDoesntExist' | 'NeedsDefaultThemeFirst';
+}
+
+/** @name PalletRmrkEquipEvent */
+export interface PalletRmrkEquipEvent extends Enum {
+  readonly isBaseCreated: boolean;
+  readonly asBaseCreated: {
+    readonly issuer: AccountId32;
+    readonly baseId: u32;
+  } & Struct;
+  readonly type: 'BaseCreated';
+}
+
 /** @name PalletStructureCall */
 export interface PalletStructureCall extends Null {}
 
@@ -1615,34 +1754,34 @@ export interface PalletXcmEvent extends Enum {
 }
 
 /** @name PhantomTypeUpDataStructsBaseInfo */
-export interface PhantomTypeUpDataStructsBaseInfo extends Vec<Lookup357> {}
+export interface PhantomTypeUpDataStructsBaseInfo extends Vec<Lookup375> {}
 
 /** @name PhantomTypeUpDataStructsCollectionInfo */
-export interface PhantomTypeUpDataStructsCollectionInfo extends Vec<Lookup334> {}
+export interface PhantomTypeUpDataStructsCollectionInfo extends Vec<Lookup353> {}
 
 /** @name PhantomTypeUpDataStructsNftChild */
-export interface PhantomTypeUpDataStructsNftChild extends Vec<Lookup372> {}
+export interface PhantomTypeUpDataStructsNftChild extends Vec<Lookup382> {}
 
 /** @name PhantomTypeUpDataStructsNftInfo */
-export interface PhantomTypeUpDataStructsNftInfo extends Vec<Lookup339> {}
+export interface PhantomTypeUpDataStructsNftInfo extends Vec<Lookup356> {}
 
 /** @name PhantomTypeUpDataStructsPartType */
-export interface PhantomTypeUpDataStructsPartType extends Vec<Lookup360> {}
+export interface PhantomTypeUpDataStructsPartType extends Vec<Lookup215> {}
 
 /** @name PhantomTypeUpDataStructsPropertyInfo */
-export interface PhantomTypeUpDataStructsPropertyInfo extends Vec<Lookup352> {}
+export interface PhantomTypeUpDataStructsPropertyInfo extends Vec<Lookup372> {}
 
 /** @name PhantomTypeUpDataStructsResourceInfo */
-export interface PhantomTypeUpDataStructsResourceInfo extends Vec<Lookup345> {}
+export interface PhantomTypeUpDataStructsResourceInfo extends Vec<Lookup362> {}
 
 /** @name PhantomTypeUpDataStructsRpcCollection */
-export interface PhantomTypeUpDataStructsRpcCollection extends Vec<Lookup331> {}
+export interface PhantomTypeUpDataStructsRpcCollection extends Vec<Lookup350> {}
 
 /** @name PhantomTypeUpDataStructsTheme */
-export interface PhantomTypeUpDataStructsTheme extends Vec<Lookup367> {}
+export interface PhantomTypeUpDataStructsTheme extends Vec<Lookup221> {}
 
 /** @name PhantomTypeUpDataStructsTokenData */
-export interface PhantomTypeUpDataStructsTokenData extends Vec<Lookup327> {}
+export interface PhantomTypeUpDataStructsTokenData extends Vec<Lookup346> {}
 
 /** @name PolkadotCorePrimitivesInboundDownwardMessage */
 export interface PolkadotCorePrimitivesInboundDownwardMessage extends Struct {
@@ -1705,118 +1844,6 @@ export interface PolkadotPrimitivesV2PersistedValidationData extends Struct {
 export interface PolkadotPrimitivesV2UpgradeRestriction extends Enum {
   readonly isPresent: boolean;
   readonly type: 'Present';
-}
-
-/** @name RmrkTypesAccountIdOrCollectionNftTuple */
-export interface RmrkTypesAccountIdOrCollectionNftTuple extends Enum {
-  readonly isAccountId: boolean;
-  readonly asAccountId: AccountId32;
-  readonly isCollectionAndNftTuple: boolean;
-  readonly asCollectionAndNftTuple: ITuple<[u32, u32]>;
-  readonly type: 'AccountId' | 'CollectionAndNftTuple';
-}
-
-/** @name RmrkTypesBaseInfo */
-export interface RmrkTypesBaseInfo extends Struct {
-  readonly issuer: AccountId32;
-  readonly baseType: Bytes;
-  readonly symbol: Bytes;
-}
-
-/** @name RmrkTypesCollectionInfo */
-export interface RmrkTypesCollectionInfo extends Struct {
-  readonly issuer: AccountId32;
-  readonly metadata: Bytes;
-  readonly max: Option<u32>;
-  readonly symbol: Bytes;
-  readonly nftsCount: u32;
-}
-
-/** @name RmrkTypesEquippableList */
-export interface RmrkTypesEquippableList extends Enum {
-  readonly isAll: boolean;
-  readonly isEmpty: boolean;
-  readonly isCustom: boolean;
-  readonly asCustom: Vec<u32>;
-  readonly type: 'All' | 'Empty' | 'Custom';
-}
-
-/** @name RmrkTypesFixedPart */
-export interface RmrkTypesFixedPart extends Struct {
-  readonly id: u32;
-  readonly z: u32;
-  readonly src: Bytes;
-}
-
-/** @name RmrkTypesNftChild */
-export interface RmrkTypesNftChild extends Struct {
-  readonly collectionId: u32;
-  readonly nftId: u32;
-}
-
-/** @name RmrkTypesNftInfo */
-export interface RmrkTypesNftInfo extends Struct {
-  readonly owner: RmrkTypesAccountIdOrCollectionNftTuple;
-  readonly royalty: Option<RmrkTypesRoyaltyInfo>;
-  readonly metadata: Bytes;
-  readonly equipped: bool;
-  readonly pending: bool;
-}
-
-/** @name RmrkTypesPartType */
-export interface RmrkTypesPartType extends Enum {
-  readonly isFixedPart: boolean;
-  readonly asFixedPart: RmrkTypesFixedPart;
-  readonly isSlotPart: boolean;
-  readonly asSlotPart: RmrkTypesSlotPart;
-  readonly type: 'FixedPart' | 'SlotPart';
-}
-
-/** @name RmrkTypesPropertyInfo */
-export interface RmrkTypesPropertyInfo extends Struct {
-  readonly key: Bytes;
-  readonly value: Bytes;
-}
-
-/** @name RmrkTypesResourceInfo */
-export interface RmrkTypesResourceInfo extends Struct {
-  readonly id: Bytes;
-  readonly pending: bool;
-  readonly pendingRemoval: bool;
-  readonly parts: Option<Vec<u32>>;
-  readonly base: Option<u32>;
-  readonly src: Option<Bytes>;
-  readonly metadata: Option<Bytes>;
-  readonly slot: Option<u32>;
-  readonly license: Option<Bytes>;
-  readonly thumb: Option<Bytes>;
-}
-
-/** @name RmrkTypesRoyaltyInfo */
-export interface RmrkTypesRoyaltyInfo extends Struct {
-  readonly recipient: AccountId32;
-  readonly amount: Permill;
-}
-
-/** @name RmrkTypesSlotPart */
-export interface RmrkTypesSlotPart extends Struct {
-  readonly id: u32;
-  readonly equippable: RmrkTypesEquippableList;
-  readonly src: Bytes;
-  readonly z: u32;
-}
-
-/** @name RmrkTypesTheme */
-export interface RmrkTypesTheme extends Struct {
-  readonly name: Bytes;
-  readonly properties: Vec<RmrkTypesThemeProperty>;
-  readonly inherit: bool;
-}
-
-/** @name RmrkTypesThemeProperty */
-export interface RmrkTypesThemeProperty extends Struct {
-  readonly key: Bytes;
-  readonly value: Bytes;
 }
 
 /** @name SpCoreEcdsaSignature */
@@ -2094,6 +2121,151 @@ export interface UpDataStructsPropertyPermission extends Struct {
   readonly mutable: bool;
   readonly collectionAdmin: bool;
   readonly tokenOwner: bool;
+}
+
+/** @name UpDataStructsRmrkAccountIdOrCollectionNftTuple */
+export interface UpDataStructsRmrkAccountIdOrCollectionNftTuple extends Enum {
+  readonly isAccountId: boolean;
+  readonly asAccountId: AccountId32;
+  readonly isCollectionAndNftTuple: boolean;
+  readonly asCollectionAndNftTuple: ITuple<[u32, u32]>;
+  readonly type: 'AccountId' | 'CollectionAndNftTuple';
+}
+
+/** @name UpDataStructsRmrkBaseInfo */
+export interface UpDataStructsRmrkBaseInfo extends Struct {
+  readonly issuer: AccountId32;
+  readonly baseType: Bytes;
+  readonly symbol: Bytes;
+}
+
+/** @name UpDataStructsRmrkBasicResource */
+export interface UpDataStructsRmrkBasicResource extends Struct {
+  readonly src: Option<Bytes>;
+  readonly metadata: Option<Bytes>;
+  readonly license: Option<Bytes>;
+  readonly thumb: Option<Bytes>;
+}
+
+/** @name UpDataStructsRmrkCollectionInfo */
+export interface UpDataStructsRmrkCollectionInfo extends Struct {
+  readonly issuer: AccountId32;
+  readonly metadata: Bytes;
+  readonly max: Option<u32>;
+  readonly symbol: Bytes;
+  readonly nftsCount: u32;
+}
+
+/** @name UpDataStructsRmrkComposableResource */
+export interface UpDataStructsRmrkComposableResource extends Struct {
+  readonly parts: Vec<u32>;
+  readonly base: u32;
+  readonly src: Option<Bytes>;
+  readonly metadata: Option<Bytes>;
+  readonly license: Option<Bytes>;
+  readonly thumb: Option<Bytes>;
+}
+
+/** @name UpDataStructsRmrkEquippableList */
+export interface UpDataStructsRmrkEquippableList extends Enum {
+  readonly isAll: boolean;
+  readonly isEmpty: boolean;
+  readonly isCustom: boolean;
+  readonly asCustom: Vec<u32>;
+  readonly type: 'All' | 'Empty' | 'Custom';
+}
+
+/** @name UpDataStructsRmrkFixedPart */
+export interface UpDataStructsRmrkFixedPart extends Struct {
+  readonly id: u32;
+  readonly z: u32;
+  readonly src: Bytes;
+}
+
+/** @name UpDataStructsRmrkNftChild */
+export interface UpDataStructsRmrkNftChild extends Struct {
+  readonly collectionId: u32;
+  readonly nftId: u32;
+}
+
+/** @name UpDataStructsRmrkNftInfo */
+export interface UpDataStructsRmrkNftInfo extends Struct {
+  readonly owner: UpDataStructsRmrkAccountIdOrCollectionNftTuple;
+  readonly royalty: Option<UpDataStructsRmrkRoyaltyInfo>;
+  readonly metadata: Bytes;
+  readonly equipped: bool;
+  readonly pending: bool;
+}
+
+/** @name UpDataStructsRmrkPartType */
+export interface UpDataStructsRmrkPartType extends Enum {
+  readonly isFixedPart: boolean;
+  readonly asFixedPart: UpDataStructsRmrkFixedPart;
+  readonly isSlotPart: boolean;
+  readonly asSlotPart: UpDataStructsRmrkSlotPart;
+  readonly type: 'FixedPart' | 'SlotPart';
+}
+
+/** @name UpDataStructsRmrkPropertyInfo */
+export interface UpDataStructsRmrkPropertyInfo extends Struct {
+  readonly key: Bytes;
+  readonly value: Bytes;
+}
+
+/** @name UpDataStructsRmrkResourceInfo */
+export interface UpDataStructsRmrkResourceInfo extends Struct {
+  readonly id: Bytes;
+  readonly resource: UpDataStructsRmrkResourceTypes;
+  readonly pending: bool;
+  readonly pendingRemoval: bool;
+}
+
+/** @name UpDataStructsRmrkResourceTypes */
+export interface UpDataStructsRmrkResourceTypes extends Enum {
+  readonly isBasic: boolean;
+  readonly asBasic: UpDataStructsRmrkBasicResource;
+  readonly isComposable: boolean;
+  readonly asComposable: UpDataStructsRmrkComposableResource;
+  readonly isSlot: boolean;
+  readonly asSlot: UpDataStructsRmrkSlotResource;
+  readonly type: 'Basic' | 'Composable' | 'Slot';
+}
+
+/** @name UpDataStructsRmrkRoyaltyInfo */
+export interface UpDataStructsRmrkRoyaltyInfo extends Struct {
+  readonly recipient: AccountId32;
+  readonly amount: Permill;
+}
+
+/** @name UpDataStructsRmrkSlotPart */
+export interface UpDataStructsRmrkSlotPart extends Struct {
+  readonly id: u32;
+  readonly equippable: UpDataStructsRmrkEquippableList;
+  readonly src: Bytes;
+  readonly z: u32;
+}
+
+/** @name UpDataStructsRmrkSlotResource */
+export interface UpDataStructsRmrkSlotResource extends Struct {
+  readonly base: u32;
+  readonly src: Option<Bytes>;
+  readonly metadata: Option<Bytes>;
+  readonly slot: u32;
+  readonly license: Option<Bytes>;
+  readonly thumb: Option<Bytes>;
+}
+
+/** @name UpDataStructsRmrkTheme */
+export interface UpDataStructsRmrkTheme extends Struct {
+  readonly name: Bytes;
+  readonly properties: Vec<UpDataStructsRmrkThemeProperty>;
+  readonly inherit: bool;
+}
+
+/** @name UpDataStructsRmrkThemeProperty */
+export interface UpDataStructsRmrkThemeProperty extends Struct {
+  readonly key: Bytes;
+  readonly value: Bytes;
 }
 
 /** @name UpDataStructsRpcCollection */
