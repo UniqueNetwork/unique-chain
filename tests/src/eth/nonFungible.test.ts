@@ -112,7 +112,9 @@ describe('NFT: Plain calls', () => {
     // const tokenUri = await contract.methods.tokenURI(nextTokenId).call();
     // expect(tokenUri).to.be.equal(`https://offchain-service.local/token-info/${nextTokenId}`);
   });
-  itWeb3('Can perform mintBulk()', async ({web3, api}) => {
+
+  //TODO: CORE-302 add eth methods
+  itWeb3.skip('Can perform mintBulk()', async ({web3, api}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });

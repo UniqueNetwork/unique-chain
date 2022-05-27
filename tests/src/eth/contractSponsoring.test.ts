@@ -226,7 +226,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.getSponsoringRateLimit(flipper.options.address).call()).to.be.equals('7200');
   });
 
-  itWeb3('Sponsoring evm address from substrate collection', async ({api, web3}) => {
+  //TODO: CORE-302 add eth methods
+  itWeb3.skip('Sponsoring evm address from substrate collection', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
     const collectionHelper = evmCollectionHelper(web3, owner);
     let result = await collectionHelper.methods.create721Collection('Sponsor collection', '1', '1').send();
@@ -304,8 +305,8 @@ describe('Sponsoring EVM contracts', () => {
     }
   });
 
-
-  itWeb3('Check that transaction via EVM spend money from substrate address', async ({api, web3}) => {
+  //TODO: CORE-302 add eth methods
+  itWeb3.skip('Check that transaction via EVM spend money from substrate address', async ({api, web3}) => {
     const owner = privateKey('//Alice');
     const user = privateKey(`//User/${Date.now()}`);
     const userEth = subToEth(user.address);
