@@ -123,7 +123,8 @@ impl<T: Config> CollectionHandle<T> {
 			}
 			_ => return Err(Error::Revert(format!("Unknown limit \"{}\"", limit))),
 		}
-		self.limits = limits;
+		self.limits = <Pallet<T>>::clamp_limits(self.mode.clone(), &self.limits, limits)
+			.map_err(dispatch_to_evm::<T>)?;
 		save(self);
 		Ok(())
 	}
