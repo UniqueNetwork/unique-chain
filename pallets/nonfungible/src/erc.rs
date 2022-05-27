@@ -162,9 +162,8 @@ impl<T: Config> NonfungibleHandle<T> {
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
 		let key = pallet_common::eth::KEY_TOKEN_URI.clone();
-		let permission = get_token_permission::<T>(self.id, &key)?;
-		if !permission.collection_admin {
-			return Err("Operation is not allowed".into());
+		if !has_token_permission::<T>(self.id, &key) {
+			return Err("No tokenURI permission".into());
 		}
 
 		self.consume_store_reads(1)?;
@@ -423,8 +422,19 @@ fn get_token_permission<T: Config>(
 	let a = token_property_permissions
 		.get(key)
 		.map(|p| p.clone())
-		.ok_or_else(|| Error::Revert("No permission for tokenURI".into()))?;
+		.ok_or_else(|| Error::Revert("No permission".into()))?;
 	Ok(a)
+}
+
+fn has_token_permission<T: Config>(
+	collection_id: CollectionId,
+	key: &PropertyKey,
+) -> bool {
+	if let Ok(token_property_permissions) = CollectionPropertyPermissions::<T>::try_get(collection_id) {
+		return token_property_permissions.contains_key(key);
+	}
+
+	false
 }
 
 #[solidity_interface(name = "ERC721UniqueExtensions")]

@@ -761,6 +761,10 @@ impl<Value> PropertiesMap<Value> {
 		self.0.get(key)
 	}
 
+	pub fn contains_key(&self, key: &PropertyKey) -> bool {
+		self.0.contains_key(key)
+	}
+
 	fn check_property_key(key: &PropertyKey) -> Result<(), PropertiesError> {
 		if key.is_empty() {
 			return Err(PropertiesError::EmptyPropertyKey);
