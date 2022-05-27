@@ -27,7 +27,6 @@ use up_data_structs::{
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
-	dispatch::CollectionDispatch,
 	eth::collection_id_to_address,
 };
 use pallet_structure::Pallet as PalletStructure;
@@ -80,8 +79,6 @@ pub mod pallet {
 		NonfungibleItemsHaveNoAmount,
 		/// Unable to burn NFT with children
 		CantBurnNftWithChildren,
-		/// Too many children to burn when destroying a collection
-		TooManyChildrenToBurn,
 	}
 
 	#[pallet::config]
@@ -293,14 +290,13 @@ impl<T: Config> Pallet<T> {
 	pub fn destroy_collection(
 		collection: NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let id = collection.id;
 
 		// =========
 
-		Self::burn_children_in_collection(id, nesting_budget)?;
 		PalletCommon::destroy_collection(collection.0, sender)?;
+
 		<TokenData<T>>::remove_prefix((id,), None);
 		<TokenChildren<T>>::remove_prefix((id,), None);
 		<Owned<T>>::remove_prefix((id,), None);
@@ -308,44 +304,6 @@ impl<T: Config> Pallet<T> {
 		<TokensBurnt<T>>::remove(id);
 		<Allowance<T>>::remove_prefix((id,), None);
 		<AccountBalance<T>>::remove_prefix((id,), None);
-		Ok(())
-	}
-
-	#[transactional]
-	fn burn_children_in_collection(collection_id: CollectionId, nesting_budget: &dyn Budget) -> DispatchResult {
-		for (parent_id, child) in <TokenChildren<T>>::drain_prefix((collection_id,))
-			.map(|((parent_id, child), _)| (parent_id, child)) {
-
-			let parent_address = T::CrossTokenAddressMapping::token_to_address(collection_id, parent_id);
-			Self::burn_tree(parent_address, child.0, child.1, nesting_budget)?;
-		}
-
-		Ok(())
-	}
-
-	fn burn_tree(
-		parent: T::CrossAccountId,
-		collection_id: CollectionId,
-		token_id: TokenId,
-		nesting_budget: &dyn Budget
-	) -> DispatchResult {
-		if !nesting_budget.consume() {
-			return Err(<Error<T>>::TooManyChildrenToBurn.into());
-		}
-
-		let handle = <CollectionHandle<T>>::try_get(collection_id)?;
-		let handle = T::CollectionDispatch::dispatch(handle);
-		let handle = handle.as_dyn();
-
-		let amount = handle.balance(parent.clone(), token_id);
-
-		handle.burn_item_unchecked(&parent, token_id, amount)?;
-
-		for child in <TokenChildren<T>>::drain_prefix((collection_id, token_id)).map(|(child, _)| child) {
-			let parent = T::CrossTokenAddressMapping::token_to_address(collection_id, token_id);
-			Self::burn_tree(parent, child.0, child.1, nesting_budget)?;
-		}
-
 		Ok(())
 	}
 
@@ -370,11 +328,31 @@ impl<T: Config> Pallet<T> {
 			return Err(<Error<T>>::CantBurnNftWithChildren.into());
 		}
 
-		let old_spender = <Allowance<T>>::get((collection.id, token));
+		let burnt = <TokensBurnt<T>>::get(collection.id)
+			.checked_add(1)
+			.ok_or(ArithmeticError::Overflow)?;
+
+		let balance = <AccountBalance<T>>::get((collection.id, token_data.owner.clone()))
+			.checked_sub(1)
+			.ok_or(ArithmeticError::Overflow)?;
+
+		if balance == 0 {
+			<AccountBalance<T>>::remove((collection.id, token_data.owner.clone()));
+		} else {
+			<AccountBalance<T>>::insert((collection.id, token_data.owner.clone()), balance);
+		}
+
+		if let Some(owner) = T::CrossTokenAddressMapping::address_to_token(&token_data.owner) {
+			Self::unnest(owner, (collection.id, token));
+		}
 
 		// =========
 
-		Self::burn_item_unchecked(collection, &token_data.owner, token)?;
+		<Owned<T>>::remove((collection.id, &token_data.owner, token));
+		<TokensBurnt<T>>::insert(collection.id, burnt);
+		<TokenData<T>>::remove((collection.id, token));
+		<TokenProperties<T>>::remove((collection.id, token));
+		let old_spender = <Allowance<T>>::take((collection.id, token));
 
 		if let Some(old_spender) = old_spender {
 			<PalletCommon<T>>::deposit_event(CommonEvent::Approved(
@@ -400,40 +378,6 @@ impl<T: Config> Pallet<T> {
 			token_data.owner,
 			1,
 		));
-		Ok(())
-	}
-
-	pub fn burn_item_unchecked(
-		collection: &NonfungibleHandle<T>,
-		owner: &T::CrossAccountId,
-		token: TokenId,
-	) -> DispatchResult {
-		let burnt = <TokensBurnt<T>>::get(collection.id)
-			.checked_add(1)
-			.ok_or(ArithmeticError::Overflow)?;
-
-		let balance = <AccountBalance<T>>::get((collection.id, owner.clone()))
-			.checked_sub(1)
-			.ok_or(ArithmeticError::Overflow)?;
-
-		// =========
-
-		if let Some(owner) = T::CrossTokenAddressMapping::address_to_token(owner) {
-			Self::unnest(owner, (collection.id, token));
-		}
-
-		if balance == 0 {
-			<AccountBalance<T>>::remove((collection.id, owner.clone()));
-		} else {
-			<AccountBalance<T>>::insert((collection.id, owner.clone()), balance);
-		}
-
-		<Owned<T>>::remove((collection.id, owner, token));
-		<TokensBurnt<T>>::insert(collection.id, burnt);
-		<TokenData<T>>::remove((collection.id, token));
-		<TokenProperties<T>>::remove((collection.id, token));
-		<Allowance<T>>::remove((collection.id, token));
-
 		Ok(())
 	}
 

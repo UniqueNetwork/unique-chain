@@ -1,4 +1,4 @@
-use frame_support::{dispatch::{DispatchResult}, ensure};
+use frame_support::{dispatch::DispatchResult, ensure};
 use pallet_evm::PrecompileResult;
 use sp_core::{H160, U256};
 use sp_std::{borrow::ToOwned, vec::Vec};
@@ -12,7 +12,6 @@ use pallet_nonfungible::{Pallet as PalletNonfungible, NonfungibleHandle};
 use pallet_refungible::{Pallet as PalletRefungible, RefungibleHandle, erc::RefungibleTokenHandle};
 use up_data_structs::{
 	CollectionMode, CreateCollectionData, MAX_DECIMAL_POINTS, mapping::TokenAddressMapping,
-	budget::Budget,
 };
 
 pub enum CollectionDispatchT<T>
@@ -47,11 +46,7 @@ where
 		Ok(())
 	}
 
-	fn destroy(
-		sender: T::CrossAccountId,
-		collection: CollectionHandle<T>,
-		nesting_budget: &dyn Budget,
-	) -> DispatchResult {
+	fn destroy(sender: T::CrossAccountId, collection: CollectionHandle<T>) -> DispatchResult {
 		match collection.mode {
 			CollectionMode::ReFungible => {
 				PalletRefungible::destroy_collection(RefungibleHandle::cast(collection), &sender)?
@@ -60,11 +55,7 @@ where
 				PalletFungible::destroy_collection(FungibleHandle::cast(collection), &sender)?
 			}
 			CollectionMode::NFT => {
-				PalletNonfungible::destroy_collection(
-					NonfungibleHandle::cast(collection),
-					&sender,
-					nesting_budget,
-				)?
+				PalletNonfungible::destroy_collection(NonfungibleHandle::cast(collection), &sender)?
 			}
 		}
 		Ok(())

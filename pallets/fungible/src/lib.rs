@@ -160,36 +160,6 @@ impl<T: Config> Pallet<T> {
 		owner: &T::CrossAccountId,
 		amount: u128,
 	) -> DispatchResult {
-		if collection.access == AccessMode::AllowList {
-			collection.check_allowlist(owner)?;
-		}
-
-		// =========
-
-		Self::burn_item_unchecked(collection, owner, amount)?;
-
-		<PalletEvm<T>>::deposit_log(
-			ERC20Events::Transfer {
-				from: *owner.as_eth(),
-				to: H160::default(),
-				value: amount.into(),
-			}
-			.to_log(collection_id_to_address(collection.id)),
-		);
-		<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
-			collection.id,
-			TokenId::default(),
-			owner.clone(),
-			amount,
-		));
-		Ok(())
-	}
-
-	pub fn burn_item_unchecked(
-		collection: &FungibleHandle<T>,
-		owner: &T::CrossAccountId,
-		amount: u128,
-	) -> DispatchResult {
 		let total_supply = <TotalSupply<T>>::get(collection.id)
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
@@ -216,6 +186,20 @@ impl<T: Config> Pallet<T> {
 		}
 		<TotalSupply<T>>::insert(collection.id, total_supply);
 
+		<PalletEvm<T>>::deposit_log(
+			ERC20Events::Transfer {
+				from: *owner.as_eth(),
+				to: H160::default(),
+				value: amount.into(),
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
+		<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
+			collection.id,
+			TokenId::default(),
+			owner.clone(),
+			amount,
+		));
 		Ok(())
 	}
 

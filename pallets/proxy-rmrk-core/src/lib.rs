@@ -179,8 +179,7 @@ pub mod pallet {
 
             ensure!(collection.total_supply() == 0, <Error<T>>::CollectionNotEmpty);
 
-            let empty_budget = budget::Value::new(0);
-            <PalletNft<T>>::destroy_collection(collection, &cross_sender, &empty_budget)
+            <PalletNft<T>>::destroy_collection(collection, &cross_sender)
                 .map_err(Self::map_common_err_to_proxy)?;
 
             Self::deposit_event(Event::CollectionDestroyed { issuer: sender, collection_id });

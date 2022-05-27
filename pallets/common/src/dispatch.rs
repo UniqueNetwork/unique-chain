@@ -6,7 +6,7 @@ use frame_support::{
 	weights::Pays,
 	traits::Get,
 };
-use up_data_structs::{CollectionId, CreateCollectionData, budget::Budget};
+use up_data_structs::{CollectionId, CreateCollectionData};
 
 use crate::{pallet::Config, CommonCollectionOperations, CollectionHandle};
 
@@ -57,11 +57,7 @@ pub fn dispatch_call<
 
 pub trait CollectionDispatch<T: Config> {
 	fn create(sender: T::AccountId, data: CreateCollectionData<T::AccountId>) -> DispatchResult;
-	fn destroy(
-		sender: T::CrossAccountId,
-		handle: CollectionHandle<T>,
-		nesting_budget: &dyn Budget,
-	) -> DispatchResult;
+	fn destroy(sender: T::CrossAccountId, handle: CollectionHandle<T>) -> DispatchResult;
 
 	fn dispatch(handle: CollectionHandle<T>) -> Self;
 	fn into_inner(self) -> CollectionHandle<T>;
