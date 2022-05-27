@@ -395,6 +395,11 @@ impl<T: Config> Pallet<T> {
 			// from != to
 			if balance_from == 0 {
 				<Balance<T>>::remove((collection.id, token, from));
+				<PalletStructure<T>>::unnest_if_nested(
+					from,
+					collection.id,
+					token
+				);
 			} else {
 				<Balance<T>>::insert((collection.id, token, from), balance_from);
 			}

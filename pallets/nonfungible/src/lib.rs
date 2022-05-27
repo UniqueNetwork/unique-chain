@@ -340,17 +340,19 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(1)
 			.ok_or(ArithmeticError::Overflow)?;
 
+		// =========
+
 		if balance == 0 {
 			<AccountBalance<T>>::remove((collection.id, token_data.owner.clone()));
 		} else {
 			<AccountBalance<T>>::insert((collection.id, token_data.owner.clone()), balance);
 		}
 
-		if let Some(owner) = T::CrossTokenAddressMapping::address_to_token(&token_data.owner) {
-			Self::unnest(owner, (collection.id, token));
-		}
-
-		// =========
+		<PalletStructure<T>>::unnest_if_nested(
+			&token_data.owner,
+			collection.id,
+			token
+		);
 
 		<Owned<T>>::remove((collection.id, &token_data.owner, token));
 		<TokensBurnt<T>>::insert(collection.id, burnt);
@@ -592,6 +594,12 @@ impl<T: Config> Pallet<T> {
 		)?;
 
 		// =========
+
+		<PalletStructure<T>>::unnest_if_nested(
+			from,
+			collection.id,
+			token
+		);
 
 		<TokenData<T>>::insert(
 			(collection.id, token),
