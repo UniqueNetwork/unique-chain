@@ -156,8 +156,8 @@ impl<T: Config> Pallet<T> {
 		budget: &dyn Budget,
 	) -> Result<bool, DispatchError> {
 		let target_parent = match T::CrossTokenAddressMapping::address_to_token(&user) {
-			Some((collection, token)) => Parent::Token(collection, token),
-			None => Parent::User(user),
+			Some((collection, token)) => Self::find_topmost_owner(collection, token, budget)?,
+			None => user,
 		};
 
 		// Tried to nest token in itself
@@ -172,7 +172,7 @@ impl<T: Config> Pallet<T> {
 					return Err(<Error<T>>::OuroborosDetected.into())
 				}
 				// Found needed parent, token is indirecty owned
-				v if v == target_parent => return Ok(true),
+				Parent::User(user) if user == target_parent => return Ok(true),
 				// Token is owned by other user
 				Parent::User(_) => return Ok(false),
 				Parent::TokenNotFound => return Err(<Error<T>>::TokenNotFound.into()),

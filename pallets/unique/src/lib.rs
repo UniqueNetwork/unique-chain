@@ -52,6 +52,8 @@ mod benchmarking;
 pub mod weights;
 use weights::WeightInfo;
 
+const NESTING_BUDGET: u32 = 5;
+
 decl_error! {
 	/// Error for non-fungible-token module.
 	pub enum Error for Module<T: Config> {
@@ -605,7 +607,7 @@ decl_module! {
 		#[transactional]
 		pub fn create_item(origin, collection_id: CollectionId, owner: T::CrossAccountId, data: CreateItemData) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(2);
+			let budget = budget::Value::new(NESTING_BUDGET);
 
 			dispatch_call::<T, _>(collection_id, |d| d.create_item(sender, owner, data, &budget))
 		}
@@ -633,7 +635,7 @@ decl_module! {
 		pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::CrossAccountId, items_data: Vec<CreateItemData>) -> DispatchResultWithPostInfo {
 			ensure!(!items_data.is_empty(), Error::<T>::EmptyArgument);
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(2);
+			let budget = budget::Value::new(NESTING_BUDGET);
 
 			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items(sender, owner, items_data, &budget))
 		}
@@ -714,7 +716,7 @@ decl_module! {
 		#[transactional]
 		pub fn create_multiple_items_ex(origin, collection_id: CollectionId, data: CreateItemExData<T::CrossAccountId>) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(2);
+			let budget = budget::Value::new(NESTING_BUDGET);
 
 			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items_ex(sender, data, &budget))
 		}
@@ -794,7 +796,7 @@ decl_module! {
 		#[transactional]
 		pub fn burn_from(origin, collection_id: CollectionId, from: T::CrossAccountId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(2);
+			let budget = budget::Value::new(NESTING_BUDGET);
 
 			dispatch_call::<T, _>(collection_id, |d| d.burn_from(sender, from, item_id, value, &budget))
 		}
@@ -826,7 +828,7 @@ decl_module! {
 		#[transactional]
 		pub fn transfer(origin, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(2);
+			let budget = budget::Value::new(NESTING_BUDGET);
 
 			dispatch_call::<T, _>(collection_id, |d| d.transfer(sender, recipient, item_id, value, &budget))
 		}
@@ -877,7 +879,7 @@ decl_module! {
 		#[transactional]
 		pub fn transfer_from(origin, from: T::CrossAccountId, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(2);
+			let budget = budget::Value::new(NESTING_BUDGET);
 
 			dispatch_call::<T, _>(collection_id, |d| d.transfer_from(sender, from, recipient, item_id, value, &budget))
 		}
