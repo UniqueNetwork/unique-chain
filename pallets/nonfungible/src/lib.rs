@@ -585,7 +585,7 @@ impl<T: Config> Pallet<T> {
 			None
 		};
 
-		<PalletStructure<T>>::try_nest_if_sent_to_token(
+		<PalletStructure<T>>::nest_if_sent_to_token(
 			from.clone(),
 			to,
 			collection.id,
@@ -704,7 +704,7 @@ impl<T: Config> Pallet<T> {
 					},
 				);
 
-				<PalletStructure<T>>::nest_if_sent_to_token(&data.owner, collection.id, TokenId(token));
+				<PalletStructure<T>>::nest_if_sent_to_token_unchecked(&data.owner, collection.id, TokenId(token));
 
 				if let Err(e) = Self::set_token_properties(
 					collection,

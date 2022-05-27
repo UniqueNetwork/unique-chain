@@ -236,7 +236,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		<PalletStructure<T>>::try_nest_if_sent_to_token(
+		<PalletStructure<T>>::nest_if_sent_to_token(
 			from.clone(),
 			to,
 			collection.id,
@@ -320,7 +320,7 @@ impl<T: Config> Pallet<T> {
 		<TotalSupply<T>>::insert(collection.id, total_supply);
 		for (user, amount) in balances {
 			<Balance<T>>::insert((collection.id, &user), amount);
-			<PalletStructure<T>>::nest_if_sent_to_token(&user, collection.id, TokenId::default());
+			<PalletStructure<T>>::nest_if_sent_to_token_unchecked(&user, collection.id, TokenId::default());
 			<PalletEvm<T>>::deposit_log(
 				ERC20Events::Transfer {
 					from: H160::default(),

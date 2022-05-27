@@ -191,7 +191,7 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		nesting_budget: &dyn Budget
 	) -> DispatchResult {
-		Self::try_dispatched(
+		Self::try_exec_if_owner_is_valid_nft(
 			under,
 			|d, parent_id| d.check_nesting(
 				from,
@@ -202,14 +202,14 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	pub fn try_nest_if_sent_to_token(
+	pub fn nest_if_sent_to_token(
 		from: T::CrossAccountId,
 		under: &T::CrossAccountId,
 		collection_id: CollectionId,
 		token_id: TokenId,
 		nesting_budget: &dyn Budget
 	) -> DispatchResult {
-		Self::try_dispatched(
+		Self::try_exec_if_owner_is_valid_nft(
 			under,
 			|d, parent_id| {
 				d.check_nesting(
@@ -226,12 +226,12 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	pub fn nest_if_sent_to_token(
+	pub fn nest_if_sent_to_token_unchecked(
 		owner: &T::CrossAccountId,
 		collection_id: CollectionId,
 		token_id: TokenId
 	) {
-		Self::dispatched(
+		Self::exec_if_owner_is_valid_nft(
 			owner,
 			|d, parent_id| d.nest(
 				parent_id,
@@ -245,7 +245,7 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 		token_id: TokenId
 	) {
-		Self::dispatched(
+		Self::exec_if_owner_is_valid_nft(
 			owner,
 			|d, parent_id| d.unnest(
 			parent_id,
@@ -254,11 +254,11 @@ impl<T: Config> Pallet<T> {
 		);
 	}
 
-	fn dispatched(
+	fn exec_if_owner_is_valid_nft(
 		account: &T::CrossAccountId,
 		action: impl FnOnce(&dyn CommonCollectionOperations<T>, TokenId)
 	) {
-		Self::try_dispatched(
+		Self::try_exec_if_owner_is_valid_nft(
 			account,
 			|d, id| {
 				action(d, id);
@@ -267,7 +267,7 @@ impl<T: Config> Pallet<T> {
 		).unwrap();
 	}
 
-	fn try_dispatched(
+	fn try_exec_if_owner_is_valid_nft(
 		account: &T::CrossAccountId,
 		action: impl FnOnce(&dyn CommonCollectionOperations<T>, TokenId) -> DispatchResult
 	) -> DispatchResult {

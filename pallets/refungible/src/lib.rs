@@ -375,7 +375,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		<PalletStructure<T>>::try_nest_if_sent_to_token(
+		<PalletStructure<T>>::nest_if_sent_to_token(
 			from.clone(),
 			to,
 			collection.id,
@@ -518,7 +518,7 @@ impl<T: Config> Pallet<T> {
 				}
 				<Balance<T>>::insert((collection.id, token_id, &user), amount);
 				<Owned<T>>::insert((collection.id, &user, TokenId(token_id)), true);
-				<PalletStructure<T>>::nest_if_sent_to_token(&user, collection.id, TokenId(token_id));
+				<PalletStructure<T>>::nest_if_sent_to_token_unchecked(&user, collection.id, TokenId(token_id));
 
 				// TODO: ERC20 transfer event
 				<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
