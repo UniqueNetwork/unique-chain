@@ -14,7 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use evm_coder::{solidity_interface, types::*, execution::{Result, Error}};
+use evm_coder::{
+	solidity_interface,
+	types::*,
+	execution::{Result, Error},
+};
 pub use pallet_evm::{PrecompileOutput, PrecompileResult, account::CrossAccountId};
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_core::{H160, U256};
@@ -66,11 +70,7 @@ impl<T: Config> CollectionHandle<T> {
 		Ok(prop.to_vec())
 	}
 
-	fn eth_set_sponsor(
-		&mut self,
-		caller: caller,
-		sponsor: address,
-	) -> Result<void> {
+	fn eth_set_sponsor(&mut self, caller: caller, sponsor: address) -> Result<void> {
 		check_is_owner(caller, self)?;
 
 		let sponsor = T::CrossAccountId::from_eth(sponsor);
@@ -88,44 +88,40 @@ impl<T: Config> CollectionHandle<T> {
 		Ok(())
 	}
 
-	fn set_limit(
-		&mut self,
-		caller: caller,
-		limit: string,
-		value: string,
-	) -> Result<void> {
+	fn set_limit(&mut self, caller: caller, limit: string, value: string) -> Result<void> {
 		check_is_owner(caller, self)?;
 		let mut limits = self.limits.clone();
 
 		match limit.as_str() {
 			"accountTokenOwnershipLimit" => {
 				limits.account_token_ownership_limit = parse_int(value)?;
-			},
+			}
 			"sponsoredDataSize" => {
 				limits.sponsored_data_size = parse_int(value)?;
-			},
+			}
 			"sponsoredDataRateLimit" => {
-				limits.sponsored_data_rate_limit = Some(SponsoringRateLimit::Blocks(parse_int(value)?.unwrap()));
-			},
+				limits.sponsored_data_rate_limit =
+					Some(SponsoringRateLimit::Blocks(parse_int(value)?.unwrap()));
+			}
 			"tokenLimit" => {
 				limits.token_limit = parse_int(value)?;
-			},
+			}
 			"sponsorTransferTimeout" => {
 				limits.sponsor_transfer_timeout = parse_int(value)?;
-			},
+			}
 			"sponsorApproveTimeout" => {
 				limits.sponsor_approve_timeout = parse_int(value)?;
-			},
+			}
 			"ownerCanTransfer" => {
 				limits.owner_can_transfer = parse_bool(value)?;
-			},
+			}
 			"ownerCanDestroy" => {
 				limits.owner_can_destroy = parse_bool(value)?;
-			},
+			}
 			"transfersEnabled" => {
 				limits.transfers_enabled = parse_bool(value)?;
-			},
-			_ => return Err(Error::Revert(format!("Unknown limit \"{}\"", limit)))
+			}
+			_ => return Err(Error::Revert(format!("Unknown limit \"{}\"", limit))),
 		}
 		self.limits = limits;
 		save(self);
@@ -150,13 +146,15 @@ fn save<T: Config>(collection: &CollectionHandle<T>) {
 }
 
 fn parse_int(value: string) -> Result<Option<u32>> {
-	value.parse::<u32>()
+	value
+		.parse::<u32>()
 		.map_err(|e| Error::Revert(format!("Int value \"{}\" parse error: {}", value, e)))
 		.map(|value| Some(value))
 }
 
 fn parse_bool(value: string) -> Result<Option<bool>> {
-	value.parse::<bool>()
+	value
+		.parse::<bool>()
 		.map_err(|e| Error::Revert(format!("Bool value \"{}\" parse error: {}", value, e)))
 		.map(|value| Some(value))
 }

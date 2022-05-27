@@ -21,7 +21,10 @@ use core::{
 };
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
 use frame_support::BoundedVec;
-use up_data_structs::{TokenId, SchemaVersion, PropertyPermission, PropertyKeyPermission, Property, CollectionId, PropertyKey, CollectionPropertiesVec};
+use up_data_structs::{
+	TokenId, SchemaVersion, PropertyPermission, PropertyKeyPermission, Property, CollectionId,
+	PropertyKey, CollectionPropertiesVec,
+};
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_core::{H160, U256};
 use sp_std::vec::Vec;
@@ -382,11 +385,15 @@ impl<T: Config> NonfungibleHandle<T> {
 		}
 
 		let mut properties = CollectionPropertiesVec::default();
-		properties.try_push(Property{
-			key,
-			value: token_uri.into_bytes().try_into()
-				.map_err(|_| "token uri is too long")?
-		}).map_err(|e| Error::Revert(alloc::format!("Can't add property: {:?}", e)))?;
+		properties
+			.try_push(Property {
+				key,
+				value: token_uri
+					.into_bytes()
+					.try_into()
+					.map_err(|_| "token uri is too long")?,
+			})
+			.map_err(|e| Error::Revert(alloc::format!("Can't add property: {:?}", e)))?;
 
 		<Pallet<T>>::create_item(
 			self,
@@ -407,10 +414,14 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 }
 
-fn get_token_permission<T: Config>(collection_id: CollectionId, key: &PropertyKey) -> Result<PropertyPermission> {
+fn get_token_permission<T: Config>(
+	collection_id: CollectionId,
+	key: &PropertyKey,
+) -> Result<PropertyPermission> {
 	let token_property_permissions = CollectionPropertyPermissions::<T>::try_get(collection_id)
 		.map_err(|_| Error::Revert("No permissions for collection".into()))?;
-	let a = token_property_permissions.get(key)
+	let a = token_property_permissions
+		.get(key)
 		.map(|p| p.clone())
 		.ok_or_else(|| Error::Revert("No permission for tokenURI".into()))?;
 	Ok(a)

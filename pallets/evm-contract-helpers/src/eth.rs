@@ -20,7 +20,7 @@ use ethereum as _;
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure,
-	account::CrossAccountId
+	account::CrossAccountId,
 };
 use sp_core::H160;
 use crate::{

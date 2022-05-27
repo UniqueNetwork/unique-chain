@@ -83,11 +83,11 @@ impl<T: Config> EvmCollectionHelper<T> {
 			collection_admin: true,
 			token_owner: false,
 		};
-		let mut token_property_permissions = up_data_structs::CollectionPropertiesPermissionsVec::default();
-		token_property_permissions.try_push(up_data_structs::PropertyKeyPermission{
-			key,
-			permission,
-		}).map_err(|e| Error::Revert(format!("{:?}", e)))?;
+		let mut token_property_permissions =
+			up_data_structs::CollectionPropertiesPermissionsVec::default();
+		token_property_permissions
+			.try_push(up_data_structs::PropertyKeyPermission { key, permission })
+			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
 
 		let data = CreateCollectionData {
 			name,
