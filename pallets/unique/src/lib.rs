@@ -115,13 +115,6 @@ decl_event! {
 		/// * owner:  New sponsor address.
 		CollectionSponsorSet(CollectionId, AccountId),
 
-		/// const on chain schema was set
-		///
-		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
-		ConstOnChainSchemaSet(CollectionId),
-
 		/// New sponsor was confirm
 		///
 		/// # Arguments
@@ -166,36 +159,6 @@ decl_event! {
 		CollectionLimitSet(CollectionId),
 
 		CollectionPermissionSet(CollectionId),
-
-		/// Mint permission	was set
-		///
-		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
-		MintPermissionSet(CollectionId),
-
-		/// Offchain schema was set
-		///
-		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
-		OffchainSchemaSet(CollectionId),
-
-		/// Public access mode was set
-		///
-		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
-		///
-		/// * mode: New access state.
-		PublicAccessModeSet(CollectionId, AccessMode),
-
-		/// Schema version was set
-		///
-		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
-		SchemaVersionSet(CollectionId),
 	}
 }
 
