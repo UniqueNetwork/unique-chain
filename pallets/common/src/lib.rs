@@ -656,6 +656,12 @@ impl<T: Config> Pallet<T> {
 			})
 			.collect();
 
+		let permissions = CollectionPermissions {
+			access: Some(permissions.access()),
+			mint_mode: Some(permissions.mint_mode()),
+			nesting: Some(permissions.nesting().clone()),
+		};
+
 		Some(RpcCollection {
 			name: name.into_inner(),
 			description: description.into_inner(),
