@@ -79,7 +79,10 @@ describe('Integration Test: Nesting', () => {
         api.tx.unique.transferFrom(
           normalizeAccountId({Ethereum: tokenIdToAddress(collection, tokenA)}), 
           normalizeAccountId({Ethereum: tokenIdToAddress(collection, tokenB)}), 
-          collection, tokenC, 1),
+          collection,
+          tokenC,
+          1,
+        ),
       )).to.not.be.rejected;
       expect(await getTopmostTokenOwner(api, collection, tokenC)).to.be.deep.equal({Substrate: alice.address});
       expect(await getTokenOwner(api, collection, tokenC)).to.be.deep.equal({Ethereum: tokenIdToAddress(collection, tokenB).toLowerCase()});
