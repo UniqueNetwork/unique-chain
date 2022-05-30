@@ -135,8 +135,8 @@ export interface IChainLimits {
   nftSponsorTransferTimeout: number;
   fungibleSponsorTransferTimeout: number;
   refungibleSponsorTransferTimeout: number;
-  offchainSchemaLimit: number;
-  constOnChainSchemaLimit: number;
+  //offchainSchemaLimit: number;
+  //constOnChainSchemaLimit: number;
 }
 
 export interface IReFungibleTokenDataType {
@@ -310,7 +310,6 @@ export type CreateCollectionParams = {
   name: string,
   description: string,
   tokenPrefix: string,
-  schemaVersion: string,
   properties?: Array<Property>,
   propPerm?: Array<PropertyPermission>
 };
@@ -320,7 +319,6 @@ const defaultCreateCollectionParams: CreateCollectionParams = {
   mode: {type: 'NFT'},
   name: 'name',
   tokenPrefix: 'prefix',
-  schemaVersion: 'ImageURL',
 };
 
 export async function createCollectionExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
@@ -783,23 +781,6 @@ export async function removeFromContractAllowListExpectFailure(sender: IKeyringP
   });
 }
 
-/*export async function setOffchainSchemaExpectSuccess(sender: IKeyringPair, collectionId: number, data: number[]) {
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setOffchainSchema(collectionId, '0x' + Buffer.from(data).toString('hex'));
-    const events = await submitTransactionAsync(sender, tx);
-    const result = getGenericResult(events);
-
-    expect(result.success).to.be.true;
-  });
-}
-
-export async function setOffchainSchemaExpectFailure(sender: IKeyringPair, collectionId: number, data: number[]) {
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setOffchainSchema(collectionId, '0x' + Buffer.from(data).toString('hex'));
-    await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
-  });
-}*/
-
 export interface CreateFungibleData {
   readonly Value: bigint;
 }
@@ -1110,13 +1091,6 @@ export async function getAdminList(
 ): Promise<string[]> {
   return (await api.rpc.unique.adminlist(collectionId)).toHuman() as any;
 }
-/*export async function getConstMetadata(
-  api: ApiPromise,
-  collectionId: number,
-  tokenId: number,
-): Promise<number[]> {
-  return [...(await api.rpc.unique.constMetadata(collectionId, tokenId))];
-}*/
 export async function getTokenProperties(
   api: ApiPromise,
   collectionId: number,

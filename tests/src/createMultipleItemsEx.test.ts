@@ -29,13 +29,10 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
-          // constData: '0x0000',
         }, {
           owner: {substrate: bob.address},
-          // constData: '0x2222',
         }, {
           owner: {substrate: charlie.address},
-          // constData: '0x4444',
         },
       ];
 
@@ -57,15 +54,12 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
-          // constData: '0x1111',
           properties: [{key: 'k', value: 'v1'}],
         }, {
           owner: {substrate: bob.address},
-          // constData: '0x2222',
           properties: [{key: 'k', value: 'v2'}],
         }, {
           owner: {substrate: charlie.address},
-          // constData: '0x4444',
           properties: [{key: 'k', value: 'v3'}],
         },
       ];
@@ -88,15 +82,12 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
-          // constData: '0x0000',
           properties: [{key: 'k', value: 'v1'}],
         }, {
           owner: {substrate: bob.address},
-          // constData: '0x2222',
           properties: [{key: 'k', value: 'v2'}],
         }, {
           owner: {substrate: charlie.address},
-          // constData: '0x4444',
           properties: [{key: 'k', value: 'v3'}],
         },
       ];
@@ -119,15 +110,12 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
-          // constData: '0x0000',
           properties: [{key: 'k', value: 'v1'}],
         }, {
           owner: {substrate: bob.address},
-          // constData: '0x2222',
           properties: [{key: 'k', value: 'v2'}],
         }, {
           owner: {substrate: charlie.address},
-          // constData: '0x4444',
           properties: [{key: 'k', value: 'v3'}],
         },
       ];
@@ -272,13 +260,10 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
-          // constData: '0x0000',
         }, {
           owner: {substrate: bob.address},
-          // constData: '0x2222',
         }, {
           owner: {substrate: charlie.address},
-          // constData: '0x4444',
         },
       ];
 
@@ -300,13 +285,10 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
-          // constData: '0x0000',
         }, {
           owner: {substrate: bob.address},
-          // constData: '0x2222',
         }, {
           owner: {substrate: charlie.address},
-          // constData: '0x4444',
         },
       ];
 

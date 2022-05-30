@@ -31,12 +31,12 @@ describe.skip('Migration testing for pallet-common', () => {
         name: strToUTF16('Mojave Pictures'),
         description: strToUTF16('$2.2 billion power plant!'),
         tokenPrefix: '0x0002030',
-        offchainSchema: '0x111111',
-        schemaVersion: 'Unique',
+        //offchainSchema: '0x111111',
+        //schemaVersion: 'Unique',
         limits: {
           accountTokenOwnershipLimit: 3,
         },
-        constOnChainSchema: '0x333333',
+        //constOnChainSchema: '0x333333',
       });
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateCollectionResult(events);
@@ -96,17 +96,17 @@ describe.skip('Migration testing for pallet-common', () => {
       const collectionNew = (await api.query.common.collectionById(collectionId)).toJSON() as any;
 
       // Make sure the extra fields are what they should be
-      const constOnChainSchema = await api.query.common.collectionData(collectionId, 'ConstOnChainSchema');
-      const offchainSchema = await api.query.common.collectionData(collectionId, 'OffchainSchema');
+      //const constOnChainSchema = await api.query.common.collectionData(collectionId, 'ConstOnChainSchema');
+      //const offchainSchema = await api.query.common.collectionData(collectionId, 'OffchainSchema');
 
-      expect(constOnChainSchema.toHex()).to.be.deep.equal(collectionOld.constOnChainSchema);
-      expect(offchainSchema.toHex()).to.be.deep.equal(collectionOld.offchainSchema);
+      //expect(constOnChainSchema.toHex()).to.be.deep.equal(collectionOld.constOnChainSchema);
+      //expect(offchainSchema.toHex()).to.be.deep.equal(collectionOld.offchainSchema);
       expect(collectionNew).to.have.nested.property('limits.nestingRule');
 
       // Get rid of extra fields to perform comparison on the rest of the collection
       delete collectionNew.limits.nestingRule;
-      delete collectionOld.constOnChainSchema;
-      delete collectionOld.offchainSchema;
+      //delete collectionOld.constOnChainSchema;
+      //delete collectionOld.offchainSchema;
 
       expect(collectionNew).to.be.deep.equal(collectionOld);
     });

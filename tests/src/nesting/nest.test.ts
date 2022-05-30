@@ -10,6 +10,7 @@ import {
   enablePublicMintingExpectSuccess,
   getTokenOwner,
   getTopmostTokenOwner,
+  normalizeAccountId,
   setCollectionPermissionsExpectSuccess,
   transferExpectFailure,
   transferExpectSuccess,
@@ -28,7 +29,7 @@ describe('Integration Test: Nesting', () => {
     });
   });
 
-  it('Performs the full suite: bundles a token, transfers, and allows to unnest', async () => {
+  it('Performs the full suite: bundles a token, transfers, and unnests', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: 'Owner'});
@@ -55,6 +56,33 @@ describe('Integration Test: Nesting', () => {
       // Unnest
       await transferFromExpectSuccess(collection, newToken, bob, {Ethereum: tokenIdToAddress(collection, targetToken)}, {Substrate: bob.address});
       expect(await getTokenOwner(api, collection, newToken)).to.be.deep.equal({Substrate: bob.address});
+    });
+  });
+
+  it('Transfers an already bundled token', async () => {
+    await usingApi(async api => {
+      const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: 'Owner'});
+
+      const tokenA = await createItemExpectSuccess(alice, collection, 'NFT');
+      const tokenB = await createItemExpectSuccess(alice, collection, 'NFT');
+
+      // Create a nested token
+      const tokenC = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: tokenIdToAddress(collection, tokenA)});
+      expect(await getTopmostTokenOwner(api, collection, tokenC)).to.be.deep.equal({Substrate: alice.address});
+      expect(await getTokenOwner(api, collection, tokenC)).to.be.deep.equal({Ethereum: tokenIdToAddress(collection, tokenA).toLowerCase()});
+
+      // Transfer the nested token to another token
+      await expect(executeTransaction(
+        api,
+        alice,
+        api.tx.unique.transferFrom(
+          normalizeAccountId({Ethereum: tokenIdToAddress(collection, tokenA)}), 
+          normalizeAccountId({Ethereum: tokenIdToAddress(collection, tokenB)}), 
+          collection, tokenC, 1),
+      )).to.not.be.rejected;
+      expect(await getTopmostTokenOwner(api, collection, tokenC)).to.be.deep.equal({Substrate: alice.address});
+      expect(await getTokenOwner(api, collection, tokenC)).to.be.deep.equal({Ethereum: tokenIdToAddress(collection, tokenB).toLowerCase()});
     });
   });
 
