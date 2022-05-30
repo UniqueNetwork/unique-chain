@@ -484,10 +484,6 @@ pub enum SponsoringRateLimit {
 pub struct CreateNftData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
-	pub const_data: BoundedVec<u8, CustomDataLimit>,
-
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
-	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub properties: CollectionPropertiesVec,
 }
 
@@ -563,7 +559,6 @@ pub enum CreateItemExData<CrossAccountId> {
 impl CreateItemData {
 	pub fn data_size(&self) -> usize {
 		match self {
-			CreateItemData::NFT(data) => data.const_data.len(),
 			CreateItemData::ReFungible(data) => data.const_data.len(),
 			_ => 0,
 		}
