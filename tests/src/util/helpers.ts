@@ -1228,6 +1228,7 @@ export async function createItemWithPropsExpectFailure(sender: IKeyringPair, col
 
 
     const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    if(events.message && events.message.contains('1002: Verification Error')) return;
     const result = getCreateItemResult(events);
 
     expect(result.success).to.be.false;
