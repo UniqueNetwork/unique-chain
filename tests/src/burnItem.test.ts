@@ -217,22 +217,6 @@ describe('Negative integration test: ext. burnItem():', () => {
     });
   });
 
-  it('Burn a token in a destroyed collection', async () => {
-    const createMode = 'NFT';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
-    await destroyCollectionExpectSuccess(collectionId);
-
-    await usingApi(async (api) => {
-      const tx = api.tx.unique.burnItem(collectionId, tokenId, 0);
-      const badTransaction = async function () {
-        await submitTransactionExpectFailAsync(alice, tx);
-      };
-      await expect(badTransaction()).to.be.rejected;
-    });
-
-  });
-
   it('Burn a token that was never created', async () => {
     const createMode = 'NFT';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
