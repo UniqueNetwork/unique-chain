@@ -1364,7 +1364,7 @@ export async function enablePublicMintingExpectSuccess(sender: IKeyringPair, col
 export async function setMintPermissionExpectFailure(sender: IKeyringPair, collectionId: number, enabled: boolean) {
   await usingApi(async (api) => {
     // Run the transaction
-    const tx = api.tx.unique.setMintPermission(collectionId, enabled);
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, {mintMode: enabled});
     const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
     const result = getCreateCollectionResult(events);
     // tslint:disable-next-line:no-unused-expression
