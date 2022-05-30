@@ -20,37 +20,37 @@ pub mod primitives {
 
 #[cfg(feature = "std")]
 mod serialize {
-    use core::convert::AsRef;
-    use serde::ser::{self, Serialize};
+	use core::convert::AsRef;
+	use serde::ser::{self, Serialize};
 
-    pub mod vec {
-        use super::*;
+	pub mod vec {
+		use super::*;
 
-        pub fn serialize<D, V, C>(value: &C, serializer: D) -> Result<D::Ok, D::Error>
-        where
-            D: ser::Serializer,
-            V: Serialize,
-            C: AsRef<[V]>,
-        {
-            value.as_ref().serialize(serializer)
-        }
-    }
+		pub fn serialize<D, V, C>(value: &C, serializer: D) -> Result<D::Ok, D::Error>
+		where
+			D: ser::Serializer,
+			V: Serialize,
+			C: AsRef<[V]>,
+		{
+			value.as_ref().serialize(serializer)
+		}
+	}
 
-    pub mod opt_vec {
-        use super::*;
+	pub mod opt_vec {
+		use super::*;
 
-        pub fn serialize<D, V, C>(value: &Option<C>, serializer: D) -> Result<D::Ok, D::Error>
-        where
-            D: ser::Serializer,
-            V: Serialize,
-            C: AsRef<[V]>,
-        {
-            match value {
-                Some(value) => super::vec::serialize(value, serializer),
-                None => serializer.serialize_none()
-            }
-        }
-    }
+		pub fn serialize<D, V, C>(value: &Option<C>, serializer: D) -> Result<D::Ok, D::Error>
+		where
+			D: ser::Serializer,
+			V: Serialize,
+			C: AsRef<[V]>,
+		{
+			match value {
+				Some(value) => super::vec::serialize(value, serializer),
+				None => serializer.serialize_none(),
+			}
+		}
+	}
 }
 
 /// Collection info.
@@ -58,13 +58,11 @@ mod serialize {
 #[derive(Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(
 	feature = "std",
-	serde(
-		bound = r#"
+	serde(bound = r#"
 			AccountId: Serialize,
 			BoundedString: AsRef<[u8]>,
 			BoundedSymbol: AsRef<[u8]>
-		"#
-	)
+		"#)
 )]
 pub struct CollectionInfo<BoundedString, BoundedSymbol, AccountId> {
 	/// Current bidder and bid price.
@@ -91,9 +89,9 @@ pub enum AccountIdOrCollectionNftTuple<AccountId> {
 #[derive(Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
 pub struct RoyaltyInfo<AccountId, RoyaltyAmount> {
 	/// Recipient (AccountId) of the royalty
-    pub recipient: AccountId,
+	pub recipient: AccountId,
 	/// Amount (Permill) of the royalty
-    pub amount: RoyaltyAmount,
+	pub amount: RoyaltyAmount,
 }
 
 /// Nft info.
@@ -101,13 +99,11 @@ pub struct RoyaltyInfo<AccountId, RoyaltyAmount> {
 #[derive(Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(
 	feature = "std",
-	serde(
-		bound = r#"
+	serde(bound = r#"
 			AccountId: Serialize,
 			RoyaltyAmount: Serialize,
 			BoundedString: AsRef<[u8]>
-		"#
-	)
+		"#)
 )]
 pub struct NftInfo<AccountId, RoyaltyAmount, BoundedString> {
 	/// The owner of the NFT, can be either an Account or a tuple (CollectionId, NftId)
@@ -129,22 +125,19 @@ pub struct NftInfo<AccountId, RoyaltyAmount, BoundedString> {
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub struct NftChild {
 	pub collection_id: CollectionId,
-	pub nft_id: NftId
+	pub nft_id: NftId,
 }
 
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[derive(Encode, Decode, PartialEq, TypeInfo)]
 #[cfg_attr(
 	feature = "std",
-	serde(
-		bound = r#"
+	serde(bound = r#"
 			BoundedKey: AsRef<[u8]>,
 			BoundedValue: AsRef<[u8]>
-		"#
-	)
+		"#)
 )]
-pub struct PropertyInfo<BoundedKey, BoundedValue>
-{
+pub struct PropertyInfo<BoundedKey, BoundedValue> {
 	/// Key of the property
 	#[cfg_attr(feature = "std", serde(with = "serialize::vec"))]
 	pub key: BoundedKey,
@@ -156,10 +149,7 @@ pub struct PropertyInfo<BoundedKey, BoundedValue>
 
 #[derive(Encode, Decode, Default, Eq, PartialEq, Clone, Debug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize))]
-#[cfg_attr(
-	feature = "std",
-	serde(bound = "BoundedString: AsRef<[u8]>")
-)]
+#[cfg_attr(feature = "std", serde(bound = "BoundedString: AsRef<[u8]>"))]
 pub struct BasicResource<BoundedString> {
 	/// If the resource is Media, the base property is absent. Media src should be a URI like an
 	/// IPFS hash.
@@ -188,12 +178,10 @@ pub struct BasicResource<BoundedString> {
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[cfg_attr(
 	feature = "std",
-	serde(
-		bound = r#"
+	serde(bound = r#"
 			BoundedString: AsRef<[u8]>,
 			BoundedParts: AsRef<[PartId]>
-		"#
-	)
+		"#)
 )]
 pub struct ComposableResource<BoundedString, BoundedParts> {
 	/// If a resource is composed, it will have an array of parts that compose it
@@ -235,10 +223,7 @@ pub struct ComposableResource<BoundedString, BoundedParts> {
 
 #[derive(Encode, Decode, Eq, PartialEq, Clone, Debug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize))]
-#[cfg_attr(
-	feature = "std",
-	serde(bound = "BoundedString: AsRef<[u8]>")
-)]
+#[cfg_attr(feature = "std", serde(bound = "BoundedString: AsRef<[u8]>"))]
 pub struct SlotResource<BoundedString> {
 	/// A Base is uniquely identified by the combination of the word `base`, its minting block
 	/// number, and user provided symbol during Base creation, glued by dashes `-`, e.g.
@@ -279,14 +264,12 @@ pub struct SlotResource<BoundedString> {
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[cfg_attr(
 	feature = "std",
-	serde(
-		bound = r#"
+	serde(bound = r#"
 			BoundedString: AsRef<[u8]>,
 			BoundedParts: AsRef<[PartId]>
-		"#
-	)
+		"#)
 )]
-#[derivative(Default(bound=""))]
+#[derivative(Default(bound = ""))]
 pub enum ResourceTypes<BoundedString: Default, BoundedParts> {
 	#[derivative(Default)]
 	Basic(BasicResource<BoundedString>),
@@ -294,18 +277,15 @@ pub enum ResourceTypes<BoundedString: Default, BoundedParts> {
 	Slot(SlotResource<BoundedString>),
 }
 
-
 #[derive(Encode, Decode, Eq, PartialEq, Clone, Debug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[cfg_attr(
 	feature = "std",
-	serde(
-		bound = r#"
+	serde(bound = r#"
 			BoundedResource: AsRef<[u8]>,
 			BoundedString: AsRef<[u8]>,
 			BoundedParts: AsRef<[PartId]>
-		"#
-	)
+		"#)
 )]
 pub struct ResourceInfo<BoundedResource, BoundedString: Default, BoundedParts> {
 	/// id is a 5-character string of reasonable uniqueness.
@@ -328,12 +308,10 @@ pub struct ResourceInfo<BoundedResource, BoundedString: Default, BoundedParts> {
 #[derive(Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(
 	feature = "std",
-	serde(
-		bound = r#"
+	serde(bound = r#"
 			AccountId: Serialize,
 			BoundedString: AsRef<[u8]>
-		"#
-	)
+		"#)
 )]
 pub struct BaseInfo<AccountId, BoundedString> {
 	/// Original creator of the Base
@@ -350,10 +328,7 @@ pub struct BaseInfo<AccountId, BoundedString> {
 
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[derive(Encode, Decode, Debug, TypeInfo, Clone, PartialEq, Eq, MaxEncodedLen)]
-#[cfg_attr(
-	feature = "std",
-	serde(bound = "BoundedString: AsRef<[u8]>")
-)]
+#[cfg_attr(feature = "std", serde(bound = "BoundedString: AsRef<[u8]>"))]
 pub struct FixedPart<BoundedString> {
 	pub id: PartId,
 	pub z: ZIndex,
@@ -368,29 +343,24 @@ pub struct FixedPart<BoundedString> {
 	feature = "std",
 	serde(bound = "BoundedCollectionList: AsRef<[CollectionId]>")
 )]
-#[derivative(Default(bound=""))]
+#[derivative(Default(bound = ""))]
 pub enum EquippableList<BoundedCollectionList> {
 	All,
 
 	#[derivative(Default)]
 	Empty,
 
-	Custom(
-		#[cfg_attr(feature = "std", serde(with = "serialize::vec"))]
-		BoundedCollectionList
-	),
+	Custom(#[cfg_attr(feature = "std", serde(with = "serialize::vec"))] BoundedCollectionList),
 }
 
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[derive(Encode, Decode, Debug, TypeInfo, Clone, PartialEq, Eq, MaxEncodedLen)]
 #[cfg_attr(
 	feature = "std",
-	serde(
-		bound = r#"
+	serde(bound = r#"
 			BoundedString: AsRef<[u8]>,
 			BoundedCollectionList: AsRef<[CollectionId]>
-		"#
-	)
+		"#)
 )]
 pub struct SlotPart<BoundedString, BoundedCollectionList> {
 	pub id: PartId,
@@ -406,12 +376,10 @@ pub struct SlotPart<BoundedString, BoundedCollectionList> {
 #[derive(Encode, Decode, Debug, TypeInfo, Clone, PartialEq, Eq, MaxEncodedLen)]
 #[cfg_attr(
 	feature = "std",
-	serde(
-		bound = r#"
+	serde(bound = r#"
 			BoundedString: AsRef<[u8]>,
 			BoundedCollectionList: AsRef<[CollectionId]>
-		"#
-	)
+		"#)
 )]
 pub enum PartType<BoundedString, BoundedCollectionList> {
 	FixedPart(FixedPart<BoundedString>),
@@ -422,21 +390,21 @@ impl<BoundedString, BoundedCollectionList> PartType<BoundedString, BoundedCollec
 	pub fn id(&self) -> PartId {
 		match self {
 			Self::FixedPart(part) => part.id,
-			Self::SlotPart(part) => part.id
+			Self::SlotPart(part) => part.id,
 		}
 	}
 
 	pub fn src(&self) -> &BoundedString {
 		match self {
 			Self::FixedPart(part) => &part.src,
-			Self::SlotPart(part) => &part.src
+			Self::SlotPart(part) => &part.src,
 		}
 	}
 
 	pub fn z_index(&self) -> ZIndex {
 		match self {
 			Self::FixedPart(part) => part.z,
-			Self::SlotPart(part) => part.z
+			Self::SlotPart(part) => part.z,
 		}
 	}
 }
@@ -445,12 +413,10 @@ impl<BoundedString, BoundedCollectionList> PartType<BoundedString, BoundedCollec
 #[derive(Encode, Decode, Debug, TypeInfo, Clone, PartialEq)]
 #[cfg_attr(
 	feature = "std",
-	serde(
-		bound = r#"
+	serde(bound = r#"
 			BoundedString: AsRef<[u8]>,
 			PropertyList: AsRef<[ThemeProperty<BoundedString>]>,
-		"#
-	)
+		"#)
 )]
 pub struct Theme<BoundedString, PropertyList> {
 	/// Name of the theme
@@ -466,10 +432,7 @@ pub struct Theme<BoundedString, PropertyList> {
 
 #[cfg_attr(feature = "std", derive(Eq, Serialize))]
 #[derive(Encode, Decode, Debug, TypeInfo, Clone, PartialEq)]
-#[cfg_attr(
-	feature = "std",
-	serde(bound = "BoundedString: AsRef<[u8]>")
-)]
+#[cfg_attr(feature = "std", serde(bound = "BoundedString: AsRef<[u8]>"))]
 pub struct ThemeProperty<BoundedString> {
 	/// Key of the property
 	#[cfg_attr(feature = "std", serde(with = "serialize::vec"))]

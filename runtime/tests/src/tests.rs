@@ -19,9 +19,9 @@ use crate::{Test, TestCrossAccountId, CollectionCreationPrice, Origin, Unique, n
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, CollectionId, CreateItemData, CreateFungibleData, CreateNftData,
 	CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT, TokenId,
-	MAX_TOKEN_OWNERSHIP, CreateCollectionData, CollectionMode,
-	AccessMode, CollectionPermissions, PropertyKeyPermission, PropertyPermission,
-	Property, CollectionPropertiesVec, CollectionPropertiesPermissionsVec,
+	MAX_TOKEN_OWNERSHIP, CreateCollectionData, CollectionMode, AccessMode, CollectionPermissions,
+	PropertyKeyPermission, PropertyPermission, Property, CollectionPropertiesVec,
+	CollectionPropertiesPermissionsVec,
 };
 use frame_support::{assert_noop, assert_ok, assert_err};
 use sp_std::convert::TryInto;
@@ -47,12 +47,12 @@ fn add_balance(user: u64, value: u64) {
 
 fn default_nft_data() -> CreateNftData {
 	CreateNftData {
-		properties: vec![
-			Property {
-				key: b"test-prop".to_vec().try_into().unwrap(),
-				value: b"test-nft-prop".to_vec().try_into().unwrap(),
-			},
-		].try_into().unwrap(),
+		properties: vec![Property {
+			key: b"test-prop".to_vec().try_into().unwrap(),
+			value: b"test-nft-prop".to_vec().try_into().unwrap(),
+		}]
+		.try_into()
+		.unwrap(),
 	}
 }
 
@@ -77,22 +77,23 @@ fn create_test_collection_for_owner(
 	let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 	let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 	let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
-	let token_property_permissions: CollectionPropertiesPermissionsVec = vec![
-		PropertyKeyPermission {
+	let token_property_permissions: CollectionPropertiesPermissionsVec =
+		vec![PropertyKeyPermission {
 			key: b"test-prop".to_vec().try_into().unwrap(),
 			permission: PropertyPermission {
 				mutable: true,
 				collection_admin: false,
 				token_owner: true,
 			},
-		},
-	].try_into().unwrap();
-	let properties: CollectionPropertiesVec = vec![
-		Property {
-			key: b"test-collection-prop".to_vec().try_into().unwrap(),
-			value: b"test-collection-value".to_vec().try_into().unwrap(),
-		}
-	].try_into().unwrap();
+		}]
+		.try_into()
+		.unwrap();
+	let properties: CollectionPropertiesVec = vec![Property {
+		key: b"test-collection-prop".to_vec().try_into().unwrap(),
+		value: b"test-collection-value".to_vec().try_into().unwrap(),
+	}]
+	.try_into()
+	.unwrap();
 
 	let data: CreateCollectionData<u64> = CreateCollectionData {
 		name: col_name1.try_into().unwrap(),
@@ -150,30 +151,21 @@ fn create_test_collection_for_owner(
 fn get_collection_property_permissions(collection_id: CollectionId) -> Vec<PropertyKeyPermission> {
 	<pallet_common::Pallet<Test>>::property_permissions(collection_id)
 		.into_iter()
-		.map(|(key, permission)| PropertyKeyPermission {
-			key,
-			permission,
-		})
+		.map(|(key, permission)| PropertyKeyPermission { key, permission })
 		.collect()
 }
 
 fn get_collection_properties(collection_id: CollectionId) -> Vec<Property> {
 	<pallet_common::Pallet<Test>>::collection_properties(collection_id)
 		.into_iter()
-		.map(|(key, value)| Property {
-			key,
-			value,
-		})
+		.map(|(key, value)| Property { key, value })
 		.collect()
 }
 
 fn get_token_properties(collection_id: CollectionId, token_id: TokenId) -> Vec<Property> {
 	<pallet_nonfungible::Pallet<Test>>::token_properties((collection_id, token_id))
 		.into_iter()
-		.map(|(key, value)| Property {
-			key,
-			value,
-		})
+		.map(|(key, value)| Property { key, value })
 		.collect()
 }
 

@@ -21,7 +21,11 @@ use frame_system::{pallet_prelude::*, ensure_signed};
 use sp_runtime::DispatchError;
 use up_data_structs::*;
 use pallet_common::{Pallet as PalletCommon, Error as CommonError};
-use pallet_rmrk_core::{Pallet as PalletCore, misc::{self, *}, property::RmrkProperty::*};
+use pallet_rmrk_core::{
+	Pallet as PalletCore,
+	misc::{self, *},
+	property::RmrkProperty::*,
+};
 use pallet_nonfungible::{Pallet as PalletNft, NonfungibleHandle};
 use pallet_evm::account::CrossAccountId;
 
@@ -29,212 +33,206 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-    use super::*;
+	use super::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config
-                    + pallet_rmrk_core::Config {
+	pub trait Config: frame_system::Config + pallet_rmrk_core::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 	}
 
-    #[pallet::storage]
+	#[pallet::storage]
 	#[pallet::getter(fn internal_part_id)]
-	pub type InernalPartId<T: Config> = StorageDoubleMap<
-        _,
-        Twox64Concat,
-        CollectionId,
-        Twox64Concat,
-        RmrkPartId,
-        TokenId
-    >;
+	pub type InernalPartId<T: Config> =
+		StorageDoubleMap<_, Twox64Concat, CollectionId, Twox64Concat, RmrkPartId, TokenId>;
 
-    #[pallet::storage]
+	#[pallet::storage]
 	#[pallet::getter(fn base_has_default_theme)]
-    pub type BaseHasDefaultTheme<T: Config> = StorageMap<
-        _,
-        Twox64Concat,
-        CollectionId,
-        bool,
-        ValueQuery
-    >;
+	pub type BaseHasDefaultTheme<T: Config> =
+		StorageMap<_, Twox64Concat, CollectionId, bool, ValueQuery>;
 
-    #[pallet::pallet]
+	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-        BaseCreated {
+		BaseCreated {
 			issuer: T::AccountId,
 			base_id: RmrkBaseId,
 		},
-    }
+	}
 
-    #[pallet::error]
+	#[pallet::error]
 	pub enum Error<T> {
-        PermissionError,
-        NoAvailableBaseId,
-        NoAvailablePartId,
-        BaseDoesntExist,
-        NeedsDefaultThemeFirst,
-    }
+		PermissionError,
+		NoAvailableBaseId,
+		NoAvailablePartId,
+		BaseDoesntExist,
+		NeedsDefaultThemeFirst,
+	}
 
-    #[pallet::call]
+	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-        #[transactional]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[transactional]
 		pub fn create_base(
 			origin: OriginFor<T>,
 			base_type: RmrkString,
 			symbol: RmrkString,
 			parts: BoundedVec<RmrkPartType, RmrkPartsLimit>,
 		) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
-            let cross_sender = T::CrossAccountId::from_sub(sender.clone());
+			let sender = ensure_signed(origin)?;
+			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
 
-            let data = CreateCollectionData {
-                limits: None,
-                token_prefix: symbol.into_inner()
-                    .try_into()
-                    .map_err(|_| <CommonError<T>>::CollectionTokenPrefixLimitExceeded)?,
-                ..Default::default()
-            };
+			let data = CreateCollectionData {
+				limits: None,
+				token_prefix: symbol
+					.into_inner()
+					.try_into()
+					.map_err(|_| <CommonError<T>>::CollectionTokenPrefixLimitExceeded)?,
+				..Default::default()
+			};
 
-            let collection_id_res = <PalletNft<T>>::init_collection(sender.clone(), data);
+			let collection_id_res = <PalletNft<T>>::init_collection(sender.clone(), data);
 
-            if let Err(DispatchError::Arithmetic(_)) = &collection_id_res {
-                return Err(<Error<T>>::NoAvailableBaseId.into());
-            }
+			if let Err(DispatchError::Arithmetic(_)) = &collection_id_res {
+				return Err(<Error<T>>::NoAvailableBaseId.into());
+			}
 
-            let collection_id = collection_id_res?;
+			let collection_id = collection_id_res?;
 
-            <PalletCommon<T>>::set_scoped_collection_properties(
-                collection_id,
-                PropertyScope::Rmrk,
-                [
-                    <PalletCore<T>>::rmrk_property(CollectionType, &misc::CollectionType::Base)?,
-                    <PalletCore<T>>::rmrk_property(BaseType, &base_type)?,
-                ].into_iter()
-            )?;
+			<PalletCommon<T>>::set_scoped_collection_properties(
+				collection_id,
+				PropertyScope::Rmrk,
+				[
+					<PalletCore<T>>::rmrk_property(CollectionType, &misc::CollectionType::Base)?,
+					<PalletCore<T>>::rmrk_property(BaseType, &base_type)?,
+				]
+				.into_iter(),
+			)?;
 
-            let collection = <PalletCore<T>>::get_nft_collection(collection_id)?;
+			let collection = <PalletCore<T>>::get_nft_collection(collection_id)?;
 
-            for part in parts {
-                let part_id = part.id();
-                let part_token_id = Self::create_part(
-                    &cross_sender,
-                    &collection,
-                    part
-                )?;
+			for part in parts {
+				let part_id = part.id();
+				let part_token_id = Self::create_part(&cross_sender, &collection, part)?;
 
-                <InernalPartId<T>>::insert(collection_id, part_id, part_token_id);
+				<InernalPartId<T>>::insert(collection_id, part_id, part_token_id);
 
-                <PalletNft<T>>::set_scoped_token_property(
-                    collection_id,
-                    part_token_id,
-                    PropertyScope::Rmrk,
-                    <PalletCore<T>>::rmrk_property(ExternalPartId, &part_id)?
-                )?;
-            }
+				<PalletNft<T>>::set_scoped_token_property(
+					collection_id,
+					part_token_id,
+					PropertyScope::Rmrk,
+					<PalletCore<T>>::rmrk_property(ExternalPartId, &part_id)?,
+				)?;
+			}
 
-            Self::deposit_event(Event::BaseCreated { issuer: sender, base_id: collection_id.0 });
+			Self::deposit_event(Event::BaseCreated {
+				issuer: sender,
+				base_id: collection_id.0,
+			});
 
-            Ok(())
-        }
+			Ok(())
+		}
 
-        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-        #[transactional]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[transactional]
 		pub fn theme_add(
 			origin: OriginFor<T>,
 			base_id: RmrkBaseId,
 			theme: RmrkTheme,
 		) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
+			let sender = ensure_signed(origin)?;
 
-            let sender = T::CrossAccountId::from_sub(sender);
-            let owner = &sender;
+			let sender = T::CrossAccountId::from_sub(sender);
+			let owner = &sender;
 
-            let collection_id: CollectionId = base_id.into();
+			let collection_id: CollectionId = base_id.into();
 
-            let collection = <PalletCore<T>>::get_typed_nft_collection(
-                collection_id,
-                misc::CollectionType::Base
-            ).map_err(|_| <Error<T>>::BaseDoesntExist)?;
+			let collection = <PalletCore<T>>::get_typed_nft_collection(
+				collection_id,
+				misc::CollectionType::Base,
+			)
+			.map_err(|_| <Error<T>>::BaseDoesntExist)?;
 
-            if theme.name.as_slice() == b"default" {
-                <BaseHasDefaultTheme<T>>::insert(collection_id, true);
-            } else if !Self::base_has_default_theme(collection_id) {
-                return Err(<Error<T>>::NeedsDefaultThemeFirst.into());
-            }
+			if theme.name.as_slice() == b"default" {
+				<BaseHasDefaultTheme<T>>::insert(collection_id, true);
+			} else if !Self::base_has_default_theme(collection_id) {
+				return Err(<Error<T>>::NeedsDefaultThemeFirst.into());
+			}
 
-            let token_id = <PalletCore<T>>::create_nft(
-                &sender,
-                owner,
-                &collection,
-                NftType::Theme,
-                [
-                    <PalletCore<T>>::rmrk_property(ThemeName, &theme.name)?,
-                    <PalletCore<T>>::rmrk_property(ThemeInherit, &theme.inherit)?
-                ].into_iter()
-            ).map_err(|_| <Error<T>>::PermissionError)?;
+			let token_id = <PalletCore<T>>::create_nft(
+				&sender,
+				owner,
+				&collection,
+				NftType::Theme,
+				[
+					<PalletCore<T>>::rmrk_property(ThemeName, &theme.name)?,
+					<PalletCore<T>>::rmrk_property(ThemeInherit, &theme.inherit)?,
+				]
+				.into_iter(),
+			)
+			.map_err(|_| <Error<T>>::PermissionError)?;
 
-            for property in theme.properties {
-                <PalletNft<T>>::set_scoped_token_property(
-                    collection_id,
-                    token_id,
-                    PropertyScope::Rmrk,
-                    <PalletCore<T>>::rmrk_property(
-                        UserProperty(property.key.as_slice()),
-                        &property.value
-                    )?
-                )?;
-            }
+			for property in theme.properties {
+				<PalletNft<T>>::set_scoped_token_property(
+					collection_id,
+					token_id,
+					PropertyScope::Rmrk,
+					<PalletCore<T>>::rmrk_property(
+						UserProperty(property.key.as_slice()),
+						&property.value,
+					)?,
+				)?;
+			}
 
-            Ok(())
-        }
-    }
+			Ok(())
+		}
+	}
 }
 
 impl<T: Config> Pallet<T> {
-    fn create_part(
-        sender: &T::CrossAccountId,
-        collection: &NonfungibleHandle<T>,
-        part: RmrkPartType
-    ) -> Result<TokenId, DispatchError> {
-        let owner = sender;
+	fn create_part(
+		sender: &T::CrossAccountId,
+		collection: &NonfungibleHandle<T>,
+		part: RmrkPartType,
+	) -> Result<TokenId, DispatchError> {
+		let owner = sender;
 
-        let src = part.src();
-        let z_index = part.z_index();
+		let src = part.src();
+		let z_index = part.z_index();
 
-        let nft_type = match part {
-            RmrkPartType::FixedPart(_) => NftType::FixedPart,
-            RmrkPartType::SlotPart(_) => NftType::SlotPart,
-        };
+		let nft_type = match part {
+			RmrkPartType::FixedPart(_) => NftType::FixedPart,
+			RmrkPartType::SlotPart(_) => NftType::SlotPart,
+		};
 
-        let token_id = <PalletCore<T>>::create_nft(
-            sender,
-            owner,
-            collection,
-            nft_type,
-            [
-                <PalletCore<T>>::rmrk_property(Src, &src)?,
-                <PalletCore<T>>::rmrk_property(ZIndex, &z_index)?
-            ].into_iter()
-        ).map_err(|err| match err {
-            DispatchError::Arithmetic(_) => <Error<T>>::NoAvailablePartId.into(),
-            err => err
-        })?;
+		let token_id = <PalletCore<T>>::create_nft(
+			sender,
+			owner,
+			collection,
+			nft_type,
+			[
+				<PalletCore<T>>::rmrk_property(Src, &src)?,
+				<PalletCore<T>>::rmrk_property(ZIndex, &z_index)?,
+			]
+			.into_iter(),
+		)
+		.map_err(|err| match err {
+			DispatchError::Arithmetic(_) => <Error<T>>::NoAvailablePartId.into(),
+			err => err,
+		})?;
 
-        if let RmrkPartType::SlotPart(part) = part {
-            <PalletNft<T>>::set_scoped_token_property(
-                collection.id,
-                token_id,
-                PropertyScope::Rmrk,
-                <PalletCore<T>>::rmrk_property(EquippableList, &part.equippable)?
-            )?;
-        }
+		if let RmrkPartType::SlotPart(part) = part {
+			<PalletNft<T>>::set_scoped_token_property(
+				collection.id,
+				token_id,
+				PropertyScope::Rmrk,
+				<PalletCore<T>>::rmrk_property(EquippableList, &part.equippable)?,
+			)?;
+		}
 
-        Ok(token_id)
-    }
+		Ok(token_id)
+	}
 }

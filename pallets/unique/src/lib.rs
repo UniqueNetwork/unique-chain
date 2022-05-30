@@ -37,11 +37,10 @@ use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{sp_std::prelude::Vec};
 use up_data_structs::{
-	MAX_COLLECTION_NAME_LENGTH,
-	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, AccessMode, CreateItemData,
-	CollectionLimits, CollectionPermissions, CollectionId, CollectionMode, TokenId, SponsorshipState,
-	CreateCollectionData, CreateItemExData, budget, Property, PropertyKey,
-	PropertyKeyPermission,
+	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
+	AccessMode, CreateItemData, CollectionLimits, CollectionPermissions, CollectionId,
+	CollectionMode, TokenId, SponsorshipState, CreateCollectionData, CreateItemExData, budget,
+	Property, PropertyKey, PropertyKeyPermission,
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{

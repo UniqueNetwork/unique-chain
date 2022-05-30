@@ -426,11 +426,10 @@ fn get_token_permission<T: Config>(
 	Ok(a)
 }
 
-fn has_token_permission<T: Config>(
-	collection_id: CollectionId,
-	key: &PropertyKey,
-) -> bool {
-	if let Ok(token_property_permissions) = CollectionPropertyPermissions::<T>::try_get(collection_id) {
+fn has_token_permission<T: Config>(collection_id: CollectionId, key: &PropertyKey) -> bool {
+	if let Ok(token_property_permissions) =
+		CollectionPropertyPermissions::<T>::try_get(collection_id)
+	{
 		return token_property_permissions.contains_key(key);
 	}
 

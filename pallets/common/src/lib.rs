@@ -501,7 +501,6 @@ pub mod pallet {
 			PhantomType<(
 				TokenData<T::CrossAccountId>,
 				RpcCollection<T::AccountId>,
-
 				// RMRK
 				RmrkCollectionInfo<T::AccountId>,
 				RmrkInstanceInfo<T::AccountId>,
@@ -526,19 +525,34 @@ pub mod pallet {
 					if !v.offchain_schema.is_empty() {
 						props.push(Property {
 							key: b"_old_offchainSchema".to_vec().try_into().unwrap(),
-							value: v.offchain_schema.clone().into_inner().try_into().expect("offchain schema too big"),
+							value: v
+								.offchain_schema
+								.clone()
+								.into_inner()
+								.try_into()
+								.expect("offchain schema too big"),
 						});
 					}
 					if !v.variable_on_chain_schema.is_empty() {
 						props.push(Property {
 							key: b"_old_variableOnChainSchema".to_vec().try_into().unwrap(),
-							value: v.variable_on_chain_schema.clone().into_inner().try_into().expect("offchain schema too big"),
+							value: v
+								.variable_on_chain_schema
+								.clone()
+								.into_inner()
+								.try_into()
+								.expect("offchain schema too big"),
 						});
 					}
 					if !v.const_on_chain_schema.is_empty() {
 						props.push(Property {
 							key: b"_old_constOnChainSchema".to_vec().try_into().unwrap(),
-							value: v.const_on_chain_schema.clone().into_inner().try_into().expect("offchain schema too big"),
+							value: v
+								.const_on_chain_schema
+								.clone()
+								.into_inner()
+								.try_into()
+								.expect("offchain schema too big"),
 						});
 					}
 					props.push(Property {
@@ -546,13 +560,17 @@ pub mod pallet {
 						value: match v.schema_version {
 							SchemaVersion::ImageURL => b"ImageUrl".as_slice(),
 							SchemaVersion::Unique => b"Unique".as_slice(),
-						}.to_vec().try_into().unwrap(),
+						}
+						.to_vec()
+						.try_into()
+						.unwrap(),
 					});
 					Self::set_scoped_collection_properties(
 						id,
 						PropertyScope::None,
 						props.into_iter(),
-					).expect("existing data larger than properties");
+					)
+					.expect("existing data larger than properties");
 					let mut new = CollectionVersion2::from(v.clone());
 					new.permissions.access = Some(v.access);
 					new.permissions.mint_mode = Some(v.mint_mode);
@@ -644,18 +662,12 @@ impl<T: Config> Pallet<T> {
 
 		let token_property_permissions = <CollectionPropertyPermissions<T>>::get(collection)
 			.into_iter()
-			.map(|(key, permission)| PropertyKeyPermission {
-				key,
-				permission,
-			})
+			.map(|(key, permission)| PropertyKeyPermission { key, permission })
 			.collect();
 
 		let properties = <CollectionProperties<T>>::get(collection)
 			.into_iter()
-			.map(|(key, value)| Property {
-				key,
-				value,
-			})
+			.map(|(key, value)| Property { key, value })
 			.collect();
 
 		let permissions = CollectionPermissions {
@@ -751,7 +763,9 @@ impl<T: Config> Pallet<T> {
 				.unwrap_or_else(|| Ok(CollectionLimits::default()))?,
 			permissions: data
 				.permissions
-				.map(|permissions| Self::clamp_permissions(data.mode.clone(), &Default::default(), permissions))
+				.map(|permissions| {
+					Self::clamp_permissions(data.mode.clone(), &Default::default(), permissions)
+				})
 				.unwrap_or_else(|| Ok(CollectionPermissions::default()))?,
 		};
 
@@ -1005,10 +1019,7 @@ impl<T: Config> Pallet<T> {
 			.unwrap_or_else(|| {
 				properties
 					.into_iter()
-					.map(|(key, value)| Property {
-						key,
-						value,
-					})
+					.map(|(key, value)| Property { key, value })
 					.collect()
 			});
 
@@ -1037,10 +1048,7 @@ impl<T: Config> Pallet<T> {
 			.unwrap_or_else(|| {
 				permissions
 					.into_iter()
-					.map(|(key, permission)| PropertyKeyPermission {
-						key,
-						permission,
-					})
+					.map(|(key, permission)| PropertyKeyPermission { key, permission })
 					.collect()
 			});
 
@@ -1276,17 +1284,9 @@ pub trait CommonCollectionOperations<T: Config> {
 		budget: &dyn Budget,
 	) -> DispatchResult;
 
-	fn nest(
-		&self,
-		under: TokenId,
-		to_nest: (CollectionId, TokenId)
-	);
+	fn nest(&self, under: TokenId, to_nest: (CollectionId, TokenId));
 
-	fn unnest(
-		&self,
-		under: TokenId,
-		to_nest: (CollectionId, TokenId)
-	);
+	fn unnest(&self, under: TokenId, to_nest: (CollectionId, TokenId));
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId>;
 	fn collection_tokens(&self) -> Vec<TokenId>;

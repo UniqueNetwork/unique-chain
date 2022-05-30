@@ -164,31 +164,44 @@ pub mod pallet {
 		fn on_runtime_upgrade() -> Weight {
 			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
 				let mut had_consts = BTreeSet::new();
-				<TokenData<T>>::translate::<ItemDataVersion1<T::CrossAccountId>, _>(|(collection, token), v| {
-					let mut props = vec![];
-					if !v.const_data.is_empty() {
-						props.push(Property {
-							key: b"_old_constData".to_vec().try_into().unwrap(),
-							value: v.const_data.clone().into_inner().try_into().expect("const too long"),
-						});
-						had_consts.insert(collection);
-					}
-					if !v.variable_data.is_empty() {
-						props.push(Property {
-							key: b"_old_variableData".to_vec().try_into().unwrap(),
-							value: v.variable_data.clone().into_inner().try_into().expect("variable too long"),
-						})
-					}
-					if !props.is_empty() {
-						Self::set_scoped_token_properties(
-							collection,
-							token,
-							PropertyScope::None,
-							props.into_iter(),
-						).expect("existing token data exceeds property storage");
-					}
-					Some(<ItemDataVersion2<T::CrossAccountId>>::from(v))
-				});
+				<TokenData<T>>::translate::<ItemDataVersion1<T::CrossAccountId>, _>(
+					|(collection, token), v| {
+						let mut props = vec![];
+						if !v.const_data.is_empty() {
+							props.push(Property {
+								key: b"_old_constData".to_vec().try_into().unwrap(),
+								value: v
+									.const_data
+									.clone()
+									.into_inner()
+									.try_into()
+									.expect("const too long"),
+							});
+							had_consts.insert(collection);
+						}
+						if !v.variable_data.is_empty() {
+							props.push(Property {
+								key: b"_old_variableData".to_vec().try_into().unwrap(),
+								value: v
+									.variable_data
+									.clone()
+									.into_inner()
+									.try_into()
+									.expect("variable too long"),
+							})
+						}
+						if !props.is_empty() {
+							Self::set_scoped_token_properties(
+								collection,
+								token,
+								PropertyScope::None,
+								props.into_iter(),
+							)
+							.expect("existing token data exceeds property storage");
+						}
+						Some(<ItemDataVersion2<T::CrossAccountId>>::from(v))
+					},
+				);
 				for collection in had_consts {
 					<PalletCommon<T>>::set_property_permission_unchecked(
 						collection,
@@ -199,8 +212,9 @@ pub mod pallet {
 								collection_admin: true,
 								token_owner: false,
 							},
-						}
-					).expect("failed to configure permission");
+						},
+					)
+					.expect("failed to configure permission");
 				}
 			}
 
@@ -263,7 +277,7 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 		token_id: TokenId,
 		scope: PropertyScope,
-		properties: impl Iterator<Item=Property>,
+		properties: impl Iterator<Item = Property>,
 	) -> DispatchResult {
 		TokenProperties::<T>::try_mutate((collection_id, token_id), |stored_properties| {
 			stored_properties.try_scoped_set_from_iter(scope, properties)
@@ -347,11 +361,7 @@ impl<T: Config> Pallet<T> {
 			<AccountBalance<T>>::insert((collection.id, token_data.owner.clone()), balance);
 		}
 
-		<PalletStructure<T>>::unnest_if_nested(
-			&token_data.owner,
-			collection.id,
-			token
-		);
+		<PalletStructure<T>>::unnest_if_nested(&token_data.owner, collection.id, token);
 
 		<Owned<T>>::remove((collection.id, &token_data.owner, token));
 		<TokensBurnt<T>>::insert(collection.id, burnt);
@@ -589,16 +599,12 @@ impl<T: Config> Pallet<T> {
 			to,
 			collection.id,
 			token,
-			nesting_budget
+			nesting_budget,
 		)?;
 
 		// =========
 
-		<PalletStructure<T>>::unnest_if_nested(
-			from,
-			collection.id,
-			token
-		);
+		<PalletStructure<T>>::unnest_if_nested(from, collection.id, token);
 
 		<TokenData<T>>::insert(
 			(collection.id, token),
@@ -709,7 +715,11 @@ impl<T: Config> Pallet<T> {
 					},
 				);
 
-				<PalletStructure<T>>::nest_if_sent_to_token_unchecked(&data.owner, collection.id, TokenId(token));
+				<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
+					&data.owner,
+					collection.id,
+					TokenId(token),
+				);
 
 				if let Err(e) = Self::set_token_properties(
 					collection,
@@ -958,31 +968,24 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn nest(
-		under: (CollectionId, TokenId),
-		to_nest: (CollectionId, TokenId),
-	) {
-		<TokenChildren<T>>::insert(
-			(under.0, under.1, (to_nest.0, to_nest.1)),
-			true
-		);
+	fn nest(under: (CollectionId, TokenId), to_nest: (CollectionId, TokenId)) {
+		<TokenChildren<T>>::insert((under.0, under.1, (to_nest.0, to_nest.1)), true);
 	}
 
-	fn unnest(
-		under: (CollectionId, TokenId),
-		to_unnest: (CollectionId, TokenId),
-	) {
-		<TokenChildren<T>>::remove(
-			(under.0, under.1, to_unnest)
-		);
+	fn unnest(under: (CollectionId, TokenId), to_unnest: (CollectionId, TokenId)) {
+		<TokenChildren<T>>::remove((under.0, under.1, to_unnest));
 	}
 
 	fn collection_has_tokens(collection_id: CollectionId) -> bool {
-		<TokenData<T>>::iter_prefix((collection_id,)).next().is_some()
+		<TokenData<T>>::iter_prefix((collection_id,))
+			.next()
+			.is_some()
 	}
 
 	fn token_has_children(collection_id: CollectionId, token_id: TokenId) -> bool {
-		<TokenChildren<T>>::iter_prefix((collection_id, token_id)).next().is_some()
+		<TokenChildren<T>>::iter_prefix((collection_id, token_id))
+			.next()
+			.is_some()
 	}
 
 	/// Delegated to `create_multiple_items`

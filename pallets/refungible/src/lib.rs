@@ -22,9 +22,7 @@ use up_data_structs::{
 	CreateCollectionData, CreateRefungibleExData, mapping::TokenAddressMapping, budget::Budget,
 };
 use pallet_evm::account::CrossAccountId;
-use pallet_common::{
-	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
-};
+use pallet_common::{Error as CommonError, Event as CommonEvent, Pallet as PalletCommon};
 use pallet_structure::Pallet as PalletStructure;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
@@ -230,7 +228,9 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn collection_has_tokens(collection_id: CollectionId) -> bool {
-		<TokenData<T>>::iter_prefix((collection_id,)).next().is_some()
+		<TokenData<T>>::iter_prefix((collection_id,))
+			.next()
+			.is_some()
 	}
 
 	pub fn burn_token(collection: &RefungibleHandle<T>, token_id: TokenId) -> DispatchResult {
@@ -388,18 +388,14 @@ impl<T: Config> Pallet<T> {
 			to,
 			collection.id,
 			token,
-			nesting_budget
+			nesting_budget,
 		)?;
 
 		if let Some(balance_to) = balance_to {
 			// from != to
 			if balance_from == 0 {
 				<Balance<T>>::remove((collection.id, token, from));
-				<PalletStructure<T>>::unnest_if_nested(
-					from,
-					collection.id,
-					token
-				);
+				<PalletStructure<T>>::unnest_if_nested(from, collection.id, token);
 			} else {
 				<Balance<T>>::insert((collection.id, token, from), balance_from);
 			}
@@ -497,7 +493,6 @@ impl<T: Config> Pallet<T> {
 		for (i, token) in data.iter().enumerate() {
 			let token_id = TokenId(first_token_id + i as u32 + 1);
 			for (to, _) in token.users.iter() {
-
 				<PalletStructure<T>>::check_nesting(
 					sender.clone(),
 					to,
@@ -531,7 +526,11 @@ impl<T: Config> Pallet<T> {
 				}
 				<Balance<T>>::insert((collection.id, token_id, &user), amount);
 				<Owned<T>>::insert((collection.id, &user, TokenId(token_id)), true);
-				<PalletStructure<T>>::nest_if_sent_to_token_unchecked(&user, collection.id, TokenId(token_id));
+				<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
+					&user,
+					collection.id,
+					TokenId(token_id),
+				);
 
 				// TODO: ERC20 transfer event
 				<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(

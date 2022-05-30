@@ -49,7 +49,8 @@ pub use rmrk::{
 	},
 	NftChild as RmrkNftChild, AccountIdOrCollectionNftTuple as RmrkAccountIdOrCollectionNftTuple,
 	FixedPart as RmrkFixedPart, SlotPart as RmrkSlotPart, EquippableList as RmrkEquippableList,
-	BasicResource as RmrkBasicResource, ComposableResource as RmrkComposableResource, SlotResource as RmrkSlotResource,
+	BasicResource as RmrkBasicResource, ComposableResource as RmrkComposableResource,
+	SlotResource as RmrkSlotResource,
 };
 
 mod bounded;
@@ -361,8 +362,7 @@ pub struct CreateCollectionData<AccountId> {
 pub type CollectionPropertiesPermissionsVec =
 	BoundedVec<PropertyKeyPermission, ConstU32<MAX_PROPERTIES_PER_ITEM>>;
 
-pub type CollectionPropertiesVec =
-	BoundedVec<Property, ConstU32<MAX_PROPERTIES_PER_ITEM>>;
+pub type CollectionPropertiesVec = BoundedVec<Property, ConstU32<MAX_PROPERTIES_PER_ITEM>>;
 
 /// All fields are wrapped in `Option`s, where None means chain default
 // When adding/removing fields from this struct - don't forget to also update clamp_limits
@@ -790,8 +790,8 @@ impl<Value> IntoIterator for PropertiesMap<Value> {
 	>::IntoIter;
 
 	fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
-    }
+		self.0.into_iter()
+	}
 }
 
 impl<Value> TrySetProperty for PropertiesMap<Value> {
@@ -853,8 +853,8 @@ impl IntoIterator for Properties {
 	type IntoIter = <PropertiesMap<PropertyValue> as IntoIterator>::IntoIter;
 
 	fn into_iter(self) -> Self::IntoIter {
-        self.map.into_iter()
-    }
+		self.map.into_iter()
+	}
 }
 
 impl TrySetProperty for Properties {
@@ -932,11 +932,7 @@ impl From<RmrkNftId> for TokenId {
 pub type RmrkCollectionInfo<AccountId> =
 	CollectionInfo<RmrkString, RmrkCollectionSymbol, AccountId>;
 pub type RmrkInstanceInfo<AccountId> = NftInfo<AccountId, Permill, RmrkString>;
-pub type RmrkResourceInfo = ResourceInfo<
-	RmrkBoundedResource,
-	RmrkString,
-	RmrkBoundedParts,
->;
+pub type RmrkResourceInfo = ResourceInfo<RmrkBoundedResource, RmrkString, RmrkBoundedParts>;
 pub type RmrkPropertyInfo = PropertyInfo<RmrkKeyString, RmrkValueString>;
 pub type RmrkBaseInfo<AccountId> = BaseInfo<AccountId, RmrkString>;
 pub type RmrkPartType =

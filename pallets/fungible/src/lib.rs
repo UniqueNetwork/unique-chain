@@ -184,11 +184,7 @@ impl<T: Config> Pallet<T> {
 
 		if balance == 0 {
 			<Balance<T>>::remove((collection.id, owner));
-			<PalletStructure<T>>::unnest_if_nested(
-				owner,
-				collection.id,
-				TokenId::default()
-			);
+			<PalletStructure<T>>::unnest_if_nested(owner, collection.id, TokenId::default());
 		} else {
 			<Balance<T>>::insert((collection.id, owner), balance);
 		}
@@ -249,18 +245,14 @@ impl<T: Config> Pallet<T> {
 			to,
 			collection.id,
 			TokenId::default(),
-			nesting_budget
+			nesting_budget,
 		)?;
 
 		if let Some(balance_to) = balance_to {
 			// from != to
 			if balance_from == 0 {
 				<Balance<T>>::remove((collection.id, from));
-				<PalletStructure<T>>::unnest_if_nested(
-					from,
-					collection.id,
-					TokenId::default()
-				);
+				<PalletStructure<T>>::unnest_if_nested(from, collection.id, TokenId::default());
 			} else {
 				<Balance<T>>::insert((collection.id, from), balance_from);
 			}
@@ -333,7 +325,11 @@ impl<T: Config> Pallet<T> {
 		<TotalSupply<T>>::insert(collection.id, total_supply);
 		for (user, amount) in balances {
 			<Balance<T>>::insert((collection.id, &user), amount);
-			<PalletStructure<T>>::nest_if_sent_to_token_unchecked(&user, collection.id, TokenId::default());
+			<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
+				&user,
+				collection.id,
+				TokenId::default(),
+			);
 			<PalletEvm<T>>::deposit_log(
 				ERC20Events::Transfer {
 					from: H160::default(),

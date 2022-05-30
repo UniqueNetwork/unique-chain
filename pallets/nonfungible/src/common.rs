@@ -22,7 +22,7 @@ use up_data_structs::{
 	PropertyKeyPermission, PropertyValue,
 };
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, with_weight, weights::WeightInfo as _
+	CommonCollectionOperations, CommonWeightInfo, with_weight, weights::WeightInfo as _,
 };
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
@@ -353,19 +353,11 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		<Pallet<T>>::check_nesting(self, sender, from, under, budget)
 	}
 
-	fn nest(
-		&self,
-		under: TokenId,
-		to_nest: (CollectionId, TokenId)
-	) {
+	fn nest(&self, under: TokenId, to_nest: (CollectionId, TokenId)) {
 		<Pallet<T>>::nest((self.id, under), to_nest);
 	}
 
-	fn unnest(
-		&self,
-		under: TokenId,
-		to_unnest: (CollectionId, TokenId)
-	) {
+	fn unnest(&self, under: TokenId, to_unnest: (CollectionId, TokenId)) {
 		<Pallet<T>>::unnest((self.id, under), to_unnest);
 	}
 
@@ -415,10 +407,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		.unwrap_or_else(|| {
 			properties
 				.into_iter()
-				.map(|(key, value)| Property {
-					key,
-					value,
-				})
+				.map(|(key, value)| Property { key, value })
 				.collect()
 		})
 	}

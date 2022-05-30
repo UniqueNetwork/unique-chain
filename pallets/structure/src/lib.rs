@@ -189,17 +189,11 @@ impl<T: Config> Pallet<T> {
 		under: &T::CrossAccountId,
 		collection_id: CollectionId,
 		token_id: TokenId,
-		nesting_budget: &dyn Budget
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::try_exec_if_owner_is_valid_nft(
-			under,
-			|d, parent_id| d.check_nesting(
-				from,
-				(collection_id, token_id),
-				parent_id,
-				nesting_budget
-			)
-		)
+		Self::try_exec_if_owner_is_valid_nft(under, |d, parent_id| {
+			d.check_nesting(from, (collection_id, token_id), parent_id, nesting_budget)
+		})
 	}
 
 	pub fn nest_if_sent_to_token(
@@ -207,69 +201,51 @@ impl<T: Config> Pallet<T> {
 		under: &T::CrossAccountId,
 		collection_id: CollectionId,
 		token_id: TokenId,
-		nesting_budget: &dyn Budget
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::try_exec_if_owner_is_valid_nft(
-			under,
-			|d, parent_id| {
-				d.check_nesting(
-					from,
-					(collection_id, token_id),
-					parent_id,
-					nesting_budget
-				)?;
+		Self::try_exec_if_owner_is_valid_nft(under, |d, parent_id| {
+			d.check_nesting(from, (collection_id, token_id), parent_id, nesting_budget)?;
 
-				d.nest(parent_id, (collection_id, token_id));
+			d.nest(parent_id, (collection_id, token_id));
 
-				Ok(())
-			}
-		)
+			Ok(())
+		})
 	}
 
 	pub fn nest_if_sent_to_token_unchecked(
 		owner: &T::CrossAccountId,
 		collection_id: CollectionId,
-		token_id: TokenId
+		token_id: TokenId,
 	) {
-		Self::exec_if_owner_is_valid_nft(
-			owner,
-			|d, parent_id| d.nest(
-				parent_id,
-				(collection_id, token_id)
-			)
-		);
+		Self::exec_if_owner_is_valid_nft(owner, |d, parent_id| {
+			d.nest(parent_id, (collection_id, token_id))
+		});
 	}
 
 	pub fn unnest_if_nested(
 		owner: &T::CrossAccountId,
 		collection_id: CollectionId,
-		token_id: TokenId
+		token_id: TokenId,
 	) {
-		Self::exec_if_owner_is_valid_nft(
-			owner,
-			|d, parent_id| d.unnest(
-			parent_id,
-			(collection_id, token_id)
-			)
-		);
+		Self::exec_if_owner_is_valid_nft(owner, |d, parent_id| {
+			d.unnest(parent_id, (collection_id, token_id))
+		});
 	}
 
 	fn exec_if_owner_is_valid_nft(
 		account: &T::CrossAccountId,
-		action: impl FnOnce(&dyn CommonCollectionOperations<T>, TokenId)
+		action: impl FnOnce(&dyn CommonCollectionOperations<T>, TokenId),
 	) {
-		Self::try_exec_if_owner_is_valid_nft(
-			account,
-			|d, id| {
-				action(d, id);
-				Ok(())
-			}
-		).unwrap();
+		Self::try_exec_if_owner_is_valid_nft(account, |d, id| {
+			action(d, id);
+			Ok(())
+		})
+		.unwrap();
 	}
 
 	fn try_exec_if_owner_is_valid_nft(
 		account: &T::CrossAccountId,
-		action: impl FnOnce(&dyn CommonCollectionOperations<T>, TokenId) -> DispatchResult
+		action: impl FnOnce(&dyn CommonCollectionOperations<T>, TokenId) -> DispatchResult,
 	) -> DispatchResult {
 		let account = T::CrossTokenAddressMapping::address_to_token(account);
 

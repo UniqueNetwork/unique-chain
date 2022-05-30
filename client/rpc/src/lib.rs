@@ -30,8 +30,7 @@ use up_rpc::UniqueApi as UniqueRuntimeApi;
 // RMRK
 use rmrk_rpc::RmrkApi as RmrkRuntimeApi;
 use up_data_structs::{
-	RmrkCollectionId, RmrkNftId, RmrkBaseId, RmrkNftChild, RmrkThemeName,
-	RmrkResourceId,
+	RmrkCollectionId, RmrkNftId, RmrkBaseId, RmrkNftChild, RmrkThemeName, RmrkResourceId,
 };
 
 pub use rmrk_unique_rpc::RmrkApi;
