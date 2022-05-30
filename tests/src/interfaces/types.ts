@@ -2,5 +2,4 @@
 /* eslint-disable */
 
 export * from './unique/types';
-export * from './rmrk/types';
 export * from './default/types';

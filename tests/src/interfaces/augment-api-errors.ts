@@ -65,6 +65,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       CantApproveMoreThanOwned: AugmentedError<ApiType>;
       /**
+       * Destroying only empty collections is allowed
+       **/
+      CantDestroyNotEmptyCollection: AugmentedError<ApiType>;
+      /**
        * Exceeded max admin count
        **/
       CollectionAdminCountExceeded: AugmentedError<ApiType>;
@@ -295,6 +299,10 @@ declare module '@polkadot/api-base/types/errors' {
     };
     nonfungible: {
       /**
+       * Unable to burn NFT with children
+       **/
+      CantBurnNftWithChildren: AugmentedError<ApiType>;
+      /**
        * Used amount > 1 with NFT
        **/
       NonfungibleItemsHaveNoAmount: AugmentedError<ApiType>;
@@ -424,33 +432,6 @@ declare module '@polkadot/api-base/types/errors' {
        * Maximum refungibility exceeded
        **/
       WrongRefungiblePieces: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
-    rmrkCore: {
-      CollectionFullOrLocked: AugmentedError<ApiType>;
-      CollectionNotEmpty: AugmentedError<ApiType>;
-      CollectionUnknown: AugmentedError<ApiType>;
-      CorruptedCollectionType: AugmentedError<ApiType>;
-      NftTypeEncodeError: AugmentedError<ApiType>;
-      NoAvailableCollectionId: AugmentedError<ApiType>;
-      NoAvailableNftId: AugmentedError<ApiType>;
-      NoPermission: AugmentedError<ApiType>;
-      RmrkPropertyKeyIsTooLong: AugmentedError<ApiType>;
-      RmrkPropertyValueIsTooLong: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
-    rmrkEquip: {
-      BaseDoesntExist: AugmentedError<ApiType>;
-      NeedsDefaultThemeFirst: AugmentedError<ApiType>;
-      NoAvailableBaseId: AugmentedError<ApiType>;
-      NoAvailablePartId: AugmentedError<ApiType>;
-      PermissionError: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
