@@ -347,7 +347,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
       name: strToUTF16(name),
       description: strToUTF16(description),
       tokenPrefix: strToUTF16(tokenPrefix),
-      mode: modeprm as any
+      mode: modeprm as any,
     });
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getCreateCollectionResult(events);
@@ -561,7 +561,7 @@ export const setCollectionPermissionsExpectSuccess = async (sender: IKeyringPair
 
     expect(result.success).to.be.true;
   });
-}
+};
 
 export async function setCollectionLimitsExpectFailure(sender: IKeyringPair, collectionId: number, limits: any) {
   await usingApi(async (api) => {

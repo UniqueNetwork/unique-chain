@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {default as usingApi, executeTransaction} from './substrate/substrate-api';
+import {default as usingApi} from './substrate/substrate-api';
 import chai from 'chai';
 import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -125,7 +125,7 @@ describe('Negative integration test: ext. createItem():', () => {
   });
 
   it('No editing rights', async () => {
-    await usingApi(async api => {
+    await usingApi(async () => {
       const createMode = 'NFT';
       const newCollectionID = await createCollectionWithPropsExpectSuccess({mode: {type: createMode}, 
         propPerm:   [{key: 'key1', permission: {mutable: false, collectionAdmin: false, tokenOwner: false}}]});
@@ -136,14 +136,14 @@ describe('Negative integration test: ext. createItem():', () => {
   });
 
   it('User doesnt have editing rights', async () => {
-    await usingApi(async api => {
+    await usingApi(async () => {
       const newCollectionID = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'key1', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}]});
       await createItemWithPropsExpectFailure(bob, newCollectionID, 'NFT', [{key: 'key1', value: 'v'}]);
     });
   });
 
   it('Adding property without access rights', async () => {
-    await usingApi(async api => {
+    await usingApi(async () => {
       const newCollectionID = await createCollectionWithPropsExpectSuccess();
       await addCollectionAdminExpectSuccess(alice, newCollectionID, bob.address);
 
@@ -152,7 +152,7 @@ describe('Negative integration test: ext. createItem():', () => {
   });
 
   it('Adding more than 64 prps', async () => {
-    await usingApi(async api => {
+    await usingApi(async () => {
       const prps = [];
 
       for (let i = 0; i < 65; i++) {
@@ -166,7 +166,7 @@ describe('Negative integration test: ext. createItem():', () => {
   });
 
   it('Trying to add bigger property than allowed', async () => {
-    await usingApi(async api => {
+    await usingApi(async () => {
       const newCollectionID = await createCollectionWithPropsExpectSuccess();
       
       createItemWithPropsExpectFailure(alice, newCollectionID, 'NFT', [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]);

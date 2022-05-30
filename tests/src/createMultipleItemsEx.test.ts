@@ -16,8 +16,8 @@
 
 import {expect} from 'chai';
 import privateKey from './substrate/privateKey';
-import usingApi, {executeTransaction, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import {createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess, addCollectionAdminExpectSuccess, getCreateItemsResult} from './util/helpers';
+import usingApi, {executeTransaction} from './substrate/substrate-api';
+import {createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess, addCollectionAdminExpectSuccess} from './util/helpers';
 
 describe('createMultipleItemsEx', () => {
   it('can initialize multiple NFT with different owners', async () => {
@@ -175,7 +175,6 @@ describe('createMultipleItemsEx', () => {
       propPerm:   [{key: 'key1', permission: {mutable: false, collectionAdmin: false, tokenOwner: false}}]});
     const alice = privateKey('//Alice');
     const bob = privateKey('//Bob');
-    const charlie = privateKey('//Charlie');
     await addCollectionAdminExpectSuccess(alice, collection, bob.address);
     await usingApi(async (api) => {
       const data = [
@@ -236,9 +235,7 @@ describe('createMultipleItemsEx', () => {
     const alice = privateKey('//Alice');
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await usingApi(async (api) => {
-      await expect(
-        executeTransaction(api, alice, api.tx.unique.setPropertyPermissions(collection, propPerms))
-      ).to.be.rejectedWith(/common\.PropertyLimitReached/);
+      await expect(executeTransaction(api, alice, api.tx.unique.setPropertyPermissions(collection, propPerms))).to.be.rejectedWith(/common\.PropertyLimitReached/);
     });
   });
 

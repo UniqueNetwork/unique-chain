@@ -49,13 +49,13 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const alice = privateKey('//Alice');
       await submitTransactionAsync(
         alice, 
-        api.tx.unique.setPropertyPermissions(collectionId, [{key: 'data', permission: {tokenOwner: true}}])
+        api.tx.unique.setPropertyPermissions(collectionId, [{key: 'data', permission: {tokenOwner: true}}]),
       );
       
       const args = [
         {NFT: {properties: [{key: 'data', value: '1'}]}},
         {NFT: {properties: [{key: 'data', value: '2'}]}},
-        {NFT: {properties: [{key: 'data', value: '3'}]}}
+        {NFT: {properties: [{key: 'data', value: '3'}]}},
       ];
       const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await submitTransactionAsync(alice, createMultipleItemsTx);
@@ -143,7 +143,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const args = [
         {NFT: {properties: [{key: 'k', value: 'v1'}]}},
         {NFT: {properties: [{key: 'k', value: 'v2'}]}},
-        {NFT: {properties: [{key: 'k', value: 'v3'}]}}
+        {NFT: {properties: [{key: 'k', value: 'v3'}]}},
       ];
 
       await createMultipleItemsWithPropsExpectSuccess(alice, collectionId, args);
@@ -171,7 +171,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const args = [
         {NFT: {properties: [{key: 'k', value: 'v1'}]}},
         {NFT: {properties: [{key: 'k', value: 'v2'}]}},
-        {NFT: {properties: [{key: 'k', value: 'v3'}]}}
+        {NFT: {properties: [{key: 'k', value: 'v3'}]}},
       ];
 
       await createMultipleItemsWithPropsExpectSuccess(alice, collectionId, args);
@@ -190,16 +190,14 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
 
   it('Create 0x31, 0x32, 0x33 items in active NFT with property itemOwnerOrAdmin', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionWithPropsExpectSuccess(
-        {propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]}
-      );
+      const collectionId = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       const alice = privateKey('//Alice');
       const args = [
         {NFT: {properties: [{key: 'k', value: 'v1'}]}},
         {NFT: {properties: [{key: 'k', value: 'v2'}]}},
-        {NFT: {properties: [{key: 'k', value: 'v3'}]}}
+        {NFT: {properties: [{key: 'k', value: 'v3'}]}},
       ];
 
       await createMultipleItemsWithPropsExpectSuccess(alice, collectionId, args);
@@ -230,16 +228,14 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
 
   it('Create 0x31, 0x32, 0x33 items in active NFT collection and verify tokens data in chain', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionWithPropsExpectSuccess(
-        {propPerm: [{key: 'data', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]}
-      );
+      const collectionId = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'data', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
       const args = [
         {NFT: {properties: [{key: 'data', value: 'v1'}]}},
         {NFT: {properties: [{key: 'data', value: 'v2'}]}},
-        {NFT: {properties: [{key: 'data', value: 'v3'}]}}
+        {NFT: {properties: [{key: 'data', value: 'v3'}]}},
       ];
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(bob.address), args);
@@ -358,9 +354,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
   it('Create token in not existing collection', async () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionId = await getCreatedCollectionCount(api) + 1;
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(
-        collectionId, normalizeAccountId(alice.address), ['NFT', 'NFT', 'NFT']
-      );
+      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), ['NFT', 'NFT', 'NFT']);
       await expect(executeTransaction(api, alice, createMultipleItemsTx)).to.be.rejectedWith(/common\.CollectionNotFound/);
     });
   });
@@ -369,7 +363,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
     await usingApi(async (api: ApiPromise) => {
       // NFT
       const collectionId = await createCollectionWithPropsExpectSuccess({
-        propPerm: [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]
+        propPerm: [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}],
       });
       const alice = privateKey('//Alice');
       const args = [
@@ -399,11 +393,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       const collectionId = await createCollectionExpectSuccess();
       const createMultipleItemsTx = api.tx.unique
         .createMultipleItems(collectionId, normalizeAccountId(alice.address), ['NFT', 'Fungible', 'ReFungible']);
-      await expect(
-        executeTransaction(api, alice, createMultipleItemsTx)
-      ).to.be.rejectedWith(
-        /nonfungible\.NotNonfungibleDataUsedToMintFungibleCollectionToken/
-      );
+      await expect(executeTransaction(api, alice, createMultipleItemsTx)).to.be.rejectedWith(/nonfungible\.NotNonfungibleDataUsedToMintFungibleCollectionToken/);
       // garbage collection :-D // lol
       await destroyCollectionExpectSuccess(collectionId);
     });
@@ -412,7 +402,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
   it('Create tokens with different data limits <> maximum data limit', async () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionId = await createCollectionWithPropsExpectSuccess({
-        propPerm: [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]
+        propPerm: [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}],
       });
       const args = [
         {NFT: {properties: [{key: 'key', value: 'A'}]}},
@@ -441,7 +431,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
   it('User doesnt have editing rights', async () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionId = await createCollectionWithPropsExpectSuccess({
-        propPerm: [{key: 'key1', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}]
+        propPerm: [{key: 'key1', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}],
       });
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
@@ -449,7 +439,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       const args = [
         {NFT: {properties: [{key: 'key1', value: 'v2'}]}},
         {NFT: {}},
-        {NFT: {}}
+        {NFT: {}},
       ];
 
       const tx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(bob.address), args);
@@ -497,11 +487,11 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       const args = [
         {NFT: {properties: prps}},
         {NFT: {properties: prps}},
-        {NFT: {properties: prps}}
+        {NFT: {properties: prps}},
       ];
 
       // there are no permissions, but will fail anyway because of too much weight for a block
-      const tx2 = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);;
+      const tx2 = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await expect(submitTransactionExpectFailAsync(alice, tx2)).to.be.rejected;
     });
   });
@@ -509,7 +499,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
   it('Trying to add bigger property than allowed', async () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionId = await createCollectionWithPropsExpectSuccess({
-        propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]
+        propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}],
       });
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
