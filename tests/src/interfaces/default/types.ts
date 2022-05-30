@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { BTreeMap, BTreeSet, Bytes, Compact, Enum, Null, Option, OptionBool, Result, Struct, Text, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { BTreeMap, BTreeSet, Bytes, Compact, Enum, Null, Option, Result, Struct, Text, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
 import type { Event } from '@polkadot/types/interfaces/system';
@@ -1588,7 +1588,7 @@ export interface PalletXcmEvent extends Enum {
 }
 
 /** @name PhantomTypeUpDataStructs */
-export interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, UpDataStructsRmrkCollectionInfo, UpDataStructsRmrkNftInfo, UpDataStructsRmrkResourceInfo, UpDataStructsRmrkPropertyInfo, UpDataStructsRmrkBaseInfo, UpDataStructsRmrkPartType, UpDataStructsRmrkTheme, UpDataStructsRmrkNftChild]>> {}
+export interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsRmrkCollectionInfo, UpDataStructsRmrkNftInfo, UpDataStructsRmrkResourceInfo, UpDataStructsRmrkPropertyInfo, UpDataStructsRmrkBaseInfo, UpDataStructsRmrkPartType, UpDataStructsRmrkTheme, UpDataStructsRmrkNftChild]>> {}
 
 /** @name PolkadotCorePrimitivesInboundDownwardMessage */
 export interface PolkadotCorePrimitivesInboundDownwardMessage extends Struct {
@@ -1788,9 +1788,9 @@ export interface UpDataStructsCollectionLimits extends Struct {
   readonly tokenLimit: Option<u32>;
   readonly sponsorTransferTimeout: Option<u32>;
   readonly sponsorApproveTimeout: Option<u32>;
-  readonly ownerCanTransfer: OptionBool;
-  readonly ownerCanDestroy: OptionBool;
-  readonly transfersEnabled: OptionBool;
+  readonly ownerCanTransfer: Option<bool>;
+  readonly ownerCanDestroy: Option<bool>;
+  readonly transfersEnabled: Option<bool>;
 }
 
 /** @name UpDataStructsCollectionMode */
@@ -1805,7 +1805,7 @@ export interface UpDataStructsCollectionMode extends Enum {
 /** @name UpDataStructsCollectionPermissions */
 export interface UpDataStructsCollectionPermissions extends Struct {
   readonly access: Option<UpDataStructsAccessMode>;
-  readonly mintMode: OptionBool;
+  readonly mintMode: Option<bool>;
   readonly nesting: Option<UpDataStructsNestingRule>;
 }
 

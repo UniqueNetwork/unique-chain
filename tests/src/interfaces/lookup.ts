@@ -1403,9 +1403,9 @@ export default {
     tokenLimit: 'Option<u32>',
     sponsorTransferTimeout: 'Option<u32>',
     sponsorApproveTimeout: 'Option<u32>',
-    ownerCanTransfer: 'OptionBool',
-    ownerCanDestroy: 'OptionBool',
-    transfersEnabled: 'OptionBool'
+    ownerCanTransfer: 'Option<bool>',
+    ownerCanDestroy: 'Option<bool>',
+    transfersEnabled: 'Option<bool>'
   },
   /**
    * Lookup164: up_data_structs::SponsoringRateLimit
@@ -1421,7 +1421,7 @@ export default {
    **/
   UpDataStructsCollectionPermissions: {
     access: 'Option<UpDataStructsAccessMode>',
-    mintMode: 'OptionBool',
+    mintMode: 'Option<bool>',
     nesting: 'Option<UpDataStructsNestingRule>'
   },
   /**
@@ -2284,7 +2284,7 @@ export default {
   /**
    * Lookup323: PhantomType::up_data_structs<T>
    **/
-  PhantomTypeUpDataStructs: '[(UpDataStructsTokenData,UpDataStructsRpcCollection,UpDataStructsRmrkCollectionInfo,UpDataStructsRmrkNftInfo,UpDataStructsRmrkResourceInfo,UpDataStructsRmrkPropertyInfo,UpDataStructsRmrkBaseInfo,UpDataStructsRmrkPartType,UpDataStructsRmrkTheme,UpDataStructsRmrkNftChild);0]',
+  PhantomTypeUpDataStructs: '[(UpDataStructsTokenData,UpDataStructsRpcCollection,PalletEvmAccountBasicCrossAccountIdRepr,UpDataStructsRmrkCollectionInfo,UpDataStructsRmrkNftInfo,UpDataStructsRmrkResourceInfo,UpDataStructsRmrkPropertyInfo,UpDataStructsRmrkBaseInfo,UpDataStructsRmrkPartType,UpDataStructsRmrkTheme,UpDataStructsRmrkNftChild);0]',
   /**
    * Lookup325: up_data_structs::TokenData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
