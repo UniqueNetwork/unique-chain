@@ -23,11 +23,13 @@ import Web3 from 'web3';
 import usingApi, {submitTransactionAsync} from '../../substrate/substrate-api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
-import {getGenericResult, UNIQUE} from '../../util/helpers';
+import {CrossAccountId, getDetailedCollectionInfo, getGenericResult, UNIQUE} from '../../util/helpers';
 import * as solc from 'solc';
 import config from '../../config';
 import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
+import nonFungibleAbi from '../nonFungibleAbi.json';
+import collectionHelpersAbi from '../collectionHelpersAbi.json';
 import getBalance from '../../substrate/get-balance';
 import waitNewBlocks from '../../substrate/wait-new-blocks';
 
@@ -56,15 +58,52 @@ export async function usingWeb3<T>(cb: (web3: Web3) => Promise<T> | T): Promise<
   }
 }
 
-export function collectionIdToAddress(address: number): string {
-  if (address >= 0xffffffff || address < 0) throw new Error('id overflow');
+function encodeIntBE(v: number): number[] {
+  if (v >= 0xffffffff || v < 0) throw new Error('id overflow');
+  return [
+    v >> 24,
+    (v >> 16) & 0xff,
+    (v >> 8) & 0xff,
+    v & 0xff,
+  ];
+}
+
+export async function getCollectionAddressFromResult(api: ApiPromise, result: any) {
+  const collectionIdAddress = normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
+  const collectionId = collectionIdFromAddress(collectionIdAddress);  
+  const collection = (await getDetailedCollectionInfo(api, collectionId))!;
+  return {collectionIdAddress, collectionId, collection};
+}
+
+export function collectionIdToAddress(collection: number): string {
   const buf = Buffer.from([0x17, 0xc4, 0xe6, 0x45, 0x3c, 0xc4, 0x9a, 0xaa, 0xae, 0xac, 0xa8, 0x94, 0xe6, 0xd9, 0x68, 0x3e,
-    address >> 24,
-    (address >> 16) & 0xff,
-    (address >> 8) & 0xff,
-    address & 0xff,
+    ...encodeIntBE(collection),
   ]);
   return Web3.utils.toChecksumAddress('0x' + buf.toString('hex'));
+}
+export function collectionIdFromAddress(address: string): number {
+  if (!address.startsWith('0x'))
+    throw 'address not starts with "0x"';
+  if (address.length > 42)
+    throw 'address length is more than 20 bytes';
+  return Number('0x' + address.substring(address.length - 8));
+}
+  
+export function normalizeAddress(address: string): string {
+  return '0x' + address.substring(address.length - 40);
+}
+
+export function tokenIdToAddress(collection: number, token: number): string {
+  const buf = Buffer.from([0xf8, 0x23, 0x8c, 0xcf, 0xff, 0x8e, 0xd8, 0x87, 0x46, 0x3f, 0xd5, 0xe0,
+    ...encodeIntBE(collection),
+    ...encodeIntBE(token),
+  ]);
+  return Web3.utils.toChecksumAddress('0x' + buf.toString('hex'));
+}
+export function tokenIdToCross(collection: number, token: number): CrossAccountId {
+  return {
+    Ethereum: tokenIdToAddress(collection, token),
+  };
 }
 
 export function createEthAccount(web3: Web3) {
@@ -252,6 +291,26 @@ export function contractHelpers(web3: Web3, caller: string) {
   return new web3.eth.Contract(contractHelpersAbi as any, '0x842899ECF380553E8a4de75bF534cdf6fBF64049', {from: caller, ...GAS_ARGS});
 }
 
+/** 
+ * evm collection helper
+ * @param web3 
+ * @param caller - eth address
+ * @returns 
+ */
+export function evmCollectionHelpers(web3: Web3, caller: string) {
+  return new web3.eth.Contract(collectionHelpersAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, ...GAS_ARGS});
+}
+
+/** 
+ * evm collection
+ * @param web3 
+ * @param caller - eth address
+ * @returns 
+ */
+export function evmCollection(web3: Web3, caller: string, collection: string) {
+  return new web3.eth.Contract(nonFungibleAbi as any, collection, {from: caller, ...GAS_ARGS});
+}
+
 /**
  * Execute ethereum method call using substrate account
  * @param to target contract
@@ -302,4 +361,16 @@ export async function recordEthFee(api: ApiPromise, user: string, call: () => Pr
   expect(after < before).to.be.true;
 
   return before - after;
+}
+
+type ElementOf<A> = A extends readonly (infer T)[] ? T : never;
+// I want a fancier api, not a memory efficiency
+export function* cartesian<T extends Array<Array<any>>, R extends Array<any>>(internalRest: [...R], ...args: [...T]): Generator<[...R, ...{[K in keyof T]: ElementOf<T[K]>}]> {
+  if(args.length === 0) {
+    yield internalRest as any;
+    return;
+  }
+  for(const value of args[0]) {
+    yield* cartesian([...internalRest, value], ...args.slice(1)) as any;
+  }
 }

@@ -58,7 +58,7 @@ pub use frame_support::{
 	traits::{
 		tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Everything,
 		Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier,
-		OnUnbalanced, Randomness, FindAuthor,
+		OnUnbalanced, Randomness, FindAuthor, ConstU32, Imbalance,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -92,6 +92,7 @@ pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 // Polkadot imports
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
+use up_data_structs::mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping};
 use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
@@ -114,7 +115,15 @@ use xcm_executor::traits::{MatchesFungible, WeightTrader};
 //use xcm_executor::traits::MatchesFungible;
 use sp_runtime::traits::CheckedConversion;
 
-use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
+use unique_runtime_common::{
+	impl_common_runtime_apis,
+	types::*,
+	constants::*,
+	dispatch::{CollectionDispatchT, CollectionDispatch},
+	sponsoring::UniqueSponsorshipHandler,
+	eth_sponsoring::UniqueEthSponsorshipHandler,
+	weights::CommonWeights,
+};
 
 pub const RUNTIME_NAME: &str = "quartz";
 pub const TOKEN_SYMBOL: &str = "QTZ";
@@ -274,8 +283,9 @@ impl pallet_evm::Config for Runtime {
 	type Event = Event;
 	type OnMethodCall = (
 		pallet_evm_migration::OnMethodCall<Self>,
-		pallet_unique::UniqueErcSupport<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
+		CollectionDispatchT<Self>,
+		pallet_unique::eth::CollectionHelpersOnMethodCall<Self>,
 	);
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
@@ -790,10 +800,7 @@ pub type XcmRouter = (
 	XcmpQueue,
 );
 
-impl pallet_evm_coder_substrate::Config for Runtime {
-	type EthereumTransactionSender = pallet_ethereum::Pallet<Self>;
-	type GasWeightMapping = FixedGasWeightMapping;
-}
+impl pallet_evm_coder_substrate::Config for Runtime {}
 
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
@@ -851,6 +858,17 @@ impl pallet_common::Config for Runtime {
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
+	type CollectionDispatch = CollectionDispatchT<Self>;
+
+	type EvmTokenAddressMapping = EvmTokenAddressMapping;
+	type CrossTokenAddressMapping = CrossTokenAddressMapping<Self::AccountId>;
+	type ContractAddress = EvmCollectionHelpersAddress;
+}
+
+impl pallet_structure::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type WeightInfo = pallet_structure::weights::SubstrateWeight<Self>;
 }
 
 impl pallet_evm::account::Config for Runtime {
@@ -868,10 +886,19 @@ impl pallet_refungible::Config for Runtime {
 impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
 }
+/* TODO free RMRK!
+impl pallet_proxy_rmrk_core::Config for Runtime {
+	type Event = Event;
+}
+
+impl pallet_proxy_rmrk_equip::Config for Runtime {
+	type Event = Event;
+}*/
 
 impl pallet_unique::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
+	type CommonWeightInfo = CommonWeights<Self>;
 }
 
 parameter_types! {
@@ -893,11 +920,11 @@ impl pallet_inflation::Config for Runtime {
 // }
 
 type EvmSponsorshipHandler = (
-	pallet_unique::UniqueEthSponsorshipHandler<Runtime>,
+	UniqueEthSponsorshipHandler<Runtime>,
 	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
 );
 type SponsorshipHandler = (
-	pallet_unique::UniqueSponsorshipHandler<Runtime>,
+	UniqueSponsorshipHandler<Runtime>,
 	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
 	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
 );
@@ -931,6 +958,11 @@ parameter_types! {
 	// 0x842899ECF380553E8a4de75bF534cdf6fBF64049
 	pub const HelpersContractAddress: H160 = H160([
 		0x84, 0x28, 0x99, 0xec, 0xf3, 0x80, 0x55, 0x3e, 0x8a, 0x4d, 0xe7, 0x5b, 0xf5, 0x34, 0xcd, 0xf6, 0xfb, 0xf6, 0x40, 0x49,
+	]);
+		
+	// 0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f
+	pub const EvmCollectionHelpersAddress: H160 = H160([
+		0x6c, 0x4e, 0x9f, 0xe1, 0xae, 0x37, 0xa4, 0x1e, 0x93, 0xce, 0xe4, 0x29, 0xe8, 0xe1, 0x88, 0x1a, 0xbd, 0xcb, 0xb5, 0x4f,
 	]);
 }
 
@@ -979,6 +1011,10 @@ construct_runtime!(
 		Fungible: pallet_fungible::{Pallet, Storage} = 67,
 		Refungible: pallet_refungible::{Pallet, Storage} = 68,
 		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
+		Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
+		/* TODO free RMRK!
+		RmrkCore: pallet_proxy_rmrk_core::{Pallet, Call, Storage, Event<T>} = 71,
+		RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,*/
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
@@ -1035,6 +1071,7 @@ pub type SignedExtra = (
 	frame_system::CheckWeight<Runtime>,
 	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
+	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
@@ -1105,12 +1142,10 @@ impl fp_self_contained::SelfContainedCall for Call {
 
 macro_rules! dispatch_unique_runtime {
 	($collection:ident.$method:ident($($name:ident),*)) => {{
-		use pallet_unique::dispatch::Dispatched;
-
-		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
+		let collection = <Runtime as pallet_common::Config>::CollectionDispatch::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
 		let dispatch = collection.as_dyn();
 
-		Ok(dispatch.$method($($name),*))
+		Ok::<_, DispatchError>(dispatch.$method($($name),*))
 	}};
 }
 

@@ -3,7 +3,7 @@
 Uncomment following lies:
 1. In node/rpc/Cargo.toml
 ```
-# pallet-contracts-rpc = { version = "3.0", git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.9' }
+# pallet-contracts-rpc = { version = "3.0", git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.9' }
 ```
 
 2. In node/rpc/src/lib.rs
@@ -24,19 +24,19 @@ Uncomment following lies:
     # 'pallet-contract-helpers/std',
 ...
     # [dependencies.pallet-contracts]
-    # git = 'https://github.com/paritytech/substrate.git'
+    # git = 'https://github.com/paritytech/substrate'
     # default-features = false
     # branch = 'polkadot-v0.9.9'
     # version = '3.0.0'
 
     # [dependencies.pallet-contracts-primitives]
-    # git = 'https://github.com/paritytech/substrate.git'
+    # git = 'https://github.com/paritytech/substrate'
     # default-features = false
     # branch = 'polkadot-v0.9.9'
     # version = '3.0.0'
 
     # [dependencies.pallet-contracts-rpc-runtime-api]
-    # git = 'https://github.com/paritytech/substrate.git'
+    # git = 'https://github.com/paritytech/substrate'
     # default-features = false
     # branch = 'polkadot-v0.9.9'
     # version = '3.0.0'

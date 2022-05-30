@@ -1,6 +1,16 @@
 [workspace]
 resolver = "2"
-members = ['node/*', 'pallets/*', 'client/*', 'primitives/*', 'crates/*']
-exclude = ["runtime/unique", "runtime/quartz"]
+members = [
+    'node/*',
+    'pallets/*',
+    'client/*',
+    'primitives/*',
+    'crates/*',
+    'runtime/tests',
+]
+exclude = [
+    "runtime/unique",
+    "runtime/quartz"
+]
 [profile.release]
 panic = 'unwind'

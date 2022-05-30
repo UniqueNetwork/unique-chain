@@ -25,6 +25,7 @@ import {createCollectionExpectSuccess,
   setCollectionLimitsExpectSuccess,
   addCollectionAdminExpectSuccess,
   getCreatedCollectionCount,
+  createItemExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -80,6 +81,12 @@ describe('(!negative test!) integration test: ext. destroyCollection():', () => 
   it('fails when OwnerCanDestroy == false', async () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanDestroy: false});
+
+    await destroyCollectionExpectFailure(collectionId, '//Alice');
+  });
+  it('fails when a collection still has a token', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await createItemExpectSuccess(alice, collectionId, 'NFT');
 
     await destroyCollectionExpectFailure(collectionId, '//Alice');
   });

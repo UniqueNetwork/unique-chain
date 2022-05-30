@@ -40,7 +40,9 @@ pub trait WeightInfo {
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
 	fn burn_from() -> Weight;
-	fn set_variable_metadata(b: u32, ) -> Weight;
+	fn set_property_permissions(b: u32) -> Weight;
+	fn set_token_properties(b: u32) -> Weight;
+	fn delete_token_properties(b: u32) -> Weight;
 }
 
 /// Weights for pallet_nonfungible using the Substrate node and recommended hardware.
@@ -90,6 +92,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+
 	// Storage: Nonfungible TokenData (r:1 w:1)
 	// Storage: Nonfungible AccountBalance (r:2 w:2)
 	// Storage: Nonfungible Allowance (r:1 w:0)
@@ -125,10 +128,32 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
-	// Storage: Nonfungible TokenData (r:1 w:1)
-	fn set_variable_metadata(_b: u32, ) -> Weight {
-		(7_700_000 as Weight)
+	// Storage: Common CollectionPropertyPermissions (r:1 w:1)
+	fn set_property_permissions(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 3_432_000
+			.saturating_add((126_888_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
+	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
+	// Storage: Nonfungible TokenData (r:1 w:0)
+	// Storage: Nonfungible TokenProperties (r:1 w:1)
+	fn set_token_properties(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 158_583_000
+			.saturating_add((4_707_700_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
+	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
+	// Storage: Nonfungible TokenData (r:1 w:0)
+	// Storage: Nonfungible TokenProperties (r:1 w:1)
+	fn delete_token_properties(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 169_018_000
+			.saturating_add((4_783_967_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 }
@@ -179,6 +204,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
+
 	// Storage: Nonfungible TokenData (r:1 w:1)
 	// Storage: Nonfungible AccountBalance (r:2 w:2)
 	// Storage: Nonfungible Allowance (r:1 w:0)
@@ -214,10 +240,32 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
-	// Storage: Nonfungible TokenData (r:1 w:1)
-	fn set_variable_metadata(_b: u32, ) -> Weight {
-		(7_700_000 as Weight)
+	// Storage: Common CollectionPropertyPermissions (r:1 w:1)
+	fn set_property_permissions(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 3_432_000
+			.saturating_add((126_888_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	}
+	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
+	// Storage: Nonfungible TokenData (r:1 w:0)
+	// Storage: Nonfungible TokenProperties (r:1 w:1)
+	fn set_token_properties(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 158_583_000
+			.saturating_add((4_707_700_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	}
+	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
+	// Storage: Nonfungible TokenData (r:1 w:0)
+	// Storage: Nonfungible TokenProperties (r:1 w:1)
+	fn delete_token_properties(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 169_018_000
+			.saturating_add((4_783_967_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }

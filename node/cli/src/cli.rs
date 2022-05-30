@@ -55,6 +55,9 @@ pub enum Subcommand {
 	/// The custom benchmark subcommmand benchmarking runtime pallets.
 	#[clap(subcommand)]
 	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
+
+	/// Try runtime
+	TryRuntime(try_runtime_cli::TryRuntimeCmd),
 }
 
 /// Command for exporting the genesis state of the parachain

@@ -73,7 +73,7 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
     await usingApi(async (api: ApiPromise) => {
       // tslint:disable-next-line: radix
       const collectionId = await getCreatedCollectionCount(api) + 1;
-      const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
+      const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: 'AllowList'});
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });
@@ -83,7 +83,7 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
       await destroyCollectionExpectSuccess(collectionId);
-      const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
+      const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: 'AllowList'});
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });
@@ -100,7 +100,7 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
     await usingApi(async (api: ApiPromise) => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
-      const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
+      const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: 'AllowList'});
       await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
     });
   });
@@ -118,7 +118,7 @@ describe('Negative Integration Test ext. collection admin setPublicAccessMode():
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
+      const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: 'AllowList'});
       await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
     });
   });

@@ -43,6 +43,11 @@ use std::{collections::BTreeMap, sync::Arc};
 use unique_runtime_common::types::{
 	Hash, AccountId, RuntimeInstance, Index, Block, BlockNumber, Balance,
 };
+// RMRK
+/* TODO free RMRK! use up_data_structs::{
+	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo,
+	RmrkPartType, RmrkTheme,
+};*/
 
 /// Public io handler for exporting into other modules
 pub type IoHandler = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
@@ -144,6 +149,18 @@ where
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: up_rpc::UniqueApi<Block, <R as RuntimeInstance>::CrossAccountId, AccountId>,
+	/* TODO free RMRK!
+	C::Api: rmrk_rpc::RmrkApi<
+		Block,
+		AccountId,
+		RmrkCollectionInfo<AccountId>,
+		RmrkInstanceInfo<AccountId>,
+		RmrkResourceInfo,
+		RmrkPropertyInfo,
+		RmrkBaseInfo<AccountId>,
+		RmrkPartType,
+		RmrkTheme,
+	>,*/
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
 	P: TransactionPool<Block = Block> + 'static,
@@ -157,7 +174,7 @@ where
 		EthPubSubApiServer, EthSigner, HexEncodedIdProvider, NetApi, NetApiServer, Web3Api,
 		Web3ApiServer,
 	};
-	use uc_rpc::{UniqueApi, Unique};
+	use uc_rpc::{UniqueApi, RmrkApi, Unique};
 	// use pallet_contracts_rpc::{Contracts, ContractsApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
@@ -213,7 +230,11 @@ where
 		fee_history_limit,
 		fee_history_cache,
 	)));
+
+	// todo look into
+	//let unique = Unique::new(client.clone());
 	io.extend_with(UniqueApi::to_delegate(Unique::new(client.clone())));
+	// TODO free RMRK! io.extend_with(RmrkApi::to_delegate(Unique::new(client.clone())));
 
 	if let Some(filter_pool) = filter_pool {
 		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(

@@ -12,12 +12,19 @@ version = '0.9.21'
 default = ['std']
 std = [
     'sp-core/std',
+    'sp-std/std',
     'sp-runtime/std',
     'codec/std',
     'frame-support/std',
     'frame-system/std',
     'sp-consensus-aura/std',
     'pallet-common/std',
+    'pallet-unique/std',
+    'pallet-fungible/std',
+    'pallet-nonfungible/std',
+    'pallet-refungible/std',
+    'up-data-structs/std',
+    'pallet-evm/std',
     'fp-rpc/std',
 ]
 runtime-benchmarks = [
@@ -30,6 +37,11 @@ runtime-benchmarks = [
 default-features = false
 git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.21"
+
+[dependencies.sp-std]
+default-features = false
+git = 'https://github.com/paritytech/substrate'
+branch = 'polkadot-v0.9.21'
 
 [dependencies.sp-runtime]
 default-features = false
@@ -61,6 +73,26 @@ branch = "polkadot-v0.9.21"
 default-features = false
 path = "../../pallets/common"
 
+[dependencies.pallet-unique]
+default-features = false
+path = "../../pallets/unique"
+
+[dependencies.pallet-fungible]
+default-features = false
+path = "../../pallets/fungible"
+
+[dependencies.pallet-nonfungible]
+default-features = false
+path = "../../pallets/nonfungible"
+
+[dependencies.pallet-refungible]
+default-features = false
+path = "../../pallets/refungible"
+
+[dependencies.up-data-structs]
+default-features = false
+path = "../../primitives/data-structs"
+
 [dependencies.sp-consensus-aura]
 default-features = false
 git = "https://github.com/paritytech/substrate"
@@ -69,7 +101,11 @@ branch = "polkadot-v0.9.21"
 [dependencies.fp-rpc]
 default-features = false
 git = "https://github.com/uniquenetwork/frontier"
-branch = "unique-polkadot-v0.9.21"
+branch = "unique-polkadot-v0.9.21-logs"
 
 [dependencies]
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+evm-coder = { default-features = false, path = '../../crates/evm-coder' }
+up-sponsorship = { default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring", branch = 'polkadot-v0.9.21' }
+
+rmrk-rpc = { default-features = false, path = "../../primitives/rmrk-rpc" }

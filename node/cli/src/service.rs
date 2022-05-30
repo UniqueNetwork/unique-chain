@@ -67,6 +67,12 @@ use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
 use unique_runtime_common::types::{AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block};
 
+// RMRK
+/* TODO free RMRK! use up_data_structs::{
+	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo,
+	RmrkPartType, RmrkTheme,
+};*/
+
 /// Unique native executor instance.
 #[cfg(feature = "unique-runtime")]
 pub struct UniqueRuntimeExecutor;
@@ -347,6 +353,18 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
+		/* TODO free RMRK!
+		+ rmrk_rpc::RmrkApi<
+			Block,
+			AccountId,
+			RmrkCollectionInfo<AccountId>,
+			RmrkInstanceInfo<AccountId>,
+			RmrkResourceInfo,
+			RmrkPropertyInfo,
+			RmrkBaseInfo<AccountId>,
+			RmrkPartType,
+			RmrkTheme,
+		>*/
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
@@ -628,6 +646,18 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
+		/* TODO free RMRK!
+		+ rmrk_rpc::RmrkApi<
+			Block,
+			AccountId,
+			RmrkCollectionInfo<AccountId>,
+			RmrkInstanceInfo<AccountId>,
+			RmrkResourceInfo,
+			RmrkPropertyInfo,
+			RmrkBaseInfo<AccountId>,
+			RmrkPartType,
+			RmrkTheme,
+		>*/
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
@@ -761,6 +791,18 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
+		/* TODO free RMRK!
+		+ rmrk_rpc::RmrkApi<
+			Block,
+			AccountId,
+			RmrkCollectionInfo<AccountId>,
+			RmrkInstanceInfo<AccountId>,
+			RmrkResourceInfo,
+			RmrkPropertyInfo,
+			RmrkBaseInfo<AccountId>,
+			RmrkPartType,
+			RmrkTheme,
+		>*/
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
