@@ -1111,6 +1111,17 @@ impl<T: Config> Pallet<T> {
 				new_limit <= MAX_TOKEN_OWNERSHIP,
 				<Error<T>>::CollectionLimitBoundsExceeded,
 			),
+			sponsored_data_size => ensure!(
+				new_limit <= CUSTOM_DATA_LIMIT,
+				<Error<T>>::CollectionLimitBoundsExceeded,
+			),
+
+			sponsored_data_rate_limit => {},
+			token_limit => ensure!(
+				old_limit >= new_limit && new_limit > 0,
+				<Error<T>>::CollectionTokenLimitExceeded
+			),
+
 			sponsor_transfer_timeout(match mode {
 				CollectionMode::NFT => NFT_SPONSOR_TRANSFER_TIMEOUT,
 				CollectionMode::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
@@ -1119,14 +1130,7 @@ impl<T: Config> Pallet<T> {
 				new_limit <= MAX_SPONSOR_TIMEOUT,
 				<Error<T>>::CollectionLimitBoundsExceeded,
 			),
-			sponsored_data_size => ensure!(
-				new_limit <= CUSTOM_DATA_LIMIT,
-				<Error<T>>::CollectionLimitBoundsExceeded,
-			),
-			token_limit => ensure!(
-				old_limit >= new_limit && new_limit > 0,
-				<Error<T>>::CollectionTokenLimitExceeded
-			),
+			sponsor_approve_timeout => {},
 			owner_can_transfer => ensure!(
 				old_limit || !new_limit,
 				<Error<T>>::OwnerPermissionsCantBeReverted,
@@ -1135,7 +1139,6 @@ impl<T: Config> Pallet<T> {
 				old_limit || !new_limit,
 				<Error<T>>::OwnerPermissionsCantBeReverted,
 			),
-			sponsored_data_rate_limit => {},
 			transfers_enabled => {},
 		);
 		Ok(new_limit)
@@ -1146,6 +1149,9 @@ impl<T: Config> Pallet<T> {
 		mut new_limit: CollectionPermissions,
 	) -> Result<CollectionPermissions, DispatchError> {
 		limit_default_clone!(old_limit, new_limit,
+			access => {},
+			mint_mode => {},
+			nesting => {},
 		);
 		Ok(new_limit)
 	}

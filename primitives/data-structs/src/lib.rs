@@ -365,6 +365,7 @@ pub type CollectionPropertiesVec =
 	BoundedVec<Property, ConstU32<MAX_PROPERTIES_PER_ITEM>>;
 
 /// All fields are wrapped in `Option`s, where None means chain default
+// When adding/removing fields from this struct - don't forget to also update clamp_limits
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionLimits {
@@ -432,6 +433,7 @@ impl CollectionLimits {
 	}
 }
 
+// When adding/removing fields from this struct - don't forget to also update clamp_limits
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionPermissions {
