@@ -21,7 +21,6 @@ import {
   createCollectionExpectSuccess,
   createItemExpectSuccess,
   getGenericResult,
-  destroyCollectionExpectSuccess,
   normalizeAccountId,
   addCollectionAdminExpectSuccess,
   getBalance,

@@ -64,7 +64,7 @@ describe('integration test: ext. createCollection():', () => {
       const tx = api.tx.unique.createCollectionEx({
         mode: {Fungible: 8},
         permissions: {
-          access: 'AllowList'
+          access: 'AllowList',
         },
         name: [1],
         description: [2],
