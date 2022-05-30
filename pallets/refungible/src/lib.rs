@@ -23,8 +23,7 @@ use up_data_structs::{
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
-	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, CollectionHandle,
-	dispatch::CollectionDispatch,
+	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
 };
 use pallet_structure::Pallet as PalletStructure;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
@@ -211,6 +210,10 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let id = collection.id;
 
+		if Self::collection_has_tokens(id) {
+			return Err(<CommonError<T>>::CantDestroyNotEmptyCollection.into());
+		}
+
 		// =========
 
 		PalletCommon::destroy_collection(collection.0, sender)?;
@@ -224,6 +227,10 @@ impl<T: Config> Pallet<T> {
 		<Owned<T>>::remove_prefix((id,), None);
 		<AccountBalance<T>>::remove_prefix((id,), None);
 		Ok(())
+	}
+
+	fn collection_has_tokens(collection_id: CollectionId) -> bool {
+		<TokenData<T>>::iter_prefix((collection_id,)).next().is_some()
 	}
 
 	pub fn burn_token(collection: &RefungibleHandle<T>, token_id: TokenId) -> DispatchResult {
@@ -265,6 +272,7 @@ impl<T: Config> Pallet<T> {
 			// =========
 
 			<Owned<T>>::remove((collection.id, owner, token));
+			<PalletStructure<T>>::unnest_if_nested(owner, collection.id, token);
 			<AccountBalance<T>>::insert((collection.id, owner), account_balance);
 			Self::burn_token(collection, token)?;
 			<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
@@ -292,6 +300,7 @@ impl<T: Config> Pallet<T> {
 
 		if balance == 0 {
 			<Owned<T>>::remove((collection.id, owner, token));
+			<PalletStructure<T>>::unnest_if_nested(owner, collection.id, token);
 			<Balance<T>>::remove((collection.id, token, owner));
 			<AccountBalance<T>>::insert((collection.id, owner), account_balance);
 		} else {
@@ -372,25 +381,25 @@ impl<T: Config> Pallet<T> {
 			None
 		};
 
-		if let Some(target) = T::CrossTokenAddressMapping::address_to_token(to) {
-			let handle = <CollectionHandle<T>>::try_get(target.0)?;
-			let dispatch = T::CollectionDispatch::dispatch(handle);
-			let dispatch = dispatch.as_dyn();
-
-			dispatch.check_nesting(
-				from.clone(),
-				(collection.id, token),
-				target.1,
-				nesting_budget,
-			)?;
-		}
-
 		// =========
+
+		<PalletStructure<T>>::nest_if_sent_to_token(
+			from.clone(),
+			to,
+			collection.id,
+			token,
+			nesting_budget
+		)?;
 
 		if let Some(balance_to) = balance_to {
 			// from != to
 			if balance_from == 0 {
 				<Balance<T>>::remove((collection.id, token, from));
+				<PalletStructure<T>>::unnest_if_nested(
+					from,
+					collection.id,
+					token
+				);
 			} else {
 				<Balance<T>>::insert((collection.id, token, from), balance_from);
 			}
@@ -488,18 +497,14 @@ impl<T: Config> Pallet<T> {
 		for (i, token) in data.iter().enumerate() {
 			let token_id = TokenId(first_token_id + i as u32 + 1);
 			for (to, _) in token.users.iter() {
-				if let Some(target) = T::CrossTokenAddressMapping::address_to_token(to) {
-					let handle = <CollectionHandle<T>>::try_get(target.0)?;
-					let dispatch = T::CollectionDispatch::dispatch(handle);
-					let dispatch = dispatch.as_dyn();
 
-					dispatch.check_nesting(
-						sender.clone(),
-						(collection.id, token_id),
-						target.1,
-						nesting_budget,
-					)?;
-				}
+				<PalletStructure<T>>::check_nesting(
+					sender.clone(),
+					to,
+					collection.id,
+					token_id,
+					nesting_budget,
+				)?;
 			}
 		}
 
@@ -519,12 +524,15 @@ impl<T: Config> Pallet<T> {
 					const_data: token.const_data,
 				},
 			);
+
 			for (user, amount) in token.users.into_iter() {
 				if amount == 0 {
 					continue;
 				}
 				<Balance<T>>::insert((collection.id, token_id, &user), amount);
 				<Owned<T>>::insert((collection.id, &user, TokenId(token_id)), true);
+				<PalletStructure<T>>::nest_if_sent_to_token_unchecked(&user, collection.id, TokenId(token_id));
+
 				// TODO: ERC20 transfer event
 				<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
 					collection.id,

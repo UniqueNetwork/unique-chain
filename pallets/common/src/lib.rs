@@ -353,6 +353,8 @@ pub mod pallet {
 		MustBeTokenOwner,
 		/// No permission to perform action
 		NoPermission,
+		/// Destroying only empty collections is allowed
+		CantDestroyNotEmptyCollection,
 		/// Collection is not in mint mode.
 		PublicMintingNotAllowed,
 		/// Address is not in allow list.
@@ -1267,6 +1269,18 @@ pub trait CommonCollectionOperations<T: Config> {
 		under: TokenId,
 		budget: &dyn Budget,
 	) -> DispatchResult;
+
+	fn nest(
+		&self,
+		under: TokenId,
+		to_nest: (CollectionId, TokenId)
+	);
+
+	fn unnest(
+		&self,
+		under: TokenId,
+		to_nest: (CollectionId, TokenId)
+	);
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId>;
 	fn collection_tokens(&self) -> Vec<TokenId>;

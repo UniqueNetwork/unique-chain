@@ -298,6 +298,18 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		fail!(<Error<T>>::FungibleDisallowsNesting)
 	}
 
+	fn nest(
+		&self,
+		_under: TokenId,
+		_to_nest: (CollectionId, TokenId)
+	) {}
+
+	fn unnest(
+		&self,
+		_under: TokenId,
+		_to_nest: (CollectionId, TokenId)
+	) {}
+
 	fn collection_tokens(&self) -> Vec<TokenId> {
 		vec![TokenId::default()]
 	}

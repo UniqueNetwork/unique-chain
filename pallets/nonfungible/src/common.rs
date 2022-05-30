@@ -353,6 +353,22 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		<Pallet<T>>::check_nesting(self, sender, from, under, budget)
 	}
 
+	fn nest(
+		&self,
+		under: TokenId,
+		to_nest: (CollectionId, TokenId)
+	) {
+		<Pallet<T>>::nest((self.id, under), to_nest);
+	}
+
+	fn unnest(
+		&self,
+		under: TokenId,
+		to_unnest: (CollectionId, TokenId)
+	) {
+		<Pallet<T>>::unnest((self.id, under), to_unnest);
+	}
+
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId> {
 		<Owned<T>>::iter_prefix((self.id, account))
 			.map(|(id, _)| id)
