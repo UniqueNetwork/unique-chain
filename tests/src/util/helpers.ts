@@ -554,7 +554,7 @@ export async function setCollectionLimitsExpectSuccess(sender: IKeyringPair, col
   });
 }
 
-export const setCollectionPermissionsExceptSuccess = async (sender: IKeyringPair, collectionId: number, permissions: {mintMode?: boolean, access?: 'Normal' | 'AllowList', nesting?: 'Disabled' | 'Owner' | {OwnerRestricted: number[]}}) => {
+export const setCollectionPermissionsExpectSuccess = async (sender: IKeyringPair, collectionId: number, permissions: {mintMode?: boolean, access?: 'Normal' | 'AllowList', nesting?: 'Disabled' | 'Owner' | {OwnerRestricted: number[]}}) => {
   await usingApi(async(api) => {
     const tx = api.tx.unique.setCollectionPermissions(collectionId, permissions);
     const events = await submitTransactionAsync(sender, tx);
@@ -1298,7 +1298,7 @@ export async function setPublicAccessModeExpectSuccess(
   await usingApi(async (api) => {
 
     // Run the transaction
-    const tx = api.tx.unique.setPublicAccessMode(collectionId, accessMode);
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: accessMode});
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
 
@@ -1319,7 +1319,7 @@ export async function setPublicAccessModeExpectFail(
   await usingApi(async (api) => {
 
     // Run the transaction
-    const tx = api.tx.unique.setPublicAccessMode(collectionId, accessMode);
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: accessMode});
     const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
     const result = getGenericResult(events);
 
@@ -1345,7 +1345,7 @@ export async function setMintPermissionExpectSuccess(sender: IKeyringPair, colle
   await usingApi(async (api) => {
 
     // Run the transaction
-    const tx = api.tx.unique.setMintPermission(collectionId, enabled);
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, {mintMode: enabled});
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
     expect(result.success).to.be.true;

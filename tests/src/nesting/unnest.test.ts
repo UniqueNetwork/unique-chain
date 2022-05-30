@@ -8,7 +8,7 @@ import {
   getBalance,
   getTokenOwner,
   normalizeAccountId,
-  setCollectionPermissionsExceptSuccess,
+  setCollectionPermissionsExpectSuccess,
   transferExpectSuccess,
   transferFromExpectSuccess,
 } from '../util/helpers';
@@ -28,7 +28,7 @@ describe('Integration Test: Unnesting', () => {
   it('NFT: allows the owner to successfully unnest a token', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExceptSuccess(alice, collection, {nesting: 'Owner'});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: 'Owner'});
       const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
       const targetAddress = {Ethereum: tokenIdToAddress(collection, targetToken)};
 
@@ -57,7 +57,7 @@ describe('Integration Test: Unnesting', () => {
   it('Fungible: allows the owner to successfully unnest a token', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExceptSuccess(alice, collection, {nesting: 'Owner'});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: 'Owner'});
       const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
       const targetAddress = {Ethereum: tokenIdToAddress(collection, targetToken)};
 
@@ -84,7 +84,7 @@ describe('Integration Test: Unnesting', () => {
   it('ReFungible: allows the owner to successfully unnest a token', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExceptSuccess(alice, collection, {nesting: 'Owner'});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: 'Owner'});
       const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
       const targetAddress = {Ethereum: tokenIdToAddress(collection, targetToken)};
 
@@ -119,7 +119,7 @@ describe('Negative Test: Unnesting', () => {
   it('Disallows a non-owner to unnest/burn a token', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExceptSuccess(alice, collection, {nesting: 'Owner'});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: 'Owner'});
       const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
       const targetAddress = {Ethereum: tokenIdToAddress(collection, targetToken)};
 
@@ -149,7 +149,7 @@ describe('Negative Test: Unnesting', () => {
   // Recursive nesting
   it('Prevents Ouroboros creation', async () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-    await setCollectionPermissionsExceptSuccess(alice, collection, {nesting: 'Owner'});
+    await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: 'Owner'});
     const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
 
     // Create a nested token ouroboros
