@@ -506,6 +506,7 @@ pub struct CreateReFungibleData {
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum MetaUpdatePermission {
 	ItemOwner,
 	Admin,
@@ -758,6 +759,10 @@ impl<Value> PropertiesMap<Value> {
 
 	pub fn get(&self, key: &PropertyKey) -> Option<&Value> {
 		self.0.get(key)
+	}
+
+	pub fn contains_key(&self, key: &PropertyKey) -> bool {
+		self.0.contains_key(key)
 	}
 
 	fn check_property_key(key: &PropertyKey) -> Result<(), PropertiesError> {

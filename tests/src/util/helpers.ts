@@ -325,7 +325,7 @@ const defaultCreateCollectionParams: CreateCollectionParams = {
 };
 
 export async function createCollectionExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
-  const {name, description, mode, tokenPrefix, schemaVersion} = {...defaultCreateCollectionParams, ...params};
+  const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
 
   let collectionId = 0;
   await usingApi(async (api) => {
@@ -348,8 +348,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
       name: strToUTF16(name),
       description: strToUTF16(description),
       tokenPrefix: strToUTF16(tokenPrefix),
-      mode: modeprm as any,
-      schemaVersion: schemaVersion,
+      mode: modeprm as any
     });
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getCreateCollectionResult(events);
@@ -548,6 +547,16 @@ export async function destroyCollectionExpectSuccess(collectionId: number, sende
 export async function setCollectionLimitsExpectSuccess(sender: IKeyringPair, collectionId: number, limits: any) {
   await usingApi(async (api) => {
     const tx = api.tx.unique.setCollectionLimits(collectionId, limits);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+}
+
+export const setCollectionPermissionsExceptSuccess = async (sender: IKeyringPair, collectionId: number, permissions: {mintMode?: boolean, access?: 'Normal' | 'AllowList', nesting?: 'Disabled' | 'Owner' | {OwnerRestricted: number[]}}) => {
+  await usingApi(async(api) => {
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, permissions);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
 
@@ -1299,7 +1308,7 @@ export async function setPublicAccessModeExpectSuccess(
     // What to expect
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
-    expect(collection.access.toHuman()).to.be.equal(accessMode);
+    expect(collection.permissions.access.toHuman()).to.be.equal(accessMode);
   });
 }
 
@@ -1344,7 +1353,7 @@ export async function setMintPermissionExpectSuccess(sender: IKeyringPair, colle
     // Get the collection
     const collection = await queryCollectionExpectSuccess(api, collectionId);
 
-    expect(collection.mintMode.toHuman()).to.be.equal(enabled);
+    expect(collection.permissions.mintMode.toHuman()).to.be.equal(enabled);
   });
 }
 

@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import types from '../lookup';
-
 type RpcParam = {
   name: string;
   type: string;
@@ -30,17 +28,17 @@ const fn = (description: string, params: RpcParam[], type: string) => ({
 });
 
 export default {
-  types,
+  types: {},
   rpc: {
     lastCollectionIdx: fn('Get the latest created collection id', [], 'u32'),
-    collectionById: fn('Get collection by id', [{name: 'id', type: 'u32'}], 'Option<PhantomTypeUpDataStructsCollectionInfo>'),
+    collectionById: fn('Get collection by id', [{name: 'id', type: 'u32'}], 'Option<UpDataStructsRmrkCollectionInfo>'),
     nftById: fn(
       'Get NFT by collection id and NFT id',
       [
         {name: 'collectionId', type: 'u32'},
         {name: 'nftId', type: 'u32'},
       ],
-      'Option<PhantomTypeUpDataStructsNftInfo>',
+      'Option<UpDataStructsRmrkNftInfo>',
     ),
     accountTokens: fn(
       'Get tokens owned by an account in a collection',
@@ -56,12 +54,12 @@ export default {
         {name: 'collectionId', type: 'u32'},
         {name: 'nftId', type: 'u32'},
       ],
-      'Vec<PhantomTypeUpDataStructsNftChild>',
+      'Vec<UpDataStructsRmrkNftChild>',
     ),
     collectionProperties: fn(
       'Get collection properties',
       [{name: 'collectionId', type: 'u32'}],
-      'Vec<PhantomTypeUpDataStructsPropertyInfo>',
+      'Vec<UpDataStructsRmrkPropertyInfo>',
     ),
     nftProperties: fn(
       'Get NFT properties',
@@ -69,7 +67,7 @@ export default {
         {name: 'collectionId', type: 'u32'},
         {name: 'nftId', type: 'u32'},
       ],
-      'Vec<PhantomTypeUpDataStructsPropertyInfo>',
+      'Vec<UpDataStructsRmrkPropertyInfo>',
     ),
     nftResources: fn(
       'Get NFT resources',
@@ -77,7 +75,7 @@ export default {
         {name: 'collectionId', type: 'u32'},
         {name: 'nftId', type: 'u32'},
       ],
-      'Vec<PhantomTypeUpDataStructsResourceInfo>',
+      'Vec<UpDataStructsRmrkResourceInfo>',
     ),
     nftResourcePriorities: fn(
       'Get NFT resource priorities',
@@ -90,12 +88,12 @@ export default {
     base: fn(
       'Get base info',
       [{name: 'baseId', type: 'u32'}],
-      'Option<PhantomTypeUpDataStructsBaseInfo>',
+      'Option<UpDataStructsRmrkBaseInfo>',
     ),
     baseParts: fn(
       'Get all Base\'s parts',
       [{name: 'baseId', type: 'u32'}],
-      'Vec<PhantomTypeUpDataStructsPartType>',
+      'Vec<UpDataStructsRmrkPartType>',
     ),
     themeNames: fn(
       'Get Base\'s theme names',
@@ -109,7 +107,7 @@ export default {
         {name: 'themeName', type: 'String'},
         {name: 'keys', type: 'Option<Vec<String>>'},
       ],
-      'Option<PhantomTypeUpDataStructsTheme>',
+      'Option<UpDataStructsRmrkTheme>',
     ),
   },
 };

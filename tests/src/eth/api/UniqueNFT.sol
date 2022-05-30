@@ -191,24 +191,6 @@ interface ERC721Enumerable is Dummy, ERC165 {
 	function totalSupply() external view returns (uint256);
 }
 
-// Selector: 9b5e29c5
-interface CollectionProperties is Dummy, ERC165 {
-	// Selector: setCollectionProperty(string,bytes) 2f073f66
-	function setCollectionProperty(string memory key, bytes memory value)
-		external;
-
-	// Selector: deleteCollectionProperty(string) 7b7debce
-	function deleteCollectionProperty(string memory key) external;
-
-	// Throws error if key not found
-	//
-	// Selector: collectionProperty(string) cf24fd6d
-	function collectionProperty(string memory key)
-		external
-		view
-		returns (bytes memory);
-}
-
 // Selector: d74d154f
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// Selector: transfer(address,uint256) a9059cbb
@@ -231,6 +213,36 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 		returns (bool);
 }
 
+// Selector: f5652829
+interface Collection is Dummy, ERC165 {
+	// Selector: setCollectionProperty(string,bytes) 2f073f66
+	function setCollectionProperty(string memory key, bytes memory value)
+		external;
+
+	// Selector: deleteCollectionProperty(string) 7b7debce
+	function deleteCollectionProperty(string memory key) external;
+
+	// Throws error if key not found
+	//
+	// Selector: collectionProperty(string) cf24fd6d
+	function collectionProperty(string memory key)
+		external
+		view
+		returns (bytes memory);
+
+	// Selector: ethSetSponsor(address) 8f9af356
+	function ethSetSponsor(address sponsor) external;
+
+	// Selector: ethConfirmSponsorship() a8580d1a
+	function ethConfirmSponsorship() external;
+
+	// Selector: setLimit(string,string) bf4d2014
+	function setLimit(string memory limit, string memory value) external;
+
+	// Selector: contractAddress() f6b4dfb4
+	function contractAddress() external view returns (address);
+}
+
 interface UniqueNFT is
 	Dummy,
 	ERC165,
@@ -240,6 +252,6 @@ interface UniqueNFT is
 	ERC721UniqueExtensions,
 	ERC721Mintable,
 	ERC721Burnable,
-	CollectionProperties,
+	Collection,
 	TokenProperties
 {}

@@ -114,6 +114,15 @@ impl<T: Config> CollectionHandle<T> {
 			recorder: SubstrateRecorder::new(gas_limit),
 		})
 	}
+
+	pub fn new_with_recorder(id: CollectionId, recorder: SubstrateRecorder<T>) -> Option<Self> {
+		<CollectionById<T>>::get(id).map(|collection| Self {
+			id,
+			collection,
+			recorder,
+		})
+	}
+
 	pub fn new(id: CollectionId) -> Option<Self> {
 		Self::new_with_gas_limit(id, u64::MAX)
 	}
@@ -139,6 +148,19 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn save(self) -> DispatchResult {
 		<CollectionById<T>>::insert(self.id, self.collection);
 		Ok(())
+	}
+
+	pub fn set_sponsor(&mut self, sponsor: T::AccountId) {
+		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor);
+	}
+
+	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> bool {
+		if self.collection.sponsorship.pending_sponsor() != Some(sender) {
+			return false;
+		};
+
+		self.collection.sponsorship = SponsorshipState::Confirmed(sender.clone());
+		true
 	}
 }
 impl<T: Config> Deref for CollectionHandle<T> {
@@ -476,17 +498,20 @@ pub mod pallet {
 			CollectionStats,
 			CollectionId,
 			TokenId,
-			PhantomType<TokenData<T::CrossAccountId>>,
-			PhantomType<RpcCollection<T::AccountId>>,
-			// RMRK
-			PhantomType<RmrkCollectionInfo<T::AccountId>>,
-			PhantomType<RmrkInstanceInfo<T::AccountId>>,
-			PhantomType<RmrkResourceInfo>,
-			PhantomType<RmrkPropertyInfo>,
-			PhantomType<RmrkBaseInfo<T::AccountId>>,
-			PhantomType<RmrkPartType>,
-			PhantomType<RmrkTheme>,
-			PhantomType<RmrkNftChild>,
+			PhantomType<(
+				TokenData<T::CrossAccountId>,
+				RpcCollection<T::AccountId>,
+
+				// RMRK
+				RmrkCollectionInfo<T::AccountId>,
+				RmrkInstanceInfo<T::AccountId>,
+				RmrkResourceInfo,
+				RmrkPropertyInfo,
+				RmrkBaseInfo<T::AccountId>,
+				RmrkPartType,
+				RmrkTheme,
+				RmrkNftChild,
+			)>,
 		),
 		QueryKind = OptionQuery,
 	>;
@@ -632,6 +657,12 @@ impl<T: Config> Pallet<T> {
 				value,
 			})
 			.collect();
+
+		let permissions = CollectionPermissions {
+			access: Some(permissions.access()),
+			mint_mode: Some(permissions.mint_mode()),
+			nesting: Some(permissions.nesting().clone()),
+		};
 
 		Some(RpcCollection {
 			name: name.into_inner(),

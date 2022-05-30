@@ -5,7 +5,7 @@ import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Bytes, Compact, Option, U256, Vec, bool, u128, u16, u32, u64 } from '@polkadot/types-codec';
 import type { AnyNumber, IMethod, ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
-import type { CumulusPrimitivesParachainInherentParachainInherentData, EthereumTransactionTransactionV2, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsAccessMode, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCreateCollectionData, UpDataStructsCreateItemData, UpDataStructsCreateItemExData, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, UpDataStructsRmrkPartType, UpDataStructsRmrkTheme, UpDataStructsSchemaVersion, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
+import type { CumulusPrimitivesParachainInherentParachainInherentData, EthereumTransactionTransactionV2, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCollectionPermissions, UpDataStructsCreateCollectionData, UpDataStructsCreateItemData, UpDataStructsCreateItemExData, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, UpDataStructsRmrkPartType, UpDataStructsRmrkTheme, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/submittable' {
   export interface AugmentedSubmittables<ApiType extends ApiTypes> {
@@ -700,7 +700,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Prefer it to deprecated [`created_collection`] method
        **/
-      createCollectionEx: AugmentedSubmittable<(data: UpDataStructsCreateCollectionData | { mode?: any; access?: any; name?: any; description?: any; tokenPrefix?: any; offchainSchema?: any; schemaVersion?: any; pendingSponsor?: any; limits?: any; constOnChainSchema?: any; tokenPropertyPermissions?: any; properties?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [UpDataStructsCreateCollectionData]>;
+      createCollectionEx: AugmentedSubmittable<(data: UpDataStructsCreateCollectionData | { mode?: any; access?: any; name?: any; description?: any; tokenPrefix?: any; pendingSponsor?: any; limits?: any; permissions?: any; tokenPropertyPermissions?: any; properties?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [UpDataStructsCreateCollectionData]>;
       /**
        * This method creates a concrete instance of NFT Collection created with CreateCollection method.
        * 
@@ -800,7 +800,8 @@ declare module '@polkadot/api-base/types/submittable' {
        * * address.
        **/
       removeFromAllowList: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, address: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
-      setCollectionLimits: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newLimit: UpDataStructsCollectionLimits | { accountTokenOwnershipLimit?: any; sponsoredDataSize?: any; sponsoredDataRateLimit?: any; tokenLimit?: any; sponsorTransferTimeout?: any; sponsorApproveTimeout?: any; ownerCanTransfer?: any; ownerCanDestroy?: any; transfersEnabled?: any; nestingRule?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsCollectionLimits]>;
+      setCollectionLimits: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newLimit: UpDataStructsCollectionLimits | { accountTokenOwnershipLimit?: any; sponsoredDataSize?: any; sponsoredDataRateLimit?: any; tokenLimit?: any; sponsorTransferTimeout?: any; sponsorApproveTimeout?: any; ownerCanTransfer?: any; ownerCanDestroy?: any; transfersEnabled?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsCollectionLimits]>;
+      setCollectionPermissions: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newLimit: UpDataStructsCollectionPermissions | { access?: any; mintMode?: any; nesting?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsCollectionPermissions]>;
       setCollectionProperties: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, properties: Vec<UpDataStructsProperty> | (UpDataStructsProperty | { key?: any; value?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, Vec<UpDataStructsProperty>]>;
       /**
        * # Permissions
@@ -814,84 +815,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * * new_sponsor.
        **/
       setCollectionSponsor: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newSponsor: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, AccountId32]>;
-      /**
-       * Set const on-chain data schema.
-       * 
-       * # Permissions
-       * 
-       * * Collection Owner
-       * * Collection Admin
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * schema: String representing the const on-chain data schema.
-       **/
-      setConstOnChainSchema: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, schema: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, Bytes]>;
-      /**
-       * Allows Anyone to create tokens if:
-       * * Allow List is enabled, and
-       * * Address is added to allow list, and
-       * * This method was called with True parameter
-       * 
-       * # Permissions
-       * * Collection Owner
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * mint_permission: Boolean parameter. If True, allows minting to Anyone with conditions above.
-       **/
-      setMintPermission: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, mintPermission: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, bool]>;
-      /**
-       * Set off-chain data schema.
-       * 
-       * # Permissions
-       * 
-       * * Collection Owner
-       * * Collection Admin
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * schema: String representing the offchain data schema.
-       **/
-      setOffchainSchema: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, schema: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, Bytes]>;
       setPropertyPermissions: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, propertyPermissions: Vec<UpDataStructsPropertyKeyPermission> | (UpDataStructsPropertyKeyPermission | { key?: any; permission?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, Vec<UpDataStructsPropertyKeyPermission>]>;
-      /**
-       * Toggle between normal and allow list access for the methods with access for `Anyone`.
-       * 
-       * # Permissions
-       * 
-       * * Collection Owner.
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * mode: [AccessMode]
-       **/
-      setPublicAccessMode: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, mode: UpDataStructsAccessMode | 'Normal' | 'AllowList' | number | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsAccessMode]>;
-      /**
-       * Set schema standard
-       * ImageURL
-       * Unique
-       * 
-       * # Permissions
-       * 
-       * * Collection Owner
-       * * Collection Admin
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * schema: SchemaVersion: enum
-       **/
-      setSchemaVersion: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, version: UpDataStructsSchemaVersion | 'ImageURL' | 'Unique' | number | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsSchemaVersion]>;
       setTokenProperties: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, properties: Vec<UpDataStructsProperty> | (UpDataStructsProperty | { key?: any; value?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, u32, Vec<UpDataStructsProperty>]>;
       /**
        * Set transfers_enabled value for particular collection
