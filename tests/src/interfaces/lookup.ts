@@ -1403,9 +1403,9 @@ export default {
     tokenLimit: 'Option<u32>',
     sponsorTransferTimeout: 'Option<u32>',
     sponsorApproveTimeout: 'Option<u32>',
-    ownerCanTransfer: 'Option<bool>',
-    ownerCanDestroy: 'Option<bool>',
-    transfersEnabled: 'Option<bool>'
+    ownerCanTransfer: 'OptionBool',
+    ownerCanDestroy: 'OptionBool',
+    transfersEnabled: 'OptionBool'
   },
   /**
    * Lookup164: up_data_structs::SponsoringRateLimit
@@ -1421,7 +1421,7 @@ export default {
    **/
   UpDataStructsCollectionPermissions: {
     access: 'Option<UpDataStructsAccessMode>',
-    mintMode: 'Option<bool>',
+    mintMode: 'OptionBool',
     nesting: 'Option<UpDataStructsNestingRule>'
   },
   /**
