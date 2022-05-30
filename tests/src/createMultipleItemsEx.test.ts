@@ -29,13 +29,13 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
-          constData: '0x0000',
+          // constData: '0x0000',
         }, {
           owner: {substrate: bob.address},
-          constData: '0x2222',
+          // constData: '0x2222',
         }, {
           owner: {substrate: charlie.address},
-          constData: '0x4444',
+          // constData: '0x4444',
         },
       ];
 
@@ -57,15 +57,15 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
-          constData: '0x1111',
+          // constData: '0x1111',
           properties: [{key: 'k', value: 'v1'}],
         }, {
           owner: {substrate: bob.address},
-          constData: '0x2222',
+          // constData: '0x2222',
           properties: [{key: 'k', value: 'v2'}],
         }, {
           owner: {substrate: charlie.address},
-          constData: '0x4444',
+          // constData: '0x4444',
           properties: [{key: 'k', value: 'v3'}],
         },
       ];
@@ -88,15 +88,15 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
-          constData: '0x0000',
+          // constData: '0x0000',
           properties: [{key: 'k', value: 'v1'}],
         }, {
           owner: {substrate: bob.address},
-          constData: '0x2222',
+          // constData: '0x2222',
           properties: [{key: 'k', value: 'v2'}],
         }, {
           owner: {substrate: charlie.address},
-          constData: '0x4444',
+          // constData: '0x4444',
           properties: [{key: 'k', value: 'v3'}],
         },
       ];
@@ -119,15 +119,15 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
-          constData: '0x0000',
+          // constData: '0x0000',
           properties: [{key: 'k', value: 'v1'}],
         }, {
           owner: {substrate: bob.address},
-          constData: '0x2222',
+          // constData: '0x2222',
           properties: [{key: 'k', value: 'v2'}],
         }, {
           owner: {substrate: charlie.address},
-          constData: '0x4444',
+          // constData: '0x4444',
           properties: [{key: 'k', value: 'v3'}],
         },
       ];
@@ -154,10 +154,10 @@ describe('createMultipleItemsEx', () => {
           owner: {substrate: alice.address},
           properties: [{key: 'key1', value: 'v2'}],
         }, {
-          owner: {substrate: alice.address},
+          owner: {substrate: bob.address},
           properties: [{key: 'key1', value: 'v2'}],
         }, {
-          owner: {substrate: alice.address},
+          owner: {substrate: charlie.address},
           properties: [{key: 'key1', value: 'v2'}],
         },
       ];
@@ -165,7 +165,8 @@ describe('createMultipleItemsEx', () => {
       const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
       // await executeTransaction(api, alice, tx);
 
-      await submitTransactionExpectFailAsync(alice, tx);
+      //await submitTransactionExpectFailAsync(alice, tx);
+      await expect(executeTransaction(api, alice, tx)).to.be.rejectedWith(/common\.NoPermission/);
     });
   });
 
@@ -193,7 +194,8 @@ describe('createMultipleItemsEx', () => {
       const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
       // await executeTransaction(api, alice, tx);
 
-      await submitTransactionExpectFailAsync(alice, tx);
+      //await submitTransactionExpectFailAsync(alice, tx);
+      await expect(executeTransaction(api, alice, tx)).to.be.rejectedWith(/common\.NoPermission/);
     });
   });
 
@@ -219,41 +221,24 @@ describe('createMultipleItemsEx', () => {
 
       const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
 
-      await submitTransactionExpectFailAsync(alice, tx);
+      await expect(executeTransaction(api, alice, tx)).to.be.rejectedWith(/common\.NoPermission/);
+      //await submitTransactionExpectFailAsync(alice, tx);
     });
   });
 
-  it('Adding more than 64 prps', async () => {
-    const prps = [{key: 'key', value: 'v'}];
-    const propPerm = [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}];
+  it('Adding more than 64 properties', async () => {
+    const propPerms = [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}];
 
     for (let i = 0; i < 65; i++) {
-      prps.push({key: `key${i}`, value: `value${i}`});
-      propPerm.push({key: `key${i}`, permission: {mutable: true, collectionAdmin: true, tokenOwner: true}});
+      propPerms.push({key: `key${i}`, permission: {mutable: true, collectionAdmin: true, tokenOwner: true}});
     }
 
-    const collection = await createCollectionWithPropsExpectSuccess({propPerm: propPerm});
     const alice = privateKey('//Alice');
-    const bob = privateKey('//Bob');
-    const charlie = privateKey('//Charlie');
-    await addCollectionAdminExpectSuccess(alice, collection, bob.address);
+    const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await usingApi(async (api) => {
-      const data = [
-        {
-          owner: {substrate: alice.address},
-          properties: prps,
-        }, {
-          owner: {substrate: alice.address},
-          properties: prps,
-        }, {
-          owner: {substrate: alice.address},
-          properties: prps,
-        },
-      ];
-
-      const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
-
-      await submitTransactionExpectFailAsync(alice, tx);
+      await expect(
+        executeTransaction(api, alice, api.tx.unique.setPropertyPermissions(collection, propPerms))
+      ).to.be.rejectedWith(/common\.PropertyLimitReached/);
     });
   });
 
@@ -276,7 +261,8 @@ describe('createMultipleItemsEx', () => {
 
       const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
 
-      await submitTransactionExpectFailAsync(alice, tx);
+      //await submitTransactionExpectFailAsync(alice, tx);
+      await expect(executeTransaction(api, alice, tx)).to.be.rejectedWith(/common\.NoPermission/);
     });
   });
 
@@ -289,13 +275,13 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
-          constData: '0x0000',
+          // constData: '0x0000',
         }, {
           owner: {substrate: bob.address},
-          constData: '0x2222',
+          // constData: '0x2222',
         }, {
           owner: {substrate: charlie.address},
-          constData: '0x4444',
+          // constData: '0x4444',
         },
       ];
 
@@ -317,13 +303,13 @@ describe('createMultipleItemsEx', () => {
       const data = [
         {
           owner: {substrate: alice.address},
-          constData: '0x0000',
+          // constData: '0x0000',
         }, {
           owner: {substrate: bob.address},
-          constData: '0x2222',
+          // constData: '0x2222',
         }, {
           owner: {substrate: charlie.address},
-          constData: '0x4444',
+          // constData: '0x4444',
         },
       ];
 

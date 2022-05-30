@@ -27,7 +27,7 @@ import {alicesPublicKey} from '../accounts';
 import privateKey from '../substrate/privateKey';
 import {default as usingApi, executeTransaction, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
-import {UpDataStructsRpcCollection, UpDataStructsCreateItemData} from '@polkadot/types/lookup';
+import {UpDataStructsRpcCollection, UpDataStructsCreateItemData, UpDataStructsProperty} from '@polkadot/types/lookup';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -141,7 +141,6 @@ export interface IChainLimits {
 
 export interface IReFungibleTokenDataType {
   owner: IReFungibleOwner[];
-  constData: number[];
 }
 
 export function uniqueEventMessage(events: EventRecord[]): IGetMessage {
@@ -784,7 +783,7 @@ export async function removeFromContractAllowListExpectFailure(sender: IKeyringP
   });
 }
 
-export async function setOffchainSchemaExpectSuccess(sender: IKeyringPair, collectionId: number, data: number[]) {
+/*export async function setOffchainSchemaExpectSuccess(sender: IKeyringPair, collectionId: number, data: number[]) {
   await usingApi(async (api) => {
     const tx = api.tx.unique.setOffchainSchema(collectionId, '0x' + Buffer.from(data).toString('hex'));
     const events = await submitTransactionAsync(sender, tx);
@@ -799,7 +798,7 @@ export async function setOffchainSchemaExpectFailure(sender: IKeyringPair, colle
     const tx = api.tx.unique.setOffchainSchema(collectionId, '0x' + Buffer.from(data).toString('hex'));
     await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
   });
-}
+}*/
 
 export interface CreateFungibleData {
   readonly Value: bigint;
@@ -1111,12 +1110,20 @@ export async function getAdminList(
 ): Promise<string[]> {
   return (await api.rpc.unique.adminlist(collectionId)).toHuman() as any;
 }
-export async function getConstMetadata(
+/*export async function getConstMetadata(
   api: ApiPromise,
   collectionId: number,
   tokenId: number,
 ): Promise<number[]> {
   return [...(await api.rpc.unique.constMetadata(collectionId, tokenId))];
+}*/
+export async function getTokenProperties(
+  api: ApiPromise,
+  collectionId: number,
+  tokenId: number,
+  propertyKeys: string[],
+): Promise<UpDataStructsProperty[]> {
+  return (await api.rpc.unique.tokenProperties(collectionId, tokenId, propertyKeys)).toHuman() as any;
 }
 
 export async function createFungibleItemExpectSuccess(
@@ -1150,18 +1157,6 @@ export async function createMultipleItemsWithPropsExpectSuccess(sender: IKeyring
   });
 }
 
-export async function createMultipleItemsWithPropsExpectFailure(sender: IKeyringPair, collectionId: number, itemsData: any, owner: CrossAccountId | string = sender.address) {
-  await usingApi(async (api) => {
-    const to = normalizeAccountId(owner);
-    const tx = api.tx.unique.createMultipleItems(collectionId, to, itemsData);
-
-    const events = await expect(await submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
-    const result = getCreateItemsResult(events);
-
-    expect(result).to.be.equal(false);
-  });
-}
-
 export async function createMultipleItemsExWithPropsExpectSuccess(sender: IKeyringPair, collectionId: number, itemsData: any) {
   await usingApi(async (api) => {
     const tx = api.tx.unique.createMultipleItemsEx(collectionId, itemsData);
@@ -1187,10 +1182,10 @@ export async function createItemWithPropsExpectSuccess(sender: IKeyringPair, col
       const createData = {fungible: {value: 10}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     } else if (createMode === 'ReFungible') {
-      const createData = {refungible: {const_data: [], pieces: 100}};
+      const createData = {refungible: {pieces: 100}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     } else {
-      const data = api.createType('UpDataStructsCreateItemData', {NFT: {constData: 'test', properties: props}});
+      const data = api.createType('UpDataStructsCreateItemData', {NFT: {properties: props}});
       tx = api.tx.unique.createItem(collectionId, to, data as UpDataStructsCreateItemData);
     }
 
@@ -1225,7 +1220,7 @@ export async function createItemWithPropsExpectFailure(sender: IKeyringPair, col
 
     let tx;
     if (createMode === 'NFT') {
-      const data = api.createType('UpDataStructsCreateItemData', {NFT: {constData: 'test', properties: props}});
+      const data = api.createType('UpDataStructsCreateItemData', {NFT: {properties: props}});
       tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), data);
     } else {
       tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), createMode);
@@ -1251,10 +1246,10 @@ export async function createItemExpectSuccess(sender: IKeyringPair, collectionId
       const createData = {fungible: {value: 10}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     } else if (createMode === 'ReFungible') {
-      const createData = {refungible: {const_data: [], pieces: 100}};
+      const createData = {refungible: {pieces: 100}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     } else {
-      const createData = {nft: {const_data: []}};
+      const createData = {nft: {}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     }
 

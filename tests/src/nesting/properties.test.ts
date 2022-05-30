@@ -792,7 +792,7 @@ describe('Negative Integration Test: Token Properties', () => {
         ]), 
       )).to.be.rejectedWith(/common\.NoSpaceForProperty/);
 
-      expect((await api.rpc.unique.tokenProperties(collection, token, ['a_holy_book', 'young years'])).toJSON()).to.be.empty;
+      expect((await api.rpc.unique.tokenProperties(collection, token, ['a_holy_book', 'young_years'])).toJSON()).to.be.empty;
       const propertiesMap = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON();
       expect(propertiesMap.consumedSpace).to.be.equal(originalSpace);
     });

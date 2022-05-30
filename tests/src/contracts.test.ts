@@ -139,9 +139,9 @@ describe.skip('Chain extensions', () => {
       await addToAllowListExpectSuccess(alice, collectionId, bob.address);
 
       const transferTx = contract.tx.createMultipleItems(value, gasLimit, bob.address, collectionId, [
-        {Nft: {const_data: '0x010203'}},
-        {Nft: {const_data: '0x010204'}},
-        {Nft: {const_data: '0x010205'}},
+        {NFT: {/*const_data: '0x010203'*/}},
+        {NFT: {/*const_data: '0x010204'*/}},
+        {NFT: {/*const_data: '0x010205'*/}},
       ]);
       const events = await submitTransactionAsync(alice, transferTx);
       const result = getGenericResult(events);
@@ -153,15 +153,15 @@ describe.skip('Chain extensions', () => {
       expect(tokensAfter).to.be.deep.equal([
         {
           Owner: bob.address,
-          ConstData: '0x010203',
+          //ConstData: '0x010203',
         },
         {
           Owner: bob.address,
-          ConstData: '0x010204',
+          //ConstData: '0x010204',
         },
         {
           Owner: bob.address,
-          ConstData: '0x010205',
+          //ConstData: '0x010205',
         },
       ]);
     });

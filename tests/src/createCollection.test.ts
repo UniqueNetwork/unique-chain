@@ -63,17 +63,17 @@ describe('integration test: ext. createCollection():', () => {
       const bob = privateKey('//Bob');
       const tx = api.tx.unique.createCollectionEx({
         mode: {Fungible: 8},
-        access: 'AllowList',
+        //access: 'AllowList',
         name: [1],
         description: [2],
         tokenPrefix: '0x000000',
-        offchainSchema: '0x111111',
-        schemaVersion: 'Unique',
+        //offchainSchema: '0x111111',
+        //schemaVersion: 'Unique',
         pendingSponsor: bob.address,
         limits: {
           accountTokenOwnershipLimit: 3,
         },
-        constOnChainSchema: '0x333333',
+        //constOnChainSchema: '0x333333',
       });
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateCollectionResult(events);
@@ -81,15 +81,15 @@ describe('integration test: ext. createCollection():', () => {
       const collection = (await getDetailedCollectionInfo(api, result.collectionId))!;
       expect(collection.owner.toString()).to.equal(alice.address);
       expect(collection.mode.asFungible.toNumber()).to.equal(8);
-      expect(collection.access.isAllowList).to.be.true;
+      //expect(collection.access.isAllowList).to.be.true;
       expect(collection.name.map(v => v.toNumber())).to.deep.equal([1]);
       expect(collection.description.map(v => v.toNumber())).to.deep.equal([2]);
       expect(collection.tokenPrefix.toString()).to.equal('0x000000');
-      expect(collection.offchainSchema.toString()).to.equal('0x111111');
-      expect(collection.schemaVersion.isUnique).to.be.true;
+      //expect(collection.offchainSchema.toString()).to.equal('0x111111');
+      //expect(collection.schemaVersion.isUnique).to.be.true;
       expect(collection.sponsorship.asUnconfirmed.toString()).to.equal(bob.address);
       expect(collection.limits.accountTokenOwnershipLimit.unwrap().toNumber()).to.equal(3);
-      expect(collection.constOnChainSchema.toString()).to.equal('0x333333');
+      //expect(collection.constOnChainSchema.toString()).to.equal('0x333333');
     });
   });
 });
