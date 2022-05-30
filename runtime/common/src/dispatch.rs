@@ -30,7 +30,10 @@ where
 		+ pallet_nonfungible::Config
 		+ pallet_refungible::Config,
 {
-	fn create(sender: T::AccountId, data: CreateCollectionData<T::AccountId>) -> DispatchResult {
+	fn create(
+		sender: T::CrossAccountId,
+		data: CreateCollectionData<T::AccountId>,
+	) -> DispatchResult {
 		let _id = match data.mode {
 			CollectionMode::NFT => <PalletNonfungible<T>>::init_collection(sender, data)?,
 			CollectionMode::Fungible(decimal_points) => {

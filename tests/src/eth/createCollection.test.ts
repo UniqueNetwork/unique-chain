@@ -18,7 +18,7 @@ import {evmToAddress} from '@polkadot/util-crypto';
 import {expect} from 'chai';
 import {getCreatedCollectionCount, getDetailedCollectionInfo} from '../util/helpers';
 import {
-  evmCollectionHelper,
+  evmCollectionHelpers,
   collectionIdToAddress,
   createEthAccount,
   createEthAccountWithBalance,
@@ -30,14 +30,14 @@ import {
 describe('Create collection from EVM', () => {
   itWeb3('Create collection', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
-    const helper = evmCollectionHelper(web3, owner);
+    const helper = evmCollectionHelpers(web3, owner);
     const collectionName = 'CollectionEVM';
     const description = 'Some description';
     const tokenPrefix = 'token prefix';
   
     const collectionCountBefore = await getCreatedCollectionCount(api);
     const result = await helper.methods
-      .create721Collection(collectionName, description, tokenPrefix)
+      .createNonfungibleCollection(collectionName, description, tokenPrefix)
       .send();
     const collectionCountAfter = await getCreatedCollectionCount(api);
   
@@ -51,27 +51,27 @@ describe('Create collection from EVM', () => {
 
   itWeb3('Check collection address exist', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
-    const collectionHelper = evmCollectionHelper(web3, owner);
+    const collectionHelpers = evmCollectionHelpers(web3, owner);
   
     const expectedCollectionId = await getCreatedCollectionCount(api) + 1;
     const expectedCollectionAddress = collectionIdToAddress(expectedCollectionId);
-    expect(await collectionHelper.methods
+    expect(await collectionHelpers.methods
       .isCollectionExist(expectedCollectionAddress)
       .call()).to.be.false;
 
-    await collectionHelper.methods
-      .create721Collection('A', 'A', 'A')
+    await collectionHelpers.methods
+      .createNonfungibleCollection('A', 'A', 'A')
       .send();
     
-    expect(await collectionHelper.methods
+    expect(await collectionHelpers.methods
       .isCollectionExist(expectedCollectionAddress)
       .call()).to.be.true;
   });
   
   itWeb3('Set sponsorship', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
-    const collectionHelper = evmCollectionHelper(web3, owner);
-    let result = await collectionHelper.methods.create721Collection('Sponsor collection', '1', '1').send();
+    const collectionHelpers = evmCollectionHelpers(web3, owner);
+    let result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const sponsor = await createEthAccountWithBalance(api, web3);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
@@ -89,8 +89,8 @@ describe('Create collection from EVM', () => {
 
   itWeb3('Set limits', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
-    const collectionHelper = evmCollectionHelper(web3, owner);
-    const result = await collectionHelper.methods.create721Collection('Const collection', '5', '5').send();
+    const collectionHelpers = evmCollectionHelpers(web3, owner);
+    const result = await collectionHelpers.methods.createNonfungibleCollection('Const collection', '5', '5').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const limits = {
       accountTokenOwnershipLimit: 1000,
@@ -105,15 +105,15 @@ describe('Create collection from EVM', () => {
     };
 
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-    await collectionEvm.methods.setLimit('accountTokenOwnershipLimit', limits.accountTokenOwnershipLimit.toString()).send();
-    await collectionEvm.methods.setLimit('sponsoredDataSize', limits.sponsoredDataSize.toString()).send();
-    await collectionEvm.methods.setLimit('sponsoredDataRateLimit', limits.sponsoredDataRateLimit.toString()).send();
-    await collectionEvm.methods.setLimit('tokenLimit', limits.tokenLimit.toString()).send();
-    await collectionEvm.methods.setLimit('sponsorTransferTimeout', limits.sponsorTransferTimeout.toString()).send();
-    await collectionEvm.methods.setLimit('sponsorApproveTimeout', limits.sponsorApproveTimeout.toString()).send();
-    await collectionEvm.methods.setLimit('ownerCanTransfer', limits.ownerCanTransfer.toString()).send();
-    await collectionEvm.methods.setLimit('ownerCanDestroy', limits.ownerCanDestroy.toString()).send();
-    await collectionEvm.methods.setLimit('transfersEnabled', limits.transfersEnabled.toString()).send();
+    await collectionEvm.methods['setLimit(string,uint32)']('accountTokenOwnershipLimit', limits.accountTokenOwnershipLimit).send();
+    await collectionEvm.methods['setLimit(string,uint32)']('sponsoredDataSize', limits.sponsoredDataSize).send();
+    await collectionEvm.methods['setLimit(string,uint32)']('sponsoredDataRateLimit', limits.sponsoredDataRateLimit).send();
+    await collectionEvm.methods['setLimit(string,uint32)']('tokenLimit', limits.tokenLimit).send();
+    await collectionEvm.methods['setLimit(string,uint32)']('sponsorTransferTimeout', limits.sponsorTransferTimeout).send();
+    await collectionEvm.methods['setLimit(string,uint32)']('sponsorApproveTimeout', limits.sponsorApproveTimeout).send();
+    await collectionEvm.methods['setLimit(string,bool)']('ownerCanTransfer', limits.ownerCanTransfer).send();
+    await collectionEvm.methods['setLimit(string,bool)']('ownerCanDestroy', limits.ownerCanDestroy).send();
+    await collectionEvm.methods['setLimit(string,bool)']('transfersEnabled', limits.transfersEnabled).send();
     
     const collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
     expect(collectionSub.limits.accountTokenOwnershipLimit.unwrap().toNumber()).to.be.eq(limits.accountTokenOwnershipLimit);
@@ -130,14 +130,14 @@ describe('Create collection from EVM', () => {
   itWeb3('Collection address exist', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
     const collectionAddressForNonexistentCollection = '0x17C4E6453CC49AAAAEACA894E6D9683E00112233';
-    const collectionHelper = evmCollectionHelper(web3, owner);
-    expect(await collectionHelper.methods
+    const collectionHelpers = evmCollectionHelpers(web3, owner);
+    expect(await collectionHelpers.methods
       .isCollectionExist(collectionAddressForNonexistentCollection).call())
       .to.be.false;
     
-    const result = await collectionHelper.methods.create721Collection('Collection address exist', '7', '7').send();
+    const result = await collectionHelpers.methods.createNonfungibleCollection('Collection address exist', '7', '7').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    expect(await collectionHelper.methods
+    expect(await collectionHelpers.methods
       .isCollectionExist(collectionIdAddress).call())
       .to.be.true;
   });
@@ -146,7 +146,7 @@ describe('Create collection from EVM', () => {
 describe('(!negative tests!) Create collection from EVM', () => {
   itWeb3('(!negative test!) Create collection (bad lengths)', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
-    const helper = evmCollectionHelper(web3, owner);
+    const helper = evmCollectionHelpers(web3, owner);
     {
       const MAX_NAME_LENGHT = 64;
       const collectionName = 'A'.repeat(MAX_NAME_LENGHT + 1);
@@ -154,7 +154,7 @@ describe('(!negative tests!) Create collection from EVM', () => {
       const tokenPrefix = 'A';
     
       await expect(helper.methods
-        .create721Collection(collectionName, description, tokenPrefix)
+        .createNonfungibleCollection(collectionName, description, tokenPrefix)
         .call()).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGHT);
       
     }
@@ -164,7 +164,7 @@ describe('(!negative tests!) Create collection from EVM', () => {
       const description = 'A'.repeat(MAX_DESCRIPTION_LENGHT + 1);
       const tokenPrefix = 'A';
       await expect(helper.methods
-        .create721Collection(collectionName, description, tokenPrefix)
+        .createNonfungibleCollection(collectionName, description, tokenPrefix)
         .call()).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGHT);
     }
     {  
@@ -173,28 +173,28 @@ describe('(!negative tests!) Create collection from EVM', () => {
       const description = 'A';
       const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGHT + 1);
       await expect(helper.methods
-        .create721Collection(collectionName, description, tokenPrefix)
+        .createNonfungibleCollection(collectionName, description, tokenPrefix)
         .call()).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGHT);
     }
   });
   
   itWeb3('(!negative test!) Create collection (no funds)', async ({web3}) => {
     const owner = await createEthAccount(web3);
-    const helper = evmCollectionHelper(web3, owner);
+    const helper = evmCollectionHelpers(web3, owner);
     const collectionName = 'A';
     const description = 'A';
     const tokenPrefix = 'A';
     
     await expect(helper.methods
-      .create721Collection(collectionName, description, tokenPrefix)
+      .createNonfungibleCollection(collectionName, description, tokenPrefix)
       .call()).to.be.rejectedWith('NotSufficientFounds');
   });
 
   itWeb3('(!negative test!) Check owner', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
     const notOwner = await createEthAccount(web3);
-    const collectionHelper = evmCollectionHelper(web3, owner);
-    const result = await collectionHelper.methods.create721Collection('A', 'A', 'A').send();
+    const collectionHelpers = evmCollectionHelpers(web3, owner);
+    const result = await collectionHelpers.methods.createNonfungibleCollection('A', 'A', 'A').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const contractEvmFromNotOwner = evmCollection(web3, notOwner, collectionIdAddress);
     const EXPECTED_ERROR = 'NoPermission';
@@ -218,18 +218,12 @@ describe('(!negative tests!) Create collection from EVM', () => {
 
   itWeb3('(!negative test!) Set limits', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
-    const collectionHelper = evmCollectionHelper(web3, owner);
-    const result = await collectionHelper.methods.create721Collection('Schema collection', 'A', 'A').send();
+    const collectionHelpers = evmCollectionHelpers(web3, owner);
+    const result = await collectionHelpers.methods.createNonfungibleCollection('Schema collection', 'A', 'A').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     await expect(collectionEvm.methods
       .setLimit('badLimit', 'true')
-      .call()).to.be.rejectedWith('Unknown limit "badLimit"');
-    await expect(collectionEvm.methods
-      .setLimit('sponsoredDataSize', 'badValue')
-      .call()).to.be.rejectedWith('Int value "badValue" parse error:');
-    await expect(collectionEvm.methods
-      .setLimit('ownerCanTransfer', 'badValue')
-      .call()).to.be.rejectedWith('Bool value "badValue" parse error:');
+      .call()).to.be.rejectedWith('Unknown boolean limit "badLimit"');
   });
 });

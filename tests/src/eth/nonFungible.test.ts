@@ -16,7 +16,7 @@
 
 import privateKey from '../substrate/privateKey';
 import {approveExpectSuccess, burnItemExpectSuccess, createCollectionExpectSuccess, createItemExpectSuccess, transferExpectSuccess, transferFromExpectSuccess, UNIQUE} from '../util/helpers';
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelper, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, transferBalanceToEth} from './util/helpers';
+import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, transferBalanceToEth} from './util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import {expect} from 'chai';
 import {submitTransactionAsync} from '../substrate/substrate-api';
@@ -76,8 +76,8 @@ describe('NFT: Information getting', () => {
 describe('NFT: Plain calls', () => {
   itWeb3('Can perform mint()', async ({web3, api}) => {
     const owner = await createEthAccountWithBalance(api, web3);
-    const helper = evmCollectionHelper(web3, owner);
-    let result = await helper.methods.create721Collection('Mint collection', '6', '6').send();
+    const helper = evmCollectionHelpers(web3, owner);
+    let result = await helper.methods.createNonfungibleCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const receiver = createEthAccount(web3);
     const contract = evmCollection(web3, owner, collectionIdAddress);

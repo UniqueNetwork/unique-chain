@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use evm_coder::{
-	solidity_interface, solidity,
+	solidity_interface, solidity, ToLog,
 	types::*,
 	execution::{Result, Error},
 };
@@ -27,6 +27,16 @@ use up_data_structs::{Property, SponsoringRateLimit};
 use alloc::format;
 
 use crate::{Pallet, CollectionHandle, Config, CollectionProperties};
+
+#[derive(ToLog)]
+pub enum CollectionHelpersEvents {
+	CollectionCreated {
+		#[indexed]
+		owner: address,
+		#[indexed]
+		collection_id: address,
+	},
+}
 
 /// Does not always represent a full collection, for RFT it is either
 /// collection (Implementing ERC721), or specific collection token (Implementing ERC20)

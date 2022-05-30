@@ -191,29 +191,7 @@ interface ERC721Enumerable is Dummy, ERC165 {
 	function totalSupply() external view returns (uint256);
 }
 
-// Selector: d74d154f
-interface ERC721UniqueExtensions is Dummy, ERC165 {
-	// Selector: transfer(address,uint256) a9059cbb
-	function transfer(address to, uint256 tokenId) external;
-
-	// Selector: burnFrom(address,uint256) 79cc6790
-	function burnFrom(address from, uint256 tokenId) external;
-
-	// Selector: nextTokenId() 75794a3c
-	function nextTokenId() external view returns (uint256);
-
-	// Selector: mintBulk(address,uint256[]) 44a9945e
-	function mintBulk(address to, uint256[] memory tokenIds)
-		external
-		returns (bool);
-
-	// Selector: mintBulkWithTokenURI(address,(uint256,string)[]) 36543006
-	function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
-		external
-		returns (bool);
-}
-
-// Selector: f5652829
+// Selector: c894dc35
 interface Collection is Dummy, ERC165 {
 	// Selector: setCollectionProperty(string,bytes) 2f073f66
 	function setCollectionProperty(string memory key, bytes memory value)
@@ -236,11 +214,36 @@ interface Collection is Dummy, ERC165 {
 	// Selector: ethConfirmSponsorship() a8580d1a
 	function ethConfirmSponsorship() external;
 
-	// Selector: setLimit(string,string) bf4d2014
-	function setLimit(string memory limit, string memory value) external;
+	// Selector: setLimit(string,uint32) 68db30ca
+	function setLimit(string memory limit, uint32 value) external;
+
+	// Selector: setLimit(string,bool) ea67e4c2
+	function setLimit(string memory limit, bool value) external;
 
 	// Selector: contractAddress() f6b4dfb4
 	function contractAddress() external view returns (address);
+}
+
+// Selector: d74d154f
+interface ERC721UniqueExtensions is Dummy, ERC165 {
+	// Selector: transfer(address,uint256) a9059cbb
+	function transfer(address to, uint256 tokenId) external;
+
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 tokenId) external;
+
+	// Selector: nextTokenId() 75794a3c
+	function nextTokenId() external view returns (uint256);
+
+	// Selector: mintBulk(address,uint256[]) 44a9945e
+	function mintBulk(address to, uint256[] memory tokenIds)
+		external
+		returns (bool);
+
+	// Selector: mintBulkWithTokenURI(address,(uint256,string)[]) 36543006
+	function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
+		external
+		returns (bool);
 }
 
 interface UniqueNFT is

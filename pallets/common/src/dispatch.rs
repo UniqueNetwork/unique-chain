@@ -56,7 +56,10 @@ pub fn dispatch_call<
 }
 
 pub trait CollectionDispatch<T: Config> {
-	fn create(sender: T::AccountId, data: CreateCollectionData<T::AccountId>) -> DispatchResult;
+	fn create(
+		sender: T::CrossAccountId,
+		data: CreateCollectionData<T::AccountId>,
+	) -> DispatchResult;
 	fn destroy(sender: T::CrossAccountId, handle: CollectionHandle<T>) -> DispatchResult;
 
 	fn dispatch(handle: CollectionHandle<T>) -> Self;

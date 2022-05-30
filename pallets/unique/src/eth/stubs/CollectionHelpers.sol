@@ -21,10 +21,18 @@ contract ERC165 is Dummy {
 	}
 }
 
-// Selector: 56c215c5
-contract CollectionHelper is Dummy, ERC165 {
-	// Selector: create721Collection(string,string,string) 951c0151
-	function create721Collection(
+// Inline
+contract CollectionHelpersEvents {
+	event CollectionCreated(
+		address indexed owner,
+		address indexed collectionId
+	);
+}
+
+// Selector: 20947cd0
+contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
+	// Selector: createNonfungibleCollection(string,string,string) e34a6844
+	function createNonfungibleCollection(
 		string memory name,
 		string memory description,
 		string memory tokenPrefix

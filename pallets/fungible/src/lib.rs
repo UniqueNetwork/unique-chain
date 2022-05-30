@@ -134,7 +134,7 @@ impl<T: Config> Deref for FungibleHandle<T> {
 
 impl<T: Config> Pallet<T> {
 	pub fn init_collection(
-		owner: T::AccountId,
+		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		<PalletCommon<T>>::init_collection(owner, data)

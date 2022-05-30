@@ -127,7 +127,7 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 	}
 }
 
-// Selector: f5652829
+// Selector: c894dc35
 contract Collection is Dummy, ERC165 {
 	// Selector: setCollectionProperty(string,bytes) 2f073f66
 	function setCollectionProperty(string memory key, bytes memory value)
@@ -173,8 +173,16 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 	}
 
-	// Selector: setLimit(string,string) bf4d2014
-	function setLimit(string memory limit, string memory value) public {
+	// Selector: setLimit(string,uint32) 68db30ca
+	function setLimit(string memory limit, uint32 value) public {
+		require(false, stub_error);
+		limit;
+		value;
+		dummy = 0;
+	}
+
+	// Selector: setLimit(string,bool) ea67e4c2
+	function setLimit(string memory limit, bool value) public {
 		require(false, stub_error);
 		limit;
 		value;

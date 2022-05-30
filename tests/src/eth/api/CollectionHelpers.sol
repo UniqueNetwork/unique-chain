@@ -12,10 +12,18 @@ interface ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-// Selector: 56c215c5
-interface CollectionHelper is Dummy, ERC165 {
-	// Selector: create721Collection(string,string,string) 951c0151
-	function create721Collection(
+// Inline
+interface CollectionHelpersEvents {
+	event CollectionCreated(
+		address indexed owner,
+		address indexed collectionId
+	);
+}
+
+// Selector: 20947cd0
+interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
+	// Selector: createNonfungibleCollection(string,string,string) e34a6844
+	function createNonfungibleCollection(
 		string memory name,
 		string memory description,
 		string memory tokenPrefix

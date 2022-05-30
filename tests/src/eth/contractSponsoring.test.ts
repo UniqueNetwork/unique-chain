@@ -29,7 +29,7 @@ import {
   normalizeEvents,
   subToEth,
   executeEthTxOnSub,
-  evmCollectionHelper,
+  evmCollectionHelpers,
   getCollectionAddressFromResult,
   evmCollection,
 } from './util/helpers';
@@ -224,8 +224,8 @@ describe('Sponsoring EVM contracts', () => {
   //TODO: CORE-302 add eth methods
   itWeb3.skip('Sponsoring evm address from substrate collection', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
-    const collectionHelper = evmCollectionHelper(web3, owner);
-    let result = await collectionHelper.methods.create721Collection('Sponsor collection', '1', '1').send();
+    const collectionHelpers = evmCollectionHelpers(web3, owner);
+    let result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const sponsor = await createEthAccountWithBalance(api, web3);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);

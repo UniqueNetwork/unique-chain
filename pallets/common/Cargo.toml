@@ -21,6 +21,7 @@ fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenet
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
 pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
+ethereum = { version = "0.12.0", default-features = false }
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
 
 serde = { version = "1.0.130", default-features = false }

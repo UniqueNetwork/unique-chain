@@ -139,7 +139,8 @@ pub mod pallet {
 				..Default::default()
 			};
 
-			let collection_id_res = <PalletNft<T>>::init_collection(sender.clone(), data);
+			let collection_id_res =
+				<PalletNft<T>>::init_collection(T::CrossAccountId::from_sub(sender.clone()), data);
 
 			if let Err(DispatchError::Arithmetic(_)) = &collection_id_res {
 				return Err(<Error<T>>::NoAvailableCollectionId.into());

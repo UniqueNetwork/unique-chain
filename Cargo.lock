@@ -5912,6 +5912,7 @@ dependencies = [
 name = "pallet-common"
 version = "0.1.0"
 dependencies = [
+ "ethereum",
  "evm-coder",
  "fp-evm-mapping",
  "frame-benchmarking",

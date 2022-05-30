@@ -152,7 +152,17 @@
   {
     "inputs": [
       { "internalType": "string", "name": "limit", "type": "string" },
-      { "internalType": "string", "name": "value", "type": "string" }
+      { "internalType": "uint32", "name": "value", "type": "uint32" }
+    ],
+    "name": "setLimit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "limit", "type": "string" },
+      { "internalType": "bool", "name": "value", "type": "bool" }
     ],
     "name": "setLimit",
     "outputs": [],

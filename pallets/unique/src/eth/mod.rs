@@ -24,14 +24,17 @@ use up_data_structs::{
 	MAX_COLLECTION_NAME_LENGTH,
 };
 use frame_support::traits::Get;
-use pallet_common::{CollectionById, erc::token_uri_key};
+use pallet_common::{
+	CollectionById,
+	erc::{token_uri_key, CollectionHelpersEvents},
+};
 use crate::{SelfWeightOf, Config, weights::WeightInfo};
 
 use sp_std::vec::Vec;
 use alloc::format;
 
-struct EvmCollectionHelper<T: Config>(SubstrateRecorder<T>);
-impl<T: Config> WithRecorder<T> for EvmCollectionHelper<T> {
+struct EvmCollectionHelpers<T: Config>(SubstrateRecorder<T>);
+impl<T: Config> WithRecorder<T> for EvmCollectionHelpers<T> {
 	fn recorder(&self) -> &SubstrateRecorder<T> {
 		&self.0
 	}
@@ -41,8 +44,8 @@ impl<T: Config> WithRecorder<T> for EvmCollectionHelper<T> {
 	}
 }
 
-#[solidity_interface(name = "CollectionHelper")]
-impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelper<T> {
+#[solidity_interface(name = "CollectionHelpers", events(CollectionHelpersEvents))]
+impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelpers<T> {
 	#[weight(<SelfWeightOf<T>>::create_collection())]
 	fn create_nonfungible_collection(
 		&self,
@@ -89,9 +92,8 @@ impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelper<T> {
 			..Default::default()
 		};
 
-		let collection_id =
-			<pallet_nonfungible::Pallet<T>>::init_collection(caller.as_sub().clone(), data)
-				.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		let collection_id = <pallet_nonfungible::Pallet<T>>::init_collection(caller.clone(), data)
+			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
 		Ok(address)
@@ -107,8 +109,8 @@ impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelper<T> {
 	}
 }
 
-pub struct CollectionHelperOnMethodCall<T: Config>(PhantomData<*const T>);
-impl<T: Config + pallet_nonfungible::Config> OnMethodCall<T> for CollectionHelperOnMethodCall<T> {
+pub struct CollectionHelpersOnMethodCall<T: Config>(PhantomData<*const T>);
+impl<T: Config + pallet_nonfungible::Config> OnMethodCall<T> for CollectionHelpersOnMethodCall<T> {
 	fn is_reserved(contract: &sp_core::H160) -> bool {
 		contract == &T::ContractAddress::get()
 	}
@@ -128,18 +130,18 @@ impl<T: Config + pallet_nonfungible::Config> OnMethodCall<T> for CollectionHelpe
 			return None;
 		}
 
-		let helpers = EvmCollectionHelper::<T>(SubstrateRecorder::<T>::new(gas_left));
+		let helpers = EvmCollectionHelpers::<T>(SubstrateRecorder::<T>::new(gas_left));
 		pallet_evm_coder_substrate::call(*source, helpers, value, input)
 	}
 
 	fn get_code(contract: &sp_core::H160) -> Option<Vec<u8>> {
 		(contract == &T::ContractAddress::get())
-			.then(|| include_bytes!("./stubs/CollectionHelper.raw").to_vec())
+			.then(|| include_bytes!("./stubs/CollectionHelpers.raw").to_vec())
 	}
 }
 
-generate_stubgen!(collection_helper_impl, CollectionHelperCall<()>, true);
-generate_stubgen!(collection_helper_iface, CollectionHelperCall<()>, false);
+generate_stubgen!(collection_helper_impl, CollectionHelpersCall<()>, true);
+generate_stubgen!(collection_helper_iface, CollectionHelpersCall<()>, false);
 
 fn error_feild_too_long(feild: &str, bound: u32) -> Error {
 	Error::Revert(format!("{} is too long. Max length is {}.", feild, bound))

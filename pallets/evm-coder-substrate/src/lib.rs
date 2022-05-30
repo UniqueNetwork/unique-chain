@@ -66,9 +66,7 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
-		type GasWeightMapping: pallet_evm::GasWeightMapping;
-	}
+	pub trait Config: frame_system::Config + pallet_evm::Config {}
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);

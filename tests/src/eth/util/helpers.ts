@@ -29,7 +29,7 @@ import config from '../../config';
 import privateKey from '../../substrate/privateKey';
 import contractHelpersAbi from './contractHelpersAbi.json';
 import nonFungibleAbi from '../nonFungibleAbi.json';
-import collectionHelperAbi from '../collectionHelperAbi.json';
+import collectionHelpersAbi from '../collectionHelpersAbi.json';
 import getBalance from '../../substrate/get-balance';
 import waitNewBlocks from '../../substrate/wait-new-blocks';
 
@@ -69,7 +69,7 @@ function encodeIntBE(v: number): number[] {
 }
 
 export async function getCollectionAddressFromResult(api: ApiPromise, result: any) {
-  const collectionIdAddress = normalizeAddress(result.events[0].raw.topics[2]);
+  const collectionIdAddress = normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
   const collectionId = collectionIdFromAddress(collectionIdAddress);  
   const collection = (await getDetailedCollectionInfo(api, collectionId))!;
   return {collectionIdAddress, collectionId, collection};
@@ -297,8 +297,8 @@ export function contractHelpers(web3: Web3, caller: string) {
  * @param caller - eth address
  * @returns 
  */
-export function evmCollectionHelper(web3: Web3, caller: string) {
-  return new web3.eth.Contract(collectionHelperAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, ...GAS_ARGS});
+export function evmCollectionHelpers(web3: Web3, caller: string) {
+  return new web3.eth.Contract(collectionHelpersAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, ...GAS_ARGS});
 }
 
 /** 

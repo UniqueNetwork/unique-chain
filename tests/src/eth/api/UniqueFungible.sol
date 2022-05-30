@@ -65,7 +65,7 @@ interface ERC20 is Dummy, ERC165, ERC20Events {
 		returns (uint256);
 }
 
-// Selector: f5652829
+// Selector: c894dc35
 interface Collection is Dummy, ERC165 {
 	// Selector: setCollectionProperty(string,bytes) 2f073f66
 	function setCollectionProperty(string memory key, bytes memory value)
@@ -88,8 +88,11 @@ interface Collection is Dummy, ERC165 {
 	// Selector: ethConfirmSponsorship() a8580d1a
 	function ethConfirmSponsorship() external;
 
-	// Selector: setLimit(string,string) bf4d2014
-	function setLimit(string memory limit, string memory value) external;
+	// Selector: setLimit(string,uint32) 68db30ca
+	function setLimit(string memory limit, uint32 value) external;
+
+	// Selector: setLimit(string,bool) ea67e4c2
+	function setLimit(string memory limit, bool value) external;
 
 	// Selector: contractAddress() f6b4dfb4
 	function contractAddress() external view returns (address);

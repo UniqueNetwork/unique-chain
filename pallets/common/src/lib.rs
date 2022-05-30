@@ -21,12 +21,12 @@ extern crate alloc;
 use core::ops::{Deref, DerefMut};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_std::vec::Vec;
-use pallet_evm::account::CrossAccountId;
+use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
+use evm_coder::ToLog;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Weight, PostDispatchInfo},
 	ensure,
 	traits::{Imbalance, Get, Currency, WithdrawReasons, ExistenceRequirement},
-	BoundedVec,
 	weights::Pays,
 	transactional,
 };
@@ -54,7 +54,6 @@ use up_data_structs::{
 	CreateItemExData,
 	SponsoringRateLimit,
 	budget::Budget,
-	COLLECTION_FIELD_LIMIT,
 	PhantomType,
 	Property,
 	Properties,
@@ -218,7 +217,11 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_evm_coder_substrate::Config + TypeInfo + account::Config
+		frame_system::Config
+		+ pallet_evm_coder_substrate::Config
+		+ pallet_evm::Config
+		+ TypeInfo
+		+ account::Config
 	{
 		type WeightInfo: WeightInfo;
 		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
@@ -232,6 +235,7 @@ pub mod pallet {
 		type CollectionDispatch: CollectionDispatch<Self>;
 
 		type TreasuryAccountId: Get<Self::AccountId>;
+		type ContractAddress: Get<H160>;
 
 		type EvmTokenAddressMapping: TokenAddressMapping<H160>;
 		type CrossTokenAddressMapping: TokenAddressMapping<Self::CrossAccountId>;
@@ -722,7 +726,7 @@ macro_rules! limit_default_clone {
 
 impl<T: Config> Pallet<T> {
 	pub fn init_collection(
-		owner: T::AccountId,
+		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		{
@@ -748,7 +752,7 @@ impl<T: Config> Pallet<T> {
 		// =========
 
 		let collection = Collection {
-			owner: owner.clone(),
+			owner: owner.as_sub().clone(),
 			name: data.name,
 			mode: data.mode.clone(),
 			description: data.description,
@@ -794,7 +798,7 @@ impl<T: Config> Pallet<T> {
 				),
 			);
 			<T as Config>::Currency::settle(
-				&owner,
+				&owner.as_sub(),
 				imbalance,
 				WithdrawReasons::TRANSFER,
 				ExistenceRequirement::KeepAlive,
@@ -803,7 +807,18 @@ impl<T: Config> Pallet<T> {
 		}
 
 		<CreatedCollectionCount<T>>::put(created_count);
-		<Pallet<T>>::deposit_event(Event::CollectionCreated(id, data.mode.id(), owner.clone()));
+		<Pallet<T>>::deposit_event(Event::CollectionCreated(
+			id,
+			data.mode.id(),
+			owner.as_sub().clone(),
+		));
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionCreated {
+				owner: *owner.as_eth(),
+				collection_id: eth::collection_id_to_address(id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
 		<CollectionById<T>>::insert(id, collection);
 		Ok(id)
 	}

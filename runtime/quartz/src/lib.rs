@@ -285,7 +285,7 @@ impl pallet_evm::Config for Runtime {
 		pallet_evm_migration::OnMethodCall<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
 		CollectionDispatchT<Self>,
-		pallet_unique::eth::CollectionHelperOnMethodCall<Self>,
+		pallet_unique::eth::CollectionHelpersOnMethodCall<Self>,
 	);
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
@@ -800,9 +800,7 @@ pub type XcmRouter = (
 	XcmpQueue,
 );
 
-impl pallet_evm_coder_substrate::Config for Runtime {
-	type GasWeightMapping = FixedGasWeightMapping;
-}
+impl pallet_evm_coder_substrate::Config for Runtime {}
 
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
@@ -864,6 +862,7 @@ impl pallet_common::Config for Runtime {
 
 	type EvmTokenAddressMapping = EvmTokenAddressMapping;
 	type CrossTokenAddressMapping = CrossTokenAddressMapping<Self::AccountId>;
+	type ContractAddress = EvmCollectionHelpersAddress;
 }
 
 impl pallet_structure::Config for Runtime {
@@ -900,7 +899,6 @@ impl pallet_unique::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
 	type CommonWeightInfo = CommonWeights<Self>;
-	type ContractAddress = EvmCollectionHelperAddress;
 }
 
 parameter_types! {
@@ -963,7 +961,7 @@ parameter_types! {
 	]);
 		
 	// 0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f
-	pub const EvmCollectionHelperAddress: H160 = H160([
+	pub const EvmCollectionHelpersAddress: H160 = H160([
 		0x6c, 0x4e, 0x9f, 0xe1, 0xae, 0x37, 0xa4, 0x1e, 0x93, 0xce, 0xe4, 0x29, 0xe8, 0xe1, 0x88, 0x1a, 0xbd, 0xcb, 0xb5, 0x4f,
 	]);
 }

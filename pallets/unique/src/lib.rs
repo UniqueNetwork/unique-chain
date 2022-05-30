@@ -30,10 +30,9 @@ use frame_support::{
 	ensure,
 	weights::{Weight},
 	transactional,
-	pallet_prelude::{DispatchResultWithPostInfo, ConstU32, Get},
+	pallet_prelude::{DispatchResultWithPostInfo, ConstU32},
 	BoundedVec,
 };
-use sp_core::H160;
 use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::{sp_std::prelude::Vec};
@@ -75,7 +74,6 @@ pub trait Config: system::Config + pallet_common::Config + Sized + TypeInfo {
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 	type CommonWeightInfo: CommonWeightInfo<Self::CrossAccountId>;
-	type ContractAddress: Get<H160>;
 }
 
 decl_event! {
@@ -287,7 +285,7 @@ decl_module! {
 
 			// =========
 
-			T::CollectionDispatch::create(sender, data)?;
+			T::CollectionDispatch::create(T::CrossAccountId::from_sub(sender), data)?;
 
 			Ok(())
 		}
