@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use evm_coder::{
-	solidity_interface,
+	solidity_interface, solidity,
 	types::*,
 	execution::{Result, Error},
 };
@@ -88,40 +88,64 @@ impl<T: Config> CollectionHandle<T> {
 		Ok(())
 	}
 
-	fn set_limit(&mut self, caller: caller, limit: string, value: string) -> Result<void> {
+	#[solidity(rename_selector = "setLimit")]
+	fn set_int_limit(&mut self, caller: caller, limit: string, value: uint32) -> Result<void> {
 		check_is_owner(caller, self)?;
 		let mut limits = self.limits.clone();
 
 		match limit.as_str() {
 			"accountTokenOwnershipLimit" => {
-				limits.account_token_ownership_limit = parse_int(value)?;
+				limits.account_token_ownership_limit = Some(value);
 			}
 			"sponsoredDataSize" => {
-				limits.sponsored_data_size = parse_int(value)?;
+				limits.sponsored_data_size = Some(value);
 			}
 			"sponsoredDataRateLimit" => {
-				limits.sponsored_data_rate_limit =
-					Some(SponsoringRateLimit::Blocks(parse_int(value)?.unwrap()));
+				limits.sponsored_data_rate_limit = Some(SponsoringRateLimit::Blocks(value));
 			}
 			"tokenLimit" => {
-				limits.token_limit = parse_int(value)?;
+				limits.token_limit = Some(value);
 			}
 			"sponsorTransferTimeout" => {
-				limits.sponsor_transfer_timeout = parse_int(value)?;
+				limits.sponsor_transfer_timeout = Some(value);
 			}
 			"sponsorApproveTimeout" => {
-				limits.sponsor_approve_timeout = parse_int(value)?;
+				limits.sponsor_approve_timeout = Some(value);
 			}
+			_ => {
+				return Err(Error::Revert(format!(
+					"Unknown integer limit \"{}\"",
+					limit
+				)))
+			}
+		}
+		self.limits = <Pallet<T>>::clamp_limits(self.mode.clone(), &self.limits, limits)
+			.map_err(dispatch_to_evm::<T>)?;
+		save(self);
+		Ok(())
+	}
+
+	#[solidity(rename_selector = "setLimit")]
+	fn set_bool_limit(&mut self, caller: caller, limit: string, value: bool) -> Result<void> {
+		check_is_owner(caller, self)?;
+		let mut limits = self.limits.clone();
+
+		match limit.as_str() {
 			"ownerCanTransfer" => {
-				limits.owner_can_transfer = parse_bool(value)?;
+				limits.owner_can_transfer = Some(value);
 			}
 			"ownerCanDestroy" => {
-				limits.owner_can_destroy = parse_bool(value)?;
+				limits.owner_can_destroy = Some(value);
 			}
 			"transfersEnabled" => {
-				limits.transfers_enabled = parse_bool(value)?;
+				limits.transfers_enabled = Some(value);
 			}
-			_ => return Err(Error::Revert(format!("Unknown limit \"{}\"", limit))),
+			_ => {
+				return Err(Error::Revert(format!(
+					"Unknown boolean limit \"{}\"",
+					limit
+				)))
+			}
 		}
 		self.limits = <Pallet<T>>::clamp_limits(self.mode.clone(), &self.limits, limits)
 			.map_err(dispatch_to_evm::<T>)?;
@@ -146,16 +170,9 @@ fn save<T: Config>(collection: &CollectionHandle<T>) {
 	<crate::CollectionById<T>>::insert(collection.id, collection.collection.clone());
 }
 
-fn parse_int(value: string) -> Result<Option<u32>> {
-	value
-		.parse::<u32>()
-		.map_err(|e| Error::Revert(format!("Int value \"{}\" parse error: {}", value, e)))
-		.map(|value| Some(value))
-}
-
-fn parse_bool(value: string) -> Result<Option<bool>> {
-	value
-		.parse::<bool>()
-		.map_err(|e| Error::Revert(format!("Bool value \"{}\" parse error: {}", value, e)))
-		.map(|value| Some(value))
+pub fn token_uri_key() -> up_data_structs::PropertyKey {
+	b"tokenURI"
+		.to_vec()
+		.try_into()
+		.expect("length < limit; qed")
 }

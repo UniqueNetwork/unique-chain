@@ -917,6 +917,7 @@ impl pallet_unique::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
 	type CommonWeightInfo = CommonWeights<Self>;
+	type ContractAddress = EvmCollectionHelperAddress;
 }
 
 parameter_types! {
@@ -987,10 +988,6 @@ parameter_types! {
 impl pallet_evm_contract_helpers::Config for Runtime {
 	type ContractAddress = HelpersContractAddress;
 	type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
-}
-
-impl pallet_unique::eth::Config for Runtime {
-	type ContractAddress = EvmCollectionHelperAddress;
 }
 
 construct_runtime!(

@@ -15,29 +15,20 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use core::marker::PhantomData;
-use evm_coder::{execution::*, generate_stubgen, solidity_interface, types::*, ToLog};
+use evm_coder::{execution::*, generate_stubgen, solidity_interface, weight, types::*};
 use ethereum as _;
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use pallet_evm::{OnMethodCall, PrecompileResult, account::CrossAccountId, Pallet as PalletEvm};
+use pallet_evm::{OnMethodCall, PrecompileResult, account::CrossAccountId};
 use up_data_structs::{
 	CreateCollectionData, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
 	MAX_COLLECTION_NAME_LENGTH,
 };
 use frame_support::traits::Get;
-use sp_core::H160;
-use pallet_common::CollectionById;
+use pallet_common::{CollectionById, erc::token_uri_key};
+use crate::{SelfWeightOf, Config, weights::WeightInfo};
 
 use sp_std::vec::Vec;
 use alloc::format;
-
-pub trait Config:
-	frame_system::Config
-	+ pallet_evm_coder_substrate::Config
-	+ pallet_evm::account::Config
-	+ pallet_nonfungible::Config
-{
-	type ContractAddress: Get<H160>;
-}
 
 struct EvmCollectionHelper<T: Config>(SubstrateRecorder<T>);
 impl<T: Config> WithRecorder<T> for EvmCollectionHelper<T> {
@@ -51,8 +42,9 @@ impl<T: Config> WithRecorder<T> for EvmCollectionHelper<T> {
 }
 
 #[solidity_interface(name = "CollectionHelper")]
-impl<T: Config> EvmCollectionHelper<T> {
-	fn create_721_collection(
+impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelper<T> {
+	#[weight(<SelfWeightOf<T>>::create_collection())]
+	fn create_nonfungible_collection(
 		&self,
 		caller: caller,
 		name: string,
@@ -77,7 +69,7 @@ impl<T: Config> EvmCollectionHelper<T> {
 			.try_into()
 			.map_err(|_| error_feild_too_long(stringify!(token_prefix), MAX_TOKEN_PREFIX_LENGTH))?;
 
-		let key = pallet_common::eth::KEY_TOKEN_URI.clone();
+		let key = token_uri_key();
 		let permission = up_data_structs::PropertyPermission {
 			mutable: true,
 			collection_admin: true,
@@ -102,13 +94,6 @@ impl<T: Config> EvmCollectionHelper<T> {
 				.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
-		<PalletEvm<T>>::deposit_log(
-			EthCollectionEvent::CollectionCreated {
-				owner: *caller.as_eth(),
-				collection_id: address,
-			}
-			.to_log(address),
-		);
 		Ok(address)
 	}
 
@@ -122,18 +107,8 @@ impl<T: Config> EvmCollectionHelper<T> {
 	}
 }
 
-#[derive(ToLog)]
-pub enum EthCollectionEvent {
-	CollectionCreated {
-		#[indexed]
-		owner: address,
-		#[indexed]
-		collection_id: address,
-	},
-}
-
 pub struct CollectionHelperOnMethodCall<T: Config>(PhantomData<*const T>);
-impl<T: Config> OnMethodCall<T> for CollectionHelperOnMethodCall<T> {
+impl<T: Config + pallet_nonfungible::Config> OnMethodCall<T> for CollectionHelperOnMethodCall<T> {
 	fn is_reserved(contract: &sp_core::H160) -> bool {
 		contract == &T::ContractAddress::get()
 	}

@@ -16,7 +16,7 @@
 
 #![allow(clippy::from_over_into)]
 
-use sp_core::{H256, U256};
+use sp_core::{H160, H256, U256};
 use frame_support::{
 	parameter_types,
 	traits::{Everything, ConstU32, ConstU64},
@@ -245,10 +245,18 @@ impl pallet_nonfungible::Config for Test {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	// 0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f
+	pub const EvmCollectionHelperAddress: H160 = H160([
+		0x6c, 0x4e, 0x9f, 0xe1, 0xae, 0x37, 0xa4, 0x1e, 0x93, 0xce, 0xe4, 0x29, 0xe8, 0xe1, 0x88, 0x1a, 0xbd, 0xcb, 0xb5, 0x4f,
+	]);
+}
+
 impl pallet_unique::Config for Test {
 	type Event = ();
 	type WeightInfo = ();
 	type CommonWeightInfo = CommonWeights<Self>;
+	type ContractAddress = EvmCollectionHelperAddress;
 }
 
 // Build genesis storage according to the mock runtime.

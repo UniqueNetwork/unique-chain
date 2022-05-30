@@ -22,14 +22,14 @@ use core::{
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
 use frame_support::BoundedVec;
 use up_data_structs::{
-	TokenId, SchemaVersion, PropertyPermission, PropertyKeyPermission, Property, CollectionId,
-	PropertyKey, CollectionPropertiesVec,
+	TokenId, PropertyPermission, PropertyKeyPermission, Property, CollectionId, PropertyKey,
+	CollectionPropertiesVec,
 };
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_core::{H160, U256};
 use sp_std::vec::Vec;
 use pallet_common::{
-	erc::{CommonEvmHandler, PrecompileResult, CollectionCall},
+	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, token_uri_key},
 	CollectionHandle, CollectionPropertyPermissions,
 };
 use pallet_evm::account::CrossAccountId;
@@ -161,7 +161,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// Returns token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
-		let key = pallet_common::eth::KEY_TOKEN_URI.clone();
+		let key = token_uri_key();
 		if !has_token_permission::<T>(self.id, &key) {
 			return Err("No tokenURI permission".into());
 		}
@@ -362,7 +362,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_id: uint256,
 		token_uri: string,
 	) -> Result<bool> {
-		let key = pallet_common::eth::KEY_TOKEN_URI.clone();
+		let key = token_uri_key();
 		let permission = get_token_permission::<T>(self.id, &key)?;
 		if !permission.collection_admin {
 			return Err("Operation is not allowed".into());
@@ -524,6 +524,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		to: address,
 		tokens: Vec<(uint256, string)>,
 	) -> Result<bool> {
+		let key = token_uri_key();
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let mut expected_index = <TokensMinted<T>>::get(self.id)
@@ -541,8 +542,19 @@ impl<T: Config> NonfungibleHandle<T> {
 			}
 			expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
 
+			let mut properties = CollectionPropertiesVec::default();
+			properties
+				.try_push(Property {
+					key: key.clone(),
+					value: token_uri
+						.into_bytes()
+						.try_into()
+						.map_err(|_| "token uri is too long")?,
+				})
+				.map_err(|e| Error::Revert(alloc::format!("Can't add property: {:?}", e)))?;
+
 			data.push(CreateItemData::<T> {
-				properties: BoundedVec::default(),
+				properties,
 				owner: to.clone(),
 			});
 		}
