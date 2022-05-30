@@ -58,6 +58,7 @@ frame_support::construct_runtime!(
 		Fungible: pallet_fungible::{Pallet, Storage},
 		Refungible: pallet_refungible::{Pallet, Storage},
 		Nonfungible: pallet_nonfungible::{Pallet, Storage},
+		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 	}
 );
 

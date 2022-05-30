@@ -19,8 +19,9 @@ use crate::{Test, TestCrossAccountId, CollectionCreationPrice, Origin, Unique, n
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, CollectionId, CreateItemData, CreateFungibleData, CreateNftData,
 	CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT, TokenId,
-	MAX_TOKEN_OWNERSHIP, CreateCollectionData, CollectionField, SchemaVersion, CollectionMode,
-	AccessMode,
+	MAX_TOKEN_OWNERSHIP, CreateCollectionData, CollectionMode,
+	AccessMode, CollectionPermissions, PropertyKeyPermission, PropertyPermission,
+	Property, CollectionPropertiesVec, CollectionPropertiesPermissionsVec,
 };
 use frame_support::{assert_noop, assert_ok, assert_err};
 use sp_std::convert::TryInto;
@@ -46,8 +47,12 @@ fn add_balance(user: u64, value: u64) {
 
 fn default_nft_data() -> CreateNftData {
 	CreateNftData {
-		const_data: vec![1, 2, 3].try_into().unwrap(),
-		properties: vec![].try_into().unwrap(),
+		properties: vec![
+			Property {
+				key: b"test-prop".to_vec().try_into().unwrap(),
+				value: b"test-nft-prop".to_vec().try_into().unwrap(),
+			},
+		].try_into().unwrap(),
 	}
 }
 
@@ -72,12 +77,30 @@ fn create_test_collection_for_owner(
 	let col_name1: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 	let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 	let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
+	let token_property_permissions: CollectionPropertiesPermissionsVec = vec![
+		PropertyKeyPermission {
+			key: b"test-prop".to_vec().try_into().unwrap(),
+			permission: PropertyPermission {
+				mutable: true,
+				collection_admin: false,
+				token_owner: true,
+			},
+		},
+	].try_into().unwrap();
+	let properties: CollectionPropertiesVec = vec![
+		Property {
+			key: b"test-collection-prop".to_vec().try_into().unwrap(),
+			value: b"test-collection-value".to_vec().try_into().unwrap(),
+		}
+	].try_into().unwrap();
 
 	let data: CreateCollectionData<u64> = CreateCollectionData {
 		name: col_name1.try_into().unwrap(),
 		description: col_desc1.try_into().unwrap(),
 		token_prefix: token_prefix1.try_into().unwrap(),
 		mode: mode.clone(),
+		token_property_permissions: token_property_permissions.clone(),
+		properties: properties.clone(),
 		..Default::default()
 	};
 
@@ -113,7 +136,45 @@ fn create_test_collection_for_owner(
 			.token_prefix,
 		saved_prefix
 	);
+	assert_eq!(
+		get_collection_property_permissions(id).as_slice(),
+		token_property_permissions.as_slice()
+	);
+	assert_eq!(
+		get_collection_properties(id).as_slice(),
+		properties.as_slice()
+	);
 	id
+}
+
+fn get_collection_property_permissions(collection_id: CollectionId) -> Vec<PropertyKeyPermission> {
+	<pallet_common::Pallet<Test>>::property_permissions(collection_id)
+		.into_iter()
+		.map(|(key, permission)| PropertyKeyPermission {
+			key,
+			permission,
+		})
+		.collect()
+}
+
+fn get_collection_properties(collection_id: CollectionId) -> Vec<Property> {
+	<pallet_common::Pallet<Test>>::collection_properties(collection_id)
+		.into_iter()
+		.map(|(key, value)| Property {
+			key,
+			value,
+		})
+		.collect()
+}
+
+fn get_token_properties(collection_id: CollectionId, token_id: TokenId) -> Vec<Property> {
+	<pallet_nonfungible::Pallet<Test>>::token_properties((collection_id, token_id))
+		.into_iter()
+		.map(|(key, value)| Property {
+			key,
+			value,
+		})
+		.collect()
 }
 
 fn create_test_collection(mode: &CollectionMode, id: CollectionId) -> CollectionId {
@@ -136,26 +197,6 @@ fn account(sub: u64) -> TestCrossAccountId {
 
 // Use cases tests region
 // #region
-
-#[test]
-fn set_version_schema() {
-	new_test_ext().execute_with(|| {
-		let origin1 = Origin::signed(1);
-		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-
-		assert_ok!(Unique::set_schema_version(
-			origin1,
-			collection_id,
-			SchemaVersion::Unique
-		));
-		assert_eq!(
-			<pallet_common::CollectionById<Test>>::get(collection_id)
-				.unwrap()
-				.schema_version,
-			SchemaVersion::Unique
-		);
-	});
-}
 
 #[test]
 fn check_not_sufficient_founds() {
@@ -212,8 +253,10 @@ fn create_nft_item() {
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.clone().into());
 
-		let item = <pallet_nonfungible::TokenData<Test>>::get((collection_id, 1)).unwrap();
-		assert_eq!(item.const_data, data.const_data.into_inner());
+		assert_eq!(
+			get_token_properties(collection_id, TokenId(1)).as_slice(),
+			data.properties.as_slice(),
+		);
 	});
 }
 
@@ -239,12 +282,10 @@ fn create_nft_multiple_items() {
 				.collect()
 		));
 		for (index, data) in items_data.into_iter().enumerate() {
-			let item = <pallet_nonfungible::TokenData<Test>>::get((
-				CollectionId(1),
-				TokenId((index + 1) as u32),
-			))
-			.unwrap();
-			assert_eq!(item.const_data.to_vec(), data.const_data.into_inner());
+			assert_eq!(
+				get_token_properties(CollectionId(1), TokenId(index as u32 + 1)).as_slice(),
+				data.properties.as_slice()
+			);
 		}
 	});
 }
@@ -701,12 +742,6 @@ fn nft_approve_and_transfer_from_allow_list() {
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.clone().into());
 		assert_eq!(
-			&<pallet_nonfungible::TokenData<Test>>::get((collection_id, TokenId(1)))
-				.unwrap()
-				.const_data,
-			&data.const_data.into_inner()
-		);
-		assert_eq!(
 			<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))),
 			1
 		);
@@ -716,15 +751,14 @@ fn nft_approve_and_transfer_from_allow_list() {
 		);
 
 		// Allow allow-list users to mint and add accounts 1, 2, and 3 to allow-list
-		assert_ok!(Unique::set_mint_permission(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			CollectionId(1),
-			true
-		));
-		assert_ok!(Unique::set_public_access_mode(
-			origin1.clone(),
-			CollectionId(1),
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: Some(true),
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
@@ -796,15 +830,14 @@ fn refungible_approve_and_transfer_from() {
 		);
 
 		// Allow public minting, enable allow-list and add accounts 1, 2, 3 to allow-list
-		assert_ok!(Unique::set_mint_permission(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			CollectionId(1),
-			true
-		));
-		assert_ok!(Unique::set_public_access_mode(
-			origin1.clone(),
-			CollectionId(1),
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: Some(true),
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
@@ -896,15 +929,14 @@ fn fungible_approve_and_transfer_from() {
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
-		assert_ok!(Unique::set_mint_permission(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			CollectionId(1),
-			true
-		));
-		assert_ok!(Unique::set_public_access_mode(
-			origin1.clone(),
-			CollectionId(1),
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: Some(true),
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
@@ -1146,15 +1178,14 @@ fn burn_refungible_item() {
 		let collection_id = create_test_collection(&CollectionMode::ReFungible, CollectionId(1));
 		let origin1 = Origin::signed(1);
 
-		assert_ok!(Unique::set_mint_permission(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			true
-		));
-		assert_ok!(Unique::set_public_access_mode(
-			origin1.clone(),
-			collection_id,
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: Some(true),
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
@@ -1392,15 +1423,14 @@ fn transfer_from() {
 			account(2)
 		);
 
-		assert_ok!(Unique::set_mint_permission(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			CollectionId(1),
-			true
-		));
-		assert_ok!(Unique::set_public_access_mode(
-			origin1.clone(),
-			CollectionId(1),
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: Some(true),
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
@@ -1722,10 +1752,14 @@ fn allow_list_test_1() {
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: None,
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
@@ -1750,10 +1784,14 @@ fn allow_list_test_2() {
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: None,
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
@@ -1811,10 +1849,14 @@ fn allow_list_test_3() {
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: None,
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
@@ -1840,10 +1882,14 @@ fn allow_list_test_4() {
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: None,
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
@@ -1901,10 +1947,14 @@ fn allow_list_test_5() {
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: None,
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_noop!(
 			Unique::burn_item(origin1.clone(), CollectionId(1), TokenId(1), 1).map_err(|e| e.error),
@@ -1924,10 +1974,14 @@ fn allow_list_test_6() {
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: None,
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 
 		// do approve
@@ -1951,10 +2005,14 @@ fn allow_list_test_7() {
 
 		let origin1 = Origin::signed(1);
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: None,
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
@@ -1989,10 +2047,14 @@ fn allow_list_test_8() {
 		let origin1 = Origin::signed(1);
 
 		// Toggle Allow List mode and add accounts 1 and 2
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: None,
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
@@ -2037,12 +2099,15 @@ fn allow_list_test_9() {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 		let origin1 = Origin::signed(1);
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: Some(false),
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
-		assert_ok!(Unique::set_mint_permission(origin1, collection_id, false));
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
@@ -2058,15 +2123,14 @@ fn allow_list_test_10() {
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
-		));
-		assert_ok!(Unique::set_mint_permission(
-			origin1.clone(),
-			collection_id,
-			false
+			CollectionPermissions {
+				mint_mode: Some(false),
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 
 		assert_ok!(Unique::add_collection_admin(
@@ -2093,15 +2157,14 @@ fn allow_list_test_11() {
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
-		));
-		assert_ok!(Unique::set_mint_permission(
-			origin1.clone(),
-			collection_id,
-			false
+			CollectionPermissions {
+				mint_mode: Some(false),
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_ok!(Unique::add_to_allow_list(
 			origin1,
@@ -2131,12 +2194,15 @@ fn allow_list_test_12() {
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: Some(false),
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
-		assert_ok!(Unique::set_mint_permission(origin1, collection_id, false));
 
 		assert_noop!(
 			Unique::create_item(
@@ -2159,12 +2225,15 @@ fn allow_list_test_13() {
 
 		let origin1 = Origin::signed(1);
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: Some(true),
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
-		assert_ok!(Unique::set_mint_permission(origin1, collection_id, true));
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
@@ -2180,15 +2249,14 @@ fn allow_list_test_14() {
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
-		));
-		assert_ok!(Unique::set_mint_permission(
-			origin1.clone(),
-			collection_id,
-			true
+			CollectionPermissions {
+				mint_mode: Some(true),
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 
 		assert_ok!(Unique::add_collection_admin(
@@ -2215,12 +2283,15 @@ fn allow_list_test_15() {
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: Some(true),
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
-		assert_ok!(Unique::set_mint_permission(origin1, collection_id, true));
 
 		assert_noop!(
 			Unique::create_item(
@@ -2244,15 +2315,14 @@ fn allow_list_test_16() {
 		let origin1 = Origin::signed(1);
 		let origin2 = Origin::signed(2);
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
-		));
-		assert_ok!(Unique::set_mint_permission(
-			origin1.clone(),
-			collection_id,
-			true
+			CollectionPermissions {
+				mint_mode: Some(true),
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_ok!(Unique::add_to_allow_list(
 			origin1,
@@ -2528,20 +2598,19 @@ fn collection_sponsoring() {
 		)
 		.is_err());
 
-		assert_ok!(Unique::set_public_access_mode(
+		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
 			collection_id,
-			AccessMode::AllowList
+			CollectionPermissions {
+				mint_mode: Some(true),
+				access: Some(AccessMode::AllowList),
+				nesting: None,
+			}
 		));
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
 			account2.clone()
-		));
-		assert_ok!(Unique::set_mint_permission(
-			origin1.clone(),
-			collection_id,
-			true
 		));
 
 		assert_ok!(Unique::create_item(
