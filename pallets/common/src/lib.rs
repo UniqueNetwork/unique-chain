@@ -148,7 +148,8 @@ impl<T: Config> CollectionHandle<T> {
 					.saturating_mul(writes),
 			))
 	}
-	pub fn save(self) -> Result<(), DispatchError> {
+
+	pub fn save(self) -> DispatchResult {
 		<CollectionById<T>>::insert(self.id, self.collection);
 		Ok(())
 	}

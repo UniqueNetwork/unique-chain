@@ -84,16 +84,7 @@
     "inputs": [
       { "internalType": "address", "name": "newAdmin", "type": "address" }
     ],
-    "name": "addCollectionAdmin",
-    "outputs": [],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "user", "type": "address" }
-    ],
-    "name": "addToCollectionAllowList",
+    "name": "addAdmin",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"
@@ -293,16 +284,7 @@
     "inputs": [
       { "internalType": "address", "name": "admin", "type": "address" }
     ],
-    "name": "removeCollectionAdmin",
-    "outputs": [],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "user", "type": "address" }
-    ],
-    "name": "removeFromCollectionAllowList",
+    "name": "removeAdmin",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"
@@ -410,6 +392,27 @@
       { "internalType": "address", "name": "sponsor", "type": "address" }
     ],
     "name": "setCollectionSponsor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "bool", "name": "enable", "type": "bool" },
+      {
+        "internalType": "address[]",
+        "name": "collections",
+        "type": "address[]"
+      }
+    ],
+    "name": "setNesting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "bool", "name": "enable", "type": "bool" }],
+    "name": "setNesting",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
