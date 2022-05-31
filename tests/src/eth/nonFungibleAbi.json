@@ -82,6 +82,15 @@
   },
   {
     "inputs": [
+      { "internalType": "address", "name": "newAdmin", "type": "address" }
+    ],
+    "name": "addAdmin",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "address", "name": "approved", "type": "address" },
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
@@ -282,6 +291,15 @@
   },
   {
     "inputs": [
+      { "internalType": "address", "name": "admin", "type": "address" }
+    ],
+    "name": "removeAdmin",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "address", "name": "from", "type": "address" },
       { "internalType": "address", "name": "to", "type": "address" },
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
@@ -339,6 +357,27 @@
       { "internalType": "bool", "name": "value", "type": "bool" }
     ],
     "name": "setLimit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "bool", "name": "enable", "type": "bool" },
+      {
+        "internalType": "address[]",
+        "name": "collections",
+        "type": "address[]"
+      }
+    ],
+    "name": "setNesting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "bool", "name": "enable", "type": "bool" }],
+    "name": "setNesting",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

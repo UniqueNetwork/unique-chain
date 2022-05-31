@@ -42,6 +42,51 @@ interface ERC721MintableEvents {
 	event MintingFinished();
 }
 
+// Selector: 3a54513b
+interface Collection is Dummy, ERC165 {
+	// Selector: setCollectionProperty(string,bytes) 2f073f66
+	function setCollectionProperty(string memory key, bytes memory value)
+		external;
+
+	// Selector: deleteCollectionProperty(string) 7b7debce
+	function deleteCollectionProperty(string memory key) external;
+
+	// Throws error if key not found
+	//
+	// Selector: collectionProperty(string) cf24fd6d
+	function collectionProperty(string memory key)
+		external
+		view
+		returns (bytes memory);
+
+	// Selector: ethSetSponsor(address) 8f9af356
+	function ethSetSponsor(address sponsor) external;
+
+	// Selector: ethConfirmSponsorship() a8580d1a
+	function ethConfirmSponsorship() external;
+
+	// Selector: setLimit(string,uint32) 68db30ca
+	function setLimit(string memory limit, uint32 value) external;
+
+	// Selector: setLimit(string,bool) ea67e4c2
+	function setLimit(string memory limit, bool value) external;
+
+	// Selector: contractAddress() f6b4dfb4
+	function contractAddress() external view returns (address);
+
+	// Selector: addAdmin(address) 70480275
+	function addAdmin(address newAdmin) external view;
+
+	// Selector: removeAdmin(address) 1785f53c
+	function removeAdmin(address admin) external view;
+
+	// Selector: setNesting(bool) e8fc50dd
+	function setNesting(bool enable) external;
+
+	// Selector: setNesting(bool,address[]) 7df12a9a
+	function setNesting(bool enable, address[] memory collections) external;
+}
+
 // Selector: 41369377
 interface TokenProperties is Dummy, ERC165 {
 	// Selector: setTokenPropertyPermission(string,bool,bool,bool) 222d97fa
@@ -189,39 +234,6 @@ interface ERC721Enumerable is Dummy, ERC165 {
 
 	// Selector: totalSupply() 18160ddd
 	function totalSupply() external view returns (uint256);
-}
-
-// Selector: c894dc35
-interface Collection is Dummy, ERC165 {
-	// Selector: setCollectionProperty(string,bytes) 2f073f66
-	function setCollectionProperty(string memory key, bytes memory value)
-		external;
-
-	// Selector: deleteCollectionProperty(string) 7b7debce
-	function deleteCollectionProperty(string memory key) external;
-
-	// Throws error if key not found
-	//
-	// Selector: collectionProperty(string) cf24fd6d
-	function collectionProperty(string memory key)
-		external
-		view
-		returns (bytes memory);
-
-	// Selector: ethSetSponsor(address) 8f9af356
-	function ethSetSponsor(address sponsor) external;
-
-	// Selector: ethConfirmSponsorship() a8580d1a
-	function ethConfirmSponsorship() external;
-
-	// Selector: setLimit(string,uint32) 68db30ca
-	function setLimit(string memory limit, uint32 value) external;
-
-	// Selector: setLimit(string,bool) ea67e4c2
-	function setLimit(string memory limit, bool value) external;
-
-	// Selector: contractAddress() f6b4dfb4
-	function contractAddress() external view returns (address);
 }
 
 // Selector: d74d154f
