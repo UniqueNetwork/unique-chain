@@ -41,7 +41,7 @@ function defaultApiOptions(): ApiOptions {
     },
     rpc: {
       unique: defs.unique.rpc,
-      // TODO free RMRK! rmrk: defs.rmrk.rpc,
+      rmrk: defs.rmrk.rpc,
       eth: {
         feeHistory: {
           description: 'Dummy',

@@ -126,8 +126,6 @@ macro_rules! impl_common_runtime_apis {
                 }
             }
 
-            /*
-            TODO free RMRK!
             impl rmrk_rpc::RmrkApi<
                 Block,
                 AccountId,
@@ -461,7 +459,7 @@ macro_rules! impl_common_runtime_apis {
 
                     Ok(Some(theme))
                 }
-            }*/
+            }
 
             impl sp_api::Core<Block> for Runtime {
                 fn version() -> RuntimeVersion {
