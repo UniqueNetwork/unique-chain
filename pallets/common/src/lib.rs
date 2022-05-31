@@ -126,9 +126,11 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn new(id: CollectionId) -> Option<Self> {
 		Self::new_with_gas_limit(id, u64::MAX)
 	}
+
 	pub fn try_get(id: CollectionId) -> Result<Self, DispatchError> {
 		Ok(Self::new(id).ok_or(<Error<T>>::CollectionNotFound)?)
 	}
+
 	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(
@@ -137,6 +139,7 @@ impl<T: Config> CollectionHandle<T> {
 					.saturating_mul(reads),
 			))
 	}
+
 	pub fn consume_store_writes(&self, writes: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(
@@ -145,6 +148,7 @@ impl<T: Config> CollectionHandle<T> {
 					.saturating_mul(writes),
 			))
 	}
+
 	pub fn save(self) -> DispatchResult {
 		<CollectionById<T>>::insert(self.id, self.collection);
 		Ok(())
@@ -163,6 +167,7 @@ impl<T: Config> CollectionHandle<T> {
 		true
 	}
 }
+
 impl<T: Config> Deref for CollectionHandle<T> {
 	type Target = Collection<T::AccountId>;
 

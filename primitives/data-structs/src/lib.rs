@@ -454,6 +454,8 @@ impl CollectionPermissions {
 	}
 }
 
+pub type OwnerRestrictedSet = BoundedBTreeSet<CollectionId, ConstU32<16>>;
+
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen, Derivative)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 #[derivative(Debug)]
@@ -466,7 +468,7 @@ pub enum NestingRule {
 	OwnerRestricted(
 		#[cfg_attr(feature = "serde1", serde(with = "bounded::set_serde"))]
 		#[derivative(Debug(format_with = "bounded::set_debug"))]
-		BoundedBTreeSet<CollectionId, ConstU32<16>>,
+		OwnerRestrictedSet,
 	),
 	/// Used for tests
 	Permissive,

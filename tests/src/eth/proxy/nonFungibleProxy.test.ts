@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {createCollectionExpectSuccess, createItemExpectSuccess} from '../../util/helpers';
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents} from '../util/helpers';
+import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents} from '../util/helpers';
 import nonFungibleAbi from '../nonFungibleAbi.json';
 import {expect} from 'chai';
 import {submitTransactionAsync} from '../../substrate/substrate-api';
@@ -87,20 +87,19 @@ describe('NFT (Via EVM proxy): Information getting', () => {
 });
 
 describe('NFT (Via EVM proxy): Plain calls', () => {
-  //TODO: CORE-302 add eth methods
-  itWeb3.skip('Can perform mint()', async ({web3, api, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKeyWrapper('//Alice');
+  itWeb3('Can perform mint()', async ({web3, api}) => {
+    const owner = await createEthAccountWithBalance(api, web3);
+    const collectionHelper = evmCollectionHelpers(web3, owner);
+    const result = await collectionHelper.methods
+      .createNonfungibleCollection('A', 'A', 'A')
+      .send();
+    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const caller = await createEthAccountWithBalance(api, web3);
     const receiver = createEthAccount(web3);
-
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS}));
-
-    const changeAdminTx = api.tx.unique.addCollectionAdmin(collection, {Ethereum: contract.options.address});
-    await submitTransactionAsync(alice, changeAdminTx);
+    const collectionEvmOwned = evmCollection(web3, owner, collectionIdAddress);
+    const collectionEvm = evmCollection(web3, caller, collectionIdAddress);
+    const contract = await proxyWrap(api, web3, collectionEvm);
+    await collectionEvmOwned.methods.addAdmin(contract.options.address).send();
 
     {
       const nextTokenId = await contract.methods.nextTokenId().call();
@@ -111,10 +110,11 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
         'Test URI',
       ).send({from: caller});
       const events = normalizeEvents(result.events);
+      events[0].address = events[0].address.toLocaleLowerCase();
 
       expect(events).to.be.deep.equal([
         {
-          address,
+          address: collectionIdAddress.toLocaleLowerCase(),
           event: 'Transfer',
           args: {
             from: '0x0000000000000000000000000000000000000000',

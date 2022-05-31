@@ -30,13 +30,13 @@ import {
 describe('Create collection from EVM', () => {
   itWeb3('Create collection', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
-    const helper = evmCollectionHelpers(web3, owner);
+    const collectionHelper = evmCollectionHelpers(web3, owner);
     const collectionName = 'CollectionEVM';
     const description = 'Some description';
     const tokenPrefix = 'token prefix';
   
     const collectionCountBefore = await getCreatedCollectionCount(api);
-    const result = await helper.methods
+    const result = await collectionHelper.methods
       .createNonfungibleCollection(collectionName, description, tokenPrefix)
       .send();
     const collectionCountAfter = await getCreatedCollectionCount(api);
