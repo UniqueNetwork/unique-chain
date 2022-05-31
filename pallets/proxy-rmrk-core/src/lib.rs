@@ -54,6 +54,11 @@ pub mod pallet {
 	#[pallet::getter(fn collection_index)]
 	pub type CollectionIndex<T: Config> = StorageValue<_, RmrkCollectionId, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn collection_index_map)]
+	pub type CollectionIndexMap<T: Config> = 
+		StorageMap<_, Twox64Concat, RmrkCollectionId, CollectionId, ValueQuery>;
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
@@ -146,10 +151,14 @@ pub mod pallet {
 				return Err(<Error<T>>::NoAvailableCollectionId.into());
 			}
 
-			let collection_id = collection_id_res?;
+			let unique_collection_id = collection_id_res?;
+			let rmrk_collection_id = <CollectionIndex<T>>::get();
+
+			<CollectionIndex<T>>::mutate(|n| *n += 1);
+			<CollectionIndexMap<T>>::insert(rmrk_collection_id, unique_collection_id);
 
 			<PalletCommon<T>>::set_scoped_collection_properties(
-				collection_id,
+				unique_collection_id,
 				PropertyScope::Rmrk,
 				[
 					Self::rmrk_property(Metadata, &metadata)?,
@@ -158,11 +167,9 @@ pub mod pallet {
 				.into_iter(),
 			)?;
 
-			<CollectionIndex<T>>::mutate(|n| *n += 1);
-
 			Self::deposit_event(Event::CollectionCreated {
 				issuer: sender,
-				collection_id: collection_id.0,
+				collection_id: rmrk_collection_id,
 			});
 
 			Ok(())
@@ -177,10 +184,8 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
 
-			let unique_collection_id = collection_id.into();
-
 			let collection = Self::get_typed_nft_collection(
-				unique_collection_id,
+				Self::unique_collection_id(collection_id)?,
 				misc::CollectionType::Regular,
 			)?;
 
@@ -212,7 +217,7 @@ pub mod pallet {
 			let new_issuer = T::Lookup::lookup(new_issuer)?;
 
 			Self::change_collection_owner(
-				collection_id.into(),
+				Self::unique_collection_id(collection_id)?,
 				misc::CollectionType::Regular,
 				sender.clone(),
 				new_issuer.clone(),
@@ -237,7 +242,7 @@ pub mod pallet {
 			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
 
 			let collection = Self::get_typed_nft_collection(
-				collection_id.into(),
+				Self::unique_collection_id(collection_id)?,
 				misc::CollectionType::Regular,
 			)?;
 
@@ -277,7 +282,7 @@ pub mod pallet {
 			});
 
 			let collection = Self::get_typed_nft_collection(
-				collection_id.into(),
+				Self::unique_collection_id(collection_id)?,
 				misc::CollectionType::Regular,
 			)?;
 
@@ -321,7 +326,7 @@ pub mod pallet {
 
 			Self::destroy_nft(
 				cross_sender,
-				collection_id.into(),
+				Self::unique_collection_id(collection_id)?,
 				misc::CollectionType::Regular,
 				nft_id.into(),
 			)?;
@@ -346,7 +351,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let sender = T::CrossAccountId::from_sub(sender);
 
-			let collection_id: CollectionId = rmrk_collection_id.into();
+			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
 
 			match maybe_nft_id {
 				Some(nft_id) => {
@@ -486,6 +491,10 @@ impl<T: Config> Pallet<T> {
 
 	pub fn last_collection_idx() -> RmrkCollectionId {
 		<CollectionIndex<T>>::get()
+	}
+
+	pub fn unique_collection_id(rmrk_collection_id: RmrkCollectionId) -> Result<CollectionId, DispatchError> {
+		<CollectionIndexMap<T>>::try_get(rmrk_collection_id).map_err(|_| <Error<T>>::CollectionUnknown.into())
 	}
 
 	pub fn get_nft_collection(
