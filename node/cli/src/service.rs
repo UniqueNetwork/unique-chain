@@ -363,8 +363,7 @@ where
 			RmrkBaseInfo<AccountId>,
 			RmrkPartType,
 			RmrkTheme,
-		>
-		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>,
@@ -655,8 +654,7 @@ where
 			RmrkBaseInfo<AccountId>,
 			RmrkPartType,
 			RmrkTheme,
-		>
-		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
@@ -799,8 +797,7 @@ where
 			RmrkBaseInfo<AccountId>,
 			RmrkPartType,
 			RmrkTheme,
-		>
-		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
