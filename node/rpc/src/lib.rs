@@ -44,10 +44,10 @@ use unique_runtime_common::types::{
 	Hash, AccountId, RuntimeInstance, Index, Block, BlockNumber, Balance,
 };
 // RMRK
-/* TODO free RMRK! use up_data_structs::{
+use up_data_structs::{
 	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo,
 	RmrkPartType, RmrkTheme,
-};*/
+};
 
 /// Extra dependencies for GRANDPA
 pub struct GrandpaDeps<B> {
@@ -146,7 +146,6 @@ where
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: up_rpc::UniqueApi<Block, <R as RuntimeInstance>::CrossAccountId, AccountId>,
-	/* TODO free RMRK!
 	C::Api: rmrk_rpc::RmrkApi<
 		Block,
 		AccountId,
@@ -157,7 +156,7 @@ where
 		RmrkBaseInfo<AccountId>,
 		RmrkPartType,
 		RmrkTheme,
-	>,*/
+	>,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
 	P: TransactionPool<Block = Block> + 'static,
@@ -223,10 +222,8 @@ where
 		.into_rpc(),
 	)?;
 
-	// todo look into
-	//let unique = Unique::new(client.clone());
 	io.merge(Unique::new(client.clone()).into_rpc())?;
-	// TODO free RMRK! io.extend_with(RmrkApi::to_delegate(Unique::new(client.clone())));
+	// TODO RMRK
 
 	if let Some(filter_pool) = filter_pool {
 		io.merge(
