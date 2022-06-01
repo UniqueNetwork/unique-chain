@@ -24,6 +24,7 @@ import config from '../config';
 import promisifySubstrate from './promisify-substrate';
 import {ApiOptions, SubmittableExtrinsic, ApiTypes} from '@polkadot/api/types';
 import * as defs from '../interfaces/definitions';
+import privateKey from './privateKey';
 
 
 function defaultApiOptions(): ApiOptions {
@@ -58,7 +59,7 @@ function defaultApiOptions(): ApiOptions {
   };
 }
 
-export default async function usingApi<T = void>(action: (api: ApiPromise) => Promise<T>, settings: ApiOptions | undefined = undefined): Promise<T> {
+export default async function usingApi<T = void>(action: (api: ApiPromise, privateKeyWrapper?: (account: string) => IKeyringPair) => Promise<T>, settings: ApiOptions | undefined = undefined): Promise<T> {
   settings = settings || defaultApiOptions();
   const api: ApiPromise = new ApiPromise(settings);
   let result: T = null as unknown as T;
@@ -87,7 +88,12 @@ export default async function usingApi<T = void>(action: (api: ApiPromise) => Pr
     await promisifySubstrate(api, async () => {
       if (api) {
         await api.isReadyOrError;
-        result = await action(api);
+        const chainProperties = api.registry.getChainProperties();
+        if (chainProperties) {
+          const ss58Format = (chainProperties).toHuman().ss58Format;
+          const privateKeyWrapper = (account: string) => privateKey(account, Number(ss58Format));
+          result = await action(api, privateKeyWrapper);
+        } 
       }
     })();
   } finally {
