@@ -23,7 +23,7 @@ pub use pallet_evm::{PrecompileOutput, PrecompileResult, account::CrossAccountId
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_core::{H160, U256, H256};
 use sp_std::vec::Vec;
-use up_data_structs::{Property, SponsoringRateLimit, NestingRule, OwnerRestrictedSet};
+use up_data_structs::{Property, SponsoringRateLimit, NestingRule, OwnerRestrictedSet, AccessMode};
 use alloc::format;
 
 use crate::{Pallet, CollectionHandle, Config, CollectionProperties};
@@ -252,6 +252,42 @@ impl<T: Config> CollectionHandle<T>
 		save(self);
 		Ok(())
 	}
+
+	fn set_access(&mut self, caller: caller, mode: string) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		self.check_is_owner_or_admin(&caller)
+			.map_err(dispatch_to_evm::<T>)?;
+		self.collection.permissions.access = Some(match mode.as_str() {
+			"Normal" => AccessMode::Normal,
+			"AllowList" => AccessMode::AllowList,
+			_ => return Err("Not supported access mode".into()),
+		});
+		save(self);
+		Ok(())
+	}
+
+	fn add_to_allow_list(&self, caller: caller, user: address) -> Result<void> {
+		let caller = check_is_owner_or_admin(caller, self)?;
+		let user = T::CrossAccountId::from_eth(user);
+		<Pallet<T>>::toggle_allowlist(self, &caller, &user, true)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	fn remove_from_allow_list(&self, caller: caller, user: address) -> Result<void> {
+		let caller = check_is_owner_or_admin(caller, self)?;
+		let user = T::CrossAccountId::from_eth(user);
+		<Pallet<T>>::toggle_allowlist(self, &caller, &user, false)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	fn set_mint_mode(&mut self, caller: caller, mode: bool) -> Result<void> {
+		check_is_owner_or_admin(caller, self)?;
+		self.collection.permissions.mint_mode = Some(mode);
+		save(self);
+		Ok(())
+	}
 }
 
 fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -> Result<()> {
@@ -260,6 +296,14 @@ fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -
 		.check_is_owner(&caller)
 		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 	Ok(())
+}
+
+fn check_is_owner_or_admin<T: Config>(caller: caller, collection: &CollectionHandle<T>) -> Result<T::CrossAccountId> {
+	let caller = T::CrossAccountId::from_eth(caller);
+	collection
+		.check_is_owner_or_admin(&caller)
+		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+	Ok(caller)
 }
 
 fn save<T: Config>(collection: &CollectionHandle<T>) {
