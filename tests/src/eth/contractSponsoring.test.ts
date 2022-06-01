@@ -223,7 +223,7 @@ describe('Sponsoring EVM contracts', () => {
   });
 
   //TODO: CORE-302 add eth methods
-  itWeb3('Sponsoring collection from evm address via access list', async ({api, web3}) => {
+  itWeb3.skip('Sponsoring collection from evm address via access list', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
     const collectionHelpers = evmCollectionHelpers(web3, owner);
     let result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
@@ -293,19 +293,19 @@ describe('Sponsoring EVM contracts', () => {
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const sponsor = await createEthAccountWithBalance(api, web3);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-    result = await collectionEvm.methods.ethSetSponsor(sponsor).send();
+    result = await collectionEvm.methods.setCollectionSponsor(sponsor).send();
     let collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
     expect(collectionSub.sponsorship.isUnconfirmed).to.be.true;
     expect(collectionSub.sponsorship.asUnconfirmed.toHuman()).to.be.eq(evmToAddress(sponsor));
-    await expect(collectionEvm.methods.ethConfirmSponsorship().call()).to.be.rejectedWith('Caller is not set as sponsor');
+    await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('Caller is not set as sponsor');
     const sponsorCollection = evmCollection(web3, sponsor, collectionIdAddress);
-    await sponsorCollection.methods.ethConfirmSponsorship().send();
+    await sponsorCollection.methods.confirmCollectionSponsorship().send();
     collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
     expect(collectionSub.sponsorship.isConfirmed).to.be.true;
     expect(collectionSub.sponsorship.asConfirmed.toHuman()).to.be.eq(evmToAddress(sponsor));
 
     const user = createEthAccount(web3);
-    await collectionEvm.methods.addAdmin(user).send();
+    await collectionEvm.methods.addCollectionAdmin(user).send();
     
     const ownerBalanceBefore = await ethBalanceViaSub(api, owner);
     const sponsorBalanceBefore = await ethBalanceViaSub(api, sponsor);
