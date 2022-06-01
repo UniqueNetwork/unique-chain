@@ -14,17 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import '../interfaces/augment-api-events';
-import {WsProvider, ApiPromise} from '@polkadot/api';
-import {EventRecord} from '@polkadot/types/interfaces/system/types';
+import {ApiPromise, WsProvider} from '@polkadot/api';
+import {ApiOptions, ApiTypes, SubmittableExtrinsic} from '@polkadot/api/types';
 import {ExtrinsicStatus} from '@polkadot/types/interfaces/author/types';
+import {EventRecord} from '@polkadot/types/interfaces/system/types';
 import {IKeyringPair} from '@polkadot/types/types';
-
 import config from '../config';
-import promisifySubstrate from './promisify-substrate';
-import {ApiOptions, SubmittableExtrinsic, ApiTypes} from '@polkadot/api/types';
+import '../interfaces/augment-api-events';
 import * as defs from '../interfaces/definitions';
 import privateKey from './privateKey';
+import promisifySubstrate from './promisify-substrate';
+
 
 
 function defaultApiOptions(): ApiOptions {
@@ -88,12 +88,9 @@ export default async function usingApi<T = void>(action: (api: ApiPromise, priva
     await promisifySubstrate(api, async () => {
       if (api) {
         await api.isReadyOrError;
-        const chainProperties = api.registry.getChainProperties();
-        if (chainProperties) {
-          const ss58Format = (chainProperties).toHuman().ss58Format;
-          const privateKeyWrapper = (account: string) => privateKey(account, Number(ss58Format));
-          result = await action(api, privateKeyWrapper);
-        } 
+        const ss58Format = (api.registry.getChainProperties())!.toHuman().ss58Format;
+        const privateKeyWrapper = (account: string) => privateKey(account, Number(ss58Format));
+        result = await action(api, privateKeyWrapper);
       }
     })();
   } finally {
