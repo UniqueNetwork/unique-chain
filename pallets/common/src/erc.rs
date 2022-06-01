@@ -253,6 +253,42 @@ impl<T: Config> CollectionHandle<T>
 		save(self);
 		Ok(())
 	}
+
+	fn set_access(&mut self, caller: caller, mode: string) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		self.check_is_owner_or_admin(&caller)
+			.map_err(dispatch_to_evm::<T>)?;
+		self.collection.permissions.access = Some(match mode.as_str() {
+			"Normal" => AccessMode::Normal,
+			"AllowList" => AccessMode::AllowList,
+			_ => return Err("Not supported access mode".into()),
+		});
+		save(self);
+		Ok(())
+	}
+
+	fn add_to_allow_list(&self, caller: caller, user: address) -> Result<void> {
+		let caller = check_is_owner_or_admin(caller, self)?;
+		let user = T::CrossAccountId::from_eth(user);
+		<Pallet<T>>::toggle_allowlist(self, &caller, &user, true)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	fn remove_from_allow_list(&self, caller: caller, user: address) -> Result<void> {
+		let caller = check_is_owner_or_admin(caller, self)?;
+		let user = T::CrossAccountId::from_eth(user);
+		<Pallet<T>>::toggle_allowlist(self, &caller, &user, false)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	fn set_mint_mode(&mut self, caller: caller, mode: bool) -> Result<void> {
+		check_is_owner_or_admin(caller, self)?;
+		self.collection.permissions.mint_mode = Some(mode);
+		save(self);
+		Ok(())
+	}
 }
 
 fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -> Result<void> {
@@ -263,10 +299,7 @@ fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -
 	Ok(())
 }
 
-fn check_is_owner_or_admin<T: Config>(
-	caller: caller,
-	collection: &CollectionHandle<T>,
-) -> Result<T::CrossAccountId> {
+fn check_is_owner_or_admin<T: Config>(caller: caller, collection: &CollectionHandle<T>) -> Result<T::CrossAccountId> {
 	let caller = T::CrossAccountId::from_eth(caller);
 	collection
 		.check_is_owner_or_admin(&caller)
@@ -274,11 +307,7 @@ fn check_is_owner_or_admin<T: Config>(
 	Ok(caller)
 }
 
-fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
-	// TODO possibly delete for the lack of transaction
-	collection
-		.check_is_internal()
-		.map_err(dispatch_to_evm::<T>)?;
+fn save<T: Config>(collection: &CollectionHandle<T>) {
 	<crate::CollectionById<T>>::insert(collection.id, collection.collection.clone());
 	Ok(())
 }

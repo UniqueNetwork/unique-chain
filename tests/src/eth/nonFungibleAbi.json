@@ -91,6 +91,15 @@
   },
   {
     "inputs": [
+      { "internalType": "address", "name": "user", "type": "address" }
+    ],
+    "name": "addToAllowList",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "address", "name": "approved", "type": "address" },
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
@@ -291,6 +300,15 @@
   },
   {
     "inputs": [
+      { "internalType": "address", "name": "user", "type": "address" }
+    ],
+    "name": "removeFromAllowList",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "address", "name": "from", "type": "address" },
       { "internalType": "address", "name": "to", "type": "address" },
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
@@ -308,6 +326,13 @@
       { "internalType": "bytes", "name": "data", "type": "bytes" }
     ],
     "name": "safeTransferFromWithData",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "string", "name": "mode", "type": "string" }],
+    "name": "setAccess",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -392,6 +417,13 @@
       { "internalType": "address", "name": "sponsor", "type": "address" }
     ],
     "name": "setCollectionSponsor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "bool", "name": "mode", "type": "bool" }],
+    "name": "setMintMode",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

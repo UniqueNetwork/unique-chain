@@ -42,51 +42,6 @@ interface ERC721MintableEvents {
 	event MintingFinished();
 }
 
-// Selector: 3a54513b
-interface Collection is Dummy, ERC165 {
-	// Selector: setCollectionProperty(string,bytes) 2f073f66
-	function setCollectionProperty(string memory key, bytes memory value)
-		external;
-
-	// Selector: deleteCollectionProperty(string) 7b7debce
-	function deleteCollectionProperty(string memory key) external;
-
-	// Throws error if key not found
-	//
-	// Selector: collectionProperty(string) cf24fd6d
-	function collectionProperty(string memory key)
-		external
-		view
-		returns (bytes memory);
-
-	// Selector: ethSetSponsor(address) 8f9af356
-	function ethSetSponsor(address sponsor) external;
-
-	// Selector: ethConfirmSponsorship() a8580d1a
-	function ethConfirmSponsorship() external;
-
-	// Selector: setLimit(string,uint32) 68db30ca
-	function setLimit(string memory limit, uint32 value) external;
-
-	// Selector: setLimit(string,bool) ea67e4c2
-	function setLimit(string memory limit, bool value) external;
-
-	// Selector: contractAddress() f6b4dfb4
-	function contractAddress() external view returns (address);
-
-	// Selector: addAdmin(address) 70480275
-	function addAdmin(address newAdmin) external view;
-
-	// Selector: removeAdmin(address) 1785f53c
-	function removeAdmin(address admin) external view;
-
-	// Selector: setNesting(bool) e8fc50dd
-	function setNesting(bool enable) external;
-
-	// Selector: setNesting(bool,address[]) 7df12a9a
-	function setNesting(bool enable, address[] memory collections) external;
-}
-
 // Selector: 41369377
 interface TokenProperties is Dummy, ERC165 {
 	// Selector: setTokenPropertyPermission(string,bool,bool,bool) 222d97fa
@@ -256,6 +211,63 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
 		external
 		returns (bool);
+}
+
+// Selector: f56cd7fa
+interface Collection is Dummy, ERC165 {
+	// Selector: setCollectionProperty(string,bytes) 2f073f66
+	function setCollectionProperty(string memory key, bytes memory value)
+		external;
+
+	// Selector: deleteCollectionProperty(string) 7b7debce
+	function deleteCollectionProperty(string memory key) external;
+
+	// Throws error if key not found
+	//
+	// Selector: collectionProperty(string) cf24fd6d
+	function collectionProperty(string memory key)
+		external
+		view
+		returns (bytes memory);
+
+	// Selector: ethSetSponsor(address) 8f9af356
+	function ethSetSponsor(address sponsor) external;
+
+	// Selector: ethConfirmSponsorship() a8580d1a
+	function ethConfirmSponsorship() external;
+
+	// Selector: setLimit(string,uint32) 68db30ca
+	function setLimit(string memory limit, uint32 value) external;
+
+	// Selector: setLimit(string,bool) ea67e4c2
+	function setLimit(string memory limit, bool value) external;
+
+	// Selector: contractAddress() f6b4dfb4
+	function contractAddress() external view returns (address);
+
+	// Selector: addAdmin(address) 70480275
+	function addAdmin(address newAdmin) external view;
+
+	// Selector: removeAdmin(address) 1785f53c
+	function removeAdmin(address admin) external view;
+
+	// Selector: setNesting(bool) e8fc50dd
+	function setNesting(bool enable) external;
+
+	// Selector: setNesting(bool,address[]) 7df12a9a
+	function setNesting(bool enable, address[] memory collections) external;
+
+	// Selector: setAccess(string) 488f56aa
+	function setAccess(string memory mode) external;
+
+	// Selector: addToAllowList(address) 31f59102
+	function addToAllowList(address user) external view;
+
+	// Selector: removeFromAllowList(address) eba8dabc
+	function removeFromAllowList(address user) external view;
+
+	// Selector: setMintMode(bool) 5dea9bd5
+	function setMintMode(bool mode) external;
 }
 
 interface UniqueNFT is
