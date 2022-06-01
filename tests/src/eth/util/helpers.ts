@@ -127,14 +127,14 @@ export async function transferBalanceToEth(api: ApiPromise, source: IKeyringPair
   expect(result.success).to.be.true;
 }
 
-export async function itWeb3(name: string, cb: (apis: { web3: Web3, api: ApiPromise }) => any, opts: { only?: boolean, skip?: boolean } = {}) {
+export async function itWeb3(name: string, cb: (apis: { web3: Web3, api: ApiPromise, privateKeyWrapper?: (account: string) => IKeyringPair }) => any, opts: { only?: boolean, skip?: boolean } = {}) {
   let i: any = it;
   if (opts.only) i = i.only;
   else if (opts.skip) i = i.skip;
   i(name, async () => {
-    await usingApi(async api => {
+    await usingApi(async (api, privateKeyWrapper) => {
       await usingWeb3(async web3 => {
-        await cb({api, web3});
+        await cb({api, web3, privateKeyWrapper});
       });
     });
   });
