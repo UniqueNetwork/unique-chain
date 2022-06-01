@@ -83,7 +83,7 @@ impl<T: Config> CollectionHandle<T>
 		Ok(prop.to_vec())
 	}
 
-	fn eth_set_sponsor(&mut self, caller: caller, sponsor: address) -> Result<void> {
+	fn set_collection_sponsor(&mut self, caller: caller, sponsor: address) -> Result<void> {
 		check_is_owner(caller, self)?;
 
 		let sponsor = T::CrossAccountId::from_eth(sponsor);
@@ -92,7 +92,7 @@ impl<T: Config> CollectionHandle<T>
 		Ok(())
 	}
 
-	fn eth_confirm_sponsorship(&mut self, caller: caller) -> Result<void> {
+	fn confirm_collection_sponsorship(&mut self, caller: caller) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		if !self.confirm_sponsorship(caller.as_sub()) {
 			return Err(Error::Revert("Caller is not set as sponsor".into()));
@@ -101,7 +101,7 @@ impl<T: Config> CollectionHandle<T>
 		Ok(())
 	}
 
-	#[solidity(rename_selector = "setLimit")]
+	#[solidity(rename_selector = "setCollectionLimit")]
 	fn set_int_limit(&mut self, caller: caller, limit: string, value: uint32) -> Result<void> {
 		check_is_owner(caller, self)?;
 		let mut limits = self.limits.clone();
@@ -138,7 +138,7 @@ impl<T: Config> CollectionHandle<T>
 		Ok(())
 	}
 
-	#[solidity(rename_selector = "setLimit")]
+	#[solidity(rename_selector = "setCollectionLimit")]
 	fn set_bool_limit(&mut self, caller: caller, limit: string, value: bool) -> Result<void> {
 		check_is_owner(caller, self)?;
 		let mut limits = self.limits.clone();
@@ -192,7 +192,7 @@ impl<T: Config> CollectionHandle<T>
 	// 	Ok(())
 	// }
 
-	fn add_admin(&self, caller: caller, new_admin: address) -> Result<void> {
+	fn add_collection_admin(&self, caller: caller, new_admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		self.check_is_owner_or_admin(&caller)
 			.map_err(dispatch_to_evm::<T>)?;
@@ -202,7 +202,7 @@ impl<T: Config> CollectionHandle<T>
 		Ok(())
 	}
 
-	fn remove_admin(&self, caller: caller, admin: address) -> Result<void> {
+	fn remove_collection_admin(&self, caller: caller, admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		self.check_is_owner_or_admin(&caller)
 			.map_err(dispatch_to_evm::<T>)?;
@@ -212,7 +212,7 @@ impl<T: Config> CollectionHandle<T>
 		Ok(())
 	}
 
-	#[solidity(rename_selector = "setNesting")]
+	#[solidity(rename_selector = "setCollectionNesting")]
 	fn set_nesting_bool(&mut self, caller: caller, enable: bool) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		self.check_is_owner_or_admin(&caller)
@@ -225,7 +225,7 @@ impl<T: Config> CollectionHandle<T>
 		Ok(())
 	}
 
-	#[solidity(rename_selector = "setNesting")]
+	#[solidity(rename_selector = "setCollectionNesting")]
 	fn set_nesting(&mut self, caller: caller, enable: bool, collections: Vec<address>) -> Result<void> {
 		if collections.is_empty() {
 			return Err("No addresses provided".into());
@@ -253,7 +253,7 @@ impl<T: Config> CollectionHandle<T>
 		Ok(())
 	}
 
-	fn set_access(&mut self, caller: caller, mode: string) -> Result<void> {
+	fn set_collection_access(&mut self, caller: caller, mode: string) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		self.check_is_owner_or_admin(&caller)
 			.map_err(dispatch_to_evm::<T>)?;
@@ -266,7 +266,7 @@ impl<T: Config> CollectionHandle<T>
 		Ok(())
 	}
 
-	fn add_to_allow_list(&self, caller: caller, user: address) -> Result<void> {
+	fn add_to_collection_allow_list(&self, caller: caller, user: address) -> Result<void> {
 		let caller = check_is_owner_or_admin(caller, self)?;
 		let user = T::CrossAccountId::from_eth(user);
 		<Pallet<T>>::toggle_allowlist(self, &caller, &user, true)
@@ -274,7 +274,7 @@ impl<T: Config> CollectionHandle<T>
 		Ok(())
 	}
 
-	fn remove_from_allow_list(&self, caller: caller, user: address) -> Result<void> {
+	fn remove_from_collection_allow_list(&self, caller: caller, user: address) -> Result<void> {
 		let caller = check_is_owner_or_admin(caller, self)?;
 		let user = T::CrossAccountId::from_eth(user);
 		<Pallet<T>>::toggle_allowlist(self, &caller, &user, false)
@@ -282,7 +282,7 @@ impl<T: Config> CollectionHandle<T>
 		Ok(())
 	}
 
-	fn set_mint_mode(&mut self, caller: caller, mode: bool) -> Result<void> {
+	fn set_collection_mint_mode(&mut self, caller: caller, mode: bool) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;
 		self.collection.permissions.mint_mode = Some(mode);
 		save(self);

@@ -99,7 +99,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const collectionEvmOwned = evmCollection(web3, owner, collectionIdAddress);
     const collectionEvm = evmCollection(web3, caller, collectionIdAddress);
     const contract = await proxyWrap(api, web3, collectionEvm);
-    await collectionEvmOwned.methods.addAdmin(contract.options.address).send();
+    await collectionEvmOwned.methods.addCollectionAdmin(contract.options.address).send();
 
     {
       const nextTokenId = await contract.methods.nextTokenId().call();

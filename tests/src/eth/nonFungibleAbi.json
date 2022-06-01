@@ -84,7 +84,7 @@
     "inputs": [
       { "internalType": "address", "name": "newAdmin", "type": "address" }
     ],
-    "name": "addAdmin",
+    "name": "addCollectionAdmin",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"
@@ -93,7 +93,7 @@
     "inputs": [
       { "internalType": "address", "name": "user", "type": "address" }
     ],
-    "name": "addToAllowList",
+    "name": "addToCollectionAllowList",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"
@@ -145,6 +145,13 @@
   },
   {
     "inputs": [],
+    "name": "confirmCollectionSponsorship",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "contractAddress",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "view",
@@ -163,22 +170,6 @@
       { "internalType": "string", "name": "key", "type": "string" }
     ],
     "name": "deleteProperty",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "ethConfirmSponsorship",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "sponsor", "type": "address" }
-    ],
-    "name": "ethSetSponsor",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -302,7 +293,7 @@
     "inputs": [
       { "internalType": "address", "name": "admin", "type": "address" }
     ],
-    "name": "removeAdmin",
+    "name": "removeCollectionAdmin",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"
@@ -311,7 +302,7 @@
     "inputs": [
       { "internalType": "address", "name": "user", "type": "address" }
     ],
-    "name": "removeFromAllowList",
+    "name": "removeFromCollectionAllowList",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"
@@ -340,18 +331,66 @@
     "type": "function"
   },
   {
+    "inputs": [
+      { "internalType": "address", "name": "operator", "type": "address" },
+      { "internalType": "bool", "name": "approved", "type": "bool" }
+    ],
+    "name": "setApprovalForAll",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [{ "internalType": "string", "name": "mode", "type": "string" }],
-    "name": "setAccess",
+    "name": "setCollectionAccess",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "operator", "type": "address" },
-      { "internalType": "bool", "name": "approved", "type": "bool" }
+      { "internalType": "string", "name": "limit", "type": "string" },
+      { "internalType": "uint32", "name": "value", "type": "uint32" }
     ],
-    "name": "setApprovalForAll",
+    "name": "setCollectionLimit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "limit", "type": "string" },
+      { "internalType": "bool", "name": "value", "type": "bool" }
+    ],
+    "name": "setCollectionLimit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "bool", "name": "mode", "type": "bool" }],
+    "name": "setCollectionMintMode",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "bool", "name": "enable", "type": "bool" }],
+    "name": "setCollectionNesting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "bool", "name": "enable", "type": "bool" },
+      {
+        "internalType": "address[]",
+        "name": "collections",
+        "type": "address[]"
+      }
+    ],
+    "name": "setCollectionNesting",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -368,48 +407,9 @@
   },
   {
     "inputs": [
-      { "internalType": "string", "name": "limit", "type": "string" },
-      { "internalType": "uint32", "name": "value", "type": "uint32" }
+      { "internalType": "address", "name": "sponsor", "type": "address" }
     ],
-    "name": "setLimit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "string", "name": "limit", "type": "string" },
-      { "internalType": "bool", "name": "value", "type": "bool" }
-    ],
-    "name": "setLimit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "bool", "name": "mode", "type": "bool" }],
-    "name": "setMintMode",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "bool", "name": "enable", "type": "bool" },
-      {
-        "internalType": "address[]",
-        "name": "collections",
-        "type": "address[]"
-      }
-    ],
-    "name": "setNesting",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "bool", "name": "enable", "type": "bool" }],
-    "name": "setNesting",
+    "name": "setCollectionSponsor",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
