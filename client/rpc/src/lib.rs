@@ -16,13 +16,24 @@
 
 use std::sync::Arc;
 
-use codec::Decode;
+use codec::{Decode, Encode};
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
-use up_data_structs::{Collection, CollectionId, CollectionStats, CollectionLimits, TokenId};
+use up_data_structs::{
+	RpcCollection, CollectionId, CollectionStats, CollectionLimits, TokenId, Property,
+	PropertyKeyPermission, TokenData,
+};
 use sp_api::{BlockId, BlockT, ProvideRuntimeApi, ApiExt};
 use sp_blockchain::HeaderBackend;
 use up_rpc::UniqueApi as UniqueRuntimeApi;
+
+// RMRK
+use rmrk_rpc::RmrkApi as RmrkRuntimeApi;
+use up_data_structs::{
+	RmrkCollectionId, RmrkNftId, RmrkBaseId, RmrkNftChild, RmrkThemeName, RmrkResourceId,
+};
+
+pub use rmrk_unique_rpc::RmrkApi;
 
 #[rpc]
 pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
@@ -31,6 +42,12 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		&self,
 		collection: CollectionId,
 		account: CrossAccountId,
+		at: Option<BlockHash>,
+	) -> Result<Vec<TokenId>>;
+	#[rpc(name = "unique_collectionTokens")]
+	fn collection_tokens(
+		&self,
+		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<TokenId>>;
 	#[rpc(name = "unique_tokenExists")]
@@ -48,23 +65,50 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<CrossAccountId>>;
-	#[rpc(name = "unique_constMetadata")]
-	fn const_metadata(
+	#[rpc(name = "unique_topmostTokenOwner")]
+	fn topmost_token_owner(
 		&self,
 		collection: CollectionId,
 		token: TokenId,
 		at: Option<BlockHash>,
-	) -> Result<Vec<u8>>;
-	#[rpc(name = "unique_variableMetadata")]
-	fn variable_metadata(
-		&self,
-		collection: CollectionId,
-		token: TokenId,
-		at: Option<BlockHash>,
-	) -> Result<Vec<u8>>;
+	) -> Result<Option<CrossAccountId>>;
 
-	#[rpc(name = "unique_collectionTokens")]
-	fn collection_tokens(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<u32>;
+	#[rpc(name = "unique_collectionProperties")]
+	fn collection_properties(
+		&self,
+		collection: CollectionId,
+		keys: Option<Vec<String>>,
+		at: Option<BlockHash>,
+	) -> Result<Vec<Property>>;
+
+	#[rpc(name = "unique_tokenProperties")]
+	fn token_properties(
+		&self,
+		collection: CollectionId,
+		token_id: TokenId,
+		keys: Option<Vec<String>>,
+		at: Option<BlockHash>,
+	) -> Result<Vec<Property>>;
+
+	#[rpc(name = "unique_propertyPermissions")]
+	fn property_permissions(
+		&self,
+		collection: CollectionId,
+		keys: Option<Vec<String>>,
+		at: Option<BlockHash>,
+	) -> Result<Vec<PropertyKeyPermission>>;
+
+	#[rpc(name = "unique_tokenData")]
+	fn token_data(
+		&self,
+		collection: CollectionId,
+		token_id: TokenId,
+		keys: Option<Vec<String>>,
+		at: Option<BlockHash>,
+	) -> Result<TokenData<CrossAccountId>>;
+
+	#[rpc(name = "unique_totalSupply")]
+	fn total_supply(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<u32>;
 	#[rpc(name = "unique_accountBalance")]
 	fn account_balance(
 		&self,
@@ -116,7 +160,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
-	) -> Result<Option<Collection<AccountId>>>;
+	) -> Result<Option<RpcCollection<AccountId>>>;
 	#[rpc(name = "unique_collectionStats")]
 	fn collection_stats(&self, at: Option<BlockHash>) -> Result<CollectionStats>;
 
@@ -134,6 +178,124 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		collection_id: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Option<CollectionLimits>>;
+}
+
+mod rmrk_unique_rpc {
+	use super::*;
+
+	#[rpc(server)]
+	pub trait RmrkApi<
+		BlockHash,
+		AccountId,
+		CollectionInfo,
+		NftInfo,
+		ResourceInfo,
+		PropertyInfo,
+		BaseInfo,
+		PartType,
+		Theme,
+	>
+	{
+		#[rpc(name = "rmrk_lastCollectionIdx")]
+		/// Get the latest created collection id
+		fn last_collection_idx(&self, at: Option<BlockHash>) -> Result<RmrkCollectionId>;
+
+		#[rpc(name = "rmrk_collectionById")]
+		/// Get collection by id
+		fn collection_by_id(
+			&self,
+			id: RmrkCollectionId,
+			at: Option<BlockHash>,
+		) -> Result<Option<CollectionInfo>>;
+
+		#[rpc(name = "rmrk_nftById")]
+		/// Get NFT by collection id and NFT id
+		fn nft_by_id(
+			&self,
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+			at: Option<BlockHash>,
+		) -> Result<Option<NftInfo>>;
+
+		#[rpc(name = "rmrk_accountTokens")]
+		/// Get tokens owned by an account in a collection
+		fn account_tokens(
+			&self,
+			account_id: AccountId,
+			collection_id: RmrkCollectionId,
+			at: Option<BlockHash>,
+		) -> Result<Vec<RmrkNftId>>;
+
+		#[rpc(name = "rmrk_nftChildren")]
+		/// Get NFT children
+		fn nft_children(
+			&self,
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+			at: Option<BlockHash>,
+		) -> Result<Vec<RmrkNftChild>>;
+
+		#[rpc(name = "rmrk_collectionProperties")]
+		/// Get collection properties
+		fn collection_properties(
+			&self,
+			collection_id: RmrkCollectionId,
+			filter_keys: Option<Vec<String>>,
+			at: Option<BlockHash>,
+		) -> Result<Vec<PropertyInfo>>;
+
+		#[rpc(name = "rmrk_nftProperties")]
+		/// Get NFT properties
+		fn nft_properties(
+			&self,
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+			filter_keys: Option<Vec<String>>,
+			at: Option<BlockHash>,
+		) -> Result<Vec<PropertyInfo>>;
+
+		#[rpc(name = "rmrk_nftResources")]
+		/// Get NFT resources
+		fn nft_resources(
+			&self,
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+			at: Option<BlockHash>,
+		) -> Result<Vec<ResourceInfo>>;
+
+		#[rpc(name = "rmrk_nftResourcePriorities")]
+		/// Get NFT resource priorities
+		fn nft_resource_priorities(
+			&self,
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+			at: Option<BlockHash>,
+		) -> Result<Vec<RmrkResourceId>>;
+
+		#[rpc(name = "rmrk_base")]
+		/// Get base info
+		fn base(&self, base_id: RmrkBaseId, at: Option<BlockHash>) -> Result<Option<BaseInfo>>;
+
+		#[rpc(name = "rmrk_baseParts")]
+		/// Get all Base's parts
+		fn base_parts(&self, base_id: RmrkBaseId, at: Option<BlockHash>) -> Result<Vec<PartType>>;
+
+		#[rpc(name = "rmrk_themeNames")]
+		fn theme_names(
+			&self,
+			base_id: RmrkBaseId,
+			at: Option<BlockHash>,
+		) -> Result<Vec<RmrkThemeName>>;
+
+		#[rpc(name = "rmrk_themes")]
+		fn theme(
+			&self,
+			base_id: RmrkBaseId,
+			theme_name: String,
+			filter_keys: Option<Vec<String>>,
+			at: Option<BlockHash>,
+		) -> Result<Option<Theme>>;
+	}
 }
 
 pub struct Unique<C, P> {
@@ -164,7 +326,11 @@ impl From<Error> for i64 {
 
 macro_rules! pass_method {
 	(
-		$method_name:ident($($name:ident: $ty:ty),* $(,)?) -> $result:ty $(=> $mapper:expr)?
+		$method_name:ident(
+			$($(#[map(|$map_arg:ident| $map:expr)])? $name:ident: $ty:ty),* $(,)?
+		) -> $result:ty $(=> $mapper:expr)?,
+		//$runtime_name:ident $(<$($lt: tt),+>)*
+		$runtime_api_macro:ident
 		$(; changed_in $ver:expr, $changed_method_name:ident ($($changed_name:expr), * $(,)?) => $fixer:expr)*
 	) => {
 		fn $method_name(
@@ -177,7 +343,7 @@ macro_rules! pass_method {
 			let api = self.client.runtime_api();
 			let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 			let _api_version = if let Ok(Some(api_version)) =
-				api.api_version::<dyn UniqueRuntimeApi<Block, CrossAccountId, AccountId>>(&at)
+				api.api_version::<$runtime_api_macro!()>(&at)
 			{
 				api_version
 			} else {
@@ -192,7 +358,7 @@ macro_rules! pass_method {
 			let result = $(if _api_version < $ver {
 				api.$changed_method_name(&at, $($changed_name),*).map(|r| r.map($fixer))
 			} else)*
-			{ api.$method_name(&at, $($name),*) };
+			{ api.$method_name(&at, $($((|$map_arg: $ty| $map))? ($name)),*) };
 
 			let result = result.map_err(|e| RpcError {
 				code: ErrorCode::ServerError(Error::RuntimeError.into()),
@@ -208,6 +374,18 @@ macro_rules! pass_method {
 	};
 }
 
+macro_rules! unique_api {
+	() => {
+		dyn UniqueRuntimeApi<Block, CrossAccountId, AccountId>
+	};
+}
+
+macro_rules! rmrk_api {
+	() => {
+		dyn RmrkRuntimeApi<Block, AccountId, CollectionInfo, NftInfo, ResourceInfo, PropertyInfo, BaseInfo, PartType, Theme>
+	};
+}
+
 #[allow(deprecated)]
 impl<C, Block, CrossAccountId, AccountId>
 	UniqueApi<<Block as BlockT>::Hash, CrossAccountId, AccountId> for Unique<C, Block>
@@ -218,25 +396,157 @@ where
 	C::Api: UniqueRuntimeApi<Block, CrossAccountId, AccountId>,
 	CrossAccountId: pallet_evm::account::CrossAccountId<AccountId>,
 {
-	pass_method!(account_tokens(collection: CollectionId, account: CrossAccountId) -> Vec<TokenId>);
-	pass_method!(token_exists(collection: CollectionId, token: TokenId) -> bool);
 	pass_method!(
-		token_owner(collection: CollectionId, token: TokenId) -> Option<CrossAccountId>;
-		changed_in 2, token_owner_before_version_2(collection, token) => |u| Some(u)
+		account_tokens(collection: CollectionId, account: CrossAccountId) -> Vec<TokenId>, unique_api
 	);
-	pass_method!(const_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
-	pass_method!(variable_metadata(collection: CollectionId, token: TokenId) -> Vec<u8>);
-	pass_method!(collection_tokens(collection: CollectionId) -> u32);
-	pass_method!(account_balance(collection: CollectionId, account: CrossAccountId) -> u32);
-	pass_method!(balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> String => |v| v.to_string());
-	pass_method!(allowance(collection: CollectionId, sender: CrossAccountId, spender: CrossAccountId, token: TokenId) -> String => |v| v.to_string());
+	pass_method!(
+		collection_tokens(collection: CollectionId) -> Vec<TokenId>, unique_api
+	);
+	pass_method!(
+		token_exists(collection: CollectionId, token: TokenId) -> bool, unique_api
+	);
+	pass_method!(
+		token_owner(collection: CollectionId, token: TokenId) -> Option<CrossAccountId>, unique_api
+	);
+	pass_method!(
+		topmost_token_owner(collection: CollectionId, token: TokenId) -> Option<CrossAccountId>, unique_api
+	);
+	pass_method!(total_supply(collection: CollectionId) -> u32, unique_api);
+	pass_method!(account_balance(collection: CollectionId, account: CrossAccountId) -> u32, unique_api);
+	pass_method!(balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> String => |v| v.to_string(), unique_api);
+	pass_method!(
+		allowance(collection: CollectionId, sender: CrossAccountId, spender: CrossAccountId, token: TokenId) -> String => |v| v.to_string(),
+		unique_api
+	);
 
-	pass_method!(adminlist(collection: CollectionId) -> Vec<CrossAccountId>);
-	pass_method!(allowlist(collection: CollectionId) -> Vec<CrossAccountId>);
-	pass_method!(allowed(collection: CollectionId, user: CrossAccountId) -> bool);
-	pass_method!(last_token_id(collection: CollectionId) -> TokenId);
-	pass_method!(collection_by_id(collection: CollectionId) -> Option<Collection<AccountId>>);
-	pass_method!(collection_stats() -> CollectionStats);
-	pass_method!(next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Option<u64>);
-	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>);
+	pass_method!(collection_properties(
+		collection: CollectionId,
+
+		#[map(|keys| string_keys_to_bytes_keys(keys))]
+		keys: Option<Vec<String>>
+	) -> Vec<Property>, unique_api);
+
+	pass_method!(token_properties(
+		collection: CollectionId,
+		token_id: TokenId,
+
+		#[map(|keys| string_keys_to_bytes_keys(keys))]
+		keys: Option<Vec<String>>
+	) -> Vec<Property>, unique_api);
+
+	pass_method!(property_permissions(
+		collection: CollectionId,
+
+		#[map(|keys| string_keys_to_bytes_keys(keys))]
+		keys: Option<Vec<String>>
+	) -> Vec<PropertyKeyPermission>, unique_api);
+
+	pass_method!(token_data(
+		collection: CollectionId,
+		token_id: TokenId,
+
+		#[map(|keys| string_keys_to_bytes_keys(keys))]
+		keys: Option<Vec<String>>,
+	) -> TokenData<CrossAccountId>, unique_api);
+
+	pass_method!(adminlist(collection: CollectionId) -> Vec<CrossAccountId>, unique_api);
+	pass_method!(allowlist(collection: CollectionId) -> Vec<CrossAccountId>, unique_api);
+	pass_method!(allowed(collection: CollectionId, user: CrossAccountId) -> bool, unique_api);
+	pass_method!(last_token_id(collection: CollectionId) -> TokenId, unique_api);
+	pass_method!(collection_by_id(collection: CollectionId) -> Option<RpcCollection<AccountId>>, unique_api);
+	pass_method!(collection_stats() -> CollectionStats, unique_api);
+	pass_method!(next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Option<u64>, unique_api);
+	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>, unique_api);
+}
+
+#[allow(deprecated)]
+impl<
+		C,
+		Block,
+		AccountId,
+		CollectionInfo,
+		NftInfo,
+		ResourceInfo,
+		PropertyInfo,
+		BaseInfo,
+		PartType,
+		Theme,
+	>
+	rmrk_unique_rpc::RmrkApi<
+		<Block as BlockT>::Hash,
+		AccountId,
+		CollectionInfo,
+		NftInfo,
+		ResourceInfo,
+		PropertyInfo,
+		BaseInfo,
+		PartType,
+		Theme,
+	> for Unique<C, Block>
+where
+	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
+	C::Api: RmrkRuntimeApi<
+		Block,
+		AccountId,
+		CollectionInfo,
+		NftInfo,
+		ResourceInfo,
+		PropertyInfo,
+		BaseInfo,
+		PartType,
+		Theme,
+	>,
+	AccountId: Decode + Encode,
+	CollectionInfo: Decode,
+	NftInfo: Decode,
+	ResourceInfo: Decode,
+	PropertyInfo: Decode,
+	BaseInfo: Decode,
+	PartType: Decode,
+	Theme: Decode,
+	Block: BlockT,
+{
+	pass_method!(last_collection_idx() -> RmrkCollectionId, rmrk_api);
+	pass_method!(collection_by_id(id: RmrkCollectionId) -> Option<CollectionInfo>, rmrk_api);
+	pass_method!(nft_by_id(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Option<NftInfo>, rmrk_api);
+	pass_method!(account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Vec<RmrkNftId>, rmrk_api);
+	pass_method!(nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Vec<RmrkNftChild>, rmrk_api);
+	pass_method!(
+		collection_properties(
+			collection_id: RmrkCollectionId,
+
+			#[map(|keys| string_keys_to_bytes_keys(keys))]
+			filter_keys: Option<Vec<String>>
+		) -> Vec<PropertyInfo>,
+		rmrk_api
+	);
+	pass_method!(
+		nft_properties(
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+
+			#[map(|keys| string_keys_to_bytes_keys(keys))]
+			filter_keys: Option<Vec<String>>
+		) -> Vec<PropertyInfo>,
+		rmrk_api
+	);
+	pass_method!(nft_resources(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Vec<ResourceInfo>, rmrk_api);
+	pass_method!(nft_resource_priorities(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Vec<RmrkResourceId>, rmrk_api);
+	pass_method!(base(base_id: RmrkBaseId) -> Option<BaseInfo>, rmrk_api);
+	pass_method!(base_parts(base_id: RmrkBaseId) -> Vec<PartType>, rmrk_api);
+	pass_method!(theme_names(base_id: RmrkBaseId) -> Vec<RmrkThemeName>, rmrk_api);
+	pass_method!(
+		theme(
+			base_id: RmrkBaseId,
+
+			#[map(|n| n.into_bytes())]
+			theme_name: String,
+
+			#[map(|keys| string_keys_to_bytes_keys(keys))]
+			filter_keys: Option<Vec<String>>
+		) -> Option<Theme>, rmrk_api);
+}
+
+fn string_keys_to_bytes_keys(keys: Option<Vec<String>>) -> Option<Vec<Vec<u8>>> {
+	keys.map(|keys| keys.into_iter().map(|key| key.into_bytes()).collect())
 }

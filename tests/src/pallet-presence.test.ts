@@ -30,6 +30,7 @@ const requiredPallets = [
   'timestamp',
   'transactionpayment',
   'treasury',
+  'structure',
   'system',
   'vesting',
   'parachainsystem',

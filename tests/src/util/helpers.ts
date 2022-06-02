@@ -17,17 +17,17 @@
 import '../interfaces/augment-api-rpc';
 import '../interfaces/augment-api-query';
 import {ApiPromise, Keyring} from '@polkadot/api';
-import type {AccountId, EventRecord} from '@polkadot/types/interfaces';
-import {IKeyringPair} from '@polkadot/types/types';
+import type {AccountId, EventRecord, Event} from '@polkadot/types/interfaces';
+import {AnyTuple, IEvent, IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
 import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {alicesPublicKey} from '../accounts';
 import privateKey from '../substrate/privateKey';
-import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
+import {default as usingApi, executeTransaction, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
-import {UpDataStructsCollection} from '@polkadot/types/lookup';
+import {UpDataStructsRpcCollection, UpDataStructsCreateItemData, UpDataStructsProperty} from '@polkadot/types/lookup';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -105,7 +105,6 @@ interface CreateItemResult {
 }
 
 interface TransferResult {
-  success: boolean;
   collectionId: number;
   itemId: number;
   sender?: CrossAccountId;
@@ -136,15 +135,12 @@ export interface IChainLimits {
   nftSponsorTransferTimeout: number;
   fungibleSponsorTransferTimeout: number;
   refungibleSponsorTransferTimeout: number;
-  offchainSchemaLimit: number;
-  variableOnChainSchemaLimit: number;
-  constOnChainSchemaLimit: number;
+  //offchainSchemaLimit: number;
+  //constOnChainSchemaLimit: number;
 }
 
 export interface IReFungibleTokenDataType {
   owner: IReFungibleOwner[];
-  constData: number[];
-  variableData: number[];
 }
 
 export function uniqueEventMessage(events: EventRecord[]): IGetMessage {
@@ -166,6 +162,12 @@ export function uniqueEventMessage(events: EventRecord[]): IGetMessage {
     checkMsgSysMethod,
   };
   return result;
+}
+
+export function getEvent<T extends Event>(events: EventRecord[], check: (event: IEvent<AnyTuple>) => event is T): T | undefined {
+  const event = events.find(r => check(r.event));
+  if (!event) return;
+  return event.event as T;
 }
 
 export function getGenericResult(events: EventRecord[]): GenericResult {
@@ -201,6 +203,37 @@ export function getCreateCollectionResult(events: EventRecord[]): CreateCollecti
   return result;
 }
 
+export function getCreateItemsResult(events: EventRecord[]): CreateItemResult[] {
+  let success = false;
+  let collectionId = 0;
+  let itemId = 0;
+  let recipient;
+
+  const results : CreateItemResult[]  = [];
+
+  events.forEach(({event: {data, method, section}}) => {
+    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
+    if (method == 'ExtrinsicSuccess') {
+      success = true;
+    } else if ((section == 'common') && (method == 'ItemCreated')) {
+      collectionId = parseInt(data[0].toString(), 10);
+      itemId = parseInt(data[1].toString(), 10);
+      recipient = normalizeAccountId(data[2].toJSON() as any);
+
+      const itemRes: CreateItemResult = {
+        success,
+        collectionId,
+        itemId,
+        recipient,
+      };
+
+      results.push(itemRes);
+    }
+  });
+
+  return results;
+}
+
 export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
   let success = false;
   let collectionId = 0;
@@ -225,27 +258,20 @@ export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
   return result;
 }
 
-export function getTransferResult(events: EventRecord[]): TransferResult {
-  const result: TransferResult = {
-    success: false,
-    collectionId: 0,
-    itemId: 0,
-    value: 0n,
-  };
-
-  events.forEach(({event: {data, method, section}}) => {
-    if (method === 'ExtrinsicSuccess') {
-      result.success = true;
-    } else if (section === 'common' && method === 'Transfer') {
-      result.collectionId = +data[0].toString();
-      result.itemId = +data[1].toString();
-      result.sender = normalizeAccountId(data[2].toJSON() as any);
-      result.recipient = normalizeAccountId(data[3].toJSON() as any);
-      result.value = BigInt(data[4].toString());
+export function getTransferResult(api: ApiPromise, events: EventRecord[]): TransferResult {
+  for (const {event} of events) {
+    if (api.events.common.Transfer.is(event)) {
+      const [collection, token, sender, recipient, value] = event.data;
+      return {
+        collectionId: collection.toNumber(),
+        itemId: token.toNumber(),
+        sender: normalizeAccountId(sender.toJSON() as any),
+        recipient: normalizeAccountId(recipient.toJSON() as any),
+        value: value.toBigInt(),
+      };
     }
-  });
-
-  return result;
+  }
+  throw new Error('no transfer event');
 }
 
 interface Nft {
@@ -263,12 +289,29 @@ interface ReFungible {
 
 type CollectionMode = Nft | Fungible | ReFungible;
 
+export type Property = {
+  key: any,
+  value: any,
+};
+
+type Permission = {
+  mutable: boolean;
+  collectionAdmin: boolean;
+  tokenOwner: boolean;
+}
+
+type PropertyPermission = {
+  key: any;
+  permission: Permission;
+}
+
 export type CreateCollectionParams = {
   mode: CollectionMode,
   name: string,
   description: string,
   tokenPrefix: string,
-  schemaVersion: string,
+  properties?: Array<Property>,
+  propPerm?: Array<PropertyPermission>
 };
 
 const defaultCreateCollectionParams: CreateCollectionParams = {
@@ -276,11 +319,10 @@ const defaultCreateCollectionParams: CreateCollectionParams = {
   mode: {type: 'NFT'},
   name: 'name',
   tokenPrefix: 'prefix',
-  schemaVersion: 'ImageURL',
 };
 
 export async function createCollectionExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
-  const {name, description, mode, tokenPrefix, schemaVersion} = {...defaultCreateCollectionParams, ...params};
+  const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
 
   let collectionId = 0;
   await usingApi(async (api) => {
@@ -300,11 +342,10 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     }
 
     const tx = api.tx.unique.createCollectionEx({
-      name: strToUTF16(name), 
-      description: strToUTF16(description), 
-      tokenPrefix: strToUTF16(tokenPrefix), 
+      name: strToUTF16(name),
+      description: strToUTF16(description),
+      tokenPrefix: strToUTF16(tokenPrefix),
       mode: modeprm as any,
-      schemaVersion: schemaVersion,
     });
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getCreateCollectionResult(events);
@@ -331,6 +372,85 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
   });
 
   return collectionId;
+}
+
+export async function createCollectionWithPropsExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
+  const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
+
+  let collectionId = 0;
+  await usingApi(async (api) => {
+    // Get number of collections before the transaction
+    const collectionCountBefore = await getCreatedCollectionCount(api);
+
+    // Run the CreateCollection transaction
+    const alicePrivateKey = privateKey('//Alice');
+
+    let modeprm = {};
+    if (mode.type === 'NFT') {
+      modeprm = {nft: null};
+    } else if (mode.type === 'Fungible') {
+      modeprm = {fungible: mode.decimalPoints};
+    } else if (mode.type === 'ReFungible') {
+      modeprm = {refungible: null};
+    }
+
+    const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any, properties: params.properties, tokenPropertyPermissions: params.propPerm});
+    const events = await submitTransactionAsync(alicePrivateKey, tx);
+    const result = getCreateCollectionResult(events);
+
+    // Get number of collections after the transaction
+    const collectionCountAfter = await getCreatedCollectionCount(api);
+
+    // Get the collection
+    const collection = await queryCollectionExpectSuccess(api, result.collectionId);
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.true;
+    expect(result.collectionId).to.be.equal(collectionCountAfter);
+    // tslint:disable-next-line:no-unused-expression
+    expect(collection).to.be.not.null;
+    expect(collectionCountAfter).to.be.equal(collectionCountBefore + 1, 'Error: NFT collection NOT created.');
+    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicesPublicKey));
+    expect(utf16ToStr(collection.name.toJSON() as any)).to.be.equal(name);
+    expect(utf16ToStr(collection.description.toJSON() as any)).to.be.equal(description);
+    expect(hexToStr(collection.tokenPrefix.toJSON())).to.be.equal(tokenPrefix);
+
+
+    collectionId = result.collectionId;
+  });
+
+  return collectionId;
+}
+
+export async function createCollectionWithPropsExpectFailure(params: Partial<CreateCollectionParams> = {}) {
+  const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
+
+  await usingApi(async (api) => {
+    // Get number of collections before the transaction
+    const collectionCountBefore = await getCreatedCollectionCount(api);
+
+    // Run the CreateCollection transaction
+    const alicePrivateKey = privateKey('//Alice');
+
+    let modeprm = {};
+    if (mode.type === 'NFT') {
+      modeprm = {nft: null};
+    } else if (mode.type === 'Fungible') {
+      modeprm = {fungible: mode.decimalPoints};
+    } else if (mode.type === 'ReFungible') {
+      modeprm = {refungible: null};
+    }
+
+    const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any, properties: params.properties, tokenPropertyPermissions: params.propPerm});
+    await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
+
+
+    // Get number of collections after the transaction
+    const collectionCountAfter = await getCreatedCollectionCount(api);
+
+    expect(collectionCountAfter).to.be.equal(collectionCountBefore, 'Error: Collection with incorrect data created.');
+  });
 }
 
 export async function createCollectionExpectFailure(params: Partial<CreateCollectionParams> = {}) {
@@ -430,6 +550,16 @@ export async function setCollectionLimitsExpectSuccess(sender: IKeyringPair, col
     expect(result.success).to.be.true;
   });
 }
+
+export const setCollectionPermissionsExpectSuccess = async (sender: IKeyringPair, collectionId: number, permissions: {mintMode?: boolean, access?: 'Normal' | 'AllowList', nesting?: 'Disabled' | 'Owner' | {OwnerRestricted: number[]}}) => {
+  await usingApi(async(api) => {
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, permissions);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+};
 
 export async function setCollectionLimitsExpectFailure(sender: IKeyringPair, collectionId: number, limits: any) {
   await usingApi(async (api) => {
@@ -533,28 +663,6 @@ export async function confirmSponsorshipExpectFailure(collectionId: number, send
     const sender = privateKey(senderSeed);
     const tx = api.tx.unique.confirmSponsorship(collectionId);
     await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
-  });
-}
-
-export async function setMetadataUpdatePermissionFlagExpectSuccess(sender: IKeyringPair, collectionId: number, flag: string) {
-
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setMetaUpdatePermissionFlag(collectionId, flag as any);
-    const events = await submitTransactionAsync(sender, tx);
-    const result = getGenericResult(events);
-
-    expect(result.success).to.be.true;
-  });
-}
-
-export async function setMetadataUpdatePermissionFlagExpectFailure(sender: IKeyringPair, collectionId: number, flag: string) {
-
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setMetaUpdatePermissionFlag(collectionId, flag as any);
-    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
-    const result = getGenericResult(events);
-
-    expect(result.success).to.be.false;
   });
 }
 
@@ -679,40 +787,6 @@ export async function removeFromContractAllowListExpectFailure(sender: IKeyringP
   });
 }
 
-export async function setVariableMetaDataExpectSuccess(sender: IKeyringPair, collectionId: number, itemId: number, data: number[]) {
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setVariableMetaData(collectionId, itemId, '0x' + Buffer.from(data).toString('hex'));
-    const events = await submitTransactionAsync(sender, tx);
-    const result = getGenericResult(events);
-
-    expect(result.success).to.be.true;
-  });
-}
-
-export async function setVariableMetaDataExpectFailure(sender: IKeyringPair, collectionId: number, itemId: number, data: number[]) {
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setVariableMetaData(collectionId, itemId, '0x' + Buffer.from(data).toString('hex'));
-    await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
-  });
-}
-
-export async function setOffchainSchemaExpectSuccess(sender: IKeyringPair, collectionId: number, data: number[]) {
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setOffchainSchema(collectionId, '0x' + Buffer.from(data).toString('hex'));
-    const events = await submitTransactionAsync(sender, tx);
-    const result = getGenericResult(events);
-
-    expect(result.success).to.be.true;
-  });
-}
-
-export async function setOffchainSchemaExpectFailure(sender: IKeyringPair, collectionId: number, data: number[]) {
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setOffchainSchema(collectionId, '0x' + Buffer.from(data).toString('hex'));
-    await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
-  });
-}
-
 export interface CreateFungibleData {
   readonly Value: bigint;
 }
@@ -787,7 +861,7 @@ transferFromExpectSuccess(
     const from = normalizeAccountId(accountFrom);
     const to = normalizeAccountId(accountTo);
     let balanceBefore = 0n;
-    if (type === 'Fungible') {
+    if (type === 'Fungible' || type === 'ReFungible') {
       balanceBefore = await getBalance(api, collectionId, to, tokenId);
     }
     const transferFromTx = api.tx.unique.transferFrom(normalizeAccountId(accountFrom), to, collectionId, tokenId, value);
@@ -807,7 +881,7 @@ transferFromExpectSuccess(
       }
     }
     if (type === 'ReFungible') {
-      expect(await getBalance(api, collectionId, to, tokenId)).to.be.equal(BigInt(value));
+      expect(await getBalance(api, collectionId, to, tokenId)).to.be.equal(balanceBefore + BigInt(value));
     }
   });
 }
@@ -1004,15 +1078,15 @@ transferExpectSuccess(
       balanceBefore = await getBalance(api, collectionId, to, tokenId);
     }
     const transferTx = api.tx.unique.transfer(to, collectionId, tokenId, value);
-    const events = await submitTransactionAsync(sender, transferTx);
-    const result = getTransferResult(events);
-    // tslint:disable-next-line:no-unused-expression
-    expect(result.success).to.be.true;
+    const events = await executeTransaction(api, sender, transferTx);
+
+    const result = getTransferResult(api, events);
     expect(result.collectionId).to.be.equal(collectionId);
     expect(result.itemId).to.be.equal(tokenId);
     expect(result.sender).to.be.deep.equal(normalizeAccountId(sender.address));
     expect(result.recipient).to.be.deep.equal(to);
     expect(result.value).to.be.equal(BigInt(value));
+
     if (type === 'NFT') {
       expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(to);
     }
@@ -1035,11 +1109,11 @@ transferExpectFailure(
   collectionId: number,
   tokenId: number,
   sender: IKeyringPair,
-  recipient: IKeyringPair,
+  recipient: IKeyringPair | CrossAccountId,
   value: number | bigint = 1,
 ) {
   await usingApi(async (api: ApiPromise) => {
-    const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value);
+    const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient), collectionId, tokenId, value);
     const events = await expect(submitTransactionExpectFailAsync(sender, transferTx)).to.be.rejected;
     const result = getGenericResult(events);
     // if (events && Array.isArray(events)) {
@@ -1077,7 +1151,18 @@ export async function getTokenOwner(
   collectionId: number,
   token: number,
 ): Promise<CrossAccountId> {
-  return normalizeAccountId((await api.rpc.unique.tokenOwner(collectionId, token)).toJSON() as any);
+  const owner = (await api.rpc.unique.tokenOwner(collectionId, token)).toJSON() as any;
+  if (owner == null) throw new Error('owner == null');
+  return normalizeAccountId(owner);
+}
+export async function getTopmostTokenOwner(
+  api: ApiPromise,
+  collectionId: number,
+  token: number,
+): Promise<CrossAccountId> {
+  const owner = (await api.rpc.unique.topmostTokenOwner(collectionId, token)).toJSON() as any;
+  if (owner == null) throw new Error('owner == null');
+  return normalizeAccountId(owner);
 }
 export async function isTokenExists(
   api: ApiPromise,
@@ -1098,19 +1183,13 @@ export async function getAdminList(
 ): Promise<string[]> {
   return (await api.rpc.unique.adminlist(collectionId)).toHuman() as any;
 }
-export async function getVariableMetadata(
+export async function getTokenProperties(
   api: ApiPromise,
   collectionId: number,
   tokenId: number,
-): Promise<number[]> {
-  return [...(await api.rpc.unique.variableMetadata(collectionId, tokenId))];
-}
-export async function getConstMetadata(
-  api: ApiPromise,
-  collectionId: number,
-  tokenId: number,
-): Promise<number[]> {
-  return [...(await api.rpc.unique.constMetadata(collectionId, tokenId))];
+  propertyKeys: string[],
+): Promise<UpDataStructsProperty[]> {
+  return (await api.rpc.unique.tokenProperties(collectionId, tokenId, propertyKeys)).toHuman() as any;
 }
 
 export async function createFungibleItemExpectSuccess(
@@ -1130,6 +1209,98 @@ export async function createFungibleItemExpectSuccess(
   });
 }
 
+export async function createMultipleItemsWithPropsExpectSuccess(sender: IKeyringPair, collectionId: number, itemsData: any, owner: CrossAccountId | string = sender.address) {
+  await usingApi(async (api) => {
+    const to = normalizeAccountId(owner);
+    const tx = api.tx.unique.createMultipleItems(collectionId, to, itemsData);
+
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getCreateItemsResult(events);
+
+    for (const res of result) {
+      expect(await api.rpc.unique.tokenProperties(collectionId, res.itemId)).not.to.be.empty;
+    }
+  });
+}
+
+export async function createMultipleItemsExWithPropsExpectSuccess(sender: IKeyringPair, collectionId: number, itemsData: any) {
+  await usingApi(async (api) => {
+    const tx = api.tx.unique.createMultipleItemsEx(collectionId, itemsData);
+
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getCreateItemsResult(events);
+
+    for (const res of result) {
+      expect(await api.rpc.unique.tokenProperties(collectionId, res.itemId)).not.to.be.empty;
+    }
+  });
+}
+
+export async function createItemWithPropsExpectSuccess(sender: IKeyringPair, collectionId: number, createMode: string, props:  Array<Property>, owner: CrossAccountId | string = sender.address) {
+  let newItemId = 0;
+  await usingApi(async (api) => {
+    const to = normalizeAccountId(owner);
+    const itemCountBefore = await getLastTokenId(api, collectionId);
+    const itemBalanceBefore = await getBalance(api, collectionId, to, newItemId);
+
+    let tx;
+    if (createMode === 'Fungible') {
+      const createData = {fungible: {value: 10}};
+      tx = api.tx.unique.createItem(collectionId, to, createData as any);
+    } else if (createMode === 'ReFungible') {
+      const createData = {refungible: {pieces: 100}};
+      tx = api.tx.unique.createItem(collectionId, to, createData as any);
+    } else {
+      const data = api.createType('UpDataStructsCreateItemData', {NFT: {properties: props}});
+      tx = api.tx.unique.createItem(collectionId, to, data as UpDataStructsCreateItemData);
+    }
+
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getCreateItemResult(events);
+
+    const itemCountAfter = await getLastTokenId(api, collectionId);
+    const itemBalanceAfter = await getBalance(api, collectionId, to, newItemId);
+
+    if (createMode === 'NFT') {
+      expect(await api.rpc.unique.tokenProperties(collectionId, result.itemId)).not.to.be.empty;
+    }
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.true;
+    if (createMode === 'Fungible') {
+      expect(itemBalanceAfter - itemBalanceBefore).to.be.equal(10n);
+    } else {
+      expect(itemCountAfter).to.be.equal(itemCountBefore + 1);
+    }
+    expect(collectionId).to.be.equal(result.collectionId);
+    expect(itemCountAfter.toString()).to.be.equal(result.itemId.toString());
+    expect(to).to.be.deep.equal(result.recipient);
+    newItemId = result.itemId;
+  });
+  return newItemId;
+}
+
+export async function createItemWithPropsExpectFailure(sender: IKeyringPair, collectionId: number, createMode: string, props: Array<Property>, owner: CrossAccountId | string = sender.address) {
+  await usingApi(async (api) => {
+
+    let tx;
+    if (createMode === 'NFT') {
+      const data = api.createType('UpDataStructsCreateItemData', {NFT: {properties: props}});
+      tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), data);
+    } else {
+      tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), createMode);
+    }
+
+
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    if(events.message && events.message.toString().indexOf('1002: Verification Error') > -1) return;
+    const result = getCreateItemResult(events);
+
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function createItemExpectSuccess(sender: IKeyringPair, collectionId: number, createMode: string, owner: CrossAccountId | string = sender.address) {
   let newItemId = 0;
   await usingApi(async (api) => {
@@ -1142,10 +1313,10 @@ export async function createItemExpectSuccess(sender: IKeyringPair, collectionId
       const createData = {fungible: {value: 10}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     } else if (createMode === 'ReFungible') {
-      const createData = {refungible: {const_data: [], variable_data: [], pieces: 100}};
+      const createData = {refungible: {pieces: 100}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     } else {
-      const createData = {nft: {const_data: [], variable_data: []}};
+      const createData = {nft: {}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     }
 
@@ -1171,7 +1342,7 @@ export async function createItemExpectSuccess(sender: IKeyringPair, collectionId
   return newItemId;
 }
 
-export async function createItemExpectFailure(sender: IKeyringPair, collectionId: number, createMode: string, owner: string = sender.address) {
+export async function createItemExpectFailure(sender: IKeyringPair, collectionId: number, createMode: string, owner: CrossAccountId | string = sender.address) {
   await usingApi(async (api) => {
     const tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), createMode);
 
@@ -1189,7 +1360,7 @@ export async function setPublicAccessModeExpectSuccess(
   await usingApi(async (api) => {
 
     // Run the transaction
-    const tx = api.tx.unique.setPublicAccessMode(collectionId, accessMode);
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: accessMode});
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
 
@@ -1199,7 +1370,7 @@ export async function setPublicAccessModeExpectSuccess(
     // What to expect
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
-    expect(collection.access.toHuman()).to.be.equal(accessMode);
+    expect(collection.permissions.access.toHuman()).to.be.equal(accessMode);
   });
 }
 
@@ -1210,7 +1381,7 @@ export async function setPublicAccessModeExpectFail(
   await usingApi(async (api) => {
 
     // Run the transaction
-    const tx = api.tx.unique.setPublicAccessMode(collectionId, accessMode);
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: accessMode});
     const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
     const result = getGenericResult(events);
 
@@ -1236,7 +1407,7 @@ export async function setMintPermissionExpectSuccess(sender: IKeyringPair, colle
   await usingApi(async (api) => {
 
     // Run the transaction
-    const tx = api.tx.unique.setMintPermission(collectionId, enabled);
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, {mintMode: enabled});
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
     expect(result.success).to.be.true;
@@ -1244,7 +1415,7 @@ export async function setMintPermissionExpectSuccess(sender: IKeyringPair, colle
     // Get the collection
     const collection = await queryCollectionExpectSuccess(api, collectionId);
 
-    expect(collection.mintMode.toHuman()).to.be.equal(enabled);
+    expect(collection.permissions.mintMode.toHuman()).to.be.equal(enabled);
   });
 }
 
@@ -1255,7 +1426,7 @@ export async function enablePublicMintingExpectSuccess(sender: IKeyringPair, col
 export async function setMintPermissionExpectFailure(sender: IKeyringPair, collectionId: number, enabled: boolean) {
   await usingApi(async (api) => {
     // Run the transaction
-    const tx = api.tx.unique.setMintPermission(collectionId, enabled);
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, {mintMode: enabled});
     const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
     const result = getCreateCollectionResult(events);
     // tslint:disable-next-line:no-unused-expression
@@ -1348,7 +1519,7 @@ export async function removeFromAllowListExpectFailure(sender: IKeyringPair, col
 }
 
 export const getDetailedCollectionInfo = async (api: ApiPromise, collectionId: number)
-  : Promise<UpDataStructsCollection | null> => {
+  : Promise<UpDataStructsRpcCollection | null> => {
   return (await api.rpc.unique.collectionById(collectionId)).unwrapOr(null);
 };
 
@@ -1357,7 +1528,7 @@ export const getCreatedCollectionCount = async (api: ApiPromise): Promise<number
   return (await api.rpc.unique.collectionStats()).created.toNumber();
 };
 
-export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId: number): Promise<UpDataStructsCollection> {
+export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId: number): Promise<UpDataStructsRpcCollection> {
   return (await api.rpc.unique.collectionById(collectionId)).unwrap();
 }
 

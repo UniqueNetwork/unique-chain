@@ -29,14 +29,21 @@ runtime-benchmarks = [
     'pallet-balances/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
     'pallet-common/runtime-benchmarks',
+    'pallet-structure/runtime-benchmarks',
     'pallet-fungible/runtime-benchmarks',
     'pallet-refungible/runtime-benchmarks',
     'pallet-nonfungible/runtime-benchmarks',
+    'pallet-proxy-rmrk-core/runtime-benchmarks',
     'pallet-unique/runtime-benchmarks',
     'pallet-inflation/runtime-benchmarks',
     'pallet-xcm/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
     'xcm-builder/runtime-benchmarks',
+]
+try-runtime = [
+    'frame-try-runtime',
+    'frame-executive/try-runtime',
+    'frame-system/try-runtime',
 ]
 std = [
     'codec/std',
@@ -46,6 +53,7 @@ std = [
     'cumulus-pallet-xcmp-queue/std',
     'cumulus-primitives-core/std',
     'cumulus-primitives-utility/std',
+    'frame-try-runtime/std',
     'frame-executive/std',
     'frame-support/std',
     'frame-system/std',
@@ -78,9 +86,11 @@ std = [
     'serde',
     'pallet-inflation/std',
     'pallet-common/std',
+    'pallet-structure/std',
     'pallet-fungible/std',
     'pallet-refungible/std',
     'pallet-nonfungible/std',
+    'pallet-proxy-rmrk-core/std',
     'pallet-unique/std',
     'pallet-unq-scheduler/std',
     'pallet-charge-transaction/std',
@@ -120,6 +130,12 @@ default-features = false
 git = "https://github.com/paritytech/substrate"
 optional = true
 branch = "polkadot-v0.9.21"
+
+[dependencies.frame-try-runtime]
+default-features = false
+git = 'https://github.com/paritytech/substrate'
+optional = true
+branch = 'polkadot-v0.9.21'
 
 [dependencies.frame-executive]
 default-features = false
@@ -372,9 +388,19 @@ version = "0.4.1-dev"
 default-features = false
 
 ################################################################################
+# RMRK dependencies
+
+# todo git
+[dependencies.rmrk-rpc]
+default-features = false
+git = "https://github.com/UniqueNetwork/rmrk-substrate.git"
+branch = "feature/separate-types-and-traits"
+
+################################################################################
 # local dependencies
 
 [dependencies]
+log = { version = "0.4.16", default-features = false }
 unique-runtime-common = { path = "../common", default-features = false }
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
@@ -382,13 +408,15 @@ scale-info = { version = "2.0.1", default-features = false, features = [
 derivative = "2.2.0"
 pallet-unique = { path = '../../pallets/unique', default-features = false }
 up-rpc = { path = "../../primitives/rpc", default-features = false }
-fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
+fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
 pallet-inflation = { path = '../../pallets/inflation', default-features = false }
 up-data-structs = { path = '../../primitives/data-structs', default-features = false }
 pallet-common = { default-features = false, path = "../../pallets/common" }
+pallet-structure = { default-features = false, path = "../../pallets/structure" }
 pallet-fungible = { default-features = false, path = "../../pallets/fungible" }
 pallet-refungible = { default-features = false, path = "../../pallets/refungible" }
 pallet-nonfungible = { default-features = false, path = "../../pallets/nonfungible" }
+pallet-proxy-rmrk-core = { default-features = false, path = "../../pallets/proxy-rmrk-core", package = "pallet-rmrk-core" }
 pallet-unq-scheduler = { path = '../../pallets/scheduler', default-features = false }
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
 pallet-charge-transaction = { git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.21", package = "pallet-template-transaction-payment", default-features = false, version = "3.0.0" }
@@ -396,11 +424,11 @@ pallet-evm-migration = { path = '../../pallets/evm-migration', default-features 
 pallet-evm-contract-helpers = { path = '../../pallets/evm-contract-helpers', default-features = false }
 pallet-evm-transaction-payment = { path = '../../pallets/evm-transaction-payment', default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
-pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
-fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
-fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
 
 ################################################################################
 # Build Dependencies

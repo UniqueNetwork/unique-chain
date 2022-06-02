@@ -23,6 +23,7 @@ use std::fmt::Write;
 use syn::{
 	Expr, FnArg, GenericArgument, Generics, Ident, ImplItem, ImplItemMethod, ItemImpl, Lit, Meta,
 	MetaNameValue, NestedMeta, PatType, Path, PathArguments, ReturnType, Type, spanned::Spanned,
+	parse_str,
 };
 
 use crate::{
@@ -35,15 +36,20 @@ struct Is {
 	name: Ident,
 	pascal_call_name: Ident,
 	snake_call_name: Ident,
+	via: Option<(Type, Ident)>,
 }
 impl Is {
-	fn try_from(path: &Path) -> syn::Result<Self> {
+	fn new_via(path: &Path, via: Option<(Type, Ident)>) -> syn::Result<Self> {
 		let name = parse_ident_from_path(path, false)?.clone();
 		Ok(Self {
 			pascal_call_name: pascal_ident_to_call(&name),
 			snake_call_name: pascal_ident_to_snake_call(&name),
 			name,
+			via,
 		})
+	}
+	fn new(path: &Path) -> syn::Result<Self> {
+		Self::new_via(path, None)
 	}
 
 	fn expand_call_def(&self, gen_ref: &proc_macro2::TokenStream) -> proc_macro2::TokenStream {
@@ -85,8 +91,18 @@ impl Is {
 	) -> proc_macro2::TokenStream {
 		let name = &self.name;
 		let pascal_call_name = &self.pascal_call_name;
+		let via_typ = self
+			.via
+			.as_ref()
+			.map(|(t, _)| quote! {#t})
+			.unwrap_or_else(|| quote! {Self});
+		let via_map = self
+			.via
+			.as_ref()
+			.map(|(_, i)| quote! {.#i()})
+			.unwrap_or_default();
 		quote! {
-			#call_name::#name(call) => return <Self as ::evm_coder::Callable<#pascal_call_name #generics>>::call(self, Msg {
+			#call_name::#name(call) => return <#via_typ as ::evm_coder::Callable<#pascal_call_name #generics>>::call(self #via_map, Msg {
 				call,
 				caller: c.caller,
 				value: c.value,
@@ -126,8 +142,46 @@ impl FromMeta for IsList {
 		let mut out = Vec::new();
 		for item in items {
 			match item {
-				NestedMeta::Meta(Meta::Path(path)) => out.push(Is::try_from(path)?),
-				_ => return Err(syn::Error::new(item.span(), "expected path").into()),
+				NestedMeta::Meta(Meta::Path(path)) => out.push(Is::new(path)?),
+				// TODO: replace meta parsing with manual
+				NestedMeta::Meta(Meta::List(list))
+					if list.path.is_ident("via") && list.nested.len() == 3 =>
+				{
+					let mut data = list.nested.iter();
+					let typ = match data.next().expect("len == 3") {
+						NestedMeta::Lit(Lit::Str(s)) => {
+							let v = s.value();
+							let typ: Type = parse_str(&v)?;
+							typ
+						}
+						_ => {
+							return Err(syn::Error::new(
+								item.span(),
+								"via typ should be type in string",
+							)
+							.into())
+						}
+					};
+					let via = match data.next().expect("len == 3") {
+						NestedMeta::Meta(Meta::Path(path)) => path
+							.get_ident()
+							.ok_or_else(|| syn::Error::new(item.span(), "via should be ident"))?,
+						_ => return Err(syn::Error::new(item.span(), "via should be ident").into()),
+					};
+					let path = match data.next().expect("len == 3") {
+						NestedMeta::Meta(Meta::Path(path)) => path,
+						_ => return Err(syn::Error::new(item.span(), "path should be path").into()),
+					};
+
+					out.push(Is::new_via(path, Some((typ, via.clone())))?)
+				}
+				_ => {
+					return Err(syn::Error::new(
+						item.span(),
+						"expected either Name or via(\"Type\", getter, Name)",
+					)
+					.into())
+				}
 			}
 		}
 		Ok(Self(out))

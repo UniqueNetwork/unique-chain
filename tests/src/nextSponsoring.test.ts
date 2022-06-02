@@ -68,7 +68,7 @@ describe('Integration Test getNextSponsored(collection_id, owner, item_id):', ()
 
       // After transfer
       await transferExpectSuccess(collectionId, itemId, alice, bob, 1);
-      expect(await getNextSponsored(api, collectionId, normalizeAccountId(alice), itemId)).to.be.equal(5);
+      expect(await getNextSponsored(api, collectionId, normalizeAccountId(alice), itemId)).to.be.lessThanOrEqual(5);
 
       // Not existing token 
       expect(await getNextSponsored(api, collectionId, normalizeAccountId(alice), itemId+1)).to.be.equal(-1);
@@ -86,7 +86,7 @@ describe('Integration Test getNextSponsored(collection_id, owner, item_id):', ()
       expect(await getNextSponsored(api, funCollectionId, normalizeAccountId(alice), 0)).to.be.equal(0);
 
       await transferExpectSuccess(funCollectionId, 0, alice, bob, 10, 'Fungible');
-      expect(await getNextSponsored(api, funCollectionId, normalizeAccountId(alice), 0)).to.be.equal(5);
+      expect(await getNextSponsored(api, funCollectionId, normalizeAccountId(alice), 0)).to.be.lessThanOrEqual(5);
     });
   });
 
@@ -101,7 +101,7 @@ describe('Integration Test getNextSponsored(collection_id, owner, item_id):', ()
       expect(await getNextSponsored(api, refunCollectionId, normalizeAccountId(alice), refunItemId)).to.be.equal(0);
 
       await transferExpectSuccess(refunCollectionId, refunItemId, alice, bob, 10, 'ReFungible');
-      expect(await getNextSponsored(api, refunCollectionId, normalizeAccountId(alice), refunItemId)).to.be.equal(5);
+      expect(await getNextSponsored(api, refunCollectionId, normalizeAccountId(alice), refunItemId)).to.be.lessThanOrEqual(5);
 
       // Not existing token 
       expect(await getNextSponsored(api, refunCollectionId, normalizeAccountId(alice), refunItemId+1)).to.be.equal(-1);

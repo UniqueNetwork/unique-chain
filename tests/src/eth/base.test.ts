@@ -14,7 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, deployFlipper, ethBalanceViaSub, GAS_ARGS, itWeb3, recordEthFee, usingWeb3} from './util/helpers';
+import {
+  collectionIdToAddress, 
+  createEthAccount, 
+  createEthAccountWithBalance, 
+  deployFlipper, 
+  ethBalanceViaSub, 
+  GAS_ARGS, 
+  itWeb3, 
+  recordEthFee, 
+  usingWeb3,
+} from './util/helpers';
 import {expect} from 'chai';
 import {createCollectionExpectSuccess, createItemExpectSuccess, UNIQUE} from '../util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
@@ -79,7 +89,7 @@ describe('ERC165 tests', async () => {
       minter = createEthAccount(web3);
     });
   });
-  
+
   itWeb3('interfaceID == 0xffffffff always false', async ({web3}) => {
     expect(await contract(web3).methods.supportsInterface('0xffffffff').call()).to.be.false;
   });
@@ -101,7 +111,7 @@ describe('ERC165 tests', async () => {
   });
 
   itWeb3('ERC721UniqueExtensions support', async ({web3}) => {
-    expect(await contract(web3).methods.supportsInterface('0xe562194d').call()).to.be.true;
+    expect(await contract(web3).methods.supportsInterface('0xd74d154f').call()).to.be.true;
   });
 
   itWeb3('ERC721Burnable support', async ({web3}) => {

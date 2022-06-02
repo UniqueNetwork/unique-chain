@@ -162,7 +162,7 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 			return None;
 		}
 
-		let helpers = ContractHelpers::<T>(SubstrateRecorder::<T>::new(*target, gas_left));
+		let helpers = ContractHelpers::<T>(SubstrateRecorder::<T>::new(gas_left));
 		pallet_evm_coder_substrate::call(*source, helpers, value, input)
 	}
 

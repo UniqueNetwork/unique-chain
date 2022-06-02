@@ -34,9 +34,26 @@ function defaultApiOptions(): ApiOptions {
         extrinsic: {},
         payload: {},
       },
+      FakeTransactionFinalizer: {
+        extrinsic: {},
+        payload: {},
+      },
     },
     rpc: {
       unique: defs.unique.rpc,
+      // TODO free RMRK! rmrk: defs.rmrk.rpc,
+      eth: {
+        feeHistory: {
+          description: 'Dummy',
+          params: [],
+          type: 'u8',
+        },
+        maxPriorityFeePerGas: {
+          description: 'Dummy',
+          params: [],
+          type: 'u8',
+        },
+      },
     },
   };
 }
