@@ -1,5 +1,6 @@
 use super::*;
 use codec::{Encode, Decode};
+use derivative::Derivative;
 
 #[macro_export]
 macro_rules! map_common_err_to_proxy {
@@ -49,9 +50,10 @@ pub enum CollectionType {
 }
 
 // todo remove default?
-#[derive(Encode, Decode, PartialEq, Eq, Default)]
+#[derive(Encode, Decode, PartialEq, Eq, Derivative)]
+#[derivative(Default(bound=""))]
 pub enum NftType {
-	#[default]
+	#[derivative(Default)]
 	Regular,
 	Resource,
 	FixedPart,
@@ -60,9 +62,10 @@ pub enum NftType {
 }
 
 // todo remove default?
-#[derive(Encode, Decode, PartialEq, Eq, Default)]
+#[derive(Encode, Decode, PartialEq, Eq, Derivative)]
+#[derivative(Default(bound=""))]
 pub enum ResourceType {
-	#[default]
+	#[derivative(Default)]
 	Basic,
 	Composable,
 	Slot,
