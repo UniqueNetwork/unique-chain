@@ -83,7 +83,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			.map_err(|_| "key too long")?;
 		let value = value.try_into().map_err(|_| "value too long")?;
 
-		<Pallet<T>>::set_token_property(self, &caller, TokenId(token_id), Property { key, value })
+		<Pallet<T>>::set_token_property(self, &caller, TokenId(token_id), Property { key, value }, false)
 			.map_err(dispatch_to_evm::<T>)
 	}
 
