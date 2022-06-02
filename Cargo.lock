@@ -6329,6 +6329,7 @@ dependencies = [
 name = "pallet-rmrk-core"
 version = "0.1.0"
 dependencies = [
+ "derivative",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
