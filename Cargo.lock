@@ -5596,7 +5596,9 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "orml-traits",
  "orml-vesting",
+ "orml-xtokens",
  "pallet-aura",
  "pallet-balances",
  "pallet-base-fee",
@@ -5607,6 +5609,7 @@ dependencies = [
  "pallet-evm-contract-helpers",
  "pallet-evm-migration",
  "pallet-evm-transaction-payment",
+ "pallet-foreing-assets",
  "pallet-fungible",
  "pallet-inflation",
  "pallet-nonfungible",
@@ -5700,6 +5703,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "orml-traits"
+version = "0.4.1-dev"
+source = "git+https://github.com/UniqueNetwork/open-runtime-module-library?branch=unique-polkadot-v0.9.18#4690ac0d5e85a35351608d27c4304dfc6df4eb03"
+dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples",
+ "num-traits",
+ "orml-utilities",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
+name = "orml-utilities"
+version = "0.4.1-dev"
+source = "git+https://github.com/UniqueNetwork/open-runtime-module-library?branch=unique-polkadot-v0.9.18#4690ac0d5e85a35351608d27c4304dfc6df4eb03"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "orml-vesting"
 version = "0.4.1-dev"
 source = "git+https://github.com/UniqueNetwork/open-runtime-module-library?branch=unique-polkadot-v0.9.18#4690ac0d5e85a35351608d27c4304dfc6df4eb03"
@@ -5712,6 +5747,40 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "orml-xcm-support"
+version = "0.4.1-dev"
+source = "git+https://github.com/UniqueNetwork/open-runtime-module-library?branch=unique-polkadot-v0.9.18#4690ac0d5e85a35351608d27c4304dfc6df4eb03"
+dependencies = [
+ "frame-support",
+ "orml-traits",
+ "parity-scale-codec",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
+name = "orml-xtokens"
+version = "0.4.1-dev"
+source = "git+https://github.com/UniqueNetwork/open-runtime-module-library?branch=unique-polkadot-v0.9.18#4690ac0d5e85a35351608d27c4304dfc6df4eb03"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "orml-traits",
+ "orml-xcm-support",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -6196,6 +6265,32 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "up-sponsorship",
+]
+
+[[package]]
+name = "pallet-foreing-assets"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "pallet-balances",
+ "pallet-common",
+ "pallet-fungible",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "up-data-structs",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -12343,7 +12438,7 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",
