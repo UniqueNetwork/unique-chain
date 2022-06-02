@@ -51,7 +51,7 @@ pub enum CollectionType {
 
 // todo remove default?
 #[derive(Encode, Decode, PartialEq, Eq, Derivative)]
-#[derivative(Default(bound=""))]
+#[derivative(Default(bound = ""))]
 pub enum NftType {
 	#[derivative(Default)]
 	Regular,
@@ -63,7 +63,7 @@ pub enum NftType {
 
 // todo remove default?
 #[derive(Encode, Decode, PartialEq, Eq, Derivative)]
-#[derivative(Default(bound=""))]
+#[derivative(Default(bound = ""))]
 pub enum ResourceType {
 	#[derivative(Default)]
 	Basic,
