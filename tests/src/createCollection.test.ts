@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-import privateKey from './substrate/privateKey';
 import usingApi, {executeTransaction, submitTransactionAsync} from './substrate/substrate-api';
 import {createCollectionWithPropsExpectFailure, createCollectionExpectFailure, createCollectionExpectSuccess, getCreateCollectionResult, getDetailedCollectionInfo, createCollectionWithPropsExpectSuccess} from './util/helpers';
 
@@ -58,9 +57,9 @@ describe('integration test: ext. createCollection():', () => {
   });
 
   it('Create new collection with extra fields', async () => {
-    await usingApi(async api => {
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper!('//Alice');
+      const bob = privateKeyWrapper!('//Bob');
       const tx = api.tx.unique.createCollectionEx({
         mode: {Fungible: 8},
         permissions: {
@@ -115,8 +114,8 @@ describe('(!negative test!) integration test: ext. createCollection():', () => {
     await createCollectionExpectFailure({tokenPrefix: 'A'.repeat(17), mode: {type: 'NFT'}});
   });
   it('fails when bad limits are set', async () => {
-    await usingApi(async api => {
-      const alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper!('//Alice');
       const tx = api.tx.unique.createCollectionEx({mode: 'NFT', limits: {tokenLimit: 0}});
       await expect(executeTransaction(api, alice, tx)).to.be.rejectedWith(/^common.CollectionTokenLimitExceeded$/);
     });

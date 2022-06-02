@@ -1,6 +1,5 @@
 import {expect} from 'chai';
 import {tokenIdToAddress} from '../eth/util/helpers';
-import privateKey from '../substrate/privateKey';
 import usingApi, {executeTransaction} from '../substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
@@ -19,9 +18,9 @@ let bob: IKeyringPair;
 
 describe('Integration Test: Unnesting', () => {
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper!('//Alice');
+      bob = privateKeyWrapper!('//Bob');
     });
   });
 
@@ -110,9 +109,9 @@ describe('Integration Test: Unnesting', () => {
 
 describe('Negative Test: Unnesting', () => {
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper!('//Alice');
+      bob = privateKeyWrapper!('//Bob');
     });
   });
 

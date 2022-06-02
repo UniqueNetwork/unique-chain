@@ -18,7 +18,6 @@ import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import {default as usingApi} from './substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
@@ -40,9 +39,9 @@ describe('Integration Test getNextSponsored(collection_id, owner, item_id):', ()
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper!('//Alice');
+      bob = privateKeyWrapper!('//Bob');
     });
   });
 

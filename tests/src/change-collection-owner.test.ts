@@ -16,7 +16,6 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import {createCollectionExpectSuccess,
   addCollectionAdminExpectSuccess,
@@ -41,10 +40,10 @@ const expect = chai.expect;
 
 describe('Integration Test changeCollectionOwner(collection_id, new_owner):', () => {
   it('Changing owner changes owner address', async () => {
-    await usingApi(async api => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
+      const alice = privateKeyWrapper!('//Alice');
+      const bob = privateKeyWrapper!('//Bob');
 
       const collection =await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
@@ -60,10 +59,10 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner):', ()
 
 describe('Integration Test changeCollectionOwner(collection_id, new_owner) special checks for exOwner:', () => {
   it('Changing the owner of the collection is not allowed for the former owner', async () => {
-    await usingApi(async api => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
+      const alice = privateKeyWrapper!('//Alice');
+      const bob = privateKeyWrapper!('//Bob');
 
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
@@ -80,11 +79,11 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
   });
 
   it('New collectionOwner has access to sponsorship management operations in the collection', async () => {
-    await usingApi(async api => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
-      const charlie = privateKey('//Charlie');
+      const alice = privateKeyWrapper!('//Alice');
+      const bob = privateKeyWrapper!('//Bob');
+      const charlie = privateKeyWrapper!('//Charlie');
 
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
@@ -124,11 +123,11 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
   });
 
   it('New collectionOwner has access to changeCollectionOwner', async () => {
-    await usingApi(async api => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
-      const charlie = privateKey('//Charlie');
+      const alice = privateKeyWrapper!('//Alice');
+      const bob = privateKeyWrapper!('//Bob');
+      const charlie = privateKeyWrapper!('//Charlie');
 
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
@@ -151,10 +150,10 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
 
 describe('Negative Integration Test changeCollectionOwner(collection_id, new_owner):', () => {
   it('Not owner can\'t change owner.', async () => {
-    await usingApi(async api => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
+      const alice = privateKeyWrapper!('//Alice');
+      const bob = privateKeyWrapper!('//Bob');
 
       const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
       await expect(submitTransactionExpectFailAsync(bob, changeOwnerTx)).to.be.rejected;
@@ -168,10 +167,10 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
   });
 
   it('Collection admin can\'t change owner.', async () => {
-    await usingApi(async api => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
+      const alice = privateKeyWrapper!('//Alice');
+      const bob = privateKeyWrapper!('//Bob');
 
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
 
@@ -187,10 +186,10 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
   });
 
   it('Can\'t change owner of a non-existing collection.', async () => {
-    await usingApi(async api => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = (1<<32) - 1;
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
+      const alice = privateKeyWrapper!('//Alice');
+      const bob = privateKeyWrapper!('//Bob');
 
       const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
       await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
@@ -201,11 +200,11 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
   });
 
   it('Former collectionOwner not allowed to sponsorship management operations in the collection', async () => {
-    await usingApi(async api => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
-      const charlie = privateKey('//Charlie');
+      const alice = privateKeyWrapper!('//Alice');
+      const bob = privateKeyWrapper!('//Bob');
+      const charlie = privateKeyWrapper!('//Charlie');
 
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);

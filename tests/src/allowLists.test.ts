@@ -17,7 +17,6 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import usingApi, {submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import {
   addToAllowListExpectSuccess,
@@ -50,10 +49,10 @@ let charlie: IKeyringPair;
 describe('Integration Test ext. Allow list tests', () => {
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper!('//Alice');
+      bob = privateKeyWrapper!('//Bob');
+      charlie = privateKeyWrapper!('//Charlie');
     });
   });
 

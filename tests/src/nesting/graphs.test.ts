@@ -2,7 +2,6 @@ import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
 import {tokenIdToCross} from '../eth/util/helpers';
-import privateKey from '../substrate/privateKey';
 import usingApi, {executeTransaction} from '../substrate/substrate-api';
 import {getCreateCollectionResult, transferExpectSuccess} from '../util/helpers';
 
@@ -34,8 +33,8 @@ async function buildComplexObjectGraph(api: ApiPromise, sender: IKeyringPair): P
 
 describe('Graphs', () => {
   it('Ouroboros can\'t be created in a complex graph', async () => {
-    await usingApi(async api => {
-      const alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper!('//Alice');
       const collection = await buildComplexObjectGraph(api, alice);
 
       // to self

@@ -18,20 +18,20 @@
 /// <reference path="helpers.d.ts" />
 
 import {ApiPromise} from '@polkadot/api';
-import {addressToEvm, evmToAddress} from '@polkadot/util-crypto';
-import Web3 from 'web3';
-import usingApi, {submitTransactionAsync} from '../../substrate/substrate-api';
 import {IKeyringPair} from '@polkadot/types/types';
+import {addressToEvm, evmToAddress} from '@polkadot/util-crypto';
 import {expect} from 'chai';
-import {CrossAccountId, getDetailedCollectionInfo, getGenericResult, UNIQUE} from '../../util/helpers';
 import * as solc from 'solc';
+import Web3 from 'web3';
 import config from '../../config';
-import privateKey from '../../substrate/privateKey';
-import contractHelpersAbi from './contractHelpersAbi.json';
-import nonFungibleAbi from '../nonFungibleAbi.json';
-import collectionHelpersAbi from '../collectionHelpersAbi.json';
 import getBalance from '../../substrate/get-balance';
+import privateKey from '../../substrate/privateKey';
+import usingApi, {submitTransactionAsync} from '../../substrate/substrate-api';
 import waitNewBlocks from '../../substrate/wait-new-blocks';
+import {CrossAccountId, getDetailedCollectionInfo, getGenericResult, UNIQUE} from '../../util/helpers';
+import collectionHelpersAbi from '../collectionHelpersAbi.json';
+import nonFungibleAbi from '../nonFungibleAbi.json';
+import contractHelpersAbi from './contractHelpersAbi.json';
 
 export const GAS_ARGS = {gas: 2500000};
 
@@ -139,8 +139,8 @@ export async function itWeb3(name: string, cb: (apis: { web3: Web3, api: ApiProm
     });
   });
 }
-itWeb3.only = (name: string, cb: (apis: { web3: Web3, api: ApiPromise }) => any) => itWeb3(name, cb, {only: true});
-itWeb3.skip = (name: string, cb: (apis: { web3: Web3, api: ApiPromise }) => any) => itWeb3(name, cb, {skip: true});
+itWeb3.only = (name: string, cb: (apis: { web3: Web3, api: ApiPromise, privateKeyWrapper?: (account: string) => IKeyringPair }) => any) => itWeb3(name, cb, {only: true});
+itWeb3.skip = (name: string, cb: (apis: { web3: Web3, api: ApiPromise, privateKeyWrapper?: (account: string) => IKeyringPair }) => any) => itWeb3(name, cb, {skip: true});
 
 export async function generateSubstrateEthPair(web3: Web3) {
   const account = web3.eth.accounts.create();

@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import privateKey from '../substrate/privateKey';
 import {expect} from 'chai';
 import {
   contractHelpers,
@@ -64,8 +63,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
   });
 
-  itWeb3('In generous mode, non-allowlisted user transaction will be sponsored', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('In generous mode, non-allowlisted user transaction will be sponsored', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper!('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = await createEthAccountWithBalance(api, web3);
@@ -92,8 +91,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(+balanceAfter).to.be.lessThan(+originalFlipperBalance);
   });
 
-  itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should decrease (allowlisted)', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should decrease (allowlisted)', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper!('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = createEthAccount(web3);
@@ -122,8 +121,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(+balanceAfter).to.be.lessThan(+originalFlipperBalance);
   });
 
-  itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should not decrease (non-allowlisted)', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should not decrease (non-allowlisted)', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper!('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = createEthAccount(web3);
@@ -150,8 +149,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(+balanceAfter).to.be.equals(+originalFlipperBalance);
   });
 
-  itWeb3('Sponsoring is set, an address that has UNQ can send a transaction and it works. User balance should not change', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('Sponsoring is set, an address that has UNQ can send a transaction and it works. User balance should not change', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper!('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = await createEthAccountWithBalance(api, web3);
@@ -179,8 +178,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(await web3.eth.getBalance(caller)).to.be.equals(originalCallerBalance);
   });
 
-  itWeb3('Sponsoring is limited, with setContractRateLimit. The limitation is working if transactions are sent more often, the sender pays the commission.', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('Sponsoring is limited, with setContractRateLimit. The limitation is working if transactions are sent more often, the sender pays the commission.', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper!('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = await createEthAccountWithBalance(api, web3);

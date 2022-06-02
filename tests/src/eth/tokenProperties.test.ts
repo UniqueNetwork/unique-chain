@@ -1,4 +1,3 @@
-import privateKey from '../substrate/privateKey';
 import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, createItemExpectSuccess} from '../util/helpers';
 import {cartesian, collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3} from './util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
@@ -6,8 +5,8 @@ import {expect} from 'chai';
 import {executeTransaction} from '../substrate/substrate-api';
 
 describe('EVM token properties', () => {
-  itWeb3('Can be reconfigured', async({web3, api}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('Can be reconfigured', async({web3, api, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper!('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
     for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
@@ -24,8 +23,8 @@ describe('EVM token properties', () => {
       });
     }
   });
-  itWeb3('Can be set', async({web3, api}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('Can be set', async({web3, api, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper!('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     const token = await createItemExpectSuccess(alice, collection, 'NFT');
@@ -47,8 +46,8 @@ describe('EVM token properties', () => {
     const [{value}] = (await api.rpc.unique.tokenProperties(collection, token, ['testKey'])).toHuman()! as any;
     expect(value).to.equal('testValue');
   });
-  itWeb3('Can be deleted', async({web3, api}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('Can be deleted', async({web3, api, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper!('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     const token = await createItemExpectSuccess(alice, collection, 'NFT');
@@ -72,8 +71,8 @@ describe('EVM token properties', () => {
     const result = (await api.rpc.unique.tokenProperties(collection, token, ['testKey'])).toJSON()! as any;
     expect(result.length).to.equal(0);
   });
-  itWeb3('Can be read', async({web3, api}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('Can be read', async({web3, api, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper!('//Alice');
     const caller = createEthAccount(web3);
     const collection = await createCollectionExpectSuccess({mode: {type:'NFT'}});
     const token = await createItemExpectSuccess(alice, collection, 'NFT');
