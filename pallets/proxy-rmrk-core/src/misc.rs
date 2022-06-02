@@ -37,7 +37,8 @@ where
 	BoundedVec<u8, S>: TryFrom<Vec<u8>>,
 {
 	fn rebind(&self) -> Result<BoundedVec<u8, S>, Error> {
-		BoundedVec::<u8, S>::try_from(self.clone().into_inner()).map_err(|_| "BoundedVec exceeds its limit".into())
+		BoundedVec::<u8, S>::try_from(self.clone().into_inner())
+			.map_err(|_| "BoundedVec exceeds its limit".into())
 	}
 }
 
