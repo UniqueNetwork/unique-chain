@@ -58,7 +58,10 @@ export default {
     ),
     collectionProperties: fn(
       'Get collection properties',
-      [{name: 'collectionId', type: 'u32'}],
+      [
+        {name: 'collectionId', type: 'u32'},
+        {name: 'filterKeys', type: 'Vec<String>', isOptional: true},
+      ],
       'Vec<UpDataStructsRmrkPropertyInfo>',
     ),
     nftProperties: fn(
@@ -66,6 +69,7 @@ export default {
       [
         {name: 'collectionId', type: 'u32'},
         {name: 'nftId', type: 'u32'},
+        {name: 'filterKeys', type: 'Vec<String>', isOptional: true},
       ],
       'Vec<UpDataStructsRmrkPropertyInfo>',
     ),

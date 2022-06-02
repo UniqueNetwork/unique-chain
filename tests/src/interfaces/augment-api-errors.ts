@@ -437,6 +437,33 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    rmrkCore: {
+      CollectionFullOrLocked: AugmentedError<ApiType>;
+      CollectionNotEmpty: AugmentedError<ApiType>;
+      CollectionUnknown: AugmentedError<ApiType>;
+      CorruptedCollectionType: AugmentedError<ApiType>;
+      NftTypeEncodeError: AugmentedError<ApiType>;
+      NoAvailableCollectionId: AugmentedError<ApiType>;
+      NoAvailableNftId: AugmentedError<ApiType>;
+      NoPermission: AugmentedError<ApiType>;
+      RmrkPropertyKeyIsTooLong: AugmentedError<ApiType>;
+      RmrkPropertyValueIsTooLong: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    rmrkEquip: {
+      BaseDoesntExist: AugmentedError<ApiType>;
+      NeedsDefaultThemeFirst: AugmentedError<ApiType>;
+      NoAvailableBaseId: AugmentedError<ApiType>;
+      NoAvailablePartId: AugmentedError<ApiType>;
+      PermissionError: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     structure: {
       /**
        * While searched for owner, encountered depth limit

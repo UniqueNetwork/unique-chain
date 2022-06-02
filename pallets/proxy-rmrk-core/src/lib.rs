@@ -25,6 +25,7 @@ use pallet_common::{
 	Pallet as PalletCommon, Error as CommonError, CollectionHandle, CommonCollectionOperations,
 };
 use pallet_nonfungible::{Pallet as PalletNft, NonfungibleHandle, TokenData};
+use pallet_structure::Pallet as PalletStructure;
 use pallet_evm::account::CrossAccountId;
 use core::convert::AsRef;
 
@@ -56,7 +57,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn collection_index_map)]
-	pub type CollectionIndexMap<T: Config> = 
+	pub type CollectionIndexMap<T: Config> =
 		StorageMap<_, Twox64Concat, RmrkCollectionId, CollectionId, ValueQuery>;
 
 	#[pallet::pallet]
@@ -98,6 +99,10 @@ pub mod pallet {
 			key: RmrkKeyString,
 			value: RmrkValueString,
 		},
+		ResourceAdded {
+			nft_id: RmrkNftId,
+			resource_id: RmrkResourceId,
+		},
 	}
 
 	#[pallet::error]
@@ -106,7 +111,7 @@ pub mod pallet {
 		CorruptedCollectionType,
 		NftTypeEncodeError,
 		RmrkPropertyKeyIsTooLong,
-		RmrkPropertyValueIsTooLong,
+		RmrkPropertyValueIsTooLong, // todo utilize that in RPCs
 
 		/* RMRK compatible events */
 		CollectionNotEmpty,
@@ -115,6 +120,7 @@ pub mod pallet {
 		CollectionUnknown,
 		NoPermission,
 		CollectionFullOrLocked,
+		// todo add resource errors?
 	}
 
 	#[pallet::call]
@@ -144,28 +150,20 @@ pub mod pallet {
 				..Default::default()
 			};
 
-			let collection_id_res =
-				<PalletNft<T>>::init_collection(T::CrossAccountId::from_sub(sender.clone()), data);
-
-			if let Err(DispatchError::Arithmetic(_)) = &collection_id_res {
-				return Err(<Error<T>>::NoAvailableCollectionId.into());
-			}
-
-			let unique_collection_id = collection_id_res?;
-			let rmrk_collection_id = <CollectionIndex<T>>::get();
-
 			<CollectionIndex<T>>::mutate(|n| *n += 1);
-			<CollectionIndexMap<T>>::insert(rmrk_collection_id, unique_collection_id);
 
-			<PalletCommon<T>>::set_scoped_collection_properties(
-				unique_collection_id,
-				PropertyScope::Rmrk,
+			let unique_collection_id = Self::init_collection(
+				T::CrossAccountId::from_sub(sender.clone()),
+				data,
 				[
 					Self::rmrk_property(Metadata, &metadata)?,
 					Self::rmrk_property(CollectionType, &misc::CollectionType::Regular)?,
 				]
 				.into_iter(),
-			)?;
+			)?; //collection_id_res?;
+			let rmrk_collection_id = <CollectionIndex<T>>::get();
+
+			<CollectionIndexMap<T>>::insert(rmrk_collection_id, unique_collection_id);
 
 			Self::deposit_event(Event::CollectionCreated {
 				issuer: sender,
@@ -290,13 +288,26 @@ pub mod pallet {
 				&sender,
 				&cross_owner,
 				&collection,
-				NftType::Regular,
 				[
+					Self::rmrk_property(TokenType, &NftType::Regular)?,
 					Self::rmrk_property(RoyaltyInfo, &royalty_info)?,
 					Self::rmrk_property(Metadata, &metadata)?,
 					Self::rmrk_property(Equipped, &false)?,
-					Self::rmrk_property(ResourceCollection, &None::<CollectionId>)?,
-					Self::rmrk_property(ResourcePriorities, &<Vec<u8>>::new())?,
+					Self::rmrk_property(
+						ResourceCollection,
+						&Self::init_collection(
+							sender.clone(),
+							CreateCollectionData {
+								..Default::default()
+							},
+							[Self::rmrk_property(
+								CollectionType,
+								&misc::CollectionType::Resource,
+							)?]
+							.into_iter(),
+						)?,
+					)?, // todo possibly add limits to the collection if rmrk warrants them
+					Self::rmrk_property(ResourcePriorities, &<Vec<u8>>::new())?, // todo create resource priorities?
 				]
 				.into_iter(),
 			)
@@ -392,6 +403,107 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[transactional]
+		pub fn add_basic_resource(
+			origin: OriginFor<T>,
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+			resource: RmrkBasicResource,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+
+			let resource_id = Self::resource_add(
+				sender,
+				Self::unique_collection_id(collection_id)?,
+				nft_id.into(),
+				[
+					Self::rmrk_property(TokenType, &NftType::Resource)?,
+					Self::rmrk_property(ResourceType, &misc::ResourceType::Basic)?,
+					Self::rmrk_property(Src, &resource.src)?,
+					Self::rmrk_property(Metadata, &resource.metadata)?,
+					Self::rmrk_property(License, &resource.license)?,
+					Self::rmrk_property(Thumb, &resource.thumb)?,
+				]
+				.into_iter(),
+			)?;
+
+			Self::deposit_event(Event::ResourceAdded {
+				nft_id,
+				resource_id,
+			});
+			Ok(())
+		}
+
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[transactional]
+		pub fn add_composable_resource(
+			origin: OriginFor<T>,
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+			_resource_id: RmrkBoundedResource,
+			resource: RmrkComposableResource,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+
+			let resource_id = Self::resource_add(
+				sender,
+				Self::unique_collection_id(collection_id)?,
+				nft_id.into(),
+				[
+					Self::rmrk_property(TokenType, &NftType::Resource)?,
+					Self::rmrk_property(ResourceType, &misc::ResourceType::Composable)?,
+					Self::rmrk_property(Parts, &resource.parts)?,
+					Self::rmrk_property(Base, &resource.base)?,
+					Self::rmrk_property(Src, &resource.src)?,
+					Self::rmrk_property(Metadata, &resource.metadata)?,
+					Self::rmrk_property(License, &resource.license)?,
+					Self::rmrk_property(Thumb, &resource.thumb)?,
+				]
+				.into_iter(),
+			)?;
+
+			Self::deposit_event(Event::ResourceAdded {
+				nft_id,
+				resource_id,
+			});
+			Ok(())
+		}
+
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[transactional]
+		pub fn add_slot_resource(
+			origin: OriginFor<T>,
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+			resource: RmrkSlotResource,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+
+			let resource_id = Self::resource_add(
+				sender,
+				Self::unique_collection_id(collection_id)?,
+				nft_id.into(),
+				[
+					Self::rmrk_property(TokenType, &NftType::Resource)?,
+					Self::rmrk_property(ResourceType, &misc::ResourceType::Slot)?,
+					Self::rmrk_property(Base, &resource.base)?,
+					Self::rmrk_property(Src, &resource.src)?,
+					Self::rmrk_property(Metadata, &resource.metadata)?,
+					Self::rmrk_property(Slot, &resource.slot)?,
+					Self::rmrk_property(License, &resource.license)?,
+					Self::rmrk_property(Thumb, &resource.thumb)?,
+				]
+				.into_iter(),
+			)?;
+
+			Self::deposit_event(Event::ResourceAdded {
+				nft_id,
+				resource_id,
+			});
+			Ok(())
+		}
 	}
 }
 
@@ -422,14 +534,32 @@ impl<T: Config> Pallet<T> {
 		Ok(property)
 	}
 
+	fn init_collection(
+		sender: T::CrossAccountId,
+		data: CreateCollectionData<T::AccountId>,
+		properties: impl Iterator<Item = Property>,
+	) -> Result<CollectionId, DispatchError> {
+		let collection_id = <PalletNft<T>>::init_collection(sender, data);
+
+		if let Err(DispatchError::Arithmetic(_)) = &collection_id {
+			return Err(<Error<T>>::NoAvailableCollectionId.into());
+		}
+
+		<PalletCommon<T>>::set_scoped_collection_properties(
+			collection_id?,
+			PropertyScope::Rmrk,
+			properties,
+		)?;
+
+		collection_id
+	}
+
 	pub fn create_nft(
 		sender: &T::CrossAccountId,
 		owner: &T::CrossAccountId,
 		collection: &NonfungibleHandle<T>,
-		nft_type: NftType,
 		properties: impl Iterator<Item = Property>,
 	) -> Result<TokenId, DispatchError> {
-		todo!("store nft type");
 		let data = CreateNftExData {
 			properties: BoundedVec::default(),
 			owner: owner.clone(),
@@ -465,6 +595,57 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	fn resource_add(
+		sender: T::AccountId,
+		collection_id: CollectionId,
+		token_id: TokenId,
+		resource_properties: impl Iterator<Item = Property>,
+	) -> Result<RmrkResourceId, DispatchError> {
+		let collection =
+			Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
+		ensure!(collection.owner == sender, Error::<T>::NoPermission);
+
+		// Check NFT lock status // todo depends on market, maybe later
+		//ensure!(!Pallet::<T>::is_locked(collection_id, nft_id), pallet_uniques::Error::<T>::Locked);
+
+		let sender = T::CrossAccountId::from_sub(sender);
+		let budget = budget::Value::new(10);
+		let pending = <PalletStructure<T>>::check_indirectly_owned(
+			sender.clone(),
+			collection_id,
+			token_id,
+			None,
+			&budget,
+		)?;
+
+		let resource_collection_id: CollectionId =
+			Self::get_nft_property(collection_id, token_id, ResourceCollection)?
+				.decode_or_default();
+		let resource_collection =
+			Self::get_typed_nft_collection(resource_collection_id, misc::CollectionType::Resource)?;
+
+		// todo probably add extra connections to bases, slots, etc., when RMRK starts to use them
+
+		let resource_id = Self::create_nft(
+			&sender, // todo owner of the nft?
+			&sender,
+			&resource_collection,
+			resource_properties.chain(
+				[
+					Self::rmrk_property(PendingResourceAccept, &pending)?,
+					Self::rmrk_property(PendingResourceRemoval, &false)?,
+				]
+				.into_iter(),
+			),
+		)
+		.map_err(|err| match err {
+			DispatchError::Arithmetic(_) => <Error<T>>::NoAvailableNftId.into(),
+			err => Self::map_common_err_to_proxy(err),
+		})?;
+
+		Ok(resource_id.0)
+	}
+
 	fn change_collection_owner(
 		collection_id: CollectionId,
 		collection_type: misc::CollectionType,
@@ -493,8 +674,11 @@ impl<T: Config> Pallet<T> {
 		<CollectionIndex<T>>::get()
 	}
 
-	pub fn unique_collection_id(rmrk_collection_id: RmrkCollectionId) -> Result<CollectionId, DispatchError> {
-		<CollectionIndexMap<T>>::try_get(rmrk_collection_id).map_err(|_| <Error<T>>::CollectionUnknown.into())
+	pub fn unique_collection_id(
+		rmrk_collection_id: RmrkCollectionId,
+	) -> Result<CollectionId, DispatchError> {
+		<CollectionIndexMap<T>>::try_get(rmrk_collection_id)
+			.map_err(|_| <Error<T>>::CollectionUnknown.into())
 	}
 
 	pub fn get_nft_collection(
@@ -511,10 +695,6 @@ impl<T: Config> Pallet<T> {
 
 	pub fn collection_exists(collection_id: CollectionId) -> bool {
 		<CollectionHandle<T>>::try_get(collection_id).is_ok()
-	}
-
-	pub fn nft_exists(collection_id: CollectionId, nft_id: TokenId) -> bool {
-		<TokenData<T>>::contains_key((collection_id, nft_id))
 	}
 
 	pub fn get_collection_property(
@@ -553,6 +733,15 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	pub fn get_typed_nft_collection(
+		collection_id: CollectionId,
+		collection_type: misc::CollectionType,
+	) -> Result<NonfungibleHandle<T>, DispatchError> {
+		Self::ensure_collection_type(collection_id, collection_type)?;
+
+		Self::get_nft_collection(collection_id)
+	}
+
 	pub fn get_nft_property(
 		collection_id: CollectionId,
 		nft_id: TokenId,
@@ -560,17 +749,23 @@ impl<T: Config> Pallet<T> {
 	) -> Result<PropertyValue, DispatchError> {
 		let nft_property = <PalletNft<T>>::token_properties((collection_id, nft_id))
 			.get(&Self::rmrk_property_key(key)?)
-			.ok_or(<Error<T>>::NoAvailableNftId)?
+			.ok_or(<Error<T>>::NoAvailableNftId)? // todo replace with better error
 			.clone();
 
 		Ok(nft_property)
 	}
 
+	pub fn nft_exists(collection_id: CollectionId, nft_id: TokenId) -> bool {
+		<TokenData<T>>::contains_key((collection_id, nft_id))
+	}
+
 	pub fn get_nft_type(
-		_collection_id: CollectionId,
-		_token_id: TokenId,
+		collection_id: CollectionId,
+		token_id: TokenId,
 	) -> Result<NftType, DispatchError> {
-		todo!("should get it from properties?")
+		Ok(Self::get_nft_property(collection_id, token_id, TokenType)?.decode_or_default())
+		// todo throw error
+		// NftTypeEncodeError?
 	}
 
 	pub fn ensure_nft_type(
@@ -673,15 +868,6 @@ impl<T: Config> Pallet<T> {
 		});
 
 		Ok(properties)
-	}
-
-	pub fn get_typed_nft_collection(
-		collection_id: CollectionId,
-		collection_type: misc::CollectionType,
-	) -> Result<NonfungibleHandle<T>, DispatchError> {
-		Self::ensure_collection_type(collection_id, collection_type)?;
-
-		Self::get_nft_collection(collection_id)
 	}
 
 	fn map_common_err_to_proxy(err: DispatchError) -> DispatchError {

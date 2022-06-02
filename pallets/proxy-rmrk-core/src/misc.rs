@@ -18,6 +18,7 @@ pub trait RmrkDecode<T: Decode + Default, S> {
 	fn decode_or_default(&self) -> T;
 }
 
+// todo fail if unwrap doesn't work
 impl<T: Decode + Default, S> RmrkDecode<T, S> for BoundedVec<u8, S> {
 	fn decode_or_default(&self) -> T {
 		let mut value = self.as_slice();
@@ -30,6 +31,7 @@ pub trait RmrkRebind<T, S> {
 	fn rebind(&self) -> BoundedVec<u8, S>;
 }
 
+// todo fail if unwrap doesn't work
 impl<T, S> RmrkRebind<T, S> for BoundedVec<u8, T>
 where
 	BoundedVec<u8, S>: TryFrom<Vec<u8>>,
@@ -46,11 +48,22 @@ pub enum CollectionType {
 	Base,
 }
 
-#[derive(Encode, Decode, PartialEq, Eq)]
+// todo remove default?
+#[derive(Encode, Decode, PartialEq, Eq, Default)]
 pub enum NftType {
+	#[default]
 	Regular,
 	Resource,
 	FixedPart,
 	SlotPart,
 	Theme,
+}
+
+// todo remove default?
+#[derive(Encode, Decode, PartialEq, Eq, Default)]
+pub enum ResourceType {
+	#[default]
+	Basic,
+	Composable,
+	Slot,
 }

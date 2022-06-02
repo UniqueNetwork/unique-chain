@@ -282,17 +282,16 @@ pub enum ResourceTypes<BoundedString: Default, BoundedParts> {
 #[cfg_attr(
 	feature = "std",
 	serde(bound = r#"
-			BoundedResource: AsRef<[u8]>,
 			BoundedString: AsRef<[u8]>,
 			BoundedParts: AsRef<[PartId]>
 		"#)
 )]
-pub struct ResourceInfo<BoundedResource, BoundedString: Default, BoundedParts> {
+pub struct ResourceInfo<BoundedString: Default, BoundedParts> {
 	/// id is a 5-character string of reasonable uniqueness.
 	/// The combination of base ID and resource id should be unique across the entire RMRK
 	/// ecosystem which
-	#[cfg_attr(feature = "std", serde(with = "serialize::vec"))]
-	pub id: BoundedResource,
+	//#[cfg_attr(feature = "std", serde(with = "serialize::vec"))]
+	pub id: ResourceId,
 
 	/// Resource
 	pub resource: ResourceTypes<BoundedString, BoundedParts>,

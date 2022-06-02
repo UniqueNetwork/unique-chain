@@ -166,8 +166,8 @@ pub mod pallet {
 				&sender,
 				owner,
 				&collection,
-				NftType::Theme,
 				[
+					<PalletCore<T>>::rmrk_property(TokenType, &NftType::Theme)?,
 					<PalletCore<T>>::rmrk_property(ThemeName, &theme.name)?,
 					<PalletCore<T>>::rmrk_property(ThemeInherit, &theme.inherit)?,
 				]
@@ -212,8 +212,8 @@ impl<T: Config> Pallet<T> {
 			sender,
 			owner,
 			collection,
-			nft_type,
 			[
+				<PalletCore<T>>::rmrk_property(TokenType, &nft_type)?,
 				<PalletCore<T>>::rmrk_property(Src, &src)?,
 				<PalletCore<T>>::rmrk_property(ZIndex, &z_index)?,
 			]
