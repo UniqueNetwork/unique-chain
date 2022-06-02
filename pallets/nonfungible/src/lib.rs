@@ -447,8 +447,9 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		property: Property,
+		is_token_create: bool,
 	) -> DispatchResult {
-		Self::check_token_change_permission(collection, sender, token_id, &property.key)?;
+		Self::check_token_change_permission(collection, sender, token_id, &property.key, is_token_create)?;
 
 		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
 			let property = property.clone();
@@ -471,9 +472,10 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties: Vec<Property>,
+		is_token_create: bool,
 	) -> DispatchResult {
 		for property in properties {
-			Self::set_token_property(collection, sender, token_id, property)?;
+			Self::set_token_property(collection, sender, token_id, property, is_token_create)?;
 		}
 
 		Ok(())
@@ -485,7 +487,7 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		property_key: PropertyKey,
 	) -> DispatchResult {
-		Self::check_token_change_permission(collection, sender, token_id, &property_key)?;
+		Self::check_token_change_permission(collection, sender, token_id, &property_key, false)?;
 
 		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
 			properties.remove(&property_key)
@@ -506,6 +508,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		property_key: &PropertyKey,
+		is_token_create: bool,
 	) -> DispatchResult {
 		let permission = <PalletCommon<T>>::property_permissions(collection.id)
 			.get(property_key)
@@ -534,6 +537,10 @@ impl<T: Config> Pallet<T> {
 				token_owner,
 				..
 			} => {
+				if is_token_create && (collection_admin || token_owner) {
+					return Ok(());
+				}
+
 				let mut check_result = Err(<CommonError<T>>::NoPermission.into());
 
 				if collection_admin {
@@ -772,6 +779,7 @@ impl<T: Config> Pallet<T> {
 					sender,
 					TokenId(token),
 					data.properties.clone().into_inner(),
+					true,
 				) {
 					return TransactionOutcome::Rollback(Err(e));
 				}
