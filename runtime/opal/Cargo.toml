@@ -104,6 +104,7 @@ std = [
     'unique-runtime-common/std',
 
     "orml-vesting/std",
+    "orml-xtokens/std",
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 
@@ -367,6 +368,18 @@ branch = 'release-v0.9.18'
 default-features = false
 
 [dependencies.orml-vesting]
+git = 'https://github.com/UniqueNetwork/open-runtime-module-library'
+branch = 'unique-polkadot-v0.9.18'
+version = "0.4.1-dev"
+default-features = false
+
+[dependencies.orml-xtokens]
+git = 'https://github.com/UniqueNetwork/open-runtime-module-library'
+branch = 'unique-polkadot-v0.9.18'
+version = "0.4.1-dev"
+default-features = false
+
+[dependencies.orml-traits]
 git = 'https://github.com/UniqueNetwork/open-runtime-module-library'
 branch = 'unique-polkadot-v0.9.18'
 version = "0.4.1-dev"

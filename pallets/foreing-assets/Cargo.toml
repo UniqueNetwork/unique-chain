@@ -15,6 +15,8 @@ frame-support = { git = "https://github.com/paritytech/substrate", branch = "pol
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", default-features = false }
 #primitives = { package = "acala-primitives", path = "../../primitives", default-features = false }
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
+pallet-common = { default-features = false, path = '../common' }
+pallet-fungible = { default-features = false, path = '../fungible' }
 
 xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.18", default-features = false }
 xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.18", default-features = false }
@@ -46,6 +48,8 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"up-data-structs/std",
+	"pallet-common/std",
+	"pallet-fungible/std",
 	# "primitives/std",
 	# "xcm/std",
 	# "xcm-builder/std",

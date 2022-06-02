@@ -56,7 +56,9 @@ pub use frame_support::{
 	dispatch::DispatchResult,
 	PalletId, parameter_types, StorageValue, ConsensusEngineId,
 	traits::{
+		fungibles::{self, Balanced, CreditOf},
 		tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Everything,
+		Contains,
 		Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier,
 		OnUnbalanced, Randomness, FindAuthor,
 	},
@@ -86,6 +88,7 @@ use sp_runtime::{
 	SaturatedConversion,
 };
 
+use orml_traits::{parameter_type_with_key, MultiReservableCurrency};
 // pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 
@@ -94,13 +97,15 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
-	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, AsPrefixedGeneralIndex, 
+	CurrencyAdapter, ConvertedConcreteAssetId,
+	EnsureXcmOrigin, FixedWeightBounds, FungiblesAdapter, LocationInverter, NativeAsset, ParentAsSuperuser,
 	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 	ParentIsPreset,
 };
 use xcm_executor::{Config, XcmExecutor, Assets};
+use xcm_executor::traits::JustTry;
 use sp_std::{marker::PhantomData};
 
 use xcm::latest::{
@@ -111,8 +116,8 @@ use xcm::latest::{
 	Error as XcmError,
 };
 use xcm_executor::traits::{MatchesFungible, WeightTrader};
-//use xcm_executor::traits::MatchesFungible;
 use sp_runtime::traits::CheckedConversion;
+use pallet_foreing_assets::{AssetIds, AssetIdMaps};
 
 use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
 
@@ -145,6 +150,8 @@ pub type Hash = sp_core::H256;
 
 /// Digest item type.
 pub type DigestItem = generic::DigestItem;
+
+pub type AssetId = u32;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -626,6 +633,52 @@ impl<B: TryFrom<u128>> MatchesFungible<B> for OnlySelfCurrency {
 	}
 }
 
+// impl<T: TryFrom<u32>, B: TryFrom<u128>> MatchesFungible<B> for OnlySelfCurrency<T> {
+// 	fn matches_fungible(a: &MultiAsset) -> Option<B> {
+// 		match (&a.id, &a.fun) {
+// 			(Concrete(_), XcmFungible(ref amount)) => CheckedConversion::checked_from(*amount),
+// 			_ => None,
+// 		}
+// 	}
+// }
+
+// impl<T: Get<MultiLocation>, B: TryFrom<u128>> MatchesFungible<B> for IsConcrete<T> {
+// 	fn matches_fungible(a: &MultiAsset) -> Option<B> {
+// 		match (&a.id, &a.fun) {
+// 			(Concrete(ref id), Fungible(ref amount)) if id == &T::get() =>
+// 				CheckedConversion::checked_from(*amount),
+// 			_ => None,
+// 		}
+// 	}
+// }
+
+
+/// A `MatchesFungible` implementation. It matches concrete fungible assets
+/// whose `id` could be converted into `CurrencyId`.
+/// 
+pub struct IsNativeConcrete<CurrencyId, CurrencyIdConvert>(PhantomData<(CurrencyId, CurrencyIdConvert)>);
+impl<CurrencyId, CurrencyIdConvert, Amount> MatchesFungible<Amount> for IsNativeConcrete<CurrencyId, CurrencyIdConvert>
+where
+	CurrencyIdConvert: TryFrom<u64>,// Convert<MultiLocation, Option<CurrencyId>>,
+	Amount: TryFrom<u128>,
+{
+	fn matches_fungible(a: &MultiAsset) -> Option<Amount> {
+
+		match (&a.id, &a.fun) {
+			(Concrete(_), XcmFungible(ref amount)) => CheckedConversion::checked_from(*amount),
+			_ => None,
+		}
+
+		// if let (Fungible(ref amount), Concrete(ref location)) = (&a.fun, &a.id) {
+		// 	if CurrencyIdConvert::convert(location.clone()).is_some() {
+		// 		return CheckedConversion::checked_from(*amount);
+		// 	}
+		// }
+		// None
+	}
+}
+
+
 /// Means for transacting assets on this chain.
 pub type LocalAssetTransactor = CurrencyAdapter<
 	// Use this currency:
@@ -639,6 +692,90 @@ pub type LocalAssetTransactor = CurrencyAdapter<
 	// We don't track any teleports.
 	(),
 >;
+
+parameter_types! {
+	pub StatemintLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(1000)));
+	// ALWAYS ensure that the index in PalletInstance stays up-to-date with
+	// Statemint's Assets pallet index
+	pub StatemintAssetsPalletLocation: MultiLocation =
+		MultiLocation::new(1, X2(Parachain(1000), PalletInstance(50)));
+	pub CheckingAccount: AccountId = PolkadotXcm::check_account();
+}
+
+/// Allow checking in assets that have issuance > 0.
+pub struct NonZeroIssuance<AccountId, ForeingAssets>(PhantomData<(AccountId, ForeingAssets)>);
+impl<AccountId, ForeingAssets> Contains<<ForeingAssets as fungibles::Inspect<AccountId>>::AssetId>
+	for NonZeroIssuance<AccountId, ForeingAssets>
+where
+	ForeingAssets: fungibles::Inspect<AccountId>,
+{
+	fn contains(id: &<ForeingAssets as fungibles::Inspect<AccountId>>::AssetId) -> bool {
+		!ForeingAssets::total_issuance(*id).is_zero()
+	}
+}
+
+use xcm_executor::traits::{Convert, Error as MatchError, MatchesFungibles, TransactAsset};
+
+pub struct ConvertedConcreteAssetId2<AssetId, Balance, ConvertAssetId, ConvertBalance>(
+	PhantomData<(AssetId, Balance, ConvertAssetId, ConvertBalance)>,
+);
+impl<
+		AssetId: Clone,
+		Balance: Clone,
+		ConvertAssetId: Convert<MultiLocation, AssetId>,
+		ConvertBalance: Convert<u128, Balance>,
+	> MatchesFungibles<AssetId, Balance>
+	for ConvertedConcreteAssetId2<AssetId, Balance, ConvertAssetId, ConvertBalance>
+{
+	fn matches_fungibles(a: &MultiAsset) -> Result<(AssetId, Balance), MatchError> {
+		Err(MatchError::AssetNotFound)
+		// match (&a.id, &a.fun) {
+		// 	(Concrete(_), XcmFungible(ref amount)) => CheckedConversion::checked_from(*amount),
+		// 	_ => None,
+		// }
+
+		// let (amount, id) = match (&a.fun, &a.id) {
+		// 	(Fungible(ref amount), Concrete(ref id)) => (amount, id),
+		// 	_ => return Err(MatchError::AssetNotFound),
+		// };
+		// let what =
+		// 	ConvertAssetId::convert_ref(id).map_err(|_| MatchError::AssetIdConversionFailed)?;
+		// let amount = ConvertBalance::convert_ref(amount)
+		// 	.map_err(|_| MatchError::AmountToBalanceConversionFailed)?;
+		// Ok((what, amount))
+	}
+}
+
+/// Means for transacting assets besides the native currency on this chain.
+pub type FungiblesTransactor = FungiblesAdapter<
+	// Use this fungibles implementation:
+	ForeingAssets,
+	// Use this currency when it is a fungible asset matching the given location or name:
+	// IsNativeConcrete<
+	//  	AssetId,
+	// 	AsPrefixedGeneralIndex<StatemintAssetsPalletLocation, AssetId, JustTry>,
+	// >,
+	ConvertedConcreteAssetId2<
+		AssetId,
+		u128,
+		AsPrefixedGeneralIndex<StatemintAssetsPalletLocation, AssetId, JustTry>,
+		JustTry,
+	>,
+
+
+	// Convert an XCM MultiLocation into a local account id:
+	LocationToAccountId,
+	// Our chain's account ID type (we can't get away without mentioning it explicitly):
+	AccountId,
+	// We only want to allow teleports of known assets. We use non-zero issuance as an indication
+	// that this asset is known.
+	NonZeroIssuance<AccountId, ForeingAssets>,
+	// The account to use for tracking teleports.
+	CheckingAccount,
+>;
+
+/// Means for transacting assets on this chain.
+pub type AssetTransactors = LocalAssetTransactor;// (LocalAssetTransactor, FungiblesTransactor);
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
@@ -774,7 +911,7 @@ impl Config for XcmConfig {
 	type Call = Call;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = LocalAssetTransactor;
+	type AssetTransactor = AssetTransactors;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = NativeAsset;
 	type IsTeleporter = (); // Teleportation is disabled
@@ -948,6 +1085,68 @@ impl pallet_foreing_assets::Config for Runtime {
 	type WeightInfo = ();//weights::module_asset_registry::WeightInfo<Runtime>;
 }
 
+
+pub struct CurrencyIdConvert;
+impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
+	fn convert(id: CurrencyId) -> Option<MultiLocation> {
+		match id {
+			CurrencyId::ForeignAsset(foreign_asset_id) => {
+				XcmForeignAssetIdMapping::<Runtime>::get_multi_location(foreign_asset_id)
+			}
+			_ => None,
+		}
+	}
+}
+impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
+	fn convert(location: MultiLocation) -> Option<CurrencyId> {
+		if let Some(currency_id) = XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location.clone()) {
+			return Some(currency_id);
+		}
+
+		None
+	}
+}
+impl Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert {
+	fn convert(asset: MultiAsset) -> Option<CurrencyId> {
+		if let MultiAsset {
+			id: Concrete(location), ..
+		} = asset
+		{
+			Self::convert(location)
+		} else {
+			None
+		}
+	}
+}
+
+parameter_types! {
+	pub const BaseXcmWeight: Weight = 100_000_000; // TODO: recheck this
+	pub const MaxAssetsForTransfer: usize = 2;
+}
+
+parameter_type_with_key! {
+	pub ParachainMinFee: |_location: MultiLocation| -> u128 {
+		u128::MAX
+	};
+}
+
+impl orml_xtokens::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type CurrencyId = AssetIds;
+	type CurrencyIdConvert = CurrencyIdConvert;
+	type AccountIdToMultiLocation = AccountIdToMultiLocation;
+	type SelfLocation = SelfLocation;
+	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+	type BaseXcmWeight = BaseXcmWeight;
+	type LocationInverter = LocationInverter<Ancestry>;
+	type MaxAssetsForTransfer = MaxAssetsForTransfer;
+	type MinXcmFee = ParachainMinFee;
+	type MultiLocationsFilter = Everything;
+	type ReserveProvider = AbsoluteReserveProvider;
+}
+
 parameter_types! {
 	// 0x842899ECF380553E8a4de75bF534cdf6fBF64049
 	pub const HelpersContractAddress: H160 = H160([
@@ -980,6 +1179,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 36,
 		Vesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 37,
+		XTokens: orml_xtokens = 38,
 		// Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
 		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 

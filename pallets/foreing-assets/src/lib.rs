@@ -46,12 +46,16 @@ use frame_support::{
 	dispatch::DispatchResult,
 	ensure,
 	pallet_prelude::*,
-	traits::{Currency, EnsureOrigin},
+	traits::{fungible, fungibles, Currency, EnsureOrigin},
 	transactional,
 	weights::constants::WEIGHT_PER_SECOND,
 	RuntimeDebug,
 };
 use frame_system::pallet_prelude::*;
+use up_data_structs::{CollectionMode};
+use pallet_common::{Error as CommonError, Event as CommonEvent, Pallet as PalletCommon};
+use pallet_fungible::{Pallet as PalletFungible};
+
 // use module_support::{AssetIdMapping, EVMBridge, Erc20InfoMapping, InvokeContext};
 // use primitives::{
 // 	currency::{CurrencyIdType, DexShare, DexShareType, Erc20Id, ForeignAssetId, Lease, StableAssetPoolId, TokenInfo},
@@ -63,7 +67,7 @@ use frame_system::pallet_prelude::*;
 // 	CurrencyId,
 // };
 use scale_info::{prelude::format, TypeInfo};
-use sp_runtime::{traits::One, ArithmeticError, FixedPointNumber, FixedU128};
+use sp_runtime::{traits::{One, Zero}, ArithmeticError, FixedPointNumber, FixedU128};
 use sp_std::{boxed::Box, vec::Vec};
 use up_data_structs::{AccessMode, CollectionId, TokenId, CreateCollectionData};
 
@@ -74,22 +78,25 @@ use xcm::{v1::MultiLocation, VersionedMultiLocation};
 use xcm_builder::TakeRevenue;
 use xcm_executor::{traits::WeightTrader, Assets};
 
+pub type ForeignAssetId = u32;
+pub type CurrencyId = ForeignAssetId;
+
 // mod mock;
 // mod tests;
+mod impl_fungibles;
 mod weights;
 
 pub use module::*;
 pub use weights::WeightInfo;
 
 
-pub type ForeignAssetId = u16;
-pub type CurrencyId = ForeignAssetId;
+
 
 /// Type alias for currency balance.
 pub type BalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 /// A mapping between ForeignAssetId and AssetMetadata.
-pub trait ForeignAssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata> {
+pub trait AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata> {
 	/// Returns the AssetMetadata associated with a given ForeignAssetId.
 	fn get_asset_metadata(foreign_asset_id: ForeignAssetId) -> Option<AssetMetadata>;
 	/// Returns the MultiLocation associated with a given ForeignAssetId.
@@ -103,7 +110,11 @@ pub mod module {
 	use super::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_common::Config + pallet_fungible::Config
+	// + 
+	// fungibles::Mutate<Self::AccountId, AssetId = CurrencyId, Balance = BalanceOf<Self>>	+ 
+	// fungibles::Transfer<Self::AccountId, AssetId = CurrencyId, Balance = BalanceOf<Self>> 
+	{
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -210,6 +221,13 @@ pub mod module {
 	pub type AssetMetadatas<T: Config> =
 		StorageMap<_, Twox64Concat, AssetIds, AssetMetadata<BalanceOf<T>>, OptionQuery>;
 
+	/// The storages for assets to fungible collection binding
+	///
+	#[pallet::storage]
+	#[pallet::getter(fn asset_binding)]
+	pub type AssetBinding<T: Config> =
+		StorageMap<_, Twox64Concat, ForeignAssetId, CollectionId, OptionQuery>;		
+
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
@@ -247,17 +265,33 @@ pub mod module {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(T::WeightInfo::register_foreign_asset())]
+		#[pallet::weight(<T as Config>::WeightInfo::register_foreign_asset())]
 		#[transactional]
 		pub fn register_foreign_asset(
 			origin: OriginFor<T>,
+			owner: T::AccountId,
 			location: Box<VersionedMultiLocation>,
 			metadata: Box<AssetMetadata<BalanceOf<T>>>,
 		) -> DispatchResult {
-			T::RegisterOrigin::ensure_origin(origin)?;
+			T::RegisterOrigin::ensure_origin(origin.clone())?;
 
 			let location: MultiLocation = (*location).try_into().map_err(|()| Error::<T>::BadLocation)?;
-			let foreign_asset_id = Self::do_register_foreign_asset(&location, &metadata)?;
+
+			let name: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
+			let description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
+			
+			// token_prefix: data.token_prefix,
+			let data: CreateCollectionData<T::AccountId> = CreateCollectionData {
+				name: name.try_into().unwrap(),
+				description: description.try_into().unwrap(),
+				mode: CollectionMode::Fungible(18),
+				..Default::default()
+			};
+
+			// throw an error on bad result
+			let bounded_collection_id = <PalletCommon<T>>::init_collection(owner, data).unwrap();
+			//let bounded_collection_id = CollectionId(0);
+			let foreign_asset_id = Self::do_register_foreign_asset(&location, &metadata, bounded_collection_id)?;
 
 			Self::deposit_event(Event::<T>::ForeignAssetRegistered {
 				asset_id: foreign_asset_id,
@@ -267,7 +301,7 @@ pub mod module {
 			Ok(())
 		}
 
-		#[pallet::weight(T::WeightInfo::update_foreign_asset())]
+		#[pallet::weight(<T as Config>::WeightInfo::update_foreign_asset())]
 		#[transactional]
 		pub fn update_foreign_asset(
 			origin: OriginFor<T>,
@@ -303,6 +337,7 @@ impl<T: Config> Pallet<T> {
 	fn do_register_foreign_asset(
 		location: &MultiLocation,
 		metadata: &AssetMetadata<BalanceOf<T>>,
+		bounded_collection_id: CollectionId,
 	) -> Result<ForeignAssetId, DispatchError> {
 		let foreign_asset_id = Self::get_next_foreign_asset_id()?;
 		LocationToCurrencyIds::<T>::try_mutate(location, |maybe_currency_ids| -> DispatchResult {
@@ -319,10 +354,19 @@ impl<T: Config> Pallet<T> {
 					|maybe_asset_metadatas| -> DispatchResult {
 						ensure!(maybe_asset_metadatas.is_none(), Error::<T>::AssetIdExisted);
 
+						// insert bounded collection in metadata
+						//let mut md = metadata.clone();
+						//md.mapped_collection = bounded_collection_id;
+
 						*maybe_asset_metadatas = Some(metadata.clone());
 						Ok(())
 					},
 				)
+			})?;
+
+			AssetBinding::<T>::try_mutate(foreign_asset_id, |collection_id| -> DispatchResult {
+				*collection_id = Some(bounded_collection_id);
+				Ok(())
 			})
 		})?;
 
@@ -361,23 +405,23 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-// pub struct AssetIdMaps<T>(sp_std::marker::PhantomData<T>);
+pub struct AssetIdMaps<T>(sp_std::marker::PhantomData<T>);
 
-// impl<T: Config> AssetIdMapping<StableAssetPoolId, ForeignAssetId, MultiLocation, AssetMetadata<BalanceOf<T>>>
-// 	for AssetIdMaps<T>
-// {
-// 	fn get_foreign_asset_metadata(foreign_asset_id: ForeignAssetId) -> Option<AssetMetadata<BalanceOf<T>>> {
-// 		Pallet::<T>::asset_metadatas(AssetIds::ForeignAssetId(foreign_asset_id))
-// 	}
+impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<BalanceOf<T>>>
+	for AssetIdMaps<T>
+{
+	fn get_asset_metadata(foreign_asset_id: ForeignAssetId) -> Option<AssetMetadata<BalanceOf<T>>> {
+		Pallet::<T>::asset_metadatas(AssetIds::ForeignAssetId(foreign_asset_id))
+	}
 
-// 	fn get_multi_location(foreign_asset_id: ForeignAssetId) -> Option<MultiLocation> {
-// 		Pallet::<T>::foreign_asset_locations(foreign_asset_id)
-// 	}
+	fn get_multi_location(foreign_asset_id: ForeignAssetId) -> Option<MultiLocation> {
+		Pallet::<T>::foreign_asset_locations(foreign_asset_id)
+	}
 
-// 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
-// 		Pallet::<T>::location_to_currency_ids(multi_location)
-// 	}
-// }
+	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
+		Pallet::<T>::location_to_currency_ids(multi_location)
+	}
+}
 
 /// Simple fee calculator that requires payment in a single fungible at a fixed rate.
 ///
@@ -429,7 +473,7 @@ where
 					// The integration tests can ensure the ed is non-zero.
 					let ed_ratio = FixedU128::saturating_from_rational(
 						asset_metadatas.minimal_balance.into(),
-						T::Currency::minimum_balance().into(),
+						<T as module::Config>::Currency::minimum_balance().into(),
 					);
 					// The WEIGHT_PER_SECOND is non-zero.
 					let weight_ratio = FixedU128::saturating_from_rational(weight as u128, WEIGHT_PER_SECOND as u128);
@@ -505,7 +549,7 @@ impl<T, FixedRate: Get<u128>, R: TakeRevenue> Drop for FixedRateOfForeignAsset<T
 	}
 }
 
-pub struct EvmErc20InfoMapping<T>(sp_std::marker::PhantomData<T>);
+// pub struct EvmErc20InfoMapping<T>(sp_std::marker::PhantomData<T>);
 
 // impl<T: Config> Erc20InfoMapping for EvmErc20InfoMapping<T> {
 // 	// Returns the name associated with a given CurrencyId.
