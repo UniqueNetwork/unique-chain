@@ -111,7 +111,7 @@ pub mod pallet {
 		CorruptedCollectionType,
 		NftTypeEncodeError,
 		RmrkPropertyKeyIsTooLong,
-		RmrkPropertyValueIsTooLong, // todo utilize that in RPCs
+		RmrkPropertyValueIsTooLong,
 
 		/* RMRK compatible events */
 		CollectionNotEmpty,
@@ -518,7 +518,7 @@ impl<T: Config> Pallet<T> {
 		Ok(scoped_key)
 	}
 
-	pub fn rmrk_property<E: Encode>(
+	pub fn rmrk_property<E: Encode>( // todo think about renaming this
 		rmrk_key: RmrkProperty,
 		value: &E,
 	) -> Result<Property, DispatchError> {
@@ -532,6 +532,21 @@ impl<T: Config> Pallet<T> {
 		let property = Property { key, value };
 
 		Ok(property)
+	}
+	
+	pub fn decode_property<D: Decode>(
+		vec: PropertyValue,
+	) -> Result<D, DispatchError> {
+		vec.decode().map_err(|_| <Error<T>>::RmrkPropertyValueIsTooLong.into())
+	}
+
+	pub fn rebind<L, S>(
+		vec: &BoundedVec<u8, L>,
+	) -> Result<BoundedVec<u8, S>, DispatchError> 
+	where 
+		BoundedVec<u8, S>: TryFrom<Vec<u8>> 
+	{
+		vec.rebind().map_err(|_| <Error<T>>::RmrkPropertyValueIsTooLong.into())
 	}
 
 	fn init_collection(
@@ -619,8 +634,7 @@ impl<T: Config> Pallet<T> {
 		)?;
 
 		let resource_collection_id: CollectionId =
-			Self::get_nft_property(collection_id, token_id, ResourceCollection)?
-				.decode_or_default();
+			Self::get_nft_property_decoded(collection_id, token_id, ResourceCollection)?;
 		let resource_collection =
 			Self::get_typed_nft_collection(resource_collection_id, misc::CollectionType::Resource)?;
 
@@ -709,14 +723,19 @@ impl<T: Config> Pallet<T> {
 		Ok(collection_property)
 	}
 
+	pub fn get_collection_property_decoded<V: Decode>(
+		collection_id: CollectionId,
+		key: RmrkProperty,
+	) -> Result<V, DispatchError> {
+		Self::decode_property(
+			Self::get_collection_property(collection_id, key)?
+		)
+	}
+
 	pub fn get_collection_type(
 		collection_id: CollectionId,
 	) -> Result<misc::CollectionType, DispatchError> {
-		let value = Self::get_collection_property(collection_id, CollectionType)?;
-
-		let mut value = value.as_slice();
-
-		misc::CollectionType::decode(&mut value)
+		Self::get_collection_property_decoded(collection_id, CollectionType)
 			.map_err(|_| <Error<T>>::CorruptedCollectionType.into())
 	}
 
@@ -749,10 +768,20 @@ impl<T: Config> Pallet<T> {
 	) -> Result<PropertyValue, DispatchError> {
 		let nft_property = <PalletNft<T>>::token_properties((collection_id, nft_id))
 			.get(&Self::rmrk_property_key(key)?)
-			.ok_or(<Error<T>>::NoAvailableNftId)? // todo replace with better error
+			.ok_or(<Error<T>>::NoAvailableNftId)? // todo replace with better error?
 			.clone();
 
 		Ok(nft_property)
+	}
+
+	pub fn get_nft_property_decoded<V: Decode>(
+		collection_id: CollectionId,
+		nft_id: TokenId,
+		key: RmrkProperty,
+	) -> Result<V, DispatchError> {
+		Self::decode_property(
+			Self::get_nft_property(collection_id, nft_id, key)?
+		)
 	}
 
 	pub fn nft_exists(collection_id: CollectionId, nft_id: TokenId) -> bool {
@@ -763,9 +792,8 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 		token_id: TokenId,
 	) -> Result<NftType, DispatchError> {
-		Ok(Self::get_nft_property(collection_id, token_id, TokenType)?.decode_or_default())
-		// todo throw error
-		// NftTypeEncodeError?
+		Self::get_nft_property_decoded(collection_id, token_id, TokenType)
+			.map_err(|_| <Error<T>>::NftTypeEncodeError.into())
 	}
 
 	pub fn ensure_nft_type(
@@ -814,18 +842,17 @@ impl<T: Config> Pallet<T> {
 						let key: Key = key.try_into().ok()?;
 
 						let value = match token_id {
-							Some(token_id) => Self::get_nft_property(
+							Some(token_id) => Self::get_nft_property_decoded(
 								collection_id,
 								token_id,
 								UserProperty(key.as_ref()),
 							),
-							None => Self::get_collection_property(
+							None => Self::get_collection_property_decoded(
 								collection_id,
 								UserProperty(key.as_ref()),
 							),
 						}
-						.ok()?
-						.decode_or_default();
+						.ok()?;
 
 						Some(mapper(key, value))
 					})
@@ -862,7 +889,7 @@ impl<T: Config> Pallet<T> {
 			let key = key.as_slice().strip_prefix(key_prefix.as_slice())?;
 
 			let key: Key = key.to_vec().try_into().ok()?;
-			let value: Value = value.decode_or_default();
+			let value: Value = value.decode().ok()?;
 
 			Some(mapper(key, value))
 		});

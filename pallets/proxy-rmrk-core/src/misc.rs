@@ -1,6 +1,5 @@
 use super::*;
-use codec::{Encode, Decode};
-use derivative::Derivative;
+use codec::{Encode, Decode, Error};
 
 #[macro_export]
 macro_rules! map_common_err_to_proxy {
@@ -15,30 +14,30 @@ macro_rules! map_common_err_to_proxy {
     };
 }
 
-pub trait RmrkDecode<T: Decode + Default, S> {
-	fn decode_or_default(&self) -> T;
+// Utilize the RmrkCore pallet for access to Runtime errors.
+pub trait RmrkDecode<T: Decode, S> {
+	fn decode(&self) -> Result<T, Error>;
 }
 
-// todo fail if unwrap doesn't work
-impl<T: Decode + Default, S> RmrkDecode<T, S> for BoundedVec<u8, S> {
-	fn decode_or_default(&self) -> T {
+impl<T: Decode, S> RmrkDecode<T, S> for BoundedVec<u8, S> {
+	fn decode(&self) -> Result<T, Error> {
 		let mut value = self.as_slice();
 
-		T::decode(&mut value).unwrap_or_default()
+		T::decode(&mut value)
 	}
 }
 
+// Utilize the RmrkCore pallet for access to Runtime errors.
 pub trait RmrkRebind<T, S> {
-	fn rebind(&self) -> BoundedVec<u8, S>;
+	fn rebind(&self) -> Result<BoundedVec<u8, S>, Error>;
 }
 
-// todo fail if unwrap doesn't work
 impl<T, S> RmrkRebind<T, S> for BoundedVec<u8, T>
 where
 	BoundedVec<u8, S>: TryFrom<Vec<u8>>,
 {
-	fn rebind(&self) -> BoundedVec<u8, S> {
-		BoundedVec::<u8, S>::try_from(self.clone().into_inner()).unwrap_or_default()
+	fn rebind(&self) -> Result<BoundedVec<u8, S>, Error> {
+		BoundedVec::<u8, S>::try_from(self.clone().into_inner()).map_err(|_| "BoundedVec exceeds its limit".into())
 	}
 }
 
@@ -49,11 +48,8 @@ pub enum CollectionType {
 	Base,
 }
 
-// todo remove default?
-#[derive(Encode, Decode, PartialEq, Eq, Derivative)]
-#[derivative(Default(bound = ""))]
+#[derive(Encode, Decode, PartialEq, Eq)]
 pub enum NftType {
-	#[derivative(Default)]
 	Regular,
 	Resource,
 	FixedPart,
@@ -61,11 +57,8 @@ pub enum NftType {
 	Theme,
 }
 
-// todo remove default?
-#[derive(Encode, Decode, PartialEq, Eq, Derivative)]
-#[derivative(Default(bound = ""))]
+#[derive(Encode, Decode, PartialEq, Eq)]
 pub enum ResourceType {
-	#[derivative(Default)]
 	Basic,
 	Composable,
 	Slot,
