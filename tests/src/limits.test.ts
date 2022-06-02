@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
@@ -35,8 +34,8 @@ describe('Number of tokens per address (NFT)', () => {
   let alice: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper!('//Alice');
     });
   });
 
@@ -69,8 +68,8 @@ describe('Number of tokens per address (ReFungible)', () => {
   let alice: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper!('//Alice');
     });
   });
 
@@ -103,10 +102,10 @@ describe.skip('Sponsor timeout (NFT) (only for special chain limits test)', () =
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper!('//Alice');
+      bob = privateKeyWrapper!('//Bob');
+      charlie = privateKeyWrapper!('//Charlie');
     });
   });
 
@@ -166,10 +165,10 @@ describe.skip('Sponsor timeout (Fungible) (only for special chain limits test)',
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper!('//Alice');
+      bob = privateKeyWrapper!('//Bob');
+      charlie = privateKeyWrapper!('//Charlie');
     });
   });
 
@@ -233,10 +232,10 @@ describe.skip('Sponsor timeout (ReFungible) (only for special chain limits test)
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper!('//Alice');
+      bob = privateKeyWrapper!('//Bob');
+      charlie = privateKeyWrapper!('//Charlie');
     });
   });
 
@@ -296,10 +295,10 @@ describe('Collection zero limits (NFT)', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper!('//Alice');
+      bob = privateKeyWrapper!('//Bob');
+      charlie = privateKeyWrapper!('//Charlie');
     });
   });
 
@@ -337,10 +336,10 @@ describe('Collection zero limits (Fungible)', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper!('//Alice');
+      bob = privateKeyWrapper!('//Bob');
+      charlie = privateKeyWrapper!('//Charlie');
     });
   });
 
@@ -369,10 +368,10 @@ describe('Collection zero limits (ReFungible)', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper!('//Alice');
+      bob = privateKeyWrapper!('//Bob');
+      charlie = privateKeyWrapper!('//Charlie');
     });
   });
 

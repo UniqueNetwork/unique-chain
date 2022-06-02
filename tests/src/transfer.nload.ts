@@ -16,7 +16,6 @@
 
 import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
-import privateKey from './substrate/privateKey';
 import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
 import waitNewBlocks from './substrate/wait-new-blocks';
 import {findUnusedAddresses} from './util/helpers';
@@ -95,11 +94,11 @@ if (cluster.isMaster) {
   });
   const waiting: Promise<void>[] = [];
   console.log(`Starting ${os.cpus().length} workers`);
-  usingApi(async (api) => {
-    const alice = privateKey('//Alice');
+  usingApi(async (api, privateKeyWrapper) => {
+    const alice = privateKeyWrapper!('//Alice');
     for (const id in os.cpus()) {
       const WORKER_NAME = `//LoadWorker${id}_${Date.now()}`;
-      const workerAccount = privateKey(WORKER_NAME);
+      const workerAccount = privateKeyWrapper!(WORKER_NAME);
       const tx = api.tx.balances.transfer(workerAccount.address, 400n * 10n ** 23n);
       await submitTransactionAsync(alice, tx);
 
@@ -119,8 +118,8 @@ if (cluster.isMaster) {
   });
 } else {
   increaseCounter('startedWorkers', 1);
-  usingApi(async (api) => {
-    await distributeBalance(privateKey(process.env.WORKER_NAME as string), api, 400n * 10n ** 22n, 10);
+  usingApi(async (api, privateKeyWrapper) => {
+    await distributeBalance(privateKeyWrapper!(process.env.WORKER_NAME as string), api, 400n * 10n ** 22n, 10);
   });
   const interval = setInterval(() => {
     flushCounterToMaster();

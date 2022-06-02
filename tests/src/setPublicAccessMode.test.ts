@@ -19,7 +19,6 @@ import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import usingApi, {submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import {
   addToAllowListExpectSuccess,
@@ -41,9 +40,9 @@ let bob: IKeyringPair;
 
 describe('Integration Test setPublicAccessMode(): ', () => {
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper!('//Alice');
+      bob = privateKeyWrapper!('//Bob');
     });
   });
 
@@ -108,9 +107,9 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
 
 describe('Negative Integration Test ext. collection admin setPublicAccessMode(): ', () => {
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper!('//Alice');
+      bob = privateKeyWrapper!('//Bob');
     });
   });
   it('setPublicAccessMode by collection admin', async () => {

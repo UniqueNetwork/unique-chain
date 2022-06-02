@@ -17,22 +17,21 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import privateKey from './substrate/privateKey';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 describe('integration test: Inflation', () => {
   it('First year inflation is 10%', async () => {
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
 
       // Make sure non-sudo can't start inflation
       const tx = api.tx.inflation.startInflation(1);
-      const bob = privateKey('//Bob');
+      const bob = privateKeyWrapper!('//Bob');
       await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
 
       // Start inflation on relay block 1 (Alice is sudo)
-      const alice = privateKey('//Alice');
+      const alice = privateKeyWrapper!('//Alice');
       const sudoTx = api.tx.sudo.sudo(tx as any);
       await submitTransactionAsync(alice, sudoTx);
 

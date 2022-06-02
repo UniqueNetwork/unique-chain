@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import privateKey from '../substrate/privateKey';
 import {approveExpectSuccess, burnItemExpectSuccess, createCollectionExpectSuccess, createItemExpectSuccess, transferExpectSuccess, transferFromExpectSuccess, UNIQUE} from '../util/helpers';
 import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, transferBalanceToEth} from './util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
@@ -22,11 +21,11 @@ import {expect} from 'chai';
 import {submitTransactionAsync} from '../substrate/substrate-api';
 
 describe('NFT: Information getting', () => {
-  itWeb3('totalSupply', async ({api, web3}) => {
+  itWeb3('totalSupply', async ({api, web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
 
     await createItemExpectSuccess(alice, collection, 'NFT', {Substrate: alice.address});
@@ -38,11 +37,11 @@ describe('NFT: Information getting', () => {
     expect(totalSupply).to.equal('1');
   });
 
-  itWeb3('balanceOf', async ({api, web3}) => {
+  itWeb3('balanceOf', async ({api, web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
 
     const caller = await createEthAccountWithBalance(api, web3);
     await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum:caller});
@@ -56,11 +55,11 @@ describe('NFT: Information getting', () => {
     expect(balance).to.equal('3');
   });
 
-  itWeb3('ownerOf', async ({api, web3}) => {
+  itWeb3('ownerOf', async ({api, web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
 
     const caller = await createEthAccountWithBalance(api, web3);
     const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: caller});
@@ -114,11 +113,11 @@ describe('NFT: Plain calls', () => {
   });
 
   //TODO: CORE-302 add eth methods
-  itWeb3.skip('Can perform mintBulk()', async ({web3, api}) => {
+  itWeb3.skip('Can perform mintBulk()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
 
     const caller = await createEthAccountWithBalance(api, web3);
     const changeAdminTx = api.tx.unique.addCollectionAdmin(collection, {Ethereum: caller});
@@ -177,11 +176,11 @@ describe('NFT: Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform burn()', async ({web3, api}) => {
+  itWeb3('Can perform burn()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
 
@@ -208,11 +207,11 @@ describe('NFT: Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform approve()', async ({web3, api}) => {
+  itWeb3('Can perform approve()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
 
     const owner = createEthAccount(web3);
     await transferBalanceToEth(api, alice, owner);
@@ -242,11 +241,11 @@ describe('NFT: Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform transferFrom()', async ({web3, api}) => {
+  itWeb3('Can perform transferFrom()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
 
     const owner = createEthAccount(web3);
     await transferBalanceToEth(api, alice, owner);
@@ -290,11 +289,11 @@ describe('NFT: Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform transfer()', async ({web3, api}) => {
+  itWeb3('Can perform transfer()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
 
     const owner = createEthAccount(web3);
     await transferBalanceToEth(api, alice, owner);
@@ -336,11 +335,11 @@ describe('NFT: Plain calls', () => {
 });
 
 describe('NFT: Fees', () => {
-  itWeb3('approve() call fee is less than 0.2UNQ', async ({web3, api}) => {
+  itWeb3('approve() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const spender = createEthAccount(web3);
@@ -354,11 +353,11 @@ describe('NFT: Fees', () => {
     expect(cost < BigInt(0.2 * Number(UNIQUE)));
   });
 
-  itWeb3('transferFrom() call fee is less than 0.2UNQ', async ({web3, api}) => {
+  itWeb3('transferFrom() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const spender = await createEthAccountWithBalance(api, web3);
@@ -374,11 +373,11 @@ describe('NFT: Fees', () => {
     expect(cost < BigInt(0.2 * Number(UNIQUE)));
   });
 
-  itWeb3('transfer() call fee is less than 0.2UNQ', async ({web3, api}) => {
+  itWeb3('transfer() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const receiver = createEthAccount(web3);
@@ -394,11 +393,11 @@ describe('NFT: Fees', () => {
 });
 
 describe('NFT: Substrate calls', () => {
-  itWeb3('Events emitted for mint()', async ({web3}) => {
+  itWeb3('Events emitted for mint()', async ({web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
 
     const address = collectionIdToAddress(collection);
     const contract = new web3.eth.Contract(nonFungibleAbi as any, address);
@@ -421,11 +420,11 @@ describe('NFT: Substrate calls', () => {
     ]);
   });
 
-  itWeb3('Events emitted for burn()', async ({web3}) => {
+  itWeb3('Events emitted for burn()', async ({web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
 
     const address = collectionIdToAddress(collection);
     const contract = new web3.eth.Contract(nonFungibleAbi as any, address);
@@ -448,11 +447,11 @@ describe('NFT: Substrate calls', () => {
     ]);
   });
 
-  itWeb3('Events emitted for approve()', async ({web3}) => {
+  itWeb3('Events emitted for approve()', async ({web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
 
     const receiver = createEthAccount(web3);
 
@@ -478,12 +477,12 @@ describe('NFT: Substrate calls', () => {
     ]);
   });
 
-  itWeb3('Events emitted for transferFrom()', async ({web3}) => {
+  itWeb3('Events emitted for transferFrom()', async ({web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
-    const bob = privateKey('//Bob');
+    const alice = privateKeyWrapper!('//Alice');
+    const bob = privateKeyWrapper!('//Bob');
 
     const receiver = createEthAccount(web3);
 
@@ -510,11 +509,11 @@ describe('NFT: Substrate calls', () => {
     ]);
   });
 
-  itWeb3('Events emitted for transfer()', async ({web3}) => {
+  itWeb3('Events emitted for transfer()', async ({web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper!('//Alice');
 
     const receiver = createEthAccount(web3);
 

@@ -1,12 +1,11 @@
-import privateKey from '../substrate/privateKey';
 import {addToAllowListExpectSuccess, confirmSponsorshipExpectSuccess, createCollectionExpectSuccess, enablePublicMintingExpectSuccess, setCollectionSponsorExpectSuccess} from '../util/helpers';
 import {itWeb3, createEthAccount, collectionIdToAddress, GAS_ARGS, normalizeEvents} from './util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import {expect} from 'chai';
 
 describe('evm collection sponsoring', () => {
-  itWeb3('sponsors mint transactions', async ({web3}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('sponsors mint transactions', async ({web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper!('//Alice');
 
     const collection = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collection, alice.address);
