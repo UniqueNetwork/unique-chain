@@ -103,6 +103,10 @@ pub mod pallet {
 			nft_id: RmrkNftId,
 			resource_id: RmrkResourceId,
 		},
+		ResourceRemoval {
+			nft_id: RmrkNftId,
+			resource_id: RmrkResourceId,
+		},
 	}
 
 	#[pallet::error]
@@ -120,7 +124,7 @@ pub mod pallet {
 		CollectionUnknown,
 		NoPermission,
 		CollectionFullOrLocked,
-		// todo add resource errors?
+		ResourceDoesntExist,
 	}
 
 	#[pallet::call]
@@ -160,7 +164,7 @@ pub mod pallet {
 					Self::rmrk_property(CollectionType, &misc::CollectionType::Regular)?,
 				]
 				.into_iter(),
-			)?; //collection_id_res?;
+			)?;
 			let rmrk_collection_id = <CollectionIndex<T>>::get();
 
 			<CollectionIndexMap<T>>::insert(rmrk_collection_id, unique_collection_id);
@@ -307,7 +311,7 @@ pub mod pallet {
 							.into_iter(),
 						)?,
 					)?, // todo possibly add limits to the collection if rmrk warrants them
-					Self::rmrk_property(ResourcePriorities, &<Vec<u8>>::new())?, // todo create resource priorities?
+					Self::rmrk_property(ResourcePriorities, &<Vec<u8>>::new())?,
 				]
 				.into_iter(),
 			)
@@ -504,6 +508,30 @@ pub mod pallet {
 			});
 			Ok(())
 		}
+
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[transactional]
+		pub fn remove_resource(
+			origin: OriginFor<T>,
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+			resource_id: RmrkResourceId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+
+			Self::resource_remove(
+				sender,
+				Self::unique_collection_id(collection_id)?,
+				nft_id.into(),
+				resource_id.into(),
+			)?;
+
+			Self::deposit_event(Event::ResourceRemoval {
+				nft_id,
+				resource_id,
+			});
+			Ok(())
+		}
 	}
 }
 
@@ -518,8 +546,8 @@ impl<T: Config> Pallet<T> {
 		Ok(scoped_key)
 	}
 
+	// todo think about renaming these
 	pub fn rmrk_property<E: Encode>(
-		// todo think about renaming this
 		rmrk_key: RmrkProperty,
 		value: &E,
 	) -> Result<Property, DispatchError> {
@@ -624,7 +652,7 @@ impl<T: Config> Pallet<T> {
 
 		let sender = T::CrossAccountId::from_sub(sender);
 		let budget = budget::Value::new(10);
-		let pending = <PalletStructure<T>>::check_indirectly_owned(
+		let pending = !<PalletStructure<T>>::check_indirectly_owned(
 			sender.clone(),
 			collection_id,
 			token_id,
@@ -657,6 +685,45 @@ impl<T: Config> Pallet<T> {
 		})?;
 
 		Ok(resource_id.0)
+	}
+
+	fn resource_remove(
+		sender: T::AccountId,
+		collection_id: CollectionId,
+		nft_id: TokenId,
+		resource_id: TokenId,
+	) -> DispatchResult {
+		let collection =
+			Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
+		ensure!(collection.owner == sender, Error::<T>::NoPermission);
+
+		let resource_collection_id: CollectionId =
+			Self::get_nft_property_decoded(collection_id, nft_id, ResourceCollection)?;
+		let resource_collection =
+			Self::get_typed_nft_collection(resource_collection_id, misc::CollectionType::Resource)?;
+		ensure!(
+			<PalletNft<T>>::token_exists(&resource_collection, resource_id),
+			Error::<T>::ResourceDoesntExist
+		);
+
+		let budget = up_data_structs::budget::Value::new(10);
+		let topmost_owner =
+			<PalletStructure<T>>::find_topmost_owner(collection_id, nft_id, &budget)?;
+
+		let sender = T::CrossAccountId::from_sub(sender);
+		if topmost_owner == sender {
+			<PalletNft<T>>::burn(&collection, &sender, nft_id)
+				.map_err(Self::map_common_err_to_proxy)?;
+		} else {
+			<PalletNft<T>>::set_scoped_token_property(
+				collection_id,
+				nft_id,
+				PropertyScope::Rmrk,
+				Self::rmrk_property(PendingResourceRemoval, &true)?,
+			)?;
+		}
+
+		Ok(())
 	}
 
 	fn change_collection_owner(
