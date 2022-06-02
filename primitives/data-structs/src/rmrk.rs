@@ -1,8 +1,6 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
-use derivative::Derivative;
-
 #[cfg(feature = "std")]
 use serde::Serialize;
 
@@ -147,7 +145,7 @@ pub struct PropertyInfo<BoundedKey, BoundedValue> {
 	pub value: BoundedValue,
 }
 
-#[derive(Encode, Decode, Default, Eq, PartialEq, Clone, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Eq, PartialEq, Clone, Debug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[cfg_attr(feature = "std", serde(bound = "BoundedString: AsRef<[u8]>"))]
 pub struct BasicResource<BoundedString> {
@@ -260,7 +258,7 @@ pub struct SlotResource<BoundedString> {
 	pub thumb: Option<BoundedString>,
 }
 
-#[derive(Encode, Decode, Derivative, Eq, PartialEq, Clone, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Eq, PartialEq, Clone, Debug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[cfg_attr(
 	feature = "std",
@@ -269,9 +267,7 @@ pub struct SlotResource<BoundedString> {
 			BoundedParts: AsRef<[PartId]>
 		"#)
 )]
-#[derivative(Default(bound = ""))]
-pub enum ResourceTypes<BoundedString: Default, BoundedParts> {
-	#[derivative(Default)]
+pub enum ResourceTypes<BoundedString, BoundedParts> {
 	Basic(BasicResource<BoundedString>),
 	Composable(ComposableResource<BoundedString, BoundedParts>),
 	Slot(SlotResource<BoundedString>),
@@ -286,7 +282,7 @@ pub enum ResourceTypes<BoundedString: Default, BoundedParts> {
 			BoundedParts: AsRef<[PartId]>
 		"#)
 )]
-pub struct ResourceInfo<BoundedString: Default, BoundedParts> {
+pub struct ResourceInfo<BoundedString, BoundedParts> {
 	/// id is a 5-character string of reasonable uniqueness.
 	/// The combination of base ID and resource id should be unique across the entire RMRK
 	/// ecosystem which
@@ -337,18 +333,14 @@ pub struct FixedPart<BoundedString> {
 }
 
 #[cfg_attr(feature = "std", derive(Serialize))]
-#[derive(Encode, Decode, Debug, Derivative, TypeInfo, Clone, PartialEq, Eq, MaxEncodedLen)]
+#[derive(Encode, Decode, Debug, TypeInfo, Clone, PartialEq, Eq, MaxEncodedLen)]
 #[cfg_attr(
 	feature = "std",
 	serde(bound = "BoundedCollectionList: AsRef<[CollectionId]>")
 )]
-#[derivative(Default(bound = ""))]
 pub enum EquippableList<BoundedCollectionList> {
 	All,
-
-	#[derivative(Default)]
 	Empty,
-
 	Custom(#[cfg_attr(feature = "std", serde(with = "serialize::vec"))] BoundedCollectionList),
 }
 
