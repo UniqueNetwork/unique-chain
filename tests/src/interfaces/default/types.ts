@@ -1129,6 +1129,169 @@ export interface PalletRefungibleItemData extends Struct {
   readonly constData: Bytes;
 }
 
+/** @name PalletRmrkCoreCall */
+export interface PalletRmrkCoreCall extends Enum {
+  readonly isCreateCollection: boolean;
+  readonly asCreateCollection: {
+    readonly metadata: Bytes;
+    readonly max: Option<u32>;
+    readonly symbol: Bytes;
+  } & Struct;
+  readonly isDestroyCollection: boolean;
+  readonly asDestroyCollection: {
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isChangeCollectionIssuer: boolean;
+  readonly asChangeCollectionIssuer: {
+    readonly collectionId: u32;
+    readonly newIssuer: MultiAddress;
+  } & Struct;
+  readonly isLockCollection: boolean;
+  readonly asLockCollection: {
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isMintNft: boolean;
+  readonly asMintNft: {
+    readonly owner: AccountId32;
+    readonly collectionId: u32;
+    readonly recipient: Option<AccountId32>;
+    readonly royaltyAmount: Option<Permill>;
+    readonly metadata: Bytes;
+  } & Struct;
+  readonly isBurnNft: boolean;
+  readonly asBurnNft: {
+    readonly collectionId: u32;
+    readonly nftId: u32;
+  } & Struct;
+  readonly isSetProperty: boolean;
+  readonly asSetProperty: {
+    readonly rmrkCollectionId: Compact<u32>;
+    readonly maybeNftId: Option<u32>;
+    readonly key: Bytes;
+    readonly value: Bytes;
+  } & Struct;
+  readonly isAddBasicResource: boolean;
+  readonly asAddBasicResource: {
+    readonly collectionId: u32;
+    readonly nftId: u32;
+    readonly resource: UpDataStructsRmrkBasicResource;
+  } & Struct;
+  readonly isAddComposableResource: boolean;
+  readonly asAddComposableResource: {
+    readonly collectionId: u32;
+    readonly nftId: u32;
+    readonly resourceId: Bytes;
+    readonly resource: UpDataStructsRmrkComposableResource;
+  } & Struct;
+  readonly isAddSlotResource: boolean;
+  readonly asAddSlotResource: {
+    readonly collectionId: u32;
+    readonly nftId: u32;
+    readonly resource: UpDataStructsRmrkSlotResource;
+  } & Struct;
+  readonly type: 'CreateCollection' | 'DestroyCollection' | 'ChangeCollectionIssuer' | 'LockCollection' | 'MintNft' | 'BurnNft' | 'SetProperty' | 'AddBasicResource' | 'AddComposableResource' | 'AddSlotResource';
+}
+
+/** @name PalletRmrkCoreError */
+export interface PalletRmrkCoreError extends Enum {
+  readonly isCorruptedCollectionType: boolean;
+  readonly isNftTypeEncodeError: boolean;
+  readonly isRmrkPropertyKeyIsTooLong: boolean;
+  readonly isRmrkPropertyValueIsTooLong: boolean;
+  readonly isCollectionNotEmpty: boolean;
+  readonly isNoAvailableCollectionId: boolean;
+  readonly isNoAvailableNftId: boolean;
+  readonly isCollectionUnknown: boolean;
+  readonly isNoPermission: boolean;
+  readonly isCollectionFullOrLocked: boolean;
+  readonly type: 'CorruptedCollectionType' | 'NftTypeEncodeError' | 'RmrkPropertyKeyIsTooLong' | 'RmrkPropertyValueIsTooLong' | 'CollectionNotEmpty' | 'NoAvailableCollectionId' | 'NoAvailableNftId' | 'CollectionUnknown' | 'NoPermission' | 'CollectionFullOrLocked';
+}
+
+/** @name PalletRmrkCoreEvent */
+export interface PalletRmrkCoreEvent extends Enum {
+  readonly isCollectionCreated: boolean;
+  readonly asCollectionCreated: {
+    readonly issuer: AccountId32;
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isCollectionDestroyed: boolean;
+  readonly asCollectionDestroyed: {
+    readonly issuer: AccountId32;
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isIssuerChanged: boolean;
+  readonly asIssuerChanged: {
+    readonly oldIssuer: AccountId32;
+    readonly newIssuer: AccountId32;
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isCollectionLocked: boolean;
+  readonly asCollectionLocked: {
+    readonly issuer: AccountId32;
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isNftMinted: boolean;
+  readonly asNftMinted: {
+    readonly owner: AccountId32;
+    readonly collectionId: u32;
+    readonly nftId: u32;
+  } & Struct;
+  readonly isNftBurned: boolean;
+  readonly asNftBurned: {
+    readonly owner: AccountId32;
+    readonly nftId: u32;
+  } & Struct;
+  readonly isPropertySet: boolean;
+  readonly asPropertySet: {
+    readonly collectionId: u32;
+    readonly maybeNftId: Option<u32>;
+    readonly key: Bytes;
+    readonly value: Bytes;
+  } & Struct;
+  readonly isResourceAdded: boolean;
+  readonly asResourceAdded: {
+    readonly nftId: u32;
+    readonly resourceId: u32;
+  } & Struct;
+  readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'IssuerChanged' | 'CollectionLocked' | 'NftMinted' | 'NftBurned' | 'PropertySet' | 'ResourceAdded';
+}
+
+/** @name PalletRmrkEquipCall */
+export interface PalletRmrkEquipCall extends Enum {
+  readonly isCreateBase: boolean;
+  readonly asCreateBase: {
+    readonly baseType: Bytes;
+    readonly symbol: Bytes;
+    readonly parts: Vec<UpDataStructsRmrkPartType>;
+  } & Struct;
+  readonly isThemeAdd: boolean;
+  readonly asThemeAdd: {
+    readonly baseId: u32;
+    readonly theme: UpDataStructsRmrkTheme;
+  } & Struct;
+  readonly type: 'CreateBase' | 'ThemeAdd';
+}
+
+/** @name PalletRmrkEquipError */
+export interface PalletRmrkEquipError extends Enum {
+  readonly isPermissionError: boolean;
+  readonly isNoAvailableBaseId: boolean;
+  readonly isNoAvailablePartId: boolean;
+  readonly isBaseDoesntExist: boolean;
+  readonly isNeedsDefaultThemeFirst: boolean;
+  readonly type: 'PermissionError' | 'NoAvailableBaseId' | 'NoAvailablePartId' | 'BaseDoesntExist' | 'NeedsDefaultThemeFirst';
+}
+
+/** @name PalletRmrkEquipEvent */
+export interface PalletRmrkEquipEvent extends Enum {
+  readonly isBaseCreated: boolean;
+  readonly asBaseCreated: {
+    readonly issuer: AccountId32;
+    readonly baseId: u32;
+  } & Struct;
+  readonly type: 'BaseCreated';
+}
+
 /** @name PalletStructureCall */
 export interface PalletStructureCall extends Null {}
 
@@ -2014,7 +2177,7 @@ export interface UpDataStructsRmrkPropertyInfo extends Struct {
 
 /** @name UpDataStructsRmrkResourceInfo */
 export interface UpDataStructsRmrkResourceInfo extends Struct {
-  readonly id: Bytes;
+  readonly id: u32;
   readonly resource: UpDataStructsRmrkResourceTypes;
   readonly pending: bool;
   readonly pendingRemoval: bool;

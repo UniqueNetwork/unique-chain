@@ -6335,6 +6335,7 @@ dependencies = [
  "pallet-common",
  "pallet-evm",
  "pallet-nonfungible",
+ "pallet-structure",
  "parity-scale-codec 3.1.2",
  "scale-info",
  "sp-core",

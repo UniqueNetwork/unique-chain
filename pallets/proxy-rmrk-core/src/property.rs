@@ -4,6 +4,7 @@ use core::convert::AsRef;
 pub enum RmrkProperty<'r> {
 	Metadata,
 	CollectionType,
+	TokenType,
 	RoyaltyInfo,
 	Equipped,
 	ResourceCollection,
@@ -47,6 +48,7 @@ impl<'r> RmrkProperty<'r> {
 		match self {
 			Self::Metadata => key!("metadata"),
 			Self::CollectionType => key!("collection-type"),
+			Self::TokenType => key!("token-type"),
 			Self::RoyaltyInfo => key!("royalty-info"),
 			Self::Equipped => key!("equipped"),
 			Self::ResourceCollection => key!("resource-collection"),

@@ -104,6 +104,12 @@ declare module '@polkadot/types/types/registry' {
     PalletNonfungibleItemData: PalletNonfungibleItemData;
     PalletRefungibleError: PalletRefungibleError;
     PalletRefungibleItemData: PalletRefungibleItemData;
+    PalletRmrkCoreCall: PalletRmrkCoreCall;
+    PalletRmrkCoreError: PalletRmrkCoreError;
+    PalletRmrkCoreEvent: PalletRmrkCoreEvent;
+    PalletRmrkEquipCall: PalletRmrkEquipCall;
+    PalletRmrkEquipError: PalletRmrkEquipError;
+    PalletRmrkEquipEvent: PalletRmrkEquipEvent;
     PalletStructureCall: PalletStructureCall;
     PalletStructureError: PalletStructureError;
     PalletStructureEvent: PalletStructureEvent;

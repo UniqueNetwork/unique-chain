@@ -22,7 +22,7 @@ import type { MmrLeafBatchProof, MmrLeafProof } from '@polkadot/types/interfaces
 import type { StorageKind } from '@polkadot/types/interfaces/offchain';
 import type { FeeDetails, RuntimeDispatchInfo } from '@polkadot/types/interfaces/payment';
 import type { RpcMethods } from '@polkadot/types/interfaces/rpc';
-import type { AccountId, BlockNumber, H160, H256, H64, Hash, Header, Index, Justification, KeyValue, SignedBlock, StorageData } from '@polkadot/types/interfaces/runtime';
+import type { AccountId, AccountId32, BlockNumber, H160, H256, H64, Hash, Header, Index, Justification, KeyValue, SignedBlock, StorageData } from '@polkadot/types/interfaces/runtime';
 import type { MigrationStatusResult, ReadProof, RuntimeVersion, TraceBlockResponse } from '@polkadot/types/interfaces/state';
 import type { ApplyExtrinsicResult, ChainProperties, ChainType, Health, NetworkState, NodeRole, PeerInfo, SyncState } from '@polkadot/types/interfaces/system';
 import type { IExtrinsic, Observable } from '@polkadot/types/types';
@@ -396,6 +396,60 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Retrieves the fee information for an encoded extrinsic
        **/
       queryInfo: AugmentedRpc<(extrinsic: Bytes | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<RuntimeDispatchInfo>>;
+    };
+    rmrk: {
+      /**
+       * Get tokens owned by an account in a collection
+       **/
+      accountTokens: AugmentedRpc<(accountId: AccountId32 | string | Uint8Array, collectionId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<u32>>>;
+      /**
+       * Get base info
+       **/
+      base: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsRmrkBaseInfo>>>;
+      /**
+       * Get all Base's parts
+       **/
+      baseParts: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsRmrkPartType>>>;
+      /**
+       * Get collection by id
+       **/
+      collectionById: AugmentedRpc<(id: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsRmrkCollectionInfo>>>;
+      /**
+       * Get collection properties
+       **/
+      collectionProperties: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, filterKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsRmrkPropertyInfo>>>;
+      /**
+       * Get the latest created collection id
+       **/
+      lastCollectionIdx: AugmentedRpc<(at?: Hash | string | Uint8Array) => Observable<u32>>;
+      /**
+       * Get NFT by collection id and NFT id
+       **/
+      nftById: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsRmrkNftInfo>>>;
+      /**
+       * Get NFT children
+       **/
+      nftChildren: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsRmrkNftChild>>>;
+      /**
+       * Get NFT properties
+       **/
+      nftProperties: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, filterKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsRmrkPropertyInfo>>>;
+      /**
+       * Get NFT resource priorities
+       **/
+      nftResourcePriorities: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<Bytes>>>;
+      /**
+       * Get NFT resources
+       **/
+      nftResources: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsRmrkResourceInfo>>>;
+      /**
+       * Get Base's theme names
+       **/
+      themeNames: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<Bytes>>>;
+      /**
+       * Get Theme's keys values
+       **/
+      themes: AugmentedRpc<(baseId: u32 | AnyNumber | Uint8Array, themeName: Text | string, keys: Option<Vec<Text>> | null | object | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsRmrkTheme>>>;
     };
     rpc: {
       /**
