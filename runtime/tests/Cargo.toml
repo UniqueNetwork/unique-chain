@@ -1,0 +1,37 @@
+[package]
+name = "tests"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+unique-runtime-common = { path = '../common' }
+up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
+
+sp-core = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
+sp-std = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
+sp-io = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
+sp-runtime = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
+
+fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+
+frame-support = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
+frame-system = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
+
+pallet-balances = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
+pallet-transaction-payment = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
+pallet-timestamp = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
+
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+
+pallet-common = { path = '../../pallets/common' }
+pallet-structure = { path = '../../pallets/structure' }
+pallet-fungible = { path = '../../pallets/fungible' }
+pallet-nonfungible = { path = '../../pallets/nonfungible' }
+pallet-refungible = { path = '../../pallets/refungible' }
+pallet-unique = { path = '../../pallets/unique' }
+
+pallet-evm-coder-substrate = { path = '../../pallets/evm-coder-substrate' }
+
+parity-scale-codec = "*"
+scale-info = "*"

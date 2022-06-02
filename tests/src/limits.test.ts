@@ -27,7 +27,7 @@ import {
   createItemExpectFailure,
   transferExpectSuccess,
   getFreeBalance,
-  waitNewBlocks,
+  waitNewBlocks, burnItemExpectSuccess,
 } from './util/helpers';
 import {expect} from 'chai';
 
@@ -48,6 +48,9 @@ describe('Number of tokens per address (NFT)', () => {
       await createItemExpectSuccess(alice, collectionId, 'NFT');
     }
     await createItemExpectFailure(alice, collectionId, 'NFT');
+    for(let i = 1; i < 11; i++) {
+      await burnItemExpectSuccess(alice, collectionId, i);
+    }
     await destroyCollectionExpectSuccess(collectionId);
   });
 
@@ -57,6 +60,7 @@ describe('Number of tokens per address (NFT)', () => {
     await setCollectionLimitsExpectSuccess(alice, collectionId, {accountTokenOwnershipLimit: 1});
     await createItemExpectSuccess(alice, collectionId, 'NFT');
     await createItemExpectFailure(alice, collectionId, 'NFT');
+    await burnItemExpectSuccess(alice, collectionId, 1);
     await destroyCollectionExpectSuccess(collectionId);
   });
 });
@@ -77,6 +81,9 @@ describe('Number of tokens per address (ReFungible)', () => {
       await createItemExpectSuccess(alice, collectionId, 'ReFungible');
     }
     await createItemExpectFailure(alice, collectionId, 'ReFungible');
+    for(let i = 1; i < 11; i++) {
+      await burnItemExpectSuccess(alice, collectionId, i, 100);
+    }
     await destroyCollectionExpectSuccess(collectionId);
   });
 
@@ -85,6 +92,7 @@ describe('Number of tokens per address (ReFungible)', () => {
     await setCollectionLimitsExpectSuccess(alice, collectionId, {accountTokenOwnershipLimit: 1});
     await createItemExpectSuccess(alice, collectionId, 'ReFungible');
     await createItemExpectFailure(alice, collectionId, 'ReFungible');
+    await burnItemExpectSuccess(alice, collectionId, 1, 100);
     await destroyCollectionExpectSuccess(collectionId);
   });
 });

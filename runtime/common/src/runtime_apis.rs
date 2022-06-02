@@ -14,6 +14,9 @@ macro_rules! impl_common_runtime_apis {
                 fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Result<Vec<TokenId>, DispatchError> {
                     dispatch_unique_runtime!(collection.account_tokens(account))
                 }
+                fn collection_tokens(collection: CollectionId) -> Result<Vec<TokenId>, DispatchError> {
+                    dispatch_unique_runtime!(collection.collection_tokens())
+                }
                 fn token_exists(collection: CollectionId, token: TokenId) -> Result<bool, DispatchError> {
                     dispatch_unique_runtime!(collection.token_exists(token))
                 }
@@ -21,15 +24,61 @@ macro_rules! impl_common_runtime_apis {
                 fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
                     dispatch_unique_runtime!(collection.token_owner(token))
                 }
-                fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
-                    dispatch_unique_runtime!(collection.const_metadata(token))
-                }
-                fn variable_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
-                    dispatch_unique_runtime!(collection.variable_metadata(token))
+                fn topmost_token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
+                    let budget = up_data_structs::budget::Value::new(10);
+
+                    Ok(Some(<pallet_structure::Pallet<Runtime>>::find_topmost_owner(collection, token, &budget)?))
                 }
 
-                fn collection_tokens(collection: CollectionId) -> Result<u32, DispatchError> {
-                    dispatch_unique_runtime!(collection.collection_tokens())
+                fn collection_properties(
+                    collection: CollectionId,
+                    keys: Option<Vec<Vec<u8>>>
+                ) -> Result<Vec<Property>, DispatchError> {
+                    let keys = keys.map(
+                        |keys| Common::bytes_keys_to_property_keys(keys)
+                    ).transpose()?;
+
+                    Common::filter_collection_properties(collection, keys)
+                }
+
+                fn token_properties(
+                    collection: CollectionId,
+                    token_id: TokenId,
+                    keys: Option<Vec<Vec<u8>>>
+                ) -> Result<Vec<Property>, DispatchError> {
+                    let keys = keys.map(
+                        |keys| Common::bytes_keys_to_property_keys(keys)
+                    ).transpose()?;
+
+                    dispatch_unique_runtime!(collection.token_properties(token_id, keys))
+                }
+
+                fn property_permissions(
+                    collection: CollectionId,
+                    keys: Option<Vec<Vec<u8>>>
+                ) -> Result<Vec<PropertyKeyPermission>, DispatchError> {
+                    let keys = keys.map(
+                        |keys| Common::bytes_keys_to_property_keys(keys)
+                    ).transpose()?;
+
+                    Common::filter_property_permissions(collection, keys)
+                }
+
+                fn token_data(
+                    collection: CollectionId,
+                    token_id: TokenId,
+                    keys: Option<Vec<Vec<u8>>>
+                ) -> Result<TokenData<CrossAccountId>, DispatchError> {
+                    let token_data = TokenData {
+                        properties: Self::token_properties(collection, token_id, keys)?,
+                        owner: Self::token_owner(collection, token_id)?
+                    };
+
+                    Ok(token_data)
+                }
+
+                fn total_supply(collection: CollectionId) -> Result<u32, DispatchError> {
+                    dispatch_unique_runtime!(collection.total_supply())
                 }
                 fn account_balance(collection: CollectionId, account: CrossAccountId) -> Result<u32, DispatchError> {
                     dispatch_unique_runtime!(collection.account_balance(account))
@@ -46,11 +95,6 @@ macro_rules! impl_common_runtime_apis {
                     dispatch_unique_runtime!(collection.allowance(sender, spender, token))
                 }
 
-                fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
-                    <pallet_unique::UniqueErcSupport<Runtime>>::get_code(&account)
-                        .or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account))
-                        .or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
-                }
                 fn adminlist(collection: CollectionId) -> Result<Vec<CrossAccountId>, DispatchError> {
                     Ok(<pallet_common::Pallet<Runtime>>::adminlist(collection))
                 }
@@ -63,15 +107,15 @@ macro_rules! impl_common_runtime_apis {
                 fn last_token_id(collection: CollectionId) -> Result<TokenId, DispatchError> {
                     dispatch_unique_runtime!(collection.last_token_id())
                 }
-                fn collection_by_id(collection: CollectionId) -> Result<Option<Collection<AccountId>>, DispatchError> {
-                    Ok(<pallet_common::CollectionById<Runtime>>::get(collection))
+                fn collection_by_id(collection: CollectionId) -> Result<Option<RpcCollection<AccountId>>, DispatchError> {
+                    Ok(<pallet_common::Pallet<Runtime>>::rpc_collection(collection))
                 }
                 fn collection_stats() -> Result<CollectionStats, DispatchError> {
                     Ok(<pallet_common::Pallet<Runtime>>::collection_stats())
                 }
                 fn next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<Option<u64>, DispatchError> {
-                    Ok(<pallet_unique::UniqueSponsorshipPredict<Runtime> as
-                            pallet_unique::SponsorshipPredict<Runtime>>::predict(
+                    Ok(<$crate::sponsoring::UniqueSponsorshipPredict<Runtime> as
+                            $crate::sponsoring::SponsorshipPredict<Runtime>>::predict(
                         collection,
                         account,
                         token))
@@ -81,6 +125,343 @@ macro_rules! impl_common_runtime_apis {
                     Ok(<pallet_common::Pallet<Runtime>>::effective_collection_limits(collection))
                 }
             }
+
+            /*
+            TODO free RMRK!
+            impl rmrk_rpc::RmrkApi<
+                Block,
+                AccountId,
+                RmrkCollectionInfo<AccountId>,
+                RmrkInstanceInfo<AccountId>,
+                RmrkResourceInfo,
+                RmrkPropertyInfo,
+                RmrkBaseInfo<AccountId>,
+                RmrkPartType,
+                RmrkTheme
+            > for Runtime {
+                fn last_collection_idx() -> Result<RmrkCollectionId, DispatchError> {
+                    Ok(RmrkCore::last_collection_idx())
+                }
+
+                fn collection_by_id(collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo<AccountId>>, DispatchError> {
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, RmrkDecode, RmrkRebind}};
+
+                    let collection_id = CollectionId(collection_id);
+                    let collection = match RmrkCore::get_typed_nft_collection(collection_id, CollectionType::Regular) {
+                        Ok(c) => c,
+                        Err(_) => return Ok(None),
+                    };
+
+                    let nfts_count = dispatch_unique_runtime!(collection_id.total_supply())?;
+
+                    Ok(Some(RmrkCollectionInfo {
+                        issuer: collection.owner.clone(),
+                        metadata: RmrkCore::get_collection_property(collection_id, RmrkProperty::Metadata)?.decode_or_default(),
+                        max: collection.limits.token_limit,
+                        symbol: collection.token_prefix.rebind(),
+                        nfts_count
+                    }))
+                }
+
+                fn nft_by_id(collection_id: RmrkCollectionId, nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo<AccountId>>, DispatchError> {
+                    use up_data_structs::mapping::TokenAddressMapping;
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::RmrkDecode};
+
+                    let collection_id = CollectionId(collection_id);
+                    let nft_id = TokenId(nft_by_id);
+                    if !RmrkCore::nft_exists(collection_id, nft_id) { return Ok(None); }
+
+                    let owner = match dispatch_unique_runtime!(collection_id.token_owner(nft_id))? {
+                        Some(owner) => match <Runtime as pallet_common::Config>::CrossTokenAddressMapping::address_to_token(&owner) {
+                            Some((col, tok)) => RmrkAccountIdOrCollectionNftTuple::CollectionAndNftTuple(col.0, tok.0),
+                            None => RmrkAccountIdOrCollectionNftTuple::AccountId(owner.as_sub().clone())
+                        },
+                        None => return Ok(None)
+                    };
+
+                    let allowance = pallet_nonfungible::Allowance::<Runtime>::get((collection_id, nft_id));
+
+                    Ok(Some(RmrkInstanceInfo {
+                        owner: owner,
+                        royalty: RmrkCore::get_nft_property(collection_id, nft_id, RmrkProperty::RoyaltyInfo)?.decode_or_default(),
+                        metadata: RmrkCore::get_nft_property(collection_id, nft_id, RmrkProperty::Metadata)?.decode_or_default(),
+                        equipped: RmrkCore::get_nft_property(collection_id, nft_id, RmrkProperty::Equipped)?.decode_or_default(),
+                        pending: allowance.is_some(),
+                    }))
+                }
+
+                fn account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
+                    use pallet_proxy_rmrk_core::misc::CollectionType;
+
+                    let cross_account_id = CrossAccountId::from_sub(account_id);
+                    let collection_id = CollectionId(collection_id);
+                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Regular).is_err() { return Ok(Vec::new()); }
+
+                    Ok(
+                        dispatch_unique_runtime!(collection_id.account_tokens(cross_account_id))?
+                            .into_iter()
+                            .map(|token| token.0)
+                            .collect()
+                    )
+                }
+
+                fn nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
+                    let collection_id = CollectionId(collection_id);
+                    let nft_id = TokenId(nft_id);
+                    if !RmrkCore::nft_exists(collection_id, nft_id) { return Ok(Vec::new()); }
+
+                    Ok(
+                        pallet_nonfungible::TokenChildren::<Runtime>::iter_prefix((collection_id, nft_id))
+                            .filter_map(|(child_id, is_child)|
+                                match is_child {
+                                    true => Some(RmrkNftChild {
+                                        collection_id: child_id.0.0,
+                                        nft_id: child_id.1.0,
+                                    }),
+                                    false => None,
+                                }
+                            ).collect()
+                    )
+                }
+
+                fn collection_properties(collection_id: RmrkCollectionId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+                    use pallet_proxy_rmrk_core::misc::CollectionType;
+
+                    let collection_id = CollectionId(collection_id);
+                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Regular).is_err() {
+                        return Ok(Vec::new());
+                    }
+
+                    let properties = RmrkCore::filter_user_properties(
+                        collection_id,
+                        /* token_id = */ None,
+                        filter_keys,
+                        |key, value| RmrkPropertyInfo {
+                            key,
+                            value
+                        }
+                    )?;
+
+                    Ok(properties)
+                }
+
+                fn nft_properties(collection_id: RmrkCollectionId, nft_id: RmrkNftId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+                    use pallet_proxy_rmrk_core::misc::NftType;
+
+                    let collection_id = CollectionId(collection_id);
+                    let token_id = TokenId(nft_id);
+
+                    if RmrkCore::ensure_nft_type(collection_id, token_id, NftType::Regular).is_err() {
+                        return Ok(Vec::new());
+                    }
+
+		            let properties = RmrkCore::filter_user_properties(
+                        collection_id,
+                        Some(token_id),
+                        filter_keys,
+                        |key, value| RmrkPropertyInfo {
+                            key,
+                            value
+                        }
+                    )?;
+
+                    Ok(properties)
+                }
+
+                fn nft_resources(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
+                    use frame_support::BoundedVec;
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, NftType, RmrkDecode}};
+
+                    let collection_id = CollectionId(collection_id);
+                    if !RmrkCore::collection_exists(collection_id) { return Ok(Vec::new()); } // todo make sure the collection type doesn't matter
+
+                    let nft_id = TokenId(nft_id);
+                    if RmrkCore::ensure_nft_type(collection_id, nft_id, NftType::Resource).is_err() { return Ok(Vec::new()); }
+
+                    let resource_collection_id: CollectionId = RmrkCore::get_nft_property(collection_id, nft_id, RmrkProperty::ResourceCollection)
+                        .unwrap()
+                        .decode_or_default();
+                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Resource).is_err() { return Ok(Vec::new()); }
+
+                    let resources = pallet_nonfungible::TokenProperties::<Runtime>::iter_prefix((resource_collection_id,))
+                        .filter_map(|(resource_id, properties)| Some(RmrkResourceInfo {
+                            id: BoundedVec::default(), // todo ResourceId property
+                            pending: RmrkCore::get_nft_property(resource_collection_id, resource_id, RmrkProperty::PendingResourceAccept).unwrap().decode_or_default(),
+                            pending_removal: RmrkCore::get_nft_property(resource_collection_id, resource_id, RmrkProperty::PendingResourceRemoval).unwrap().decode_or_default(),
+                            resource: RmrkCore::get_nft_property(resource_collection_id, resource_id, RmrkProperty::ResourceType).unwrap().decode_or_default(),/* {
+                                RmrkResourceTypes::Basic(resource) => RmrkResourceTypes::Basic(),/*(RmrkBasicResource {
+                                    src: RmrkCore::get_nft_property_inner(properties, RmrkProperty::Src).unwrap().decode_or_default(),
+                                    metadata: RmrkCore::get_nft_property_inner(properties, RmrkProperty::Metadata).unwrap().decode_or_default(),
+                                    license: RmrkCore::get_nft_property_inner(properties, RmrkProperty::License).unwrap().decode_or_default(),
+                                    thumb: RmrkCore::get_nft_property_inner(properties, RmrkProperty::Thumb).unwrap().decode_or_default(),
+                                },*///BasicResource<BoundedString>)
+                                _ => todo!(), //RmrkResourceTypes::Composable(ComposableResource<BoundedString, BoundedParts>),
+                                //RmrkResourceTypes::Slot(SlotResource<BoundedString>),
+                            },*/
+                        }))
+                        .collect();
+
+                    Ok(resources)
+                }
+
+                fn nft_resource_priorities(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkResourceId>, DispatchError> {
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, NftType, RmrkDecode}};
+
+                    let collection_id = CollectionId(collection_id);
+                    if !RmrkCore::collection_exists(collection_id) { return Ok(Vec::new()); } // todo ensure the collection type doesn't matter
+
+                    let nft_id = TokenId(nft_id);
+                    if RmrkCore::ensure_nft_type(collection_id, nft_id, NftType::Resource).is_err() { return Ok(Vec::new()); }
+
+                    /*let resource_collection_id: CollectionId = RmrkCore::get_nft_property(collection_id, nft_id, RmrkProperty::ResourceCollection)
+                        .unwrap()
+                        .decode_or_default();
+                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Resource).is_err() { return Ok(Vec::new()); }
+
+                    let resources = pallet_nonfungible::TokenProperties::<Runtime>::iter_prefix((resource_collection_id,))
+                        .filter_map(|(resource_id, properties)| Some((
+                            resource_id, // ResourceId property
+                            RmrkCore::get_nft_property(resource_collection_id, resource_id, RmrkProperty::Priority).unwrap().decode_or_default(),
+                        )))
+                        .collect()
+                        .sort_by_key(|(_, index)| *index)
+                        .into_iter().map(|(resource_id, _)| resource_id)*/
+                    let priorities = RmrkCore::get_nft_property(collection_id, nft_id, RmrkProperty::ResourcePriorities)?.decode_or_default();
+
+                    Ok(priorities)
+                }
+
+                fn base(base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
+                    use pallet_proxy_rmrk_core::{
+                        RmrkProperty, misc::{CollectionType, RmrkDecode, RmrkRebind},
+                    };
+
+                    let collection_id = CollectionId(base_id);
+                    let collection = match RmrkCore::get_typed_nft_collection(collection_id, CollectionType::Base) {
+                        Ok(c) => c,
+                        Err(_) => return Ok(None),
+                    };
+
+                    Ok(Some(RmrkBaseInfo {
+                        issuer: collection.owner.clone(),
+                        base_type: RmrkCore::get_collection_property(collection_id, RmrkProperty::BaseType)?.decode_or_default(),
+                        symbol: collection.token_prefix.rebind(),
+                    }))
+                }
+
+                fn base_parts(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, NftType, RmrkDecode}};
+
+                    let collection_id = CollectionId(base_id);
+                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Base).is_err() { return Ok(Vec::new()); }
+
+                    let parts = dispatch_unique_runtime!(collection_id.collection_tokens())?
+                        .into_iter()
+                        .filter_map(|token_id| {
+                            let nft_type = RmrkCore::get_nft_type(collection_id, token_id).ok()?;
+
+                            match nft_type {
+                                NftType::FixedPart => Some(RmrkPartType::FixedPart(RmrkFixedPart {
+                                    id: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::ExternalPartId).ok()?.decode_or_default(),
+                                    src: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::Src).ok()?.decode_or_default(),
+                                    z: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::ZIndex).ok()?.decode_or_default(),
+                                })),
+                                NftType::SlotPart => Some(RmrkPartType::SlotPart(RmrkSlotPart {
+                                    id: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::ExternalPartId).ok()?.decode_or_default(),
+                                    src: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::Src).ok()?.decode_or_default(),
+                                    z: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::ZIndex).ok()?.decode_or_default(),
+                                    equippable: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::EquippableList).ok()?.decode_or_default(),
+                                })),
+                                _ => None
+                            }
+                        })
+                        .collect();
+
+                    Ok(parts)
+                }
+
+                fn theme_names(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, RmrkDecode}};
+
+                    let collection_id = CollectionId(base_id);
+                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Base).is_err() {
+                        return Ok(Vec::new());
+                    }
+
+                    let theme_names = dispatch_unique_runtime!(collection_id.collection_tokens())?
+                        .iter()
+                        .filter_map(|token_id| {
+                            let nft_type = RmrkCore::get_nft_type(collection_id, *token_id).unwrap();
+
+                            match nft_type {
+                                Theme => Some(
+                                    RmrkCore::get_nft_property(collection_id, *token_id, RmrkProperty::ThemeName).unwrap().decode_or_default()
+                                ),
+                                _ => None
+                            }
+                        })
+                        .collect();
+
+                    Ok(theme_names)
+                }
+
+                fn theme(base_id: RmrkBaseId, theme_name: RmrkThemeName, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Option<RmrkTheme>, DispatchError> {
+                    use pallet_proxy_rmrk_core::{
+                        RmrkProperty,
+                        misc::{CollectionType, NftType, RmrkDecode}
+                    };
+
+                    let collection_id = CollectionId(base_id);
+                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Base).is_err() {
+                        return Ok(None);
+                    }
+
+                    let theme_info = dispatch_unique_runtime!(collection_id.collection_tokens())?
+                        .into_iter()
+                        .find_map(|token_id| {
+                            RmrkCore::ensure_nft_type(collection_id, token_id, NftType::Theme).ok()?;
+
+                            let name: RmrkString = RmrkCore::get_nft_property(
+                                collection_id, token_id, RmrkProperty::ThemeName
+                            ).ok()?.decode_or_default();
+
+                            if name == theme_name {
+                                Some((name, token_id))
+                            } else {
+                                None
+                            }
+                        });
+
+                    let (name, theme_id) = match theme_info {
+                        Some((name, theme_id)) => (name, theme_id),
+                        None => return Ok(None)
+                    };
+
+                    let properties = RmrkCore::filter_user_properties(
+                        collection_id,
+                        Some(theme_id),
+                        filter_keys,
+                        |key, value| RmrkThemeProperty {
+                            key,
+                            value
+                        }
+                    )?;
+
+                    let inherit = RmrkCore::get_nft_property(
+                        collection_id,
+                        theme_id,
+                        RmrkProperty::ThemeInherit
+                    )?.decode_or_default();
+
+                    let theme = RmrkTheme {
+                        name,
+                        properties,
+                        inherit,
+                    };
+
+                    Ok(Some(theme))
+                }
+            }*/
 
             impl sp_api::Core<Block> for Runtime {
                 fn version() -> RuntimeVersion {
@@ -191,6 +572,7 @@ macro_rules! impl_common_runtime_apis {
                         None
                     };
 
+                    let is_transactional = false;
                     <Runtime as pallet_evm::Config>::Runner::call(
                         CrossAccountId::from_eth(from),
                         to,
@@ -201,6 +583,7 @@ macro_rules! impl_common_runtime_apis {
                         max_priority_fee_per_gas,
                         nonce,
                         access_list.unwrap_or_default(),
+                        is_transactional,
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
                     ).map_err(|err| err.into())
                 }
@@ -225,6 +608,7 @@ macro_rules! impl_common_runtime_apis {
                         None
                     };
 
+                    let is_transactional = false;
                     <Runtime as pallet_evm::Config>::Runner::create(
                         CrossAccountId::from_eth(from),
                         data,
@@ -234,6 +618,7 @@ macro_rules! impl_common_runtime_apis {
                         max_priority_fee_per_gas,
                         nonce,
                         access_list.unwrap_or_default(),
+                        is_transactional,
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
                     ).map_err(|err| err.into())
                 }
@@ -271,6 +656,14 @@ macro_rules! impl_common_runtime_apis {
 
                 fn elasticity() -> Option<Permill> {
                     None
+                }
+            }
+
+            impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
+                fn convert_transaction(transaction: pallet_ethereum::Transaction) -> <Block as BlockT>::Extrinsic  {
+                    UncheckedExtrinsic::new_unsigned(
+                        pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
+                    )
                 }
             }
 
@@ -370,7 +763,9 @@ macro_rules! impl_common_runtime_apis {
                     let mut list = Vec::<BenchmarkList>::new();
 
                     list_benchmark!(list, extra, pallet_evm_migration, EvmMigration);
+                    list_benchmark!(list, extra, pallet_common, Common);
                     list_benchmark!(list, extra, pallet_unique, Unique);
+                    list_benchmark!(list, extra, pallet_structure, Structure);
                     list_benchmark!(list, extra, pallet_inflation, Inflation);
                     list_benchmark!(list, extra, pallet_fungible, Fungible);
                     list_benchmark!(list, extra, pallet_refungible, Refungible);
@@ -388,23 +783,32 @@ macro_rules! impl_common_runtime_apis {
                     use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
                     let allowlist: Vec<TrackedStorageKey> = vec![
-                        // Block Number
-                        hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
                         // Total Issuance
                         hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
+
+                        // Block Number
+                        hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
                         // Execution Phase
                         hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
                         // Event Count
                         hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
                         // System Events
                         hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
+
+                        // Evm CurrentLogs
+                        hex_literal::hex!("1da53b775b270400e7e61ed5cbc5a146547f210cec367e9af919603343b9cb56").to_vec().into(),
+
+                        // Transactional depth
+                        hex_literal::hex!("3a7472616e73616374696f6e5f6c6576656c3a").to_vec().into(),
                     ];
 
                     let mut batches = Vec::<BenchmarkBatch>::new();
                     let params = (&config, &allowlist);
 
                     add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
+                    add_benchmark!(params, batches, pallet_common, Common);
                     add_benchmark!(params, batches, pallet_unique, Unique);
+                    add_benchmark!(params, batches, pallet_structure, Structure);
                     add_benchmark!(params, batches, pallet_inflation, Inflation);
                     add_benchmark!(params, batches, pallet_fungible, Fungible);
                     add_benchmark!(params, batches, pallet_refungible, Refungible);
@@ -413,6 +817,19 @@ macro_rules! impl_common_runtime_apis {
 
                     if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
                     Ok(batches)
+                }
+            }
+
+            #[cfg(feature = "try-runtime")]
+            impl frame_try_runtime::TryRuntime<Block> for Runtime {
+                fn on_runtime_upgrade() -> (Weight, Weight) {
+                    log::info!("try-runtime::on_runtime_upgrade unique-chain.");
+                    let weight = Executive::try_runtime_upgrade().unwrap();
+                    (weight, RuntimeBlockWeights::get().max_block)
+                }
+
+                fn execute_block_no_check(block: Block) -> Weight {
+                    Executive::execute_block_no_check(block)
                 }
             }
         }

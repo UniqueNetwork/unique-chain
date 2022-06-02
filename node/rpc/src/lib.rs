@@ -21,7 +21,7 @@ use fc_rpc::{
 };
 use fc_rpc_core::types::{FilterPool, FeeHistoryCache};
 use jsonrpc_pubsub::manager::SubscriptionManager;
-use pallet_ethereum::EthereumStorageSchema;
+use fp_storage::EthereumStorageSchema;
 use sc_client_api::{
 	backend::{AuxStore, StorageProvider},
 	client::BlockchainEvents,
@@ -38,11 +38,16 @@ use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sc_service::TransactionPool;
-use std::{collections::BTreeMap, marker::PhantomData, sync::Arc};
+use std::{collections::BTreeMap, sync::Arc};
 
 use unique_runtime_common::types::{
 	Hash, AccountId, RuntimeInstance, Index, Block, BlockNumber, Balance,
 };
+// RMRK
+/* TODO free RMRK! use up_data_structs::{
+	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo,
+	RmrkPartType, RmrkTheme,
+};*/
 
 /// Public io handler for exporting into other modules
 pub type IoHandler = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
@@ -93,44 +98,6 @@ pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	pub block_data_cache: Arc<EthBlockDataCache<Block>>,
 }
 
-struct AccountCodes<C, B, R> {
-	client: Arc<C>,
-	_blk_marker: PhantomData<B>,
-	_runtime_marker: PhantomData<R>,
-}
-
-impl<C, Block, R> AccountCodes<C, Block, R>
-where
-	Block: sp_api::BlockT,
-	C: ProvideRuntimeApi<Block>,
-	R: RuntimeInstance,
-{
-	fn new(client: Arc<C>) -> Self {
-		Self {
-			client,
-			_blk_marker: PhantomData,
-			_runtime_marker: PhantomData,
-		}
-	}
-}
-
-impl<C, Block, Runtime> fc_rpc::AccountCodeProvider<Block> for AccountCodes<C, Block, Runtime>
-where
-	Block: sp_api::BlockT,
-	C: ProvideRuntimeApi<Block>,
-	C::Api: up_rpc::UniqueApi<Block, <Runtime as RuntimeInstance>::CrossAccountId, AccountId>,
-	Runtime: RuntimeInstance,
-{
-	fn code(&self, block: &sp_api::BlockId<Block>, account: sp_core::H160) -> Option<Vec<u8>> {
-		use up_rpc::UniqueApi;
-		self.client
-			.runtime_api()
-			.eth_contract_code(block, account)
-			.ok()
-			.flatten()
-	}
-}
-
 pub fn overrides_handle<C, BE, R>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
 where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
@@ -145,10 +112,8 @@ where
 	let mut overrides_map = BTreeMap::new();
 	overrides_map.insert(
 		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new_with_code_provider(
-			client.clone(),
-			Arc::new(AccountCodes::<C, Block, R>::new(client.clone())),
-		)) as Box<dyn StorageOverride<_> + Send + Sync>,
+		Box::new(SchemaV1Override::new(client.clone()))
+			as Box<dyn StorageOverride<_> + Send + Sync>,
 	);
 	overrides_map.insert(
 		EthereumStorageSchema::V2,
@@ -182,7 +147,20 @@ where
 	// C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
+	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: up_rpc::UniqueApi<Block, <R as RuntimeInstance>::CrossAccountId, AccountId>,
+	/* TODO free RMRK!
+	C::Api: rmrk_rpc::RmrkApi<
+		Block,
+		AccountId,
+		RmrkCollectionInfo<AccountId>,
+		RmrkInstanceInfo<AccountId>,
+		RmrkResourceInfo,
+		RmrkPropertyInfo,
+		RmrkBaseInfo<AccountId>,
+		RmrkPartType,
+		RmrkTheme,
+	>,*/
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
 	P: TransactionPool<Block = Block> + 'static,
@@ -196,7 +174,7 @@ where
 		EthPubSubApiServer, EthSigner, HexEncodedIdProvider, NetApi, NetApiServer, Web3Api,
 		Web3ApiServer,
 	};
-	use uc_rpc::{UniqueApi, Unique};
+	use uc_rpc::{UniqueApi, RmrkApi, Unique};
 	// use pallet_contracts_rpc::{Contracts, ContractsApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
@@ -242,18 +220,21 @@ where
 		client.clone(),
 		pool.clone(),
 		graph,
-		<R as RuntimeInstance>::get_transaction_converter(),
+		Some(<R as RuntimeInstance>::get_transaction_converter()),
 		network.clone(),
 		signers,
 		overrides.clone(),
 		backend.clone(),
 		is_authority,
-		max_past_logs,
 		block_data_cache.clone(),
 		fee_history_limit,
 		fee_history_cache,
 	)));
+
+	// todo look into
+	//let unique = Unique::new(client.clone());
 	io.extend_with(UniqueApi::to_delegate(Unique::new(client.clone())));
+	// TODO free RMRK! io.extend_with(RmrkApi::to_delegate(Unique::new(client.clone())));
 
 	if let Some(filter_pool) = filter_pool {
 		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
