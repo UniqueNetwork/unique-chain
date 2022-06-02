@@ -518,7 +518,8 @@ impl<T: Config> Pallet<T> {
 		Ok(scoped_key)
 	}
 
-	pub fn rmrk_property<E: Encode>( // todo think about renaming this
+	pub fn rmrk_property<E: Encode>(
+		// todo think about renaming this
 		rmrk_key: RmrkProperty,
 		value: &E,
 	) -> Result<Property, DispatchError> {
@@ -533,20 +534,18 @@ impl<T: Config> Pallet<T> {
 
 		Ok(property)
 	}
-	
-	pub fn decode_property<D: Decode>(
-		vec: PropertyValue,
-	) -> Result<D, DispatchError> {
-		vec.decode().map_err(|_| <Error<T>>::RmrkPropertyValueIsTooLong.into())
+
+	pub fn decode_property<D: Decode>(vec: PropertyValue) -> Result<D, DispatchError> {
+		vec.decode()
+			.map_err(|_| <Error<T>>::RmrkPropertyValueIsTooLong.into())
 	}
 
-	pub fn rebind<L, S>(
-		vec: &BoundedVec<u8, L>,
-	) -> Result<BoundedVec<u8, S>, DispatchError> 
-	where 
-		BoundedVec<u8, S>: TryFrom<Vec<u8>> 
+	pub fn rebind<L, S>(vec: &BoundedVec<u8, L>) -> Result<BoundedVec<u8, S>, DispatchError>
+	where
+		BoundedVec<u8, S>: TryFrom<Vec<u8>>,
 	{
-		vec.rebind().map_err(|_| <Error<T>>::RmrkPropertyValueIsTooLong.into())
+		vec.rebind()
+			.map_err(|_| <Error<T>>::RmrkPropertyValueIsTooLong.into())
 	}
 
 	fn init_collection(
@@ -727,9 +726,7 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 		key: RmrkProperty,
 	) -> Result<V, DispatchError> {
-		Self::decode_property(
-			Self::get_collection_property(collection_id, key)?
-		)
+		Self::decode_property(Self::get_collection_property(collection_id, key)?)
 	}
 
 	pub fn get_collection_type(
@@ -779,9 +776,7 @@ impl<T: Config> Pallet<T> {
 		nft_id: TokenId,
 		key: RmrkProperty,
 	) -> Result<V, DispatchError> {
-		Self::decode_property(
-			Self::get_nft_property(collection_id, nft_id, key)?
-		)
+		Self::decode_property(Self::get_nft_property(collection_id, nft_id, key)?)
 	}
 
 	pub fn nft_exists(collection_id: CollectionId, nft_id: TokenId) -> bool {
