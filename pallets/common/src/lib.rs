@@ -171,9 +171,11 @@ impl<T: Config> CollectionHandle<T> {
 		Ok(true)
 	}
 
-	pub fn check_is_read_only(&self) -> DispatchResult {
-		if self.read_only {
-			return Err(<Error<T>>::CollectionNotFound)?;
+	/// Checks that collection is can be mutate.
+	/// Now check only `external_collection` flag and if it **true**, than return `CollectionIsReadOnly` error.
+	pub fn check_is_mutable(&self) -> DispatchResult {
+		if self.external_collection {
+			return Err(<Error<T>>::CollectionIsReadOnly)?;
 		}
 
 		Ok(())
