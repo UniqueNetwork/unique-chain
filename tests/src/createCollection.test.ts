@@ -88,6 +88,20 @@ describe('integration test: ext. createCollection():', () => {
       expect(collection.limits.accountTokenOwnershipLimit.unwrap().toNumber()).to.equal(3);
     });
   });
+
+  it('Create new collection is not read only', async () => {
+    await usingApi(async api => {
+      const alice = privateKey('//Alice');
+      const tx = api.tx.unique.createCollectionEx({
+        readOnly: true
+      });
+      const events = await submitTransactionAsync(alice, tx);
+      const result = getCreateCollectionResult(events);
+
+      const collection = (await getDetailedCollectionInfo(api, result.collectionId))!;
+      expect(collection.readOnly.toHuman()).to.be.false;
+    });
+  });
 });
 
 describe('(!negative test!) integration test: ext. createCollection():', () => {

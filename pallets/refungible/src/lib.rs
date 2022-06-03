@@ -234,6 +234,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn burn_token(collection: &RefungibleHandle<T>, token_id: TokenId) -> DispatchResult {
+		collection.check_is_read_only()?;
 		let burnt = <TokensBurnt<T>>::get(collection.id)
 			.checked_add(1)
 			.ok_or(ArithmeticError::Overflow)?;
@@ -253,6 +254,7 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult {
+		collection.check_is_read_only()?;
 		let total_supply = <TotalSupply<T>>::get((collection.id, token))
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
@@ -325,6 +327,7 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
+		collection.check_is_read_only()?;
 		ensure!(
 			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed
@@ -573,6 +576,7 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult {
+		collection.check_is_read_only()?;
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(sender)?;
 			collection.check_allowlist(spender)?;
