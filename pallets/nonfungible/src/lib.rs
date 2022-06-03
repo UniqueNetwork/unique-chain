@@ -857,7 +857,7 @@ impl<T: Config> Pallet<T> {
 		spender: Option<&T::CrossAccountId>,
 	) -> DispatchResult {
 		collection.check_is_read_only()?;
-		
+
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(sender)?;
 			if let Some(spender) = spender {
