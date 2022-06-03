@@ -41,8 +41,8 @@ describe('Integration Test removeFromAllowList', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -75,8 +75,8 @@ describe('Negative Integration Test removeFromAllowList', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -107,9 +107,9 @@ describe('Integration Test removeFromAllowList with collection admin permissions
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
-      charlie = privateKeyWrapper!('//Charlie');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 

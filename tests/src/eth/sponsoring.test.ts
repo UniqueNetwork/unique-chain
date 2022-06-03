@@ -19,7 +19,7 @@ import {contractHelpers, createEthAccount, createEthAccountWithBalance, deployCo
 
 describe('EVM sponsoring', () => {
   itWeb3('Fee is deducted from contract if sponsoring is enabled', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = createEthAccount(web3);
@@ -50,7 +50,7 @@ describe('EVM sponsoring', () => {
     expect(await web3.eth.getBalance(flipper.options.address)).to.be.not.equals(originalFlipperBalance);
   });
   itWeb3('...but this doesn\'t applies to payable value', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = await createEthAccountWithBalance(api, web3);

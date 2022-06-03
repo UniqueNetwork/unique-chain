@@ -16,8 +16,8 @@ let charlie: IKeyringPair;
 describe('Composite Properties Test', () => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -63,8 +63,8 @@ describe('Composite Properties Test', () => {
 describe('Integration Test: Collection Properties', () => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -158,8 +158,8 @@ describe('Integration Test: Collection Properties', () => {
 describe('Negative Integration Test: Collection Properties', () => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
   
@@ -290,8 +290,8 @@ describe('Negative Integration Test: Collection Properties', () => {
 describe('Integration Test: Access Rights to Token Properties', () => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
   
@@ -356,8 +356,8 @@ describe('Integration Test: Access Rights to Token Properties', () => {
 describe('Negative Integration Test: Access Rights to Token Properties', () => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -474,9 +474,9 @@ describe('Integration Test: Token Properties', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
-      charlie = privateKeyWrapper!('//Charlie');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
 
       permissions = [
         {permission: {mutable: true, collectionAdmin: true}, signers: [alice, bob]},
@@ -639,10 +639,10 @@ describe('Negative Integration Test: Token Properties', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
-      charlie = privateKeyWrapper!('//Charlie');
-      const dave = privateKeyWrapper!('//Dave');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
+      const dave = privateKeyWrapper('//Dave');
 
       constitution = [
         {permission: {mutable: true, collectionAdmin: true}, signers: [alice, bob], sinner: charlie},

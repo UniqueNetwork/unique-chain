@@ -126,7 +126,7 @@ describe('RPC Tests', () => {
       const [contract, deployer] = await deployLoadTester(api);
 
       // Fill smart contract up with data
-      const bob = privateKeyWrapper!('//Bob');
+      const bob = privateKeyWrapper('//Bob');
       const tx = contract.tx.bloat(value, gasLimit, 200);
       await submitTransactionAsync(bob, tx);
 

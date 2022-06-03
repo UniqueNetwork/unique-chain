@@ -23,8 +23,8 @@ let bob: IKeyringPair;
 describe('Integration Test: Nesting', () => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -226,8 +226,8 @@ describe('Integration Test: Nesting', () => {
 describe('Negative Test: Nesting', async() => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 

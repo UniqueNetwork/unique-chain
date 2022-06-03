@@ -27,11 +27,11 @@ describe('integration test: Inflation', () => {
 
       // Make sure non-sudo can't start inflation
       const tx = api.tx.inflation.startInflation(1);
-      const bob = privateKeyWrapper!('//Bob');
+      const bob = privateKeyWrapper('//Bob');
       await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
 
       // Start inflation on relay block 1 (Alice is sudo)
-      const alice = privateKeyWrapper!('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const sudoTx = api.tx.sudo.sudo(tx as any);
       await submitTransactionAsync(alice, sudoTx);
 

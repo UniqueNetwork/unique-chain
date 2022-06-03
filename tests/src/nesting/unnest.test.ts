@@ -19,8 +19,8 @@ let bob: IKeyringPair;
 describe('Integration Test: Unnesting', () => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -110,8 +110,8 @@ describe('Integration Test: Unnesting', () => {
 describe('Negative Test: Unnesting', () => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 

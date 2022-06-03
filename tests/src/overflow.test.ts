@@ -30,9 +30,9 @@ describe.skip('Integration Test fungible overflows', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
-      charlie = privateKeyWrapper!('//Charlie');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 

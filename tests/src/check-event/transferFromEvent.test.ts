@@ -33,8 +33,8 @@ describe('Transfer from event ', () => {
   const checkSystem = 'ExtrinsicSuccess';
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
   it('Check event from transferFrom(): ', async () => {

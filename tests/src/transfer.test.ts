@@ -51,7 +51,7 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
     await usingApi(async (api, privateKeyWrapper) => {
       const [alicesBalanceBefore, bobsBalanceBefore] = await getBalance(api, [alicesPublicKey, bobsPublicKey]);
 
-      const alicePrivateKey = privateKeyWrapper!('//Alice');
+      const alicePrivateKey = privateKeyWrapper('//Alice');
 
       const transfer = api.tx.balances.transfer(bobsPublicKey, 1n);
       const events = await submitTransactionAsync(alicePrivateKey, transfer);
@@ -87,8 +87,8 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
 
   it('User can transfer owned token', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
@@ -114,8 +114,8 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
 
   it('Collection admin can transfer owned token', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       await addCollectionAdminExpectSuccess(alice, nftCollectionId, bob.address);
@@ -145,9 +145,9 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
 describe('Negative Integration Test Transfer(recipient, collection_id, item_id, value)', () => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
-      charlie = privateKeyWrapper!('//Charlie');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
   it('Transfer with not existed collection_id', async () => {
@@ -258,8 +258,8 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
 describe('Zero value transfer(From)', () => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -316,7 +316,7 @@ describe('Zero value transfer(From)', () => {
 describe('Transfers to self (potentially over substrate-evm boundary)', () => {
   itWeb3('Transfers to self. In case of same frontend', async ({api, privateKeyWrapper}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const aliceProxy = subToEth(alice.address);
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
     await transferExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, 10, 'Fungible');
@@ -328,7 +328,7 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
 
   itWeb3('Transfers to self. In case of substrate-evm boundary', async ({api, privateKeyWrapper}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const aliceProxy = subToEth(alice.address);
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
     const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
@@ -340,7 +340,7 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
 
   itWeb3('Transfers to self. In case of inside substrate-evm', async ({api, privateKeyWrapper}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
     const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
     await transferExpectSuccess(collectionId, tokenId, alice, alice , 10, 'Fungible');
@@ -351,7 +351,7 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
 
   itWeb3('Transfers to self. In case of inside substrate-evm when not enought "Fungibles"', async ({api, privateKeyWrapper}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
     const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
     await transferExpectFailure(collectionId, tokenId, alice, alice , 11);

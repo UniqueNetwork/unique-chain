@@ -34,7 +34,7 @@ async function buildComplexObjectGraph(api: ApiPromise, sender: IKeyringPair): P
 describe('Graphs', () => {
   it('Ouroboros can\'t be created in a complex graph', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const collection = await buildComplexObjectGraph(api, alice);
 
       // to self

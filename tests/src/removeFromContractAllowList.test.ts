@@ -25,7 +25,7 @@ describe.skip('Integration Test removeFromContractAllowList', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      bob = privateKeyWrapper!('//Bob');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -70,8 +70,8 @@ describe.skip('Negative Integration Test removeFromContractAllowList', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 

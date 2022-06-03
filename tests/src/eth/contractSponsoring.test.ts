@@ -64,7 +64,7 @@ describe('Sponsoring EVM contracts', () => {
   });
 
   itWeb3('In generous mode, non-allowlisted user transaction will be sponsored', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = await createEthAccountWithBalance(api, web3);
@@ -92,7 +92,7 @@ describe('Sponsoring EVM contracts', () => {
   });
 
   itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should decrease (allowlisted)', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = createEthAccount(web3);
@@ -122,7 +122,7 @@ describe('Sponsoring EVM contracts', () => {
   });
 
   itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should not decrease (non-allowlisted)', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = createEthAccount(web3);
@@ -150,7 +150,7 @@ describe('Sponsoring EVM contracts', () => {
   });
 
   itWeb3('Sponsoring is set, an address that has UNQ can send a transaction and it works. User balance should not change', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = await createEthAccountWithBalance(api, web3);
@@ -179,7 +179,7 @@ describe('Sponsoring EVM contracts', () => {
   });
 
   itWeb3('Sponsoring is limited, with setContractRateLimit. The limitation is working if transactions are sent more often, the sender pays the commission.', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = await createEthAccountWithBalance(api, web3);

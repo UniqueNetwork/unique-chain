@@ -57,7 +57,7 @@ describe.skip('Negative Integration Test setContractSponsoringRateLimit', () => 
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
+      alice = privateKeyWrapper('//Alice');
     });
   });
 

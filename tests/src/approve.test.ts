@@ -43,9 +43,9 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper!('//Alice');
-      bob =  privateKeyWrapper!('//Bob');
-      charlie =  privateKeyWrapper!('//Charlie');
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 
@@ -99,9 +99,9 @@ describe('Normal user can approve other users to transfer:', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper!('//Alice');
-      bob =  privateKeyWrapper!('//Bob');
-      charlie =  privateKeyWrapper!('//Charlie');
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });  
 
@@ -131,9 +131,9 @@ describe('Approved users can transferFrom up to approved amount:', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper!('//Alice');
-      bob =  privateKeyWrapper!('//Bob');
-      charlie =  privateKeyWrapper!('//Charlie');
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });  
 
@@ -166,9 +166,9 @@ describe('Approved users cannot use transferFrom to repeat transfers if approved
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper!('//Alice');
-      bob =  privateKeyWrapper!('//Bob');
-      charlie =  privateKeyWrapper!('//Charlie');
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });  
 
@@ -205,10 +205,10 @@ describe('Approved amount decreases by the transferred amount.:', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper!('//Alice');
-      bob =  privateKeyWrapper!('//Bob');
-      charlie =  privateKeyWrapper!('//Charlie');
-      dave =  privateKeyWrapper!('//Dave');
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
+      dave =  privateKeyWrapper('//Dave');
     });
   });  
 
@@ -228,9 +228,9 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper!('//Alice');
-      bob =  privateKeyWrapper!('//Bob');
-      charlie =  privateKeyWrapper!('//Charlie');
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 
@@ -267,9 +267,9 @@ describe('User cannot approve for the amount greater than they own:', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper!('//Alice');
-      bob =  privateKeyWrapper!('//Bob');
-      charlie =  privateKeyWrapper!('//Charlie');
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 
@@ -300,10 +300,10 @@ describe('Administrator and collection owner do not need approval in order to ex
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper!('//Alice');
-      bob =  privateKeyWrapper!('//Bob');
-      charlie =  privateKeyWrapper!('//Charlie');
-      dave =  privateKeyWrapper!('//Dave');
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
+      dave =  privateKeyWrapper('//Dave');
     });
   });  
 
@@ -340,10 +340,10 @@ describe('Repeated approvals add up', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper!('//Alice');
-      bob =  privateKeyWrapper!('//Bob');
-      charlie =  privateKeyWrapper!('//Charlie');
-      dave =  privateKeyWrapper!('//Dave');
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
+      dave =  privateKeyWrapper('//Dave');
     });
   });  
 
@@ -391,9 +391,9 @@ describe('Integration Test approve(spender, collection_id, item_id, amount) with
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper!('//Alice');
-      bob =  privateKeyWrapper!('//Bob');
-      charlie =  privateKeyWrapper!('//Charlie');
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 
@@ -413,9 +413,9 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper!('//Alice');
-      bob =  privateKeyWrapper!('//Bob');
-      charlie =  privateKeyWrapper!('//Charlie');
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 

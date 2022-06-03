@@ -6,7 +6,7 @@ import {executeTransaction} from '../substrate/substrate-api';
 
 describe('EVM collection properties', () => {
   itWeb3('Can be set', async({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
 
@@ -21,7 +21,7 @@ describe('EVM collection properties', () => {
     expect(value).to.equal('testValue');
   });
   itWeb3('Can be deleted', async({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
 
@@ -38,7 +38,7 @@ describe('EVM collection properties', () => {
     expect(result.length).to.equal(0);
   });
   itWeb3('Can be read', async({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = createEthAccount(web3);
     const collection = await createCollectionExpectSuccess({mode: {type:'NFT'}});
 

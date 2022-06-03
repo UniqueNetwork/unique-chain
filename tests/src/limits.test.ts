@@ -35,7 +35,7 @@ describe('Number of tokens per address (NFT)', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
+      alice = privateKeyWrapper('//Alice');
     });
   });
 
@@ -69,7 +69,7 @@ describe('Number of tokens per address (ReFungible)', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
+      alice = privateKeyWrapper('//Alice');
     });
   });
 
@@ -103,9 +103,9 @@ describe.skip('Sponsor timeout (NFT) (only for special chain limits test)', () =
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
-      charlie = privateKeyWrapper!('//Charlie');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 
@@ -166,9 +166,9 @@ describe.skip('Sponsor timeout (Fungible) (only for special chain limits test)',
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
-      charlie = privateKeyWrapper!('//Charlie');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 
@@ -233,9 +233,9 @@ describe.skip('Sponsor timeout (ReFungible) (only for special chain limits test)
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
-      charlie = privateKeyWrapper!('//Charlie');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 
@@ -296,9 +296,9 @@ describe('Collection zero limits (NFT)', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
-      charlie = privateKeyWrapper!('//Charlie');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 
@@ -337,9 +337,9 @@ describe('Collection zero limits (Fungible)', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
-      charlie = privateKeyWrapper!('//Charlie');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 
@@ -369,9 +369,9 @@ describe('Collection zero limits (ReFungible)', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
-      charlie = privateKeyWrapper!('//Charlie');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 

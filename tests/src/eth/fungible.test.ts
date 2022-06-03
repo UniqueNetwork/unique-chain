@@ -25,7 +25,7 @@ describe('Fungible: Information getting', () => {
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const caller = await createEthAccountWithBalance(api, web3);
 
@@ -43,7 +43,7 @@ describe('Fungible: Information getting', () => {
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const caller = await createEthAccountWithBalance(api, web3);
 
@@ -63,7 +63,7 @@ describe('Fungible: Plain calls', () => {
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
 
@@ -102,7 +102,7 @@ describe('Fungible: Plain calls', () => {
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = createEthAccount(web3);
     await transferBalanceToEth(api, alice, owner);
@@ -160,7 +160,7 @@ describe('Fungible: Plain calls', () => {
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = createEthAccount(web3);
     await transferBalanceToEth(api, alice, owner);
@@ -206,7 +206,7 @@ describe('Fungible: Fees', () => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const spender = createEthAccount(web3);
@@ -224,7 +224,7 @@ describe('Fungible: Fees', () => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const spender = await createEthAccountWithBalance(api, web3);
@@ -244,7 +244,7 @@ describe('Fungible: Fees', () => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const receiver = createEthAccount(web3);
@@ -264,7 +264,7 @@ describe('Fungible: Substrate calls', () => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const receiver = createEthAccount(web3);
 
@@ -294,8 +294,8 @@ describe('Fungible: Substrate calls', () => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
-    const bob = privateKeyWrapper!('//Bob');
+    const alice = privateKeyWrapper('//Alice');
+    const bob = privateKeyWrapper('//Bob');
 
     const receiver = createEthAccount(web3);
 
@@ -335,7 +335,7 @@ describe('Fungible: Substrate calls', () => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const receiver = createEthAccount(web3);
 

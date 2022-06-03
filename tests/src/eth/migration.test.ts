@@ -53,7 +53,7 @@ describe('EVM Migrations', () => {
       ['0xedc95719e9a3b28dd8e80877cb5880a9be7de1a13fc8b05e7999683b6b567643', '0x0000000000000000000000000000000000000000000000000000000000000004'],
     ];
 
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
 
     await submitTransactionAsync(alice, api.tx.sudo.sudo(api.tx.evmMigration.begin(ADDRESS) as any));

@@ -34,7 +34,7 @@ describe('EVM payable contracts', () => {
   itWeb3('Evm contract can receive wei from substrate account', async ({api, web3, privateKeyWrapper}) => {
     const deployer = await createEthAccountWithBalance(api, web3);
     const contract = await deployCollector(web3, deployer);
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     // Transaction fee/value will be payed from subToEth(sender) evm balance,
     // which is backed by evmToAddress(subToEth(sender)) substrate balance
@@ -64,7 +64,7 @@ describe('EVM payable contracts', () => {
   itWeb3('Wei sent directly to backing storage of evm contract balance is unaccounted', async({api, web3, privateKeyWrapper}) => {
     const deployer = await createEthAccountWithBalance(api, web3);
     const contract = await deployCollector(web3, deployer);
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     await transferBalanceExpectSuccess(api, alice, evmToAddress(contract.options.address), '10000');
 
@@ -77,11 +77,11 @@ describe('EVM payable contracts', () => {
 
     const deployer = await createEthAccountWithBalance(api, web3);
     const contract = await deployCollector(web3, deployer);
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     await web3.eth.sendTransaction({from: deployer, to: contract.options.address, value: CONTRACT_BALANCE.toString(), ...GAS_ARGS});
 
-    const receiver = privateKeyWrapper!(`//Receiver${Date.now()}`);
+    const receiver = privateKeyWrapper(`//Receiver${Date.now()}`);
 
     // First receive balance on eth balance of bob
     {

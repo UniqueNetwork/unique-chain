@@ -329,7 +329,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKeyWrapper!('//Alice');
+    const alicePrivateKey = privateKeyWrapper('//Alice');
 
     let modeprm = {};
     if (mode.type === 'NFT') {
@@ -382,7 +382,7 @@ export async function createCollectionWithPropsExpectSuccess(params: Partial<Cre
     const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKeyWrapper!('//Alice');
+    const alicePrivateKey = privateKeyWrapper('//Alice');
 
     let modeprm = {};
     if (mode.type === 'NFT') {
@@ -430,7 +430,7 @@ export async function createCollectionWithPropsExpectFailure(params: Partial<Cre
     const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKeyWrapper!('//Alice');
+    const alicePrivateKey = privateKeyWrapper('//Alice');
 
     let modeprm = {};
     if (mode.type === 'NFT') {
@@ -469,7 +469,7 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
     const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKeyWrapper!('//Alice');
+    const alicePrivateKey = privateKeyWrapper('//Alice');
     const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any});
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
 
@@ -520,7 +520,7 @@ function getDestroyResult(events: EventRecord[]): boolean {
 export async function destroyCollectionExpectFailure(collectionId: number, senderSeed = '//Alice') {
   await usingApi(async (api, privateKeyWrapper) => {
     // Run the DestroyCollection transaction
-    const alicePrivateKey = privateKeyWrapper!(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.destroyCollection(collectionId);
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
@@ -529,7 +529,7 @@ export async function destroyCollectionExpectFailure(collectionId: number, sende
 export async function destroyCollectionExpectSuccess(collectionId: number, senderSeed = '//Alice') {
   await usingApi(async (api, privateKeyWrapper) => {
     // Run the DestroyCollection transaction
-    const alicePrivateKey = privateKeyWrapper!(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.destroyCollection(collectionId);
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getDestroyResult(events);
@@ -574,7 +574,7 @@ export async function setCollectionSponsorExpectSuccess(collectionId: number, sp
   await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const senderPrivateKey = privateKeyWrapper!(sender);
+    const senderPrivateKey = privateKeyWrapper(sender);
     const tx = api.tx.unique.setCollectionSponsor(collectionId, sponsor);
     const events = await submitTransactionAsync(senderPrivateKey, tx);
     const result = getGenericResult(events);
@@ -594,7 +594,7 @@ export async function removeCollectionSponsorExpectSuccess(collectionId: number,
   await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKeyWrapper!(sender);
+    const alicePrivateKey = privateKeyWrapper(sender);
     const tx = api.tx.unique.removeCollectionSponsor(collectionId);
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getGenericResult(events);
@@ -612,7 +612,7 @@ export async function removeCollectionSponsorExpectFailure(collectionId: number,
   await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKeyWrapper!(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.removeCollectionSponsor(collectionId);
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
@@ -622,7 +622,7 @@ export async function setCollectionSponsorExpectFailure(collectionId: number, sp
   await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKeyWrapper!(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.setCollectionSponsor(collectionId, sponsor);
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
@@ -632,7 +632,7 @@ export async function confirmSponsorshipExpectSuccess(collectionId: number, send
   await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const sender = privateKeyWrapper!(senderSeed);
+    const sender = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.confirmSponsorship(collectionId);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
@@ -653,7 +653,7 @@ export async function confirmSponsorshipExpectFailure(collectionId: number, send
   await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const sender = privateKeyWrapper!(senderSeed);
+    const sender = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.confirmSponsorship(collectionId);
     await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
   });

@@ -31,7 +31,7 @@ describe('Destroy collection event ', () => {
   const checkSystem = 'ExtrinsicSuccess';
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
+      alice = privateKeyWrapper('//Alice');
     });
   });
   it('Check event from destroyCollection(): ', async () => {

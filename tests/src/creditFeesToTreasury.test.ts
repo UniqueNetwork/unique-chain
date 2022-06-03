@@ -65,8 +65,8 @@ function skipInflationBlock(api: ApiPromise): Promise<void> {
 describe('integration test: Fees must be credited to Treasury:', () => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -77,7 +77,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
       const totalBefore = (await api.query.balances.totalIssuance()).toBigInt();
 
-      const alicePrivateKey = privateKeyWrapper!('//Alice');
+      const alicePrivateKey = privateKeyWrapper('//Alice');
       const amount = 1n;
       const transfer = api.tx.balances.transfer(bobsPublicKey, amount);
 
@@ -95,7 +95,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
-      const alicePrivateKey = privateKeyWrapper!('//Alice');
+      const alicePrivateKey = privateKeyWrapper('//Alice');
       const treasuryBalanceBefore: bigint = (await api.query.system.account(TREASURY)).data.free.toBigInt();
       const aliceBalanceBefore: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
 
@@ -118,7 +118,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       //await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
-      const bobPrivateKey = privateKeyWrapper!('//Bob');
+      const bobPrivateKey = privateKeyWrapper('//Bob');
       const treasuryBalanceBefore = (await api.query.system.account(TREASURY)).data.free.toBigInt();
       const bobBalanceBefore = (await api.query.system.account(bobsPublicKey)).data.free.toBigInt();
 

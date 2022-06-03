@@ -31,8 +31,8 @@ chai.use(chaiAsPromised);
 describe('Enable/Disable Transfers', () => {
   it('User can transfer token with enabled transfer flag', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
@@ -46,8 +46,8 @@ describe('Enable/Disable Transfers', () => {
 
   it('User can\'n transfer token with disabled transfer flag', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
@@ -63,7 +63,7 @@ describe('Enable/Disable Transfers', () => {
 describe('Negative Enable/Disable Transfers', () => {
   it('Non-owner cannot change transfer flag', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const bob = privateKeyWrapper!('//Bob');
+      const bob = privateKeyWrapper('//Bob');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
 

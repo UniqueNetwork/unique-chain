@@ -26,8 +26,8 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
   it('Remove collection admin.', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.deep.eq(alice.address);
       // first - add collection admin Bob
@@ -49,9 +49,9 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
   it('Remove collection admin by admin.', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
-      const charlie = privateKeyWrapper!('//Charlie');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.eq(alice.address);
       // first - add collection admin Bob
@@ -75,7 +75,7 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
 
   it('Remove admin from collection that has no admins', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const collectionId = await createCollectionExpectSuccess();
 
       const adminListBeforeAddAdmin = await getAdminList(api, collectionId);
@@ -92,8 +92,8 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
     await usingApi(async (api, privateKeyWrapper) => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = (1 << 32) - 1;
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
 
       const changeOwnerTx = api.tx.unique.removeCollectionAdmin(collectionId, normalizeAccountId(bob.address));
       await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
@@ -107,8 +107,8 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
     await usingApi(async (api, privateKeyWrapper) => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
 
       await destroyCollectionExpectSuccess(collectionId);
 
@@ -123,9 +123,9 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
   it('Regular user Can\'t remove collection admin', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
-      const charlie = privateKeyWrapper!('//Charlie');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
 
       const addAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
       await submitTransactionAsync(alice, addAdminTx);

@@ -5,7 +5,7 @@ import {expect} from 'chai';
 
 describe('evm collection sponsoring', () => {
   itWeb3('sponsors mint transactions', async ({web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const collection = await createCollectionExpectSuccess();
     await setCollectionSponsorExpectSuccess(collection, alice.address);
