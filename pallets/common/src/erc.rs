@@ -261,13 +261,13 @@ impl<T: Config> CollectionHandle<T>
 		Ok(())
 	}
 
-	fn set_collection_access(&mut self, caller: caller, mode: string) -> Result<void> {
+	fn set_collection_access(&mut self, caller: caller, mode: uint8) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		self.check_is_owner_or_admin(&caller)
 			.map_err(dispatch_to_evm::<T>)?;
-		self.collection.permissions.access = Some(match mode.as_str() {
-			"Normal" => AccessMode::Normal,
-			"AllowList" => AccessMode::AllowList,
+		self.collection.permissions.access = Some(match mode {
+			0 => AccessMode::Normal,
+			1 => AccessMode::AllowList,
 			_ => return Err("Not supported access mode".into()),
 		});
 		save(self);

@@ -51,135 +51,6 @@ contract ERC721MintableEvents {
 	event MintingFinished();
 }
 
-// Selector: 1248b7d1
-contract Collection is Dummy, ERC165 {
-	// Selector: setCollectionProperty(string,bytes) 2f073f66
-	function setCollectionProperty(string memory key, bytes memory value)
-		public
-	{
-		require(false, stub_error);
-		key;
-		value;
-		dummy = 0;
-	}
-
-	// Selector: deleteCollectionProperty(string) 7b7debce
-	function deleteCollectionProperty(string memory key) public {
-		require(false, stub_error);
-		key;
-		dummy = 0;
-	}
-
-	// Throws error if key not found
-	//
-	// Selector: collectionProperty(string) cf24fd6d
-	function collectionProperty(string memory key)
-		public
-		view
-		returns (bytes memory)
-	{
-		require(false, stub_error);
-		key;
-		dummy;
-		return hex"";
-	}
-
-	// Selector: setCollectionSponsor(address) 7623402e
-	function setCollectionSponsor(address sponsor) public {
-		require(false, stub_error);
-		sponsor;
-		dummy = 0;
-	}
-
-	// Selector: confirmCollectionSponsorship() 3c50e97a
-	function confirmCollectionSponsorship() public {
-		require(false, stub_error);
-		dummy = 0;
-	}
-
-	// Selector: setCollectionLimit(string,uint32) 6a3841db
-	function setCollectionLimit(string memory limit, uint32 value) public {
-		require(false, stub_error);
-		limit;
-		value;
-		dummy = 0;
-	}
-
-	// Selector: setCollectionLimit(string,bool) 993b7fba
-	function setCollectionLimit(string memory limit, bool value) public {
-		require(false, stub_error);
-		limit;
-		value;
-		dummy = 0;
-	}
-
-	// Selector: contractAddress() f6b4dfb4
-	function contractAddress() public view returns (address) {
-		require(false, stub_error);
-		dummy;
-		return 0x0000000000000000000000000000000000000000;
-	}
-
-	// Selector: addCollectionAdmin(address) 92e462c7
-	function addCollectionAdmin(address newAdmin) public view {
-		require(false, stub_error);
-		newAdmin;
-		dummy;
-	}
-
-	// Selector: removeCollectionAdmin(address) fafd7b42
-	function removeCollectionAdmin(address admin) public view {
-		require(false, stub_error);
-		admin;
-		dummy;
-	}
-
-	// Selector: setCollectionNesting(bool) 112d4586
-	function setCollectionNesting(bool enable) public {
-		require(false, stub_error);
-		enable;
-		dummy = 0;
-	}
-
-	// Selector: setCollectionNesting(bool,address[]) 64872396
-	function setCollectionNesting(bool enable, address[] memory collections)
-		public
-	{
-		require(false, stub_error);
-		enable;
-		collections;
-		dummy = 0;
-	}
-
-	// Selector: setCollectionAccess(string) 392172a9
-	function setCollectionAccess(string memory mode) public {
-		require(false, stub_error);
-		mode;
-		dummy = 0;
-	}
-
-	// Selector: addToCollectionAllowList(address) 67844fe6
-	function addToCollectionAllowList(address user) public view {
-		require(false, stub_error);
-		user;
-		dummy;
-	}
-
-	// Selector: removeFromCollectionAllowList(address) 85c51acb
-	function removeFromCollectionAllowList(address user) public view {
-		require(false, stub_error);
-		user;
-		dummy;
-	}
-
-	// Selector: setCollectionMintMode(bool) 00018e84
-	function setCollectionMintMode(bool mode) public {
-		require(false, stub_error);
-		mode;
-		dummy = 0;
-	}
-}
-
 // Selector: 41369377
 contract TokenProperties is Dummy, ERC165 {
 	// Selector: setTokenPropertyPermission(string,bool,bool,bool) 222d97fa
@@ -423,6 +294,135 @@ contract ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 		require(false, stub_error);
 		dummy = 0;
 		return false;
+	}
+}
+
+// Selector: 6aea9834
+contract Collection is Dummy, ERC165 {
+	// Selector: setCollectionProperty(string,bytes) 2f073f66
+	function setCollectionProperty(string memory key, bytes memory value)
+		public
+	{
+		require(false, stub_error);
+		key;
+		value;
+		dummy = 0;
+	}
+
+	// Selector: deleteCollectionProperty(string) 7b7debce
+	function deleteCollectionProperty(string memory key) public {
+		require(false, stub_error);
+		key;
+		dummy = 0;
+	}
+
+	// Throws error if key not found
+	//
+	// Selector: collectionProperty(string) cf24fd6d
+	function collectionProperty(string memory key)
+		public
+		view
+		returns (bytes memory)
+	{
+		require(false, stub_error);
+		key;
+		dummy;
+		return hex"";
+	}
+
+	// Selector: setCollectionSponsor(address) 7623402e
+	function setCollectionSponsor(address sponsor) public {
+		require(false, stub_error);
+		sponsor;
+		dummy = 0;
+	}
+
+	// Selector: confirmCollectionSponsorship() 3c50e97a
+	function confirmCollectionSponsorship() public {
+		require(false, stub_error);
+		dummy = 0;
+	}
+
+	// Selector: setCollectionLimit(string,uint32) 6a3841db
+	function setCollectionLimit(string memory limit, uint32 value) public {
+		require(false, stub_error);
+		limit;
+		value;
+		dummy = 0;
+	}
+
+	// Selector: setCollectionLimit(string,bool) 993b7fba
+	function setCollectionLimit(string memory limit, bool value) public {
+		require(false, stub_error);
+		limit;
+		value;
+		dummy = 0;
+	}
+
+	// Selector: contractAddress() f6b4dfb4
+	function contractAddress() public view returns (address) {
+		require(false, stub_error);
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
+	// Selector: addCollectionAdmin(address) 92e462c7
+	function addCollectionAdmin(address newAdmin) public view {
+		require(false, stub_error);
+		newAdmin;
+		dummy;
+	}
+
+	// Selector: removeCollectionAdmin(address) fafd7b42
+	function removeCollectionAdmin(address admin) public view {
+		require(false, stub_error);
+		admin;
+		dummy;
+	}
+
+	// Selector: setCollectionNesting(bool) 112d4586
+	function setCollectionNesting(bool enable) public {
+		require(false, stub_error);
+		enable;
+		dummy = 0;
+	}
+
+	// Selector: setCollectionNesting(bool,address[]) 64872396
+	function setCollectionNesting(bool enable, address[] memory collections)
+		public
+	{
+		require(false, stub_error);
+		enable;
+		collections;
+		dummy = 0;
+	}
+
+	// Selector: setCollectionAccess(uint8) 41835d4c
+	function setCollectionAccess(uint8 mode) public {
+		require(false, stub_error);
+		mode;
+		dummy = 0;
+	}
+
+	// Selector: addToCollectionAllowList(address) 67844fe6
+	function addToCollectionAllowList(address user) public view {
+		require(false, stub_error);
+		user;
+		dummy;
+	}
+
+	// Selector: removeFromCollectionAllowList(address) 85c51acb
+	function removeFromCollectionAllowList(address user) public view {
+		require(false, stub_error);
+		user;
+		dummy;
+	}
+
+	// Selector: setCollectionMintMode(bool) 00018e84
+	function setCollectionMintMode(bool mode) public {
+		require(false, stub_error);
+		mode;
+		dummy = 0;
 	}
 }
 

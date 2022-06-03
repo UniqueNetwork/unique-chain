@@ -248,7 +248,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(oldPermissions.mintMode).to.be.false;
     expect(oldPermissions.access).to.be.equal('Normal');
 
-    await collectionEvm.methods.setCollectionAccess('AllowList').send({from: owner});
+    //TODO: change value, when enum generated
+    await collectionEvm.methods.setCollectionAccess(1 /*'AllowList'*/).send({from: owner});
     await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
     await collectionEvm.methods.setCollectionMintMode(true).send({from: owner});
 
