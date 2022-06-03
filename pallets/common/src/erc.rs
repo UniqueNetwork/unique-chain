@@ -47,8 +47,8 @@ pub trait CommonEvmHandler {
 }
 
 #[solidity_interface(name = "Collection")]
-impl<T: Config> CollectionHandle<T> 
-// where 
+impl<T: Config> CollectionHandle<T>
+// where
 // 	T::AccountId: From<H256>
 {
 	fn set_collection_property(&mut self, caller: caller, key: string, value: bytes) -> Result<()> {
@@ -207,8 +207,7 @@ impl<T: Config> CollectionHandle<T>
 		self.check_is_owner_or_admin(&caller)
 			.map_err(dispatch_to_evm::<T>)?;
 		let admin = T::CrossAccountId::from_eth(admin);
-		<Pallet<T>>::toggle_admin(&self, &caller, &admin, false)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::toggle_admin(&self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
@@ -226,12 +225,21 @@ impl<T: Config> CollectionHandle<T>
 	}
 
 	#[solidity(rename_selector = "setCollectionNesting")]
-	fn set_nesting(&mut self, caller: caller, enable: bool, collections: Vec<address>) -> Result<void> {
+	fn set_nesting(
+		&mut self,
+		caller: caller,
+		enable: bool,
+		collections: Vec<address>,
+	) -> Result<void> {
 		if collections.is_empty() {
 			return Err("No addresses provided".into());
 		}
 		if collections.len() >= OwnerRestrictedSet::bound() {
-			return Err(Error::Revert(format!("Out of bound: {} >= {}", collections.len(), OwnerRestrictedSet::bound())));
+			return Err(Error::Revert(format!(
+				"Out of bound: {} >= {}",
+				collections.len(),
+				OwnerRestrictedSet::bound()
+			)));
 		}
 		let caller = T::CrossAccountId::from_eth(caller);
 		self.check_is_owner_or_admin(&caller)
@@ -241,12 +249,12 @@ impl<T: Config> CollectionHandle<T>
 			true => {
 				let mut bv = OwnerRestrictedSet::new();
 				for i in collections {
-					bv.try_insert(
-						crate::eth::map_eth_to_id(&i)
-							.ok_or(Error::Revert("Can't convert address into collection id".into()))?
-					).map_err(|e| Error::Revert(format!("{:?}", e)))?;
+					bv.try_insert(crate::eth::map_eth_to_id(&i).ok_or(Error::Revert(
+						"Can't convert address into collection id".into(),
+					))?)
+					.map_err(|e| Error::Revert(format!("{:?}", e)))?;
 				}
-				NestingRule::OwnerRestricted (bv)
+				NestingRule::OwnerRestricted(bv)
 			}
 		});
 		save(self);
@@ -269,16 +277,14 @@ impl<T: Config> CollectionHandle<T>
 	fn add_to_collection_allow_list(&self, caller: caller, user: address) -> Result<void> {
 		let caller = check_is_owner_or_admin(caller, self)?;
 		let user = T::CrossAccountId::from_eth(user);
-		<Pallet<T>>::toggle_allowlist(self, &caller, &user, true)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::toggle_allowlist(self, &caller, &user, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
 	fn remove_from_collection_allow_list(&self, caller: caller, user: address) -> Result<void> {
 		let caller = check_is_owner_or_admin(caller, self)?;
 		let user = T::CrossAccountId::from_eth(user);
-		<Pallet<T>>::toggle_allowlist(self, &caller, &user, false)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::toggle_allowlist(self, &caller, &user, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
@@ -298,7 +304,10 @@ fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -
 	Ok(())
 }
 
-fn check_is_owner_or_admin<T: Config>(caller: caller, collection: &CollectionHandle<T>) -> Result<T::CrossAccountId> {
+fn check_is_owner_or_admin<T: Config>(
+	caller: caller,
+	collection: &CollectionHandle<T>,
+) -> Result<T::CrossAccountId> {
 	let caller = T::CrossAccountId::from_eth(caller);
 	collection
 		.check_is_owner_or_admin(&caller)
