@@ -98,7 +98,11 @@ pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 // Polkadot imports
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use up_data_structs::mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping};
+use up_data_structs::{
+	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits, 
+	CollectionStats, RpcCollection, 
+	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping}
+};
 use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,

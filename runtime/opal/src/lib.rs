@@ -70,7 +70,11 @@ pub use frame_support::{
 	},
 };
 use pallet_unq_scheduler::DispatchCall;
-use up_data_structs::mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping};
+use up_data_structs::{
+	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits, 
+	CollectionStats, RpcCollection, 
+	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping}
+};
 
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
