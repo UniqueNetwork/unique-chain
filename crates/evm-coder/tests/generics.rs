@@ -34,3 +34,15 @@ impl<T: Into<u32>> Generic<T> {
 }
 
 generate_stubgen!(gen_iface, GenericCall<()>, false);
+
+#[solidity_interface(name = "GenericWhere")]
+impl<T> Generic<T>
+where
+	T: core::fmt::Debug,
+{
+	fn test_3(&self) -> Result<uint256> {
+		todo!()
+	}
+}
+
+generate_stubgen!(gen_where_iface, GenericWhereCall<()>, false);

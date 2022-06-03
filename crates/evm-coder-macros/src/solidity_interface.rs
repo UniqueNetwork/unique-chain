@@ -801,6 +801,7 @@ impl SolidityInterface {
 		let generics = self.generics;
 		let gen_ref = generics_reference(&generics);
 		let gen_data = generics_data(&generics);
+		let gen_where = &generics.where_clause;
 
 		let call_sub = self
 			.info
@@ -956,7 +957,9 @@ impl SolidityInterface {
 					return Ok(None);
 				}
 			}
-			impl #generics ::evm_coder::Weighted for #call_name #gen_ref {
+			impl #generics ::evm_coder::Weighted for #call_name #gen_ref
+			#gen_where
+			{
 				#[allow(unused_variables)]
 				fn weight(&self) -> ::evm_coder::execution::DispatchInfo {
 					match self {
@@ -971,7 +974,9 @@ impl SolidityInterface {
 					}
 				}
 			}
-			impl #generics ::evm_coder::Callable<#call_name #gen_ref> for #name {
+			impl #generics ::evm_coder::Callable<#call_name #gen_ref> for #name
+			#gen_where
+			{
 				#[allow(unreachable_code)] // In case of no inner calls
 				fn call(&mut self, c: Msg<#call_name #gen_ref>) -> ::evm_coder::execution::ResultWithPostInfo<::evm_coder::abi::AbiWriter> {
 					use ::evm_coder::abi::AbiWrite;
