@@ -42,7 +42,7 @@ so that we can keep the builds stable.
 1. Install Rust:
 
 ```bash
-sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang
+sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make
 curl https://sh.rustup.rs -sSf | sh
 ```
 
