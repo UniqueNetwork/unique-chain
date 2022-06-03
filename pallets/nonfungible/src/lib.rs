@@ -878,6 +878,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token: TokenId,
 		spender: Option<&T::CrossAccountId>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(sender)?;
@@ -889,9 +890,16 @@ impl<T: Config> Pallet<T> {
 		if let Some(spender) = spender {
 			<PalletCommon<T>>::ensure_correct_receiver(spender)?;
 		}
-		let token_data =
-			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
-		if &token_data.owner != sender {
+
+		let is_owned = <PalletStructure<T>>::check_indirectly_owned(
+			sender.clone(),
+			collection.id,
+			token,
+			None,
+			nesting_budget
+		)?;
+
+		if !is_owned {
 			ensure!(
 				collection.ignores_owned_amount(sender),
 				<CommonError<T>>::CantApproveMoreThanOwned
@@ -918,6 +926,9 @@ impl<T: Config> Pallet<T> {
 			// `from`, `to` checked in [`transfer`]
 			collection.check_allowlist(spender)?;
 		}
+		if <Allowance<T>>::get((collection.id, token)).as_ref() == Some(spender) {
+			return Ok(());
+		}
 		if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
 			// TODO: should collection owner be allowed to perform this transfer?
 			ensure!(
@@ -930,9 +941,6 @@ impl<T: Config> Pallet<T> {
 				)?,
 				<CommonError<T>>::ApprovedValueTooLow,
 			);
-			return Ok(());
-		}
-		if <Allowance<T>>::get((collection.id, token)).as_ref() == Some(spender) {
 			return Ok(());
 		}
 		ensure!(

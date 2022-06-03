@@ -1298,6 +1298,7 @@ pub trait CommonCollectionOperations<T: Config> {
 		spender: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn transfer_from(
 		&self,
