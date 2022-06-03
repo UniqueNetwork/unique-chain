@@ -87,13 +87,17 @@ impl<T: Config> CollectionHandle<T>
 		check_is_owner(caller, self)?;
 
 		let sponsor = T::CrossAccountId::from_eth(sponsor);
-		self.set_sponsor(sponsor.as_sub().clone()).map_err(dispatch_to_evm::<T>)?;
+		self.set_sponsor(sponsor.as_sub().clone())
+			.map_err(dispatch_to_evm::<T>)?;
 		save(self)
 	}
 
 	fn confirm_collection_sponsorship(&mut self, caller: caller) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		if !self.confirm_sponsorship(caller.as_sub()).map_err(dispatch_to_evm::<T>)? {
+		if !self
+			.confirm_sponsorship(caller.as_sub())
+			.map_err(dispatch_to_evm::<T>)?
+		{
 			return Err(Error::Revert("Caller is not set as sponsor".into()));
 		}
 		save(self)
@@ -312,7 +316,9 @@ fn check_is_owner_or_admin<T: Config>(
 }
 
 fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
-	collection.check_is_read_only().map_err(dispatch_to_evm::<T>)?;
+	collection
+		.check_is_read_only()
+		.map_err(dispatch_to_evm::<T>)?;
 	<crate::CollectionById<T>>::insert(collection.id, collection.collection.clone());
 	Ok(())
 }

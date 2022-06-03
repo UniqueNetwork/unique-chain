@@ -175,7 +175,7 @@ impl<T: Config> CollectionHandle<T> {
 		if self.read_only {
 			return Err(<Error<T>>::CollectionNotFound)?;
 		}
-		
+
 		Ok(())
 	}
 }
