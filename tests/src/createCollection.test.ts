@@ -93,7 +93,7 @@ describe('integration test: ext. createCollection():', () => {
     await usingApi(async api => {
       const alice = privateKey('//Alice');
       const tx = api.tx.unique.createCollectionEx({
-        readOnly: true
+        readOnly: true,
       });
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateCollectionResult(events);
