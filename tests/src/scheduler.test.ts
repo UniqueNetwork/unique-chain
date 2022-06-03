@@ -30,8 +30,8 @@ chai.use(chaiAsPromised);
 describe.skip('Integration Test scheduler base transaction', () => {
   it('User can transfer owned token with delay (scheduler)', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');

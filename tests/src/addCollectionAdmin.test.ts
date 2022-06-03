@@ -27,8 +27,8 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
   it('Add collection admin.', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
 
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.equal(alice.address);
@@ -44,9 +44,9 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
   it('Add admin using added collection admin.', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
-      const charlie = privateKeyWrapper!('//CHARLIE');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//CHARLIE');
 
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.equal(alice.address);
@@ -70,8 +70,8 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
   it("Not owner can't add collection admin.", async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper!('//Alice');
-      const nonOwner = privateKeyWrapper!('//Bob_stash');
+      const alice = privateKeyWrapper('//Alice');
+      const nonOwner = privateKeyWrapper('//Bob_stash');
 
       const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(alice.address));
       await expect(submitTransactionExpectFailAsync(nonOwner, changeAdminTx)).to.be.rejected;
@@ -87,8 +87,8 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
     await usingApi(async (api, privateKeyWrapper) => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = (1 << 32) - 1;
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
 
       const changeOwnerTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
       await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
@@ -101,8 +101,8 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
   it("Can't add an admin to a destroyed collection.", async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       await destroyCollectionExpectSuccess(collectionId);
       const changeOwnerTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
       await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
@@ -114,15 +114,15 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
 
   it('Add an admin to a collection that has reached the maximum number of admins limit', async () => {
     await usingApi(async (api: ApiPromise, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const accounts = [
-        privateKeyWrapper!('//AdminTest/1').address,
-        privateKeyWrapper!('//AdminTest/2').address,
-        privateKeyWrapper!('//AdminTest/3').address,
-        privateKeyWrapper!('//AdminTest/4').address,
-        privateKeyWrapper!('//AdminTest/5').address,
-        privateKeyWrapper!('//AdminTest/6').address,
-        privateKeyWrapper!('//AdminTest/7').address,
+        privateKeyWrapper('//AdminTest/1').address,
+        privateKeyWrapper('//AdminTest/2').address,
+        privateKeyWrapper('//AdminTest/3').address,
+        privateKeyWrapper('//AdminTest/4').address,
+        privateKeyWrapper('//AdminTest/5').address,
+        privateKeyWrapper('//AdminTest/6').address,
+        privateKeyWrapper('//AdminTest/7').address,
       ];
       const collectionId = await createCollectionExpectSuccess();
 

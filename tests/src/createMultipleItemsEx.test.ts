@@ -22,9 +22,9 @@ describe('createMultipleItemsEx', () => {
   it('can initialize multiple NFT with different owners', async () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
-      const charlie = privateKeyWrapper!('//Charlie');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
       const data = [
         {
           owner: {substrate: alice.address},
@@ -47,9 +47,9 @@ describe('createMultipleItemsEx', () => {
   it('createMultipleItemsEx with property Admin', async () => {
     const collection = await createCollectionWithPropsExpectSuccess({mode: {type: 'NFT'}, propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]});
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
-      const charlie = privateKeyWrapper!('//Charlie');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
       const data = [
         {
           owner: {substrate: alice.address},
@@ -75,9 +75,9 @@ describe('createMultipleItemsEx', () => {
   it('createMultipleItemsEx with property AdminConst', async () => {
     const collection = await createCollectionWithPropsExpectSuccess({mode: {type: 'NFT'}, propPerm: [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]});
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
-      const charlie = privateKeyWrapper!('//Charlie');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
       const data = [
         {
           owner: {substrate: alice.address},
@@ -103,9 +103,9 @@ describe('createMultipleItemsEx', () => {
   it('createMultipleItemsEx with property itemOwnerOrAdmin', async () => {
     const collection = await createCollectionWithPropsExpectSuccess({mode: {type: 'NFT'}, propPerm: [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: true}}]});
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
-      const charlie = privateKeyWrapper!('//Charlie');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
       const data = [
         {
           owner: {substrate: alice.address},
@@ -132,9 +132,9 @@ describe('createMultipleItemsEx', () => {
     const collection = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}],
       propPerm:   [{key: 'key1', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}]});
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
-      const charlie = privateKeyWrapper!('//Charlie');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
       await addCollectionAdminExpectSuccess(alice, collection, bob.address);
       const data = [
         {
@@ -161,8 +161,8 @@ describe('createMultipleItemsEx', () => {
     const collection = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}],
       propPerm:   [{key: 'key1', permission: {mutable: false, collectionAdmin: false, tokenOwner: false}}]});
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       await addCollectionAdminExpectSuccess(alice, collection, bob.address);
       const data = [
         {
@@ -188,9 +188,9 @@ describe('createMultipleItemsEx', () => {
   it('Adding property without access rights', async () => {
     const collection = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}]});
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
-      const charlie = privateKeyWrapper!('//Charlie');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
       await addCollectionAdminExpectSuccess(alice, collection, bob.address);
       const data = [
         {
@@ -221,7 +221,7 @@ describe('createMultipleItemsEx', () => {
 
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       await expect(executeTransaction(api, alice, api.tx.unique.setPropertyPermissions(collection, propPerms))).to.be.rejectedWith(/common\.PropertyLimitReached/);
     });
   });
@@ -229,9 +229,9 @@ describe('createMultipleItemsEx', () => {
   it('Trying to add bigger property than allowed', async () => {
     const collection = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]});
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
-      const charlie = privateKeyWrapper!('//Charlie');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
       await addCollectionAdminExpectSuccess(alice, collection, bob.address);
       const data = [
         {
@@ -253,9 +253,9 @@ describe('createMultipleItemsEx', () => {
   it('can initialize multiple NFT with different owners', async () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
-      const charlie = privateKeyWrapper!('//Charlie');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
       const data = [
         {
           owner: {substrate: alice.address},
@@ -278,9 +278,9 @@ describe('createMultipleItemsEx', () => {
   it('can initialize multiple NFT with different owners', async () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
-      const charlie = privateKeyWrapper!('//Charlie');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
       const data = [
         {
           owner: {substrate: alice.address},
@@ -304,8 +304,8 @@ describe('createMultipleItemsEx', () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       // Polkadot requires map, and yet requires keys to be JSON encoded
       const users = new Map();
       users.set(JSON.stringify({substrate: alice.address}), 1);

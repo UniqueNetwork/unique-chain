@@ -31,9 +31,9 @@ describe.skip('Negative Integration Test setChainLimits', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
-      dave = privateKeyWrapper!('//Dave');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      dave = privateKeyWrapper('//Dave');
       limits = {
         collectionNumbersLimit : 1,
         accountTokenOwnershipLimit: 1,

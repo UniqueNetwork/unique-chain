@@ -59,7 +59,7 @@ function defaultApiOptions(): ApiOptions {
   };
 }
 
-export default async function usingApi<T = void>(action: (api: ApiPromise, privateKeyWrapper?: (account: string) => IKeyringPair) => Promise<T>, settings: ApiOptions | undefined = undefined): Promise<T> {
+export default async function usingApi<T = void>(action: (api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair) => Promise<T>, settings: ApiOptions | undefined = undefined): Promise<T> {
   settings = settings || defaultApiOptions();
   const api: ApiPromise = new ApiPromise(settings);
   let result: T = null as unknown as T;

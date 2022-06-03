@@ -13,7 +13,7 @@ describe.skip('Migration testing for pallet-common', () => {
 
   before(async() => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
+      alice = privateKeyWrapper('//Alice');
     });
   });
 

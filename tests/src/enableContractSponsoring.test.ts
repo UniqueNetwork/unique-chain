@@ -79,7 +79,7 @@ describe.skip('Negative Integration Test enableContractSponsoring', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
+      alice = privateKeyWrapper('//Alice');
     });
   });
 

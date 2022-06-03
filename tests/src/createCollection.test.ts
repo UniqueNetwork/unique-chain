@@ -58,8 +58,8 @@ describe('integration test: ext. createCollection():', () => {
 
   it('Create new collection with extra fields', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       const tx = api.tx.unique.createCollectionEx({
         mode: {Fungible: 8},
         permissions: {
@@ -101,7 +101,7 @@ describe('(!negative test!) integration test: ext. createCollection():', () => {
   });
   it('fails when bad limits are set', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const tx = api.tx.unique.createCollectionEx({mode: 'NFT', limits: {tokenLimit: 0}});
       await expect(executeTransaction(api, alice, tx)).to.be.rejectedWith(/^common.CollectionTokenLimitExceeded$/);
     });

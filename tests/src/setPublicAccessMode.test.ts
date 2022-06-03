@@ -41,8 +41,8 @@ let bob: IKeyringPair;
 describe('Integration Test setPublicAccessMode(): ', () => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -108,8 +108,8 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
 describe('Negative Integration Test ext. collection admin setPublicAccessMode(): ', () => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
   it('setPublicAccessMode by collection admin', async () => {

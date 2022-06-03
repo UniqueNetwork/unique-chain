@@ -31,7 +31,7 @@ describe.skip('Integration Test addToContractAllowList', () => {
 
   it('Add an address to a contract allow list', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const bob = privateKeyWrapper!('//Bob');
+      const bob = privateKeyWrapper('//Bob');
       const [contract, deployer] = await deployFlipper(api);
 
       const allowListedBefore = (await api.query.unique.contractAllowList(contract.address, bob.address)).toJSON();
@@ -47,7 +47,7 @@ describe.skip('Integration Test addToContractAllowList', () => {
 
   it('Adding same address to allow list repeatedly should not produce errors', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const bob = privateKeyWrapper!('//Bob');
+      const bob = privateKeyWrapper('//Bob');
       const [contract, deployer] = await deployFlipper(api);
 
       const allowListedBefore = (await api.query.unique.contractAllowList(contract.address, bob.address)).toJSON();
@@ -70,9 +70,9 @@ describe.skip('Negative Integration Test addToContractAllowList', () => {
 
   it('Add an address to a allow list of a non-contract', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Bob');
-      const bob = privateKeyWrapper!('//Bob');
-      const charlieGuineaPig = privateKeyWrapper!('//Charlie');
+      const alice = privateKeyWrapper('//Bob');
+      const bob = privateKeyWrapper('//Bob');
+      const charlieGuineaPig = privateKeyWrapper('//Charlie');
 
       const allowListedBefore = (await api.query.unique.contractAllowList(charlieGuineaPig.address, bob.address)).toJSON();
       const addTx = api.tx.unique.addToContractAllowList(charlieGuineaPig.address, bob.address);
@@ -86,7 +86,7 @@ describe.skip('Negative Integration Test addToContractAllowList', () => {
 
   it('Add to a contract allow list using a non-owner address', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const bob = privateKeyWrapper!('//Bob');
+      const bob = privateKeyWrapper('//Bob');
       const [contract] = await deployFlipper(api);
 
       const allowListedBefore = (await api.query.unique.contractAllowList(contract.address, bob.address)).toJSON();

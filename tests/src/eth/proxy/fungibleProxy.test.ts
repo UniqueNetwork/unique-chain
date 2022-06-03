@@ -39,7 +39,7 @@ describe('Fungible (Via EVM proxy): Information getting', () => {
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
 
     await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Substrate: alice.address});
@@ -56,7 +56,7 @@ describe('Fungible (Via EVM proxy): Information getting', () => {
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
 
     await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Ethereum: caller});
@@ -75,7 +75,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
     const spender = createEthAccount(web3);
 
@@ -111,7 +111,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
     const owner = await createEthAccountWithBalance(api, web3);
 
@@ -166,7 +166,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
     const receiver = await createEthAccountWithBalance(api, web3);
 

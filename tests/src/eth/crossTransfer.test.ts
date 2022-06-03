@@ -32,9 +32,9 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
-    const bob = privateKeyWrapper!('//Bob');
-    const charlie = privateKeyWrapper!('//Charlie');
+    const alice = privateKeyWrapper('//Alice');
+    const bob = privateKeyWrapper('//Bob');
+    const charlie = privateKeyWrapper('//Charlie');
     await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Substrate: alice.address});
     await transferExpectSuccess(collection, 0, alice, {Ethereum: subToEth(charlie.address)} , 200, 'Fungible');
     await transferFromExpectSuccess(collection, 0, alice, {Ethereum: subToEth(charlie.address)}, charlie, 50, 'Fungible');
@@ -46,8 +46,8 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKeyWrapper!('//Alice');
-    const bob = privateKeyWrapper!('//Bob');
+    const alice = privateKeyWrapper('//Alice');
+    const bob = privateKeyWrapper('//Bob');
     const bobProxy = await createEthAccountWithBalance(api, web3);
     const aliceProxy = await createEthAccountWithBalance(api, web3);
 
@@ -68,9 +68,9 @@ describe('Token transfer between substrate address and EVM address. NFT', () => 
       name: 'token name',
       mode: {type: 'NFT'},
     });
-    const alice = privateKeyWrapper!('//Alice');
-    const bob = privateKeyWrapper!('//Bob');
-    const charlie = privateKeyWrapper!('//Charlie');
+    const alice = privateKeyWrapper('//Alice');
+    const bob = privateKeyWrapper('//Bob');
+    const charlie = privateKeyWrapper('//Charlie');
     const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Substrate: alice.address});
     await transferExpectSuccess(collection, tokenId, alice, {Ethereum: subToEth(charlie.address)}, 1, 'NFT');
     await transferFromExpectSuccess(collection, tokenId, alice, {Ethereum: subToEth(charlie.address)}, charlie, 1, 'NFT');
@@ -82,9 +82,9 @@ describe('Token transfer between substrate address and EVM address. NFT', () => 
       name: 'token name',
       mode: {type: 'NFT'},
     });
-    const alice = privateKeyWrapper!('//Alice');
-    const bob = privateKeyWrapper!('//Bob');
-    const charlie = privateKeyWrapper!('//Charlie');
+    const alice = privateKeyWrapper('//Alice');
+    const bob = privateKeyWrapper('//Bob');
+    const charlie = privateKeyWrapper('//Charlie');
     const bobProxy = await createEthAccountWithBalance(api, web3);
     const aliceProxy = await createEthAccountWithBalance(api, web3);
     const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Substrate: alice.address});

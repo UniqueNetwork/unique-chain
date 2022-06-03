@@ -42,8 +42,8 @@ describe('Integration Test ext. addToAllowList()', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -67,7 +67,7 @@ describe('Negative Integration Test ext. addToAllowList()', () => {
     await usingApi(async (api, privateKeyWrapper) => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = await getCreatedCollectionCount(api) + 1;
-      const bob = privateKeyWrapper!('//Bob');
+      const bob = privateKeyWrapper('//Bob');
 
       const tx = api.tx.unique.addToAllowList(collectionId, normalizeAccountId(bob.address));
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
@@ -76,8 +76,8 @@ describe('Negative Integration Test ext. addToAllowList()', () => {
 
   it('Allow list an address in the collection that was destroyed', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
       await destroyCollectionExpectSuccess(collectionId);
@@ -88,8 +88,8 @@ describe('Negative Integration Test ext. addToAllowList()', () => {
 
   it('Allow list an address in the collection that does not have allow list access enabled', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
-      const ferdie = privateKeyWrapper!('//Ferdie');
+      const alice = privateKeyWrapper('//Alice');
+      const ferdie = privateKeyWrapper('//Ferdie');
       const collectionId = await createCollectionExpectSuccess();
       await enableAllowListExpectSuccess(alice, collectionId);
       await enablePublicMintingExpectSuccess(alice, collectionId);
@@ -104,9 +104,9 @@ describe('Integration Test ext. addToAllowList() with collection admin permissio
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
-      charlie = privateKeyWrapper!('//Charlie');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 

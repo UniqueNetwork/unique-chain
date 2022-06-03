@@ -95,10 +95,10 @@ if (cluster.isMaster) {
   const waiting: Promise<void>[] = [];
   console.log(`Starting ${os.cpus().length} workers`);
   usingApi(async (api, privateKeyWrapper) => {
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     for (const id in os.cpus()) {
       const WORKER_NAME = `//LoadWorker${id}_${Date.now()}`;
-      const workerAccount = privateKeyWrapper!(WORKER_NAME);
+      const workerAccount = privateKeyWrapper(WORKER_NAME);
       const tx = api.tx.balances.transfer(workerAccount.address, 400n * 10n ** 23n);
       await submitTransactionAsync(alice, tx);
 
@@ -119,7 +119,7 @@ if (cluster.isMaster) {
 } else {
   increaseCounter('startedWorkers', 1);
   usingApi(async (api, privateKeyWrapper) => {
-    await distributeBalance(privateKeyWrapper!(process.env.WORKER_NAME as string), api, 400n * 10n ** 22n, 10);
+    await distributeBalance(privateKeyWrapper(process.env.WORKER_NAME as string), api, 400n * 10n ** 22n, 10);
   });
   const interval = setInterval(() => {
     flushCounterToMaster();

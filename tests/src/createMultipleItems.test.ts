@@ -45,7 +45,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
 
-      const alice = privateKeyWrapper!('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       await submitTransactionAsync(
         alice, 
         api.tx.unique.setPropertyPermissions(collectionId, [{key: 'data', permission: {tokenOwner: true}}]),
@@ -76,7 +76,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKeyWrapper!('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const args = [
         {Fungible: {value: 1}},
         {Fungible: {value: 2}},
@@ -96,7 +96,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKeyWrapper!('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const args = [
         {ReFungible: {pieces: 1}},
         {ReFungible: {pieces: 2}},
@@ -116,7 +116,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
 
   it('Can mint amount of items equals to collection limits', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper!('//Alice');
+      const alice = privateKeyWrapper('//Alice');
 
       const collectionId = await createCollectionExpectSuccess();
       await setCollectionLimitsExpectSuccess(alice, collectionId, {
@@ -138,7 +138,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const collectionId = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKeyWrapper!('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const args = [
         {NFT: {properties: [{key: 'k', value: 'v1'}]}},
         {NFT: {properties: [{key: 'k', value: 'v2'}]}},
@@ -164,8 +164,8 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const collectionId = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
       const args = [
         {NFT: {properties: [{key: 'k', value: 'v1'}]}},
@@ -192,7 +192,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const collectionId = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKeyWrapper!('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const args = [
         {NFT: {properties: [{key: 'k', value: 'v1'}]}},
         {NFT: {properties: [{key: 'k', value: 'v2'}]}},
@@ -220,8 +220,8 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -302,8 +302,8 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -364,7 +364,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       const collectionId = await createCollectionWithPropsExpectSuccess({
         propPerm: [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}],
       });
-      const alice = privateKeyWrapper!('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const args = [
         {NFT: {properties: [{key: 'key', value: 'A'.repeat(32769)}]}},
         {NFT: {properties: [{key: 'key', value: 'B'.repeat(32769)}]}},

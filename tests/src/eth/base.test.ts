@@ -53,7 +53,7 @@ describe('Contract calls', () => {
     const caller = await createEthAccountWithBalance(api, web3);
     const receiver = createEthAccount(web3);
 
-    const alice = privateKeyWrapper!('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });

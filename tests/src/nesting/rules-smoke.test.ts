@@ -9,8 +9,8 @@ describe('nesting check', () => {
   let nestTarget!: CrossAccountId;
   before(async() => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
-      const bob = privateKeyWrapper!('//Bob');
+      alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       const events = await executeTransaction(api, alice, api.tx.unique.createCollectionEx({
         mode: 'NFT',
         permissions: {

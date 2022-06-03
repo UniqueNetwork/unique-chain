@@ -38,7 +38,7 @@ describe('Integration test: Exchanging OPL with Karura', () => {
   
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper!('//Alice');
+      alice = privateKeyWrapper('//Alice');
     });
 
     const karuraApiOptions: ApiOptions = {
