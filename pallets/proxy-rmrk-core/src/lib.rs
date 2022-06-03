@@ -20,7 +20,7 @@ use frame_support::{pallet_prelude::*, transactional, BoundedVec, dispatch::Disp
 use frame_system::{pallet_prelude::*, ensure_signed};
 use sp_runtime::{DispatchError, Permill, traits::StaticLookup};
 use sp_std::vec::Vec;
-use up_data_structs::*;
+use up_data_structs::{*, mapping::TokenAddressMapping};
 use pallet_common::{
 	Pallet as PalletCommon, Error as CommonError, CollectionHandle, CommonCollectionOperations,
 };
@@ -39,6 +39,8 @@ pub use property::*;
 
 use RmrkProperty::*;
 
+const NESTING_BUDGET: u32 = 5;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -56,9 +58,12 @@ pub mod pallet {
 	pub type CollectionIndex<T: Config> = StorageValue<_, RmrkCollectionId, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn collection_index_map)]
-	pub type CollectionIndexMap<T: Config> =
+	pub type UniqueCollectionId<T: Config> =
 		StorageMap<_, Twox64Concat, RmrkCollectionId, CollectionId, ValueQuery>;
+
+	#[pallet::storage]
+	pub type RmrkInernalCollectionId<T: Config> =
+		StorageMap<_, Twox64Concat, CollectionId, RmrkCollectionId, ValueQuery>;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -151,10 +156,12 @@ pub mod pallet {
 					.into_inner()
 					.try_into()
 					.map_err(|_| <CommonError<T>>::CollectionTokenPrefixLimitExceeded)?,
+				permissions: Some(CollectionPermissions {
+					nesting: Some(NestingRule::Owner),
+					..Default::default()
+				}),
 				..Default::default()
 			};
-
-			<CollectionIndex<T>>::mutate(|n| *n += 1);
 
 			let unique_collection_id = Self::init_collection(
 				T::CrossAccountId::from_sub(sender.clone()),
@@ -167,7 +174,10 @@ pub mod pallet {
 			)?;
 			let rmrk_collection_id = <CollectionIndex<T>>::get();
 
-			<CollectionIndexMap<T>>::insert(rmrk_collection_id, unique_collection_id);
+			<UniqueCollectionId<T>>::insert(rmrk_collection_id, unique_collection_id);
+			<RmrkInernalCollectionId<T>>::insert(unique_collection_id, rmrk_collection_id);
+
+			<CollectionIndex<T>>::mutate(|n| *n += 1);
 
 			Self::deposit_event(Event::CollectionCreated {
 				issuer: sender,
@@ -356,6 +366,81 @@ pub mod pallet {
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
+		pub fn send(
+			origin: OriginFor<T>,
+			rmrk_collection_id: RmrkCollectionId,
+			rmrk_nft_id: RmrkNftId,
+			new_owner: RmrkAccountIdOrCollectionNftTuple<T::AccountId>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
+
+			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
+			let nft_id = rmrk_nft_id.into();
+
+			let token_data = <TokenData<T>>::get((collection_id, nft_id))
+				.ok_or(<Error<T>>::NoAvailableNftId)?;
+
+			let from = token_data.owner;
+
+			let collection = Self::get_typed_nft_collection(
+				collection_id,
+				misc::CollectionType::Regular,
+			)?;
+
+			let budget = budget::Value::new(NESTING_BUDGET);
+
+			let target_owner;
+
+			match new_owner {
+				RmrkAccountIdOrCollectionNftTuple::AccountId(account_id) => {
+					target_owner = T::CrossAccountId::from_sub(account_id);
+				},
+				RmrkAccountIdOrCollectionNftTuple::CollectionAndNftTuple(target_collection_id, target_nft_id) => {
+					let target_collection_id = Self::unique_collection_id(target_collection_id)?;
+
+					target_owner = T::CrossTokenAddressMapping::token_to_address(
+						target_collection_id,
+						target_nft_id.into(),
+					);
+
+					let spender = <PalletStructure<T>>::get_indirect_owner(
+						target_collection_id,
+						target_nft_id.into(),
+						Some((collection_id, nft_id)),
+						&budget,
+					)?;
+
+					let is_approval_required = cross_sender != spender;
+
+					if is_approval_required {
+						<PalletNft<T>>::set_allowance(
+							&collection,
+							&cross_sender,
+							nft_id,
+							Some(&spender),
+							&budget
+						).map_err(Self::map_common_err_to_proxy)?;
+
+						return Ok(());
+					}
+				}
+			}
+
+			<PalletNft<T>>::transfer_from(
+				&collection,
+				&cross_sender,
+				&from,
+				&target_owner,
+				nft_id,
+				&budget
+			).map_err(Self::map_common_err_to_proxy)?;
+
+			Ok(())
+		}
+
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[transactional]
 		pub fn set_property(
 			origin: OriginFor<T>,
 			#[pallet::compact] rmrk_collection_id: RmrkCollectionId,
@@ -367,12 +452,13 @@ pub mod pallet {
 			let sender = T::CrossAccountId::from_sub(sender);
 
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
+			let budget = budget::Value::new(NESTING_BUDGET);
 
 			match maybe_nft_id {
 				Some(nft_id) => {
 					let token_id: TokenId = nft_id.into();
 
-					Self::ensure_nft_owner(collection_id, token_id, &sender)?;
+					Self::ensure_nft_owner(collection_id, token_id, &sender, &budget)?;
 					Self::ensure_nft_type(collection_id, token_id, NftType::Regular)?;
 
 					<PalletNft<T>>::set_scoped_token_property(
@@ -607,7 +693,7 @@ impl<T: Config> Pallet<T> {
 			owner: owner.clone(),
 		};
 
-		let budget = budget::Value::new(2);
+		let budget = budget::Value::new(NESTING_BUDGET);
 
 		<PalletNft<T>>::create_item(collection, sender, data, &budget)?;
 
@@ -651,14 +737,8 @@ impl<T: Config> Pallet<T> {
 		//ensure!(!Pallet::<T>::is_locked(collection_id, nft_id), pallet_uniques::Error::<T>::Locked);
 
 		let sender = T::CrossAccountId::from_sub(sender);
-		let budget = budget::Value::new(10);
-		let pending = !<PalletStructure<T>>::check_indirectly_owned(
-			sender.clone(),
-			collection_id,
-			token_id,
-			None,
-			&budget,
-		)?;
+		let budget = budget::Value::new(NESTING_BUDGET);
+		let pending = Self::ensure_nft_owner(collection_id, token_id, &sender, &budget).is_err();
 
 		let resource_collection_id: CollectionId =
 			Self::get_nft_property_decoded(collection_id, token_id, ResourceCollection)?;
@@ -757,7 +837,14 @@ impl<T: Config> Pallet<T> {
 	pub fn unique_collection_id(
 		rmrk_collection_id: RmrkCollectionId,
 	) -> Result<CollectionId, DispatchError> {
-		<CollectionIndexMap<T>>::try_get(rmrk_collection_id)
+		<UniqueCollectionId<T>>::try_get(rmrk_collection_id)
+			.map_err(|_| <Error<T>>::CollectionUnknown.into())
+	}
+
+	pub fn rmrk_collection_id(
+		unique_collection_id: CollectionId
+	) -> Result<RmrkCollectionId, DispatchError> {
+		<RmrkInernalCollectionId<T>>::try_get(unique_collection_id)
 			.map_err(|_| <Error<T>>::CollectionUnknown.into())
 	}
 
@@ -873,12 +960,18 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 		token_id: TokenId,
 		possible_owner: &T::CrossAccountId,
+		nesting_budget: &dyn budget::Budget
 	) -> DispatchResult {
-		let token_data =
-			<TokenData<T>>::get((collection_id, token_id)).ok_or(<Error<T>>::NoAvailableNftId)?;
+		let is_owned = <PalletStructure<T>>::check_indirectly_owned(
+			possible_owner.clone(),
+			collection_id,
+			token_id,
+			None,
+			nesting_budget,
+		)?;
 
 		ensure!(
-			token_data.owner == *possible_owner,
+			is_owned,
 			<Error<T>>::NoPermission
 		);
 
@@ -965,7 +1058,8 @@ impl<T: Config> Pallet<T> {
 				NoPermission => NoPermission,
 				CollectionTokenLimitExceeded => CollectionFullOrLocked,
 				PublicMintingNotAllowed => NoPermission,
-				TokenNotFound => NoAvailableNftId
+				TokenNotFound => NoAvailableNftId,
+				ApprovedValueTooLow => NoPermission
 			}
 		}
 	}

@@ -147,6 +147,34 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
+	pub fn get_indirect_owner(
+		collection: CollectionId,
+		token: TokenId,
+		for_nest: Option<(CollectionId, TokenId)>,
+		budget: &dyn Budget,
+	) -> Result<T::CrossAccountId, DispatchError> {
+		// Tried to nest token in itself
+		if Some((collection, token)) == for_nest {
+			return Err(<Error<T>>::OuroborosDetected.into());
+		}
+
+		for parent in Self::parent_chain(collection, token).take_while(|_| budget.consume()) {
+			match parent? {
+				// Tried to nest token in chain, which has this token as one of parents
+				Parent::Token(collection, token) if Some((collection, token)) == for_nest => {
+					return Err(<Error<T>>::OuroborosDetected.into())
+				}
+				// Token is owned by other user
+				Parent::User(user) => return Ok(user),
+				Parent::TokenNotFound => return Err(<Error<T>>::TokenNotFound.into()),
+				// Continue parent chain
+				Parent::Token(_, _) => {}
+			}
+		}
+
+		Err(<Error<T>>::DepthLimit.into())
+	}
+
 	/// Check if token indirectly owned by specified user
 	pub fn check_indirectly_owned(
 		user: T::CrossAccountId,
@@ -160,28 +188,12 @@ impl<T: Config> Pallet<T> {
 			None => user,
 		};
 
-		// Tried to nest token in itself
-		if Some((collection, token)) == for_nest {
-			return Err(<Error<T>>::OuroborosDetected.into());
-		}
-
-		for parent in Self::parent_chain(collection, token).take_while(|_| budget.consume()) {
-			match parent? {
-				// Tried to nest token in chain, which has this token as one of parents
-				Parent::Token(collection, token) if Some((collection, token)) == for_nest => {
-					return Err(<Error<T>>::OuroborosDetected.into())
-				}
-				// Found needed parent, token is indirecty owned
-				Parent::User(user) if user == target_parent => return Ok(true),
-				// Token is owned by other user
-				Parent::User(_) => return Ok(false),
-				Parent::TokenNotFound => return Err(<Error<T>>::TokenNotFound.into()),
-				// Continue parent chain
-				Parent::Token(_, _) => {}
-			}
-		}
-
-		Err(<Error<T>>::DepthLimit.into())
+		Self::get_indirect_owner(
+			collection,
+			token,
+			for_nest,
+			budget
+		).map(|indirect_owner| indirect_owner == target_parent)
 	}
 
 	pub fn check_nesting(
