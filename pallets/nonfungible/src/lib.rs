@@ -543,6 +543,7 @@ impl<T: Config> Pallet<T> {
 				token_owner,
 				..
 			} => {
+				//TODO: исследовать угрозы при публичном минтинге.
 				if is_token_create && (collection_admin || token_owner) {
 					return Ok(());
 				}

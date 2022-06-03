@@ -341,7 +341,7 @@
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "string", "name": "mode", "type": "string" }],
+    "inputs": [{ "internalType": "uint8", "name": "mode", "type": "uint8" }],
     "name": "setCollectionAccess",
     "outputs": [],
     "stateMutability": "nonpayable",
