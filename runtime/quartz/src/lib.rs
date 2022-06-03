@@ -81,7 +81,7 @@ use codec::{Encode, Decode};
 use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
-	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating},
+	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf, DispatchInfoOf, Saturating},
 	transaction_validity::TransactionValidityError,
 	SaturatedConversion,
 };
@@ -237,8 +237,8 @@ parameter_types! {
 
 pub struct FixedFee;
 impl FeeCalculator for FixedFee {
-	fn min_gas_price() -> U256 {
-		MIN_GAS_PRICE.into()
+	fn min_gas_price() -> (U256, u64) {
+		(MIN_GAS_PRICE.into(), 0)
 	}
 }
 
@@ -853,8 +853,8 @@ parameter_types! {
 }
 
 impl pallet_common::Config for Runtime {
+	type WeightInfo = pallet_common::weights::SubstrateWeight<Self>;
 	type Event = Event;
-
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
@@ -1110,9 +1110,14 @@ impl fp_self_contained::SelfContainedCall for Call {
 		}
 	}
 
-	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
+	fn validate_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+		dispatch_info: &DispatchInfoOf<Call>,
+		len: usize,
+	) -> Option<TransactionValidity> {
 		match self {
-			Call::Ethereum(call) => call.validate_self_contained(info),
+			Call::Ethereum(call) => call.validate_self_contained(info, dispatch_info, len),
 			_ => None,
 		}
 	}
