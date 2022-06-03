@@ -633,6 +633,14 @@ export async function confirmSponsorshipExpectSuccess(collectionId: number, send
 
     // Run the transaction
     const sender = privateKeyWrapper(senderSeed);
+    await confirmSponsorshipByKeyExpectSuccess(collectionId, sender);
+  });
+}
+
+export async function confirmSponsorshipByKeyExpectSuccess(collectionId: number, sender: IKeyringPair) {
+  await usingApi(async (api, privateKeyWrapper) => {
+
+    // Run the transaction
     const tx = api.tx.unique.confirmSponsorship(collectionId);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
@@ -898,7 +906,7 @@ transferFromExpectFail(
 }
 
 /* eslint no-async-promise-executor: "off" */
-async function getBlockNumber(api: ApiPromise): Promise<number> {
+export async function getBlockNumber(api: ApiPromise): Promise<number> {
   return new Promise<number>(async (resolve) => {
     const unsubscribe = await api.rpc.chain.subscribeNewHeads((head) => {
       unsubscribe();
@@ -934,29 +942,76 @@ export async function transferBalanceTo(api: ApiPromise, source: IKeyringPair, t
 }
 
 export async function
-scheduleTransferExpectSuccess(
-  collectionId: number,
-  tokenId: number,
+scheduleExpectSuccess(
+  operationTx: any,
   sender: IKeyringPair,
-  recipient: IKeyringPair,
-  value: number | bigint = 1,
   blockSchedule: number,
+  scheduledId: string,
+  period = 1,
+  repetitions = 1,
 ) {
   await usingApi(async (api: ApiPromise) => {
     const blockNumber: number | undefined = await getBlockNumber(api);
     const expectedBlockNumber = blockNumber + blockSchedule;
 
     expect(blockNumber).to.be.greaterThan(0);
-    const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value);
-    const scheduleTx = api.tx.scheduler.schedule(expectedBlockNumber, null, 0, transferTx as any);
+    const scheduleTx = api.tx.scheduler.scheduleNamed( // schedule
+      scheduledId,
+      expectedBlockNumber, 
+      repetitions > 1 ? [period, repetitions] : null, 
+      0, 
+      {value: operationTx as any},
+    );
 
-    await submitTransactionAsync(sender, scheduleTx);
+    const events = await submitTransactionAsync(sender, scheduleTx);
+    expect(getGenericResult(events).success).to.be.true;
+  });
+}
+
+export async function
+scheduleExpectFailure(
+  operationTx: any,
+  sender: IKeyringPair,
+  blockSchedule: number,
+  scheduledId: string,
+  period = 1,
+  repetitions = 1,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    const blockNumber: number | undefined = await getBlockNumber(api);
+    const expectedBlockNumber = blockNumber + blockSchedule;
+
+    expect(blockNumber).to.be.greaterThan(0);
+    const scheduleTx = api.tx.scheduler.scheduleNamed( // schedule
+      scheduledId,
+      expectedBlockNumber, 
+      repetitions <= 1 ? null : [period, repetitions], 
+      0, 
+      {value: operationTx as any},
+    );
+
+    //const events = 
+    await expect(submitTransactionExpectFailAsync(sender, scheduleTx)).to.be.rejected;
+    //expect(getGenericResult(events).success).to.be.false;
+  });
+}
+
+export async function
+scheduleTransferAndWaitExpectSuccess(
+  collectionId: number,
+  tokenId: number,
+  sender: IKeyringPair,
+  recipient: IKeyringPair,
+  value: number | bigint = 1,
+  blockSchedule: number,
+  scheduledId: string,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    await scheduleTransferExpectSuccess(collectionId, tokenId, sender, recipient, value, blockSchedule, scheduledId);
 
     const recipientBalanceBefore = (await api.query.system.account(recipient.address)).data.free.toBigInt();
 
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(sender.address));
-
-    // sleep for 4 blocks
+    // sleep for n + 1 blocks
     await waitNewBlocks(blockSchedule + 1);
 
     const recipientBalanceAfter = (await api.query.system.account(recipient.address)).data.free.toBigInt();
@@ -966,6 +1021,45 @@ scheduleTransferExpectSuccess(
   });
 }
 
+export async function
+scheduleTransferExpectSuccess(
+  collectionId: number,
+  tokenId: number,
+  sender: IKeyringPair,
+  recipient: IKeyringPair,
+  value: number | bigint = 1,
+  blockSchedule: number,
+  scheduledId: string,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value);
+
+    await scheduleExpectSuccess(transferTx, sender, blockSchedule, scheduledId);
+
+    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(sender.address));
+  });
+}
+
+export async function
+scheduleTransferFundsPeriodicExpectSuccess(
+  amount: bigint,
+  sender: IKeyringPair,
+  recipient: IKeyringPair,
+  blockSchedule: number,
+  scheduledId: string,
+  period: number,
+  repetitions: number,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    const transferTx = api.tx.balances.transfer(recipient.address, amount);
+
+    const balanceBefore = await getFreeBalance(recipient);
+    
+    await scheduleExpectSuccess(transferTx, sender, blockSchedule, scheduledId, period, repetitions);
+
+    expect(await getFreeBalance(recipient)).to.be.equal(balanceBefore);
+  });
+}
 
 export async function
 transferExpectSuccess(

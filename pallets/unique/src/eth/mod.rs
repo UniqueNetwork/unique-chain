@@ -18,7 +18,7 @@ use core::marker::PhantomData;
 use evm_coder::{execution::*, generate_stubgen, solidity_interface, weight, types::*};
 use ethereum as _;
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use pallet_evm::{OnMethodCall, PrecompileResult, account::CrossAccountId};
+use pallet_evm::{OnMethodCall, PrecompileResult, account::CrossAccountId, PrecompileHandle};
 use up_data_structs::{
 	CreateCollectionData, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
 	MAX_COLLECTION_NAME_LENGTH,
@@ -119,19 +119,14 @@ impl<T: Config + pallet_nonfungible::Config> OnMethodCall<T> for CollectionHelpe
 		contract == &T::ContractAddress::get()
 	}
 
-	fn call(
-		source: &sp_core::H160,
-		target: &sp_core::H160,
-		gas_left: u64,
-		input: &[u8],
-		value: sp_core::U256,
-	) -> Option<PrecompileResult> {
-		if target != &T::ContractAddress::get() {
+	fn call(handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
+		if handle.code_address() != T::ContractAddress::get() {
 			return None;
 		}
 
-		let helpers = EvmCollectionHelpers::<T>(SubstrateRecorder::<T>::new(gas_left));
-		pallet_evm_coder_substrate::call(*source, helpers, value, input)
+		let helpers =
+			EvmCollectionHelpers::<T>(SubstrateRecorder::<T>::new(handle.remaining_gas()));
+		pallet_evm_coder_substrate::call(handle, helpers)
 	}
 
 	fn get_code(contract: &sp_core::H160) -> Option<Vec<u8>> {

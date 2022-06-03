@@ -530,11 +530,13 @@ macro_rules! impl_common_runtime_apis {
                 }
 
                 fn account_basic(address: H160) -> EVMAccount {
-                    EVM::account_basic(&address)
+                    let (account, _) = EVM::account_basic(&address);
+                    account
                 }
 
                 fn gas_price() -> U256 {
-                    <Runtime as pallet_evm::Config>::FeeCalculator::min_gas_price()
+                    let (price, _) = <Runtime as pallet_evm::Config>::FeeCalculator::min_gas_price();
+                    price
                 }
 
                 fn account_code_at(address: H160) -> Vec<u8> {
@@ -585,7 +587,7 @@ macro_rules! impl_common_runtime_apis {
                         access_list.unwrap_or_default(),
                         is_transactional,
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
-                    ).map_err(|err| err.into())
+                    ).map_err(|err| err.error.into())
                 }
 
                 #[allow(clippy::redundant_closure)]
@@ -620,7 +622,7 @@ macro_rules! impl_common_runtime_apis {
                         access_list.unwrap_or_default(),
                         is_transactional,
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
-                    ).map_err(|err| err.into())
+                    ).map_err(|err| err.error.into())
                 }
 
                 fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
