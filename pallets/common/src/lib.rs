@@ -148,23 +148,35 @@ impl<T: Config> CollectionHandle<T> {
 					.saturating_mul(writes),
 			))
 	}
-
-	pub fn save(self) -> DispatchResult {
+	pub fn save(self) -> Result<(), DispatchError> {
+		self.check_is_read_only()?;
 		<CollectionById<T>>::insert(self.id, self.collection);
 		Ok(())
 	}
 
-	pub fn set_sponsor(&mut self, sponsor: T::AccountId) {
+	pub fn set_sponsor(&mut self, sponsor: T::AccountId) -> DispatchResult {
+		self.check_is_read_only()?;
 		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor);
+		Ok(())
 	}
 
-	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> bool {
+	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> Result<bool, DispatchError> {
+		self.check_is_read_only()?;
+
 		if self.collection.sponsorship.pending_sponsor() != Some(sender) {
-			return false;
-		};
+			return Ok(false);
+		}
 
 		self.collection.sponsorship = SponsorshipState::Confirmed(sender.clone());
-		true
+		Ok(true)
+	}
+
+	pub fn check_is_read_only(&self) -> DispatchResult {
+		if self.read_only {
+			return Err(<Error<T>>::CollectionNotFound)?;
+		}
+		
+		Ok(())
 	}
 }
 
@@ -434,6 +446,9 @@ pub mod pallet {
 
 		/// Empty property keys are forbidden
 		EmptyPropertyKey,
+
+		/// Collection is read only
+		CollectionIsReadOnly,
 	}
 
 	#[pallet::storage]
@@ -669,6 +684,7 @@ impl<T: Config> Pallet<T> {
 			sponsorship,
 			limits,
 			permissions,
+			read_only,
 		} = <CollectionById<T>>::get(collection)?;
 
 		let token_property_permissions = <CollectionPropertyPermissions<T>>::get(collection)
@@ -698,6 +714,7 @@ impl<T: Config> Pallet<T> {
 			permissions,
 			token_property_permissions,
 			properties,
+			read_only,
 		})
 	}
 }
@@ -778,6 +795,7 @@ impl<T: Config> Pallet<T> {
 					Self::clamp_permissions(data.mode.clone(), &Default::default(), permissions)
 				})
 				.unwrap_or_else(|| Ok(CollectionPermissions::default()))?,
+			read_only: false,
 		};
 
 		let mut collection_properties = up_data_structs::CollectionProperties::get();
@@ -834,6 +852,7 @@ impl<T: Config> Pallet<T> {
 		collection: CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 	) -> DispatchResult {
+		collection.check_is_read_only()?;
 		ensure!(
 			collection.limits.owner_can_destroy(),
 			<Error<T>>::NoPermission,
@@ -863,6 +882,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property: Property,
 	) -> DispatchResult {
+		collection.check_is_read_only()?;
 		collection.check_is_owner_or_admin(sender)?;
 
 		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
@@ -908,6 +928,8 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		properties: Vec<Property>,
 	) -> DispatchResult {
+		collection.check_is_read_only()?;
+
 		for property in properties {
 			Self::set_collection_property(collection, sender, property)?;
 		}
@@ -920,6 +942,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_key: PropertyKey,
 	) -> DispatchResult {
+		collection.check_is_read_only()?;
 		collection.check_is_owner_or_admin(sender)?;
 
 		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
@@ -941,6 +964,8 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_keys: Vec<PropertyKey>,
 	) -> DispatchResult {
+		collection.check_is_read_only()?;
+
 		for key in property_keys {
 			Self::delete_collection_property(collection, sender, key)?;
 		}
@@ -965,6 +990,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_permission: PropertyKeyPermission,
 	) -> DispatchResult {
+		collection.check_is_read_only()?;
 		collection.check_is_owner_or_admin(sender)?;
 
 		let all_permissions = CollectionPropertyPermissions::<T>::get(collection.id);
@@ -996,6 +1022,8 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResult {
+		collection.check_is_read_only()?;
+
 		for prop_pemission in property_permissions {
 			Self::set_property_permission(collection, sender, prop_pemission)?;
 		}
@@ -1083,6 +1111,7 @@ impl<T: Config> Pallet<T> {
 		user: &T::CrossAccountId,
 		allowed: bool,
 	) -> DispatchResult {
+		collection.check_is_read_only()?;
 		collection.check_is_owner_or_admin(sender)?;
 
 		// =========
@@ -1102,6 +1131,7 @@ impl<T: Config> Pallet<T> {
 		user: &T::CrossAccountId,
 		admin: bool,
 	) -> DispatchResult {
+		collection.check_is_read_only()?;
 		collection.check_is_owner_or_admin(sender)?;
 
 		let was_admin = <IsAdmin<T>>::get((collection.id, user));
