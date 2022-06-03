@@ -78,8 +78,8 @@ describe('Integration Test: Nesting', () => {
         api,
         alice,
         api.tx.unique.transferFrom(
-          normalizeAccountId({Ethereum: tokenIdToAddress(collection, tokenA)}), 
-          normalizeAccountId({Ethereum: tokenIdToAddress(collection, tokenB)}), 
+          normalizeAccountId({Ethereum: tokenIdToAddress(collection, tokenA)}),
+          normalizeAccountId({Ethereum: tokenIdToAddress(collection, tokenB)}),
           collection,
           tokenC,
           1,
@@ -120,13 +120,13 @@ describe('Integration Test: Nesting', () => {
       ], 'Children contents check at nesting #2');
 
       // Move token B to a different user outside the nesting tree
-      await transferFromExpectSuccess(collectionA, tokenB, alice, targetAddress, bob);
+      await transferExpectSuccess(collectionA, tokenB, alice, bob);
       children = await getTokenChildren(api, collectionA, targetToken);
       expect(children.length).to.be.equal(1, 'Children length check at unnesting');
       expect(children).to.be.have.deep.members([
         {token: tokenA, collection: collectionA},
       ], 'Children contents check at unnesting');
-      
+
       // Create a fungible token in another collection and then nest
       const tokenC = await createItemExpectSuccess(alice, collectionB, 'Fungible');
       await transferExpectSuccess(collectionB, tokenC, alice, targetAddress, 1, 'Fungible');
@@ -287,20 +287,6 @@ describe('Negative Test: Nesting', async() => {
     await usingApi(async () => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
-    });
-  });
-
-  // TODO delete if this is actually wrong
-  // TODO remake all other nesting tests if this is right
-  it('Affirms that transfer is disallowed to transfer nested tokens', async () => {
-    await usingApi(async () => {
-      const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: 'Owner'});
-
-      const tokenA = await createItemExpectSuccess(alice, collection, 'NFT');
-      const tokenB = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: tokenIdToAddress(collection, tokenA)});
-      
-      await transferExpectFailure(collection, tokenB, alice, bob);
     });
   });
 

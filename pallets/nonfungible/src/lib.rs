@@ -604,7 +604,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		<PalletStructure<T>>::unnest_if_nested(from, collection.id, token);
+		<PalletStructure<T>>::unnest_if_nested(&token_data.owner, collection.id, token);
 
 		<TokenData<T>>::insert(
 			(collection.id, token),

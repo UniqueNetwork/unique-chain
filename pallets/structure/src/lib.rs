@@ -191,8 +191,8 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::try_exec_if_owner_is_valid_nft(under, |d, parent_id| {
-			d.check_nesting(from, (collection_id, token_id), parent_id, nesting_budget)
+		Self::try_exec_if_owner_is_valid_nft(under, |collection, parent_id| {
+			collection.check_nesting(from, (collection_id, token_id), parent_id, nesting_budget)
 		})
 	}
 
@@ -203,10 +203,10 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::try_exec_if_owner_is_valid_nft(under, |d, parent_id| {
-			d.check_nesting(from, (collection_id, token_id), parent_id, nesting_budget)?;
+		Self::try_exec_if_owner_is_valid_nft(under, |collection, parent_id| {
+			collection.check_nesting(from, (collection_id, token_id), parent_id, nesting_budget)?;
 
-			d.nest(parent_id, (collection_id, token_id));
+			collection.nest(parent_id, (collection_id, token_id));
 
 			Ok(())
 		})
@@ -217,8 +217,8 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 		token_id: TokenId,
 	) {
-		Self::exec_if_owner_is_valid_nft(owner, |d, parent_id| {
-			d.nest(parent_id, (collection_id, token_id))
+		Self::exec_if_owner_is_valid_nft(owner, |collection, parent_id| {
+			collection.nest(parent_id, (collection_id, token_id))
 		});
 	}
 
@@ -227,8 +227,8 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 		token_id: TokenId,
 	) {
-		Self::exec_if_owner_is_valid_nft(owner, |d, parent_id| {
-			d.unnest(parent_id, (collection_id, token_id))
+		Self::exec_if_owner_is_valid_nft(owner, |collection, parent_id| {
+			collection.unnest(parent_id, (collection_id, token_id))
 		});
 	}
 
@@ -236,8 +236,8 @@ impl<T: Config> Pallet<T> {
 		account: &T::CrossAccountId,
 		action: impl FnOnce(&dyn CommonCollectionOperations<T>, TokenId),
 	) {
-		Self::try_exec_if_owner_is_valid_nft(account, |d, id| {
-			action(d, id);
+		Self::try_exec_if_owner_is_valid_nft(account, |collection, id| {
+			action(collection, id);
 			Ok(())
 		})
 		.unwrap();
