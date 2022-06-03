@@ -168,7 +168,7 @@ impl<T: Config> Pallet<T> {
 		owner: &T::CrossAccountId,
 		amount: u128,
 	) -> DispatchResult {
-		collection.check_is_read_only()?;
+		collection.check_is_mutable()?;
 
 		let total_supply = <TotalSupply<T>>::get(collection.id)
 			.checked_sub(amount)
@@ -216,7 +216,7 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		collection.check_is_read_only()?;
+		collection.check_is_mutable()?;
 
 		ensure!(
 			collection.limits.transfers_enabled(),
@@ -287,7 +287,7 @@ impl<T: Config> Pallet<T> {
 		data: BTreeMap<T::CrossAccountId, u128>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		collection.check_is_read_only()?;
+		collection.check_is_mutable()?;
 
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
@@ -390,7 +390,7 @@ impl<T: Config> Pallet<T> {
 		spender: &T::CrossAccountId,
 		amount: u128,
 	) -> DispatchResult {
-		collection.check_is_read_only()?;
+		collection.check_is_mutable()?;
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(owner)?;
 			collection.check_allowlist(spender)?;
