@@ -449,7 +449,13 @@ impl<T: Config> Pallet<T> {
 		property: Property,
 		is_token_create: bool,
 	) -> DispatchResult {
-		Self::check_token_change_permission(collection, sender, token_id, &property.key, is_token_create)?;
+		Self::check_token_change_permission(
+			collection,
+			sender,
+			token_id,
+			&property.key,
+			is_token_create,
+		)?;
 
 		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
 			let property = property.clone();
