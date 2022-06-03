@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import waitNewBlocks from './substrate/wait-new-blocks';
 import {deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess} from './util/contracthelpers';
@@ -57,7 +56,9 @@ describe.skip('Negative Integration Test setContractSponsoringRateLimit', () => 
   let alice: IKeyringPair;
 
   before(async () => {
-    alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+    });
   });
 
   it('fails when called for non-contract address', async () => {

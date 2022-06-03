@@ -31,7 +31,6 @@ import {
   addCollectionAdminExpectSuccess,
 } from './util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
-import privateKey from './substrate/privateKey';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -41,9 +40,9 @@ describe('Integration Test removeFromAllowList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -75,9 +74,9 @@ describe('Negative Integration Test removeFromAllowList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -107,10 +106,10 @@ describe('Integration Test removeFromAllowList with collection admin permissions
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 

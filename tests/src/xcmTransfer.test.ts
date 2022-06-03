@@ -20,7 +20,6 @@ import chaiAsPromised from 'chai-as-promised';
 import {WsProvider} from '@polkadot/api';
 import {ApiOptions} from '@polkadot/api/types';
 import {IKeyringPair} from '@polkadot/types/types';
-import privateKey from './substrate/privateKey';
 import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
 import {getGenericResult} from './util/helpers';
 import waitNewBlocks from './substrate/wait-new-blocks';
@@ -38,8 +37,8 @@ describe('Integration test: Exchanging OPL with Karura', () => {
   let alice: IKeyringPair;
   
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
     });
 
     const karuraApiOptions: ApiOptions = {

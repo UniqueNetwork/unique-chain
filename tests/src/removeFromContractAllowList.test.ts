@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import {deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess} from './util/contracthelpers';
 import {addToContractAllowListExpectSuccess, isAllowlistedInContract, removeFromContractAllowListExpectFailure, removeFromContractAllowListExpectSuccess, toggleContractAllowlistExpectSuccess} from './util/helpers';
@@ -25,8 +24,8 @@ describe.skip('Integration Test removeFromContractAllowList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -70,9 +69,9 @@ describe.skip('Negative Integration Test removeFromContractAllowList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 

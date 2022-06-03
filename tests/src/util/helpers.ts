@@ -24,7 +24,6 @@ import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {alicesPublicKey} from '../accounts';
-import privateKey from '../substrate/privateKey';
 import {default as usingApi, executeTransaction, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
 import {UpDataStructsRpcCollection, UpDataStructsCreateItemData, UpDataStructsProperty} from '@polkadot/types/lookup';
@@ -325,12 +324,12 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
   const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
 
   let collectionId = 0;
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Get number of collections before the transaction
     const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKeyWrapper('//Alice');
 
     let modeprm = {};
     if (mode.type === 'NFT') {
@@ -378,12 +377,12 @@ export async function createCollectionWithPropsExpectSuccess(params: Partial<Cre
   const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
 
   let collectionId = 0;
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Get number of collections before the transaction
     const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKeyWrapper('//Alice');
 
     let modeprm = {};
     if (mode.type === 'NFT') {
@@ -426,12 +425,12 @@ export async function createCollectionWithPropsExpectSuccess(params: Partial<Cre
 export async function createCollectionWithPropsExpectFailure(params: Partial<CreateCollectionParams> = {}) {
   const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
 
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Get number of collections before the transaction
     const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKeyWrapper('//Alice');
 
     let modeprm = {};
     if (mode.type === 'NFT') {
@@ -465,12 +464,12 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
     modeprm = {refungible: null};
   }
 
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Get number of collections before the transaction
     const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKeyWrapper('//Alice');
     const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any});
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
 
@@ -519,18 +518,18 @@ function getDestroyResult(events: EventRecord[]): boolean {
 }
 
 export async function destroyCollectionExpectFailure(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Run the DestroyCollection transaction
-    const alicePrivateKey = privateKey(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.destroyCollection(collectionId);
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
 }
 
 export async function destroyCollectionExpectSuccess(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Run the DestroyCollection transaction
-    const alicePrivateKey = privateKey(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.destroyCollection(collectionId);
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getDestroyResult(events);
@@ -572,10 +571,10 @@ export async function setCollectionLimitsExpectFailure(sender: IKeyringPair, col
 }
 
 export async function setCollectionSponsorExpectSuccess(collectionId: number, sponsor: string, sender = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const senderPrivateKey = privateKey(sender);
+    const senderPrivateKey = privateKeyWrapper(sender);
     const tx = api.tx.unique.setCollectionSponsor(collectionId, sponsor);
     const events = await submitTransactionAsync(senderPrivateKey, tx);
     const result = getGenericResult(events);
@@ -592,10 +591,10 @@ export async function setCollectionSponsorExpectSuccess(collectionId: number, sp
 }
 
 export async function removeCollectionSponsorExpectSuccess(collectionId: number, sender = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey(sender);
+    const alicePrivateKey = privateKeyWrapper(sender);
     const tx = api.tx.unique.removeCollectionSponsor(collectionId);
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getGenericResult(events);
@@ -610,34 +609,36 @@ export async function removeCollectionSponsorExpectSuccess(collectionId: number,
 }
 
 export async function removeCollectionSponsorExpectFailure(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.removeCollectionSponsor(collectionId);
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
 }
 
 export async function setCollectionSponsorExpectFailure(collectionId: number, sponsor: string, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.setCollectionSponsor(collectionId, sponsor);
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
 }
 
 export async function confirmSponsorshipExpectSuccess(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async () => {
-    const sender = privateKey(senderSeed);
+  await usingApi(async (api, privateKeyWrapper) => {
+
+    // Run the transaction
+    const sender = privateKeyWrapper(senderSeed);
     await confirmSponsorshipByKeyExpectSuccess(collectionId, sender);
   });
 }
 
 export async function confirmSponsorshipByKeyExpectSuccess(collectionId: number, sender: IKeyringPair) {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
     const tx = api.tx.unique.confirmSponsorship(collectionId);
@@ -657,10 +658,10 @@ export async function confirmSponsorshipByKeyExpectSuccess(collectionId: number,
 
 
 export async function confirmSponsorshipExpectFailure(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const sender = privateKey(senderSeed);
+    const sender = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.confirmSponsorship(collectionId);
     await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
   });

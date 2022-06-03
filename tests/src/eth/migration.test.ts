@@ -15,12 +15,11 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-import privateKey from '../substrate/privateKey';
 import {submitTransactionAsync} from '../substrate/substrate-api';
 import {createEthAccountWithBalance, GAS_ARGS, itWeb3} from './util/helpers';
 
 describe('EVM Migrations', () => {
-  itWeb3('Deploy contract saved state', async ({web3, api}) => {
+  itWeb3('Deploy contract saved state', async ({web3, api, privateKeyWrapper}) => {
     /*
       contract StatefulContract {
         uint counter;
@@ -54,7 +53,7 @@ describe('EVM Migrations', () => {
       ['0xedc95719e9a3b28dd8e80877cb5880a9be7de1a13fc8b05e7999683b6b567643', '0x0000000000000000000000000000000000000000000000000000000000000004'],
     ];
 
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
 
     await submitTransactionAsync(alice, api.tx.sudo.sudo(api.tx.evmMigration.begin(ADDRESS) as any));

@@ -18,7 +18,6 @@ import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync, executeTransaction} from './substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
@@ -41,12 +40,12 @@ const expect = chai.expect;
 
 describe('Integration Test createMultipleItems(collection_id, owner, items_data):', () => {
   it('Create 0x31, 0x32, 0x33 items in active NFT collection and verify tokens data in chain', async () => {
-    await usingApi(async (api: ApiPromise) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
 
-      const alice = privateKey('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       await submitTransactionAsync(
         alice, 
         api.tx.unique.setPropertyPermissions(collectionId, [{key: 'data', permission: {tokenOwner: true}}]),
@@ -73,11 +72,11 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
   });
 
   it('Create 0x01, 0x02, 0x03 items in active Fungible collection and verify tokens data in chain', async () => {
-    await usingApi(async (api: ApiPromise) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKey('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const args = [
         {Fungible: {value: 1}},
         {Fungible: {value: 2}},
@@ -93,11 +92,11 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
   });
 
   it('Create 0x31, 0x32, 0x33 items in active ReFungible collection and verify tokens data in chain', async () => {
-    await usingApi(async (api: ApiPromise) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKey('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const args = [
         {ReFungible: {pieces: 1}},
         {ReFungible: {pieces: 2}},
@@ -116,8 +115,8 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
   });
 
   it('Can mint amount of items equals to collection limits', async () => {
-    await usingApi(async (api) => {
-      const alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
 
       const collectionId = await createCollectionExpectSuccess();
       await setCollectionLimitsExpectSuccess(alice, collectionId, {
@@ -135,11 +134,11 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
   });
 
   it('Create 0x31, 0x32, 0x33 items in active NFT with property Admin', async () => {
-    await usingApi(async (api: ApiPromise) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKey('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const args = [
         {NFT: {properties: [{key: 'k', value: 'v1'}]}},
         {NFT: {properties: [{key: 'k', value: 'v2'}]}},
@@ -161,12 +160,12 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
   });
 
   it('Create 0x31, 0x32, 0x33 items in active NFT with property AdminConst', async () => {
-    await usingApi(async (api: ApiPromise) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
       const args = [
         {NFT: {properties: [{key: 'k', value: 'v1'}]}},
@@ -189,11 +188,11 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
   });
 
   it('Create 0x31, 0x32, 0x33 items in active NFT with property itemOwnerOrAdmin', async () => {
-    await usingApi(async (api: ApiPromise) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
       expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKey('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const args = [
         {NFT: {properties: [{key: 'k', value: 'v1'}]}},
         {NFT: {properties: [{key: 'k', value: 'v2'}]}},
@@ -220,9 +219,9 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -302,9 +301,9 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -360,12 +359,12 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
   });
 
   it('Create NFT and Re-fungible tokens that has reached the maximum data limit', async () => {
-    await usingApi(async (api: ApiPromise) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       // NFT
       const collectionId = await createCollectionWithPropsExpectSuccess({
         propPerm: [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}],
       });
-      const alice = privateKey('//Alice');
+      const alice = privateKeyWrapper('//Alice');
       const args = [
         {NFT: {properties: [{key: 'key', value: 'A'.repeat(32769)}]}},
         {NFT: {properties: [{key: 'key', value: 'B'.repeat(32769)}]}},

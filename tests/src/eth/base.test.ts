@@ -28,7 +28,6 @@ import {
 import {expect} from 'chai';
 import {createCollectionExpectSuccess, createItemExpectSuccess, UNIQUE} from '../util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
-import privateKey from '../substrate/privateKey';
 import {Contract} from 'web3-eth-contract';
 import Web3 from 'web3';
 
@@ -50,11 +49,11 @@ describe('Contract calls', () => {
     expect(cost - balanceB < BigInt(0.2 * Number(UNIQUE))).to.be.true;
   });
 
-  itWeb3('NFT transfer is close to 0.15 UNQ', async ({web3, api}) => {
+  itWeb3('NFT transfer is close to 0.15 UNQ', async ({web3, api, privateKeyWrapper}) => {
     const caller = await createEthAccountWithBalance(api, web3);
     const receiver = createEthAccount(web3);
 
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
