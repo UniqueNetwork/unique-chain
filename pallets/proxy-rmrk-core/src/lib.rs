@@ -792,12 +792,12 @@ impl<T: Config> Pallet<T> {
 
 		let sender = T::CrossAccountId::from_sub(sender);
 		if topmost_owner == sender {
-			<PalletNft<T>>::burn(&collection, &sender, nft_id)
+			<PalletNft<T>>::burn(&resource_collection, &sender, resource_id)
 				.map_err(Self::map_common_err_to_proxy)?;
 		} else {
 			<PalletNft<T>>::set_scoped_token_property(
-				collection_id,
-				nft_id,
+				resource_collection_id,
+				resource_id,
 				PropertyScope::Rmrk,
 				Self::rmrk_property(PendingResourceRemoval, &true)?,
 			)?;
