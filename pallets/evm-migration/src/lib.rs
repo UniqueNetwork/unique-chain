@@ -108,7 +108,7 @@ pub mod pallet {
 			false
 		}
 
-		fn call(handle: &mut impl PrecompileHandle) -> Option<pallet_evm::PrecompileResult> {
+		fn call(_handle: &mut impl PrecompileHandle) -> Option<pallet_evm::PrecompileResult> {
 			None
 		}
 

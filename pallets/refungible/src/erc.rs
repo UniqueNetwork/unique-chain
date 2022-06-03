@@ -25,7 +25,7 @@ impl<T: Config> CommonEvmHandler for RefungibleHandle<T> {
 
 	fn call(
 		self,
-		handle: &mut impl PrecompileHandle,
+		_handle: &mut impl PrecompileHandle,
 	) -> Option<pallet_common::erc::PrecompileResult> {
 		// TODO: Implement RFT variant of ERC721
 		None
@@ -39,7 +39,7 @@ impl<T: Config> CommonEvmHandler for RefungibleTokenHandle<T> {
 
 	fn call(
 		self,
-		handle: &mut impl PrecompileHandle,
+		_handle: &mut impl PrecompileHandle,
 	) -> Option<pallet_common::erc::PrecompileResult> {
 		// TODO: Implement RFT variant of ERC20
 		None

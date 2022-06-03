@@ -26,7 +26,6 @@ use up_data_structs::{
 	CollectionPropertiesVec,
 };
 use pallet_evm_coder_substrate::dispatch_to_evm;
-use sp_core::{H160, U256};
 use sp_std::vec::Vec;
 use pallet_common::{
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, token_uri_key},

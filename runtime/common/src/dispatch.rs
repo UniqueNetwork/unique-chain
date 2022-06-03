@@ -1,6 +1,6 @@
 use frame_support::{dispatch::DispatchResult, ensure};
 use pallet_evm::{PrecompileHandle, PrecompileResult};
-use sp_core::{H160, U256};
+use sp_core::H160;
 use sp_std::{borrow::ToOwned, vec::Vec};
 use pallet_common::{
 	CollectionById, CollectionHandle, CommonCollectionOperations, erc::CommonEvmHandler,
