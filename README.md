@@ -51,14 +51,14 @@ curl https://sh.rustup.rs -sSf | sh
 3. Install install nightly 2021-11-11 and make it default:
 
 ```bash
-rustup toolchain install nightly-2022-04-07
-rustup default nightly-2022-04-07
+rustup toolchain install nightly-2022-05-11
+rustup default nightly-2022-05-11
 ```
 
 4. Add wasm target for nightly toolchain:
 
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2022-04-07
+rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
 ```
 
 5. Build:
@@ -81,7 +81,7 @@ git clone https://github.com/paritytech/polkadot-launch
 ```
 git clone https://github.com/paritytech/polkadot.git
 cd polkadot
-git checkout release-v0.9.21
+git checkout release-v0.9.22
 cargo build --release
 ```
 

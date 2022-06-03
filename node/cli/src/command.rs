@@ -454,6 +454,15 @@ pub fn run() -> Result<()> {
 			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
+				let hwbench = if !cli.no_hardware_benchmarks {
+					config.database.path().map(|database_path| {
+						let _ = std::fs::create_dir_all(&database_path);
+						sc_sysinfo::gather_hwbench(Some(database_path))
+					})
+				} else {
+					None
+				};
+
 				let extensions = chain_spec::Extensions::try_get(&*config.chain_spec);
 
 				let service_id = config.chain_spec.service_id();
@@ -517,7 +526,7 @@ pub fn run() -> Result<()> {
 				);
 
 				start_node_using_chain_runtime! {
-					start_node(config, polkadot_config, collator_options, para_id)
+					start_node(config, polkadot_config, collator_options, para_id, hwbench)
 						.await
 						.map(|r| r.0)
 						.map_err(Into::into)

@@ -24,14 +24,14 @@ struct Impls;
 #[solidity_interface(name = "OurInterface")]
 impl Impls {
 	fn fn_a(&self, _input: uint256) -> Result<bool> {
-		todo!()
+		unreachable!()
 	}
 }
 
 #[solidity_interface(name = "OurInterface1")]
 impl Impls {
 	fn fn_b(&self, _input: uint128) -> Result<uint32> {
-		todo!()
+		unreachable!()
 	}
 }
 
@@ -56,26 +56,26 @@ enum OurEvents {
 impl Impls {
 	#[solidity(rename_selector = "fnK")]
 	fn fn_c(&self, _input: uint32) -> Result<uint8> {
-		todo!()
+		unreachable!()
 	}
 	fn fn_d(&self, _value: uint32) -> Result<uint32> {
-		todo!()
+		unreachable!()
 	}
 
 	fn caller_sensitive(&self, _caller: caller) -> Result<uint8> {
-		todo!()
+		unreachable!()
 	}
 	fn payable(&mut self, _value: value) -> Result<uint8> {
-		todo!()
+		unreachable!()
 	}
 
 	#[weight(*_weight)]
 	fn with_weight(&self, _weight: uint64) -> Result<void> {
-		todo!()
+		unreachable!()
 	}
 
 	/// Doccoment example
 	fn with_doc(&self) -> Result<void> {
-		todo!()
+		unreachable!()
 	}
 }
