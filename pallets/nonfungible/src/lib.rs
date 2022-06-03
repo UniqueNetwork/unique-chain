@@ -336,7 +336,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token: TokenId,
 	) -> DispatchResult {
-		collection.check_is_read_only()?;
+		collection.check_is_mutable()?;
 
 		let token_data =
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
@@ -458,7 +458,7 @@ impl<T: Config> Pallet<T> {
 			&property.key,
 			is_token_create,
 		)?;
-		collection.check_is_read_only()?;
+		collection.check_is_mutable()?;
 
 		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
 			let property = property.clone();
@@ -496,8 +496,8 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		property_key: PropertyKey,
 	) -> DispatchResult {
+		collection.check_is_mutable()?;
 		Self::check_token_change_permission(collection, sender, token_id, &property_key, false)?;
-		collection.check_is_read_only()?;
 
 		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
 			properties.remove(&property_key)
@@ -574,7 +574,7 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		property_keys: Vec<PropertyKey>,
 	) -> DispatchResult {
-		collection.check_is_read_only()?;
+		collection.check_is_mutable()?;
 
 		for key in property_keys {
 			Self::delete_token_property(collection, sender, token_id, key)?;
@@ -622,7 +622,7 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		collection.check_is_read_only()?;
+		collection.check_is_mutable()?;
 
 		ensure!(
 			collection.limits.transfers_enabled(),
@@ -902,7 +902,7 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		spender: Option<&T::CrossAccountId>,
 	) -> DispatchResult {
-		collection.check_is_read_only()?;
+		collection.check_is_mutable()?;
 
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(sender)?;

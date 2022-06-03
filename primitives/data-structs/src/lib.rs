@@ -316,8 +316,9 @@ pub struct Collection<AccountId> {
 	#[version(2.., upper(Default::default()))]
 	pub permissions: CollectionPermissions,
 
+	/// Marks that this collection is not "unique", and managed from external.
 	#[version(2.., upper(false))]
-	pub read_only: bool,
+	pub external_collection: bool,
 
 	#[version(..2)]
 	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,

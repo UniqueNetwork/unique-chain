@@ -317,7 +317,7 @@ fn check_is_owner_or_admin<T: Config>(
 
 fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
 	collection
-		.check_is_read_only()
+		.check_is_mutable()
 		.map_err(dispatch_to_evm::<T>)?;
 	<crate::CollectionById<T>>::insert(collection.id, collection.collection.clone());
 	Ok(())

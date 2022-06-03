@@ -304,7 +304,7 @@ decl_module! {
 		pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			collection.check_is_read_only()?;
+			collection.check_is_mutable()?;
 
 			// =========
 
@@ -407,7 +407,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_read_only()?;
+			target_collection.check_is_mutable()?;
 			target_collection.check_is_owner(&sender)?;
 
 			target_collection.owner = new_owner.clone();
