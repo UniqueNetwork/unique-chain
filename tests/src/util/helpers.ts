@@ -28,6 +28,7 @@ import privateKey from '../substrate/privateKey';
 import {default as usingApi, executeTransaction, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
 import {UpDataStructsRpcCollection, UpDataStructsCreateItemData, UpDataStructsProperty} from '@polkadot/types/lookup';
+import {UpDataStructsTokenChild} from '../interfaces';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -1071,6 +1072,13 @@ export async function getTopmostTokenOwner(
   const owner = (await api.rpc.unique.topmostTokenOwner(collectionId, token)).toJSON() as any;
   if (owner == null) throw new Error('owner == null');
   return normalizeAccountId(owner);
+}
+export async function getTokenChildren(
+  api: ApiPromise,
+  collectionId: number,
+  tokenId: number,
+): Promise<UpDataStructsTokenChild[]> {
+  return (await api.rpc.unique.tokenChildren(collectionId, tokenId)).toJSON() as any;
 }
 export async function isTokenExists(
   api: ApiPromise,

@@ -22,7 +22,7 @@ use frame_support::{BoundedVec, ensure, fail, transactional, storage::with_trans
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
-	PropertyKey, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty,
+	PropertyKey, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
@@ -986,6 +986,15 @@ impl<T: Config> Pallet<T> {
 		<TokenChildren<T>>::iter_prefix((collection_id, token_id))
 			.next()
 			.is_some()
+	}
+
+	pub fn token_children_ids(collection_id: CollectionId, token_id: TokenId) -> Vec<TokenChild> {
+		<TokenChildren<T>>::iter_prefix((collection_id, token_id))
+			.map(|((child_collection_id, child_id), _)| TokenChild {
+				collection: child_collection_id,
+				token: child_id,
+			})
+			.collect()
 	}
 
 	/// Delegated to `create_multiple_items`
