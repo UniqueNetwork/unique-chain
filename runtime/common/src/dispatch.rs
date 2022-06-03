@@ -1,6 +1,6 @@
 use frame_support::{dispatch::DispatchResult, ensure};
-use pallet_evm::PrecompileResult;
-use sp_core::{H160, U256};
+use pallet_evm::{PrecompileHandle, PrecompileResult};
+use sp_core::H160;
 use sp_std::{borrow::ToOwned, vec::Vec};
 use pallet_common::{
 	CollectionById, CollectionHandle, CommonCollectionOperations, erc::CommonEvmHandler,
@@ -129,33 +129,30 @@ where
 			None
 		}
 	}
-	fn call(
-		source: &H160,
-		target: &H160,
-		gas_limit: u64,
-		input: &[u8],
-		value: U256,
-	) -> Option<PrecompileResult> {
-		if let Some(collection_id) = map_eth_to_id(target) {
-			let collection = <CollectionHandle<T>>::new_with_gas_limit(collection_id, gas_limit)?;
+	fn call(handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
+		if let Some(collection_id) = map_eth_to_id(&handle.code_address()) {
+			let collection =
+				<CollectionHandle<T>>::new_with_gas_limit(collection_id, handle.remaining_gas())?;
 			let dispatched = Self::dispatch(collection);
 
 			match dispatched {
-				Self::Fungible(h) => h.call(source, input, value),
-				Self::Nonfungible(h) => h.call(source, input, value),
-				Self::Refungible(h) => h.call(source, input, value),
+				Self::Fungible(h) => h.call(handle),
+				Self::Nonfungible(h) => h.call(handle),
+				Self::Refungible(h) => h.call(handle),
 			}
 		} else if let Some((collection_id, token_id)) =
-			<T as pallet_common::Config>::EvmTokenAddressMapping::address_to_token(target)
-		{
-			let collection = <CollectionHandle<T>>::new_with_gas_limit(collection_id, gas_limit)?;
+			<T as pallet_common::Config>::EvmTokenAddressMapping::address_to_token(
+				&handle.code_address(),
+			) {
+			let collection =
+				<CollectionHandle<T>>::new_with_gas_limit(collection_id, handle.remaining_gas())?;
 			if collection.mode != CollectionMode::ReFungible {
 				return None;
 			}
 
-			let handle = RefungibleHandle::cast(collection);
+			let h = RefungibleHandle::cast(collection);
 			// TODO: check token existence
-			RefungibleTokenHandle(handle, token_id).call(source, input, value)
+			RefungibleTokenHandle(h, token_id).call(handle)
 		} else {
 			None
 		}

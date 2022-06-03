@@ -19,9 +19,8 @@ use core::convert::TryInto;
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity_interface, types::*, weight};
 use up_data_structs::CollectionMode;
 use pallet_common::erc::{CommonEvmHandler, PrecompileResult};
-use sp_core::{H160, U256};
 use sp_std::vec::Vec;
-use pallet_evm::account::CrossAccountId;
+use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 use pallet_common::{CollectionHandle, erc::CollectionCall};
@@ -161,7 +160,7 @@ generate_stubgen!(gen_iface, UniqueFungibleCall<()>, false);
 impl<T: Config> CommonEvmHandler for FungibleHandle<T> {
 	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueFungible.raw");
 
-	fn call(self, source: &H160, input: &[u8], value: U256) -> Option<PrecompileResult> {
-		call::<T, UniqueFungibleCall<T>, _>(*source, self, value, input)
+	fn call(self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
+		call::<T, UniqueFungibleCall<T>, _, _>(handle, self)
 	}
 }

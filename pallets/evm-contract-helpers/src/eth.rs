@@ -18,7 +18,7 @@ use core::marker::PhantomData;
 use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{
-	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure,
+	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, PrecompileHandle,
 	account::CrossAccountId,
 };
 use sp_core::H160;
@@ -138,18 +138,13 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 		contract == &T::ContractAddress::get()
 	}
 
-	fn call(
-		source: &sp_core::H160,
-		target: &sp_core::H160,
-		gas_left: u64,
-		input: &[u8],
-		value: sp_core::U256,
-	) -> Option<PrecompileResult> {
+	fn call(handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
 		// TODO: Extract to another OnMethodCall handler
-		if <AllowlistEnabled<T>>::get(target) && !<Pallet<T>>::allowed(*target, *source) {
+		if <AllowlistEnabled<T>>::get(handle.code_address())
+			&& !<Pallet<T>>::allowed(handle.code_address(), handle.context().caller)
+		{
 			return Some(Err(PrecompileFailure::Revert {
 				exit_status: ExitRevert::Reverted,
-				cost: 0,
 				output: {
 					let mut writer = AbiWriter::new_call(evm_coder::fn_selector!(Error(string)));
 					writer.string("Target contract is allowlisted");
@@ -158,12 +153,12 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 			}));
 		}
 
-		if target != &T::ContractAddress::get() {
+		if handle.code_address() != T::ContractAddress::get() {
 			return None;
 		}
 
-		let helpers = ContractHelpers::<T>(SubstrateRecorder::<T>::new(gas_left));
-		pallet_evm_coder_substrate::call(*source, helpers, value, input)
+		let helpers = ContractHelpers::<T>(SubstrateRecorder::<T>::new(handle.remaining_gas()));
+		pallet_evm_coder_substrate::call(handle, helpers)
 	}
 
 	fn get_code(contract: &sp_core::H160) -> Option<Vec<u8>> {

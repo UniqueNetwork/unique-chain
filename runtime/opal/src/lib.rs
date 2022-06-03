@@ -91,8 +91,8 @@ use codec::{Encode, Decode};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
 	traits::{
-		Applyable, BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating,
-		CheckedConversion,
+		Applyable, BlockNumberProvider, Dispatchable, PostDispatchInfoOf, DispatchInfoOf,
+		Saturating, CheckedConversion,
 	},
 	generic::Era,
 	transaction_validity::TransactionValidityError,
@@ -189,7 +189,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!(RUNTIME_NAME),
 	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 921000,
+	spec_version: 922000,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -263,8 +263,8 @@ parameter_types! {
 
 pub struct FixedFee;
 impl FeeCalculator for FixedFee {
-	fn min_gas_price() -> U256 {
-		MIN_GAS_PRICE.into()
+	fn min_gas_price() -> (U256, u64) {
+		(MIN_GAS_PRICE.into(), 0)
 	}
 }
 
@@ -1270,9 +1270,14 @@ impl fp_self_contained::SelfContainedCall for Call {
 		}
 	}
 
-	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
+	fn validate_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+		dispatch_info: &DispatchInfoOf<Call>,
+		len: usize,
+	) -> Option<TransactionValidity> {
 		match self {
-			Call::Ethereum(call) => call.validate_self_contained(info),
+			Call::Ethereum(call) => call.validate_self_contained(info, dispatch_info, len),
 			_ => None,
 		}
 	}

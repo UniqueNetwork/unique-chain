@@ -16,11 +16,11 @@
 
 use sp_runtime::traits::BlakeTwo256;
 use fc_rpc::{
-	EthBlockDataCache, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
+	EthBlockDataCacheTask, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
 	StorageOverride, SchemaV2Override, SchemaV3Override,
 };
+use jsonrpsee::RpcModule;
 use fc_rpc_core::types::{FilterPool, FeeHistoryCache};
-use jsonrpc_pubsub::manager::SubscriptionManager;
 use fp_storage::EthereumStorageSchema;
 use sc_client_api::{
 	backend::{AuxStore, StorageProvider},
@@ -48,9 +48,6 @@ use unique_runtime_common::types::{
 	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo,
 	RmrkPartType, RmrkTheme,
 };*/
-
-/// Public io handler for exporting into other modules
-pub type IoHandler = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
 
 /// Extra dependencies for GRANDPA
 pub struct GrandpaDeps<B> {
@@ -95,7 +92,7 @@ pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	/// Fee history cache.
 	pub fee_history_cache: FeeHistoryCache,
 	/// Cache for Ethereum block data.
-	pub block_data_cache: Arc<EthBlockDataCache<Block>>,
+	pub block_data_cache: Arc<EthBlockDataCacheTask<Block>>,
 }
 
 pub fn overrides_handle<C, BE, R>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
@@ -136,7 +133,7 @@ where
 pub fn create_full<C, P, SC, CA, R, A, B>(
 	deps: FullDeps<C, P, SC, CA>,
 	subscription_task_executor: SubscriptionTaskExecutor,
-) -> jsonrpc_core::IoHandler<sc_rpc_api::Metadata>
+) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
 where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, B> + AuxStore,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
@@ -170,16 +167,15 @@ where
 	for<'de> <R as RuntimeInstance>::CrossAccountId: serde::Deserialize<'de>,
 {
 	use fc_rpc::{
-		EthApi, EthApiServer, EthDevSigner, EthFilterApi, EthFilterApiServer, EthPubSubApi,
-		EthPubSubApiServer, EthSigner, HexEncodedIdProvider, NetApi, NetApiServer, Web3Api,
-		Web3ApiServer,
+		Eth, EthApiServer, EthDevSigner, EthFilter, EthFilterApiServer, EthPubSub,
+		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer,
 	};
-	use uc_rpc::{UniqueApi, RmrkApi, Unique};
+	use uc_rpc::{UniqueApiServer, Unique};
 	// use pallet_contracts_rpc::{Contracts, ContractsApi};
-	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
-	use substrate_frame_rpc_system::{FullSystem, SystemApi};
+	use pallet_transaction_payment_rpc::{TransactionPaymentRpc, TransactionPaymentApiServer};
+	use substrate_frame_rpc_system::{SystemRpc, SystemApiServer};
 
-	let mut io = jsonrpc_core::IoHandler::default();
+	let mut io = RpcModule::new(());
 	let FullDeps {
 		client,
 		pool,
@@ -197,15 +193,8 @@ where
 		max_past_logs,
 	} = deps;
 
-	io.extend_with(SystemApi::to_delegate(FullSystem::new(
-		client.clone(),
-		pool.clone(),
-		deny_unsafe,
-	)));
-
-	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
-		client.clone(),
-	)));
+	io.merge(SystemRpc::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
+	io.merge(TransactionPaymentRpc::new(Arc::clone(&client)).into_rpc())?;
 
 	// io.extend_with(ContractsApi::to_delegate(Contracts::new(client.clone())));
 
@@ -216,56 +205,58 @@ where
 
 	let overrides = overrides_handle::<_, _, R>(client.clone());
 
-	io.extend_with(EthApiServer::to_delegate(EthApi::new(
-		client.clone(),
-		pool.clone(),
-		graph,
-		Some(<R as RuntimeInstance>::get_transaction_converter()),
-		network.clone(),
-		signers,
-		overrides.clone(),
-		backend.clone(),
-		is_authority,
-		block_data_cache.clone(),
-		fee_history_limit,
-		fee_history_cache,
-	)));
+	io.merge(
+		Eth::new(
+			client.clone(),
+			pool.clone(),
+			graph,
+			Some(<R as RuntimeInstance>::get_transaction_converter()),
+			network.clone(),
+			signers,
+			overrides.clone(),
+			backend.clone(),
+			is_authority,
+			block_data_cache.clone(),
+			fee_history_cache,
+			fee_history_limit,
+		)
+		.into_rpc(),
+	)?;
 
 	// todo look into
 	//let unique = Unique::new(client.clone());
-	io.extend_with(UniqueApi::to_delegate(Unique::new(client.clone())));
+	io.merge(Unique::new(client.clone()).into_rpc())?;
 	// TODO free RMRK! io.extend_with(RmrkApi::to_delegate(Unique::new(client.clone())));
 
 	if let Some(filter_pool) = filter_pool {
-		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
-			client.clone(),
-			backend,
-			filter_pool,
-			500_usize, // max stored filters
-			max_past_logs,
-			block_data_cache,
-		)));
+		io.merge(
+			EthFilter::new(
+				client.clone(),
+				backend,
+				filter_pool,
+				500_usize, // max stored filters
+				max_past_logs,
+				block_data_cache,
+			)
+			.into_rpc(),
+		)?;
 	}
 
-	io.extend_with(NetApiServer::to_delegate(NetApi::new(
-		client.clone(),
-		network.clone(),
-		// Whether to format the `peer_count` response as Hex (default) or not.
-		true,
-	)));
+	io.merge(
+		Net::new(
+			client.clone(),
+			network.clone(),
+			// Whether to format the `peer_count` response as Hex (default) or not.
+			true,
+		)
+		.into_rpc(),
+	)?;
 
-	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
+	io.merge(Web3::new(client.clone()).into_rpc())?;
 
-	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
-		pool,
-		client,
-		network,
-		SubscriptionManager::<HexEncodedIdProvider>::with_id_provider(
-			HexEncodedIdProvider::default(),
-			Arc::new(subscription_task_executor),
-		),
-		overrides,
-	)));
+	io.merge(
+		EthPubSub::new(pool, client, network, subscription_task_executor, overrides).into_rpc(),
+	)?;
 
-	io
+	Ok(io)
 }

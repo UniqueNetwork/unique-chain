@@ -32,7 +32,7 @@ use frame_support::{ensure, sp_runtime::ModuleError};
 use up_data_structs::budget;
 use pallet_evm::{
 	ExitError, ExitRevert, ExitSucceed, GasWeightMapping, PrecompileFailure, PrecompileOutput,
-	PrecompileResult,
+	PrecompileResult, PrecompileHandle,
 };
 use sp_core::H160;
 // #[cfg(feature = "runtime-benchmarks")]
@@ -171,15 +171,15 @@ impl<T: Config> SubstrateRecorder<T> {
 
 	pub fn evm_to_precompile_output(
 		self,
+		handle: &mut impl PrecompileHandle,
 		result: evm_coder::execution::Result<Option<AbiWriter>>,
 	) -> Option<PrecompileResult> {
 		use evm_coder::execution::Error;
+		// We ignore error here, as it should not occur, as we have our own bookkeeping of gas
+		let _ = handle.record_cost(self.initial_gas - self.gas_left());
 		Some(match result {
 			Ok(Some(v)) => Ok(PrecompileOutput {
 				exit_status: ExitSucceed::Returned,
-				cost: self.initial_gas - self.gas_left(),
-				// We don't use this interface
-				logs: sp_std::vec![],
 				output: v.finish(),
 			}),
 			Ok(None) => return None,
@@ -189,7 +189,6 @@ impl<T: Config> SubstrateRecorder<T> {
 
 				Err(PrecompileFailure::Revert {
 					exit_status: ExitRevert::Reverted,
-					cost: self.initial_gas - self.gas_left(),
 					output: writer.finish(),
 				})
 			}
@@ -235,14 +234,18 @@ pub fn call<
 	T: Config,
 	C: evm_coder::Call + evm_coder::Weighted,
 	E: evm_coder::Callable<C> + WithRecorder<T>,
+	H: PrecompileHandle,
 >(
-	caller: H160,
+	handle: &mut H,
 	mut e: E,
-	value: value,
-	input: &[u8],
 ) -> Option<PrecompileResult> {
-	let result = call_internal(caller, &mut e, value, input);
-	e.into_recorder().evm_to_precompile_output(result)
+	let result = call_internal(
+		handle.context().caller,
+		&mut e,
+		handle.context().apparent_value,
+		handle.input(),
+	);
+	e.into_recorder().evm_to_precompile_output(handle, result)
 }
 
 fn call_internal<
