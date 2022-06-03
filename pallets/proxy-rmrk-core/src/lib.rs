@@ -912,6 +912,17 @@ impl<T: Config> Pallet<T> {
 		Self::get_nft_collection(collection_id)
 	}
 
+	pub fn get_typed_nft_collection_mapped(
+		rmrk_collection_id: RmrkCollectionId,
+		collection_type: misc::CollectionType,
+	) -> Result<(NonfungibleHandle<T>, CollectionId), DispatchError> {
+		let unique_collection_id = Self::unique_collection_id(rmrk_collection_id)?;
+
+		let collection = Self::get_typed_nft_collection(unique_collection_id, collection_type)?;
+
+		Ok((collection, unique_collection_id))
+	}
+
 	pub fn get_nft_property(
 		collection_id: CollectionId,
 		nft_id: TokenId,
