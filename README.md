@@ -81,7 +81,7 @@ git clone https://github.com/paritytech/polkadot-launch
 ```
 git clone https://github.com/paritytech/polkadot.git
 cd polkadot
-git checkout release-v0.9.21
+git checkout release-v0.9.22
 cargo build --release
 ```
 

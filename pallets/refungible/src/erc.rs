@@ -16,6 +16,7 @@
 
 use up_data_structs::TokenId;
 use pallet_common::erc::CommonEvmHandler;
+use pallet_evm::PrecompileHandle;
 
 use crate::{Config, RefungibleHandle};
 
@@ -24,9 +25,7 @@ impl<T: Config> CommonEvmHandler for RefungibleHandle<T> {
 
 	fn call(
 		self,
-		_source: &sp_core::H160,
-		_input: &[u8],
-		_value: sp_core::U256,
+		handle: &mut impl PrecompileHandle,
 	) -> Option<pallet_common::erc::PrecompileResult> {
 		// TODO: Implement RFT variant of ERC721
 		None
@@ -40,9 +39,7 @@ impl<T: Config> CommonEvmHandler for RefungibleTokenHandle<T> {
 
 	fn call(
 		self,
-		_source: &sp_core::H160,
-		_input: &[u8],
-		_value: sp_core::U256,
+		handle: &mut impl PrecompileHandle,
 	) -> Option<pallet_common::erc::PrecompileResult> {
 		// TODO: Implement RFT variant of ERC20
 		None

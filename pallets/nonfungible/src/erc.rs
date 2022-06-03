@@ -32,7 +32,7 @@ use pallet_common::{
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, token_uri_key},
 	CollectionHandle, CollectionPropertyPermissions,
 };
-use pallet_evm::account::CrossAccountId;
+use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 
@@ -587,7 +587,7 @@ generate_stubgen!(gen_iface, UniqueNFTCall<()>, false);
 impl<T: Config> CommonEvmHandler for NonfungibleHandle<T> {
 	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueNFT.raw");
 
-	fn call(self, source: &H160, input: &[u8], value: U256) -> Option<PrecompileResult> {
-		call::<T, UniqueNFTCall<T>, _>(*source, self, value, input)
+	fn call(self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
+		call::<T, UniqueNFTCall<T>, _, _>(handle, self)
 	}
 }

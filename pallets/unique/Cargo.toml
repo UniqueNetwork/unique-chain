@@ -59,37 +59,37 @@ version = '3.1.2'
 default-features = false
 optional = true
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
+branch = "polkadot-v0.9.22"
 
 [dependencies.frame-support]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
+branch = "polkadot-v0.9.22"
 
 [dependencies.frame-system]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
+branch = "polkadot-v0.9.22"
 
 [dependencies.sp-std]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
+branch = "polkadot-v0.9.22"
 
 [dependencies.sp-runtime]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
+branch = "polkadot-v0.9.22"
 
 [dependencies.sp-core]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
+branch = "polkadot-v0.9.22"
 
 [dependencies.sp-io]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
+branch = "polkadot-v0.9.22"
 
 ################################################################################
 # Local Dependencies
@@ -98,7 +98,7 @@ up-data-structs = { default-features = false, path = "../../primitives/data-stru
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
 ] }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.22" }
 pallet-common = { default-features = false, path = "../common" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }

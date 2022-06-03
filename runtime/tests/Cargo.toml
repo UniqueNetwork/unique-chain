@@ -7,22 +7,22 @@ edition = "2021"
 unique-runtime-common = { path = '../common' }
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
 
-sp-core = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
-sp-std = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
-sp-io = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
-sp-runtime = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
+sp-core = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.22' }
+sp-std = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.22' }
+sp-io = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.22' }
+sp-runtime = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.22' }
 
-fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.22" }
 
-frame-support = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
-frame-system = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
+frame-support = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.22' }
+frame-system = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.22' }
 
-pallet-balances = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
-pallet-transaction-payment = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
-pallet-timestamp = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.21' }
+pallet-balances = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.22' }
+pallet-transaction-payment = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.22' }
+pallet-timestamp = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.22' }
 
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.22" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.22" }
 
 pallet-common = { path = '../../pallets/common' }
 pallet-structure = { path = '../../pallets/structure' }
