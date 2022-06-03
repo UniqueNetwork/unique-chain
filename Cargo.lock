@@ -298,9 +298,9 @@ checksum = "30696a84d817107fc028e049980e09d5e140e8da8f1caeb17e8e950658a3cea9"
 
 [[package]]
 name = "async-trait"
-version = "0.1.53"
+version = "0.1.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed6aa3524a2dfcf9fe180c51eae2b58738348d819517ceadf95789c51fff7600"
+checksum = "96cf8829f67d2eab0b2dfa42c5d0ef737e0724e4a82b01b3e292456202b19716"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2529,7 +2529,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#205e4b943c8cb2338e3507d1f24c7eb3e0543f5f"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#94cc1f98619da89350f77d18b2e4224b034e07ad"
 dependencies = [
  "async-trait",
  "fc-db",
@@ -2548,7 +2548,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#205e4b943c8cb2338e3507d1f24c7eb3e0543f5f"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#94cc1f98619da89350f77d18b2e4224b034e07ad"
 dependencies = [
  "fp-storage",
  "kvdb-rocksdb",
@@ -2564,7 +2564,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#205e4b943c8cb2338e3507d1f24c7eb3e0543f5f"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#94cc1f98619da89350f77d18b2e4224b034e07ad"
 dependencies = [
  "fc-db",
  "fp-consensus",
@@ -2581,7 +2581,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#205e4b943c8cb2338e3507d1f24c7eb3e0543f5f"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#94cc1f98619da89350f77d18b2e4224b034e07ad"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2621,7 +2621,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#205e4b943c8cb2338e3507d1f24c7eb3e0543f5f"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#94cc1f98619da89350f77d18b2e4224b034e07ad"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2749,7 +2749,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#205e4b943c8cb2338e3507d1f24c7eb3e0543f5f"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#94cc1f98619da89350f77d18b2e4224b034e07ad"
 dependencies = [
  "ethereum",
  "parity-scale-codec 3.1.2",
@@ -2761,7 +2761,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#205e4b943c8cb2338e3507d1f24c7eb3e0543f5f"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#94cc1f98619da89350f77d18b2e4224b034e07ad"
 dependencies = [
  "evm",
  "frame-support",
@@ -2775,7 +2775,7 @@ dependencies = [
 [[package]]
 name = "fp-evm-mapping"
 version = "0.1.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#205e4b943c8cb2338e3507d1f24c7eb3e0543f5f"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#94cc1f98619da89350f77d18b2e4224b034e07ad"
 dependencies = [
  "frame-support",
  "sp-core",
@@ -2784,7 +2784,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#205e4b943c8cb2338e3507d1f24c7eb3e0543f5f"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#94cc1f98619da89350f77d18b2e4224b034e07ad"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2801,7 +2801,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#205e4b943c8cb2338e3507d1f24c7eb3e0543f5f"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#94cc1f98619da89350f77d18b2e4224b034e07ad"
 dependencies = [
  "ethereum",
  "frame-support",
@@ -2817,7 +2817,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#205e4b943c8cb2338e3507d1f24c7eb3e0543f5f"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#94cc1f98619da89350f77d18b2e4224b034e07ad"
 dependencies = [
  "parity-scale-codec 3.1.2",
 ]
@@ -5553,7 +5553,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#205e4b943c8cb2338e3507d1f24c7eb3e0543f5f"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#94cc1f98619da89350f77d18b2e4224b034e07ad"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -5812,7 +5812,7 @@ dependencies = [
 [[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#205e4b943c8cb2338e3507d1f24c7eb3e0543f5f"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#94cc1f98619da89350f77d18b2e4224b034e07ad"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -5841,7 +5841,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#205e4b943c8cb2338e3507d1f24c7eb3e0543f5f"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.22#94cc1f98619da89350f77d18b2e4224b034e07ad"
 dependencies = [
  "evm",
  "fp-evm",
@@ -11750,9 +11750,9 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "syn"
-version = "1.0.95"
+version = "1.0.96"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbaf6116ab8924f39d52792136fb74fd60a80194cf1b1c6ffa6453eef1c3f942"
+checksum = "0748dd251e24453cb8717f0354206b91557e4ec8703673a4b30208f2abaf1ebf"
 dependencies = [
  "proc-macro2",
  "quote",
