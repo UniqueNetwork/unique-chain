@@ -2,10 +2,10 @@ use super::*;
 use codec::{Encode, Decode, Error};
 
 #[macro_export]
-macro_rules! map_common_err_to_proxy {
-    (match $err:ident { $($common_err:ident => $proxy_err:ident),+ }) => {
+macro_rules! map_unique_err_to_proxy {
+    (match $err:ident { $($unique_err_ty:ident :: $unique_err:ident => $proxy_err:ident),+ }) => {
         $(
-            if $err == <CommonError<T>>::$common_err.into() {
+            if $err == <$unique_err_ty<T>>::$unique_err.into() {
                 return <Error<T>>::$proxy_err.into()
             } else
         )+ {
