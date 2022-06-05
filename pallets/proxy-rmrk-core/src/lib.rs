@@ -204,11 +204,6 @@ pub mod pallet {
 				misc::CollectionType::Regular,
 			)?;
 
-			ensure!(
-				collection.total_supply() == 0,
-				<Error<T>>::CollectionNotEmpty
-			);
-
 			<PalletNft<T>>::destroy_collection(collection, &cross_sender)
 				.map_err(Self::map_unique_err_to_proxy)?;
 
@@ -1142,8 +1137,9 @@ impl<T: Config> Pallet<T> {
 				CommonError::PublicMintingNotAllowed => NoPermission,
 				CommonError::TokenNotFound => NoAvailableNftId,
 				CommonError::ApprovedValueTooLow => NoPermission,
+				CommonError::CantDestroyNotEmptyCollection => CollectionNotEmpty,
 				StructureError::TokenNotFound => NoAvailableNftId,
-				StructureError::OuroborosDetected => CannotSendToDescendentOrSelf
+				StructureError::OuroborosDetected => CannotSendToDescendentOrSelf,
 			}
 		}
 	}

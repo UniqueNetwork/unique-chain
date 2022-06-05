@@ -3,7 +3,7 @@ use codec::{Encode, Decode, Error};
 
 #[macro_export]
 macro_rules! map_unique_err_to_proxy {
-    (match $err:ident { $($unique_err_ty:ident :: $unique_err:ident => $proxy_err:ident),+ }) => {
+    (match $err:ident { $($unique_err_ty:ident :: $unique_err:ident => $proxy_err:ident),+ $(,)? }) => {
         $(
             if $err == <$unique_err_ty<T>>::$unique_err.into() {
                 return <Error<T>>::$proxy_err.into()
