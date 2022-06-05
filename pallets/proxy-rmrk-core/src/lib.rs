@@ -133,6 +133,7 @@ pub mod pallet {
 		ResourceDoesntExist,
 		CannotSendToDescendentOrSelf,
 		CannotAcceptNonOwnedNft,
+		CannotRejectNonOwnedNft,
 	}
 
 	#[pallet::call]
@@ -353,9 +354,8 @@ pub mod pallet {
 			Self::destroy_nft(
 				cross_sender,
 				Self::unique_collection_id(collection_id)?,
-				misc::CollectionType::Regular,
 				nft_id.into(),
-			)?;
+			).map_err(Self::map_unique_err_to_proxy)?;
 
 			Self::deposit_event(Event::NFTBurned {
 				owner: sender,
@@ -501,6 +501,35 @@ pub mod pallet {
 				PropertyScope::Rmrk,
 				Self::rmrk_property(PendingNftAccept, &false)?,
 			)?;
+
+			Ok(())
+		}
+
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[transactional]
+		pub fn reject_nft(
+			origin: OriginFor<T>,
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let cross_sender = T::CrossAccountId::from_sub(sender);
+
+			let collection_id = Self::unique_collection_id(collection_id)?;
+			let nft_id = nft_id.into();
+
+			Self::destroy_nft(
+				cross_sender,
+				collection_id,
+				nft_id
+			).map_err(|err| {
+				if err == <CommonError<T>>::NoPermission.into()
+				|| err == <CommonError<T>>::ApprovedValueTooLow.into() {
+					<Error<T>>::CannotRejectNonOwnedNft.into()
+				} else {
+					Self::map_unique_err_to_proxy(err)
+				}
+			})?;
 
 			Ok(())
 		}
@@ -778,15 +807,18 @@ impl<T: Config> Pallet<T> {
 	fn destroy_nft(
 		sender: T::CrossAccountId,
 		collection_id: CollectionId,
-		collection_type: misc::CollectionType,
 		token_id: TokenId,
 	) -> DispatchResult {
-		let collection = Self::get_typed_nft_collection(collection_id, collection_type)?;
+		let collection = Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
 
-		<PalletNft<T>>::burn(&collection, &sender, token_id)
-			.map_err(Self::map_unique_err_to_proxy)?;
+		let token_data = <TokenData<T>>::get((collection_id, token_id))
+			.ok_or(<Error<T>>::NoAvailableNftId)?;
 
-		Ok(())
+		let from = token_data.owner;
+
+		let budget = budget::Value::new(NESTING_BUDGET);
+
+		<PalletNft<T>>::burn_from(&collection, &sender, &from, token_id, &budget)
 	}
 
 	fn resource_add(
