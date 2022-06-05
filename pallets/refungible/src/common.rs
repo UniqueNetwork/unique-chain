@@ -254,7 +254,6 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		spender: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
-		_nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
 			<Pallet<T>>::set_allowance(self, &sender, &spender, token, amount),

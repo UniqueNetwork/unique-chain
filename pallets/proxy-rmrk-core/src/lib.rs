@@ -414,13 +414,14 @@ pub mod pallet {
 					let is_approval_required = cross_sender != spender;
 
 					if is_approval_required {
-						<PalletNft<T>>::set_allowance(
-							&collection,
-							&cross_sender,
-							nft_id,
-							Some(&spender),
-							&budget
-						).map_err(Self::map_common_err_to_proxy)?;
+						// FIXME
+						// <PalletNft<T>>::set_allowance(
+						// 	&collection,
+						// 	&cross_sender,
+						// 	nft_id,
+						// 	Some(&spender),
+						// 	&budget
+						// ).map_err(Self::map_common_err_to_proxy)?;
 
 						return Ok(());
 					}

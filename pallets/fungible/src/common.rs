@@ -226,7 +226,6 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		spender: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
-		_nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),

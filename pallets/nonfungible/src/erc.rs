@@ -269,11 +269,8 @@ impl<T: Config> NonfungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let approved = T::CrossAccountId::from_eth(approved);
 		let token = token_id.try_into()?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::set_allowance(self, &caller, token, Some(&approved), &budget)
+		<Pallet<T>>::set_allowance(self, &caller, token, Some(&approved))
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
