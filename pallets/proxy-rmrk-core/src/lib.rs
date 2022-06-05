@@ -132,6 +132,7 @@ pub mod pallet {
 		CollectionFullOrLocked,
 		ResourceDoesntExist,
 		CannotSendToDescendentOrSelf,
+		CannotAcceptNonOwnedNft,
 	}
 
 	#[pallet::call]
@@ -449,6 +450,62 @@ pub mod pallet {
 				nft_id,
 				&src_nft_budget
 			).map_err(Self::map_unique_err_to_proxy)?;
+
+			Ok(())
+		}
+
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[transactional]
+		pub fn accept_nft(
+			origin: OriginFor<T>,
+			rmrk_collection_id: RmrkCollectionId,
+			rmrk_nft_id: RmrkNftId,
+			new_owner: RmrkAccountIdOrCollectionNftTuple<T::AccountId>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+			let cross_sender = T::CrossAccountId::from_sub(sender);
+
+			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
+			let nft_id = rmrk_nft_id.into();
+
+			let collection = Self::get_typed_nft_collection(
+				collection_id,
+				misc::CollectionType::Regular,
+			)?;
+
+			let new_owner = match new_owner {
+				RmrkAccountIdOrCollectionNftTuple::AccountId(account_id) => {
+					T::CrossAccountId::from_sub(account_id)
+				},
+				RmrkAccountIdOrCollectionNftTuple::CollectionAndNftTuple(target_collection_id, target_nft_id) => {
+					let target_collection_id = Self::unique_collection_id(target_collection_id)?;
+
+					T::CrossTokenAddressMapping::token_to_address(target_collection_id, TokenId(target_nft_id))
+				}
+			};
+
+			let budget = budget::Value::new(NESTING_BUDGET);
+
+			<PalletNft<T>>::transfer(
+				&collection,
+				&cross_sender,
+				&new_owner,
+				nft_id,
+				&budget,
+			).map_err(|err| {
+				if err == <CommonError<T>>::OnlyOwnerAllowedToNest.into() {
+					<Error<T>>::CannotAcceptNonOwnedNft.into()
+				} else {
+					Self::map_unique_err_to_proxy(err)
+				}
+			})?;
+
+			<PalletNft<T>>::set_scoped_token_property(
+				collection.id,
+				nft_id,
+				PropertyScope::Rmrk,
+				Self::rmrk_property(PendingNftAccept, &false)?,
+			)?;
 
 			Ok(())
 		}
