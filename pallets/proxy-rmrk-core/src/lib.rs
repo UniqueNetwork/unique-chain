@@ -395,7 +395,11 @@ pub mod pallet {
 			);
 
 			ensure!(
-				!Self::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::PendingNftAccept)?,
+				!Self::get_nft_property_decoded(
+					collection_id,
+					nft_id,
+					RmrkProperty::PendingNftAccept
+				)?,
 				<Error<T>>::NoPermission
 			);
 
