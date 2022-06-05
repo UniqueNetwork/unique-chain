@@ -389,17 +389,15 @@ pub mod pallet {
 			let collection =
 				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
 
-			if !Self::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::Transferable)? {
-				return Err(<Error<T>>::NonTransferable.into());
-			}
+			ensure!(
+				Self::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::Transferable)?,
+				<Error<T>>::NonTransferable
+			);
 
-			if Self::get_nft_property_decoded(
-				collection_id,
-				nft_id,
-				RmrkProperty::PendingNftAccept,
-			)? {
-				return Err(<Error<T>>::NoPermission.into());
-			}
+			ensure!(
+				!Self::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::PendingNftAccept)?,
+				<Error<T>>::NoPermission
+			);
 
 			let target_owner;
 
