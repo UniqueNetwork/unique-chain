@@ -289,15 +289,14 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		spender: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
-		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		ensure!(amount <= 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
 
 		with_weight(
 			if amount == 1 {
-				<Pallet<T>>::set_allowance(self, &sender, token, Some(&spender), nesting_budget)
+				<Pallet<T>>::set_allowance(self, &sender, token, Some(&spender))
 			} else {
-				<Pallet<T>>::set_allowance(self, &sender, token, None, nesting_budget)
+				<Pallet<T>>::set_allowance(self, &sender, token, None)
 			},
 			<CommonWeights<T>>::approve(),
 		)

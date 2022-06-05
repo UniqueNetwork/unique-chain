@@ -815,9 +815,8 @@ decl_module! {
 		#[transactional]
 		pub fn approve(origin, spender: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_call::<T, _>(collection_id, |d| d.approve(sender, spender, item_id, amount, &budget))
+			dispatch_call::<T, _>(collection_id, |d| d.approve(sender, spender, item_id, amount))
 		}
 
 		/// Change ownership of a NFT on behalf of the owner. See Approve method for additional information. After this method executes, the approval is removed so that the approved address will not be able to transfer this NFT again from this owner.
