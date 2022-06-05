@@ -25,7 +25,7 @@ use pallet_common::{
 	Pallet as PalletCommon, Error as CommonError, CollectionHandle, CommonCollectionOperations,
 };
 use pallet_nonfungible::{Pallet as PalletNft, NonfungibleHandle, TokenData};
-use pallet_structure::Pallet as PalletStructure;
+use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm::account::CrossAccountId;
 use core::convert::AsRef;
 
@@ -128,8 +128,10 @@ pub mod pallet {
 		NoAvailableNftId,
 		CollectionUnknown,
 		NoPermission,
+		NonTransferable,
 		CollectionFullOrLocked,
 		ResourceDoesntExist,
+		CannotSendToDescendentOrSelf,
 	}
 
 	#[pallet::call]
@@ -207,7 +209,7 @@ pub mod pallet {
 			);
 
 			<PalletNft<T>>::destroy_collection(collection, &cross_sender)
-				.map_err(Self::map_common_err_to_proxy)?;
+				.map_err(Self::map_unique_err_to_proxy)?;
 
 			Self::deposit_event(Event::CollectionDestroyed {
 				issuer: sender,
@@ -283,6 +285,7 @@ pub mod pallet {
 			recipient: Option<T::AccountId>,
 			royalty_amount: Option<Permill>,
 			metadata: RmrkString,
+			transferable: bool,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let sender = T::CrossAccountId::from_sub(sender);
@@ -304,6 +307,8 @@ pub mod pallet {
 				&collection,
 				[
 					Self::rmrk_property(TokenType, &NftType::Regular)?,
+					Self::rmrk_property(Transferable, &transferable)?,
+					Self::rmrk_property(PendingNftAccept, &false)?,
 					Self::rmrk_property(RoyaltyInfo, &royalty_info)?,
 					Self::rmrk_property(Metadata, &metadata)?,
 					Self::rmrk_property(Equipped, &false)?,
@@ -327,7 +332,7 @@ pub mod pallet {
 			)
 			.map_err(|err| match err {
 				DispatchError::Arithmetic(_) => <Error<T>>::NoAvailableNftId.into(),
-				err => Self::map_common_err_to_proxy(err),
+				err => Self::map_unique_err_to_proxy(err),
 			})?;
 
 			Self::deposit_event(Event::NftMinted {
@@ -373,7 +378,7 @@ pub mod pallet {
 			new_owner: RmrkAccountIdOrCollectionNftTuple<T::AccountId>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
-			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
+			let cross_sender = T::CrossAccountId::from_sub(sender);
 
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
 			let nft_id = rmrk_nft_id.into();
@@ -388,7 +393,13 @@ pub mod pallet {
 				misc::CollectionType::Regular,
 			)?;
 
-			let budget = budget::Value::new(NESTING_BUDGET);
+			if !Self::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::Transferable)? {
+				return Err(<Error<T>>::NonTransferable.into());
+			}
+
+			if Self::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::PendingNftAccept)? {
+				return Err(<Error<T>>::NoPermission.into());
+			}
 
 			let target_owner;
 
@@ -399,34 +410,36 @@ pub mod pallet {
 				RmrkAccountIdOrCollectionNftTuple::CollectionAndNftTuple(target_collection_id, target_nft_id) => {
 					let target_collection_id = Self::unique_collection_id(target_collection_id)?;
 
-					target_owner = T::CrossTokenAddressMapping::token_to_address(
-						target_collection_id,
-						target_nft_id.into(),
-					);
+					let target_nft_budget = budget::Value::new(NESTING_BUDGET);
 
-					let spender = <PalletStructure<T>>::get_indirect_owner(
+					let target_nft_owner = <PalletStructure<T>>::get_checked_indirect_owner(
 						target_collection_id,
 						target_nft_id.into(),
 						Some((collection_id, nft_id)),
-						&budget,
-					)?;
+						&target_nft_budget,
+					).map_err(Self::map_unique_err_to_proxy)?;
 
-					let is_approval_required = cross_sender != spender;
+					let is_approval_required = cross_sender != target_nft_owner;
 
 					if is_approval_required {
-						// FIXME
-						// <PalletNft<T>>::set_allowance(
-						// 	&collection,
-						// 	&cross_sender,
-						// 	nft_id,
-						// 	Some(&spender),
-						// 	&budget
-						// ).map_err(Self::map_common_err_to_proxy)?;
+						target_owner = target_nft_owner;
 
-						return Ok(());
+						<PalletNft<T>>::set_scoped_token_property(
+							collection.id,
+							nft_id,
+							PropertyScope::Rmrk,
+							Self::rmrk_property(PendingNftAccept, &is_approval_required)?,
+						)?;
+					} else {
+						target_owner = T::CrossTokenAddressMapping::token_to_address(
+							target_collection_id,
+							target_nft_id.into(),
+						);
 					}
 				}
 			}
+
+			let src_nft_budget = budget::Value::new(NESTING_BUDGET);
 
 			<PalletNft<T>>::transfer_from(
 				&collection,
@@ -434,8 +447,8 @@ pub mod pallet {
 				&from,
 				&target_owner,
 				nft_id,
-				&budget
-			).map_err(Self::map_common_err_to_proxy)?;
+				&src_nft_budget
+			).map_err(Self::map_unique_err_to_proxy)?;
 
 			Ok(())
 		}
@@ -719,7 +732,7 @@ impl<T: Config> Pallet<T> {
 		let collection = Self::get_typed_nft_collection(collection_id, collection_type)?;
 
 		<PalletNft<T>>::burn(&collection, &sender, token_id)
-			.map_err(Self::map_common_err_to_proxy)?;
+			.map_err(Self::map_unique_err_to_proxy)?;
 
 		Ok(())
 	}
@@ -762,7 +775,7 @@ impl<T: Config> Pallet<T> {
 		)
 		.map_err(|err| match err {
 			DispatchError::Arithmetic(_) => <Error<T>>::NoAvailableNftId.into(),
-			err => Self::map_common_err_to_proxy(err),
+			err => Self::map_unique_err_to_proxy(err),
 		})?;
 
 		Ok(resource_id.0)
@@ -794,7 +807,7 @@ impl<T: Config> Pallet<T> {
 		let sender = T::CrossAccountId::from_sub(sender);
 		if topmost_owner == sender {
 			<PalletNft<T>>::burn(&resource_collection, &sender, resource_id)
-				.map_err(Self::map_common_err_to_proxy)?;
+				.map_err(Self::map_unique_err_to_proxy)?;
 		} else {
 			<PalletNft<T>>::set_scoped_token_property(
 				resource_collection_id,
@@ -828,7 +841,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		collection
 			.check_is_owner(account)
-			.map_err(Self::map_common_err_to_proxy)
+			.map_err(Self::map_unique_err_to_proxy)
 	}
 
 	pub fn last_collection_idx() -> RmrkCollectionId {
@@ -1064,14 +1077,16 @@ impl<T: Config> Pallet<T> {
 		Ok(properties)
 	}
 
-	fn map_common_err_to_proxy(err: DispatchError) -> DispatchError {
-		map_common_err_to_proxy! {
+	fn map_unique_err_to_proxy(err: DispatchError) -> DispatchError {
+		map_unique_err_to_proxy! {
 			match err {
-				NoPermission => NoPermission,
-				CollectionTokenLimitExceeded => CollectionFullOrLocked,
-				PublicMintingNotAllowed => NoPermission,
-				TokenNotFound => NoAvailableNftId,
-				ApprovedValueTooLow => NoPermission
+				CommonError::NoPermission => NoPermission,
+				CommonError::CollectionTokenLimitExceeded => CollectionFullOrLocked,
+				CommonError::PublicMintingNotAllowed => NoPermission,
+				CommonError::TokenNotFound => NoAvailableNftId,
+				CommonError::ApprovedValueTooLow => NoPermission,
+				StructureError::TokenNotFound => NoAvailableNftId,
+				StructureError::OuroborosDetected => CannotSendToDescendentOrSelf
 			}
 		}
 	}

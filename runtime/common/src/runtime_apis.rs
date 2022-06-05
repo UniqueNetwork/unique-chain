@@ -186,19 +186,17 @@ macro_rules! impl_common_runtime_apis {
                         None => return Ok(None)
                     };
 
-                    let allowance = pallet_nonfungible::Allowance::<Runtime>::get((collection_id, nft_id));
-
                     Ok(Some(RmrkInstanceInfo {
                         owner: owner,
                         royalty: RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::RoyaltyInfo)?,
                         metadata: RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::Metadata)?,
                         equipped: RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::Equipped)?,
-                        pending: allowance.is_some(),
+                        pending: RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::PendingNftAccept)?,
                     }))
                 }
 
                 fn account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
-                    use pallet_proxy_rmrk_core::misc::CollectionType;
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::CollectionType};
                     use pallet_common::CommonCollectionOperations;
 
                     let cross_account_id = CrossAccountId::from_sub(account_id);
@@ -208,15 +206,26 @@ macro_rules! impl_common_runtime_apis {
                         Err(_) => return Ok(Vec::new()),
                     };
 
-                    Ok(
-                        collection.account_tokens(cross_account_id)
-                            .into_iter()
-                            .map(|token| token.0)
-                            .collect()
-                    )
+                    let tokens = collection.account_tokens(cross_account_id)
+                        .into_iter()
+                        .filter(|token| {
+                            let is_pending = RmrkCore::get_nft_property_decoded(
+                                collection_id,
+                                *token,
+                                RmrkProperty::PendingNftAccept
+                            ).unwrap_or(true);
+
+                            !is_pending
+                        })
+                        .map(|token| token.0)
+                        .collect();
+
+                    Ok(tokens)
                 }
 
                 fn nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
+                    use pallet_proxy_rmrk_core::RmrkProperty;
+
                     let collection_id = match RmrkCore::unique_collection_id(collection_id) {
                         Ok(id) => id,
                         Err(_) => return Ok(Vec::new())
@@ -227,6 +236,16 @@ macro_rules! impl_common_runtime_apis {
                     Ok(
                         pallet_nonfungible::TokenChildren::<Runtime>::iter_prefix((collection_id, nft_id))
                             .filter_map(|((child_collection, child_token), _)| {
+                                let is_pending = RmrkCore::get_nft_property_decoded(
+                                    child_collection,
+                                    child_token,
+                                    RmrkProperty::PendingNftAccept
+                                ).ok()?;
+
+                                if is_pending {
+                                    return None;
+                                }
+
                                 let rmrk_child_collection = RmrkCore::rmrk_collection_id(
                                     child_collection
                                 ).ok()?;
@@ -396,7 +415,7 @@ macro_rules! impl_common_runtime_apis {
                         Ok(c) => c,
                         Err(_) => return Ok(Vec::new()),
                     };
-                    
+
                     let parts = collection.collection_tokens()
                         .into_iter()
                         .filter_map(|token_id| {

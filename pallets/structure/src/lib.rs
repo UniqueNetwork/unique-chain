@@ -147,7 +147,7 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	pub fn get_indirect_owner(
+	pub fn get_checked_indirect_owner(
 		collection: CollectionId,
 		token: TokenId,
 		for_nest: Option<(CollectionId, TokenId)>,
@@ -188,7 +188,7 @@ impl<T: Config> Pallet<T> {
 			None => user,
 		};
 
-		Self::get_indirect_owner(
+		Self::get_checked_indirect_owner(
 			collection,
 			token,
 			for_nest,
