@@ -355,7 +355,8 @@ pub mod pallet {
 				cross_sender,
 				Self::unique_collection_id(collection_id)?,
 				nft_id.into(),
-			).map_err(Self::map_unique_err_to_proxy)?;
+			)
+			.map_err(Self::map_unique_err_to_proxy)?;
 
 			Self::deposit_event(Event::NFTBurned {
 				owner: sender,
@@ -379,21 +380,23 @@ pub mod pallet {
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
 			let nft_id = rmrk_nft_id.into();
 
-			let token_data = <TokenData<T>>::get((collection_id, nft_id))
-				.ok_or(<Error<T>>::NoAvailableNftId)?;
+			let token_data =
+				<TokenData<T>>::get((collection_id, nft_id)).ok_or(<Error<T>>::NoAvailableNftId)?;
 
 			let from = token_data.owner;
 
-			let collection = Self::get_typed_nft_collection(
-				collection_id,
-				misc::CollectionType::Regular,
-			)?;
+			let collection =
+				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
 
 			if !Self::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::Transferable)? {
 				return Err(<Error<T>>::NonTransferable.into());
 			}
 
-			if Self::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::PendingNftAccept)? {
+			if Self::get_nft_property_decoded(
+				collection_id,
+				nft_id,
+				RmrkProperty::PendingNftAccept,
+			)? {
 				return Err(<Error<T>>::NoPermission.into());
 			}
 
@@ -402,8 +405,11 @@ pub mod pallet {
 			match new_owner {
 				RmrkAccountIdOrCollectionNftTuple::AccountId(account_id) => {
 					target_owner = T::CrossAccountId::from_sub(account_id);
-				},
-				RmrkAccountIdOrCollectionNftTuple::CollectionAndNftTuple(target_collection_id, target_nft_id) => {
+				}
+				RmrkAccountIdOrCollectionNftTuple::CollectionAndNftTuple(
+					target_collection_id,
+					target_nft_id,
+				) => {
 					let target_collection_id = Self::unique_collection_id(target_collection_id)?;
 
 					let target_nft_budget = budget::Value::new(NESTING_BUDGET);
@@ -413,7 +419,8 @@ pub mod pallet {
 						target_nft_id.into(),
 						Some((collection_id, nft_id)),
 						&target_nft_budget,
-					).map_err(Self::map_unique_err_to_proxy)?;
+					)
+					.map_err(Self::map_unique_err_to_proxy)?;
 
 					let is_approval_required = cross_sender != target_nft_owner;
 
@@ -443,8 +450,9 @@ pub mod pallet {
 				&from,
 				&target_owner,
 				nft_id,
-				&src_nft_budget
-			).map_err(Self::map_unique_err_to_proxy)?;
+				&src_nft_budget,
+			)
+			.map_err(Self::map_unique_err_to_proxy)?;
 
 			Ok(())
 		}
@@ -463,37 +471,36 @@ pub mod pallet {
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
 			let nft_id = rmrk_nft_id.into();
 
-			let collection = Self::get_typed_nft_collection(
-				collection_id,
-				misc::CollectionType::Regular,
-			)?;
+			let collection =
+				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
 
 			let new_owner = match new_owner {
 				RmrkAccountIdOrCollectionNftTuple::AccountId(account_id) => {
 					T::CrossAccountId::from_sub(account_id)
-				},
-				RmrkAccountIdOrCollectionNftTuple::CollectionAndNftTuple(target_collection_id, target_nft_id) => {
+				}
+				RmrkAccountIdOrCollectionNftTuple::CollectionAndNftTuple(
+					target_collection_id,
+					target_nft_id,
+				) => {
 					let target_collection_id = Self::unique_collection_id(target_collection_id)?;
 
-					T::CrossTokenAddressMapping::token_to_address(target_collection_id, TokenId(target_nft_id))
+					T::CrossTokenAddressMapping::token_to_address(
+						target_collection_id,
+						TokenId(target_nft_id),
+					)
 				}
 			};
 
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			<PalletNft<T>>::transfer(
-				&collection,
-				&cross_sender,
-				&new_owner,
-				nft_id,
-				&budget,
-			).map_err(|err| {
-				if err == <CommonError<T>>::OnlyOwnerAllowedToNest.into() {
-					<Error<T>>::CannotAcceptNonOwnedNft.into()
-				} else {
-					Self::map_unique_err_to_proxy(err)
-				}
-			})?;
+			<PalletNft<T>>::transfer(&collection, &cross_sender, &new_owner, nft_id, &budget)
+				.map_err(|err| {
+					if err == <CommonError<T>>::OnlyOwnerAllowedToNest.into() {
+						<Error<T>>::CannotAcceptNonOwnedNft.into()
+					} else {
+						Self::map_unique_err_to_proxy(err)
+					}
+				})?;
 
 			<PalletNft<T>>::set_scoped_token_property(
 				collection.id,
@@ -518,13 +525,10 @@ pub mod pallet {
 			let collection_id = Self::unique_collection_id(collection_id)?;
 			let nft_id = nft_id.into();
 
-			Self::destroy_nft(
-				cross_sender,
-				collection_id,
-				nft_id
-			).map_err(|err| {
+			Self::destroy_nft(cross_sender, collection_id, nft_id).map_err(|err| {
 				if err == <CommonError<T>>::NoPermission.into()
-				|| err == <CommonError<T>>::ApprovedValueTooLow.into() {
+					|| err == <CommonError<T>>::ApprovedValueTooLow.into()
+				{
 					<Error<T>>::CannotRejectNonOwnedNft.into()
 				} else {
 					Self::map_unique_err_to_proxy(err)
@@ -809,10 +813,11 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 		token_id: TokenId,
 	) -> DispatchResult {
-		let collection = Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
+		let collection =
+			Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
 
-		let token_data = <TokenData<T>>::get((collection_id, token_id))
-			.ok_or(<Error<T>>::NoAvailableNftId)?;
+		let token_data =
+			<TokenData<T>>::get((collection_id, token_id)).ok_or(<Error<T>>::NoAvailableNftId)?;
 
 		let from = token_data.owner;
 
@@ -940,7 +945,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn rmrk_collection_id(
-		unique_collection_id: CollectionId
+		unique_collection_id: CollectionId,
 	) -> Result<RmrkCollectionId, DispatchError> {
 		<RmrkInernalCollectionId<T>>::try_get(unique_collection_id)
 			.map_err(|_| <Error<T>>::CollectionUnknown.into())
@@ -1069,7 +1074,7 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 		token_id: TokenId,
 		possible_owner: &T::CrossAccountId,
-		nesting_budget: &dyn budget::Budget
+		nesting_budget: &dyn budget::Budget,
 	) -> DispatchResult {
 		let is_owned = <PalletStructure<T>>::check_indirectly_owned(
 			possible_owner.clone(),
@@ -1079,10 +1084,7 @@ impl<T: Config> Pallet<T> {
 			nesting_budget,
 		)?;
 
-		ensure!(
-			is_owned,
-			<Error<T>>::NoPermission
-		);
+		ensure!(is_owned, <Error<T>>::NoPermission);
 
 		Ok(())
 	}
