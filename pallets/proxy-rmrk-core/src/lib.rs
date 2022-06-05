@@ -558,18 +558,20 @@ pub mod pallet {
 
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			let nft_owner = <PalletStructure<T>>::find_topmost_owner(
-				collection_id,
-				nft_id,
-				&budget,
-			).map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+			let nft_owner =
+				<PalletStructure<T>>::find_topmost_owner(collection_id, nft_id, &budget)
+					.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
 
 			let resource_collection_id: CollectionId =
 				Self::get_nft_property_decoded(collection_id, nft_id, ResourceCollection)
 					.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
 
-			let is_pending: bool = Self::get_nft_property_decoded(resource_collection_id, resource_id, PendingResourceAccept)
-				.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+			let is_pending: bool = Self::get_nft_property_decoded(
+				resource_collection_id,
+				resource_id,
+				PendingResourceAccept,
+			)
+			.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
 
 			ensure!(is_pending, <Error<T>>::ResourceNotPending);
 
@@ -577,10 +579,59 @@ pub mod pallet {
 
 			<PalletNft<T>>::set_scoped_token_property(
 				resource_collection_id,
-				resource_id,
+				rmrk_resource_id.into(),
 				PropertyScope::Rmrk,
 				Self::rmrk_property(PendingResourceAccept, &false)?,
 			)?;
+
+			Ok(())
+		}
+
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[transactional]
+		pub fn accept_resource_removal(
+			origin: OriginFor<T>,
+			rmrk_collection_id: RmrkCollectionId,
+			rmrk_nft_id: RmrkNftId,
+			rmrk_resource_id: RmrkResourceId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let cross_sender = T::CrossAccountId::from_sub(sender);
+
+			let collection_id = Self::unique_collection_id(rmrk_collection_id)
+				.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+
+			let nft_id = rmrk_nft_id.into();
+			let resource_id = rmrk_resource_id.into();
+
+			let budget = budget::Value::new(NESTING_BUDGET);
+
+			let nft_owner =
+				<PalletStructure<T>>::find_topmost_owner(collection_id, nft_id, &budget)
+					.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+
+			ensure!(cross_sender == nft_owner, <Error<T>>::NoPermission);
+
+			let resource_collection_id: CollectionId =
+				Self::get_nft_property_decoded(collection_id, nft_id, ResourceCollection)
+					.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+
+			let is_pending: bool = Self::get_nft_property_decoded(
+				resource_collection_id,
+				resource_id,
+				PendingResourceRemoval,
+			)
+			.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+
+			ensure!(is_pending, <Error<T>>::ResourceNotPending);
+
+			let resource_collection = Self::get_typed_nft_collection(
+				resource_collection_id,
+				misc::CollectionType::Resource,
+			)?;
+
+			<PalletNft<T>>::burn(&resource_collection, &cross_sender, rmrk_resource_id.into())
+				.map_err(Self::map_unique_err_to_proxy)?;
 
 			Ok(())
 		}
@@ -886,11 +937,8 @@ impl<T: Config> Pallet<T> {
 		let sender = T::CrossAccountId::from_sub(sender);
 		let budget = budget::Value::new(NESTING_BUDGET);
 
-		let nft_owner = <PalletStructure<T>>::find_topmost_owner(
-			collection_id,
-			token_id,
-			&budget,
-		).map_err(Self::map_unique_err_to_proxy)?;
+		let nft_owner = <PalletStructure<T>>::find_topmost_owner(collection_id, token_id, &budget)
+			.map_err(Self::map_unique_err_to_proxy)?;
 
 		let pending = sender != nft_owner;
 
