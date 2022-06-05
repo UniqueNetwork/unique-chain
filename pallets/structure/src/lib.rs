@@ -188,12 +188,8 @@ impl<T: Config> Pallet<T> {
 			None => user,
 		};
 
-		Self::get_checked_indirect_owner(
-			collection,
-			token,
-			for_nest,
-			budget
-		).map(|indirect_owner| indirect_owner == target_parent)
+		Self::get_checked_indirect_owner(collection, token, for_nest, budget)
+			.map(|indirect_owner| indirect_owner == target_parent)
 	}
 
 	pub fn check_nesting(
