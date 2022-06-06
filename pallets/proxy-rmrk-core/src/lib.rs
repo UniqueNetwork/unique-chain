@@ -657,8 +657,8 @@ pub mod pallet {
 				Some(nft_id) => {
 					let token_id: TokenId = nft_id.into();
 
-					Self::ensure_nft_owner(collection_id, token_id, &sender, &budget)?;
 					Self::ensure_nft_type(collection_id, token_id, NftType::Regular)?;
+					Self::ensure_nft_owner(collection_id, token_id, &sender, &budget)?;
 
 					<PalletNft<T>>::set_scoped_token_property(
 						collection_id,
@@ -1120,7 +1120,10 @@ impl<T: Config> Pallet<T> {
 		rmrk_collection_id: RmrkCollectionId,
 		collection_type: misc::CollectionType,
 	) -> Result<(NonfungibleHandle<T>, CollectionId), DispatchError> {
-		let unique_collection_id = Self::unique_collection_id(rmrk_collection_id)?;
+		let unique_collection_id = match collection_type {
+			misc::CollectionType::Regular => Self::unique_collection_id(rmrk_collection_id)?,
+			_ => rmrk_collection_id.into()
+		};
 
 		let collection = Self::get_typed_nft_collection(unique_collection_id, collection_type)?;
 
@@ -1183,7 +1186,7 @@ impl<T: Config> Pallet<T> {
 			token_id,
 			None,
 			nesting_budget,
-		)?;
+		).map_err(Self::map_unique_err_to_proxy)?;
 
 		ensure!(is_owned, <Error<T>>::NoPermission);
 
