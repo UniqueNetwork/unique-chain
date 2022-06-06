@@ -715,7 +715,7 @@ pub mod pallet {
 				collection_id,
 				nft_id,
 				PropertyScope::Rmrk,
-				Self::rmrk_property(ResourcePriorities, &priorities.into_inner())?
+				Self::rmrk_property(ResourcePriorities, &priorities.into_inner())?,
 			)?;
 
 			Ok(())
@@ -1150,7 +1150,7 @@ impl<T: Config> Pallet<T> {
 	) -> Result<(NonfungibleHandle<T>, CollectionId), DispatchError> {
 		let unique_collection_id = match collection_type {
 			misc::CollectionType::Regular => Self::unique_collection_id(rmrk_collection_id)?,
-			_ => rmrk_collection_id.into()
+			_ => rmrk_collection_id.into(),
 		};
 
 		let collection = Self::get_typed_nft_collection(unique_collection_id, collection_type)?;
@@ -1214,7 +1214,8 @@ impl<T: Config> Pallet<T> {
 			token_id,
 			None,
 			nesting_budget,
-		).map_err(Self::map_unique_err_to_proxy)?;
+		)
+		.map_err(Self::map_unique_err_to_proxy)?;
 
 		ensure!(is_owned, <Error<T>>::NoPermission);
 
