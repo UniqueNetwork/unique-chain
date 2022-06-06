@@ -695,6 +695,34 @@ pub mod pallet {
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
+		pub fn set_priority(
+			origin: OriginFor<T>,
+			rmrk_collection_id: RmrkCollectionId,
+			rmrk_nft_id: RmrkNftId,
+			priorities: BoundedVec<RmrkResourceId, RmrkMaxPriorities>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let sender = T::CrossAccountId::from_sub(sender);
+
+			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
+			let nft_id = rmrk_nft_id.into();
+			let budget = budget::Value::new(NESTING_BUDGET);
+
+			Self::ensure_nft_type(collection_id, nft_id, NftType::Regular)?;
+			Self::ensure_nft_owner(collection_id, nft_id, &sender, &budget)?;
+
+			<PalletNft<T>>::set_scoped_token_property(
+				collection_id,
+				nft_id,
+				PropertyScope::Rmrk,
+				Self::rmrk_property(ResourcePriorities, &priorities.into_inner())?
+			)?;
+
+			Ok(())
+		}
+
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[transactional]
 		pub fn add_basic_resource(
 			origin: OriginFor<T>,
 			collection_id: RmrkCollectionId,
@@ -1160,7 +1188,7 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 	) -> Result<NftType, DispatchError> {
 		Self::get_nft_property_decoded(collection_id, token_id, TokenType)
-			.map_err(|_| <Error<T>>::NftTypeEncodeError.into())
+			.map_err(|_| <Error<T>>::NoAvailableNftId.into())
 	}
 
 	pub fn ensure_nft_type(
