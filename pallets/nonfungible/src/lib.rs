@@ -497,7 +497,7 @@ impl<T: Config> Pallet<T> {
 				token_owner,
 				..
 			} => {
-				//TODO: исследовать угрозы при публичном минтинге.
+				//TODO: investigate threats during public minting.
 				if is_token_create && (collection_admin || token_owner) {
 					return Ok(());
 				}
