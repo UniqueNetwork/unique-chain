@@ -361,33 +361,25 @@ macro_rules! impl_common_runtime_apis {
                     Ok(resources)
                 }
 
-                fn nft_resource_priorities(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkResourceId>, DispatchError> {
+                fn nft_resource_priority(collection_id: RmrkCollectionId, nft_id: RmrkNftId, resource_id: RmrkResourceId) -> Result<Option<u32>, DispatchError> {
                     use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, NftType}};
 
                     let collection_id = match RmrkCore::unique_collection_id(collection_id) {
                         Ok(id) => id,
-                        Err(_) => return Ok(Vec::new())
+                        Err(_) => return Ok(None)
                     };
-                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Regular).is_err() { return Ok(Vec::new()); }
+                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Regular).is_err() { return Ok(None); }
 
                     let nft_id = TokenId(nft_id);
-                    if RmrkCore::ensure_nft_type(collection_id, nft_id, NftType::Regular).is_err() { return Ok(Vec::new()); }
+                    if RmrkCore::ensure_nft_type(collection_id, nft_id, NftType::Regular).is_err() { return Ok(None); }
 
-                    /*let resource_collection_id: CollectionId = RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::ResourceCollection)
-                        .unwrap();
-                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Resource).is_err() { return Ok(Vec::new()); }
-
-                    let resources = pallet_nonfungible::TokenProperties::<Runtime>::iter_prefix((resource_collection_id,))
-                        .filter_map(|(resource_id, properties)| Some((
-                            resource_id, // ResourceId property
-                            RmrkCore::get_nft_property_decoded(resource_collection_id, resource_id, RmrkProperty::Priority).unwrap(),
-                        )))
-                        .collect()
-                        .sort_by_key(|(_, index)| *index)
-                        .into_iter().map(|(resource_id, _)| resource_id)*/
-                    let priorities = RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::ResourcePriorities)?;
-
-                    Ok(priorities)
+                    let priorities: Vec<_> = RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::ResourcePriorities)?;
+                    Ok(
+                        priorities.into_iter()
+                            .enumerate()
+                            .find(|(_, id)| *id == resource_id)
+                            .map(|(priority, _): (usize, RmrkResourceId)| priority as u32)
+                    )
                 }
 
                 fn base(base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {

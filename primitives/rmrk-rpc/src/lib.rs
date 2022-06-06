@@ -50,7 +50,7 @@ sp_api::decl_runtime_apis! {
 
 		fn nft_resources(collection_id: CollectionId, nft_id: NftId) -> Result<Vec<ResourceInfo>>;
 
-		fn nft_resource_priorities(collection_id: CollectionId, nft_id: NftId) -> Result<Vec<ResourceId>>;
+		fn nft_resource_priority(collection_id: CollectionId, nft_id: NftId, resource_id: ResourceId) -> Result<Option<u32>>;
 
 		fn base(base_id: BaseId) -> Result<Option<BaseInfo>>;
 
