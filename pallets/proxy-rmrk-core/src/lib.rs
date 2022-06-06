@@ -289,7 +289,7 @@ pub mod pallet {
 			let sender = T::CrossAccountId::from_sub(sender);
 			let cross_owner = T::CrossAccountId::from_sub(owner.clone());
 
-			let royalty_info = royalty_amount.map(|amount| rmrk::RoyaltyInfo {
+			let royalty_info = royalty_amount.map(|amount| rmrk_traits::RoyaltyInfo {
 				recipient: recipient.unwrap_or_else(|| owner.clone()),
 				amount,
 			});

@@ -20,6 +20,7 @@ pallet-common = { default-features = false, path = '../common' }
 pallet-nonfungible = { default-features = false, path = "../../pallets/nonfungible" }
 pallet-structure = { default-features = false, path = "../../pallets/structure" }
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
+rmrk-traits = { default-features = false, path = "../../primitives/rmrk-traits" }
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21-logs" }
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
 scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
@@ -33,6 +34,7 @@ std = [
     "sp-runtime/std",
     "sp-std/std",
     "up-data-structs/std",
+    "rmrk-traits/std",
     "pallet-common/std",
     "pallet-nonfungible/std",
     "pallet-structure/std",

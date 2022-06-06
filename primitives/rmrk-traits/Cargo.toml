@@ -1,0 +1,23 @@
+[package]
+name = "rmrk-traits"
+authors = ["Unique Network <support@uniquenetwork.io>"]
+description = "RMRK proxy data structs definitions"
+edition = "2021"
+license = 'GPLv3'
+homepage = "https://unique.network"
+repository = 'https://github.com/UniqueNetwork/unique-chain'
+version = '0.1.0'
+
+[dependencies]
+scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "3.1.2", default-features = false, features = ["derive"] }
+serde = { version = "1.0.130", features = ["derive"], default-features = false, optional = true }
+
+[features]
+default = ["std"]
+std = [
+  "serde1",
+  "serde/std",
+  "codec/std",
+]
+serde1 = ["serde/alloc"]
