@@ -6338,6 +6338,7 @@ dependencies = [
  "pallet-nonfungible",
  "pallet-structure",
  "parity-scale-codec 3.1.2",
+ "rmrk-traits",
  "scale-info",
  "sp-core",
  "sp-runtime",
@@ -6357,6 +6358,7 @@ dependencies = [
  "pallet-nonfungible",
  "pallet-rmrk-core",
  "parity-scale-codec 3.1.2",
+ "rmrk-traits",
  "scale-info",
  "sp-core",
  "sp-runtime",
@@ -8999,12 +9001,21 @@ name = "rmrk-rpc"
 version = "0.0.1"
 dependencies = [
  "parity-scale-codec 2.3.1",
+ "rmrk-traits",
  "serde",
  "sp-api",
  "sp-core",
  "sp-runtime",
  "sp-std",
- "up-data-structs",
+]
+
+[[package]]
+name = "rmrk-traits"
+version = "0.1.0"
+dependencies = [
+ "parity-scale-codec 3.1.2",
+ "scale-info",
+ "serde",
 ]
 
 [[package]]
@@ -12723,6 +12734,7 @@ dependencies = [
  "frame-system",
  "pallet-evm",
  "parity-scale-codec 3.1.2",
+ "rmrk-traits",
  "scale-info",
  "serde",
  "sp-core",

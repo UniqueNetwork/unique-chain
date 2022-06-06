@@ -36,14 +36,12 @@ use frame_support::{BoundedVec, traits::ConstU32};
 use derivative::Derivative;
 use scale_info::TypeInfo;
 
-pub mod rmrk;
-
 // RMRK
-use rmrk::{
+use rmrk_traits::{
 	CollectionInfo, NftInfo, ResourceInfo, PropertyInfo, BaseInfo, PartType, Theme, ThemeProperty,
 	ResourceTypes, BasicResource, ComposableResource, SlotResource,
 };
-pub use rmrk::{
+pub use rmrk_traits::{
 	primitives::{
 		CollectionId as RmrkCollectionId, NftId as RmrkNftId, BaseId as RmrkBaseId,
 		PartId as RmrkPartId, ResourceId as RmrkResourceId,

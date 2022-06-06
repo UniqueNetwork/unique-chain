@@ -3,7 +3,7 @@
 use sp_api::{Encode, Decode};
 use sp_std::vec::Vec;
 use sp_runtime::DispatchError;
-use up_data_structs::rmrk::{primitives::*, NftChild};
+use rmrk_traits::{primitives::*, NftChild};
 
 pub type Result<T> = core::result::Result<T, DispatchError>;
 
