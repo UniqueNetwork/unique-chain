@@ -304,6 +304,7 @@ decl_module! {
 		pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			collection.check_is_mutable()?;
 
 			// =========
 
@@ -406,6 +407,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			target_collection.check_is_mutable()?;
 			target_collection.check_is_owner(&sender)?;
 
 			target_collection.owner = new_owner.clone();
@@ -487,7 +489,7 @@ decl_module! {
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner(&sender)?;
 
-			target_collection.set_sponsor(new_sponsor.clone());
+			target_collection.set_sponsor(new_sponsor.clone())?;
 
 			<Pallet<T>>::deposit_event(Event::<T>::CollectionSponsorSet(
 				collection_id,
@@ -511,7 +513,7 @@ decl_module! {
 
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			ensure!(
-				target_collection.confirm_sponsorship(&sender),
+				target_collection.confirm_sponsorship(&sender)?,
 				Error::<T>::ConfirmUnsetSponsorFail
 			);
 

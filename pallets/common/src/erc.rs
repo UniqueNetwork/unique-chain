@@ -87,18 +87,20 @@ impl<T: Config> CollectionHandle<T>
 		check_is_owner(caller, self)?;
 
 		let sponsor = T::CrossAccountId::from_eth(sponsor);
-		self.set_sponsor(sponsor.as_sub().clone());
-		save(self);
-		Ok(())
+		self.set_sponsor(sponsor.as_sub().clone())
+			.map_err(dispatch_to_evm::<T>)?;
+		save(self)
 	}
 
 	fn confirm_collection_sponsorship(&mut self, caller: caller) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		if !self.confirm_sponsorship(caller.as_sub()) {
+		if !self
+			.confirm_sponsorship(caller.as_sub())
+			.map_err(dispatch_to_evm::<T>)?
+		{
 			return Err(Error::Revert("Caller is not set as sponsor".into()));
 		}
-		save(self);
-		Ok(())
+		save(self)
 	}
 
 	#[solidity(rename_selector = "setCollectionLimit")]
@@ -134,8 +136,7 @@ impl<T: Config> CollectionHandle<T>
 		}
 		self.limits = <Pallet<T>>::clamp_limits(self.mode.clone(), &self.limits, limits)
 			.map_err(dispatch_to_evm::<T>)?;
-		save(self);
-		Ok(())
+		save(self)
 	}
 
 	#[solidity(rename_selector = "setCollectionLimit")]
@@ -162,8 +163,7 @@ impl<T: Config> CollectionHandle<T>
 		}
 		self.limits = <Pallet<T>>::clamp_limits(self.mode.clone(), &self.limits, limits)
 			.map_err(dispatch_to_evm::<T>)?;
-		save(self);
-		Ok(())
+		save(self)
 	}
 
 	fn contract_address(&self, _caller: caller) -> Result<address> {
@@ -296,7 +296,7 @@ impl<T: Config> CollectionHandle<T>
 	}
 }
 
-fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -> Result<()> {
+fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -> Result<void> {
 	let caller = T::CrossAccountId::from_eth(caller);
 	collection
 		.check_is_owner(&caller)
@@ -315,8 +315,12 @@ fn check_is_owner_or_admin<T: Config>(
 	Ok(caller)
 }
 
-fn save<T: Config>(collection: &CollectionHandle<T>) {
+fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
+	collection
+		.check_is_mutable()
+		.map_err(dispatch_to_evm::<T>)?;
 	<crate::CollectionById<T>>::insert(collection.id, collection.collection.clone());
+	Ok(())
 }
 
 pub fn token_uri_key() -> up_data_structs::PropertyKey {

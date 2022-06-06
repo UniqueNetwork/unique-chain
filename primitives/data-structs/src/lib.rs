@@ -316,6 +316,10 @@ pub struct Collection<AccountId> {
 	#[version(2.., upper(Default::default()))]
 	pub permissions: CollectionPermissions,
 
+	/// Marks that this collection is not "unique", and managed from external.
+	#[version(2.., upper(false))]
+	pub external_collection: bool,
+
 	#[version(..2)]
 	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
 
@@ -340,6 +344,7 @@ pub struct RpcCollection<AccountId> {
 	pub permissions: CollectionPermissions,
 	pub token_property_permissions: Vec<PropertyKeyPermission>,
 	pub properties: Vec<Property>,
+	pub read_only: bool,
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Derivative, MaxEncodedLen)]
