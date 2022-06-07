@@ -330,57 +330,7 @@ contract ERC721Enumerable is Dummy, ERC165 {
 	}
 }
 
-// Selector: d74d154f
-contract ERC721UniqueExtensions is Dummy, ERC165 {
-	// Selector: transfer(address,uint256) a9059cbb
-	function transfer(address to, uint256 tokenId) public {
-		require(false, stub_error);
-		to;
-		tokenId;
-		dummy = 0;
-	}
-
-	// Selector: burnFrom(address,uint256) 79cc6790
-	function burnFrom(address from, uint256 tokenId) public {
-		require(false, stub_error);
-		from;
-		tokenId;
-		dummy = 0;
-	}
-
-	// Selector: nextTokenId() 75794a3c
-	function nextTokenId() public view returns (uint256) {
-		require(false, stub_error);
-		dummy;
-		return 0;
-	}
-
-	// Selector: mintBulk(address,uint256[]) 44a9945e
-	function mintBulk(address to, uint256[] memory tokenIds)
-		public
-		returns (bool)
-	{
-		require(false, stub_error);
-		to;
-		tokenIds;
-		dummy = 0;
-		return false;
-	}
-
-	// Selector: mintBulkWithTokenURI(address,(uint256,string)[]) 36543006
-	function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
-		public
-		returns (bool)
-	{
-		require(false, stub_error);
-		to;
-		tokens;
-		dummy = 0;
-		return false;
-	}
-}
-
-// Selector: f56cd7fa
+// Selector: 7d9262e6
 contract Collection is Dummy, ERC165 {
 	// Selector: setCollectionProperty(string,bytes) 2f073f66
 	function setCollectionProperty(string memory key, bytes memory value)
@@ -449,8 +399,22 @@ contract Collection is Dummy, ERC165 {
 		return 0x0000000000000000000000000000000000000000;
 	}
 
-	// Selector: addAdmin(address) 70480275
-	function addAdmin(address newAdmin) public view {
+	// Selector: addCollectionAdminSubstrate(uint256) 5730062b
+	function addCollectionAdminSubstrate(uint256 newAdmin) public view {
+		require(false, stub_error);
+		newAdmin;
+		dummy;
+	}
+
+	// Selector: removeCollectionAdminSubstrate(uint256) 4048fcf9
+	function removeCollectionAdminSubstrate(uint256 newAdmin) public view {
+		require(false, stub_error);
+		newAdmin;
+		dummy;
+	}
+
+	// Selector: addCollectionAdmin(address) 92e462c7
+	function addCollectionAdmin(address newAdmin) public view {
 		require(false, stub_error);
 		newAdmin;
 		dummy;
@@ -504,6 +468,56 @@ contract Collection is Dummy, ERC165 {
 		require(false, stub_error);
 		mode;
 		dummy = 0;
+	}
+}
+
+// Selector: d74d154f
+contract ERC721UniqueExtensions is Dummy, ERC165 {
+	// Selector: transfer(address,uint256) a9059cbb
+	function transfer(address to, uint256 tokenId) public {
+		require(false, stub_error);
+		to;
+		tokenId;
+		dummy = 0;
+	}
+
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 tokenId) public {
+		require(false, stub_error);
+		from;
+		tokenId;
+		dummy = 0;
+	}
+
+	// Selector: nextTokenId() 75794a3c
+	function nextTokenId() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+
+	// Selector: mintBulk(address,uint256[]) 44a9945e
+	function mintBulk(address to, uint256[] memory tokenIds)
+		public
+		returns (bool)
+	{
+		require(false, stub_error);
+		to;
+		tokenIds;
+		dummy = 0;
+		return false;
+	}
+
+	// Selector: mintBulkWithTokenURI(address,(uint256,string)[]) 36543006
+	function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
+		public
+		returns (bool)
+	{
+		require(false, stub_error);
+		to;
+		tokens;
+		dummy = 0;
+		return false;
 	}
 }
 

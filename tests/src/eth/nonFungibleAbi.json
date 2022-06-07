@@ -91,6 +91,15 @@
   },
   {
     "inputs": [
+      { "internalType": "uint256", "name": "newAdmin", "type": "uint256" }
+    ],
+    "name": "addCollectionAdminSubstrate",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "address", "name": "user", "type": "address" }
     ],
     "name": "addToAllowList",
@@ -294,6 +303,15 @@
       { "internalType": "address", "name": "admin", "type": "address" }
     ],
     "name": "removeAdmin",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "newAdmin", "type": "uint256" }
+    ],
+    "name": "removeCollectionAdminSubstrate",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"
