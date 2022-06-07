@@ -96,6 +96,7 @@ where
 		+ pallet_fungible::Config
 		+ pallet_nonfungible::Config
 		+ pallet_refungible::Config,
+	T::AccountId: From<[u8; 32]>,
 {
 	fn is_reserved(target: &H160) -> bool {
 		map_eth_to_id(target).is_some()

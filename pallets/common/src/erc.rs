@@ -47,10 +47,9 @@ pub trait CommonEvmHandler {
 }
 
 #[solidity_interface(name = "Collection")]
-
-impl<T: Config> CollectionHandle<T> 
-// where 
-// 	T::AccountId: From<H256>
+impl<T: Config> CollectionHandle<T>
+where
+	T::AccountId: From<[u8; 32]>
 {
 	fn set_collection_property(&mut self, caller: caller, key: string, value: bytes) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
