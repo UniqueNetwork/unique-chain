@@ -40,6 +40,7 @@ use up_data_structs::{
 	MAX_TOKEN_PREFIX_LENGTH,
 	COLLECTION_ADMINS_LIMIT,
 	TokenId,
+	TokenChild,
 	CollectionStats,
 	MAX_TOKEN_OWNERSHIP,
 	CollectionMode,
@@ -502,6 +503,7 @@ pub mod pallet {
 			CollectionStats,
 			CollectionId,
 			TokenId,
+			TokenChild,
 			PhantomType<(
 				TokenData<T::CrossAccountId>,
 				RpcCollection<T::AccountId>,

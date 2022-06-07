@@ -29,7 +29,9 @@ macro_rules! impl_common_runtime_apis {
 
                     Ok(Some(<pallet_structure::Pallet<Runtime>>::find_topmost_owner(collection, token, &budget)?))
                 }
-
+                fn token_children(collection: CollectionId, token: TokenId) -> Result<Vec<TokenChild>, DispatchError> {
+                    Ok(<pallet_nonfungible::Pallet<Runtime>>::token_children_ids(collection, token))
+                }
                 fn collection_properties(
                     collection: CollectionId,
                     keys: Option<Vec<Vec<u8>>>

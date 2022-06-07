@@ -73,6 +73,7 @@ use up_data_structs::{
 	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits,
 	CollectionStats, RpcCollection,
 	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
+	TokenChild,
 };
 
 // use pallet_contracts::weights::WeightInfo;

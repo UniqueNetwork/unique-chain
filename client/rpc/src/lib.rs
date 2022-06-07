@@ -25,7 +25,7 @@ use jsonrpsee::{
 use anyhow::anyhow;
 use up_data_structs::{
 	RpcCollection, CollectionId, CollectionStats, CollectionLimits, TokenId, Property,
-	PropertyKeyPermission, TokenData,
+	PropertyKeyPermission, TokenData, TokenChild,
 };
 use sp_api::{BlockId, BlockT, ProvideRuntimeApi, ApiExt};
 use sp_blockchain::HeaderBackend;
@@ -77,6 +77,13 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<CrossAccountId>>;
+	#[method(name = "unique_tokenChildren")]
+	fn token_children(
+		&self,
+		collection: CollectionId,
+		token: TokenId,
+		at: Option<BlockHash>,
+	) -> Result<Vec<TokenChild>>;
 
 	#[method(name = "unique_collectionProperties")]
 	fn collection_properties(
@@ -394,6 +401,7 @@ where
 	pass_method!(
 		topmost_token_owner(collection: CollectionId, token: TokenId) -> Option<CrossAccountId>, unique_api
 	);
+	pass_method!(token_children(collection: CollectionId, token: TokenId) -> Vec<TokenChild>, unique_api);
 	pass_method!(total_supply(collection: CollectionId) -> u32, unique_api);
 	pass_method!(account_balance(collection: CollectionId, account: CrossAccountId) -> u32, unique_api);
 	pass_method!(balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> String => |v| v.to_string(), unique_api);
