@@ -76,7 +76,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<CrossAccountId>>;
-	#[rpc(name = "unique_tokenChildren")]
+	#[method(name = "unique_tokenChildren")]
 	fn token_children(
 		&self,
 		collection: CollectionId,
