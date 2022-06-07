@@ -152,17 +152,14 @@ impl<T: Config> FungibleHandle<T> {
 		via("CollectionHandle<T>", common_mut, Collection)
 	)
 )]
-impl<T: Config> FungibleHandle<T>
-where
-	T::AccountId: From<[u8; 32]>
-{}
+impl<T: Config> FungibleHandle<T> where T::AccountId: From<[u8; 32]> {}
 
 generate_stubgen!(gen_impl, UniqueFungibleCall<()>, true);
 generate_stubgen!(gen_iface, UniqueFungibleCall<()>, false);
 
 impl<T: Config> CommonEvmHandler for FungibleHandle<T>
 where
-	T::AccountId: From<[u8; 32]>
+	T::AccountId: From<[u8; 32]>,
 {
 	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueFungible.raw");
 

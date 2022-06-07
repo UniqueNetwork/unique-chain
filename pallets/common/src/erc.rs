@@ -49,7 +49,7 @@ pub trait CommonEvmHandler {
 #[solidity_interface(name = "Collection")]
 impl<T: Config> CollectionHandle<T>
 where
-	T::AccountId: From<[u8; 32]>
+	T::AccountId: From<[u8; 32]>,
 {
 	fn set_collection_property(&mut self, caller: caller, key: string, value: bytes) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -176,12 +176,15 @@ where
 		new_admin.to_big_endian(&mut new_admin_arr);
 		let account_id = T::AccountId::from(new_admin_arr);
 		let new_admin = T::CrossAccountId::from_sub(account_id);
-		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
-	fn remove_collection_admin_substrate(&self, caller: caller, new_admin: uint256) -> Result<void> {
+	fn remove_collection_admin_substrate(
+		&self,
+		caller: caller,
+		new_admin: uint256,
+	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let mut new_admin_arr: [u8; 32] = Default::default();
 		new_admin.to_big_endian(&mut new_admin_arr);
@@ -195,16 +198,14 @@ where
 	fn add_collection_admin(&self, caller: caller, new_admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_admin = T::CrossAccountId::from_eth(new_admin);
-		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
 	fn remove_admin(&self, caller: caller, admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let admin = T::CrossAccountId::from_eth(admin);
-		<Pallet<T>>::toggle_admin(self, &caller, &admin, false)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
@@ -233,9 +234,9 @@ where
 			true => {
 				let mut bv = OwnerRestrictedSet::new();
 				for i in collections {
-					bv.try_insert(crate::eth::map_eth_to_id(&i).ok_or_else(|| Error::Revert(
-						"Can't convert address into collection id".into(),
-						))?)
+					bv.try_insert(crate::eth::map_eth_to_id(&i).ok_or_else(|| {
+						Error::Revert("Can't convert address into collection id".into())
+					})?)
 					.map_err(|e| Error::Revert(format!("{:?}", e)))?;
 				}
 				NestingRule::OwnerRestricted (bv)
@@ -259,16 +260,14 @@ where
 	fn add_to_collection_allow_list(&self, caller: caller, user: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let user = T::CrossAccountId::from_eth(user);
-		<Pallet<T>>::toggle_allowlist(self, &caller, &user, true)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::toggle_allowlist(self, &caller, &user, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
 	fn remove_from_collection_allow_list(&self, caller: caller, user: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let user = T::CrossAccountId::from_eth(user);
-		<Pallet<T>>::toggle_allowlist(self, &caller, &user, false)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::toggle_allowlist(self, &caller, &user, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 

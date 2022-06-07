@@ -583,10 +583,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		TokenProperties,
 	)
 )]
-impl<T: Config> NonfungibleHandle<T>
-where
-	T::AccountId: From<[u8; 32]>
-{}
+impl<T: Config> NonfungibleHandle<T> where T::AccountId: From<[u8; 32]> {}
 
 // Not a tests, but code generators
 generate_stubgen!(gen_impl, UniqueNFTCall<()>, true);
@@ -594,7 +591,7 @@ generate_stubgen!(gen_iface, UniqueNFTCall<()>, false);
 
 impl<T: Config> CommonEvmHandler for NonfungibleHandle<T>
 where
-	T::AccountId: From<[u8; 32]>
+	T::AccountId: From<[u8; 32]>,
 {
 	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueNFT.raw");
 
