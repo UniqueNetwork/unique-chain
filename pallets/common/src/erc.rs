@@ -21,7 +21,7 @@ use evm_coder::{
 };
 pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
 use pallet_evm_coder_substrate::dispatch_to_evm;
-use sp_core::{H160, U256, H256};
+use sp_core::{H160, U256};
 use sp_std::vec::Vec;
 use up_data_structs::{Property, SponsoringRateLimit, NestingRule, OwnerRestrictedSet, AccessMode};
 use alloc::format;
@@ -84,7 +84,7 @@ where
 	}
 
 	fn set_collection_sponsor(&mut self, caller: caller, sponsor: address) -> Result<void> {
-		check_is_owner(caller, self)?;
+		check_is_owner_or_admin(caller, self)?;
 
 		let sponsor = T::CrossAccountId::from_eth(sponsor);
 		self.set_sponsor(sponsor.as_sub().clone())
@@ -105,7 +105,7 @@ where
 
 	#[solidity(rename_selector = "setCollectionLimit")]
 	fn set_int_limit(&mut self, caller: caller, limit: string, value: uint32) -> Result<void> {
-		check_is_owner(caller, self)?;
+		check_is_owner_or_admin(caller, self)?;
 		let mut limits = self.limits.clone();
 
 		match limit.as_str() {
@@ -141,7 +141,7 @@ where
 
 	#[solidity(rename_selector = "setCollectionLimit")]
 	fn set_bool_limit(&mut self, caller: caller, limit: string, value: bool) -> Result<void> {
-		check_is_owner(caller, self)?;
+		check_is_owner_or_admin(caller, self)?;
 		let mut limits = self.limits.clone();
 
 		match limit.as_str() {
@@ -170,58 +170,52 @@ where
 		Ok(crate::eth::collection_id_to_address(self.id))
 	}
 
-	// fn add_admin_substrate(&self, caller: caller, new_admin: uint256) -> Result<void> {
-	// 	let mut new_admin_h256 = H256::default();
-	// 	new_admin.to_little_endian(&mut new_admin_h256.0);
-	// 	let account_id = T::AccountId::from(new_admin_h256);
-	// 	let caller = T::CrossAccountId::from_eth(caller);
-	// 	let new_admin = T::CrossAccountId::from_sub(account_id);
-	// 	<Pallet<T>>::toggle_admin(&self, &caller, &new_admin, true)
-	// 		.map_err(dispatch_to_evm::<T>)?;
-	// 	Ok(())
-	// }
-
-	// fn remove_admin_substrate(&self, caller: caller, new_admin: uint256) -> Result<void> {
-	// 	let mut new_admin_h256 = H256::default();
-	// 	new_admin.to_little_endian(&mut new_admin_h256.0);
-	// 	let account_id = T::AccountId::from(new_admin_h256);
-	// 	let caller = T::CrossAccountId::from_eth(caller);
-	// 	let new_admin = T::CrossAccountId::from_sub(account_id);
-	// 	<Pallet<T>>::toggle_admin(&self, &caller, &new_admin, false)
-	// 		.map_err(dispatch_to_evm::<T>)?;
-	// 	Ok(())
-	// }
-
-	fn add_admin(&self, caller: caller, new_admin: address) -> Result<void> {
+	fn add_collection_admin_substrate(&self, caller: caller, new_admin: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		self.check_is_owner_or_admin(&caller)
+		let mut new_admin_arr: [u8; 32] = Default::default();
+		new_admin.to_big_endian(&mut new_admin_arr);
+		let account_id = T::AccountId::from(new_admin_arr);
+		let new_admin = T::CrossAccountId::from_sub(account_id);
+		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true)
 			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	fn remove_collection_admin_substrate(&self, caller: caller, new_admin: uint256) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let mut new_admin_arr: [u8; 32] = Default::default();
+		new_admin.to_big_endian(&mut new_admin_arr);
+		let account_id = T::AccountId::from(new_admin_arr);
+		let new_admin = T::CrossAccountId::from_sub(account_id);
+		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, false)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	fn add_collection_admin(&self, caller: caller, new_admin: address) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
 		let new_admin = T::CrossAccountId::from_eth(new_admin);
-		<Pallet<T>>::toggle_admin(&self, &caller, &new_admin, true)
+		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
 	fn remove_admin(&self, caller: caller, admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		self.check_is_owner_or_admin(&caller)
-			.map_err(dispatch_to_evm::<T>)?;
 		let admin = T::CrossAccountId::from_eth(admin);
-		<Pallet<T>>::toggle_admin(&self, &caller, &admin, false)
+		<Pallet<T>>::toggle_admin(self, &caller, &admin, false)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
 	#[solidity(rename_selector = "setNesting")]
 	fn set_nesting_bool(&mut self, caller: caller, enable: bool) -> Result<void> {
-		let caller = T::CrossAccountId::from_eth(caller);
-		self.check_is_owner_or_admin(&caller)
-			.map_err(dispatch_to_evm::<T>)?;
+		check_is_owner_or_admin(caller, self)?;
 		self.collection.permissions.nesting = Some(match enable {
 			false => NestingRule::Disabled,
 			true => NestingRule::Owner,
 		});
-		save(self);
+		save(self)?;
 		Ok(())
 	}
 
@@ -233,49 +227,45 @@ where
 		if collections.len() >= OwnerRestrictedSet::bound() {
 			return Err(Error::Revert(format!("Out of bound: {} >= {}", collections.len(), OwnerRestrictedSet::bound())));
 		}
-		let caller = T::CrossAccountId::from_eth(caller);
-		self.check_is_owner_or_admin(&caller)
-			.map_err(dispatch_to_evm::<T>)?;
+		check_is_owner_or_admin(caller, self)?;
 		self.collection.permissions.nesting = Some(match enable {
 			false => NestingRule::Disabled,
 			true => {
 				let mut bv = OwnerRestrictedSet::new();
 				for i in collections {
-					bv.try_insert(
-						crate::eth::map_eth_to_id(&i)
-							.ok_or(Error::Revert("Can't convert address into collection id".into()))?
-					).map_err(|e| Error::Revert(format!("{:?}", e)))?;
+					bv.try_insert(crate::eth::map_eth_to_id(&i).ok_or_else(|| Error::Revert(
+						"Can't convert address into collection id".into(),
+						))?)
+					.map_err(|e| Error::Revert(format!("{:?}", e)))?;
 				}
 				NestingRule::OwnerRestricted (bv)
 			}
 		});
-		save(self);
+		save(self)?;
 		Ok(())
 	}
 
-	fn set_access(&mut self, caller: caller, mode: string) -> Result<void> {
-		let caller = T::CrossAccountId::from_eth(caller);
-		self.check_is_owner_or_admin(&caller)
-			.map_err(dispatch_to_evm::<T>)?;
-		self.collection.permissions.access = Some(match mode.as_str() {
-			"Normal" => AccessMode::Normal,
-			"AllowList" => AccessMode::AllowList,
+	fn set_collection_access(&mut self, caller: caller, mode: uint8) -> Result<void> {
+		check_is_owner_or_admin(caller, self)?;
+		self.collection.permissions.access = Some(match mode {
+			0 => AccessMode::Normal,
+			1 => AccessMode::AllowList,
 			_ => return Err("Not supported access mode".into()),
 		});
-		save(self);
+		save(self)?;
 		Ok(())
 	}
 
-	fn add_to_allow_list(&self, caller: caller, user: address) -> Result<void> {
-		let caller = check_is_owner_or_admin(caller, self)?;
+	fn add_to_collection_allow_list(&self, caller: caller, user: address) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
 		let user = T::CrossAccountId::from_eth(user);
 		<Pallet<T>>::toggle_allowlist(self, &caller, &user, true)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
-	fn remove_from_allow_list(&self, caller: caller, user: address) -> Result<void> {
-		let caller = check_is_owner_or_admin(caller, self)?;
+	fn remove_from_collection_allow_list(&self, caller: caller, user: address) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
 		let user = T::CrossAccountId::from_eth(user);
 		<Pallet<T>>::toggle_allowlist(self, &caller, &user, false)
 			.map_err(dispatch_to_evm::<T>)?;
@@ -285,20 +275,15 @@ where
 	fn set_mint_mode(&mut self, caller: caller, mode: bool) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;
 		self.collection.permissions.mint_mode = Some(mode);
-		save(self);
+		save(self)?;
 		Ok(())
 	}
 }
 
-fn check_is_owner<T: Config>(caller: caller, collection: &CollectionHandle<T>) -> Result<void> {
-	let caller = T::CrossAccountId::from_eth(caller);
-	collection
-		.check_is_owner(&caller)
-		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-	Ok(())
-}
-
-fn check_is_owner_or_admin<T: Config>(caller: caller, collection: &CollectionHandle<T>) -> Result<T::CrossAccountId> {
+fn check_is_owner_or_admin<T: Config>(
+	caller: caller,
+	collection: &CollectionHandle<T>,
+) -> Result<T::CrossAccountId> {
 	let caller = T::CrossAccountId::from_eth(caller);
 	collection
 		.check_is_owner_or_admin(&caller)
