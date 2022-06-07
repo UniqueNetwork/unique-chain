@@ -1588,7 +1588,7 @@ export interface PalletXcmEvent extends Enum {
 }
 
 /** @name PhantomTypeUpDataStructs */
-export interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsRmrkCollectionInfo, UpDataStructsRmrkNftInfo, UpDataStructsRmrkResourceInfo, UpDataStructsRmrkPropertyInfo, UpDataStructsRmrkBaseInfo, UpDataStructsRmrkPartType, UpDataStructsRmrkTheme, UpDataStructsRmrkNftChild]>> {}
+export interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, UpDataStructsRmrkCollectionInfo, UpDataStructsRmrkNftInfo, UpDataStructsRmrkResourceInfo, UpDataStructsRmrkPropertyInfo, UpDataStructsRmrkBaseInfo, UpDataStructsRmrkPartType, UpDataStructsRmrkTheme, UpDataStructsRmrkNftChild]>> {}
 
 /** @name PolkadotCorePrimitivesInboundDownwardMessage */
 export interface PolkadotCorePrimitivesInboundDownwardMessage extends Struct {
@@ -1861,7 +1861,6 @@ export interface UpDataStructsCreateItemExData extends Enum {
 
 /** @name UpDataStructsCreateNftData */
 export interface UpDataStructsCreateNftData extends Struct {
-  readonly constData: Bytes;
   readonly properties: Vec<UpDataStructsProperty>;
 }
 
@@ -2099,6 +2098,12 @@ export interface UpDataStructsSponsorshipState extends Enum {
   readonly isConfirmed: boolean;
   readonly asConfirmed: AccountId32;
   readonly type: 'Disabled' | 'Unconfirmed' | 'Confirmed';
+}
+
+/** @name UpDataStructsTokenChild */
+export interface UpDataStructsTokenChild extends Struct {
+  readonly token: u32;
+  readonly collection: u32;
 }
 
 /** @name UpDataStructsTokenData */

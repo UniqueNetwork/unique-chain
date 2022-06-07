@@ -7,6 +7,7 @@ import {
   createItemExpectSuccess,
   enableAllowListExpectSuccess,
   enablePublicMintingExpectSuccess,
+  getTokenChildren,
   getTokenOwner,
   getTopmostTokenOwner,
   normalizeAccountId,
@@ -76,8 +77,8 @@ describe('Integration Test: Nesting', () => {
         api,
         alice,
         api.tx.unique.transferFrom(
-          normalizeAccountId({Ethereum: tokenIdToAddress(collection, tokenA)}), 
-          normalizeAccountId({Ethereum: tokenIdToAddress(collection, tokenB)}), 
+          normalizeAccountId({Ethereum: tokenIdToAddress(collection, tokenA)}),
+          normalizeAccountId({Ethereum: tokenIdToAddress(collection, tokenB)}),
           collection,
           tokenC,
           1,
@@ -85,6 +86,63 @@ describe('Integration Test: Nesting', () => {
       )).to.not.be.rejected;
       expect(await getTopmostTokenOwner(api, collection, tokenC)).to.be.deep.equal({Substrate: alice.address});
       expect(await getTokenOwner(api, collection, tokenC)).to.be.deep.equal({Ethereum: tokenIdToAddress(collection, tokenB).toLowerCase()});
+    });
+  });
+
+  it('Checks token children', async () => {
+    await usingApi(async api => {
+      const collectionA = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await setCollectionPermissionsExpectSuccess(alice, collectionA, {nesting: 'Owner'});
+      const collectionB = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+
+      const targetToken = await createItemExpectSuccess(alice, collectionA, 'NFT');
+      const targetAddress = {Ethereum: tokenIdToAddress(collectionA, targetToken)};
+      let children = await getTokenChildren(api, collectionA, targetToken);
+      expect(children.length).to.be.equal(0, 'Children length check at creation');
+
+      // Create a nested NFT token
+      const tokenA = await createItemExpectSuccess(alice, collectionA, 'NFT', targetAddress);
+      children = await getTokenChildren(api, collectionA, targetToken);
+      expect(children.length).to.be.equal(1, 'Children length check at nesting #1');
+      expect(children).to.have.deep.members([
+        {token: tokenA, collection: collectionA},
+      ], 'Children contents check at nesting #1');
+
+      // Create then nest
+      const tokenB = await createItemExpectSuccess(alice, collectionA, 'NFT');
+      await transferExpectSuccess(collectionA, tokenB, alice, targetAddress);
+      children = await getTokenChildren(api, collectionA, targetToken);
+      expect(children.length).to.be.equal(2, 'Children length check at nesting #2');
+      expect(children).to.have.deep.members([
+        {token: tokenA, collection: collectionA},
+        {token: tokenB, collection: collectionA},
+      ], 'Children contents check at nesting #2');
+
+      // Move token B to a different user outside the nesting tree
+      await transferExpectSuccess(collectionA, tokenB, alice, bob);
+      children = await getTokenChildren(api, collectionA, targetToken);
+      expect(children.length).to.be.equal(1, 'Children length check at unnesting');
+      expect(children).to.be.have.deep.members([
+        {token: tokenA, collection: collectionA},
+      ], 'Children contents check at unnesting');
+
+      // Create a fungible token in another collection and then nest
+      const tokenC = await createItemExpectSuccess(alice, collectionB, 'Fungible');
+      await transferExpectSuccess(collectionB, tokenC, alice, targetAddress, 1, 'Fungible');
+      children = await getTokenChildren(api, collectionA, targetToken);
+      expect(children.length).to.be.equal(2, 'Children length check at nesting #3 (from another collection)');
+      expect(children).to.be.have.deep.members([
+        {token: tokenA, collection: collectionA},
+        {token: tokenC, collection: collectionB},
+      ], 'Children contents check at nesting #3 (from another collection)');
+
+      // Move the fungible token inside token A deeper in the nesting tree
+      await transferFromExpectSuccess(collectionB, tokenC, alice, targetAddress, {Ethereum: tokenIdToAddress(collectionA, tokenA)}, 1, 'Fungible');
+      children = await getTokenChildren(api, collectionA, targetToken);
+      expect(children.length).to.be.equal(1, 'Children length check at deeper nesting');
+      expect(children).to.be.have.deep.members([
+        {token: tokenA, collection: collectionA},
+      ], 'Children contents check at deeper nesting');
     });
   });
 

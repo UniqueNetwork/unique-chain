@@ -18,7 +18,7 @@
 
 use up_data_structs::{
 	CollectionId, TokenId, RpcCollection, CollectionStats, CollectionLimits, Property,
-	PropertyKeyPermission, TokenData,
+	PropertyKeyPermission, TokenData, TokenChild,
 };
 use sp_std::vec::Vec;
 use codec::Decode;
@@ -41,6 +41,7 @@ sp_api::decl_runtime_apis! {
 
 		fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>>;
 		fn topmost_token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>>;
+		fn token_children(collection: CollectionId, token: TokenId) -> Result<Vec<TokenChild>>;
 
 		fn collection_properties(collection: CollectionId, properties: Option<Vec<Vec<u8>>>) -> Result<Vec<Property>>;
 

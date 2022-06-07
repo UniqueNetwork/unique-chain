@@ -585,6 +585,14 @@ impl From<CreateFungibleData> for CreateItemData {
 
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+// todo possibly rename to be used generally as an address pair
+pub struct TokenChild {
+	pub token: TokenId,
+	pub collection: CollectionId,
+}
+
+#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionStats {
 	pub created: u32,
 	pub destroyed: u32,
