@@ -138,6 +138,10 @@ pub mod pallet {
 			nft_id: RmrkNftId,
 			resource_id: RmrkResourceId,
 		},
+		PrioritySet {
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+		},
 	}
 
 	#[pallet::error]
@@ -776,6 +780,11 @@ pub mod pallet {
 				PropertyScope::Rmrk,
 				Self::rmrk_property(ResourcePriorities, &priorities.into_inner())?,
 			)?;
+
+			Self::deposit_event(Event::<T>::PrioritySet {
+				collection_id: rmrk_collection_id,
+				nft_id: rmrk_nft_id,
+			});
 
 			Ok(())
 		}
