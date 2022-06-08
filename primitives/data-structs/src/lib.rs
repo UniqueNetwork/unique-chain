@@ -784,7 +784,7 @@ impl<Value> PropertiesMap<Value> {
 		for byte in key.as_slice().iter() {
 			let byte = *byte;
 
-			if !byte.is_ascii_alphanumeric() && byte != b'_' && byte != b'-' {
+			if !byte.is_ascii_alphanumeric() && byte != b'_' && byte != b'-' && byte != b'.' {
 				return Err(PropertiesError::InvalidCharacterInPropertyKey);
 			}
 		}
