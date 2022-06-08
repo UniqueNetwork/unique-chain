@@ -23,7 +23,6 @@ import {evmToAddress} from '@polkadot/util-crypto';
 import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {alicesPublicKey} from '../accounts';
 import {default as usingApi, executeTransaction, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
 import {UpDataStructsRpcCollection, UpDataStructsCreateItemData, UpDataStructsProperty} from '@polkadot/types/lookup';
@@ -40,7 +39,7 @@ export type CrossAccountId = {
 
 export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {
   if (typeof input === 'string') {
-    if (input.length === 48 || input.length === 47) {
+    if (input.length >= 47) {
       return {Substrate: input};
     } else if (input.length === 42 && input.startsWith('0x')) {
       return {Ethereum: input.toLowerCase()};
@@ -363,7 +362,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     // tslint:disable-next-line:no-unused-expression
     expect(collection).to.be.not.null;
     expect(collectionCountAfter).to.be.equal(collectionCountBefore + 1, 'Error: NFT collection NOT created.');
-    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicesPublicKey));
+    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicePrivateKey));
     expect(utf16ToStr(collection.name.toJSON() as any)).to.be.equal(name);
     expect(utf16ToStr(collection.description.toJSON() as any)).to.be.equal(description);
     expect(hexToStr(collection.tokenPrefix.toJSON())).to.be.equal(tokenPrefix);
@@ -411,7 +410,7 @@ export async function createCollectionWithPropsExpectSuccess(params: Partial<Cre
     // tslint:disable-next-line:no-unused-expression
     expect(collection).to.be.not.null;
     expect(collectionCountAfter).to.be.equal(collectionCountBefore + 1, 'Error: NFT collection NOT created.');
-    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicesPublicKey));
+    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicePrivateKey));
     expect(utf16ToStr(collection.name.toJSON() as any)).to.be.equal(name);
     expect(utf16ToStr(collection.description.toJSON() as any)).to.be.equal(description);
     expect(hexToStr(collection.tokenPrefix.toJSON())).to.be.equal(tokenPrefix);

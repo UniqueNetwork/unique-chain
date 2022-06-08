@@ -24,7 +24,6 @@ import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
 import {getGenericResult} from './util/helpers';
 import waitNewBlocks from './substrate/wait-new-blocks';
 import getBalance from './substrate/get-balance';
-import {alicesPublicKey} from './accounts';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -144,7 +143,7 @@ describe('Integration test: Exchanging OPL with Karura', () => {
     let balanceBefore: bigint;
     
     await usingApi(async (api) => {
-      [balanceBefore] = await getBalance(api, [alicesPublicKey]);
+      [balanceBefore] = await getBalance(api, [alice.address]);
     });
 
     await usingApi(async (api) => {
@@ -181,7 +180,7 @@ describe('Integration test: Exchanging OPL with Karura', () => {
     await usingApi(async (api) => {
       // todo do something about instant sealing, where there might not be any new blocks
       await waitNewBlocks(api, 3);
-      const [balanceAfter] = await getBalance(api, [alicesPublicKey]);
+      const [balanceAfter] = await getBalance(api, [alice.address]);
       expect(balanceAfter > balanceBefore).to.be.true;
     });
   });
