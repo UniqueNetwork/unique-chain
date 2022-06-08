@@ -469,6 +469,8 @@ pub enum NestingRule {
 		#[derivative(Debug(format_with = "bounded::set_debug"))]
 		BoundedBTreeSet<CollectionId, ConstU32<16>>,
 	),
+	/// Used for tests
+	Permissive,
 }
 
 #[derive(Encode, Decode, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen)]

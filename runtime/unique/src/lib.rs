@@ -97,7 +97,8 @@ use polkadot_parachain::primitives::Sibling;
 use up_data_structs::{
 	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits, 
 	CollectionStats, RpcCollection, 
-	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping}
+	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
+	TokenChild,
 };
 use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
