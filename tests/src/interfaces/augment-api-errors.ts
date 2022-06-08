@@ -81,6 +81,14 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       CollectionFieldSizeExceeded: AugmentedError<ApiType>;
       /**
+       * Tried to access an external collection with an internal API
+       **/
+      CollectionIsExternal: AugmentedError<ApiType>;
+      /**
+       * Tried to access an internal collection with an external API
+       **/
+      CollectionIsInternal: AugmentedError<ApiType>;
+      /**
        * Collection limit bounds per collection exceeded
        **/
       CollectionLimitBoundsExceeded: AugmentedError<ApiType>;
@@ -438,6 +446,9 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     rmrkCore: {
+      CannotAcceptNonOwnedNft: AugmentedError<ApiType>;
+      CannotRejectNonOwnedNft: AugmentedError<ApiType>;
+      CannotSendToDescendentOrSelf: AugmentedError<ApiType>;
       CollectionFullOrLocked: AugmentedError<ApiType>;
       CollectionNotEmpty: AugmentedError<ApiType>;
       CollectionUnknown: AugmentedError<ApiType>;
@@ -445,7 +456,10 @@ declare module '@polkadot/api-base/types/errors' {
       NftTypeEncodeError: AugmentedError<ApiType>;
       NoAvailableCollectionId: AugmentedError<ApiType>;
       NoAvailableNftId: AugmentedError<ApiType>;
+      NonTransferable: AugmentedError<ApiType>;
       NoPermission: AugmentedError<ApiType>;
+      ResourceDoesntExist: AugmentedError<ApiType>;
+      ResourceNotPending: AugmentedError<ApiType>;
       RmrkPropertyKeyIsTooLong: AugmentedError<ApiType>;
       RmrkPropertyValueIsTooLong: AugmentedError<ApiType>;
       /**
