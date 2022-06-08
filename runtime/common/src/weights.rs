@@ -89,4 +89,12 @@ where
 	fn burn_from() -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(burn_from())
 	}
+
+	fn burn_recursively_self_raw() -> Weight {
+		max_weight_of!(burn_recursively_self_raw())
+	}
+
+	fn burn_recursively_breadth_raw(amount: u32) -> Weight {
+		max_weight_of!(burn_recursively_breadth_raw(amount))
+	}
 }

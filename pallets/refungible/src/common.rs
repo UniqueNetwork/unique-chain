@@ -17,12 +17,13 @@
 use core::marker::PhantomData;
 
 use sp_std::collections::btree_map::BTreeMap;
-use frame_support::{dispatch::DispatchResultWithPostInfo, fail, weights::Weight};
+use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
 use up_data_structs::{
 	CollectionId, TokenId, CreateItemExData, CreateRefungibleExData, budget::Budget, Property,
 	PropertyKey, PropertyValue, PropertyKeyPermission, CreateItemData,
 };
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
+use pallet_structure::Error as StructureError;
 use sp_runtime::DispatchError;
 use sp_std::{vec::Vec, vec};
 
@@ -113,6 +114,15 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn burn_from() -> Weight {
 		<SelfWeightOf<T>>::burn_from()
 	}
+
+	fn burn_recursively_self_raw() -> Weight {
+		// Read to get total balance
+		Self::burn_item() + T::DbWeight::get().reads(1)
+	}
+	fn burn_recursively_breadth_raw(_amount: u32) -> Weight {
+		// Refungible token can't have children
+		0
+	}
 }
 
 fn map_create_data<T: Config>(
@@ -202,6 +212,25 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		with_weight(
 			<Pallet<T>>::burn(self, &sender, token, amount),
 			<CommonWeights<T>>::burn_item(),
+		)
+	}
+
+	fn burn_item_recursively(
+		&self,
+		sender: T::CrossAccountId,
+		token: TokenId,
+		self_budget: &dyn Budget,
+		_breadth_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo {
+		ensure!(self_budget.consume(), <StructureError<T>>::DepthLimit,);
+		with_weight(
+			<Pallet<T>>::burn(
+				self,
+				&sender,
+				token,
+				<Balance<T>>::get((self.id, token, &sender)),
+			),
+			<CommonWeights<T>>::burn_recursively_self_raw(),
 		)
 	}
 
