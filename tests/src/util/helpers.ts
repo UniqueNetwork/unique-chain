@@ -18,6 +18,7 @@ import '../interfaces/augment-api-rpc';
 import '../interfaces/augment-api-query';
 import {ApiPromise, Keyring} from '@polkadot/api';
 import type {AccountId, EventRecord, Event} from '@polkadot/types/interfaces';
+import type {GenericEventData} from '@polkadot/types';
 import {AnyTuple, IEvent, IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
 import BN from 'bn.js';
@@ -88,9 +89,10 @@ const MILLIUNIQUE = 1_000n * MICROUNIQUE;
 const CENTIUNIQUE = 10n * MILLIUNIQUE;
 export const UNIQUE = 100n * CENTIUNIQUE;
 
-type GenericResult = {
-  success: boolean,
-};
+interface GenericResult<T> {
+  success: boolean;
+  data: T | null;
+}
 
 interface CreateCollectionResult {
   success: boolean;
@@ -170,20 +172,27 @@ export function getEvent<T extends Event>(events: EventRecord[], check: (event: 
   return event.event as T;
 }
 
-export function getGenericResult(events: EventRecord[]): GenericResult {
-  const result: GenericResult = {
-    success: false,
-  };
-  events.forEach(({event: {method}}) => {
-    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
+export function getGenericResult<T>(
+  events: EventRecord[],
+  expectSection?: string,
+  expectMethod?: string,
+  extractAction?: (data: GenericEventData) => T,
+): GenericResult<T> {
+  let success = false;
+  let successData = null;
+  events.forEach(({event: {data, method, section}}) => {
     if (method === 'ExtrinsicSuccess') {
-      result.success = true;
+      success = true;
+    } else if ((expectSection == section) && (expectMethod == method)) {
+      successData = extractAction!(data);
     }
   });
+  const result: GenericResult<T> = {
+    success,
+    data: successData,
+  };
   return result;
 }
-
-
 
 export function getCreateCollectionResult(events: EventRecord[]): CreateCollectionResult {
   let success = false;
