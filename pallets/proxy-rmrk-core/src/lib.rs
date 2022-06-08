@@ -105,6 +105,17 @@ pub mod pallet {
 			nft_id: RmrkNftId,
 			approval_required: bool,
 		},
+		NFTAccepted {
+			sender: T::AccountId,
+			recipient: RmrkAccountIdOrCollectionNftTuple<T::AccountId>,
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+		},
+		NFTRejected {
+			sender: T::AccountId,
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+		},
 		PropertySet {
 			collection_id: RmrkCollectionId,
 			maybe_nft_id: Option<RmrkNftId>,
@@ -486,7 +497,7 @@ pub mod pallet {
 			new_owner: RmrkAccountIdOrCollectionNftTuple<T::AccountId>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
-			let cross_sender = T::CrossAccountId::from_sub(sender);
+			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
 
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
 			let nft_id = rmrk_nft_id.into();
@@ -494,9 +505,9 @@ pub mod pallet {
 			let collection =
 				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
 
-			let new_owner = match new_owner {
-				RmrkAccountIdOrCollectionNftTuple::AccountId(account_id) => {
-					T::CrossAccountId::from_sub(account_id)
+			let new_cross_owner = match new_owner {
+				RmrkAccountIdOrCollectionNftTuple::AccountId(ref account_id) => {
+					T::CrossAccountId::from_sub(account_id.clone())
 				}
 				RmrkAccountIdOrCollectionNftTuple::CollectionAndNftTuple(
 					target_collection_id,
@@ -513,7 +524,7 @@ pub mod pallet {
 
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			<PalletNft<T>>::transfer(&collection, &cross_sender, &new_owner, nft_id, &budget)
+			<PalletNft<T>>::transfer(&collection, &cross_sender, &new_cross_owner, nft_id, &budget)
 				.map_err(|err| {
 					if err == <CommonError<T>>::OnlyOwnerAllowedToNest.into() {
 						<Error<T>>::CannotAcceptNonOwnedNft.into()
@@ -529,6 +540,13 @@ pub mod pallet {
 				Self::rmrk_property(PendingNftAccept, &false)?,
 			)?;
 
+			Self::deposit_event(Event::NFTAccepted {
+				sender,
+				recipient: new_owner,
+				collection_id: rmrk_collection_id,
+				nft_id: rmrk_nft_id,
+			});
+
 			Ok(())
 		}
 
@@ -536,14 +554,14 @@ pub mod pallet {
 		#[transactional]
 		pub fn reject_nft(
 			origin: OriginFor<T>,
-			collection_id: RmrkCollectionId,
-			nft_id: RmrkNftId,
+			rmrk_collection_id: RmrkCollectionId,
+			rmrk_nft_id: RmrkNftId,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let cross_sender = T::CrossAccountId::from_sub(sender);
+			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
 
-			let collection_id = Self::unique_collection_id(collection_id)?;
-			let nft_id = nft_id.into();
+			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
+			let nft_id = rmrk_nft_id.into();
 
 			Self::destroy_nft(cross_sender, collection_id, nft_id).map_err(|err| {
 				if err == <CommonError<T>>::NoPermission.into()
@@ -554,6 +572,12 @@ pub mod pallet {
 					Self::map_unique_err_to_proxy(err)
 				}
 			})?;
+
+			Self::deposit_event(Event::NFTRejected {
+				sender,
+				collection_id: rmrk_collection_id,
+				nft_id: rmrk_nft_id,
+			});
 
 			Ok(())
 		}
