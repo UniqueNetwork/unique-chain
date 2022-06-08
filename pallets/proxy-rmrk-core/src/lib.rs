@@ -130,6 +130,14 @@ pub mod pallet {
 			nft_id: RmrkNftId,
 			resource_id: RmrkResourceId,
 		},
+		ResourceAccepted {
+			nft_id: RmrkNftId,
+			resource_id: RmrkResourceId,
+		},
+		ResourceRemovalAccepted {
+			nft_id: RmrkNftId,
+			resource_id: RmrkResourceId,
+		},
 	}
 
 	#[pallet::error]
@@ -627,6 +635,11 @@ pub mod pallet {
 				Self::rmrk_property(PendingResourceAccept, &false)?,
 			)?;
 
+			Self::deposit_event(Event::<T>::ResourceAccepted {
+				nft_id: rmrk_nft_id,
+				resource_id: rmrk_resource_id,
+			});
+
 			Ok(())
 		}
 
@@ -675,6 +688,11 @@ pub mod pallet {
 
 			<PalletNft<T>>::burn(&resource_collection, &cross_sender, rmrk_resource_id.into())
 				.map_err(Self::map_unique_err_to_proxy)?;
+
+			Self::deposit_event(Event::<T>::ResourceRemovalAccepted {
+				nft_id: rmrk_nft_id,
+				resource_id: rmrk_resource_id,
+			});
 
 			Ok(())
 		}
