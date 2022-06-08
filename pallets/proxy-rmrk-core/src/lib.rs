@@ -536,14 +536,20 @@ pub mod pallet {
 
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			<PalletNft<T>>::transfer(&collection, &cross_sender, &new_cross_owner, nft_id, &budget)
-				.map_err(|err| {
-					if err == <CommonError<T>>::OnlyOwnerAllowedToNest.into() {
-						<Error<T>>::CannotAcceptNonOwnedNft.into()
-					} else {
-						Self::map_unique_err_to_proxy(err)
-					}
-				})?;
+			<PalletNft<T>>::transfer(
+				&collection,
+				&cross_sender,
+				&new_cross_owner,
+				nft_id,
+				&budget,
+			)
+			.map_err(|err| {
+				if err == <CommonError<T>>::OnlyOwnerAllowedToNest.into() {
+					<Error<T>>::CannotAcceptNonOwnedNft.into()
+				} else {
+					Self::map_unique_err_to_proxy(err)
+				}
+			})?;
 
 			<PalletNft<T>>::set_scoped_token_property(
 				collection.id,
