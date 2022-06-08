@@ -81,13 +81,14 @@ export default {
       ],
       'Vec<RmrkTraitsResourceResourceInfo>',
     ),
-    nftResourcePriorities: fn(
+    nftResourcePriority: fn(
       'Get NFT resource priorities',
       [
         {name: 'collectionId', type: 'u32'},
         {name: 'nftId', type: 'u32'},
+        {name: 'resourceId', type: 'u32'},
       ],
-      'Vec<Bytes>',
+      'Option<u32>',
     ),
     base: fn(
       'Get base info',
