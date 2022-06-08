@@ -88,12 +88,10 @@ describe('integration test: ext. createCollection():', () => {
     });
   });
 
-  it('Create new collection is not read only', async () => {
+  it('New collection is not external', async () => {
     await usingApi(async api => {
       const alice = privateKey('//Alice');
-      const tx = api.tx.unique.createCollectionEx({
-        readOnly: true,
-      });
+      const tx = api.tx.unique.createCollectionEx({ });
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateCollectionResult(events);
 
