@@ -28,12 +28,13 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
 use sp_runtime::DispatchError;
+use fp_self_contained::*;
 // #[cfg(any(feature = "std", test))]
 // pub use sp_runtime::BuildStorage;
 
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion, Zero},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion, Zero, Member},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, RuntimeAppPublic,
 };
@@ -50,6 +51,7 @@ pub use pallet_transaction_payment::{
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_evm::{
 	EnsureAddressTruncated, HashedAddressMapping, Runner, account::CrossAccountId as _,
+	OnMethodCall, Account as EVMAccount, FeeCalculator, GasWeightMapping,
 };
 pub use frame_support::{
 	construct_runtime, match_types,
@@ -58,7 +60,7 @@ pub use frame_support::{
 	traits::{
 		tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Everything,
 		Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier,
-		OnUnbalanced, Randomness, FindAuthor,
+		OnUnbalanced, Randomness, FindAuthor, ConstU32, Imbalance, PrivilegeCmp,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -66,7 +68,14 @@ pub use frame_support::{
 		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients, ConstantMultiplier,
 	},
 };
-use up_data_structs::*;
+use pallet_unq_scheduler::DispatchCall;
+use up_data_structs::{
+	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits,
+	CollectionStats, RpcCollection,
+	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
+	TokenChild,
+};
+
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
 use frame_system::{
@@ -77,13 +86,17 @@ use sp_arithmetic::{
 	traits::{BaseArithmetic, Unsigned},
 };
 use smallvec::smallvec;
+// use scale_info::TypeInfo;
 use codec::{Encode, Decode};
-use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
-	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating},
+	traits::{
+		Applyable, BlockNumberProvider, Dispatchable, PostDispatchInfoOf, DispatchInfoOf,
+		Saturating, CheckedConversion,
+	},
+	generic::Era,
 	transaction_validity::TransactionValidityError,
-	SaturatedConversion,
+	DispatchErrorWithPostInfo, SaturatedConversion,
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
@@ -101,7 +114,7 @@ use xcm_builder::{
 	ParentIsPreset,
 };
 use xcm_executor::{Config, XcmExecutor, Assets};
-use sp_std::{marker::PhantomData};
+use sp_std::{cmp::Ordering, marker::PhantomData};
 
 use xcm::latest::{
 	//	Xcm,
@@ -112,9 +125,16 @@ use xcm::latest::{
 };
 use xcm_executor::traits::{MatchesFungible, WeightTrader};
 //use xcm_executor::traits::MatchesFungible;
-use sp_runtime::traits::CheckedConversion;
 
-use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
+use unique_runtime_common::{
+	impl_common_runtime_apis,
+	types::*,
+	constants::*,
+	dispatch::{CollectionDispatchT, CollectionDispatch},
+	sponsoring::UniqueSponsorshipHandler,
+	eth_sponsoring::UniqueEthSponsorshipHandler,
+	weights::CommonWeights,
+};
 
 pub const RUNTIME_NAME: &str = "opal";
 pub const TOKEN_SYMBOL: &str = "OPL";
@@ -169,7 +189,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!(RUNTIME_NAME),
 	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 921000,
+	spec_version: 922000,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -243,8 +263,8 @@ parameter_types! {
 
 pub struct FixedFee;
 impl FeeCalculator for FixedFee {
-	fn min_gas_price() -> U256 {
-		MIN_GAS_PRICE.into()
+	fn min_gas_price() -> (U256, u64) {
+		(MIN_GAS_PRICE.into(), 0)
 	}
 }
 
@@ -295,8 +315,9 @@ impl pallet_evm::Config for Runtime {
 	type Event = Event;
 	type OnMethodCall = (
 		pallet_evm_migration::OnMethodCall<Self>,
-		pallet_unique::UniqueErcSupport<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
+		CollectionDispatchT<Self>,
+		pallet_unique::eth::CollectionHelpersOnMethodCall<Self>,
 	);
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
@@ -396,12 +417,13 @@ parameter_types! {
 	// pub const ExistentialDeposit: u128 = 500;
 	pub const ExistentialDeposit: u128 = 0;
 	pub const MaxLocks: u32 = 50;
+	pub const MaxReserves: u32 = 50;
 }
 
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
+	type MaxReserves = MaxReserves;
+	type ReserveIdentifier = [u8; 16];
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// The ubiquitous event type.
@@ -811,10 +833,7 @@ pub type XcmRouter = (
 	XcmpQueue,
 );
 
-impl pallet_evm_coder_substrate::Config for Runtime {
-	type EthereumTransactionSender = pallet_ethereum::Pallet<Self>;
-	type GasWeightMapping = FixedGasWeightMapping;
-}
+impl pallet_evm_coder_substrate::Config for Runtime {}
 
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
@@ -867,10 +886,22 @@ parameter_types! {
 }
 
 impl pallet_common::Config for Runtime {
+	type WeightInfo = pallet_common::weights::SubstrateWeight<Self>;
 	type Event = Event;
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
+	type CollectionDispatch = CollectionDispatchT<Self>;
+
+	type EvmTokenAddressMapping = EvmTokenAddressMapping;
+	type CrossTokenAddressMapping = CrossTokenAddressMapping<Self::AccountId>;
+	type ContractAddress = EvmCollectionHelpersAddress;
+}
+
+impl pallet_structure::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type WeightInfo = pallet_structure::weights::SubstrateWeight<Self>;
 }
 
 impl pallet_fungible::Config for Runtime {
@@ -883,9 +914,20 @@ impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
 }
 
+/*
+TODO free RMRK!
+impl pallet_proxy_rmrk_core::Config for Runtime {
+	type Event = Event;
+}
+
+impl pallet_proxy_rmrk_equip::Config for Runtime {
+	type Event = Event;
+}*/
+
 impl pallet_unique::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
+	type CommonWeightInfo = CommonWeights<Self>;
 }
 
 parameter_types! {
@@ -900,33 +942,156 @@ impl pallet_inflation::Config for Runtime {
 	type BlockNumberProvider = RelayChainBlockNumberProvider<Runtime>;
 }
 
-// parameter_types! {
-// 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(50) *
-// 		RuntimeBlockWeights::get().max_block;
-// 	pub const MaxScheduledPerBlock: u32 = 50;
-// }
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(50) *
+		RuntimeBlockWeights::get().max_block;
+	pub const MaxScheduledPerBlock: u32 = 50;
+}
+
+type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
+use frame_support::traits::NamedReservableCurrency;
+
+fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> SignedExtraScheduler {
+	(
+		frame_system::CheckSpecVersion::<Runtime>::new(),
+		frame_system::CheckGenesis::<Runtime>::new(),
+		frame_system::CheckEra::<Runtime>::from(Era::Immortal),
+		frame_system::CheckNonce::<Runtime>::from(frame_system::Pallet::<Runtime>::account_nonce(
+			from,
+		)),
+		frame_system::CheckWeight::<Runtime>::new(),
+		// sponsoring transaction logic
+		// pallet_charge_transaction::ChargeTransactionPayment::<Runtime>::new(0),
+	)
+}
+
+pub struct SchedulerPaymentExecutor;
+impl<T: frame_system::Config + pallet_unq_scheduler::Config, SelfContainedSignedInfo>
+	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
+where
+	<T as frame_system::Config>::Call: Member
+		+ Dispatchable<Origin = Origin, Info = DispatchInfo>
+		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>
+		+ GetDispatchInfo
+		+ From<frame_system::Call<Runtime>>,
+	SelfContainedSignedInfo: Send + Sync + 'static,
+	Call: From<<T as frame_system::Config>::Call>
+		+ From<<T as pallet_unq_scheduler::Config>::Call>
+		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
+	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
+{
+	fn dispatch_call(
+		signer: <T as frame_system::Config>::AccountId,
+		call: <T as pallet_unq_scheduler::Config>::Call,
+	) -> Result<
+		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
+		TransactionValidityError,
+	> {
+		let dispatch_info = call.get_dispatch_info();
+		let extrinsic = fp_self_contained::CheckedExtrinsic::<
+			AccountId,
+			Call,
+			SignedExtraScheduler,
+			SelfContainedSignedInfo,
+		> {
+			signed:
+				CheckedSignature::<AccountId, SignedExtraScheduler, SelfContainedSignedInfo>::Signed(
+					signer.clone().into(),
+					get_signed_extras(signer.into()),
+				),
+			function: call.into(),
+		};
+
+		extrinsic.apply::<Runtime>(&dispatch_info, 0)
+	}
+
+	fn reserve_balance(
+		id: [u8; 16],
+		sponsor: <T as frame_system::Config>::AccountId,
+		call: <T as pallet_unq_scheduler::Config>::Call,
+		count: u32,
+	) -> Result<(), DispatchError> {
+		let dispatch_info = call.get_dispatch_info();
+		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0)
+			.saturating_mul(count.into());
+
+		<Balances as NamedReservableCurrency<AccountId>>::reserve_named(
+			&id,
+			&(sponsor.into()),
+			weight,
+		)
+	}
+
+	fn pay_for_call(
+		id: [u8; 16],
+		sponsor: <T as frame_system::Config>::AccountId,
+		call: <T as pallet_unq_scheduler::Config>::Call,
+	) -> Result<u128, DispatchError> {
+		let dispatch_info = call.get_dispatch_info();
+		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0);
+		Ok(
+			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
+				&id,
+				&(sponsor.into()),
+				weight,
+			),
+		)
+	}
+
+	fn cancel_reserve(
+		id: [u8; 16],
+		sponsor: <T as frame_system::Config>::AccountId,
+	) -> Result<u128, DispatchError> {
+		Ok(
+			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
+				&id,
+				&(sponsor.into()),
+				u128::MAX,
+			),
+		)
+	}
+}
+
+parameter_types! {
+	pub const NoPreimagePostponement: Option<u32> = Some(10);
+	pub const Preimage: Option<u32> = Some(10);
+}
+
+/// Used the compare the privilege of an origin inside the scheduler.
+pub struct OriginPrivilegeCmp;
+
+impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
+	fn cmp_privilege(_left: &OriginCaller, _right: &OriginCaller) -> Option<Ordering> {
+		Some(Ordering::Equal)
+	}
+}
+
+impl pallet_unq_scheduler::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type Currency = Balances;
+	type PalletsOrigin = OriginCaller;
+	type Call = Call;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureSigned<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type WeightInfo = ();
+	type CallExecutor = SchedulerPaymentExecutor;
+	type OriginPrivilegeCmp = OriginPrivilegeCmp;
+	type PreimageProvider = ();
+	type NoPreimagePostponement = NoPreimagePostponement;
+}
 
 type EvmSponsorshipHandler = (
-	pallet_unique::UniqueEthSponsorshipHandler<Runtime>,
+	UniqueEthSponsorshipHandler<Runtime>,
 	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
 );
+
 type SponsorshipHandler = (
-	pallet_unique::UniqueSponsorshipHandler<Runtime>,
+	UniqueSponsorshipHandler<Runtime>,
 	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
 	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
 );
-
-// impl pallet_unq_scheduler::Config for Runtime {
-// 	type Event = Event;
-// 	type Origin = Origin;
-// 	type PalletsOrigin = OriginCaller;
-// 	type Call = Call;
-// 	type MaximumWeight = MaximumSchedulerWeight;
-// 	type ScheduleOrigin = EnsureSigned<AccountId>;
-// 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-// 	type SponsorshipHandler = SponsorshipHandler;
-// 	type WeightInfo = ();
-// }
 
 impl pallet_evm_transaction_payment::Config for Runtime {
 	type EvmSponsorshipHandler = EvmSponsorshipHandler;
@@ -945,6 +1110,11 @@ parameter_types! {
 	// 0x842899ECF380553E8a4de75bF534cdf6fBF64049
 	pub const HelpersContractAddress: H160 = H160([
 		0x84, 0x28, 0x99, 0xec, 0xf3, 0x80, 0x55, 0x3e, 0x8a, 0x4d, 0xe7, 0x5b, 0xf5, 0x34, 0xcd, 0xf6, 0xfb, 0xf6, 0x40, 0x49,
+	]);
+
+	// 0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f
+	pub const EvmCollectionHelpersAddress: H160 = H160([
+		0x6c, 0x4e, 0x9f, 0xe1, 0xae, 0x37, 0xa4, 0x1e, 0x93, 0xce, 0xe4, 0x29, 0xe8, 0xe1, 0x88, 0x1a, 0xbd, 0xcb, 0xb5, 0x4f,
 	]);
 }
 
@@ -985,7 +1155,7 @@ construct_runtime!(
 		// Unique Pallets
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
 		Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
-		// Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
+		Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 		// free = 63
 		Charging: pallet_charge_transaction::{Pallet, Call, Storage } = 64,
 		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
@@ -993,6 +1163,11 @@ construct_runtime!(
 		Fungible: pallet_fungible::{Pallet, Storage} = 67,
 		Refungible: pallet_refungible::{Pallet, Storage} = 68,
 		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
+		Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
+		/* TODO free RMRK!
+		RmrkCore: pallet_proxy_rmrk_core::{Pallet, Call, Storage, Event<T>} = 71,
+		RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
+		*/
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
@@ -1047,8 +1222,16 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
+	ChargeTransactionPayment,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
+	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
+);
+pub type SignedExtraScheduler = (
+	frame_system::CheckSpecVersion<Runtime>,
+	frame_system::CheckGenesis<Runtime>,
+	frame_system::CheckEra<Runtime>,
+	frame_system::CheckNonce<Runtime>,
+	frame_system::CheckWeight<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
@@ -1087,9 +1270,14 @@ impl fp_self_contained::SelfContainedCall for Call {
 		}
 	}
 
-	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
+	fn validate_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+		dispatch_info: &DispatchInfoOf<Call>,
+		len: usize,
+	) -> Option<TransactionValidity> {
 		match self {
-			Call::Ethereum(call) => call.validate_self_contained(info),
+			Call::Ethereum(call) => call.validate_self_contained(info, dispatch_info, len),
 			_ => None,
 		}
 	}
@@ -1119,12 +1307,10 @@ impl fp_self_contained::SelfContainedCall for Call {
 
 macro_rules! dispatch_unique_runtime {
 	($collection:ident.$method:ident($($name:ident),*)) => {{
-		use pallet_unique::dispatch::Dispatched;
-
-		let collection = Dispatched::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
+		let collection = <Runtime as pallet_common::Config>::CollectionDispatch::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
 		let dispatch = collection.as_dyn();
 
-		Ok(dispatch.$method($($name),*))
+		Ok::<_, DispatchError>(dispatch.$method($($name),*))
 	}};
 }
 

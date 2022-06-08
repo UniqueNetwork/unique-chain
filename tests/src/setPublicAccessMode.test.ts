@@ -19,7 +19,6 @@ import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import usingApi, {submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import {
   addToAllowListExpectSuccess,
@@ -41,9 +40,9 @@ let bob: IKeyringPair;
 
 describe('Integration Test setPublicAccessMode(): ', () => {
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -73,7 +72,7 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
     await usingApi(async (api: ApiPromise) => {
       // tslint:disable-next-line: radix
       const collectionId = await getCreatedCollectionCount(api) + 1;
-      const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
+      const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: 'AllowList'});
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });
@@ -83,7 +82,7 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
       await destroyCollectionExpectSuccess(collectionId);
-      const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
+      const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: 'AllowList'});
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
     });
   });
@@ -100,7 +99,7 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
     await usingApi(async (api: ApiPromise) => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
-      const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
+      const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: 'AllowList'});
       await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
     });
   });
@@ -108,9 +107,9 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
 
 describe('Negative Integration Test ext. collection admin setPublicAccessMode(): ', () => {
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
   it('setPublicAccessMode by collection admin', async () => {
@@ -118,7 +117,7 @@ describe('Negative Integration Test ext. collection admin setPublicAccessMode():
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
       await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
+      const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: 'AllowList'});
       await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
     });
   });

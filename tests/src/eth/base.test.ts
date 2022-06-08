@@ -14,11 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, deployFlipper, ethBalanceViaSub, GAS_ARGS, itWeb3, recordEthFee, usingWeb3} from './util/helpers';
+import {
+  collectionIdToAddress, 
+  createEthAccount, 
+  createEthAccountWithBalance, 
+  deployFlipper, 
+  ethBalanceViaSub, 
+  GAS_ARGS, 
+  itWeb3, 
+  recordEthFee, 
+  usingWeb3,
+} from './util/helpers';
 import {expect} from 'chai';
 import {createCollectionExpectSuccess, createItemExpectSuccess, UNIQUE} from '../util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
-import privateKey from '../substrate/privateKey';
 import {Contract} from 'web3-eth-contract';
 import Web3 from 'web3';
 
@@ -40,11 +49,11 @@ describe('Contract calls', () => {
     expect(cost - balanceB < BigInt(0.2 * Number(UNIQUE))).to.be.true;
   });
 
-  itWeb3('NFT transfer is close to 0.15 UNQ', async ({web3, api}) => {
+  itWeb3('NFT transfer is close to 0.15 UNQ', async ({web3, api, privateKeyWrapper}) => {
     const caller = await createEthAccountWithBalance(api, web3);
     const receiver = createEthAccount(web3);
 
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
@@ -79,7 +88,7 @@ describe('ERC165 tests', async () => {
       minter = createEthAccount(web3);
     });
   });
-  
+
   itWeb3('interfaceID == 0xffffffff always false', async ({web3}) => {
     expect(await contract(web3).methods.supportsInterface('0xffffffff').call()).to.be.false;
   });
@@ -101,7 +110,7 @@ describe('ERC165 tests', async () => {
   });
 
   itWeb3('ERC721UniqueExtensions support', async ({web3}) => {
-    expect(await contract(web3).methods.supportsInterface('0xe562194d').call()).to.be.true;
+    expect(await contract(web3).methods.supportsInterface('0xd74d154f').call()).to.be.true;
   });
 
   itWeb3('ERC721Burnable support', async ({web3}) => {

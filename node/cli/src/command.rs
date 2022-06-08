@@ -49,6 +49,7 @@ use crate::service::OpalRuntimeExecutor;
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use cumulus_client_service::genesis::generate_genesis_block;
+use std::{future::Future, pin::Pin};
 use log::info;
 use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
@@ -373,7 +374,7 @@ pub fn run() -> Result<()> {
 		}
 		#[cfg(feature = "unique-runtime")]
 		Some(Subcommand::Benchmark(cmd)) => {
-			use frame_benchmarking_cli::BenchmarkCmd;
+			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
@@ -405,7 +406,9 @@ pub fn run() -> Result<()> {
 
 					cmd.run(config, partials.client.clone(), db, storage)
 				}),
-				BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| cmd.run(&config)),
+				BenchmarkCmd::Machine(cmd) => {
+					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()))
+				}
 				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
 			}
 		}
@@ -413,11 +416,55 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Benchmark(..)) => {
 			Err("benchmarking is only available with unique runtime enabled".into())
 		}
+		Some(Subcommand::TryRuntime(cmd)) => {
+			if cfg!(feature = "try-runtime") {
+				let runner = cli.create_runner(cmd)?;
+
+				// grab the task manager.
+				let registry = &runner
+					.config()
+					.prometheus_config
+					.as_ref()
+					.map(|cfg| &cfg.registry);
+				let task_manager =
+					sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
+						.map_err(|e| format!("Error: {:?}", e))?;
+
+				runner.async_run(|config| -> Result<(Pin<Box<dyn Future<Output = _>>>, _)> {
+					Ok((
+						match config.chain_spec.runtime_id() {
+							#[cfg(feature = "unique-runtime")]
+							RuntimeId::Unique => Box::pin(cmd.run::<Block, UniqueRuntimeExecutor>(config)),
+
+							#[cfg(feature = "quartz-runtime")]
+							RuntimeId::Quartz => Box::pin(cmd.run::<Block, QuartzRuntimeExecutor>(config)),
+
+							RuntimeId::Opal => {
+								Box::pin(cmd.run::<Block, OpalRuntimeExecutor>(config))
+							}
+							RuntimeId::Unknown(chain) => return Err(no_runtime_err!(chain).into()),
+						},
+						task_manager,
+					))
+				})
+			} else {
+				Err("Try-runtime must be enabled by `--features try-runtime`.".into())
+			}
+		}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
+				let hwbench = if !cli.no_hardware_benchmarks {
+					config.database.path().map(|database_path| {
+						let _ = std::fs::create_dir_all(&database_path);
+						sc_sysinfo::gather_hwbench(Some(database_path))
+					})
+				} else {
+					None
+				};
+
 				let extensions = chain_spec::Extensions::try_get(&*config.chain_spec);
 
 				let service_id = config.chain_spec.service_id();
@@ -481,7 +528,7 @@ pub fn run() -> Result<()> {
 				);
 
 				start_node_using_chain_runtime! {
-					start_node(config, polkadot_config, collator_options, para_id)
+					start_node(config, polkadot_config, collator_options, para_id, hwbench)
 						.await
 						.map(|r| r.0)
 						.map_err(Into::into)

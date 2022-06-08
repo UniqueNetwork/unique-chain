@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsCollection, UpDataStructsCollectionLimits, UpDataStructsCollectionStats } from './unique';
+import type { PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsCollectionLimits, UpDataStructsCollectionStats, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, UpDataStructsRpcCollection, UpDataStructsTokenChild, UpDataStructsTokenData } from './default';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u128, u32, u64 } from '@polkadot/types-codec';
@@ -18,7 +18,7 @@ import type { CreatedBlock } from '@polkadot/types/interfaces/engine';
 import type { EthAccount, EthCallRequest, EthFilter, EthFilterChanges, EthLog, EthReceipt, EthRichBlock, EthSubKind, EthSubParams, EthSyncStatus, EthTransaction, EthTransactionRequest, EthWork } from '@polkadot/types/interfaces/eth';
 import type { Extrinsic } from '@polkadot/types/interfaces/extrinsics';
 import type { EncodedFinalityProofs, JustificationNotification, ReportedRoundStates } from '@polkadot/types/interfaces/grandpa';
-import type { MmrLeafProof } from '@polkadot/types/interfaces/mmr';
+import type { MmrLeafBatchProof, MmrLeafProof } from '@polkadot/types/interfaces/mmr';
 import type { StorageKind } from '@polkadot/types/interfaces/offchain';
 import type { FeeDetails, RuntimeDispatchInfo } from '@polkadot/types/interfaces/payment';
 import type { RpcMethods } from '@polkadot/types/interfaces/rpc';
@@ -355,9 +355,13 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
     };
     mmr: {
       /**
+       * Generate MMR proof for the given leaf indices.
+       **/
+      generateBatchProof: AugmentedRpc<(leafIndices: Vec<u64> | (u64 | AnyNumber | Uint8Array)[], at?: BlockHash | string | Uint8Array) => Observable<MmrLeafProof>>;
+      /**
        * Generate MMR proof for given leaf index.
        **/
-      generateProof: AugmentedRpc<(leafIndex: u64 | AnyNumber | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<MmrLeafProof>>;
+      generateProof: AugmentedRpc<(leafIndex: u64 | AnyNumber | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<MmrLeafBatchProof>>;
     };
     net: {
       /**
@@ -601,7 +605,11 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get collection by specified id
        **/
-      collectionById: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsCollection>>>;
+      collectionById: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsRpcCollection>>>;
+      /**
+       * Get collection properties
+       **/
+      collectionProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
       /**
        * Get collection stats
        **/
@@ -627,13 +635,37 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       nextSponsored: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<u64>>>;
       /**
+       * Get property permissions
+       **/
+      propertyPermissions: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsPropertyKeyPermission>>>;
+      /**
+       * Get tokens nested directly into the token
+       **/
+      tokenChildren: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsTokenChild>>>;
+      /**
+       * Get token data
+       **/
+      tokenData: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<UpDataStructsTokenData>>;
+      /**
        * Check if token exists
        **/
       tokenExists: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<bool>>;
       /**
        * Get token owner
        **/
-      tokenOwner: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<PalletEvmAccountBasicCrossAccountIdRepr>>;
+      tokenOwner: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<PalletEvmAccountBasicCrossAccountIdRepr>>>;
+      /**
+       * Get token properties
+       **/
+      tokenProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
+      /**
+       * Get token owner, in case of nested token - find parent recursive
+       **/
+      topmostTokenOwner: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<PalletEvmAccountBasicCrossAccountIdRepr>>>;
+      /**
+       * Get amount of unique collection tokens
+       **/
+      totalSupply: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
       /**
        * Get token variable metadata
        **/

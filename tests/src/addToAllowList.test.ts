@@ -17,7 +17,6 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import usingApi, {submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import {
   addToAllowListExpectSuccess,
@@ -42,9 +41,9 @@ let charlie: IKeyringPair;
 describe('Integration Test ext. addToAllowList()', () => {
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -65,10 +64,10 @@ describe('Integration Test ext. addToAllowList()', () => {
 describe('Negative Integration Test ext. addToAllowList()', () => {
 
   it('Allow list an address in the collection that does not exist', async () => {
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       // tslint:disable-next-line: no-bitwise
       const collectionId = await getCreatedCollectionCount(api) + 1;
-      const bob = privateKey('//Bob');
+      const bob = privateKeyWrapper('//Bob');
 
       const tx = api.tx.unique.addToAllowList(collectionId, normalizeAccountId(bob.address));
       await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
@@ -76,9 +75,9 @@ describe('Negative Integration Test ext. addToAllowList()', () => {
   });
 
   it('Allow list an address in the collection that was destroyed', async () => {
-    await usingApi(async (api) => {
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       // tslint:disable-next-line: no-bitwise
       const collectionId = await createCollectionExpectSuccess();
       await destroyCollectionExpectSuccess(collectionId);
@@ -88,9 +87,9 @@ describe('Negative Integration Test ext. addToAllowList()', () => {
   });
 
   it('Allow list an address in the collection that does not have allow list access enabled', async () => {
-    await usingApi(async (api) => {
-      const alice = privateKey('//Alice');
-      const ferdie = privateKey('//Ferdie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const ferdie = privateKeyWrapper('//Ferdie');
       const collectionId = await createCollectionExpectSuccess();
       await enableAllowListExpectSuccess(alice, collectionId);
       await enablePublicMintingExpectSuccess(alice, collectionId);
@@ -104,10 +103,10 @@ describe('Negative Integration Test ext. addToAllowList()', () => {
 describe('Integration Test ext. addToAllowList() with collection admin permissions:', () => {
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 

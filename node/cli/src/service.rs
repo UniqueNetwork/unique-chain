@@ -65,6 +65,12 @@ use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
 use unique_runtime_common::types::{AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block};
 
+// RMRK
+/* TODO free RMRK! use up_data_structs::{
+	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo,
+	RmrkPartType, RmrkTheme,
+};*/
+
 /// Unique native executor instance.
 #[cfg(feature = "unique-runtime")]
 pub struct UniqueRuntimeExecutor;
@@ -148,7 +154,7 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backen
 
 	Ok(Arc::new(fc_db::Backend::<Block>::new(
 		&fc_db::DatabaseSettings {
-			source: fc_db::DatabaseSettingsSrc::RocksDb {
+			source: fc_db::DatabaseSource::RocksDb {
 				path: database_dir,
 				cache_size: 0,
 			},
@@ -298,6 +304,7 @@ async fn build_relay_chain_interface(
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 	task_manager: &mut TaskManager,
 	collator_options: CollatorOptions,
+	hwbench: Option<sc_sysinfo::HwBench>,
 ) -> RelayChainResult<(
 	Arc<(dyn RelayChainInterface + 'static)>,
 	Option<CollatorPair>,
@@ -312,6 +319,7 @@ async fn build_relay_chain_interface(
 			parachain_config,
 			telemetry_worker_handle,
 			task_manager,
+			hwbench,
 		),
 	}
 }
@@ -327,6 +335,7 @@ async fn start_node_impl<Runtime, RuntimeApi, ExecutorDispatch, BIQ, BIC>(
 	id: ParaId,
 	build_import_queue: BIQ,
 	build_consensus: BIC,
+	hwbench: Option<sc_sysinfo::HwBench>,
 ) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, ExecutorDispatch>>)>
 where
 	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
@@ -345,6 +354,18 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
+		/* TODO free RMRK!
+		+ rmrk_rpc::RmrkApi<
+			Block,
+			AccountId,
+			RmrkCollectionInfo<AccountId>,
+			RmrkInstanceInfo<AccountId>,
+			RmrkResourceInfo,
+			RmrkPropertyInfo,
+			RmrkBaseInfo<AccountId>,
+			RmrkPartType,
+			RmrkTheme,
+		>*/
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
@@ -392,6 +413,7 @@ where
 		telemetry_worker_handle,
 		&mut task_manager,
 		collator_options.clone(),
+		hwbench.clone(),
 	)
 	.await
 	.map_err(|e| match e {
@@ -420,7 +442,6 @@ where
 			warp_sync: None,
 		})?;
 
-	let subscription_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let rpc_client = client.clone();
 	let rpc_pool = transaction_pool.clone();
 	let select_chain = params.select_chain.clone();
@@ -428,14 +449,31 @@ where
 
 	let rpc_frontier_backend = frontier_backend.clone();
 
-	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCache::new(
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
 		task_manager.spawn_handle(),
 		overrides_handle::<_, _, Runtime>(client.clone()),
 		50,
 		50,
+		prometheus_registry.clone(),
 	));
 
-	let rpc_extensions_builder = Box::new(move |deny_unsafe, _| {
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-mapping-sync-worker",
+		None,
+		MappingSyncWorker::new(
+			client.import_notification_stream(),
+			Duration::new(6, 0),
+			client.clone(),
+			backend.clone(),
+			frontier_backend.clone(),
+			3,
+			0,
+			SyncStrategy::Normal,
+		)
+		.for_each(|()| futures::future::ready(())),
+	);
+
+	let rpc_builder = Box::new(move |deny_unsafe, subscription_task_executor| {
 		let full_deps = unique_rpc::FullDeps {
 			backend: rpc_frontier_backend.clone(),
 			deny_unsafe,
@@ -456,32 +494,15 @@ where
 			fee_history_limit: 2048,
 		};
 
-		Ok(
-			unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
-				full_deps,
-				subscription_executor.clone(),
-			),
+		unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
+			full_deps,
+			subscription_task_executor,
 		)
+		.map_err(Into::into)
 	});
 
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-mapping-sync-worker",
-		None,
-		MappingSyncWorker::new(
-			client.import_notification_stream(),
-			Duration::new(6, 0),
-			client.clone(),
-			backend.clone(),
-			frontier_backend.clone(),
-			3,
-			0,
-			SyncStrategy::Normal,
-		)
-		.for_each(|()| futures::future::ready(())),
-	);
-
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
-		rpc_extensions_builder,
+		rpc_builder,
 		client: client.clone(),
 		transaction_pool: transaction_pool.clone(),
 		task_manager: &mut task_manager,
@@ -492,6 +513,19 @@ where
 		system_rpc_tx,
 		telemetry: telemetry.as_mut(),
 	})?;
+
+	if let Some(hwbench) = hwbench {
+		sc_sysinfo::print_hwbench(&hwbench);
+
+		if let Some(ref mut telemetry) = telemetry {
+			let telemetry_handle = telemetry.handle();
+			task_manager.spawn_handle().spawn(
+				"telemetry_hwbench",
+				None,
+				sc_sysinfo::initialize_hwbench_telemetry(telemetry_handle, hwbench),
+			);
+		}
+	}
 
 	let announce_block = {
 		let network = network.clone();
@@ -609,6 +643,7 @@ pub async fn start_node<Runtime, RuntimeApi, ExecutorDispatch>(
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
 	id: ParaId,
+	hwbench: Option<sc_sysinfo::HwBench>,
 ) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, ExecutorDispatch>>)>
 where
 	Runtime: RuntimeInstance + Send + Sync + 'static,
@@ -626,6 +661,18 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
+		/* TODO free RMRK!
+		+ rmrk_rpc::RmrkApi<
+			Block,
+			AccountId,
+			RmrkCollectionInfo<AccountId>,
+			RmrkInstanceInfo<AccountId>,
+			RmrkResourceInfo,
+			RmrkPropertyInfo,
+			RmrkBaseInfo<AccountId>,
+			RmrkPartType,
+			RmrkTheme,
+		>*/
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
@@ -708,6 +755,7 @@ where
 				max_block_proposal_slot_portion: None,
 			}))
 		},
+		hwbench,
 	)
 	.await
 }
@@ -759,6 +807,18 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
+		/* TODO free RMRK!
+		+ rmrk_rpc::RmrkApi<
+			Block,
+			AccountId,
+			RmrkCollectionInfo<AccountId>,
+			RmrkInstanceInfo<AccountId>,
+			RmrkResourceInfo,
+			RmrkPropertyInfo,
+			RmrkBaseInfo<AccountId>,
+			RmrkPartType,
+			RmrkTheme,
+		>*/
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
@@ -784,12 +844,14 @@ where
 		&config,
 		dev_build_import_queue::<RuntimeApi, ExecutorDispatch>,
 	)?;
+	let prometheus_registry = config.prometheus_registry().cloned();
 
-	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCache::new(
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
 		task_manager.spawn_handle(),
 		overrides_handle::<_, _, Runtime>(client.clone()),
 		50,
 		50,
+		prometheus_registry.clone(),
 	));
 
 	let (network, system_rpc_tx, network_starter) =
@@ -812,7 +874,6 @@ where
 		);
 	}
 
-	let prometheus_registry = config.prometheus_registry().cloned();
 	let collator = config.role.is_authority();
 
 	let select_chain = maybe_select_chain.clone();
@@ -923,12 +984,11 @@ where
 		.for_each(|()| futures::future::ready(())),
 	);
 
-	let subscription_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let rpc_client = client.clone();
 	let rpc_pool = transaction_pool.clone();
 	let rpc_network = network.clone();
 	let rpc_frontier_backend = frontier_backend.clone();
-	let rpc_extensions_builder = Box::new(move |deny_unsafe, _| {
+	let rpc_builder = Box::new(move |deny_unsafe, subscription_executor| {
 		let full_deps = unique_rpc::FullDeps {
 			backend: rpc_frontier_backend.clone(),
 			deny_unsafe,
@@ -949,12 +1009,11 @@ where
 			fee_history_limit: 2048,
 		};
 
-		Ok(
-			unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
-				full_deps,
-				subscription_executor.clone(),
-			),
+		unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
+			full_deps,
+			subscription_executor,
 		)
+		.map_err(Into::into)
 	});
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
@@ -963,7 +1022,7 @@ where
 		keystore: keystore_container.sync_keystore(),
 		task_manager: &mut task_manager,
 		transaction_pool,
-		rpc_extensions_builder,
+		rpc_builder,
 		backend,
 		system_rpc_tx,
 		config,

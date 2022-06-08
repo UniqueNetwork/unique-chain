@@ -69,6 +69,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+
 	// Storage: Fungible Balance (r:2 w:2)
 	fn transfer() -> Weight {
 		(17_713_000 as Weight)
@@ -126,6 +127,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
+
 	// Storage: Fungible Balance (r:2 w:2)
 	fn transfer() -> Weight {
 		(17_713_000 as Weight)

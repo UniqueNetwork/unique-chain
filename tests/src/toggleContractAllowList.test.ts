@@ -17,7 +17,6 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import usingApi, {submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import privateKey from './substrate/privateKey';
 import {
   deployFlipper,
   getFlipValue,
@@ -50,8 +49,8 @@ describe.skip('Integration Test toggleContractAllowList', () => {
   });
 
   it('Only allowlisted account can call contract', async () => {
-    await usingApi(async api => {
-      const bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const bob = privateKeyWrapper('//Bob');
 
       const [contract, deployer] = await deployFlipper(api);
 
@@ -135,9 +134,9 @@ describe.skip('Integration Test toggleContractAllowList', () => {
 describe.skip('Negative Integration Test toggleContractAllowList', () => {
 
   it('Enable allow list for a non-contract', async () => {
-    await usingApi(async api => {
-      const alice = privateKey('//Alice');
-      const bobGuineaPig = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bobGuineaPig = privateKeyWrapper('//Bob');
 
       const enabledBefore = (await api.query.unique.contractAllowListEnabled(bobGuineaPig.address)).toJSON();
       const enableAllowListTx = api.tx.unique.toggleContractAllowList(bobGuineaPig.address, true);
@@ -150,8 +149,8 @@ describe.skip('Negative Integration Test toggleContractAllowList', () => {
   });
 
   it('Enable allow list using a non-owner address', async () => {
-    await usingApi(async api => {
-      const bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const bob = privateKeyWrapper('//Bob');
       const [contract] = await deployFlipper(api);
 
       const enabledBefore = (await api.query.unique.contractAllowListEnabled(contract.address)).toJSON();

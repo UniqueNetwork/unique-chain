@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import privateKey from '../substrate/privateKey';
 import {expect} from 'chai';
 import {
   contractHelpers,
@@ -29,19 +28,19 @@ import {
   normalizeEvents,
   subToEth,
   executeEthTxOnSub,
+  evmCollectionHelpers,
+  getCollectionAddressFromResult,
+  evmCollection,
 } from './util/helpers';
 import {
   addCollectionAdminExpectSuccess,
   createCollectionExpectSuccess,
-  getCreateCollectionResult,
+  getDetailedCollectionInfo,
   transferBalanceTo,
 } from '../util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
-import {
-  submitTransactionAsync,
-} from '../substrate/substrate-api';
 import getBalance from '../substrate/get-balance';
-import {alicesPublicKey} from '../accounts';
+import {evmToAddress} from '@polkadot/util-crypto';
 
 describe('Sponsoring EVM contracts', () => {
   itWeb3('Sponsoring can be set by the address that has deployed the contract', async ({api, web3}) => {
@@ -63,8 +62,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
   });
 
-  itWeb3('In generous mode, non-allowlisted user transaction will be sponsored', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('In generous mode, non-allowlisted user transaction will be sponsored', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = await createEthAccountWithBalance(api, web3);
@@ -91,8 +90,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(+balanceAfter).to.be.lessThan(+originalFlipperBalance);
   });
 
-  itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should decrease (allowlisted)', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should decrease (allowlisted)', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = createEthAccount(web3);
@@ -121,8 +120,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(+balanceAfter).to.be.lessThan(+originalFlipperBalance);
   });
 
-  itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should not decrease (non-allowlisted)', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should not decrease (non-allowlisted)', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = createEthAccount(web3);
@@ -149,8 +148,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(+balanceAfter).to.be.equals(+originalFlipperBalance);
   });
 
-  itWeb3('Sponsoring is set, an address that has UNQ can send a transaction and it works. User balance should not change', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('Sponsoring is set, an address that has UNQ can send a transaction and it works. User balance should not change', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = await createEthAccountWithBalance(api, web3);
@@ -178,8 +177,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(await web3.eth.getBalance(caller)).to.be.equals(originalCallerBalance);
   });
 
-  itWeb3('Sponsoring is limited, with setContractRateLimit. The limitation is working if transactions are sent more often, the sender pays the commission.', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('Sponsoring is limited, with setContractRateLimit. The limitation is working if transactions are sent more often, the sender pays the commission.', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = await createEthAccountWithBalance(api, web3);
@@ -221,91 +220,89 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.getSponsoringRateLimit(flipper.options.address).call()).to.be.equals('7200');
   });
 
-  itWeb3('Sponsoring evm address from substrate collection', async ({api, web3}) => {
-    const owner = privateKey('//Alice');
-    const userEth = createEthAccount(web3);
-    const collectionId = await createCollectionExpectSuccess();
+  //TODO: CORE-302 add eth methods
+  itWeb3.skip('Sponsoring evm address from substrate collection', async ({api, web3}) => {
+    const owner = await createEthAccountWithBalance(api, web3);
+    const collectionHelpers = evmCollectionHelpers(web3, owner);
+    let result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const sponsor = await createEthAccountWithBalance(api, web3);
+    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    result = await collectionEvm.methods.ethSetSponsor(sponsor).send();
+    let collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
+    expect(collectionSub.sponsorship.isUnconfirmed).to.be.true;
+    expect(collectionSub.sponsorship.asUnconfirmed.toHuman()).to.be.eq(evmToAddress(sponsor));
+    await expect(collectionEvm.methods.ethConfirmSponsorship().call()).to.be.rejectedWith('Caller is not set as sponsor');
+
+    const sponsorCollection = evmCollection(web3, sponsor, collectionIdAddress);
+    await sponsorCollection.methods.ethConfirmSponsorship().send();
+    collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
+    expect(collectionSub.sponsorship.isConfirmed).to.be.true;
+    expect(collectionSub.sponsorship.asConfirmed.toHuman()).to.be.eq(evmToAddress(sponsor));
+
+    const user = createEthAccount(web3);
+    const userContract = evmCollection(web3, user, collectionIdAddress);
+    const nextTokenId = await userContract.methods.nextTokenId().call();
+
+    expect(nextTokenId).to.be.equal('1');
+    await expect(userContract.methods.mintWithTokenURI(
+      user,
+      nextTokenId,
+      'Test URI',
+    ).call()).to.be.rejectedWith('PublicMintingNotAllowed');
+    
+    // TODO: add this methods to eth
+    // {
+    //   const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
+    //   const events = await submitTransactionAsync(owner, tx);
+    //   const result = getCreateCollectionResult(events);
+    //   expect(result.success).to.be.true;
+    // }
+    // {
+    //   const tx = api.tx.unique.addToAllowList(collectionId, {Ethereum: userEth});
+    //   const events = await submitTransactionAsync(owner, tx);
+    //   const result = getCreateCollectionResult(events);
+    //   expect(result.success).to.be.true;
+    // }
+    // {
+    //   const tx = api.tx.unique.setMintPermission(collectionId, true);
+    //   const events = await submitTransactionAsync(owner, tx);
+    //   const result = getCreateCollectionResult(events);
+    //   expect(result.success).to.be.true;
+    // }
+
+    // const [alicesBalanceBefore] = await getBalance(api, [alicesPublicKey]);
 
     {
-      const tx = api.tx.unique.setCollectionSponsor(collectionId, owner.address);
-      const events = await submitTransactionAsync(owner, tx);
-      const result = getCreateCollectionResult(events);
-      expect(result.success).to.be.true;
-    }
-    {
-      const tx = api.tx.unique.confirmSponsorship(collectionId);
-      const events = await submitTransactionAsync(owner, tx);
-      const result = getCreateCollectionResult(events);
-      expect(result.success).to.be.true;
-    }
-
-    const address = collectionIdToAddress(collectionId);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: userEth, ...GAS_ARGS});
-
-    { // This part should fail, because user not in access list and user have no money
-      const nextTokenId = await contract.methods.nextTokenId().call();
+      const nextTokenId = await userContract.methods.nextTokenId().call();
       expect(nextTokenId).to.be.equal('1');
-      await expect(contract.methods.mintWithTokenURI(
-        userEth,
+      const result = await userContract.methods.mintWithTokenURI(
+        user,
         nextTokenId,
         'Test URI',
-      ).call({from: userEth})).to.be.rejectedWith(/PublicMintingNotAllowed/);
-    }
-
-    {
-      const tx = api.tx.unique.setPublicAccessMode(collectionId, 'AllowList');
-      const events = await submitTransactionAsync(owner, tx);
-      const result = getCreateCollectionResult(events);
-      expect(result.success).to.be.true;
-    }
-    {
-      const tx = api.tx.unique.addToAllowList(collectionId, {Ethereum: userEth});
-      const events = await submitTransactionAsync(owner, tx);
-      const result = getCreateCollectionResult(events);
-      expect(result.success).to.be.true;
-    }
-    {
-      const tx = api.tx.unique.setMintPermission(collectionId, true);
-      const events = await submitTransactionAsync(owner, tx);
-      const result = getCreateCollectionResult(events);
-      expect(result.success).to.be.true;
-    }
-
-    const [alicesBalanceBefore] = await getBalance(api, [alicesPublicKey]);
-
-    {
-      const nextTokenId = await contract.methods.nextTokenId().call();
-      expect(nextTokenId).to.be.equal('1');
-      const result = await contract.methods.mintWithTokenURI(
-        userEth,
-        nextTokenId,
-        'Test URI',
-      ).send({from: userEth});
+      ).send();
       const events = normalizeEvents(result.events);
 
       expect(events).to.be.deep.equal([
         {
-          address,
+          collectionIdAddress,
           event: 'Transfer',
           args: {
             from: '0x0000000000000000000000000000000000000000',
-            to: userEth,
+            to: user,
             tokenId: nextTokenId,
           },
         },
       ]);
 
-      expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+      expect(await userContract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
     }
-
-    const [alicesBalanceAfter] = await getBalance(api, [alicesPublicKey]);
-    expect(alicesBalanceAfter < alicesBalanceBefore).to.be.true;
   });
 
-
-  itWeb3('Check that transaction via EVM spend money from substrate address', async ({api, web3}) => {
-    const owner = privateKey('//Alice');
-    const user = privateKey(`//User/${Date.now()}`);
+  //TODO: CORE-302 add eth methods
+  itWeb3.skip('Check that transaction via EVM spend money from substrate address', async ({api, web3, privateKeyWrapper}) => {
+    const owner = privateKeyWrapper('//Alice');
+    const user = privateKeyWrapper(`//User/${Date.now()}`);
     const userEth = subToEth(user.address);
     const collectionId = await createCollectionExpectSuccess();
     await addCollectionAdminExpectSuccess(owner, collectionId, {Ethereum: userEth});

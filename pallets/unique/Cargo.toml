@@ -22,31 +22,29 @@ std = [
     'serde/std',
     'frame-support/std',
     'frame-system/std',
-    'pallet-balances/std',
     'pallet-evm/std',
-    'pallet-timestamp/std',
-    'pallet-randomness-collective-flip/std',
-    'pallet-transaction-payment/std',
     'pallet-common/std',
-    'pallet-fungible/std',
-    'pallet-nonfungible/std',
-    'pallet-refungible/std',
-    'fp-evm/std',
     'up-data-structs/std',
-    'up-sponsorship/std',
-    'fp-evm-mapping/std',
     'sp-std/std',
-    'sp-api/std',
     'sp-runtime/std',
     'frame-benchmarking/std',
-    'ethereum/std',
-    'rlp/std',
-
-    'primitive-types/std',
     'evm-coder/std',
     'pallet-evm-coder-substrate/std',
+    'pallet-nonfungible/std',
 ]
 limit-testing = ["up-data-structs/limit-testing"]
+
+################################################################################
+# Standart Dependencies
+
+[dependencies.serde]
+default-features = false
+features = ['derive']
+version = '1.0.130'
+
+[dependencies.ethereum]
+version = "0.12.0"
+default-features = false
 
 ################################################################################
 # Substrate Dependencies
@@ -61,90 +59,47 @@ version = '3.1.2'
 default-features = false
 optional = true
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
+branch = "polkadot-v0.9.22"
 
 [dependencies.frame-support]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
+branch = "polkadot-v0.9.22"
 
 [dependencies.frame-system]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
-
-[dependencies.pallet-balances]
-default-features = false
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
-
-[dependencies.pallet-timestamp]
-default-features = false
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
-
-[dependencies.pallet-randomness-collective-flip]
-default-features = false
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
+branch = "polkadot-v0.9.22"
 
 [dependencies.sp-std]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
-
-[dependencies.pallet-transaction-payment]
-default-features = false
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
-
-[dependencies.serde]
-default-features = false
-features = ['derive']
-version = '1.0.130'
+branch = "polkadot-v0.9.22"
 
 [dependencies.sp-runtime]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
+branch = "polkadot-v0.9.22"
 
 [dependencies.sp-core]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
+branch = "polkadot-v0.9.22"
 
 [dependencies.sp-io]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.21"
-
+branch = "polkadot-v0.9.22"
 
 ################################################################################
 # Local Dependencies
 [dependencies]
 up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
-
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
 ] }
-ethereum = { version = "0.12.0", default-features = false }
-rlp = { default-features = false, version = "0.5.0" }
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-
-up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.21" }
-fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
-evm-coder = { default-features = false, path = "../../crates/evm-coder" }
-pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }
-primitive-types = { version = "0.11.1", default-features = false, features = [
-    "serde_no_std",
-] }
-
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
-fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
-hex-literal = "0.3.3"
-
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.22" }
 pallet-common = { default-features = false, path = "../common" }
-pallet-fungible = { default-features = false, path = "../fungible" }
-pallet-nonfungible = { default-features = false, path = "../nonfungible" }
-pallet-refungible = { default-features = false, path = "../refungible" }
+evm-coder = { default-features = false, path = '../../crates/evm-coder' }
+pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }
+pallet-nonfungible = { default-features = false, path = '../../pallets/nonfungible' }

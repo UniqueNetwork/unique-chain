@@ -2,3 +2,4 @@
 /* eslint-disable */
 
 export * from './unique/types';
+export * from './default/types';

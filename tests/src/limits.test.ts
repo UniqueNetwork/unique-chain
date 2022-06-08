@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
@@ -27,7 +26,7 @@ import {
   createItemExpectFailure,
   transferExpectSuccess,
   getFreeBalance,
-  waitNewBlocks,
+  waitNewBlocks, burnItemExpectSuccess,
 } from './util/helpers';
 import {expect} from 'chai';
 
@@ -35,8 +34,8 @@ describe('Number of tokens per address (NFT)', () => {
   let alice: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
     });
   });
 
@@ -48,6 +47,9 @@ describe('Number of tokens per address (NFT)', () => {
       await createItemExpectSuccess(alice, collectionId, 'NFT');
     }
     await createItemExpectFailure(alice, collectionId, 'NFT');
+    for(let i = 1; i < 11; i++) {
+      await burnItemExpectSuccess(alice, collectionId, i);
+    }
     await destroyCollectionExpectSuccess(collectionId);
   });
 
@@ -57,6 +59,7 @@ describe('Number of tokens per address (NFT)', () => {
     await setCollectionLimitsExpectSuccess(alice, collectionId, {accountTokenOwnershipLimit: 1});
     await createItemExpectSuccess(alice, collectionId, 'NFT');
     await createItemExpectFailure(alice, collectionId, 'NFT');
+    await burnItemExpectSuccess(alice, collectionId, 1);
     await destroyCollectionExpectSuccess(collectionId);
   });
 });
@@ -65,8 +68,8 @@ describe('Number of tokens per address (ReFungible)', () => {
   let alice: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
     });
   });
 
@@ -77,6 +80,9 @@ describe('Number of tokens per address (ReFungible)', () => {
       await createItemExpectSuccess(alice, collectionId, 'ReFungible');
     }
     await createItemExpectFailure(alice, collectionId, 'ReFungible');
+    for(let i = 1; i < 11; i++) {
+      await burnItemExpectSuccess(alice, collectionId, i, 100);
+    }
     await destroyCollectionExpectSuccess(collectionId);
   });
 
@@ -85,6 +91,7 @@ describe('Number of tokens per address (ReFungible)', () => {
     await setCollectionLimitsExpectSuccess(alice, collectionId, {accountTokenOwnershipLimit: 1});
     await createItemExpectSuccess(alice, collectionId, 'ReFungible');
     await createItemExpectFailure(alice, collectionId, 'ReFungible');
+    await burnItemExpectSuccess(alice, collectionId, 1, 100);
     await destroyCollectionExpectSuccess(collectionId);
   });
 });
@@ -95,10 +102,10 @@ describe.skip('Sponsor timeout (NFT) (only for special chain limits test)', () =
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 
@@ -158,10 +165,10 @@ describe.skip('Sponsor timeout (Fungible) (only for special chain limits test)',
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 
@@ -225,10 +232,10 @@ describe.skip('Sponsor timeout (ReFungible) (only for special chain limits test)
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 
@@ -288,10 +295,10 @@ describe('Collection zero limits (NFT)', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 
@@ -329,10 +336,10 @@ describe('Collection zero limits (Fungible)', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 
@@ -361,10 +368,10 @@ describe('Collection zero limits (ReFungible)', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 

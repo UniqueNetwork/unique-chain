@@ -19,8 +19,8 @@
 use super::*;
 use crate::Pallet;
 use frame_system::RawOrigin;
+use frame_support::traits::{tokens::currency::Currency, Get};
 use frame_benchmarking::{benchmarks, account};
-use up_data_structs::*;
 use sp_runtime::DispatchError;
 use pallet_common::benchmarking::{create_data, create_var_data, create_u16_data};
 
@@ -130,34 +130,6 @@ benchmarks! {
 		let collection = create_nft_collection::<T>(caller.clone())?;
 	}: _(RawOrigin::Signed(caller.clone()), collection, false)
 
-	set_offchain_schema {
-		let b in 0..OFFCHAIN_SCHEMA_LIMIT;
-
-		let caller: T::AccountId = account("caller", 0, SEED);
-		let collection = create_nft_collection::<T>(caller.clone())?;
-		let data = create_var_data(b);
-	}: set_offchain_schema(RawOrigin::Signed(caller.clone()), collection, data)
-
-	set_const_on_chain_schema {
-		let b in 0..CONST_ON_CHAIN_SCHEMA_LIMIT;
-
-		let caller: T::AccountId = account("caller", 0, SEED);
-		let collection = create_nft_collection::<T>(caller.clone())?;
-		let data = create_var_data(b);
-	}: set_const_on_chain_schema(RawOrigin::Signed(caller.clone()), collection, data)
-
-	set_variable_on_chain_schema {
-		let b in 0..VARIABLE_ON_CHAIN_SCHEMA_LIMIT;
-
-		let caller: T::AccountId = account("caller", 0, SEED);
-		let collection = create_nft_collection::<T>(caller.clone())?;
-		let data = create_var_data(b);
-	}: set_variable_on_chain_schema(RawOrigin::Signed(caller.clone()), collection, data)
-
-	set_schema_version {
-		let caller: T::AccountId = account("caller", 0, SEED);
-		let collection = create_nft_collection::<T>(caller.clone())?;
-	}: set_schema_version(RawOrigin::Signed(caller.clone()), collection, SchemaVersion::Unique)
 
 	set_collection_limits{
 		let caller: T::AccountId = account("caller", 0, SEED);
@@ -173,11 +145,7 @@ benchmarks! {
 			owner_can_transfer: Some(true),
 			sponsored_data_rate_limit: None,
 			transfers_enabled: Some(true),
+			nesting_rule: None,
 		};
 	}: set_collection_limits(RawOrigin::Signed(caller.clone()), collection, cl)
-
-	set_meta_update_permission_flag {
-		let caller: T::AccountId = account("caller", 0, SEED);
-		let collection = create_nft_collection::<T>(caller.clone())?;
-	}: _(RawOrigin::Signed(caller.clone()), collection, MetaUpdatePermission::Admin)
 }

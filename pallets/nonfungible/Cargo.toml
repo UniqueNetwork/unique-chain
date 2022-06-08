@@ -11,21 +11,23 @@ package = 'parity-scale-codec'
 version = '3.1.2'
 
 [dependencies]
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.22" }
 pallet-common = { default-features = false, path = '../common' }
+pallet-structure = { default-features = false, path = '../structure' }
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 pallet-evm-coder-substrate = { default-features = false, path = '../evm-coder-substrate' }
 ethereum = { version = "0.12.0", default-features = false }
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
 ] }
+struct-versioning = { path = "../../crates/struct-versioning" }
 
 [features]
 default = ["std"]
@@ -36,6 +38,7 @@ std = [
     "sp-std/std",
     "up-data-structs/std",
     "pallet-common/std",
+    "pallet-structure/std",
     "evm-coder/std",
     "ethereum/std",
     "pallet-evm-coder-substrate/std",
@@ -46,4 +49,5 @@ runtime-benchmarks = [
     'frame-benchmarking',
     'frame-support/runtime-benchmarks',
     'frame-system/runtime-benchmarks',
+    'up-data-structs/runtime-benchmarks',
 ]

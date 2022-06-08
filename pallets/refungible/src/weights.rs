@@ -38,6 +38,9 @@ pub trait WeightInfo {
 	fn create_multiple_items_ex_multiple_owners(b: u32, ) -> Weight;
 	fn burn_item_partial() -> Weight;
 	fn burn_item_fully() -> Weight;
+	fn set_token_properties(amount: u32) -> Weight;
+	fn delete_token_properties(amount: u32) -> Weight;
+	fn set_property_permissions(amount: u32) -> Weight;
 	fn transfer_normal() -> Weight;
 	fn transfer_creating() -> Weight;
 	fn transfer_removing() -> Weight;
@@ -48,7 +51,6 @@ pub trait WeightInfo {
 	fn transfer_from_removing() -> Weight;
 	fn transfer_from_creating_removing() -> Weight;
 	fn burn_from() -> Weight;
-	fn set_variable_metadata(b: u32, ) -> Weight;
 }
 
 /// Weights for pallet_refungible using the Substrate node and recommended hardware.
@@ -129,6 +131,22 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
+
+	fn set_token_properties(_amount: u32) -> Weight {
+		// Error
+		0
+	}
+
+	fn delete_token_properties(_amount: u32) -> Weight {
+		// Error
+		0
+	}
+
+	fn set_property_permissions(_amount: u32) -> Weight {
+		// Error
+		0
+	}
+
 	// Storage: Refungible Balance (r:2 w:2)
 	fn transfer_normal() -> Weight {
 		(19_766_000 as Weight)
@@ -212,12 +230,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
-	// Storage: Refungible TokenData (r:1 w:1)
-	fn set_variable_metadata(_b: u32, ) -> Weight {
-		(7_364_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
 }
 
 // For backwards compatibility and tests
@@ -297,6 +309,22 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
+
+	fn set_token_properties(_amount: u32) -> Weight {
+		// Error
+		0
+	}
+
+	fn delete_token_properties(_amount: u32) -> Weight {
+		// Error
+		0
+	}
+
+	fn set_property_permissions(_amount: u32) -> Weight {
+		// Error
+		0
+	}
+
 	// Storage: Refungible Balance (r:2 w:2)
 	fn transfer_normal() -> Weight {
 		(19_766_000 as Weight)
@@ -379,11 +407,5 @@ impl WeightInfo for () {
 		(42_043_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
-	}
-	// Storage: Refungible TokenData (r:1 w:1)
-	fn set_variable_metadata(_b: u32, ) -> Weight {
-		(7_364_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }

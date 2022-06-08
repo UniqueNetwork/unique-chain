@@ -14,19 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import privateKey from '../substrate/privateKey';
 import {approveExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, transferExpectSuccess, transferFromExpectSuccess, UNIQUE} from '../util/helpers';
 import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, transferBalanceToEth} from './util/helpers';
 import fungibleAbi from './fungibleAbi.json';
 import {expect} from 'chai';
 
 describe('Fungible: Information getting', () => {
-  itWeb3('totalSupply', async ({api, web3}) => {
+  itWeb3('totalSupply', async ({api, web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const caller = await createEthAccountWithBalance(api, web3);
 
@@ -39,12 +38,12 @@ describe('Fungible: Information getting', () => {
     expect(totalSupply).to.equal('200');
   });
 
-  itWeb3('balanceOf', async ({api, web3}) => {
+  itWeb3('balanceOf', async ({api, web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const caller = await createEthAccountWithBalance(api, web3);
 
@@ -59,12 +58,12 @@ describe('Fungible: Information getting', () => {
 });
 
 describe('Fungible: Plain calls', () => {
-  itWeb3('Can perform approve()', async ({web3, api}) => {
+  itWeb3('Can perform approve()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
 
@@ -98,12 +97,12 @@ describe('Fungible: Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform transferFrom()', async ({web3, api}) => {
+  itWeb3('Can perform transferFrom()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = createEthAccount(web3);
     await transferBalanceToEth(api, alice, owner);
@@ -156,12 +155,12 @@ describe('Fungible: Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform transfer()', async ({web3, api}) => {
+  itWeb3('Can perform transfer()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       name: 'token name',
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = createEthAccount(web3);
     await transferBalanceToEth(api, alice, owner);
@@ -203,11 +202,11 @@ describe('Fungible: Plain calls', () => {
 });
 
 describe('Fungible: Fees', () => {
-  itWeb3('approve() call fee is less than 0.2UNQ', async ({web3, api}) => {
+  itWeb3('approve() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const spender = createEthAccount(web3);
@@ -221,11 +220,11 @@ describe('Fungible: Fees', () => {
     expect(cost < BigInt(0.2 * Number(UNIQUE)));
   });
 
-  itWeb3('transferFrom() call fee is less than 0.2UNQ', async ({web3, api}) => {
+  itWeb3('transferFrom() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const spender = await createEthAccountWithBalance(api, web3);
@@ -241,11 +240,11 @@ describe('Fungible: Fees', () => {
     expect(cost < BigInt(0.2 * Number(UNIQUE)));
   });
 
-  itWeb3('transfer() call fee is less than 0.2UNQ', async ({web3, api}) => {
+  itWeb3('transfer() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const receiver = createEthAccount(web3);
@@ -261,11 +260,11 @@ describe('Fungible: Fees', () => {
 });
 
 describe('Fungible: Substrate calls', () => {
-  itWeb3('Events emitted for approve()', async ({web3}) => {
+  itWeb3('Events emitted for approve()', async ({web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const receiver = createEthAccount(web3);
 
@@ -291,12 +290,12 @@ describe('Fungible: Substrate calls', () => {
     ]);
   });
 
-  itWeb3('Events emitted for transferFrom()', async ({web3}) => {
+  itWeb3('Events emitted for transferFrom()', async ({web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKey('//Alice');
-    const bob = privateKey('//Bob');
+    const alice = privateKeyWrapper('//Alice');
+    const bob = privateKeyWrapper('//Bob');
 
     const receiver = createEthAccount(web3);
 
@@ -332,11 +331,11 @@ describe('Fungible: Substrate calls', () => {
     ]);
   });
 
-  itWeb3('Events emitted for transfer()', async ({web3}) => {
+  itWeb3('Events emitted for transfer()', async ({web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'Fungible', decimalPoints: 0},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const receiver = createEthAccount(web3);
 

@@ -30,6 +30,7 @@ const requiredPallets = [
   'timestamp',
   'transactionpayment',
   'treasury',
+  'structure',
   'system',
   'vesting',
   'parachainsystem',
@@ -49,7 +50,7 @@ const requiredPallets = [
   'unique',
   'nonfungible',
   'refungible',
-  //'scheduler',
+  'scheduler',
   'charging',
 ];
 

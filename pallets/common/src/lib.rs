@@ -16,32 +16,81 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
 use core::ops::{Deref, DerefMut};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_std::vec::Vec;
-use pallet_evm::account::CrossAccountId;
+use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
+use evm_coder::ToLog;
 use frame_support::{
-	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo},
-	ensure, fail,
-	traits::{Imbalance, Get, Currency},
-	BoundedVec,
+	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Weight, PostDispatchInfo},
+	ensure,
+	traits::{Imbalance, Get, Currency, WithdrawReasons, ExistenceRequirement},
+	weights::Pays,
+	transactional,
 };
 use pallet_evm::GasWeightMapping;
 use up_data_structs::{
-	COLLECTION_NUMBER_LIMIT, Collection, CollectionId, CreateItemData, ExistenceRequirement,
-	MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, MetaUpdatePermission, Pays, PostDispatchInfo,
-	TokenId, Weight, WithdrawReasons, CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode,
-	NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
-	CustomDataLimit, CreateCollectionData, SponsorshipState, CreateItemExData, SponsoringRateLimit,
+	COLLECTION_NUMBER_LIMIT,
+	Collection,
+	RpcCollection,
+	CollectionId,
+	CreateItemData,
+	MAX_TOKEN_PREFIX_LENGTH,
+	COLLECTION_ADMINS_LIMIT,
+	TokenId,
+	TokenChild,
+	CollectionStats,
+	MAX_TOKEN_OWNERSHIP,
+	CollectionMode,
+	NFT_SPONSOR_TRANSFER_TIMEOUT,
+	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	MAX_SPONSOR_TIMEOUT,
+	CUSTOM_DATA_LIMIT,
+	CollectionLimits,
+	CreateCollectionData,
+	SponsorshipState,
+	CreateItemExData,
+	SponsoringRateLimit,
+	budget::Budget,
+	PhantomType,
+	Property,
+	Properties,
+	PropertiesPermissionMap,
+	PropertyKey,
+	PropertyValue,
+	PropertyPermission,
+	PropertiesError,
+	PropertyKeyPermission,
+	TokenData,
+	TrySetProperty,
+	PropertyScope,
+	// RMRK
+	RmrkCollectionInfo,
+	RmrkInstanceInfo,
+	RmrkResourceInfo,
+	RmrkPropertyInfo,
+	RmrkBaseInfo,
+	RmrkPartType,
+	RmrkTheme,
+	RmrkNftChild,
+	CollectionPermissions,
+	SchemaVersion,
 };
+
 pub use pallet::*;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
+pub mod dispatch;
 pub mod erc;
 pub mod eth;
+pub mod weights;
+
+pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 #[must_use = "Should call submit_logs or save, otherwise some data will be lost for evm side"]
 pub struct CollectionHandle<T: Config> {
@@ -62,20 +111,23 @@ impl<T: Config> CollectionHandle<T> {
 		<CollectionById<T>>::get(id).map(|collection| Self {
 			id,
 			collection,
-			recorder: SubstrateRecorder::new(eth::collection_id_to_address(id), gas_limit),
+			recorder: SubstrateRecorder::new(gas_limit),
 		})
 	}
+
+	pub fn new_with_recorder(id: CollectionId, recorder: SubstrateRecorder<T>) -> Option<Self> {
+		<CollectionById<T>>::get(id).map(|collection| Self {
+			id,
+			collection,
+			recorder,
+		})
+	}
+
 	pub fn new(id: CollectionId) -> Option<Self> {
 		Self::new_with_gas_limit(id, u64::MAX)
 	}
 	pub fn try_get(id: CollectionId) -> Result<Self, DispatchError> {
 		Ok(Self::new(id).ok_or(<Error<T>>::CollectionNotFound)?)
-	}
-	pub fn log_mirrored(&self, log: impl evm_coder::ToLog) {
-		self.recorder.log_mirrored(log)
-	}
-	pub fn log_direct(&self, log: impl evm_coder::ToLog) {
-		self.recorder.log_direct(log)
 	}
 	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
@@ -93,13 +145,22 @@ impl<T: Config> CollectionHandle<T> {
 					.saturating_mul(writes),
 			))
 	}
-	pub fn submit_logs(self) {
-		self.recorder.submit_logs()
-	}
 	pub fn save(self) -> DispatchResult {
-		self.recorder.submit_logs();
 		<CollectionById<T>>::insert(self.id, self.collection);
 		Ok(())
+	}
+
+	pub fn set_sponsor(&mut self, sponsor: T::AccountId) {
+		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor);
+	}
+
+	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> bool {
+		if self.collection.sponsorship.pending_sponsor() != Some(sender) {
+			return false;
+		};
+
+		self.collection.sponsorship = SponsorshipState::Confirmed(sender.clone());
+		true
 	}
 }
 impl<T: Config> Deref for CollectionHandle<T> {
@@ -141,36 +202,29 @@ impl<T: Config> CollectionHandle<T> {
 		);
 		Ok(())
 	}
-
-	pub fn check_can_update_meta(
-		&self,
-		subject: &T::CrossAccountId,
-		item_owner: &T::CrossAccountId,
-	) -> DispatchResult {
-		match self.meta_update_permission {
-			MetaUpdatePermission::ItemOwner => {
-				ensure!(subject == item_owner, <Error<T>>::NoPermission);
-				Ok(())
-			}
-			MetaUpdatePermission::Admin => self.check_is_owner_or_admin(subject),
-			MetaUpdatePermission::None => fail!(<Error<T>>::NoPermission),
-		}
-	}
 }
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key};
 	use pallet_evm::account;
+	use dispatch::CollectionDispatch;
+	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
+	use frame_system::pallet_prelude::*;
 	use frame_support::traits::Currency;
-	use up_data_structs::TokenId;
+	use up_data_structs::{TokenId, mapping::TokenAddressMapping};
 	use scale_info::TypeInfo;
+	use weights::WeightInfo;
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_evm_coder_substrate::Config + TypeInfo + account::Config
+		frame_system::Config
+		+ pallet_evm_coder_substrate::Config
+		+ pallet_evm::Config
+		+ TypeInfo
+		+ account::Config
 	{
+		type WeightInfo: WeightInfo;
 		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
 
 		type Currency: Currency<Self::AccountId>;
@@ -179,11 +233,19 @@ pub mod pallet {
 		type CollectionCreationPrice: Get<
 			<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance,
 		>;
+		type CollectionDispatch: CollectionDispatch<Self>;
 
 		type TreasuryAccountId: Get<Self::AccountId>;
+		type ContractAddress: Get<H160>;
+
+		type EvmTokenAddressMapping: TokenAddressMapping<H160>;
+		type CrossTokenAddressMapping: TokenAddressMapping<Self::CrossAccountId>;
 	}
 
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
@@ -276,6 +338,16 @@ pub mod pallet {
 			T::CrossAccountId,
 			u128,
 		),
+
+		CollectionPropertySet(CollectionId, PropertyKey),
+
+		CollectionPropertyDeleted(CollectionId, PropertyKey),
+
+		TokenPropertySet(CollectionId, TokenId, PropertyKey),
+
+		TokenPropertyDeleted(CollectionId, TokenId, PropertyKey),
+
+		PropertyPermissionSet(CollectionId, PropertyKey),
 	}
 
 	#[pallet::error]
@@ -286,6 +358,8 @@ pub mod pallet {
 		MustBeTokenOwner,
 		/// No permission to perform action
 		NoPermission,
+		/// Destroying only empty collections is allowed
+		CantDestroyNotEmptyCollection,
 		/// Collection is not in mint mode.
 		PublicMintingNotAllowed,
 		/// Address is not in allow list.
@@ -299,15 +373,12 @@ pub mod pallet {
 		CollectionTokenPrefixLimitExceeded,
 		/// Total collections bound exceeded.
 		TotalCollectionsLimitExceeded,
-		/// variable_data exceeded data limit.
-		TokenVariableDataLimitExceeded,
 		/// Exceeded max admin count
 		CollectionAdminCountExceeded,
 		/// Collection limit bounds per collection exceeded
 		CollectionLimitBoundsExceeded,
 		/// Tried to enable permissions which are only permitted to be disabled
 		OwnerPermissionsCantBeReverted,
-
 		/// Collection settings not allowing items transferring
 		TransferNotAllowed,
 		/// Account token limit exceeded per collection
@@ -333,6 +404,31 @@ pub mod pallet {
 
 		/// Not sufficient founds to perform action
 		NotSufficientFounds,
+
+		/// Collection has nesting disabled
+		NestingIsDisabled,
+		/// Only owner may nest tokens under this collection
+		OnlyOwnerAllowedToNest,
+		/// Only tokens from specific collections may nest tokens under this
+		SourceCollectionIsNotAllowedToNest,
+
+		/// Tried to store more data than allowed in collection field
+		CollectionFieldSizeExceeded,
+
+		/// Tried to store more property data than allowed
+		NoSpaceForProperty,
+
+		/// Tried to store more property keys than allowed
+		PropertyLimitReached,
+
+		/// Property key is too long
+		PropertyKeyIsTooLong,
+
+		/// Only ASCII letters, digits, and '_', '-' are allowed
+		InvalidCharacterInPropertyKey,
+
+		/// Empty property keys are forbidden
+		EmptyPropertyKey,
 	}
 
 	#[pallet::storage]
@@ -348,6 +444,26 @@ pub mod pallet {
 		Key = CollectionId,
 		Value = Collection<<T as frame_system::Config>::AccountId>,
 		QueryKind = OptionQuery,
+	>;
+
+	/// Collection properties
+	#[pallet::storage]
+	#[pallet::getter(fn collection_properties)]
+	pub type CollectionProperties<T> = StorageMap<
+		Hasher = Blake2_128Concat,
+		Key = CollectionId,
+		Value = Properties,
+		QueryKind = ValueQuery,
+		OnEmpty = up_data_structs::CollectionProperties,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn property_permissions)]
+	pub type CollectionPropertyPermissions<T> = StorageMap<
+		Hasher = Blake2_128Concat,
+		Key = CollectionId,
+		Value = PropertiesPermissionMap,
+		QueryKind = ValueQuery,
 	>;
 
 	#[pallet::storage]
@@ -382,8 +498,95 @@ pub mod pallet {
 
 	/// Not used by code, exists only to provide some types to metadata
 	#[pallet::storage]
-	pub type DummyStorageValue<T> =
-		StorageValue<Value = (CollectionStats, CollectionId, TokenId), QueryKind = OptionQuery>;
+	pub type DummyStorageValue<T: Config> = StorageValue<
+		Value = (
+			CollectionStats,
+			CollectionId,
+			TokenId,
+			TokenChild,
+			PhantomType<(
+				TokenData<T::CrossAccountId>,
+				RpcCollection<T::AccountId>,
+				// RMRK
+				RmrkCollectionInfo<T::AccountId>,
+				RmrkInstanceInfo<T::AccountId>,
+				RmrkResourceInfo,
+				RmrkPropertyInfo,
+				RmrkBaseInfo<T::AccountId>,
+				RmrkPartType,
+				RmrkTheme,
+				RmrkNftChild,
+			)>,
+		),
+		QueryKind = OptionQuery,
+	>;
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> Weight {
+			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
+				use up_data_structs::{CollectionVersion1, CollectionVersion2};
+				<CollectionById<T>>::translate::<CollectionVersion1<T::AccountId>, _>(|id, v| {
+					let mut props = Vec::new();
+					if !v.offchain_schema.is_empty() {
+						props.push(Property {
+							key: b"_old_offchainSchema".to_vec().try_into().unwrap(),
+							value: v
+								.offchain_schema
+								.clone()
+								.into_inner()
+								.try_into()
+								.expect("offchain schema too big"),
+						});
+					}
+					if !v.variable_on_chain_schema.is_empty() {
+						props.push(Property {
+							key: b"_old_variableOnChainSchema".to_vec().try_into().unwrap(),
+							value: v
+								.variable_on_chain_schema
+								.clone()
+								.into_inner()
+								.try_into()
+								.expect("offchain schema too big"),
+						});
+					}
+					if !v.const_on_chain_schema.is_empty() {
+						props.push(Property {
+							key: b"_old_constOnChainSchema".to_vec().try_into().unwrap(),
+							value: v
+								.const_on_chain_schema
+								.clone()
+								.into_inner()
+								.try_into()
+								.expect("offchain schema too big"),
+						});
+					}
+					props.push(Property {
+						key: b"_old_schemaVersion".to_vec().try_into().unwrap(),
+						value: match v.schema_version {
+							SchemaVersion::ImageURL => b"ImageUrl".as_slice(),
+							SchemaVersion::Unique => b"Unique".as_slice(),
+						}
+						.to_vec()
+						.try_into()
+						.unwrap(),
+					});
+					Self::set_scoped_collection_properties(
+						id,
+						PropertyScope::None,
+						props.into_iter(),
+					)
+					.expect("existing data larger than properties");
+					let mut new = CollectionVersion2::from(v.clone());
+					new.permissions.access = Some(v.access);
+					new.permissions.mint_mode = Some(v.mint_mode);
+					Some(new)
+				});
+			}
+
+			0
+		}
+	}
 }
 
 impl<T: Config> Pallet<T> {
@@ -450,11 +653,82 @@ impl<T: Config> Pallet<T> {
 
 		Some(effective_limits)
 	}
+
+	pub fn rpc_collection(collection: CollectionId) -> Option<RpcCollection<T::AccountId>> {
+		let Collection {
+			name,
+			description,
+			owner,
+			mode,
+			token_prefix,
+			sponsorship,
+			limits,
+			permissions,
+		} = <CollectionById<T>>::get(collection)?;
+
+		let token_property_permissions = <CollectionPropertyPermissions<T>>::get(collection)
+			.into_iter()
+			.map(|(key, permission)| PropertyKeyPermission { key, permission })
+			.collect();
+
+		let properties = <CollectionProperties<T>>::get(collection)
+			.into_iter()
+			.map(|(key, value)| Property { key, value })
+			.collect();
+
+		let permissions = CollectionPermissions {
+			access: Some(permissions.access()),
+			mint_mode: Some(permissions.mint_mode()),
+			nesting: Some(permissions.nesting().clone()),
+		};
+
+		Some(RpcCollection {
+			name: name.into_inner(),
+			description: description.into_inner(),
+			owner,
+			mode,
+			token_prefix: token_prefix.into_inner(),
+			sponsorship,
+			limits,
+			permissions,
+			token_property_permissions,
+			properties,
+		})
+	}
+}
+
+macro_rules! limit_default {
+	($old:ident, $new:ident, $($field:ident $(($arg:expr))? => $check:expr),* $(,)?) => {{
+		$(
+			if let Some($new) = $new.$field {
+				let $old = $old.$field($($arg)?);
+				let _ = $new;
+				let _ = $old;
+				$check
+			} else {
+				$new.$field = $old.$field
+			}
+		)*
+	}};
+}
+macro_rules! limit_default_clone {
+	($old:ident, $new:ident, $($field:ident $(($arg:expr))? => $check:expr),* $(,)?) => {{
+		$(
+			if let Some($new) = $new.$field.clone() {
+				let $old = $old.$field($($arg)?);
+				let _ = $new;
+				let _ = $old;
+				$check
+			} else {
+				$new.$field = $old.$field.clone()
+			}
+		)*
+	}};
 }
 
 impl<T: Config> Pallet<T> {
 	pub fn init_collection(
-		owner: T::AccountId,
+		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		{
@@ -480,27 +754,40 @@ impl<T: Config> Pallet<T> {
 		// =========
 
 		let collection = Collection {
-			owner: owner.clone(),
+			owner: owner.as_sub().clone(),
 			name: data.name,
 			mode: data.mode.clone(),
-			mint_mode: false,
-			access: data.access.unwrap_or_default(),
 			description: data.description,
 			token_prefix: data.token_prefix,
-			offchain_schema: data.offchain_schema,
-			schema_version: data.schema_version.unwrap_or_default(),
 			sponsorship: data
 				.pending_sponsor
 				.map(SponsorshipState::Unconfirmed)
 				.unwrap_or_default(),
-			variable_on_chain_schema: data.variable_on_chain_schema,
-			const_on_chain_schema: data.const_on_chain_schema,
 			limits: data
 				.limits
 				.map(|limits| Self::clamp_limits(data.mode.clone(), &Default::default(), limits))
 				.unwrap_or_else(|| Ok(CollectionLimits::default()))?,
-			meta_update_permission: data.meta_update_permission.unwrap_or_default(),
+			permissions: data
+				.permissions
+				.map(|permissions| {
+					Self::clamp_permissions(data.mode.clone(), &Default::default(), permissions)
+				})
+				.unwrap_or_else(|| Ok(CollectionPermissions::default()))?,
 		};
+
+		let mut collection_properties = up_data_structs::CollectionProperties::get();
+		collection_properties
+			.try_set_from_iter(data.properties.into_iter())
+			.map_err(<Error<T>>::from)?;
+
+		CollectionProperties::<T>::insert(id, collection_properties);
+
+		let mut token_props_permissions = PropertiesPermissionMap::new();
+		token_props_permissions
+			.try_set_from_iter(data.token_property_permissions.into_iter())
+			.map_err(<Error<T>>::from)?;
+
+		CollectionPropertyPermissions::<T>::insert(id, token_props_permissions);
 
 		// Take a (non-refundable) deposit of collection creation
 		{
@@ -513,7 +800,7 @@ impl<T: Config> Pallet<T> {
 				),
 			);
 			<T as Config>::Currency::settle(
-				&owner,
+				&owner.as_sub(),
 				imbalance,
 				WithdrawReasons::TRANSFER,
 				ExistenceRequirement::KeepAlive,
@@ -522,7 +809,18 @@ impl<T: Config> Pallet<T> {
 		}
 
 		<CreatedCollectionCount<T>>::put(created_count);
-		<Pallet<T>>::deposit_event(Event::CollectionCreated(id, data.mode.id(), owner.clone()));
+		<Pallet<T>>::deposit_event(Event::CollectionCreated(
+			id,
+			data.mode.id(),
+			owner.as_sub().clone(),
+		));
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionCreated {
+				owner: *owner.as_eth(),
+				collection_id: eth::collection_id_to_address(id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
 		<CollectionById<T>>::insert(id, collection);
 		Ok(id)
 	}
@@ -549,9 +847,229 @@ impl<T: Config> Pallet<T> {
 		<AdminAmount<T>>::remove(collection.id);
 		<IsAdmin<T>>::remove_prefix((collection.id,), None);
 		<Allowlist<T>>::remove_prefix((collection.id,), None);
+		<CollectionProperties<T>>::remove(collection.id);
 
 		<Pallet<T>>::deposit_event(Event::CollectionDestroyed(collection.id));
 		Ok(())
+	}
+
+	pub fn set_collection_property(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property: Property,
+	) -> DispatchResult {
+		collection.check_is_owner_or_admin(sender)?;
+
+		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
+			let property = property.clone();
+			properties.try_set(property.key, property.value)
+		})
+		.map_err(<Error<T>>::from)?;
+
+		Self::deposit_event(Event::CollectionPropertySet(collection.id, property.key));
+
+		Ok(())
+	}
+
+	pub fn set_scoped_collection_property(
+		collection_id: CollectionId,
+		scope: PropertyScope,
+		property: Property,
+	) -> DispatchResult {
+		CollectionProperties::<T>::try_mutate(collection_id, |properties| {
+			properties.try_scoped_set(scope, property.key, property.value)
+		})
+		.map_err(<Error<T>>::from)?;
+
+		Ok(())
+	}
+
+	pub fn set_scoped_collection_properties(
+		collection_id: CollectionId,
+		scope: PropertyScope,
+		properties: impl Iterator<Item = Property>,
+	) -> DispatchResult {
+		CollectionProperties::<T>::try_mutate(collection_id, |stored_properties| {
+			stored_properties.try_scoped_set_from_iter(scope, properties)
+		})
+		.map_err(<Error<T>>::from)?;
+
+		Ok(())
+	}
+
+	#[transactional]
+	pub fn set_collection_properties(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		properties: Vec<Property>,
+	) -> DispatchResult {
+		for property in properties {
+			Self::set_collection_property(collection, sender, property)?;
+		}
+
+		Ok(())
+	}
+
+	pub fn delete_collection_property(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_key: PropertyKey,
+	) -> DispatchResult {
+		collection.check_is_owner_or_admin(sender)?;
+
+		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
+			properties.remove(&property_key)
+		})
+		.map_err(<Error<T>>::from)?;
+
+		Self::deposit_event(Event::CollectionPropertyDeleted(
+			collection.id,
+			property_key,
+		));
+
+		Ok(())
+	}
+
+	#[transactional]
+	pub fn delete_collection_properties(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResult {
+		for key in property_keys {
+			Self::delete_collection_property(collection, sender, key)?;
+		}
+
+		Ok(())
+	}
+
+	// For migrations
+	pub fn set_property_permission_unchecked(
+		collection: CollectionId,
+		property_permission: PropertyKeyPermission,
+	) -> DispatchResult {
+		<CollectionPropertyPermissions<T>>::try_mutate(collection, |permissions| {
+			permissions.try_set(property_permission.key, property_permission.permission)
+		})
+		.map_err(<Error<T>>::from)?;
+		Ok(())
+	}
+
+	pub fn set_property_permission(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_permission: PropertyKeyPermission,
+	) -> DispatchResult {
+		collection.check_is_owner_or_admin(sender)?;
+
+		let all_permissions = CollectionPropertyPermissions::<T>::get(collection.id);
+		let current_permission = all_permissions.get(&property_permission.key);
+		if matches![
+			current_permission,
+			Some(PropertyPermission { mutable: false, .. })
+		] {
+			return Err(<Error<T>>::NoPermission.into());
+		}
+
+		CollectionPropertyPermissions::<T>::try_mutate(collection.id, |permissions| {
+			let property_permission = property_permission.clone();
+			permissions.try_set(property_permission.key, property_permission.permission)
+		})
+		.map_err(<Error<T>>::from)?;
+
+		Self::deposit_event(Event::PropertyPermissionSet(
+			collection.id,
+			property_permission.key,
+		));
+
+		Ok(())
+	}
+
+	#[transactional]
+	pub fn set_property_permissions(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResult {
+		for prop_pemission in property_permissions {
+			Self::set_property_permission(collection, sender, prop_pemission)?;
+		}
+
+		Ok(())
+	}
+
+	pub fn get_collection_property(
+		collection_id: CollectionId,
+		key: &PropertyKey,
+	) -> Option<PropertyValue> {
+		Self::collection_properties(collection_id).get(key).cloned()
+	}
+
+	pub fn bytes_keys_to_property_keys(
+		keys: Vec<Vec<u8>>,
+	) -> Result<Vec<PropertyKey>, DispatchError> {
+		keys.into_iter()
+			.map(|key| -> Result<PropertyKey, DispatchError> {
+				key.try_into()
+					.map_err(|_| <Error<T>>::PropertyKeyIsTooLong.into())
+			})
+			.collect::<Result<Vec<PropertyKey>, DispatchError>>()
+	}
+
+	pub fn filter_collection_properties(
+		collection_id: CollectionId,
+		keys: Option<Vec<PropertyKey>>,
+	) -> Result<Vec<Property>, DispatchError> {
+		let properties = Self::collection_properties(collection_id);
+
+		let properties = keys
+			.map(|keys| {
+				keys.into_iter()
+					.filter_map(|key| {
+						properties.get(&key).map(|value| Property {
+							key,
+							value: value.clone(),
+						})
+					})
+					.collect()
+			})
+			.unwrap_or_else(|| {
+				properties
+					.into_iter()
+					.map(|(key, value)| Property { key, value })
+					.collect()
+			});
+
+		Ok(properties)
+	}
+
+	pub fn filter_property_permissions(
+		collection_id: CollectionId,
+		keys: Option<Vec<PropertyKey>>,
+	) -> Result<Vec<PropertyKeyPermission>, DispatchError> {
+		let permissions = Self::property_permissions(collection_id);
+
+		let key_permissions = keys
+			.map(|keys| {
+				keys.into_iter()
+					.filter_map(|key| {
+						permissions
+							.get(&key)
+							.map(|permission| PropertyKeyPermission {
+								key,
+								permission: permission.clone(),
+							})
+					})
+					.collect()
+			})
+			.unwrap_or_else(|| {
+				permissions
+					.into_iter()
+					.map(|(key, permission)| PropertyKeyPermission { key, permission })
+					.collect()
+			});
+
+		Ok(key_permissions)
 	}
 
 	pub fn toggle_allowlist(
@@ -613,26 +1131,22 @@ impl<T: Config> Pallet<T> {
 		old_limit: &CollectionLimits,
 		mut new_limit: CollectionLimits,
 	) -> Result<CollectionLimits, DispatchError> {
-		macro_rules! limit_default {
-				($old:ident, $new:ident, $($field:ident $(($arg:expr))? => $check:expr),* $(,)?) => {{
-					$(
-						if let Some($new) = $new.$field {
-							let $old = $old.$field($($arg)?);
-							let _ = $new;
-							let _ = $old;
-							$check
-						} else {
-							$new.$field = $old.$field
-						}
-					)*
-				}};
-			}
-
 		limit_default!(old_limit, new_limit,
 			account_token_ownership_limit => ensure!(
 				new_limit <= MAX_TOKEN_OWNERSHIP,
 				<Error<T>>::CollectionLimitBoundsExceeded,
 			),
+			sponsored_data_size => ensure!(
+				new_limit <= CUSTOM_DATA_LIMIT,
+				<Error<T>>::CollectionLimitBoundsExceeded,
+			),
+
+			sponsored_data_rate_limit => {},
+			token_limit => ensure!(
+				old_limit >= new_limit && new_limit > 0,
+				<Error<T>>::CollectionTokenLimitExceeded
+			),
+
 			sponsor_transfer_timeout(match mode {
 				CollectionMode::NFT => NFT_SPONSOR_TRANSFER_TIMEOUT,
 				CollectionMode::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
@@ -641,14 +1155,7 @@ impl<T: Config> Pallet<T> {
 				new_limit <= MAX_SPONSOR_TIMEOUT,
 				<Error<T>>::CollectionLimitBoundsExceeded,
 			),
-			sponsored_data_size => ensure!(
-				new_limit <= CUSTOM_DATA_LIMIT,
-				<Error<T>>::CollectionLimitBoundsExceeded,
-			),
-			token_limit => ensure!(
-				old_limit >= new_limit && new_limit > 0,
-				<Error<T>>::CollectionTokenLimitExceeded
-			),
+			sponsor_approve_timeout => {},
 			owner_can_transfer => ensure!(
 				old_limit || !new_limit,
 				<Error<T>>::OwnerPermissionsCantBeReverted,
@@ -657,8 +1164,19 @@ impl<T: Config> Pallet<T> {
 				old_limit || !new_limit,
 				<Error<T>>::OwnerPermissionsCantBeReverted,
 			),
-			sponsored_data_rate_limit => {},
 			transfers_enabled => {},
+		);
+		Ok(new_limit)
+	}
+	pub fn clamp_permissions(
+		mode: CollectionMode,
+		old_limit: &CollectionPermissions,
+		mut new_limit: CollectionPermissions,
+	) -> Result<CollectionPermissions, DispatchError> {
+		limit_default_clone!(old_limit, new_limit,
+			access => {},
+			mint_mode => {},
+			nesting => {},
 		);
 		Ok(new_limit)
 	}
@@ -674,14 +1192,18 @@ macro_rules! unsupported {
 /// Worst cases
 pub trait CommonWeightInfo<CrossAccountId> {
 	fn create_item() -> Weight;
-	fn create_multiple_items(amount: u32) -> Weight;
+	fn create_multiple_items(amount: &[CreateItemData]) -> Weight;
 	fn create_multiple_items_ex(cost: &CreateItemExData<CrossAccountId>) -> Weight;
 	fn burn_item() -> Weight;
+	fn set_collection_properties(amount: u32) -> Weight;
+	fn delete_collection_properties(amount: u32) -> Weight;
+	fn set_token_properties(amount: u32) -> Weight;
+	fn delete_token_properties(amount: u32) -> Weight;
+	fn set_property_permissions(amount: u32) -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
 	fn burn_from() -> Weight;
-	fn set_variable_metadata(bytes: u32) -> Weight;
 }
 
 pub trait CommonCollectionOperations<T: Config> {
@@ -690,17 +1212,20 @@ pub trait CommonCollectionOperations<T: Config> {
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
 		data: CreateItemData,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn create_multiple_items(
 		&self,
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
 		data: Vec<CreateItemData>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn create_multiple_items_ex(
 		&self,
 		sender: T::CrossAccountId,
 		data: CreateItemExData<T::CrossAccountId>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn burn_item(
 		&self,
@@ -708,13 +1233,40 @@ pub trait CommonCollectionOperations<T: Config> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResultWithPostInfo;
-
+	fn set_collection_properties(
+		&self,
+		sender: T::CrossAccountId,
+		properties: Vec<Property>,
+	) -> DispatchResultWithPostInfo;
+	fn delete_collection_properties(
+		&self,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResultWithPostInfo;
+	fn set_token_properties(
+		&self,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		property: Vec<Property>,
+	) -> DispatchResultWithPostInfo;
+	fn delete_token_properties(
+		&self,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResultWithPostInfo;
+	fn set_property_permissions(
+		&self,
+		sender: &T::CrossAccountId,
+		property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResultWithPostInfo;
 	fn transfer(
 		&self,
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn approve(
 		&self,
@@ -730,6 +1282,7 @@ pub trait CommonCollectionOperations<T: Config> {
 		to: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn burn_from(
 		&self,
@@ -737,25 +1290,31 @@ pub trait CommonCollectionOperations<T: Config> {
 		from: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 
-	fn set_variable_metadata(
+	fn check_nesting(
 		&self,
 		sender: T::CrossAccountId,
-		token: TokenId,
-		data: BoundedVec<u8, CustomDataLimit>,
-	) -> DispatchResultWithPostInfo;
+		from: (CollectionId, TokenId),
+		under: TokenId,
+		budget: &dyn Budget,
+	) -> DispatchResult;
+
+	fn nest(&self, under: TokenId, to_nest: (CollectionId, TokenId));
+
+	fn unnest(&self, under: TokenId, to_nest: (CollectionId, TokenId));
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId>;
+	fn collection_tokens(&self) -> Vec<TokenId>;
 	fn token_exists(&self, token: TokenId) -> bool;
 	fn last_token_id(&self) -> TokenId;
 
 	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
-	fn const_metadata(&self, token: TokenId) -> Vec<u8>;
-	fn variable_metadata(&self, token: TokenId) -> Vec<u8>;
-
-	/// How many tokens collection contains (Applicable to nonfungible/refungible)
-	fn collection_tokens(&self) -> u32;
+	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue>;
+	fn token_properties(&self, token_id: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property>;
+	/// Amount of unique collection tokens
+	fn total_supply(&self) -> u32;
 	/// Amount of different tokens account has (Applicable to nonfungible/refungible)
 	fn account_balance(&self, account: T::CrossAccountId) -> u32;
 	/// Amount of specific token account have (Applicable to fungible/refungible)
@@ -777,5 +1336,17 @@ pub fn with_weight(res: DispatchResult, weight: Weight) -> DispatchResultWithPos
 	match res {
 		Ok(()) => Ok(post_info),
 		Err(error) => Err(DispatchErrorWithPostInfo { post_info, error }),
+	}
+}
+
+impl<T: Config> From<PropertiesError> for Error<T> {
+	fn from(error: PropertiesError) -> Self {
+		match error {
+			PropertiesError::NoSpaceForProperty => Self::NoSpaceForProperty,
+			PropertiesError::PropertyLimitReached => Self::PropertyLimitReached,
+			PropertiesError::InvalidCharacterInPropertyKey => Self::InvalidCharacterInPropertyKey,
+			PropertiesError::PropertyKeyIsTooLong => Self::PropertyKeyIsTooLong,
+			PropertiesError::EmptyPropertyKey => Self::EmptyPropertyKey,
+		}
 	}
 }

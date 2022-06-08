@@ -19,10 +19,11 @@
 use frame_support::{ensure, BoundedVec};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, MAX_REFUNGIBLE_PIECES, TokenId,
-	CreateCollectionData, CreateRefungibleExData,
+	CreateCollectionData, CreateRefungibleExData, mapping::TokenAddressMapping, budget::Budget,
 };
-use pallet_common::{Error as CommonError, Event as CommonEvent, Pallet as PalletCommon};
 use pallet_evm::account::CrossAccountId;
+use pallet_common::{Error as CommonError, Event as CommonEvent, Pallet as PalletCommon};
+use pallet_structure::Pallet as PalletStructure;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use core::ops::Deref;
@@ -37,16 +38,23 @@ pub mod erc;
 pub mod weights;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
+#[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Default, TypeInfo, MaxEncodedLen)]
 pub struct ItemData {
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
+
+	#[version(..2)]
 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 }
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key};
+	use frame_support::{
+		Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key,
+		traits::StorageVersion,
+	};
+	use frame_system::pallet_prelude::*;
 	use up_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;
 
@@ -56,14 +64,23 @@ pub mod pallet {
 		NotRefungibleDataUsedToMintFungibleCollectionToken,
 		/// Maximum refungibility exceeded
 		WrongRefungiblePieces,
+		/// Refungible token can't nest other tokens
+		RefungibleDisallowsNesting,
+		/// Setting item properties is not allowed
+		SettingPropertiesNotAllowed,
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_common::Config {
+	pub trait Config:
+		frame_system::Config + pallet_common::Config + pallet_structure::Config
+	{
 		type WeightInfo: WeightInfo;
 	}
 
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
@@ -136,6 +153,19 @@ pub mod pallet {
 		Value = u128,
 		QueryKind = ValueQuery,
 	>;
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> Weight {
+			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
+				<TokenData<T>>::translate_values::<ItemDataVersion1, _>(|v| {
+					Some(<ItemDataVersion2>::from(v))
+				})
+			}
+
+			0
+		}
+	}
 }
 
 pub struct RefungibleHandle<T: Config>(pallet_common::CollectionHandle<T>);
@@ -167,7 +197,7 @@ impl<T: Config> Pallet<T> {
 // unchecked calls skips any permission checks
 impl<T: Config> Pallet<T> {
 	pub fn init_collection(
-		owner: T::AccountId,
+		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		<PalletCommon<T>>::init_collection(owner, data)
@@ -177,6 +207,10 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 	) -> DispatchResult {
 		let id = collection.id;
+
+		if Self::collection_has_tokens(id) {
+			return Err(<CommonError<T>>::CantDestroyNotEmptyCollection.into());
+		}
 
 		// =========
 
@@ -191,6 +225,12 @@ impl<T: Config> Pallet<T> {
 		<Owned<T>>::remove_prefix((id,), None);
 		<AccountBalance<T>>::remove_prefix((id,), None);
 		Ok(())
+	}
+
+	fn collection_has_tokens(collection_id: CollectionId) -> bool {
+		<TokenData<T>>::iter_prefix((collection_id,))
+			.next()
+			.is_some()
 	}
 
 	pub fn burn_token(collection: &RefungibleHandle<T>, token_id: TokenId) -> DispatchResult {
@@ -232,6 +272,7 @@ impl<T: Config> Pallet<T> {
 			// =========
 
 			<Owned<T>>::remove((collection.id, owner, token));
+			<PalletStructure<T>>::unnest_if_nested(owner, collection.id, token);
 			<AccountBalance<T>>::insert((collection.id, owner), account_balance);
 			Self::burn_token(collection, token)?;
 			<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
@@ -259,6 +300,7 @@ impl<T: Config> Pallet<T> {
 
 		if balance == 0 {
 			<Owned<T>>::remove((collection.id, owner, token));
+			<PalletStructure<T>>::unnest_if_nested(owner, collection.id, token);
 			<Balance<T>>::remove((collection.id, token, owner));
 			<AccountBalance<T>>::insert((collection.id, owner), account_balance);
 		} else {
@@ -281,13 +323,14 @@ impl<T: Config> Pallet<T> {
 		to: &T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		ensure!(
 			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed
 		);
 
-		if collection.access == AccessMode::AllowList {
+		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(from)?;
 			collection.check_allowlist(to)?;
 		}
@@ -340,10 +383,19 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
+		<PalletStructure<T>>::nest_if_sent_to_token(
+			from.clone(),
+			to,
+			collection.id,
+			token,
+			nesting_budget,
+		)?;
+
 		if let Some(balance_to) = balance_to {
 			// from != to
 			if balance_from == 0 {
 				<Balance<T>>::remove((collection.id, token, from));
+				<PalletStructure<T>>::unnest_if_nested(from, collection.id, token);
 			} else {
 				<Balance<T>>::insert((collection.id, token, from), balance_from);
 			}
@@ -373,10 +425,11 @@ impl<T: Config> Pallet<T> {
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		data: Vec<CreateRefungibleExData<T::CrossAccountId>>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
-				collection.mint_mode,
+				collection.permissions.mint_mode(),
 				<CommonError<T>>::PublicMintingNotAllowed
 			);
 			collection.check_allowlist(sender)?;
@@ -437,6 +490,19 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 
+		for (i, token) in data.iter().enumerate() {
+			let token_id = TokenId(first_token_id + i as u32 + 1);
+			for (to, _) in token.users.iter() {
+				<PalletStructure<T>>::check_nesting(
+					sender.clone(),
+					to,
+					collection.id,
+					token_id,
+					nesting_budget,
+				)?;
+			}
+		}
+
 		// =========
 
 		<TokensMinted<T>>::insert(collection.id, tokens_minted);
@@ -451,15 +517,21 @@ impl<T: Config> Pallet<T> {
 				(collection.id, token_id),
 				ItemData {
 					const_data: token.const_data,
-					variable_data: token.variable_data,
 				},
 			);
+
 			for (user, amount) in token.users.into_iter() {
 				if amount == 0 {
 					continue;
 				}
 				<Balance<T>>::insert((collection.id, token_id, &user), amount);
 				<Owned<T>>::insert((collection.id, &user, TokenId(token_id)), true);
+				<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
+					&user,
+					collection.id,
+					TokenId(token_id),
+				);
+
 				// TODO: ERC20 transfer event
 				<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
 					collection.id,
@@ -501,7 +573,7 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult {
-		if collection.access == AccessMode::AllowList {
+		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(sender)?;
 			collection.check_allowlist(spender)?;
 		}
@@ -521,22 +593,36 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn transfer_from(
+	/// Returns allowance, which should be set after transaction
+	fn check_allowed(
 		collection: &RefungibleHandle<T>,
 		spender: &T::CrossAccountId,
 		from: &T::CrossAccountId,
-		to: &T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
-	) -> DispatchResult {
+		nesting_budget: &dyn Budget,
+	) -> Result<Option<u128>, DispatchError> {
 		if spender.conv_eq(from) {
-			return Self::transfer(collection, from, to, token, amount);
+			return Ok(None);
 		}
-		if collection.access == AccessMode::AllowList {
+		if collection.permissions.access() == AccessMode::AllowList {
 			// `from`, `to` checked in [`transfer`]
 			collection.check_allowlist(spender)?;
 		}
-
+		if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
+			// TODO: should collection owner be allowed to perform this transfer?
+			ensure!(
+				<PalletStructure<T>>::check_indirectly_owned(
+					spender.clone(),
+					source.0,
+					source.1,
+					None,
+					nesting_budget
+				)?,
+				<CommonError<T>>::ApprovedValueTooLow,
+			);
+			return Ok(None);
+		}
 		let allowance =
 			<Allowance<T>>::get((collection.id, token, from, &spender)).checked_sub(amount);
 		if allowance.is_none() {
@@ -545,10 +631,24 @@ impl<T: Config> Pallet<T> {
 				<CommonError<T>>::ApprovedValueTooLow
 			);
 		}
+		Ok(allowance)
+	}
+
+	pub fn transfer_from(
+		collection: &RefungibleHandle<T>,
+		spender: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResult {
+		let allowance =
+			Self::check_allowed(collection, spender, from, token, amount, nesting_budget)?;
 
 		// =========
 
-		Self::transfer(collection, from, to, token, amount)?;
+		Self::transfer(collection, from, to, token, amount, nesting_budget)?;
 		if let Some(allowance) = allowance {
 			Self::set_allowance_unchecked(collection, from, spender, token, allowance);
 		}
@@ -561,23 +661,10 @@ impl<T: Config> Pallet<T> {
 		from: &T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		if spender.conv_eq(from) {
-			return Self::burn(collection, from, token, amount);
-		}
-		if collection.access == AccessMode::AllowList {
-			// `from` checked in [`burn`]
-			collection.check_allowlist(spender)?;
-		}
-
 		let allowance =
-			<Allowance<T>>::get((collection.id, token, from, &spender)).checked_sub(amount);
-		if allowance.is_none() {
-			ensure!(
-				collection.ignores_allowance(spender),
-				<CommonError<T>>::ApprovedValueTooLow
-			);
-		}
+			Self::check_allowed(collection, spender, from, token, amount, nesting_budget)?;
 
 		// =========
 
@@ -588,37 +675,13 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn set_variable_metadata(
-		collection: &RefungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		token: TokenId,
-		data: BoundedVec<u8, CustomDataLimit>,
-	) -> DispatchResult {
-		collection.check_can_update_meta(
-			sender,
-			&T::CrossAccountId::from_sub(collection.owner.clone()),
-		)?;
-
-		let token_data = <TokenData<T>>::get((collection.id, token));
-
-		// =========
-
-		<TokenData<T>>::insert(
-			(collection.id, token),
-			ItemData {
-				variable_data: data,
-				..token_data
-			},
-		);
-		Ok(())
-	}
-
 	/// Delegated to `create_multiple_items`
 	pub fn create_item(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		data: CreateRefungibleExData<T::CrossAccountId>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::create_multiple_items(collection, sender, vec![data])
+		Self::create_multiple_items(collection, sender, vec![data], nesting_budget)
 	}
 }

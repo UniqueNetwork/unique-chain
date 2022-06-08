@@ -5,17 +5,18 @@ license = "GPLv3"
 edition = "2021"
 
 [dependencies]
+unique-runtime-common = { default-features = false, path = "../../runtime/common" }
 pallet-common = { default-features = false, path = '../../pallets/common' }
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
 up-rpc = { path = "../../primitives/rpc" }
+rmrk-rpc = { path = "../../primitives/rmrk-rpc" }
 codec = { package = "parity-scale-codec", version = "3.1.2" }
-jsonrpc-core = "18.0.0"
-jsonrpc-core-client = "18.0.0"
-jsonrpc-derive = "18.0.0"
+jsonrpsee = { version = "0.13.0", features = ["server", "macros"] }
+anyhow = "1.0.57"
 
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-sp-blockchain = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-sp-rpc = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.21" }
+sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-blockchain = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-rpc = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.22" }
