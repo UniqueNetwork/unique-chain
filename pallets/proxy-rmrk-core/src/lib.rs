@@ -98,6 +98,13 @@ pub mod pallet {
 			owner: T::AccountId,
 			nft_id: RmrkNftId,
 		},
+		NFTSent {
+			sender: T::AccountId,
+			recipient: RmrkAccountIdOrCollectionNftTuple<T::AccountId>,
+			collection_id: RmrkCollectionId,
+			nft_id: RmrkNftId,
+			approval_required: bool,
+		},
 		PropertySet {
 			collection_id: RmrkCollectionId,
 			maybe_nft_id: Option<RmrkNftId>,
@@ -376,7 +383,7 @@ pub mod pallet {
 			new_owner: RmrkAccountIdOrCollectionNftTuple<T::AccountId>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
-			let cross_sender = T::CrossAccountId::from_sub(sender);
+			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
 
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
 			let nft_id = rmrk_nft_id.into();
@@ -404,10 +411,12 @@ pub mod pallet {
 			);
 
 			let target_owner;
+			let approval_required;
 
 			match new_owner {
-				RmrkAccountIdOrCollectionNftTuple::AccountId(account_id) => {
-					target_owner = T::CrossAccountId::from_sub(account_id);
+				RmrkAccountIdOrCollectionNftTuple::AccountId(ref account_id) => {
+					target_owner = T::CrossAccountId::from_sub(account_id.clone());
+					approval_required = false;
 				}
 				RmrkAccountIdOrCollectionNftTuple::CollectionAndNftTuple(
 					target_collection_id,
@@ -425,16 +434,16 @@ pub mod pallet {
 					)
 					.map_err(Self::map_unique_err_to_proxy)?;
 
-					let is_approval_required = cross_sender != target_nft_owner;
+					approval_required = cross_sender != target_nft_owner;
 
-					if is_approval_required {
+					if approval_required {
 						target_owner = target_nft_owner;
 
 						<PalletNft<T>>::set_scoped_token_property(
 							collection.id,
 							nft_id,
 							PropertyScope::Rmrk,
-							Self::rmrk_property(PendingNftAccept, &is_approval_required)?,
+							Self::rmrk_property(PendingNftAccept, &approval_required)?,
 						)?;
 					} else {
 						target_owner = T::CrossTokenAddressMapping::token_to_address(
@@ -456,6 +465,14 @@ pub mod pallet {
 				&src_nft_budget,
 			)
 			.map_err(Self::map_unique_err_to_proxy)?;
+
+			Self::deposit_event(Event::NFTSent {
+				sender,
+				recipient: new_owner,
+				collection_id: rmrk_collection_id,
+				nft_id: rmrk_nft_id,
+				approval_required,
+			});
 
 			Ok(())
 		}
