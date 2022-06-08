@@ -36,6 +36,8 @@ pub trait WeightInfo {
 	fn create_multiple_items(b: u32, ) -> Weight;
 	fn create_multiple_items_ex(b: u32, ) -> Weight;
 	fn burn_item() -> Weight;
+	fn burn_recursively_self_raw() -> Weight;
+	fn burn_recursively_breadth_plus_self_plus_self_per_each_raw(b: u32, ) -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
