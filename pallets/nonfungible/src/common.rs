@@ -108,6 +108,15 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn burn_from() -> Weight {
 		<SelfWeightOf<T>>::burn_from()
 	}
+
+	fn burn_recursively_self_raw() -> Weight {
+		<SelfWeightOf<T>>::burn_recursively_self_raw()
+	}
+
+	fn burn_recursively_breadth_raw(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::burn_recursively_breadth_plus_self_plus_self_per_each_raw(amount)
+			.saturating_sub(Self::burn_recursively_self_raw().saturating_mul(amount as u64 + 1))
+	}
 }
 
 fn map_create_data<T: Config>(
@@ -262,6 +271,16 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		} else {
 			Ok(().into())
 		}
+	}
+
+	fn burn_item_recursively(
+		&self,
+		sender: T::CrossAccountId,
+		token: TokenId,
+		self_budget: &dyn Budget,
+		breadth_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo {
+		<Pallet<T>>::burn_recursively(self, &sender, token, self_budget, breadth_budget)
 	}
 
 	fn transfer(

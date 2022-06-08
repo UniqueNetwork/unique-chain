@@ -60,8 +60,9 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
+// FIXME
+// #[cfg(feature = "runtime-benchmarks")]
+// mod benchmarking;
 
 pub mod weights;
 

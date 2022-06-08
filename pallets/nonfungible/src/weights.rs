@@ -36,6 +36,8 @@ pub trait WeightInfo {
 	fn create_multiple_items(b: u32, ) -> Weight;
 	fn create_multiple_items_ex(b: u32, ) -> Weight;
 	fn burn_item() -> Weight;
+	fn burn_recursively_self_raw() -> Weight;
+	fn burn_recursively_breadth_plus_self_plus_self_per_each_raw(b: u32, ) -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
@@ -92,7 +94,35 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
-
+	// Storage: Nonfungible TokenChildren (r:1 w:0)
+	// Storage: Nonfungible TokenData (r:1 w:1)
+	// Storage: Nonfungible TokensBurnt (r:1 w:1)
+	// Storage: Nonfungible AccountBalance (r:1 w:1)
+	// Storage: Nonfungible Allowance (r:1 w:0)
+	// Storage: Nonfungible Owned (r:0 w:1)
+	// Storage: Nonfungible TokenProperties (r:0 w:1)
+	fn burn_recursively_self_raw() -> Weight {
+		(86_136_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(5 as Weight))
+			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+	}
+	// Storage: Nonfungible TokenChildren (r:1 w:0)
+	// Storage: Nonfungible TokenData (r:1 w:1)
+	// Storage: Nonfungible TokensBurnt (r:1 w:1)
+	// Storage: Nonfungible AccountBalance (r:1 w:1)
+	// Storage: Nonfungible Allowance (r:1 w:0)
+	// Storage: Nonfungible Owned (r:0 w:1)
+	// Storage: Nonfungible TokenProperties (r:0 w:1)
+	// Storage: Common CollectionById (r:1 w:0)
+	fn burn_recursively_breadth_plus_self_plus_self_per_each_raw(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 42_828_000
+			.saturating_add((381_478_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(T::DbWeight::get().reads(6 as Weight))
+			.saturating_add(T::DbWeight::get().reads((4 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+			.saturating_add(T::DbWeight::get().writes((4 as Weight).saturating_mul(b as Weight)))
+	}
 	// Storage: Nonfungible TokenData (r:1 w:1)
 	// Storage: Nonfungible AccountBalance (r:2 w:2)
 	// Storage: Nonfungible Allowance (r:1 w:0)
@@ -204,7 +234,35 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
-
+	// Storage: Nonfungible TokenChildren (r:1 w:0)
+	// Storage: Nonfungible TokenData (r:1 w:1)
+	// Storage: Nonfungible TokensBurnt (r:1 w:1)
+	// Storage: Nonfungible AccountBalance (r:1 w:1)
+	// Storage: Nonfungible Allowance (r:1 w:0)
+	// Storage: Nonfungible Owned (r:0 w:1)
+	// Storage: Nonfungible TokenProperties (r:0 w:1)
+	fn burn_recursively_self_raw() -> Weight {
+		(86_136_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+	}
+	// Storage: Nonfungible TokenChildren (r:1 w:0)
+	// Storage: Nonfungible TokenData (r:1 w:1)
+	// Storage: Nonfungible TokensBurnt (r:1 w:1)
+	// Storage: Nonfungible AccountBalance (r:1 w:1)
+	// Storage: Nonfungible Allowance (r:1 w:0)
+	// Storage: Nonfungible Owned (r:0 w:1)
+	// Storage: Nonfungible TokenProperties (r:0 w:1)
+	// Storage: Common CollectionById (r:1 w:0)
+	fn burn_recursively_breadth_plus_self_plus_self_per_each_raw(b: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 42_828_000
+			.saturating_add((381_478_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
+			.saturating_add(RocksDbWeight::get().reads((4 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+			.saturating_add(RocksDbWeight::get().writes((4 as Weight).saturating_mul(b as Weight)))
+	}
 	// Storage: Nonfungible TokenData (r:1 w:1)
 	// Storage: Nonfungible AccountBalance (r:2 w:2)
 	// Storage: Nonfungible Allowance (r:1 w:0)

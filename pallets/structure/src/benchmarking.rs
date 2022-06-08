@@ -5,6 +5,7 @@ use frame_support::traits::{Currency, Get};
 use up_data_structs::{
 	CreateCollectionData, CollectionMode, CreateItemData, CreateNftData, budget::Unlimited,
 };
+use pallet_common::Config as CommonConfig;
 use pallet_evm::account::CrossAccountId;
 
 const SEED: u32 = 1;
@@ -14,8 +15,8 @@ benchmarks! {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let caller_cross = T::CrossAccountId::from_sub(caller.clone());
 
-		T::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
-		T::CollectionDispatch::create(caller, CreateCollectionData {
+		<T as CommonConfig>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
+		T::CollectionDispatch::create(caller_cross.clone(), CreateCollectionData {
 			mode: CollectionMode::NFT,
 			..Default::default()
 		})?;

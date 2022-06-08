@@ -3,7 +3,7 @@
 use pallet_common::CommonCollectionOperations;
 use sp_std::collections::btree_set::BTreeSet;
 
-use frame_support::dispatch::{DispatchError, DispatchResult};
+use frame_support::dispatch::{DispatchError, DispatchResult, DispatchResultWithPostInfo};
 use frame_support::fail;
 pub use pallet::*;
 use pallet_common::{dispatch::CollectionDispatch, CollectionHandle};
@@ -29,6 +29,8 @@ pub mod pallet {
 		OuroborosDetected,
 		/// While searched for owner, encountered depth limit
 		DepthLimit,
+		/// While iterating over children, encountered breadth limit
+		BreadthLimit,
 		/// While searched for owner, found token owner by not-yet-existing token
 		TokenNotFound,
 	}
@@ -182,6 +184,19 @@ impl<T: Config> Pallet<T> {
 		}
 
 		Err(<Error<T>>::DepthLimit.into())
+	}
+
+	pub fn burn_item_recursively(
+		from: T::CrossAccountId,
+		collection: CollectionId,
+		token: TokenId,
+		self_budget: &dyn Budget,
+		breadth_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo {
+		let handle = <CollectionHandle<T>>::try_get(collection)?;
+		let dispatch = T::CollectionDispatch::dispatch(handle);
+		let dispatch = dispatch.as_dyn();
+		dispatch.burn_item_recursively(from.clone(), token, self_budget, breadth_budget)
 	}
 
 	pub fn check_nesting(
