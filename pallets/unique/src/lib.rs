@@ -304,7 +304,7 @@ decl_module! {
 		pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			collection.check_is_mutable()?;
+			collection.check_is_internal()?;
 
 			// =========
 
@@ -339,6 +339,7 @@ decl_module! {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			collection.check_is_internal()?;
 
 			<PalletCommon<T>>::toggle_allowlist(
 				&collection,
@@ -373,6 +374,7 @@ decl_module! {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			collection.check_is_internal()?;
 
 			<PalletCommon<T>>::toggle_allowlist(
 				&collection,
@@ -407,7 +409,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_mutable()?;
+			target_collection.check_is_internal()?;
 			target_collection.check_is_owner(&sender)?;
 
 			target_collection.owner = new_owner.clone();
@@ -437,6 +439,7 @@ decl_module! {
 		pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin_id: T::CrossAccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			collection.check_is_internal()?;
 
 			<Pallet<T>>::deposit_event(Event::<T>::CollectionAdminAdded(
 				collection_id,
@@ -463,6 +466,7 @@ decl_module! {
 		pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::CrossAccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			collection.check_is_internal()?;
 
 			<Pallet<T>>::deposit_event(Event::<T>::CollectionAdminRemoved(
 				collection_id,
@@ -488,6 +492,7 @@ decl_module! {
 
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_owner(&sender)?;
+			target_collection.check_is_internal()?;
 
 			target_collection.set_sponsor(new_sponsor.clone())?;
 
@@ -512,6 +517,7 @@ decl_module! {
 			let sender = ensure_signed(origin)?;
 
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			target_collection.check_is_internal()?;
 			ensure!(
 				target_collection.confirm_sponsorship(&sender)?,
 				Error::<T>::ConfirmUnsetSponsorFail
@@ -540,6 +546,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			target_collection.check_is_internal()?;
 			target_collection.check_is_owner(&sender)?;
 
 			target_collection.sponsorship = SponsorshipState::Disabled;
@@ -704,6 +711,7 @@ decl_module! {
 		pub fn set_transfers_enabled_flag(origin, collection_id: CollectionId, value: bool) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			target_collection.check_is_internal()?;
 			target_collection.check_is_owner(&sender)?;
 
 			// =========
@@ -858,6 +866,7 @@ decl_module! {
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			target_collection.check_is_internal()?;
 			target_collection.check_is_owner(&sender)?;
 			let old_limit = &target_collection.limits;
 
@@ -879,6 +888,7 @@ decl_module! {
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			target_collection.check_is_internal()?;
 			target_collection.check_is_owner(&sender)?;
 			let old_limit = &target_collection.permissions;
 

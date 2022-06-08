@@ -94,7 +94,8 @@ pub mod pallet {
 				..Default::default()
 			};
 
-			let collection_id_res = <PalletNft<T>>::init_collection(cross_sender.clone(), data);
+			let collection_id_res =
+				<PalletNft<T>>::init_collection(cross_sender.clone(), data, true);
 
 			if let Err(DispatchError::Arithmetic(_)) = &collection_id_res {
 				return Err(<Error<T>>::NoAvailableBaseId.into());
@@ -155,6 +156,7 @@ pub mod pallet {
 				misc::CollectionType::Base,
 			)
 			.map_err(|_| <Error<T>>::BaseDoesntExist)?;
+			collection.check_is_external()?;
 
 			if theme.name.as_slice() == b"default" {
 				<BaseHasDefaultTheme<T>>::insert(collection_id, true);

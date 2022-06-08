@@ -35,7 +35,7 @@ where
 		data: CreateCollectionData<T::AccountId>,
 	) -> DispatchResult {
 		let _id = match data.mode {
-			CollectionMode::NFT => <PalletNonfungible<T>>::init_collection(sender, data)?,
+			CollectionMode::NFT => <PalletNonfungible<T>>::init_collection(sender, data, false)?,
 			CollectionMode::Fungible(decimal_points) => {
 				// check params
 				ensure!(
