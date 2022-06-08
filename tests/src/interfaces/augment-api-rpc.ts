@@ -437,7 +437,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get NFT resource priorities
        **/
-      nftResourcePriorities: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<Bytes>>>;
+      nftResourcePriority: AugmentedRpc<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, resourceId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<u32>>>;
       /**
        * Get NFT resources
        **/
