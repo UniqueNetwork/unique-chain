@@ -38,6 +38,7 @@
     "testStructure": "mocha --timeout 9999999 -r ts-node/register ./**/nesting/**.test.ts",
     "testProperties": "mocha --timeout 9999999 -r ts-node/register ./**/properties.test.ts",
     "testMigrationStructure": "mocha --timeout 9999999 -r ts-node/register ./**/nesting/migration-check.test.ts",
+    "testRmrk": "mocha --timeout 9999999 -r ts-node/register ./**/rmrk/**.test.ts",
     "testAddCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/addCollectionAdmin.test.ts",
     "testSetSchemaVersion": "mocha --timeout 9999999 -r ts-node/register ./**/setSchemaVersion.test.ts",
     "testSetCollectionLimits": "mocha --timeout 9999999 -r ts-node/register ./**/setCollectionLimits.test.ts",
