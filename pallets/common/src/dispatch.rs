@@ -36,6 +36,13 @@ pub fn dispatch_call<
 			},
 			error,
 		})?;
+	handle.check_is_internal().map_err(|error| DispatchErrorWithPostInfo {
+		post_info: PostDispatchInfo {
+			actual_weight: Some(dispatch_weight::<T>()),
+			pays_fee: Pays::Yes,
+		},
+		error,
+	})?;
 	let dispatched = T::CollectionDispatch::dispatch(handle);
 	let mut result = call(dispatched.as_dyn());
 	match &mut result {

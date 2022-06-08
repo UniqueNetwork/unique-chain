@@ -148,20 +148,16 @@ impl<T: Config> CollectionHandle<T> {
 			))
 	}
 	pub fn save(self) -> Result<(), DispatchError> {
-		self.check_is_mutable()?;
 		<CollectionById<T>>::insert(self.id, self.collection);
 		Ok(())
 	}
 
 	pub fn set_sponsor(&mut self, sponsor: T::AccountId) -> DispatchResult {
-		self.check_is_mutable()?;
 		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor);
 		Ok(())
 	}
 
 	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> Result<bool, DispatchError> {
-		self.check_is_mutable()?;
-
 		if self.collection.sponsorship.pending_sponsor() != Some(sender) {
 			return Ok(false);
 		}
@@ -170,11 +166,21 @@ impl<T: Config> CollectionHandle<T> {
 		Ok(true)
 	}
 
-	/// Checks that collection is can be mutate.
-	/// Now check only `external_collection` flag and if it **true**, than return `CollectionIsReadOnly` error.
-	pub fn check_is_mutable(&self) -> DispatchResult {
+	/// Checks that the collection was created with, and must be operated upon through **Unique API**.
+	/// Now check only the `external_collection` flag and if it's **true**, then return `CollectionIsExternal` error.
+	pub fn check_is_internal(&self) -> DispatchResult {
 		if self.external_collection {
-			return Err(<Error<T>>::CollectionIsReadOnly)?;
+			return Err(<Error<T>>::CollectionIsExternal)?;
+		}
+
+		Ok(())
+	}
+
+	/// Checks that the collection was created with, and must be operated upon through an **assimilated API**.
+	/// Now check only the `external_collection` flag and if it's **false**, then return `CollectionIsInternal` error.
+	pub fn check_is_external(&self) -> DispatchResult {
+		if !self.external_collection {
+			return Err(<Error<T>>::CollectionIsInternal)?;
 		}
 
 		Ok(())
@@ -448,8 +454,11 @@ pub mod pallet {
 		/// Empty property keys are forbidden
 		EmptyPropertyKey,
 
-		/// Collection is read only
-		CollectionIsReadOnly,
+		/// Tried to access an external collection with an internal API
+		CollectionIsExternal,
+
+		/// Tried to access an internal collection with an external API
+		CollectionIsInternal,
 	}
 
 	#[pallet::storage]
@@ -752,6 +761,7 @@ impl<T: Config> Pallet<T> {
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
+		is_external: bool,
 	) -> Result<CollectionId, DispatchError> {
 		{
 			ensure!(
@@ -795,7 +805,7 @@ impl<T: Config> Pallet<T> {
 					Self::clamp_permissions(data.mode.clone(), &Default::default(), permissions)
 				})
 				.unwrap_or_else(|| Ok(CollectionPermissions::default()))?,
-			external_collection: false,
+			external_collection: is_external,
 		};
 
 		let mut collection_properties = up_data_structs::CollectionProperties::get();
@@ -852,7 +862,6 @@ impl<T: Config> Pallet<T> {
 		collection: CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 	) -> DispatchResult {
-		collection.check_is_mutable()?;
 		ensure!(
 			collection.limits.owner_can_destroy(),
 			<Error<T>>::NoPermission,
@@ -882,7 +891,6 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property: Property,
 	) -> DispatchResult {
-		collection.check_is_mutable()?;
 		collection.check_is_owner_or_admin(sender)?;
 
 		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
@@ -928,8 +936,6 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		properties: Vec<Property>,
 	) -> DispatchResult {
-		collection.check_is_mutable()?;
-
 		for property in properties {
 			Self::set_collection_property(collection, sender, property)?;
 		}
@@ -942,7 +948,6 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_key: PropertyKey,
 	) -> DispatchResult {
-		collection.check_is_mutable()?;
 		collection.check_is_owner_or_admin(sender)?;
 
 		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
@@ -964,8 +969,6 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_keys: Vec<PropertyKey>,
 	) -> DispatchResult {
-		collection.check_is_mutable()?;
-
 		for key in property_keys {
 			Self::delete_collection_property(collection, sender, key)?;
 		}
@@ -990,7 +993,6 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_permission: PropertyKeyPermission,
 	) -> DispatchResult {
-		collection.check_is_mutable()?;
 		collection.check_is_owner_or_admin(sender)?;
 
 		let all_permissions = CollectionPropertyPermissions::<T>::get(collection.id);
@@ -1022,8 +1024,6 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResult {
-		collection.check_is_mutable()?;
-
 		for prop_pemission in property_permissions {
 			Self::set_property_permission(collection, sender, prop_pemission)?;
 		}
@@ -1111,7 +1111,6 @@ impl<T: Config> Pallet<T> {
 		user: &T::CrossAccountId,
 		allowed: bool,
 	) -> DispatchResult {
-		collection.check_is_mutable()?;
 		collection.check_is_owner_or_admin(sender)?;
 
 		// =========
@@ -1131,7 +1130,6 @@ impl<T: Config> Pallet<T> {
 		user: &T::CrossAccountId,
 		admin: bool,
 	) -> DispatchResult {
-		collection.check_is_mutable()?;
 		collection.check_is_owner_or_admin(sender)?;
 
 		let was_admin = <IsAdmin<T>>::get((collection.id, user));

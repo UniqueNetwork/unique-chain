@@ -235,6 +235,7 @@ pub mod pallet {
 				Self::unique_collection_id(collection_id)?,
 				misc::CollectionType::Regular,
 			)?;
+			collection.check_is_external()?;
 
 			<PalletNft<T>>::destroy_collection(collection, &cross_sender)
 				.map_err(Self::map_unique_err_to_proxy)?;
@@ -255,6 +256,9 @@ pub mod pallet {
 			new_issuer: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+
+			let collection = Self::get_nft_collection(Self::unique_collection_id(collection_id)?)?;
+			collection.check_is_external()?;
 
 			let new_issuer = T::Lookup::lookup(new_issuer)?;
 
@@ -287,6 +291,7 @@ pub mod pallet {
 				Self::unique_collection_id(collection_id)?,
 				misc::CollectionType::Regular,
 			)?;
+			collection.check_is_external()?;
 
 			Self::check_collection_owner(&collection, &cross_sender)?;
 
@@ -319,15 +324,16 @@ pub mod pallet {
 			let sender = T::CrossAccountId::from_sub(sender);
 			let cross_owner = T::CrossAccountId::from_sub(owner.clone());
 
-			let royalty_info = royalty_amount.map(|amount| rmrk_traits::RoyaltyInfo {
-				recipient: recipient.unwrap_or_else(|| owner.clone()),
-				amount,
-			});
-
 			let collection = Self::get_typed_nft_collection(
 				Self::unique_collection_id(collection_id)?,
 				misc::CollectionType::Regular,
 			)?;
+			collection.check_is_external()?;
+
+			let royalty_info = royalty_amount.map(|amount| rmrk_traits::RoyaltyInfo {
+				recipient: recipient.unwrap_or_else(|| owner.clone()),
+				amount,
+			});
 
 			let nft_id = Self::create_nft(
 				&sender,
@@ -382,6 +388,12 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
 
+			let collection = Self::get_typed_nft_collection(
+				Self::unique_collection_id(collection_id)?,
+				misc::CollectionType::Regular,
+			)?;
+			collection.check_is_external()?;
+
 			Self::destroy_nft(
 				cross_sender,
 				Self::unique_collection_id(collection_id)?,
@@ -411,13 +423,14 @@ pub mod pallet {
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
 			let nft_id = rmrk_nft_id.into();
 
+			let collection =
+				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
+			collection.check_is_external()?;
+
 			let token_data =
 				<TokenData<T>>::get((collection_id, nft_id)).ok_or(<Error<T>>::NoAvailableNftId)?;
 
 			let from = token_data.owner;
-
-			let collection =
-				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
 
 			ensure!(
 				Self::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::Transferable)?,
@@ -516,6 +529,7 @@ pub mod pallet {
 
 			let collection =
 				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
+			collection.check_is_external()?;
 
 			let new_cross_owner = match new_owner {
 				RmrkAccountIdOrCollectionNftTuple::AccountId(ref account_id) => {
@@ -581,6 +595,10 @@ pub mod pallet {
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
 			let nft_id = rmrk_nft_id.into();
 
+			let collection =
+				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
+			collection.check_is_external()?;
+
 			Self::destroy_nft(cross_sender, collection_id, nft_id).map_err(|err| {
 				if err == <CommonError<T>>::NoPermission.into()
 					|| err == <CommonError<T>>::ApprovedValueTooLow.into()
@@ -613,6 +631,9 @@ pub mod pallet {
 
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)
 				.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+			let collection =
+				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
+			collection.check_is_external()?;
 
 			let nft_id = rmrk_nft_id.into();
 			let resource_id = rmrk_resource_id.into();
@@ -666,6 +687,9 @@ pub mod pallet {
 
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)
 				.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+			let collection =
+				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
+			collection.check_is_external()?;
 
 			let nft_id = rmrk_nft_id.into();
 			let resource_id = rmrk_resource_id.into();
@@ -720,6 +744,10 @@ pub mod pallet {
 			let sender = T::CrossAccountId::from_sub(sender);
 
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
+			let collection =
+				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
+			collection.check_is_external()?;
+
 			let budget = budget::Value::new(NESTING_BUDGET);
 
 			match maybe_nft_id {
@@ -775,6 +803,11 @@ pub mod pallet {
 
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
 			let nft_id = rmrk_nft_id.into();
+
+			let collection =
+				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
+			collection.check_is_external()?;
+
 			let budget = budget::Value::new(NESTING_BUDGET);
 
 			Self::ensure_nft_type(collection_id, nft_id, NftType::Regular)?;
@@ -799,15 +832,20 @@ pub mod pallet {
 		#[transactional]
 		pub fn add_basic_resource(
 			origin: OriginFor<T>,
-			collection_id: RmrkCollectionId,
+			rmrk_collection_id: RmrkCollectionId,
 			nft_id: RmrkNftId,
 			resource: RmrkBasicResource,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 
+			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
+			let collection =
+				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
+			collection.check_is_external()?;
+
 			let resource_id = Self::resource_add(
 				sender,
-				Self::unique_collection_id(collection_id)?,
+				collection_id,
 				nft_id.into(),
 				[
 					Self::rmrk_property(TokenType, &NftType::Resource)?,
@@ -831,16 +869,21 @@ pub mod pallet {
 		#[transactional]
 		pub fn add_composable_resource(
 			origin: OriginFor<T>,
-			collection_id: RmrkCollectionId,
+			rmrk_collection_id: RmrkCollectionId,
 			nft_id: RmrkNftId,
 			_resource_id: RmrkBoundedResource,
 			resource: RmrkComposableResource,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 
+			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
+			let collection =
+				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
+			collection.check_is_external()?;
+
 			let resource_id = Self::resource_add(
 				sender,
-				Self::unique_collection_id(collection_id)?,
+				collection_id,
 				nft_id.into(),
 				[
 					Self::rmrk_property(TokenType, &NftType::Resource)?,
@@ -866,15 +909,20 @@ pub mod pallet {
 		#[transactional]
 		pub fn add_slot_resource(
 			origin: OriginFor<T>,
-			collection_id: RmrkCollectionId,
+			rmrk_collection_id: RmrkCollectionId,
 			nft_id: RmrkNftId,
 			resource: RmrkSlotResource,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 
+			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
+			let collection =
+				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
+			collection.check_is_external()?;
+
 			let resource_id = Self::resource_add(
 				sender,
-				Self::unique_collection_id(collection_id)?,
+				collection_id,
 				nft_id.into(),
 				[
 					Self::rmrk_property(TokenType, &NftType::Resource)?,
@@ -900,18 +948,18 @@ pub mod pallet {
 		#[transactional]
 		pub fn remove_resource(
 			origin: OriginFor<T>,
-			collection_id: RmrkCollectionId,
+			rmrk_collection_id: RmrkCollectionId,
 			nft_id: RmrkNftId,
 			resource_id: RmrkResourceId,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 
-			Self::resource_remove(
-				sender,
-				Self::unique_collection_id(collection_id)?,
-				nft_id.into(),
-				resource_id.into(),
-			)?;
+			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
+			let collection =
+				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
+			collection.check_is_external()?;
+
+			Self::resource_remove(sender, collection_id, nft_id.into(), resource_id.into())?;
 
 			Self::deposit_event(Event::ResourceRemoval {
 				nft_id,
@@ -968,7 +1016,7 @@ impl<T: Config> Pallet<T> {
 		data: CreateCollectionData<T::AccountId>,
 		properties: impl Iterator<Item = Property>,
 	) -> Result<CollectionId, DispatchError> {
-		let collection_id = <PalletNft<T>>::init_collection(sender, data);
+		let collection_id = <PalletNft<T>>::init_collection(sender, data, true);
 
 		if let Err(DispatchError::Arithmetic(_)) = &collection_id {
 			return Err(<Error<T>>::NoAvailableCollectionId.into());

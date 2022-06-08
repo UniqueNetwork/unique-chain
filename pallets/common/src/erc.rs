@@ -316,8 +316,9 @@ fn check_is_owner_or_admin<T: Config>(
 }
 
 fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
+	// TODO possibly delete for the lack of transaction
 	collection
-		.check_is_mutable()
+		.check_is_internal()
 		.map_err(dispatch_to_evm::<T>)?;
 	<crate::CollectionById<T>>::insert(collection.id, collection.collection.clone());
 	Ok(())
