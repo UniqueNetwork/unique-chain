@@ -1264,7 +1264,6 @@ fn remove_collection_admin() {
 		let collection1_id =
 			create_test_collection_for_owner(&CollectionMode::NFT, 1, CollectionId(1));
 		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
 
 		// Add collection admins 2 and 3
 		assert_ok!(Unique::add_collection_admin(
@@ -1273,7 +1272,7 @@ fn remove_collection_admin() {
 			account(2)
 		));
 		assert_ok!(Unique::add_collection_admin(
-			origin1,
+			origin1.clone(),
 			collection1_id,
 			account(3)
 		));
@@ -1287,9 +1286,9 @@ fn remove_collection_admin() {
 			account(3)
 		)));
 
-		// remove admin 3
+		// remove admin 3 
 		assert_ok!(Unique::remove_collection_admin(
-			origin2,
+			origin1,
 			CollectionId(1),
 			account(3)
 		));
