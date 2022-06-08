@@ -28,6 +28,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
 use sp_runtime::DispatchError;
+use fp_self_contained::*;
 // #[cfg(any(feature = "std", test))]
 // pub use sp_runtime::BuildStorage;
 
@@ -50,6 +51,7 @@ pub use pallet_transaction_payment::{
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_evm::{
 	EnsureAddressTruncated, HashedAddressMapping, Runner, account::CrossAccountId as _,
+	OnMethodCall, Account as EVMAccount, FeeCalculator, GasWeightMapping,
 };
 pub use frame_support::{
 	construct_runtime, match_types,
@@ -66,6 +68,14 @@ pub use frame_support::{
 		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients, ConstantMultiplier,
 	},
 };
+use pallet_unq_scheduler::DispatchCall;
+use up_data_structs::{
+	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits, 
+	CollectionStats, RpcCollection, 
+	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
+	TokenChild,
+};
+
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
 use frame_system::{
@@ -77,19 +87,16 @@ use sp_arithmetic::{
 };
 use smallvec::smallvec;
 use codec::{Encode, Decode};
-use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
 	traits::{
-		Applyable, BlockNumberProvider, Dispatchable, PostDispatchInfoOf, DispatchInfoOf, Saturating,
-		CheckedConversion,
+		Applyable, BlockNumberProvider, Dispatchable, PostDispatchInfoOf, DispatchInfoOf,
+		Saturating, CheckedConversion,
 	},
 	generic::Era,
 	transaction_validity::TransactionValidityError,
-	SaturatedConversion, DispatchErrorWithPostInfo,
+	DispatchErrorWithPostInfo, SaturatedConversion, 
 };
-
-use fp_self_contained::{SelfContainedCall, CheckedSignature};
 
 // pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -97,12 +104,6 @@ pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 // Polkadot imports
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use up_data_structs::{
-	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits, 
-	CollectionStats, RpcCollection, 
-	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
-	TokenChild,
-};
 use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
@@ -113,7 +114,6 @@ use xcm_builder::{
 };
 use xcm_executor::{Config, XcmExecutor, Assets};
 use sp_std::{cmp::Ordering, marker::PhantomData};
-use pallet_unq_scheduler::DispatchCall;
 
 use xcm::latest::{
 	//	Xcm,
@@ -148,6 +148,22 @@ impl RuntimeInstance for Runtime {
 		TransactionConverter
 	}
 }
+
+/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
+/// never know...
+pub type AccountIndex = u32;
+
+/// Balance of an account.
+pub type Balance = u128;
+
+/// Index of a transaction in the chain.
+pub type Index = u32;
+
+/// A hash of some data used by the chain.
+pub type Hash = sp_core::H256;
+
+/// Digest item type.
+pub type DigestItem = generic::DigestItem;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -278,6 +294,12 @@ impl GasWeightMapping for FixedGasWeightMapping {
 	}
 }
 
+impl pallet_evm::account::Config for Runtime {
+	type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Self>;
+	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
+	type EvmBackwardsAddressMapping = fp_evm_mapping::MapBackwardsAddressTruncated;
+}
+
 impl pallet_evm::Config for Runtime {
 	type BlockGasLimit = BlockGasLimit;
 	type FeeCalculator = FixedFee;
@@ -394,11 +416,12 @@ parameter_types! {
 	// pub const ExistentialDeposit: u128 = 500;
 	pub const ExistentialDeposit: u128 = 0;
 	pub const MaxLocks: u32 = 50;
+	pub const MaxReserves: u32 = 50;
 }
 
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
+	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = [u8; 16];
 	/// The type for recording an account's balance.
 	type Balance = Balance;
@@ -880,12 +903,6 @@ impl pallet_structure::Config for Runtime {
 	type WeightInfo = pallet_structure::weights::SubstrateWeight<Self>;
 }
 
-impl pallet_evm::account::Config for Runtime {
-	type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Self>;
-	type EvmAddressMapping = HashedAddressMapping<Self::Hashing>;
-	type EvmBackwardsAddressMapping = fp_evm_mapping::MapBackwardsAddressTruncated;
-}
-
 impl pallet_fungible::Config for Runtime {
 	type WeightInfo = pallet_fungible::weights::SubstrateWeight<Self>;
 }
@@ -927,58 +944,6 @@ parameter_types! {
 		RuntimeBlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
 }
-
-type EvmSponsorshipHandler = (
-	UniqueEthSponsorshipHandler<Runtime>,
-	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
-);
-type SponsorshipHandler = (
-	UniqueSponsorshipHandler<Runtime>,
-	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
-	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
-);
-
-parameter_types! {
-	pub const NoPreimagePostponement: Option<u32> = Some(10);
-	pub const Preimage: Option<u32> = Some(10);
-}
-
-/// Used the compare the privilege of an origin inside the scheduler.
-pub struct OriginPrivilegeCmp;
-impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
-	fn cmp_privilege(_left: &OriginCaller, _right: &OriginCaller) -> Option<Ordering> {
-		Some(Ordering::Equal)
-	}
-}
-
-impl pallet_unq_scheduler::Config for Runtime {
-	type Event = Event;
-	type Origin = Origin;
-	type Currency = Balances;
-	type PalletsOrigin = OriginCaller;
-	type Call = Call;
-	type MaximumWeight = MaximumSchedulerWeight;
-	type ScheduleOrigin = EnsureSigned<AccountId>;
-	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type WeightInfo = ();
-	type CallExecutor = SchedulerPaymentExecutor;
-	type OriginPrivilegeCmp = OriginPrivilegeCmp;
-	type PreimageProvider = ();
-	type NoPreimagePostponement = NoPreimagePostponement;
-}
-
-impl pallet_evm_transaction_payment::Config for Runtime {
-	type EvmSponsorshipHandler = EvmSponsorshipHandler;
-	type Currency = Balances;
-}
-
-impl pallet_charge_transaction::Config for Runtime {
-	type SponsorshipHandler = SponsorshipHandler;
-}
-
-// impl pallet_contract_helpers::Config for Runtime {
-//	 type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
-// }
 
 type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
 use frame_support::traits::NamedReservableCurrency;
@@ -1083,6 +1048,59 @@ where
 		)
 	}
 }
+
+parameter_types! {
+	pub const NoPreimagePostponement: Option<u32> = Some(10);
+	pub const Preimage: Option<u32> = Some(10);
+}
+
+/// Used the compare the privilege of an origin inside the scheduler.
+pub struct OriginPrivilegeCmp;
+
+impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
+	fn cmp_privilege(_left: &OriginCaller, _right: &OriginCaller) -> Option<Ordering> {
+		Some(Ordering::Equal)
+	}
+}
+
+impl pallet_unq_scheduler::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type Currency = Balances;
+	type PalletsOrigin = OriginCaller;
+	type Call = Call;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureSigned<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type WeightInfo = ();
+	type CallExecutor = SchedulerPaymentExecutor;
+	type OriginPrivilegeCmp = OriginPrivilegeCmp;
+	type PreimageProvider = ();
+	type NoPreimagePostponement = NoPreimagePostponement;
+}
+
+type EvmSponsorshipHandler = (
+	UniqueEthSponsorshipHandler<Runtime>,
+	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
+);
+type SponsorshipHandler = (
+	UniqueSponsorshipHandler<Runtime>,
+	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
+	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
+);
+
+impl pallet_evm_transaction_payment::Config for Runtime {
+	type EvmSponsorshipHandler = EvmSponsorshipHandler;
+	type Currency = Balances;
+}
+
+impl pallet_charge_transaction::Config for Runtime {
+	type SponsorshipHandler = SponsorshipHandler;
+}
+
+// impl pallet_contract_helpers::Config for Runtime {
+//	 type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
+// }
 
 parameter_types! {
 	// 0x842899ECF380553E8a4de75bF534cdf6fBF64049
@@ -1199,7 +1217,7 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
+	ChargeTransactionPayment,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
 );

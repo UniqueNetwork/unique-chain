@@ -42,7 +42,7 @@ so that we can keep the builds stable.
 1. Install Rust:
 
 ```bash
-sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang
+sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make
 curl https://sh.rustup.rs -sSf | sh
 ```
 
@@ -62,8 +62,18 @@ rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
 ```
 
 5. Build:
+
+Opal
 ```bash
-cargo build --features=unique-runtime,quartz-runtime --release
+cargo build --release
+```
+Quartz
+```bash
+cargo build --features=quartz-runtime --release
+```
+Unique
+```bash
+cargo build --features=unique-runtime --release
 ```
 
 ## Building as Parachain locally
@@ -155,13 +165,13 @@ assetRegistry -> registerForeignAsset(location, metadata)
 location:
 	V0(X2(Parent, Parachain(PARA_ID)))
 metadata:
-	name         OPL
-	symbol       OPL
+	name         QTZ
+	symbol       QTZ
 	decimals     18
 minimalBalance	 1
 ```
 
-### Next, we can send tokens from Opal to Karura:
+### Next, we can send tokens from Quartz to Karura:
 ```
 polkadotXcm -> reserveTransferAssets
 dest:
@@ -179,7 +189,7 @@ weightLimit:
 The result will be displayed in ChainState
 tokens -> accounts
 
-### To send tokens from Karura to Opal:
+### To send tokens from Karura to Quartz:
 ```
 xtokens -> transfer
 
