@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
-
 // std
 use std::sync::Arc;
 use std::sync::Mutex;
