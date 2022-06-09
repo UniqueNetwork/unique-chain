@@ -45,7 +45,7 @@ pub use property::*;
 
 use RmrkProperty::*;
 
-const NESTING_BUDGET: u32 = 5;
+pub const NESTING_BUDGET: u32 = 5;
 
 #[frame_support::pallet]
 pub mod pallet {
