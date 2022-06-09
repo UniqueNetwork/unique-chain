@@ -93,5 +93,9 @@ bench-nonfungible:
 bench-structure:
 	make _bench PALLET=structure
 
+.PHONY: bench-scheduler
+bench-scheduler:
+	make _bench PALLET=unq-scheduler	
+
 .PHONY: bench
-bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible
+bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-scheduler
