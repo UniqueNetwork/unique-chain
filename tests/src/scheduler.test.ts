@@ -16,7 +16,6 @@
 
 import chai, {expect} from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import {
   default as usingApi, 
   submitTransactionAsync,

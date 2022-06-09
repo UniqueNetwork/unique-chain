@@ -16,7 +16,6 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import {createCollectionExpectSuccess, destroyCollectionExpectSuccess, getAdminList, normalizeAccountId, queryCollectionExpectSuccess} from './util/helpers';
 
@@ -95,11 +94,11 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
   });
 
   it('Regular user can\'t remove collection admin', async () => {
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
-      const charlie = privateKey('//Charlie');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
 
       const addAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
       await submitTransactionAsync(alice, addAdminTx);
@@ -113,11 +112,11 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
   });
 
   it('Admin can\'t remove collection admin.', async () => {
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
-      const charlie = privateKey('//Charlie');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
 
       const adminListAfterAddAdmin = await getAdminList(api, collectionId);
       expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
