@@ -326,6 +326,20 @@ impl<C, P> Unique<C, P> {
 	}
 }
 
+pub struct Rmrk<C, P> {
+	client: Arc<C>,
+	_marker: std::marker::PhantomData<P>,
+}
+
+impl<C, P> Rmrk<C, P> {
+	pub fn new(client: Arc<C>) -> Self {
+		Self {
+			client,
+			_marker: Default::default(),
+		}
+	}
+}
+
 macro_rules! pass_method {
 	(
 		$method_name:ident(
@@ -474,7 +488,7 @@ impl<
 		BaseInfo,
 		PartType,
 		Theme,
-	> for Unique<C, Block>
+	> for Rmrk<C, Block>
 where
 	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	C::Api: RmrkRuntimeApi<
