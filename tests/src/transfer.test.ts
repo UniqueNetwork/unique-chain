@@ -73,9 +73,9 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
   });
 
   it('Inability to pay fees error message is correct', async () => {
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       // Find unused address
-      const pk = await findUnusedAddress(api);
+      const pk = await findUnusedAddress(api, privateKeyWrapper);
 
       const badTransfer = api.tx.balances.transfer(bob.address, 1n);
       // const events = await submitTransactionAsync(pk, badTransfer);

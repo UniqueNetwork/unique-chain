@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {
   createCollectionExpectSuccess,
@@ -37,10 +36,9 @@ let bob: IKeyringPair;
 
 describe('integration test: ext. burnItem():', () => {
   before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({type: 'sr25519'});
-      alice = keyring.addFromUri('//Alice');
-      bob = keyring.addFromUri('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -142,10 +140,9 @@ describe('integration test: ext. burnItem():', () => {
 
 describe('integration test: ext. burnItem() with admin permissions:', () => {
   before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({type: 'sr25519'});
-      alice = keyring.addFromUri('//Alice');
-      bob = keyring.addFromUri('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -209,10 +206,9 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
 
 describe('Negative integration test: ext. burnItem():', () => {
   before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({type: 'sr25519'});
-      alice = keyring.addFromUri('//Alice');
-      bob = keyring.addFromUri('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
