@@ -56,7 +56,7 @@ fn fill_schedule<T: Config>(
 				} else {
 					call.into()
 				}
-			},
+			}
 			Some(false) => call.into(),
 			None => CallOrHashOf::<T>::Hash(hash),
 		};
@@ -67,13 +67,24 @@ fn fill_schedule<T: Config>(
 		let t = DispatchTime::At(when);
 		let origin = frame_system::RawOrigin::Root.into();
 		if named {
-			Scheduler::<T>::do_schedule_named(i.encode().try_into().unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]),
-			t, period, 0, origin, call_or_hash)?;
+			Scheduler::<T>::do_schedule_named(
+				i.encode()
+					.try_into()
+					.unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]),
+				t,
+				period,
+				0,
+				origin,
+				call_or_hash,
+			)?;
 		} else {
 			Scheduler::<T>::do_schedule(t, period, 0, origin, call_or_hash)?;
 		}
 	}
-	ensure!(Agenda::<T>::get(when).len() == n as usize, "didn't fill schedule");
+	ensure!(
+		Agenda::<T>::get(when).len() == n as usize,
+		"didn't fill schedule"
+	);
 	Ok(())
 }
 
@@ -83,7 +94,6 @@ fn call_and_hash<T: Config>(i: u32) -> (<T as Config>::Call, T::Hash) {
 	let hash = T::Hashing::hash_of(&call);
 	(call, hash)
 }
-
 
 benchmarks! {
 	on_initialize_periodic_named_resolved {
