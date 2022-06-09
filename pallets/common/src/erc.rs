@@ -21,7 +21,6 @@ use evm_coder::{
 };
 pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
 use pallet_evm_coder_substrate::dispatch_to_evm;
-use sp_core::{H160, U256, H256};
 use sp_std::vec::Vec;
 use up_data_structs::{Property, SponsoringRateLimit, NestingRule, OwnerRestrictedSet, AccessMode};
 use alloc::format;
@@ -220,7 +219,7 @@ impl<T: Config> CollectionHandle<T>
 			false => NestingRule::Disabled,
 			true => NestingRule::Owner,
 		});
-		save(self);
+		save(self)?;
 		Ok(())
 	}
 
@@ -257,7 +256,7 @@ impl<T: Config> CollectionHandle<T>
 				NestingRule::OwnerRestricted(bv)
 			}
 		});
-		save(self);
+		save(self)?;
 		Ok(())
 	}
 
@@ -270,7 +269,7 @@ impl<T: Config> CollectionHandle<T>
 			1 => AccessMode::AllowList,
 			_ => return Err("Not supported access mode".into()),
 		});
-		save(self);
+		save(self)?;
 		Ok(())
 	}
 
@@ -291,7 +290,7 @@ impl<T: Config> CollectionHandle<T>
 	fn set_collection_mint_mode(&mut self, caller: caller, mode: bool) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;
 		self.collection.permissions.mint_mode = Some(mode);
-		save(self);
+		save(self)?;
 		Ok(())
 	}
 }
