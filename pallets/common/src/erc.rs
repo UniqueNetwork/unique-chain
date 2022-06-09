@@ -201,7 +201,7 @@ where
 		Ok(())
 	}
 
-	fn remove_admin(&self, caller: caller, admin: address) -> Result<void> {
+	fn remove_collection_admin(&self, caller: caller, admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let admin = T::CrossAccountId::from_eth(admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
@@ -220,12 +220,21 @@ where
 	}
 
 	#[solidity(rename_selector = "setNesting")]
-	fn set_nesting(&mut self, caller: caller, enable: bool, collections: Vec<address>) -> Result<void> {
+	fn set_nesting(
+		&mut self,
+		caller: caller,
+		enable: bool,
+		collections: Vec<address>,
+	) -> Result<void> {
 		if collections.is_empty() {
 			return Err("No addresses provided".into());
 		}
 		if collections.len() >= OwnerRestrictedSet::bound() {
-			return Err(Error::Revert(format!("Out of bound: {} >= {}", collections.len(), OwnerRestrictedSet::bound())));
+			return Err(Error::Revert(format!(
+				"Out of bound: {} >= {}",
+				collections.len(),
+				OwnerRestrictedSet::bound()
+			)));
 		}
 		check_is_owner_or_admin(caller, self)?;
 		self.collection.permissions.nesting = Some(match enable {
@@ -238,7 +247,7 @@ where
 					})?)
 					.map_err(|e| Error::Revert(format!("{:?}", e)))?;
 				}
-				NestingRule::OwnerRestricted (bv)
+				NestingRule::OwnerRestricted(bv)
 			}
 		});
 		save(self)?;

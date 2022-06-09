@@ -302,7 +302,7 @@
     "inputs": [
       { "internalType": "address", "name": "admin", "type": "address" }
     ],
-    "name": "removeAdmin",
+    "name": "removeCollectionAdmin",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"

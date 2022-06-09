@@ -1286,7 +1286,7 @@ fn remove_collection_admin() {
 			account(3)
 		)));
 
-		// remove admin 3 
+		// remove admin 3
 		assert_ok!(Unique::remove_collection_admin(
 			origin1,
 			CollectionId(1),

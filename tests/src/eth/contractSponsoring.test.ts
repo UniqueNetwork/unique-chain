@@ -221,7 +221,6 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.getSponsoringRateLimit(flipper.options.address).call()).to.be.equals('7200');
   });
 
-  //TODO: CORE-302 add eth methods
   itWeb3('Sponsoring collection from evm address via access list', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
     const collectionHelpers = evmCollectionHelpers(web3, owner);
@@ -229,13 +228,13 @@ describe('Sponsoring EVM contracts', () => {
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const sponsor = await createEthAccountWithBalance(api, web3);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-    result = await collectionEvm.methods.ethSetSponsor(sponsor).send({from: owner});
+    result = await collectionEvm.methods.setCollectionSponsor(sponsor).send({from: owner});
     let collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
     expect(collectionSub.sponsorship.isUnconfirmed).to.be.true;
     expect(collectionSub.sponsorship.asUnconfirmed.toHuman()).to.be.eq(evmToAddress(sponsor));
     await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('Caller is not set as sponsor');
 
-    await collectionEvm.methods.ethConfirmSponsorship().send({from: sponsor});
+    await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsor});
     collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
     expect(collectionSub.sponsorship.isConfirmed).to.be.true;
     expect(collectionSub.sponsorship.asConfirmed.toHuman()).to.be.eq(evmToAddress(sponsor));
@@ -248,15 +247,16 @@ describe('Sponsoring EVM contracts', () => {
     expect(oldPermissions.mintMode).to.be.false;
     expect(oldPermissions.access).to.be.equal('Normal');
 
-    await collectionEvm.methods.setAccess('AllowList').send({from: owner});
-    await collectionEvm.methods.addToAllowList(user).send({from: owner});
+    await collectionEvm.methods.setCollectionAccess(1 /*'AllowList'*/).send({from: owner});
+    await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
     await collectionEvm.methods.setMintMode(true).send({from: owner});
 
     const newPermissions = (await getDetailedCollectionInfo(api, collectionId))!.permissions.toHuman();
     expect(newPermissions.mintMode).to.be.true;
     expect(newPermissions.access).to.be.equal('AllowList');
 
-    // const [alicesBalanceBefore] = await getBalance(api, [alicesPublicKey]);
+    const ownerBalanceBefore = await ethBalanceViaSub(api, owner);
+    const sponsorBalanceBefore = await ethBalanceViaSub(api, sponsor);
 
     {
       const nextTokenId = await collectionEvm.methods.nextTokenId().call();
@@ -265,13 +265,12 @@ describe('Sponsoring EVM contracts', () => {
         user,
         nextTokenId,
         'Test URI',
-      ).call({from: user});
-      console.log(result);
+      ).send({from: user});
       const events = normalizeEvents(result.events);
 
       expect(events).to.be.deep.equal([
         {
-          collectionIdAddress,
+          address: collectionIdAddress,
           event: 'Transfer',
           args: {
             from: '0x0000000000000000000000000000000000000000',
@@ -281,7 +280,12 @@ describe('Sponsoring EVM contracts', () => {
         },
       ]);
 
+      const ownerBalanceAfter = await ethBalanceViaSub(api, owner);
+      const sponsorBalanceAfter = await ethBalanceViaSub(api, sponsor);
+
       expect(await collectionEvm.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+      expect(ownerBalanceBefore).to.be.eq(ownerBalanceAfter);
+      expect(sponsorBalanceBefore > sponsorBalanceAfter).to.be.true;
     }
   });
 
@@ -292,19 +296,19 @@ describe('Sponsoring EVM contracts', () => {
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const sponsor = await createEthAccountWithBalance(api, web3);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-    result = await collectionEvm.methods.ethSetSponsor(sponsor).send();
+    result = await collectionEvm.methods.setCollectionSponsor(sponsor).send();
     let collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
     expect(collectionSub.sponsorship.isUnconfirmed).to.be.true;
     expect(collectionSub.sponsorship.asUnconfirmed.toHuman()).to.be.eq(evmToAddress(sponsor));
-    await expect(collectionEvm.methods.ethConfirmSponsorship().call()).to.be.rejectedWith('Caller is not set as sponsor');
+    await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('Caller is not set as sponsor');
     const sponsorCollection = evmCollection(web3, sponsor, collectionIdAddress);
-    await sponsorCollection.methods.ethConfirmSponsorship().send();
+    await sponsorCollection.methods.confirmCollectionSponsorship().send();
     collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
     expect(collectionSub.sponsorship.isConfirmed).to.be.true;
     expect(collectionSub.sponsorship.asConfirmed.toHuman()).to.be.eq(evmToAddress(sponsor));
 
     const user = createEthAccount(web3);
-    await collectionEvm.methods.addAdmin(user).send();
+    await collectionEvm.methods.addCollectionAdmin(user).send();
     
     const ownerBalanceBefore = await ethBalanceViaSub(api, owner);
     const sponsorBalanceBefore = await ethBalanceViaSub(api, sponsor);

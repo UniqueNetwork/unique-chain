@@ -42,69 +42,6 @@ interface ERC721MintableEvents {
 	event MintingFinished();
 }
 
-// Selector: 2da6e59e
-interface Collection is Dummy, ERC165 {
-	// Selector: setCollectionProperty(string,bytes) 2f073f66
-	function setCollectionProperty(string memory key, bytes memory value)
-		external;
-
-	// Selector: deleteCollectionProperty(string) 7b7debce
-	function deleteCollectionProperty(string memory key) external;
-
-	// Throws error if key not found
-	//
-	// Selector: collectionProperty(string) cf24fd6d
-	function collectionProperty(string memory key)
-		external
-		view
-		returns (bytes memory);
-
-	// Selector: setCollectionSponsor(address) 7623402e
-	function setCollectionSponsor(address sponsor) external;
-
-	// Selector: confirmCollectionSponsorship() 3c50e97a
-	function confirmCollectionSponsorship() external;
-
-	// Selector: setCollectionLimit(string,uint32) 6a3841db
-	function setCollectionLimit(string memory limit, uint32 value) external;
-
-	// Selector: setCollectionLimit(string,bool) 993b7fba
-	function setCollectionLimit(string memory limit, bool value) external;
-
-	// Selector: contractAddress() f6b4dfb4
-	function contractAddress() external view returns (address);
-
-	// Selector: addCollectionAdminSubstrate(uint256) 5730062b
-	function addCollectionAdminSubstrate(uint256 newAdmin) external view;
-
-	// Selector: removeCollectionAdminSubstrate(uint256) 4048fcf9
-	function removeCollectionAdminSubstrate(uint256 newAdmin) external view;
-
-	// Selector: addCollectionAdmin(address) 92e462c7
-	function addCollectionAdmin(address newAdmin) external view;
-
-	// Selector: removeAdmin(address) 1785f53c
-	function removeAdmin(address admin) external view;
-
-	// Selector: setNesting(bool) e8fc50dd
-	function setNesting(bool enable) external;
-
-	// Selector: setNesting(bool,address[]) 7df12a9a
-	function setNesting(bool enable, address[] memory collections) external;
-
-	// Selector: setCollectionAccess(uint8) 41835d4c
-	function setCollectionAccess(uint8 mode) external;
-
-	// Selector: addToCollectionAllowList(address) 67844fe6
-	function addToCollectionAllowList(address user) external view;
-
-	// Selector: removeFromCollectionAllowList(address) 85c51acb
-	function removeFromCollectionAllowList(address user) external view;
-
-	// Selector: setMintMode(bool) 5dea9bd5
-	function setMintMode(bool mode) external;
-}
-
 // Selector: 41369377
 interface TokenProperties is Dummy, ERC165 {
 	// Selector: setTokenPropertyPermission(string,bool,bool,bool) 222d97fa
@@ -252,6 +189,69 @@ interface ERC721Enumerable is Dummy, ERC165 {
 
 	// Selector: totalSupply() 18160ddd
 	function totalSupply() external view returns (uint256);
+}
+
+// Selector: c0de6be0
+interface Collection is Dummy, ERC165 {
+	// Selector: setCollectionProperty(string,bytes) 2f073f66
+	function setCollectionProperty(string memory key, bytes memory value)
+		external;
+
+	// Selector: deleteCollectionProperty(string) 7b7debce
+	function deleteCollectionProperty(string memory key) external;
+
+	// Throws error if key not found
+	//
+	// Selector: collectionProperty(string) cf24fd6d
+	function collectionProperty(string memory key)
+		external
+		view
+		returns (bytes memory);
+
+	// Selector: setCollectionSponsor(address) 7623402e
+	function setCollectionSponsor(address sponsor) external;
+
+	// Selector: confirmCollectionSponsorship() 3c50e97a
+	function confirmCollectionSponsorship() external;
+
+	// Selector: setCollectionLimit(string,uint32) 6a3841db
+	function setCollectionLimit(string memory limit, uint32 value) external;
+
+	// Selector: setCollectionLimit(string,bool) 993b7fba
+	function setCollectionLimit(string memory limit, bool value) external;
+
+	// Selector: contractAddress() f6b4dfb4
+	function contractAddress() external view returns (address);
+
+	// Selector: addCollectionAdminSubstrate(uint256) 5730062b
+	function addCollectionAdminSubstrate(uint256 newAdmin) external view;
+
+	// Selector: removeCollectionAdminSubstrate(uint256) 4048fcf9
+	function removeCollectionAdminSubstrate(uint256 newAdmin) external view;
+
+	// Selector: addCollectionAdmin(address) 92e462c7
+	function addCollectionAdmin(address newAdmin) external view;
+
+	// Selector: removeCollectionAdmin(address) fafd7b42
+	function removeCollectionAdmin(address admin) external view;
+
+	// Selector: setNesting(bool) e8fc50dd
+	function setNesting(bool enable) external;
+
+	// Selector: setNesting(bool,address[]) 7df12a9a
+	function setNesting(bool enable, address[] memory collections) external;
+
+	// Selector: setCollectionAccess(uint8) 41835d4c
+	function setCollectionAccess(uint8 mode) external;
+
+	// Selector: addToCollectionAllowList(address) 67844fe6
+	function addToCollectionAllowList(address user) external view;
+
+	// Selector: removeFromCollectionAllowList(address) 85c51acb
+	function removeFromCollectionAllowList(address user) external view;
+
+	// Selector: setMintMode(bool) 5dea9bd5
+	function setMintMode(bool mode) external;
 }
 
 // Selector: d74d154f
