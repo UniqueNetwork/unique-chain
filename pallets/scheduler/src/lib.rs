@@ -158,11 +158,10 @@ pub(crate) trait MarginalWeightInfo: WeightInfo {
 				Self::on_initialize_periodic(2) - Self::on_initialize_periodic(1)
 			}
 			(true, true, Some(false)) => {
-				Self::on_initialize_periodic_named(2) - Self::on_initialize_periodic_named(1)
+				Self::on_initialize_periodic_named_resolved(2)
+					- Self::on_initialize_periodic_named_resolved(1)
 			}
-			(false, false, Some(true)) => {
-				Self::on_initialize_resolved(2) - Self::on_initialize_resolved(1)
-			}
+			(false, false, Some(true)) => Self::on_initialize(2) - Self::on_initialize(1),
 			(false, true, Some(true)) => {
 				Self::on_initialize_named_resolved(2) - Self::on_initialize_named_resolved(1)
 			}

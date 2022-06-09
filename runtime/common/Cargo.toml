@@ -89,7 +89,7 @@ path = "../../pallets/nonfungible"
 default-features = false
 path = "../../pallets/refungible"
 
-[dependencies.pallet-unq-scheduler]
+[dependencies.pallet-unique-scheduler]
 default-features = false
 path = "../../pallets/scheduler"
 

@@ -123,6 +123,18 @@ benchmarks! {
 		assert!(Agenda::<T>::iter().count() == 0);
 	}
 
+	on_initialize_periodic {
+		let s in 1 .. T::MaxScheduledPerBlock::get();
+		let when = BLOCK_NUMBER.into();
+		fill_schedule::<T>(when, s, true, Some(false))?;
+	}: { Scheduler::<T>::on_initialize(when); }
+	verify {
+		assert_eq!(System::<T>::event_count(), s);
+		for i in 0..s {
+			assert_eq!(Agenda::<T>::get(when + (i + 100).into()).len(), 1 as usize);
+		}
+	}
+
 	on_initialize_periodic_resolved {
 		let s in 1 .. T::MaxScheduledPerBlock::get();
 		let when = BLOCK_NUMBER.into();
@@ -133,6 +145,42 @@ benchmarks! {
 		for i in 0..s {
 			assert_eq!(Agenda::<T>::get(when + (i + 100).into()).len(), 1 as usize);
 		}
+	}
+
+	on_initialize_aborted {
+		let s in 1 .. T::MaxScheduledPerBlock::get();
+		let when = BLOCK_NUMBER.into();
+		fill_schedule::<T>(when, s, false, None)?;
+	}: { Scheduler::<T>::on_initialize(BLOCK_NUMBER.into()); }
+	verify {
+		assert_eq!(System::<T>::event_count(), 0);
+	}
+
+	on_initialize_named_aborted {
+		let s in 1 .. T::MaxScheduledPerBlock::get();
+		let when = BLOCK_NUMBER.into();
+		fill_schedule::<T>(when, s, false, Some(false))?;
+	}: { Scheduler::<T>::on_initialize(BLOCK_NUMBER.into()); }
+	verify {
+	}
+
+	on_initialize_named {
+		let s in 1 .. T::MaxScheduledPerBlock::get();
+		let when = BLOCK_NUMBER.into();
+		fill_schedule::<T>(when, s, false, None)?;
+	}: { Scheduler::<T>::on_initialize(BLOCK_NUMBER.into()); }
+	verify {
+		assert_eq!(System::<T>::event_count(), 0);
+	}
+
+	on_initialize {
+		let s in 1 .. T::MaxScheduledPerBlock::get();
+		let when = BLOCK_NUMBER.into();
+		fill_schedule::<T>(when, s, false, Some(false))?;
+	}: { Scheduler::<T>::on_initialize(BLOCK_NUMBER.into()); }
+	verify {
+		assert_eq!(System::<T>::event_count(), s);
+		assert!(Agenda::<T>::iter().count() == 0);
 	}
 
 	on_initialize_resolved {

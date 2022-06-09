@@ -774,7 +774,7 @@ macro_rules! impl_common_runtime_apis {
                     list_benchmark!(list, extra, pallet_fungible, Fungible);
                     list_benchmark!(list, extra, pallet_refungible, Refungible);
                     list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
-                    list_benchmark!(list, extra, pallet_unq_scheduler, Scheduler);
+                    list_benchmark!(list, extra, pallet_unique_scheduler, Scheduler);
                     // list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
                     let storage_info = AllPalletsReversedWithSystemFirst::storage_info();
@@ -818,7 +818,7 @@ macro_rules! impl_common_runtime_apis {
                     add_benchmark!(params, batches, pallet_fungible, Fungible);
                     add_benchmark!(params, batches, pallet_refungible, Refungible);
                     add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
-                    add_benchmark!(params, batches, pallet_unq_scheduler, Scheduler);
+                    add_benchmark!(params, batches, pallet_unique_scheduler, Scheduler);
 
                     // add_benchmark!(params, batches, pallet_evm_coder_substrate, EvmCoderSubstrate);
 

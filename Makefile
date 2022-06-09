@@ -103,7 +103,7 @@ bench-structure:
 
 .PHONY: bench-scheduler
 bench-scheduler:
-	make _bench2 PALLET=unq-scheduler PALLET_DIR=scheduler
+	make _bench2 PALLET=unique-scheduler PALLET_DIR=scheduler
 
 .PHONY: bench
 bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-scheduler
