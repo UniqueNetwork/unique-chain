@@ -97,7 +97,7 @@ where
 			.confirm_sponsorship(caller.as_sub())
 			.map_err(dispatch_to_evm::<T>)?
 		{
-			return Err(Error::Revert("Caller is not set as sponsor".into()));
+			return Err("Caller is not set as sponsor".into());
 		}
 		save(self)
 	}
