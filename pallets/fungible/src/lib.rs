@@ -137,7 +137,7 @@ impl<T: Config> Pallet<T> {
 		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, data)
+		<PalletCommon<T>>::init_collection(owner, data, false)
 	}
 	pub fn destroy_collection(
 		collection: FungibleHandle<T>,

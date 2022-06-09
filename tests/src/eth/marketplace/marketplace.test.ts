@@ -39,7 +39,7 @@ const PRICE = 2000n;
 describe('Matcher contract usage', () => {
   itWeb3('With UNQ', async ({api, web3, privateKeyWrapper}) => {
     const alice = privateKeyWrapper('//Alice');
-    const matcherOwner = await createEthAccountWithBalance(api, web3);
+    const matcherOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
       from: matcherOwner,
       ...GAS_ARGS,
@@ -100,8 +100,8 @@ describe('Matcher contract usage', () => {
 
   itWeb3('With escrow', async ({api, web3, privateKeyWrapper}) => {
     const alice = privateKeyWrapper('//Alice');
-    const matcherOwner = await createEthAccountWithBalance(api, web3);
-    const escrow = await createEthAccountWithBalance(api, web3);
+    const matcherOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const escrow = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
       from: matcherOwner,
       ...GAS_ARGS,
@@ -171,7 +171,7 @@ describe('Matcher contract usage', () => {
 
   itWeb3('Sell tokens from substrate user via EVM contract', async ({api, web3, privateKeyWrapper}) => {
     const alice = privateKeyWrapper('//Alice');
-    const matcherOwner = await createEthAccountWithBalance(api, web3);
+    const matcherOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
       from: matcherOwner,
       ...GAS_ARGS,

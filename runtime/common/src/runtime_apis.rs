@@ -1,3 +1,19 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 #[macro_export]
 macro_rules! impl_common_runtime_apis {
     (
@@ -128,8 +144,6 @@ macro_rules! impl_common_runtime_apis {
                 }
             }
 
-            /*
-            TODO free RMRK!
             impl rmrk_rpc::RmrkApi<
                 Block,
                 AccountId,
@@ -146,90 +160,129 @@ macro_rules! impl_common_runtime_apis {
                 }
 
                 fn collection_by_id(collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo<AccountId>>, DispatchError> {
-                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, RmrkDecode, RmrkRebind}};
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::CollectionType};
+                    use pallet_common::CommonCollectionOperations;
 
-                    let collection_id = CollectionId(collection_id);
-                    let collection = match RmrkCore::get_typed_nft_collection(collection_id, CollectionType::Regular) {
+                    let (collection, collection_id) = match RmrkCore::get_typed_nft_collection_mapped(collection_id, CollectionType::Regular) {
                         Ok(c) => c,
                         Err(_) => return Ok(None),
                     };
 
-                    let nfts_count = dispatch_unique_runtime!(collection_id.total_supply())?;
+                    let nfts_count = collection.total_supply();
 
                     Ok(Some(RmrkCollectionInfo {
                         issuer: collection.owner.clone(),
-                        metadata: RmrkCore::get_collection_property(collection_id, RmrkProperty::Metadata)?.decode_or_default(),
+                        metadata: RmrkCore::get_collection_property_decoded(collection_id, RmrkProperty::Metadata)?,
                         max: collection.limits.token_limit,
-                        symbol: collection.token_prefix.rebind(),
+                        symbol: RmrkCore::rebind(&collection.token_prefix)?,
                         nfts_count
                     }))
                 }
 
                 fn nft_by_id(collection_id: RmrkCollectionId, nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo<AccountId>>, DispatchError> {
                     use up_data_structs::mapping::TokenAddressMapping;
-                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::RmrkDecode};
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::CollectionType};
+                    use pallet_common::CommonCollectionOperations;
 
-                    let collection_id = CollectionId(collection_id);
+                    let (collection, collection_id) = match RmrkCore::get_typed_nft_collection_mapped(collection_id, CollectionType::Regular) {
+                        Ok(c) => c,
+                        Err(_) => return Ok(None),
+                    };
+
                     let nft_id = TokenId(nft_by_id);
                     if !RmrkCore::nft_exists(collection_id, nft_id) { return Ok(None); }
 
-                    let owner = match dispatch_unique_runtime!(collection_id.token_owner(nft_id))? {
+                    let owner = match collection.token_owner(nft_id) {
                         Some(owner) => match <Runtime as pallet_common::Config>::CrossTokenAddressMapping::address_to_token(&owner) {
-                            Some((col, tok)) => RmrkAccountIdOrCollectionNftTuple::CollectionAndNftTuple(col.0, tok.0),
+                            Some((col, tok)) => {
+                                let rmrk_collection = RmrkCore::rmrk_collection_id(col)?;
+
+                                RmrkAccountIdOrCollectionNftTuple::CollectionAndNftTuple(rmrk_collection, tok.0)
+                            }
                             None => RmrkAccountIdOrCollectionNftTuple::AccountId(owner.as_sub().clone())
                         },
                         None => return Ok(None)
                     };
 
-                    let allowance = pallet_nonfungible::Allowance::<Runtime>::get((collection_id, nft_id));
-
                     Ok(Some(RmrkInstanceInfo {
                         owner: owner,
-                        royalty: RmrkCore::get_nft_property(collection_id, nft_id, RmrkProperty::RoyaltyInfo)?.decode_or_default(),
-                        metadata: RmrkCore::get_nft_property(collection_id, nft_id, RmrkProperty::Metadata)?.decode_or_default(),
-                        equipped: RmrkCore::get_nft_property(collection_id, nft_id, RmrkProperty::Equipped)?.decode_or_default(),
-                        pending: allowance.is_some(),
+                        royalty: RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::RoyaltyInfo)?,
+                        metadata: RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::Metadata)?,
+                        equipped: RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::Equipped)?,
+                        pending: RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::PendingNftAccept)?,
                     }))
                 }
 
                 fn account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
-                    use pallet_proxy_rmrk_core::misc::CollectionType;
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::CollectionType};
+                    use pallet_common::CommonCollectionOperations;
 
                     let cross_account_id = CrossAccountId::from_sub(account_id);
-                    let collection_id = CollectionId(collection_id);
-                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Regular).is_err() { return Ok(Vec::new()); }
 
-                    Ok(
-                        dispatch_unique_runtime!(collection_id.account_tokens(cross_account_id))?
-                            .into_iter()
-                            .map(|token| token.0)
-                            .collect()
-                    )
+                    let (collection, collection_id) = match RmrkCore::get_typed_nft_collection_mapped(collection_id, CollectionType::Regular) {
+                        Ok(c) => c,
+                        Err(_) => return Ok(Vec::new()),
+                    };
+
+                    let tokens = collection.account_tokens(cross_account_id)
+                        .into_iter()
+                        .filter(|token| {
+                            let is_pending = RmrkCore::get_nft_property_decoded(
+                                collection_id,
+                                *token,
+                                RmrkProperty::PendingNftAccept
+                            ).unwrap_or(true);
+
+                            !is_pending
+                        })
+                        .map(|token| token.0)
+                        .collect();
+
+                    Ok(tokens)
                 }
 
                 fn nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
-                    let collection_id = CollectionId(collection_id);
+                    use pallet_proxy_rmrk_core::RmrkProperty;
+
+                    let collection_id = match RmrkCore::unique_collection_id(collection_id) {
+                        Ok(id) => id,
+                        Err(_) => return Ok(Vec::new())
+                    };
                     let nft_id = TokenId(nft_id);
                     if !RmrkCore::nft_exists(collection_id, nft_id) { return Ok(Vec::new()); }
 
                     Ok(
                         pallet_nonfungible::TokenChildren::<Runtime>::iter_prefix((collection_id, nft_id))
-                            .filter_map(|(child_id, is_child)|
-                                match is_child {
-                                    true => Some(RmrkNftChild {
-                                        collection_id: child_id.0.0,
-                                        nft_id: child_id.1.0,
-                                    }),
-                                    false => None,
+                            .filter_map(|((child_collection, child_token), _)| {
+                                let is_pending = RmrkCore::get_nft_property_decoded(
+                                    child_collection,
+                                    child_token,
+                                    RmrkProperty::PendingNftAccept
+                                ).ok()?;
+
+                                if is_pending {
+                                    return None;
                                 }
-                            ).collect()
+
+                                let rmrk_child_collection = RmrkCore::rmrk_collection_id(
+                                    child_collection
+                                ).ok()?;
+
+                                Some(RmrkNftChild {
+                                    collection_id: rmrk_child_collection,
+                                    nft_id: child_token.0,
+                                })
+                            }).collect()
                     )
                 }
 
                 fn collection_properties(collection_id: RmrkCollectionId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
                     use pallet_proxy_rmrk_core::misc::CollectionType;
 
-                    let collection_id = CollectionId(collection_id);
+                    let collection_id = match RmrkCore::unique_collection_id(collection_id) {
+                        Ok(id) => id,
+                        Err(_) => return Ok(Vec::new())
+                    };
                     if RmrkCore::ensure_collection_type(collection_id, CollectionType::Regular).is_err() {
                         return Ok(Vec::new());
                     }
@@ -250,7 +303,10 @@ macro_rules! impl_common_runtime_apis {
                 fn nft_properties(collection_id: RmrkCollectionId, nft_id: RmrkNftId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
                     use pallet_proxy_rmrk_core::misc::NftType;
 
-                    let collection_id = CollectionId(collection_id);
+                    let collection_id = match RmrkCore::unique_collection_id(collection_id) {
+                        Ok(id) => id,
+                        Err(_) => return Ok(Vec::new())
+                    };
                     let token_id = TokenId(nft_id);
 
                     if RmrkCore::ensure_nft_type(collection_id, token_id, NftType::Regular).is_err() {
@@ -271,108 +327,121 @@ macro_rules! impl_common_runtime_apis {
                 }
 
                 fn nft_resources(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
-                    use frame_support::BoundedVec;
-                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, NftType, RmrkDecode}};
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, NftType, ResourceType}};
+                    use pallet_common::CommonCollectionOperations;
 
-                    let collection_id = CollectionId(collection_id);
-                    if !RmrkCore::collection_exists(collection_id) { return Ok(Vec::new()); } // todo make sure the collection type doesn't matter
+                    let collection_id = match RmrkCore::unique_collection_id(collection_id) {
+                        Ok(id) => id,
+                        Err(_) => return Ok(Vec::new())
+                    };
+                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Regular).is_err() { return Ok(Vec::new()); }
 
                     let nft_id = TokenId(nft_id);
-                    if RmrkCore::ensure_nft_type(collection_id, nft_id, NftType::Resource).is_err() { return Ok(Vec::new()); }
+                    if RmrkCore::ensure_nft_type(collection_id, nft_id, NftType::Regular).is_err() { return Ok(Vec::new()); }
 
-                    let resource_collection_id: CollectionId = RmrkCore::get_nft_property(collection_id, nft_id, RmrkProperty::ResourceCollection)
-                        .unwrap()
-                        .decode_or_default();
-                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Resource).is_err() { return Ok(Vec::new()); }
+                    let res_collection_id: CollectionId = RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::ResourceCollection)?;
+                    let resource_collection = RmrkCore::get_typed_nft_collection(res_collection_id, CollectionType::Resource)?;
 
-                    let resources = pallet_nonfungible::TokenProperties::<Runtime>::iter_prefix((resource_collection_id,))
-                        .filter_map(|(resource_id, properties)| Some(RmrkResourceInfo {
-                            id: BoundedVec::default(), // todo ResourceId property
-                            pending: RmrkCore::get_nft_property(resource_collection_id, resource_id, RmrkProperty::PendingResourceAccept).unwrap().decode_or_default(),
-                            pending_removal: RmrkCore::get_nft_property(resource_collection_id, resource_id, RmrkProperty::PendingResourceRemoval).unwrap().decode_or_default(),
-                            resource: RmrkCore::get_nft_property(resource_collection_id, resource_id, RmrkProperty::ResourceType).unwrap().decode_or_default(),/* {
-                                RmrkResourceTypes::Basic(resource) => RmrkResourceTypes::Basic(),/*(RmrkBasicResource {
-                                    src: RmrkCore::get_nft_property_inner(properties, RmrkProperty::Src).unwrap().decode_or_default(),
-                                    metadata: RmrkCore::get_nft_property_inner(properties, RmrkProperty::Metadata).unwrap().decode_or_default(),
-                                    license: RmrkCore::get_nft_property_inner(properties, RmrkProperty::License).unwrap().decode_or_default(),
-                                    thumb: RmrkCore::get_nft_property_inner(properties, RmrkProperty::Thumb).unwrap().decode_or_default(),
-                                },*///BasicResource<BoundedString>)
-                                _ => todo!(), //RmrkResourceTypes::Composable(ComposableResource<BoundedString, BoundedParts>),
-                                //RmrkResourceTypes::Slot(SlotResource<BoundedString>),
-                            },*/
+                    let resources = resource_collection
+                        .collection_tokens()
+                        .iter()
+                        .filter_map(|(res_id)| Some(RmrkResourceInfo {
+                            id: res_id.0,
+                            pending: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::PendingResourceAccept).ok()?,
+                            pending_removal: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::PendingResourceRemoval).ok()?,
+                            resource: match RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::ResourceType).ok()? {
+                                ResourceType::Basic => RmrkResourceTypes::Basic(RmrkBasicResource {
+                                    src: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Src).ok()?,
+                                    metadata: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Metadata).ok()?,
+                                    license: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::License).ok()?,
+                                    thumb: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Thumb).ok()?,
+                                }),
+                                ResourceType::Composable => RmrkResourceTypes::Composable(RmrkComposableResource {
+                                    parts: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Parts).ok()?,
+                                    base: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Base).ok()?,
+                                    src: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Src).ok()?,
+                                    metadata: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Metadata).ok()?,
+                                    license: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::License).ok()?,
+                                    thumb: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Thumb).ok()?,
+                                }),
+                                ResourceType::Slot => RmrkResourceTypes::Slot(RmrkSlotResource {
+                                    base: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Base).ok()?,
+                                    src: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Src).ok()?,
+                                    metadata: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Metadata).ok()?,
+                                    slot: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Slot).ok()?,
+                                    license: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::License).ok()?,
+                                    thumb: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Thumb).ok()?,
+                                }),
+                            },
                         }))
                         .collect();
 
                     Ok(resources)
                 }
 
-                fn nft_resource_priorities(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkResourceId>, DispatchError> {
-                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, NftType, RmrkDecode}};
+                fn nft_resource_priority(collection_id: RmrkCollectionId, nft_id: RmrkNftId, resource_id: RmrkResourceId) -> Result<Option<u32>, DispatchError> {
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, NftType}};
 
-                    let collection_id = CollectionId(collection_id);
-                    if !RmrkCore::collection_exists(collection_id) { return Ok(Vec::new()); } // todo ensure the collection type doesn't matter
+                    let collection_id = match RmrkCore::unique_collection_id(collection_id) {
+                        Ok(id) => id,
+                        Err(_) => return Ok(None)
+                    };
+                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Regular).is_err() { return Ok(None); }
 
                     let nft_id = TokenId(nft_id);
-                    if RmrkCore::ensure_nft_type(collection_id, nft_id, NftType::Resource).is_err() { return Ok(Vec::new()); }
+                    if RmrkCore::ensure_nft_type(collection_id, nft_id, NftType::Regular).is_err() { return Ok(None); }
 
-                    /*let resource_collection_id: CollectionId = RmrkCore::get_nft_property(collection_id, nft_id, RmrkProperty::ResourceCollection)
-                        .unwrap()
-                        .decode_or_default();
-                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Resource).is_err() { return Ok(Vec::new()); }
-
-                    let resources = pallet_nonfungible::TokenProperties::<Runtime>::iter_prefix((resource_collection_id,))
-                        .filter_map(|(resource_id, properties)| Some((
-                            resource_id, // ResourceId property
-                            RmrkCore::get_nft_property(resource_collection_id, resource_id, RmrkProperty::Priority).unwrap().decode_or_default(),
-                        )))
-                        .collect()
-                        .sort_by_key(|(_, index)| *index)
-                        .into_iter().map(|(resource_id, _)| resource_id)*/
-                    let priorities = RmrkCore::get_nft_property(collection_id, nft_id, RmrkProperty::ResourcePriorities)?.decode_or_default();
-
-                    Ok(priorities)
+                    let priorities: Vec<_> = RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::ResourcePriorities)?;
+                    Ok(
+                        priorities.into_iter()
+                            .enumerate()
+                            .find(|(_, id)| *id == resource_id)
+                            .map(|(priority, _): (usize, RmrkResourceId)| priority as u32)
+                    )
                 }
 
                 fn base(base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
                     use pallet_proxy_rmrk_core::{
-                        RmrkProperty, misc::{CollectionType, RmrkDecode, RmrkRebind},
+                        RmrkProperty, misc::{CollectionType},
                     };
 
-                    let collection_id = CollectionId(base_id);
-                    let collection = match RmrkCore::get_typed_nft_collection(collection_id, CollectionType::Base) {
+                    let (collection, collection_id) = match RmrkCore::get_typed_nft_collection_mapped(base_id, CollectionType::Base) {
                         Ok(c) => c,
                         Err(_) => return Ok(None),
                     };
 
                     Ok(Some(RmrkBaseInfo {
                         issuer: collection.owner.clone(),
-                        base_type: RmrkCore::get_collection_property(collection_id, RmrkProperty::BaseType)?.decode_or_default(),
-                        symbol: collection.token_prefix.rebind(),
+                        base_type: RmrkCore::get_collection_property_decoded(collection_id, RmrkProperty::BaseType)?,
+                        symbol: RmrkCore::rebind(&collection.token_prefix)?,
                     }))
                 }
 
                 fn base_parts(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
-                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, NftType, RmrkDecode}};
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, NftType}};
+                    use pallet_common::CommonCollectionOperations;
 
-                    let collection_id = CollectionId(base_id);
-                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Base).is_err() { return Ok(Vec::new()); }
+                    let (collection, collection_id) = match RmrkCore::get_typed_nft_collection_mapped(base_id, CollectionType::Base) {
+                        Ok(c) => c,
+                        Err(_) => return Ok(Vec::new()),
+                    };
 
-                    let parts = dispatch_unique_runtime!(collection_id.collection_tokens())?
+                    let parts = collection.collection_tokens()
                         .into_iter()
                         .filter_map(|token_id| {
                             let nft_type = RmrkCore::get_nft_type(collection_id, token_id).ok()?;
 
                             match nft_type {
                                 NftType::FixedPart => Some(RmrkPartType::FixedPart(RmrkFixedPart {
-                                    id: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::ExternalPartId).ok()?.decode_or_default(),
-                                    src: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::Src).ok()?.decode_or_default(),
-                                    z: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::ZIndex).ok()?.decode_or_default(),
+                                    id: RmrkCore::get_nft_property_decoded(collection_id, token_id, RmrkProperty::ExternalPartId).ok()?,
+                                    src: RmrkCore::get_nft_property_decoded(collection_id, token_id, RmrkProperty::Src).ok()?,
+                                    z: RmrkCore::get_nft_property_decoded(collection_id, token_id, RmrkProperty::ZIndex).ok()?,
                                 })),
                                 NftType::SlotPart => Some(RmrkPartType::SlotPart(RmrkSlotPart {
-                                    id: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::ExternalPartId).ok()?.decode_or_default(),
-                                    src: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::Src).ok()?.decode_or_default(),
-                                    z: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::ZIndex).ok()?.decode_or_default(),
-                                    equippable: RmrkCore::get_nft_property(collection_id, token_id, RmrkProperty::EquippableList).ok()?.decode_or_default(),
+                                    id: RmrkCore::get_nft_property_decoded(collection_id, token_id, RmrkProperty::ExternalPartId).ok()?,
+                                    src: RmrkCore::get_nft_property_decoded(collection_id, token_id, RmrkProperty::Src).ok()?,
+                                    z: RmrkCore::get_nft_property_decoded(collection_id, token_id, RmrkProperty::ZIndex).ok()?,
+                                    equippable: RmrkCore::get_nft_property_decoded(collection_id, token_id, RmrkProperty::EquippableList).ok()?,
                                 })),
                                 _ => None
                             }
@@ -383,22 +452,21 @@ macro_rules! impl_common_runtime_apis {
                 }
 
                 fn theme_names(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
-                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, RmrkDecode}};
+                    use pallet_proxy_rmrk_core::{RmrkProperty, misc::CollectionType};
+                    use pallet_common::CommonCollectionOperations;
 
-                    let collection_id = CollectionId(base_id);
-                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Base).is_err() {
-                        return Ok(Vec::new());
-                    }
+                    let (collection, collection_id) = match RmrkCore::get_typed_nft_collection_mapped(base_id, CollectionType::Base) {
+                        Ok(c) => c,
+                        Err(_) => return Ok(Vec::new()),
+                    };
 
-                    let theme_names = dispatch_unique_runtime!(collection_id.collection_tokens())?
+                    let theme_names = collection.collection_tokens()
                         .iter()
                         .filter_map(|token_id| {
-                            let nft_type = RmrkCore::get_nft_type(collection_id, *token_id).unwrap();
+                            let nft_type = RmrkCore::get_nft_type(collection_id, *token_id).ok()?;
 
                             match nft_type {
-                                Theme => Some(
-                                    RmrkCore::get_nft_property(collection_id, *token_id, RmrkProperty::ThemeName).unwrap().decode_or_default()
-                                ),
+                                Theme => RmrkCore::get_nft_property_decoded(collection_id, *token_id, RmrkProperty::ThemeName).ok(),
                                 _ => None
                             }
                         })
@@ -410,22 +478,23 @@ macro_rules! impl_common_runtime_apis {
                 fn theme(base_id: RmrkBaseId, theme_name: RmrkThemeName, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Option<RmrkTheme>, DispatchError> {
                     use pallet_proxy_rmrk_core::{
                         RmrkProperty,
-                        misc::{CollectionType, NftType, RmrkDecode}
+                        misc::{CollectionType, NftType}
+                    };
+                    use pallet_common::CommonCollectionOperations;
+
+                    let (collection, collection_id) = match RmrkCore::get_typed_nft_collection_mapped(base_id, CollectionType::Base) {
+                        Ok(c) => c,
+                        Err(_) => return Ok(None),
                     };
 
-                    let collection_id = CollectionId(base_id);
-                    if RmrkCore::ensure_collection_type(collection_id, CollectionType::Base).is_err() {
-                        return Ok(None);
-                    }
-
-                    let theme_info = dispatch_unique_runtime!(collection_id.collection_tokens())?
+                    let theme_info = collection.collection_tokens()
                         .into_iter()
                         .find_map(|token_id| {
                             RmrkCore::ensure_nft_type(collection_id, token_id, NftType::Theme).ok()?;
 
-                            let name: RmrkString = RmrkCore::get_nft_property(
+                            let name: RmrkString = RmrkCore::get_nft_property_decoded(
                                 collection_id, token_id, RmrkProperty::ThemeName
-                            ).ok()?.decode_or_default();
+                            ).ok()?;
 
                             if name == theme_name {
                                 Some((name, token_id))
@@ -449,11 +518,11 @@ macro_rules! impl_common_runtime_apis {
                         }
                     )?;
 
-                    let inherit = RmrkCore::get_nft_property(
+                    let inherit = RmrkCore::get_nft_property_decoded(
                         collection_id,
                         theme_id,
                         RmrkProperty::ThemeInherit
-                    )?.decode_or_default();
+                    )?;
 
                     let theme = RmrkTheme {
                         name,
@@ -463,7 +532,7 @@ macro_rules! impl_common_runtime_apis {
 
                     Ok(Some(theme))
                 }
-            }*/
+            }
 
             impl sp_api::Core<Block> for Runtime {
                 fn version() -> RuntimeVersion {
@@ -775,6 +844,7 @@ macro_rules! impl_common_runtime_apis {
                     list_benchmark!(list, extra, pallet_refungible, Refungible);
                     list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
                     list_benchmark!(list, extra, pallet_unique_scheduler, Scheduler);
+                    list_benchmark!(list, extra, pallet_proxy_rmrk_core, RmrkCore);
                     // list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
                     let storage_info = AllPalletsReversedWithSystemFirst::storage_info();
@@ -819,7 +889,7 @@ macro_rules! impl_common_runtime_apis {
                     add_benchmark!(params, batches, pallet_refungible, Refungible);
                     add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
                     add_benchmark!(params, batches, pallet_unique_scheduler, Scheduler);
-
+                    add_benchmark!(params, batches, pallet_proxy_rmrk_core, RmrkCore);
                     // add_benchmark!(params, batches, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
                     if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

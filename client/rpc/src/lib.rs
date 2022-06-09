@@ -276,14 +276,15 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Vec<ResourceInfo>>;
 
-		#[method(name = "rmrk_nftResourcePriorities")]
-		/// Get NFT resource priorities
-		fn nft_resource_priorities(
+		#[method(name = "rmrk_nftResourcePriority")]
+		/// Get NFT resource priority
+		fn nft_resource_priority(
 			&self,
 			collection_id: RmrkCollectionId,
 			nft_id: RmrkNftId,
+			resource_id: RmrkResourceId,
 			at: Option<BlockHash>,
-		) -> Result<Vec<RmrkResourceId>>;
+		) -> Result<Option<u32>>;
 
 		#[method(name = "rmrk_base")]
 		/// Get base info
@@ -317,6 +318,20 @@ pub struct Unique<C, P> {
 }
 
 impl<C, P> Unique<C, P> {
+	pub fn new(client: Arc<C>) -> Self {
+		Self {
+			client,
+			_marker: Default::default(),
+		}
+	}
+}
+
+pub struct Rmrk<C, P> {
+	client: Arc<C>,
+	_marker: std::marker::PhantomData<P>,
+}
+
+impl<C, P> Rmrk<C, P> {
 	pub fn new(client: Arc<C>) -> Self {
 		Self {
 			client,
@@ -473,7 +488,7 @@ impl<
 		BaseInfo,
 		PartType,
 		Theme,
-	> for Unique<C, Block>
+	> for Rmrk<C, Block>
 where
 	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	C::Api: RmrkRuntimeApi<
@@ -522,7 +537,7 @@ where
 		rmrk_api
 	);
 	pass_method!(nft_resources(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Vec<ResourceInfo>, rmrk_api);
-	pass_method!(nft_resource_priorities(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Vec<RmrkResourceId>, rmrk_api);
+	pass_method!(nft_resource_priority(collection_id: RmrkCollectionId, nft_id: RmrkNftId, resource_id: RmrkResourceId) -> Option<u32>, rmrk_api);
 	pass_method!(base(base_id: RmrkBaseId) -> Option<BaseInfo>, rmrk_api);
 	pass_method!(base_parts(base_id: RmrkBaseId) -> Vec<PartType>, rmrk_api);
 	pass_method!(theme_names(base_id: RmrkBaseId) -> Vec<RmrkThemeName>, rmrk_api);

@@ -297,40 +297,7 @@ contract ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 	}
 }
 
-// Selector: 780e9d63
-contract ERC721Enumerable is Dummy, ERC165 {
-	// Selector: tokenByIndex(uint256) 4f6ccce7
-	function tokenByIndex(uint256 index) public view returns (uint256) {
-		require(false, stub_error);
-		index;
-		dummy;
-		return 0;
-	}
-
-	// Not implemented
-	//
-	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
-	function tokenOfOwnerByIndex(address owner, uint256 index)
-		public
-		view
-		returns (uint256)
-	{
-		require(false, stub_error);
-		owner;
-		index;
-		dummy;
-		return 0;
-	}
-
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() public view returns (uint256) {
-		require(false, stub_error);
-		dummy;
-		return 0;
-	}
-}
-
-// Selector: c894dc35
+// Selector: 6aea9834
 contract Collection is Dummy, ERC165 {
 	// Selector: setCollectionProperty(string,bytes) 2f073f66
 	function setCollectionProperty(string memory key, bytes memory value)
@@ -363,29 +330,29 @@ contract Collection is Dummy, ERC165 {
 		return hex"";
 	}
 
-	// Selector: ethSetSponsor(address) 8f9af356
-	function ethSetSponsor(address sponsor) public {
+	// Selector: setCollectionSponsor(address) 7623402e
+	function setCollectionSponsor(address sponsor) public {
 		require(false, stub_error);
 		sponsor;
 		dummy = 0;
 	}
 
-	// Selector: ethConfirmSponsorship() a8580d1a
-	function ethConfirmSponsorship() public {
+	// Selector: confirmCollectionSponsorship() 3c50e97a
+	function confirmCollectionSponsorship() public {
 		require(false, stub_error);
 		dummy = 0;
 	}
 
-	// Selector: setLimit(string,uint32) 68db30ca
-	function setLimit(string memory limit, uint32 value) public {
+	// Selector: setCollectionLimit(string,uint32) 6a3841db
+	function setCollectionLimit(string memory limit, uint32 value) public {
 		require(false, stub_error);
 		limit;
 		value;
 		dummy = 0;
 	}
 
-	// Selector: setLimit(string,bool) ea67e4c2
-	function setLimit(string memory limit, bool value) public {
+	// Selector: setCollectionLimit(string,bool) 993b7fba
+	function setCollectionLimit(string memory limit, bool value) public {
 		require(false, stub_error);
 		limit;
 		value;
@@ -397,6 +364,98 @@ contract Collection is Dummy, ERC165 {
 		require(false, stub_error);
 		dummy;
 		return 0x0000000000000000000000000000000000000000;
+	}
+
+	// Selector: addCollectionAdmin(address) 92e462c7
+	function addCollectionAdmin(address newAdmin) public view {
+		require(false, stub_error);
+		newAdmin;
+		dummy;
+	}
+
+	// Selector: removeCollectionAdmin(address) fafd7b42
+	function removeCollectionAdmin(address admin) public view {
+		require(false, stub_error);
+		admin;
+		dummy;
+	}
+
+	// Selector: setCollectionNesting(bool) 112d4586
+	function setCollectionNesting(bool enable) public {
+		require(false, stub_error);
+		enable;
+		dummy = 0;
+	}
+
+	// Selector: setCollectionNesting(bool,address[]) 64872396
+	function setCollectionNesting(bool enable, address[] memory collections)
+		public
+	{
+		require(false, stub_error);
+		enable;
+		collections;
+		dummy = 0;
+	}
+
+	// Selector: setCollectionAccess(uint8) 41835d4c
+	function setCollectionAccess(uint8 mode) public {
+		require(false, stub_error);
+		mode;
+		dummy = 0;
+	}
+
+	// Selector: addToCollectionAllowList(address) 67844fe6
+	function addToCollectionAllowList(address user) public view {
+		require(false, stub_error);
+		user;
+		dummy;
+	}
+
+	// Selector: removeFromCollectionAllowList(address) 85c51acb
+	function removeFromCollectionAllowList(address user) public view {
+		require(false, stub_error);
+		user;
+		dummy;
+	}
+
+	// Selector: setCollectionMintMode(bool) 00018e84
+	function setCollectionMintMode(bool mode) public {
+		require(false, stub_error);
+		mode;
+		dummy = 0;
+	}
+}
+
+// Selector: 780e9d63
+contract ERC721Enumerable is Dummy, ERC165 {
+	// Selector: tokenByIndex(uint256) 4f6ccce7
+	function tokenByIndex(uint256 index) public view returns (uint256) {
+		require(false, stub_error);
+		index;
+		dummy;
+		return 0;
+	}
+
+	// Not implemented
+	//
+	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
+	function tokenOfOwnerByIndex(address owner, uint256 index)
+		public
+		view
+		returns (uint256)
+	{
+		require(false, stub_error);
+		owner;
+		index;
+		dummy;
+		return 0;
+	}
+
+	// Selector: totalSupply() 18160ddd
+	function totalSupply() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
 	}
 }
 

@@ -32,7 +32,7 @@ describe.skip('Integration Test addToContractAllowList', () => {
   it('Add an address to a contract allow list', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const bob = privateKeyWrapper('//Bob');
-      const [contract, deployer] = await deployFlipper(api);
+      const [contract, deployer] = await deployFlipper(api, privateKeyWrapper);
 
       const allowListedBefore = (await api.query.unique.contractAllowList(contract.address, bob.address)).toJSON();
       const addTx = api.tx.unique.addToContractAllowList(contract.address, bob.address);
@@ -48,7 +48,7 @@ describe.skip('Integration Test addToContractAllowList', () => {
   it('Adding same address to allow list repeatedly should not produce errors', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const bob = privateKeyWrapper('//Bob');
-      const [contract, deployer] = await deployFlipper(api);
+      const [contract, deployer] = await deployFlipper(api, privateKeyWrapper);
 
       const allowListedBefore = (await api.query.unique.contractAllowList(contract.address, bob.address)).toJSON();
       const addTx = api.tx.unique.addToContractAllowList(contract.address, bob.address);
@@ -87,7 +87,7 @@ describe.skip('Negative Integration Test addToContractAllowList', () => {
   it('Add to a contract allow list using a non-owner address', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const bob = privateKeyWrapper('//Bob');
-      const [contract] = await deployFlipper(api);
+      const [contract] = await deployFlipper(api, privateKeyWrapper);
 
       const allowListedBefore = (await api.query.unique.contractAllowList(contract.address, bob.address)).toJSON();
       const addTx = api.tx.unique.addToContractAllowList(contract.address, bob.address);

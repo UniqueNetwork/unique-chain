@@ -73,7 +73,11 @@ use up_data_structs::{
 	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits,
 	CollectionStats, RpcCollection,
 	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
-	TokenChild,
+	TokenChild, RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo,
+	RmrkBaseInfo, RmrkPartType, RmrkTheme, RmrkThemeName, RmrkThemeProperty, RmrkCollectionId,
+	RmrkNftId, RmrkAccountIdOrCollectionNftTuple, RmrkNftChild, RmrkPropertyKey, RmrkResourceTypes,
+	RmrkBasicResource, RmrkComposableResource, RmrkSlotResource, RmrkResourceId, RmrkBaseId,
+	RmrkFixedPart, RmrkSlotPart, RmrkString,
 };
 
 // use pallet_contracts::weights::WeightInfo;
@@ -914,15 +918,14 @@ impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
 }
 
-/*
-TODO free RMRK!
 impl pallet_proxy_rmrk_core::Config for Runtime {
+	type WeightInfo = pallet_proxy_rmrk_core::weights::SubstrateWeight<Self>;
 	type Event = Event;
 }
 
 impl pallet_proxy_rmrk_equip::Config for Runtime {
 	type Event = Event;
-}*/
+}
 
 impl pallet_unique::Config for Runtime {
 	type Event = Event;
@@ -1164,10 +1167,8 @@ construct_runtime!(
 		Refungible: pallet_refungible::{Pallet, Storage} = 68,
 		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
 		Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
-		/* TODO free RMRK!
 		RmrkCore: pallet_proxy_rmrk_core::{Pallet, Call, Storage, Event<T>} = 71,
 		RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
-		*/
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
