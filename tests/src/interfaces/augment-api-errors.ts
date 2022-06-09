@@ -81,6 +81,14 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       CollectionFieldSizeExceeded: AugmentedError<ApiType>;
       /**
+       * Tried to access an external collection with an internal API
+       **/
+      CollectionIsExternal: AugmentedError<ApiType>;
+      /**
+       * Tried to access an internal collection with an external API
+       **/
+      CollectionIsInternal: AugmentedError<ApiType>;
+      /**
        * Collection limit bounds per collection exceeded
        **/
       CollectionLimitBoundsExceeded: AugmentedError<ApiType>;
@@ -437,6 +445,61 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    rmrkCore: {
+      CannotAcceptNonOwnedNft: AugmentedError<ApiType>;
+      CannotRejectNonOwnedNft: AugmentedError<ApiType>;
+      CannotSendToDescendentOrSelf: AugmentedError<ApiType>;
+      CollectionFullOrLocked: AugmentedError<ApiType>;
+      CollectionNotEmpty: AugmentedError<ApiType>;
+      CollectionUnknown: AugmentedError<ApiType>;
+      CorruptedCollectionType: AugmentedError<ApiType>;
+      NftTypeEncodeError: AugmentedError<ApiType>;
+      NoAvailableCollectionId: AugmentedError<ApiType>;
+      NoAvailableNftId: AugmentedError<ApiType>;
+      NonTransferable: AugmentedError<ApiType>;
+      NoPermission: AugmentedError<ApiType>;
+      ResourceDoesntExist: AugmentedError<ApiType>;
+      ResourceNotPending: AugmentedError<ApiType>;
+      RmrkPropertyKeyIsTooLong: AugmentedError<ApiType>;
+      RmrkPropertyValueIsTooLong: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    rmrkEquip: {
+      BaseDoesntExist: AugmentedError<ApiType>;
+      NeedsDefaultThemeFirst: AugmentedError<ApiType>;
+      NoAvailableBaseId: AugmentedError<ApiType>;
+      NoAvailablePartId: AugmentedError<ApiType>;
+      PermissionError: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    scheduler: {
+      /**
+       * Failed to schedule a call
+       **/
+      FailedToSchedule: AugmentedError<ApiType>;
+      /**
+       * Cannot find the scheduled call.
+       **/
+      NotFound: AugmentedError<ApiType>;
+      /**
+       * Reschedule failed because it does not change scheduled time.
+       **/
+      RescheduleNoChange: AugmentedError<ApiType>;
+      /**
+       * Given target block number is in the past.
+       **/
+      TargetBlockNumberInPast: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     structure: {
       /**
        * While searched for owner, encountered depth limit
@@ -508,6 +571,10 @@ declare module '@polkadot/api-base/types/errors' {
        * No proposal or bounty at that index.
        **/
       InvalidIndex: AugmentedError<ApiType>;
+      /**
+       * Proposal has not been approved.
+       **/
+      ProposalNotApproved: AugmentedError<ApiType>;
       /**
        * Too many approvals in the queue.
        **/

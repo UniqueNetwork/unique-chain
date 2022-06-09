@@ -2,10 +2,10 @@
 /* eslint-disable */
 
 import type { ApiTypes } from '@polkadot/api-base/types';
-import type { Bytes, Compact, Option, U256, Vec, bool, u128, u16, u32, u64 } from '@polkadot/types-codec';
+import type { Bytes, Compact, Option, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AnyNumber, IMethod, ITuple } from '@polkadot/types-codec/types';
-import type { AccountId32, Call, H160, H256, MultiAddress, Perbill } from '@polkadot/types/interfaces/runtime';
-import type { CumulusPrimitivesParachainInherentParachainInherentData, EthereumTransactionTransactionV2, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCollectionPermissions, UpDataStructsCreateCollectionData, UpDataStructsCreateItemData, UpDataStructsCreateItemExData, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
+import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
+import type { CumulusPrimitivesParachainInherentParachainInherentData, EthereumTransactionTransactionV2, FrameSupportScheduleMaybeHashed, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, RmrkTraitsNftAccountIdOrCollectionNftTuple, RmrkTraitsPartPartType, RmrkTraitsResourceBasicResource, RmrkTraitsResourceComposableResource, RmrkTraitsResourceSlotResource, RmrkTraitsTheme, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCollectionPermissions, UpDataStructsCreateCollectionData, UpDataStructsCreateItemData, UpDataStructsCreateItemExData, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/submittable' {
   export interface AugmentedSubmittables<ApiType extends ApiTypes> {
@@ -346,6 +346,59 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
+    rmrkCore: {
+      acceptNft: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, newOwner: RmrkTraitsNftAccountIdOrCollectionNftTuple | { AccountId: any } | { CollectionAndNftTuple: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsNftAccountIdOrCollectionNftTuple]>;
+      acceptResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, rmrkResourceId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u32]>;
+      acceptResourceRemoval: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, rmrkResourceId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u32]>;
+      addBasicResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, resource: RmrkTraitsResourceBasicResource | { src?: any; metadata?: any; license?: any; thumb?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsResourceBasicResource]>;
+      addComposableResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, resourceId: Bytes | string | Uint8Array, resource: RmrkTraitsResourceComposableResource | { parts?: any; base?: any; src?: any; metadata?: any; license?: any; thumb?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, Bytes, RmrkTraitsResourceComposableResource]>;
+      addSlotResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, resource: RmrkTraitsResourceSlotResource | { base?: any; src?: any; metadata?: any; slot?: any; license?: any; thumb?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsResourceSlotResource]>;
+      burnNft: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32]>;
+      changeCollectionIssuer: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newIssuer: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, MultiAddress]>;
+      createCollection: AugmentedSubmittable<(metadata: Bytes | string | Uint8Array, max: Option<u32> | null | object | string | Uint8Array, symbol: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes, Option<u32>, Bytes]>;
+      destroyCollection: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
+      lockCollection: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
+      mintNft: AugmentedSubmittable<(owner: AccountId32 | string | Uint8Array, collectionId: u32 | AnyNumber | Uint8Array, recipient: Option<AccountId32> | null | object | string | Uint8Array, royaltyAmount: Option<Permill> | null | object | string | Uint8Array, metadata: Bytes | string | Uint8Array, transferable: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32, u32, Option<AccountId32>, Option<Permill>, Bytes, bool]>;
+      rejectNft: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32]>;
+      removeResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, resourceId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u32]>;
+      send: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, newOwner: RmrkTraitsNftAccountIdOrCollectionNftTuple | { AccountId: any } | { CollectionAndNftTuple: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsNftAccountIdOrCollectionNftTuple]>;
+      setPriority: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, priorities: Vec<u32> | (u32 | AnyNumber | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, u32, Vec<u32>]>;
+      setProperty: AugmentedSubmittable<(rmrkCollectionId: Compact<u32> | AnyNumber | Uint8Array, maybeNftId: Option<u32> | null | object | string | Uint8Array, key: Bytes | string | Uint8Array, value: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u32>, Option<u32>, Bytes, Bytes]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
+    rmrkEquip: {
+      createBase: AugmentedSubmittable<(baseType: Bytes | string | Uint8Array, symbol: Bytes | string | Uint8Array, parts: Vec<RmrkTraitsPartPartType> | (RmrkTraitsPartPartType | { FixedPart: any } | { SlotPart: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Bytes, Bytes, Vec<RmrkTraitsPartPartType>]>;
+      themeAdd: AugmentedSubmittable<(baseId: u32 | AnyNumber | Uint8Array, theme: RmrkTraitsTheme | { name?: any; properties?: any; inherit?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, RmrkTraitsTheme]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
+    scheduler: {
+      /**
+       * Cancel a named scheduled task.
+       **/
+      cancelNamed: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed]>;
+      /**
+       * Schedule a named task.
+       **/
+      scheduleNamed: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array, when: u32 | AnyNumber | Uint8Array, maybePeriodic: Option<ITuple<[u32, u32]>> | null | object | string | Uint8Array, priority: u8 | AnyNumber | Uint8Array, call: FrameSupportScheduleMaybeHashed | { Value: any } | { Hash: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed, u32, Option<ITuple<[u32, u32]>>, u8, FrameSupportScheduleMaybeHashed]>;
+      /**
+       * Schedule a named task after a delay.
+       * 
+       * # <weight>
+       * Same as [`schedule_named`](Self::schedule_named).
+       * # </weight>
+       **/
+      scheduleNamedAfter: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array, after: u32 | AnyNumber | Uint8Array, maybePeriodic: Option<ITuple<[u32, u32]>> | null | object | string | Uint8Array, priority: u8 | AnyNumber | Uint8Array, call: FrameSupportScheduleMaybeHashed | { Value: any } | { Hash: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed, u32, Option<ITuple<[u32, u32]>>, u8, FrameSupportScheduleMaybeHashed]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
     structure: {
       /**
        * Generic tx
@@ -542,6 +595,24 @@ declare module '@polkadot/api-base/types/submittable' {
        * # </weight>
        **/
       rejectProposal: AugmentedSubmittable<(proposalId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u32>]>;
+      /**
+       * Force a previously approved proposal to be removed from the approval queue.
+       * The original deposit will no longer be returned.
+       * 
+       * May only be called from `T::RejectOrigin`.
+       * - `proposal_id`: The index of a proposal
+       * 
+       * # <weight>
+       * - Complexity: O(A) where `A` is the number of approvals
+       * - Db reads and writes: `Approvals`
+       * # </weight>
+       * 
+       * Errors:
+       * - `ProposalNotApproved`: The `proposal_id` supplied was not found in the approval queue,
+       * i.e., the proposal has not been approved. This could also mean the proposal does not
+       * exist altogether, thus there is no way it would have been approved in the first place.
+       **/
+      removeApproval: AugmentedSubmittable<(proposalId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u32>]>;
       /**
        * Generic tx
        **/

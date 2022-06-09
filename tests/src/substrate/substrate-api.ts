@@ -42,7 +42,7 @@ function defaultApiOptions(): ApiOptions {
     },
     rpc: {
       unique: defs.unique.rpc,
-      // TODO free RMRK! rmrk: defs.rmrk.rpc,
+      rmrk: defs.rmrk.rpc,
       eth: {
         feeHistory: {
           description: 'Dummy',
@@ -88,7 +88,7 @@ export default async function usingApi<T = void>(action: (api: ApiPromise, priva
     await promisifySubstrate(api, async () => {
       if (api) {
         await api.isReadyOrError;
-        const ss58Format = (api.registry.getChainProperties())!.toHuman().ss58Format;
+        const ss58Format = (api.registry.getChainProperties())!.toJSON().ss58Format;
         const privateKeyWrapper = (account: string) => privateKey(account, Number(ss58Format));
         result = await action(api, privateKeyWrapper);
       }

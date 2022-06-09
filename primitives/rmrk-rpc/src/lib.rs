@@ -1,9 +1,25 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use sp_api::{Encode, Decode};
 use sp_std::vec::Vec;
 use sp_runtime::DispatchError;
-use up_data_structs::rmrk::{primitives::*, NftChild};
+use rmrk_traits::{primitives::*, NftChild};
 
 pub type Result<T> = core::result::Result<T, DispatchError>;
 
@@ -50,7 +66,7 @@ sp_api::decl_runtime_apis! {
 
 		fn nft_resources(collection_id: CollectionId, nft_id: NftId) -> Result<Vec<ResourceInfo>>;
 
-		fn nft_resource_priorities(collection_id: CollectionId, nft_id: NftId) -> Result<Vec<ResourceId>>;
+		fn nft_resource_priority(collection_id: CollectionId, nft_id: NftId, resource_id: ResourceId) -> Result<Option<u32>>;
 
 		fn base(base_id: BaseId) -> Result<Option<BaseInfo>>;
 

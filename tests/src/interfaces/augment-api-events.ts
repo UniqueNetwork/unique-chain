@@ -2,9 +2,10 @@
 /* eslint-disable */
 
 import type { ApiTypes } from '@polkadot/api-base/types';
-import type { Bytes, Null, Option, Result, U256, U8aFixed, u128, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Bytes, Null, Option, Result, U256, U8aFixed, bool, u128, u32, u64, u8 } from '@polkadot/types-codec';
+import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
-import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, SpRuntimeDispatchError, XcmV1MultiLocation, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportScheduleLookupError, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, RmrkTraitsNftAccountIdOrCollectionNftTuple, SpRuntimeDispatchError, XcmV1MultiLocation, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/events' {
   export interface AugmentedEvents<ApiType extends ApiTypes> {
@@ -391,6 +392,56 @@ declare module '@polkadot/api-base/types/events' {
        * \[ destination, result \]
        **/
       VersionChangeNotified: AugmentedEvent<ApiType, [XcmV1MultiLocation, u32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    rmrkCore: {
+      CollectionCreated: AugmentedEvent<ApiType, [AccountId32, u32]>;
+      CollectionDestroyed: AugmentedEvent<ApiType, [AccountId32, u32]>;
+      CollectionLocked: AugmentedEvent<ApiType, [AccountId32, u32]>;
+      IssuerChanged: AugmentedEvent<ApiType, [AccountId32, AccountId32, u32]>;
+      NFTAccepted: AugmentedEvent<ApiType, [AccountId32, RmrkTraitsNftAccountIdOrCollectionNftTuple, u32, u32]>;
+      NFTBurned: AugmentedEvent<ApiType, [AccountId32, u32]>;
+      NftMinted: AugmentedEvent<ApiType, [AccountId32, u32, u32]>;
+      NFTRejected: AugmentedEvent<ApiType, [AccountId32, u32, u32]>;
+      NFTSent: AugmentedEvent<ApiType, [AccountId32, RmrkTraitsNftAccountIdOrCollectionNftTuple, u32, u32, bool]>;
+      PrioritySet: AugmentedEvent<ApiType, [u32, u32]>;
+      PropertySet: AugmentedEvent<ApiType, [u32, Option<u32>, Bytes, Bytes]>;
+      ResourceAccepted: AugmentedEvent<ApiType, [u32, u32]>;
+      ResourceAdded: AugmentedEvent<ApiType, [u32, u32]>;
+      ResourceRemoval: AugmentedEvent<ApiType, [u32, u32]>;
+      ResourceRemovalAccepted: AugmentedEvent<ApiType, [u32, u32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    rmrkEquip: {
+      BaseCreated: AugmentedEvent<ApiType, [AccountId32, u32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    scheduler: {
+      /**
+       * The call for the provided hash was not found so the task has been aborted.
+       **/
+      CallLookupFailed: AugmentedEvent<ApiType, [ITuple<[u32, u32]>, Option<U8aFixed>, FrameSupportScheduleLookupError]>;
+      /**
+       * Canceled some task.
+       **/
+      Canceled: AugmentedEvent<ApiType, [u32, u32]>;
+      /**
+       * Dispatched some task.
+       **/
+      Dispatched: AugmentedEvent<ApiType, [ITuple<[u32, u32]>, Option<U8aFixed>, Result<Null, SpRuntimeDispatchError>]>;
+      /**
+       * Scheduled some task.
+       **/
+      Scheduled: AugmentedEvent<ApiType, [u32, u32]>;
       /**
        * Generic event
        **/

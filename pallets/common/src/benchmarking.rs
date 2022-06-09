@@ -109,7 +109,7 @@ fn create_collection<T: Config>(
 	create_collection_raw(
 		owner,
 		CollectionMode::NFT,
-		|owner, data| <Pallet<T>>::init_collection(owner, data),
+		|owner, data| <Pallet<T>>::init_collection(owner, data, true),
 		|h| h,
 	)
 }

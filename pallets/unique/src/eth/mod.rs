@@ -92,8 +92,9 @@ impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelpers<T> {
 			..Default::default()
 		};
 
-		let collection_id = <pallet_nonfungible::Pallet<T>>::init_collection(caller.clone(), data)
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		let collection_id =
+			<pallet_nonfungible::Pallet<T>>::init_collection(caller.clone(), data, false)
+				.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
 		Ok(address)

@@ -16,7 +16,6 @@
 
 import {default as usingApi} from './substrate/substrate-api';
 import chai from 'chai';
-import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {
   createCollectionExpectSuccess,
@@ -33,10 +32,9 @@ let bob: IKeyringPair;
 
 describe('integration test: ext. ():', () => {
   before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({type: 'sr25519'});
-      alice = keyring.addFromUri('//Alice');
-      bob = keyring.addFromUri('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -101,10 +99,9 @@ describe('integration test: ext. ():', () => {
 
 describe('Negative integration test: ext. createItem():', () => {
   before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({type: 'sr25519'});
-      alice = keyring.addFromUri('//Alice');
-      bob = keyring.addFromUri('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
