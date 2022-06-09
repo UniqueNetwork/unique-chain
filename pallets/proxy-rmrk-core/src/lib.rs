@@ -158,6 +158,7 @@ pub mod pallet {
 		NftTypeEncodeError,
 		RmrkPropertyKeyIsTooLong,
 		RmrkPropertyValueIsTooLong,
+		UnableToDecodeRmrkData,
 
 		/* RMRK compatible events */
 		CollectionNotEmpty,
@@ -378,20 +379,7 @@ pub mod pallet {
 					Self::rmrk_property(RoyaltyInfo, &royalty_info)?,
 					Self::rmrk_property(Metadata, &metadata)?,
 					Self::rmrk_property(Equipped, &false)?,
-					Self::rmrk_property(
-						ResourceCollection,
-						&Self::init_collection(
-							sender.clone(),
-							CreateCollectionData {
-								..Default::default()
-							},
-							[Self::rmrk_property(
-								CollectionType,
-								&misc::CollectionType::Resource,
-							)?]
-							.into_iter(),
-						)?,
-					)?, // todo possibly add limits to the collection if rmrk warrants them
+					Self::rmrk_property(ResourceCollection, &None::<CollectionId>)?,
 					Self::rmrk_property(ResourcePriorities, &<Vec<u8>>::new())?,
 				]
 				.into_iter(),
@@ -702,9 +690,11 @@ pub mod pallet {
 				<PalletStructure<T>>::find_topmost_owner(collection_id, nft_id, &budget)
 					.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
 
-			let resource_collection_id: CollectionId =
+			let resource_collection_id: Option<CollectionId> =
 				Self::get_nft_property_decoded(collection_id, nft_id, ResourceCollection)
 					.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+				
+			let resource_collection_id = resource_collection_id.ok_or(<Error<T>>::ResourceDoesntExist)?;
 
 			let is_pending: bool = Self::get_nft_property_decoded(
 				resource_collection_id,
@@ -761,9 +751,11 @@ pub mod pallet {
 
 			ensure!(cross_sender == nft_owner, <Error<T>>::NoPermission);
 
-			let resource_collection_id: CollectionId =
+			let resource_collection_id: Option<CollectionId> =
 				Self::get_nft_property_decoded(collection_id, nft_id, ResourceCollection)
 					.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+
+			let resource_collection_id = resource_collection_id.ok_or(<Error<T>>::ResourceDoesntExist)?;
 
 			let is_pending: bool = Self::get_nft_property_decoded(
 				resource_collection_id,
@@ -1065,7 +1057,7 @@ impl<T: Config> Pallet<T> {
 
 	pub fn decode_property<D: Decode>(vec: PropertyValue) -> Result<D, DispatchError> {
 		vec.decode()
-			.map_err(|_| <Error<T>>::RmrkPropertyValueIsTooLong.into())
+			.map_err(|_| <Error<T>>::UnableToDecodeRmrkData.into())
 	}
 
 	pub fn rebind<L, S>(vec: &BoundedVec<u8, L>) -> Result<BoundedVec<u8, S>, DispatchError>
@@ -1181,8 +1173,37 @@ impl<T: Config> Pallet<T> {
 
 		let pending = sender != nft_owner;
 
-		let resource_collection_id: CollectionId =
+		let resource_collection_id: Option<CollectionId> =
 			Self::get_nft_property_decoded(collection_id, token_id, ResourceCollection)?;
+
+		let resource_collection_id = match resource_collection_id {
+			Some(id) => id,
+			None => {
+				let resource_collection_id = Self::init_collection(
+					sender.clone(),
+					CreateCollectionData {
+						..Default::default()
+					},
+					[
+						Self::rmrk_property(
+							CollectionType,
+							&misc::CollectionType::Resource,
+						)?
+					]
+					.into_iter(),
+				)?;
+
+				<PalletNft<T>>::set_scoped_token_property(
+					collection_id,
+					token_id,
+					PropertyScope::Rmrk,
+					Self::rmrk_property(ResourceCollection, &Some(resource_collection_id))?
+				)?;
+
+				resource_collection_id
+			}
+		};
+
 		let resource_collection =
 			Self::get_typed_nft_collection(resource_collection_id, misc::CollectionType::Resource)?;
 
@@ -1218,8 +1239,11 @@ impl<T: Config> Pallet<T> {
 			Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
 		ensure!(collection.owner == sender, Error::<T>::NoPermission);
 
-		let resource_collection_id: CollectionId =
+		let resource_collection_id: Option<CollectionId> =
 			Self::get_nft_property_decoded(collection_id, nft_id, ResourceCollection)?;
+
+		let resource_collection_id = resource_collection_id.ok_or(Error::<T>::ResourceDoesntExist)?;
+		
 		let resource_collection =
 			Self::get_typed_nft_collection(resource_collection_id, misc::CollectionType::Resource)?;
 		ensure!(

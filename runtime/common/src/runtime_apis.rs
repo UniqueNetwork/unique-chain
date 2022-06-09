@@ -339,7 +339,13 @@ macro_rules! impl_common_runtime_apis {
                     let nft_id = TokenId(nft_id);
                     if RmrkCore::ensure_nft_type(collection_id, nft_id, NftType::Regular).is_err() { return Ok(Vec::new()); }
 
-                    let res_collection_id: CollectionId = RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::ResourceCollection)?;
+                    let res_collection_id: Option<CollectionId> = RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::ResourceCollection)?;
+
+                    let res_collection_id = match res_collection_id {
+                        Some(id) => id,
+                        None => return Ok(Vec::new())
+                    };
+
                     let resource_collection = RmrkCore::get_typed_nft_collection(res_collection_id, CollectionType::Resource)?;
 
                     let resources = resource_collection
