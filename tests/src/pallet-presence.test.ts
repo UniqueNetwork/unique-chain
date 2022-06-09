@@ -50,6 +50,8 @@ const requiredPallets = [
   'unique',
   'nonfungible',
   'refungible',
+  'rmrkcore',
+  'rmrkequip',
   'scheduler',
   'charging',
 ];
