@@ -17,7 +17,6 @@
 import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
-import {alicesPublicKey, bobsPublicKey} from './accounts';
 import getBalance from './substrate/get-balance';
 import {default as usingApi, submitTransactionAsync} from './substrate/substrate-api';
 import {
@@ -47,19 +46,24 @@ let bob: IKeyringPair;
 let charlie: IKeyringPair;
 
 describe('Integration Test Transfer(recipient, collection_id, item_id, value)', () => {
+  before(async () => {
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+    });
+  });
+  
   it('Balance transfers and check balance', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const [alicesBalanceBefore, bobsBalanceBefore] = await getBalance(api, [alicesPublicKey, bobsPublicKey]);
+      const [alicesBalanceBefore, bobsBalanceBefore] = await getBalance(api, [alice.address, bob.address]);
 
-      const alicePrivateKey = privateKeyWrapper('//Alice');
-
-      const transfer = api.tx.balances.transfer(bobsPublicKey, 1n);
-      const events = await submitTransactionAsync(alicePrivateKey, transfer);
+      const transfer = api.tx.balances.transfer(bob.address, 1n);
+      const events = await submitTransactionAsync(alice, transfer);
       const result = getCreateItemResult(events);
       // tslint:disable-next-line:no-unused-expression
       expect(result.success).to.be.true;
 
-      const [alicesBalanceAfter, bobsBalanceAfter] = await getBalance(api, [alicesPublicKey, bobsPublicKey]);
+      const [alicesBalanceAfter, bobsBalanceAfter] = await getBalance(api, [alice.address, bob.address]);
 
       // tslint:disable-next-line:no-unused-expression
       expect(alicesBalanceAfter < alicesBalanceBefore).to.be.true;
@@ -69,11 +73,11 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
   });
 
   it('Inability to pay fees error message is correct', async () => {
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       // Find unused address
-      const pk = await findUnusedAddress(api);
+      const pk = await findUnusedAddress(api, privateKeyWrapper);
 
-      const badTransfer = api.tx.balances.transfer(bobsPublicKey, 1n);
+      const badTransfer = api.tx.balances.transfer(bob.address, 1n);
       // const events = await submitTransactionAsync(pk, badTransfer);
       const badTransaction = async () => {
         const events = await submitTransactionAsync(pk, badTransfer);
@@ -87,8 +91,6 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
 
   it('User can transfer owned token', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
@@ -114,8 +116,6 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
 
   it('Collection admin can transfer owned token', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
       // nft
       const nftCollectionId = await createCollectionExpectSuccess();
       await addCollectionAdminExpectSuccess(alice, nftCollectionId, bob.address);
@@ -316,7 +316,6 @@ describe('Zero value transfer(From)', () => {
 describe('Transfers to self (potentially over substrate-evm boundary)', () => {
   itWeb3('Transfers to self. In case of same frontend', async ({api, privateKeyWrapper}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const alice = privateKeyWrapper('//Alice');
     const aliceProxy = subToEth(alice.address);
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
     await transferExpectSuccess(collectionId, tokenId, alice, {Ethereum: aliceProxy}, 10, 'Fungible');
@@ -328,7 +327,6 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
 
   itWeb3('Transfers to self. In case of substrate-evm boundary', async ({api, privateKeyWrapper}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const alice = privateKeyWrapper('//Alice');
     const aliceProxy = subToEth(alice.address);
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
     const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
@@ -340,7 +338,6 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
 
   itWeb3('Transfers to self. In case of inside substrate-evm', async ({api, privateKeyWrapper}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const alice = privateKeyWrapper('//Alice');
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
     const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
     await transferExpectSuccess(collectionId, tokenId, alice, alice , 10, 'Fungible');
@@ -351,7 +348,6 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
 
   itWeb3('Transfers to self. In case of inside substrate-evm when not enought "Fungibles"', async ({api, privateKeyWrapper}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const alice = privateKeyWrapper('//Alice');
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible', {Substrate: alice.address});
     const balanceAliceBefore = await getTokenBalance(api, collectionId, normalizeAccountId(alice), tokenId);
     await transferExpectFailure(collectionId, tokenId, alice, alice , 11);

@@ -16,14 +16,13 @@
 
 import '../interfaces/augment-api-rpc';
 import '../interfaces/augment-api-query';
-import {ApiPromise, Keyring} from '@polkadot/api';
+import {ApiPromise} from '@polkadot/api';
 import type {AccountId, EventRecord, Event} from '@polkadot/types/interfaces';
 import {AnyTuple, IEvent, IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
 import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {alicesPublicKey} from '../accounts';
 import {default as usingApi, executeTransaction, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
 import {UpDataStructsRpcCollection, UpDataStructsCreateItemData, UpDataStructsProperty} from '@polkadot/types/lookup';
@@ -40,7 +39,7 @@ export type CrossAccountId = {
 
 export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {
   if (typeof input === 'string') {
-    if (input.length === 48 || input.length === 47) {
+    if (input.length >= 47) {
       return {Substrate: input};
     } else if (input.length === 42 && input.startsWith('0x')) {
       return {Ethereum: input.toLowerCase()};
@@ -363,7 +362,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     // tslint:disable-next-line:no-unused-expression
     expect(collection).to.be.not.null;
     expect(collectionCountAfter).to.be.equal(collectionCountBefore + 1, 'Error: NFT collection NOT created.');
-    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicesPublicKey));
+    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicePrivateKey));
     expect(utf16ToStr(collection.name.toJSON() as any)).to.be.equal(name);
     expect(utf16ToStr(collection.description.toJSON() as any)).to.be.equal(description);
     expect(hexToStr(collection.tokenPrefix.toJSON())).to.be.equal(tokenPrefix);
@@ -411,7 +410,7 @@ export async function createCollectionWithPropsExpectSuccess(params: Partial<Cre
     // tslint:disable-next-line:no-unused-expression
     expect(collection).to.be.not.null;
     expect(collectionCountAfter).to.be.equal(collectionCountBefore + 1, 'Error: NFT collection NOT created.');
-    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicesPublicKey));
+    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicePrivateKey));
     expect(utf16ToStr(collection.name.toJSON() as any)).to.be.equal(name);
     expect(utf16ToStr(collection.description.toJSON() as any)).to.be.equal(description);
     expect(hexToStr(collection.tokenPrefix.toJSON())).to.be.equal(tokenPrefix);
@@ -482,13 +481,12 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
   });
 }
 
-export async function findUnusedAddress(api: ApiPromise, seedAddition = ''): Promise<IKeyringPair> {
+export async function findUnusedAddress(api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair, seedAddition = ''): Promise<IKeyringPair> {
   let bal = 0n;
   let unused;
   do {
     const randomSeed = 'seed' + Math.floor(Math.random() * Math.floor(10000)) + seedAddition;
-    const keyring = new Keyring({type: 'sr25519'});
-    unused = keyring.addFromUri(`//${randomSeed}`);
+    unused = privateKeyWrapper(`//${randomSeed}`);
     bal = (await api.query.system.account(unused.address)).data.free.toBigInt();
   } while (bal !== 0n);
   return unused;
@@ -498,8 +496,8 @@ export async function getAllowance(api: ApiPromise, collectionId: number, owner:
   return (await api.rpc.unique.allowance(collectionId, normalizeAccountId(owner), normalizeAccountId(approved), tokenId)).toBigInt();
 }
 
-export function findUnusedAddresses(api: ApiPromise, amount: number): Promise<IKeyringPair[]> {
-  return Promise.all(new Array(amount).fill(null).map(() => findUnusedAddress(api, '_' + Date.now())));
+export function findUnusedAddresses(api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair, amount: number): Promise<IKeyringPair[]> {
+  return Promise.all(new Array(amount).fill(null).map(() => findUnusedAddress(api, privateKeyWrapper, '_' + Date.now())));
 }
 
 export async function findNotExistingCollection(api: ApiPromise): Promise<number> {
