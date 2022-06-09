@@ -17,7 +17,6 @@
 import {ApiPromise} from '@polkadot/api';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, destroyCollectionExpectSuccess, getAdminList, normalizeAccountId, queryCollectionExpectSuccess} from './util/helpers';
 
@@ -45,11 +44,11 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
 
 describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_id):', () => {
   it("Not owner can't add collection admin.", async () => {
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
-      const charlie = privateKey('//CHARLIE');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//CHARLIE');
 
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.equal(alice.address);
@@ -67,11 +66,11 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
   });
 
   it("Admin can't add collection admin.", async () => {
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
-      const charlie = privateKey('//CHARLIE');
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//CHARLIE');
 
       const collection = await queryCollectionExpectSuccess(api, collectionId);
       expect(collection.owner.toString()).to.be.equal(alice.address);
