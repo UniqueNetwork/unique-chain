@@ -27,17 +27,6 @@ describe('Integration Test: EVM Nesting', () => {
 
   itWeb3('NFT: allows an Owner to nest/unnest their token', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
-    // const receiver = await createEthAccountWithBalance(api, web3);
-
-    // const helper = evmCollectionHelper(web3, owner);
-    // const collectionName = 'CollectionEVM';
-    // const description = 'Some description';
-    // const tokenPrefix = 'token prefix';
-  
-    // const collection = await helper.methods
-    //   .create721Collection(collectionName, description, tokenPrefix)
-    //   .send();
-
     const {collectionId, address} = await getCollectionFromSubstrate(api, owner);
     const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: owner, ...GAS_ARGS});
 
