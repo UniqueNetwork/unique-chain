@@ -51,4 +51,9 @@ benchmarks! {
 
 		let new_owner_source = T::Lookup::unlookup(new_owner);
 	}: _(RawOrigin::Signed(caller), collection_id, new_owner_source)
+
+	lock_collection {
+		let caller: T::AccountId = account("caller", 0, SEED);
+		let collection_id = create_max_collection::<T>(&caller)?;
+	}: _(RawOrigin::Signed(caller), collection_id)
 }
