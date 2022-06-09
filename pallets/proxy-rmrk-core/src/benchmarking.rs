@@ -15,7 +15,7 @@ use super::*;
 const SEED: u32 = 1;
 
 fn create_data<S: Get<u32>>() -> BoundedVec<u8, S> {
-	vec![0; S::get() as usize].try_into().expect("size == S")
+	vec![b'A'; S::get() as usize].try_into().expect("size == S")
 }
 
 fn create_max_collection<T: Config>(owner: &T::AccountId) -> DispatchResult {
@@ -202,5 +202,23 @@ benchmarks! {
 		src_collection_id,
 		src_nft_id,
 		actual_new_owner
+	)
+
+	set_property {
+		let caller: T::AccountId = account("caller", 0, SEED);
+		create_max_collection::<T>(&caller)?;
+		let collection_id = 0;
+
+		let mut nft_builder = NftBuilder::new(collection_id);
+		let nft_id = nft_builder.build_tower::<T>(&caller, NESTING_BUDGET - 1)?;
+
+		let key = create_data();
+		let value = create_data();
+	}: _(
+		RawOrigin::Signed(caller),
+		collection_id,
+		Some(nft_id),
+		key,
+		value
 	)
 }
