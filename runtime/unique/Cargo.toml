@@ -36,6 +36,7 @@ runtime-benchmarks = [
     'pallet-proxy-rmrk-core/runtime-benchmarks',
     'pallet-unique/runtime-benchmarks',
     'pallet-inflation/runtime-benchmarks',
+    'pallet-unq-scheduler/runtime-benchmarks',
     'pallet-xcm/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
     'xcm-builder/runtime-benchmarks',
