@@ -169,10 +169,7 @@ where
 		Eth, EthApiServer, EthDevSigner, EthFilter, EthFilterApiServer, EthPubSub,
 		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer,
 	};
-	use uc_rpc::{
-		UniqueApiServer, Unique,
-		RmrkApiServer, Rmrk,
-	};
+	use uc_rpc::{UniqueApiServer, Unique, RmrkApiServer, Rmrk};
 	// use pallet_contracts_rpc::{Contracts, ContractsApi};
 	use pallet_transaction_payment_rpc::{TransactionPaymentRpc, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{SystemRpc, SystemApiServer};

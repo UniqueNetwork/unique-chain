@@ -70,16 +70,14 @@ pub use frame_support::{
 };
 use pallet_unq_scheduler::DispatchCall;
 use up_data_structs::{
-	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits, 
-	CollectionStats, RpcCollection, 
+	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits,
+	CollectionStats, RpcCollection,
 	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
-	TokenChild,
-	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo,
-	RmrkBaseInfo, RmrkPartType, RmrkTheme, RmrkThemeName, RmrkThemeProperty,
-	RmrkCollectionId, RmrkNftId, RmrkAccountIdOrCollectionNftTuple,
-	RmrkNftChild, RmrkPropertyKey, RmrkResourceTypes, RmrkBasicResource,
-	RmrkComposableResource, RmrkSlotResource, RmrkResourceId, RmrkBaseId,
-	RmrkFixedPart, RmrkSlotPart, RmrkString, 
+	TokenChild, RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo,
+	RmrkBaseInfo, RmrkPartType, RmrkTheme, RmrkThemeName, RmrkThemeProperty, RmrkCollectionId,
+	RmrkNftId, RmrkAccountIdOrCollectionNftTuple, RmrkNftChild, RmrkPropertyKey, RmrkResourceTypes,
+	RmrkBasicResource, RmrkComposableResource, RmrkSlotResource, RmrkResourceId, RmrkBaseId,
+	RmrkFixedPart, RmrkSlotPart, RmrkString,
 };
 
 // use pallet_contracts::weights::WeightInfo;
@@ -101,7 +99,7 @@ use sp_runtime::{
 	},
 	generic::Era,
 	transaction_validity::TransactionValidityError,
-	DispatchErrorWithPostInfo, SaturatedConversion, 
+	DispatchErrorWithPostInfo, SaturatedConversion,
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
@@ -1113,7 +1111,7 @@ parameter_types! {
 	pub const HelpersContractAddress: H160 = H160([
 		0x84, 0x28, 0x99, 0xec, 0xf3, 0x80, 0x55, 0x3e, 0x8a, 0x4d, 0xe7, 0x5b, 0xf5, 0x34, 0xcd, 0xf6, 0xfb, 0xf6, 0x40, 0x49,
 	]);
-		
+
 	// 0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f
 	pub const EvmCollectionHelpersAddress: H160 = H160([
 		0x6c, 0x4e, 0x9f, 0xe1, 0xae, 0x37, 0xa4, 0x1e, 0x93, 0xce, 0xe4, 0x29, 0xe8, 0xe1, 0x88, 0x1a, 0xbd, 0xcb, 0xb5, 0x4f,
