@@ -98,4 +98,4 @@ bench-rmrk-core:
 	make _bench PALLET=proxy-rmrk-core
 
 .PHONY: bench
-bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible
+bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-rmrk-core
