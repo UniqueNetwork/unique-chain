@@ -427,7 +427,7 @@ pub mod pallet {
 		/// Target collection doesn't supports this operation
 		UnsupportedOperation,
 
-		/// Not sufficient founds to perform action
+		/// Not sufficient funds to perform action
 		NotSufficientFounds,
 
 		/// Collection has nesting disabled

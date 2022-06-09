@@ -31,9 +31,15 @@ use core::convert::AsRef;
 
 pub use pallet::*;
 
+#[cfg(feature = "runtime-benchmarks")]
+pub mod benchmarking;
 pub mod misc;
 pub mod property;
+pub mod weights;
 
+pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
+
+use weights::WeightInfo;
 use misc::*;
 pub use property::*;
 
@@ -51,6 +57,7 @@ pub mod pallet {
 		frame_system::Config + pallet_common::Config + pallet_nonfungible::Config + account::Config
 	{
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::storage]
@@ -169,7 +176,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(<SelfWeightOf<T>>::create_collection())]
 		#[transactional]
 		pub fn create_collection(
 			origin: OriginFor<T>,

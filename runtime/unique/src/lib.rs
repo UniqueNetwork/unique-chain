@@ -917,6 +917,7 @@ impl pallet_nonfungible::Config for Runtime {
 }
 
 impl pallet_proxy_rmrk_core::Config for Runtime {
+	type WeightInfo = pallet_proxy_rmrk_core::weights::SubstrateWeight<Self>;
 	type Event = Event;
 }
 
