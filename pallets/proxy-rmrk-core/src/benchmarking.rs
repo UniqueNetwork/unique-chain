@@ -18,8 +18,39 @@ fn create_data<S: Get<u32>>() -> BoundedVec<u8, S> {
 	vec![b'A'; S::get() as usize].try_into().expect("size == S")
 }
 
-fn create_priorities<S: Get<u32>>() -> BoundedVec<RmrkResourceId, S> {
+fn create_u32_array<S: Get<u32>>() -> BoundedVec<u32, S> {
 	vec![0; S::get() as usize].try_into().expect("size == S")
+}
+
+fn create_basic_resource() -> RmrkBasicResource {
+	RmrkBasicResource {
+		src: Some(create_data()),
+		metadata: Some(create_data()),
+		license: Some(create_data()),
+		thumb: Some(create_data()),
+	}
+}
+
+fn create_composable_resource() -> RmrkComposableResource {
+	RmrkComposableResource {
+		parts: create_u32_array(),
+		base: 100,
+		src: Some(create_data()),
+		metadata: Some(create_data()),
+		license: Some(create_data()),
+		thumb: Some(create_data()),
+	}
+}
+
+fn create_slot_resource() -> RmrkSlotResource {
+	RmrkSlotResource {
+		base: 100,
+		slot: 200,
+		src: Some(create_data()),
+		metadata: Some(create_data()),
+		license: Some(create_data()),
+		thumb: Some(create_data()),
+	}
 }
 
 fn create_max_collection<T: Config>(owner: &T::AccountId) -> DispatchResult {
@@ -233,11 +264,63 @@ benchmarks! {
 
 		let mut nft_builder = NftBuilder::new(collection_id);
 		let nft_id = nft_builder.build_tower::<T>(&caller, NESTING_BUDGET - 1)?;
-		let priorities = create_priorities();
+		let priorities = create_u32_array();
 	}: _(
 		RawOrigin::Signed(caller),
 		collection_id,
 		nft_id,
 		priorities
+	)
+
+	add_basic_resource {
+		let caller: T::AccountId = account("caller", 0, SEED);
+		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
+
+
+		create_max_collection::<T>(&caller)?;
+		let collection_id = 0;
+
+		let mut nft_builder = NftBuilder::new(collection_id);
+		let nft_id = nft_builder.build_tower::<T>(&caller, NESTING_BUDGET - 1)?;
+		let resource = create_basic_resource();
+	}: _(
+		RawOrigin::Signed(caller),
+		collection_id,
+		nft_id,
+		resource
+	)
+
+	add_composable_resource {
+		let caller: T::AccountId = account("caller", 0, SEED);
+		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
+
+		create_max_collection::<T>(&caller)?;
+		let collection_id = 0;
+
+		let mut nft_builder = NftBuilder::new(collection_id);
+		let nft_id = nft_builder.build_tower::<T>(&caller, NESTING_BUDGET - 1)?;
+		let resource = create_composable_resource();
+	}: _(
+		RawOrigin::Signed(caller),
+		collection_id,
+		nft_id,
+		resource
+	)
+
+	add_slot_resource {
+		let caller: T::AccountId = account("caller", 0, SEED);
+		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
+
+		create_max_collection::<T>(&caller)?;
+		let collection_id = 0;
+
+		let mut nft_builder = NftBuilder::new(collection_id);
+		let nft_id = nft_builder.build_tower::<T>(&caller, NESTING_BUDGET - 1)?;
+		let resource = create_slot_resource();
+	}: _(
+		RawOrigin::Signed(caller),
+		collection_id,
+		nft_id,
+		resource
 	)
 }

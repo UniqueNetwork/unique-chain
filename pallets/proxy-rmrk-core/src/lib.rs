@@ -926,7 +926,6 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			rmrk_collection_id: RmrkCollectionId,
 			nft_id: RmrkNftId,
-			_resource_id: RmrkBoundedResource,
 			resource: RmrkComposableResource,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
