@@ -74,6 +74,12 @@ use up_data_structs::{
 	CollectionStats, RpcCollection,
 	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
 	TokenChild,
+	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo,
+	RmrkBaseInfo, RmrkPartType, RmrkTheme, RmrkThemeName, RmrkThemeProperty,
+	RmrkCollectionId, RmrkNftId, RmrkAccountIdOrCollectionNftTuple,
+	RmrkNftChild, RmrkPropertyKey, RmrkResourceTypes, RmrkBasicResource,
+	RmrkComposableResource, RmrkSlotResource, RmrkResourceId, RmrkBaseId,
+	RmrkFixedPart, RmrkSlotPart, RmrkString, 
 };
 
 // use pallet_contracts::weights::WeightInfo;
