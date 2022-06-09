@@ -101,9 +101,57 @@ pub trait AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata> {
 	fn get_asset_metadata(foreign_asset_id: ForeignAssetId) -> Option<AssetMetadata>;
 	/// Returns the MultiLocation associated with a given ForeignAssetId.
 	fn get_multi_location(foreign_asset_id: ForeignAssetId) -> Option<MultiLocation>;
+	fn get_multi_location2(foreign_asset_id: AssetIds) -> Option<MultiLocation>;
 	/// Returns the CurrencyId associated with a given MultiLocation.
 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId>;
 }
+
+pub struct XcmForeignAssetIdMapping<T>(sp_std::marker::PhantomData<T>);
+
+impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<BalanceOf<T>>>
+	for XcmForeignAssetIdMapping<T>
+{
+	fn get_asset_metadata(foreign_asset_id: ForeignAssetId) -> Option<AssetMetadata<BalanceOf<T>>> {
+		Pallet::<T>::asset_metadatas(AssetIds::ForeignAssetId(foreign_asset_id))
+	}
+
+	fn get_multi_location(foreign_asset_id: ForeignAssetId) -> Option<MultiLocation> {
+		Pallet::<T>::foreign_asset_locations(foreign_asset_id)
+	}
+
+	fn get_multi_location2(foreign_asset_id: AssetIds) -> Option<MultiLocation> {
+		match foreign_asset_id {
+			AssetIds::ForeignAssetId(id) =>  Pallet::<T>::foreign_asset_locations(id),
+		}
+	}
+
+	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
+		Pallet::<T>::location_to_currency_ids(multi_location)
+	}
+}
+
+// pub struct AssetIdMaps<T>(sp_std::marker::PhantomData<T>);
+
+// impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<BalanceOf<T>>>
+// 	for AssetIdMaps<T>
+// {
+// 	fn get_asset_metadata(foreign_asset_id: ForeignAssetId) -> Option<AssetMetadata<BalanceOf<T>>> {
+// 		Pallet::<T>::asset_metadatas(AssetIds::ForeignAssetId(foreign_asset_id))
+// 	}
+
+// 	fn get_asset_metadata2(foreign_asset_id: AssetIds) -> Option<AssetMetadata<BalanceOf<T>>> {
+// 		Pallet::<T>::asset_metadatas(foreign_asset_id)
+// 	}
+
+// 	fn get_multi_location(foreign_asset_id: ForeignAssetId) -> Option<MultiLocation> {
+// 		Pallet::<T>::foreign_asset_locations(foreign_asset_id)
+// 	}
+
+// 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
+// 		Pallet::<T>::location_to_currency_ids(multi_location)
+// 	}
+// }
+
 
 #[frame_support::pallet]
 pub mod module {
@@ -402,24 +450,6 @@ impl<T: Config> Pallet<T> {
 				},
 			)
 		})
-	}
-}
-
-pub struct AssetIdMaps<T>(sp_std::marker::PhantomData<T>);
-
-impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<BalanceOf<T>>>
-	for AssetIdMaps<T>
-{
-	fn get_asset_metadata(foreign_asset_id: ForeignAssetId) -> Option<AssetMetadata<BalanceOf<T>>> {
-		Pallet::<T>::asset_metadatas(AssetIds::ForeignAssetId(foreign_asset_id))
-	}
-
-	fn get_multi_location(foreign_asset_id: ForeignAssetId) -> Option<MultiLocation> {
-		Pallet::<T>::foreign_asset_locations(foreign_asset_id)
-	}
-
-	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
-		Pallet::<T>::location_to_currency_ids(multi_location)
 	}
 }
 

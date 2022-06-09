@@ -66,36 +66,37 @@
     },
     "parachains": [
         {
-            "bin": "../unique-chain/target/release/unique-collator",
-            "id": "5000",
-            "balance": "1000000000000000000000000",
-            "nodes": [
-                {
-                    "port": 31200,
-                    "wsPort": 9944,
-                    "rpcPort": 9933,
-                    "name": "alice",
+            "bin": "../Acala/target/production/acala",
+            "id": "2000",
+            "chain":  "karura-dev",
+			"balance": "1000000000000000000000",
+			"nodes": [
+				{
+					"wsPort": 9944,
+					"port": 11202,
+                    "rpcPort": 29932,
+					"name": "alice",
                     "flags": [
                         "--rpc-cors=all",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external",
                         "-lxcm=trace"
                     ]
-                },
+				},
                 {
-                    "port": 31201,
-                    "wsPort": 9945,
-                    "rpcPort": 9934,
-                    "name": "bob",
+					"wsPort": 9943,
+					"port": 11203,
+                    "rpcPort": 29933,
+					"name": "bob",
                     "flags": [
                         "--rpc-cors=all",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external",
                         "-lxcm=trace"
                     ]
-                }
-            ]
-        },
+				}
+			]
+		},
         {
             "bin": "../cumulus/target/release/polkadot-collator",
             "id": "1000",
@@ -132,14 +133,14 @@
     "simpleParachains": [],
     "hrmpChannels": [
         {
-            "sender": 5000,
+            "sender": 2000,
             "recipient": 1000,
             "maxCapacity": 8,
             "maxMessageSize": 512
         },
         {
             "sender": 1000,
-            "recipient": 5000,
+            "recipient": 2000,
             "maxCapacity": 8,
             "maxMessageSize": 512
         }

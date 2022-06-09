@@ -83,12 +83,12 @@ use codec::{Encode, Decode};
 use pallet_evm::{Account as EVMAccount, FeeCalculator, GasWeightMapping, OnMethodCall};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
-	traits::{BlockNumberProvider, Dispatchable, PostDispatchInfoOf, Saturating},
+	traits::{BlockNumberProvider, Convert, Dispatchable, PostDispatchInfoOf, Saturating},
 	transaction_validity::TransactionValidityError,
 	SaturatedConversion,
 };
 
-use orml_traits::{parameter_type_with_key, MultiReservableCurrency};
+use orml_traits::{parameter_type_with_key, MultiReservableCurrency, location::AbsoluteReserveProvider};
 // pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 
@@ -117,7 +117,7 @@ use xcm::latest::{
 };
 use xcm_executor::traits::{MatchesFungible, WeightTrader};
 use sp_runtime::traits::CheckedConversion;
-use pallet_foreing_assets::{AssetIds, AssetIdMaps};
+use pallet_foreing_assets::{AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId};
 
 use unique_runtime_common::{impl_common_runtime_apis, types::*, constants::*};
 
@@ -714,7 +714,7 @@ where
 	}
 }
 
-use xcm_executor::traits::{Convert, Error as MatchError, MatchesFungibles, TransactAsset};
+use xcm_executor::traits::{Convert as ConvertXcm, Error as MatchError, MatchesFungibles, TransactAsset};
 
 pub struct ConvertedConcreteAssetId2<AssetId, Balance, ConvertAssetId, ConvertBalance>(
 	PhantomData<(AssetId, Balance, ConvertAssetId, ConvertBalance)>,
@@ -906,6 +906,14 @@ impl<
 	}
 }
 
+use xcm_executor::traits::FilterAssetLocation;
+pub struct AllAsset;
+impl FilterAssetLocation for AllAsset {
+	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
+		true
+	}
+}
+
 pub struct XcmConfig;
 impl Config for XcmConfig {
 	type Call = Call;
@@ -913,7 +921,7 @@ impl Config for XcmConfig {
 	// How to withdraw and deposit an asset.
 	type AssetTransactor = AssetTransactors;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = NativeAsset;
+	type IsReserve = AllAsset;//NativeAsset;
 	type IsTeleporter = (); // Teleportation is disabled
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
@@ -1087,36 +1095,74 @@ impl pallet_foreing_assets::Config for Runtime {
 
 
 pub struct CurrencyIdConvert;
-impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
-	fn convert(id: CurrencyId) -> Option<MultiLocation> {
+impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
+	fn convert(id: AssetIds) -> Option<MultiLocation> {
+		// match id {
+		// 	// CurrencyId::ForeignAsset(foreign_asset_id) => {
+		// 	// 	XcmForeignAssetIdMapping::<Runtime>::get_multi_location(foreign_asset_id)
+		// 	// }
+		// 	foreign_asset_id => {
+		// 		Ok(XcmForeignAssetIdMapping::<Runtime>::get_multi_location(foreign_asset_id))
+		// 	}
+		// 	_ => Err(id),
+		// }
+
 		match id {
-			CurrencyId::ForeignAsset(foreign_asset_id) => {
+			AssetIds::ForeignAssetId(foreign_asset_id) => {
 				XcmForeignAssetIdMapping::<Runtime>::get_multi_location(foreign_asset_id)
 			}
 			_ => None,
 		}
 	}
 }
-impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
-	fn convert(location: MultiLocation) -> Option<CurrencyId> {
-		if let Some(currency_id) = XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location.clone()) {
-			return Some(currency_id);
-		}
+// impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
+// 	fn convert(location: MultiLocation) -> Result<Option<CurrencyId>, MultiLocation> {
+// 		if let Some(currency_id) = XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location.clone()) {
+// 			return Ok(Some(currency_id));
+// 		}
 
-		None
-	}
-}
-impl Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert {
-	fn convert(asset: MultiAsset) -> Option<CurrencyId> {
-		if let MultiAsset {
-			id: Concrete(location), ..
-		} = asset
-		{
-			Self::convert(location)
-		} else {
-			None
-		}
-	}
+// 		Err(location)
+// 	}
+// }
+// impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
+// 	fn convert(id: AssetIds) -> Result<Option<MultiLocation>, AssetIds> {
+// 		match id {
+// 			foreign_asset_id => {
+// 				Ok(XcmForeignAssetIdMapping::<Runtime>::get_multi_location2(foreign_asset_id))
+// 			}
+// 			_ => Err(id),
+// 		}
+// 	}
+// }
+
+// impl Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert {
+// 	fn convert(asset: MultiAsset) -> Result<Option<CurrencyId>, MultiAsset> {
+// 		if let MultiAsset {
+// 			id: Concrete(location), ..
+// 		} = asset
+// 		{
+// 			Self::convert(location)
+// 		} else {
+// 			Err(asset)
+// 		}
+// 	}
+// }
+// impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
+// 	fn convert(id: AssetIds) -> Result<Option<MultiLocation>, AssetIds> {
+// 		match id {
+// 			foreign_asset_id => {
+// 				Ok(XcmForeignAssetIdMapping::<Runtime>::get_multi_location2(foreign_asset_id))
+// 			}
+// 			_ => Err(id),
+// 		}
+// 	}
+// }
+
+
+
+
+parameter_types! {
+	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
 }
 
 parameter_types! {
@@ -1128,6 +1174,17 @@ parameter_type_with_key! {
 	pub ParachainMinFee: |_location: MultiLocation| -> u128 {
 		u128::MAX
 	};
+}
+
+pub struct AccountIdToMultiLocation;
+impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
+	fn convert(account: AccountId) -> MultiLocation {
+		X1(AccountId32 {
+			network: NetworkId::Any,
+			id: account.into(),
+		})
+		.into()
+	}
 }
 
 impl orml_xtokens::Config for Runtime {
