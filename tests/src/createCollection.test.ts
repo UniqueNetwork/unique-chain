@@ -89,8 +89,8 @@ describe('integration test: ext. createCollection():', () => {
   });
 
   it('New collection is not external', async () => {
-    await usingApi(async api => {
-      const alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
       const tx = api.tx.unique.createCollectionEx({ });
       const events = await submitTransactionAsync(alice, tx);
       const result = getCreateCollectionResult(events);
