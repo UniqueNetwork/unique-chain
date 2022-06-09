@@ -50,6 +50,7 @@ export default {
     allowance: fun('Get allowed amount', [collectionParam, crossAccountParam('sender'), crossAccountParam('spender'), tokenParam], 'u128'),
     tokenOwner: fun('Get token owner', [collectionParam, tokenParam], `Option<${CROSS_ACCOUNT_ID_TYPE}>`),
     topmostTokenOwner: fun('Get token owner, in case of nested token - find parent recursive', [collectionParam, tokenParam], `Option<${CROSS_ACCOUNT_ID_TYPE}>`),
+    tokenChildren: fun('Get tokens nested directly into the token', [collectionParam, tokenParam], 'Vec<UpDataStructsTokenChild>'),
     constMetadata: fun('Get token constant metadata', [collectionParam, tokenParam], 'Vec<u8>'),
     variableMetadata: fun('Get token variable metadata', [collectionParam, tokenParam], 'Vec<u8>'),
     collectionProperties: fun(

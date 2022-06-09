@@ -19,7 +19,6 @@ import chaiAsPromised from 'chai-as-promised';
 import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
 import fs from 'fs';
 import {Abi, ContractPromise as Contract} from '@polkadot/api-contract';
-import privateKey from './substrate/privateKey';
 import {
   deployFlipper,
   getFlipValue,
@@ -50,11 +49,11 @@ const marketContractAddress = '5CYN9j3YvRkqxewoxeSvRbhAym4465C57uMmX5j4yz99L5H6'
 
 describe.skip('Contracts', () => {
   it('Can deploy smart contract Flipper, instantiate it and call it\'s get and flip messages.', async () => {
-    await usingApi(async api => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const [contract, deployer] = await deployFlipper(api);
       const initialGetResponse = await getFlipValue(contract, deployer);
 
-      const bob = privateKey('//Bob');
+      const bob = privateKeyWrapper('//Bob');
       const flip = contract.tx.flip(value, gasLimit);
       await submitTransactionAsync(bob, flip);
 
@@ -76,9 +75,9 @@ describe.skip('Contracts', () => {
 
 describe.skip('Chain extensions', () => {
   it('Transfer CE', async () => {
-    await usingApi(async api => {
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
 
       // Prep work
       const collectionId = await createCollectionExpectSuccess();
@@ -100,9 +99,9 @@ describe.skip('Chain extensions', () => {
   });
 
   it('Mint CE', async () => {
-    await usingApi(async api => {
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
 
       const collectionId = await createCollectionExpectSuccess();
       const [contract] = await deployTransferContract(api);
@@ -127,9 +126,9 @@ describe.skip('Chain extensions', () => {
   });
 
   it('Bulk mint CE', async () => {
-    await usingApi(async api => {
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
 
       const collectionId = await createCollectionExpectSuccess();
       const [contract] = await deployTransferContract(api);
@@ -168,10 +167,10 @@ describe.skip('Chain extensions', () => {
   });
 
   it('Approve CE', async () => {
-    await usingApi(async api => {
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
-      const charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
 
       const collectionId = await createCollectionExpectSuccess();
       const [contract] = await deployTransferContract(api);
@@ -187,10 +186,10 @@ describe.skip('Chain extensions', () => {
   });
 
   it('TransferFrom CE', async () => {
-    await usingApi(async api => {
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
-      const charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
 
       const collectionId = await createCollectionExpectSuccess();
       const [contract] = await deployTransferContract(api);
@@ -208,9 +207,9 @@ describe.skip('Chain extensions', () => {
   });
 
   it('ToggleAllowList CE', async () => {
-    await usingApi(async api => {
-      const alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
 
       const collectionId = await createCollectionExpectSuccess();
       const [contract] = await deployTransferContract(api);

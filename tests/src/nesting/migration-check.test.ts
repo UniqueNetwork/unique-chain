@@ -1,5 +1,4 @@
 import {expect} from 'chai';
-import privateKey from '../substrate/privateKey';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
 import {getCreateCollectionResult} from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -13,8 +12,8 @@ describe.skip('Migration testing for pallet-common', () => {
   let alice: IKeyringPair;
 
   before(async() => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
     });
   });
 

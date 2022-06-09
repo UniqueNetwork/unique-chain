@@ -469,6 +469,8 @@ pub enum NestingRule {
 		#[derivative(Debug(format_with = "bounded::set_debug"))]
 		BoundedBTreeSet<CollectionId, ConstU32<16>>,
 	),
+	/// Used for tests
+	Permissive,
 }
 
 #[derive(Encode, Decode, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen)]
@@ -581,6 +583,14 @@ impl From<CreateFungibleData> for CreateItemData {
 	fn from(item: CreateFungibleData) -> Self {
 		CreateItemData::Fungible(item)
 	}
+}
+
+#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+// todo possibly rename to be used generally as an address pair
+pub struct TokenChild {
+	pub token: TokenId,
+	pub collection: CollectionId,
 }
 
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]

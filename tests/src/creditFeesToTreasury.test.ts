@@ -19,7 +19,6 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import {alicesPublicKey, bobsPublicKey} from './accounts';
-import privateKey from './substrate/privateKey';
 import {IKeyringPair} from '@polkadot/types/types';
 import {
   createCollectionExpectSuccess,
@@ -65,20 +64,20 @@ function skipInflationBlock(api: ApiPromise): Promise<void> {
 
 describe('integration test: Fees must be credited to Treasury:', () => {
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
   it('Total issuance does not change', async () => {
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
       const totalBefore = (await api.query.balances.totalIssuance()).toBigInt();
 
-      const alicePrivateKey = privateKey('//Alice');
+      const alicePrivateKey = privateKeyWrapper('//Alice');
       const amount = 1n;
       const transfer = api.tx.balances.transfer(bobsPublicKey, amount);
 
@@ -92,11 +91,11 @@ describe('integration test: Fees must be credited to Treasury:', () => {
   });
 
   it('Sender balance decreased by fee+sent amount, Treasury balance increased by fee', async () => {
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
-      const alicePrivateKey = privateKey('//Alice');
+      const alicePrivateKey = privateKeyWrapper('//Alice');
       const treasuryBalanceBefore: bigint = (await api.query.system.account(TREASURY)).data.free.toBigInt();
       const aliceBalanceBefore: bigint = (await api.query.system.account(alicesPublicKey)).data.free.toBigInt();
 
@@ -115,11 +114,11 @@ describe('integration test: Fees must be credited to Treasury:', () => {
   });
 
   it('Treasury balance increased by failed tx fee', async () => {
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       //await skipInflationBlock(api);
       await waitNewBlocks(api, 1);
 
-      const bobPrivateKey = privateKey('//Bob');
+      const bobPrivateKey = privateKeyWrapper('//Bob');
       const treasuryBalanceBefore = (await api.query.system.account(TREASURY)).data.free.toBigInt();
       const bobBalanceBefore = (await api.query.system.account(bobsPublicKey)).data.free.toBigInt();
 

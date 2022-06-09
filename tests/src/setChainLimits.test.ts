@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
@@ -31,10 +30,10 @@ describe.skip('Negative Integration Test setChainLimits', () => {
   let limits: IChainLimits;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      dave = privateKey('//Dave');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      dave = privateKeyWrapper('//Dave');
       limits = {
         collectionNumbersLimit : 1,
         accountTokenOwnershipLimit: 1,

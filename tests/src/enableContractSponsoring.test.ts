@@ -17,7 +17,6 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import {deployFlipper, getFlipValue, toggleFlipValueExpectSuccess} from './util/contracthelpers';
 import {
@@ -79,7 +78,9 @@ describe.skip('Negative Integration Test enableContractSponsoring', () => {
   let alice: IKeyringPair;
 
   before(async () => {
-    alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+    });
   });
 
   it('fails when called for non-contract address', async () => {

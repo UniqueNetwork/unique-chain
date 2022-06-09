@@ -40,6 +40,7 @@ use up_data_structs::{
 	MAX_TOKEN_PREFIX_LENGTH,
 	COLLECTION_ADMINS_LIMIT,
 	TokenId,
+	TokenChild,
 	CollectionStats,
 	MAX_TOKEN_OWNERSHIP,
 	CollectionMode,
@@ -502,6 +503,7 @@ pub mod pallet {
 			CollectionStats,
 			CollectionId,
 			TokenId,
+			TokenChild,
 			PhantomType<(
 				TokenData<T::CrossAccountId>,
 				RpcCollection<T::AccountId>,
@@ -1166,8 +1168,9 @@ impl<T: Config> Pallet<T> {
 		);
 		Ok(new_limit)
 	}
+
 	pub fn clamp_permissions(
-		mode: CollectionMode,
+		_mode: CollectionMode,
 		old_limit: &CollectionPermissions,
 		mut new_limit: CollectionPermissions,
 	) -> Result<CollectionPermissions, DispatchError> {
@@ -1202,6 +1205,22 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
 	fn burn_from() -> Weight;
+
+	/// Differs from burn_item in case of Fungible and Refungible, as it should burn
+	/// whole users's balance
+	///
+	/// This method shouldn't be used directly, as it doesn't count breadth price, use `burn_recursively` instead
+	fn burn_recursively_self_raw() -> Weight;
+	/// Cost of iterating over `amount` children while burning, without counting child burning itself
+	///
+	/// This method shouldn't be used directly, as it doesn't count depth price, use `burn_recursively` instead
+	fn burn_recursively_breadth_raw(amount: u32) -> Weight;
+
+	fn burn_recursively(max_selfs: u32, max_breadth: u32) -> Weight {
+		Self::burn_recursively_self_raw()
+			.saturating_mul(max_selfs.max(1) as u64)
+			.saturating_add(Self::burn_recursively_breadth_raw(max_breadth))
+	}
 }
 
 pub trait CommonCollectionOperations<T: Config> {
@@ -1230,6 +1249,13 @@ pub trait CommonCollectionOperations<T: Config> {
 		sender: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+	) -> DispatchResultWithPostInfo;
+	fn burn_item_recursively(
+		&self,
+		sender: T::CrossAccountId,
+		token: TokenId,
+		self_budget: &dyn Budget,
+		breadth_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn set_collection_properties(
 		&self,

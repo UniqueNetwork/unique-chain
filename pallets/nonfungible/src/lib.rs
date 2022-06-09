@@ -18,18 +18,24 @@
 
 use erc::ERC721Events;
 use evm_coder::ToLog;
-use frame_support::{BoundedVec, ensure, fail, transactional, storage::with_transaction};
+use frame_support::{
+	BoundedVec, ensure, fail, transactional,
+	storage::with_transaction,
+	pallet_prelude::DispatchResultWithPostInfo,
+	pallet_prelude::Weight,
+	weights::{PostDispatchInfo, Pays},
+};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
-	PropertyKey, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty,
+	PropertyKey, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
 	eth::collection_id_to_address,
 };
-use pallet_structure::Pallet as PalletStructure;
+use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
@@ -39,6 +45,7 @@ use codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
 pub use pallet::*;
+use weights::WeightInfo;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod common;
@@ -373,7 +380,7 @@ impl<T: Config> Pallet<T> {
 			<PalletCommon<T>>::deposit_event(CommonEvent::Approved(
 				collection.id,
 				token,
-				sender.clone(),
+				token_data.owner.clone(),
 				old_spender,
 				0,
 			));
@@ -394,6 +401,45 @@ impl<T: Config> Pallet<T> {
 			1,
 		));
 		Ok(())
+	}
+
+	#[transactional]
+	pub fn burn_recursively(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token: TokenId,
+		self_budget: &dyn Budget,
+		breadth_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo {
+		ensure!(self_budget.consume(), <StructureError<T>>::DepthLimit,);
+
+		let current_token_account =
+			T::CrossTokenAddressMapping::token_to_address(collection.id, token);
+
+		let mut weight = 0 as Weight;
+
+		// This method is transactional, if user in fact doesn't have permissions to remove token -
+		// tokens removed here will be restored after rejected transaction
+		for ((collection, token), _) in <TokenChildren<T>>::iter_prefix((collection.id, token)) {
+			ensure!(breadth_budget.consume(), <StructureError<T>>::BreadthLimit,);
+			let PostDispatchInfo { actual_weight, .. } =
+				<PalletStructure<T>>::burn_item_recursively(
+					current_token_account.clone(),
+					collection,
+					token,
+					self_budget,
+					breadth_budget,
+				)?;
+			if let Some(actual_weight) = actual_weight {
+				weight = weight.saturating_add(actual_weight);
+			}
+		}
+
+		Self::burn(collection, sender, token)?;
+		DispatchResultWithPostInfo::Ok(PostDispatchInfo {
+			actual_weight: Some(weight + <SelfWeightOf<T>>::burn_item()),
+			pays_fee: Pays::Yes,
+		})
 	}
 
 	pub fn set_token_property(
@@ -604,7 +650,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		<PalletStructure<T>>::unnest_if_nested(from, collection.id, token);
+		<PalletStructure<T>>::unnest_if_nested(&token_data.owner, collection.id, token);
 
 		<TokenData<T>>::insert(
 			(collection.id, token),
@@ -964,6 +1010,7 @@ impl<T: Config> Pallet<T> {
 				);
 				ensure_sender_allowed::<T>(handle.id, under, from, sender, nesting_budget)?
 			}
+			NestingRule::Permissive => {}
 		}
 		Ok(())
 	}
@@ -986,6 +1033,15 @@ impl<T: Config> Pallet<T> {
 		<TokenChildren<T>>::iter_prefix((collection_id, token_id))
 			.next()
 			.is_some()
+	}
+
+	pub fn token_children_ids(collection_id: CollectionId, token_id: TokenId) -> Vec<TokenChild> {
+		<TokenChildren<T>>::iter_prefix((collection_id, token_id))
+			.map(|((child_collection_id, child_id), _)| TokenChild {
+				collection: child_collection_id,
+				token: child_id,
+			})
+			.collect()
 	}
 
 	/// Delegated to `create_multiple_items`

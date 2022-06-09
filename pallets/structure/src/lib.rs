@@ -3,7 +3,7 @@
 use pallet_common::CommonCollectionOperations;
 use sp_std::collections::btree_set::BTreeSet;
 
-use frame_support::dispatch::{DispatchError, DispatchResult};
+use frame_support::dispatch::{DispatchError, DispatchResult, DispatchResultWithPostInfo};
 use frame_support::fail;
 pub use pallet::*;
 use pallet_common::{dispatch::CollectionDispatch, CollectionHandle};
@@ -29,6 +29,8 @@ pub mod pallet {
 		OuroborosDetected,
 		/// While searched for owner, encountered depth limit
 		DepthLimit,
+		/// While iterating over children, encountered breadth limit
+		BreadthLimit,
 		/// While searched for owner, found token owner by not-yet-existing token
 		TokenNotFound,
 	}
@@ -184,6 +186,19 @@ impl<T: Config> Pallet<T> {
 		Err(<Error<T>>::DepthLimit.into())
 	}
 
+	pub fn burn_item_recursively(
+		from: T::CrossAccountId,
+		collection: CollectionId,
+		token: TokenId,
+		self_budget: &dyn Budget,
+		breadth_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo {
+		let handle = <CollectionHandle<T>>::try_get(collection)?;
+		let dispatch = T::CollectionDispatch::dispatch(handle);
+		let dispatch = dispatch.as_dyn();
+		dispatch.burn_item_recursively(from.clone(), token, self_budget, breadth_budget)
+	}
+
 	pub fn check_nesting(
 		from: T::CrossAccountId,
 		under: &T::CrossAccountId,
@@ -191,8 +206,8 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::try_exec_if_owner_is_valid_nft(under, |d, parent_id| {
-			d.check_nesting(from, (collection_id, token_id), parent_id, nesting_budget)
+		Self::try_exec_if_owner_is_valid_nft(under, |collection, parent_id| {
+			collection.check_nesting(from, (collection_id, token_id), parent_id, nesting_budget)
 		})
 	}
 
@@ -203,10 +218,10 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::try_exec_if_owner_is_valid_nft(under, |d, parent_id| {
-			d.check_nesting(from, (collection_id, token_id), parent_id, nesting_budget)?;
+		Self::try_exec_if_owner_is_valid_nft(under, |collection, parent_id| {
+			collection.check_nesting(from, (collection_id, token_id), parent_id, nesting_budget)?;
 
-			d.nest(parent_id, (collection_id, token_id));
+			collection.nest(parent_id, (collection_id, token_id));
 
 			Ok(())
 		})
@@ -217,8 +232,8 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 		token_id: TokenId,
 	) {
-		Self::exec_if_owner_is_valid_nft(owner, |d, parent_id| {
-			d.nest(parent_id, (collection_id, token_id))
+		Self::exec_if_owner_is_valid_nft(owner, |collection, parent_id| {
+			collection.nest(parent_id, (collection_id, token_id))
 		});
 	}
 
@@ -227,8 +242,8 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 		token_id: TokenId,
 	) {
-		Self::exec_if_owner_is_valid_nft(owner, |d, parent_id| {
-			d.unnest(parent_id, (collection_id, token_id))
+		Self::exec_if_owner_is_valid_nft(owner, |collection, parent_id| {
+			collection.unnest(parent_id, (collection_id, token_id))
 		});
 	}
 
@@ -236,8 +251,8 @@ impl<T: Config> Pallet<T> {
 		account: &T::CrossAccountId,
 		action: impl FnOnce(&dyn CommonCollectionOperations<T>, TokenId),
 	) {
-		Self::try_exec_if_owner_is_valid_nft(account, |d, id| {
-			action(d, id);
+		Self::try_exec_if_owner_is_valid_nft(account, |collection, id| {
+			action(collection, id);
 			Ok(())
 		})
 		.unwrap();

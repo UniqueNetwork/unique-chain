@@ -22,14 +22,14 @@ struct Generic<T>(PhantomData<T>);
 #[solidity_interface(name = "GenericIs")]
 impl<T> Generic<T> {
 	fn test_1(&self) -> Result<uint256> {
-		todo!()
+		unreachable!()
 	}
 }
 
 #[solidity_interface(name = "Generic", is(GenericIs))]
 impl<T: Into<u32>> Generic<T> {
 	fn test_2(&self) -> Result<uint256> {
-		todo!()
+		unreachable!()
 	}
 }
 

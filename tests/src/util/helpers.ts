@@ -24,10 +24,10 @@ import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {alicesPublicKey} from '../accounts';
-import privateKey from '../substrate/privateKey';
 import {default as usingApi, executeTransaction, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
 import {UpDataStructsRpcCollection, UpDataStructsCreateItemData, UpDataStructsProperty} from '@polkadot/types/lookup';
+import {UpDataStructsTokenChild} from '../interfaces';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -325,12 +325,12 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
   const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
 
   let collectionId = 0;
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Get number of collections before the transaction
     const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKeyWrapper('//Alice');
 
     let modeprm = {};
     if (mode.type === 'NFT') {
@@ -378,12 +378,12 @@ export async function createCollectionWithPropsExpectSuccess(params: Partial<Cre
   const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
 
   let collectionId = 0;
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Get number of collections before the transaction
     const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKeyWrapper('//Alice');
 
     let modeprm = {};
     if (mode.type === 'NFT') {
@@ -426,12 +426,12 @@ export async function createCollectionWithPropsExpectSuccess(params: Partial<Cre
 export async function createCollectionWithPropsExpectFailure(params: Partial<CreateCollectionParams> = {}) {
   const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
 
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Get number of collections before the transaction
     const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKeyWrapper('//Alice');
 
     let modeprm = {};
     if (mode.type === 'NFT') {
@@ -465,12 +465,12 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
     modeprm = {refungible: null};
   }
 
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Get number of collections before the transaction
     const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKeyWrapper('//Alice');
     const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any});
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
 
@@ -519,18 +519,18 @@ function getDestroyResult(events: EventRecord[]): boolean {
 }
 
 export async function destroyCollectionExpectFailure(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Run the DestroyCollection transaction
-    const alicePrivateKey = privateKey(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.destroyCollection(collectionId);
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
 }
 
 export async function destroyCollectionExpectSuccess(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Run the DestroyCollection transaction
-    const alicePrivateKey = privateKey(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.destroyCollection(collectionId);
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getDestroyResult(events);
@@ -572,10 +572,10 @@ export async function setCollectionLimitsExpectFailure(sender: IKeyringPair, col
 }
 
 export async function setCollectionSponsorExpectSuccess(collectionId: number, sponsor: string, sender = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const senderPrivateKey = privateKey(sender);
+    const senderPrivateKey = privateKeyWrapper(sender);
     const tx = api.tx.unique.setCollectionSponsor(collectionId, sponsor);
     const events = await submitTransactionAsync(senderPrivateKey, tx);
     const result = getGenericResult(events);
@@ -592,10 +592,10 @@ export async function setCollectionSponsorExpectSuccess(collectionId: number, sp
 }
 
 export async function removeCollectionSponsorExpectSuccess(collectionId: number, sender = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey(sender);
+    const alicePrivateKey = privateKeyWrapper(sender);
     const tx = api.tx.unique.removeCollectionSponsor(collectionId);
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getGenericResult(events);
@@ -610,30 +610,38 @@ export async function removeCollectionSponsorExpectSuccess(collectionId: number,
 }
 
 export async function removeCollectionSponsorExpectFailure(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.removeCollectionSponsor(collectionId);
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
 }
 
 export async function setCollectionSponsorExpectFailure(collectionId: number, sponsor: string, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.setCollectionSponsor(collectionId, sponsor);
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
 }
 
 export async function confirmSponsorshipExpectSuccess(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const sender = privateKey(senderSeed);
+    const sender = privateKeyWrapper(senderSeed);
+    await confirmSponsorshipByKeyExpectSuccess(collectionId, sender);
+  });
+}
+
+export async function confirmSponsorshipByKeyExpectSuccess(collectionId: number, sender: IKeyringPair) {
+  await usingApi(async (api, privateKeyWrapper) => {
+
+    // Run the transaction
     const tx = api.tx.unique.confirmSponsorship(collectionId);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
@@ -651,10 +659,10 @@ export async function confirmSponsorshipExpectSuccess(collectionId: number, send
 
 
 export async function confirmSponsorshipExpectFailure(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const sender = privateKey(senderSeed);
+    const sender = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.confirmSponsorship(collectionId);
     await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
   });
@@ -899,7 +907,7 @@ transferFromExpectFail(
 }
 
 /* eslint no-async-promise-executor: "off" */
-async function getBlockNumber(api: ApiPromise): Promise<number> {
+export async function getBlockNumber(api: ApiPromise): Promise<number> {
   return new Promise<number>(async (resolve) => {
     const unsubscribe = await api.rpc.chain.subscribeNewHeads((head) => {
       unsubscribe();
@@ -935,29 +943,76 @@ export async function transferBalanceTo(api: ApiPromise, source: IKeyringPair, t
 }
 
 export async function
-scheduleTransferExpectSuccess(
-  collectionId: number,
-  tokenId: number,
+scheduleExpectSuccess(
+  operationTx: any,
   sender: IKeyringPair,
-  recipient: IKeyringPair,
-  value: number | bigint = 1,
   blockSchedule: number,
+  scheduledId: string,
+  period = 1,
+  repetitions = 1,
 ) {
   await usingApi(async (api: ApiPromise) => {
     const blockNumber: number | undefined = await getBlockNumber(api);
     const expectedBlockNumber = blockNumber + blockSchedule;
 
     expect(blockNumber).to.be.greaterThan(0);
-    const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value);
-    const scheduleTx = api.tx.scheduler.schedule(expectedBlockNumber, null, 0, transferTx as any);
+    const scheduleTx = api.tx.scheduler.scheduleNamed( // schedule
+      scheduledId,
+      expectedBlockNumber, 
+      repetitions > 1 ? [period, repetitions] : null, 
+      0, 
+      {value: operationTx as any},
+    );
 
-    await submitTransactionAsync(sender, scheduleTx);
+    const events = await submitTransactionAsync(sender, scheduleTx);
+    expect(getGenericResult(events).success).to.be.true;
+  });
+}
+
+export async function
+scheduleExpectFailure(
+  operationTx: any,
+  sender: IKeyringPair,
+  blockSchedule: number,
+  scheduledId: string,
+  period = 1,
+  repetitions = 1,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    const blockNumber: number | undefined = await getBlockNumber(api);
+    const expectedBlockNumber = blockNumber + blockSchedule;
+
+    expect(blockNumber).to.be.greaterThan(0);
+    const scheduleTx = api.tx.scheduler.scheduleNamed( // schedule
+      scheduledId,
+      expectedBlockNumber, 
+      repetitions <= 1 ? null : [period, repetitions], 
+      0, 
+      {value: operationTx as any},
+    );
+
+    //const events = 
+    await expect(submitTransactionExpectFailAsync(sender, scheduleTx)).to.be.rejected;
+    //expect(getGenericResult(events).success).to.be.false;
+  });
+}
+
+export async function
+scheduleTransferAndWaitExpectSuccess(
+  collectionId: number,
+  tokenId: number,
+  sender: IKeyringPair,
+  recipient: IKeyringPair,
+  value: number | bigint = 1,
+  blockSchedule: number,
+  scheduledId: string,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    await scheduleTransferExpectSuccess(collectionId, tokenId, sender, recipient, value, blockSchedule, scheduledId);
 
     const recipientBalanceBefore = (await api.query.system.account(recipient.address)).data.free.toBigInt();
 
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(sender.address));
-
-    // sleep for 4 blocks
+    // sleep for n + 1 blocks
     await waitNewBlocks(blockSchedule + 1);
 
     const recipientBalanceAfter = (await api.query.system.account(recipient.address)).data.free.toBigInt();
@@ -967,6 +1022,45 @@ scheduleTransferExpectSuccess(
   });
 }
 
+export async function
+scheduleTransferExpectSuccess(
+  collectionId: number,
+  tokenId: number,
+  sender: IKeyringPair,
+  recipient: IKeyringPair,
+  value: number | bigint = 1,
+  blockSchedule: number,
+  scheduledId: string,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value);
+
+    await scheduleExpectSuccess(transferTx, sender, blockSchedule, scheduledId);
+
+    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(sender.address));
+  });
+}
+
+export async function
+scheduleTransferFundsPeriodicExpectSuccess(
+  amount: bigint,
+  sender: IKeyringPair,
+  recipient: IKeyringPair,
+  blockSchedule: number,
+  scheduledId: string,
+  period: number,
+  repetitions: number,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    const transferTx = api.tx.balances.transfer(recipient.address, amount);
+
+    const balanceBefore = await getFreeBalance(recipient);
+    
+    await scheduleExpectSuccess(transferTx, sender, blockSchedule, scheduledId, period, repetitions);
+
+    expect(await getFreeBalance(recipient)).to.be.equal(balanceBefore);
+  });
+}
 
 export async function
 transferExpectSuccess(
@@ -1071,6 +1165,13 @@ export async function getTopmostTokenOwner(
   const owner = (await api.rpc.unique.topmostTokenOwner(collectionId, token)).toJSON() as any;
   if (owner == null) throw new Error('owner == null');
   return normalizeAccountId(owner);
+}
+export async function getTokenChildren(
+  api: ApiPromise,
+  collectionId: number,
+  tokenId: number,
+): Promise<UpDataStructsTokenChild[]> {
+  return (await api.rpc.unique.tokenChildren(collectionId, tokenId)).toJSON() as any;
 }
 export async function isTokenExists(
   api: ApiPromise,

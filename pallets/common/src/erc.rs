@@ -19,9 +19,8 @@ use evm_coder::{
 	types::*,
 	execution::{Result, Error},
 };
-pub use pallet_evm::{PrecompileOutput, PrecompileResult, account::CrossAccountId};
+pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
 use pallet_evm_coder_substrate::dispatch_to_evm;
-use sp_core::{H160, U256};
 use sp_std::vec::Vec;
 use up_data_structs::{Property, SponsoringRateLimit};
 use alloc::format;
@@ -43,7 +42,7 @@ pub enum CollectionHelpersEvents {
 pub trait CommonEvmHandler {
 	const CODE: &'static [u8];
 
-	fn call(self, source: &H160, input: &[u8], value: U256) -> Option<PrecompileResult>;
+	fn call(self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult>;
 }
 
 #[solidity_interface(name = "Collection")]

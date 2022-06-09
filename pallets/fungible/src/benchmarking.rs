@@ -25,7 +25,9 @@ use pallet_common::bench_init;
 
 const SEED: u32 = 1;
 
-fn create_collection<T: Config>(owner: T::AccountId) -> Result<FungibleHandle<T>, DispatchError> {
+fn create_collection<T: Config>(
+	owner: T::CrossAccountId,
+) -> Result<FungibleHandle<T>, DispatchError> {
 	create_collection_raw(
 		owner,
 		CollectionMode::Fungible(0),

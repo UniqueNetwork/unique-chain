@@ -14,14 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+// Original License
 use std::sync::Arc;
 
 use codec::{Decode, Encode};
-use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
-use jsonrpc_derive::rpc;
+use jsonrpsee::{
+	core::{RpcResult as Result},
+	proc_macros::rpc,
+};
+use anyhow::anyhow;
 use up_data_structs::{
 	RpcCollection, CollectionId, CollectionStats, CollectionLimits, TokenId, Property,
-	PropertyKeyPermission, TokenData,
+	PropertyKeyPermission, TokenData, TokenChild,
 };
 use sp_api::{BlockId, BlockT, ProvideRuntimeApi, ApiExt};
 use sp_blockchain::HeaderBackend;
@@ -33,24 +37,25 @@ use up_data_structs::{
 	RmrkCollectionId, RmrkNftId, RmrkBaseId, RmrkNftChild, RmrkThemeName, RmrkResourceId,
 };
 
-pub use rmrk_unique_rpc::RmrkApi;
+pub use rmrk_unique_rpc::RmrkApiServer;
 
-#[rpc]
+#[rpc(server)]
+#[async_trait]
 pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
-	#[rpc(name = "unique_accountTokens")]
+	#[method(name = "unique_accountTokens")]
 	fn account_tokens(
 		&self,
 		collection: CollectionId,
 		account: CrossAccountId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<TokenId>>;
-	#[rpc(name = "unique_collectionTokens")]
+	#[method(name = "unique_collectionTokens")]
 	fn collection_tokens(
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<TokenId>>;
-	#[rpc(name = "unique_tokenExists")]
+	#[method(name = "unique_tokenExists")]
 	fn token_exists(
 		&self,
 		collection: CollectionId,
@@ -58,22 +63,29 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<bool>;
 
-	#[rpc(name = "unique_tokenOwner")]
+	#[method(name = "unique_tokenOwner")]
 	fn token_owner(
 		&self,
 		collection: CollectionId,
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<CrossAccountId>>;
-	#[rpc(name = "unique_topmostTokenOwner")]
+	#[method(name = "unique_topmostTokenOwner")]
 	fn topmost_token_owner(
 		&self,
 		collection: CollectionId,
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<CrossAccountId>>;
+	#[method(name = "unique_tokenChildren")]
+	fn token_children(
+		&self,
+		collection: CollectionId,
+		token: TokenId,
+		at: Option<BlockHash>,
+	) -> Result<Vec<TokenChild>>;
 
-	#[rpc(name = "unique_collectionProperties")]
+	#[method(name = "unique_collectionProperties")]
 	fn collection_properties(
 		&self,
 		collection: CollectionId,
@@ -81,7 +93,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Vec<Property>>;
 
-	#[rpc(name = "unique_tokenProperties")]
+	#[method(name = "unique_tokenProperties")]
 	fn token_properties(
 		&self,
 		collection: CollectionId,
@@ -90,7 +102,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Vec<Property>>;
 
-	#[rpc(name = "unique_propertyPermissions")]
+	#[method(name = "unique_propertyPermissions")]
 	fn property_permissions(
 		&self,
 		collection: CollectionId,
@@ -98,7 +110,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Vec<PropertyKeyPermission>>;
 
-	#[rpc(name = "unique_tokenData")]
+	#[method(name = "unique_tokenData")]
 	fn token_data(
 		&self,
 		collection: CollectionId,
@@ -107,16 +119,16 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<TokenData<CrossAccountId>>;
 
-	#[rpc(name = "unique_totalSupply")]
+	#[method(name = "unique_totalSupply")]
 	fn total_supply(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<u32>;
-	#[rpc(name = "unique_accountBalance")]
+	#[method(name = "unique_accountBalance")]
 	fn account_balance(
 		&self,
 		collection: CollectionId,
 		account: CrossAccountId,
 		at: Option<BlockHash>,
 	) -> Result<u32>;
-	#[rpc(name = "unique_balance")]
+	#[method(name = "unique_balance")]
 	fn balance(
 		&self,
 		collection: CollectionId,
@@ -124,7 +136,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<String>;
-	#[rpc(name = "unique_allowance")]
+	#[method(name = "unique_allowance")]
 	fn allowance(
 		&self,
 		collection: CollectionId,
@@ -134,37 +146,37 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<String>;
 
-	#[rpc(name = "unique_adminlist")]
+	#[method(name = "unique_adminlist")]
 	fn adminlist(
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<CrossAccountId>>;
-	#[rpc(name = "unique_allowlist")]
+	#[method(name = "unique_allowlist")]
 	fn allowlist(
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<CrossAccountId>>;
-	#[rpc(name = "unique_allowed")]
+	#[method(name = "unique_allowed")]
 	fn allowed(
 		&self,
 		collection: CollectionId,
 		user: CrossAccountId,
 		at: Option<BlockHash>,
 	) -> Result<bool>;
-	#[rpc(name = "unique_lastTokenId")]
+	#[method(name = "unique_lastTokenId")]
 	fn last_token_id(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<TokenId>;
-	#[rpc(name = "unique_collectionById")]
+	#[method(name = "unique_collectionById")]
 	fn collection_by_id(
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Option<RpcCollection<AccountId>>>;
-	#[rpc(name = "unique_collectionStats")]
+	#[method(name = "unique_collectionStats")]
 	fn collection_stats(&self, at: Option<BlockHash>) -> Result<CollectionStats>;
 
-	#[rpc(name = "unique_nextSponsored")]
+	#[method(name = "unique_nextSponsored")]
 	fn next_sponsored(
 		&self,
 		collection: CollectionId,
@@ -172,7 +184,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<u64>>;
-	#[rpc(name = "unique_effectiveCollectionLimits")]
+	#[method(name = "unique_effectiveCollectionLimits")]
 	fn effective_collection_limits(
 		&self,
 		collection_id: CollectionId,
@@ -184,6 +196,7 @@ mod rmrk_unique_rpc {
 	use super::*;
 
 	#[rpc(server)]
+	#[async_trait]
 	pub trait RmrkApi<
 		BlockHash,
 		AccountId,
@@ -196,11 +209,11 @@ mod rmrk_unique_rpc {
 		Theme,
 	>
 	{
-		#[rpc(name = "rmrk_lastCollectionIdx")]
+		#[method(name = "rmrk_lastCollectionIdx")]
 		/// Get the latest created collection id
 		fn last_collection_idx(&self, at: Option<BlockHash>) -> Result<RmrkCollectionId>;
 
-		#[rpc(name = "rmrk_collectionById")]
+		#[method(name = "rmrk_collectionById")]
 		/// Get collection by id
 		fn collection_by_id(
 			&self,
@@ -208,7 +221,7 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Option<CollectionInfo>>;
 
-		#[rpc(name = "rmrk_nftById")]
+		#[method(name = "rmrk_nftById")]
 		/// Get NFT by collection id and NFT id
 		fn nft_by_id(
 			&self,
@@ -217,7 +230,7 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Option<NftInfo>>;
 
-		#[rpc(name = "rmrk_accountTokens")]
+		#[method(name = "rmrk_accountTokens")]
 		/// Get tokens owned by an account in a collection
 		fn account_tokens(
 			&self,
@@ -226,7 +239,7 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Vec<RmrkNftId>>;
 
-		#[rpc(name = "rmrk_nftChildren")]
+		#[method(name = "rmrk_nftChildren")]
 		/// Get NFT children
 		fn nft_children(
 			&self,
@@ -235,7 +248,7 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Vec<RmrkNftChild>>;
 
-		#[rpc(name = "rmrk_collectionProperties")]
+		#[method(name = "rmrk_collectionProperties")]
 		/// Get collection properties
 		fn collection_properties(
 			&self,
@@ -244,7 +257,7 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Vec<PropertyInfo>>;
 
-		#[rpc(name = "rmrk_nftProperties")]
+		#[method(name = "rmrk_nftProperties")]
 		/// Get NFT properties
 		fn nft_properties(
 			&self,
@@ -254,7 +267,7 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Vec<PropertyInfo>>;
 
-		#[rpc(name = "rmrk_nftResources")]
+		#[method(name = "rmrk_nftResources")]
 		/// Get NFT resources
 		fn nft_resources(
 			&self,
@@ -263,7 +276,7 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Vec<ResourceInfo>>;
 
-		#[rpc(name = "rmrk_nftResourcePriorities")]
+		#[method(name = "rmrk_nftResourcePriorities")]
 		/// Get NFT resource priorities
 		fn nft_resource_priorities(
 			&self,
@@ -272,22 +285,22 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Vec<RmrkResourceId>>;
 
-		#[rpc(name = "rmrk_base")]
+		#[method(name = "rmrk_base")]
 		/// Get base info
 		fn base(&self, base_id: RmrkBaseId, at: Option<BlockHash>) -> Result<Option<BaseInfo>>;
 
-		#[rpc(name = "rmrk_baseParts")]
+		#[method(name = "rmrk_baseParts")]
 		/// Get all Base's parts
 		fn base_parts(&self, base_id: RmrkBaseId, at: Option<BlockHash>) -> Result<Vec<PartType>>;
 
-		#[rpc(name = "rmrk_themeNames")]
+		#[method(name = "rmrk_themeNames")]
 		fn theme_names(
 			&self,
 			base_id: RmrkBaseId,
 			at: Option<BlockHash>,
 		) -> Result<Vec<RmrkThemeName>>;
 
-		#[rpc(name = "rmrk_themes")]
+		#[method(name = "rmrk_themes")]
 		fn theme(
 			&self,
 			base_id: RmrkBaseId,
@@ -308,18 +321,6 @@ impl<C, P> Unique<C, P> {
 		Self {
 			client,
 			_marker: Default::default(),
-		}
-	}
-}
-
-pub enum Error {
-	RuntimeError,
-}
-
-impl From<Error> for i64 {
-	fn from(e: Error) -> i64 {
-		match e {
-			Error::RuntimeError => 1,
 		}
 	}
 }
@@ -348,11 +349,7 @@ macro_rules! pass_method {
 				api_version
 			} else {
 				// unreachable for our runtime
-				return Err(RpcError {
-					code: ErrorCode::InvalidParams,
-					message: "Api is not available".into(),
-					data: None,
-				})
+				return Err(anyhow!("api is not available").into())
 			};
 
 			let result = $(if _api_version < $ver {
@@ -360,16 +357,9 @@ macro_rules! pass_method {
 			} else)*
 			{ api.$method_name(&at, $($((|$map_arg: $ty| $map))? ($name)),*) };
 
-			let result = result.map_err(|e| RpcError {
-				code: ErrorCode::ServerError(Error::RuntimeError.into()),
-				message: "Unable to query".into(),
-				data: Some(format!("{:?}", e).into()),
-			})?;
-			result.map_err(|e| RpcError {
-				code: ErrorCode::InvalidParams,
-				message: "Runtime returned error".into(),
-				data: Some(format!("{:?}", e).into()),
-			})$(.map($mapper))?
+			Ok(result
+				.map_err(|e| anyhow!("unable to query: {e}"))?
+				.map_err(|e| anyhow!("runtime error: {e:?}"))$(.map($mapper))??)
 		}
 	};
 }
@@ -388,7 +378,7 @@ macro_rules! rmrk_api {
 
 #[allow(deprecated)]
 impl<C, Block, CrossAccountId, AccountId>
-	UniqueApi<<Block as BlockT>::Hash, CrossAccountId, AccountId> for Unique<C, Block>
+	UniqueApiServer<<Block as BlockT>::Hash, CrossAccountId, AccountId> for Unique<C, Block>
 where
 	Block: BlockT,
 	AccountId: Decode,
@@ -411,6 +401,7 @@ where
 	pass_method!(
 		topmost_token_owner(collection: CollectionId, token: TokenId) -> Option<CrossAccountId>, unique_api
 	);
+	pass_method!(token_children(collection: CollectionId, token: TokenId) -> Vec<TokenChild>, unique_api);
 	pass_method!(total_supply(collection: CollectionId) -> u32, unique_api);
 	pass_method!(account_balance(collection: CollectionId, account: CrossAccountId) -> u32, unique_api);
 	pass_method!(balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> String => |v| v.to_string(), unique_api);
@@ -472,7 +463,7 @@ impl<
 		PartType,
 		Theme,
 	>
-	rmrk_unique_rpc::RmrkApi<
+	rmrk_unique_rpc::RmrkApiServer<
 		<Block as BlockT>::Hash,
 		AccountId,
 		CollectionInfo,

@@ -20,7 +20,6 @@ import {Abi, BlueprintPromise as Blueprint, CodePromise, ContractPromise as Cont
 import {ApiPromise, Keyring} from '@polkadot/api';
 import {findUnusedAddress} from './util/helpers';
 import fs from 'fs';
-import privateKey from './substrate/privateKey';
 
 const value = 0;
 const gasLimit = 500000n * 1000000n;
@@ -121,13 +120,13 @@ describe('RPC Tests', () => {
   });
 
   it('Smart Contract RPC Load Test', async () => {
-    await usingApi(async api => {
+    await usingApi(async (api, privateKeyWrapper) => {
 
       // Deploy smart contract
       const [contract, deployer] = await deployLoadTester(api);
 
       // Fill smart contract up with data
-      const bob = privateKey('//Bob');
+      const bob = privateKeyWrapper('//Bob');
       const tx = contract.tx.bloat(value, gasLimit, 200);
       await submitTransactionAsync(bob, tx);
 

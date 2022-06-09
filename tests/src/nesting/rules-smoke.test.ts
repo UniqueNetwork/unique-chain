@@ -1,6 +1,5 @@
 import {expect} from 'chai';
 import {tokenIdToAddress} from '../eth/util/helpers';
-import privateKey from '../substrate/privateKey';
 import usingApi, {executeTransaction} from '../substrate/substrate-api';
 import {createCollectionExpectSuccess, createFungibleItemExpectSuccess, createItemExpectSuccess, CrossAccountId, getCreateCollectionResult} from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -9,9 +8,9 @@ describe('nesting check', () => {
   let alice!: IKeyringPair;
   let nestTarget!: CrossAccountId;
   before(async() => {
-    await usingApi(async api => {
-      alice = privateKey('//Alice');
-      const bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       const events = await executeTransaction(api, alice, api.tx.unique.createCollectionEx({
         mode: 'NFT',
         permissions: {

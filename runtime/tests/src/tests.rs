@@ -21,7 +21,7 @@ use up_data_structs::{
 	CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT, TokenId,
 	MAX_TOKEN_OWNERSHIP, CreateCollectionData, CollectionMode, AccessMode, CollectionPermissions,
 	PropertyKeyPermission, PropertyPermission, Property, CollectionPropertiesVec,
-	CollectionPropertiesPermissionsVec,
+	CollectionPropertiesPermissionsVec, TokenChild,
 };
 use frame_support::{assert_noop, assert_ok, assert_err};
 use sp_std::convert::TryInto;

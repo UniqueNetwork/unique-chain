@@ -15,12 +15,11 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-import privateKey from '../substrate/privateKey';
 import {contractHelpers, createEthAccount, createEthAccountWithBalance, deployCollector, deployFlipper, itWeb3, SponsoringMode, transferBalanceToEth} from './util/helpers';
 
 describe('EVM sponsoring', () => {
-  itWeb3('Fee is deducted from contract if sponsoring is enabled', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('Fee is deducted from contract if sponsoring is enabled', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = createEthAccount(web3);
@@ -50,8 +49,8 @@ describe('EVM sponsoring', () => {
     expect(await web3.eth.getBalance(caller)).to.be.equals(originalCallerBalance);
     expect(await web3.eth.getBalance(flipper.options.address)).to.be.not.equals(originalFlipperBalance);
   });
-  itWeb3('...but this doesn\'t applies to payable value', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
+  itWeb3('...but this doesn\'t applies to payable value', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
 
     const owner = await createEthAccountWithBalance(api, web3);
     const caller = await createEthAccountWithBalance(api, web3);
