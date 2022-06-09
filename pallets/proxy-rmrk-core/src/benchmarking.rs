@@ -45,12 +45,12 @@ fn create_max_nft<T: Config>(owner: &T::AccountId, collection_id: RmrkCollection
 	)
 }
 
-struct NftTowerBuilder {
+struct NftBuilder {
 	collection_id: RmrkCollectionId,
 	current_nft_id: RmrkNftId
 }
 
-impl NftTowerBuilder {
+impl NftBuilder {
 	fn new(collection_id: RmrkCollectionId) -> Self {
 		Self {
 			collection_id,
@@ -58,15 +58,20 @@ impl NftTowerBuilder {
 		}
 	}
 
-	fn build<T: Config>(&mut self, owner: &T::AccountId, height: u32) -> Result<RmrkNftId, DispatchError> {
+	fn build<T: Config>(&mut self, owner: &T::AccountId) -> Result<RmrkNftId, DispatchError> {
 		create_max_nft::<T>(owner, self.collection_id)?;
 		self.current_nft_id += 1;
+
+		Ok(self.current_nft_id)
+	}
+
+	fn build_tower<T: Config>(&mut self, owner: &T::AccountId, height: u32) -> Result<RmrkNftId, DispatchError> {
+		self.build::<T>(owner)?;
 
 		let mut prev_nft_id = self.current_nft_id;
 
 		for _ in 0..height {
-			create_max_nft::<T>(owner, self.collection_id)?;
-			self.current_nft_id += 1;
+			self.build::<T>(owner)?;
 			
 			let new_owner = <RmrkAccountIdOrCollectionNftTuple<T::AccountId>>::CollectionAndNftTuple(
 				self.collection_id,
@@ -149,13 +154,53 @@ benchmarks! {
 		create_max_collection::<T>(&caller)?;
 		let collection_id = 0;
 
-		let mut nft_tower_builder = NftTowerBuilder::new(collection_id);
-		let src_nft_id = nft_tower_builder.build::<T>(&caller, 0)?;
-		let target_nft_id = nft_tower_builder.build::<T>(&caller, NESTING_BUDGET - 2)?;
+		let mut nft_builder = NftBuilder::new(collection_id);
+		let src_nft_id = nft_builder.build::<T>(&caller)?;
+		let target_nft_id = nft_builder.build_tower::<T>(&caller, NESTING_BUDGET - 2)?;
 	}: _(
 		RawOrigin::Signed(caller),
 		collection_id,
 		src_nft_id,
 		<RmrkAccountIdOrCollectionNftTuple<T::AccountId>>::CollectionAndNftTuple(collection_id, target_nft_id)
+	)
+
+	accept_nft {
+		let caller: T::AccountId = account("caller", 0, SEED);
+		let sender: T::AccountId = account("sender", 0, SEED);
+
+		create_max_collection::<T>(&sender)?;
+		let src_collection_id = 0;
+
+		create_max_collection::<T>(&caller)?;
+		let target_collection_id = 1;
+
+		let mut src_nft_builder = NftBuilder::new(src_collection_id);
+		let src_nft_id = src_nft_builder.build::<T>(&sender)?;
+
+		let mut target_nft_builder = NftBuilder::new(target_collection_id);
+		let fake_target_nft_id = target_nft_builder.build::<T>(&caller)?;
+		let target_nft_id = target_nft_builder.build_tower::<T>(&caller, NESTING_BUDGET - 1)?;
+
+		let new_owner = <RmrkAccountIdOrCollectionNftTuple<T::AccountId>>::CollectionAndNftTuple(
+			target_collection_id,
+			fake_target_nft_id
+		);
+
+		let actual_new_owner = <RmrkAccountIdOrCollectionNftTuple<T::AccountId>>::CollectionAndNftTuple(
+			target_collection_id,
+			target_nft_id
+		);
+
+		<Pallet<T>>::send(
+			RawOrigin::Signed(sender.clone()).into(),
+			src_collection_id,
+			src_nft_id,
+			new_owner,
+		)?;
+	}: _(
+		RawOrigin::Signed(caller),
+		src_collection_id,
+		src_nft_id,
+		actual_new_owner
 	)
 }
