@@ -6,6 +6,7 @@ use frame_support::{
 	traits::{Currency, Get},
 	BoundedVec,
 };
+use sp_runtime::traits::AccountIdLookup;
 
 use up_data_structs::*;
 
@@ -42,4 +43,12 @@ benchmarks! {
 		let caller = account("caller", 0, SEED);
 		let collection_id = create_max_collection::<T>(&caller)?;
 	}: _(RawOrigin::Signed(caller), collection_id)
+
+	change_collection_issuer {
+		let caller: T::AccountId = account("caller", 0, SEED);
+		let collection_id = create_max_collection::<T>(&caller)?;
+		let new_owner: T::AccountId = account("new_owner", 0, SEED);
+
+		let new_owner_source = T::Lookup::unlookup(new_owner);
+	}: _(RawOrigin::Signed(caller), collection_id, new_owner_source)
 }
