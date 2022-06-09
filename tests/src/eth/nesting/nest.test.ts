@@ -1,23 +1,26 @@
 import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
-import { collectionIdToAddress, createEthAccountWithBalance, GAS_ARGS, itWeb3, tokenIdToAddress} from '../../eth/util/helpers';
+import {collectionIdToAddress, createEthAccountWithBalance, GAS_ARGS, itWeb3, tokenIdToAddress} from '../../eth/util/helpers';
 import usingApi, {submitTransactionAsync} from '../../substrate/substrate-api';
-import {createCollectionExpectSuccess, setCollectionLimitsExpectSuccess} from '../../util/helpers';
+import {createCollectionExpectSuccess, setCollectionPermissionsExpectSuccess} from '../../util/helpers';
 import nonFungibleAbi from '../nonFungibleAbi.json';
 
 let alice: IKeyringPair;
 
-const getCollectionFromSubstrate = async (api: ApiPromise, ethAddress: string): Promise<{ collectionId: number, address: string }> => {
+const getCollectionFromSubstrate = async (
+  api: ApiPromise, 
+  ethAddress: string,
+): Promise<{ collectionId: number, address: string }> => {
   const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-  await setCollectionLimitsExpectSuccess(alice, collectionId, {nestingRule: 'Owner'});
+  await setCollectionPermissionsExpectSuccess(alice, collectionId, {nesting: 'Owner'});
   await submitTransactionAsync(alice, api.tx.unique.addCollectionAdmin(collectionId, {Ethereum: ethAddress}));
   return {collectionId, address: collectionIdToAddress(collectionId)};
 };
 
-describe('Integration Test: Nesting', () => {
+describe('Integration Test: EVM Nesting', () => {
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
+    await usingApi(async (_api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
     });
   });
@@ -36,15 +39,16 @@ describe('Integration Test: Nesting', () => {
     //   .send();
 
     const {collectionId, address} = await getCollectionFromSubstrate(api, owner);
-
     const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: owner, ...GAS_ARGS});
 
+    // Create a token to be nested
     const nftTokenId = await contract.methods.nextTokenId().call();
     await contract.methods.mint(
       owner,
       nftTokenId,
     ).send({from: owner});
 
+    // Nest into a token
     const firstTargetNftTokenId = await contract.methods.nextTokenId().call();
     await contract.methods.mint(
       owner,
@@ -55,14 +59,15 @@ describe('Integration Test: Nesting', () => {
 
     await contract.methods.transfer(targetNftTokenAddress, nftTokenId).send({from: owner});
     expect(await contract.methods.ownerOf(nftTokenId).call()).to.be.equal(targetNftTokenAddress);
-    
+
+    // Re-nest into another
     const secondTargetNftTokenId = await contract.methods.nextTokenId().call();
     await contract.methods.mint(
       owner,
       secondTargetNftTokenId,
     ).send({from: owner});
     const nextNftTokenAddress = tokenIdToAddress(collectionId, secondTargetNftTokenId);
-      
+
     await contract.methods.transfer(nextNftTokenAddress, nftTokenId).send({from: owner});
     expect(await contract.methods.ownerOf(nftTokenId).call()).to.be.equal(nextNftTokenAddress);
   });
@@ -72,41 +77,43 @@ describe('Integration Test: Nesting', () => {
 
     const {collectionId: collectionIdA, address: addressCollectionA} = await getCollectionFromSubstrate(api, owner);
     const {collectionId: collectionIdB, address: addressCollectionB} = await getCollectionFromSubstrate(api, owner);
-
+    await setCollectionPermissionsExpectSuccess(alice, collectionIdA, {nesting: {OwnerRestricted:[collectionIdA, collectionIdB]}});
 
     const contractA = new web3.eth.Contract(nonFungibleAbi as any, addressCollectionA, {from: owner, ...GAS_ARGS});
     const contractB = new web3.eth.Contract(nonFungibleAbi as any, addressCollectionB, {from: owner, ...GAS_ARGS});
 
-    const nftTokenIdA1 = await contractA.methods.nextTokenId().call();
+    // Create a token to nest into
+    const targetNftTokenId = await contractA.methods.nextTokenId().call();
     await contractA.methods.mint(
       owner,
-      nftTokenIdA1,
+      targetNftTokenId,
     ).send({from: owner});
-    const nftTokenAddressA1 = tokenIdToAddress(collectionIdA, nftTokenIdA1);
+    const nftTokenAddressA1 = tokenIdToAddress(collectionIdA, targetNftTokenId);
 
-    const nftTokenIdA2 = await contractA.methods.nextTokenId().call();
+    // Create a token for nesting in the same collection as the target
+    const nftTokenIdA = await contractA.methods.nextTokenId().call();
     await contractA.methods.mint(
       owner,
-      nftTokenIdA2,
+      nftTokenIdA,
     ).send({from: owner});
 
-    const nftTokenIdB1 = await contractB.methods.nextTokenId().call();
+    // Create a token for nesting in a different collection
+    const nftTokenIdB = await contractB.methods.nextTokenId().call();
     await contractB.methods.mint(
       owner,
-      nftTokenIdB1,
+      nftTokenIdB,
     ).send({from: owner});
 
-    await setCollectionLimitsExpectSuccess(alice, collectionIdA, {nestingRule: {OwnerRestricted:[collectionIdA, collectionIdB]}});
+    // Nest
+    await contractA.methods.transfer(nftTokenAddressA1, nftTokenIdA).send({from: owner});
+    expect(await contractA.methods.ownerOf(nftTokenIdA).call()).to.be.equal(nftTokenAddressA1);
 
-    await contractA.methods.transfer(nftTokenAddressA1, nftTokenIdA2).send({from: owner});
-    expect(await contractA.methods.ownerOf(nftTokenIdA2).call()).to.be.equal(nftTokenAddressA1);
-
-    await contractB.methods.transfer(nftTokenAddressA1, nftTokenIdB1).send({from: owner});
-    expect(await contractB.methods.ownerOf(nftTokenIdB1).call()).to.be.equal(nftTokenAddressA1);
+    await contractB.methods.transfer(nftTokenAddressA1, nftTokenIdB).send({from: owner});
+    expect(await contractB.methods.ownerOf(nftTokenIdB).call()).to.be.equal(nftTokenAddressA1);
   });
 });
 
-describe('Negative Test: Nesting', async() => {
+describe('Negative Test: EVM Nesting', async() => {
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
@@ -117,16 +124,11 @@ describe('Negative Test: Nesting', async() => {
     const owner = await createEthAccountWithBalance(api, web3);
 
     const {collectionId, address} = await getCollectionFromSubstrate(api, owner);
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {nestingRule: 'Disabled'});
+    await setCollectionPermissionsExpectSuccess(alice, collectionId, {nesting: 'Disabled'});
 
     const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: owner, ...GAS_ARGS});
 
-    const nftTokenId = await contract.methods.nextTokenId().call();
-    await contract.methods.mint(
-      owner,
-      nftTokenId,
-    ).send({from: owner});
-
+    // Create a token to nest into
     const targetNftTokenId = await contract.methods.nextTokenId().call();
     await contract.methods.mint(
       owner,
@@ -135,6 +137,14 @@ describe('Negative Test: Nesting', async() => {
 
     const targetNftTokenAddress = tokenIdToAddress(collectionId, targetNftTokenId);
 
+    // Create a token to nest
+    const nftTokenId = await contract.methods.nextTokenId().call();
+    await contract.methods.mint(
+      owner,
+      nftTokenId,
+    ).send({from: owner});
+
+    // Try to nest
     await expect(contract.methods
       .transfer(targetNftTokenAddress, nftTokenId)
       .call()).to.be.rejectedWith('NestingIsDisabled');
@@ -142,35 +152,36 @@ describe('Negative Test: Nesting', async() => {
   
   itWeb3('NFT: disallows a non-Owner to nest someone else\'s token', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
-    const receiver = await createEthAccountWithBalance(api, web3);
+    const malignant = await createEthAccountWithBalance(api, web3);
 
-    const {collectionId: collectionIdA, address: addressCollectionA} = await getCollectionFromSubstrate(api, owner);
-    const {collectionId: collectionIdB, address: addressCollectionB} = await getCollectionFromSubstrate(api, receiver);
+    const {collectionId, address: collectionAdress} = await getCollectionFromSubstrate(api, owner);
 
-    const contractA = new web3.eth.Contract(nonFungibleAbi as any, addressCollectionA, {from: owner, ...GAS_ARGS});
-    const contractB = new web3.eth.Contract(nonFungibleAbi as any, addressCollectionB, {from: receiver, ...GAS_ARGS});
+    const contract = new web3.eth.Contract(nonFungibleAbi as any, collectionAdress, {from: owner, ...GAS_ARGS});
 
-    const nftTokenIdA = await contractA.methods.nextTokenId().call();
-    await contractA.methods.mint(
+    // Mint a token
+    const targetTokenId = await contract.methods.nextTokenId().call();
+    await contract.methods.mint(
       owner,
-      nftTokenIdA,
+      targetTokenId,
     ).send({from: owner});
+    const targetTokenAddress = tokenIdToAddress(collectionId, targetTokenId);
     
-    const nftTokenIdB = await contractB.methods.nextTokenId().call();
-    await contractB.methods.mint(
-      receiver,
-      nftTokenIdB,
-    ).send({from: receiver});
+    // Mint a token belonging to a different account
+    const tokenId = await contract.methods.nextTokenId().call();
+    await contract.methods.mint(
+      malignant,
+      tokenId,
+    ).send({from: owner});
       
-    const nftTokenAddressB = tokenIdToAddress(collectionIdB, nftTokenIdB);
-
-    await expect(contractA.methods
-      .transfer(nftTokenAddressB, nftTokenIdA)
-      .call()).to.be.rejectedWith('OnlyOwnerAllowedToNest');
+    // Try to nest one token in another as a non-owner account
+    await expect(contract.methods
+      .transfer(targetTokenAddress, tokenId)
+      .call({from: malignant})).to.be.rejectedWith('OnlyOwnerAllowedToNest');
   });
   
   itWeb3('NFT: disallows a non-Owner to nest someone else\'s token (Restricted nesting)', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
+    const malignant = await createEthAccountWithBalance(api, web3);
 
     const {collectionId: collectionIdA, address: addressCollectionA} = await getCollectionFromSubstrate(api, owner);
     const {collectionId: collectionIdB, address: addressCollectionB} = await getCollectionFromSubstrate(api, owner);
@@ -178,46 +189,58 @@ describe('Negative Test: Nesting', async() => {
     const contractA = new web3.eth.Contract(nonFungibleAbi as any, addressCollectionA, {from: owner, ...GAS_ARGS});
     const contractB = new web3.eth.Contract(nonFungibleAbi as any, addressCollectionB, {from: owner, ...GAS_ARGS});
 
-    await setCollectionLimitsExpectSuccess(alice, collectionIdA, {nestingRule: {OwnerRestricted:[collectionIdA]}});
+    await setCollectionPermissionsExpectSuccess(alice, collectionIdA, {nesting: {OwnerRestricted:[collectionIdA, collectionIdB]}});
 
+    // Create a token in one collection
     const nftTokenIdA = await contractA.methods.nextTokenId().call();
     await contractA.methods.mint(
       owner,
       nftTokenIdA,
     ).send({from: owner});
-    
-    const nftTokenIdB = await contractB.methods.nextTokenId().call();
-    await contractB.methods.mint(
-      owner,
-      nftTokenIdB,
-    ).send({from: owner});
-      
     const nftTokenAddressA = tokenIdToAddress(collectionIdA, nftTokenIdA);
 
+    // Create a token in another collection belonging to someone else
+    const nftTokenIdB = await contractB.methods.nextTokenId().call();
+    await contractB.methods.mint(
+      malignant,
+      nftTokenIdB,
+    ).send({from: owner});
+
+    // Try to drag someone else's token into the other collection and nest
     await expect(contractB.methods
       .transfer(nftTokenAddressA, nftTokenIdB)
-      .call()).to.be.rejectedWith('SourceCollectionIsNotAllowedToNest');
+      .call({from: malignant})).to.be.rejectedWith('OnlyOwnerAllowedToNest');
   });
   
   itWeb3('NFT: disallows to nest token in an unlisted collection', async ({api, web3}) => {
     const owner = await createEthAccountWithBalance(api, web3);
 
     const {collectionId: collectionIdA, address: addressCollectionA} = await getCollectionFromSubstrate(api, owner);
+    const {address: addressCollectionB} = await getCollectionFromSubstrate(api, owner);
 
     const contractA = new web3.eth.Contract(nonFungibleAbi as any, addressCollectionA, {from: owner, ...GAS_ARGS});
+    const contractB = new web3.eth.Contract(nonFungibleAbi as any, addressCollectionB, {from: owner, ...GAS_ARGS});
 
-    await setCollectionLimitsExpectSuccess(alice, collectionIdA, {nestingRule: {OwnerRestricted:[]}});
+    await setCollectionPermissionsExpectSuccess(alice, collectionIdA, {nesting: {OwnerRestricted:[collectionIdA]}});
 
+    // Create a token in one collection
     const nftTokenIdA = await contractA.methods.nextTokenId().call();
     await contractA.methods.mint(
       owner,
       nftTokenIdA,
     ).send({from: owner});
-    
     const nftTokenAddressA = tokenIdToAddress(collectionIdA, nftTokenIdA);
 
-    await expect(contractA.methods
-      .transfer(nftTokenAddressA, nftTokenIdA)
+    // Create a token in another collection
+    const nftTokenIdB = await contractB.methods.nextTokenId().call();
+    await contractB.methods.mint(
+      owner,
+      nftTokenIdB,
+    ).send({from: owner});
+
+    // Try to nest into a token in the other collection, disallowed in the first
+    await expect(contractB.methods
+      .transfer(nftTokenAddressA, nftTokenIdB)
       .call()).to.be.rejectedWith('SourceCollectionIsNotAllowedToNest');
   });
 });
