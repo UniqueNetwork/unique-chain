@@ -20,7 +20,7 @@ benchmarks! {
 		let caller = account("caller", 0, SEED);
 		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
 		let metadata = create_data();
-		// TODO: Fix CollectionTokenPrefixLimitExceeded with create_data
-		let symbol = vec![].try_into().expect("0 <= x");
-	}: _(RawOrigin::Signed(caller), metadata, None, symbol)
+		let max = None;
+		let symbol = create_data();
+	}: _(RawOrigin::Signed(caller), metadata, max, symbol)
 }
