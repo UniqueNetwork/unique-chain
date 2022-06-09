@@ -462,7 +462,7 @@ pub mod pallet {
 
 					let target_nft_budget = budget::Value::new(NESTING_BUDGET);
 
-					let target_nft_owner = <PalletStructure<T>>::get_checked_indirect_owner(
+					let target_nft_owner = <PalletStructure<T>>::get_checked_topmost_owner(
 						target_collection_id,
 						target_nft_id.into(),
 						Some((collection_id, nft_id)),

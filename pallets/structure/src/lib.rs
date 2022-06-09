@@ -149,7 +149,7 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	pub fn get_checked_indirect_owner(
+	pub fn get_checked_topmost_owner(
 		collection: CollectionId,
 		token: TokenId,
 		for_nest: Option<(CollectionId, TokenId)>,
@@ -203,7 +203,7 @@ impl<T: Config> Pallet<T> {
 			None => user,
 		};
 
-		Self::get_checked_indirect_owner(collection, token, for_nest, budget)
+		Self::get_checked_topmost_owner(collection, token, for_nest, budget)
 			.map(|indirect_owner| indirect_owner == target_parent)
 	}
 
