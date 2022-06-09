@@ -276,7 +276,6 @@ benchmarks! {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
 
-
 		create_max_collection::<T>(&caller)?;
 		let collection_id = 0;
 
@@ -322,5 +321,31 @@ benchmarks! {
 		collection_id,
 		nft_id,
 		resource
+	)
+
+	remove_resource {
+		let caller: T::AccountId = account("caller", 0, SEED);
+		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
+
+		create_max_collection::<T>(&caller)?;
+		let collection_id = 0;
+
+		let mut nft_builder = NftBuilder::new(collection_id);
+		let nft_id = nft_builder.build_tower::<T>(&caller, NESTING_BUDGET - 1)?;
+		let resource = create_basic_resource();
+
+		<Pallet<T>>::add_basic_resource(
+			RawOrigin::Signed(caller.clone()).into(),
+			collection_id,
+			nft_id,
+			resource
+		)?;
+
+		let resource_id = 1;
+	}: _(
+		RawOrigin::Signed(caller),
+		collection_id,
+		nft_id,
+		resource_id
 	)
 }
