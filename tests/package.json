@@ -5,7 +5,7 @@
   "main": "",
   "devDependencies": {
     "@polkadot/ts": "0.4.22",
-    "@polkadot/typegen": "8.6.2",
+    "@polkadot/typegen": "8.7.2-11",
     "@types/chai": "^4.3.1",
     "@types/chai-as-promised": "^7.1.5",
     "@types/mocha": "^9.1.1",
@@ -85,8 +85,8 @@
   "license": "SEE LICENSE IN ../LICENSE",
   "homepage": "",
   "dependencies": {
-    "@polkadot/api": "8.6.2",
-    "@polkadot/api-contract": "8.6.2",
+    "@polkadot/api": "8.7.2-11",
+    "@polkadot/api-contract": "8.7.2-11",
     "@polkadot/util-crypto": "9.4.1",
     "bignumber.js": "^9.0.2",
     "chai-as-promised": "^7.1.1",
