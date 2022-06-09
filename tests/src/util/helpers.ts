@@ -172,6 +172,14 @@ export function getEvent<T extends Event>(events: EventRecord[], check: (event: 
   return event.event as T;
 }
 
+export function getGenericResult<T>(events: EventRecord[]): GenericResult<T>;
+export function getGenericResult<T>(
+  events: EventRecord[],
+  expectSection: string,
+  expectMethod: string,
+  extractAction: (data: GenericEventData) => T
+): GenericResult<T>;
+
 export function getGenericResult<T>(
   events: EventRecord[],
   expectSection?: string,
@@ -180,13 +188,16 @@ export function getGenericResult<T>(
 ): GenericResult<T> {
   let success = false;
   let successData = null;
+
   events.forEach(({event: {data, method, section}}) => {
+    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
     if (method === 'ExtrinsicSuccess') {
       success = true;
     } else if ((expectSection == section) && (expectMethod == method)) {
       successData = extractAction!(data);
     }
   });
+
   const result: GenericResult<T> = {
     success,
     data: successData,
@@ -195,75 +206,53 @@ export function getGenericResult<T>(
 }
 
 export function getCreateCollectionResult(events: EventRecord[]): CreateCollectionResult {
-  let success = false;
-  let collectionId = 0;
-  events.forEach(({event: {data, method, section}}) => {
-    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
-    if (method == 'ExtrinsicSuccess') {
-      success = true;
-    } else if ((section == 'common') && (method == 'CollectionCreated')) {
-      collectionId = parseInt(data[0].toString(), 10);
-    }
-  });
+  const genericResult = getGenericResult(events, 'common', 'CollectionCreated', (data) => parseInt(data[0].toString(), 10));
   const result: CreateCollectionResult = {
-    success,
-    collectionId,
+    success: genericResult.success,
+    collectionId: genericResult.data ?? 0,
   };
   return result;
 }
 
 export function getCreateItemsResult(events: EventRecord[]): CreateItemResult[] {
-  let success = false;
-  let collectionId = 0;
-  let itemId = 0;
-  let recipient;
+  const results: CreateItemResult[] = [];
+  
+  const genericResult = getGenericResult<CreateItemResult[]>(events, 'common', 'ItemCreated', (data) => {
+    const collectionId = parseInt(data[0].toString(), 10);
+    const itemId = parseInt(data[1].toString(), 10);
+    const recipient = normalizeAccountId(data[2].toJSON() as any);
 
-  const results : CreateItemResult[]  = [];
+    const itemRes: CreateItemResult = {
+      success: true,
+      collectionId,
+      itemId,
+      recipient,
+    };
 
-  events.forEach(({event: {data, method, section}}) => {
-    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
-    if (method == 'ExtrinsicSuccess') {
-      success = true;
-    } else if ((section == 'common') && (method == 'ItemCreated')) {
-      collectionId = parseInt(data[0].toString(), 10);
-      itemId = parseInt(data[1].toString(), 10);
-      recipient = normalizeAccountId(data[2].toJSON() as any);
-
-      const itemRes: CreateItemResult = {
-        success,
-        collectionId,
-        itemId,
-        recipient,
-      };
-
-      results.push(itemRes);
-    }
+    results.push(itemRes);
+    return results;
   });
 
+  if (!genericResult.success) return [];
   return results;
 }
 
 export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
-  let success = false;
-  let collectionId = 0;
-  let itemId = 0;
-  let recipient;
-  events.forEach(({event: {data, method, section}}) => {
-    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
-    if (method == 'ExtrinsicSuccess') {
-      success = true;
-    } else if ((section == 'common') && (method == 'ItemCreated')) {
-      collectionId = parseInt(data[0].toString(), 10);
-      itemId = parseInt(data[1].toString(), 10);
-      recipient = normalizeAccountId(data[2].toJSON() as any);
-    }
-  });
+  const genericResult = getGenericResult<[number, number, CrossAccountId?]>(events, 'common', 'ItemCreated', (data) => [
+    parseInt(data[0].toString(), 10),
+    parseInt(data[1].toString(), 10),
+    normalizeAccountId(data[2].toJSON() as any),
+  ]);
+
+  if (genericResult.data == null) genericResult.data = [0, 0];
+
   const result: CreateItemResult = {
-    success,
-    collectionId,
-    itemId,
-    recipient,
+    success: genericResult.success,
+    collectionId: genericResult.data[0],
+    itemId: genericResult.data[1],
+    recipient: genericResult.data![2],
   };
+  
   return result;
 }
 
@@ -877,7 +866,7 @@ transferFromExpectSuccess(
     }
     const transferFromTx = api.tx.unique.transferFrom(normalizeAccountId(accountFrom), to, collectionId, tokenId, value);
     const events = await submitTransactionAsync(accountApproved, transferFromTx);
-    const result = getCreateItemResult(events);
+    const result = getGenericResult(events);
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
     if (type === 'NFT') {
