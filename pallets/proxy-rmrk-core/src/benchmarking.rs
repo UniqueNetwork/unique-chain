@@ -6,7 +6,7 @@ use frame_support::{
 	traits::{Currency, Get},
 	BoundedVec,
 };
-use sp_runtime::traits::AccountIdLookup;
+use sp_runtime::Permill;
 
 use up_data_structs::*;
 
@@ -56,4 +56,23 @@ benchmarks! {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let collection_id = create_max_collection::<T>(&caller)?;
 	}: _(RawOrigin::Signed(caller), collection_id)
+
+	mint_nft {
+		let caller: T::AccountId = account("caller", 0, SEED);
+		let collection_id = create_max_collection::<T>(&caller)?;
+		let owner = caller.clone();
+		
+		let royalty_recipient = Some(caller.clone());
+		let royalty_amount = Some(Permill::from_percent(25));
+		let metadata = create_data();
+		let transferable = true;
+	}:  _(
+		RawOrigin::Signed(caller),
+		owner,
+		collection_id,
+		royalty_recipient,
+		royalty_amount,
+		metadata,
+		transferable
+	)
 }
