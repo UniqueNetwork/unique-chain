@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2022 RMRK
+// This file is part of rmrk-substrate.
+// License: Apache 2.0 modified by RMRK, see https://github.com/rmrk-team/rmrk-substrate/blob/main/LICENSE
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod base;
