@@ -176,8 +176,9 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(<SelfWeightOf<T>>::create_collection())]
+		/// Create a collection
 		#[transactional]
+		#[pallet::weight(<SelfWeightOf<T>>::create_collection())]
 		pub fn create_collection(
 			origin: OriginFor<T>,
 			metadata: RmrkString,
@@ -229,6 +230,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// destroy collection
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn destroy_collection(
@@ -255,6 +257,12 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Change the issuer of a collection
+		///
+		/// Parameters:
+		/// - `origin`: sender of the transaction
+		/// - `collection_id`: collection id of the nft to change issuer of
+		/// - `new_issuer`: Collection's new issuer
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn change_collection_issuer(
@@ -285,6 +293,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// lock collection
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn lock_collection(
@@ -316,6 +325,16 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Mints an NFT in the specified collection
+		/// Sets metadata and the royalty attribute
+		///
+		/// Parameters:
+		/// - `collection_id`: The class of the asset to be minted.
+		/// - `nft_id`: The nft value of the asset to be minted.
+		/// - `recipient`: Receiver of the royalty
+		/// - `royalty`: Permillage reward from each trade for the Recipient
+		/// - `metadata`: Arbitrary data about an nft, e.g. IPFS hash
+		/// - `transferable`: Ability to transfer this NFT
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn mint_nft(
@@ -385,6 +404,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// burn nft
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn burn_nft(
@@ -416,6 +436,13 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Transfers a NFT from an Account or NFT A to another Account or NFT B
+		///
+		/// Parameters:
+		/// - `origin`: sender of the transaction
+		/// - `rmrk_collection_id`: collection id of the nft to be transferred
+		/// - `rmrk_nft_id`: nft id of the nft to be transferred
+		/// - `new_owner`: new owner of the nft which can be either an account or a NFT
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn send(
@@ -520,6 +547,14 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Accepts an NFT sent from another account to self or owned NFT
+		///
+		/// Parameters:
+		/// - `origin`: sender of the transaction
+		/// - `rmrk_collection_id`: collection id of the nft to be accepted
+		/// - `rmrk_nft_id`: nft id of the nft to be accepted
+		/// - `new_owner`: either origin's account ID or origin-owned NFT, whichever the NFT was
+		///   sent to
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn accept_nft(
@@ -589,6 +624,12 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Rejects an NFT sent from another account to self or owned NFT
+		///
+		/// Parameters:
+		/// - `origin`: sender of the transaction
+		/// - `rmrk_collection_id`: collection id of the nft to be accepted
+		/// - `rmrk_nft_id`: nft id of the nft to be accepted
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn reject_nft(
@@ -625,6 +666,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// accept the addition of a new resource to an existing NFT
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn accept_resource(
@@ -681,6 +723,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// accept the removal of a resource of an existing NFT
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn accept_resource_removal(
@@ -738,6 +781,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// set a custom value on an NFT
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn set_property(
@@ -797,6 +841,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// set a different order of resource priority
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn set_priority(
@@ -835,6 +880,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Create basic resource
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn add_basic_resource(
@@ -872,6 +918,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Create composable resource
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn add_composable_resource(
@@ -912,6 +959,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Create slot resource
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn add_slot_resource(
@@ -951,6 +999,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// remove resource
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn remove_resource(
