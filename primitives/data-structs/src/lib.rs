@@ -107,13 +107,6 @@ pub const MAX_PROPERTIES_PER_ITEM: u32 = 64;
 pub const MAX_COLLECTION_PROPERTIES_SIZE: u32 = 40960;
 pub const MAX_TOKEN_PROPERTIES_SIZE: u32 = 32768;
 
-// RMRK constants
-pub const RMRK_STRING_LIMIT: u32 = 128;
-pub const RMRK_COLLECTION_SYMBOL_LIMIT: u32 = 100;
-pub const RMRK_RESOURCE_SYMBOL_LIMIT: u32 = 10;
-pub const RMRK_KEY_LIMIT: u32 = 32;
-pub const RMRK_VALUE_LIMIT: u32 = 256;
-
 /// How much items can be created per single
 /// create_many call
 pub const MAX_ITEMS_PER_BATCH: u32 = 200;
@@ -946,9 +939,9 @@ parameter_types! {
 	#[derive(PartialEq, TypeInfo)]
 	pub const RmrkStringLimit: u32 = 128;
 	#[derive(PartialEq)]
-	pub const RmrkCollectionSymbolLimit: u32 = 100;
+	pub const RmrkCollectionSymbolLimit: u32 = MAX_TOKEN_PREFIX_LENGTH;
 	#[derive(PartialEq)]
-	pub const RmrkResourceSymbolLimit: u32 = 10;
+	pub const RmrkResourceSymbolLimit: u32 = MAX_TOKEN_PREFIX_LENGTH;
 	#[derive(PartialEq)]
 	pub const RmrkKeyLimit: u32 = 32;
 	#[derive(PartialEq)]
