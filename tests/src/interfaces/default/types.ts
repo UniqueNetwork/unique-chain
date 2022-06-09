@@ -126,6 +126,14 @@ export interface CumulusPalletXcmEvent extends Enum {
   readonly type: 'InvalidFormat' | 'UnsupportedVersion' | 'ExecutedDownward';
 }
 
+/** @name CumulusPalletXcmOrigin */
+export interface CumulusPalletXcmOrigin extends Enum {
+  readonly isRelay: boolean;
+  readonly isSiblingParachain: boolean;
+  readonly asSiblingParachain: u32;
+  readonly type: 'Relay' | 'SiblingParachain';
+}
+
 /** @name CumulusPalletXcmpQueueCall */
 export interface CumulusPalletXcmpQueueCall extends Enum {
   readonly isServiceOverweight: boolean;
@@ -443,8 +451,33 @@ export interface FpRpcTransactionStatus extends Struct {
   readonly logsBloom: EthbloomBloom;
 }
 
+/** @name FrameSupportDispatchRawOrigin */
+export interface FrameSupportDispatchRawOrigin extends Enum {
+  readonly isRoot: boolean;
+  readonly isSigned: boolean;
+  readonly asSigned: AccountId32;
+  readonly isNone: boolean;
+  readonly type: 'Root' | 'Signed' | 'None';
+}
+
 /** @name FrameSupportPalletId */
 export interface FrameSupportPalletId extends U8aFixed {}
+
+/** @name FrameSupportScheduleLookupError */
+export interface FrameSupportScheduleLookupError extends Enum {
+  readonly isUnknown: boolean;
+  readonly isBadFormat: boolean;
+  readonly type: 'Unknown' | 'BadFormat';
+}
+
+/** @name FrameSupportScheduleMaybeHashed */
+export interface FrameSupportScheduleMaybeHashed extends Enum {
+  readonly isValue: boolean;
+  readonly asValue: Call;
+  readonly isHash: boolean;
+  readonly asHash: H256;
+  readonly type: 'Value' | 'Hash';
+}
 
 /** @name FrameSupportTokensMiscBalanceStatus */
 export interface FrameSupportTokensMiscBalanceStatus extends Enum {
@@ -652,6 +685,21 @@ export interface FrameSystemPhase extends Enum {
   readonly isFinalization: boolean;
   readonly isInitialization: boolean;
   readonly type: 'ApplyExtrinsic' | 'Finalization' | 'Initialization';
+}
+
+/** @name OpalRuntimeOriginCaller */
+export interface OpalRuntimeOriginCaller extends Enum {
+  readonly isVoid: boolean;
+  readonly asVoid: SpCoreVoid;
+  readonly isSystem: boolean;
+  readonly asSystem: FrameSupportDispatchRawOrigin;
+  readonly isPolkadotXcm: boolean;
+  readonly asPolkadotXcm: PalletXcmOrigin;
+  readonly isCumulusXcm: boolean;
+  readonly asCumulusXcm: CumulusPalletXcmOrigin;
+  readonly isEthereum: boolean;
+  readonly asEthereum: PalletEthereumRawOrigin;
+  readonly type: 'Void' | 'System' | 'PolkadotXcm' | 'CumulusXcm' | 'Ethereum';
 }
 
 /** @name OpalRuntimeRuntime */
@@ -953,6 +1001,13 @@ export interface PalletEthereumEvent extends Enum {
 
 /** @name PalletEthereumFakeTransactionFinalizer */
 export interface PalletEthereumFakeTransactionFinalizer extends Null {}
+
+/** @name PalletEthereumRawOrigin */
+export interface PalletEthereumRawOrigin extends Enum {
+  readonly isEthereumTransaction: boolean;
+  readonly asEthereumTransaction: H160;
+  readonly type: 'EthereumTransaction';
+}
 
 /** @name PalletEvmAccountBasicCrossAccountIdRepr */
 export interface PalletEvmAccountBasicCrossAccountIdRepr extends Enum {
@@ -1484,7 +1539,11 @@ export interface PalletTreasuryCall extends Enum {
   readonly asApproveProposal: {
     readonly proposalId: Compact<u32>;
   } & Struct;
-  readonly type: 'ProposeSpend' | 'RejectProposal' | 'ApproveProposal';
+  readonly isRemoveApproval: boolean;
+  readonly asRemoveApproval: {
+    readonly proposalId: Compact<u32>;
+  } & Struct;
+  readonly type: 'ProposeSpend' | 'RejectProposal' | 'ApproveProposal' | 'RemoveApproval';
 }
 
 /** @name PalletTreasuryError */
@@ -1492,7 +1551,8 @@ export interface PalletTreasuryError extends Enum {
   readonly isInsufficientProposersBalance: boolean;
   readonly isInvalidIndex: boolean;
   readonly isTooManyApprovals: boolean;
-  readonly type: 'InsufficientProposersBalance' | 'InvalidIndex' | 'TooManyApprovals';
+  readonly isProposalNotApproved: boolean;
+  readonly type: 'InsufficientProposersBalance' | 'InvalidIndex' | 'TooManyApprovals' | 'ProposalNotApproved';
 }
 
 /** @name PalletTreasuryEvent */
@@ -1724,6 +1784,76 @@ export interface PalletUniqueRawEvent extends Enum {
   readonly type: 'CollectionSponsorRemoved' | 'CollectionAdminAdded' | 'CollectionOwnedChanged' | 'CollectionSponsorSet' | 'SponsorshipConfirmed' | 'CollectionAdminRemoved' | 'AllowListAddressRemoved' | 'AllowListAddressAdded' | 'CollectionLimitSet' | 'CollectionPermissionSet';
 }
 
+/** @name PalletUnqSchedulerCall */
+export interface PalletUnqSchedulerCall extends Enum {
+  readonly isScheduleNamed: boolean;
+  readonly asScheduleNamed: {
+    readonly id: U8aFixed;
+    readonly when: u32;
+    readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
+    readonly priority: u8;
+    readonly call: FrameSupportScheduleMaybeHashed;
+  } & Struct;
+  readonly isCancelNamed: boolean;
+  readonly asCancelNamed: {
+    readonly id: U8aFixed;
+  } & Struct;
+  readonly isScheduleNamedAfter: boolean;
+  readonly asScheduleNamedAfter: {
+    readonly id: U8aFixed;
+    readonly after: u32;
+    readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
+    readonly priority: u8;
+    readonly call: FrameSupportScheduleMaybeHashed;
+  } & Struct;
+  readonly type: 'ScheduleNamed' | 'CancelNamed' | 'ScheduleNamedAfter';
+}
+
+/** @name PalletUnqSchedulerError */
+export interface PalletUnqSchedulerError extends Enum {
+  readonly isFailedToSchedule: boolean;
+  readonly isNotFound: boolean;
+  readonly isTargetBlockNumberInPast: boolean;
+  readonly isRescheduleNoChange: boolean;
+  readonly type: 'FailedToSchedule' | 'NotFound' | 'TargetBlockNumberInPast' | 'RescheduleNoChange';
+}
+
+/** @name PalletUnqSchedulerEvent */
+export interface PalletUnqSchedulerEvent extends Enum {
+  readonly isScheduled: boolean;
+  readonly asScheduled: {
+    readonly when: u32;
+    readonly index: u32;
+  } & Struct;
+  readonly isCanceled: boolean;
+  readonly asCanceled: {
+    readonly when: u32;
+    readonly index: u32;
+  } & Struct;
+  readonly isDispatched: boolean;
+  readonly asDispatched: {
+    readonly task: ITuple<[u32, u32]>;
+    readonly id: Option<U8aFixed>;
+    readonly result: Result<Null, SpRuntimeDispatchError>;
+  } & Struct;
+  readonly isCallLookupFailed: boolean;
+  readonly asCallLookupFailed: {
+    readonly task: ITuple<[u32, u32]>;
+    readonly id: Option<U8aFixed>;
+    readonly error: FrameSupportScheduleLookupError;
+  } & Struct;
+  readonly type: 'Scheduled' | 'Canceled' | 'Dispatched' | 'CallLookupFailed';
+}
+
+/** @name PalletUnqSchedulerScheduledV3 */
+export interface PalletUnqSchedulerScheduledV3 extends Struct {
+  readonly maybeId: Option<U8aFixed>;
+  readonly priority: u8;
+  readonly call: FrameSupportScheduleMaybeHashed;
+  readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
+  readonly origin: OpalRuntimeOriginCaller;
+}
+
 /** @name PalletXcmCall */
 export interface PalletXcmCall extends Enum {
   readonly isSend: boolean;
@@ -1839,6 +1969,15 @@ export interface PalletXcmEvent extends Enum {
   readonly isNotifyTargetMigrationFail: boolean;
   readonly asNotifyTargetMigrationFail: ITuple<[XcmVersionedMultiLocation, u64]>;
   readonly type: 'Attempted' | 'Sent' | 'UnexpectedResponse' | 'ResponseReady' | 'Notified' | 'NotifyOverweight' | 'NotifyDispatchError' | 'NotifyDecodeFailed' | 'InvalidResponder' | 'InvalidResponderVersion' | 'ResponseTaken' | 'AssetsTrapped' | 'VersionChangeNotified' | 'SupportedVersionChanged' | 'NotifyTargetSendFail' | 'NotifyTargetMigrationFail';
+}
+
+/** @name PalletXcmOrigin */
+export interface PalletXcmOrigin extends Enum {
+  readonly isXcm: boolean;
+  readonly asXcm: XcmV1MultiLocation;
+  readonly isResponse: boolean;
+  readonly asResponse: XcmV1MultiLocation;
+  readonly type: 'Xcm' | 'Response';
 }
 
 /** @name PhantomTypeUpDataStructs */
@@ -2060,6 +2199,9 @@ export interface SpCoreEd25519Signature extends U8aFixed {}
 
 /** @name SpCoreSr25519Signature */
 export interface SpCoreSr25519Signature extends U8aFixed {}
+
+/** @name SpCoreVoid */
+export interface SpCoreVoid extends Null {}
 
 /** @name SpRuntimeArithmeticError */
 export interface SpRuntimeArithmeticError extends Enum {

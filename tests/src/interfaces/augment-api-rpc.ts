@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsCollectionLimits, UpDataStructsCollectionStats, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, UpDataStructsRpcCollection, UpDataStructsTokenChild, UpDataStructsTokenData } from './default';
+import type { PalletEvmAccountBasicCrossAccountIdRepr, RmrkTraitsBaseBaseInfo, RmrkTraitsCollectionCollectionInfo, RmrkTraitsNftNftChild, RmrkTraitsNftNftInfo, RmrkTraitsPartPartType, RmrkTraitsPropertyPropertyInfo, RmrkTraitsResourceResourceInfo, RmrkTraitsTheme, UpDataStructsCollectionLimits, UpDataStructsCollectionStats, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, UpDataStructsRpcCollection, UpDataStructsTokenChild, UpDataStructsTokenData } from './default';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u128, u32, u64 } from '@polkadot/types-codec';
