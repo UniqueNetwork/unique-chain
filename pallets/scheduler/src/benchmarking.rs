@@ -62,10 +62,9 @@ fn fill_schedule<T: Config>(
 	periodic: bool,
 	resolved: Option<bool>,
 ) -> Result<(), &'static str> {
-
 	let t = DispatchTime::At(when);
 	let caller = account("user", 0, 1);
-	
+
 	// Give the sender account max funds for transfer (their account will never reasonably be killed).
 	T::Currency::make_free_balance_be(&caller, T::Currency::minimum_balance());
 
@@ -81,18 +80,11 @@ fn fill_schedule<T: Config>(
 		};
 
 		let slice_id: [u8; 4] = i.encode().try_into().unwrap();
-		let mut id: [u8; 16] =  [0; 16];
+		let mut id: [u8; 16] = [0; 16];
 		id[..4].clone_from_slice(&slice_id);
 
 		let origin = frame_system::RawOrigin::Signed(caller.clone()).into();
-		Scheduler::<T>::do_schedule_named(
-			id,
-			t,
-			period,
-			0,
-			origin,
-			call_or_hash,
-		)?;
+		Scheduler::<T>::do_schedule_named(id, t, period, 0, origin, call_or_hash)?;
 	}
 	ensure!(
 		Agenda::<T>::get(when).len() == n as usize,
