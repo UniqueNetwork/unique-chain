@@ -21,7 +21,6 @@ use evm_coder::{
 };
 pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
 use pallet_evm_coder_substrate::dispatch_to_evm;
-use sp_core::{H160, U256};
 use sp_std::vec::Vec;
 use up_data_structs::{Property, SponsoringRateLimit, NestingRule, OwnerRestrictedSet, AccessMode};
 use alloc::format;
@@ -290,7 +289,11 @@ fn check_is_owner_or_admin<T: Config>(
 	Ok(caller)
 }
 
-fn save<T: Config>(collection: &CollectionHandle<T>) {
+fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
+	// TODO possibly delete for the lack of transaction
+	collection
+		.check_is_internal()
+		.map_err(dispatch_to_evm::<T>)?;
 	<crate::CollectionById<T>>::insert(collection.id, collection.collection.clone());
 	Ok(())
 }

@@ -84,7 +84,7 @@
     "inputs": [
       { "internalType": "address", "name": "newAdmin", "type": "address" }
     ],
-    "name": "addAdmin",
+    "name": "addCollectionAdmin",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"
@@ -102,7 +102,7 @@
     "inputs": [
       { "internalType": "address", "name": "user", "type": "address" }
     ],
-    "name": "addToAllowList",
+    "name": "addToCollectionAllowList",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"
@@ -320,7 +320,7 @@
     "inputs": [
       { "internalType": "address", "name": "user", "type": "address" }
     ],
-    "name": "removeFromAllowList",
+    "name": "removeFromCollectionAllowList",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"
@@ -344,13 +344,6 @@
       { "internalType": "bytes", "name": "data", "type": "bytes" }
     ],
     "name": "safeTransferFromWithData",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "string", "name": "mode", "type": "string" }],
-    "name": "setAccess",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -388,34 +381,6 @@
       { "internalType": "bool", "name": "value", "type": "bool" }
     ],
     "name": "setCollectionLimit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "bool", "name": "mode", "type": "bool" }],
-    "name": "setCollectionMintMode",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "bool", "name": "enable", "type": "bool" }],
-    "name": "setCollectionNesting",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "bool", "name": "enable", "type": "bool" },
-      {
-        "internalType": "address[]",
-        "name": "collections",
-        "type": "address[]"
-      }
-    ],
-    "name": "setCollectionNesting",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

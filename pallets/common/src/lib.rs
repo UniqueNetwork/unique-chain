@@ -1133,7 +1133,6 @@ impl<T: Config> Pallet<T> {
 		user: &T::CrossAccountId,
 		admin: bool,
 	) -> DispatchResult {
-		collection.check_is_mutable()?;
 		collection.check_is_owner(sender)?;
 
 		let was_admin = <IsAdmin<T>>::get((collection.id, user));

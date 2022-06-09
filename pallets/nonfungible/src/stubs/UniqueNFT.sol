@@ -51,6 +51,147 @@ contract ERC721MintableEvents {
 	event MintingFinished();
 }
 
+// Selector: 2da6e59e
+contract Collection is Dummy, ERC165 {
+	// Selector: setCollectionProperty(string,bytes) 2f073f66
+	function setCollectionProperty(string memory key, bytes memory value)
+		public
+	{
+		require(false, stub_error);
+		key;
+		value;
+		dummy = 0;
+	}
+
+	// Selector: deleteCollectionProperty(string) 7b7debce
+	function deleteCollectionProperty(string memory key) public {
+		require(false, stub_error);
+		key;
+		dummy = 0;
+	}
+
+	// Throws error if key not found
+	//
+	// Selector: collectionProperty(string) cf24fd6d
+	function collectionProperty(string memory key)
+		public
+		view
+		returns (bytes memory)
+	{
+		require(false, stub_error);
+		key;
+		dummy;
+		return hex"";
+	}
+
+	// Selector: setCollectionSponsor(address) 7623402e
+	function setCollectionSponsor(address sponsor) public {
+		require(false, stub_error);
+		sponsor;
+		dummy = 0;
+	}
+
+	// Selector: confirmCollectionSponsorship() 3c50e97a
+	function confirmCollectionSponsorship() public {
+		require(false, stub_error);
+		dummy = 0;
+	}
+
+	// Selector: setCollectionLimit(string,uint32) 6a3841db
+	function setCollectionLimit(string memory limit, uint32 value) public {
+		require(false, stub_error);
+		limit;
+		value;
+		dummy = 0;
+	}
+
+	// Selector: setCollectionLimit(string,bool) 993b7fba
+	function setCollectionLimit(string memory limit, bool value) public {
+		require(false, stub_error);
+		limit;
+		value;
+		dummy = 0;
+	}
+
+	// Selector: contractAddress() f6b4dfb4
+	function contractAddress() public view returns (address) {
+		require(false, stub_error);
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
+	// Selector: addCollectionAdminSubstrate(uint256) 5730062b
+	function addCollectionAdminSubstrate(uint256 newAdmin) public view {
+		require(false, stub_error);
+		newAdmin;
+		dummy;
+	}
+
+	// Selector: removeCollectionAdminSubstrate(uint256) 4048fcf9
+	function removeCollectionAdminSubstrate(uint256 newAdmin) public view {
+		require(false, stub_error);
+		newAdmin;
+		dummy;
+	}
+
+	// Selector: addCollectionAdmin(address) 92e462c7
+	function addCollectionAdmin(address newAdmin) public view {
+		require(false, stub_error);
+		newAdmin;
+		dummy;
+	}
+
+	// Selector: removeAdmin(address) 1785f53c
+	function removeAdmin(address admin) public view {
+		require(false, stub_error);
+		admin;
+		dummy;
+	}
+
+	// Selector: setNesting(bool) e8fc50dd
+	function setNesting(bool enable) public {
+		require(false, stub_error);
+		enable;
+		dummy = 0;
+	}
+
+	// Selector: setNesting(bool,address[]) 7df12a9a
+	function setNesting(bool enable, address[] memory collections) public {
+		require(false, stub_error);
+		enable;
+		collections;
+		dummy = 0;
+	}
+
+	// Selector: setCollectionAccess(uint8) 41835d4c
+	function setCollectionAccess(uint8 mode) public {
+		require(false, stub_error);
+		mode;
+		dummy = 0;
+	}
+
+	// Selector: addToCollectionAllowList(address) 67844fe6
+	function addToCollectionAllowList(address user) public view {
+		require(false, stub_error);
+		user;
+		dummy;
+	}
+
+	// Selector: removeFromCollectionAllowList(address) 85c51acb
+	function removeFromCollectionAllowList(address user) public view {
+		require(false, stub_error);
+		user;
+		dummy;
+	}
+
+	// Selector: setMintMode(bool) 5dea9bd5
+	function setMintMode(bool mode) public {
+		require(false, stub_error);
+		mode;
+		dummy = 0;
+	}
+}
+
 // Selector: 41369377
 contract TokenProperties is Dummy, ERC165 {
 	// Selector: setTokenPropertyPermission(string,bool,bool,bool) 222d97fa
@@ -327,147 +468,6 @@ contract ERC721Enumerable is Dummy, ERC165 {
 		require(false, stub_error);
 		dummy;
 		return 0;
-	}
-}
-
-// Selector: 7d9262e6
-contract Collection is Dummy, ERC165 {
-	// Selector: setCollectionProperty(string,bytes) 2f073f66
-	function setCollectionProperty(string memory key, bytes memory value)
-		public
-	{
-		require(false, stub_error);
-		key;
-		value;
-		dummy = 0;
-	}
-
-	// Selector: deleteCollectionProperty(string) 7b7debce
-	function deleteCollectionProperty(string memory key) public {
-		require(false, stub_error);
-		key;
-		dummy = 0;
-	}
-
-	// Throws error if key not found
-	//
-	// Selector: collectionProperty(string) cf24fd6d
-	function collectionProperty(string memory key)
-		public
-		view
-		returns (bytes memory)
-	{
-		require(false, stub_error);
-		key;
-		dummy;
-		return hex"";
-	}
-
-	// Selector: ethSetSponsor(address) 8f9af356
-	function ethSetSponsor(address sponsor) public {
-		require(false, stub_error);
-		sponsor;
-		dummy = 0;
-	}
-
-	// Selector: ethConfirmSponsorship() a8580d1a
-	function ethConfirmSponsorship() public {
-		require(false, stub_error);
-		dummy = 0;
-	}
-
-	// Selector: setLimit(string,uint32) 68db30ca
-	function setLimit(string memory limit, uint32 value) public {
-		require(false, stub_error);
-		limit;
-		value;
-		dummy = 0;
-	}
-
-	// Selector: setLimit(string,bool) ea67e4c2
-	function setLimit(string memory limit, bool value) public {
-		require(false, stub_error);
-		limit;
-		value;
-		dummy = 0;
-	}
-
-	// Selector: contractAddress() f6b4dfb4
-	function contractAddress() public view returns (address) {
-		require(false, stub_error);
-		dummy;
-		return 0x0000000000000000000000000000000000000000;
-	}
-
-	// Selector: addCollectionAdminSubstrate(uint256) 5730062b
-	function addCollectionAdminSubstrate(uint256 newAdmin) public view {
-		require(false, stub_error);
-		newAdmin;
-		dummy;
-	}
-
-	// Selector: removeCollectionAdminSubstrate(uint256) 4048fcf9
-	function removeCollectionAdminSubstrate(uint256 newAdmin) public view {
-		require(false, stub_error);
-		newAdmin;
-		dummy;
-	}
-
-	// Selector: addCollectionAdmin(address) 92e462c7
-	function addCollectionAdmin(address newAdmin) public view {
-		require(false, stub_error);
-		newAdmin;
-		dummy;
-	}
-
-	// Selector: removeAdmin(address) 1785f53c
-	function removeAdmin(address admin) public view {
-		require(false, stub_error);
-		admin;
-		dummy;
-	}
-
-	// Selector: setNesting(bool) e8fc50dd
-	function setNesting(bool enable) public {
-		require(false, stub_error);
-		enable;
-		dummy = 0;
-	}
-
-	// Selector: setNesting(bool,address[]) 7df12a9a
-	function setNesting(bool enable, address[] memory collections) public {
-		require(false, stub_error);
-		enable;
-		collections;
-		dummy = 0;
-	}
-
-	// Selector: setAccess(string) 488f56aa
-	function setAccess(string memory mode) public {
-		require(false, stub_error);
-		mode;
-		dummy = 0;
-	}
-
-	// Selector: addToAllowList(address) 31f59102
-	function addToAllowList(address user) public view {
-		require(false, stub_error);
-		user;
-		dummy;
-	}
-
-	// Selector: removeFromAllowList(address) eba8dabc
-	function removeFromAllowList(address user) public view {
-		require(false, stub_error);
-		user;
-		dummy;
-	}
-
-	// Selector: setMintMode(bool) 5dea9bd5
-	function setMintMode(bool mode) public {
-		require(false, stub_error);
-		mode;
-		dummy = 0;
 	}
 }
 
