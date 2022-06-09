@@ -663,7 +663,8 @@ pub mod pallet {
 				nft_id,
 				max_burns,
 				<Error<T>>::CannotRejectNonOwnedNft,
-			).map_err(|err| Self::map_unique_err_to_proxy(err.error))?;
+			)
+			.map_err(|err| Self::map_unique_err_to_proxy(err.error))?;
 
 			Self::deposit_event(Event::NFTRejected {
 				sender,
@@ -1153,7 +1154,13 @@ impl<T: Config> Pallet<T> {
 		let burns_budget = budget::Value::new(max_burns);
 		let breadth_budget = budget::Value::new(max_burns);
 
-		<PalletNft<T>>::burn_recursively(&collection, &from, token_id, &burns_budget, &breadth_budget)
+		<PalletNft<T>>::burn_recursively(
+			&collection,
+			&from,
+			token_id,
+			&burns_budget,
+			&breadth_budget,
+		)
 	}
 
 	fn resource_add(
