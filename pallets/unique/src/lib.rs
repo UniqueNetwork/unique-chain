@@ -44,7 +44,7 @@ use up_data_structs::{
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
-	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_call,
+	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_tx,
 	dispatch::CollectionDispatch,
 };
 pub mod eth;
@@ -581,7 +581,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_call::<T, _>(collection_id, |d| d.create_item(sender, owner, data, &budget))
+			dispatch_tx::<T, _>(collection_id, |d| d.create_item(sender, owner, data, &budget))
 		}
 
 		/// This method creates multiple items in a collection created with CreateCollection method.
@@ -609,7 +609,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items(sender, owner, items_data, &budget))
+			dispatch_tx::<T, _>(collection_id, |d| d.create_multiple_items(sender, owner, items_data, &budget))
 		}
 
 		#[weight = T::CommonWeightInfo::set_collection_properties(properties.len() as u32)]
@@ -623,7 +623,7 @@ decl_module! {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_call::<T, _>(collection_id, |d| d.set_collection_properties(sender, properties))
+			dispatch_tx::<T, _>(collection_id, |d| d.set_collection_properties(sender, properties))
 		}
 
 		#[weight = T::CommonWeightInfo::delete_collection_properties(property_keys.len() as u32)]
@@ -637,7 +637,7 @@ decl_module! {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_call::<T, _>(collection_id, |d| d.delete_collection_properties(&sender, property_keys))
+			dispatch_tx::<T, _>(collection_id, |d| d.delete_collection_properties(&sender, property_keys))
 		}
 
 		#[weight = T::CommonWeightInfo::set_token_properties(properties.len() as u32)]
@@ -652,7 +652,7 @@ decl_module! {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_call::<T, _>(collection_id, |d| d.set_token_properties(sender, token_id, properties))
+			dispatch_tx::<T, _>(collection_id, |d| d.set_token_properties(sender, token_id, properties))
 		}
 
 		#[weight = T::CommonWeightInfo::delete_token_properties(property_keys.len() as u32)]
@@ -667,7 +667,7 @@ decl_module! {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_call::<T, _>(collection_id, |d| d.delete_token_properties(sender, token_id, property_keys))
+			dispatch_tx::<T, _>(collection_id, |d| d.delete_token_properties(sender, token_id, property_keys))
 		}
 
 		#[weight = T::CommonWeightInfo::set_property_permissions(property_permissions.len() as u32)]
@@ -681,7 +681,7 @@ decl_module! {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_call::<T, _>(collection_id, |d| d.set_property_permissions(&sender, property_permissions))
+			dispatch_tx::<T, _>(collection_id, |d| d.set_property_permissions(&sender, property_permissions))
 		}
 
 		#[weight = T::CommonWeightInfo::create_multiple_items_ex(&data)]
@@ -690,7 +690,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_call::<T, _>(collection_id, |d| d.create_multiple_items_ex(sender, data, &budget))
+			dispatch_tx::<T, _>(collection_id, |d| d.create_multiple_items_ex(sender, data, &budget))
 		}
 
 		// TODO! transaction weight
@@ -738,7 +738,7 @@ decl_module! {
 		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			let post_info = dispatch_call::<T, _>(collection_id, |d| d.burn_item(sender, item_id, value))?;
+			let post_info = dispatch_tx::<T, _>(collection_id, |d| d.burn_item(sender, item_id, value))?;
 			if value == 1 {
 				<NftTransferBasket<T>>::remove(collection_id, item_id);
 				<NftApproveBasket<T>>::remove(collection_id, item_id);
@@ -771,7 +771,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_call::<T, _>(collection_id, |d| d.burn_from(sender, from, item_id, value, &budget))
+			dispatch_tx::<T, _>(collection_id, |d| d.burn_from(sender, from, item_id, value, &budget))
 		}
 
 		/// Change ownership of the token.
@@ -803,7 +803,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_call::<T, _>(collection_id, |d| d.transfer(sender, recipient, item_id, value, &budget))
+			dispatch_tx::<T, _>(collection_id, |d| d.transfer(sender, recipient, item_id, value, &budget))
 		}
 
 		/// Set, change, or remove approved address to transfer the ownership of the NFT.
@@ -826,7 +826,7 @@ decl_module! {
 		pub fn approve(origin, spender: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_call::<T, _>(collection_id, |d| d.approve(sender, spender, item_id, amount))
+			dispatch_tx::<T, _>(collection_id, |d| d.approve(sender, spender, item_id, amount))
 		}
 
 		/// Change ownership of a NFT on behalf of the owner. See Approve method for additional information. After this method executes, the approval is removed so that the approved address will not be able to transfer this NFT again from this owner.
@@ -854,7 +854,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_call::<T, _>(collection_id, |d| d.transfer_from(sender, from, recipient, item_id, value, &budget))
+			dispatch_tx::<T, _>(collection_id, |d| d.transfer_from(sender, from, recipient, item_id, value, &budget))
 		}
 
 		#[weight = <SelfWeightOf<T>>::set_collection_limits()]

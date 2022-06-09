@@ -11,7 +11,7 @@ use up_data_structs::{CollectionId, CreateCollectionData};
 use crate::{pallet::Config, CommonCollectionOperations, CollectionHandle};
 
 // TODO: move to benchmarking
-/// Price of [`dispatch_call`] call with noop `call` argument
+/// Price of [`dispatch_tx`] call with noop `call` argument
 pub fn dispatch_weight<T: Config>() -> Weight {
 	// Read collection
 	<T as frame_system::Config>::DbWeight::get().reads(1)
@@ -21,7 +21,7 @@ pub fn dispatch_weight<T: Config>() -> Weight {
 }
 
 /// Helper function to implement substrate calls for common collection methods
-pub fn dispatch_call<
+pub fn dispatch_tx<
 	T: Config,
 	C: FnOnce(&dyn CommonCollectionOperations<T>) -> DispatchResultWithPostInfo,
 >(
