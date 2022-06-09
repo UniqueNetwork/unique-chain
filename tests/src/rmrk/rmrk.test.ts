@@ -49,8 +49,8 @@ async function createRmrkNft(api: ApiPromise, sender: IKeyringPair, collectionId
 
 describe('RMRK External Integration Test', () => {
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
     });
   });
 
@@ -75,9 +75,9 @@ describe('Negative Integration Test: External Collections, Internal Ops', () => 
   let rmrkNftId: number;
 
   before(async () => {
-    await usingApi(async api => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
 
       const collectionIds = await createRmrkCollection(api, alice);
       uniqueCollectionId = collectionIds.uniqueId;
@@ -210,9 +210,9 @@ describe('Negative Integration Test: Internal Collections, External Ops', () => 
   let nftId: number;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
 
       collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       nftId = await createItemExpectSuccess(alice, collectionId, 'NFT');

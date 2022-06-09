@@ -22,8 +22,8 @@ import {getGenericResult, UNIQUE} from '../util/helpers';
 import {getBalanceSingle, transferBalanceExpectSuccess} from '../substrate/get-balance';
 
 describe('EVM payable contracts', () => {
-  itWeb3('Evm contract can receive wei from eth account', async ({api, web3}) => {
-    const deployer = await createEthAccountWithBalance(api, web3);
+  itWeb3('Evm contract can receive wei from eth account', async ({api, web3, privateKeyWrapper}) => {
+    const deployer = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const contract = await deployCollector(web3, deployer);
 
     await web3.eth.sendTransaction({from: deployer, to: contract.options.address, value: '10000', ...GAS_ARGS});
@@ -32,7 +32,7 @@ describe('EVM payable contracts', () => {
   });
 
   itWeb3('Evm contract can receive wei from substrate account', async ({api, web3, privateKeyWrapper}) => {
-    const deployer = await createEthAccountWithBalance(api, web3);
+    const deployer = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const contract = await deployCollector(web3, deployer);
     const alice = privateKeyWrapper('//Alice');
 
@@ -62,7 +62,7 @@ describe('EVM payable contracts', () => {
 
   // We can't handle sending balance to backing storage of evm balance, because evmToAddress operation is irreversible
   itWeb3('Wei sent directly to backing storage of evm contract balance is unaccounted', async({api, web3, privateKeyWrapper}) => {
-    const deployer = await createEthAccountWithBalance(api, web3);
+    const deployer = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const contract = await deployCollector(web3, deployer);
     const alice = privateKeyWrapper('//Alice');
 
@@ -75,7 +75,7 @@ describe('EVM payable contracts', () => {
     const FEE_BALANCE = 1000n * UNIQUE;
     const CONTRACT_BALANCE = 1n * UNIQUE;
 
-    const deployer = await createEthAccountWithBalance(api, web3);
+    const deployer = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const contract = await deployCollector(web3, deployer);
     const alice = privateKeyWrapper('//Alice');
 
