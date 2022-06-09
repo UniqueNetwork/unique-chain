@@ -417,6 +417,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection_id: RmrkCollectionId,
 			nft_id: RmrkNftId,
+			max_burns: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
@@ -431,8 +432,10 @@ pub mod pallet {
 				cross_sender,
 				Self::unique_collection_id(collection_id)?,
 				nft_id.into(),
+				max_burns,
+				<Error<T>>::NoPermission,
 			)
-			.map_err(Self::map_unique_err_to_proxy)?;
+			.map_err(|err| Self::map_unique_err_to_proxy(err.error))?;
 
 			Self::deposit_event(Event::NFTBurned {
 				owner: sender,
@@ -642,6 +645,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			rmrk_collection_id: RmrkCollectionId,
 			rmrk_nft_id: RmrkNftId,
+			max_burns: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
@@ -653,15 +657,13 @@ pub mod pallet {
 				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
 			collection.check_is_external()?;
 
-			Self::destroy_nft(cross_sender, collection_id, nft_id).map_err(|err| {
-				if err == <CommonError<T>>::NoPermission.into()
-					|| err == <CommonError<T>>::ApprovedValueTooLow.into()
-				{
-					<Error<T>>::CannotRejectNonOwnedNft.into()
-				} else {
-					Self::map_unique_err_to_proxy(err)
-				}
-			})?;
+			Self::destroy_nft(
+				cross_sender,
+				collection_id,
+				nft_id,
+				max_burns,
+				<Error<T>>::CannotRejectNonOwnedNft,
+			).map_err(|err| Self::map_unique_err_to_proxy(err.error))?;
 
 			Self::deposit_event(Event::NFTRejected {
 				sender,
@@ -1124,7 +1126,9 @@ impl<T: Config> Pallet<T> {
 		sender: T::CrossAccountId,
 		collection_id: CollectionId,
 		token_id: TokenId,
-	) -> DispatchResult {
+		max_burns: u32,
+		error_if_not_owned: Error<T>,
+	) -> DispatchResultWithPostInfo {
 		let collection =
 			Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
 
@@ -1133,9 +1137,23 @@ impl<T: Config> Pallet<T> {
 
 		let from = token_data.owner;
 
-		let budget = budget::Value::new(NESTING_BUDGET);
+		let owner_check_budget = budget::Value::new(NESTING_BUDGET);
 
-		<PalletNft<T>>::burn_from(&collection, &sender, &from, token_id, &budget)
+		ensure!(
+			<PalletStructure<T>>::check_indirectly_owned(
+				sender.clone(),
+				collection_id,
+				token_id,
+				None,
+				&owner_check_budget
+			)?,
+			error_if_not_owned,
+		);
+
+		let burns_budget = budget::Value::new(max_burns);
+		let breadth_budget = budget::Value::new(max_burns);
+
+		<PalletNft<T>>::burn_recursively(&collection, &from, token_id, &burns_budget, &breadth_budget)
 	}
 
 	fn resource_add(
@@ -1202,7 +1220,7 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::ResourceDoesntExist
 		);
 
-		let budget = up_data_structs::budget::Value::new(10);
+		let budget = up_data_structs::budget::Value::new(NESTING_BUDGET);
 		let topmost_owner =
 			<PalletStructure<T>>::find_topmost_owner(collection_id, nft_id, &budget)?;
 
