@@ -18,6 +18,10 @@ fn create_data<S: Get<u32>>() -> BoundedVec<u8, S> {
 	vec![b'A'; S::get() as usize].try_into().expect("size == S")
 }
 
+fn create_priorities<S: Get<u32>>() -> BoundedVec<RmrkResourceId, S> {
+	vec![0; S::get() as usize].try_into().expect("size == S")
+}
+
 fn create_max_collection<T: Config>(owner: &T::AccountId) -> DispatchResult {
 	<T as pallet_common::Config>::Currency::deposit_creating(owner, T::CollectionCreationPrice::get());
 
@@ -220,5 +224,20 @@ benchmarks! {
 		Some(nft_id),
 		key,
 		value
+	)
+
+	set_priority {
+		let caller: T::AccountId = account("caller", 0, SEED);
+		create_max_collection::<T>(&caller)?;
+		let collection_id = 0;
+
+		let mut nft_builder = NftBuilder::new(collection_id);
+		let nft_id = nft_builder.build_tower::<T>(&caller, NESTING_BUDGET - 1)?;
+		let priorities = create_priorities();
+	}: _(
+		RawOrigin::Signed(caller),
+		collection_id,
+		nft_id,
+		priorities
 	)
 }
