@@ -51,7 +51,7 @@ describe('Add collection admins', () => {
       .send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const newAdmin = privateKey('//Alice');
+    const newAdmin = privateKeyWrapper('//Alice');
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
 
@@ -180,7 +180,7 @@ describe('Remove collection admins', () => {
       .send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const newAdmin = privateKey('//Alice');
+    const newAdmin = privateKeyWrapper('//Alice');
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
     {
@@ -255,7 +255,7 @@ describe('Remove collection admins', () => {
       .send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const adminSub = privateKey('//Alice');
+    const adminSub = privateKeyWrapper('//Alice');
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     await collectionEvm.methods.addCollectionAdminSubstrate(adminSub.addressRaw).send();
     const adminEth = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
@@ -280,7 +280,7 @@ describe('Remove collection admins', () => {
       .send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const adminSub = privateKey('//Alice');
+    const adminSub = privateKeyWrapper('//Alice');
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     await collectionEvm.methods.addCollectionAdminSubstrate(adminSub.addressRaw).send();
     const notAdminEth = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
