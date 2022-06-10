@@ -125,10 +125,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       MustBeTokenOwner: AugmentedError<ApiType>;
       /**
-       * Collection has nesting disabled
-       **/
-      NestingIsDisabled: AugmentedError<ApiType>;
-      /**
        * No permission to perform action
        **/
       NoPermission: AugmentedError<ApiType>;
@@ -137,13 +133,9 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NoSpaceForProperty: AugmentedError<ApiType>;
       /**
-       * Not sufficient founds to perform action
+       * Not sufficient funds to perform action
        **/
       NotSufficientFounds: AugmentedError<ApiType>;
-      /**
-       * Only owner may nest tokens under this collection
-       **/
-      OnlyOwnerAllowedToNest: AugmentedError<ApiType>;
       /**
        * Tried to enable permissions which are only permitted to be disabled
        **/
@@ -184,6 +176,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Target collection doesn't supports this operation
        **/
       UnsupportedOperation: AugmentedError<ApiType>;
+      /**
+       * User not passed nesting rule
+       **/
+      UserIsNotAllowedToNest: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -501,6 +497,10 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     structure: {
+      /**
+       * While iterating over children, encountered breadth limit
+       **/
+      BreadthLimit: AugmentedError<ApiType>;
       /**
        * While searched for owner, encountered depth limit
        **/

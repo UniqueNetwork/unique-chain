@@ -5356,7 +5356,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-unique",
- "pallet-unq-scheduler",
+ "pallet-unique-scheduler",
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec 3.1.2",
@@ -6646,7 +6646,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-unq-scheduler"
+name = "pallet-unique-scheduler"
 version = "0.1.0"
 dependencies = [
  "frame-benchmarking",
@@ -8590,7 +8590,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-unique",
- "pallet-unq-scheduler",
+ "pallet-unique-scheduler",
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec 3.1.2",
@@ -12643,7 +12643,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-unique",
- "pallet-unq-scheduler",
+ "pallet-unique-scheduler",
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec 3.1.2",
@@ -12688,6 +12688,7 @@ dependencies = [
  "pallet-nonfungible",
  "pallet-refungible",
  "pallet-unique",
+ "pallet-unique-scheduler",
  "parity-scale-codec 3.1.2",
  "rmrk-rpc",
  "scale-info",

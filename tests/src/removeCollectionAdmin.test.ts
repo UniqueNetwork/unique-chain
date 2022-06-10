@@ -111,7 +111,7 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
     });
   });
 
-  it.only('Admin can\'t remove collection admin.', async () => {
+  it('Admin can\'t remove collection admin.', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
       const alice = privateKeyWrapper('//Alice');

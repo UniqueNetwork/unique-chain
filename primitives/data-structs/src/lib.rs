@@ -441,7 +441,7 @@ impl CollectionLimits {
 pub struct CollectionPermissions {
 	pub access: Option<AccessMode>,
 	pub mint_mode: Option<bool>,
-	pub nesting: Option<NestingRule>,
+	pub nesting: Option<NestingPermissions>,
 }
 
 impl CollectionPermissions {
@@ -451,30 +451,58 @@ impl CollectionPermissions {
 	pub fn mint_mode(&self) -> bool {
 		self.mint_mode.unwrap_or(false)
 	}
-	pub fn nesting(&self) -> &NestingRule {
-		static DEFAULT: NestingRule = NestingRule::Disabled;
+	pub fn nesting(&self) -> &NestingPermissions {
+		static DEFAULT: NestingPermissions = NestingPermissions {
+			token_owner: false,
+			admin: false,
+			restricted: None,
+
+			permissive: false,
+		};
 		self.nesting.as_ref().unwrap_or(&DEFAULT)
 	}
 }
 
-pub type OwnerRestrictedSet = BoundedBTreeSet<CollectionId, ConstU32<16>>;
+type OwnerRestrictedSetInner = BoundedBTreeSet<CollectionId, ConstU32<16>>;
 
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen, Derivative)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 #[derivative(Debug)]
-pub enum NestingRule {
-	/// No one can nest tokens
-	Disabled,
-	/// Owner can nest any tokens
-	Owner,
-	/// Owner can nest tokens from specified collections
-	OwnerRestricted(
-		#[cfg_attr(feature = "serde1", serde(with = "bounded::set_serde"))]
-		#[derivative(Debug(format_with = "bounded::set_debug"))]
-		OwnerRestrictedSet,
-	),
-	/// Used for tests
-	Permissive,
+pub struct OwnerRestrictedSet(
+	#[cfg_attr(feature = "serde1", serde(with = "bounded::set_serde"))]
+	#[derivative(Debug(format_with = "bounded::set_debug"))]
+	pub OwnerRestrictedSetInner,
+);
+impl OwnerRestrictedSet {
+	pub fn new() -> Self {
+		Self(Default::default())
+	}
+}
+impl core::ops::Deref for OwnerRestrictedSet {
+	type Target = OwnerRestrictedSetInner;
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
+}
+impl core::ops::DerefMut for OwnerRestrictedSet {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		&mut self.0
+	}
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen, Derivative)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derivative(Debug)]
+pub struct NestingPermissions {
+	/// Owner of token can nest tokens under it
+	pub token_owner: bool,
+	/// Admin of token collection can nest tokens under token
+	pub admin: bool,
+	/// If set - only tokens from specified collections can be nested
+	pub restricted: Option<OwnerRestrictedSet>,
+
+	/// Anyone can nest tokens, mutually exclusive with `token_owner`, `admin`
+	pub permissive: bool,
 }
 
 #[derive(Encode, Decode, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen)]

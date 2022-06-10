@@ -32,7 +32,7 @@ describe('Integration Test: Nesting', () => {
   it('Performs the full suite: bundles a token, transfers, and unnests', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: 'Owner'});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true}});
       const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
 
       // Create a nested token
@@ -62,7 +62,7 @@ describe('Integration Test: Nesting', () => {
   it('Transfers an already bundled token', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: 'Owner'});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true}});
 
       const tokenA = await createItemExpectSuccess(alice, collection, 'NFT');
       const tokenB = await createItemExpectSuccess(alice, collection, 'NFT');
@@ -92,7 +92,7 @@ describe('Integration Test: Nesting', () => {
   it('Checks token children', async () => {
     await usingApi(async api => {
       const collectionA = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collectionA, {nesting: 'Owner'});
+      await setCollectionPermissionsExpectSuccess(alice, collectionA, {nesting: {tokenOwner: true}});
       const collectionB = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
 
       const targetToken = await createItemExpectSuccess(alice, collectionA, 'NFT');
@@ -151,7 +151,7 @@ describe('Integration Test: Nesting', () => {
   it('NFT: allows an Owner to nest/unnest their token', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: 'Owner'});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true}});
       const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
 
       // Create a nested token
@@ -170,7 +170,7 @@ describe('Integration Test: Nesting', () => {
   it('NFT: allows an Owner to nest/unnest their token (Restricted nesting)', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {OwnerRestricted:[collection]}});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true, restricted:[collection]}});
       const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
 
       // Create a nested token
@@ -191,7 +191,7 @@ describe('Integration Test: Nesting', () => {
   it('Fungible: allows an Owner to nest/unnest their token', async () => {
     await usingApi(async api => {
       const collectionNFT = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: 'Owner'});
+      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {tokenOwner: true}});
       const targetToken = await createItemExpectSuccess(alice, collectionNFT, 'NFT', {Substrate: alice.address});
       const targetAddress = {Ethereum: tokenIdToAddress(collectionNFT, targetToken)};
 
@@ -218,7 +218,7 @@ describe('Integration Test: Nesting', () => {
 
       const collectionFT = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
 
-      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {OwnerRestricted: [collectionFT]}});
+      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {tokenOwner: true, restricted: [collectionFT]}});
 
       // Create a nested token
       await expect(executeTransaction(api, alice, api.tx.unique.createItem(
@@ -238,7 +238,7 @@ describe('Integration Test: Nesting', () => {
   it('ReFungible: allows an Owner to nest/unnest their token', async () => {
     await usingApi(async api => {
       const collectionNFT = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: 'Owner'});
+      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {tokenOwner: true}});
       const targetToken = await createItemExpectSuccess(alice, collectionNFT, 'NFT', {Substrate: alice.address});
       const targetAddress = {Ethereum: tokenIdToAddress(collectionNFT, targetToken)};
 
@@ -265,7 +265,7 @@ describe('Integration Test: Nesting', () => {
 
       const collectionRFT = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
 
-      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {OwnerRestricted:[collectionRFT]}});
+      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {tokenOwner: true, restricted:[collectionRFT]}});
 
       // Create a nested token
       await expect(executeTransaction(api, alice, api.tx.unique.createItem(
@@ -292,7 +292,7 @@ describe('Negative Test: Nesting', async() => {
   it('Disallows excessive token nesting', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: 'Owner'});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true}});
       const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
 
       const maxNestingLevel = 5;
@@ -326,7 +326,7 @@ describe('Negative Test: Nesting', async() => {
   it('NFT: disallows to nest token if nesting is disabled', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: 'Disabled'});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {}});
       const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
 
       // Try to create a nested token
@@ -334,12 +334,12 @@ describe('Negative Test: Nesting', async() => {
         collection,
         {Ethereum: tokenIdToAddress(collection, targetToken)},
           {nft: {const_data: [], variable_data: []}} as any,
-      )), 'while creating nested token').to.be.rejectedWith(/^common\.NestingIsDisabled$/);
+      )), 'while creating nested token').to.be.rejectedWith(/^common\.UserIsNotAllowedToNest$/);
 
       // Create a token to be nested
       const newToken = await createItemExpectSuccess(alice, collection, 'NFT');
       // Try to nest
-      await expect(executeTransaction(api, alice, api.tx.unique.transfer({Ethereum: tokenIdToAddress(collection, targetToken)}, collection, newToken, 1)), 'while nesting new token').to.be.rejectedWith(/common\.NestingIsDisabled/);
+      await expect(executeTransaction(api, alice, api.tx.unique.transfer({Ethereum: tokenIdToAddress(collection, targetToken)}, collection, newToken, 1)), 'while nesting new token').to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
       expect(await getTopmostTokenOwner(api, collection, newToken)).to.be.deep.equal({Substrate: alice.address});
       expect(await getTokenOwner(api, collection, newToken)).to.be.deep.equal({Substrate: alice.address});
     });
@@ -348,7 +348,7 @@ describe('Negative Test: Nesting', async() => {
   it('NFT: disallows a non-Owner to nest someone else\'s token', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: 'Owner'});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true}});
 
       await addToAllowListExpectSuccess(alice, collection, bob.address);
       await enableAllowListExpectSuccess(alice, collection);
@@ -362,7 +362,7 @@ describe('Negative Test: Nesting', async() => {
         collection,
         {Ethereum: tokenIdToAddress(collection, targetToken)},
           {nft: {const_data: [], variable_data: []}} as any,
-      )), 'while creating nested token').to.be.rejectedWith(/common\.OnlyOwnerAllowedToNest/);
+      )), 'while creating nested token').to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
 
       // Try to create and nest a token in the wrong collection
       const newToken = await createItemExpectSuccess(alice, collection, 'NFT');
@@ -374,7 +374,7 @@ describe('Negative Test: Nesting', async() => {
   it('NFT: disallows a non-Owner to nest someone else\'s token (Restricted nesting)', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {OwnerRestricted:[collection]}});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true, restricted:[collection]}});
 
       await addToAllowListExpectSuccess(alice, collection, bob.address);
       await enableAllowListExpectSuccess(alice, collection);
@@ -388,7 +388,7 @@ describe('Negative Test: Nesting', async() => {
         collection,
         {Ethereum: tokenIdToAddress(collection, targetToken)},
           {nft: {const_data: [], variable_data: []}} as any,
-      )), 'while creating nested token').to.be.rejectedWith(/common\.OnlyOwnerAllowedToNest/);
+      )), 'while creating nested token').to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
 
       // Try to create and nest a token in the wrong collection
       const newToken = await createItemExpectSuccess(alice, collection, 'NFT');
@@ -400,7 +400,7 @@ describe('Negative Test: Nesting', async() => {
   it('NFT: disallows to nest token in an unlisted collection', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {OwnerRestricted:[]}});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true, restricted:[]}});
 
       // Create a token to attempt to be nested into
       const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
@@ -424,7 +424,7 @@ describe('Negative Test: Nesting', async() => {
   it('Fungible: disallows to nest token if nesting is disabled', async () => {
     await usingApi(async api => {
       const collectionNFT = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: 'Disabled'});
+      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {}});
       const targetToken = await createItemExpectSuccess(alice, collectionNFT, 'NFT');
       const targetAddress = {Ethereum: tokenIdToAddress(collectionNFT, targetToken)};
 
@@ -435,12 +435,12 @@ describe('Negative Test: Nesting', async() => {
         collectionFT,
         targetAddress,
         {Fungible: {Value: 10}},
-      )), 'while creating nested token').to.be.rejectedWith(/^common\.NestingIsDisabled$/);
+      )), 'while creating nested token').to.be.rejectedWith(/^common\.UserIsNotAllowedToNest$/);
 
       // Create a token to be nested
       const newToken = await createItemExpectSuccess(alice, collectionFT, 'Fungible');
       // Try to nest
-      await expect(executeTransaction(api, alice, api.tx.unique.transfer(targetAddress, collectionFT, newToken, 1)), 'while nesting new token').to.be.rejectedWith(/common\.NestingIsDisabled/);
+      await expect(executeTransaction(api, alice, api.tx.unique.transfer(targetAddress, collectionFT, newToken, 1)), 'while nesting new token').to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
 
       // Create another token to be nested
       const newToken2 = await createItemExpectSuccess(alice, collectionFT, 'Fungible');
@@ -452,7 +452,7 @@ describe('Negative Test: Nesting', async() => {
   it('Fungible: disallows a non-Owner to nest someone else\'s token', async () => {
     await usingApi(async api => {
       const collectionNFT = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: 'Owner'});
+      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {tokenOwner: true}});
 
       await addToAllowListExpectSuccess(alice, collectionNFT, bob.address);
       await enableAllowListExpectSuccess(alice, collectionNFT);
@@ -469,11 +469,11 @@ describe('Negative Test: Nesting', async() => {
         collectionFT,
         targetAddress,
         {Fungible: {Value: 10}},
-      )), 'while creating nested token').to.be.rejectedWith(/common\.OnlyOwnerAllowedToNest/);
+      )), 'while creating nested token').to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
 
       // Try to create and nest a token in the wrong collection
       const newToken = await createItemExpectSuccess(alice, collectionFT, 'Fungible');
-      await expect(executeTransaction(api, alice, api.tx.unique.transfer(targetAddress, collectionFT, newToken, 1)), 'while nesting new token').to.be.rejectedWith(/common\.OnlyOwnerAllowedToNest/);
+      await expect(executeTransaction(api, alice, api.tx.unique.transfer(targetAddress, collectionFT, newToken, 1)), 'while nesting new token').to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
     });
   });
 
@@ -489,25 +489,25 @@ describe('Negative Test: Nesting', async() => {
       const targetAddress = {Ethereum: tokenIdToAddress(collectionNFT, targetToken)};
 
       const collectionFT = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {OwnerRestricted:[collectionFT]}});
+      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {tokenOwner: true, restricted:[collectionFT]}});
 
       // Try to create a nested token in the wrong collection
       await expect(executeTransaction(api, alice, api.tx.unique.createItem(
         collectionFT,
         targetAddress,
         {Fungible: {Value: 10}},
-      )), 'while creating nested token').to.be.rejectedWith(/common\.OnlyOwnerAllowedToNest/);
+      )), 'while creating nested token').to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
 
       // Try to create and nest a token in the wrong collection
       const newToken = await createItemExpectSuccess(alice, collectionFT, 'Fungible');
-      await expect(executeTransaction(api, alice, api.tx.unique.transfer(targetAddress, collectionFT, newToken, 1)), 'while nesting new token').to.be.rejectedWith(/common\.OnlyOwnerAllowedToNest/);
+      await expect(executeTransaction(api, alice, api.tx.unique.transfer(targetAddress, collectionFT, newToken, 1)), 'while nesting new token').to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
     });
   });
 
   it('Fungible: disallows to nest token in an unlisted collection', async () => {
     await usingApi(async api => {
       const collectionNFT = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {OwnerRestricted:[]}});
+      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {tokenOwner: true, restricted:[]}});
 
       // Create a token to attempt to be nested into
       const targetToken = await createItemExpectSuccess(alice, collectionNFT, 'NFT');
@@ -533,7 +533,7 @@ describe('Negative Test: Nesting', async() => {
   it('ReFungible: disallows to nest token if nesting is disabled', async () => {
     await usingApi(async api => {
       const collectionNFT = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: 'Disabled'});
+      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {}});
       const targetToken = await createItemExpectSuccess(alice, collectionNFT, 'NFT');
       const targetAddress = {Ethereum: tokenIdToAddress(collectionNFT, targetToken)};
 
@@ -544,14 +544,14 @@ describe('Negative Test: Nesting', async() => {
         collectionRFT,
         targetAddress,
         {ReFungible: {const_data: [], pieces: 100}},
-      )), 'while creating a nested token').to.be.rejectedWith(/^common\.NestingIsDisabled$/);
+      )), 'while creating a nested token').to.be.rejectedWith(/^common\.UserIsNotAllowedToNest$/);
 
       // Create a token to be nested
       const newToken = await createItemExpectSuccess(alice, collectionRFT, 'ReFungible');
       // Try to nest
       await transferExpectFailure(collectionRFT, newToken, alice, targetAddress, 100);
       // Try to nest
-      await expect(executeTransaction(api, alice, api.tx.unique.transfer(targetAddress, collectionRFT, newToken, 1)), 'while nesting new token').to.be.rejectedWith(/common\.NestingIsDisabled/);
+      await expect(executeTransaction(api, alice, api.tx.unique.transfer(targetAddress, collectionRFT, newToken, 1)), 'while nesting new token').to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
 
       // Create another token to be nested
       const newToken2 = await createItemExpectSuccess(alice, collectionRFT, 'ReFungible');
@@ -563,7 +563,7 @@ describe('Negative Test: Nesting', async() => {
   it('ReFungible: disallows a non-Owner to nest someone else\'s token', async () => {
     await usingApi(async api => {
       const collectionNFT = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: 'Owner'});
+      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {tokenOwner: true}});
 
       await addToAllowListExpectSuccess(alice, collectionNFT, bob.address);
       await enableAllowListExpectSuccess(alice, collectionNFT);
@@ -580,11 +580,11 @@ describe('Negative Test: Nesting', async() => {
         collectionRFT,
         targetAddress,
         {ReFungible: {const_data: [], pieces: 100}},
-      )), 'while creating a nested token').to.be.rejectedWith(/common\.OnlyOwnerAllowedToNest/);
+      )), 'while creating a nested token').to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
 
       // Try to create and nest a token in the wrong collection
       const newToken = await createItemExpectSuccess(alice, collectionRFT, 'ReFungible');
-      await expect(executeTransaction(api, alice, api.tx.unique.transfer(targetAddress, collectionRFT, newToken, 1)), 'while nesting new token').to.be.rejectedWith(/common\.OnlyOwnerAllowedToNest/);
+      await expect(executeTransaction(api, alice, api.tx.unique.transfer(targetAddress, collectionRFT, newToken, 1)), 'while nesting new token').to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
     });
   });
 
@@ -600,25 +600,25 @@ describe('Negative Test: Nesting', async() => {
       const targetAddress = {Ethereum: tokenIdToAddress(collectionNFT, targetToken)};
 
       const collectionRFT = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {OwnerRestricted:[collectionRFT]}});
+      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {tokenOwner: true, restricted:[collectionRFT]}});
 
       // Try to create a nested token in the wrong collection
       await expect(executeTransaction(api, alice, api.tx.unique.createItem(
         collectionRFT,
         targetAddress,
         {ReFungible: {const_data: [], pieces: 100}},
-      )), 'while creating a nested token').to.be.rejectedWith(/common\.OnlyOwnerAllowedToNest/);
+      )), 'while creating a nested token').to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
 
       // Try to create and nest a token in the wrong collection
       const newToken = await createItemExpectSuccess(alice, collectionRFT, 'ReFungible');
-      await expect(executeTransaction(api, alice, api.tx.unique.transfer(targetAddress, collectionRFT, newToken, 1)), 'while nesting new token').to.be.rejectedWith(/common\.OnlyOwnerAllowedToNest/);
+      await expect(executeTransaction(api, alice, api.tx.unique.transfer(targetAddress, collectionRFT, newToken, 1)), 'while nesting new token').to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
     });
   });
 
   it('ReFungible: disallows to nest token to an unlisted collection', async () => {
     await usingApi(async api => {
       const collectionNFT = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {OwnerRestricted:[]}});
+      await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {tokenOwner: true, restricted:[]}});
 
       // Create a token to attempt to be nested into
       const targetToken = await createItemExpectSuccess(alice, collectionNFT, 'NFT');

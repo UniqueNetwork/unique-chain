@@ -68,7 +68,7 @@ pub use frame_support::{
 		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients, ConstantMultiplier,
 	},
 };
-use pallet_unq_scheduler::DispatchCall;
+use pallet_unique_scheduler::DispatchCall;
 use up_data_structs::{
 	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits,
 	CollectionStats, RpcCollection,
@@ -968,7 +968,7 @@ fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> Sign
 }
 
 pub struct SchedulerPaymentExecutor;
-impl<T: frame_system::Config + pallet_unq_scheduler::Config, SelfContainedSignedInfo>
+impl<T: frame_system::Config + pallet_unique_scheduler::Config, SelfContainedSignedInfo>
 	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
 where
 	<T as frame_system::Config>::Call: Member
@@ -978,13 +978,13 @@ where
 		+ From<frame_system::Call<Runtime>>,
 	SelfContainedSignedInfo: Send + Sync + 'static,
 	Call: From<<T as frame_system::Config>::Call>
-		+ From<<T as pallet_unq_scheduler::Config>::Call>
+		+ From<<T as pallet_unique_scheduler::Config>::Call>
 		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
 	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
 {
 	fn dispatch_call(
 		signer: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unq_scheduler::Config>::Call,
+		call: <T as pallet_unique_scheduler::Config>::Call,
 	) -> Result<
 		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
 		TransactionValidityError,
@@ -1010,7 +1010,7 @@ where
 	fn reserve_balance(
 		id: [u8; 16],
 		sponsor: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unq_scheduler::Config>::Call,
+		call: <T as pallet_unique_scheduler::Config>::Call,
 		count: u32,
 	) -> Result<(), DispatchError> {
 		let dispatch_info = call.get_dispatch_info();
@@ -1027,7 +1027,7 @@ where
 	fn pay_for_call(
 		id: [u8; 16],
 		sponsor: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unq_scheduler::Config>::Call,
+		call: <T as pallet_unique_scheduler::Config>::Call,
 	) -> Result<u128, DispatchError> {
 		let dispatch_info = call.get_dispatch_info();
 		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0);
@@ -1068,7 +1068,7 @@ impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
 	}
 }
 
-impl pallet_unq_scheduler::Config for Runtime {
+impl pallet_unique_scheduler::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
 	type Currency = Balances;
@@ -1156,7 +1156,7 @@ construct_runtime!(
 		// Unique Pallets
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
 		Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
-		Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
+		Scheduler: pallet_unique_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 		// free = 63
 		Charging: pallet_charge_transaction::{Pallet, Call, Storage } = 64,
 		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
