@@ -935,8 +935,7 @@ export interface PalletCommonError extends Enum {
   readonly isAddressIsZero: boolean;
   readonly isUnsupportedOperation: boolean;
   readonly isNotSufficientFounds: boolean;
-  readonly isNestingIsDisabled: boolean;
-  readonly isOnlyOwnerAllowedToNest: boolean;
+  readonly isUserIsNotAllowedToNest: boolean;
   readonly isSourceCollectionIsNotAllowedToNest: boolean;
   readonly isCollectionFieldSizeExceeded: boolean;
   readonly isNoSpaceForProperty: boolean;
@@ -946,7 +945,7 @@ export interface PalletCommonError extends Enum {
   readonly isEmptyPropertyKey: boolean;
   readonly isCollectionIsExternal: boolean;
   readonly isCollectionIsInternal: boolean;
-  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'NestingIsDisabled' | 'OnlyOwnerAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal';
+  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'UserIsNotAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal';
 }
 
 /** @name PalletCommonEvent */
@@ -1445,8 +1444,9 @@ export interface PalletStructureCall extends Null {}
 export interface PalletStructureError extends Enum {
   readonly isOuroborosDetected: boolean;
   readonly isDepthLimit: boolean;
+  readonly isBreadthLimit: boolean;
   readonly isTokenNotFound: boolean;
-  readonly type: 'OuroborosDetected' | 'DepthLimit' | 'TokenNotFound';
+  readonly type: 'OuroborosDetected' | 'DepthLimit' | 'BreadthLimit' | 'TokenNotFound';
 }
 
 /** @name PalletStructureEvent */
@@ -2348,7 +2348,7 @@ export interface UpDataStructsCollectionMode extends Enum {
 export interface UpDataStructsCollectionPermissions extends Struct {
   readonly access: Option<UpDataStructsAccessMode>;
   readonly mintMode: Option<bool>;
-  readonly nesting: Option<UpDataStructsNestingRule>;
+  readonly nesting: Option<UpDataStructsNestingPermissions>;
 }
 
 /** @name UpDataStructsCollectionStats */
@@ -2424,14 +2424,16 @@ export interface UpDataStructsCreateRefungibleExData extends Struct {
   readonly users: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>;
 }
 
-/** @name UpDataStructsNestingRule */
-export interface UpDataStructsNestingRule extends Enum {
-  readonly isDisabled: boolean;
-  readonly isOwner: boolean;
-  readonly isOwnerRestricted: boolean;
-  readonly asOwnerRestricted: BTreeSet<u32>;
-  readonly type: 'Disabled' | 'Owner' | 'OwnerRestricted';
+/** @name UpDataStructsNestingPermissions */
+export interface UpDataStructsNestingPermissions extends Struct {
+  readonly tokenOwner: bool;
+  readonly admin: bool;
+  readonly restricted: Option<UpDataStructsOwnerRestrictedSet>;
+  readonly permissive: bool;
 }
+
+/** @name UpDataStructsOwnerRestrictedSet */
+export interface UpDataStructsOwnerRestrictedSet extends BTreeSet<u32> {}
 
 /** @name UpDataStructsProperties */
 export interface UpDataStructsProperties extends Struct {

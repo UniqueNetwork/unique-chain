@@ -193,7 +193,7 @@ export function getGenericResult<T>(
     if (method === 'ExtrinsicSuccess') {
       success = true;
     } else if ((expectSection == section) && (expectMethod == method)) {
-      successData = extractAction!(data);
+      successData = extractAction!(data as any);
     }
   });
 
@@ -547,7 +547,7 @@ export async function setCollectionLimitsExpectSuccess(sender: IKeyringPair, col
   });
 }
 
-export const setCollectionPermissionsExpectSuccess = async (sender: IKeyringPair, collectionId: number, permissions: {mintMode?: boolean, access?: 'Normal' | 'AllowList', nesting?: 'Disabled' | 'Owner' | {OwnerRestricted: number[]}}) => {
+export const setCollectionPermissionsExpectSuccess = async (sender: IKeyringPair, collectionId: number, permissions: any) => {
   await usingApi(async(api) => {
     const tx = api.tx.unique.setCollectionPermissions(collectionId, permissions);
     const events = await submitTransactionAsync(sender, tx);

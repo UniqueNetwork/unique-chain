@@ -22,7 +22,7 @@ use evm_coder::{
 pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
-use up_data_structs::{Property, SponsoringRateLimit, NestingRule, OwnerRestrictedSet, AccessMode};
+use up_data_structs::{Property, SponsoringRateLimit, OwnerRestrictedSet, AccessMode};
 use alloc::format;
 
 use crate::{Pallet, CollectionHandle, Config, CollectionProperties};
@@ -215,12 +215,21 @@ impl<T: Config> CollectionHandle<T>
 		let caller = T::CrossAccountId::from_eth(caller);
 		self.check_is_owner_or_admin(&caller)
 			.map_err(dispatch_to_evm::<T>)?;
-		self.collection.permissions.nesting = Some(match enable {
-			false => NestingRule::Disabled,
-			true => NestingRule::Owner,
-		});
-		save(self)?;
-		Ok(())
+
+		let mut permissions = self.collection.permissions.clone();
+		let mut nesting = permissions.nesting().clone();
+		nesting.token_owner = enable;
+		nesting.restricted = None;
+		permissions.nesting = Some(nesting);
+
+		self.collection.permissions = <Pallet<T>>::clamp_permissions(
+			self.collection.mode.clone(),
+			&self.collection.permissions,
+			permissions,
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+
+		save(self)
 	}
 
 	#[solidity(rename_selector = "setCollectionNesting")]
@@ -233,31 +242,41 @@ impl<T: Config> CollectionHandle<T>
 		if collections.is_empty() {
 			return Err("No addresses provided".into());
 		}
-		if collections.len() >= OwnerRestrictedSet::bound() {
-			return Err(Error::Revert(format!(
-				"Out of bound: {} >= {}",
-				collections.len(),
-				OwnerRestrictedSet::bound()
-			)));
-		}
 		let caller = T::CrossAccountId::from_eth(caller);
 		self.check_is_owner_or_admin(&caller)
 			.map_err(dispatch_to_evm::<T>)?;
-		self.collection.permissions.nesting = Some(match enable {
-			false => NestingRule::Disabled,
+
+		let mut permissions = self.collection.permissions.clone();
+		match enable {
+			false => {
+				let mut nesting = permissions.nesting().clone();
+				nesting.token_owner = false;
+				nesting.restricted = None;
+				permissions.nesting = Some(nesting);
+			}
 			true => {
 				let mut bv = OwnerRestrictedSet::new();
 				for i in collections {
 					bv.try_insert(crate::eth::map_eth_to_id(&i).ok_or(Error::Revert(
 						"Can't convert address into collection id".into(),
 					))?)
-					.map_err(|e| Error::Revert(format!("{:?}", e)))?;
+					.map_err(|_| "too many collections")?;
 				}
-				NestingRule::OwnerRestricted(bv)
+				let mut nesting = permissions.nesting().clone();
+				nesting.token_owner = true;
+				nesting.restricted = Some(bv);
+				permissions.nesting = Some(nesting);
 			}
-		});
-		save(self)?;
-		Ok(())
+		};
+
+		self.collection.permissions = <Pallet<T>>::clamp_permissions(
+			self.collection.mode.clone(),
+			&self.collection.permissions,
+			permissions,
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+
+		save(self)
 	}
 
 	fn set_collection_access(&mut self, caller: caller, mode: uint8) -> Result<void> {

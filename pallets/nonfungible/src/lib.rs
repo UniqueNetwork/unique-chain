@@ -27,8 +27,8 @@ use frame_support::{
 };
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
-	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
-	PropertyKey, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild,
+	mapping::TokenAddressMapping, budget::Budget, Property, PropertyPermission, PropertyKey,
+	PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
@@ -996,38 +996,29 @@ impl<T: Config> Pallet<T> {
 		under: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		fn ensure_sender_allowed<T: Config>(
-			collection: CollectionId,
-			token: TokenId,
-			for_nest: (CollectionId, TokenId),
-			sender: T::CrossAccountId,
-			budget: &dyn Budget,
-		) -> DispatchResult {
-			ensure!(
-				<PalletStructure<T>>::check_indirectly_owned(
-					sender,
-					collection,
-					token,
-					Some(for_nest),
-					budget
-				)?,
-				<CommonError<T>>::OnlyOwnerAllowedToNest,
-			);
-			Ok(())
+		let nesting = handle.permissions.nesting();
+		if nesting.permissive {
+			// Pass
+		} else if nesting.token_owner
+			&& <PalletStructure<T>>::check_indirectly_owned(
+				sender.clone(),
+				handle.id,
+				under,
+				Some(from),
+				nesting_budget,
+			)? {
+			// Pass
+		} else if nesting.admin && handle.is_owner_or_admin(&sender) {
+			// Pass
+		} else {
+			fail!(<CommonError<T>>::UserIsNotAllowedToNest);
 		}
-		match handle.permissions.nesting() {
-			NestingRule::Disabled => fail!(<CommonError<T>>::NestingIsDisabled),
-			NestingRule::Owner => {
-				ensure_sender_allowed::<T>(handle.id, under, from, sender, nesting_budget)?
-			}
-			NestingRule::OwnerRestricted(whitelist) => {
-				ensure!(
-					whitelist.contains(&from.0),
-					<CommonError<T>>::SourceCollectionIsNotAllowedToNest
-				);
-				ensure_sender_allowed::<T>(handle.id, under, from, sender, nesting_budget)?
-			}
-			NestingRule::Permissive => {}
+
+		if let Some(whitelist) = &nesting.restricted {
+			ensure!(
+				whitelist.contains(&from.0),
+				<CommonError<T>>::SourceCollectionIsNotAllowedToNest
+			);
 		}
 		Ok(())
 	}

@@ -200,7 +200,13 @@ pub mod pallet {
 					.try_into()
 					.map_err(|_| <CommonError<T>>::CollectionTokenPrefixLimitExceeded)?,
 				permissions: Some(CollectionPermissions {
-					nesting: Some(NestingRule::Owner),
+					nesting: Some(NestingPermissions {
+						token_owner: true,
+						admin: false,
+						restricted: None,
+
+						permissive: false,
+					}),
 					..Default::default()
 				}),
 				..Default::default()
@@ -600,7 +606,7 @@ pub mod pallet {
 				&budget,
 			)
 			.map_err(|err| {
-				if err == <CommonError<T>>::OnlyOwnerAllowedToNest.into() {
+				if err == <CommonError<T>>::UserIsNotAllowedToNest.into() {
 					<Error<T>>::CannotAcceptNonOwnedNft.into()
 				} else {
 					Self::map_unique_err_to_proxy(err)
