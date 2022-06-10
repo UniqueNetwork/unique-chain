@@ -53,7 +53,12 @@ impl<T: Config> CollectionHandle<T>
 where
 	T::AccountId: From<[u8; 32]>,
 {
-	fn set_collection_property(&mut self, caller: caller, key: string, value: bytes) -> Result<void> {
+	fn set_collection_property(
+		&mut self,
+		caller: caller,
+		key: string,
+		value: bytes,
+	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
 			.try_into()
@@ -271,19 +276,19 @@ where
 			permissions,
 		)
 		.map_err(dispatch_to_evm::<T>)?;
-		
+
 		save(self)
 	}
 
 	fn set_collection_access(&mut self, caller: caller, mode: uint8) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;
-		let permissions = CollectionPermissions{
+		let permissions = CollectionPermissions {
 			access: Some(match mode {
 				0 => AccessMode::Normal,
 				1 => AccessMode::AllowList,
 				_ => return Err("Not supported access mode".into()),
 			}),
-			.. Default::default()
+			..Default::default()
 		};
 		self.collection.permissions = <Pallet<T>>::clamp_permissions(
 			self.collection.mode.clone(),
@@ -311,7 +316,10 @@ where
 
 	fn set_collection_mint_mode(&mut self, caller: caller, mode: bool) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;
-		let permissions = CollectionPermissions { mint_mode: Some(mode), .. Default::default() };
+		let permissions = CollectionPermissions {
+			mint_mode: Some(mode),
+			..Default::default()
+		};
 		self.collection.permissions = <Pallet<T>>::clamp_permissions(
 			self.collection.mode.clone(),
 			&self.collection.permissions,
