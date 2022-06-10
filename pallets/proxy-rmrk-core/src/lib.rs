@@ -68,10 +68,6 @@ pub mod pallet {
 	pub type UniqueCollectionId<T: Config> =
 		StorageMap<_, Twox64Concat, RmrkCollectionId, CollectionId, ValueQuery>;
 
-	#[pallet::storage]
-	pub type RmrkInernalCollectionId<T: Config> =
-		StorageMap<_, Twox64Concat, CollectionId, RmrkCollectionId, ValueQuery>;
-
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
@@ -225,7 +221,12 @@ pub mod pallet {
 			let rmrk_collection_id = <CollectionIndex<T>>::get();
 
 			<UniqueCollectionId<T>>::insert(rmrk_collection_id, unique_collection_id);
-			<RmrkInernalCollectionId<T>>::insert(unique_collection_id, rmrk_collection_id);
+
+			<PalletCommon<T>>::set_scoped_collection_property(
+				unique_collection_id,
+				PropertyScope::Rmrk,
+				Self::rmrk_property(RmrkInternalCollectionId, &rmrk_collection_id)?
+			)?;
 
 			<CollectionIndex<T>>::mutate(|n| *n += 1);
 
@@ -1318,8 +1319,10 @@ impl<T: Config> Pallet<T> {
 	pub fn rmrk_collection_id(
 		unique_collection_id: CollectionId,
 	) -> Result<RmrkCollectionId, DispatchError> {
-		<RmrkInernalCollectionId<T>>::try_get(unique_collection_id)
-			.map_err(|_| <Error<T>>::CollectionUnknown.into())
+		Self::get_collection_property_decoded(
+			unique_collection_id,
+			RmrkInternalCollectionId
+		)
 	}
 
 	pub fn get_nft_collection(
