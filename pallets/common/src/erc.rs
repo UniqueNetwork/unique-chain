@@ -22,7 +22,9 @@ use evm_coder::{
 pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
-use up_data_structs::{Property, SponsoringRateLimit, OwnerRestrictedSet, AccessMode, CollectionPermissions};
+use up_data_structs::{
+	Property, SponsoringRateLimit, OwnerRestrictedSet, AccessMode, CollectionPermissions,
+};
 use alloc::format;
 
 use crate::{Pallet, CollectionHandle, Config, CollectionProperties};
