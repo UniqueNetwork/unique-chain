@@ -634,7 +634,6 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			rmrk_collection_id: RmrkCollectionId,
 			rmrk_nft_id: RmrkNftId,
-			max_burns: u32,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
@@ -650,7 +649,7 @@ pub mod pallet {
 				cross_sender,
 				collection_id,
 				nft_id,
-				max_burns,
+				NESTING_BUDGET,
 				<Error<T>>::CannotRejectNonOwnedNft,
 			)
 			.map_err(|err| Self::map_unique_err_to_proxy(err.error))?;
