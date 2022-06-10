@@ -65,6 +65,11 @@ describe('integration test: ext. setCollectionSponsor():', () => {
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await setCollectionSponsorExpectSuccess(collectionId, charlie.address);
   });
+  it('Collection admin add sponsor', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+    await setCollectionSponsorExpectSuccess(collectionId, charlie.address, '//Bob');
+  });
 });
 
 describe('(!negative test!) integration test: ext. setCollectionSponsor():', () => {
@@ -93,10 +98,5 @@ describe('(!negative test!) integration test: ext. setCollectionSponsor():', () 
     const collectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectSuccess(collectionId);
     await setCollectionSponsorExpectFailure(collectionId, bob.address);
-  });
-  it('(!negative test!) Collection admin add sponsor', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-    await setCollectionSponsorExpectFailure(collectionId, charlie.address, '//Bob');
   });
 });

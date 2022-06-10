@@ -13,7 +13,7 @@ import {getCreateCollectionResult, transferExpectSuccess} from '../util/helpers'
  * ```
  */
 async function buildComplexObjectGraph(api: ApiPromise, sender: IKeyringPair): Promise<number> {
-  const events = await executeTransaction(api, sender, api.tx.unique.createCollectionEx({mode: 'NFT', permissions: {nesting: 'Owner'}}));
+  const events = await executeTransaction(api, sender, api.tx.unique.createCollectionEx({mode: 'NFT', permissions: {nesting: {tokenOwner: true}}}));
   const {collectionId} = getCreateCollectionResult(events);
 
   await executeTransaction(api, sender, api.tx.unique.createMultipleItemsEx(collectionId, {NFT: Array(8).fill({owner: {Substrate: sender.address}})}));

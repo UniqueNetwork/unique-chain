@@ -1650,8 +1650,8 @@ declare module '@polkadot/types/lookup' {
     readonly users: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>;
   }
 
-  /** @name PalletUnqSchedulerCall (206) */
-  export interface PalletUnqSchedulerCall extends Enum {
+  /** @name PalletUniqueSchedulerCall (206) */
+  export interface PalletUniqueSchedulerCall extends Enum {
     readonly isScheduleNamed: boolean;
     readonly asScheduleNamed: {
       readonly id: U8aFixed;
@@ -2350,8 +2350,8 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'CollectionSponsorRemoved' | 'CollectionAdminAdded' | 'CollectionOwnedChanged' | 'CollectionSponsorSet' | 'SponsorshipConfirmed' | 'CollectionAdminRemoved' | 'AllowListAddressRemoved' | 'AllowListAddressAdded' | 'CollectionLimitSet' | 'CollectionPermissionSet';
   }
 
-  /** @name PalletUnqSchedulerEvent (283) */
-  export interface PalletUnqSchedulerEvent extends Enum {
+  /** @name PalletUniqueSchedulerEvent (283) */
+  export interface PalletUniqueSchedulerEvent extends Enum {
     readonly isScheduled: boolean;
     readonly asScheduled: {
       readonly when: u32;
@@ -2805,8 +2805,8 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'CollectionDecimalPointLimitExceeded' | 'ConfirmUnsetSponsorFail' | 'EmptyArgument';
   }
 
-  /** @name PalletUnqSchedulerScheduledV3 (344) */
-  export interface PalletUnqSchedulerScheduledV3 extends Struct {
+  /** @name PalletUniqueSchedulerScheduledV3 (344) */
+  export interface PalletUniqueSchedulerScheduledV3 extends Struct {
     readonly maybeId: Option<U8aFixed>;
     readonly priority: u8;
     readonly call: FrameSupportScheduleMaybeHashed;
@@ -2864,8 +2864,8 @@ declare module '@polkadot/types/lookup' {
   /** @name SpCoreVoid (350) */
   export type SpCoreVoid = Null;
 
-  /** @name PalletUnqSchedulerError (351) */
-  export interface PalletUnqSchedulerError extends Enum {
+  /** @name PalletUniqueSchedulerError (351) */
+  export interface PalletUniqueSchedulerError extends Enum {
     readonly isFailedToSchedule: boolean;
     readonly isNotFound: boolean;
     readonly isTargetBlockNumberInPast: boolean;

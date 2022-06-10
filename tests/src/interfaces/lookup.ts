@@ -1526,9 +1526,9 @@ export default {
     users: 'BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>'
   },
   /**
-   * Lookup206: pallet_unq_scheduler::pallet::Call<T>
+   * Lookup206: pallet_unique_scheduler::pallet::Call<T>
    **/
-  PalletUnqSchedulerCall: {
+  PalletUniqueSchedulerCall: {
     _enum: {
       schedule_named: {
         id: '[u8;16]',
@@ -2181,9 +2181,9 @@ export default {
     }
   },
   /**
-   * Lookup283: pallet_unq_scheduler::pallet::Event<T>
+   * Lookup283: pallet_unique_scheduler::pallet::Event<T>
    **/
-  PalletUnqSchedulerEvent: {
+  PalletUniqueSchedulerEvent: {
     _enum: {
       Scheduled: {
         when: 'u32',
@@ -2589,9 +2589,9 @@ export default {
     _enum: ['CollectionDecimalPointLimitExceeded', 'ConfirmUnsetSponsorFail', 'EmptyArgument']
   },
   /**
-   * Lookup344: pallet_unq_scheduler::ScheduledV3<frame_support::traits::schedule::MaybeHashed<opal_runtime::Call, primitive_types::H256>, BlockNumber, opal_runtime::OriginCaller, sp_core::crypto::AccountId32>
+   * Lookup344: pallet_unique_scheduler::ScheduledV3<frame_support::traits::schedule::MaybeHashed<opal_runtime::Call, primitive_types::H256>, BlockNumber, opal_runtime::OriginCaller, sp_core::crypto::AccountId32>
    **/
-  PalletUnqSchedulerScheduledV3: {
+  PalletUniqueSchedulerScheduledV3: {
     maybeId: 'Option<[u8;16]>',
     priority: 'u8',
     call: 'FrameSupportScheduleMaybeHashed',
@@ -2748,9 +2748,9 @@ export default {
    **/
   SpCoreVoid: 'Null',
   /**
-   * Lookup351: pallet_unq_scheduler::pallet::Error<T>
+   * Lookup351: pallet_unique_scheduler::pallet::Error<T>
    **/
-  PalletUnqSchedulerError: {
+  PalletUniqueSchedulerError: {
     _enum: ['FailedToSchedule', 'NotFound', 'TargetBlockNumberInPast', 'RescheduleNoChange']
   },
   /**

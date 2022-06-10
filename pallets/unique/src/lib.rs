@@ -491,7 +491,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_owner(&sender)?;
+			target_collection.check_is_owner_or_admin(&sender)?;
 			target_collection.check_is_internal()?;
 
 			target_collection.set_sponsor(new_sponsor.clone())?;
@@ -867,7 +867,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_internal()?;
-			target_collection.check_is_owner(&sender)?;
+			target_collection.check_is_owner_or_admin(&sender)?;
 			let old_limit = &target_collection.limits;
 
 			target_collection.limits = <PalletCommon<T>>::clamp_limits(target_collection.mode.clone(), &old_limit, new_limit)?;
@@ -889,7 +889,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_internal()?;
-			target_collection.check_is_owner(&sender)?;
+			target_collection.check_is_owner_or_admin(&sender)?;
 			let old_limit = &target_collection.permissions;
 
 			target_collection.permissions = <PalletCommon<T>>::clamp_permissions(target_collection.mode.clone(), &old_limit, new_limit)?;

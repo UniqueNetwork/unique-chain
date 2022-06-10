@@ -106,6 +106,58 @@ describe('Integration Test: Collection Properties', () => {
     });
   });
 
+  it('Check valid names for collection properties keys', async () => {
+    await usingApi(async api => {
+      const events = await executeTransaction(api, bob, api.tx.unique.createCollectionEx({mode: 'NFT'}));
+      const {collectionId} = getCreateCollectionResult(events);
+
+      // alpha symbols
+      await expect(executeTransaction(
+        api, 
+        bob, 
+        api.tx.unique.setCollectionProperties(collectionId, [{key: 'alpha'}]), 
+      )).to.not.be.rejected;
+
+      // numeric symbols
+      await expect(executeTransaction(
+        api, 
+        bob, 
+        api.tx.unique.setCollectionProperties(collectionId, [{key: '123'}]), 
+      )).to.not.be.rejected;
+
+      // underscore symbol
+      await expect(executeTransaction(
+        api, 
+        bob, 
+        api.tx.unique.setCollectionProperties(collectionId, [{key: 'black_hole'}]), 
+      )).to.not.be.rejected;
+
+      // dash symbol
+      await expect(executeTransaction(
+        api, 
+        bob, 
+        api.tx.unique.setCollectionProperties(collectionId, [{key: 'semi-automatic'}]), 
+      )).to.not.be.rejected;
+
+      // underscore symbol
+      await expect(executeTransaction(
+        api, 
+        bob, 
+        api.tx.unique.setCollectionProperties(collectionId, [{key: 'build.rs'}]), 
+      )).to.not.be.rejected;
+
+      const propertyKeys = ['alpha', '123', 'black_hole', 'semi-automatic', 'build.rs'];
+      const properties = (await api.rpc.unique.collectionProperties(collectionId, propertyKeys)).toHuman();
+      expect(properties).to.be.deep.equal([
+        {key: 'alpha', value: ''},
+        {key: '123', value: ''},
+        {key: 'black_hole', value: ''},
+        {key: 'semi-automatic', value: ''},
+        {key: 'build.rs', value: ''},
+      ]);
+    });
+  });
+
   it('Changes properties of a collection', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess();
@@ -241,7 +293,7 @@ describe('Negative Integration Test: Collection Properties', () => {
 
       const invalidProperties = [
         [{key: 'electron', value: 'negative'}, {key: 'string theory', value: 'understandable'}],
-        [{key: 'Mr.Sandman', value: 'Bring me a gene'}],
+        [{key: 'Mr/Sandman', value: 'Bring me a gene'}],
         [{key: 'déjà vu', value: 'hmm...'}],
       ];
 
