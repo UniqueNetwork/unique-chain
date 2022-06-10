@@ -233,7 +233,7 @@ describe('Sponsoring EVM contracts', () => {
     const ss58Format = (api.registry.getChainProperties())!.toJSON().ss58Format;
     expect(collectionSub.sponsorship.isUnconfirmed).to.be.true;
     expect(collectionSub.sponsorship.asUnconfirmed.toHuman()).to.be.eq(evmToAddress(sponsor, Number(ss58Format)));
-    await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('Caller is not set as sponsor');
+    await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
 
     await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsor});
     collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
@@ -302,7 +302,7 @@ describe('Sponsoring EVM contracts', () => {
     const ss58Format = (api.registry.getChainProperties())!.toJSON().ss58Format;
     expect(collectionSub.sponsorship.isUnconfirmed).to.be.true;
     expect(collectionSub.sponsorship.asUnconfirmed.toHuman()).to.be.eq(evmToAddress(sponsor, Number(ss58Format)));
-    await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('Caller is not set as sponsor');
+    await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
     const sponsorCollection = evmCollection(web3, sponsor, collectionIdAddress);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
     collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;

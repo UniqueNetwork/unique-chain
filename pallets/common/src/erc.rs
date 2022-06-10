@@ -105,7 +105,7 @@ where
 			.confirm_sponsorship(caller.as_sub())
 			.map_err(dispatch_to_evm::<T>)?
 		{
-			return Err("Caller is not set as sponsor".into());
+			return Err("caller is not set as sponsor".into());
 		}
 		save(self)
 	}
@@ -136,7 +136,7 @@ where
 			}
 			_ => {
 				return Err(Error::Revert(format!(
-					"Unknown integer limit \"{}\"",
+					"unknown integer limit \"{}\"",
 					limit
 				)))
 			}
@@ -163,7 +163,7 @@ where
 			}
 			_ => {
 				return Err(Error::Revert(format!(
-					"Unknown boolean limit \"{}\"",
+					"unknown boolean limit \"{}\"",
 					limit
 				)))
 			}
@@ -244,11 +244,11 @@ where
 		collections: Vec<address>,
 	) -> Result<void> {
 		if collections.is_empty() {
-			return Err("No addresses provided".into());
+			return Err("no addresses provided".into());
 		}
 		if collections.len() >= OwnerRestrictedSet::bound() {
 			return Err(Error::Revert(format!(
-				"Out of bound: {} >= {}",
+				"out of bound: {} >= {}",
 				collections.len(),
 				OwnerRestrictedSet::bound()
 			)));
@@ -261,7 +261,7 @@ where
 					let mut bv = OwnerRestrictedSet::new();
 					for i in collections {
 						bv.try_insert(crate::eth::map_eth_to_id(&i).ok_or_else(|| {
-							Error::Revert("Can't convert address into collection id".into())
+							Error::Revert("can't convert address into collection id".into())
 						})?)
 						.map_err(|e| Error::Revert(format!("{:?}", e)))?;
 					}
@@ -286,7 +286,7 @@ where
 			access: Some(match mode {
 				0 => AccessMode::Normal,
 				1 => AccessMode::AllowList,
-				_ => return Err("Not supported access mode".into()),
+				_ => return Err("not supported access mode".into()),
 			}),
 			..Default::default()
 		};
