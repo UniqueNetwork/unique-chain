@@ -148,6 +148,35 @@ impl NftBuilder {
 
 		Ok((root_nft_id, deepest_nft_id))
 	}
+
+	fn build_wide_tree<T: Config>(
+		&mut self,
+		owner: &T::AccountId,
+		width: u32,
+	) -> Result<RmrkNftId, DispatchError> {
+		self.build::<T>(owner)?;
+
+		let root_nft_id = self.current_nft_id;
+
+		let root_owner =
+			<RmrkAccountIdOrCollectionNftTuple<T::AccountId>>::CollectionAndNftTuple(
+				self.collection_id,
+				root_nft_id,
+			);
+
+		for _ in 0..width {
+			self.build::<T>(owner)?;
+
+			<Pallet<T>>::send(
+				RawOrigin::Signed(owner.clone()).into(),
+				self.collection_id,
+				self.current_nft_id,
+				root_owner.clone(),
+			)?;
+		} 
+
+		Ok(root_nft_id)
+	}
 }
 
 benchmarks! {
@@ -203,6 +232,23 @@ benchmarks! {
 		royalty_amount,
 		metadata,
 		transferable
+	)
+
+	burn_nft {
+		let b in 0..200;
+
+		let caller: T::AccountId = account("caller", 0, SEED);
+		create_max_collection::<T>(&caller)?;
+		let collection_id = 0;
+
+		let mut nft_builder = NftBuilder::new(collection_id);
+		let root_nft_id  = nft_builder.build_wide_tree::<T>(&caller, b)?;
+		let max_burns = b + 1;
+	}: _(
+		RawOrigin::Signed(caller),
+		collection_id,
+		root_nft_id,
+		max_burns
 	)
 
 	send {
