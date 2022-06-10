@@ -225,7 +225,8 @@ describe('Negative Integration Test: Internal Collections, External Ops', () => 
       await expect(executeTransaction(api, alice, txChangeOwner), 'changing collection issuer')
         .to.be.rejectedWith(/rmrkCore\.CollectionUnknown/);
 
-      const txBurnItem = api.tx.rmrkCore.burnNft(collectionId, nftId);
+      const maxBurns = 10;
+      const txBurnItem = api.tx.rmrkCore.burnNft(collectionId, nftId, maxBurns);
       await expect(executeTransaction(api, alice, txBurnItem), 'burning NFT').to.be.rejectedWith(/rmrkCore\.CollectionUnknown/);
     });
   });
