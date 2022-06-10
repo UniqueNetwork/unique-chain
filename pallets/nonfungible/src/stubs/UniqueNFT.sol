@@ -297,7 +297,40 @@ contract ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 	}
 }
 
-// Selector: 6aea9834
+// Selector: 780e9d63
+contract ERC721Enumerable is Dummy, ERC165 {
+	// Selector: tokenByIndex(uint256) 4f6ccce7
+	function tokenByIndex(uint256 index) public view returns (uint256) {
+		require(false, stub_error);
+		index;
+		dummy;
+		return 0;
+	}
+
+	// Not implemented
+	//
+	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
+	function tokenOfOwnerByIndex(address owner, uint256 index)
+		public
+		view
+		returns (uint256)
+	{
+		require(false, stub_error);
+		owner;
+		index;
+		dummy;
+		return 0;
+	}
+
+	// Selector: totalSupply() 18160ddd
+	function totalSupply() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+}
+
+// Selector: 7d9262e6
 contract Collection is Dummy, ERC165 {
 	// Selector: setCollectionProperty(string,bytes) 2f073f66
 	function setCollectionProperty(string memory key, bytes memory value)
@@ -366,6 +399,20 @@ contract Collection is Dummy, ERC165 {
 		return 0x0000000000000000000000000000000000000000;
 	}
 
+	// Selector: addCollectionAdminSubstrate(uint256) 5730062b
+	function addCollectionAdminSubstrate(uint256 newAdmin) public view {
+		require(false, stub_error);
+		newAdmin;
+		dummy;
+	}
+
+	// Selector: removeCollectionAdminSubstrate(uint256) 4048fcf9
+	function removeCollectionAdminSubstrate(uint256 newAdmin) public view {
+		require(false, stub_error);
+		newAdmin;
+		dummy;
+	}
+
 	// Selector: addCollectionAdmin(address) 92e462c7
 	function addCollectionAdmin(address newAdmin) public view {
 		require(false, stub_error);
@@ -423,39 +470,6 @@ contract Collection is Dummy, ERC165 {
 		require(false, stub_error);
 		mode;
 		dummy = 0;
-	}
-}
-
-// Selector: 780e9d63
-contract ERC721Enumerable is Dummy, ERC165 {
-	// Selector: tokenByIndex(uint256) 4f6ccce7
-	function tokenByIndex(uint256 index) public view returns (uint256) {
-		require(false, stub_error);
-		index;
-		dummy;
-		return 0;
-	}
-
-	// Not implemented
-	//
-	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
-	function tokenOfOwnerByIndex(address owner, uint256 index)
-		public
-		view
-		returns (uint256)
-	{
-		require(false, stub_error);
-		owner;
-		index;
-		dummy;
-		return 0;
-	}
-
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() public view returns (uint256) {
-		require(false, stub_error);
-		dummy;
-		return 0;
 	}
 }
 

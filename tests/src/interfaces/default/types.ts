@@ -1784,8 +1784,8 @@ export interface PalletUniqueRawEvent extends Enum {
   readonly type: 'CollectionSponsorRemoved' | 'CollectionAdminAdded' | 'CollectionOwnedChanged' | 'CollectionSponsorSet' | 'SponsorshipConfirmed' | 'CollectionAdminRemoved' | 'AllowListAddressRemoved' | 'AllowListAddressAdded' | 'CollectionLimitSet' | 'CollectionPermissionSet';
 }
 
-/** @name PalletUnqSchedulerCall */
-export interface PalletUnqSchedulerCall extends Enum {
+/** @name PalletUniqueSchedulerCall */
+export interface PalletUniqueSchedulerCall extends Enum {
   readonly isScheduleNamed: boolean;
   readonly asScheduleNamed: {
     readonly id: U8aFixed;
@@ -1809,8 +1809,8 @@ export interface PalletUnqSchedulerCall extends Enum {
   readonly type: 'ScheduleNamed' | 'CancelNamed' | 'ScheduleNamedAfter';
 }
 
-/** @name PalletUnqSchedulerError */
-export interface PalletUnqSchedulerError extends Enum {
+/** @name PalletUniqueSchedulerError */
+export interface PalletUniqueSchedulerError extends Enum {
   readonly isFailedToSchedule: boolean;
   readonly isNotFound: boolean;
   readonly isTargetBlockNumberInPast: boolean;
@@ -1818,8 +1818,8 @@ export interface PalletUnqSchedulerError extends Enum {
   readonly type: 'FailedToSchedule' | 'NotFound' | 'TargetBlockNumberInPast' | 'RescheduleNoChange';
 }
 
-/** @name PalletUnqSchedulerEvent */
-export interface PalletUnqSchedulerEvent extends Enum {
+/** @name PalletUniqueSchedulerEvent */
+export interface PalletUniqueSchedulerEvent extends Enum {
   readonly isScheduled: boolean;
   readonly asScheduled: {
     readonly when: u32;
@@ -1845,8 +1845,8 @@ export interface PalletUnqSchedulerEvent extends Enum {
   readonly type: 'Scheduled' | 'Canceled' | 'Dispatched' | 'CallLookupFailed';
 }
 
-/** @name PalletUnqSchedulerScheduledV3 */
-export interface PalletUnqSchedulerScheduledV3 extends Struct {
+/** @name PalletUniqueSchedulerScheduledV3 */
+export interface PalletUniqueSchedulerScheduledV3 extends Struct {
   readonly maybeId: Option<U8aFixed>;
   readonly priority: u8;
   readonly call: FrameSupportScheduleMaybeHashed;
