@@ -628,8 +628,8 @@ pub mod pallet {
 		/// - `origin`: sender of the transaction
 		/// - `rmrk_collection_id`: collection id of the nft to be accepted
 		/// - `rmrk_nft_id`: nft id of the nft to be accepted
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
+		#[pallet::weight(<SelfWeightOf<T>>::reject_nft())]
 		pub fn reject_nft(
 			origin: OriginFor<T>,
 			rmrk_collection_id: RmrkCollectionId,
