@@ -693,8 +693,6 @@ decl_module! {
 			dispatch_tx::<T, _>(collection_id, |d| d.create_multiple_items_ex(sender, data, &budget))
 		}
 
-		// TODO! transaction weight
-
 		/// Set transfers_enabled value for particular collection
 		///
 		/// # Permissions
