@@ -30,8 +30,8 @@ describe.skip('Integration Test removeFromContractAllowList', () => {
   });
 
   it('user is no longer allowlisted after removal', async () => {
-    await usingApi(async (api) => {
-      const [flipper, deployer] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [flipper, deployer] = await deployFlipper(api, privateKeyWrapper);
 
       await addToContractAllowListExpectSuccess(deployer, flipper.address.toString(), bob.address);
       await removeFromContractAllowListExpectSuccess(deployer, flipper.address.toString(), bob.address);
@@ -41,8 +41,8 @@ describe.skip('Integration Test removeFromContractAllowList', () => {
   });
 
   it('user can\'t execute contract after removal', async () => {
-    await usingApi(async (api) => {
-      const [flipper, deployer] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [flipper, deployer] = await deployFlipper(api, privateKeyWrapper);
       await toggleContractAllowlistExpectSuccess(deployer, flipper.address.toString(), true);
 
       await addToContractAllowListExpectSuccess(deployer, flipper.address.toString(), bob.address);
@@ -54,8 +54,8 @@ describe.skip('Integration Test removeFromContractAllowList', () => {
   });
 
   it('can be called twice', async () => {
-    await usingApi(async (api) => {
-      const [flipper, deployer] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [flipper, deployer] = await deployFlipper(api, privateKeyWrapper);
 
       await addToContractAllowListExpectSuccess(deployer, flipper.address.toString(), bob.address);
       await removeFromContractAllowListExpectSuccess(deployer, flipper.address.toString(), bob.address);
@@ -82,8 +82,8 @@ describe.skip('Negative Integration Test removeFromContractAllowList', () => {
   });
 
   it('fails when executed by non owner', async () => {
-    await usingApi(async (api) => {
-      const [flipper] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [flipper] = await deployFlipper(api, privateKeyWrapper);
 
       await removeFromContractAllowListExpectFailure(alice, flipper.address.toString(), bob.address);
     });

@@ -126,6 +126,14 @@ export interface CumulusPalletXcmEvent extends Enum {
   readonly type: 'InvalidFormat' | 'UnsupportedVersion' | 'ExecutedDownward';
 }
 
+/** @name CumulusPalletXcmOrigin */
+export interface CumulusPalletXcmOrigin extends Enum {
+  readonly isRelay: boolean;
+  readonly isSiblingParachain: boolean;
+  readonly asSiblingParachain: u32;
+  readonly type: 'Relay' | 'SiblingParachain';
+}
+
 /** @name CumulusPalletXcmpQueueCall */
 export interface CumulusPalletXcmpQueueCall extends Enum {
   readonly isServiceOverweight: boolean;
@@ -443,8 +451,33 @@ export interface FpRpcTransactionStatus extends Struct {
   readonly logsBloom: EthbloomBloom;
 }
 
+/** @name FrameSupportDispatchRawOrigin */
+export interface FrameSupportDispatchRawOrigin extends Enum {
+  readonly isRoot: boolean;
+  readonly isSigned: boolean;
+  readonly asSigned: AccountId32;
+  readonly isNone: boolean;
+  readonly type: 'Root' | 'Signed' | 'None';
+}
+
 /** @name FrameSupportPalletId */
 export interface FrameSupportPalletId extends U8aFixed {}
+
+/** @name FrameSupportScheduleLookupError */
+export interface FrameSupportScheduleLookupError extends Enum {
+  readonly isUnknown: boolean;
+  readonly isBadFormat: boolean;
+  readonly type: 'Unknown' | 'BadFormat';
+}
+
+/** @name FrameSupportScheduleMaybeHashed */
+export interface FrameSupportScheduleMaybeHashed extends Enum {
+  readonly isValue: boolean;
+  readonly asValue: Call;
+  readonly isHash: boolean;
+  readonly asHash: H256;
+  readonly type: 'Value' | 'Hash';
+}
 
 /** @name FrameSupportTokensMiscBalanceStatus */
 export interface FrameSupportTokensMiscBalanceStatus extends Enum {
@@ -652,6 +685,21 @@ export interface FrameSystemPhase extends Enum {
   readonly isFinalization: boolean;
   readonly isInitialization: boolean;
   readonly type: 'ApplyExtrinsic' | 'Finalization' | 'Initialization';
+}
+
+/** @name OpalRuntimeOriginCaller */
+export interface OpalRuntimeOriginCaller extends Enum {
+  readonly isVoid: boolean;
+  readonly asVoid: SpCoreVoid;
+  readonly isSystem: boolean;
+  readonly asSystem: FrameSupportDispatchRawOrigin;
+  readonly isPolkadotXcm: boolean;
+  readonly asPolkadotXcm: PalletXcmOrigin;
+  readonly isCumulusXcm: boolean;
+  readonly asCumulusXcm: CumulusPalletXcmOrigin;
+  readonly isEthereum: boolean;
+  readonly asEthereum: PalletEthereumRawOrigin;
+  readonly type: 'Void' | 'System' | 'PolkadotXcm' | 'CumulusXcm' | 'Ethereum';
 }
 
 /** @name OpalRuntimeRuntime */
@@ -887,8 +935,7 @@ export interface PalletCommonError extends Enum {
   readonly isAddressIsZero: boolean;
   readonly isUnsupportedOperation: boolean;
   readonly isNotSufficientFounds: boolean;
-  readonly isNestingIsDisabled: boolean;
-  readonly isOnlyOwnerAllowedToNest: boolean;
+  readonly isUserIsNotAllowedToNest: boolean;
   readonly isSourceCollectionIsNotAllowedToNest: boolean;
   readonly isCollectionFieldSizeExceeded: boolean;
   readonly isNoSpaceForProperty: boolean;
@@ -896,7 +943,9 @@ export interface PalletCommonError extends Enum {
   readonly isPropertyKeyIsTooLong: boolean;
   readonly isInvalidCharacterInPropertyKey: boolean;
   readonly isEmptyPropertyKey: boolean;
-  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'NestingIsDisabled' | 'OnlyOwnerAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey';
+  readonly isCollectionIsExternal: boolean;
+  readonly isCollectionIsInternal: boolean;
+  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'UserIsNotAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal';
 }
 
 /** @name PalletCommonEvent */
@@ -951,6 +1000,13 @@ export interface PalletEthereumEvent extends Enum {
 
 /** @name PalletEthereumFakeTransactionFinalizer */
 export interface PalletEthereumFakeTransactionFinalizer extends Null {}
+
+/** @name PalletEthereumRawOrigin */
+export interface PalletEthereumRawOrigin extends Enum {
+  readonly isEthereumTransaction: boolean;
+  readonly asEthereumTransaction: H160;
+  readonly type: 'EthereumTransaction';
+}
 
 /** @name PalletEvmAccountBasicCrossAccountIdRepr */
 export interface PalletEvmAccountBasicCrossAccountIdRepr extends Enum {
@@ -1129,6 +1185,258 @@ export interface PalletRefungibleItemData extends Struct {
   readonly constData: Bytes;
 }
 
+/** @name PalletRmrkCoreCall */
+export interface PalletRmrkCoreCall extends Enum {
+  readonly isCreateCollection: boolean;
+  readonly asCreateCollection: {
+    readonly metadata: Bytes;
+    readonly max: Option<u32>;
+    readonly symbol: Bytes;
+  } & Struct;
+  readonly isDestroyCollection: boolean;
+  readonly asDestroyCollection: {
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isChangeCollectionIssuer: boolean;
+  readonly asChangeCollectionIssuer: {
+    readonly collectionId: u32;
+    readonly newIssuer: MultiAddress;
+  } & Struct;
+  readonly isLockCollection: boolean;
+  readonly asLockCollection: {
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isMintNft: boolean;
+  readonly asMintNft: {
+    readonly owner: AccountId32;
+    readonly collectionId: u32;
+    readonly recipient: Option<AccountId32>;
+    readonly royaltyAmount: Option<Permill>;
+    readonly metadata: Bytes;
+    readonly transferable: bool;
+  } & Struct;
+  readonly isBurnNft: boolean;
+  readonly asBurnNft: {
+    readonly collectionId: u32;
+    readonly nftId: u32;
+  } & Struct;
+  readonly isSend: boolean;
+  readonly asSend: {
+    readonly rmrkCollectionId: u32;
+    readonly rmrkNftId: u32;
+    readonly newOwner: RmrkTraitsNftAccountIdOrCollectionNftTuple;
+  } & Struct;
+  readonly isAcceptNft: boolean;
+  readonly asAcceptNft: {
+    readonly rmrkCollectionId: u32;
+    readonly rmrkNftId: u32;
+    readonly newOwner: RmrkTraitsNftAccountIdOrCollectionNftTuple;
+  } & Struct;
+  readonly isRejectNft: boolean;
+  readonly asRejectNft: {
+    readonly rmrkCollectionId: u32;
+    readonly rmrkNftId: u32;
+  } & Struct;
+  readonly isAcceptResource: boolean;
+  readonly asAcceptResource: {
+    readonly rmrkCollectionId: u32;
+    readonly rmrkNftId: u32;
+    readonly rmrkResourceId: u32;
+  } & Struct;
+  readonly isAcceptResourceRemoval: boolean;
+  readonly asAcceptResourceRemoval: {
+    readonly rmrkCollectionId: u32;
+    readonly rmrkNftId: u32;
+    readonly rmrkResourceId: u32;
+  } & Struct;
+  readonly isSetProperty: boolean;
+  readonly asSetProperty: {
+    readonly rmrkCollectionId: Compact<u32>;
+    readonly maybeNftId: Option<u32>;
+    readonly key: Bytes;
+    readonly value: Bytes;
+  } & Struct;
+  readonly isSetPriority: boolean;
+  readonly asSetPriority: {
+    readonly rmrkCollectionId: u32;
+    readonly rmrkNftId: u32;
+    readonly priorities: Vec<u32>;
+  } & Struct;
+  readonly isAddBasicResource: boolean;
+  readonly asAddBasicResource: {
+    readonly rmrkCollectionId: u32;
+    readonly nftId: u32;
+    readonly resource: RmrkTraitsResourceBasicResource;
+  } & Struct;
+  readonly isAddComposableResource: boolean;
+  readonly asAddComposableResource: {
+    readonly rmrkCollectionId: u32;
+    readonly nftId: u32;
+    readonly resourceId: Bytes;
+    readonly resource: RmrkTraitsResourceComposableResource;
+  } & Struct;
+  readonly isAddSlotResource: boolean;
+  readonly asAddSlotResource: {
+    readonly rmrkCollectionId: u32;
+    readonly nftId: u32;
+    readonly resource: RmrkTraitsResourceSlotResource;
+  } & Struct;
+  readonly isRemoveResource: boolean;
+  readonly asRemoveResource: {
+    readonly rmrkCollectionId: u32;
+    readonly nftId: u32;
+    readonly resourceId: u32;
+  } & Struct;
+  readonly type: 'CreateCollection' | 'DestroyCollection' | 'ChangeCollectionIssuer' | 'LockCollection' | 'MintNft' | 'BurnNft' | 'Send' | 'AcceptNft' | 'RejectNft' | 'AcceptResource' | 'AcceptResourceRemoval' | 'SetProperty' | 'SetPriority' | 'AddBasicResource' | 'AddComposableResource' | 'AddSlotResource' | 'RemoveResource';
+}
+
+/** @name PalletRmrkCoreError */
+export interface PalletRmrkCoreError extends Enum {
+  readonly isCorruptedCollectionType: boolean;
+  readonly isNftTypeEncodeError: boolean;
+  readonly isRmrkPropertyKeyIsTooLong: boolean;
+  readonly isRmrkPropertyValueIsTooLong: boolean;
+  readonly isCollectionNotEmpty: boolean;
+  readonly isNoAvailableCollectionId: boolean;
+  readonly isNoAvailableNftId: boolean;
+  readonly isCollectionUnknown: boolean;
+  readonly isNoPermission: boolean;
+  readonly isNonTransferable: boolean;
+  readonly isCollectionFullOrLocked: boolean;
+  readonly isResourceDoesntExist: boolean;
+  readonly isCannotSendToDescendentOrSelf: boolean;
+  readonly isCannotAcceptNonOwnedNft: boolean;
+  readonly isCannotRejectNonOwnedNft: boolean;
+  readonly isResourceNotPending: boolean;
+  readonly type: 'CorruptedCollectionType' | 'NftTypeEncodeError' | 'RmrkPropertyKeyIsTooLong' | 'RmrkPropertyValueIsTooLong' | 'CollectionNotEmpty' | 'NoAvailableCollectionId' | 'NoAvailableNftId' | 'CollectionUnknown' | 'NoPermission' | 'NonTransferable' | 'CollectionFullOrLocked' | 'ResourceDoesntExist' | 'CannotSendToDescendentOrSelf' | 'CannotAcceptNonOwnedNft' | 'CannotRejectNonOwnedNft' | 'ResourceNotPending';
+}
+
+/** @name PalletRmrkCoreEvent */
+export interface PalletRmrkCoreEvent extends Enum {
+  readonly isCollectionCreated: boolean;
+  readonly asCollectionCreated: {
+    readonly issuer: AccountId32;
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isCollectionDestroyed: boolean;
+  readonly asCollectionDestroyed: {
+    readonly issuer: AccountId32;
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isIssuerChanged: boolean;
+  readonly asIssuerChanged: {
+    readonly oldIssuer: AccountId32;
+    readonly newIssuer: AccountId32;
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isCollectionLocked: boolean;
+  readonly asCollectionLocked: {
+    readonly issuer: AccountId32;
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isNftMinted: boolean;
+  readonly asNftMinted: {
+    readonly owner: AccountId32;
+    readonly collectionId: u32;
+    readonly nftId: u32;
+  } & Struct;
+  readonly isNftBurned: boolean;
+  readonly asNftBurned: {
+    readonly owner: AccountId32;
+    readonly nftId: u32;
+  } & Struct;
+  readonly isNftSent: boolean;
+  readonly asNftSent: {
+    readonly sender: AccountId32;
+    readonly recipient: RmrkTraitsNftAccountIdOrCollectionNftTuple;
+    readonly collectionId: u32;
+    readonly nftId: u32;
+    readonly approvalRequired: bool;
+  } & Struct;
+  readonly isNftAccepted: boolean;
+  readonly asNftAccepted: {
+    readonly sender: AccountId32;
+    readonly recipient: RmrkTraitsNftAccountIdOrCollectionNftTuple;
+    readonly collectionId: u32;
+    readonly nftId: u32;
+  } & Struct;
+  readonly isNftRejected: boolean;
+  readonly asNftRejected: {
+    readonly sender: AccountId32;
+    readonly collectionId: u32;
+    readonly nftId: u32;
+  } & Struct;
+  readonly isPropertySet: boolean;
+  readonly asPropertySet: {
+    readonly collectionId: u32;
+    readonly maybeNftId: Option<u32>;
+    readonly key: Bytes;
+    readonly value: Bytes;
+  } & Struct;
+  readonly isResourceAdded: boolean;
+  readonly asResourceAdded: {
+    readonly nftId: u32;
+    readonly resourceId: u32;
+  } & Struct;
+  readonly isResourceRemoval: boolean;
+  readonly asResourceRemoval: {
+    readonly nftId: u32;
+    readonly resourceId: u32;
+  } & Struct;
+  readonly isResourceAccepted: boolean;
+  readonly asResourceAccepted: {
+    readonly nftId: u32;
+    readonly resourceId: u32;
+  } & Struct;
+  readonly isResourceRemovalAccepted: boolean;
+  readonly asResourceRemovalAccepted: {
+    readonly nftId: u32;
+    readonly resourceId: u32;
+  } & Struct;
+  readonly isPrioritySet: boolean;
+  readonly asPrioritySet: {
+    readonly collectionId: u32;
+    readonly nftId: u32;
+  } & Struct;
+  readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'IssuerChanged' | 'CollectionLocked' | 'NftMinted' | 'NftBurned' | 'NftSent' | 'NftAccepted' | 'NftRejected' | 'PropertySet' | 'ResourceAdded' | 'ResourceRemoval' | 'ResourceAccepted' | 'ResourceRemovalAccepted' | 'PrioritySet';
+}
+
+/** @name PalletRmrkEquipCall */
+export interface PalletRmrkEquipCall extends Enum {
+  readonly isCreateBase: boolean;
+  readonly asCreateBase: {
+    readonly baseType: Bytes;
+    readonly symbol: Bytes;
+    readonly parts: Vec<RmrkTraitsPartPartType>;
+  } & Struct;
+  readonly isThemeAdd: boolean;
+  readonly asThemeAdd: {
+    readonly baseId: u32;
+    readonly theme: RmrkTraitsTheme;
+  } & Struct;
+  readonly type: 'CreateBase' | 'ThemeAdd';
+}
+
+/** @name PalletRmrkEquipError */
+export interface PalletRmrkEquipError extends Enum {
+  readonly isPermissionError: boolean;
+  readonly isNoAvailableBaseId: boolean;
+  readonly isNoAvailablePartId: boolean;
+  readonly isBaseDoesntExist: boolean;
+  readonly isNeedsDefaultThemeFirst: boolean;
+  readonly type: 'PermissionError' | 'NoAvailableBaseId' | 'NoAvailablePartId' | 'BaseDoesntExist' | 'NeedsDefaultThemeFirst';
+}
+
+/** @name PalletRmrkEquipEvent */
+export interface PalletRmrkEquipEvent extends Enum {
+  readonly isBaseCreated: boolean;
+  readonly asBaseCreated: {
+    readonly issuer: AccountId32;
+    readonly baseId: u32;
+  } & Struct;
+  readonly type: 'BaseCreated';
+}
+
 /** @name PalletStructureCall */
 export interface PalletStructureCall extends Null {}
 
@@ -1136,8 +1444,9 @@ export interface PalletStructureCall extends Null {}
 export interface PalletStructureError extends Enum {
   readonly isOuroborosDetected: boolean;
   readonly isDepthLimit: boolean;
+  readonly isBreadthLimit: boolean;
   readonly isTokenNotFound: boolean;
-  readonly type: 'OuroborosDetected' | 'DepthLimit' | 'TokenNotFound';
+  readonly type: 'OuroborosDetected' | 'DepthLimit' | 'BreadthLimit' | 'TokenNotFound';
 }
 
 /** @name PalletStructureEvent */
@@ -1230,7 +1539,11 @@ export interface PalletTreasuryCall extends Enum {
   readonly asApproveProposal: {
     readonly proposalId: Compact<u32>;
   } & Struct;
-  readonly type: 'ProposeSpend' | 'RejectProposal' | 'ApproveProposal';
+  readonly isRemoveApproval: boolean;
+  readonly asRemoveApproval: {
+    readonly proposalId: Compact<u32>;
+  } & Struct;
+  readonly type: 'ProposeSpend' | 'RejectProposal' | 'ApproveProposal' | 'RemoveApproval';
 }
 
 /** @name PalletTreasuryError */
@@ -1238,7 +1551,8 @@ export interface PalletTreasuryError extends Enum {
   readonly isInsufficientProposersBalance: boolean;
   readonly isInvalidIndex: boolean;
   readonly isTooManyApprovals: boolean;
-  readonly type: 'InsufficientProposersBalance' | 'InvalidIndex' | 'TooManyApprovals';
+  readonly isProposalNotApproved: boolean;
+  readonly type: 'InsufficientProposersBalance' | 'InvalidIndex' | 'TooManyApprovals' | 'ProposalNotApproved';
 }
 
 /** @name PalletTreasuryEvent */
@@ -1470,6 +1784,76 @@ export interface PalletUniqueRawEvent extends Enum {
   readonly type: 'CollectionSponsorRemoved' | 'CollectionAdminAdded' | 'CollectionOwnedChanged' | 'CollectionSponsorSet' | 'SponsorshipConfirmed' | 'CollectionAdminRemoved' | 'AllowListAddressRemoved' | 'AllowListAddressAdded' | 'CollectionLimitSet' | 'CollectionPermissionSet';
 }
 
+/** @name PalletUnqSchedulerCall */
+export interface PalletUnqSchedulerCall extends Enum {
+  readonly isScheduleNamed: boolean;
+  readonly asScheduleNamed: {
+    readonly id: U8aFixed;
+    readonly when: u32;
+    readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
+    readonly priority: u8;
+    readonly call: FrameSupportScheduleMaybeHashed;
+  } & Struct;
+  readonly isCancelNamed: boolean;
+  readonly asCancelNamed: {
+    readonly id: U8aFixed;
+  } & Struct;
+  readonly isScheduleNamedAfter: boolean;
+  readonly asScheduleNamedAfter: {
+    readonly id: U8aFixed;
+    readonly after: u32;
+    readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
+    readonly priority: u8;
+    readonly call: FrameSupportScheduleMaybeHashed;
+  } & Struct;
+  readonly type: 'ScheduleNamed' | 'CancelNamed' | 'ScheduleNamedAfter';
+}
+
+/** @name PalletUnqSchedulerError */
+export interface PalletUnqSchedulerError extends Enum {
+  readonly isFailedToSchedule: boolean;
+  readonly isNotFound: boolean;
+  readonly isTargetBlockNumberInPast: boolean;
+  readonly isRescheduleNoChange: boolean;
+  readonly type: 'FailedToSchedule' | 'NotFound' | 'TargetBlockNumberInPast' | 'RescheduleNoChange';
+}
+
+/** @name PalletUnqSchedulerEvent */
+export interface PalletUnqSchedulerEvent extends Enum {
+  readonly isScheduled: boolean;
+  readonly asScheduled: {
+    readonly when: u32;
+    readonly index: u32;
+  } & Struct;
+  readonly isCanceled: boolean;
+  readonly asCanceled: {
+    readonly when: u32;
+    readonly index: u32;
+  } & Struct;
+  readonly isDispatched: boolean;
+  readonly asDispatched: {
+    readonly task: ITuple<[u32, u32]>;
+    readonly id: Option<U8aFixed>;
+    readonly result: Result<Null, SpRuntimeDispatchError>;
+  } & Struct;
+  readonly isCallLookupFailed: boolean;
+  readonly asCallLookupFailed: {
+    readonly task: ITuple<[u32, u32]>;
+    readonly id: Option<U8aFixed>;
+    readonly error: FrameSupportScheduleLookupError;
+  } & Struct;
+  readonly type: 'Scheduled' | 'Canceled' | 'Dispatched' | 'CallLookupFailed';
+}
+
+/** @name PalletUnqSchedulerScheduledV3 */
+export interface PalletUnqSchedulerScheduledV3 extends Struct {
+  readonly maybeId: Option<U8aFixed>;
+  readonly priority: u8;
+  readonly call: FrameSupportScheduleMaybeHashed;
+  readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
+  readonly origin: OpalRuntimeOriginCaller;
+}
+
 /** @name PalletXcmCall */
 export interface PalletXcmCall extends Enum {
   readonly isSend: boolean;
@@ -1587,8 +1971,17 @@ export interface PalletXcmEvent extends Enum {
   readonly type: 'Attempted' | 'Sent' | 'UnexpectedResponse' | 'ResponseReady' | 'Notified' | 'NotifyOverweight' | 'NotifyDispatchError' | 'NotifyDecodeFailed' | 'InvalidResponder' | 'InvalidResponderVersion' | 'ResponseTaken' | 'AssetsTrapped' | 'VersionChangeNotified' | 'SupportedVersionChanged' | 'NotifyTargetSendFail' | 'NotifyTargetMigrationFail';
 }
 
+/** @name PalletXcmOrigin */
+export interface PalletXcmOrigin extends Enum {
+  readonly isXcm: boolean;
+  readonly asXcm: XcmV1MultiLocation;
+  readonly isResponse: boolean;
+  readonly asResponse: XcmV1MultiLocation;
+  readonly type: 'Xcm' | 'Response';
+}
+
 /** @name PhantomTypeUpDataStructs */
-export interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, UpDataStructsRmrkCollectionInfo, UpDataStructsRmrkNftInfo, UpDataStructsRmrkResourceInfo, UpDataStructsRmrkPropertyInfo, UpDataStructsRmrkBaseInfo, UpDataStructsRmrkPartType, UpDataStructsRmrkTheme, UpDataStructsRmrkNftChild]>> {}
+export interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, RmrkTraitsCollectionCollectionInfo, RmrkTraitsNftNftInfo, RmrkTraitsResourceResourceInfo, RmrkTraitsPropertyPropertyInfo, RmrkTraitsBaseBaseInfo, RmrkTraitsPartPartType, RmrkTraitsTheme, RmrkTraitsNftNftChild]>> {}
 
 /** @name PolkadotCorePrimitivesInboundDownwardMessage */
 export interface PolkadotCorePrimitivesInboundDownwardMessage extends Struct {
@@ -1653,6 +2046,151 @@ export interface PolkadotPrimitivesV2UpgradeRestriction extends Enum {
   readonly type: 'Present';
 }
 
+/** @name RmrkTraitsBaseBaseInfo */
+export interface RmrkTraitsBaseBaseInfo extends Struct {
+  readonly issuer: AccountId32;
+  readonly baseType: Bytes;
+  readonly symbol: Bytes;
+}
+
+/** @name RmrkTraitsCollectionCollectionInfo */
+export interface RmrkTraitsCollectionCollectionInfo extends Struct {
+  readonly issuer: AccountId32;
+  readonly metadata: Bytes;
+  readonly max: Option<u32>;
+  readonly symbol: Bytes;
+  readonly nftsCount: u32;
+}
+
+/** @name RmrkTraitsNftAccountIdOrCollectionNftTuple */
+export interface RmrkTraitsNftAccountIdOrCollectionNftTuple extends Enum {
+  readonly isAccountId: boolean;
+  readonly asAccountId: AccountId32;
+  readonly isCollectionAndNftTuple: boolean;
+  readonly asCollectionAndNftTuple: ITuple<[u32, u32]>;
+  readonly type: 'AccountId' | 'CollectionAndNftTuple';
+}
+
+/** @name RmrkTraitsNftNftChild */
+export interface RmrkTraitsNftNftChild extends Struct {
+  readonly collectionId: u32;
+  readonly nftId: u32;
+}
+
+/** @name RmrkTraitsNftNftInfo */
+export interface RmrkTraitsNftNftInfo extends Struct {
+  readonly owner: RmrkTraitsNftAccountIdOrCollectionNftTuple;
+  readonly royalty: Option<RmrkTraitsNftRoyaltyInfo>;
+  readonly metadata: Bytes;
+  readonly equipped: bool;
+  readonly pending: bool;
+}
+
+/** @name RmrkTraitsNftRoyaltyInfo */
+export interface RmrkTraitsNftRoyaltyInfo extends Struct {
+  readonly recipient: AccountId32;
+  readonly amount: Permill;
+}
+
+/** @name RmrkTraitsPartEquippableList */
+export interface RmrkTraitsPartEquippableList extends Enum {
+  readonly isAll: boolean;
+  readonly isEmpty: boolean;
+  readonly isCustom: boolean;
+  readonly asCustom: Vec<u32>;
+  readonly type: 'All' | 'Empty' | 'Custom';
+}
+
+/** @name RmrkTraitsPartFixedPart */
+export interface RmrkTraitsPartFixedPart extends Struct {
+  readonly id: u32;
+  readonly z: u32;
+  readonly src: Bytes;
+}
+
+/** @name RmrkTraitsPartPartType */
+export interface RmrkTraitsPartPartType extends Enum {
+  readonly isFixedPart: boolean;
+  readonly asFixedPart: RmrkTraitsPartFixedPart;
+  readonly isSlotPart: boolean;
+  readonly asSlotPart: RmrkTraitsPartSlotPart;
+  readonly type: 'FixedPart' | 'SlotPart';
+}
+
+/** @name RmrkTraitsPartSlotPart */
+export interface RmrkTraitsPartSlotPart extends Struct {
+  readonly id: u32;
+  readonly equippable: RmrkTraitsPartEquippableList;
+  readonly src: Bytes;
+  readonly z: u32;
+}
+
+/** @name RmrkTraitsPropertyPropertyInfo */
+export interface RmrkTraitsPropertyPropertyInfo extends Struct {
+  readonly key: Bytes;
+  readonly value: Bytes;
+}
+
+/** @name RmrkTraitsResourceBasicResource */
+export interface RmrkTraitsResourceBasicResource extends Struct {
+  readonly src: Option<Bytes>;
+  readonly metadata: Option<Bytes>;
+  readonly license: Option<Bytes>;
+  readonly thumb: Option<Bytes>;
+}
+
+/** @name RmrkTraitsResourceComposableResource */
+export interface RmrkTraitsResourceComposableResource extends Struct {
+  readonly parts: Vec<u32>;
+  readonly base: u32;
+  readonly src: Option<Bytes>;
+  readonly metadata: Option<Bytes>;
+  readonly license: Option<Bytes>;
+  readonly thumb: Option<Bytes>;
+}
+
+/** @name RmrkTraitsResourceResourceInfo */
+export interface RmrkTraitsResourceResourceInfo extends Struct {
+  readonly id: u32;
+  readonly resource: RmrkTraitsResourceResourceTypes;
+  readonly pending: bool;
+  readonly pendingRemoval: bool;
+}
+
+/** @name RmrkTraitsResourceResourceTypes */
+export interface RmrkTraitsResourceResourceTypes extends Enum {
+  readonly isBasic: boolean;
+  readonly asBasic: RmrkTraitsResourceBasicResource;
+  readonly isComposable: boolean;
+  readonly asComposable: RmrkTraitsResourceComposableResource;
+  readonly isSlot: boolean;
+  readonly asSlot: RmrkTraitsResourceSlotResource;
+  readonly type: 'Basic' | 'Composable' | 'Slot';
+}
+
+/** @name RmrkTraitsResourceSlotResource */
+export interface RmrkTraitsResourceSlotResource extends Struct {
+  readonly base: u32;
+  readonly src: Option<Bytes>;
+  readonly metadata: Option<Bytes>;
+  readonly slot: u32;
+  readonly license: Option<Bytes>;
+  readonly thumb: Option<Bytes>;
+}
+
+/** @name RmrkTraitsTheme */
+export interface RmrkTraitsTheme extends Struct {
+  readonly name: Bytes;
+  readonly properties: Vec<RmrkTraitsThemeThemeProperty>;
+  readonly inherit: bool;
+}
+
+/** @name RmrkTraitsThemeThemeProperty */
+export interface RmrkTraitsThemeThemeProperty extends Struct {
+  readonly key: Bytes;
+  readonly value: Bytes;
+}
+
 /** @name SpCoreEcdsaSignature */
 export interface SpCoreEcdsaSignature extends U8aFixed {}
 
@@ -1661,6 +2199,9 @@ export interface SpCoreEd25519Signature extends U8aFixed {}
 
 /** @name SpCoreSr25519Signature */
 export interface SpCoreSr25519Signature extends U8aFixed {}
+
+/** @name SpCoreVoid */
+export interface SpCoreVoid extends Null {}
 
 /** @name SpRuntimeArithmeticError */
 export interface SpRuntimeArithmeticError extends Enum {
@@ -1778,6 +2319,7 @@ export interface UpDataStructsCollection extends Struct {
   readonly sponsorship: UpDataStructsSponsorshipState;
   readonly limits: UpDataStructsCollectionLimits;
   readonly permissions: UpDataStructsCollectionPermissions;
+  readonly externalCollection: bool;
 }
 
 /** @name UpDataStructsCollectionLimits */
@@ -1806,7 +2348,7 @@ export interface UpDataStructsCollectionMode extends Enum {
 export interface UpDataStructsCollectionPermissions extends Struct {
   readonly access: Option<UpDataStructsAccessMode>;
   readonly mintMode: Option<bool>;
-  readonly nesting: Option<UpDataStructsNestingRule>;
+  readonly nesting: Option<UpDataStructsNestingPermissions>;
 }
 
 /** @name UpDataStructsCollectionStats */
@@ -1882,14 +2424,16 @@ export interface UpDataStructsCreateRefungibleExData extends Struct {
   readonly users: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>;
 }
 
-/** @name UpDataStructsNestingRule */
-export interface UpDataStructsNestingRule extends Enum {
-  readonly isDisabled: boolean;
-  readonly isOwner: boolean;
-  readonly isOwnerRestricted: boolean;
-  readonly asOwnerRestricted: BTreeSet<u32>;
-  readonly type: 'Disabled' | 'Owner' | 'OwnerRestricted';
+/** @name UpDataStructsNestingPermissions */
+export interface UpDataStructsNestingPermissions extends Struct {
+  readonly tokenOwner: bool;
+  readonly admin: bool;
+  readonly restricted: Option<UpDataStructsOwnerRestrictedSet>;
+  readonly permissive: bool;
 }
+
+/** @name UpDataStructsOwnerRestrictedSet */
+export interface UpDataStructsOwnerRestrictedSet extends BTreeSet<u32> {}
 
 /** @name UpDataStructsProperties */
 export interface UpDataStructsProperties extends Struct {
@@ -1923,151 +2467,6 @@ export interface UpDataStructsPropertyPermission extends Struct {
   readonly tokenOwner: bool;
 }
 
-/** @name UpDataStructsRmrkAccountIdOrCollectionNftTuple */
-export interface UpDataStructsRmrkAccountIdOrCollectionNftTuple extends Enum {
-  readonly isAccountId: boolean;
-  readonly asAccountId: AccountId32;
-  readonly isCollectionAndNftTuple: boolean;
-  readonly asCollectionAndNftTuple: ITuple<[u32, u32]>;
-  readonly type: 'AccountId' | 'CollectionAndNftTuple';
-}
-
-/** @name UpDataStructsRmrkBaseInfo */
-export interface UpDataStructsRmrkBaseInfo extends Struct {
-  readonly issuer: AccountId32;
-  readonly baseType: Bytes;
-  readonly symbol: Bytes;
-}
-
-/** @name UpDataStructsRmrkBasicResource */
-export interface UpDataStructsRmrkBasicResource extends Struct {
-  readonly src: Option<Bytes>;
-  readonly metadata: Option<Bytes>;
-  readonly license: Option<Bytes>;
-  readonly thumb: Option<Bytes>;
-}
-
-/** @name UpDataStructsRmrkCollectionInfo */
-export interface UpDataStructsRmrkCollectionInfo extends Struct {
-  readonly issuer: AccountId32;
-  readonly metadata: Bytes;
-  readonly max: Option<u32>;
-  readonly symbol: Bytes;
-  readonly nftsCount: u32;
-}
-
-/** @name UpDataStructsRmrkComposableResource */
-export interface UpDataStructsRmrkComposableResource extends Struct {
-  readonly parts: Vec<u32>;
-  readonly base: u32;
-  readonly src: Option<Bytes>;
-  readonly metadata: Option<Bytes>;
-  readonly license: Option<Bytes>;
-  readonly thumb: Option<Bytes>;
-}
-
-/** @name UpDataStructsRmrkEquippableList */
-export interface UpDataStructsRmrkEquippableList extends Enum {
-  readonly isAll: boolean;
-  readonly isEmpty: boolean;
-  readonly isCustom: boolean;
-  readonly asCustom: Vec<u32>;
-  readonly type: 'All' | 'Empty' | 'Custom';
-}
-
-/** @name UpDataStructsRmrkFixedPart */
-export interface UpDataStructsRmrkFixedPart extends Struct {
-  readonly id: u32;
-  readonly z: u32;
-  readonly src: Bytes;
-}
-
-/** @name UpDataStructsRmrkNftChild */
-export interface UpDataStructsRmrkNftChild extends Struct {
-  readonly collectionId: u32;
-  readonly nftId: u32;
-}
-
-/** @name UpDataStructsRmrkNftInfo */
-export interface UpDataStructsRmrkNftInfo extends Struct {
-  readonly owner: UpDataStructsRmrkAccountIdOrCollectionNftTuple;
-  readonly royalty: Option<UpDataStructsRmrkRoyaltyInfo>;
-  readonly metadata: Bytes;
-  readonly equipped: bool;
-  readonly pending: bool;
-}
-
-/** @name UpDataStructsRmrkPartType */
-export interface UpDataStructsRmrkPartType extends Enum {
-  readonly isFixedPart: boolean;
-  readonly asFixedPart: UpDataStructsRmrkFixedPart;
-  readonly isSlotPart: boolean;
-  readonly asSlotPart: UpDataStructsRmrkSlotPart;
-  readonly type: 'FixedPart' | 'SlotPart';
-}
-
-/** @name UpDataStructsRmrkPropertyInfo */
-export interface UpDataStructsRmrkPropertyInfo extends Struct {
-  readonly key: Bytes;
-  readonly value: Bytes;
-}
-
-/** @name UpDataStructsRmrkResourceInfo */
-export interface UpDataStructsRmrkResourceInfo extends Struct {
-  readonly id: Bytes;
-  readonly resource: UpDataStructsRmrkResourceTypes;
-  readonly pending: bool;
-  readonly pendingRemoval: bool;
-}
-
-/** @name UpDataStructsRmrkResourceTypes */
-export interface UpDataStructsRmrkResourceTypes extends Enum {
-  readonly isBasic: boolean;
-  readonly asBasic: UpDataStructsRmrkBasicResource;
-  readonly isComposable: boolean;
-  readonly asComposable: UpDataStructsRmrkComposableResource;
-  readonly isSlot: boolean;
-  readonly asSlot: UpDataStructsRmrkSlotResource;
-  readonly type: 'Basic' | 'Composable' | 'Slot';
-}
-
-/** @name UpDataStructsRmrkRoyaltyInfo */
-export interface UpDataStructsRmrkRoyaltyInfo extends Struct {
-  readonly recipient: AccountId32;
-  readonly amount: Permill;
-}
-
-/** @name UpDataStructsRmrkSlotPart */
-export interface UpDataStructsRmrkSlotPart extends Struct {
-  readonly id: u32;
-  readonly equippable: UpDataStructsRmrkEquippableList;
-  readonly src: Bytes;
-  readonly z: u32;
-}
-
-/** @name UpDataStructsRmrkSlotResource */
-export interface UpDataStructsRmrkSlotResource extends Struct {
-  readonly base: u32;
-  readonly src: Option<Bytes>;
-  readonly metadata: Option<Bytes>;
-  readonly slot: u32;
-  readonly license: Option<Bytes>;
-  readonly thumb: Option<Bytes>;
-}
-
-/** @name UpDataStructsRmrkTheme */
-export interface UpDataStructsRmrkTheme extends Struct {
-  readonly name: Bytes;
-  readonly properties: Vec<UpDataStructsRmrkThemeProperty>;
-  readonly inherit: bool;
-}
-
-/** @name UpDataStructsRmrkThemeProperty */
-export interface UpDataStructsRmrkThemeProperty extends Struct {
-  readonly key: Bytes;
-  readonly value: Bytes;
-}
-
 /** @name UpDataStructsRpcCollection */
 export interface UpDataStructsRpcCollection extends Struct {
   readonly owner: AccountId32;
@@ -2080,6 +2479,7 @@ export interface UpDataStructsRpcCollection extends Struct {
   readonly permissions: UpDataStructsCollectionPermissions;
   readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
   readonly properties: Vec<UpDataStructsProperty>;
+  readonly readOnly: bool;
 }
 
 /** @name UpDataStructsSponsoringRateLimit */

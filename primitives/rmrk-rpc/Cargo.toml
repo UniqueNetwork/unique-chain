@@ -11,7 +11,7 @@ sp-std = { default-features = false, git = 'https://github.com/paritytech/substr
 sp-api = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.22' }
 sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.22' }
 serde = { version = "1.0.130", default-features = false, features = ["derive"] }
-up-data-structs = { default-features = false, path = '../data-structs' }
+rmrk-traits = { default-features = false, path = "../rmrk-traits" }
 
 [features]
 default = ["std"]
@@ -22,5 +22,5 @@ std = [
 	"sp-api/std",
 	"sp-runtime/std",
 	"serde/std",
-	"up-data-structs/std",
+	"rmrk-traits/std",
 ]

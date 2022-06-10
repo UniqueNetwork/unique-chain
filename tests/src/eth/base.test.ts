@@ -32,16 +32,16 @@ import {Contract} from 'web3-eth-contract';
 import Web3 from 'web3';
 
 describe('Contract calls', () => {
-  itWeb3('Call of simple contract fee is less than 0.2 UNQ', async ({web3, api}) => {
-    const deployer = await createEthAccountWithBalance(api, web3);
+  itWeb3('Call of simple contract fee is less than 0.2 UNQ', async ({web3, api, privateKeyWrapper}) => {
+    const deployer = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const flipper = await deployFlipper(web3, deployer);
 
     const cost = await recordEthFee(api, deployer, () => flipper.methods.flip().send({from: deployer}));
     expect(cost < BigInt(0.2 * Number(UNIQUE))).to.be.true;
   });
 
-  itWeb3('Balance transfer fee is less than 0.2 UNQ', async ({web3, api}) => {
-    const userA = await createEthAccountWithBalance(api, web3);
+  itWeb3('Balance transfer fee is less than 0.2 UNQ', async ({web3, api, privateKeyWrapper}) => {
+    const userA = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const userB = createEthAccount(web3);
 
     const cost = await recordEthFee(api, userA, () => web3.eth.sendTransaction({from: userA, to: userB, value: '1000000', ...GAS_ARGS}));
@@ -50,7 +50,7 @@ describe('Contract calls', () => {
   });
 
   itWeb3('NFT transfer is close to 0.15 UNQ', async ({web3, api, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3);
+    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const receiver = createEthAccount(web3);
 
     const alice = privateKeyWrapper('//Alice');

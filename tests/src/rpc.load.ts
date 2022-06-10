@@ -54,13 +54,12 @@ function deployContract(alice: IKeyringPair, blueprint: Blueprint) : Promise<any
   });
 }
 
-async function prepareDeployer(api: ApiPromise) {
+async function prepareDeployer(api: ApiPromise, privateKeyWrapper: ((account: string) => IKeyringPair)) {
   // Find unused address
-  const deployer = await findUnusedAddress(api);
+  const deployer = await findUnusedAddress(api, privateKeyWrapper);
 
   // Transfer balance to it
-  const keyring = new Keyring({type: 'sr25519'});
-  const alice = keyring.addFromUri('//Alice');
+  const alice = privateKeyWrapper('//Alice');
   const amount = BigInt(endowment) + 10n**15n;
   const tx = api.tx.balances.transfer(deployer.address, amount);
   await submitTransactionAsync(alice, tx);
@@ -68,11 +67,11 @@ async function prepareDeployer(api: ApiPromise) {
   return deployer;
 }
 
-async function deployLoadTester(api: ApiPromise): Promise<[Contract, IKeyringPair]> {
+async function deployLoadTester(api: ApiPromise, privateKeyWrapper: ((account: string) => IKeyringPair)): Promise<[Contract, IKeyringPair]> {
   const metadata = JSON.parse(fs.readFileSync('./src/load_test_sc/metadata.json').toString('utf-8'));
   const abi = new Abi(metadata);
 
-  const deployer = await prepareDeployer(api);
+  const deployer = await prepareDeployer(api, privateKeyWrapper);
 
   const wasm = fs.readFileSync('./src/load_test_sc/loadtester.wasm');
 
@@ -123,7 +122,7 @@ describe('RPC Tests', () => {
     await usingApi(async (api, privateKeyWrapper) => {
 
       // Deploy smart contract
-      const [contract, deployer] = await deployLoadTester(api);
+      const [contract, deployer] = await deployLoadTester(api, privateKeyWrapper);
 
       // Fill smart contract up with data
       const bob = privateKeyWrapper('//Bob');

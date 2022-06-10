@@ -18,8 +18,8 @@ import {expect} from 'chai';
 import {contractHelpers, createEthAccountWithBalance, deployFlipper, itWeb3} from './util/helpers';
 
 describe('EVM allowlist', () => {
-  itWeb3('Contract allowlist can be toggled', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
+  itWeb3('Contract allowlist can be toggled', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const flipper = await deployFlipper(web3, owner);
 
     const helpers = contractHelpers(web3, owner);
@@ -36,10 +36,10 @@ describe('EVM allowlist', () => {
     expect(await helpers.methods.allowlistEnabled(flipper.options.address).call()).to.be.false;
   });
 
-  itWeb3('Non-allowlisted user can\'t call contract with allowlist enabled', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
+  itWeb3('Non-allowlisted user can\'t call contract with allowlist enabled', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const flipper = await deployFlipper(web3, owner);
-    const caller = await createEthAccountWithBalance(api, web3);
+    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
 
     const helpers = contractHelpers(web3, owner);
 

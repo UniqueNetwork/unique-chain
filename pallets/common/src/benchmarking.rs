@@ -20,7 +20,7 @@ use pallet_evm::account::CrossAccountId;
 use frame_benchmarking::{benchmarks, account};
 use up_data_structs::{
 	CollectionMode, CreateCollectionData, CollectionId, Property, PropertyKey, PropertyValue,
-	CollectionPermissions, NestingRule, MAX_COLLECTION_NAME_LENGTH,
+	CollectionPermissions, NestingPermissions, MAX_COLLECTION_NAME_LENGTH,
 	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, MAX_PROPERTIES_PER_ITEM,
 };
 use frame_support::{
@@ -94,7 +94,12 @@ pub fn create_collection_raw<T: Config, R>(
 			description,
 			token_prefix,
 			permissions: Some(CollectionPermissions {
-				nesting: Some(NestingRule::Permissive),
+				nesting: Some(NestingPermissions {
+					token_owner: false,
+					admin: false,
+					restricted: None,
+					permissive: true,
+				}),
 				..Default::default()
 			}),
 			..Default::default()
@@ -109,7 +114,7 @@ fn create_collection<T: Config>(
 	create_collection_raw(
 		owner,
 		CollectionMode::NFT,
-		|owner, data| <Pallet<T>>::init_collection(owner, data),
+		|owner, data| <Pallet<T>>::init_collection(owner, data, true),
 		|h| h,
 	)
 }

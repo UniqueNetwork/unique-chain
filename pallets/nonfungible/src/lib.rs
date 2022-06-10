@@ -27,8 +27,8 @@ use frame_support::{
 };
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
-	mapping::TokenAddressMapping, NestingRule, budget::Budget, Property, PropertyPermission,
-	PropertyKey, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild,
+	mapping::TokenAddressMapping, budget::Budget, Property, PropertyPermission, PropertyKey,
+	PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
@@ -304,8 +304,9 @@ impl<T: Config> Pallet<T> {
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
+		is_external: bool,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, data)
+		<PalletCommon<T>>::init_collection(owner, data, is_external)
 	}
 	pub fn destroy_collection(
 		collection: NonfungibleHandle<T>,
@@ -447,8 +448,15 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		property: Property,
+		is_token_create: bool,
 	) -> DispatchResult {
-		Self::check_token_change_permission(collection, sender, token_id, &property.key)?;
+		Self::check_token_change_permission(
+			collection,
+			sender,
+			token_id,
+			&property.key,
+			is_token_create,
+		)?;
 
 		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
 			let property = property.clone();
@@ -471,9 +479,10 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties: Vec<Property>,
+		is_token_create: bool,
 	) -> DispatchResult {
 		for property in properties {
-			Self::set_token_property(collection, sender, token_id, property)?;
+			Self::set_token_property(collection, sender, token_id, property, is_token_create)?;
 		}
 
 		Ok(())
@@ -485,7 +494,7 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		property_key: PropertyKey,
 	) -> DispatchResult {
-		Self::check_token_change_permission(collection, sender, token_id, &property_key)?;
+		Self::check_token_change_permission(collection, sender, token_id, &property_key, false)?;
 
 		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
 			properties.remove(&property_key)
@@ -506,6 +515,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		property_key: &PropertyKey,
+		is_token_create: bool,
 	) -> DispatchResult {
 		let permission = <PalletCommon<T>>::property_permissions(collection.id)
 			.get(property_key)
@@ -534,6 +544,11 @@ impl<T: Config> Pallet<T> {
 				token_owner,
 				..
 			} => {
+				//TODO: investigate threats during public minting.
+				if is_token_create && (collection_admin || token_owner) {
+					return Ok(());
+				}
+
 				let mut check_result = Err(<CommonError<T>>::NoPermission.into());
 
 				if collection_admin {
@@ -772,6 +787,7 @@ impl<T: Config> Pallet<T> {
 					sender,
 					TokenId(token),
 					data.properties.clone().into_inner(),
+					true,
 				) {
 					return TransactionOutcome::Rollback(Err(e));
 				}
@@ -889,6 +905,7 @@ impl<T: Config> Pallet<T> {
 		if let Some(spender) = spender {
 			<PalletCommon<T>>::ensure_correct_receiver(spender)?;
 		}
+
 		let token_data =
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
 		if &token_data.owner != sender {
@@ -979,38 +996,29 @@ impl<T: Config> Pallet<T> {
 		under: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		fn ensure_sender_allowed<T: Config>(
-			collection: CollectionId,
-			token: TokenId,
-			for_nest: (CollectionId, TokenId),
-			sender: T::CrossAccountId,
-			budget: &dyn Budget,
-		) -> DispatchResult {
-			ensure!(
-				<PalletStructure<T>>::check_indirectly_owned(
-					sender,
-					collection,
-					token,
-					Some(for_nest),
-					budget
-				)?,
-				<CommonError<T>>::OnlyOwnerAllowedToNest,
-			);
-			Ok(())
+		let nesting = handle.permissions.nesting();
+		if nesting.permissive {
+			// Pass
+		} else if nesting.token_owner
+			&& <PalletStructure<T>>::check_indirectly_owned(
+				sender.clone(),
+				handle.id,
+				under,
+				Some(from),
+				nesting_budget,
+			)? {
+			// Pass
+		} else if nesting.admin && handle.is_owner_or_admin(&sender) {
+			// Pass
+		} else {
+			fail!(<CommonError<T>>::UserIsNotAllowedToNest);
 		}
-		match handle.permissions.nesting() {
-			NestingRule::Disabled => fail!(<CommonError<T>>::NestingIsDisabled),
-			NestingRule::Owner => {
-				ensure_sender_allowed::<T>(handle.id, under, from, sender, nesting_budget)?
-			}
-			NestingRule::OwnerRestricted(whitelist) => {
-				ensure!(
-					whitelist.contains(&from.0),
-					<CommonError<T>>::SourceCollectionIsNotAllowedToNest
-				);
-				ensure_sender_allowed::<T>(handle.id, under, from, sender, nesting_budget)?
-			}
-			NestingRule::Permissive => {}
+
+		if let Some(whitelist) = &nesting.restricted {
+			ensure!(
+				whitelist.contains(&from.0),
+				<CommonError<T>>::SourceCollectionIsNotAllowedToNest
+			);
 		}
 		Ok(())
 	}

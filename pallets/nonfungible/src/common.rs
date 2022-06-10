@@ -223,7 +223,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		let weight = <CommonWeights<T>>::set_token_properties(properties.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::set_token_properties(self, &sender, token_id, properties),
+			<Pallet<T>>::set_token_properties(self, &sender, token_id, properties, false),
 			weight,
 		)
 	}

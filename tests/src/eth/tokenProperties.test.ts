@@ -7,7 +7,7 @@ import {executeTransaction} from '../substrate/substrate-api';
 describe('EVM token properties', () => {
   itWeb3('Can be reconfigured', async({web3, api, privateKeyWrapper}) => {
     const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3);
+    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await addCollectionAdminExpectSuccess(alice, collection, {Ethereum: caller});
@@ -25,7 +25,7 @@ describe('EVM token properties', () => {
   });
   itWeb3('Can be set', async({web3, api, privateKeyWrapper}) => {
     const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3);
+    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     const token = await createItemExpectSuccess(alice, collection, 'NFT');
 
@@ -48,7 +48,7 @@ describe('EVM token properties', () => {
   });
   itWeb3('Can be deleted', async({web3, api, privateKeyWrapper}) => {
     const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3);
+    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     const token = await createItemExpectSuccess(alice, collection, 'NFT');
 

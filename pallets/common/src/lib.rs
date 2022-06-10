@@ -126,9 +126,11 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn new(id: CollectionId) -> Option<Self> {
 		Self::new_with_gas_limit(id, u64::MAX)
 	}
+
 	pub fn try_get(id: CollectionId) -> Result<Self, DispatchError> {
 		Ok(Self::new(id).ok_or(<Error<T>>::CollectionNotFound)?)
 	}
+
 	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(
@@ -137,6 +139,7 @@ impl<T: Config> CollectionHandle<T> {
 					.saturating_mul(reads),
 			))
 	}
+
 	pub fn consume_store_writes(&self, writes: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(
@@ -145,24 +148,46 @@ impl<T: Config> CollectionHandle<T> {
 					.saturating_mul(writes),
 			))
 	}
-	pub fn save(self) -> DispatchResult {
+	pub fn save(self) -> Result<(), DispatchError> {
 		<CollectionById<T>>::insert(self.id, self.collection);
 		Ok(())
 	}
 
-	pub fn set_sponsor(&mut self, sponsor: T::AccountId) {
+	pub fn set_sponsor(&mut self, sponsor: T::AccountId) -> DispatchResult {
 		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor);
+		Ok(())
 	}
 
-	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> bool {
+	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> Result<bool, DispatchError> {
 		if self.collection.sponsorship.pending_sponsor() != Some(sender) {
-			return false;
-		};
+			return Ok(false);
+		}
 
 		self.collection.sponsorship = SponsorshipState::Confirmed(sender.clone());
-		true
+		Ok(true)
+	}
+
+	/// Checks that the collection was created with, and must be operated upon through **Unique API**.
+	/// Now check only the `external_collection` flag and if it's **true**, then return `CollectionIsExternal` error.
+	pub fn check_is_internal(&self) -> DispatchResult {
+		if self.external_collection {
+			return Err(<Error<T>>::CollectionIsExternal)?;
+		}
+
+		Ok(())
+	}
+
+	/// Checks that the collection was created with, and must be operated upon through an **assimilated API**.
+	/// Now check only the `external_collection` flag and if it's **false**, then return `CollectionIsInternal` error.
+	pub fn check_is_external(&self) -> DispatchResult {
+		if !self.external_collection {
+			return Err(<Error<T>>::CollectionIsInternal)?;
+		}
+
+		Ok(())
 	}
 }
+
 impl<T: Config> Deref for CollectionHandle<T> {
 	type Target = Collection<T::AccountId>;
 
@@ -402,13 +427,11 @@ pub mod pallet {
 		/// Target collection doesn't supports this operation
 		UnsupportedOperation,
 
-		/// Not sufficient founds to perform action
+		/// Not sufficient funds to perform action
 		NotSufficientFounds,
 
-		/// Collection has nesting disabled
-		NestingIsDisabled,
-		/// Only owner may nest tokens under this collection
-		OnlyOwnerAllowedToNest,
+		/// User not passed nesting rule
+		UserIsNotAllowedToNest,
 		/// Only tokens from specific collections may nest tokens under this
 		SourceCollectionIsNotAllowedToNest,
 
@@ -429,6 +452,12 @@ pub mod pallet {
 
 		/// Empty property keys are forbidden
 		EmptyPropertyKey,
+
+		/// Tried to access an external collection with an internal API
+		CollectionIsExternal,
+
+		/// Tried to access an internal collection with an external API
+		CollectionIsInternal,
 	}
 
 	#[pallet::storage]
@@ -664,6 +693,7 @@ impl<T: Config> Pallet<T> {
 			sponsorship,
 			limits,
 			permissions,
+			external_collection,
 		} = <CollectionById<T>>::get(collection)?;
 
 		let token_property_permissions = <CollectionPropertyPermissions<T>>::get(collection)
@@ -693,6 +723,7 @@ impl<T: Config> Pallet<T> {
 			permissions,
 			token_property_permissions,
 			properties,
+			read_only: external_collection,
 		})
 	}
 }
@@ -730,6 +761,7 @@ impl<T: Config> Pallet<T> {
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
+		is_external: bool,
 	) -> Result<CollectionId, DispatchError> {
 		{
 			ensure!(
@@ -773,6 +805,7 @@ impl<T: Config> Pallet<T> {
 					Self::clamp_permissions(data.mode.clone(), &Default::default(), permissions)
 				})
 				.unwrap_or_else(|| Ok(CollectionPermissions::default()))?,
+			external_collection: is_external,
 		};
 
 		let mut collection_properties = up_data_structs::CollectionProperties::get();
@@ -1097,7 +1130,7 @@ impl<T: Config> Pallet<T> {
 		user: &T::CrossAccountId,
 		admin: bool,
 	) -> DispatchResult {
-		collection.check_is_owner_or_admin(sender)?;
+		collection.check_is_owner(sender)?;
 
 		let was_admin = <IsAdmin<T>>::get((collection.id, user));
 		if was_admin == admin {
@@ -1180,7 +1213,11 @@ impl<T: Config> Pallet<T> {
 		limit_default_clone!(old_limit, new_limit,
 			access => {},
 			mint_mode => {},
-			nesting => {},
+			nesting => ensure!(
+				// Permissive is only allowed for tests and internal usage of chain for now
+				old_limit.permissive || !new_limit.permissive,
+				<Error<T>>::NoPermission,
+			),
 		);
 		Ok(new_limit)
 	}

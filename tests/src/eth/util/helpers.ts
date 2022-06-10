@@ -112,8 +112,8 @@ export function createEthAccount(web3: Web3) {
   return account.address;
 }
 
-export async function createEthAccountWithBalance(api: ApiPromise, web3: Web3) {
-  const alice = privateKey('//Alice');
+export async function createEthAccountWithBalance(api: ApiPromise, web3: Web3, privateKeyWrapper: (account: string) => IKeyringPair) {
+  const alice = privateKeyWrapper('//Alice');
   const account = createEthAccount(web3);
   await transferBalanceToEth(api, alice, account);
 

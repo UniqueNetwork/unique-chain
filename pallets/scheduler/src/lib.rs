@@ -158,11 +158,10 @@ pub(crate) trait MarginalWeightInfo: WeightInfo {
 				Self::on_initialize_periodic(2) - Self::on_initialize_periodic(1)
 			}
 			(true, true, Some(false)) => {
-				Self::on_initialize_periodic_named(2) - Self::on_initialize_periodic_named(1)
+				Self::on_initialize_periodic_named_resolved(2)
+					- Self::on_initialize_periodic_named_resolved(1)
 			}
-			(false, false, Some(true)) => {
-				Self::on_initialize_resolved(2) - Self::on_initialize_resolved(1)
-			}
+			(false, false, Some(true)) => Self::on_initialize(2) - Self::on_initialize(1),
 			(false, true, Some(true)) => {
 				Self::on_initialize_named_resolved(2) - Self::on_initialize_named_resolved(1)
 			}
@@ -607,36 +606,6 @@ impl<T: Config> Pallet<T> {
 		}
 
 		Ok(when)
-	}
-
-	fn do_schedule(
-		when: DispatchTime<T::BlockNumber>,
-		maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-		priority: schedule::Priority,
-		origin: T::PalletsOrigin,
-		call: CallOrHashOf<T>,
-	) -> Result<TaskAddress<T::BlockNumber>, DispatchError> {
-		let when = Self::resolve_time(when)?;
-		call.ensure_requested::<T::PreimageProvider>();
-
-		// sanitize maybe_periodic
-		let maybe_periodic = maybe_periodic
-			.filter(|p| p.1 > 1 && !p.0.is_zero())
-			// Remove one from the number of repetitions since we will schedule one now.
-			.map(|(p, c)| (p, c - 1));
-		let s = Some(Scheduled {
-			maybe_id: None,
-			priority,
-			call,
-			maybe_periodic,
-			origin,
-			_phantom: PhantomData::<T::AccountId>::default(),
-		});
-		Agenda::<T>::append(when, s);
-		let index = Agenda::<T>::decode_len(when).unwrap_or(1) as u32 - 1;
-		Self::deposit_event(Event::Scheduled { when, index });
-
-		Ok((when, index))
 	}
 
 	fn do_schedule_named(
