@@ -250,7 +250,7 @@ describe('Sponsoring EVM contracts', () => {
 
     await collectionEvm.methods.setCollectionAccess(1 /*'AllowList'*/).send({from: owner});
     await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
-    await collectionEvm.methods.setMintMode(true).send({from: owner});
+    await collectionEvm.methods.setCollectionMintMode(true).send({from: owner});
 
     const newPermissions = (await getDetailedCollectionInfo(api, collectionId))!.permissions.toHuman();
     expect(newPermissions.mintMode).to.be.true;

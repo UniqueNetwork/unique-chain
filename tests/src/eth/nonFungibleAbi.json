@@ -386,6 +386,34 @@
     "type": "function"
   },
   {
+    "inputs": [{ "internalType": "bool", "name": "mode", "type": "bool" }],
+    "name": "setCollectionMintMode",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "bool", "name": "enable", "type": "bool" }],
+    "name": "setCollectionNesting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "bool", "name": "enable", "type": "bool" },
+      {
+        "internalType": "address[]",
+        "name": "collections",
+        "type": "address[]"
+      }
+    ],
+    "name": "setCollectionNesting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       { "internalType": "string", "name": "key", "type": "string" },
       { "internalType": "bytes", "name": "value", "type": "bytes" }
@@ -400,34 +428,6 @@
       { "internalType": "address", "name": "sponsor", "type": "address" }
     ],
     "name": "setCollectionSponsor",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "bool", "name": "mode", "type": "bool" }],
-    "name": "setMintMode",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "bool", "name": "enable", "type": "bool" },
-      {
-        "internalType": "address[]",
-        "name": "collections",
-        "type": "address[]"
-      }
-    ],
-    "name": "setNesting",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "bool", "name": "enable", "type": "bool" }],
-    "name": "setNesting",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

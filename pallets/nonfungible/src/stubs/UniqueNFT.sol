@@ -330,7 +330,7 @@ contract ERC721Enumerable is Dummy, ERC165 {
 	}
 }
 
-// Selector: c0de6be0
+// Selector: 7d9262e6
 contract Collection is Dummy, ERC165 {
 	// Selector: setCollectionProperty(string,bytes) 2f073f66
 	function setCollectionProperty(string memory key, bytes memory value)
@@ -427,15 +427,17 @@ contract Collection is Dummy, ERC165 {
 		dummy;
 	}
 
-	// Selector: setNesting(bool) e8fc50dd
-	function setNesting(bool enable) public {
+	// Selector: setCollectionNesting(bool) 112d4586
+	function setCollectionNesting(bool enable) public {
 		require(false, stub_error);
 		enable;
 		dummy = 0;
 	}
 
-	// Selector: setNesting(bool,address[]) 7df12a9a
-	function setNesting(bool enable, address[] memory collections) public {
+	// Selector: setCollectionNesting(bool,address[]) 64872396
+	function setCollectionNesting(bool enable, address[] memory collections)
+		public
+	{
 		require(false, stub_error);
 		enable;
 		collections;
@@ -463,8 +465,8 @@ contract Collection is Dummy, ERC165 {
 		dummy;
 	}
 
-	// Selector: setMintMode(bool) 5dea9bd5
-	function setMintMode(bool mode) public {
+	// Selector: setCollectionMintMode(bool) 00018e84
+	function setCollectionMintMode(bool mode) public {
 		require(false, stub_error);
 		mode;
 		dummy = 0;

@@ -25,8 +25,8 @@ import {
 } from './util/helpers';
 
 describe('Add collection admins', () => {
-  itWeb3('Add admin by owner', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
+  itWeb3('Add admin by owner', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
         
     const result = await collectionHelper.methods
@@ -42,8 +42,8 @@ describe('Add collection admins', () => {
       .to.be.eq(newAdmin.toLocaleLowerCase());
   });
 
-  itWeb3('Add substrate admin by owner', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
+  itWeb3('Add substrate admin by owner', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
         
     const result = await collectionHelper.methods
@@ -60,8 +60,8 @@ describe('Add collection admins', () => {
       .to.be.eq(newAdmin.address.toLocaleLowerCase());
   });
 
-  itWeb3('(!negative tests!) Add admin by ADMIN is not allowed', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
+  itWeb3('(!negative tests!) Add admin by ADMIN is not allowed', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
         
     const result = await collectionHelper.methods
@@ -69,7 +69,7 @@ describe('Add collection admins', () => {
       .send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const admin = await createEthAccountWithBalance(api, web3);
+    const admin = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     await collectionEvm.methods.addCollectionAdmin(admin).send();
     
@@ -83,8 +83,8 @@ describe('Add collection admins', () => {
       .to.be.eq(admin.toLocaleLowerCase());
   });
 
-  itWeb3('(!negative tests!) Add admin by USER is not allowed', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
+  itWeb3('(!negative tests!) Add admin by USER is not allowed', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
         
     const result = await collectionHelper.methods
@@ -92,7 +92,7 @@ describe('Add collection admins', () => {
       .send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const notAdmin = await createEthAccountWithBalance(api, web3);
+    const notAdmin = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     
     const user = await createEthAccount(web3);
@@ -103,8 +103,8 @@ describe('Add collection admins', () => {
     expect(adminList.length).to.be.eq(0);
   });
 
-  itWeb3('(!negative tests!) Add substrate admin by ADMIN is not allowed', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
+  itWeb3('(!negative tests!) Add substrate admin by ADMIN is not allowed', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
         
     const result = await collectionHelper.methods
@@ -112,7 +112,7 @@ describe('Add collection admins', () => {
       .send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const admin = await createEthAccountWithBalance(api, web3);
+    const admin = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     await collectionEvm.methods.addCollectionAdmin(admin).send();
 
@@ -126,8 +126,8 @@ describe('Add collection admins', () => {
       .to.be.eq(admin.toLocaleLowerCase());
   });
   
-  itWeb3('(!negative tests!) Add substrate admin by USER is not allowed', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
+  itWeb3('(!negative tests!) Add substrate admin by USER is not allowed', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
         
     const result = await collectionHelper.methods
@@ -135,7 +135,7 @@ describe('Add collection admins', () => {
       .send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const notAdmin0 = await createEthAccountWithBalance(api, web3);
+    const notAdmin0 = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     const notAdmin1 = privateKey('//Alice');
     await expect(collectionEvm.methods.addCollectionAdminSubstrate(notAdmin1.addressRaw).call({from: notAdmin0}))
@@ -147,8 +147,8 @@ describe('Add collection admins', () => {
 });
 
 describe('Remove collection admins', () => {
-  itWeb3('Remove admin by owner', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
+  itWeb3('Remove admin by owner', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
         
     const result = await collectionHelper.methods
@@ -171,8 +171,8 @@ describe('Remove collection admins', () => {
     expect(adminList.length).to.be.eq(0);
   });
 
-  itWeb3('Remove substrate admin by owner', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
+  itWeb3('Remove substrate admin by owner', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
         
     const result = await collectionHelper.methods
@@ -194,8 +194,8 @@ describe('Remove collection admins', () => {
     expect(adminList.length).to.be.eq(0);
   });
 
-  itWeb3('(!negative tests!) Remove admin by ADMIN is not allowed', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
+  itWeb3('(!negative tests!) Remove admin by ADMIN is not allowed', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
         
     const result = await collectionHelper.methods
@@ -205,7 +205,7 @@ describe('Remove collection admins', () => {
 
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
 
-    const admin0 = await createEthAccountWithBalance(api, web3);
+    const admin0 = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     await collectionEvm.methods.addCollectionAdmin(admin0).send();
     const admin1 = await createEthAccount(web3);
     await collectionEvm.methods.addCollectionAdmin(admin1).send();
@@ -221,8 +221,8 @@ describe('Remove collection admins', () => {
     }
   });
 
-  itWeb3('(!negative tests!) Remove admin by USER is not allowed', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
+  itWeb3('(!negative tests!) Remove admin by USER is not allowed', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
         
     const result = await collectionHelper.methods
@@ -232,7 +232,7 @@ describe('Remove collection admins', () => {
 
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
 
-    const admin = await createEthAccountWithBalance(api, web3);
+    const admin = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     await collectionEvm.methods.addCollectionAdmin(admin).send();
     const notAdmin = await createEthAccount(web3);
 
@@ -246,8 +246,8 @@ describe('Remove collection admins', () => {
     }
   });
 
-  itWeb3('(!negative tests!) Remove substrate admin by ADMIN is not allowed', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
+  itWeb3('(!negative tests!) Remove substrate admin by ADMIN is not allowed', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
         
     const result = await collectionHelper.methods
@@ -258,7 +258,7 @@ describe('Remove collection admins', () => {
     const adminSub = privateKey('//Alice');
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     await collectionEvm.methods.addCollectionAdminSubstrate(adminSub.addressRaw).send();
-    const adminEth = await createEthAccountWithBalance(api, web3);
+    const adminEth = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     await collectionEvm.methods.addCollectionAdmin(adminEth).send();
 
     await expect(collectionEvm.methods.removeCollectionAdminSubstrate(adminSub.addressRaw).call({from: adminEth}))
@@ -271,8 +271,8 @@ describe('Remove collection admins', () => {
       .to.be.deep.contains(adminEth.toLocaleLowerCase());
   });
 
-  itWeb3('(!negative tests!) Remove substrate admin by USER is not allowed', async ({api, web3}) => {
-    const owner = await createEthAccountWithBalance(api, web3);
+  itWeb3('(!negative tests!) Remove substrate admin by USER is not allowed', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
         
     const result = await collectionHelper.methods
@@ -283,7 +283,7 @@ describe('Remove collection admins', () => {
     const adminSub = privateKey('//Alice');
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     await collectionEvm.methods.addCollectionAdminSubstrate(adminSub.addressRaw).send();
-    const notAdminEth = await createEthAccountWithBalance(api, web3);
+    const notAdminEth = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
 
     await expect(collectionEvm.methods.removeCollectionAdminSubstrate(adminSub.addressRaw).call({from: notAdminEth}))
       .to.be.rejectedWith('NoPermission');

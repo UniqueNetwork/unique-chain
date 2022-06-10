@@ -191,7 +191,7 @@ interface ERC721Enumerable is Dummy, ERC165 {
 	function totalSupply() external view returns (uint256);
 }
 
-// Selector: c0de6be0
+// Selector: 7d9262e6
 interface Collection is Dummy, ERC165 {
 	// Selector: setCollectionProperty(string,bytes) 2f073f66
 	function setCollectionProperty(string memory key, bytes memory value)
@@ -235,11 +235,12 @@ interface Collection is Dummy, ERC165 {
 	// Selector: removeCollectionAdmin(address) fafd7b42
 	function removeCollectionAdmin(address admin) external view;
 
-	// Selector: setNesting(bool) e8fc50dd
-	function setNesting(bool enable) external;
+	// Selector: setCollectionNesting(bool) 112d4586
+	function setCollectionNesting(bool enable) external;
 
-	// Selector: setNesting(bool,address[]) 7df12a9a
-	function setNesting(bool enable, address[] memory collections) external;
+	// Selector: setCollectionNesting(bool,address[]) 64872396
+	function setCollectionNesting(bool enable, address[] memory collections)
+		external;
 
 	// Selector: setCollectionAccess(uint8) 41835d4c
 	function setCollectionAccess(uint8 mode) external;
@@ -250,8 +251,8 @@ interface Collection is Dummy, ERC165 {
 	// Selector: removeFromCollectionAllowList(address) 85c51acb
 	function removeFromCollectionAllowList(address user) external view;
 
-	// Selector: setMintMode(bool) 5dea9bd5
-	function setMintMode(bool mode) external;
+	// Selector: setCollectionMintMode(bool) 00018e84
+	function setCollectionMintMode(bool mode) external;
 }
 
 // Selector: d74d154f
