@@ -22,7 +22,10 @@ use evm_coder::{
 pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
-use up_data_structs::{Property, SponsoringRateLimit, NestingRule, OwnerRestrictedSet, AccessMode};
+use up_data_structs::{
+	Property, SponsoringRateLimit, NestingRule, OwnerRestrictedSet, AccessMode,
+	CollectionPermissions,
+};
 use alloc::format;
 
 use crate::{Pallet, CollectionHandle, Config, CollectionProperties};
@@ -211,10 +214,20 @@ where
 	#[solidity(rename_selector = "setNesting")]
 	fn set_nesting_bool(&mut self, caller: caller, enable: bool) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;
-		self.collection.permissions.nesting = Some(match enable {
-			false => NestingRule::Disabled,
-			true => NestingRule::Owner,
-		});
+		let permissions = CollectionPermissions {
+			nesting: Some(match enable {
+				false => NestingRule::Disabled,
+				true => NestingRule::Owner,
+			}),
+			..Default::default()
+		};
+		self.collection.permissions = <Pallet<T>>::clamp_permissions(
+			self.collection.mode.clone(),
+			&self.collection.permissions,
+			permissions,
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+
 		save(self)?;
 		Ok(())
 	}
@@ -237,19 +250,29 @@ where
 			)));
 		}
 		check_is_owner_or_admin(caller, self)?;
-		self.collection.permissions.nesting = Some(match enable {
-			false => NestingRule::Disabled,
-			true => {
-				let mut bv = OwnerRestrictedSet::new();
-				for i in collections {
-					bv.try_insert(crate::eth::map_eth_to_id(&i).ok_or_else(|| {
-						Error::Revert("Can't convert address into collection id".into())
-					})?)
-					.map_err(|e| Error::Revert(format!("{:?}", e)))?;
+		let permissions = CollectionPermissions {
+			nesting: Some(match enable {
+				false => NestingRule::Disabled,
+				true => {
+					let mut bv = OwnerRestrictedSet::new();
+					for i in collections {
+						bv.try_insert(crate::eth::map_eth_to_id(&i).ok_or_else(|| {
+							Error::Revert("Can't convert address into collection id".into())
+						})?)
+						.map_err(|e| Error::Revert(format!("{:?}", e)))?;
+					}
+					NestingRule::OwnerRestricted(bv)
 				}
-				NestingRule::OwnerRestricted(bv)
-			}
-		});
+			}),
+			..Default::default()
+		};
+		self.collection.permissions = <Pallet<T>>::clamp_permissions(
+			self.collection.mode.clone(),
+			&self.collection.permissions,
+			permissions,
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+		
 		save(self)?;
 		Ok(())
 	}
