@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import privateKey from '../../substrate/privateKey';
-import {createCollectionExpectSuccess, createItemExpectSuccess, setVariableMetaDataExpectSuccess, setMetadataUpdatePermissionFlagExpectSuccess} from '../../util/helpers';
+import {createCollectionExpectSuccess, createItemExpectSuccess} from '../../util/helpers';
 import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents} from '../util/helpers';
 import nonFungibleAbi from '../nonFungibleAbi.json';
 import {expect} from 'chai';
@@ -36,11 +35,11 @@ async function proxyWrap(api: ApiPromise, web3: Web3, wrapped: any) {
 }
 
 describe('NFT (Via EVM proxy): Information getting', () => {
-  itWeb3('totalSupply', async ({api, web3}) => {
+  itWeb3('totalSupply', async ({api, web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
 
     await createItemExpectSuccess(alice, collection, 'NFT', {Substrate: alice.address});
@@ -52,11 +51,11 @@ describe('NFT (Via EVM proxy): Information getting', () => {
     expect(totalSupply).to.equal('1');
   });
 
-  itWeb3('balanceOf', async ({api, web3}) => {
+  itWeb3('balanceOf', async ({api, web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const caller = await createEthAccountWithBalance(api, web3);
     await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: caller});
@@ -70,11 +69,11 @@ describe('NFT (Via EVM proxy): Information getting', () => {
     expect(balance).to.equal('3');
   });
 
-  itWeb3('ownerOf', async ({api, web3}) => {
+  itWeb3('ownerOf', async ({api, web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const caller = await createEthAccountWithBalance(api, web3);
     const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: caller});
@@ -88,11 +87,12 @@ describe('NFT (Via EVM proxy): Information getting', () => {
 });
 
 describe('NFT (Via EVM proxy): Plain calls', () => {
-  itWeb3('Can perform mint()', async ({web3, api}) => {
+  //TODO: CORE-302 add eth methods
+  itWeb3.skip('Can perform mint()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
     const receiver = createEthAccount(web3);
 
@@ -127,11 +127,13 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
       expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
     }
   });
-  itWeb3('Can perform mintBulk()', async ({web3, api}) => {
+  
+  //TODO: CORE-302 add eth methods
+  itWeb3.skip('Can perform mintBulk()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     const caller = await createEthAccountWithBalance(api, web3);
     const receiver = createEthAccount(web3);
@@ -190,11 +192,11 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform burn()', async ({web3, api}) => {
+  itWeb3('Can perform burn()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
 
     const address = collectionIdToAddress(collection);
@@ -222,11 +224,11 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform approve()', async ({web3, api}) => {
+  itWeb3('Can perform approve()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
     const spender = createEthAccount(web3);
 
@@ -252,11 +254,11 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform transferFrom()', async ({web3, api}) => {
+  itWeb3('Can perform transferFrom()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
     const owner = await createEthAccountWithBalance(api, web3);
 
@@ -296,11 +298,11 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform transfer()', async ({web3, api}) => {
+  itWeb3('Can perform transfer()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     const caller = await createEthAccountWithBalance(api, web3);
     const receiver = createEthAccount(web3);
 
@@ -333,36 +335,5 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
       const balance = await contract.methods.balanceOf(receiver).call();
       expect(+balance).to.equal(1);
     }
-  });
-
-  itWeb3('Can perform getVariableMetadata', async ({web3, api}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKey('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3);
-
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS}));
-    const item = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: contract.options.address});
-    await setMetadataUpdatePermissionFlagExpectSuccess(alice, collection, 'Admin');
-    await setVariableMetaDataExpectSuccess(alice, collection, item, [1, 2, 3]);
-
-    expect(await contract.methods.getVariableMetadata(item).call()).to.be.equal('0x010203');
-  });
-
-  itWeb3('Can perform setVariableMetadata', async ({web3, api}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKey('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3);
-
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS}));
-    const item = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: contract.options.address});
-
-    expect(await contract.methods.setVariableMetadata(item, '0x010203').send({from: caller}));
-    expect(await contract.methods.getVariableMetadata(item).call()).to.be.equal('0x010203');
   });
 });

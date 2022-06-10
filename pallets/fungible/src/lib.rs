@@ -17,15 +17,23 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use core::ops::Deref;
+use evm_coder::ToLog;
 use frame_support::{ensure};
-use up_data_structs::{AccessMode, CollectionId, TokenId, CreateCollectionData};
-use pallet_common::{
-	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, account::CrossAccountId,
+use pallet_evm::account::CrossAccountId;
+use up_data_structs::{
+	AccessMode, CollectionId, TokenId, CreateCollectionData, mapping::TokenAddressMapping,
+	budget::Budget,
 };
+use pallet_common::{
+	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
+	eth::collection_id_to_address,
+};
+use pallet_evm::Pallet as PalletEvm;
+use pallet_structure::Pallet as PalletStructure;
 use pallet_evm_coder_substrate::WithRecorder;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
-use sp_std::collections::btree_map::BTreeMap;
+use sp_std::{collections::btree_map::BTreeMap};
 
 pub use pallet::*;
 
@@ -36,7 +44,7 @@ pub mod common;
 pub mod erc;
 pub mod weights;
 
-pub type CreateItemData<T> = (<T as pallet_common::Config>::CrossAccountId, u128);
+pub type CreateItemData<T> = (<T as pallet_evm::account::Config>::CrossAccountId, u128);
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 #[frame_support::pallet]
@@ -53,10 +61,16 @@ pub mod pallet {
 		FungibleItemsHaveNoId,
 		/// Tried to set data for fungible item
 		FungibleItemsDontHaveData,
+		/// Fungible token does not support nested
+		FungibleDisallowsNesting,
+		/// Setting item properties is not allowed
+		SettingPropertiesNotAllowed,
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_common::Config {
+	pub trait Config:
+		frame_system::Config + pallet_common::Config + pallet_structure::Config + pallet_evm::Config
+	{
 		type WeightInfo: WeightInfo;
 	}
 
@@ -98,6 +112,9 @@ impl<T: Config> FungibleHandle<T> {
 	pub fn into_inner(self) -> pallet_common::CollectionHandle<T> {
 		self.0
 	}
+	pub fn common_mut(&mut self) -> &mut pallet_common::CollectionHandle<T> {
+		&mut self.0
+	}
 }
 impl<T: Config> WithRecorder<T> for FungibleHandle<T> {
 	fn recorder(&self) -> &pallet_evm_coder_substrate::SubstrateRecorder<T> {
@@ -117,7 +134,7 @@ impl<T: Config> Deref for FungibleHandle<T> {
 
 impl<T: Config> Pallet<T> {
 	pub fn init_collection(
-		owner: T::AccountId,
+		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		<PalletCommon<T>>::init_collection(owner, data)
@@ -128,6 +145,10 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let id = collection.id;
 
+		if Self::collection_has_tokens(id) {
+			return Err(<CommonError<T>>::CantDestroyNotEmptyCollection.into());
+		}
+
 		// =========
 
 		PalletCommon::destroy_collection(collection.0, sender)?;
@@ -136,6 +157,10 @@ impl<T: Config> Pallet<T> {
 		<Balance<T>>::remove_prefix((id,), None);
 		<Allowance<T>>::remove_prefix((id,), None);
 		Ok(())
+	}
+
+	fn collection_has_tokens(collection_id: CollectionId) -> bool {
+		<TotalSupply<T>>::get(collection_id) != 0
 	}
 
 	pub fn burn(
@@ -151,7 +176,7 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 
-		if collection.access == AccessMode::AllowList {
+		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(owner)?;
 		}
 
@@ -159,16 +184,20 @@ impl<T: Config> Pallet<T> {
 
 		if balance == 0 {
 			<Balance<T>>::remove((collection.id, owner));
+			<PalletStructure<T>>::unnest_if_nested(owner, collection.id, TokenId::default());
 		} else {
 			<Balance<T>>::insert((collection.id, owner), balance);
 		}
 		<TotalSupply<T>>::insert(collection.id, total_supply);
 
-		collection.log_mirrored(ERC20Events::Transfer {
-			from: *owner.as_eth(),
-			to: H160::default(),
-			value: amount.into(),
-		});
+		<PalletEvm<T>>::deposit_log(
+			ERC20Events::Transfer {
+				from: *owner.as_eth(),
+				to: H160::default(),
+				value: amount.into(),
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
 		<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
 			collection.id,
 			TokenId::default(),
@@ -183,13 +212,14 @@ impl<T: Config> Pallet<T> {
 		from: &T::CrossAccountId,
 		to: &T::CrossAccountId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		ensure!(
 			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed,
 		);
 
-		if collection.access == AccessMode::AllowList {
+		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(from)?;
 			collection.check_allowlist(to)?;
 		}
@@ -210,21 +240,33 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
+		<PalletStructure<T>>::nest_if_sent_to_token(
+			from.clone(),
+			to,
+			collection.id,
+			TokenId::default(),
+			nesting_budget,
+		)?;
+
 		if let Some(balance_to) = balance_to {
 			// from != to
 			if balance_from == 0 {
 				<Balance<T>>::remove((collection.id, from));
+				<PalletStructure<T>>::unnest_if_nested(from, collection.id, TokenId::default());
 			} else {
 				<Balance<T>>::insert((collection.id, from), balance_from);
 			}
 			<Balance<T>>::insert((collection.id, to), balance_to);
 		}
 
-		collection.log_mirrored(ERC20Events::Transfer {
-			from: *from.as_eth(),
-			to: *to.as_eth(),
-			value: amount.into(),
-		});
+		<PalletEvm<T>>::deposit_log(
+			ERC20Events::Transfer {
+				from: *from.as_eth(),
+				to: *to.as_eth(),
+				value: amount.into(),
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
 		<PalletCommon<T>>::deposit_event(CommonEvent::Transfer(
 			collection.id,
 			TokenId::default(),
@@ -239,10 +281,11 @@ impl<T: Config> Pallet<T> {
 		collection: &FungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		data: BTreeMap<T::CrossAccountId, u128>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
-				collection.mint_mode,
+				collection.permissions.mint_mode(),
 				<CommonError<T>>::PublicMintingNotAllowed
 			);
 			collection.check_allowlist(sender)?;
@@ -267,17 +310,34 @@ impl<T: Config> Pallet<T> {
 				.ok_or(ArithmeticError::Overflow)?;
 		}
 
+		for (to, _) in balances.iter() {
+			<PalletStructure<T>>::check_nesting(
+				sender.clone(),
+				to,
+				collection.id,
+				TokenId::default(),
+				nesting_budget,
+			)?;
+		}
+
 		// =========
 
 		<TotalSupply<T>>::insert(collection.id, total_supply);
 		for (user, amount) in balances {
 			<Balance<T>>::insert((collection.id, &user), amount);
-
-			collection.log_mirrored(ERC20Events::Transfer {
-				from: H160::default(),
-				to: *user.as_eth(),
-				value: amount.into(),
-			});
+			<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
+				&user,
+				collection.id,
+				TokenId::default(),
+			);
+			<PalletEvm<T>>::deposit_log(
+				ERC20Events::Transfer {
+					from: H160::default(),
+					to: *user.as_eth(),
+					value: amount.into(),
+				}
+				.to_log(collection_id_to_address(collection.id)),
+			);
 			<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
 				collection.id,
 				TokenId::default(),
@@ -301,11 +361,14 @@ impl<T: Config> Pallet<T> {
 			<Allowance<T>>::insert((collection.id, owner, spender), amount);
 		}
 
-		collection.log_mirrored(ERC20Events::Approval {
-			owner: *owner.as_eth(),
-			spender: *spender.as_eth(),
-			value: amount.into(),
-		});
+		<PalletEvm<T>>::deposit_log(
+			ERC20Events::Approval {
+				owner: *owner.as_eth(),
+				spender: *spender.as_eth(),
+				value: amount.into(),
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
 		<PalletCommon<T>>::deposit_event(CommonEvent::Approved(
 			collection.id,
 			TokenId(0),
@@ -321,7 +384,7 @@ impl<T: Config> Pallet<T> {
 		spender: &T::CrossAccountId,
 		amount: u128,
 	) -> DispatchResult {
-		if collection.access == AccessMode::AllowList {
+		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(owner)?;
 			collection.check_allowlist(spender)?;
 		}
@@ -339,21 +402,34 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn transfer_from(
+	fn check_allowed(
 		collection: &FungibleHandle<T>,
 		spender: &T::CrossAccountId,
 		from: &T::CrossAccountId,
-		to: &T::CrossAccountId,
 		amount: u128,
-	) -> DispatchResult {
+		nesting_budget: &dyn Budget,
+	) -> Result<Option<u128>, DispatchError> {
 		if spender.conv_eq(from) {
-			return Self::transfer(collection, from, to, amount);
+			return Ok(None);
 		}
-		if collection.access == AccessMode::AllowList {
+		if collection.permissions.access() == AccessMode::AllowList {
 			// `from`, `to` checked in [`transfer`]
 			collection.check_allowlist(spender)?;
 		}
-
+		if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
+			// TODO: should collection owner be allowed to perform this transfer?
+			ensure!(
+				<PalletStructure<T>>::check_indirectly_owned(
+					spender.clone(),
+					source.0,
+					source.1,
+					None,
+					nesting_budget
+				)?,
+				<CommonError<T>>::ApprovedValueTooLow,
+			);
+			return Ok(None);
+		}
 		let allowance = <Allowance<T>>::get((collection.id, from, spender)).checked_sub(amount);
 		if allowance.is_none() {
 			ensure!(
@@ -362,9 +438,22 @@ impl<T: Config> Pallet<T> {
 			);
 		}
 
+		Ok(allowance)
+	}
+
+	pub fn transfer_from(
+		collection: &FungibleHandle<T>,
+		spender: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		amount: u128,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResult {
+		let allowance = Self::check_allowed(collection, spender, from, amount, nesting_budget)?;
+
 		// =========
 
-		Self::transfer(collection, from, to, amount)?;
+		Self::transfer(collection, from, to, amount, nesting_budget)?;
 		if let Some(allowance) = allowance {
 			Self::set_allowance_unchecked(collection, from, spender, allowance);
 		}
@@ -376,22 +465,9 @@ impl<T: Config> Pallet<T> {
 		spender: &T::CrossAccountId,
 		from: &T::CrossAccountId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		if spender.conv_eq(from) {
-			return Self::burn(collection, from, amount);
-		}
-		if collection.access == AccessMode::AllowList {
-			// `from` checked in [`burn`]
-			collection.check_allowlist(spender)?;
-		}
-
-		let allowance = <Allowance<T>>::get((collection.id, from, spender)).checked_sub(amount);
-		if allowance.is_none() {
-			ensure!(
-				collection.ignores_allowance(spender),
-				<CommonError<T>>::ApprovedValueTooLow
-			);
-		}
+		let allowance = Self::check_allowed(collection, spender, from, amount, nesting_budget)?;
 
 		// =========
 
@@ -407,7 +483,13 @@ impl<T: Config> Pallet<T> {
 		collection: &FungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		data: CreateItemData<T>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::create_multiple_items(collection, sender, [(data.0, data.1)].into_iter().collect())
+		Self::create_multiple_items(
+			collection,
+			sender,
+			[(data.0, data.1)].into_iter().collect(),
+			nesting_budget,
+		)
 	}
 }

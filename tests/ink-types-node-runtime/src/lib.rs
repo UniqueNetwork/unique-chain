@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-// Original license
+// Original License
 // Copyright 2018-2019 Parity Technologies (UK) Ltd.
 // This file is part of ink!.
 //

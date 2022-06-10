@@ -44,7 +44,7 @@ pub mod types {
 	pub type uint128 = u128;
 	pub type uint256 = U256;
 
-	pub type bytes4 = u32;
+	pub type bytes4 = [u8; 4];
 
 	pub type topic = H256;
 
@@ -71,7 +71,7 @@ pub mod types {
 }
 
 pub trait Call: Sized {
-	fn parse(selector: u32, input: &mut AbiReader) -> execution::Result<Option<Self>>;
+	fn parse(selector: types::bytes4, input: &mut AbiReader) -> execution::Result<Option<Self>>;
 }
 
 pub type Weight = u64;
@@ -93,11 +93,11 @@ pub enum ERC165Call {
 }
 
 impl ERC165Call {
-	pub const INTERFACE_ID: types::bytes4 = 0x01ffc9a7;
+	pub const INTERFACE_ID: types::bytes4 = u32::to_be_bytes(0x01ffc9a7);
 }
 
 impl Call for ERC165Call {
-	fn parse(selector: u32, input: &mut AbiReader) -> execution::Result<Option<Self>> {
+	fn parse(selector: types::bytes4, input: &mut AbiReader) -> execution::Result<Option<Self>> {
 		if selector != Self::INTERFACE_ID {
 			return Ok(None);
 		}

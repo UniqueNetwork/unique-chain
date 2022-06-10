@@ -33,15 +33,24 @@
 // limitations under the License.
 
 use crate::{
-	chain_spec,
+	chain_spec::{self, RuntimeId, RuntimeIdentification, ServiceId, ServiceIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, ParachainRuntimeExecutor},
+	service::{new_partial, start_node, start_dev_node},
 };
+
+#[cfg(feature = "unique-runtime")]
+use crate::service::UniqueRuntimeExecutor;
+
+#[cfg(feature = "quartz-runtime")]
+use crate::service::QuartzRuntimeExecutor;
+
+use crate::service::OpalRuntimeExecutor;
+
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use cumulus_client_service::genesis::generate_genesis_block;
+use std::{future::Future, pin::Pin};
 use log::info;
-use unique_runtime::Block;
 use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
@@ -52,24 +61,46 @@ use sc_service::{
 };
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
-use std::{io::Write, net::SocketAddr};
+use std::{io::Write, net::SocketAddr, time::Duration};
+
+use unique_runtime_common::types::Block;
+
+macro_rules! no_runtime_err {
+	($chain_name:expr) => {
+		format!(
+			"No runtime valid runtime was found for chain {}",
+			$chain_name
+		)
+	};
+}
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
-		"westend-local" => Box::new(chain_spec::local_testnet_westend_config()),
-		"rococo-local" => Box::new(chain_spec::local_testnet_rococo_config()),
 		"dev" => Box::new(chain_spec::development_config()),
-		"" | "local" => Box::new(chain_spec::local_testnet_rococo_config()),
-		path => Box::new(chain_spec::ChainSpec::from_json_file(
-			std::path::PathBuf::from(path),
-		)?),
+		"" | "local" => Box::new(chain_spec::local_testnet_config()),
+		path => {
+			let path = std::path::PathBuf::from(path);
+			let chain_spec = Box::new(chain_spec::OpalChainSpec::from_json_file(path.clone())?)
+				as Box<dyn sc_service::ChainSpec>;
+
+			match chain_spec.runtime_id() {
+				#[cfg(feature = "unique-runtime")]
+				RuntimeId::Unique => Box::new(chain_spec::UniqueChainSpec::from_json_file(path)?),
+
+				#[cfg(feature = "quartz-runtime")]
+				RuntimeId::Quartz => Box::new(chain_spec::QuartzChainSpec::from_json_file(path)?),
+
+				RuntimeId::Opal => chain_spec,
+				RuntimeId::Unknown(chain) => return Err(no_runtime_err!(chain)),
+			}
+		}
 	})
 }
 
 impl SubstrateCli for Cli {
 	// TODO use args
 	fn impl_name() -> String {
-		"Opal Node".into()
+		format!("{} Node", Self::node_name())
 	}
 
 	fn impl_version() -> String {
@@ -78,10 +109,11 @@ impl SubstrateCli for Cli {
 	// TODO use args
 	fn description() -> String {
 		format!(
-			"Opal Node\n\nThe command-line arguments provided first will be \
+			"{} Node\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
 		{} [parachain-args] -- [relaychain-args]",
+			Self::node_name(),
 			Self::executable_name()
 		)
 	}
@@ -103,15 +135,24 @@ impl SubstrateCli for Cli {
 		load_spec(id)
 	}
 
-	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&unique_runtime::VERSION
+	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+		match chain_spec.runtime_id() {
+			#[cfg(feature = "unique-runtime")]
+			RuntimeId::Unique => &unique_runtime::VERSION,
+
+			#[cfg(feature = "quartz-runtime")]
+			RuntimeId::Quartz => &quartz_runtime::VERSION,
+
+			RuntimeId::Opal => &opal_runtime::VERSION,
+			RuntimeId::Unknown(chain) => panic!("{}", no_runtime_err!(chain)),
+		}
 	}
 }
 
 impl SubstrateCli for RelayChainCli {
 	// TODO use args
 	fn impl_name() -> String {
-		"Opal Node".into()
+		format!("{} Node", Cli::node_name())
 	}
 
 	fn impl_version() -> String {
@@ -119,11 +160,13 @@ impl SubstrateCli for RelayChainCli {
 	}
 	// TODO use args
 	fn description() -> String {
-		"Opal Node\n\nThe command-line arguments provided first will be \
-		passed to the parachain node, while the arguments provided after -- will be passed \
-		to the relaychain node.\n\n\
-		parachain-collator [parachain-args] -- [relaychain-args]"
-			.into()
+		format!(
+			"{} Node\n\nThe command-line arguments provided first will be \
+			passed to the parachain node, while the arguments provided after -- will be passed \
+			to the relaychain node.\n\n\
+			parachain-collator [parachain-args] -- [relaychain-args]",
+			Cli::node_name()
+		)
 	}
 
 	fn author() -> String {
@@ -157,20 +200,79 @@ fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<V
 		.ok_or_else(|| "Could not find wasm file in genesis state!".into())
 }
 
-macro_rules! construct_async_run {
-	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
-		let runner = $cli.create_runner($cmd)?;
-		runner.async_run(|$config| {
+macro_rules! async_run_with_runtime {
+	(
+		$runtime_api:path, $executor:path,
+		$runner:ident, $components:ident, $cli:ident, $cmd:ident, $config:ident,
+		$( $code:tt )*
+	) => {
+		$runner.async_run(|$config| {
 			let $components = new_partial::<
-				_
+				$runtime_api, $executor, _
 			>(
 				&$config,
 				crate::service::parachain_build_import_queue,
 			)?;
 			let task_manager = $components.task_manager;
+
 			{ $( $code )* }.map(|v| (v, task_manager))
 		})
+	};
+}
+
+macro_rules! construct_async_run {
+	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
+		let runner = $cli.create_runner($cmd)?;
+
+		match runner.config().chain_spec.runtime_id() {
+			#[cfg(feature = "unique-runtime")]
+			RuntimeId::Unique => async_run_with_runtime!(
+				unique_runtime::RuntimeApi, UniqueRuntimeExecutor,
+				runner, $components, $cli, $cmd, $config, $( $code )*
+			),
+
+			#[cfg(feature = "quartz-runtime")]
+			RuntimeId::Quartz => async_run_with_runtime!(
+				quartz_runtime::RuntimeApi, QuartzRuntimeExecutor,
+				runner, $components, $cli, $cmd, $config, $( $code )*
+			),
+
+			RuntimeId::Opal => async_run_with_runtime!(
+				opal_runtime::RuntimeApi, OpalRuntimeExecutor,
+				runner, $components, $cli, $cmd, $config, $( $code )*
+			),
+
+			RuntimeId::Unknown(chain) => Err(no_runtime_err!(chain).into())
+		}
 	}}
+}
+
+macro_rules! start_node_using_chain_runtime {
+	($start_node_fn:ident($config:expr $(, $($args:expr),+)?) $($code:tt)*) => {
+		match $config.chain_spec.runtime_id() {
+			#[cfg(feature = "unique-runtime")]
+			RuntimeId::Unique => $start_node_fn::<
+				unique_runtime::Runtime,
+				unique_runtime::RuntimeApi,
+				UniqueRuntimeExecutor,
+			>($config $(, $($args),+)?) $($code)*,
+
+			#[cfg(feature = "quartz-runtime")]
+			RuntimeId::Quartz => $start_node_fn::<
+				quartz_runtime::Runtime,
+				quartz_runtime::RuntimeApi,
+				QuartzRuntimeExecutor,
+			>($config $(, $($args),+)?) $($code)*,
+
+			RuntimeId::Opal => $start_node_fn::<
+				opal_runtime::Runtime,
+				opal_runtime::RuntimeApi,
+				OpalRuntimeExecutor,
+			>($config $(, $($args),+)?) $($code)*,
+
+			RuntimeId::Unknown(chain) => Err(no_runtime_err!(chain).into()),
+		}
+	};
 }
 
 /// Parse command line arguments into service configuration.
@@ -224,7 +326,7 @@ pub fn run() -> Result<()> {
 			})
 		}
 		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
-			Ok(cmd.run(components.client, components.backend))
+			Ok(cmd.run(components.client, components.backend, None))
 		}),
 		Some(Subcommand::ExportGenesisState(params)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
@@ -270,22 +372,117 @@ pub fn run() -> Result<()> {
 
 			Ok(())
 		}
+		#[cfg(feature = "unique-runtime")]
 		Some(Subcommand::Benchmark(cmd)) => {
-			if cfg!(feature = "runtime-benchmarks") {
+			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
+			let runner = cli.create_runner(cmd)?;
+			// Switch on the concrete benchmark sub-command-
+			match cmd {
+				BenchmarkCmd::Pallet(cmd) => {
+					if cfg!(feature = "runtime-benchmarks") {
+						runner.sync_run(|config| cmd.run::<Block, UniqueRuntimeExecutor>(config))
+					} else {
+						Err("Benchmarking wasn't enabled when building the node. \
+					You can enable it with `--features runtime-benchmarks`."
+							.into())
+					}
+				}
+				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
+					let partials = new_partial::<
+						unique_runtime::RuntimeApi,
+						UniqueRuntimeExecutor,
+						_,
+					>(&config, crate::service::parachain_build_import_queue)?;
+					cmd.run(partials.client)
+				}),
+				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
+					let partials = new_partial::<
+						unique_runtime::RuntimeApi,
+						UniqueRuntimeExecutor,
+						_,
+					>(&config, crate::service::parachain_build_import_queue)?;
+					let db = partials.backend.expose_db();
+					let storage = partials.backend.expose_storage();
+
+					cmd.run(config, partials.client.clone(), db, storage)
+				}),
+				BenchmarkCmd::Machine(cmd) => {
+					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()))
+				}
+				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+			}
+		}
+		#[cfg(not(feature = "unique-runtime"))]
+		Some(Subcommand::Benchmark(..)) => {
+			Err("benchmarking is only available with unique runtime enabled".into())
+		}
+		Some(Subcommand::TryRuntime(cmd)) => {
+			if cfg!(feature = "try-runtime") {
 				let runner = cli.create_runner(cmd)?;
 
-				runner.sync_run(|config| cmd.run::<Block, ParachainRuntimeExecutor>(config))
+				// grab the task manager.
+				let registry = &runner
+					.config()
+					.prometheus_config
+					.as_ref()
+					.map(|cfg| &cfg.registry);
+				let task_manager =
+					sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
+						.map_err(|e| format!("Error: {:?}", e))?;
+
+				runner.async_run(|config| -> Result<(Pin<Box<dyn Future<Output = _>>>, _)> {
+					Ok((
+						match config.chain_spec.runtime_id() {
+							#[cfg(feature = "unique-runtime")]
+							RuntimeId::Unique => Box::pin(cmd.run::<Block, UniqueRuntimeExecutor>(config)),
+
+							#[cfg(feature = "quartz-runtime")]
+							RuntimeId::Quartz => Box::pin(cmd.run::<Block, QuartzRuntimeExecutor>(config)),
+
+							RuntimeId::Opal => {
+								Box::pin(cmd.run::<Block, OpalRuntimeExecutor>(config))
+							}
+							RuntimeId::Unknown(chain) => return Err(no_runtime_err!(chain).into()),
+						},
+						task_manager,
+					))
+				})
 			} else {
-				Err("Benchmarking wasn't enabled when building the node. \
-				You can enable it with `--features runtime-benchmarks`."
-					.into())
+				Err("Try-runtime must be enabled by `--features try-runtime`.".into())
 			}
 		}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
+			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
-				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
+				let hwbench = if !cli.no_hardware_benchmarks {
+					config.database.path().map(|database_path| {
+						let _ = std::fs::create_dir_all(&database_path);
+						sc_sysinfo::gather_hwbench(Some(database_path))
+					})
+				} else {
+					None
+				};
+
+				let extensions = chain_spec::Extensions::try_get(&*config.chain_spec);
+
+				let service_id = config.chain_spec.service_id();
+				let relay_chain_id = extensions.map(|e| e.relay_chain.clone());
+				let is_dev_service = matches![service_id, ServiceId::Dev]
+					|| relay_chain_id == Some("dev-service".into());
+
+				if is_dev_service {
+					info!("Running Dev service");
+
+					let autoseal_interval = Duration::from_millis(cli.idle_autoseal_interval);
+
+					return start_node_using_chain_runtime! {
+						start_dev_node(config, autoseal_interval).map_err(Into::into)
+					};
+				};
+
+				let para_id = extensions
 					.map(|e| e.para_id)
 					.ok_or("Could not find parachain ID in chain-spec.")?;
 
@@ -296,10 +493,12 @@ pub fn run() -> Result<()> {
 						.chain(cli.relaychain_args.iter()),
 				);
 
-				let id = ParaId::from(para_id);
+				let para_id = ParaId::from(para_id);
 
 				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
+					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account(
+						&para_id,
+					);
 
 				let state_version =
 					RelayChainCli::native_runtime_version(&config.chain_spec).state_version();
@@ -315,7 +514,7 @@ pub fn run() -> Result<()> {
 				)
 				.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
-				info!("Parachain id: {:?}", id);
+				info!("Parachain id: {:?}", para_id);
 				info!("Parachain Account: {}", parachain_account);
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Parachain genesis hash: {}", genesis_hash);
@@ -328,10 +527,12 @@ pub fn run() -> Result<()> {
 					}
 				);
 
-				crate::service::start_node(config, polkadot_config, id)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into)
+				start_node_using_chain_runtime! {
+					start_node(config, polkadot_config, collator_options, para_id, hwbench)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
+				}
 			})
 		}
 	}

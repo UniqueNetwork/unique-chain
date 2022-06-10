@@ -19,10 +19,11 @@ use core::convert::TryInto;
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity_interface, types::*, weight};
 use up_data_structs::CollectionMode;
 use pallet_common::erc::{CommonEvmHandler, PrecompileResult};
-use sp_core::{H160, U256};
 use sp_std::vec::Vec;
-use pallet_common::account::CrossAccountId;
+use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
+use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
+use pallet_common::{CollectionHandle, erc::CollectionCall};
 
 use crate::{
 	Allowance, Balance, Config, FungibleHandle, Pallet, SelfWeightOf, TotalSupply,
@@ -80,8 +81,11 @@ impl<T: Config> FungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, amount).map_err(|_| "transfer error")?;
+		<Pallet<T>>::transfer(self, &caller, &to, amount, &budget).map_err(|_| "transfer error")?;
 		Ok(true)
 	}
 	#[weight(<SelfWeightOf<T>>::transfer_from())]
@@ -96,8 +100,11 @@ impl<T: Config> FungibleHandle<T> {
 		let from = T::CrossAccountId::from_eth(from);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount)
+		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
@@ -127,13 +134,24 @@ impl<T: Config> FungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::burn_from(self, &caller, &from, amount).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::burn_from(self, &caller, &from, amount, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 }
 
-#[solidity_interface(name = "UniqueFungible", is(ERC20))]
+#[solidity_interface(
+	name = "UniqueFungible",
+	is(
+		ERC20,
+		ERC20UniqueExtensions,
+		via("CollectionHandle<T>", common_mut, Collection)
+	)
+)]
 impl<T: Config> FungibleHandle<T> {}
 
 generate_stubgen!(gen_impl, UniqueFungibleCall<()>, true);
@@ -142,7 +160,7 @@ generate_stubgen!(gen_iface, UniqueFungibleCall<()>, false);
 impl<T: Config> CommonEvmHandler for FungibleHandle<T> {
 	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueFungible.raw");
 
-	fn call(self, source: &H160, input: &[u8], value: U256) -> Option<PrecompileResult> {
-		call::<T, UniqueFungibleCall<T>, _>(*source, self, value, input)
+	fn call(self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
+		call::<T, UniqueFungibleCall<T>, _, _>(handle, self)
 	}
 }

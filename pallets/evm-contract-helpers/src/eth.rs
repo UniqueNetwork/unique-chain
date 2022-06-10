@@ -17,14 +17,17 @@
 use core::marker::PhantomData;
 use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use pallet_evm::{ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure};
+use pallet_evm::{
+	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, PrecompileHandle,
+	account::CrossAccountId,
+};
 use sp_core::H160;
 use crate::{
 	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringRateLimit, SponsoringModeT,
 };
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
-use sp_std::{convert::TryInto, vec::Vec};
+use sp_std::vec::Vec;
 
 struct ContractHelpers<T: Config>(SubstrateRecorder<T>);
 impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
@@ -135,18 +138,13 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 		contract == &T::ContractAddress::get()
 	}
 
-	fn call(
-		source: &sp_core::H160,
-		target: &sp_core::H160,
-		gas_left: u64,
-		input: &[u8],
-		value: sp_core::U256,
-	) -> Option<PrecompileResult> {
+	fn call(handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
 		// TODO: Extract to another OnMethodCall handler
-		if <AllowlistEnabled<T>>::get(target) && !<Pallet<T>>::allowed(*target, *source) {
+		if <AllowlistEnabled<T>>::get(handle.code_address())
+			&& !<Pallet<T>>::allowed(handle.code_address(), handle.context().caller)
+		{
 			return Some(Err(PrecompileFailure::Revert {
 				exit_status: ExitRevert::Reverted,
-				cost: 0,
 				output: {
 					let mut writer = AbiWriter::new_call(evm_coder::fn_selector!(Error(string)));
 					writer.string("Target contract is allowlisted");
@@ -155,12 +153,12 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 			}));
 		}
 
-		if target != &T::ContractAddress::get() {
+		if handle.code_address() != T::ContractAddress::get() {
 			return None;
 		}
 
-		let helpers = ContractHelpers::<T>(SubstrateRecorder::<T>::new(*target, gas_left));
-		pallet_evm_coder_substrate::call(*source, helpers, value, input)
+		let helpers = ContractHelpers::<T>(SubstrateRecorder::<T>::new(handle.remaining_gas()));
+		pallet_evm_coder_substrate::call(handle, helpers)
 	}
 
 	fn get_code(contract: &sp_core::H160) -> Option<Vec<u8>> {
@@ -177,18 +175,21 @@ impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 }
 
 pub struct HelpersContractSponsoring<T: Config>(PhantomData<*const T>);
-impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for HelpersContractSponsoring<T> {
-	fn get_sponsor(who: &H160, call: &(H160, Vec<u8>)) -> Option<H160> {
+impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
+	for HelpersContractSponsoring<T>
+{
+	fn get_sponsor(who: &T::CrossAccountId, call: &(H160, Vec<u8>)) -> Option<T::CrossAccountId> {
 		let mode = <Pallet<T>>::sponsoring_mode(call.0);
 		if mode == SponsoringModeT::Disabled {
 			return None;
 		}
-		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(call.0, *who) {
+
+		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(call.0, *who.as_eth()) {
 			return None;
 		}
 		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 
-		if let Some(last_tx_block) = <SponsorBasket<T>>::get(&call.0, who) {
+		if let Some(last_tx_block) = <SponsorBasket<T>>::get(&call.0, who.as_eth()) {
 			let limit = <SponsoringRateLimit<T>>::get(&call.0);
 
 			let timeout = last_tx_block + limit;
@@ -197,9 +198,10 @@ impl<T: Config> SponsorshipHandler<H160, (H160, Vec<u8>)> for HelpersContractSpo
 			}
 		}
 
-		<SponsorBasket<T>>::insert(&call.0, who, block_number);
+		<SponsorBasket<T>>::insert(&call.0, who.as_eth(), block_number);
 
-		Some(call.0)
+		let sponsor = T::CrossAccountId::from_eth(call.0);
+		Some(sponsor)
 	}
 }
 

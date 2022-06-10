@@ -15,8 +15,10 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use crate::chain_spec;
-use std::path::PathBuf;
+use std::{path::PathBuf, env};
 use clap::Parser;
+
+const NODE_NAME_ENV: &str = "UNIQUE_NODE_NAME";
 
 /// Sub-commands supported by the collator.
 #[derive(Debug, Parser)]
@@ -51,8 +53,11 @@ pub enum Subcommand {
 	Revert(sc_cli::RevertCmd),
 
 	/// The custom benchmark subcommmand benchmarking runtime pallets.
-	#[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
+	#[clap(subcommand)]
 	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
+
+	/// Try runtime
+	TryRuntime(try_runtime_cli::TryRuntimeCmd),
 }
 
 /// Command for exporting the genesis state of the parachain
@@ -102,9 +107,46 @@ pub struct Cli {
 	#[structopt(flatten)]
 	pub run: cumulus_client_cli::RunCmd,
 
+	/// When running the node in the `--dev` mode and
+	/// there is no transaction in the transaction pool,
+	/// an empty block will be sealed automatically
+	/// after the `--idle-autoseal-interval` milliseconds.
+	///
+	/// The default interval is 500 milliseconds
+	#[structopt(default_value = "500", long)]
+	pub idle_autoseal_interval: u64,
+
+	/// Disable automatic hardware benchmarks.
+	///
+	/// By default these benchmarks are automatically ran at startup and measure
+	/// the CPU speed, the memory bandwidth and the disk speed.
+	///
+	/// The results are then printed out in the logs, and also sent as part of
+	/// telemetry, if telemetry is enabled.
+	#[clap(long)]
+	pub no_hardware_benchmarks: bool,
+
 	/// Relaychain arguments
 	#[structopt(raw = true)]
 	pub relaychain_args: Vec<String>,
+}
+
+impl Cli {
+	pub fn node_name() -> String {
+		match env::var(NODE_NAME_ENV).ok() {
+			Some(name) => name,
+			None => {
+				if cfg!(feature = "unique-runtime") {
+					"Unique"
+				} else if cfg!(feature = "quartz-runtime") {
+					"Quartz"
+				} else {
+					"Opal"
+				}
+			}
+			.into(),
+		}
+	}
 }
 
 #[derive(Debug)]

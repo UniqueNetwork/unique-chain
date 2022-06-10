@@ -28,6 +28,7 @@ pub mod pallet {
 	use sp_core::{H160, H256};
 	use sp_std::vec::Vec;
 	use super::weights::WeightInfo;
+	use pallet_evm::{PrecompileHandle, Pallet as PalletEvm};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm::Config {
@@ -56,8 +57,7 @@ pub mod pallet {
 		pub fn begin(origin: OriginFor<T>, address: H160) -> DispatchResult {
 			ensure_root(origin)?;
 			ensure!(
-				<pallet_evm::Pallet<T>>::is_account_empty(&address)
-					&& !<MigrationPending<T>>::get(&address),
+				<PalletEvm<T>>::is_account_empty(&address) && !<MigrationPending<T>>::get(&address),
 				<Error<T>>::AccountNotEmpty,
 			);
 
@@ -108,13 +108,7 @@ pub mod pallet {
 			false
 		}
 
-		fn call(
-			_source: &H160,
-			_arget: &H160,
-			_gas_left: u64,
-			_input: &[u8],
-			_value: sp_core::U256,
-		) -> Option<pallet_evm::PrecompileResult> {
+		fn call(_handle: &mut impl PrecompileHandle) -> Option<pallet_evm::PrecompileResult> {
 			None
 		}
 

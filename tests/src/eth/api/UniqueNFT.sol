@@ -42,6 +42,35 @@ interface ERC721MintableEvents {
 	event MintingFinished();
 }
 
+// Selector: 41369377
+interface TokenProperties is Dummy, ERC165 {
+	// Selector: setTokenPropertyPermission(string,bool,bool,bool) 222d97fa
+	function setTokenPropertyPermission(
+		string memory key,
+		bool isMutable,
+		bool collectionAdmin,
+		bool tokenOwner
+	) external;
+
+	// Selector: setProperty(uint256,string,bytes) 1752d67b
+	function setProperty(
+		uint256 tokenId,
+		string memory key,
+		bytes memory value
+	) external;
+
+	// Selector: deleteProperty(uint256,string) 066111d1
+	function deleteProperty(uint256 tokenId, string memory key) external;
+
+	// Throws error if key not found
+	//
+	// Selector: property(uint256,string) 7228c327
+	function property(uint256 tokenId, string memory key)
+		external
+		view
+		returns (bytes memory);
+}
+
 // Selector: 42966c68
 interface ERC721Burnable is Dummy, ERC165 {
 	// Selector: burn(uint256) 42966c68
@@ -162,7 +191,40 @@ interface ERC721Enumerable is Dummy, ERC165 {
 	function totalSupply() external view returns (uint256);
 }
 
-// Selector: e562194d
+// Selector: c894dc35
+interface Collection is Dummy, ERC165 {
+	// Selector: setCollectionProperty(string,bytes) 2f073f66
+	function setCollectionProperty(string memory key, bytes memory value)
+		external;
+
+	// Selector: deleteCollectionProperty(string) 7b7debce
+	function deleteCollectionProperty(string memory key) external;
+
+	// Throws error if key not found
+	//
+	// Selector: collectionProperty(string) cf24fd6d
+	function collectionProperty(string memory key)
+		external
+		view
+		returns (bytes memory);
+
+	// Selector: ethSetSponsor(address) 8f9af356
+	function ethSetSponsor(address sponsor) external;
+
+	// Selector: ethConfirmSponsorship() a8580d1a
+	function ethConfirmSponsorship() external;
+
+	// Selector: setLimit(string,uint32) 68db30ca
+	function setLimit(string memory limit, uint32 value) external;
+
+	// Selector: setLimit(string,bool) ea67e4c2
+	function setLimit(string memory limit, bool value) external;
+
+	// Selector: contractAddress() f6b4dfb4
+	function contractAddress() external view returns (address);
+}
+
+// Selector: d74d154f
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// Selector: transfer(address,uint256) a9059cbb
 	function transfer(address to, uint256 tokenId) external;
@@ -172,15 +234,6 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 
 	// Selector: nextTokenId() 75794a3c
 	function nextTokenId() external view returns (uint256);
-
-	// Selector: setVariableMetadata(uint256,bytes) d4eac26d
-	function setVariableMetadata(uint256 tokenId, bytes memory data) external;
-
-	// Selector: getVariableMetadata(uint256) e6c5ce6f
-	function getVariableMetadata(uint256 tokenId)
-		external
-		view
-		returns (bytes memory);
 
 	// Selector: mintBulk(address,uint256[]) 44a9945e
 	function mintBulk(address to, uint256[] memory tokenIds)
@@ -201,5 +254,7 @@ interface UniqueNFT is
 	ERC721Enumerable,
 	ERC721UniqueExtensions,
 	ERC721Mintable,
-	ERC721Burnable
+	ERC721Burnable,
+	Collection,
+	TokenProperties
 {}

@@ -5,7 +5,7 @@
 1. Checkout polkadot in sibling folder with this project
 ```bash
 git clone https://github.com/paritytech/polkadot.git && cd polkadot
-git checkout release-v0.9.17
+git checkout release-v0.9.22
 ```
 
 2. Build with nightly-2021-11-11
@@ -20,7 +20,7 @@ cargo build --release
 git clone https://github.com/paritytech/polkadot-launch && cd polkadot-launch
 ```
 
-5. Run launch-test-env.sh from the root of this project
+5. Run launch-testnet.sh from the root of this project
 
 
 ## How to run tests

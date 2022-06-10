@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+// Original License
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use ink_lang as ink;

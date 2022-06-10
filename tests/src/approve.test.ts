@@ -18,7 +18,6 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import {default as usingApi} from './substrate/substrate-api';
 import {
   approveExpectFail,
@@ -43,10 +42,10 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 
@@ -99,10 +98,10 @@ describe('Normal user can approve other users to transfer:', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });  
 
@@ -131,10 +130,10 @@ describe('Approved users can transferFrom up to approved amount:', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });  
 
@@ -166,10 +165,10 @@ describe('Approved users cannot use transferFrom to repeat transfers if approved
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });  
 
@@ -205,11 +204,11 @@ describe('Approved amount decreases by the transferred amount.:', () => {
   let dave: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
-      dave = privateKey('//Dave');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
+      dave =  privateKeyWrapper('//Dave');
     });
   });  
 
@@ -228,10 +227,10 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 
@@ -267,10 +266,10 @@ describe('User cannot approve for the amount greater than they own:', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 
@@ -300,11 +299,11 @@ describe('Administrator and collection owner do not need approval in order to ex
   let dave: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
-      dave = privateKey('//Dave');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
+      dave =  privateKeyWrapper('//Dave');
     });
   });  
 
@@ -343,11 +342,11 @@ describe('Repeated approvals add up', () => {
   let dave: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
-      dave = privateKey('//Dave');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
+      dave =  privateKeyWrapper('//Dave');
     });
   });  
 
@@ -394,10 +393,10 @@ describe('Integration Test approve(spender, collection_id, item_id, amount) with
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 
@@ -416,10 +415,10 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 

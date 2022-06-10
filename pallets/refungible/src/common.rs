@@ -17,9 +17,13 @@
 use core::marker::PhantomData;
 
 use sp_std::collections::btree_map::BTreeMap;
-use frame_support::{dispatch::DispatchResultWithPostInfo, fail, weights::Weight, BoundedVec};
-use up_data_structs::{TokenId, CustomDataLimit, CreateItemExData, CreateRefungibleExData};
+use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
+use up_data_structs::{
+	CollectionId, TokenId, CreateItemExData, CreateRefungibleExData, budget::Budget, Property,
+	PropertyKey, PropertyValue, PropertyKeyPermission, CreateItemData,
+};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
+use pallet_structure::Error as StructureError;
 use sp_runtime::DispatchError;
 use sp_std::{vec::Vec, vec};
 
@@ -43,8 +47,8 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::create_item()
 	}
 
-	fn create_multiple_items(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::create_multiple_items(amount)
+	fn create_multiple_items(data: &[CreateItemData]) -> Weight {
+		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32)
 	}
 
 	fn create_multiple_items_ex(call: &CreateItemExData<T::CrossAccountId>) -> Weight {
@@ -61,6 +65,28 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn burn_item() -> Weight {
 		max_weight_of!(burn_item_partial(), burn_item_fully())
+	}
+
+	fn set_collection_properties(_amount: u32) -> Weight {
+		// Error
+		0
+	}
+
+	fn delete_collection_properties(_amount: u32) -> Weight {
+		// Error
+		0
+	}
+
+	fn set_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_token_properties(amount)
+	}
+
+	fn delete_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::delete_token_properties(amount)
+	}
+
+	fn set_property_permissions(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_property_permissions(amount)
 	}
 
 	fn transfer() -> Weight {
@@ -89,8 +115,13 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::burn_from()
 	}
 
-	fn set_variable_metadata(bytes: u32) -> Weight {
-		<SelfWeightOf<T>>::set_variable_metadata(bytes)
+	fn burn_recursively_self_raw() -> Weight {
+		// Read to get total balance
+		Self::burn_item() + T::DbWeight::get().reads(1)
+	}
+	fn burn_recursively_breadth_raw(_amount: u32) -> Weight {
+		// Refungible token can't have children
+		0
 	}
 }
 
@@ -101,7 +132,6 @@ fn map_create_data<T: Config>(
 	match data {
 		up_data_structs::CreateItemData::ReFungible(data) => Ok(CreateRefungibleExData {
 			const_data: data.const_data,
-			variable_data: data.variable_data,
 			users: {
 				let mut out = BTreeMap::new();
 				out.insert(to.clone(), data.pieces);
@@ -118,9 +148,15 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
 		data: up_data_structs::CreateItemData,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
-			<Pallet<T>>::create_item(self, &sender, map_create_data::<T>(data, &to)?),
+			<Pallet<T>>::create_item(
+				self,
+				&sender,
+				map_create_data::<T>(data, &to)?,
+				nesting_budget,
+			),
 			<CommonWeights<T>>::create_item(),
 		)
 	}
@@ -130,16 +166,17 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		sender: T::CrossAccountId,
 		to: T::CrossAccountId,
 		data: Vec<up_data_structs::CreateItemData>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::create_multiple_items(&data);
 		let data = data
 			.into_iter()
 			.map(|d| map_create_data::<T>(d, &to))
 			.collect::<Result<Vec<_>, DispatchError>>()?;
 
-		let amount = data.len();
 		with_weight(
-			<Pallet<T>>::create_multiple_items(self, &sender, data),
-			<CommonWeights<T>>::create_multiple_items(amount as u32),
+			<Pallet<T>>::create_multiple_items(self, &sender, data, nesting_budget),
+			weight,
 		)
 	}
 
@@ -147,6 +184,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		&self,
 		sender: <T>::CrossAccountId,
 		data: CreateItemExData<T::CrossAccountId>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		let weight = <CommonWeights<T>>::create_multiple_items_ex(&data);
 		let data = match data {
@@ -160,7 +198,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		};
 
 		with_weight(
-			<Pallet<T>>::create_multiple_items(self, &sender, data),
+			<Pallet<T>>::create_multiple_items(self, &sender, data, nesting_budget),
 			weight,
 		)
 	}
@@ -177,15 +215,35 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		)
 	}
 
+	fn burn_item_recursively(
+		&self,
+		sender: T::CrossAccountId,
+		token: TokenId,
+		self_budget: &dyn Budget,
+		_breadth_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo {
+		ensure!(self_budget.consume(), <StructureError<T>>::DepthLimit,);
+		with_weight(
+			<Pallet<T>>::burn(
+				self,
+				&sender,
+				token,
+				<Balance<T>>::get((self.id, token, &sender)),
+			),
+			<CommonWeights<T>>::burn_recursively_self_raw(),
+		)
+	}
+
 	fn transfer(
 		&self,
 		from: T::CrossAccountId,
 		to: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
-			<Pallet<T>>::transfer(self, &from, &to, token, amount),
+			<Pallet<T>>::transfer(self, &from, &to, token, amount, nesting_budget),
 			<CommonWeights<T>>::transfer(),
 		)
 	}
@@ -210,9 +268,10 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		to: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
-			<Pallet<T>>::transfer_from(self, &sender, &from, &to, token, amount),
+			<Pallet<T>>::transfer_from(self, &sender, &from, &to, token, amount, nesting_budget),
 			<CommonWeights<T>>::transfer_from(),
 		)
 	}
@@ -223,28 +282,78 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		from: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
-			<Pallet<T>>::burn_from(self, &sender, &from, token, amount),
+			<Pallet<T>>::burn_from(self, &sender, &from, token, amount, nesting_budget),
 			<CommonWeights<T>>::burn_from(),
 		)
 	}
 
-	fn set_variable_metadata(
+	fn set_collection_properties(
 		&self,
-		sender: T::CrossAccountId,
-		token: TokenId,
-		data: BoundedVec<u8, CustomDataLimit>,
+		_sender: T::CrossAccountId,
+		_property: Vec<Property>,
 	) -> DispatchResultWithPostInfo {
-		let len = data.len();
-		with_weight(
-			<Pallet<T>>::set_variable_metadata(self, &sender, token, data),
-			<CommonWeights<T>>::set_variable_metadata(len as u32),
-		)
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
+
+	fn delete_collection_properties(
+		&self,
+		_sender: &T::CrossAccountId,
+		_property_keys: Vec<PropertyKey>,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+	}
+
+	fn set_token_properties(
+		&self,
+		_sender: T::CrossAccountId,
+		_token_id: TokenId,
+		_property: Vec<Property>,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+	}
+
+	fn set_property_permissions(
+		&self,
+		_sender: &T::CrossAccountId,
+		_property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+	}
+
+	fn delete_token_properties(
+		&self,
+		_sender: T::CrossAccountId,
+		_token_id: TokenId,
+		_property_keys: Vec<PropertyKey>,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+	}
+
+	fn check_nesting(
+		&self,
+		_sender: <T>::CrossAccountId,
+		_from: (CollectionId, TokenId),
+		_under: TokenId,
+		_budget: &dyn Budget,
+	) -> sp_runtime::DispatchResult {
+		fail!(<Error<T>>::RefungibleDisallowsNesting)
+	}
+
+	fn nest(&self, _under: TokenId, _to_nest: (CollectionId, TokenId)) {}
+
+	fn unnest(&self, _under: TokenId, _to_nest: (CollectionId, TokenId)) {}
 
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId> {
 		<Owned<T>>::iter_prefix((self.id, account))
+			.map(|(id, _)| id)
+			.collect()
+	}
+
+	fn collection_tokens(&self) -> Vec<TokenId> {
+		<TokenData<T>>::iter_prefix((self.id,))
 			.map(|(id, _)| id)
 			.collect()
 	}
@@ -260,18 +369,20 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	fn token_owner(&self, _token: TokenId) -> Option<T::CrossAccountId> {
 		None
 	}
-	fn const_metadata(&self, token: TokenId) -> Vec<u8> {
-		<TokenData<T>>::get((self.id, token))
-			.const_data
-			.into_inner()
-	}
-	fn variable_metadata(&self, token: TokenId) -> Vec<u8> {
-		<TokenData<T>>::get((self.id, token))
-			.variable_data
-			.into_inner()
+
+	fn token_property(&self, _token_id: TokenId, _key: &PropertyKey) -> Option<PropertyValue> {
+		None
 	}
 
-	fn collection_tokens(&self) -> u32 {
+	fn token_properties(
+		&self,
+		_token_id: TokenId,
+		_keys: Option<Vec<PropertyKey>>,
+	) -> Vec<Property> {
+		Vec::new()
+	}
+
+	fn total_supply(&self) -> u32 {
 		<Pallet<T>>::total_supply(self)
 	}
 
