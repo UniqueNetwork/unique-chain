@@ -54,16 +54,27 @@ fn create_slot_resource() -> RmrkSlotResource {
 }
 
 fn create_max_collection<T: Config>(owner: &T::AccountId) -> DispatchResult {
-	<T as pallet_common::Config>::Currency::deposit_creating(owner, T::CollectionCreationPrice::get());
+	<T as pallet_common::Config>::Currency::deposit_creating(
+		owner,
+		T::CollectionCreationPrice::get(),
+	);
 
 	let metadata = create_data();
 	let max = None;
 	let symbol = create_data();
 
-	<Pallet<T>>::create_collection(RawOrigin::Signed(owner.clone()).into(), metadata, max, symbol)
+	<Pallet<T>>::create_collection(
+		RawOrigin::Signed(owner.clone()).into(),
+		metadata,
+		max,
+		symbol,
+	)
 }
 
-fn create_max_nft<T: Config>(owner: &T::AccountId, collection_id: RmrkCollectionId) -> DispatchResult {
+fn create_max_nft<T: Config>(
+	owner: &T::AccountId,
+	collection_id: RmrkCollectionId,
+) -> DispatchResult {
 	let royalty_recipient = Some(owner.clone());
 	let royalty_amount = Some(Permill::from_percent(25));
 	let metadata = create_data();
@@ -76,20 +87,20 @@ fn create_max_nft<T: Config>(owner: &T::AccountId, collection_id: RmrkCollection
 		royalty_recipient,
 		royalty_amount,
 		metadata,
-		transferable
+		transferable,
 	)
 }
 
 struct NftBuilder {
 	collection_id: RmrkCollectionId,
-	current_nft_id: RmrkNftId
+	current_nft_id: RmrkNftId,
 }
 
 impl NftBuilder {
 	fn new(collection_id: RmrkCollectionId) -> Self {
 		Self {
 			collection_id,
-			current_nft_id: 0
+			current_nft_id: 0,
 		}
 	}
 
@@ -100,18 +111,23 @@ impl NftBuilder {
 		Ok(self.current_nft_id)
 	}
 
-	fn build_tower<T: Config>(&mut self, owner: &T::AccountId, height: u32) -> Result<RmrkNftId, DispatchError> {
+	fn build_tower<T: Config>(
+		&mut self,
+		owner: &T::AccountId,
+		height: u32,
+	) -> Result<RmrkNftId, DispatchError> {
 		self.build::<T>(owner)?;
 
 		let mut prev_nft_id = self.current_nft_id;
 
 		for _ in 0..height {
 			self.build::<T>(owner)?;
-			
-			let new_owner = <RmrkAccountIdOrCollectionNftTuple<T::AccountId>>::CollectionAndNftTuple(
-				self.collection_id,
-				prev_nft_id
-			);
+
+			let new_owner =
+				<RmrkAccountIdOrCollectionNftTuple<T::AccountId>>::CollectionAndNftTuple(
+					self.collection_id,
+					prev_nft_id,
+				);
 
 			<Pallet<T>>::send(
 				RawOrigin::Signed(owner.clone()).into(),
@@ -140,7 +156,7 @@ benchmarks! {
 
 	destroy_collection {
 		let caller = account("caller", 0, SEED);
-		
+
 		create_max_collection::<T>(&caller)?;
 		let collection_id = 0;
 	}: _(RawOrigin::Signed(caller), collection_id)
@@ -169,7 +185,7 @@ benchmarks! {
 		create_max_collection::<T>(&caller)?;
 		let collection_id = 0;
 		let owner = caller.clone();
-		
+
 		let royalty_recipient = Some(caller.clone());
 		let royalty_amount = Some(Permill::from_percent(25));
 		let metadata = create_data();

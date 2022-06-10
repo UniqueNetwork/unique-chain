@@ -693,8 +693,9 @@ pub mod pallet {
 			let resource_collection_id: Option<CollectionId> =
 				Self::get_nft_property_decoded(collection_id, nft_id, ResourceCollection)
 					.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
-				
-			let resource_collection_id = resource_collection_id.ok_or(<Error<T>>::ResourceDoesntExist)?;
+
+			let resource_collection_id =
+				resource_collection_id.ok_or(<Error<T>>::ResourceDoesntExist)?;
 
 			let is_pending: bool = Self::get_nft_property_decoded(
 				resource_collection_id,
@@ -755,7 +756,8 @@ pub mod pallet {
 				Self::get_nft_property_decoded(collection_id, nft_id, ResourceCollection)
 					.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
 
-			let resource_collection_id = resource_collection_id.ok_or(<Error<T>>::ResourceDoesntExist)?;
+			let resource_collection_id =
+				resource_collection_id.ok_or(<Error<T>>::ResourceDoesntExist)?;
 
 			let is_pending: bool = Self::get_nft_property_decoded(
 				resource_collection_id,
@@ -771,13 +773,17 @@ pub mod pallet {
 				misc::CollectionType::Resource,
 			)?;
 
-			let resource_data =
-				<TokenData<T>>::get((resource_collection_id, resource_id)).ok_or(<Error<T>>::ResourceDoesntExist)?;
-	
+			let resource_data = <TokenData<T>>::get((resource_collection_id, resource_id))
+				.ok_or(<Error<T>>::ResourceDoesntExist)?;
+
 			let resource_owner = resource_data.owner;
 
-			<PalletNft<T>>::burn(&resource_collection, &resource_owner, rmrk_resource_id.into())
-				.map_err(Self::map_unique_err_to_proxy)?;
+			<PalletNft<T>>::burn(
+				&resource_collection,
+				&resource_owner,
+				rmrk_resource_id.into(),
+			)
+			.map_err(Self::map_unique_err_to_proxy)?;
 
 			Self::deposit_event(Event::<T>::ResourceRemovalAccepted {
 				nft_id: rmrk_nft_id,
@@ -1188,12 +1194,10 @@ impl<T: Config> Pallet<T> {
 					CreateCollectionData {
 						..Default::default()
 					},
-					[
-						Self::rmrk_property(
-							CollectionType,
-							&misc::CollectionType::Resource,
-						)?
-					]
+					[Self::rmrk_property(
+						CollectionType,
+						&misc::CollectionType::Resource,
+					)?]
 					.into_iter(),
 				)?;
 
@@ -1201,7 +1205,7 @@ impl<T: Config> Pallet<T> {
 					collection_id,
 					token_id,
 					PropertyScope::Rmrk,
-					Self::rmrk_property(ResourceCollection, &Some(resource_collection_id))?
+					Self::rmrk_property(ResourceCollection, &Some(resource_collection_id))?,
 				)?;
 
 				resource_collection_id
@@ -1246,8 +1250,9 @@ impl<T: Config> Pallet<T> {
 		let resource_collection_id: Option<CollectionId> =
 			Self::get_nft_property_decoded(collection_id, nft_id, ResourceCollection)?;
 
-		let resource_collection_id = resource_collection_id.ok_or(Error::<T>::ResourceDoesntExist)?;
-		
+		let resource_collection_id =
+			resource_collection_id.ok_or(Error::<T>::ResourceDoesntExist)?;
+
 		let resource_collection =
 			Self::get_typed_nft_collection(resource_collection_id, misc::CollectionType::Resource)?;
 		ensure!(
