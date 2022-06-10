@@ -41,7 +41,7 @@ where
 	T: core::fmt::Debug,
 {
 	fn test_3(&self) -> Result<uint256> {
-		todo!()
+		unreachable!()
 	}
 }
 
