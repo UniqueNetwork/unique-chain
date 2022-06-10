@@ -645,6 +645,15 @@ pub mod pallet {
 				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
 			collection.check_is_external()?;
 
+			ensure!(
+				Self::get_nft_property_decoded(
+					collection_id,
+					nft_id,
+					RmrkProperty::PendingNftAccept
+				)?,
+				<Error<T>>::NoPermission
+			);
+
 			Self::destroy_nft(
 				cross_sender,
 				collection_id,
