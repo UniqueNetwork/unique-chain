@@ -158,11 +158,10 @@ impl NftBuilder {
 
 		let root_nft_id = self.current_nft_id;
 
-		let root_owner =
-			<RmrkAccountIdOrCollectionNftTuple<T::AccountId>>::CollectionAndNftTuple(
-				self.collection_id,
-				root_nft_id,
-			);
+		let root_owner = <RmrkAccountIdOrCollectionNftTuple<T::AccountId>>::CollectionAndNftTuple(
+			self.collection_id,
+			root_nft_id,
+		);
 
 		for _ in 0..width {
 			self.build::<T>(owner)?;
@@ -173,7 +172,7 @@ impl NftBuilder {
 				self.current_nft_id,
 				root_owner.clone(),
 			)?;
-		} 
+		}
 
 		Ok(root_nft_id)
 	}
