@@ -225,7 +225,7 @@ pub mod pallet {
 			<PalletCommon<T>>::set_scoped_collection_property(
 				unique_collection_id,
 				PropertyScope::Rmrk,
-				Self::rmrk_property(RmrkInternalCollectionId, &rmrk_collection_id)?
+				Self::rmrk_property(RmrkInternalCollectionId, &rmrk_collection_id)?,
 			)?;
 
 			<CollectionIndex<T>>::mutate(|n| *n += 1);
@@ -1327,10 +1327,7 @@ impl<T: Config> Pallet<T> {
 	pub fn rmrk_collection_id(
 		unique_collection_id: CollectionId,
 	) -> Result<RmrkCollectionId, DispatchError> {
-		Self::get_collection_property_decoded(
-			unique_collection_id,
-			RmrkInternalCollectionId
-		)
+		Self::get_collection_property_decoded(unique_collection_id, RmrkInternalCollectionId)
 	}
 
 	pub fn get_nft_collection(
