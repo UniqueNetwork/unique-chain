@@ -771,7 +771,12 @@ pub mod pallet {
 				misc::CollectionType::Resource,
 			)?;
 
-			<PalletNft<T>>::burn(&resource_collection, &cross_sender, rmrk_resource_id.into())
+			let resource_data =
+				<TokenData<T>>::get((resource_collection_id, resource_id)).ok_or(<Error<T>>::ResourceDoesntExist)?;
+	
+			let resource_owner = resource_data.owner;
+
+			<PalletNft<T>>::burn(&resource_collection, &resource_owner, rmrk_resource_id.into())
 				.map_err(Self::map_unique_err_to_proxy)?;
 
 			Self::deposit_event(Event::<T>::ResourceRemovalAccepted {
