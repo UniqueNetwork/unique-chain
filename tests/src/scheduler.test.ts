@@ -16,7 +16,6 @@
 
 import chai, {expect} from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import {
   default as usingApi, 
   submitTransactionAsync,
@@ -52,9 +51,9 @@ describe.skip('Scheduling token and balance transfers', () => {
   let scheduledIdSlider: number;
 
   before(async() => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
 
     scheduledIdBase = '0x' + '0'.repeat(31);

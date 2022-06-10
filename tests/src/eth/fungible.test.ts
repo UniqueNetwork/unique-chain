@@ -27,7 +27,7 @@ describe('Fungible: Information getting', () => {
     });
     const alice = privateKeyWrapper('//Alice');
 
-    const caller = await createEthAccountWithBalance(api, web3);
+    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
 
     await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Substrate: alice.address});
 
@@ -45,7 +45,7 @@ describe('Fungible: Information getting', () => {
     });
     const alice = privateKeyWrapper('//Alice');
 
-    const caller = await createEthAccountWithBalance(api, web3);
+    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
 
     await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Ethereum: caller});
 
@@ -65,7 +65,7 @@ describe('Fungible: Plain calls', () => {
     });
     const alice = privateKeyWrapper('//Alice');
 
-    const owner = await createEthAccountWithBalance(api, web3);
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
 
     await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Ethereum: owner});
 
@@ -208,7 +208,7 @@ describe('Fungible: Fees', () => {
     });
     const alice = privateKeyWrapper('//Alice');
 
-    const owner = await createEthAccountWithBalance(api, web3);
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const spender = createEthAccount(web3);
 
     await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Ethereum: owner});
@@ -226,8 +226,8 @@ describe('Fungible: Fees', () => {
     });
     const alice = privateKeyWrapper('//Alice');
 
-    const owner = await createEthAccountWithBalance(api, web3);
-    const spender = await createEthAccountWithBalance(api, web3);
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const spender = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
 
     await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Ethereum: owner});
 
@@ -246,7 +246,7 @@ describe('Fungible: Fees', () => {
     });
     const alice = privateKeyWrapper('//Alice');
 
-    const owner = await createEthAccountWithBalance(api, web3);
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const receiver = createEthAccount(web3);
 
     await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Ethereum: owner});

@@ -59,8 +59,7 @@ async function prepareDeployer(api: ApiPromise, privateKeyWrapper: ((account: st
   const deployer = await findUnusedAddress(api, privateKeyWrapper);
 
   // Transfer balance to it
-  const keyring = new Keyring({type: 'sr25519'});
-  const alice = keyring.addFromUri('//Alice');
+  const alice = privateKeyWrapper('//Alice');
   const amount = BigInt(endowment) + 10n**15n;
   const tx = api.tx.balances.transfer(deployer.address, amount);
   await submitTransactionAsync(alice, tx);

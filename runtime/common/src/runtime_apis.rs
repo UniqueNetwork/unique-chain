@@ -1,3 +1,19 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 #[macro_export]
 macro_rules! impl_common_runtime_apis {
     (
@@ -331,30 +347,30 @@ macro_rules! impl_common_runtime_apis {
                         .iter()
                         .filter_map(|(res_id)| Some(RmrkResourceInfo {
                             id: res_id.0,
-                            pending: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::PendingResourceAccept).unwrap(),
-                            pending_removal: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::PendingResourceRemoval).unwrap(),
-                            resource: match RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::ResourceType).unwrap() {
+                            pending: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::PendingResourceAccept).ok()?,
+                            pending_removal: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::PendingResourceRemoval).ok()?,
+                            resource: match RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::ResourceType).ok()? {
                                 ResourceType::Basic => RmrkResourceTypes::Basic(RmrkBasicResource {
-                                    src: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Src).unwrap(),
-                                    metadata: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Metadata).unwrap(),
-                                    license: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::License).unwrap(),
-                                    thumb: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Thumb).unwrap(),
+                                    src: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Src).ok()?,
+                                    metadata: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Metadata).ok()?,
+                                    license: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::License).ok()?,
+                                    thumb: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Thumb).ok()?,
                                 }),
                                 ResourceType::Composable => RmrkResourceTypes::Composable(RmrkComposableResource {
-                                    parts: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Parts).unwrap(),
-                                    base: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Base).unwrap(),
-                                    src: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Src).unwrap(),
-                                    metadata: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Metadata).unwrap(),
-                                    license: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::License).unwrap(),
-                                    thumb: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Thumb).unwrap(),
+                                    parts: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Parts).ok()?,
+                                    base: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Base).ok()?,
+                                    src: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Src).ok()?,
+                                    metadata: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Metadata).ok()?,
+                                    license: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::License).ok()?,
+                                    thumb: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Thumb).ok()?,
                                 }),
                                 ResourceType::Slot => RmrkResourceTypes::Slot(RmrkSlotResource {
-                                    base: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Base).unwrap(),
-                                    src: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Src).unwrap(),
-                                    metadata: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Metadata).unwrap(),
-                                    slot: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Slot).unwrap(),
-                                    license: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::License).unwrap(),
-                                    thumb: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Thumb).unwrap(),
+                                    base: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Base).ok()?,
+                                    src: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Src).ok()?,
+                                    metadata: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Metadata).ok()?,
+                                    slot: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Slot).ok()?,
+                                    license: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::License).ok()?,
+                                    thumb: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Thumb).ok()?,
                                 }),
                             },
                         }))
@@ -447,12 +463,10 @@ macro_rules! impl_common_runtime_apis {
                     let theme_names = collection.collection_tokens()
                         .iter()
                         .filter_map(|token_id| {
-                            let nft_type = RmrkCore::get_nft_type(collection_id, *token_id).unwrap();
+                            let nft_type = RmrkCore::get_nft_type(collection_id, *token_id).ok()?;
 
                             match nft_type {
-                                Theme => Some(
-                                    RmrkCore::get_nft_property_decoded(collection_id, *token_id, RmrkProperty::ThemeName).unwrap()
-                                ),
+                                Theme => RmrkCore::get_nft_property_decoded(collection_id, *token_id, RmrkProperty::ThemeName).ok(),
                                 _ => None
                             }
                         })
@@ -829,6 +843,7 @@ macro_rules! impl_common_runtime_apis {
                     list_benchmark!(list, extra, pallet_fungible, Fungible);
                     list_benchmark!(list, extra, pallet_refungible, Refungible);
                     list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
+                    list_benchmark!(list, extra, pallet_proxy_rmrk_core, RmrkCore);
                     // list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
                     let storage_info = AllPalletsReversedWithSystemFirst::storage_info();
@@ -872,6 +887,7 @@ macro_rules! impl_common_runtime_apis {
                     add_benchmark!(params, batches, pallet_fungible, Fungible);
                     add_benchmark!(params, batches, pallet_refungible, Refungible);
                     add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
+                    add_benchmark!(params, batches, pallet_proxy_rmrk_core, RmrkCore);
                     // add_benchmark!(params, batches, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
                     if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

@@ -74,6 +74,15 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Creates a new Base.
+		/// Modeled after [base interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/base.md)
+		///
+		/// Parameters:
+		/// - origin: Caller, will be assigned as the issuer of the Base
+		/// - base_type: media type, e.g. "svg"
+		/// - symbol: arbitrary client-chosen symbol
+		/// - parts: array of Fixed and Slot parts composing the base, confined in length by
+		///   RmrkPartsLimit
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn create_base(
@@ -137,6 +146,19 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Adds a Theme to a Base.
+		/// Modeled after [themeadd interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/themeadd.md)
+		/// Themes are stored in the Themes storage
+		/// A Theme named "default" is required prior to adding other Themes.
+		///
+		/// Parameters:
+		/// - origin: The caller of the function, must be issuer of the base
+		/// - base_id: The Base containing the Theme to be updated
+		/// - theme: The Theme to add to the Base.  A Theme has a name and properties, which are an
+		///   array of [key, value, inherit].
+		///   - key: arbitrary BoundedString, defined by client
+		///   - value: arbitrary BoundedString, defined by client
+		///   - inherit: optional bool
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
 		pub fn theme_add(

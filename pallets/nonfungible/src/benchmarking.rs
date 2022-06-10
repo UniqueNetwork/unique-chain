@@ -51,7 +51,7 @@ fn create_collection<T: Config>(
 	create_collection_raw(
 		owner,
 		CollectionMode::NFT,
-		<Pallet<T>>::init_collection,
+		|owner, data| <Pallet<T>>::init_collection(owner, data, true),
 		NonfungibleHandle::cast,
 	)
 }
@@ -99,7 +99,7 @@ benchmarks! {
 			sender: cross_from_sub(owner); burner: cross_sub;
 		};
 		let item = create_max_item(&collection, &sender, burner.clone())?;
-	}: {<Pallet<T>>::burn_recursively(&collection, &burner, item, &Unlimited, &Unlimited)}
+	}: {<Pallet<T>>::burn_recursively(&collection, &burner, item, &Unlimited, &Unlimited)?}
 
 	burn_recursively_breadth_plus_self_plus_self_per_each_raw {
 		let b in 0..200;
@@ -111,7 +111,7 @@ benchmarks! {
 		for i in 0..b {
 			create_max_item(&collection, &sender, T::CrossTokenAddressMapping::token_to_address(collection.id, item))?;
 		}
-	}: {<Pallet<T>>::burn_recursively(&collection, &burner, item, &Unlimited, &Unlimited)}
+	}: {<Pallet<T>>::burn_recursively(&collection, &burner, item, &Unlimited, &Unlimited)?}
 
 	transfer {
 		bench_init!{
@@ -183,7 +183,7 @@ benchmarks! {
 			value: property_value(),
 		}).collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props)?}
+	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props, false)?}
 
 	delete_token_properties {
 		let b in 0..MAX_PROPERTIES_PER_ITEM;
@@ -205,7 +205,7 @@ benchmarks! {
 			value: property_value(),
 		}).collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-		<Pallet<T>>::set_token_properties(&collection, &owner, item, props)?;
+		<Pallet<T>>::set_token_properties(&collection, &owner, item, props, false)?;
 		let to_delete = (0..b).map(|k| property_key(k as usize)).collect::<Vec<_>>();
 	}: {<Pallet<T>>::delete_token_properties(&collection, &owner, item, to_delete)?}
 }
