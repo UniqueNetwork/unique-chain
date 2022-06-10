@@ -14,7 +14,7 @@ describe('nesting check', () => {
       const events = await executeTransaction(api, alice, api.tx.unique.createCollectionEx({
         mode: 'NFT',
         permissions: {
-          nesting: {OwnerRestricted: []},
+          nesting: {tokenOwner: true, restricted: []},
         },
       }));
       const collection = getCreateCollectionResult(events).collectionId;
