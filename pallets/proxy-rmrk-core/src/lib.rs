@@ -400,8 +400,8 @@ pub mod pallet {
 		}
 
 		/// burn nft
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
+		#[pallet::weight(<SelfWeightOf<T>>::burn_nft(*max_burns))]
 		pub fn burn_nft(
 			origin: OriginFor<T>,
 			collection_id: RmrkCollectionId,
