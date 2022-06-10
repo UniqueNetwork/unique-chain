@@ -348,4 +348,49 @@ benchmarks! {
 		nft_id,
 		resource_id
 	)
+
+	accept_resource_removal {
+		let caller: T::AccountId = account("caller", 0, SEED);
+		let admin: T::AccountId = account("admin", 0, SEED);
+
+		<T as pallet_common::Config>::Currency::deposit_creating(&admin, T::CollectionCreationPrice::get());
+
+		create_max_collection::<T>(&admin)?;
+		let collection_id = 0;
+
+		let mut nft_builder = NftBuilder::new(collection_id);
+		let root_nft_id = 1;
+		let nested_nft_id = nft_builder.build_tower::<T>(&admin, NESTING_BUDGET - 1)?;
+		let resource = create_basic_resource();
+
+		<Pallet<T>>::add_basic_resource(
+			RawOrigin::Signed(admin.clone()).into(),
+			collection_id,
+			nested_nft_id,
+			resource
+		)?;
+
+		let resource_id = 1;
+
+		let new_owner = <RmrkAccountIdOrCollectionNftTuple<T::AccountId>>::AccountId(caller.clone());
+
+		<Pallet<T>>::send(
+			RawOrigin::Signed(admin.clone()).into(),
+			collection_id,
+			root_nft_id,
+			new_owner,
+		)?;
+
+		<Pallet<T>>::remove_resource(
+			RawOrigin::Signed(admin).into(),
+			collection_id,
+			nested_nft_id,
+			resource_id
+		)?;
+	}: _(
+		RawOrigin::Signed(caller),
+		collection_id,
+		nested_nft_id,
+		resource_id
+	)
 }
