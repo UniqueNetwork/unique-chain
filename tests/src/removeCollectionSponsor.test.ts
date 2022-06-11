@@ -31,7 +31,6 @@ import {
   addCollectionAdminExpectSuccess,
   getCreatedCollectionCount,
 } from './util/helpers';
-import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 
 chai.use(chaiAsPromised);
@@ -43,10 +42,9 @@ let bob: IKeyringPair;
 describe('integration test: ext. removeCollectionSponsor():', () => {
 
   before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({type: 'sr25519'});
-      alice = keyring.addFromUri('//Alice');
-      bob = keyring.addFromUri('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -56,9 +54,9 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
     await removeCollectionSponsorExpectSuccess(collectionId);
 
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       // Find unused address
-      const zeroBalance = await findUnusedAddress(api);
+      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
       // Mint token for unused address
       const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', zeroBalance.address);
@@ -99,10 +97,9 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
 
 describe('(!negative test!) integration test: ext. removeCollectionSponsor():', () => {
   before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({type: 'sr25519'});
-      alice = keyring.addFromUri('//Alice');
-      bob = keyring.addFromUri('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 

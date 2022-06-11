@@ -60,9 +60,8 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// FIXME
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 
 pub mod weights;
 
@@ -159,11 +158,10 @@ pub(crate) trait MarginalWeightInfo: WeightInfo {
 				Self::on_initialize_periodic(2) - Self::on_initialize_periodic(1)
 			}
 			(true, true, Some(false)) => {
-				Self::on_initialize_periodic_named(2) - Self::on_initialize_periodic_named(1)
+				Self::on_initialize_periodic_named_resolved(2)
+					- Self::on_initialize_periodic_named_resolved(1)
 			}
-			(false, false, Some(true)) => {
-				Self::on_initialize_resolved(2) - Self::on_initialize_resolved(1)
-			}
+			(false, false, Some(true)) => Self::on_initialize(2) - Self::on_initialize(1),
 			(false, true, Some(true)) => {
 				Self::on_initialize_named_resolved(2) - Self::on_initialize_named_resolved(1)
 			}
@@ -610,95 +608,6 @@ impl<T: Config> Pallet<T> {
 		Ok(when)
 	}
 
-	fn do_schedule(
-		when: DispatchTime<T::BlockNumber>,
-		maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-		priority: schedule::Priority,
-		origin: T::PalletsOrigin,
-		call: CallOrHashOf<T>,
-	) -> Result<TaskAddress<T::BlockNumber>, DispatchError> {
-		let when = Self::resolve_time(when)?;
-		call.ensure_requested::<T::PreimageProvider>();
-
-		// sanitize maybe_periodic
-		let maybe_periodic = maybe_periodic
-			.filter(|p| p.1 > 1 && !p.0.is_zero())
-			// Remove one from the number of repetitions since we will schedule one now.
-			.map(|(p, c)| (p, c - 1));
-		let s = Some(Scheduled {
-			maybe_id: None,
-			priority,
-			call,
-			maybe_periodic,
-			origin,
-			_phantom: PhantomData::<T::AccountId>::default(),
-		});
-		Agenda::<T>::append(when, s);
-		let index = Agenda::<T>::decode_len(when).unwrap_or(1) as u32 - 1;
-		Self::deposit_event(Event::Scheduled { when, index });
-
-		Ok((when, index))
-	}
-
-	fn do_cancel(
-		origin: Option<T::PalletsOrigin>,
-		(when, index): TaskAddress<T::BlockNumber>,
-	) -> Result<(), DispatchError> {
-		let scheduled = Agenda::<T>::try_mutate(when, |agenda| {
-			agenda.get_mut(index as usize).map_or(
-				Ok(None),
-				|s| -> Result<Option<Scheduled<_, _, _, _>>, DispatchError> {
-					if let (Some(ref o), Some(ref s)) = (origin, s.borrow()) {
-						if matches!(
-							T::OriginPrivilegeCmp::cmp_privilege(o, &s.origin),
-							Some(Ordering::Less) | None
-						) {
-							return Err(BadOrigin.into());
-						}
-					};
-					Ok(s.take())
-				},
-			)
-		})?;
-		if let Some(s) = scheduled {
-			s.call.ensure_unrequested::<T::PreimageProvider>();
-			if let Some(id) = s.maybe_id {
-				Lookup::<T>::remove(id);
-			}
-			Self::deposit_event(Event::Canceled { when, index });
-			Ok(())
-		} else {
-			Err(Error::<T>::NotFound)?
-		}
-	}
-
-	fn do_reschedule(
-		(when, index): TaskAddress<T::BlockNumber>,
-		new_time: DispatchTime<T::BlockNumber>,
-	) -> Result<TaskAddress<T::BlockNumber>, DispatchError> {
-		let new_time = Self::resolve_time(new_time)?;
-
-		if new_time == when {
-			return Err(Error::<T>::RescheduleNoChange.into());
-		}
-
-		Agenda::<T>::try_mutate(when, |agenda| -> DispatchResult {
-			let task = agenda.get_mut(index as usize).ok_or(Error::<T>::NotFound)?;
-			let task = task.take().ok_or(Error::<T>::NotFound)?;
-			Agenda::<T>::append(new_time, Some(task));
-			Ok(())
-		})?;
-
-		let new_index = Agenda::<T>::decode_len(new_time).unwrap_or(1) as u32 - 1;
-		Self::deposit_event(Event::Canceled { when, index });
-		Self::deposit_event(Event::Scheduled {
-			when: new_time,
-			index: new_index,
-		});
-
-		Ok((new_time, new_index))
-	}
-
 	fn do_schedule_named(
 		id: ScheduledId,
 		when: DispatchTime<T::BlockNumber>,
@@ -789,125 +698,5 @@ impl<T: Config> Pallet<T> {
 				Err(Error::<T>::NotFound)?
 			}
 		})
-	}
-
-	fn do_reschedule_named(
-		id: ScheduledId,
-		new_time: DispatchTime<T::BlockNumber>,
-	) -> Result<TaskAddress<T::BlockNumber>, DispatchError> {
-		let new_time = Self::resolve_time(new_time)?;
-
-		Lookup::<T>::try_mutate_exists(
-			id,
-			|lookup| -> Result<TaskAddress<T::BlockNumber>, DispatchError> {
-				let (when, index) = lookup.ok_or(Error::<T>::NotFound)?;
-
-				if new_time == when {
-					return Err(Error::<T>::RescheduleNoChange.into());
-				}
-
-				Agenda::<T>::try_mutate(when, |agenda| -> DispatchResult {
-					let task = agenda.get_mut(index as usize).ok_or(Error::<T>::NotFound)?;
-					let task = task.take().ok_or(Error::<T>::NotFound)?;
-					Agenda::<T>::append(new_time, Some(task));
-
-					Ok(())
-				})?;
-
-				let new_index = Agenda::<T>::decode_len(new_time).unwrap_or(1) as u32 - 1;
-				Self::deposit_event(Event::Canceled { when, index });
-				Self::deposit_event(Event::Scheduled {
-					when: new_time,
-					index: new_index,
-				});
-
-				*lookup = Some((new_time, new_index));
-
-				Ok((new_time, new_index))
-			},
-		)
-	}
-}
-
-impl<T: Config> schedule::v2::Anon<T::BlockNumber, <T as Config>::Call, T::PalletsOrigin>
-	for Pallet<T>
-{
-	type Address = TaskAddress<T::BlockNumber>;
-	type Hash = T::Hash;
-
-	fn schedule(
-		when: DispatchTime<T::BlockNumber>,
-		maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-		priority: schedule::Priority,
-		origin: T::PalletsOrigin,
-		call: CallOrHashOf<T>,
-	) -> Result<Self::Address, DispatchError> {
-		Self::do_schedule(when, maybe_periodic, priority, origin, call)
-	}
-
-	fn cancel((when, index): Self::Address) -> Result<(), ()> {
-		Self::do_cancel(None, (when, index)).map_err(|_| ())
-	}
-
-	fn reschedule(
-		address: Self::Address,
-		when: DispatchTime<T::BlockNumber>,
-	) -> Result<Self::Address, DispatchError> {
-		Self::do_reschedule(address, when)
-	}
-
-	fn next_dispatch_time((when, index): Self::Address) -> Result<T::BlockNumber, ()> {
-		Agenda::<T>::get(when)
-			.get(index as usize)
-			.ok_or(())
-			.map(|_| when)
-	}
-}
-
-impl<T: Config> schedule::v2::Named<T::BlockNumber, <T as Config>::Call, T::PalletsOrigin>
-	for Pallet<T>
-{
-	type Address = TaskAddress<T::BlockNumber>;
-	type Hash = T::Hash;
-
-	fn schedule_named(
-		id: Vec<u8>,
-		when: DispatchTime<T::BlockNumber>,
-		maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-		priority: schedule::Priority,
-		origin: T::PalletsOrigin,
-		call: CallOrHashOf<T>,
-	) -> Result<Self::Address, ()> {
-		let inner_id: ScheduledId = id
-			.try_into()
-			.unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
-		Self::do_schedule_named(inner_id, when, maybe_periodic, priority, origin, call)
-			.map_err(|_| ())
-	}
-
-	fn cancel_named(id: Vec<u8>) -> Result<(), ()> {
-		let inner_id: ScheduledId = id
-			.try_into()
-			.unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
-		Self::do_cancel_named(None, inner_id).map_err(|_| ())
-	}
-
-	fn reschedule_named(
-		id: Vec<u8>,
-		when: DispatchTime<T::BlockNumber>,
-	) -> Result<Self::Address, DispatchError> {
-		let inner_id: ScheduledId = id
-			.try_into()
-			.unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
-		Self::do_reschedule_named(inner_id, when)
-	}
-
-	fn next_dispatch_time(id: Vec<u8>) -> Result<T::BlockNumber, ()> {
-		let inner_id: ScheduledId = id
-			.try_into()
-			.unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
-		Lookup::<T>::get(inner_id)
-			.and_then(|(when, index)| Agenda::<T>::get(when).get(index as usize).map(|_| when))
-			.ok_or(())
 	}
 }

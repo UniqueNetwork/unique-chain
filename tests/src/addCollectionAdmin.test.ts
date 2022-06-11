@@ -40,8 +40,32 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
       expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
     });
   });
+});
 
-  it('Add admin using added collection admin.', async () => {
+describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_id):', () => {
+  it("Not owner can't add collection admin.", async () => {
+    await usingApi(async (api, privateKeyWrapper) => {
+      const collectionId = await createCollectionExpectSuccess();
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//CHARLIE');
+
+      const collection = await queryCollectionExpectSuccess(api, collectionId);
+      expect(collection.owner.toString()).to.be.equal(alice.address);
+
+      const adminListAfterAddAdmin = await getAdminList(api, collectionId);
+      expect(adminListAfterAddAdmin).to.be.not.deep.contains(normalizeAccountId(bob.address));
+
+      const changeAdminTxCharlie = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(charlie.address));
+      await expect(submitTransactionAsync(bob, changeAdminTxCharlie)).to.be.rejected;
+     
+      const adminListAfterAddNewAdmin = await getAdminList(api, collectionId);
+      expect(adminListAfterAddNewAdmin).to.be.not.deep.contains(normalizeAccountId(bob.address));
+      expect(adminListAfterAddNewAdmin).to.be.not.deep.contains(normalizeAccountId(charlie.address));
+    });
+  });
+
+  it("Admin can't add collection admin.", async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
       const alice = privateKeyWrapper('//Alice');
@@ -58,31 +82,14 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
       expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
 
       const changeAdminTxCharlie = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(charlie.address));
-      await submitTransactionAsync(bob, changeAdminTxCharlie);
+      await expect(submitTransactionAsync(bob, changeAdminTxCharlie)).to.be.rejected;
+     
       const adminListAfterAddNewAdmin = await getAdminList(api, collectionId);
       expect(adminListAfterAddNewAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
-      expect(adminListAfterAddNewAdmin).to.be.deep.contains(normalizeAccountId(charlie.address));
+      expect(adminListAfterAddNewAdmin).to.be.not.deep.contains(normalizeAccountId(charlie.address));
     });
   });
-});
 
-describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_id):', () => {
-  it("Not owner can't add collection admin.", async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const nonOwner = privateKeyWrapper('//Bob_stash');
-
-      const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(alice.address));
-      await expect(submitTransactionExpectFailAsync(nonOwner, changeAdminTx)).to.be.rejected;
-
-      const adminListAfterAddAdmin = await getAdminList(api, collectionId);
-      expect(adminListAfterAddAdmin).not.to.be.deep.contains(normalizeAccountId(alice.address));
-
-      // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
-      await createCollectionExpectSuccess();
-    });
-  });
   it("Can't add collection admin of not existing collection.", async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       // tslint:disable-next-line: no-bitwise
