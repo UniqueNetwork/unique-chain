@@ -38,7 +38,7 @@ async function createRmrkNft(api: ApiPromise, sender: IKeyringPair, collectionId
     null,
     'nft-metadata',
     true,
-    null
+    null,
   );
   const events = await executeTransaction(api, sender, tx);
   const result = getGenericResult(events, 'rmrkCore', 'NftMinted', (data) => {
