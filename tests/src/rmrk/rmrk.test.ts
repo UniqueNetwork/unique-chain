@@ -11,6 +11,7 @@ import {
 } from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
+import { it } from 'mocha';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
@@ -48,14 +49,26 @@ async function createRmrkNft(api: ApiPromise, sender: IKeyringPair, collectionId
   return result.data!;
 }
 
-describe('RMRK External Integration Test', () => {
+async function isUnique(): Promise<boolean> {
+  return usingApi(async api => {
+    const chain = await api.rpc.system.chain();
+
+    return chain.eq('UNIQUE')
+  })
+}
+
+describe('RMRK External Integration Test', async () => {
+  let it_rmrk = (await isUnique() ? it : it.skip);
+
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
+
+      
     });
   });
 
-  it('Creates a new RMRK collection that is mapped to a different ID and is tagged as external', async () => {
+  it_rmrk('Creates a new RMRK collection that is mapped to a different ID and is tagged as external', async () => {
     await usingApi(async api => {
       // throwaway collection to bump last Unique collection ID to test ID mapping
       await createCollectionExpectSuccess();
@@ -70,10 +83,12 @@ describe('RMRK External Integration Test', () => {
   });
 });
 
-describe('Negative Integration Test: External Collections, Internal Ops', () => {
+describe('Negative Integration Test: External Collections, Internal Ops', async () => {
   let uniqueCollectionId: number;
   let rmrkCollectionId: number;
   let rmrkNftId: number;
+
+  let it_rmrk = (await isUnique() ? it : it.skip);
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
@@ -88,7 +103,7 @@ describe('Negative Integration Test: External Collections, Internal Ops', () => 
     });
   });
 
-  it('[Negative] Forbids Unique operations with an external collection, handled by dispatch_call', async () => {
+  it_rmrk('[Negative] Forbids Unique operations with an external collection, handled by dispatch_call', async () => {
     await usingApi(async api => {
       // Collection item creation
 
@@ -147,7 +162,7 @@ describe('Negative Integration Test: External Collections, Internal Ops', () => 
     });
   });
 
-  it('[Negative] Forbids Unique collection operations with an external collection', async () => {
+  it_rmrk('[Negative] Forbids Unique collection operations with an external collection', async () => {
     await usingApi(async api => {
       const txDestroyCollection = api.tx.unique.destroyCollection(uniqueCollectionId);
       await expect(executeTransaction(api, alice, txDestroyCollection), 'destroying collection')
@@ -206,9 +221,11 @@ describe('Negative Integration Test: External Collections, Internal Ops', () => 
   });
 });
 
-describe('Negative Integration Test: Internal Collections, External Ops', () => {
+describe('Negative Integration Test: Internal Collections, External Ops', async () => {
   let collectionId: number;
   let nftId: number;
+
+  let it_rmrk = (await isUnique() ? it : it.skip);
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
@@ -220,7 +237,7 @@ describe('Negative Integration Test: Internal Collections, External Ops', () => 
     });
   });
 
-  it('[Negative] Forbids RMRK operations with the internal collection and NFT (due to the lack of mapping)', async () => {
+  it_rmrk('[Negative] Forbids RMRK operations with the internal collection and NFT (due to the lack of mapping)', async () => {
     await usingApi(async api => {
       const txChangeOwner = api.tx.rmrkCore.changeCollectionIssuer(collectionId, bob.address);
       await expect(executeTransaction(api, alice, txChangeOwner), 'changing collection issuer')

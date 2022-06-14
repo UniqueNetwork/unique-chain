@@ -23,7 +23,7 @@ function getModuleNames(api: ApiPromise): string[] {
 }
 
 // Pallets that must always be present
-const requiredPallets = [
+let requiredPallets = [
   'balances',
   'common',
   'randomnesscollectiveflip',
@@ -50,8 +50,6 @@ const requiredPallets = [
   'unique',
   'nonfungible',
   'refungible',
-  'rmrkcore',
-  'rmrkequip',
   'scheduler',
   'charging',
 ];
@@ -64,6 +62,16 @@ const consensusPallets = [
 ];
 
 describe('Pallet presence', () => {
+  before(async () => {
+    await usingApi(async api => {
+      const chain = await api.rpc.system.chain();
+
+      if (!chain.eq('UNIQUE')) {
+        requiredPallets.push(...['rmrkcore', 'rmrkequip']);
+      }
+    });
+  });
+
   it('Required pallets are present', async () => {
     await usingApi(async api => {
       for (let i=0; i<requiredPallets.length; i++) {
