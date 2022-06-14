@@ -8998,15 +8998,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rmrk-api-opt"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "rmrk-rpc"
 version = "0.0.1"
 dependencies = [
