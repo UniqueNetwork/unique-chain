@@ -430,7 +430,7 @@ describe('Negative Test: Nesting', async() => {
 
       // Create a token to attempt to be nested into
       const targetToken = await createItemExpectSuccess(bob, collection, 'NFT');
-      const targetAddress = {Ethereum: tokenIdToAddress(collection, targetToken)};
+      const targetAddress = {Ethereum: tokenIdToAddress(collection, targetToken).toLowerCase()};
 
       // Try to nest somebody else's token
       const newToken = await createItemExpectSuccess(bob, collection, 'NFT');

@@ -98,7 +98,7 @@ export function tokenIdToAddress(collection: number, token: number): string {
     ...encodeIntBE(collection),
     ...encodeIntBE(token),
   ]);
-  return Web3.utils.toChecksumAddress('0x' + buf.toString('hex')).toLowerCase();
+  return Web3.utils.toChecksumAddress('0x' + buf.toString('hex'));
 }
 export function tokenIdToCross(collection: number, token: number): CrossAccountId {
   return {
