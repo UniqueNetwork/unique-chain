@@ -16,6 +16,7 @@ import {
   transferExpectFailure,
   transferExpectSuccess,
   transferFromExpectSuccess,
+  setCollectionLimitsExpectSuccess,
 } from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 
@@ -94,6 +95,7 @@ describe('Integration Test: Composite nesting tests', () => {
   it('Checks token children', async () => {
     await usingApi(async api => {
       const collectionA = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await setCollectionLimitsExpectSuccess(alice, collectionA, {ownerCanTransfer: true});
       await setCollectionPermissionsExpectSuccess(alice, collectionA, {nesting: {tokenOwner: true}});
       const collectionB = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
 
