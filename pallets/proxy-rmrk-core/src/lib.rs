@@ -344,7 +344,7 @@ pub mod pallet {
 		/// - `metadata`: Arbitrary data about an nft, e.g. IPFS hash
 		/// - `transferable`: Ability to transfer this NFT
 		#[transactional]
-		#[pallet::weight(<SelfWeightOf<T>>::mint_nft())]
+		#[pallet::weight(<SelfWeightOf<T>>::mint_nft(resources.as_ref().map(|r| r.len() as u32).unwrap_or(0)))]
 		pub fn mint_nft(
 			origin: OriginFor<T>,
 			owner: T::AccountId,
