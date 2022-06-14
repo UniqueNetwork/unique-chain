@@ -353,7 +353,7 @@ pub mod pallet {
 			royalty_amount: Option<Permill>,
 			metadata: RmrkString,
 			transferable: bool,
-			resources: Option<BoundedVec<RmrkResourceTypes, MaxResourcesOnMint>>
+			resources: Option<BoundedVec<RmrkResourceTypes, MaxResourcesOnMint>>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
@@ -393,12 +393,7 @@ pub mod pallet {
 
 			if let Some(resources) = resources {
 				for resource in resources {
-					Self::resource_add(
-						sender.clone(),
-						collection.id,
-						nft_id,
-						resource
-					)?;
+					Self::resource_add(sender.clone(), collection.id, nft_id, resource)?;
 				}
 			}
 
@@ -963,7 +958,7 @@ pub mod pallet {
 				sender,
 				collection_id,
 				nft_id.into(),
-				RmrkResourceTypes::Composable(resource)
+				RmrkResourceTypes::Composable(resource),
 			)?;
 
 			Self::deposit_event(Event::ResourceAdded {
@@ -1162,61 +1157,55 @@ impl<T: Config> Pallet<T> {
 		sender: T::AccountId,
 		collection_id: CollectionId,
 		nft_id: TokenId,
-		resource: RmrkResourceTypes
+		resource: RmrkResourceTypes,
 	) -> Result<RmrkResourceId, DispatchError> {
 		match resource {
-			RmrkResourceTypes::Basic(resource) => {
-				Self::resource_add_helper(
-					sender,
-					collection_id,
-					nft_id,
-					[
-						Self::rmrk_property(TokenType, &NftType::Resource)?,
-						Self::rmrk_property(ResourceType, &misc::ResourceType::Basic)?,
-						Self::rmrk_property(Src, &resource.src)?,
-						Self::rmrk_property(Metadata, &resource.metadata)?,
-						Self::rmrk_property(License, &resource.license)?,
-						Self::rmrk_property(Thumb, &resource.thumb)?,
-					]
-					.into_iter(),
-				)
-			},
-			RmrkResourceTypes::Composable(resource) => {
-				Self::resource_add_helper(
-					sender,
-					collection_id,
-					nft_id.into(),
-					[
-						Self::rmrk_property(TokenType, &NftType::Resource)?,
-						Self::rmrk_property(ResourceType, &misc::ResourceType::Composable)?,
-						Self::rmrk_property(Parts, &resource.parts)?,
-						Self::rmrk_property(Base, &resource.base)?,
-						Self::rmrk_property(Src, &resource.src)?,
-						Self::rmrk_property(Metadata, &resource.metadata)?,
-						Self::rmrk_property(License, &resource.license)?,
-						Self::rmrk_property(Thumb, &resource.thumb)?,
-					]
-					.into_iter(),
-				)
-			},
-			RmrkResourceTypes::Slot(resource) => {
-				Self::resource_add_helper(
-					sender,
-					collection_id,
-					nft_id.into(),
-					[
-						Self::rmrk_property(TokenType, &NftType::Resource)?,
-						Self::rmrk_property(ResourceType, &misc::ResourceType::Slot)?,
-						Self::rmrk_property(Base, &resource.base)?,
-						Self::rmrk_property(Src, &resource.src)?,
-						Self::rmrk_property(Metadata, &resource.metadata)?,
-						Self::rmrk_property(Slot, &resource.slot)?,
-						Self::rmrk_property(License, &resource.license)?,
-						Self::rmrk_property(Thumb, &resource.thumb)?,
-					]
-					.into_iter(),
-				)
-			}
+			RmrkResourceTypes::Basic(resource) => Self::resource_add_helper(
+				sender,
+				collection_id,
+				nft_id,
+				[
+					Self::rmrk_property(TokenType, &NftType::Resource)?,
+					Self::rmrk_property(ResourceType, &misc::ResourceType::Basic)?,
+					Self::rmrk_property(Src, &resource.src)?,
+					Self::rmrk_property(Metadata, &resource.metadata)?,
+					Self::rmrk_property(License, &resource.license)?,
+					Self::rmrk_property(Thumb, &resource.thumb)?,
+				]
+				.into_iter(),
+			),
+			RmrkResourceTypes::Composable(resource) => Self::resource_add_helper(
+				sender,
+				collection_id,
+				nft_id.into(),
+				[
+					Self::rmrk_property(TokenType, &NftType::Resource)?,
+					Self::rmrk_property(ResourceType, &misc::ResourceType::Composable)?,
+					Self::rmrk_property(Parts, &resource.parts)?,
+					Self::rmrk_property(Base, &resource.base)?,
+					Self::rmrk_property(Src, &resource.src)?,
+					Self::rmrk_property(Metadata, &resource.metadata)?,
+					Self::rmrk_property(License, &resource.license)?,
+					Self::rmrk_property(Thumb, &resource.thumb)?,
+				]
+				.into_iter(),
+			),
+			RmrkResourceTypes::Slot(resource) => Self::resource_add_helper(
+				sender,
+				collection_id,
+				nft_id.into(),
+				[
+					Self::rmrk_property(TokenType, &NftType::Resource)?,
+					Self::rmrk_property(ResourceType, &misc::ResourceType::Slot)?,
+					Self::rmrk_property(Base, &resource.base)?,
+					Self::rmrk_property(Src, &resource.src)?,
+					Self::rmrk_property(Metadata, &resource.metadata)?,
+					Self::rmrk_property(Slot, &resource.slot)?,
+					Self::rmrk_property(License, &resource.license)?,
+					Self::rmrk_property(Thumb, &resource.thumb)?,
+				]
+				.into_iter(),
+			),
 		}
 	}
 
