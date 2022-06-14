@@ -23,7 +23,7 @@ function getModuleNames(api: ApiPromise): string[] {
 }
 
 // Pallets that must always be present
-let requiredPallets = [
+const requiredPallets = [
   'balances',
   'common',
   'randomnesscollectiveflip',

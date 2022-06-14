@@ -11,7 +11,7 @@ import {
 } from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
-import { it } from 'mocha';
+import {it} from 'mocha';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
@@ -53,12 +53,12 @@ async function isUnique(): Promise<boolean> {
   return usingApi(async api => {
     const chain = await api.rpc.system.chain();
 
-    return chain.eq('UNIQUE')
-  })
+    return chain.eq('UNIQUE');
+  });
 }
 
 describe('RMRK External Integration Test', async () => {
-  let it_rmrk = (await isUnique() ? it : it.skip);
+  const it_rmrk = (await isUnique() ? it : it.skip);
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
@@ -88,7 +88,7 @@ describe('Negative Integration Test: External Collections, Internal Ops', async 
   let rmrkCollectionId: number;
   let rmrkNftId: number;
 
-  let it_rmrk = (await isUnique() ? it : it.skip);
+  const it_rmrk = (await isUnique() ? it : it.skip);
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
@@ -225,7 +225,7 @@ describe('Negative Integration Test: Internal Collections, External Ops', async 
   let collectionId: number;
   let nftId: number;
 
-  let it_rmrk = (await isUnique() ? it : it.skip);
+  const it_rmrk = (await isUnique() ? it : it.skip);
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
