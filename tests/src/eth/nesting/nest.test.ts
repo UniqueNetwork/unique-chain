@@ -18,7 +18,6 @@ const createNestingCollection = async (
   const {collectionIdAddress: collectionAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
   const contract = new web3.eth.Contract(nonFungibleAbi as any, collectionAddress, {from: owner, ...GAS_ARGS});
-  await contract.methods.addCollectionAdmin(owner).send();
   await contract.methods.setCollectionNesting(true).send({from: owner});
 
   return {collectionId, collectionAddress, contract};
