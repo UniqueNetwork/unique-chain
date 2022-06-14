@@ -916,15 +916,6 @@ impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
 }
 
-impl pallet_proxy_rmrk_core::Config for Runtime {
-	type WeightInfo = pallet_proxy_rmrk_core::weights::SubstrateWeight<Self>;
-	type Event = Event;
-}
-
-impl pallet_proxy_rmrk_equip::Config for Runtime {
-	type Event = Event;
-}
-
 impl pallet_unique::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
@@ -1164,8 +1155,6 @@ construct_runtime!(
 		Refungible: pallet_refungible::{Pallet, Storage} = 68,
 		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
 		Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
-		RmrkCore: pallet_proxy_rmrk_core::{Pallet, Call, Storage, Event<T>} = 71,
-		RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
@@ -1313,7 +1302,73 @@ macro_rules! dispatch_unique_runtime {
 	}};
 }
 
-impl_common_runtime_apis!();
+impl_common_runtime_apis! {
+	#![custom_apis]
+
+	impl rmrk_rpc::RmrkApi<
+		Block,
+		AccountId,
+		RmrkCollectionInfo<AccountId>,
+		RmrkInstanceInfo<AccountId>,
+		RmrkResourceInfo,
+		RmrkPropertyInfo,
+		RmrkBaseInfo<AccountId>,
+		RmrkPartType,
+		RmrkTheme
+	> for Runtime {
+		fn last_collection_idx() -> Result<RmrkCollectionId, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn collection_by_id(collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo<AccountId>>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_by_id(collection_id: RmrkCollectionId, nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo<AccountId>>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn collection_properties(collection_id: RmrkCollectionId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_properties(collection_id: RmrkCollectionId, nft_id: RmrkNftId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_resources(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_resource_priority(collection_id: RmrkCollectionId, nft_id: RmrkNftId, resource_id: RmrkResourceId) -> Result<Option<u32>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn base(base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn base_parts(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn theme_names(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn theme(base_id: RmrkBaseId, theme_name: RmrkThemeName, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Option<RmrkTheme>, DispatchError> {
+			Ok(Default::default())
+		}
+	}
+}
 
 struct CheckInherents;
 
