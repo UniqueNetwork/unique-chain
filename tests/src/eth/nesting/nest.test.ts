@@ -29,34 +29,37 @@ describe('Integration Test: EVM Nesting', () => {
     const {collectionId, contract} = await createNestingCollection(api, web3, owner);
 
     // Create a token to be nested
-    const nftTokenId = await contract.methods.nextTokenId().call();
+    const targetNFTTokenId = await contract.methods.nextTokenId().call();
     await contract.methods.mint(
       owner,
-      nftTokenId,
+      targetNFTTokenId,
     ).send({from: owner});
 
-    // Nest into a token
-    const firstTargetNftTokenId = await contract.methods.nextTokenId().call();
+    const targetNftTokenAddress = tokenIdToAddress(collectionId, targetNFTTokenId);
+
+    // Create a nested token
+    const firstTokenId = await contract.methods.nextTokenId().call();
+    await contract.methods.mint(
+      targetNftTokenAddress,
+      firstTokenId,
+    ).send({from: owner});
+
+    expect(await contract.methods.ownerOf(firstTokenId).call()).to.be.equal(targetNftTokenAddress);
+
+    // Create a token to be nested and nest
+    const secondTokenId = await contract.methods.nextTokenId().call();
     await contract.methods.mint(
       owner,
-      firstTargetNftTokenId,
+      secondTokenId,
     ).send({from: owner});
 
-    const targetNftTokenAddress = tokenIdToAddress(collectionId, firstTargetNftTokenId);
+    await contract.methods.transfer(targetNftTokenAddress, secondTokenId).send({from: owner});
 
-    await contract.methods.transfer(targetNftTokenAddress, nftTokenId).send({from: owner});
-    expect(await contract.methods.ownerOf(nftTokenId).call()).to.be.equal(targetNftTokenAddress);
+    expect(await contract.methods.ownerOf(secondTokenId).call()).to.be.equal(targetNftTokenAddress);
 
-    // Re-nest into another
-    const secondTargetNftTokenId = await contract.methods.nextTokenId().call();
-    await contract.methods.mint(
-      owner,
-      secondTargetNftTokenId,
-    ).send({from: owner});
-    const nextNftTokenAddress = tokenIdToAddress(collectionId, secondTargetNftTokenId);
-
-    await contract.methods.transfer(nextNftTokenAddress, nftTokenId).send({from: owner});
-    expect(await contract.methods.ownerOf(nftTokenId).call()).to.be.equal(nextNftTokenAddress);
+    // Unnest token back
+    await contract.methods.transferFrom(targetNftTokenAddress, owner, secondTokenId).send({from: owner});
+    expect(await contract.methods.ownerOf(secondTokenId).call()).to.be.equal(owner);
   });
 
   itWeb3('NFT: allows an Owner to nest/unnest their token (Restricted nesting)', async ({api, web3, privateKeyWrapper}) => {
@@ -125,7 +128,7 @@ describe('Negative Test: EVM Nesting', async() => {
       .transfer(targetNftTokenAddress, nftTokenId)
       .call({from: owner})).to.be.rejectedWith('UserIsNotAllowedToNest');
   });
-  
+
   itWeb3('NFT: disallows a non-Owner to nest someone else\'s token', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const malignant = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
@@ -139,20 +142,20 @@ describe('Negative Test: EVM Nesting', async() => {
       targetTokenId,
     ).send({from: owner});
     const targetTokenAddress = tokenIdToAddress(collectionId, targetTokenId);
-    
+
     // Mint a token belonging to a different account
     const tokenId = await contract.methods.nextTokenId().call();
     await contract.methods.mint(
       malignant,
       tokenId,
     ).send({from: owner});
-      
+
     // Try to nest one token in another as a non-owner account
     await expect(contract.methods
       .transfer(targetTokenAddress, tokenId)
       .call({from: malignant})).to.be.rejectedWith('UserIsNotAllowedToNest');
   });
-  
+
   itWeb3('NFT: disallows a non-Owner to nest someone else\'s token (Restricted nesting)', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const malignant = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
@@ -182,7 +185,7 @@ describe('Negative Test: EVM Nesting', async() => {
       .transfer(nftTokenAddressA, nftTokenIdB)
       .call({from: malignant})).to.be.rejectedWith('UserIsNotAllowedToNest');
   });
-  
+
   itWeb3('NFT: disallows to nest token in an unlisted collection', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
 
