@@ -27,46 +27,46 @@ import {
   getCollectionAddressFromResult,
 } from './util/helpers';
 
-describe('Create collection from EVM', () => {
-  // itWeb3('Create collection', async ({api, web3, privateKeyWrapper}) => {
-  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-  //   const collectionHelper = evmCollectionHelpers(web3, owner);
-  //   const collectionName = 'CollectionEVM';
-  //   const description = 'Some description';
-  //   const tokenPrefix = 'token prefix';
+describe.only('Create collection from EVM', () => {
+  itWeb3('Create collection', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const collectionHelper = evmCollectionHelpers(web3, owner);
+    const collectionName = 'CollectionEVM';
+    const description = 'Some description';
+    const tokenPrefix = 'token prefix';
   
-  //   const collectionCountBefore = await getCreatedCollectionCount(api);
-  //   const result = await collectionHelper.methods
-  //     .createNonfungibleCollection(collectionName, description, tokenPrefix)
-  //     .send();
-  //   const collectionCountAfter = await getCreatedCollectionCount(api);
+    const collectionCountBefore = await getCreatedCollectionCount(api);
+    const result = await collectionHelper.methods
+      .createNonfungibleCollection(collectionName, description, tokenPrefix)
+      .send();
+    const collectionCountAfter = await getCreatedCollectionCount(api);
   
-  //   const {collectionId, collection} = await getCollectionAddressFromResult(api, result);
-  //   expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
-  //   expect(collectionId).to.be.eq(collectionCountAfter);
-  //   expect(collection.name.map(v => String.fromCharCode(v.toNumber())).join('')).to.be.eq(collectionName);
-  //   expect(collection.description.map(v => String.fromCharCode(v.toNumber())).join('')).to.be.eq(description);
-  //   expect(collection.tokenPrefix.toHuman()).to.be.eq(tokenPrefix);
-  // });
+    const {collectionId, collection} = await getCollectionAddressFromResult(api, result);
+    expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
+    expect(collectionId).to.be.eq(collectionCountAfter);
+    expect(collection.name.map(v => String.fromCharCode(v.toNumber())).join('')).to.be.eq(collectionName);
+    expect(collection.description.map(v => String.fromCharCode(v.toNumber())).join('')).to.be.eq(description);
+    expect(collection.tokenPrefix.toHuman()).to.be.eq(tokenPrefix);
+  });
 
-  // itWeb3('Check collection address exist', async ({api, web3, privateKeyWrapper}) => {
-  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-  //   const collectionHelpers = evmCollectionHelpers(web3, owner);
+  itWeb3('Check collection address exist', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const collectionHelpers = evmCollectionHelpers(web3, owner);
   
-  //   const expectedCollectionId = await getCreatedCollectionCount(api) + 1;
-  //   const expectedCollectionAddress = collectionIdToAddress(expectedCollectionId);
-  //   expect(await collectionHelpers.methods
-  //     .isCollectionExist(expectedCollectionAddress)
-  //     .call()).to.be.false;
+    const expectedCollectionId = await getCreatedCollectionCount(api) + 1;
+    const expectedCollectionAddress = collectionIdToAddress(expectedCollectionId);
+    expect(await collectionHelpers.methods
+      .isCollectionExist(expectedCollectionAddress)
+      .call()).to.be.false;
 
-  //   await collectionHelpers.methods
-  //     .createNonfungibleCollection('A', 'A', 'A')
-  //     .send();
+    await collectionHelpers.methods
+      .createNonfungibleCollection('A', 'A', 'A')
+      .send();
     
-  //   expect(await collectionHelpers.methods
-  //     .isCollectionExist(expectedCollectionAddress)
-  //     .call()).to.be.true;
-  // });
+    expect(await collectionHelpers.methods
+      .isCollectionExist(expectedCollectionAddress)
+      .call()).to.be.true;
+  });
   
   itWeb3('Set sponsorship', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);

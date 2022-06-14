@@ -210,6 +210,24 @@ impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelpers<T> {
 		Ok(address)
 	}
 
+	#[weight(<SelfWeightOf<T>>::create_collection())]
+	fn create_refungible_collection(
+		&self,
+		caller: caller,
+		name: string,
+		description: string,
+		token_prefix: string,
+	) -> Result<address> {
+		let (caller, name, description, token_prefix) =
+			convert_data::<T>(caller, name, description, token_prefix)?;
+		let data = make_data::<T>(name, description, token_prefix)?;
+		let collection_id = <pallet_refungible::Pallet<T>>::init_collection(caller.clone(), data)
+			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+
+		let address = pallet_common::eth::collection_id_to_address(collection_id);
+		Ok(address)
+	}
+
 	/// Check if a collection exists
 	/// @param collection_address Address of the collection in question
 	/// @return bool Does the collection exist?
@@ -225,7 +243,9 @@ impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelpers<T> {
 
 /// Implements [`OnMethodCall`], which delegates call to [`EvmCollectionHelpers`]
 pub struct CollectionHelpersOnMethodCall<T: Config>(PhantomData<*const T>);
-impl<T: Config + pallet_nonfungible::Config> OnMethodCall<T> for CollectionHelpersOnMethodCall<T> {
+impl<T: Config + pallet_nonfungible::Config + pallet_refungible::Config> OnMethodCall<T>
+	for CollectionHelpersOnMethodCall<T>
+{
 	fn is_reserved(contract: &sp_core::H160) -> bool {
 		contract == &T::ContractAddress::get()
 	}
