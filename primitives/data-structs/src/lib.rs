@@ -409,7 +409,10 @@ impl CollectionLimits {
 			.min(MAX_SPONSOR_TIMEOUT)
 	}
 	pub fn owner_can_transfer(&self) -> bool {
-		self.owner_can_transfer.unwrap_or(true)
+		self.owner_can_transfer.unwrap_or(false)
+	}
+	pub fn owner_can_transfer_instaled(&self) -> bool {
+		self.owner_can_transfer.is_some()
 	}
 	pub fn owner_can_destroy(&self) -> bool {
 		self.owner_can_destroy.unwrap_or(true)
@@ -447,7 +450,7 @@ impl CollectionPermissions {
 	pub fn nesting(&self) -> &NestingPermissions {
 		static DEFAULT: NestingPermissions = NestingPermissions {
 			token_owner: false,
-			admin: false,
+			collection_admin: false,
 			restricted: None,
 
 			permissive: false,
@@ -490,7 +493,7 @@ pub struct NestingPermissions {
 	/// Owner of token can nest tokens under it
 	pub token_owner: bool,
 	/// Admin of token collection can nest tokens under token
-	pub admin: bool,
+	pub collection_admin: bool,
 	/// If set - only tokens from specified collections can be nested
 	pub restricted: Option<OwnerRestrictedSet>,
 
