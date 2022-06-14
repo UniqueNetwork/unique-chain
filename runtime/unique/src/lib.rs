@@ -74,10 +74,9 @@ use up_data_structs::{
 	CollectionStats, RpcCollection,
 	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
 	TokenChild, RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo,
-	RmrkBaseInfo, RmrkPartType, RmrkTheme, RmrkThemeName, RmrkThemeProperty, RmrkCollectionId,
-	RmrkNftId, RmrkAccountIdOrCollectionNftTuple, RmrkNftChild, RmrkPropertyKey, RmrkResourceTypes,
-	RmrkBasicResource, RmrkComposableResource, RmrkSlotResource, RmrkResourceId, RmrkBaseId,
-	RmrkFixedPart, RmrkSlotPart, RmrkString,
+	RmrkBaseInfo, RmrkPartType, RmrkTheme, RmrkThemeName, RmrkCollectionId,
+	RmrkNftId, RmrkNftChild, RmrkPropertyKey,
+	RmrkResourceId, RmrkBaseId,
 };
 
 // use pallet_contracts::weights::WeightInfo;
@@ -916,15 +915,6 @@ impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
 }
 
-impl pallet_proxy_rmrk_core::Config for Runtime {
-	type WeightInfo = pallet_proxy_rmrk_core::weights::SubstrateWeight<Self>;
-	type Event = Event;
-}
-
-impl pallet_proxy_rmrk_equip::Config for Runtime {
-	type Event = Event;
-}
-
 impl pallet_unique::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
@@ -1164,8 +1154,6 @@ construct_runtime!(
 		Refungible: pallet_refungible::{Pallet, Storage} = 68,
 		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
 		Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
-		RmrkCore: pallet_proxy_rmrk_core::{Pallet, Call, Storage, Event<T>} = 71,
-		RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
@@ -1313,7 +1301,73 @@ macro_rules! dispatch_unique_runtime {
 	}};
 }
 
-impl_common_runtime_apis!();
+impl_common_runtime_apis! {
+	#![custom_apis]
+
+	impl rmrk_rpc::RmrkApi<
+		Block,
+		AccountId,
+		RmrkCollectionInfo<AccountId>,
+		RmrkInstanceInfo<AccountId>,
+		RmrkResourceInfo,
+		RmrkPropertyInfo,
+		RmrkBaseInfo<AccountId>,
+		RmrkPartType,
+		RmrkTheme
+	> for Runtime {
+		fn last_collection_idx() -> Result<RmrkCollectionId, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn collection_by_id(_collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo<AccountId>>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_by_id(_collection_id: RmrkCollectionId, _nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo<AccountId>>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn account_tokens(_account_id: AccountId, _collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_children(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn collection_properties(_collection_id: RmrkCollectionId, _filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_properties(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId, _filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_resources(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_resource_priority(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId, _resource_id: RmrkResourceId) -> Result<Option<u32>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn base(_base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn base_parts(_base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn theme_names(_base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn theme(_base_id: RmrkBaseId, _theme_name: RmrkThemeName, _filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Option<RmrkTheme>, DispatchError> {
+			Ok(Default::default())
+		}
+	}
+}
 
 struct CheckInherents;
 

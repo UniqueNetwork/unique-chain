@@ -454,6 +454,7 @@ describe('Negative Test: Nesting', async() => {
   it('Admin (NFT): disallows an Admin to nest and unnest someone else\'s token', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await setCollectionLimitsExpectSuccess(alice, collection, {ownerCanTransfer: true});
       await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {collectionAdmin: true}});
 
       await addToAllowListExpectSuccess(alice, collection, bob.address);
