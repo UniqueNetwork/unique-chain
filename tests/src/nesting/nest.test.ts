@@ -159,7 +159,7 @@ describe('Integration Test: Various token type nesting', async () => {
   it('Admin (NFT): allows an Admin to nest a token', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {admin: true}});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {collectionAdmin: true}});
       await addCollectionAdminExpectSuccess(alice, collection, bob.address);
       const targetToken = await createItemExpectSuccess(alice, collection, 'NFT');
 
@@ -182,7 +182,7 @@ describe('Integration Test: Various token type nesting', async () => {
       await addCollectionAdminExpectSuccess(alice, collectionA, bob.address);
       const collectionB = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await addCollectionAdminExpectSuccess(alice, collectionB, bob.address);
-      await setCollectionPermissionsExpectSuccess(alice, collectionA, {nesting: {admin: true, restricted:[collectionA, collectionB]}});
+      await setCollectionPermissionsExpectSuccess(alice, collectionA, {nesting: {collectionAdmin: true, restricted:[collectionA, collectionB]}});
       const targetToken = await createItemExpectSuccess(alice, collectionA, 'NFT');
 
       // Create a nested token
@@ -399,7 +399,7 @@ describe('Negative Test: Nesting', async() => {
   it('Admin (NFT): disallows a Token Owner to operate nesting when only Admin is allowed', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {admin: true}});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {collectionAdmin: true}});
       await addToAllowListExpectSuccess(alice, collection, bob.address);
       await enableAllowListExpectSuccess(alice, collection);
       await enablePublicMintingExpectSuccess(alice, collection);
@@ -422,7 +422,7 @@ describe('Negative Test: Nesting', async() => {
   it('Admin (NFT): disallows an Admin to nest and unnest someone else\'s token', async () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {admin: true}});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {collectionAdmin: true}});
 
       await addToAllowListExpectSuccess(alice, collection, bob.address);
       await enableAllowListExpectSuccess(alice, collection);
@@ -457,7 +457,7 @@ describe('Negative Test: Nesting', async() => {
     await usingApi(async api => {
       const collectionA = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       const collectionB = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collectionA, {nesting: {admin: true, restricted:[collectionA]}});
+      await setCollectionPermissionsExpectSuccess(alice, collectionA, {nesting: {collectionAdmin: true, restricted:[collectionA]}});
 
       // Create a token to attempt to be nested into
       const targetToken = await createItemExpectSuccess(alice, collectionA, 'NFT');

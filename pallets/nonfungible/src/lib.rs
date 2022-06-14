@@ -1008,7 +1008,7 @@ impl<T: Config> Pallet<T> {
 				nesting_budget,
 			)? {
 			// Pass
-		} else if nesting.admin && handle.is_owner_or_admin(&sender) {
+		} else if nesting.collection_admin && handle.is_owner_or_admin(&sender) {
 			// Pass
 		} else {
 			fail!(<CommonError<T>>::UserIsNotAllowedToNest);
