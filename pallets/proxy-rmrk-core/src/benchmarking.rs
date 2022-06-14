@@ -54,7 +54,9 @@ fn create_slot_resource() -> RmrkSlotResource {
 }
 
 fn create_max_resource_types_array<S: Get<u32>>(num: usize) -> BoundedVec<RmrkResourceTypes, S> {
-	vec![RmrkResourceTypes::Composable(create_composable_resource()); num].try_into().expect("num <= S")
+	vec![RmrkResourceTypes::Composable(create_composable_resource()); num]
+		.try_into()
+		.expect("num <= S")
 }
 
 fn create_max_collection<T: Config>(owner: &T::AccountId) -> DispatchResult {
@@ -75,10 +77,7 @@ fn create_max_collection<T: Config>(owner: &T::AccountId) -> DispatchResult {
 	)
 }
 
-fn create_nft<T: Config>(
-	owner: &T::AccountId,
-	collection_id: RmrkCollectionId,
-) -> DispatchResult {
+fn create_nft<T: Config>(owner: &T::AccountId, collection_id: RmrkCollectionId) -> DispatchResult {
 	let royalty_recipient = Some(owner.clone());
 	let royalty_amount = Some(Permill::from_percent(25));
 	let metadata = create_data();
@@ -92,7 +91,7 @@ fn create_nft<T: Config>(
 		royalty_amount,
 		metadata,
 		transferable,
-		None
+		None,
 	)
 }
 
