@@ -921,6 +921,18 @@ export async function addCollectionAdminExpectSuccess(sender: IKeyringPair, coll
   });
 }
 
+export async function adminApproveFromExpectFail(
+  collectionId: number,
+  tokenId: number, admin: IKeyringPair, owner: CrossAccountId | string, approved: CrossAccountId | string, amount: number | bigint = 1,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    const approveUniqueTx = api.tx.unique.approve(normalizeAccountId(approved), collectionId, tokenId, amount);
+    const events = await expect(submitTransactionAsync(admin, approveUniqueTx)).to.be.rejected;
+    const result = getGenericResult(events);
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function
 getFreeBalance(account: IKeyringPair): Promise<bigint> {
   let balance = 0n;
