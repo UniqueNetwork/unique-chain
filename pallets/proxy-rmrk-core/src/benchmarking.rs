@@ -53,6 +53,10 @@ fn create_slot_resource() -> RmrkSlotResource {
 	}
 }
 
+fn create_max_resource_types_array<S: Get<u32>>(num: usize) -> BoundedVec<RmrkResourceTypes, S> {
+	vec![RmrkResourceTypes::Composable(create_composable_resource()); num].try_into().expect("num <= S")
+}
+
 fn create_max_collection<T: Config>(owner: &T::AccountId) -> DispatchResult {
 	<T as pallet_common::Config>::Currency::deposit_creating(
 		owner,
@@ -71,7 +75,7 @@ fn create_max_collection<T: Config>(owner: &T::AccountId) -> DispatchResult {
 	)
 }
 
-fn create_max_nft<T: Config>(
+fn create_nft<T: Config>(
 	owner: &T::AccountId,
 	collection_id: RmrkCollectionId,
 ) -> DispatchResult {
@@ -88,6 +92,7 @@ fn create_max_nft<T: Config>(
 		royalty_amount,
 		metadata,
 		transferable,
+		None
 	)
 }
 
@@ -109,7 +114,7 @@ impl NftBuilder {
 	}
 
 	fn build<T: Config>(&mut self, owner: &T::AccountId) -> Result<RmrkNftId, DispatchError> {
-		create_max_nft::<T>(owner, self.collection_id)?;
+		create_nft::<T>(owner, self.collection_id)?;
 		self.current_nft_id += 1;
 
 		Ok(self.current_nft_id)
@@ -213,7 +218,10 @@ benchmarks! {
 	}: _(RawOrigin::Signed(caller), collection_id)
 
 	mint_nft {
+		let b in 0..100;
+
 		let caller: T::AccountId = account("caller", 0, SEED);
+		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
 
 		create_max_collection::<T>(&caller)?;
 		let collection_id = 0;
@@ -230,7 +238,8 @@ benchmarks! {
 		royalty_recipient,
 		royalty_amount,
 		metadata,
-		transferable
+		transferable,
+		Some(create_max_resource_types_array(b as usize))
 	)
 
 	burn_nft {
