@@ -952,6 +952,8 @@ parameter_types! {
 	pub const RmrkPartsLimit: u32 = 25;
 	#[derive(PartialEq)]
 	pub const RmrkMaxPriorities: u32 = 25;
+	#[derive(PartialEq)]
+	pub const MaxResourcesOnMint: u32 = 100;
 }
 
 impl From<RmrkCollectionId> for CollectionId {
