@@ -28,7 +28,7 @@ use frame_support::{
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, budget::Budget, Property, PropertyPermission, PropertyKey,
-	PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild,
+	PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild, SysPropertyValue,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
@@ -122,6 +122,19 @@ pub mod pallet {
 		Value = Properties,
 		QueryKind = ValueQuery,
 		OnEmpty = up_data_structs::TokenProperties,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn token_sys_property)]
+	pub type TokenSysProperties<T: Config> = StorageNMap<
+		Key = (
+			Key<Twox64Concat, CollectionId>,
+			Key<Twox64Concat, TokenId>,
+			Key<Twox64Concat, PropertyScope>,
+			Key<Twox64Concat, PropertyKey>,
+		),
+		Value = SysPropertyValue,
+		QueryKind = OptionQuery,
 	>;
 
 	/// Used to enumerate tokens owned by account
@@ -294,6 +307,33 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	pub fn try_mutate_token_sys_property<R, E>(
+		collection_id: CollectionId,
+		token_id: TokenId,
+		scope: PropertyScope,
+		key: PropertyKey,
+		f: impl FnOnce(&mut Option<SysPropertyValue>) -> Result<R, E>,
+	) -> Result<R, E> {
+		<TokenSysProperties<T>>::try_mutate((collection_id, token_id, scope, key), f)
+	}
+
+	pub fn remove_token_sys_property(
+		collection_id: CollectionId,
+		token_id: TokenId,
+		scope: PropertyScope,
+		key: PropertyKey,
+	) {
+		<TokenSysProperties<T>>::remove((collection_id, token_id, scope, key));
+	}
+
+	pub fn iterate_token_sys_properties(
+		collection_id: CollectionId,
+		token_id: TokenId,
+		scope: PropertyScope,
+	) -> impl Iterator<Item = (PropertyKey, SysPropertyValue)> {
+		<TokenSysProperties<T>>::iter_prefix((collection_id, token_id, scope))
+	}
+
 	pub fn current_token_id(collection_id: CollectionId) -> TokenId {
 		TokenId(<TokensMinted<T>>::get(collection_id))
 	}
@@ -375,6 +415,7 @@ impl<T: Config> Pallet<T> {
 		<TokensBurnt<T>>::insert(collection.id, burnt);
 		<TokenData<T>>::remove((collection.id, token));
 		<TokenProperties<T>>::remove((collection.id, token));
+		<TokenSysProperties<T>>::remove_prefix((collection.id, token), None);
 		let old_spender = <Allowance<T>>::take((collection.id, token));
 
 		if let Some(old_spender) = old_spender {
