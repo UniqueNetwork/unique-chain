@@ -154,6 +154,7 @@ pub mod pallet {
 		NftTypeEncodeError,
 		RmrkPropertyKeyIsTooLong,
 		RmrkPropertyValueIsTooLong,
+		RmrkPropertyIsNotFound,
 		UnableToDecodeRmrkData,
 
 		/* RMRK compatible events */
@@ -169,6 +170,7 @@ pub mod pallet {
 		CannotAcceptNonOwnedNft,
 		CannotRejectNonOwnedNft,
 		ResourceNotPending,
+		NoAvailableResourceId,
 	}
 
 	#[pallet::call]
@@ -381,8 +383,8 @@ pub mod pallet {
 					Self::rmrk_property(RoyaltyInfo, &royalty_info)?,
 					Self::rmrk_property(Metadata, &metadata)?,
 					Self::rmrk_property(Equipped, &false)?,
-					Self::rmrk_property(ResourceCollection, &None::<CollectionId>)?,
 					Self::rmrk_property(ResourcePriorities, &<Vec<u8>>::new())?,
+					Self::rmrk_property(NextResourceId, &(0 as RmrkResourceId))?,
 				]
 				.into_iter(),
 			)
@@ -653,6 +655,11 @@ pub mod pallet {
 			collection.check_is_external()?;
 
 			ensure!(
+				<TokenData<T>>::get((collection_id, nft_id)).is_some(),
+				<Error<T>>::NoAvailableNftId
+			);
+
+			ensure!(
 				Self::get_nft_property_decoded(
 					collection_id,
 					nft_id,
@@ -686,7 +693,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			rmrk_collection_id: RmrkCollectionId,
 			rmrk_nft_id: RmrkNftId,
-			rmrk_resource_id: RmrkResourceId,
+			resource_id: RmrkResourceId,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let cross_sender = T::CrossAccountId::from_sub(sender);
@@ -698,7 +705,6 @@ pub mod pallet {
 			collection.check_is_external()?;
 
 			let nft_id = rmrk_nft_id.into();
-			let resource_id = rmrk_resource_id.into();
 
 			let budget = budget::Value::new(NESTING_BUDGET);
 
@@ -706,34 +712,18 @@ pub mod pallet {
 				<PalletStructure<T>>::find_topmost_owner(collection_id, nft_id, &budget)
 					.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
 
-			let resource_collection_id: Option<CollectionId> =
-				Self::get_nft_property_decoded(collection_id, nft_id, ResourceCollection)
-					.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+			Self::try_mutate_resource_info(collection_id, nft_id, resource_id, |res| {
+				ensure!(res.pending, <Error<T>>::ResourceNotPending);
+				ensure!(cross_sender == nft_owner, <Error<T>>::NoPermission);
 
-			let resource_collection_id =
-				resource_collection_id.ok_or(<Error<T>>::ResourceDoesntExist)?;
+				res.pending = false;
 
-			let is_pending: bool = Self::get_nft_property_decoded(
-				resource_collection_id,
-				resource_id,
-				PendingResourceAccept,
-			)
-			.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
-
-			ensure!(is_pending, <Error<T>>::ResourceNotPending);
-
-			ensure!(cross_sender == nft_owner, <Error<T>>::NoPermission);
-
-			<PalletNft<T>>::set_scoped_token_property(
-				resource_collection_id,
-				rmrk_resource_id.into(),
-				PropertyScope::Rmrk,
-				Self::rmrk_property(PendingResourceAccept, &false)?,
-			)?;
+				Ok(())
+			})?;
 
 			Self::deposit_event(Event::<T>::ResourceAccepted {
 				nft_id: rmrk_nft_id,
-				resource_id: rmrk_resource_id,
+				resource_id,
 			});
 
 			Ok(())
@@ -746,7 +736,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			rmrk_collection_id: RmrkCollectionId,
 			rmrk_nft_id: RmrkNftId,
-			rmrk_resource_id: RmrkResourceId,
+			resource_id: RmrkResourceId,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let cross_sender = T::CrossAccountId::from_sub(sender);
@@ -758,7 +748,6 @@ pub mod pallet {
 			collection.check_is_external()?;
 
 			let nft_id = rmrk_nft_id.into();
-			let resource_id = rmrk_resource_id.into();
 
 			let budget = budget::Value::new(NESTING_BUDGET);
 
@@ -768,42 +757,33 @@ pub mod pallet {
 
 			ensure!(cross_sender == nft_owner, <Error<T>>::NoPermission);
 
-			let resource_collection_id: Option<CollectionId> =
-				Self::get_nft_property_decoded(collection_id, nft_id, ResourceCollection)
-					.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+			let resource_id_key = Self::rmrk_property_key(ResourceId(resource_id))?;
 
-			let resource_collection_id =
-				resource_collection_id.ok_or(<Error<T>>::ResourceDoesntExist)?;
+			let resource_info = <PalletNft<T>>::token_sys_property((
+				collection_id,
+				nft_id,
+				PropertyScope::Rmrk,
+				resource_id_key.clone(),
+			))
+			.ok_or(<Error<T>>::ResourceDoesntExist)?;
 
-			let is_pending: bool = Self::get_nft_property_decoded(
-				resource_collection_id,
-				resource_id,
-				PendingResourceRemoval,
-			)
-			.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+			let resource_info: RmrkResourceInfo = Self::decode_property(&resource_info)?;
 
-			ensure!(is_pending, <Error<T>>::ResourceNotPending);
+			ensure!(
+				resource_info.pending_removal,
+				<Error<T>>::ResourceNotPending
+			);
 
-			let resource_collection = Self::get_typed_nft_collection(
-				resource_collection_id,
-				misc::CollectionType::Resource,
-			)?;
-
-			let resource_data = <TokenData<T>>::get((resource_collection_id, resource_id))
-				.ok_or(<Error<T>>::ResourceDoesntExist)?;
-
-			let resource_owner = resource_data.owner;
-
-			<PalletNft<T>>::burn(
-				&resource_collection,
-				&resource_owner,
-				rmrk_resource_id.into(),
-			)
-			.map_err(Self::map_unique_err_to_proxy)?;
+			<PalletNft<T>>::remove_token_sys_property(
+				collection_id,
+				nft_id,
+				PropertyScope::Rmrk,
+				resource_id_key,
+			);
 
 			Self::deposit_event(Event::<T>::ResourceRemovalAccepted {
 				nft_id: rmrk_nft_id,
-				resource_id: rmrk_resource_id,
+				resource_id,
 			});
 
 			Ok(())
@@ -1014,7 +994,7 @@ pub mod pallet {
 				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
 			collection.check_is_external()?;
 
-			Self::resource_remove(sender, collection_id, nft_id.into(), resource_id.into())?;
+			Self::resource_remove(sender, collection_id, nft_id.into(), resource_id)?;
 
 			Self::deposit_event(Event::ResourceRemoval {
 				nft_id,
@@ -1043,17 +1023,27 @@ impl<T: Config> Pallet<T> {
 	) -> Result<Property, DispatchError> {
 		let key = rmrk_key.to_key::<T>()?;
 
-		let value = value
-			.encode()
-			.try_into()
-			.map_err(|_| <Error<T>>::RmrkPropertyValueIsTooLong)?;
+		let value = Self::encode_property(value)?;
 
 		let property = Property { key, value };
 
 		Ok(property)
 	}
 
-	pub fn decode_property<D: Decode>(vec: PropertyValue) -> Result<D, DispatchError> {
+	pub fn encode_property<E: Encode, S: Get<u32>>(
+		value: &E,
+	) -> Result<BoundedBytes<S>, DispatchError> {
+		let value = value
+			.encode()
+			.try_into()
+			.map_err(|_| <Error<T>>::RmrkPropertyValueIsTooLong)?;
+
+		Ok(value)
+	}
+
+	pub fn decode_property<D: Decode, S: Get<u32>>(
+		vec: &BoundedBytes<S>,
+	) -> Result<D, DispatchError> {
 		vec.decode()
 			.map_err(|_| <Error<T>>::UnableToDecodeRmrkData.into())
 	}
@@ -1153,67 +1143,32 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
+	fn acquire_next_resource_id(
+		collection_id: CollectionId,
+		nft_id: TokenId,
+	) -> Result<RmrkResourceId, DispatchError> {
+		let resource_id: RmrkResourceId =
+			Self::get_nft_property_decoded(collection_id, nft_id, NextResourceId)?;
+
+		let next_id = resource_id
+			.checked_add(1)
+			.ok_or(<Error<T>>::NoAvailableResourceId)?;
+
+		<PalletNft<T>>::set_scoped_token_property(
+			collection_id,
+			nft_id,
+			PropertyScope::Rmrk,
+			Self::rmrk_property(NextResourceId, &next_id)?,
+		)?;
+
+		Ok(resource_id)
+	}
+
 	fn resource_add(
 		sender: T::AccountId,
 		collection_id: CollectionId,
 		nft_id: TokenId,
 		resource: RmrkResourceTypes,
-	) -> Result<RmrkResourceId, DispatchError> {
-		match resource {
-			RmrkResourceTypes::Basic(resource) => Self::resource_add_helper(
-				sender,
-				collection_id,
-				nft_id,
-				[
-					Self::rmrk_property(TokenType, &NftType::Resource)?,
-					Self::rmrk_property(ResourceType, &misc::ResourceType::Basic)?,
-					Self::rmrk_property(Src, &resource.src)?,
-					Self::rmrk_property(Metadata, &resource.metadata)?,
-					Self::rmrk_property(License, &resource.license)?,
-					Self::rmrk_property(Thumb, &resource.thumb)?,
-				]
-				.into_iter(),
-			),
-			RmrkResourceTypes::Composable(resource) => Self::resource_add_helper(
-				sender,
-				collection_id,
-				nft_id.into(),
-				[
-					Self::rmrk_property(TokenType, &NftType::Resource)?,
-					Self::rmrk_property(ResourceType, &misc::ResourceType::Composable)?,
-					Self::rmrk_property(Parts, &resource.parts)?,
-					Self::rmrk_property(Base, &resource.base)?,
-					Self::rmrk_property(Src, &resource.src)?,
-					Self::rmrk_property(Metadata, &resource.metadata)?,
-					Self::rmrk_property(License, &resource.license)?,
-					Self::rmrk_property(Thumb, &resource.thumb)?,
-				]
-				.into_iter(),
-			),
-			RmrkResourceTypes::Slot(resource) => Self::resource_add_helper(
-				sender,
-				collection_id,
-				nft_id.into(),
-				[
-					Self::rmrk_property(TokenType, &NftType::Resource)?,
-					Self::rmrk_property(ResourceType, &misc::ResourceType::Slot)?,
-					Self::rmrk_property(Base, &resource.base)?,
-					Self::rmrk_property(Src, &resource.src)?,
-					Self::rmrk_property(Metadata, &resource.metadata)?,
-					Self::rmrk_property(Slot, &resource.slot)?,
-					Self::rmrk_property(License, &resource.license)?,
-					Self::rmrk_property(Thumb, &resource.thumb)?,
-				]
-				.into_iter(),
-			),
-		}
-	}
-
-	fn resource_add_helper(
-		sender: T::AccountId,
-		collection_id: CollectionId,
-		token_id: TokenId,
-		resource_properties: impl Iterator<Item = Property>,
 	) -> Result<RmrkResourceId, DispatchError> {
 		let collection =
 			Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
@@ -1222,86 +1177,57 @@ impl<T: Config> Pallet<T> {
 		let sender = T::CrossAccountId::from_sub(sender);
 		let budget = budget::Value::new(NESTING_BUDGET);
 
-		let nft_owner = <PalletStructure<T>>::find_topmost_owner(collection_id, token_id, &budget)
+		let nft_owner = <PalletStructure<T>>::find_topmost_owner(collection_id, nft_id, &budget)
 			.map_err(Self::map_unique_err_to_proxy)?;
 
 		let pending = sender != nft_owner;
 
-		let resource_collection_id: Option<CollectionId> =
-			Self::get_nft_property_decoded(collection_id, token_id, ResourceCollection)?;
+		let id = Self::acquire_next_resource_id(collection_id, nft_id)?;
 
-		let resource_collection_id = match resource_collection_id {
-			Some(id) => id,
-			None => {
-				let resource_collection_id = Self::init_collection(
-					sender.clone(),
-					CreateCollectionData {
-						..Default::default()
-					},
-					[Self::rmrk_property(
-						CollectionType,
-						&misc::CollectionType::Resource,
-					)?]
-					.into_iter(),
-				)?;
-
-				<PalletNft<T>>::set_scoped_token_property(
-					collection_id,
-					token_id,
-					PropertyScope::Rmrk,
-					Self::rmrk_property(ResourceCollection, &Some(resource_collection_id))?,
-				)?;
-
-				resource_collection_id
-			}
+		let resource_info = RmrkResourceInfo {
+			id,
+			resource,
+			pending,
+			pending_removal: false,
 		};
 
-		let resource_collection =
-			Self::get_typed_nft_collection(resource_collection_id, misc::CollectionType::Resource)?;
+		<PalletNft<T>>::try_mutate_token_sys_property(
+			collection_id,
+			nft_id,
+			PropertyScope::Rmrk,
+			Self::rmrk_property_key(ResourceId(id))?,
+			|value| -> DispatchResult {
+				*value = Some(Self::encode_property(&resource_info)?);
 
-		// todo probably add extra connections to bases, slots, etc., when RMRK starts to use them
+				Ok(())
+			},
+		)?;
 
-		let resource_id = Self::create_nft(
-			&sender,
-			&nft_owner,
-			&resource_collection,
-			resource_properties.chain(
-				[
-					Self::rmrk_property(PendingResourceAccept, &pending)?,
-					Self::rmrk_property(PendingResourceRemoval, &false)?,
-				]
-				.into_iter(),
-			),
-		)
-		.map_err(|err| match err {
-			DispatchError::Arithmetic(_) => <Error<T>>::NoAvailableNftId.into(),
-			err => Self::map_unique_err_to_proxy(err),
-		})?;
-
-		Ok(resource_id.0)
+		Ok(id)
 	}
 
 	fn resource_remove(
 		sender: T::AccountId,
 		collection_id: CollectionId,
 		nft_id: TokenId,
-		resource_id: TokenId,
+		resource_id: RmrkResourceId,
 	) -> DispatchResult {
 		let collection =
 			Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
 		ensure!(collection.owner == sender, Error::<T>::NoPermission);
 
-		let resource_collection_id: Option<CollectionId> =
-			Self::get_nft_property_decoded(collection_id, nft_id, ResourceCollection)?;
+		let resource_id_key = Self::rmrk_property_key(ResourceId(resource_id))?;
+		let scope = PropertyScope::Rmrk;
 
-		let resource_collection_id =
-			resource_collection_id.ok_or(Error::<T>::ResourceDoesntExist)?;
-
-		let resource_collection =
-			Self::get_typed_nft_collection(resource_collection_id, misc::CollectionType::Resource)?;
 		ensure!(
-			<PalletNft<T>>::token_exists(&resource_collection, resource_id),
-			Error::<T>::ResourceDoesntExist
+			<PalletNft<T>>::token_sys_property((
+				collection_id,
+				nft_id,
+				scope,
+				resource_id_key.clone()
+			))
+			.is_some(),
+			<Error<T>>::ResourceDoesntExist
 		);
 
 		let budget = up_data_structs::budget::Value::new(NESTING_BUDGET);
@@ -1310,18 +1236,47 @@ impl<T: Config> Pallet<T> {
 
 		let sender = T::CrossAccountId::from_sub(sender);
 		if topmost_owner == sender {
-			<PalletNft<T>>::burn(&resource_collection, &sender, resource_id)
-				.map_err(Self::map_unique_err_to_proxy)?;
-		} else {
-			<PalletNft<T>>::set_scoped_token_property(
-				resource_collection_id,
-				resource_id,
+			<PalletNft<T>>::remove_token_sys_property(
+				collection_id,
+				nft_id,
 				PropertyScope::Rmrk,
-				Self::rmrk_property(PendingResourceRemoval, &true)?,
-			)?;
+				Self::rmrk_property_key(ResourceId(resource_id))?,
+			);
+		} else {
+			Self::try_mutate_resource_info(collection_id, nft_id, resource_id, |res| {
+				res.pending_removal = true;
+
+				Ok(())
+			})?;
 		}
 
 		Ok(())
+	}
+
+	fn try_mutate_resource_info(
+		collection_id: CollectionId,
+		nft_id: TokenId,
+		resource_id: RmrkResourceId,
+		f: impl FnOnce(&mut RmrkResourceInfo) -> DispatchResult,
+	) -> DispatchResult {
+		<PalletNft<T>>::try_mutate_token_sys_property(
+			collection_id,
+			nft_id,
+			PropertyScope::Rmrk,
+			Self::rmrk_property_key(ResourceId(resource_id))?,
+			|value| match value {
+				Some(value) => {
+					let mut resource_info: RmrkResourceInfo = Self::decode_property(value)?;
+
+					f(&mut resource_info)?;
+
+					*value = Self::encode_property(&resource_info)?;
+
+					Ok(())
+				}
+				None => Err(<Error<T>>::ResourceDoesntExist.into()),
+			},
+		)
 	}
 
 	fn change_collection_owner(
@@ -1397,7 +1352,7 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 		key: RmrkProperty,
 	) -> Result<V, DispatchError> {
-		Self::decode_property(Self::get_collection_property(collection_id, key)?)
+		Self::decode_property(&Self::get_collection_property(collection_id, key)?)
 	}
 
 	pub fn get_collection_type(
@@ -1450,7 +1405,7 @@ impl<T: Config> Pallet<T> {
 	) -> Result<PropertyValue, DispatchError> {
 		let nft_property = <PalletNft<T>>::token_properties((collection_id, nft_id))
 			.get(&Self::rmrk_property_key(key)?)
-			.ok_or(<Error<T>>::NoAvailableNftId)? // todo replace with better error?
+			.ok_or(<Error<T>>::RmrkPropertyIsNotFound)?
 			.clone();
 
 		Ok(nft_property)
@@ -1461,7 +1416,7 @@ impl<T: Config> Pallet<T> {
 		nft_id: TokenId,
 		key: RmrkProperty,
 	) -> Result<V, DispatchError> {
-		Self::decode_property(Self::get_nft_property(collection_id, nft_id, key)?)
+		Self::decode_property(&Self::get_nft_property(collection_id, nft_id, key)?)
 	}
 
 	pub fn nft_exists(collection_id: CollectionId, nft_id: TokenId) -> bool {

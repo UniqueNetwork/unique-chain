@@ -75,9 +75,8 @@ use up_data_structs::{
 	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
 	TokenChild, RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo,
 	RmrkBaseInfo, RmrkPartType, RmrkTheme, RmrkThemeName, RmrkThemeProperty, RmrkCollectionId,
-	RmrkNftId, RmrkAccountIdOrCollectionNftTuple, RmrkNftChild, RmrkPropertyKey, RmrkResourceTypes,
-	RmrkBasicResource, RmrkComposableResource, RmrkSlotResource, RmrkResourceId, RmrkBaseId,
-	RmrkFixedPart, RmrkSlotPart, RmrkString,
+	RmrkNftId, RmrkAccountIdOrCollectionNftTuple, RmrkNftChild, RmrkPropertyKey, RmrkResourceId,
+	RmrkBaseId, RmrkFixedPart, RmrkSlotPart, RmrkString,
 };
 
 // use pallet_contracts::weights::WeightInfo;
@@ -1501,8 +1500,8 @@ impl_common_runtime_apis! {
 		}
 
 		fn nft_resources(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
-			use pallet_proxy_rmrk_core::{RmrkProperty, misc::{CollectionType, NftType, ResourceType}};
-			use pallet_common::CommonCollectionOperations;
+			use pallet_proxy_rmrk_core::misc::{CollectionType, NftType};
+			use up_data_structs::PropertyScope;
 
 			let collection_id = match RmrkCore::unique_collection_id(collection_id) {
 				Ok(id) => id,
@@ -1513,48 +1512,13 @@ impl_common_runtime_apis! {
 			let nft_id = TokenId(nft_id);
 			if RmrkCore::ensure_nft_type(collection_id, nft_id, NftType::Regular).is_err() { return Ok(Vec::new()); }
 
-			let res_collection_id: Option<CollectionId> = RmrkCore::get_nft_property_decoded(collection_id, nft_id, RmrkProperty::ResourceCollection)?;
+			let resources = <pallet_nonfungible::Pallet<Runtime>>::iterate_token_sys_properties(
+				collection_id, nft_id, PropertyScope::Rmrk
+			).filter_map(|(_, value)| {
+				let resource_info: RmrkResourceInfo = RmrkCore::decode_property(&value).ok()?;
 
-			let res_collection_id = match res_collection_id {
-				Some(id) => id,
-				None => return Ok(Vec::new())
-			};
-
-			let resource_collection = RmrkCore::get_typed_nft_collection(res_collection_id, CollectionType::Resource)?;
-
-			let resources = resource_collection
-				.collection_tokens()
-				.iter()
-				.filter_map(|res_id| Some(RmrkResourceInfo {
-					id: res_id.0,
-					pending: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::PendingResourceAccept).ok()?,
-					pending_removal: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::PendingResourceRemoval).ok()?,
-					resource: match RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::ResourceType).ok()? {
-						ResourceType::Basic => RmrkResourceTypes::Basic(RmrkBasicResource {
-							src: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Src).ok()?,
-							metadata: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Metadata).ok()?,
-							license: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::License).ok()?,
-							thumb: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Thumb).ok()?,
-						}),
-						ResourceType::Composable => RmrkResourceTypes::Composable(RmrkComposableResource {
-							parts: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Parts).ok()?,
-							base: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Base).ok()?,
-							src: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Src).ok()?,
-							metadata: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Metadata).ok()?,
-							license: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::License).ok()?,
-							thumb: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Thumb).ok()?,
-						}),
-						ResourceType::Slot => RmrkResourceTypes::Slot(RmrkSlotResource {
-							base: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Base).ok()?,
-							src: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Src).ok()?,
-							metadata: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Metadata).ok()?,
-							slot: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Slot).ok()?,
-							license: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::License).ok()?,
-							thumb: RmrkCore::get_nft_property_decoded(res_collection_id, *res_id, RmrkProperty::Thumb).ok()?,
-						}),
-					},
-				}))
-				.collect();
+				Some(resource_info)
+			}).collect();
 
 			Ok(resources)
 		}
