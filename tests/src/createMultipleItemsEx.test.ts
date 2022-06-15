@@ -222,7 +222,7 @@ describe('createMultipleItemsEx', () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
-      await expect(executeTransaction(api, alice, api.tx.unique.setPropertyPermissions(collection, propPerms))).to.be.rejectedWith(/common\.PropertyLimitReached/);
+      await expect(executeTransaction(api, alice, api.tx.unique.setTokenPropertyPermissions(collection, propPerms))).to.be.rejectedWith(/common\.PropertyLimitReached/);
     });
   });
 

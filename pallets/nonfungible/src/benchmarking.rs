@@ -147,7 +147,7 @@ benchmarks! {
 		<Pallet<T>>::set_allowance(&collection, &sender, item, Some(&burner))?;
 	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, item, &Unlimited)?}
 
-	set_property_permissions {
+	set_token_property_permissions {
 		let b in 0..MAX_PROPERTIES_PER_ITEM;
 		bench_init!{
 			owner: sub; collection: collection(owner);
@@ -161,7 +161,7 @@ benchmarks! {
 				token_owner: false,
 			},
 		}).collect::<Vec<_>>();
-	}: {<Pallet<T>>::set_property_permissions(&collection, &owner, perms)?}
+	}: {<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?}
 
 	set_token_properties {
 		let b in 0..MAX_PROPERTIES_PER_ITEM;
@@ -177,7 +177,7 @@ benchmarks! {
 				token_owner: true,
 			},
 		}).collect::<Vec<_>>();
-		<Pallet<T>>::set_property_permissions(&collection, &owner, perms)?;
+		<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?;
 		let props = (0..b).map(|k| Property {
 			key: property_key(k as usize),
 			value: property_value(),
@@ -199,7 +199,7 @@ benchmarks! {
 				token_owner: true,
 			},
 		}).collect::<Vec<_>>();
-		<Pallet<T>>::set_property_permissions(&collection, &owner, perms)?;
+		<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?;
 		let props = (0..b).map(|k| Property {
 			key: property_key(k as usize),
 			value: property_value(),
