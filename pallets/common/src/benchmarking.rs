@@ -100,6 +100,7 @@ pub fn create_collection_raw<T: Config, R>(
 					restricted: None,
 					permissive: true,
 				}),
+                mint_mode: Some(true),
 				..Default::default()
 			}),
 			..Default::default()

@@ -1212,11 +1212,14 @@ impl<T: Config> Pallet<T> {
 		limit_default_clone!(old_limit, new_limit,
 			access => {},
 			mint_mode => {},
-			nesting => ensure!(
-				// Permissive is only allowed for tests and internal usage of chain for now
-				old_limit.permissive || !new_limit.permissive,
-				<Error<T>>::NoPermission,
-			),
+			nesting => {
+				#[cfg(not(feature = "runtime-benchmarks"))]
+				ensure!(
+					// Permissive is only allowed for tests and internal usage of chain for now
+					old_limit.permissive || !new_limit.permissive,
+					<Error<T>>::NoPermission,
+				)
+			},
 		);
 		Ok(new_limit)
 	}
