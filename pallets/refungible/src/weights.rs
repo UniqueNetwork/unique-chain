@@ -40,7 +40,7 @@ pub trait WeightInfo {
 	fn burn_item_fully() -> Weight;
 	fn set_token_properties(amount: u32) -> Weight;
 	fn delete_token_properties(amount: u32) -> Weight;
-	fn set_property_permissions(amount: u32) -> Weight;
+	fn set_token_property_permissions(amount: u32) -> Weight;
 	fn transfer_normal() -> Weight;
 	fn transfer_creating() -> Weight;
 	fn transfer_removing() -> Weight;
@@ -142,7 +142,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		0
 	}
 
-	fn set_property_permissions(_amount: u32) -> Weight {
+	fn set_token_property_permissions(_amount: u32) -> Weight {
 		// Error
 		0
 	}
@@ -320,7 +320,7 @@ impl WeightInfo for () {
 		0
 	}
 
-	fn set_property_permissions(_amount: u32) -> Weight {
+	fn set_token_property_permissions(_amount: u32) -> Weight {
 		// Error
 		0
 	}

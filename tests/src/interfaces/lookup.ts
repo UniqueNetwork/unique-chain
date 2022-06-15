@@ -1313,7 +1313,7 @@ export default {
         tokenId: 'u32',
         propertyKeys: 'Vec<Bytes>',
       },
-      set_property_permissions: {
+      set_token_property_permissions: {
         collectionId: 'u32',
         propertyPermissions: 'Vec<UpDataStructsPropertyKeyPermission>',
       },

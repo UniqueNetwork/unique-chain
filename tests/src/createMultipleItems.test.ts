@@ -48,7 +48,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
       const alice = privateKeyWrapper('//Alice');
       await submitTransactionAsync(
         alice, 
-        api.tx.unique.setPropertyPermissions(collectionId, [{key: 'data', permission: {tokenOwner: true}}]),
+        api.tx.unique.setTokenPropertyPermissions(collectionId, [{key: 'data', permission: {tokenOwner: true}}]),
       );
       
       const args = [
@@ -470,7 +470,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
 
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
 
-      const tx1 = api.tx.unique.setPropertyPermissions(collectionId, propPerms);
+      const tx1 = api.tx.unique.setTokenPropertyPermissions(collectionId, propPerms);
       await expect(executeTransaction(api, alice, tx1)).to.be.rejectedWith(/common\.PropertyLimitReached/);
 
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);

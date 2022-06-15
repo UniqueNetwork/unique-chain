@@ -129,8 +129,8 @@ describe('Negative Integration Test: External Collections, Internal Ops', async 
       await expect(executeTransaction(api, alice, txDeleteCollectionProperties), 'deleting collection properties')
         .to.be.rejectedWith(/common\.CollectionIsExternal/);
 
-      const txSetPropertyPermissions = api.tx.unique.setPropertyPermissions(uniqueCollectionId, [{key: 'a', permission: {mutable: true}}]);
-      await expect(executeTransaction(api, alice, txSetPropertyPermissions), 'setting property permissions')
+      const txsetTokenPropertyPermissions = api.tx.unique.setTokenPropertyPermissions(uniqueCollectionId, [{key: 'a', permission: {mutable: true}}]);
+      await expect(executeTransaction(api, alice, txsetTokenPropertyPermissions), 'setting property permissions')
         .to.be.rejectedWith(/common\.CollectionIsExternal/);
 
       // NFT
