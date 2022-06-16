@@ -169,6 +169,7 @@ pub mod pallet {
 		CannotSendToDescendentOrSelf,
 		CannotAcceptNonOwnedNft,
 		CannotRejectNonOwnedNft,
+		CannotRejectNonPendingNft,
 		ResourceNotPending,
 		NoAvailableResourceId,
 	}
@@ -665,7 +666,7 @@ pub mod pallet {
 					nft_id,
 					RmrkProperty::PendingNftAccept
 				)?,
-				<Error<T>>::NoPermission
+				<Error<T>>::CannotRejectNonPendingNft
 			);
 
 			Self::destroy_nft(
