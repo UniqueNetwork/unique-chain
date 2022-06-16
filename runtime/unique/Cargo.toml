@@ -16,7 +16,7 @@ version = '0.9.22'
 targets = ['x86_64-unknown-linux-gnu']
 
 [features]
-default = ['std']
+default = ['std', 'unique-runtime']
 runtime-benchmarks = [
     'hex-literal',
     'frame-benchmarking',
@@ -119,6 +119,7 @@ std = [
     "orml-vesting/std",
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
+unique-runtime = []
 
 ################################################################################
 # Substrate Dependencies

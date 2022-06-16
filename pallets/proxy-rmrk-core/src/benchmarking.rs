@@ -220,7 +220,6 @@ benchmarks! {
 		let b in 0..100;
 
 		let caller: T::AccountId = account("caller", 0, SEED);
-		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
 
 		create_max_collection::<T>(&caller)?;
 		let collection_id = 0;
@@ -381,7 +380,6 @@ benchmarks! {
 
 	add_basic_resource {
 		let caller: T::AccountId = account("caller", 0, SEED);
-		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
 
 		create_max_collection::<T>(&caller)?;
 		let collection_id = 0;
@@ -398,7 +396,6 @@ benchmarks! {
 
 	add_composable_resource {
 		let caller: T::AccountId = account("caller", 0, SEED);
-		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
 
 		create_max_collection::<T>(&caller)?;
 		let collection_id = 0;
@@ -415,7 +412,6 @@ benchmarks! {
 
 	add_slot_resource {
 		let caller: T::AccountId = account("caller", 0, SEED);
-		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
 
 		create_max_collection::<T>(&caller)?;
 		let collection_id = 0;
@@ -432,7 +428,6 @@ benchmarks! {
 
 	remove_resource {
 		let caller: T::AccountId = account("caller", 0, SEED);
-		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
 
 		create_max_collection::<T>(&caller)?;
 		let collection_id = 0;
@@ -448,7 +443,7 @@ benchmarks! {
 			resource
 		)?;
 
-		let resource_id = 1;
+		let resource_id = 0;
 	}: _(
 		RawOrigin::Signed(caller),
 		collection_id,
@@ -459,8 +454,6 @@ benchmarks! {
 	accept_resource {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let admin: T::AccountId = account("admin", 0, SEED);
-
-		<T as pallet_common::Config>::Currency::deposit_creating(&admin, T::CollectionCreationPrice::get());
 
 		create_max_collection::<T>(&admin)?;
 		let collection_id = 0;
@@ -486,7 +479,7 @@ benchmarks! {
 			resource
 		)?;
 
-		let resource_id = 1;
+		let resource_id = 0;
 	}: _(
 		RawOrigin::Signed(caller),
 		collection_id,
@@ -497,8 +490,6 @@ benchmarks! {
 	accept_resource_removal {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let admin: T::AccountId = account("admin", 0, SEED);
-
-		<T as pallet_common::Config>::Currency::deposit_creating(&admin, T::CollectionCreationPrice::get());
 
 		create_max_collection::<T>(&admin)?;
 		let collection_id = 0;
@@ -515,7 +506,7 @@ benchmarks! {
 			resource
 		)?;
 
-		let resource_id = 1;
+		let resource_id = 0;
 
 		let new_owner = <RmrkAccountIdOrCollectionNftTuple<T::AccountId>>::AccountId(caller.clone());
 
