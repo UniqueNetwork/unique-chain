@@ -64,7 +64,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Common CollectionById (r:0 w:1)
 	// Storage: RmrkCore UniqueCollectionId (r:0 w:1)
 	fn create_collection() -> Weight {
-		(41_768_000 as Weight)
+		(42_239_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(8 as Weight))
 	}
@@ -77,7 +77,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokensBurnt (r:0 w:1)
 	// Storage: Common AdminAmount (r:0 w:1)
 	fn destroy_collection() -> Weight {
-		(43_402_000 as Weight)
+		(44_684_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
@@ -85,7 +85,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Common CollectionById (r:1 w:1)
 	// Storage: Common CollectionProperties (r:1 w:0)
 	fn change_collection_issuer() -> Weight {
-		(21_711_000 as Weight)
+		(22_513_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -95,7 +95,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokensMinted (r:1 w:0)
 	// Storage: Nonfungible TokensBurnt (r:1 w:0)
 	fn lock_collection() -> Weight {
-		(23_204_000 as Weight)
+		(23_735_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -109,9 +109,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible Owned (r:0 w:1)
 	// Storage: Nonfungible TokenSysProperties (r:2 w:2)
 	fn mint_nft(b: u32, ) -> Weight {
-		(44_655_000 as Weight)
+		(45_152_000 as Weight)
 			// Standard Error: 2_000
-			.saturating_add((10_953_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add((11_084_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
@@ -129,8 +129,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenProperties (r:0 w:1)
 	fn burn_nft(b: u32, ) -> Weight {
 		(0 as Weight)
-			// Standard Error: 3_677_000
-			.saturating_add((357_082_000 as Weight).saturating_mul(b as Weight))
+			// Standard Error: 1_581_000
+			.saturating_add((321_866_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().reads((4 as Weight).saturating_mul(b as Weight)))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
@@ -146,7 +146,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenChildren (r:0 w:1)
 	// Storage: Nonfungible Owned (r:0 w:2)
 	fn send() -> Weight {
-		(73_968_000 as Weight)
+		(72_246_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(12 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
@@ -160,7 +160,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenChildren (r:0 w:1)
 	// Storage: Nonfungible Owned (r:0 w:2)
 	fn accept_nft() -> Weight {
-		(81_954_000 as Weight)
+		(81_203_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(15 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
@@ -175,7 +175,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible Allowance (r:5 w:0)
 	// Storage: Nonfungible Owned (r:0 w:5)
 	fn reject_nft() -> Weight {
-		(250_041_000 as Weight)
+		(253_117_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(29 as Weight))
 			.saturating_add(T::DbWeight::get().writes(25 as Weight))
 	}
@@ -185,7 +185,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	// Storage: Nonfungible TokenData (r:5 w:0)
 	fn set_property() -> Weight {
-		(48_631_000 as Weight)
+		(49_653_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -195,7 +195,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	// Storage: Nonfungible TokenData (r:5 w:0)
 	fn set_priority() -> Weight {
-		(47_830_000 as Weight)
+		(47_890_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -206,7 +206,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	// Storage: Nonfungible TokenSysProperties (r:1 w:1)
 	fn add_basic_resource() -> Weight {
-		(54_773_000 as Weight)
+		(54_703_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(10 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -217,7 +217,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	// Storage: Nonfungible TokenSysProperties (r:1 w:1)
 	fn add_composable_resource() -> Weight {
-		(55_214_000 as Weight)
+		(55_114_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(10 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -228,7 +228,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	// Storage: Nonfungible TokenSysProperties (r:1 w:1)
 	fn add_slot_resource() -> Weight {
-		(54_863_000 as Weight)
+		(55_615_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(10 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -238,7 +238,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenSysProperties (r:1 w:1)
 	// Storage: Nonfungible TokenData (r:5 w:0)
 	fn remove_resource() -> Weight {
-		(46_848_000 as Weight)
+		(47_139_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -248,7 +248,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenData (r:5 w:0)
 	// Storage: Nonfungible TokenSysProperties (r:1 w:1)
 	fn accept_resource() -> Weight {
-		(45_635_000 as Weight)
+		(45_535_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -258,7 +258,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenData (r:5 w:0)
 	// Storage: Nonfungible TokenSysProperties (r:1 w:1)
 	fn accept_resource_removal() -> Weight {
-		(45_535_000 as Weight)
+		(46_327_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -275,7 +275,7 @@ impl WeightInfo for () {
 	// Storage: Common CollectionById (r:0 w:1)
 	// Storage: RmrkCore UniqueCollectionId (r:0 w:1)
 	fn create_collection() -> Weight {
-		(41_768_000 as Weight)
+		(42_239_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(8 as Weight))
 	}
@@ -288,7 +288,7 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokensBurnt (r:0 w:1)
 	// Storage: Common AdminAmount (r:0 w:1)
 	fn destroy_collection() -> Weight {
-		(43_402_000 as Weight)
+		(44_684_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
@@ -296,7 +296,7 @@ impl WeightInfo for () {
 	// Storage: Common CollectionById (r:1 w:1)
 	// Storage: Common CollectionProperties (r:1 w:0)
 	fn change_collection_issuer() -> Weight {
-		(21_711_000 as Weight)
+		(22_513_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
@@ -306,7 +306,7 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokensMinted (r:1 w:0)
 	// Storage: Nonfungible TokensBurnt (r:1 w:0)
 	fn lock_collection() -> Weight {
-		(23_204_000 as Weight)
+		(23_735_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
@@ -320,9 +320,9 @@ impl WeightInfo for () {
 	// Storage: Nonfungible Owned (r:0 w:1)
 	// Storage: Nonfungible TokenSysProperties (r:2 w:2)
 	fn mint_nft(b: u32, ) -> Weight {
-		(44_655_000 as Weight)
+		(45_152_000 as Weight)
 			// Standard Error: 2_000
-			.saturating_add((10_953_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add((11_084_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
 			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
@@ -340,8 +340,8 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenProperties (r:0 w:1)
 	fn burn_nft(b: u32, ) -> Weight {
 		(0 as Weight)
-			// Standard Error: 3_677_000
-			.saturating_add((357_082_000 as Weight).saturating_mul(b as Weight))
+			// Standard Error: 1_581_000
+			.saturating_add((321_866_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
 			.saturating_add(RocksDbWeight::get().reads((4 as Weight).saturating_mul(b as Weight)))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
@@ -357,7 +357,7 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenChildren (r:0 w:1)
 	// Storage: Nonfungible Owned (r:0 w:2)
 	fn send() -> Weight {
-		(73_968_000 as Weight)
+		(72_246_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(12 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
@@ -371,7 +371,7 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenChildren (r:0 w:1)
 	// Storage: Nonfungible Owned (r:0 w:2)
 	fn accept_nft() -> Weight {
-		(81_954_000 as Weight)
+		(81_203_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(15 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}
@@ -386,7 +386,7 @@ impl WeightInfo for () {
 	// Storage: Nonfungible Allowance (r:5 w:0)
 	// Storage: Nonfungible Owned (r:0 w:5)
 	fn reject_nft() -> Weight {
-		(250_041_000 as Weight)
+		(253_117_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(29 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(25 as Weight))
 	}
@@ -396,7 +396,7 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	// Storage: Nonfungible TokenData (r:5 w:0)
 	fn set_property() -> Weight {
-		(48_631_000 as Weight)
+		(49_653_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
@@ -406,7 +406,7 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	// Storage: Nonfungible TokenData (r:5 w:0)
 	fn set_priority() -> Weight {
-		(47_830_000 as Weight)
+		(47_890_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
@@ -417,7 +417,7 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	// Storage: Nonfungible TokenSysProperties (r:1 w:1)
 	fn add_basic_resource() -> Weight {
-		(54_773_000 as Weight)
+		(54_703_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(10 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
@@ -428,7 +428,7 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	// Storage: Nonfungible TokenSysProperties (r:1 w:1)
 	fn add_composable_resource() -> Weight {
-		(55_214_000 as Weight)
+		(55_114_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(10 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
@@ -439,7 +439,7 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	// Storage: Nonfungible TokenSysProperties (r:1 w:1)
 	fn add_slot_resource() -> Weight {
-		(54_863_000 as Weight)
+		(55_615_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(10 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
@@ -449,7 +449,7 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenSysProperties (r:1 w:1)
 	// Storage: Nonfungible TokenData (r:5 w:0)
 	fn remove_resource() -> Weight {
-		(46_848_000 as Weight)
+		(47_139_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
@@ -459,7 +459,7 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenData (r:5 w:0)
 	// Storage: Nonfungible TokenSysProperties (r:1 w:1)
 	fn accept_resource() -> Weight {
-		(45_635_000 as Weight)
+		(45_535_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
@@ -469,7 +469,7 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenData (r:5 w:0)
 	// Storage: Nonfungible TokenSysProperties (r:1 w:1)
 	fn accept_resource_removal() -> Weight {
-		(45_535_000 as Weight)
+		(46_327_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}

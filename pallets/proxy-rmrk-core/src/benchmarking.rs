@@ -85,7 +85,7 @@ fn create_nft<T: Config>(owner: &T::AccountId, collection_id: RmrkCollectionId) 
 
 	<Pallet<T>>::mint_nft(
 		RawOrigin::Signed(owner.clone()).into(),
-		owner.clone(),
+		None,
 		collection_id,
 		royalty_recipient,
 		royalty_amount,
@@ -227,7 +227,7 @@ benchmarks! {
 		let transferable = true;
 	}:  _(
 		RawOrigin::Signed(caller),
-		owner,
+		None,
 		collection_id,
 		royalty_recipient,
 		royalty_amount,
