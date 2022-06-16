@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {
   createCollectionExpectSuccess,
@@ -24,6 +23,7 @@ import {
   normalizeAccountId,
   addCollectionAdminExpectSuccess,
   getBalance,
+  setCollectionLimitsExpectSuccess,
   isTokenExists,
 } from './util/helpers';
 
@@ -37,10 +37,9 @@ let bob: IKeyringPair;
 
 describe('integration test: ext. burnItem():', () => {
   before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({type: 'sr25519'});
-      alice = keyring.addFromUri('//Alice');
-      bob = keyring.addFromUri('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -142,16 +141,16 @@ describe('integration test: ext. burnItem():', () => {
 
 describe('integration test: ext. burnItem() with admin permissions:', () => {
   before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({type: 'sr25519'});
-      alice = keyring.addFromUri('//Alice');
-      bob = keyring.addFromUri('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
   it('Burn item in NFT collection', async () => {
     const createMode = 'NFT';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
     await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
 
@@ -170,6 +169,7 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
   it('Burn item in Fungible collection', async () => {
     const createMode = 'Fungible';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0}});
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode); // Helper creates 10 fungible tokens
     await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
 
@@ -192,6 +192,7 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
   it('Burn item in ReFungible collection', async () => {
     const createMode = 'ReFungible';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
     await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
 
@@ -209,10 +210,9 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
 
 describe('Negative integration test: ext. burnItem():', () => {
   before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({type: 'sr25519'});
-      alice = keyring.addFromUri('//Alice');
-      bob = keyring.addFromUri('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 

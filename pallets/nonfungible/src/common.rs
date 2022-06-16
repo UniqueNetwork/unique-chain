@@ -89,8 +89,8 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::delete_token_properties(amount)
 	}
 
-	fn set_property_permissions(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::set_property_permissions(amount)
+	fn set_token_property_permissions(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_token_property_permissions(amount)
 	}
 
 	fn transfer() -> Weight {
@@ -107,6 +107,15 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn burn_from() -> Weight {
 		<SelfWeightOf<T>>::burn_from()
+	}
+
+	fn burn_recursively_self_raw() -> Weight {
+		<SelfWeightOf<T>>::burn_recursively_self_raw()
+	}
+
+	fn burn_recursively_breadth_raw(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::burn_recursively_breadth_plus_self_plus_self_per_each_raw(amount)
+			.saturating_sub(Self::burn_recursively_self_raw().saturating_mul(amount as u64 + 1))
 	}
 }
 
@@ -214,7 +223,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		let weight = <CommonWeights<T>>::set_token_properties(properties.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::set_token_properties(self, &sender, token_id, properties),
+			<Pallet<T>>::set_token_properties(self, &sender, token_id, properties, false),
 			weight,
 		)
 	}
@@ -233,16 +242,16 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		)
 	}
 
-	fn set_property_permissions(
+	fn set_token_property_permissions(
 		&self,
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResultWithPostInfo {
 		let weight =
-			<CommonWeights<T>>::set_property_permissions(property_permissions.len() as u32);
+			<CommonWeights<T>>::set_token_property_permissions(property_permissions.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::set_property_permissions(self, sender, property_permissions),
+			<Pallet<T>>::set_token_property_permissions(self, sender, property_permissions),
 			weight,
 		)
 	}
@@ -262,6 +271,16 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		} else {
 			Ok(().into())
 		}
+	}
+
+	fn burn_item_recursively(
+		&self,
+		sender: T::CrossAccountId,
+		token: TokenId,
+		self_budget: &dyn Budget,
+		breadth_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo {
+		<Pallet<T>>::burn_recursively(self, &sender, token, self_budget, breadth_budget)
 	}
 
 	fn transfer(

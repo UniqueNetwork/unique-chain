@@ -20,7 +20,7 @@ import {submitTransactionAsync, submitTransactionExpectFailAsync} from '../subst
 import fs from 'fs';
 import {Abi, CodePromise, ContractPromise as Contract} from '@polkadot/api-contract';
 import {IKeyringPair} from '@polkadot/types/types';
-import {ApiPromise, Keyring} from '@polkadot/api';
+import {ApiPromise} from '@polkadot/api';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -45,13 +45,12 @@ function deployContract(alice: IKeyringPair, code: CodePromise, constructor = 'd
   });
 }
 
-async function prepareDeployer(api: ApiPromise) {
+async function prepareDeployer(api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair) {
   // Find unused address
-  const deployer = await findUnusedAddress(api);
+  const deployer = await findUnusedAddress(api, privateKeyWrapper);
 
   // Transfer balance to it
-  const keyring = new Keyring({type: 'sr25519'});
-  const alice = keyring.addFromUri('//Alice');
+  const alice = privateKeyWrapper('//Alice');
   const amount = BigInt(endowment) + 10n**15n;
   const tx = api.tx.balances.transfer(deployer.address, amount);
   await submitTransactionAsync(alice, tx);
@@ -59,11 +58,11 @@ async function prepareDeployer(api: ApiPromise) {
   return deployer;
 }
 
-export async function deployFlipper(api: ApiPromise): Promise<[Contract, IKeyringPair]> {
+export async function deployFlipper(api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair): Promise<[Contract, IKeyringPair]> {
   const metadata = JSON.parse(fs.readFileSync('./src/flipper/metadata.json').toString('utf-8'));
   const abi = new Abi(metadata);
 
-  const deployer = await prepareDeployer(api);
+  const deployer = await prepareDeployer(api, privateKeyWrapper);
 
   const wasm = fs.readFileSync('./src/flipper/flipper.wasm');
 
@@ -99,11 +98,11 @@ export async function toggleFlipValueExpectFailure(sender: IKeyringPair, contrac
   await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
 }
 
-export async function deployTransferContract(api: ApiPromise): Promise<[Contract, IKeyringPair]> {
+export async function deployTransferContract(api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair): Promise<[Contract, IKeyringPair]> {
   const metadata = JSON.parse(fs.readFileSync('./src/transfer_contract/metadata.json').toString('utf-8'));
   const abi = new Abi(metadata);
 
-  const deployer = await prepareDeployer(api);
+  const deployer = await prepareDeployer(api, privateKeyWrapper);
 
   const wasm = fs.readFileSync('./src/transfer_contract/nft_transfer.wasm');
 

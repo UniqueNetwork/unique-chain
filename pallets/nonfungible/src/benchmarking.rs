@@ -18,12 +18,9 @@ use super::*;
 use crate::{Pallet, Config, NonfungibleHandle};
 
 use sp_std::prelude::*;
-use pallet_common::benchmarking::{create_collection_raw, create_data, property_key, property_value};
+use pallet_common::benchmarking::{create_collection_raw, property_key, property_value};
 use frame_benchmarking::{benchmarks, account};
-use up_data_structs::{
-	CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, CUSTOM_DATA_LIMIT,
-	budget::Unlimited,
-};
+use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, budget::Unlimited};
 use pallet_common::bench_init;
 
 const SEED: u32 = 1;
@@ -49,12 +46,12 @@ fn create_max_item<T: Config>(
 }
 
 fn create_collection<T: Config>(
-	owner: T::AccountId,
+	owner: T::CrossAccountId,
 ) -> Result<NonfungibleHandle<T>, DispatchError> {
 	create_collection_raw(
 		owner,
 		CollectionMode::NFT,
-		<Pallet<T>>::init_collection,
+		|owner, data| <Pallet<T>>::init_collection(owner, data, true),
 		NonfungibleHandle::cast,
 	)
 }
@@ -96,6 +93,26 @@ benchmarks! {
 		let item = create_max_item(&collection, &sender, burner.clone())?;
 	}: {<Pallet<T>>::burn(&collection, &burner, item)?}
 
+	burn_recursively_self_raw {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			sender: cross_from_sub(owner); burner: cross_sub;
+		};
+		let item = create_max_item(&collection, &sender, burner.clone())?;
+	}: {<Pallet<T>>::burn_recursively(&collection, &burner, item, &Unlimited, &Unlimited)?}
+
+	burn_recursively_breadth_plus_self_plus_self_per_each_raw {
+		let b in 0..200;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			sender: cross_from_sub(owner); burner: cross_sub;
+		};
+		let item = create_max_item(&collection, &sender, burner.clone())?;
+		for i in 0..b {
+			create_max_item(&collection, &sender, T::CrossTokenAddressMapping::token_to_address(collection.id, item))?;
+		}
+	}: {<Pallet<T>>::burn_recursively(&collection, &burner, item, &Unlimited, &Unlimited)?}
+
 	transfer {
 		bench_init!{
 			owner: sub; collection: collection(owner);
@@ -130,7 +147,7 @@ benchmarks! {
 		<Pallet<T>>::set_allowance(&collection, &sender, item, Some(&burner))?;
 	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, item, &Unlimited)?}
 
-	set_property_permissions {
+	set_token_property_permissions {
 		let b in 0..MAX_PROPERTIES_PER_ITEM;
 		bench_init!{
 			owner: sub; collection: collection(owner);
@@ -144,7 +161,7 @@ benchmarks! {
 				token_owner: false,
 			},
 		}).collect::<Vec<_>>();
-	}: {<Pallet<T>>::set_property_permissions(&collection, &owner, perms)?}
+	}: {<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?}
 
 	set_token_properties {
 		let b in 0..MAX_PROPERTIES_PER_ITEM;
@@ -160,13 +177,13 @@ benchmarks! {
 				token_owner: true,
 			},
 		}).collect::<Vec<_>>();
-		<Pallet<T>>::set_property_permissions(&collection, &owner, perms)?;
+		<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?;
 		let props = (0..b).map(|k| Property {
 			key: property_key(k as usize),
 			value: property_value(),
 		}).collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props)?}
+	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props, false)?}
 
 	delete_token_properties {
 		let b in 0..MAX_PROPERTIES_PER_ITEM;
@@ -182,13 +199,13 @@ benchmarks! {
 				token_owner: true,
 			},
 		}).collect::<Vec<_>>();
-		<Pallet<T>>::set_property_permissions(&collection, &owner, perms)?;
+		<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?;
 		let props = (0..b).map(|k| Property {
 			key: property_key(k as usize),
 			value: property_value(),
 		}).collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-		<Pallet<T>>::set_token_properties(&collection, &owner, item, props)?;
+		<Pallet<T>>::set_token_properties(&collection, &owner, item, props, false)?;
 		let to_delete = (0..b).map(|k| property_key(k as usize)).collect::<Vec<_>>();
 	}: {<Pallet<T>>::delete_token_properties(&collection, &owner, item, to_delete)?}
 }

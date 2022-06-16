@@ -70,8 +70,8 @@ where
 		dispatch_weight::<T>() + max_weight_of!(delete_token_properties(amount))
 	}
 
-	fn set_property_permissions(amount: u32) -> Weight {
-		dispatch_weight::<T>() + max_weight_of!(set_property_permissions(amount))
+	fn set_token_property_permissions(amount: u32) -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(set_token_property_permissions(amount))
 	}
 
 	fn transfer() -> Weight {
@@ -88,5 +88,13 @@ where
 
 	fn burn_from() -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(burn_from())
+	}
+
+	fn burn_recursively_self_raw() -> Weight {
+		max_weight_of!(burn_recursively_self_raw())
+	}
+
+	fn burn_recursively_breadth_raw(amount: u32) -> Weight {
+		max_weight_of!(burn_recursively_breadth_raw(amount))
 	}
 }

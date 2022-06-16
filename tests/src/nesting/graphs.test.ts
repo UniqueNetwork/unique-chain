@@ -3,7 +3,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
 import {tokenIdToCross} from '../eth/util/helpers';
 import usingApi, {executeTransaction} from '../substrate/substrate-api';
-import {getCreateCollectionResult, transferExpectSuccess} from '../util/helpers';
+import {getCreateCollectionResult, transferExpectSuccess, setCollectionLimitsExpectSuccess} from '../util/helpers';
 
 /**
  * ```dot
@@ -13,7 +13,7 @@ import {getCreateCollectionResult, transferExpectSuccess} from '../util/helpers'
  * ```
  */
 async function buildComplexObjectGraph(api: ApiPromise, sender: IKeyringPair): Promise<number> {
-  const events = await executeTransaction(api, sender, api.tx.unique.createCollectionEx({mode: 'NFT', permissions: {nesting: 'Owner'}}));
+  const events = await executeTransaction(api, sender, api.tx.unique.createCollectionEx({mode: 'NFT', permissions: {nesting: {tokenOwner: true}}}));
   const {collectionId} = getCreateCollectionResult(events);
 
   await executeTransaction(api, sender, api.tx.unique.createMultipleItemsEx(collectionId, {NFT: Array(8).fill({owner: {Substrate: sender.address}})}));
@@ -36,6 +36,7 @@ describe('Graphs', () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
       const collection = await buildComplexObjectGraph(api, alice);
+      await setCollectionLimitsExpectSuccess(alice, collection, {ownerCanTransfer: true});
 
       // to self
       await expect(

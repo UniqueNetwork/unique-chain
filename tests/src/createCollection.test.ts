@@ -87,6 +87,18 @@ describe('integration test: ext. createCollection():', () => {
       expect(collection.limits.accountTokenOwnershipLimit.unwrap().toNumber()).to.equal(3);
     });
   });
+
+  it('New collection is not external', async () => {
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const tx = api.tx.unique.createCollectionEx({ });
+      const events = await submitTransactionAsync(alice, tx);
+      const result = getCreateCollectionResult(events);
+
+      const collection = (await getDetailedCollectionInfo(api, result.collectionId))!;
+      expect(collection.readOnly.toHuman()).to.be.false;
+    });
+  });
 });
 
 describe('(!negative test!) integration test: ext. createCollection():', () => {

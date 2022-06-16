@@ -18,6 +18,7 @@ import {createCollectionExpectSuccess,
   createFungibleItemExpectSuccess,
   transferExpectSuccess,
   transferFromExpectSuccess,
+  setCollectionLimitsExpectSuccess,
   createItemExpectSuccess} from '../util/helpers';
 import {collectionIdToAddress,
   createEthAccountWithBalance,
@@ -35,6 +36,7 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
     const alice = privateKeyWrapper('//Alice');
     const bob = privateKeyWrapper('//Bob');
     const charlie = privateKeyWrapper('//Charlie');
+    await setCollectionLimitsExpectSuccess(alice, collection, {ownerCanTransfer: true});
     await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Substrate: alice.address});
     await transferExpectSuccess(collection, 0, alice, {Ethereum: subToEth(charlie.address)} , 200, 'Fungible');
     await transferFromExpectSuccess(collection, 0, alice, {Ethereum: subToEth(charlie.address)}, charlie, 50, 'Fungible');
@@ -48,8 +50,9 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
     });
     const alice = privateKeyWrapper('//Alice');
     const bob = privateKeyWrapper('//Bob');
-    const bobProxy = await createEthAccountWithBalance(api, web3);
-    const aliceProxy = await createEthAccountWithBalance(api, web3);
+    await setCollectionLimitsExpectSuccess(alice, collection, {ownerCanTransfer: true});
+    const bobProxy = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const aliceProxy = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
 
     await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, alice.address);
     await transferExpectSuccess(collection, 0, alice, {Ethereum: aliceProxy} , 200, 'Fungible');
@@ -71,6 +74,7 @@ describe('Token transfer between substrate address and EVM address. NFT', () => 
     const alice = privateKeyWrapper('//Alice');
     const bob = privateKeyWrapper('//Bob');
     const charlie = privateKeyWrapper('//Charlie');
+    await setCollectionLimitsExpectSuccess(alice, collection, {ownerCanTransfer: true});
     const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Substrate: alice.address});
     await transferExpectSuccess(collection, tokenId, alice, {Ethereum: subToEth(charlie.address)}, 1, 'NFT');
     await transferFromExpectSuccess(collection, tokenId, alice, {Ethereum: subToEth(charlie.address)}, charlie, 1, 'NFT');
@@ -85,8 +89,9 @@ describe('Token transfer between substrate address and EVM address. NFT', () => 
     const alice = privateKeyWrapper('//Alice');
     const bob = privateKeyWrapper('//Bob');
     const charlie = privateKeyWrapper('//Charlie');
-    const bobProxy = await createEthAccountWithBalance(api, web3);
-    const aliceProxy = await createEthAccountWithBalance(api, web3);
+    await setCollectionLimitsExpectSuccess(alice, collection, {ownerCanTransfer: true});
+    const bobProxy = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const aliceProxy = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Substrate: alice.address});
     await transferExpectSuccess(collection, tokenId, alice, {Ethereum: aliceProxy} , 1, 'NFT');
     const address = collectionIdToAddress(collection);

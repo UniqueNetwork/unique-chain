@@ -34,8 +34,8 @@ const gasLimit = 3000n * 1000000n;
 describe.skip('Integration Test toggleContractAllowList', () => {
 
   it('Enable allow list contract mode', async () => {
-    await usingApi(async api => {
-      const [contract, deployer] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [contract, deployer] = await deployFlipper(api, privateKeyWrapper);
 
       const enabledBefore = (await api.query.unique.contractAllowListEnabled(contract.address)).toJSON();
       const enableAllowListTx = api.tx.unique.toggleContractAllowList(contract.address, true);
@@ -52,7 +52,7 @@ describe.skip('Integration Test toggleContractAllowList', () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const bob = privateKeyWrapper('//Bob');
 
-      const [contract, deployer] = await deployFlipper(api);
+      const [contract, deployer] = await deployFlipper(api, privateKeyWrapper);
 
       let flipValueBefore = await getFlipValue(contract, deployer);
       const flip = contract.tx.flip(value, gasLimit);
@@ -111,8 +111,8 @@ describe.skip('Integration Test toggleContractAllowList', () => {
   });
 
   it('Enabling allow list repeatedly should not produce errors', async () => {
-    await usingApi(async api => {
-      const [contract, deployer] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [contract, deployer] = await deployFlipper(api, privateKeyWrapper);
 
       const enabledBefore = (await api.query.unique.contractAllowListEnabled(contract.address)).toJSON();
       const enableAllowListTx = api.tx.unique.toggleContractAllowList(contract.address, true);
@@ -151,7 +151,7 @@ describe.skip('Negative Integration Test toggleContractAllowList', () => {
   it('Enable allow list using a non-owner address', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const bob = privateKeyWrapper('//Bob');
-      const [contract] = await deployFlipper(api);
+      const [contract] = await deployFlipper(api, privateKeyWrapper);
 
       const enabledBefore = (await api.query.unique.contractAllowListEnabled(contract.address)).toJSON();
       const enableAllowListTx = api.tx.unique.toggleContractAllowList(contract.address, true);

@@ -16,9 +16,10 @@
 
 use core::marker::PhantomData;
 
-use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
+use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
 use up_data_structs::{TokenId, CollectionId, CreateItemExData, budget::Budget, CreateItemData};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
+use pallet_structure::Error as StructureError;
 use sp_runtime::ArithmeticError;
 use sp_std::{vec::Vec, vec};
 use up_data_structs::{Property, PropertyKey, PropertyValue, PropertyKeyPermission};
@@ -71,7 +72,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		0
 	}
 
-	fn set_property_permissions(_amount: u32) -> Weight {
+	fn set_token_property_permissions(_amount: u32) -> Weight {
 		// Error
 		0
 	}
@@ -90,6 +91,16 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn burn_from() -> Weight {
 		<SelfWeightOf<T>>::burn_from()
+	}
+
+	fn burn_recursively_self_raw() -> Weight {
+		// Read to get total balance
+		Self::burn_item() + T::DbWeight::get().reads(1)
+	}
+
+	fn burn_recursively_breadth_raw(_amount: u32) -> Weight {
+		// Fungible tokens can't have children
+		0
 	}
 }
 
@@ -167,6 +178,26 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		with_weight(
 			<Pallet<T>>::burn(self, &sender, amount),
 			<CommonWeights<T>>::burn_item(),
+		)
+	}
+
+	fn burn_item_recursively(
+		&self,
+		sender: T::CrossAccountId,
+		token: TokenId,
+		self_budget: &dyn Budget,
+		_breadth_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo {
+		// Should not happen?
+		ensure!(
+			token == TokenId::default(),
+			<Error<T>>::FungibleItemsHaveNoId
+		);
+		ensure!(self_budget.consume(), <StructureError<T>>::DepthLimit,);
+
+		with_weight(
+			<Pallet<T>>::burn(self, &sender, <Balance<T>>::get((self.id, &sender))),
+			<CommonWeights<T>>::burn_recursively_self_raw(),
 		)
 	}
 
@@ -271,7 +302,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
 
-	fn set_property_permissions(
+	fn set_token_property_permissions(
 		&self,
 		_sender: &T::CrossAccountId,
 		_property_permissions: Vec<PropertyKeyPermission>,

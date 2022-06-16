@@ -14,7 +14,7 @@ describe('nesting check', () => {
       const events = await executeTransaction(api, alice, api.tx.unique.createCollectionEx({
         mode: 'NFT',
         permissions: {
-          nesting: {OwnerRestricted: []},
+          nesting: {tokenOwner: true, restricted: []},
         },
       }));
       const collection = getCreateCollectionResult(events).collectionId;
@@ -27,11 +27,11 @@ describe('nesting check', () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'Fungible',decimalPoints:0}});
       await expect(executeTransaction(api, alice, api.tx.unique.createItem(collection, nestTarget, {Fungible: {Value: 1}})))
-        .to.be.rejectedWith(/^common\.SourceCollectionIsNotAllowedToNest$/);
+        .to.be.rejectedWith(/^common\.UserIsNotAllowedToNest$/);
 
       await createFungibleItemExpectSuccess(alice, collection, {Value:1n}, {Substrate: alice.address});
       await expect(executeTransaction(api, alice, api.tx.unique.transfer(nestTarget, collection, 0, 1n)))
-        .to.be.rejectedWith(/^common\.SourceCollectionIsNotAllowedToNest$/);
+        .to.be.rejectedWith(/^common\.UserIsNotAllowedToNest$/);
     });
   });
 
@@ -39,11 +39,11 @@ describe('nesting check', () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await expect(executeTransaction(api, alice, api.tx.unique.createItem(collection, nestTarget, {NFT: {properties: []}})))
-        .to.be.rejectedWith(/^common\.SourceCollectionIsNotAllowedToNest$/);
+        .to.be.rejectedWith(/^common\.UserIsNotAllowedToNest$/);
 
       const token = await createItemExpectSuccess(alice, collection, 'NFT', {Substrate: alice.address});
       await expect(executeTransaction(api, alice, api.tx.unique.transfer(nestTarget, collection, token, 1n)))
-        .to.be.rejectedWith(/^common\.SourceCollectionIsNotAllowedToNest$/);
+        .to.be.rejectedWith(/^common\.UserIsNotAllowedToNest$/);
     });
   });
 
@@ -51,11 +51,11 @@ describe('nesting check', () => {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       await expect(executeTransaction(api, alice, api.tx.unique.createItem(collection, nestTarget, {ReFungible: {}})))
-        .to.be.rejectedWith(/^common\.SourceCollectionIsNotAllowedToNest$/);
+        .to.be.rejectedWith(/^common\.UserIsNotAllowedToNest$/);
 
       const token = await createItemExpectSuccess(alice, collection, 'ReFungible', {Substrate: alice.address});
       await expect(executeTransaction(api, alice, api.tx.unique.transfer(nestTarget, collection, token, 1n)))
-        .to.be.rejectedWith(/^common\.SourceCollectionIsNotAllowedToNest$/);
+        .to.be.rejectedWith(/^common\.UserIsNotAllowedToNest$/);
     });
   });
 });

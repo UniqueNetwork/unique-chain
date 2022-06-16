@@ -406,6 +406,7 @@ describe('Collection zero limits (ReFungible)', () => {
   it('Effective collection limits', async () => {
     await usingApi(async (api) => {
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
       
       { // Check that limits is undefined
         const collection = await api.rpc.unique.collectionById(collectionId);
@@ -419,7 +420,7 @@ describe('Collection zero limits (ReFungible)', () => {
         expect(limits.tokenLimit.toHuman()).to.be.null;
         expect(limits.sponsorTransferTimeout.toHuman()).to.be.null;
         expect(limits.sponsorApproveTimeout.toHuman()).to.be.null;
-        expect(limits.ownerCanTransfer.toHuman()).to.be.null;
+        expect(limits.ownerCanTransfer.toHuman()).to.be.true;
         expect(limits.ownerCanDestroy.toHuman()).to.be.null;
         expect(limits.transfersEnabled.toHuman()).to.be.null;
       }

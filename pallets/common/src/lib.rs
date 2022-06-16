@@ -126,9 +126,11 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn new(id: CollectionId) -> Option<Self> {
 		Self::new_with_gas_limit(id, u64::MAX)
 	}
+
 	pub fn try_get(id: CollectionId) -> Result<Self, DispatchError> {
 		Ok(Self::new(id).ok_or(<Error<T>>::CollectionNotFound)?)
 	}
+
 	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(
@@ -137,6 +139,7 @@ impl<T: Config> CollectionHandle<T> {
 					.saturating_mul(reads),
 			))
 	}
+
 	pub fn consume_store_writes(&self, writes: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(
@@ -150,19 +153,41 @@ impl<T: Config> CollectionHandle<T> {
 		Ok(())
 	}
 
-	pub fn set_sponsor(&mut self, sponsor: T::AccountId) {
+	pub fn set_sponsor(&mut self, sponsor: T::AccountId) -> DispatchResult {
 		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor);
+		Ok(())
 	}
 
-	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> bool {
+	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> Result<bool, DispatchError> {
 		if self.collection.sponsorship.pending_sponsor() != Some(sender) {
-			return false;
-		};
+			return Ok(false);
+		}
 
 		self.collection.sponsorship = SponsorshipState::Confirmed(sender.clone());
-		true
+		Ok(true)
+	}
+
+	/// Checks that the collection was created with, and must be operated upon through **Unique API**.
+	/// Now check only the `external_collection` flag and if it's **true**, then return `CollectionIsExternal` error.
+	pub fn check_is_internal(&self) -> DispatchResult {
+		if self.external_collection {
+			return Err(<Error<T>>::CollectionIsExternal)?;
+		}
+
+		Ok(())
+	}
+
+	/// Checks that the collection was created with, and must be operated upon through an **assimilated API**.
+	/// Now check only the `external_collection` flag and if it's **false**, then return `CollectionIsInternal` error.
+	pub fn check_is_external(&self) -> DispatchResult {
+		if !self.external_collection {
+			return Err(<Error<T>>::CollectionIsInternal)?;
+		}
+
+		Ok(())
 	}
 }
+
 impl<T: Config> Deref for CollectionHandle<T> {
 	type Target = Collection<T::AccountId>;
 
@@ -402,13 +427,11 @@ pub mod pallet {
 		/// Target collection doesn't supports this operation
 		UnsupportedOperation,
 
-		/// Not sufficient founds to perform action
+		/// Not sufficient funds to perform action
 		NotSufficientFounds,
 
-		/// Collection has nesting disabled
-		NestingIsDisabled,
-		/// Only owner may nest tokens under this collection
-		OnlyOwnerAllowedToNest,
+		/// User not passed nesting rule
+		UserIsNotAllowedToNest,
 		/// Only tokens from specific collections may nest tokens under this
 		SourceCollectionIsNotAllowedToNest,
 
@@ -429,6 +452,12 @@ pub mod pallet {
 
 		/// Empty property keys are forbidden
 		EmptyPropertyKey,
+
+		/// Tried to access an external collection with an internal API
+		CollectionIsExternal,
+
+		/// Tried to access an internal collection with an external API
+		CollectionIsInternal,
 	}
 
 	#[pallet::storage]
@@ -664,6 +693,7 @@ impl<T: Config> Pallet<T> {
 			sponsorship,
 			limits,
 			permissions,
+			external_collection,
 		} = <CollectionById<T>>::get(collection)?;
 
 		let token_property_permissions = <CollectionPropertyPermissions<T>>::get(collection)
@@ -693,6 +723,7 @@ impl<T: Config> Pallet<T> {
 			permissions,
 			token_property_permissions,
 			properties,
+			read_only: external_collection,
 		})
 	}
 }
@@ -730,6 +761,7 @@ impl<T: Config> Pallet<T> {
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
+		is_external: bool,
 	) -> Result<CollectionId, DispatchError> {
 		{
 			ensure!(
@@ -773,6 +805,7 @@ impl<T: Config> Pallet<T> {
 					Self::clamp_permissions(data.mode.clone(), &Default::default(), permissions)
 				})
 				.unwrap_or_else(|| Ok(CollectionPermissions::default()))?,
+			external_collection: is_external,
 		};
 
 		let mut collection_properties = up_data_structs::CollectionProperties::get();
@@ -986,7 +1019,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	#[transactional]
-	pub fn set_property_permissions(
+	pub fn set_token_property_permissions(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,
@@ -1097,7 +1130,7 @@ impl<T: Config> Pallet<T> {
 		user: &T::CrossAccountId,
 		admin: bool,
 	) -> DispatchResult {
-		collection.check_is_owner_or_admin(sender)?;
+		collection.check_is_owner(sender)?;
 
 		let was_admin = <IsAdmin<T>>::get((collection.id, user));
 		if was_admin == admin {
@@ -1131,6 +1164,7 @@ impl<T: Config> Pallet<T> {
 		old_limit: &CollectionLimits,
 		mut new_limit: CollectionLimits,
 	) -> Result<CollectionLimits, DispatchError> {
+		let limits = old_limit;
 		limit_default!(old_limit, new_limit,
 			account_token_ownership_limit => ensure!(
 				new_limit <= MAX_TOKEN_OWNERSHIP,
@@ -1157,6 +1191,7 @@ impl<T: Config> Pallet<T> {
 			),
 			sponsor_approve_timeout => {},
 			owner_can_transfer => ensure!(
+				!limits.owner_can_transfer_instaled() ||
 				old_limit || !new_limit,
 				<Error<T>>::OwnerPermissionsCantBeReverted,
 			),
@@ -1168,15 +1203,23 @@ impl<T: Config> Pallet<T> {
 		);
 		Ok(new_limit)
 	}
+
 	pub fn clamp_permissions(
-		mode: CollectionMode,
+		_mode: CollectionMode,
 		old_limit: &CollectionPermissions,
 		mut new_limit: CollectionPermissions,
 	) -> Result<CollectionPermissions, DispatchError> {
 		limit_default_clone!(old_limit, new_limit,
 			access => {},
 			mint_mode => {},
-			nesting => {},
+			nesting => {
+				#[cfg(not(feature = "runtime-benchmarks"))]
+				ensure!(
+					// Permissive is only allowed for tests and internal usage of chain for now
+					old_limit.permissive || !new_limit.permissive,
+					<Error<T>>::NoPermission,
+				)
+			},
 		);
 		Ok(new_limit)
 	}
@@ -1199,11 +1242,27 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn delete_collection_properties(amount: u32) -> Weight;
 	fn set_token_properties(amount: u32) -> Weight;
 	fn delete_token_properties(amount: u32) -> Weight;
-	fn set_property_permissions(amount: u32) -> Weight;
+	fn set_token_property_permissions(amount: u32) -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
 	fn burn_from() -> Weight;
+
+	/// Differs from burn_item in case of Fungible and Refungible, as it should burn
+	/// whole users's balance
+	///
+	/// This method shouldn't be used directly, as it doesn't count breadth price, use `burn_recursively` instead
+	fn burn_recursively_self_raw() -> Weight;
+	/// Cost of iterating over `amount` children while burning, without counting child burning itself
+	///
+	/// This method shouldn't be used directly, as it doesn't count depth price, use `burn_recursively` instead
+	fn burn_recursively_breadth_raw(amount: u32) -> Weight;
+
+	fn burn_recursively(max_selfs: u32, max_breadth: u32) -> Weight {
+		Self::burn_recursively_self_raw()
+			.saturating_mul(max_selfs.max(1) as u64)
+			.saturating_add(Self::burn_recursively_breadth_raw(max_breadth))
+	}
 }
 
 pub trait CommonCollectionOperations<T: Config> {
@@ -1233,6 +1292,13 @@ pub trait CommonCollectionOperations<T: Config> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResultWithPostInfo;
+	fn burn_item_recursively(
+		&self,
+		sender: T::CrossAccountId,
+		token: TokenId,
+		self_budget: &dyn Budget,
+		breadth_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo;
 	fn set_collection_properties(
 		&self,
 		sender: T::CrossAccountId,
@@ -1255,7 +1321,7 @@ pub trait CommonCollectionOperations<T: Config> {
 		token_id: TokenId,
 		property_keys: Vec<PropertyKey>,
 	) -> DispatchResultWithPostInfo;
-	fn set_property_permissions(
+	fn set_token_property_permissions(
 		&self,
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,

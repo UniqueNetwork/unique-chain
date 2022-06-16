@@ -50,7 +50,7 @@ const marketContractAddress = '5CYN9j3YvRkqxewoxeSvRbhAym4465C57uMmX5j4yz99L5H6'
 describe.skip('Contracts', () => {
   it('Can deploy smart contract Flipper, instantiate it and call it\'s get and flip messages.', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      const [contract, deployer] = await deployFlipper(api);
+      const [contract, deployer] = await deployFlipper(api, privateKeyWrapper);
       const initialGetResponse = await getFlipValue(contract, deployer);
 
       const bob = privateKeyWrapper('//Bob');
@@ -82,7 +82,7 @@ describe.skip('Chain extensions', () => {
       // Prep work
       const collectionId = await createCollectionExpectSuccess();
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
-      const [contract] = await deployTransferContract(api);
+      const [contract] = await deployTransferContract(api, privateKeyWrapper);
       const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, contract.address);
       await submitTransactionAsync(alice, changeAdminTx);
 
@@ -104,7 +104,7 @@ describe.skip('Chain extensions', () => {
       const bob = privateKeyWrapper('//Bob');
 
       const collectionId = await createCollectionExpectSuccess();
-      const [contract] = await deployTransferContract(api);
+      const [contract] = await deployTransferContract(api, privateKeyWrapper);
       await enablePublicMintingExpectSuccess(alice, collectionId);
       await enableAllowListExpectSuccess(alice, collectionId);
       await addToAllowListExpectSuccess(alice, collectionId, contract.address);
@@ -131,7 +131,7 @@ describe.skip('Chain extensions', () => {
       const bob = privateKeyWrapper('//Bob');
 
       const collectionId = await createCollectionExpectSuccess();
-      const [contract] = await deployTransferContract(api);
+      const [contract] = await deployTransferContract(api, privateKeyWrapper);
       await enablePublicMintingExpectSuccess(alice, collectionId);
       await enableAllowListExpectSuccess(alice, collectionId);
       await addToAllowListExpectSuccess(alice, collectionId, contract.address);
@@ -173,7 +173,7 @@ describe.skip('Chain extensions', () => {
       const charlie = privateKeyWrapper('//Charlie');
 
       const collectionId = await createCollectionExpectSuccess();
-      const [contract] = await deployTransferContract(api);
+      const [contract] = await deployTransferContract(api, privateKeyWrapper);
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', contract.address.toString());
 
       const transferTx = contract.tx.approve(value, gasLimit, bob.address, collectionId, tokenId, 1);
@@ -192,7 +192,7 @@ describe.skip('Chain extensions', () => {
       const charlie = privateKeyWrapper('//Charlie');
 
       const collectionId = await createCollectionExpectSuccess();
-      const [contract] = await deployTransferContract(api);
+      const [contract] = await deployTransferContract(api, privateKeyWrapper);
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
       await approveExpectSuccess(collectionId, tokenId, bob, contract.address.toString(), 1);
 
@@ -212,7 +212,7 @@ describe.skip('Chain extensions', () => {
       const bob = privateKeyWrapper('//Bob');
 
       const collectionId = await createCollectionExpectSuccess();
-      const [contract] = await deployTransferContract(api);
+      const [contract] = await deployTransferContract(api, privateKeyWrapper);
       const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, contract.address);
       await submitTransactionAsync(alice, changeAdminTx);
 

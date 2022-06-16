@@ -17,14 +17,13 @@
 import {expect} from 'chai';
 import {createEthAccountWithBalance, deployFlipper, GAS_ARGS, itWeb3, subToEth, transferBalanceToEth} from './util/helpers';
 import {scheduleExpectSuccess, waitNewBlocks} from '../util/helpers';
-import privateKey from '../substrate/privateKey';
 
 describe('Scheduing EVM smart contracts', () => {
-  itWeb3('Successfully schedules and periodically executes an EVM contract', async ({api, web3}) => {
-    const deployer = await createEthAccountWithBalance(api, web3);
+  itWeb3('Successfully schedules and periodically executes an EVM contract', async ({api, web3, privateKeyWrapper}) => {
+    const deployer = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const flipper = await deployFlipper(web3, deployer);
     const initialValue = await flipper.methods.getValue().call();
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
     await transferBalanceToEth(api, alice, subToEth(alice.address));
 
     {

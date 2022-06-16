@@ -1,3 +1,19 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 use sp_runtime::Perbill;
 use frame_support::{
 	parameter_types,
@@ -22,7 +38,7 @@ pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
 pub const WEIGHT_TO_FEE_COEFF: u32 = 142_688_000;
 
 // Targeting 0.15 UNQ per transfer
-pub const MIN_GAS_PRICE: u64 = 1_018_751_825_264;
+pub const MIN_GAS_PRICE: u64 = 1_019_493_469_850;
 
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.

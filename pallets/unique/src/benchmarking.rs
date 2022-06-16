@@ -22,7 +22,10 @@ use frame_system::RawOrigin;
 use frame_support::traits::{tokens::currency::Currency, Get};
 use frame_benchmarking::{benchmarks, account};
 use sp_runtime::DispatchError;
-use pallet_common::benchmarking::{create_data, create_var_data, create_u16_data};
+use pallet_common::{
+	Config as CommonConfig,
+	benchmarking::{create_data, create_u16_data},
+};
 
 const SEED: u32 = 1;
 
@@ -30,7 +33,7 @@ fn create_collection_helper<T: Config>(
 	owner: T::AccountId,
 	mode: CollectionMode,
 ) -> Result<CollectionId, DispatchError> {
-	T::Currency::deposit_creating(&owner, T::CollectionCreationPrice::get());
+	<T as CommonConfig>::Currency::deposit_creating(&owner, T::CollectionCreationPrice::get());
 	let col_name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
 	let col_desc = create_u16_data::<MAX_COLLECTION_DESCRIPTION_LENGTH>();
 	let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
@@ -54,7 +57,7 @@ benchmarks! {
 		let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
 		let mode: CollectionMode = CollectionMode::NFT;
 		let caller: T::AccountId = account("caller", 0, SEED);
-		T::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
+		<T as CommonConfig>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
 	}: _(RawOrigin::Signed(caller.clone()), col_name.clone(), col_desc.clone(), token_prefix.clone(), mode)
 	verify {
 		assert_eq!(<pallet_common::CollectionById<T>>::get(CollectionId(1)).unwrap().owner, caller);
@@ -77,16 +80,6 @@ benchmarks! {
 		let collection = create_nft_collection::<T>(caller.clone())?;
 		<Pallet<T>>::add_to_allow_list(RawOrigin::Signed(caller.clone()).into(), collection, T::CrossAccountId::from_sub(allowlist_account.clone()))?;
 	}: _(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(allowlist_account))
-
-	set_public_access_mode {
-		let caller: T::AccountId = account("caller", 0, SEED);
-		let collection = create_nft_collection::<T>(caller.clone())?;
-	}: _(RawOrigin::Signed(caller.clone()), collection, AccessMode::AllowList)
-
-	set_mint_permission {
-		let caller: T::AccountId = account("caller", 0, SEED);
-		let collection = create_nft_collection::<T>(caller.clone())?;
-	}: _(RawOrigin::Signed(caller.clone()), collection, true)
 
 	change_collection_owner {
 		let caller: T::AccountId = account("caller", 0, SEED);
@@ -145,7 +138,6 @@ benchmarks! {
 			owner_can_transfer: Some(true),
 			sponsored_data_rate_limit: None,
 			transfers_enabled: Some(true),
-			nesting_rule: None,
 		};
 	}: set_collection_limits(RawOrigin::Signed(caller.clone()), collection, cl)
 }

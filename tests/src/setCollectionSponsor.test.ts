@@ -24,7 +24,6 @@ import {createCollectionExpectSuccess,
   addCollectionAdminExpectSuccess,
   getCreatedCollectionCount,
 } from './util/helpers';
-import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 
 chai.use(chaiAsPromised);
@@ -36,10 +35,10 @@ let charlie: IKeyringPair;
 describe('integration test: ext. setCollectionSponsor():', () => {
 
   before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({type: 'sr25519'});
-      alice = keyring.addFromUri('//Alice');
-      bob = keyring.addFromUri('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 
@@ -63,21 +62,22 @@ describe('integration test: ext. setCollectionSponsor():', () => {
   });
   it('Replace collection sponsor', async () => {
     const collectionId = await createCollectionExpectSuccess();
-
-    const keyring = new Keyring({type: 'sr25519'});
-    const charlie = keyring.addFromUri('//Charlie');
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await setCollectionSponsorExpectSuccess(collectionId, charlie.address);
+  });
+  it('Collection admin add sponsor', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+    await setCollectionSponsorExpectSuccess(collectionId, charlie.address, '//Bob');
   });
 });
 
 describe('(!negative test!) integration test: ext. setCollectionSponsor():', () => {
   before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({type: 'sr25519'});
-      alice = keyring.addFromUri('//Alice');
-      bob = keyring.addFromUri('//Bob');
-      charlie = keyring.addFromUri('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 
@@ -98,10 +98,5 @@ describe('(!negative test!) integration test: ext. setCollectionSponsor():', () 
     const collectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectSuccess(collectionId);
     await setCollectionSponsorExpectFailure(collectionId, bob.address);
-  });
-  it('(!negative test!) Collection admin add sponsor', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-    await setCollectionSponsorExpectFailure(collectionId, charlie.address, '//Bob');
   });
 });

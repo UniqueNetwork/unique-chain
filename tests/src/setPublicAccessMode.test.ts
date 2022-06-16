@@ -103,6 +103,16 @@ describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
       await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
     });
   });
+
+  it('setPublicAccessMode by collection admin', async () => {
+    await usingApi(async (api: ApiPromise) => {
+      // tslint:disable-next-line: no-bitwise
+      const collectionId = await createCollectionExpectSuccess();
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+      const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: 'AllowList'});
+      await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.not.rejected;
+    });
+  });
 });
 
 describe('Negative Integration Test ext. collection admin setPublicAccessMode(): ', () => {
@@ -110,15 +120,6 @@ describe('Negative Integration Test ext. collection admin setPublicAccessMode():
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
       bob = privateKeyWrapper('//Bob');
-    });
-  });
-  it('setPublicAccessMode by collection admin', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      // tslint:disable-next-line: no-bitwise
-      const collectionId = await createCollectionExpectSuccess();
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: 'AllowList'});
-      await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
     });
   });
 });

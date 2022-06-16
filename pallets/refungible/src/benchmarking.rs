@@ -50,7 +50,9 @@ fn create_max_item<T: Config>(
 	Ok(TokenId(<TokensMinted<T>>::get(&collection.id)))
 }
 
-fn create_collection<T: Config>(owner: T::AccountId) -> Result<RefungibleHandle<T>, DispatchError> {
+fn create_collection<T: Config>(
+	owner: T::CrossAccountId,
+) -> Result<RefungibleHandle<T>, DispatchError> {
 	create_collection_raw(
 		owner,
 		CollectionMode::NFT,

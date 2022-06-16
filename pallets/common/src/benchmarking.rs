@@ -20,8 +20,8 @@ use pallet_evm::account::CrossAccountId;
 use frame_benchmarking::{benchmarks, account};
 use up_data_structs::{
 	CollectionMode, CreateCollectionData, CollectionId, Property, PropertyKey, PropertyValue,
-	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	OFFCHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT, MAX_PROPERTIES_PER_ITEM,
+	CollectionPermissions, NestingPermissions, MAX_COLLECTION_NAME_LENGTH,
+	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, MAX_PROPERTIES_PER_ITEM,
 };
 use frame_support::{
 	traits::{Currency, Get},
@@ -74,15 +74,15 @@ pub fn property_value() -> PropertyValue {
 }
 
 pub fn create_collection_raw<T: Config, R>(
-	owner: T::AccountId,
+	owner: T::CrossAccountId,
 	mode: CollectionMode,
 	handler: impl FnOnce(
-		T::AccountId,
+		T::CrossAccountId,
 		CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError>,
 	cast: impl FnOnce(CollectionHandle<T>) -> R,
 ) -> Result<R, DispatchError> {
-	T::Currency::deposit_creating(&owner, T::CollectionCreationPrice::get());
+	<T as Config>::Currency::deposit_creating(&owner.as_sub(), T::CollectionCreationPrice::get());
 	let name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
 	let description = create_u16_data::<MAX_COLLECTION_DESCRIPTION_LENGTH>();
 	let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
@@ -93,17 +93,29 @@ pub fn create_collection_raw<T: Config, R>(
 			name,
 			description,
 			token_prefix,
+			permissions: Some(CollectionPermissions {
+				nesting: Some(NestingPermissions {
+					token_owner: false,
+					collection_admin: false,
+					restricted: None,
+					permissive: true,
+				}),
+				mint_mode: Some(true),
+				..Default::default()
+			}),
 			..Default::default()
 		},
 	)
 	.and_then(CollectionHandle::try_get)
 	.map(cast)
 }
-fn create_collection<T: Config>(owner: T::AccountId) -> Result<CollectionHandle<T>, DispatchError> {
+fn create_collection<T: Config>(
+	owner: T::CrossAccountId,
+) -> Result<CollectionHandle<T>, DispatchError> {
 	create_collection_raw(
 		owner,
 		CollectionMode::NFT,
-		|owner, data| <Pallet<T>>::init_collection(owner, data),
+		|owner, data| <Pallet<T>>::init_collection(owner, data, true),
 		|h| h,
 	)
 }
@@ -127,7 +139,7 @@ macro_rules! bench_init {
 		bench_init!($($rest)*);
 	};
 	($name:ident: collection($owner:ident); $($rest:tt)*) => {
-		let $name = create_collection::<T>($owner.clone())?;
+		let $name = create_collection::<T>(T::CrossAccountId::from_sub($owner.clone()))?;
 		bench_init!($($rest)*);
 	};
 	($name:ident: cross; $($rest:tt)*) => {

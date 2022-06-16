@@ -16,14 +16,14 @@
 
 import '../interfaces/augment-api-rpc';
 import '../interfaces/augment-api-query';
-import {ApiPromise, Keyring} from '@polkadot/api';
+import {ApiPromise} from '@polkadot/api';
 import type {AccountId, EventRecord, Event} from '@polkadot/types/interfaces';
+import type {GenericEventData} from '@polkadot/types';
 import {AnyTuple, IEvent, IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
 import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {alicesPublicKey} from '../accounts';
 import {default as usingApi, executeTransaction, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
 import {UpDataStructsRpcCollection, UpDataStructsCreateItemData, UpDataStructsProperty} from '@polkadot/types/lookup';
@@ -40,7 +40,7 @@ export type CrossAccountId = {
 
 export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {
   if (typeof input === 'string') {
-    if (input.length === 48 || input.length === 47) {
+    if (input.length >= 47) {
       return {Substrate: input};
     } else if (input.length === 42 && input.startsWith('0x')) {
       return {Ethereum: input.toLowerCase()};
@@ -88,9 +88,10 @@ const MILLIUNIQUE = 1_000n * MICROUNIQUE;
 const CENTIUNIQUE = 10n * MILLIUNIQUE;
 export const UNIQUE = 100n * CENTIUNIQUE;
 
-type GenericResult = {
-  success: boolean,
-};
+interface GenericResult<T> {
+  success: boolean;
+  data: T | null;
+}
 
 interface CreateCollectionResult {
   success: boolean;
@@ -170,91 +171,87 @@ export function getEvent<T extends Event>(events: EventRecord[], check: (event: 
   return event.event as T;
 }
 
-export function getGenericResult(events: EventRecord[]): GenericResult {
-  const result: GenericResult = {
-    success: false,
-  };
-  events.forEach(({event: {method}}) => {
+export function getGenericResult<T>(events: EventRecord[]): GenericResult<T>;
+export function getGenericResult<T>(
+  events: EventRecord[],
+  expectSection: string,
+  expectMethod: string,
+  extractAction: (data: GenericEventData) => T
+): GenericResult<T>;
+
+export function getGenericResult<T>(
+  events: EventRecord[],
+  expectSection?: string,
+  expectMethod?: string,
+  extractAction?: (data: GenericEventData) => T,
+): GenericResult<T> {
+  let success = false;
+  let successData = null;
+
+  events.forEach(({event: {data, method, section}}) => {
     // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
     if (method === 'ExtrinsicSuccess') {
-      result.success = true;
+      success = true;
+    } else if ((expectSection == section) && (expectMethod == method)) {
+      successData = extractAction!(data as any);
     }
   });
+
+  const result: GenericResult<T> = {
+    success,
+    data: successData,
+  };
   return result;
 }
 
-
-
 export function getCreateCollectionResult(events: EventRecord[]): CreateCollectionResult {
-  let success = false;
-  let collectionId = 0;
-  events.forEach(({event: {data, method, section}}) => {
-    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
-    if (method == 'ExtrinsicSuccess') {
-      success = true;
-    } else if ((section == 'common') && (method == 'CollectionCreated')) {
-      collectionId = parseInt(data[0].toString(), 10);
-    }
-  });
+  const genericResult = getGenericResult(events, 'common', 'CollectionCreated', (data) => parseInt(data[0].toString(), 10));
   const result: CreateCollectionResult = {
-    success,
-    collectionId,
+    success: genericResult.success,
+    collectionId: genericResult.data ?? 0,
   };
   return result;
 }
 
 export function getCreateItemsResult(events: EventRecord[]): CreateItemResult[] {
-  let success = false;
-  let collectionId = 0;
-  let itemId = 0;
-  let recipient;
+  const results: CreateItemResult[] = [];
+  
+  const genericResult = getGenericResult<CreateItemResult[]>(events, 'common', 'ItemCreated', (data) => {
+    const collectionId = parseInt(data[0].toString(), 10);
+    const itemId = parseInt(data[1].toString(), 10);
+    const recipient = normalizeAccountId(data[2].toJSON() as any);
 
-  const results : CreateItemResult[]  = [];
+    const itemRes: CreateItemResult = {
+      success: true,
+      collectionId,
+      itemId,
+      recipient,
+    };
 
-  events.forEach(({event: {data, method, section}}) => {
-    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
-    if (method == 'ExtrinsicSuccess') {
-      success = true;
-    } else if ((section == 'common') && (method == 'ItemCreated')) {
-      collectionId = parseInt(data[0].toString(), 10);
-      itemId = parseInt(data[1].toString(), 10);
-      recipient = normalizeAccountId(data[2].toJSON() as any);
-
-      const itemRes: CreateItemResult = {
-        success,
-        collectionId,
-        itemId,
-        recipient,
-      };
-
-      results.push(itemRes);
-    }
+    results.push(itemRes);
+    return results;
   });
 
+  if (!genericResult.success) return [];
   return results;
 }
 
 export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
-  let success = false;
-  let collectionId = 0;
-  let itemId = 0;
-  let recipient;
-  events.forEach(({event: {data, method, section}}) => {
-    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
-    if (method == 'ExtrinsicSuccess') {
-      success = true;
-    } else if ((section == 'common') && (method == 'ItemCreated')) {
-      collectionId = parseInt(data[0].toString(), 10);
-      itemId = parseInt(data[1].toString(), 10);
-      recipient = normalizeAccountId(data[2].toJSON() as any);
-    }
-  });
+  const genericResult = getGenericResult<[number, number, CrossAccountId?]>(events, 'common', 'ItemCreated', (data) => [
+    parseInt(data[0].toString(), 10),
+    parseInt(data[1].toString(), 10),
+    normalizeAccountId(data[2].toJSON() as any),
+  ]);
+
+  if (genericResult.data == null) genericResult.data = [0, 0];
+
   const result: CreateItemResult = {
-    success,
-    collectionId,
-    itemId,
-    recipient,
+    success: genericResult.success,
+    collectionId: genericResult.data[0],
+    itemId: genericResult.data[1],
+    recipient: genericResult.data![2],
   };
+  
   return result;
 }
 
@@ -363,7 +360,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     // tslint:disable-next-line:no-unused-expression
     expect(collection).to.be.not.null;
     expect(collectionCountAfter).to.be.equal(collectionCountBefore + 1, 'Error: NFT collection NOT created.');
-    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicesPublicKey));
+    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicePrivateKey));
     expect(utf16ToStr(collection.name.toJSON() as any)).to.be.equal(name);
     expect(utf16ToStr(collection.description.toJSON() as any)).to.be.equal(description);
     expect(hexToStr(collection.tokenPrefix.toJSON())).to.be.equal(tokenPrefix);
@@ -411,7 +408,7 @@ export async function createCollectionWithPropsExpectSuccess(params: Partial<Cre
     // tslint:disable-next-line:no-unused-expression
     expect(collection).to.be.not.null;
     expect(collectionCountAfter).to.be.equal(collectionCountBefore + 1, 'Error: NFT collection NOT created.');
-    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicesPublicKey));
+    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicePrivateKey));
     expect(utf16ToStr(collection.name.toJSON() as any)).to.be.equal(name);
     expect(utf16ToStr(collection.description.toJSON() as any)).to.be.equal(description);
     expect(hexToStr(collection.tokenPrefix.toJSON())).to.be.equal(tokenPrefix);
@@ -482,13 +479,12 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
   });
 }
 
-export async function findUnusedAddress(api: ApiPromise, seedAddition = ''): Promise<IKeyringPair> {
+export async function findUnusedAddress(api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair, seedAddition = ''): Promise<IKeyringPair> {
   let bal = 0n;
   let unused;
   do {
     const randomSeed = 'seed' + Math.floor(Math.random() * Math.floor(10000)) + seedAddition;
-    const keyring = new Keyring({type: 'sr25519'});
-    unused = keyring.addFromUri(`//${randomSeed}`);
+    unused = privateKeyWrapper(`//${randomSeed}`);
     bal = (await api.query.system.account(unused.address)).data.free.toBigInt();
   } while (bal !== 0n);
   return unused;
@@ -498,8 +494,8 @@ export async function getAllowance(api: ApiPromise, collectionId: number, owner:
   return (await api.rpc.unique.allowance(collectionId, normalizeAccountId(owner), normalizeAccountId(approved), tokenId)).toBigInt();
 }
 
-export function findUnusedAddresses(api: ApiPromise, amount: number): Promise<IKeyringPair[]> {
-  return Promise.all(new Array(amount).fill(null).map(() => findUnusedAddress(api, '_' + Date.now())));
+export function findUnusedAddresses(api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair, amount: number): Promise<IKeyringPair[]> {
+  return Promise.all(new Array(amount).fill(null).map(() => findUnusedAddress(api, privateKeyWrapper, '_' + Date.now())));
 }
 
 export async function findNotExistingCollection(api: ApiPromise): Promise<number> {
@@ -551,7 +547,7 @@ export async function setCollectionLimitsExpectSuccess(sender: IKeyringPair, col
   });
 }
 
-export const setCollectionPermissionsExpectSuccess = async (sender: IKeyringPair, collectionId: number, permissions: {mintMode?: boolean, access?: 'Normal' | 'AllowList', nesting?: 'Disabled' | 'Owner' | {OwnerRestricted: number[]}}) => {
+export const setCollectionPermissionsExpectSuccess = async (sender: IKeyringPair, collectionId: number, permissions: any) => {
   await usingApi(async(api) => {
     const tx = api.tx.unique.setCollectionPermissions(collectionId, permissions);
     const events = await submitTransactionAsync(sender, tx);
@@ -868,7 +864,7 @@ transferFromExpectSuccess(
     }
     const transferFromTx = api.tx.unique.transferFrom(normalizeAccountId(accountFrom), to, collectionId, tokenId, value);
     const events = await submitTransactionAsync(accountApproved, transferFromTx);
-    const result = getCreateItemResult(events);
+    const result = getGenericResult(events);
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
     if (type === 'NFT') {
@@ -922,6 +918,18 @@ export async function addCollectionAdminExpectSuccess(sender: IKeyringPair, coll
     const events = await submitTransactionAsync(sender, changeAdminTx);
     const result = getCreateCollectionResult(events);
     expect(result.success).to.be.true;
+  });
+}
+
+export async function adminApproveFromExpectFail(
+  collectionId: number,
+  tokenId: number, admin: IKeyringPair, owner: CrossAccountId | string, approved: CrossAccountId | string, amount: number | bigint = 1,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    const approveUniqueTx = api.tx.unique.approve(normalizeAccountId(approved), collectionId, tokenId, amount);
+    const events = await expect(submitTransactionAsync(admin, approveUniqueTx)).to.be.rejected;
+    const result = getGenericResult(events);
+    expect(result.success).to.be.false;
   });
 }
 

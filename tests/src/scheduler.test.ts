@@ -16,7 +16,6 @@
 
 import chai, {expect} from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import {
   default as usingApi, 
   submitTransactionAsync,
@@ -52,9 +51,9 @@ describe.skip('Scheduling token and balance transfers', () => {
   let scheduledIdSlider: number;
 
   before(async() => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
 
     scheduledIdBase = '0x' + '0'.repeat(31);
@@ -116,9 +115,9 @@ describe.skip('Scheduling token and balance transfers', () => {
   });
 
   it('Schedules and dispatches a transaction even if the caller has no funds at the time of the dispatch', async () => {
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       // Find an empty, unused account
-      const zeroBalance = await findUnusedAddress(api);
+      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
       const collectionId = await createCollectionExpectSuccess();
 
@@ -156,8 +155,8 @@ describe.skip('Scheduling token and balance transfers', () => {
   it('Sponsor going bankrupt does not impact a scheduled transaction', async () => {
     const collectionId = await createCollectionExpectSuccess();
 
-    await usingApi(async (api) => {
-      const zeroBalance = await findUnusedAddress(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
       const balanceTx = api.tx.balances.transfer(zeroBalance.address, 1n * UNIQUE);
       await submitTransactionAsync(alice, balanceTx);
 
@@ -186,8 +185,8 @@ describe.skip('Scheduling token and balance transfers', () => {
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
-    await usingApi(async (api) => {
-      const zeroBalance = await findUnusedAddress(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
       await enablePublicMintingExpectSuccess(alice, collectionId);
       await addToAllowListExpectSuccess(alice, collectionId, zeroBalance.address);

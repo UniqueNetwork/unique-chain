@@ -46,33 +46,6 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
     });
   });
 
-  it('Remove collection admin by admin.', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      const charlie = privateKeyWrapper('//Charlie');
-      const collection = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collection.owner.toString()).to.be.eq(alice.address);
-      // first - add collection admin Bob
-      const addAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
-      await submitTransactionAsync(alice, addAdminTx);
-
-      const addAdminTx2 = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(charlie.address));
-      await submitTransactionAsync(alice, addAdminTx2);
-
-      const adminListAfterAddAdmin = await getAdminList(api, collectionId);
-      expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
-
-      // then remove bob from admins of collection
-      const removeAdminTx = api.tx.unique.removeCollectionAdmin(collectionId, normalizeAccountId(bob.address));
-      await submitTransactionAsync(charlie, removeAdminTx);
-
-      const adminListAfterRemoveAdmin = await getAdminList(api, collectionId);
-      expect(adminListAfterRemoveAdmin).not.to.be.deep.contains(normalizeAccountId(bob.address));
-    });
-  });
-
   it('Remove admin from collection that has no admins', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
@@ -120,7 +93,7 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
     });
   });
 
-  it('Regular user Can\'t remove collection admin', async () => {
+  it('Regular user can\'t remove collection admin', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess();
       const alice = privateKeyWrapper('//Alice');
@@ -135,6 +108,31 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
 
       // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
       await createCollectionExpectSuccess();
+    });
+  });
+
+  it('Admin can\'t remove collection admin.', async () => {
+    await usingApi(async (api, privateKeyWrapper) => {
+      const collectionId = await createCollectionExpectSuccess();
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
+
+      const addBobAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
+      await submitTransactionAsync(alice, addBobAdminTx);
+      const addCharlieAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(charlie.address));
+      await submitTransactionAsync(alice, addCharlieAdminTx);
+
+      const adminListAfterAddAdmin = await getAdminList(api, collectionId);
+      expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
+      expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(charlie.address));
+
+      const removeAdminTx = api.tx.unique.removeCollectionAdmin(collectionId, normalizeAccountId(bob.address));
+      await expect(submitTransactionExpectFailAsync(charlie, removeAdminTx)).to.be.rejected;
+
+      const adminListAfterRemoveAdmin = await getAdminList(api, collectionId);
+      expect(adminListAfterRemoveAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
+      expect(adminListAfterRemoveAdmin).to.be.deep.contains(normalizeAccountId(charlie.address));
     });
   });
 });
