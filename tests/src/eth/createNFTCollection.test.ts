@@ -27,7 +27,7 @@ import {
   getCollectionAddressFromResult,
 } from './util/helpers';
 
-describe.only('Create collection from EVM', () => {
+describe('Create NFT collection from EVM', () => {
   itWeb3('Create collection', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
@@ -144,7 +144,7 @@ describe.only('Create collection from EVM', () => {
   });
 });
 
-describe('(!negative tests!) Create collection from EVM', () => {
+describe('(!negative tests!) Create NFT collection from EVM', () => {
   itWeb3('(!negative test!) Create collection (bad lengths)', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, owner);
