@@ -923,6 +923,7 @@ impl pallet_proxy_rmrk_core::Config for Runtime {
 }
 
 impl pallet_proxy_rmrk_equip::Config for Runtime {
+	type WeightInfo = pallet_proxy_rmrk_equip::weights::SubstrateWeight<Self>;
 	type Event = Event;
 }
 

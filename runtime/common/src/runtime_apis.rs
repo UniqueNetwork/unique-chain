@@ -458,6 +458,9 @@ macro_rules! impl_common_runtime_apis {
                     #[cfg(not(feature = "unique-runtime"))]
                     list_benchmark!(list, extra, pallet_proxy_rmrk_core, RmrkCore);
 
+                    #[cfg(not(feature = "unique-runtime"))]
+                    list_benchmark!(list, extra, pallet_proxy_rmrk_equip, RmrkEquip);
+
                     // list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
                     let storage_info = AllPalletsReversedWithSystemFirst::storage_info();
@@ -505,6 +508,9 @@ macro_rules! impl_common_runtime_apis {
 
                     #[cfg(not(feature = "unique-runtime"))]
                     add_benchmark!(params, batches, pallet_proxy_rmrk_core, RmrkCore);
+
+                    #[cfg(not(feature = "unique-runtime"))]
+                    add_benchmark!(params, batches, pallet_proxy_rmrk_equip, RmrkEquip);
 
                     // add_benchmark!(params, batches, pallet_evm_coder_substrate, EvmCoderSubstrate);
 

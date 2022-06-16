@@ -28,8 +28,15 @@ use pallet_rmrk_core::{
 };
 use pallet_nonfungible::{Pallet as PalletNft, NonfungibleHandle};
 use pallet_evm::account::CrossAccountId;
+use weights::WeightInfo;
 
 pub use pallet::*;
+
+#[cfg(feature = "runtime-benchmarks")]
+pub mod benchmarking;
+pub mod weights;
+
+pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -38,6 +45,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_rmrk_core::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::storage]
@@ -83,12 +91,12 @@ pub mod pallet {
 		/// - symbol: arbitrary client-chosen symbol
 		/// - parts: array of Fixed and Slot parts composing the base, confined in length by
 		///   RmrkPartsLimit
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
+		#[pallet::weight(<SelfWeightOf<T>>::create_base(parts.len() as u32))]
 		pub fn create_base(
 			origin: OriginFor<T>,
 			base_type: RmrkString,
-			symbol: RmrkString,
+			symbol: RmrkBaseSymbol,
 			parts: BoundedVec<RmrkPartType, RmrkPartsLimit>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -159,12 +167,12 @@ pub mod pallet {
 		///   - key: arbitrary BoundedString, defined by client
 		///   - value: arbitrary BoundedString, defined by client
 		///   - inherit: optional bool
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
+		#[pallet::weight(<SelfWeightOf<T>>::theme_add(theme.properties.len() as u32))]
 		pub fn theme_add(
 			origin: OriginFor<T>,
 			base_id: RmrkBaseId,
-			theme: RmrkTheme,
+			theme: RmrkBoundedTheme,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 

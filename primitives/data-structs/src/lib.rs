@@ -950,13 +950,17 @@ parameter_types! {
 	#[derive(PartialEq)]
 	pub const RmrkCollectionSymbolLimit: u32 = MAX_TOKEN_PREFIX_LENGTH;
 	#[derive(PartialEq)]
-	pub const RmrkResourceSymbolLimit: u32 = MAX_TOKEN_PREFIX_LENGTH;
+	pub const RmrkResourceSymbolLimit: u32 = 10;
+	#[derive(PartialEq)]
+	pub const RmrkBaseSymbolLimit: u32 = MAX_TOKEN_PREFIX_LENGTH;
 	#[derive(PartialEq)]
 	pub const RmrkKeyLimit: u32 = 32;
 	#[derive(PartialEq)]
 	pub const RmrkValueLimit: u32 = 256;
 	#[derive(PartialEq)]
 	pub const RmrkMaxCollectionsEquippablePerPart: u32 = 100;
+	#[derive(PartialEq)]
+	pub const MaxPropertiesPerTheme: u32 = 5;
 	#[derive(PartialEq)]
 	pub const RmrkPartsLimit: u32 = 25;
 	#[derive(PartialEq)]
@@ -987,6 +991,7 @@ pub type RmrkPartType =
 	PartType<RmrkString, BoundedVec<RmrkCollectionId, RmrkMaxCollectionsEquippablePerPart>>;
 pub type RmrkThemeProperty = ThemeProperty<RmrkString>;
 pub type RmrkTheme = Theme<RmrkString, Vec<RmrkThemeProperty>>;
+pub type RmrkBoundedTheme = Theme<RmrkString, BoundedVec<RmrkThemeProperty, MaxPropertiesPerTheme>>;
 pub type RmrkResourceTypes = ResourceTypes<RmrkString, RmrkBoundedParts>;
 
 pub type RmrkBasicResource = BasicResource<RmrkString>;
@@ -995,6 +1000,7 @@ pub type RmrkSlotResource = SlotResource<RmrkString>;
 
 pub type RmrkString = BoundedVec<u8, RmrkStringLimit>;
 pub type RmrkCollectionSymbol = BoundedVec<u8, RmrkCollectionSymbolLimit>;
+pub type RmrkBaseSymbol = BoundedVec<u8, RmrkBaseSymbolLimit>;
 pub type RmrkKeyString = BoundedVec<u8, RmrkKeyLimit>;
 pub type RmrkValueString = BoundedVec<u8, RmrkValueLimit>;
 pub type RmrkBoundedResource = BoundedVec<u8, RmrkResourceSymbolLimit>;

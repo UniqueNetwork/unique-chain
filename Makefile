@@ -101,5 +101,9 @@ bench-scheduler:
 bench-rmrk-core:
 	make _bench PALLET=proxy-rmrk-core
 
+.PHONY: bench-rmrk-equip
+bench-rmrk-equip:
+	make _bench PALLET=proxy-rmrk-equip
+
 .PHONY: bench
-bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-scheduler bench-rmrk-core
+bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-scheduler bench-rmrk-core bench-rmrk-equip
