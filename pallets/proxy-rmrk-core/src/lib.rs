@@ -350,7 +350,7 @@ pub mod pallet {
 		#[pallet::weight(<SelfWeightOf<T>>::mint_nft(resources.as_ref().map(|r| r.len() as u32).unwrap_or(0)))]
 		pub fn mint_nft(
 			origin: OriginFor<T>,
-			owner: T::AccountId,
+			owner: Option<T::AccountId>,
 			collection_id: RmrkCollectionId,
 			recipient: Option<T::AccountId>,
 			royalty_amount: Option<Permill>,
@@ -360,6 +360,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
+
+			let owner = owner.unwrap_or(sender.clone());
 			let cross_owner = T::CrossAccountId::from_sub(owner.clone());
 
 			let collection = Self::get_typed_nft_collection(
