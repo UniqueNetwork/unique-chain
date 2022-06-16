@@ -33,7 +33,9 @@
 // limitations under the License.
 
 use crate::{
-	chain_spec::{self, RuntimeId, RuntimeIdentification, ServiceId, ServiceIdentification, default_runtime},
+	chain_spec::{
+		self, RuntimeId, RuntimeIdentification, ServiceId, ServiceIdentification, default_runtime,
+	},
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{new_partial, start_node, start_dev_node},
 };
