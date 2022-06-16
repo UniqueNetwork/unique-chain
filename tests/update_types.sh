@@ -7,7 +7,7 @@ if [ ! -d unique-types-js ]; then
 fi
 
 rsync -ar --exclude .gitignore src/interfaces/ unique-types-js
-for file in unique-types-js/augment-* unique-types-js/**/types.ts unique-types-js/**/registry.ts; do
+for file in unique-types-js/augment-* unique-types-js/**/types.ts unique-types-js/registry.ts; do
 	sed -i '1s;^;//@ts-nocheck\n;' $file
 done
 

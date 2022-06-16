@@ -60,18 +60,10 @@ evm_stubs: UniqueFungible UniqueNFT ContractHelpers CollectionHelpers
 .PHONY: _bench
 _bench:
 	cargo run --release --features runtime-benchmarks,unique-runtime -- \
-	benchmark pallet --pallet pallet-$(PALLET) \
+	benchmark pallet --pallet pallet-$(if $(PALLET),$(PALLET),$(error Must set PALLET)) \
 	--wasm-execution compiled --extrinsic '*' \
-	--template .maintain/frame-weight-template.hbs --steps=50 --repeat=200 --heap-pages=4096 \
-	--output=./pallets/$(PALLET)/src/weights.rs
-
-.PHONY: _bench2
-_bench2:
-	cargo run --release --features runtime-benchmarks,unique-runtime -- \
-	benchmark pallet --pallet pallet-$(PALLET) \
-	--wasm-execution compiled --extrinsic '*' \
-	--template .maintain/frame-weight-template.hbs --steps=50 --repeat=200 --heap-pages=4096 \
-	--output=./pallets/$(PALLET_DIR)/src/weights.rs
+	--template .maintain/frame-weight-template.hbs --steps=50 --repeat=80 --heap-pages=4096 \
+	--output=./pallets/$(if $(PALLET_DIR),$(PALLET_DIR),$(PALLET))/src/weights.rs
 
 .PHONY: bench-evm-migration
 bench-evm-migration:
@@ -103,7 +95,7 @@ bench-structure:
 
 .PHONY: bench-scheduler
 bench-scheduler:
-	make _bench2 PALLET=unique-scheduler PALLET_DIR=scheduler
+	make _bench PALLET=unique-scheduler PALLET_DIR=scheduler
 
 .PHONY: bench-rmrk-core
 bench-rmrk-core:
