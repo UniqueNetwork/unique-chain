@@ -108,10 +108,6 @@ impl NftBuilder {
 		}
 	}
 
-	fn current_nft_id(&self) -> RmrkNftId {
-		self.current_nft_id
-	}
-
 	fn build<T: Config>(&mut self, owner: &T::AccountId) -> Result<RmrkNftId, DispatchError> {
 		create_nft::<T>(owner, self.collection_id)?;
 		self.current_nft_id += 1;
