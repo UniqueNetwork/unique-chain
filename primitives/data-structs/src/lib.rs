@@ -104,7 +104,7 @@ pub const MAX_PROPERTY_KEY_LENGTH: u32 = 256;
 pub const MAX_PROPERTY_VALUE_LENGTH: u32 = 32768;
 pub const MAX_PROPERTIES_PER_ITEM: u32 = 64;
 
-pub const MAX_SYSTEM_PROPERTY_VALUE_LENGTH: u32 = 2048;
+pub const MAX_AUX_PROPERTY_VALUE_LENGTH: u32 = 2048;
 
 pub const MAX_COLLECTION_PROPERTIES_SIZE: u32 = 40960;
 pub const MAX_TOKEN_PROPERTIES_SIZE: u32 = 32768;
@@ -658,7 +658,7 @@ impl<T> MaxEncodedLen for PhantomType<T> {
 
 pub type BoundedBytes<S> = BoundedVec<u8, S>;
 
-pub type SysPropertyValue = BoundedBytes<ConstU32<MAX_SYSTEM_PROPERTY_VALUE_LENGTH>>;
+pub type AuxPropertyValue = BoundedBytes<ConstU32<MAX_AUX_PROPERTY_VALUE_LENGTH>>;
 
 pub type PropertyKey = BoundedBytes<ConstU32<MAX_PROPERTY_KEY_LENGTH>>;
 pub type PropertyValue = BoundedBytes<ConstU32<MAX_PROPERTY_VALUE_LENGTH>>;

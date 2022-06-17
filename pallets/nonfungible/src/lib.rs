@@ -28,7 +28,7 @@ use frame_support::{
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, budget::Budget, Property, PropertyPermission, PropertyKey,
-	PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild, SysPropertyValue,
+	PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild, AuxPropertyValue,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
@@ -125,15 +125,15 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn token_sys_property)]
-	pub type TokenSysProperties<T: Config> = StorageNMap<
+	#[pallet::getter(fn token_aux_property)]
+	pub type TokenAuxProperties<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
 			Key<Twox64Concat, TokenId>,
 			Key<Twox64Concat, PropertyScope>,
 			Key<Twox64Concat, PropertyKey>,
 		),
-		Value = SysPropertyValue,
+		Value = AuxPropertyValue,
 		QueryKind = OptionQuery,
 	>;
 
@@ -307,31 +307,31 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn try_mutate_token_sys_property<R, E>(
+	pub fn try_mutate_token_aux_property<R, E>(
 		collection_id: CollectionId,
 		token_id: TokenId,
 		scope: PropertyScope,
 		key: PropertyKey,
-		f: impl FnOnce(&mut Option<SysPropertyValue>) -> Result<R, E>,
+		f: impl FnOnce(&mut Option<AuxPropertyValue>) -> Result<R, E>,
 	) -> Result<R, E> {
-		<TokenSysProperties<T>>::try_mutate((collection_id, token_id, scope, key), f)
+		<TokenAuxProperties<T>>::try_mutate((collection_id, token_id, scope, key), f)
 	}
 
-	pub fn remove_token_sys_property(
+	pub fn remove_token_aux_property(
 		collection_id: CollectionId,
 		token_id: TokenId,
 		scope: PropertyScope,
 		key: PropertyKey,
 	) {
-		<TokenSysProperties<T>>::remove((collection_id, token_id, scope, key));
+		<TokenAuxProperties<T>>::remove((collection_id, token_id, scope, key));
 	}
 
-	pub fn iterate_token_sys_properties(
+	pub fn iterate_token_aux_properties(
 		collection_id: CollectionId,
 		token_id: TokenId,
 		scope: PropertyScope,
-	) -> impl Iterator<Item = (PropertyKey, SysPropertyValue)> {
-		<TokenSysProperties<T>>::iter_prefix((collection_id, token_id, scope))
+	) -> impl Iterator<Item = (PropertyKey, AuxPropertyValue)> {
+		<TokenAuxProperties<T>>::iter_prefix((collection_id, token_id, scope))
 	}
 
 	pub fn current_token_id(collection_id: CollectionId) -> TokenId {
@@ -415,7 +415,7 @@ impl<T: Config> Pallet<T> {
 		<TokensBurnt<T>>::insert(collection.id, burnt);
 		<TokenData<T>>::remove((collection.id, token));
 		<TokenProperties<T>>::remove((collection.id, token));
-		<TokenSysProperties<T>>::remove_prefix((collection.id, token), None);
+		<TokenAuxProperties<T>>::remove_prefix((collection.id, token), None);
 		let old_spender = <Allowance<T>>::take((collection.id, token));
 
 		if let Some(old_spender) = old_spender {

@@ -762,7 +762,7 @@ pub mod pallet {
 
 			let resource_id_key = Self::rmrk_property_key(ResourceId(resource_id))?;
 
-			let resource_info = <PalletNft<T>>::token_sys_property((
+			let resource_info = <PalletNft<T>>::token_aux_property((
 				collection_id,
 				nft_id,
 				PropertyScope::Rmrk,
@@ -777,7 +777,7 @@ pub mod pallet {
 				<Error<T>>::ResourceNotPending
 			);
 
-			<PalletNft<T>>::remove_token_sys_property(
+			<PalletNft<T>>::remove_token_aux_property(
 				collection_id,
 				nft_id,
 				PropertyScope::Rmrk,
@@ -1194,7 +1194,7 @@ impl<T: Config> Pallet<T> {
 			pending_removal: false,
 		};
 
-		<PalletNft<T>>::try_mutate_token_sys_property(
+		<PalletNft<T>>::try_mutate_token_aux_property(
 			collection_id,
 			nft_id,
 			PropertyScope::Rmrk,
@@ -1223,7 +1223,7 @@ impl<T: Config> Pallet<T> {
 		let scope = PropertyScope::Rmrk;
 
 		ensure!(
-			<PalletNft<T>>::token_sys_property((
+			<PalletNft<T>>::token_aux_property((
 				collection_id,
 				nft_id,
 				scope,
@@ -1239,7 +1239,7 @@ impl<T: Config> Pallet<T> {
 
 		let sender = T::CrossAccountId::from_sub(sender);
 		if topmost_owner == sender {
-			<PalletNft<T>>::remove_token_sys_property(
+			<PalletNft<T>>::remove_token_aux_property(
 				collection_id,
 				nft_id,
 				PropertyScope::Rmrk,
@@ -1262,7 +1262,7 @@ impl<T: Config> Pallet<T> {
 		resource_id: RmrkResourceId,
 		f: impl FnOnce(&mut RmrkResourceInfo) -> DispatchResult,
 	) -> DispatchResult {
-		<PalletNft<T>>::try_mutate_token_sys_property(
+		<PalletNft<T>>::try_mutate_token_aux_property(
 			collection_id,
 			nft_id,
 			PropertyScope::Rmrk,

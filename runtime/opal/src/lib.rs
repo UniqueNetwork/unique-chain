@@ -1513,7 +1513,7 @@ impl_common_runtime_apis! {
 			let nft_id = TokenId(nft_id);
 			if RmrkCore::ensure_nft_type(collection_id, nft_id, NftType::Regular).is_err() { return Ok(Vec::new()); }
 
-			let resources = <pallet_nonfungible::Pallet<Runtime>>::iterate_token_sys_properties(
+			let resources = <pallet_nonfungible::Pallet<Runtime>>::iterate_token_aux_properties(
 				collection_id, nft_id, PropertyScope::Rmrk
 			).filter_map(|(_, value)| {
 				let resource_info: RmrkResourceInfo = RmrkCore::decode_property(&value).ok()?;
