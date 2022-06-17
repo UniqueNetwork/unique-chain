@@ -34,6 +34,7 @@ pub use pallet::*;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
+pub mod rpc;
 pub mod weights;
 
 pub type SelfWeightOf<T> = <T as Config>::WeightInfo;

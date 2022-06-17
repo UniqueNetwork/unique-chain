@@ -35,6 +35,7 @@ pub use pallet::*;
 pub mod benchmarking;
 pub mod misc;
 pub mod property;
+pub mod rpc;
 pub mod weights;
 
 pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
