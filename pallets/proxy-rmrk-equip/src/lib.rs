@@ -22,8 +22,7 @@ use sp_runtime::DispatchError;
 use up_data_structs::*;
 use pallet_common::{Pallet as PalletCommon, Error as CommonError};
 use pallet_rmrk_core::{
-	Pallet as PalletCore,
-	Error as CoreError,
+	Pallet as PalletCore, Error as CoreError,
 	misc::{self, *},
 	property::RmrkProperty::*,
 };
@@ -228,12 +227,17 @@ pub mod pallet {
 			let base_collection_id = base_id.into();
 			let collection = Self::get_base(base_collection_id)?;
 
-			<PalletCore<T>>::check_collection_owner(&collection, &T::CrossAccountId::from_sub(sender))
-				.map_err(|err| if err == <CoreError<T>>::NoPermission.into() {
+			<PalletCore<T>>::check_collection_owner(
+				&collection,
+				&T::CrossAccountId::from_sub(sender),
+			)
+			.map_err(|err| {
+				if err == <CoreError<T>>::NoPermission.into() {
 					<Error<T>>::PermissionError.into()
 				} else {
 					err
-				})?;
+				}
+			})?;
 
 			let part_id = Self::internal_part_id(base_collection_id, slot_id)
 				.ok_or(<Error<T>>::PartDoesntExist)?;
@@ -254,10 +258,7 @@ pub mod pallet {
 				}
 			}
 
-			Self::deposit_event(Event::EquippablesUpdated {
-				base_id,
-				slot_id,
-			});
+			Self::deposit_event(Event::EquippablesUpdated { base_id, slot_id });
 
 			Ok(())
 		}
@@ -284,16 +285,12 @@ impl<T: Config> Pallet<T> {
 		let token_id = match Self::internal_part_id(collection.id, part_id) {
 			Some(token_id) => token_id,
 			None => {
-				let token_id = <PalletCore<T>>::create_nft(
-					sender,
-					owner,
-					collection,
-					[].into_iter(),
-				)
-				.map_err(|err| match err {
-					DispatchError::Arithmetic(_) => <Error<T>>::NoAvailablePartId.into(),
-					err => err,
-				})?;
+				let token_id =
+					<PalletCore<T>>::create_nft(sender, owner, collection, [].into_iter())
+						.map_err(|err| match err {
+							DispatchError::Arithmetic(_) => <Error<T>>::NoAvailablePartId.into(),
+							err => err,
+						})?;
 
 				<InernalPartId<T>>::insert(collection.id, part_id, token_id);
 
@@ -317,7 +314,7 @@ impl<T: Config> Pallet<T> {
 				<PalletCore<T>>::rmrk_property(Src, &src)?,
 				<PalletCore<T>>::rmrk_property(ZIndex, &z_index)?,
 			]
-			.into_iter()
+			.into_iter(),
 		)?;
 
 		if let RmrkPartType::SlotPart(part) = part {
@@ -325,7 +322,7 @@ impl<T: Config> Pallet<T> {
 				collection.id,
 				token_id,
 				PropertyScope::Rmrk,
-				<PalletCore<T>>::rmrk_property(EquippableList, &part.equippable)?
+				<PalletCore<T>>::rmrk_property(EquippableList, &part.equippable)?,
 			)?;
 		}
 
@@ -333,12 +330,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_base(base_id: CollectionId) -> Result<NonfungibleHandle<T>, DispatchError> {
-		let collection = <PalletCore<T>>::get_typed_nft_collection(base_id, misc::CollectionType::Base)
-			.map_err(|err| if err == <CoreError<T>>::CollectionUnknown.into() {
-				<Error<T>>::BaseDoesntExist.into()
-			} else {
-				err
-			})?;
+		let collection =
+			<PalletCore<T>>::get_typed_nft_collection(base_id, misc::CollectionType::Base)
+				.map_err(|err| {
+					if err == <CoreError<T>>::CollectionUnknown.into() {
+						<Error<T>>::BaseDoesntExist.into()
+					} else {
+						err
+					}
+				})?;
 		collection.check_is_external()?;
 
 		Ok(collection)

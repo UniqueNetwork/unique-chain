@@ -987,7 +987,8 @@ pub type RmrkInstanceInfo<AccountId> = NftInfo<AccountId, Permill, RmrkString>;
 pub type RmrkResourceInfo = ResourceInfo<RmrkString, RmrkBoundedParts>;
 pub type RmrkPropertyInfo = PropertyInfo<RmrkKeyString, RmrkValueString>;
 pub type RmrkBaseInfo<AccountId> = BaseInfo<AccountId, RmrkString>;
-pub type BoundedEquippableCollectionIds = BoundedVec<RmrkCollectionId, RmrkMaxCollectionsEquippablePerPart>;
+pub type BoundedEquippableCollectionIds =
+	BoundedVec<RmrkCollectionId, RmrkMaxCollectionsEquippablePerPart>;
 pub type RmrkPartType = PartType<RmrkString, BoundedEquippableCollectionIds>;
 pub type RmrkEquippableList = EquippableList<BoundedEquippableCollectionIds>;
 pub type RmrkThemeProperty = ThemeProperty<RmrkString>;
