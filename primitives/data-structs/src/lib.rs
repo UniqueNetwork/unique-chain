@@ -39,15 +39,15 @@ use scale_info::TypeInfo;
 // RMRK
 use rmrk_traits::{
 	CollectionInfo, NftInfo, ResourceInfo, PropertyInfo, BaseInfo, PartType, Theme, ThemeProperty,
-	ResourceTypes, BasicResource, ComposableResource, SlotResource,
+	ResourceTypes, BasicResource, ComposableResource, SlotResource, EquippableList,
 };
 pub use rmrk_traits::{
 	primitives::{
 		CollectionId as RmrkCollectionId, NftId as RmrkNftId, BaseId as RmrkBaseId,
-		PartId as RmrkPartId, ResourceId as RmrkResourceId,
+		SlotId as RmrkSlotId, PartId as RmrkPartId, ResourceId as RmrkResourceId,
 	},
 	NftChild as RmrkNftChild, AccountIdOrCollectionNftTuple as RmrkAccountIdOrCollectionNftTuple,
-	FixedPart as RmrkFixedPart, SlotPart as RmrkSlotPart, EquippableList as RmrkEquippableList,
+	FixedPart as RmrkFixedPart, SlotPart as RmrkSlotPart,
 };
 
 mod bounded;
@@ -987,8 +987,9 @@ pub type RmrkInstanceInfo<AccountId> = NftInfo<AccountId, Permill, RmrkString>;
 pub type RmrkResourceInfo = ResourceInfo<RmrkString, RmrkBoundedParts>;
 pub type RmrkPropertyInfo = PropertyInfo<RmrkKeyString, RmrkValueString>;
 pub type RmrkBaseInfo<AccountId> = BaseInfo<AccountId, RmrkString>;
-pub type RmrkPartType =
-	PartType<RmrkString, BoundedVec<RmrkCollectionId, RmrkMaxCollectionsEquippablePerPart>>;
+pub type BoundedEquippableCollectionIds = BoundedVec<RmrkCollectionId, RmrkMaxCollectionsEquippablePerPart>;
+pub type RmrkPartType = PartType<RmrkString, BoundedEquippableCollectionIds>;
+pub type RmrkEquippableList = EquippableList<BoundedEquippableCollectionIds>;
 pub type RmrkThemeProperty = ThemeProperty<RmrkString>;
 pub type RmrkTheme = Theme<RmrkString, Vec<RmrkThemeProperty>>;
 pub type RmrkBoundedTheme = Theme<RmrkString, BoundedVec<RmrkThemeProperty, MaxPropertiesPerTheme>>;

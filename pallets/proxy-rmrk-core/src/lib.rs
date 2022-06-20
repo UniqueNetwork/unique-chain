@@ -1298,7 +1298,7 @@ impl<T: Config> Pallet<T> {
 		collection.save()
 	}
 
-	fn check_collection_owner(
+	pub fn check_collection_owner(
 		collection: &NonfungibleHandle<T>,
 		account: &T::CrossAccountId,
 	) -> DispatchResult {
@@ -1363,7 +1363,11 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 	) -> Result<misc::CollectionType, DispatchError> {
 		Self::get_collection_property_decoded(collection_id, CollectionType)
-			.map_err(|_| <Error<T>>::CorruptedCollectionType.into())
+			.map_err(|err| if err != <Error<T>>::CollectionUnknown.into() {
+				<Error<T>>::CorruptedCollectionType.into()
+			} else {
+				err
+			})
 	}
 
 	pub fn ensure_collection_type(
