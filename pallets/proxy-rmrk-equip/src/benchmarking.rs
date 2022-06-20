@@ -21,9 +21,9 @@ fn create_u32_array<S: Get<u32>>() -> BoundedVec<u32, S> {
 	vec![0; S::get() as usize].try_into().expect("size == S")
 }
 
-fn create_max_part() -> RmrkPartType {
+fn create_max_part(id: RmrkSlotId) -> RmrkPartType {
 	RmrkPartType::SlotPart(RmrkSlotPart {
-		id: 42,
+		id,
 		equippable: RmrkEquippableList::Custom(create_u32_array()),
 		src: create_data(),
 		z: 1,
@@ -31,9 +31,13 @@ fn create_max_part() -> RmrkPartType {
 }
 
 fn create_parts_array<S: Get<u32>>(num: u32) -> BoundedVec<RmrkPartType, S> {
-	vec![create_max_part(); num as usize]
-		.try_into()
-		.expect("num <= S")
+	let mut parts: BoundedVec<RmrkPartType, S> = vec![].try_into().expect("0 <= S");
+
+	for i in 0..num {
+		parts.try_push(create_max_part(i)).expect("num <= S");
+	}
+
+	parts
 }
 
 fn create_max_theme_property() -> RmrkThemeProperty {
@@ -90,4 +94,27 @@ benchmarks! {
 
 		let theme = create_max_theme(create_data(), b);
 	}: _(RawOrigin::Signed(caller), base_id, theme)
+
+	equippable {
+		let caller = account("caller", 0, SEED);
+		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
+
+		let base_id = 1;
+		let slot_id = 42;
+
+		let base_type = create_data();
+		let symbol = create_data();
+		let parts = vec! {
+			RmrkPartType::SlotPart(RmrkSlotPart {
+				id: slot_id,
+				equippable: RmrkEquippableList::All,
+				src: create_data(),
+				z: 1,
+			})
+		}.try_into().expect("1 <= RmrkPartsLimit");
+
+		<Pallet<T>>::create_base(RawOrigin::Signed(caller.clone()).into(), base_type, symbol, parts)?;
+
+		let equippables = RmrkEquippableList::Custom(create_u32_array());
+	}: _(RawOrigin::Signed(caller), base_id, slot_id, equippables)
 }

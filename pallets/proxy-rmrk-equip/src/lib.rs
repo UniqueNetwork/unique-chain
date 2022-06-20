@@ -141,17 +141,7 @@ pub mod pallet {
 			let collection = <PalletCore<T>>::get_nft_collection(collection_id)?;
 
 			for part in parts {
-				let part_id = part.id();
-				let part_token_id = Self::create_part(&cross_sender, &collection, part)?;
-
-				<InernalPartId<T>>::insert(collection_id, part_id, part_token_id);
-
-				<PalletNft<T>>::set_scoped_token_property(
-					collection_id,
-					part_token_id,
-					PropertyScope::Rmrk,
-					<PalletCore<T>>::rmrk_property(ExternalPartId, &part_id)?,
-				)?;
+				Self::create_part(&cross_sender, &collection, part)?;
 			}
 
 			Self::deposit_event(Event::BaseCreated {
@@ -279,9 +269,10 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		collection: &NonfungibleHandle<T>,
 		part: RmrkPartType,
-	) -> Result<TokenId, DispatchError> {
+	) -> DispatchResult {
 		let owner = sender;
 
+		let part_id = part.id();
 		let src = part.src();
 		let z_index = part.z_index();
 
@@ -290,32 +281,55 @@ impl<T: Config> Pallet<T> {
 			RmrkPartType::SlotPart(_) => NftType::SlotPart,
 		};
 
-		let token_id = <PalletCore<T>>::create_nft(
-			sender,
-			owner,
-			collection,
+		let token_id = match Self::internal_part_id(collection.id, part_id) {
+			Some(token_id) => token_id,
+			None => {
+				let token_id = <PalletCore<T>>::create_nft(
+					sender,
+					owner,
+					collection,
+					[].into_iter(),
+				)
+				.map_err(|err| match err {
+					DispatchError::Arithmetic(_) => <Error<T>>::NoAvailablePartId.into(),
+					err => err,
+				})?;
+
+				<InernalPartId<T>>::insert(collection.id, part_id, token_id);
+
+				<PalletNft<T>>::set_scoped_token_property(
+					collection.id,
+					token_id,
+					PropertyScope::Rmrk,
+					<PalletCore<T>>::rmrk_property(ExternalPartId, &part_id)?,
+				)?;
+
+				token_id
+			}
+		};
+
+		<PalletNft<T>>::set_scoped_token_properties(
+			collection.id,
+			token_id,
+			PropertyScope::Rmrk,
 			[
 				<PalletCore<T>>::rmrk_property(TokenType, &nft_type)?,
 				<PalletCore<T>>::rmrk_property(Src, &src)?,
 				<PalletCore<T>>::rmrk_property(ZIndex, &z_index)?,
 			]
-			.into_iter(),
-		)
-		.map_err(|err| match err {
-			DispatchError::Arithmetic(_) => <Error<T>>::NoAvailablePartId.into(),
-			err => err,
-		})?;
+			.into_iter()
+		)?;
 
 		if let RmrkPartType::SlotPart(part) = part {
 			<PalletNft<T>>::set_scoped_token_property(
 				collection.id,
 				token_id,
 				PropertyScope::Rmrk,
-				<PalletCore<T>>::rmrk_property(EquippableList, &part.equippable)?,
+				<PalletCore<T>>::rmrk_property(EquippableList, &part.equippable)?
 			)?;
 		}
 
-		Ok(token_id)
+		Ok(())
 	}
 
 	fn get_base(base_id: CollectionId) -> Result<NonfungibleHandle<T>, DispatchError> {
