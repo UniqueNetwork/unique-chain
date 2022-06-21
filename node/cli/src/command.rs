@@ -33,7 +33,9 @@
 // limitations under the License.
 
 use crate::{
-	chain_spec::{self, RuntimeId, RuntimeIdentification, ServiceId, ServiceIdentification},
+	chain_spec::{
+		self, RuntimeId, RuntimeIdentification, ServiceId, ServiceIdentification, default_runtime,
+	},
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{new_partial, start_node, start_dev_node},
 };
@@ -44,7 +46,7 @@ use crate::service::UniqueRuntimeExecutor;
 #[cfg(feature = "quartz-runtime")]
 use crate::service::QuartzRuntimeExecutor;
 
-use crate::service::OpalRuntimeExecutor;
+use crate::service::{OpalRuntimeExecutor, DefaultRuntimeExecutor};
 
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
@@ -372,7 +374,6 @@ pub fn run() -> Result<()> {
 
 			Ok(())
 		}
-		#[cfg(feature = "unique-runtime")]
 		Some(Subcommand::Benchmark(cmd)) => {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			let runner = cli.create_runner(cmd)?;
@@ -380,7 +381,7 @@ pub fn run() -> Result<()> {
 			match cmd {
 				BenchmarkCmd::Pallet(cmd) => {
 					if cfg!(feature = "runtime-benchmarks") {
-						runner.sync_run(|config| cmd.run::<Block, UniqueRuntimeExecutor>(config))
+						runner.sync_run(|config| cmd.run::<Block, DefaultRuntimeExecutor>(config))
 					} else {
 						Err("Benchmarking wasn't enabled when building the node. \
 					You can enable it with `--features runtime-benchmarks`."
@@ -389,16 +390,16 @@ pub fn run() -> Result<()> {
 				}
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
-						unique_runtime::RuntimeApi,
-						UniqueRuntimeExecutor,
+						default_runtime::RuntimeApi,
+						DefaultRuntimeExecutor,
 						_,
 					>(&config, crate::service::parachain_build_import_queue)?;
 					cmd.run(partials.client)
 				}),
 				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
-						unique_runtime::RuntimeApi,
-						UniqueRuntimeExecutor,
+						default_runtime::RuntimeApi,
+						DefaultRuntimeExecutor,
 						_,
 					>(&config, crate::service::parachain_build_import_queue)?;
 					let db = partials.backend.expose_db();
@@ -411,10 +412,6 @@ pub fn run() -> Result<()> {
 				}
 				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
 			}
-		}
-		#[cfg(not(feature = "unique-runtime"))]
-		Some(Subcommand::Benchmark(..)) => {
-			Err("benchmarking is only available with unique runtime enabled".into())
 		}
 		Some(Subcommand::TryRuntime(cmd)) => {
 			if cfg!(feature = "try-runtime") {

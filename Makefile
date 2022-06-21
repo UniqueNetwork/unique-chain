@@ -59,7 +59,7 @@ evm_stubs: UniqueFungible UniqueNFT ContractHelpers CollectionHelpers
 
 .PHONY: _bench
 _bench:
-	cargo run --release --features runtime-benchmarks,unique-runtime -- \
+	cargo run --release --features runtime-benchmarks,$(RUNTIME) -- \
 	benchmark pallet --pallet pallet-$(if $(PALLET),$(PALLET),$(error Must set PALLET)) \
 	--wasm-execution compiled --extrinsic '*' \
 	--template .maintain/frame-weight-template.hbs --steps=50 --repeat=80 --heap-pages=4096 \
@@ -101,5 +101,9 @@ bench-scheduler:
 bench-rmrk-core:
 	make _bench PALLET=proxy-rmrk-core
 
+.PHONY: bench-rmrk-equip
+bench-rmrk-equip:
+	make _bench PALLET=proxy-rmrk-equip
+
 .PHONY: bench
-bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-scheduler bench-rmrk-core
+bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-scheduler bench-rmrk-core bench-rmrk-equip

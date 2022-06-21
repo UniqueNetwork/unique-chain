@@ -77,11 +77,19 @@ pub struct UniqueRuntimeExecutor;
 
 #[cfg(feature = "quartz-runtime")]
 /// Quartz native executor instance.
-
 pub struct QuartzRuntimeExecutor;
 
 /// Opal native executor instance.
 pub struct OpalRuntimeExecutor;
+
+#[cfg(feature = "unique-runtime")]
+pub type DefaultRuntimeExecutor = UniqueRuntimeExecutor;
+
+#[cfg(all(not(feature = "unique-runtime"), feature = "quartz-runtime"))]
+pub type DefaultRuntimeExecutor = QuartzRuntimeExecutor;
+
+#[cfg(all(not(feature = "unique-runtime"), not(feature = "quartz-runtime")))]
+pub type DefaultRuntimeExecutor = OpalRuntimeExecutor;
 
 #[cfg(feature = "unique-runtime")]
 impl NativeExecutionDispatch for UniqueRuntimeExecutor {

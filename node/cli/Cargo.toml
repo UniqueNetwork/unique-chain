@@ -323,7 +323,9 @@ rmrk-rpc = { path = "../../primitives/rmrk-rpc" }
 [features]
 default = []
 runtime-benchmarks = [
-    'unique-runtime/runtime-benchmarks',
+    'unique-runtime?/runtime-benchmarks',
+    'quartz-runtime?/runtime-benchmarks',
+    'opal-runtime/runtime-benchmarks',
     'polkadot-service/runtime-benchmarks',
 ]
 try-runtime = []

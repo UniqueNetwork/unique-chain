@@ -61,22 +61,13 @@ where
 #[derive(Encode, Decode, PartialEq, Eq)]
 pub enum CollectionType {
 	Regular,
-	Resource,
 	Base,
 }
 
 #[derive(Encode, Decode, PartialEq, Eq)]
 pub enum NftType {
 	Regular,
-	Resource,
 	FixedPart,
 	SlotPart,
 	Theme,
-}
-
-#[derive(Encode, Decode, PartialEq, Eq)]
-pub enum ResourceType {
-	Basic,
-	Composable,
-	Slot,
 }
