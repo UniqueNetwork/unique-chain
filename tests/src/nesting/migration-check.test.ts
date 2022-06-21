@@ -117,13 +117,21 @@ describe.skip('Migration testing', () => {
       const collectionNew = (await api.query.common.collectionById(collectionId)).toJSON() as any;
 
       // Make sure the extra fields are what they should be
-      expect((await api.rpc.unique.collectionProperties(collectionId, ['_old_constOnChainSchema']))[0].value.toHex()).to.be.equal(collectionOld.constOnChainSchema);
+      expect((
+        await api.rpc.unique.collectionProperties(collectionId, ['_old_constOnChainSchema'])
+      )[0].value.toHex()).to.be.equal(collectionOld.constOnChainSchema);
 
-      expect((await api.rpc.unique.collectionProperties(collectionId, ['_old_variableOnChainSchema']))[0].value.toHex()).to.be.equal(collectionOld.variableOnChainSchema);
+      expect((
+        await api.rpc.unique.collectionProperties(collectionId, ['_old_variableOnChainSchema'])
+      )[0].value.toHex()).to.be.equal(collectionOld.variableOnChainSchema);
 
-      expect((await api.rpc.unique.collectionProperties(collectionId, ['_old_offchainSchema']))[0].value.toHex()).to.be.equal(collectionOld.offchainSchema);
+      expect((
+        await api.rpc.unique.collectionProperties(collectionId, ['_old_offchainSchema'])
+      )[0].value.toHex()).to.be.equal(collectionOld.offchainSchema);
 
-      expect((await api.rpc.unique.collectionProperties(collectionId, ['_old_schemaVersion']))[0].value.toHuman()).to.be.equal(collectionOld.schemaVersion);
+      expect((
+        await api.rpc.unique.collectionProperties(collectionId, ['_old_schemaVersion'])
+      )[0].value.toHuman()).to.be.equal(collectionOld.schemaVersion);
 
       expect(collectionNew.permissions).to.be.deep.equal({
         access: collectionOld.access,
@@ -131,8 +139,11 @@ describe.skip('Migration testing', () => {
         nesting: null,
       });
 
+      expect(collectionNew.externalCollection).to.be.equal(false);
+
       // Get rid of extra fields to perform comparison on the rest of the collection
       delete collectionNew.permissions;
+      delete collectionNew.externalCollection;
       delete collectionOld.schemaVersion;
       delete collectionOld.constOnChainSchema;
       delete collectionOld.variableOnChainSchema;
