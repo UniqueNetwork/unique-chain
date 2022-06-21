@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 
+set -eux
+
 yarn polkadot-types
 
 if [ ! -d unique-types-js ]; then
