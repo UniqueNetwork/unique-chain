@@ -275,6 +275,9 @@ default-features = false
 [dependencies.up-rpc]
 path = "../../primitives/rpc"
 
+[dependencies.uc-rpc]
+path = "../../client/rpc"
+
 [dependencies.pallet-transaction-payment-rpc-runtime-api]
 git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.22"

@@ -109,6 +109,12 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       subscribeNewHeads: AugmentedRpc<() => Observable<Header>>;
     };
+    chainEx: {
+      /**
+       * Get author of a relay chain block
+       **/
+      getBlockAuthor: AugmentedRpc<(hash?: BlockHash | string | Uint8Array) => Observable<AccountId32>>;
+    };
     childstate: {
       /**
        * Returns the keys with prefix from a child storage, leave empty to get all the keys

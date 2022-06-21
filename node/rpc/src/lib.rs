@@ -141,11 +141,11 @@ where
 	C: BlockchainEvents<Block>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: BlockBuilder<Block>,
-	// C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: up_rpc::UniqueApi<Block, <R as RuntimeInstance>::CrossAccountId, AccountId>,
+	C::Api: uc_rpc::BlockExtensionsRuntimeApi<Block, AccountId>,
 	C::Api: rmrk_rpc::RmrkApi<
 		Block,
 		AccountId,
@@ -169,8 +169,7 @@ where
 		Eth, EthApiServer, EthDevSigner, EthFilter, EthFilterApiServer, EthPubSub,
 		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer,
 	};
-	use uc_rpc::{UniqueApiServer, Unique, RmrkApiServer, Rmrk};
-	// use pallet_contracts_rpc::{Contracts, ContractsApi};
+	use uc_rpc::{UniqueApiServer, Unique, RmrkApiServer, Rmrk, ChainExt, ChainExtensionsApiServer};
 	use pallet_transaction_payment_rpc::{TransactionPaymentRpc, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{SystemRpc, SystemApiServer};
 
@@ -224,6 +223,7 @@ where
 
 	io.merge(Unique::new(client.clone()).into_rpc())?;
 	io.merge(Rmrk::new(client.clone()).into_rpc())?;
+	io.merge(ChainExt::new(client.clone()).into_rpc())?;
 
 	if let Some(filter_pool) = filter_pool {
 		io.merge(

@@ -14,7 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-export {default as unique} from './unique/definitions';
-export {default as rmrk} from './rmrk/definitions';
-export {default as chainEx} from './chainex/definitions';
-export {default as default} from './default/definitions';
+type RpcParam = {
+  name: string;
+  type: string;
+  isOptional?: true;
+};
+
+const atParam = {name: 'at', type: 'Hash', isOptional: true};
+const fn = (description: string, params: RpcParam[], type: string) => ({
+  description,
+  params: [...params, atParam],
+  type,
+});
+
+export default {
+  types: {},
+  rpc: {
+    getBlockAuthor: fn(
+      'Get NFT resources',
+      [
+        {name: 'collectionId', type: 'Hash'},
+      ],
+      'Option<AccountId>',
+    ),
+  },
+};

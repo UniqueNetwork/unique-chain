@@ -789,6 +789,26 @@ macro_rules! impl_common_runtime_apis {
                 }
             }
 
+            impl up_rpc::BlockExtensionsApi<Block, AccountId> for Runtime {
+                fn block_author(block_header: <Block as BlockT>::Header) -> Result<Option<AccountId>, sp_runtime::DispatchError> {
+                    use crate::sp_api_hidden_includes_IMPL_RUNTIME_APIS::sp_api::HeaderT;
+
+                    let index = Aura::find_author(
+                        block_header.digest().logs().iter().filter_map(|d| d.as_pre_runtime()),
+                    ).expect("Author Id not found in preruntime logs");
+
+                    let authorities = Aura::authorities().to_vec();
+                    let authority = authorities
+                     .get(index as usize)
+                     .expect("Author Id not found");
+
+                    let account_raw: [u8; 32] = authority.to_raw_vec().as_slice().try_into()
+                     .expect("Author authority cannot be converted to account id");
+                    let account = AccountId::from(account_raw);
+                    Ok(Some(account))
+                }
+            }
+
             /*
             impl pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber, Hash>
                 for Runtime

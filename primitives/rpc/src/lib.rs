@@ -23,6 +23,7 @@ use up_data_structs::{
 use sp_std::vec::Vec;
 use codec::Decode;
 use sp_runtime::DispatchError;
+use sp_api::{Encode};
 
 type Result<T> = core::result::Result<T, DispatchError>;
 
@@ -80,5 +81,12 @@ sp_api::decl_runtime_apis! {
 		fn collection_stats() -> Result<CollectionStats>;
 		fn next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<Option<u64>>;
 		fn effective_collection_limits(collection_id: CollectionId) -> Result<Option<CollectionLimits>>;
+	}
+
+	pub trait BlockExtensionsApi<AccountId> where
+		Block: Encode + Decode,
+		AccountId: Decode,
+	{
+		fn block_author(block_header: <Block as sp_api::BlockT>::Header) -> Result<Option<AccountId>>;
 	}
 }

@@ -41,6 +41,7 @@ function defaultApiOptions(): ApiOptions {
       },
     },
     rpc: {
+      chainEx: defs.chainEx.rpc,
       unique: defs.unique.rpc,
       rmrk: defs.rmrk.rpc,
       eth: {

@@ -317,7 +317,7 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 		Some(properties),
 		// Extensions
 		Extensions {
-			relay_chain: "westend-local".into(),
+			relay_chain: "rococo-local".into(),
 			para_id: 1000,
 		},
 	)

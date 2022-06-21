@@ -19,7 +19,7 @@ use std::sync::Arc;
 
 use codec::{Decode, Encode};
 use jsonrpsee::{
-	core::{RpcResult as Result},
+	core::{async_trait, RpcResult as Result},
 	proc_macros::rpc,
 };
 use anyhow::anyhow;
@@ -30,6 +30,7 @@ use up_data_structs::{
 use sp_api::{BlockId, BlockT, ProvideRuntimeApi, ApiExt};
 use sp_blockchain::HeaderBackend;
 use up_rpc::UniqueApi as UniqueRuntimeApi;
+pub use up_rpc::BlockExtensionsApi as BlockExtensionsRuntimeApi;
 
 // RMRK
 use rmrk_rpc::RmrkApi as RmrkRuntimeApi;
@@ -190,6 +191,88 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		collection_id: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Option<CollectionLimits>>;
+}
+
+#[rpc(server)]
+pub trait BlockExtensionsApi<BlockHash, BlockHeader, AccountId> {
+	#[method(name = "block_author")]
+	fn block_author(
+		&self,
+		block_header: BlockHeader,
+		at: Option<BlockHash>,
+	) -> Result<Option<AccountId>>;
+}
+
+#[rpc(server, client)]
+pub trait ChainExtensionsApi<BlockHash, Client, AccountId> {
+	#[method(name = "chainEx_getBlockAuthor")]
+	async fn get_block_author(
+		&self,
+		block: BlockHash,
+		at: Option<BlockHash>,
+	) -> Result<Option<AccountId>>;
+}
+
+pub struct BlockExtensionsApi<C, B> {
+	client: Arc<C>,
+	_marker: std::marker::PhantomData<B>,
+}
+
+impl<C, B> BlockExtensionsApi<C, B> {
+	pub fn new(client: Arc<C>) -> Self {
+		Self {
+			client,
+			_marker: Default::default(),
+		}
+	}
+}
+
+pub struct ChainExt<C, B> {
+	client: Arc<C>,
+	_marker: std::marker::PhantomData<B>,
+}
+
+impl<C, B> ChainExt<C, B> {
+	pub fn new(client: Arc<C>) -> Self {
+		Self {
+			client,
+			_marker: Default::default(),
+		}
+	}
+}
+
+use unique_runtime_common::types::AccountId;
+
+#[async_trait]
+impl<C, Block> ChainExtensionsApiServer<<Block as BlockT>::Hash, C, AccountId>
+	for ChainExt<C, Block>
+where
+	Block: BlockT + 'static,
+	Block::Hash: 'static,
+	AccountId: Send + Sync + 'static + Encode + Decode,
+	C: sp_api::ProvideRuntimeApi<Block>,
+	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
+	C::Api: BlockExtensionsRuntimeApi<Block, AccountId>,
+{
+	async fn get_block_author(
+		&self,
+		block: <Block as BlockT>::Hash,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> Result<Option<AccountId>> {
+		let block_header = self
+			.client
+			.header(sp_api::BlockId::Hash(block))
+			.expect("Unable get block by hash")
+			.expect("Block doesn`t exists");
+		let api = self.client.runtime_api();
+		let genesis_hash = self.client.info().best_hash;
+		let block_id = BlockId::Hash(genesis_hash);
+		let author = match api.block_author(&block_id, block_header) {
+			Ok(r) => r.expect("Block author is empty or not fount"),
+			Err(_) => return Err(anyhow!("API is not available").into()),
+		};
+		Ok(author)
+	}
 }
 
 mod rmrk_unique_rpc {
