@@ -170,7 +170,7 @@ where
 		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer,
 	};
 
-	use uc_rpc::{UniqueApiServer, Unique, RmrkApiServer, Rmrk, ChainExt, ChainExtensionsApiServer};
+	use uc_rpc::{UniqueApiServer, Unique, ChainExt, ChainExtensionsApiServer};
 
 	#[cfg(not(feature = "unique-runtime"))]
 	use uc_rpc::{RmrkApiServer, Rmrk};
