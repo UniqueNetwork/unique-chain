@@ -5390,7 +5390,7 @@ dependencies = [
 [[package]]
 name = "orml-vesting"
 version = "0.4.1-dev"
-source = "git+https://github.com/uniquenetwork/open-runtime-module-library?branch=unique-polkadot-v0.9.23#35cdbf2be055193974cc5b24f0c416b559c62ddc"
+source = "git+https://github.com/uniquenetwork/open-runtime-module-library?branch=unique-polkadot-v0.9.23#97ff860ba8b2bbd246e6c91395fb95fd89c2951f"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -12266,7 +12266,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",

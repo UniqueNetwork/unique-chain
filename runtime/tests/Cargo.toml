@@ -33,5 +33,7 @@ pallet-unique = { path = '../../pallets/unique' }
 
 pallet-evm-coder-substrate = { path = '../../pallets/evm-coder-substrate' }
 
-parity-scale-codec = "*"
+parity-scale-codec = { version = "3.1.2", default-features = false, features = [
+	"derive",
+] }
 scale-info = "*"
