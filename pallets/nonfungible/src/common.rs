@@ -89,8 +89,8 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::delete_token_properties(amount)
 	}
 
-	fn set_property_permissions(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::set_property_permissions(amount)
+	fn set_token_property_permissions(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_token_property_permissions(amount)
 	}
 
 	fn transfer() -> Weight {
@@ -242,16 +242,16 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		)
 	}
 
-	fn set_property_permissions(
+	fn set_token_property_permissions(
 		&self,
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResultWithPostInfo {
 		let weight =
-			<CommonWeights<T>>::set_property_permissions(property_permissions.len() as u32);
+			<CommonWeights<T>>::set_token_property_permissions(property_permissions.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::set_property_permissions(self, sender, property_permissions),
+			<Pallet<T>>::set_token_property_permissions(self, sender, property_permissions),
 			weight,
 		)
 	}

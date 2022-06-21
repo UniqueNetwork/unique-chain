@@ -1,5 +1,5 @@
 [package]
-name = "pallet-unq-scheduler"
+name = "pallet-unique-scheduler"
 version = "0.1.0"
 authors = ["Unique Network <support@uniquenetwork.io>"]
 edition = "2021"

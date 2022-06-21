@@ -491,7 +491,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_owner(&sender)?;
+			target_collection.check_is_owner_or_admin(&sender)?;
 			target_collection.check_is_internal()?;
 
 			target_collection.set_sponsor(new_sponsor.clone())?;
@@ -670,9 +670,9 @@ decl_module! {
 			dispatch_tx::<T, _>(collection_id, |d| d.delete_token_properties(sender, token_id, property_keys))
 		}
 
-		#[weight = T::CommonWeightInfo::set_property_permissions(property_permissions.len() as u32)]
+		#[weight = T::CommonWeightInfo::set_token_property_permissions(property_permissions.len() as u32)]
 		#[transactional]
-		pub fn set_property_permissions(
+		pub fn set_token_property_permissions(
 			origin,
 			collection_id: CollectionId,
 			property_permissions: Vec<PropertyKeyPermission>,
@@ -681,7 +681,7 @@ decl_module! {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.set_property_permissions(&sender, property_permissions))
+			dispatch_tx::<T, _>(collection_id, |d| d.set_token_property_permissions(&sender, property_permissions))
 		}
 
 		#[weight = T::CommonWeightInfo::create_multiple_items_ex(&data)]
@@ -865,7 +865,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_internal()?;
-			target_collection.check_is_owner(&sender)?;
+			target_collection.check_is_owner_or_admin(&sender)?;
 			let old_limit = &target_collection.limits;
 
 			target_collection.limits = <PalletCommon<T>>::clamp_limits(target_collection.mode.clone(), &old_limit, new_limit)?;
@@ -887,7 +887,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_internal()?;
-			target_collection.check_is_owner(&sender)?;
+			target_collection.check_is_owner_or_admin(&sender)?;
 			let old_limit = &target_collection.permissions;
 
 			target_collection.permissions = <PalletCommon<T>>::clamp_permissions(target_collection.mode.clone(), &old_limit, new_limit)?;

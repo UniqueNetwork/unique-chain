@@ -69,16 +69,14 @@ pub use frame_support::{
 		WeightToFee,
 	},
 };
-use pallet_unq_scheduler::DispatchCall;
+use pallet_unique_scheduler::DispatchCall;
 use up_data_structs::{
 	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits,
 	CollectionStats, RpcCollection,
 	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
 	TokenChild, RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo,
-	RmrkBaseInfo, RmrkPartType, RmrkTheme, RmrkThemeName, RmrkThemeProperty, RmrkCollectionId,
-	RmrkNftId, RmrkAccountIdOrCollectionNftTuple, RmrkNftChild, RmrkPropertyKey, RmrkResourceTypes,
-	RmrkBasicResource, RmrkComposableResource, RmrkSlotResource, RmrkResourceId, RmrkBaseId,
-	RmrkFixedPart, RmrkSlotPart, RmrkString,
+	RmrkBaseInfo, RmrkPartType, RmrkTheme, RmrkThemeName, RmrkCollectionId, RmrkNftId,
+	RmrkNftChild, RmrkPropertyKey, RmrkResourceId, RmrkBaseId,
 };
 
 // use pallet_contracts::weights::WeightInfo;
@@ -192,7 +190,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!(RUNTIME_NAME),
 	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 922000,
+	spec_version: 923000,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -917,15 +915,6 @@ impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
 }
 
-impl pallet_proxy_rmrk_core::Config for Runtime {
-	type WeightInfo = pallet_proxy_rmrk_core::weights::SubstrateWeight<Self>;
-	type Event = Event;
-}
-
-impl pallet_proxy_rmrk_equip::Config for Runtime {
-	type Event = Event;
-}
-
 impl pallet_unique::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
@@ -968,7 +957,7 @@ fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> Sign
 }
 
 pub struct SchedulerPaymentExecutor;
-impl<T: frame_system::Config + pallet_unq_scheduler::Config, SelfContainedSignedInfo>
+impl<T: frame_system::Config + pallet_unique_scheduler::Config, SelfContainedSignedInfo>
 	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
 where
 	<T as frame_system::Config>::Call: Member
@@ -978,13 +967,13 @@ where
 		+ From<frame_system::Call<Runtime>>,
 	SelfContainedSignedInfo: Send + Sync + 'static,
 	Call: From<<T as frame_system::Config>::Call>
-		+ From<<T as pallet_unq_scheduler::Config>::Call>
+		+ From<<T as pallet_unique_scheduler::Config>::Call>
 		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
 	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
 {
 	fn dispatch_call(
 		signer: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unq_scheduler::Config>::Call,
+		call: <T as pallet_unique_scheduler::Config>::Call,
 	) -> Result<
 		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
 		TransactionValidityError,
@@ -1010,7 +999,7 @@ where
 	fn reserve_balance(
 		id: [u8; 16],
 		sponsor: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unq_scheduler::Config>::Call,
+		call: <T as pallet_unique_scheduler::Config>::Call,
 		count: u32,
 	) -> Result<(), DispatchError> {
 		let dispatch_info = call.get_dispatch_info();
@@ -1027,7 +1016,7 @@ where
 	fn pay_for_call(
 		id: [u8; 16],
 		sponsor: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unq_scheduler::Config>::Call,
+		call: <T as pallet_unique_scheduler::Config>::Call,
 	) -> Result<u128, DispatchError> {
 		let dispatch_info = call.get_dispatch_info();
 		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0);
@@ -1068,7 +1057,7 @@ impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
 	}
 }
 
-impl pallet_unq_scheduler::Config for Runtime {
+impl pallet_unique_scheduler::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
 	type Currency = Balances;
@@ -1156,7 +1145,7 @@ construct_runtime!(
 		// Unique Pallets
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
 		Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
-		Scheduler: pallet_unq_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
+		Scheduler: pallet_unique_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 		// free = 63
 		Charging: pallet_charge_transaction::{Pallet, Call, Storage } = 64,
 		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
@@ -1165,8 +1154,6 @@ construct_runtime!(
 		Refungible: pallet_refungible::{Pallet, Storage} = 68,
 		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
 		Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
-		RmrkCore: pallet_proxy_rmrk_core::{Pallet, Call, Storage, Event<T>} = 71,
-		RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
@@ -1314,7 +1301,73 @@ macro_rules! dispatch_unique_runtime {
 	}};
 }
 
-impl_common_runtime_apis!();
+impl_common_runtime_apis! {
+	#![custom_apis]
+
+	impl rmrk_rpc::RmrkApi<
+		Block,
+		AccountId,
+		RmrkCollectionInfo<AccountId>,
+		RmrkInstanceInfo<AccountId>,
+		RmrkResourceInfo,
+		RmrkPropertyInfo,
+		RmrkBaseInfo<AccountId>,
+		RmrkPartType,
+		RmrkTheme
+	> for Runtime {
+		fn last_collection_idx() -> Result<RmrkCollectionId, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn collection_by_id(_collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo<AccountId>>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_by_id(_collection_id: RmrkCollectionId, _nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo<AccountId>>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn account_tokens(_account_id: AccountId, _collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_children(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn collection_properties(_collection_id: RmrkCollectionId, _filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_properties(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId, _filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_resources(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn nft_resource_priority(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId, _resource_id: RmrkResourceId) -> Result<Option<u32>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn base(_base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn base_parts(_base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn theme_names(_base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
+			Ok(Default::default())
+		}
+
+		fn theme(_base_id: RmrkBaseId, _theme_name: RmrkThemeName, _filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Option<RmrkTheme>, DispatchError> {
+			Ok(Default::default())
+		}
+	}
+}
 
 struct CheckInherents;
 

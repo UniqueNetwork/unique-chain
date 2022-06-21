@@ -80,7 +80,7 @@ describe('Create collection from EVM', () => {
     expect(collectionSub.sponsorship.isUnconfirmed).to.be.true;
     const ss58Format = (api.registry.getChainProperties())!.toJSON().ss58Format;
     expect(collectionSub.sponsorship.asUnconfirmed.toHuman()).to.be.eq(evmToAddress(sponsor, Number(ss58Format)));
-    await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('Caller is not set as sponsor');
+    await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
     const sponsorCollection = evmCollection(web3, sponsor, collectionIdAddress);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
     collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
@@ -208,7 +208,7 @@ describe('(!negative tests!) Create collection from EVM', () => {
       const sponsorCollection = evmCollection(web3, sponsor, collectionIdAddress);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('Caller is not set as sponsor');
+        .call()).to.be.rejectedWith('caller is not set as sponsor');
     }
     {
       await expect(contractEvmFromNotOwner.methods
@@ -225,6 +225,6 @@ describe('(!negative tests!) Create collection from EVM', () => {
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     await expect(collectionEvm.methods
       .setCollectionLimit('badLimit', 'true')
-      .call()).to.be.rejectedWith('Unknown boolean limit "badLimit"');
+      .call()).to.be.rejectedWith('unknown boolean limit "badLimit"');
   });
 });

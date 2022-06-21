@@ -67,6 +67,14 @@ describe('Integration Test setMintPermission', () => {
       await setMintPermissionExpectSuccess(alice, collectionId, false);
     });
   });
+
+  it('Collection admin success on set', async () => {
+    await usingApi(async () => {
+      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+      await setMintPermissionExpectSuccess(bob, collectionId, true);
+    });
+  });
 });
 
 describe('Negative Integration Test setMintPermission', () => {
@@ -100,14 +108,6 @@ describe('Negative Integration Test setMintPermission', () => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await enableAllowListExpectSuccess(alice, collectionId);
     await setMintPermissionExpectFailure(bob, collectionId, true);
-  });
-
-  it('Collection admin fails on set', async () => {
-    await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      await setMintPermissionExpectFailure(bob, collectionId, true);
-    });
   });
 
   it('ensure non-allow-listed non-privileged address can\'t mint tokens', async () => {

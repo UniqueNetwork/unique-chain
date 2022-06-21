@@ -174,7 +174,24 @@ interface ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 	function finishMinting() external returns (bool);
 }
 
-// Selector: 6aea9834
+// Selector: 780e9d63
+interface ERC721Enumerable is Dummy, ERC165 {
+	// Selector: tokenByIndex(uint256) 4f6ccce7
+	function tokenByIndex(uint256 index) external view returns (uint256);
+
+	// Not implemented
+	//
+	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
+	function tokenOfOwnerByIndex(address owner, uint256 index)
+		external
+		view
+		returns (uint256);
+
+	// Selector: totalSupply() 18160ddd
+	function totalSupply() external view returns (uint256);
+}
+
+// Selector: 7d9262e6
 interface Collection is Dummy, ERC165 {
 	// Selector: setCollectionProperty(string,bytes) 2f073f66
 	function setCollectionProperty(string memory key, bytes memory value)
@@ -206,6 +223,12 @@ interface Collection is Dummy, ERC165 {
 	// Selector: contractAddress() f6b4dfb4
 	function contractAddress() external view returns (address);
 
+	// Selector: addCollectionAdminSubstrate(uint256) 5730062b
+	function addCollectionAdminSubstrate(uint256 newAdmin) external view;
+
+	// Selector: removeCollectionAdminSubstrate(uint256) 4048fcf9
+	function removeCollectionAdminSubstrate(uint256 newAdmin) external view;
+
 	// Selector: addCollectionAdmin(address) 92e462c7
 	function addCollectionAdmin(address newAdmin) external view;
 
@@ -230,23 +253,6 @@ interface Collection is Dummy, ERC165 {
 
 	// Selector: setCollectionMintMode(bool) 00018e84
 	function setCollectionMintMode(bool mode) external;
-}
-
-// Selector: 780e9d63
-interface ERC721Enumerable is Dummy, ERC165 {
-	// Selector: tokenByIndex(uint256) 4f6ccce7
-	function tokenByIndex(uint256 index) external view returns (uint256);
-
-	// Not implemented
-	//
-	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
-	function tokenOfOwnerByIndex(address owner, uint256 index)
-		external
-		view
-		returns (uint256);
-
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() external view returns (uint256);
 }
 
 // Selector: d74d154f

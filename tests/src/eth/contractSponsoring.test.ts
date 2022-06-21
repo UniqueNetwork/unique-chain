@@ -233,7 +233,7 @@ describe('Sponsoring EVM contracts', () => {
     const ss58Format = (api.registry.getChainProperties())!.toJSON().ss58Format;
     expect(collectionSub.sponsorship.isUnconfirmed).to.be.true;
     expect(collectionSub.sponsorship.asUnconfirmed.toHuman()).to.be.eq(evmToAddress(sponsor, Number(ss58Format)));
-    await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('Caller is not set as sponsor');
+    await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
 
     await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsor});
     collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
@@ -241,14 +241,13 @@ describe('Sponsoring EVM contracts', () => {
     expect(collectionSub.sponsorship.asConfirmed.toHuman()).to.be.eq(evmToAddress(sponsor, Number(ss58Format)));
 
     const user = createEthAccount(web3);
-    let nextTokenId = await collectionEvm.methods.nextTokenId().call();
+    const nextTokenId = await collectionEvm.methods.nextTokenId().call();
     expect(nextTokenId).to.be.equal('1');
 
     const oldPermissions = (await getDetailedCollectionInfo(api, collectionId))!.permissions.toHuman();
     expect(oldPermissions.mintMode).to.be.false;
     expect(oldPermissions.access).to.be.equal('Normal');
 
-    //TODO: change value, when enum generated
     await collectionEvm.methods.setCollectionAccess(1 /*'AllowList'*/).send({from: owner});
     await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
     await collectionEvm.methods.setCollectionMintMode(true).send({from: owner});
@@ -260,34 +259,35 @@ describe('Sponsoring EVM contracts', () => {
     const ownerBalanceBefore = await ethBalanceViaSub(api, owner);
     const sponsorBalanceBefore = await ethBalanceViaSub(api, sponsor);
 
-    nextTokenId = await collectionEvm.methods.nextTokenId().call({from: user});
-    expect(nextTokenId).to.be.equal('1');
-    result = await collectionEvm.methods.mintWithTokenURI(
-      user,
-      nextTokenId,
-      'Test URI',
-    ).send({from: user});
-    const events = normalizeEvents(result.events);
-    events[0].address = events[0].address.toLocaleLowerCase();
+    {
+      const nextTokenId = await collectionEvm.methods.nextTokenId().call();
+      expect(nextTokenId).to.be.equal('1');
+      const result = await collectionEvm.methods.mintWithTokenURI(
+        user,
+        nextTokenId,
+        'Test URI',
+      ).send({from: user});
+      const events = normalizeEvents(result.events);
 
-    expect(events).to.be.deep.equal([
-      {
-        address: collectionIdAddress.toLocaleLowerCase(),
-        event: 'Transfer',
-        args: {
-          from: '0x0000000000000000000000000000000000000000',
-          to: user,
-          tokenId: nextTokenId,
+      expect(events).to.be.deep.equal([
+        {
+          address: collectionIdAddress,
+          event: 'Transfer',
+          args: {
+            from: '0x0000000000000000000000000000000000000000',
+            to: user,
+            tokenId: nextTokenId,
+          },
         },
-      },
-    ]);
+      ]);
 
-    expect(await collectionEvm.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+      const ownerBalanceAfter = await ethBalanceViaSub(api, owner);
+      const sponsorBalanceAfter = await ethBalanceViaSub(api, sponsor);
 
-    const ownerBalanceAfter = await ethBalanceViaSub(api, owner);
-    expect(ownerBalanceAfter).to.be.eq(ownerBalanceBefore);
-    const sponsorBalanceAfter = await ethBalanceViaSub(api, sponsor);
-    expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
+      expect(await collectionEvm.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+      expect(ownerBalanceBefore).to.be.eq(ownerBalanceAfter);
+      expect(sponsorBalanceBefore > sponsorBalanceAfter).to.be.true;
+    }
   });
 
   itWeb3('Check that transaction via EVM spend money from sponsor address', async ({api, web3, privateKeyWrapper}) => {
@@ -302,7 +302,7 @@ describe('Sponsoring EVM contracts', () => {
     const ss58Format = (api.registry.getChainProperties())!.toJSON().ss58Format;
     expect(collectionSub.sponsorship.isUnconfirmed).to.be.true;
     expect(collectionSub.sponsorship.asUnconfirmed.toHuman()).to.be.eq(evmToAddress(sponsor, Number(ss58Format)));
-    await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('Caller is not set as sponsor');
+    await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
     const sponsorCollection = evmCollection(web3, sponsor, collectionIdAddress);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
     collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
@@ -314,6 +314,7 @@ describe('Sponsoring EVM contracts', () => {
     
     const ownerBalanceBefore = await ethBalanceViaSub(api, owner);
     const sponsorBalanceBefore = await ethBalanceViaSub(api, sponsor);
+    
   
     const userCollectionEvm = evmCollection(web3, user, collectionIdAddress);
     const nextTokenId = await userCollectionEvm.methods.nextTokenId().call();

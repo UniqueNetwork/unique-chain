@@ -169,7 +169,11 @@ where
 		Eth, EthApiServer, EthDevSigner, EthFilter, EthFilterApiServer, EthPubSub,
 		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer,
 	};
-	use uc_rpc::{UniqueApiServer, Unique, RmrkApiServer, Rmrk};
+	use uc_rpc::{UniqueApiServer, Unique};
+
+	#[cfg(not(feature = "unique-runtime"))]
+	use uc_rpc::{RmrkApiServer, Rmrk};
+
 	// use pallet_contracts_rpc::{Contracts, ContractsApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
@@ -223,6 +227,8 @@ where
 	)?;
 
 	io.merge(Unique::new(client.clone()).into_rpc())?;
+
+	#[cfg(not(feature = "unique-runtime"))]
 	io.merge(Rmrk::new(client.clone()).into_rpc())?;
 
 	if let Some(filter_pool) = filter_pool {

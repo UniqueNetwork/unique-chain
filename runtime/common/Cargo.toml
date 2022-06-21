@@ -6,7 +6,7 @@ homepage = 'https://unique.network'
 license = 'All Rights Reserved'
 name = 'unique-runtime-common'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.9.22'
+version = '0.9.23'
 
 [features]
 default = ['std']
@@ -88,6 +88,10 @@ path = "../../pallets/nonfungible"
 [dependencies.pallet-refungible]
 default-features = false
 path = "../../pallets/refungible"
+
+[dependencies.pallet-unique-scheduler]
+default-features = false
+path = "../../pallets/scheduler"
 
 [dependencies.up-data-structs]
 default-features = false

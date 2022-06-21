@@ -291,7 +291,7 @@ homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'unique-node'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.9.22'
+version = '0.9.23'
 
 [[bin]]
 name = 'unique-collator'
@@ -323,7 +323,9 @@ rmrk-rpc = { path = "../../primitives/rmrk-rpc" }
 [features]
 default = []
 runtime-benchmarks = [
-    'unique-runtime/runtime-benchmarks',
+    'unique-runtime?/runtime-benchmarks',
+    'quartz-runtime?/runtime-benchmarks',
+    'opal-runtime/runtime-benchmarks',
     'polkadot-service/runtime-benchmarks',
 ]
 try-runtime = []
