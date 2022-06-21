@@ -77,16 +77,19 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		0
 	}
 
-	fn set_token_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::set_token_properties(amount)
+	fn set_token_properties(_amount: u32) -> Weight {
+		// Error
+		0
 	}
 
-	fn delete_token_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::delete_token_properties(amount)
+	fn delete_token_properties(_amount: u32) -> Weight {
+		// Error
+		0
 	}
 
-	fn set_property_permissions(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::set_property_permissions(amount)
+	fn set_token_property_permissions(_amount: u32) -> Weight {
+		// Error
+		0
 	}
 
 	fn transfer() -> Weight {
@@ -315,7 +318,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
 
-	fn set_property_permissions(
+	fn set_token_property_permissions(
 		&self,
 		_sender: &T::CrossAccountId,
 		_property_permissions: Vec<PropertyKeyPermission>,

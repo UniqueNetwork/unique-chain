@@ -96,10 +96,11 @@ pub fn create_collection_raw<T: Config, R>(
 			permissions: Some(CollectionPermissions {
 				nesting: Some(NestingPermissions {
 					token_owner: false,
-					admin: false,
+					collection_admin: false,
 					restricted: None,
 					permissive: true,
 				}),
+				mint_mode: Some(true),
 				..Default::default()
 			}),
 			..Default::default()

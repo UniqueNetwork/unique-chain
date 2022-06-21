@@ -1214,11 +1214,13 @@ export interface PalletRmrkCoreCall extends Enum {
     readonly royaltyAmount: Option<Permill>;
     readonly metadata: Bytes;
     readonly transferable: bool;
+    readonly resources: Option<Vec<RmrkTraitsResourceResourceTypes>>;
   } & Struct;
   readonly isBurnNft: boolean;
   readonly asBurnNft: {
     readonly collectionId: u32;
     readonly nftId: u32;
+    readonly maxBurns: u32;
   } & Struct;
   readonly isSend: boolean;
   readonly asSend: {
@@ -1272,7 +1274,6 @@ export interface PalletRmrkCoreCall extends Enum {
   readonly asAddComposableResource: {
     readonly rmrkCollectionId: u32;
     readonly nftId: u32;
-    readonly resourceId: Bytes;
     readonly resource: RmrkTraitsResourceComposableResource;
   } & Struct;
   readonly isAddSlotResource: boolean;
@@ -1296,6 +1297,7 @@ export interface PalletRmrkCoreError extends Enum {
   readonly isNftTypeEncodeError: boolean;
   readonly isRmrkPropertyKeyIsTooLong: boolean;
   readonly isRmrkPropertyValueIsTooLong: boolean;
+  readonly isUnableToDecodeRmrkData: boolean;
   readonly isCollectionNotEmpty: boolean;
   readonly isNoAvailableCollectionId: boolean;
   readonly isNoAvailableNftId: boolean;
@@ -1308,7 +1310,7 @@ export interface PalletRmrkCoreError extends Enum {
   readonly isCannotAcceptNonOwnedNft: boolean;
   readonly isCannotRejectNonOwnedNft: boolean;
   readonly isResourceNotPending: boolean;
-  readonly type: 'CorruptedCollectionType' | 'NftTypeEncodeError' | 'RmrkPropertyKeyIsTooLong' | 'RmrkPropertyValueIsTooLong' | 'CollectionNotEmpty' | 'NoAvailableCollectionId' | 'NoAvailableNftId' | 'CollectionUnknown' | 'NoPermission' | 'NonTransferable' | 'CollectionFullOrLocked' | 'ResourceDoesntExist' | 'CannotSendToDescendentOrSelf' | 'CannotAcceptNonOwnedNft' | 'CannotRejectNonOwnedNft' | 'ResourceNotPending';
+  readonly type: 'CorruptedCollectionType' | 'NftTypeEncodeError' | 'RmrkPropertyKeyIsTooLong' | 'RmrkPropertyValueIsTooLong' | 'UnableToDecodeRmrkData' | 'CollectionNotEmpty' | 'NoAvailableCollectionId' | 'NoAvailableNftId' | 'CollectionUnknown' | 'NoPermission' | 'NonTransferable' | 'CollectionFullOrLocked' | 'ResourceDoesntExist' | 'CannotSendToDescendentOrSelf' | 'CannotAcceptNonOwnedNft' | 'CannotRejectNonOwnedNft' | 'ResourceNotPending';
 }
 
 /** @name PalletRmrkCoreEvent */
@@ -1688,8 +1690,8 @@ export interface PalletUniqueCall extends Enum {
     readonly tokenId: u32;
     readonly propertyKeys: Vec<Bytes>;
   } & Struct;
-  readonly isSetPropertyPermissions: boolean;
-  readonly asSetPropertyPermissions: {
+  readonly isSetTokenPropertyPermissions: boolean;
+  readonly asSetTokenPropertyPermissions: {
     readonly collectionId: u32;
     readonly propertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
   } & Struct;
@@ -1748,7 +1750,7 @@ export interface PalletUniqueCall extends Enum {
     readonly collectionId: u32;
     readonly newLimit: UpDataStructsCollectionPermissions;
   } & Struct;
-  readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetCollectionLimits' | 'SetCollectionPermissions';
+  readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetTokenPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetCollectionLimits' | 'SetCollectionPermissions';
 }
 
 /** @name PalletUniqueError */
@@ -2427,7 +2429,7 @@ export interface UpDataStructsCreateRefungibleExData extends Struct {
 /** @name UpDataStructsNestingPermissions */
 export interface UpDataStructsNestingPermissions extends Struct {
   readonly tokenOwner: bool;
-  readonly admin: bool;
+  readonly collectionAdmin: bool;
   readonly restricted: Option<UpDataStructsOwnerRestrictedSet>;
   readonly permissive: bool;
 }

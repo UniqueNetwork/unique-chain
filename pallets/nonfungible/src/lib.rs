@@ -594,12 +594,12 @@ impl<T: Config> Pallet<T> {
 		<PalletCommon<T>>::delete_collection_properties(collection, sender, property_keys)
 	}
 
-	pub fn set_property_permissions(
+	pub fn set_token_property_permissions(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResult {
-		<PalletCommon<T>>::set_property_permissions(collection, sender, property_permissions)
+		<PalletCommon<T>>::set_token_property_permissions(collection, sender, property_permissions)
 	}
 
 	pub fn set_property_permission(
@@ -1008,7 +1008,7 @@ impl<T: Config> Pallet<T> {
 				nesting_budget,
 			)? {
 			// Pass
-		} else if nesting.admin && handle.is_owner_or_admin(&sender) {
+		} else if nesting.collection_admin && handle.is_owner_or_admin(&sender) {
 			// Pass
 		} else {
 			fail!(<CommonError<T>>::UserIsNotAllowedToNest);

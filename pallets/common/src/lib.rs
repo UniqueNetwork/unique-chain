@@ -1019,7 +1019,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	#[transactional]
-	pub fn set_property_permissions(
+	pub fn set_token_property_permissions(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,
@@ -1212,11 +1212,14 @@ impl<T: Config> Pallet<T> {
 		limit_default_clone!(old_limit, new_limit,
 			access => {},
 			mint_mode => {},
-			nesting => ensure!(
-				// Permissive is only allowed for tests and internal usage of chain for now
-				old_limit.permissive || !new_limit.permissive,
-				<Error<T>>::NoPermission,
-			),
+			nesting => {
+				#[cfg(not(feature = "runtime-benchmarks"))]
+				ensure!(
+					// Permissive is only allowed for tests and internal usage of chain for now
+					old_limit.permissive || !new_limit.permissive,
+					<Error<T>>::NoPermission,
+				)
+			},
 		);
 		Ok(new_limit)
 	}
@@ -1239,7 +1242,7 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn delete_collection_properties(amount: u32) -> Weight;
 	fn set_token_properties(amount: u32) -> Weight;
 	fn delete_token_properties(amount: u32) -> Weight;
-	fn set_property_permissions(amount: u32) -> Weight;
+	fn set_token_property_permissions(amount: u32) -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
@@ -1318,7 +1321,7 @@ pub trait CommonCollectionOperations<T: Config> {
 		token_id: TokenId,
 		property_keys: Vec<PropertyKey>,
 	) -> DispatchResultWithPostInfo;
-	fn set_property_permissions(
+	fn set_token_property_permissions(
 		&self,
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,

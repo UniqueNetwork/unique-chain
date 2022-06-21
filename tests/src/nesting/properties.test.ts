@@ -38,7 +38,7 @@ describe('Composite Properties Test', () => {
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setPropertyPermissions(collectionId, propertyPermissions), 
+        api.tx.unique.setTokenPropertyPermissions(collectionId, propertyPermissions), 
       )).to.not.be.rejected;
 
       const collectionProperties = [
@@ -362,7 +362,7 @@ describe('Integration Test: Access Rights to Token Properties', () => {
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: true}}]), 
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: true}}]), 
       )).to.not.be.rejected;
 
       await addCollectionAdminExpectSuccess(alice, collection, bob.address);
@@ -370,7 +370,7 @@ describe('Integration Test: Access Rights to Token Properties', () => {
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setPropertyPermissions(collection, [{key: 'mindgame', permission: {collectionAdmin: true, tokenOwner: false}}]), 
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'mindgame', permission: {collectionAdmin: true, tokenOwner: false}}]), 
       )).to.not.be.rejected;
 
       const propertyRights = (await api.rpc.unique.propertyPermissions(collection, ['skullduggery', 'mindgame'])).toHuman();
@@ -388,13 +388,13 @@ describe('Integration Test: Access Rights to Token Properties', () => {
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: true, collectionAdmin: true}}]), 
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: true, collectionAdmin: true}}]), 
       )).to.not.be.rejected;
 
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: false, tokenOwner: true}}]), 
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: false, tokenOwner: true}}]), 
       )).to.not.be.rejected;
 
       const propertyRights = (await api.rpc.unique.propertyPermissions(collection, ['skullduggery'])).toHuman();
@@ -420,7 +420,7 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
       await expect(executeTransaction(
         api, 
         bob, 
-        api.tx.unique.setPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: true, tokenOwner: true}}]), 
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: true, tokenOwner: true}}]), 
       )).to.be.rejectedWith(/common\.NoPermission/);
 
       const propertyRights = (await api.rpc.unique.propertyPermissions(collection, ['skullduggery'])).toJSON();
@@ -443,7 +443,7 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setPropertyPermissions(collection, constitution), 
+        api.tx.unique.setTokenPropertyPermissions(collection, constitution), 
       )).to.be.rejectedWith(/common\.PropertyLimitReached/);
 
       const propertyRights = (await api.query.common.collectionPropertyPermissions(collection)).toJSON();
@@ -458,13 +458,13 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: false, tokenOwner: true}}]), 
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: false, tokenOwner: true}}]), 
       )).to.not.be.rejected;
 
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setPropertyPermissions(collection, [{key: 'skullduggery', permission: {}}]), 
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'skullduggery', permission: {}}]), 
       )).to.be.rejectedWith(/common\.NoPermission/);
 
       const propertyRights = (await api.rpc.unique.propertyPermissions(collection, ['skullduggery'])).toHuman();
@@ -488,21 +488,21 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
         await expect(executeTransaction(
           api, 
           alice, 
-          api.tx.unique.setPropertyPermissions(collection, invalidProperties[i]), 
+          api.tx.unique.setTokenPropertyPermissions(collection, invalidProperties[i]), 
         ), `on setting the new badly-named property #${i}`).to.be.rejectedWith(/common\.InvalidCharacterInPropertyKey/);
       }
 
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setPropertyPermissions(collection, [{key: '', permission: {}}]), 
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: '', permission: {}}]), 
       ), 'on rejecting an unnamed property').to.be.rejectedWith(/common\.EmptyPropertyKey/);
 
       const correctKey = '--0x03116e387820CA05'; // PolkadotJS would parse this as an already encoded hex-string
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setPropertyPermissions(collection, [
+        api.tx.unique.setTokenPropertyPermissions(collection, [
           {key: correctKey, permission: {collectionAdmin: true}},
         ]), 
       ), 'on setting the correctly-but-still-badly-named property').to.not.be.rejected;
@@ -576,7 +576,7 @@ describe('Integration Test: Token Properties', () => {
           await expect(executeTransaction(
             api, 
             alice, 
-            api.tx.unique.setPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
+            api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
           ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
 
           await expect(executeTransaction(
@@ -612,7 +612,7 @@ describe('Integration Test: Token Properties', () => {
           await expect(executeTransaction(
             api, 
             alice, 
-            api.tx.unique.setPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
+            api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
           ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
 
           await expect(executeTransaction(
@@ -655,7 +655,7 @@ describe('Integration Test: Token Properties', () => {
           await expect(executeTransaction(
             api, 
             alice, 
-            api.tx.unique.setPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
+            api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
           ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
 
           await expect(executeTransaction(
@@ -721,7 +721,7 @@ describe('Negative Integration Test: Token Properties', () => {
         await expect(executeTransaction(
           api, 
           alice, 
-          api.tx.unique.setPropertyPermissions(collection, [{key: `${i}`, permission: passage.permission}]), 
+          api.tx.unique.setTokenPropertyPermissions(collection, [{key: `${i}`, permission: passage.permission}]), 
         ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
 
         await expect(executeTransaction(
@@ -798,7 +798,7 @@ describe('Negative Integration Test: Token Properties', () => {
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setPropertyPermissions(collection, [{key: 'now-existent', permission: {}}]), 
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'now-existent', permission: {}}]), 
       ), 'on setting a new non-permitted property').to.not.be.rejected;
 
       await expect(executeTransaction(
@@ -818,7 +818,7 @@ describe('Negative Integration Test: Token Properties', () => {
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setPropertyPermissions(collection, [
+        api.tx.unique.setTokenPropertyPermissions(collection, [
           {key: 'a_holy_book', permission: {collectionAdmin: true, tokenOwner: true}}, 
           {key: 'young_years', permission: {collectionAdmin: true, tokenOwner: true}},
         ]), 

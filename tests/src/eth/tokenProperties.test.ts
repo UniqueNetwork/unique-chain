@@ -29,7 +29,7 @@ describe('EVM token properties', () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     const token = await createItemExpectSuccess(alice, collection, 'NFT');
 
-    await executeTransaction(api, alice, api.tx.unique.setPropertyPermissions(collection, [{
+    await executeTransaction(api, alice, api.tx.unique.setTokenPropertyPermissions(collection, [{
       key: 'testKey',
       permission: {
         collectionAdmin: true,
@@ -52,7 +52,7 @@ describe('EVM token properties', () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     const token = await createItemExpectSuccess(alice, collection, 'NFT');
 
-    await executeTransaction(api, alice, api.tx.unique.setPropertyPermissions(collection, [{
+    await executeTransaction(api, alice, api.tx.unique.setTokenPropertyPermissions(collection, [{
       key: 'testKey',
       permission: {
         mutable: true,
@@ -77,7 +77,7 @@ describe('EVM token properties', () => {
     const collection = await createCollectionExpectSuccess({mode: {type:'NFT'}});
     const token = await createItemExpectSuccess(alice, collection, 'NFT');
 
-    await executeTransaction(api, alice, api.tx.unique.setPropertyPermissions(collection, [{
+    await executeTransaction(api, alice, api.tx.unique.setTokenPropertyPermissions(collection, [{
       key: 'testKey',
       permission: {
         collectionAdmin: true,

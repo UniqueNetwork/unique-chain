@@ -199,7 +199,7 @@ pub mod pallet {
 				permissions: Some(CollectionPermissions {
 					nesting: Some(NestingPermissions {
 						token_owner: true,
-						admin: false,
+						collection_admin: false,
 						restricted: None,
 
 						permissive: false,

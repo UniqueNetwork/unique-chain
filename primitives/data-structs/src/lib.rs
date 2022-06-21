@@ -450,7 +450,7 @@ impl CollectionPermissions {
 	pub fn nesting(&self) -> &NestingPermissions {
 		static DEFAULT: NestingPermissions = NestingPermissions {
 			token_owner: false,
-			admin: false,
+			collection_admin: false,
 			restricted: None,
 
 			permissive: false,
@@ -493,7 +493,7 @@ pub struct NestingPermissions {
 	/// Owner of token can nest tokens under it
 	pub token_owner: bool,
 	/// Admin of token collection can nest tokens under token
-	pub admin: bool,
+	pub collection_admin: bool,
 	/// If set - only tokens from specified collections can be nested
 	pub restricted: Option<OwnerRestrictedSet>,
 
