@@ -205,7 +205,7 @@ pub mod pallet {
 						token_owner: true,
 						collection_admin: false,
 						restricted: None,
-
+						#[cfg(feature = "runtime-benchmarks")]
 						permissive: false,
 					}),
 					..Default::default()

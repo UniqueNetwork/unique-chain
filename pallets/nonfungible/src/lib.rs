@@ -1038,7 +1038,13 @@ impl<T: Config> Pallet<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let nesting = handle.permissions.nesting();
-		if nesting.permissive {
+		
+		#[cfg(not(feature = "runtime-benchmarks"))]
+		let permissive = false;
+		#[cfg(feature = "runtime-benchmarks")]
+		let permissive = nesting.permissive;
+
+		if permissive {
 			// Pass
 		} else if nesting.token_owner
 			&& <PalletStructure<T>>::check_indirectly_owned(

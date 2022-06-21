@@ -98,6 +98,7 @@ pub fn create_collection_raw<T: Config, R>(
 					token_owner: false,
 					collection_admin: false,
 					restricted: None,
+					#[cfg(feature = "runtime-benchmarks")]
 					permissive: true,
 				}),
 				mint_mode: Some(true),
