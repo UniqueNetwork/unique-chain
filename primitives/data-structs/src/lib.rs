@@ -454,7 +454,7 @@ impl CollectionPermissions {
 			token_owner: false,
 			collection_admin: false,
 			restricted: None,
-
+			#[cfg(feature = "runtime-benchmarks")]
 			permissive: false,
 		};
 		self.nesting.as_ref().unwrap_or(&DEFAULT)
@@ -499,6 +499,7 @@ pub struct NestingPermissions {
 	/// If set - only tokens from specified collections can be nested
 	pub restricted: Option<OwnerRestrictedSet>,
 
+	#[cfg(feature = "runtime-benchmarks")]
 	/// Anyone can nest tokens, mutually exclusive with `token_owner`, `admin`
 	pub permissive: bool,
 }
