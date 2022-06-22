@@ -800,7 +800,7 @@ export type CreateItemData = {
   ReFungible: CreateReFungibleData;
 };
 
-export async function burnItemExpectSuccess(sender: IKeyringPair, collectionId: number, tokenId: number, value = 1) {
+export async function burnItemExpectSuccess(sender: IKeyringPair, collectionId: number, tokenId: number, value: number | bigint = 1) {
   await usingApi(async (api) => {
     const balanceBefore = await getBalance(api, collectionId, normalizeAccountId(sender), tokenId);
     // if burning token by admin - use adminButnItemExpectSuccess
@@ -1084,7 +1084,7 @@ transferExpectSuccess(
     const to = normalizeAccountId(recipient);
 
     let balanceBefore = 0n;
-    if (type === 'Fungible') {
+    if (type === 'Fungible' || type === 'ReFungible') {
       balanceBefore = await getBalance(api, collectionId, to, tokenId);
     }
     const transferTx = api.tx.unique.transfer(to, collectionId, tokenId, value);
@@ -1100,16 +1100,13 @@ transferExpectSuccess(
     if (type === 'NFT') {
       expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(to);
     }
-    if (type === 'Fungible') {
+    if (type === 'Fungible' || type === 'ReFungible') {
       const balanceAfter = await getBalance(api, collectionId, to, tokenId);
       if (JSON.stringify(to) !== JSON.stringify(from)) {
         expect(balanceAfter - balanceBefore).to.be.equal(BigInt(value));
       } else {
         expect(balanceAfter).to.be.equal(balanceBefore);
       }
-    }
-    if (type === 'ReFungible') {
-      expect(await getBalance(api, collectionId, to, tokenId) >= value).to.be.true;
     }
   });
 }
@@ -1223,6 +1220,16 @@ export async function createFungibleItemExpectSuccess(
 
     expect(result.success).to.be.true;
     return result.itemId;
+  });
+}
+
+export async function createMultipleItemsExpectSuccess(sender: IKeyringPair, collectionId: number, itemsData: any, owner: CrossAccountId | string = sender.address) {
+  await usingApi(async (api) => {
+    const to = normalizeAccountId(owner);
+    const tx = api.tx.unique.createMultipleItems(collectionId, to, itemsData);
+
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getCreateItemsResult(events);
   });
 }
 
