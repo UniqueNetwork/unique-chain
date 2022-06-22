@@ -98,7 +98,7 @@ up-data-structs = { default-features = false, path = "../../primitives/data-stru
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
 ] }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.23" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
 pallet-common = { default-features = false, path = "../common" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }

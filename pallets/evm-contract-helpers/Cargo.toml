@@ -18,8 +18,8 @@ sp-std = { default-features = false, git = 'https://github.com/paritytech/substr
 sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.24" }
 
 # Unique
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.23" }
-fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.23" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
+fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
 up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.24" }
 
 # Locals

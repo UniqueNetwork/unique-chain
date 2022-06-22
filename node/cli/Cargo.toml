@@ -291,7 +291,7 @@ homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'unique-node'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.9.23'
+version = '0.9.24'
 
 [[bin]]
 name = 'unique-collator'
@@ -309,13 +309,13 @@ clap = "3.1.2"
 jsonrpsee = { version = "0.13.0", features = ["server", "macros"] }
 tokio = { version = "1.17.0", features = ["time"] }
 
-fc-rpc-core = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.23" }
-fc-consensus = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.23" }
-fc-mapping-sync = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.23" }
-fc-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.23" }
-fc-db = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.23" }
-fp-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.23" }
-pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.23" }
+fc-rpc-core = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
+fc-consensus = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
+fc-mapping-sync = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
+fc-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
+fc-db = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
+fp-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
+pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
 
 unique-rpc = { default-features = false, path = "../rpc" }
 rmrk-rpc = { path = "../../primitives/rmrk-rpc" }
