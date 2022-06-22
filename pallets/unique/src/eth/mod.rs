@@ -220,7 +220,7 @@ impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelpers<T> {
 	) -> Result<address> {
 		let (caller, name, description, token_prefix) =
 			convert_data::<T>(caller, name, description, token_prefix)?;
-		let data = make_data::<T>(name, description, token_prefix)?;
+		let data = make_data::<T>(name, CollectionMode::ReFungible, description, token_prefix)?;
 		let collection_id = <pallet_refungible::Pallet<T>>::init_collection(caller.clone(), data)
 			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 
