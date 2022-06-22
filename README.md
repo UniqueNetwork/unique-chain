@@ -48,7 +48,7 @@ curl https://sh.rustup.rs -sSf | sh
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
 
-3. Install install nightly 2021-11-11 and make it default:
+3. Install toolchain nightly-2022-05-11 and make it default:
 
 ```bash
 rustup toolchain install nightly-2022-05-11
