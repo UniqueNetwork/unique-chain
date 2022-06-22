@@ -47,6 +47,7 @@ describe('Create RFT collection from EVM', () => {
     expect(collection.name.map(v => String.fromCharCode(v.toNumber())).join('')).to.be.eq(collectionName);
     expect(collection.description.map(v => String.fromCharCode(v.toNumber())).join('')).to.be.eq(description);
     expect(collection.tokenPrefix.toHuman()).to.be.eq(tokenPrefix);
+    expect(collection.mode.isReFungible).to.be.true;
   });
 
   itWeb3('Check collection address exist', async ({api, web3, privateKeyWrapper}) => {
