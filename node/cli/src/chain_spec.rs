@@ -26,13 +26,13 @@ use serde_json::map::Map;
 use unique_runtime_common::types::*;
 
 #[cfg(feature = "unique-runtime")]
-use unique_runtime as default_runtime;
+pub use unique_runtime as default_runtime;
 
 #[cfg(all(not(feature = "unique-runtime"), feature = "quartz-runtime"))]
-use quartz_runtime as default_runtime;
+pub use quartz_runtime as default_runtime;
 
 #[cfg(all(not(feature = "unique-runtime"), not(feature = "quartz-runtime")))]
-use opal_runtime as default_runtime;
+pub use opal_runtime as default_runtime;
 
 /// The `ChainSpec` parameterized for the unique runtime.
 #[cfg(feature = "unique-runtime")]

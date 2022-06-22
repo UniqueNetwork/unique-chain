@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 
+set -eux
+
 ./update_types.sh
 
 if [ ! -d polkadot-apps ]; then

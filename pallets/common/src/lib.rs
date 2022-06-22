@@ -74,7 +74,7 @@ use up_data_structs::{
 	RmrkPropertyInfo,
 	RmrkBaseInfo,
 	RmrkPartType,
-	RmrkTheme,
+	RmrkBoundedTheme,
 	RmrkNftChild,
 	CollectionPermissions,
 	SchemaVersion,
@@ -543,7 +543,7 @@ pub mod pallet {
 				RmrkPropertyInfo,
 				RmrkBaseInfo<T::AccountId>,
 				RmrkPartType,
-				RmrkTheme,
+				RmrkBoundedTheme,
 				RmrkNftChild,
 			)>,
 		),
@@ -1212,14 +1212,7 @@ impl<T: Config> Pallet<T> {
 		limit_default_clone!(old_limit, new_limit,
 			access => {},
 			mint_mode => {},
-			nesting => {
-				#[cfg(not(feature = "runtime-benchmarks"))]
-				ensure!(
-					// Permissive is only allowed for tests and internal usage of chain for now
-					old_limit.permissive || !new_limit.permissive,
-					<Error<T>>::NoPermission,
-				)
-			},
+			nesting => { /* todo check for permissive, if only it gets out of benchmarks */ },
 		);
 		Ok(new_limit)
 	}

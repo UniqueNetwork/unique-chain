@@ -35,9 +35,10 @@ pub const MILLIUNIQUE: Balance = 1_000 * MICROUNIQUE;
 pub const CENTIUNIQUE: Balance = 10 * MILLIUNIQUE;
 pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
 
-pub const WEIGHT_TO_FEE_COEFF: u32 = 142_688_000;
+// Targeting 0.1 UNQ per transfer
+pub const WEIGHT_TO_FEE_COEFF: u32 = 207_890_902;
 
-// Targeting 0.15 UNQ per transfer
+// Targeting 0.15 UNQ per transfer via ETH
 pub const MIN_GAS_PRICE: u64 = 1_019_493_469_850;
 
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
@@ -52,5 +53,5 @@ pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 parameter_types! {
 	pub const DefaultSponsoringRateLimit: BlockNumber = 1 * DAYS;
 
-	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE; // Targeting 0.1 Unique per NFT transfer
+	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE;
 }

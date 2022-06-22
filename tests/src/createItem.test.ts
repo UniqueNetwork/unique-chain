@@ -158,7 +158,7 @@ describe('Negative integration test: ext. createItem():', () => {
 
       const newCollectionID = await createCollectionWithPropsExpectSuccess();
       
-      createItemWithPropsExpectFailure(alice, newCollectionID, 'NFT', prps);
+      await createItemWithPropsExpectFailure(alice, newCollectionID, 'NFT', prps);
     });
   });
 
@@ -166,7 +166,7 @@ describe('Negative integration test: ext. createItem():', () => {
     await usingApi(async () => {
       const newCollectionID = await createCollectionWithPropsExpectSuccess();
       
-      createItemWithPropsExpectFailure(alice, newCollectionID, 'NFT', [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]);
+      await createItemWithPropsExpectFailure(alice, newCollectionID, 'NFT', [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]);
     });
   });
 });
