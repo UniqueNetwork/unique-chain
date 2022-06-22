@@ -59,37 +59,37 @@ version = '3.1.2'
 default-features = false
 optional = true
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.23"
+branch = "polkadot-v0.9.24"
 
 [dependencies.frame-support]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.23"
+branch = "polkadot-v0.9.24"
 
 [dependencies.frame-system]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.23"
+branch = "polkadot-v0.9.24"
 
 [dependencies.sp-std]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.23"
+branch = "polkadot-v0.9.24"
 
 [dependencies.sp-runtime]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.23"
+branch = "polkadot-v0.9.24"
 
 [dependencies.sp-core]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.23"
+branch = "polkadot-v0.9.24"
 
 [dependencies.sp-io]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.23"
+branch = "polkadot-v0.9.24"
 
 ################################################################################
 # Local Dependencies
