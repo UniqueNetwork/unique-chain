@@ -87,13 +87,14 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{ensure, BoundedVec};
+use frame_support::{ensure, BoundedVec, transactional};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, MAX_REFUNGIBLE_PIECES, TokenId,
 	CreateCollectionData, CreateRefungibleExData, mapping::TokenAddressMapping, budget::Budget,
+	Property, PropertyScope, TrySetProperty, PropertyKey, PropertyPermission
 };
 use pallet_evm::account::CrossAccountId;
-use pallet_common::{Error as CommonError, Event as CommonEvent, Pallet as PalletCommon};
+use pallet_common::{Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, CommonCollectionOperations as _};
 use pallet_structure::Pallet as PalletStructure;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
@@ -173,6 +174,15 @@ pub mod pallet {
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
 		Value = ItemData,
 		QueryKind = ValueQuery,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn token_properties)]
+	pub type TokenProperties<T: Config> = StorageNMap<
+		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
+		Value = up_data_structs::Properties,
+		QueryKind = ValueQuery,
+		OnEmpty = up_data_structs::TokenProperties,
 	>;
 
 	/// Total amount of pieces for token
@@ -278,6 +288,34 @@ impl<T: Config> Pallet<T> {
 	pub fn token_exists(collection: &RefungibleHandle<T>, token: TokenId) -> bool {
 		<TotalSupply<T>>::contains_key((collection.id, token))
 	}
+
+	pub fn set_scoped_token_property(
+		collection_id: CollectionId,
+		token_id: TokenId,
+		scope: PropertyScope,
+		property: Property,
+	) -> DispatchResult {
+		TokenProperties::<T>::try_mutate((collection_id, token_id), |properties| {
+			properties.try_scoped_set(scope, property.key, property.value)
+		})
+		.map_err(<CommonError<T>>::from)?;
+
+		Ok(())
+	}
+
+	pub fn set_scoped_token_properties(
+		collection_id: CollectionId,
+		token_id: TokenId,
+		scope: PropertyScope,
+		properties: impl Iterator<Item = Property>,
+	) -> DispatchResult {
+		TokenProperties::<T>::try_mutate((collection_id, token_id), |stored_properties| {
+			stored_properties.try_scoped_set_from_iter(scope, properties)
+		})
+		.map_err(<CommonError<T>>::from)?;
+
+		Ok(())
+	}
 }
 
 // unchecked calls skips any permission checks
@@ -339,6 +377,7 @@ impl<T: Config> Pallet<T> {
 
 		<TokensBurnt<T>>::insert(collection.id, burnt);
 		<TokenData<T>>::remove((collection.id, token_id));
+		<TokenProperties<T>>::remove((collection.id, token_id));
 		<TotalSupply<T>>::remove((collection.id, token_id));
 		<Balance<T>>::remove_prefix((collection.id, token_id), None);
 		<Allowance<T>>::remove_prefix((collection.id, token_id), None);
@@ -424,6 +463,142 @@ impl<T: Config> Pallet<T> {
 			owner.clone(),
 			amount,
 		));
+		Ok(())
+	}
+
+	pub fn set_token_property(
+		collection: &RefungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		property: Property,
+		is_token_create: bool,
+	) -> DispatchResult {
+		Self::check_token_change_permission(
+			collection,
+			sender,
+			token_id,
+			&property.key,
+			is_token_create,
+		)?;
+
+		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
+			let property = property.clone();
+			properties.try_set(property.key, property.value)
+		})
+		.map_err(<CommonError<T>>::from)?;
+
+		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
+			collection.id,
+			token_id,
+			property.key,
+		));
+
+		Ok(())
+	}
+
+	#[transactional]
+	pub fn set_token_properties(
+		collection: &RefungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		properties: Vec<Property>,
+		is_token_create: bool,
+	) -> DispatchResult {
+		for property in properties {
+			Self::set_token_property(collection, sender, token_id, property, is_token_create)?;
+		}
+
+		Ok(())
+	}
+
+	pub fn delete_token_property(
+		collection: &RefungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		property_key: PropertyKey,
+	) -> DispatchResult {
+		Self::check_token_change_permission(collection, sender, token_id, &property_key, false)?;
+
+		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
+			properties.remove(&property_key)
+		})
+		.map_err(<CommonError<T>>::from)?;
+
+		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertyDeleted(
+			collection.id,
+			token_id,
+			property_key,
+		));
+
+		Ok(())
+	}
+
+	fn check_token_change_permission(
+		collection: &RefungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		property_key: &PropertyKey,
+		is_token_create: bool,
+	) -> DispatchResult {
+		let permission = <PalletCommon<T>>::property_permissions(collection.id)
+			.get(property_key)
+			.cloned()
+			.unwrap_or_else(PropertyPermission::none);
+
+		// Not "try_fold" because total count of pieces is limited by 'MAX_REFUNGIBLE_PIECES'.
+		let total_pieces: u128 = <Balance<T>>::iter_prefix((collection.id, token_id,)).fold(0, |total, piece| total + piece.1);
+		let balance = collection.balance(sender.clone(), token_id);
+
+		let check_token_owner = || -> DispatchResult {
+			ensure!(balance == total_pieces, <CommonError<T>>::NoPermission);
+			Ok(())
+		};
+
+		let is_property_exists = TokenProperties::<T>::get((collection.id, token_id))
+			.get(property_key)
+			.is_some();
+
+		match permission {
+			PropertyPermission { mutable: false, .. } if is_property_exists => {
+				Err(<CommonError<T>>::NoPermission.into())
+			}
+
+			PropertyPermission {
+				collection_admin,
+				token_owner,
+				..
+			} => {
+				//TODO: investigate threats during public minting.
+				if is_token_create && (collection_admin || token_owner) {
+					return Ok(());
+				}
+
+				let mut check_result = Err(<CommonError<T>>::NoPermission.into());
+
+				if collection_admin {
+					check_result = collection.check_is_owner_or_admin(sender);
+				}
+
+				if token_owner {
+					check_result.or_else(|_| check_token_owner())
+				} else {
+					check_result
+				}
+			}
+		}
+	}
+
+	#[transactional]
+	pub fn delete_token_properties(
+		collection: &RefungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResult {
+		for key in property_keys {
+			Self::delete_token_property(collection, sender, token_id, key)?;
+		}
+
 		Ok(())
 	}
 
