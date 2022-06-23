@@ -18,17 +18,17 @@ import {default as usingApi} from './substrate/substrate-api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {
   createCollectionExpectSuccess,
-  createItemExpectSuccess,
-  transferExpectSuccess,
-  transferExpectFailure,
   getBalance,
-  burnItemExpectSuccess,
   createMultipleItemsExpectSuccess,
-  approveExpectSuccess,
-  transferFromExpectSuccess,
   isTokenExists,
   getLastTokenId,
   getAllowance,
+  approve,
+  transferFrom,
+  createCollection,
+  createRefungibleToken,
+  transfer,
+  burnItem,
 } from './util/helpers';
 
 import chai from 'chai';
@@ -47,24 +47,42 @@ describe('integration test: Refungible functionality:', () => {
     });
   });
 
-  it('Create refungible collection and token. Token pieces transfer.', async () => {
-    const createMode = 'ReFungible';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
-
-    let aliceBalance = BigInt(0);
+  it('Create refungible collection and token', async () => {
     await usingApi(async api => {
-      aliceBalance = await getBalance(api, collectionId, alice.address, tokenId);
+      const createCollectionResult = await createCollection(api, alice, {mode: {type: 'ReFungible'}});
+      expect(createCollectionResult.success).to.be.true;    
+      const collectionId  = createCollectionResult.collectionId;
+
+      const itemCountBefore = await getLastTokenId(api, collectionId);
+      const result = await createRefungibleToken(api, alice, collectionId, 100n);
+
+      const itemCountAfter = await getLastTokenId(api, collectionId);
+
+      // What to expect
+      // tslint:disable-next-line:no-unused-expression
+      expect(result.success).to.be.true;
+      expect(itemCountAfter).to.be.equal(itemCountBefore + 1);
+      expect(collectionId).to.be.equal(result.collectionId);
+      expect(itemCountAfter.toString()).to.be.equal(result.itemId.toString());
     });
-    const transferAmount = BigInt(60);
-    await transferExpectSuccess(collectionId, tokenId, alice, bob, transferAmount, 'ReFungible');
-    aliceBalance = aliceBalance - transferAmount;
-    await transferExpectFailure(collectionId, tokenId, alice, bob, aliceBalance + BigInt(1));
+  });
+
+  it('Transfer token pieces', async () => {
+    await usingApi(async api => {
+      const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
+      const tokenId = (await createRefungibleToken(api, alice, collectionId, 100n)).itemId;
+
+      expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(100n);
+      expect(await transfer(api, collectionId, tokenId, alice, bob, 60n)).to.be.true;
+
+      expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(40n);
+      expect(await getBalance(api, collectionId, bob, tokenId)).to.be.equal(60n);
+      await expect(transfer(api, collectionId, tokenId, alice, bob, 41n)).to.eventually.be.rejected;
+    });
   });
 
   it('Create multiple tokens', async () => {
-    const createMode = 'ReFungible';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
+    const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     const args = [
       {ReFungible: {pieces: 1}},
       {ReFungible: {pieces: 2}},
@@ -72,65 +90,76 @@ describe('integration test: Refungible functionality:', () => {
     ];
     await createMultipleItemsExpectSuccess(alice, collectionId, args);
 
-    let tokenId = 0;
     await usingApi(async api => {      
-      tokenId = await getLastTokenId(api, collectionId);
+      const tokenId = await getLastTokenId(api, collectionId);
       expect(tokenId).to.be.equal(3);
+      expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(100n);
     });
-
-    const transferAmount = BigInt(60);
-    await transferExpectSuccess(collectionId, tokenId, alice, bob, transferAmount, 'ReFungible');
   });
 
   it('Burn some pieces', async () => {
-    const createMode = 'ReFungible';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
-
-    let aliceBalance = BigInt(0);
-    await usingApi(async api => {
-      aliceBalance = await getBalance(api, collectionId, alice.address, tokenId);
+    await usingApi(async api => {   
+      const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
+      const tokenId = (await createRefungibleToken(api, alice, collectionId, 100n)).itemId;
       expect(await isTokenExists(api, collectionId, tokenId)).to.be.true;
-    });
-    await burnItemExpectSuccess(alice, collectionId, tokenId, aliceBalance - BigInt(1));
-    await usingApi(async api => {
+      expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(100n);
+      expect(await burnItem(api, alice, collectionId, tokenId, 99n)).to.be.true;
       expect(await isTokenExists(api, collectionId, tokenId)).to.be.true;
+      expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(1n);
     });
   });
 
   it('Burn all pieces', async () => {
-    const createMode = 'ReFungible';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
-
-    let aliceBalance = BigInt(0);
-    await usingApi(async api => {
-      aliceBalance = await getBalance(api, collectionId, alice.address, tokenId);
+    await usingApi(async api => {   
+      const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
+      const tokenId = (await createRefungibleToken(api, alice, collectionId, 100n)).itemId;
       expect(await isTokenExists(api, collectionId, tokenId)).to.be.true;
+      expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(100n);
+      expect(await burnItem(api, alice, collectionId, tokenId, 100n)).to.be.true;
+      expect(await isTokenExists(api, collectionId, tokenId)).to.be.false;
     });
-    await burnItemExpectSuccess(alice, collectionId, tokenId, aliceBalance);
-    await usingApi(async api => {
+  });
+
+  it('Burn some pieces for multiple users', async () => {
+    await usingApi(async api => {   
+      const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
+      const tokenId = (await createRefungibleToken(api, alice, collectionId, 100n)).itemId;
+      expect(await isTokenExists(api, collectionId, tokenId)).to.be.true;
+
+      expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(100n);
+      expect(await transfer(api, collectionId, tokenId, alice, bob, 60n)).to.be.true;
+
+      
+      expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(40n);
+      expect(await getBalance(api, collectionId, bob, tokenId)).to.be.equal(60n);
+      expect(await burnItem(api, alice, collectionId, tokenId, 40n)).to.be.true;
+
+      expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(0n);
+      expect(await isTokenExists(api, collectionId, tokenId)).to.be.true;
+      expect(await burnItem(api, bob, collectionId, tokenId, 59n)).to.be.true;
+
+      expect(await getBalance(api, collectionId, bob, tokenId)).to.be.equal(1n);
+      expect(await isTokenExists(api, collectionId, tokenId)).to.be.true;
+      expect(await burnItem(api, bob, collectionId, tokenId, 1n)).to.be.true;
+      
       expect(await isTokenExists(api, collectionId, tokenId)).to.be.false;
     });
   });
 
   it('Set allowance for token', async () => {
-    const createMode = 'ReFungible';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
-
-    let aliceBalance = BigInt(0);
     await usingApi(async api => {
-      aliceBalance = await getBalance(api, collectionId, alice.address, tokenId);
-    });
-    const allowedAmount = BigInt(60);
-    await approveExpectSuccess(collectionId, tokenId, alice, bob.address, allowedAmount);
-    const transferAmount = BigInt(20);
-    await transferFromExpectSuccess(collectionId, tokenId, bob, alice, bob,  transferAmount, 'ReFungible');
+      const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
+      const tokenId = (await createRefungibleToken(api, alice, collectionId, 100n)).itemId;
 
-    await usingApi(async api => {
-      expect(await getAllowance(api, collectionId, alice.address, bob.address, tokenId)).to.equal(allowedAmount - transferAmount);
+      expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(100n);
+
+      expect(await approve(api, collectionId, tokenId, alice, bob, 60n)).to.be.true;
+      expect(await getAllowance(api, collectionId, alice, bob, tokenId)).to.be.equal(60n);
+
+      expect(await transferFrom(api, collectionId, tokenId, bob, alice, bob,  20n)).to.be.true;
+      expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(80n);
+      expect(await getBalance(api, collectionId, bob, tokenId)).to.be.equal(20n);
+      expect(await getAllowance(api, collectionId, alice, bob, tokenId)).to.be.equal(40n);
     });
-    
   });
 });
