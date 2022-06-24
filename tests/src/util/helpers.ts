@@ -834,7 +834,7 @@ export async function
 approve(
   api: ApiPromise,
   collectionId: number,
-  tokenId: number, owner: IKeyringPair, approved: CrossAccountId | string | IKeyringPair, amount: number | bigint = 1,
+  tokenId: number, owner: IKeyringPair, approved: CrossAccountId | string | IKeyringPair, amount: number | bigint,
 ) {
   const approveUniqueTx = api.tx.unique.approve(normalizeAccountId(approved), collectionId, tokenId, amount);
   const events = await submitTransactionAsync(owner, approveUniqueTx);
@@ -847,10 +847,10 @@ approveExpectSuccess(
   tokenId: number, owner: IKeyringPair, approved: CrossAccountId | string, amount: number | bigint = 1,
 ) {
   await usingApi(async (api: ApiPromise) => {
-    const result  = approve(api, collectionId, tokenId, owner, approved);
+    const result = await approve(api, collectionId, tokenId, owner, approved, amount);
     expect(result).to.be.true;
 
-    expect(await getAllowance(api, collectionId, owner.address, approved, tokenId)).to.be.equal(BigInt(amount));
+    expect(await getAllowance(api, collectionId, owner, approved, tokenId)).to.be.equal(BigInt(amount));
   });
 }
 
@@ -902,7 +902,7 @@ transferFromExpectSuccess(
     if (type === 'Fungible' || type === 'ReFungible') {
       balanceBefore = await getBalance(api, collectionId, to, tokenId);
     }
-    expect(transferFrom(api, collectionId, tokenId, accountApproved, accountFrom, accountTo, value)).to.be.true;
+    expect(await transferFrom(api, collectionId, tokenId, accountApproved, accountFrom, accountTo, value)).to.be.true;
     if (type === 'NFT') {
       expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(to);
     }
