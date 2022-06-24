@@ -87,7 +87,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{ensure, BoundedVec, transactional};
+use frame_support::{ensure, BoundedVec, transactional, storage::with_transaction};
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, MAX_REFUNGIBLE_PIECES, TokenId,
 	CreateCollectionData, CreateRefungibleExData, mapping::TokenAddressMapping, budget::Budget,
@@ -96,7 +96,7 @@ use up_data_structs::{
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, CommonCollectionOperations as _};
 use pallet_structure::Pallet as PalletStructure;
-use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
+use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use core::ops::Deref;
 use codec::{Encode, Decode, MaxEncodedLen};
@@ -804,32 +804,57 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
+		with_transaction(|| {
+			for (i, data) in data.iter().enumerate() {
+				let token_id = first_token_id + i as u32 + 1;
+				<TotalSupply<T>>::insert((collection.id, token_id), totals[i]);
+
+				<TokenData<T>>::insert(
+					(collection.id, token_id),
+					ItemData {
+						const_data: data.const_data.clone(),
+					},
+				);
+
+				for (user, amount) in data.users.iter() {
+					if *amount == 0 {
+						continue;
+					}
+					<Balance<T>>::insert((collection.id, token_id, &user), amount);
+					<Owned<T>>::insert((collection.id, &user, TokenId(token_id)), true);
+					<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
+						user,
+						collection.id,
+						TokenId(token_id),
+					);
+				}
+
+				if let Err(e) = Self::set_token_properties(
+					collection,
+					sender,
+					TokenId(token_id),
+					data.properties.clone().into_inner(),
+					true,
+				) {
+					return TransactionOutcome::Rollback(Err(e));
+				}
+			}
+			TransactionOutcome::Commit(Ok(()))
+		})?;
+
 		<TokensMinted<T>>::insert(collection.id, tokens_minted);
+
 		for (account, balance) in balances {
 			<AccountBalance<T>>::insert((collection.id, account), balance);
 		}
+
 		for (i, token) in data.into_iter().enumerate() {
 			let token_id = first_token_id + i as u32 + 1;
-			<TotalSupply<T>>::insert((collection.id, token_id), totals[i]);
-
-			<TokenData<T>>::insert(
-				(collection.id, token_id),
-				ItemData {
-					const_data: token.const_data,
-				},
-			);
 
 			for (user, amount) in token.users.into_iter() {
 				if amount == 0 {
 					continue;
-				}
-				<Balance<T>>::insert((collection.id, token_id, &user), amount);
-				<Owned<T>>::insert((collection.id, &user, TokenId(token_id)), true);
-				<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
-					&user,
-					collection.id,
-					TokenId(token_id),
-				);
+				}			
 
 				// TODO: ERC20 transfer event
 				<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(

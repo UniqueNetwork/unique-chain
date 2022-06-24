@@ -534,7 +534,12 @@ pub struct CreateReFungibleData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
+	
 	pub pieces: u128,
+	
+	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
+	#[derivative(Debug(format_with = "bounded::vec_debug"))]
+	pub properties: CollectionPropertiesVec,
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
@@ -568,6 +573,8 @@ pub struct CreateRefungibleExData<CrossAccountId> {
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
 	#[derivative(Debug(format_with = "bounded::map_debug"))]
 	pub users: BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
+	#[derivative(Debug(format_with = "bounded::vec_debug"))]
+	pub properties: CollectionPropertiesVec,
 }
 
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]

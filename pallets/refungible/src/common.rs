@@ -140,6 +140,7 @@ fn map_create_data<T: Config>(
 				out.insert(to.clone(), data.pieces);
 				out.try_into().expect("limit > 0")
 			},
+			properties: data.properties,
 		}),
 		_ => fail!(<Error<T>>::NotRefungibleDataUsedToMintFungibleCollectionToken),
 	}
