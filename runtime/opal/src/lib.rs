@@ -66,6 +66,7 @@ pub use frame_support::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, DispatchInfo, GetDispatchInfo, IdentityFee, Pays, PostDispatchInfo, Weight,
 		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients, ConstantMultiplier,
+		WeightToFee,
 	},
 };
 use pallet_unique_scheduler::DispatchCall;
@@ -74,10 +75,8 @@ use up_data_structs::{
 	CollectionStats, RpcCollection,
 	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
 	TokenChild, RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo,
-	RmrkBaseInfo, RmrkPartType, RmrkTheme, RmrkThemeName, RmrkThemeProperty, RmrkCollectionId,
-	RmrkNftId, RmrkAccountIdOrCollectionNftTuple, RmrkNftChild, RmrkPropertyKey, RmrkResourceTypes,
-	RmrkBasicResource, RmrkComposableResource, RmrkSlotResource, RmrkResourceId, RmrkBaseId,
-	RmrkFixedPart, RmrkSlotPart, RmrkString,
+	RmrkBaseInfo, RmrkPartType, RmrkTheme, RmrkThemeName, RmrkCollectionId, RmrkNftId,
+	RmrkNftChild, RmrkPropertyKey, RmrkResourceId, RmrkBaseId,
 };
 
 // use pallet_contracts::weights::WeightInfo;
@@ -193,7 +192,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!(RUNTIME_NAME),
 	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 922000,
+	spec_version: 923000,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -509,7 +508,6 @@ where
 
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		smallvec!(WeightToFeeCoefficient {
-			// Targeting 0.1 Unique per NFT transfer
 			coeff_integer: WEIGHT_TO_FEE_COEFF.into(),
 			coeff_frac: Perbill::zero(),
 			negative: false,
@@ -738,7 +736,7 @@ impl<
 	}
 
 	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
-		let amount = WeightToFee::calc(&weight);
+		let amount = WeightToFee::weight_to_fee(&weight);
 		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
 
 		// location to this parachain through relay chain
@@ -770,7 +768,7 @@ impl<
 
 	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
 		let weight = weight.min(self.0);
-		let amount = WeightToFee::calc(&weight);
+		let amount = WeightToFee::weight_to_fee(&weight);
 		self.0 -= weight;
 		self.1 = self.1.saturating_sub(amount);
 		let amount: u128 = amount.saturated_into();
@@ -807,13 +805,8 @@ impl Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader = UsingOnlySelfCurrencyComponents<
-		IdentityFee<Balance>,
-		RelayLocation,
-		AccountId,
-		Balances,
-		(),
-	>;
+	type Trader =
+		UsingOnlySelfCurrencyComponents<LinearFee<Balance>, RelayLocation, AccountId, Balances, ()>;
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;
 
@@ -885,7 +878,7 @@ impl pallet_aura::Config for Runtime {
 }
 
 parameter_types! {
-	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account();
+	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account_truncating();
 	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
 }
 
@@ -924,6 +917,7 @@ impl pallet_proxy_rmrk_core::Config for Runtime {
 }
 
 impl pallet_proxy_rmrk_equip::Config for Runtime {
+	type WeightInfo = pallet_proxy_rmrk_equip::weights::SubstrateWeight<Self>;
 	type Event = Event;
 }
 
@@ -1315,7 +1309,73 @@ macro_rules! dispatch_unique_runtime {
 	}};
 }
 
-impl_common_runtime_apis!();
+impl_common_runtime_apis! {
+	#![custom_apis]
+
+	impl rmrk_rpc::RmrkApi<
+		Block,
+		AccountId,
+		RmrkCollectionInfo<AccountId>,
+		RmrkInstanceInfo<AccountId>,
+		RmrkResourceInfo,
+		RmrkPropertyInfo,
+		RmrkBaseInfo<AccountId>,
+		RmrkPartType,
+		RmrkTheme
+	> for Runtime {
+		fn last_collection_idx() -> Result<RmrkCollectionId, DispatchError> {
+			pallet_proxy_rmrk_core::rpc::last_collection_idx::<Runtime>()
+		}
+
+		fn collection_by_id(collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo<AccountId>>, DispatchError> {
+			pallet_proxy_rmrk_core::rpc::collection_by_id::<Runtime>(collection_id)
+		}
+
+		fn nft_by_id(collection_id: RmrkCollectionId, nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo<AccountId>>, DispatchError> {
+			pallet_proxy_rmrk_core::rpc::nft_by_id::<Runtime>(collection_id, nft_by_id)
+		}
+
+		fn account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
+			pallet_proxy_rmrk_core::rpc::account_tokens::<Runtime>(account_id, collection_id)
+		}
+
+		fn nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
+			pallet_proxy_rmrk_core::rpc::nft_children::<Runtime>(collection_id, nft_id)
+		}
+
+		fn collection_properties(collection_id: RmrkCollectionId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+			pallet_proxy_rmrk_core::rpc::collection_properties::<Runtime>(collection_id, filter_keys)
+		}
+
+		fn nft_properties(collection_id: RmrkCollectionId, nft_id: RmrkNftId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+			pallet_proxy_rmrk_core::rpc::nft_properties::<Runtime>(collection_id, nft_id, filter_keys)
+		}
+
+		fn nft_resources(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
+			pallet_proxy_rmrk_core::rpc::nft_resources::<Runtime>(collection_id, nft_id)
+		}
+
+		fn nft_resource_priority(collection_id: RmrkCollectionId, nft_id: RmrkNftId, resource_id: RmrkResourceId) -> Result<Option<u32>, DispatchError> {
+			pallet_proxy_rmrk_core::rpc::nft_resource_priority::<Runtime>(collection_id, nft_id, resource_id)
+		}
+
+		fn base(base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
+			pallet_proxy_rmrk_equip::rpc::base::<Runtime>(base_id)
+		}
+
+		fn base_parts(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
+			pallet_proxy_rmrk_equip::rpc::base_parts::<Runtime>(base_id)
+		}
+
+		fn theme_names(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
+			pallet_proxy_rmrk_equip::rpc::theme_names::<Runtime>(base_id)
+		}
+
+		fn theme(base_id: RmrkBaseId, theme_name: RmrkThemeName, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Option<RmrkTheme>, DispatchError> {
+			pallet_proxy_rmrk_equip::rpc::theme::<Runtime>(base_id, theme_name, filter_keys)
+		}
+	}
+}
 
 struct CheckInherents;
 

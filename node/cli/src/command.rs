@@ -33,7 +33,9 @@
 // limitations under the License.
 
 use crate::{
-	chain_spec::{self, RuntimeId, RuntimeIdentification, ServiceId, ServiceIdentification},
+	chain_spec::{
+		self, RuntimeId, RuntimeIdentification, ServiceId, ServiceIdentification, default_runtime,
+	},
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{new_partial, start_node, start_dev_node},
 };
@@ -44,14 +46,13 @@ use crate::service::UniqueRuntimeExecutor;
 #[cfg(feature = "quartz-runtime")]
 use crate::service::QuartzRuntimeExecutor;
 
-use crate::service::OpalRuntimeExecutor;
+use crate::service::{OpalRuntimeExecutor, DefaultRuntimeExecutor};
 
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use cumulus_client_service::genesis::generate_genesis_block;
 use std::{future::Future, pin::Pin};
 use log::info;
-use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
@@ -60,7 +61,7 @@ use sc_service::{
 	config::{BasePath, PrometheusConfig},
 };
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use std::{io::Write, net::SocketAddr, time::Duration};
 
 use unique_runtime_common::types::Block;
@@ -372,7 +373,6 @@ pub fn run() -> Result<()> {
 
 			Ok(())
 		}
-		#[cfg(feature = "unique-runtime")]
 		Some(Subcommand::Benchmark(cmd)) => {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			let runner = cli.create_runner(cmd)?;
@@ -380,7 +380,7 @@ pub fn run() -> Result<()> {
 			match cmd {
 				BenchmarkCmd::Pallet(cmd) => {
 					if cfg!(feature = "runtime-benchmarks") {
-						runner.sync_run(|config| cmd.run::<Block, UniqueRuntimeExecutor>(config))
+						runner.sync_run(|config| cmd.run::<Block, DefaultRuntimeExecutor>(config))
 					} else {
 						Err("Benchmarking wasn't enabled when building the node. \
 					You can enable it with `--features runtime-benchmarks`."
@@ -389,16 +389,16 @@ pub fn run() -> Result<()> {
 				}
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
-						unique_runtime::RuntimeApi,
-						UniqueRuntimeExecutor,
+						default_runtime::RuntimeApi,
+						DefaultRuntimeExecutor,
 						_,
 					>(&config, crate::service::parachain_build_import_queue)?;
 					cmd.run(partials.client)
 				}),
 				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
-						unique_runtime::RuntimeApi,
-						UniqueRuntimeExecutor,
+						default_runtime::RuntimeApi,
+						DefaultRuntimeExecutor,
 						_,
 					>(&config, crate::service::parachain_build_import_queue)?;
 					let db = partials.backend.expose_db();
@@ -411,10 +411,6 @@ pub fn run() -> Result<()> {
 				}
 				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
 			}
-		}
-		#[cfg(not(feature = "unique-runtime"))]
-		Some(Subcommand::Benchmark(..)) => {
-			Err("benchmarking is only available with unique runtime enabled".into())
 		}
 		Some(Subcommand::TryRuntime(cmd)) => {
 			if cfg!(feature = "try-runtime") {
@@ -477,6 +473,11 @@ pub fn run() -> Result<()> {
 
 					let autoseal_interval = Duration::from_millis(cli.idle_autoseal_interval);
 
+					let mut config = config;
+					if config.state_pruning == None {
+						config.state_pruning = Some(sc_service::PruningMode::ArchiveAll);
+					}
+
 					return start_node_using_chain_runtime! {
 						start_dev_node(config, autoseal_interval).map_err(Into::into)
 					};
@@ -495,10 +496,7 @@ pub fn run() -> Result<()> {
 
 				let para_id = ParaId::from(para_id);
 
-				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account(
-						&para_id,
-					);
+				let parachain_account = AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account_truncating(&para_id);
 
 				let state_version =
 					RelayChainCli::native_runtime_version(&config.chain_spec).state_version();

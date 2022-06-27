@@ -53,6 +53,12 @@ fn create_slot_resource() -> RmrkSlotResource {
 	}
 }
 
+fn create_max_resource_types_array<S: Get<u32>>(num: usize) -> BoundedVec<RmrkResourceTypes, S> {
+	vec![RmrkResourceTypes::Composable(create_composable_resource()); num]
+		.try_into()
+		.expect("num <= S")
+}
+
 fn create_max_collection<T: Config>(owner: &T::AccountId) -> DispatchResult {
 	<T as pallet_common::Config>::Currency::deposit_creating(
 		owner,
@@ -71,10 +77,7 @@ fn create_max_collection<T: Config>(owner: &T::AccountId) -> DispatchResult {
 	)
 }
 
-fn create_max_nft<T: Config>(
-	owner: &T::AccountId,
-	collection_id: RmrkCollectionId,
-) -> DispatchResult {
+fn create_nft<T: Config>(owner: &T::AccountId, collection_id: RmrkCollectionId) -> DispatchResult {
 	let royalty_recipient = Some(owner.clone());
 	let royalty_amount = Some(Permill::from_percent(25));
 	let metadata = create_data();
@@ -82,12 +85,13 @@ fn create_max_nft<T: Config>(
 
 	<Pallet<T>>::mint_nft(
 		RawOrigin::Signed(owner.clone()).into(),
-		owner.clone(),
+		None,
 		collection_id,
 		royalty_recipient,
 		royalty_amount,
 		metadata,
 		transferable,
+		None,
 	)
 }
 
@@ -104,12 +108,8 @@ impl NftBuilder {
 		}
 	}
 
-	fn current_nft_id(&self) -> RmrkNftId {
-		self.current_nft_id
-	}
-
 	fn build<T: Config>(&mut self, owner: &T::AccountId) -> Result<RmrkNftId, DispatchError> {
-		create_max_nft::<T>(owner, self.collection_id)?;
+		create_nft::<T>(owner, self.collection_id)?;
 		self.current_nft_id += 1;
 
 		Ok(self.current_nft_id)
@@ -213,6 +213,8 @@ benchmarks! {
 	}: _(RawOrigin::Signed(caller), collection_id)
 
 	mint_nft {
+		let b in 0..100;
+
 		let caller: T::AccountId = account("caller", 0, SEED);
 
 		create_max_collection::<T>(&caller)?;
@@ -225,12 +227,13 @@ benchmarks! {
 		let transferable = true;
 	}:  _(
 		RawOrigin::Signed(caller),
-		owner,
+		None,
 		collection_id,
 		royalty_recipient,
 		royalty_amount,
 		metadata,
-		transferable
+		transferable,
+		Some(create_max_resource_types_array(b as usize))
 	)
 
 	burn_nft {
@@ -373,7 +376,6 @@ benchmarks! {
 
 	add_basic_resource {
 		let caller: T::AccountId = account("caller", 0, SEED);
-		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
 
 		create_max_collection::<T>(&caller)?;
 		let collection_id = 0;
@@ -390,7 +392,6 @@ benchmarks! {
 
 	add_composable_resource {
 		let caller: T::AccountId = account("caller", 0, SEED);
-		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
 
 		create_max_collection::<T>(&caller)?;
 		let collection_id = 0;
@@ -407,7 +408,6 @@ benchmarks! {
 
 	add_slot_resource {
 		let caller: T::AccountId = account("caller", 0, SEED);
-		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
 
 		create_max_collection::<T>(&caller)?;
 		let collection_id = 0;
@@ -424,7 +424,6 @@ benchmarks! {
 
 	remove_resource {
 		let caller: T::AccountId = account("caller", 0, SEED);
-		<T as pallet_common::Config>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
 
 		create_max_collection::<T>(&caller)?;
 		let collection_id = 0;
@@ -440,7 +439,7 @@ benchmarks! {
 			resource
 		)?;
 
-		let resource_id = 1;
+		let resource_id = 0;
 	}: _(
 		RawOrigin::Signed(caller),
 		collection_id,
@@ -451,8 +450,6 @@ benchmarks! {
 	accept_resource {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let admin: T::AccountId = account("admin", 0, SEED);
-
-		<T as pallet_common::Config>::Currency::deposit_creating(&admin, T::CollectionCreationPrice::get());
 
 		create_max_collection::<T>(&admin)?;
 		let collection_id = 0;
@@ -478,7 +475,7 @@ benchmarks! {
 			resource
 		)?;
 
-		let resource_id = 1;
+		let resource_id = 0;
 	}: _(
 		RawOrigin::Signed(caller),
 		collection_id,
@@ -489,8 +486,6 @@ benchmarks! {
 	accept_resource_removal {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let admin: T::AccountId = account("admin", 0, SEED);
-
-		<T as pallet_common::Config>::Currency::deposit_creating(&admin, T::CollectionCreationPrice::get());
 
 		create_max_collection::<T>(&admin)?;
 		let collection_id = 0;
@@ -507,7 +502,7 @@ benchmarks! {
 			resource
 		)?;
 
-		let resource_id = 1;
+		let resource_id = 0;
 
 		let new_owner = <RmrkAccountIdOrCollectionNftTuple<T::AccountId>>::AccountId(caller.clone());
 

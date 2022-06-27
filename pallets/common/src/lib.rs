@@ -74,7 +74,7 @@ use up_data_structs::{
 	RmrkPropertyInfo,
 	RmrkBaseInfo,
 	RmrkPartType,
-	RmrkTheme,
+	RmrkBoundedTheme,
 	RmrkNftChild,
 	CollectionPermissions,
 	SchemaVersion,
@@ -543,7 +543,7 @@ pub mod pallet {
 				RmrkPropertyInfo,
 				RmrkBaseInfo<T::AccountId>,
 				RmrkPartType,
-				RmrkTheme,
+				RmrkBoundedTheme,
 				RmrkNftChild,
 			)>,
 		),
@@ -1019,7 +1019,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	#[transactional]
-	pub fn set_property_permissions(
+	pub fn set_token_property_permissions(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,
@@ -1164,6 +1164,7 @@ impl<T: Config> Pallet<T> {
 		old_limit: &CollectionLimits,
 		mut new_limit: CollectionLimits,
 	) -> Result<CollectionLimits, DispatchError> {
+		let limits = old_limit;
 		limit_default!(old_limit, new_limit,
 			account_token_ownership_limit => ensure!(
 				new_limit <= MAX_TOKEN_OWNERSHIP,
@@ -1190,6 +1191,7 @@ impl<T: Config> Pallet<T> {
 			),
 			sponsor_approve_timeout => {},
 			owner_can_transfer => ensure!(
+				!limits.owner_can_transfer_instaled() ||
 				old_limit || !new_limit,
 				<Error<T>>::OwnerPermissionsCantBeReverted,
 			),
@@ -1210,11 +1212,7 @@ impl<T: Config> Pallet<T> {
 		limit_default_clone!(old_limit, new_limit,
 			access => {},
 			mint_mode => {},
-			nesting => ensure!(
-				// Permissive is only allowed for tests and internal usage of chain for now
-				old_limit.permissive || !new_limit.permissive,
-				<Error<T>>::NoPermission,
-			),
+			nesting => { /* todo check for permissive, if only it gets out of benchmarks */ },
 		);
 		Ok(new_limit)
 	}
@@ -1237,7 +1235,7 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn delete_collection_properties(amount: u32) -> Weight;
 	fn set_token_properties(amount: u32) -> Weight;
 	fn delete_token_properties(amount: u32) -> Weight;
-	fn set_property_permissions(amount: u32) -> Weight;
+	fn set_token_property_permissions(amount: u32) -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn transfer_from() -> Weight;
@@ -1316,7 +1314,7 @@ pub trait CommonCollectionOperations<T: Config> {
 		token_id: TokenId,
 		property_keys: Vec<PropertyKey>,
 	) -> DispatchResultWithPostInfo;
-	fn set_property_permissions(
+	fn set_token_property_permissions(
 		&self,
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,

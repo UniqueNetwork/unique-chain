@@ -22,14 +22,22 @@ use sp_runtime::DispatchError;
 use up_data_structs::*;
 use pallet_common::{Pallet as PalletCommon, Error as CommonError};
 use pallet_rmrk_core::{
-	Pallet as PalletCore,
+	Pallet as PalletCore, Error as CoreError,
 	misc::{self, *},
 	property::RmrkProperty::*,
 };
 use pallet_nonfungible::{Pallet as PalletNft, NonfungibleHandle};
 use pallet_evm::account::CrossAccountId;
+use weights::WeightInfo;
 
 pub use pallet::*;
+
+#[cfg(feature = "runtime-benchmarks")]
+pub mod benchmarking;
+pub mod rpc;
+pub mod weights;
+
+pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -38,6 +46,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_rmrk_core::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::storage]
@@ -61,6 +70,10 @@ pub mod pallet {
 			issuer: T::AccountId,
 			base_id: RmrkBaseId,
 		},
+		EquippablesUpdated {
+			base_id: RmrkBaseId,
+			slot_id: RmrkSlotId,
+		},
 	}
 
 	#[pallet::error]
@@ -70,6 +83,8 @@ pub mod pallet {
 		NoAvailablePartId,
 		BaseDoesntExist,
 		NeedsDefaultThemeFirst,
+		PartDoesntExist,
+		NoEquippableOnFixedPart,
 	}
 
 	#[pallet::call]
@@ -83,12 +98,12 @@ pub mod pallet {
 		/// - symbol: arbitrary client-chosen symbol
 		/// - parts: array of Fixed and Slot parts composing the base, confined in length by
 		///   RmrkPartsLimit
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
+		#[pallet::weight(<SelfWeightOf<T>>::create_base(parts.len() as u32))]
 		pub fn create_base(
 			origin: OriginFor<T>,
 			base_type: RmrkString,
-			symbol: RmrkString,
+			symbol: RmrkBaseSymbol,
 			parts: BoundedVec<RmrkPartType, RmrkPartsLimit>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -125,17 +140,7 @@ pub mod pallet {
 			let collection = <PalletCore<T>>::get_nft_collection(collection_id)?;
 
 			for part in parts {
-				let part_id = part.id();
-				let part_token_id = Self::create_part(&cross_sender, &collection, part)?;
-
-				<InernalPartId<T>>::insert(collection_id, part_id, part_token_id);
-
-				<PalletNft<T>>::set_scoped_token_property(
-					collection_id,
-					part_token_id,
-					PropertyScope::Rmrk,
-					<PalletCore<T>>::rmrk_property(ExternalPartId, &part_id)?,
-				)?;
+				Self::create_part(&cross_sender, &collection, part)?;
 			}
 
 			Self::deposit_event(Event::BaseCreated {
@@ -159,12 +164,12 @@ pub mod pallet {
 		///   - key: arbitrary BoundedString, defined by client
 		///   - value: arbitrary BoundedString, defined by client
 		///   - inherit: optional bool
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		#[transactional]
+		#[pallet::weight(<SelfWeightOf<T>>::theme_add(theme.properties.len() as u32))]
 		pub fn theme_add(
 			origin: OriginFor<T>,
 			base_id: RmrkBaseId,
-			theme: RmrkTheme,
+			theme: RmrkBoundedTheme,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
@@ -173,12 +178,7 @@ pub mod pallet {
 
 			let collection_id: CollectionId = base_id.into();
 
-			let collection = <PalletCore<T>>::get_typed_nft_collection(
-				collection_id,
-				misc::CollectionType::Base,
-			)
-			.map_err(|_| <Error<T>>::BaseDoesntExist)?;
-			collection.check_is_external()?;
+			let collection = Self::get_base(collection_id)?;
 
 			if theme.name.as_slice() == b"default" {
 				<BaseHasDefaultTheme<T>>::insert(collection_id, true);
@@ -213,6 +213,55 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		#[transactional]
+		#[pallet::weight(<SelfWeightOf<T>>::equippable())]
+		pub fn equippable(
+			origin: OriginFor<T>,
+			base_id: RmrkBaseId,
+			slot_id: RmrkSlotId,
+			equippables: RmrkEquippableList,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			let base_collection_id = base_id.into();
+			let collection = Self::get_base(base_collection_id)?;
+
+			<PalletCore<T>>::check_collection_owner(
+				&collection,
+				&T::CrossAccountId::from_sub(sender),
+			)
+			.map_err(|err| {
+				if err == <CoreError<T>>::NoPermission.into() {
+					<Error<T>>::PermissionError.into()
+				} else {
+					err
+				}
+			})?;
+
+			let part_id = Self::internal_part_id(base_collection_id, slot_id)
+				.ok_or(<Error<T>>::PartDoesntExist)?;
+
+			let nft_type = <PalletCore<T>>::get_nft_type(base_collection_id, part_id)
+				.map_err(|_| <Error<T>>::PartDoesntExist)?;
+
+			match nft_type {
+				NftType::Regular | NftType::Theme => return Err(<Error<T>>::PermissionError.into()),
+				NftType::FixedPart => return Err(<Error<T>>::NoEquippableOnFixedPart.into()),
+				NftType::SlotPart => {
+					<PalletNft<T>>::set_scoped_token_property(
+						base_collection_id,
+						part_id,
+						PropertyScope::Rmrk,
+						<PalletCore<T>>::rmrk_property(EquippableList, &equippables)?,
+					)?;
+				}
+			}
+
+			Self::deposit_event(Event::EquippablesUpdated { base_id, slot_id });
+
+			Ok(())
+		}
 	}
 }
 
@@ -221,9 +270,10 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		collection: &NonfungibleHandle<T>,
 		part: RmrkPartType,
-	) -> Result<TokenId, DispatchError> {
+	) -> DispatchResult {
 		let owner = sender;
 
+		let part_id = part.id();
 		let src = part.src();
 		let z_index = part.z_index();
 
@@ -232,21 +282,40 @@ impl<T: Config> Pallet<T> {
 			RmrkPartType::SlotPart(_) => NftType::SlotPart,
 		};
 
-		let token_id = <PalletCore<T>>::create_nft(
-			sender,
-			owner,
-			collection,
+		let token_id = match Self::internal_part_id(collection.id, part_id) {
+			Some(token_id) => token_id,
+			None => {
+				let token_id =
+					<PalletCore<T>>::create_nft(sender, owner, collection, [].into_iter())
+						.map_err(|err| match err {
+							DispatchError::Arithmetic(_) => <Error<T>>::NoAvailablePartId.into(),
+							err => err,
+						})?;
+
+				<InernalPartId<T>>::insert(collection.id, part_id, token_id);
+
+				<PalletNft<T>>::set_scoped_token_property(
+					collection.id,
+					token_id,
+					PropertyScope::Rmrk,
+					<PalletCore<T>>::rmrk_property(ExternalPartId, &part_id)?,
+				)?;
+
+				token_id
+			}
+		};
+
+		<PalletNft<T>>::set_scoped_token_properties(
+			collection.id,
+			token_id,
+			PropertyScope::Rmrk,
 			[
 				<PalletCore<T>>::rmrk_property(TokenType, &nft_type)?,
 				<PalletCore<T>>::rmrk_property(Src, &src)?,
 				<PalletCore<T>>::rmrk_property(ZIndex, &z_index)?,
 			]
 			.into_iter(),
-		)
-		.map_err(|err| match err {
-			DispatchError::Arithmetic(_) => <Error<T>>::NoAvailablePartId.into(),
-			err => err,
-		})?;
+		)?;
 
 		if let RmrkPartType::SlotPart(part) = part {
 			<PalletNft<T>>::set_scoped_token_property(
@@ -257,6 +326,21 @@ impl<T: Config> Pallet<T> {
 			)?;
 		}
 
-		Ok(token_id)
+		Ok(())
+	}
+
+	fn get_base(base_id: CollectionId) -> Result<NonfungibleHandle<T>, DispatchError> {
+		let collection =
+			<PalletCore<T>>::get_typed_nft_collection(base_id, misc::CollectionType::Base)
+				.map_err(|err| {
+					if err == <CoreError<T>>::CollectionUnknown.into() {
+						<Error<T>>::BaseDoesntExist.into()
+					} else {
+						err
+					}
+				})?;
+		collection.check_is_external()?;
+
+		Ok(collection)
 	}
 }

@@ -169,10 +169,14 @@ where
 		Eth, EthApiServer, EthDevSigner, EthFilter, EthFilterApiServer, EthPubSub,
 		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer,
 	};
-	use uc_rpc::{UniqueApiServer, Unique, RmrkApiServer, Rmrk};
+	use uc_rpc::{UniqueApiServer, Unique};
+
+	#[cfg(not(feature = "unique-runtime"))]
+	use uc_rpc::{RmrkApiServer, Rmrk};
+
 	// use pallet_contracts_rpc::{Contracts, ContractsApi};
-	use pallet_transaction_payment_rpc::{TransactionPaymentRpc, TransactionPaymentApiServer};
-	use substrate_frame_rpc_system::{SystemRpc, SystemApiServer};
+	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
+	use substrate_frame_rpc_system::{System, SystemApiServer};
 
 	let mut io = RpcModule::new(());
 	let FullDeps {
@@ -192,8 +196,8 @@ where
 		max_past_logs,
 	} = deps;
 
-	io.merge(SystemRpc::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
-	io.merge(TransactionPaymentRpc::new(Arc::clone(&client)).into_rpc())?;
+	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
+	io.merge(TransactionPayment::new(Arc::clone(&client)).into_rpc())?;
 
 	// io.extend_with(ContractsApi::to_delegate(Contracts::new(client.clone())));
 
@@ -223,6 +227,8 @@ where
 	)?;
 
 	io.merge(Unique::new(client.clone()).into_rpc())?;
+
+	#[cfg(not(feature = "unique-runtime"))]
 	io.merge(Rmrk::new(client.clone()).into_rpc())?;
 
 	if let Some(filter_pool) = filter_pool {

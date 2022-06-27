@@ -458,6 +458,7 @@ declare module '@polkadot/api-base/types/errors' {
       ResourceNotPending: AugmentedError<ApiType>;
       RmrkPropertyKeyIsTooLong: AugmentedError<ApiType>;
       RmrkPropertyValueIsTooLong: AugmentedError<ApiType>;
+      UnableToDecodeRmrkData: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

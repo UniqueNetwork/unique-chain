@@ -28,7 +28,7 @@ use frame_support::{
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, budget::Budget, Property, PropertyPermission, PropertyKey,
-	PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild,
+	PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild, AuxPropertyValue,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
@@ -122,6 +122,19 @@ pub mod pallet {
 		Value = Properties,
 		QueryKind = ValueQuery,
 		OnEmpty = up_data_structs::TokenProperties,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn token_aux_property)]
+	pub type TokenAuxProperties<T: Config> = StorageNMap<
+		Key = (
+			Key<Twox64Concat, CollectionId>,
+			Key<Twox64Concat, TokenId>,
+			Key<Twox64Concat, PropertyScope>,
+			Key<Twox64Concat, PropertyKey>,
+		),
+		Value = AuxPropertyValue,
+		QueryKind = OptionQuery,
 	>;
 
 	/// Used to enumerate tokens owned by account
@@ -294,6 +307,33 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	pub fn try_mutate_token_aux_property<R, E>(
+		collection_id: CollectionId,
+		token_id: TokenId,
+		scope: PropertyScope,
+		key: PropertyKey,
+		f: impl FnOnce(&mut Option<AuxPropertyValue>) -> Result<R, E>,
+	) -> Result<R, E> {
+		<TokenAuxProperties<T>>::try_mutate((collection_id, token_id, scope, key), f)
+	}
+
+	pub fn remove_token_aux_property(
+		collection_id: CollectionId,
+		token_id: TokenId,
+		scope: PropertyScope,
+		key: PropertyKey,
+	) {
+		<TokenAuxProperties<T>>::remove((collection_id, token_id, scope, key));
+	}
+
+	pub fn iterate_token_aux_properties(
+		collection_id: CollectionId,
+		token_id: TokenId,
+		scope: PropertyScope,
+	) -> impl Iterator<Item = (PropertyKey, AuxPropertyValue)> {
+		<TokenAuxProperties<T>>::iter_prefix((collection_id, token_id, scope))
+	}
+
 	pub fn current_token_id(collection_id: CollectionId) -> TokenId {
 		TokenId(<TokensMinted<T>>::get(collection_id))
 	}
@@ -375,6 +415,7 @@ impl<T: Config> Pallet<T> {
 		<TokensBurnt<T>>::insert(collection.id, burnt);
 		<TokenData<T>>::remove((collection.id, token));
 		<TokenProperties<T>>::remove((collection.id, token));
+		<TokenAuxProperties<T>>::remove_prefix((collection.id, token), None);
 		let old_spender = <Allowance<T>>::take((collection.id, token));
 
 		if let Some(old_spender) = old_spender {
@@ -594,12 +635,12 @@ impl<T: Config> Pallet<T> {
 		<PalletCommon<T>>::delete_collection_properties(collection, sender, property_keys)
 	}
 
-	pub fn set_property_permissions(
+	pub fn set_token_property_permissions(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResult {
-		<PalletCommon<T>>::set_property_permissions(collection, sender, property_permissions)
+		<PalletCommon<T>>::set_token_property_permissions(collection, sender, property_permissions)
 	}
 
 	pub fn set_property_permission(
@@ -997,7 +1038,13 @@ impl<T: Config> Pallet<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let nesting = handle.permissions.nesting();
-		if nesting.permissive {
+
+		#[cfg(not(feature = "runtime-benchmarks"))]
+		let permissive = false;
+		#[cfg(feature = "runtime-benchmarks")]
+		let permissive = nesting.permissive;
+
+		if permissive {
 			// Pass
 		} else if nesting.token_owner
 			&& <PalletStructure<T>>::check_indirectly_owned(
@@ -1008,7 +1055,7 @@ impl<T: Config> Pallet<T> {
 				nesting_budget,
 			)? {
 			// Pass
-		} else if nesting.admin && handle.is_owner_or_admin(&sender) {
+		} else if nesting.collection_admin && handle.is_owner_or_admin(&sender) {
 			// Pass
 		} else {
 			fail!(<CommonError<T>>::UserIsNotAllowedToNest);

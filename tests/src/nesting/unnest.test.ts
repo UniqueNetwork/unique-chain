@@ -153,6 +153,6 @@ describe('Negative Test: Unnesting', () => {
 
     // Create a nested token ouroboros
     const nestedToken = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: tokenIdToAddress(collection, targetToken)});
-    expect(transferExpectSuccess(collection, targetToken, alice, {Ethereum: tokenIdToAddress(collection, nestedToken)})).to.be.rejectedWith(/^structure\.OuroborosDetected$/);
+    await expect(transferExpectSuccess(collection, targetToken, alice, {Ethereum: tokenIdToAddress(collection, nestedToken)})).to.be.rejectedWith(/^structure\.OuroborosDetected$/);
   });
 });

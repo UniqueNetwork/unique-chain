@@ -3,7 +3,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
 import {tokenIdToCross} from '../eth/util/helpers';
 import usingApi, {executeTransaction} from '../substrate/substrate-api';
-import {getCreateCollectionResult, transferExpectSuccess} from '../util/helpers';
+import {getCreateCollectionResult, transferExpectSuccess, setCollectionLimitsExpectSuccess} from '../util/helpers';
 
 /**
  * ```dot
@@ -36,6 +36,7 @@ describe('Graphs', () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
       const collection = await buildComplexObjectGraph(api, alice);
+      await setCollectionLimitsExpectSuccess(alice, collection, {ownerCanTransfer: true});
 
       // to self
       await expect(
