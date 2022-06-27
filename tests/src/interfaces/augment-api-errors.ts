@@ -429,6 +429,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       RefungibleDisallowsNesting: AugmentedError<ApiType>;
       /**
+       * Refungible token can't be repartitioned by user who isn't owns all pieces
+       **/
+      RepartitionWhileNotOwningAllPieces: AugmentedError<ApiType>;
+      /**
        * Setting item properties is not allowed
        **/
       SettingPropertiesNotAllowed: AugmentedError<ApiType>;
@@ -444,6 +448,7 @@ declare module '@polkadot/api-base/types/errors' {
     rmrkCore: {
       CannotAcceptNonOwnedNft: AugmentedError<ApiType>;
       CannotRejectNonOwnedNft: AugmentedError<ApiType>;
+      CannotRejectNonPendingNft: AugmentedError<ApiType>;
       CannotSendToDescendentOrSelf: AugmentedError<ApiType>;
       CollectionFullOrLocked: AugmentedError<ApiType>;
       CollectionNotEmpty: AugmentedError<ApiType>;
@@ -452,10 +457,12 @@ declare module '@polkadot/api-base/types/errors' {
       NftTypeEncodeError: AugmentedError<ApiType>;
       NoAvailableCollectionId: AugmentedError<ApiType>;
       NoAvailableNftId: AugmentedError<ApiType>;
+      NoAvailableResourceId: AugmentedError<ApiType>;
       NonTransferable: AugmentedError<ApiType>;
       NoPermission: AugmentedError<ApiType>;
       ResourceDoesntExist: AugmentedError<ApiType>;
       ResourceNotPending: AugmentedError<ApiType>;
+      RmrkPropertyIsNotFound: AugmentedError<ApiType>;
       RmrkPropertyKeyIsTooLong: AugmentedError<ApiType>;
       RmrkPropertyValueIsTooLong: AugmentedError<ApiType>;
       UnableToDecodeRmrkData: AugmentedError<ApiType>;
@@ -469,6 +476,8 @@ declare module '@polkadot/api-base/types/errors' {
       NeedsDefaultThemeFirst: AugmentedError<ApiType>;
       NoAvailableBaseId: AugmentedError<ApiType>;
       NoAvailablePartId: AugmentedError<ApiType>;
+      NoEquippableOnFixedPart: AugmentedError<ApiType>;
+      PartDoesntExist: AugmentedError<ApiType>;
       PermissionError: AugmentedError<ApiType>;
       /**
        * Generic error
@@ -598,6 +607,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Length of items properties must be greater than 0.
        **/
       EmptyArgument: AugmentedError<ApiType>;
+      /**
+       * Repertition is only supported by refungible collection
+       **/
+      RepartitionCalledOnNonRefungibleCollection: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

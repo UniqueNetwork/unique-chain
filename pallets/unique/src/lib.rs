@@ -27,7 +27,7 @@ extern crate alloc;
 use frame_support::{
 	decl_module, decl_storage, decl_error, decl_event,
 	dispatch::DispatchResult,
-	ensure,
+	ensure, fail,
 	weights::{Weight},
 	transactional,
 	pallet_prelude::{DispatchResultWithPostInfo, ConstU32},
@@ -47,6 +47,7 @@ use pallet_common::{
 	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_tx,
 	dispatch::CollectionDispatch,
 };
+use pallet_refungible::{Pallet as PalletRefungible, RefungibleHandle};
 pub mod eth;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -65,10 +66,14 @@ decl_error! {
 		ConfirmUnsetSponsorFail,
 		/// Length of items properties must be greater than 0.
 		EmptyArgument,
+		/// Repertition is only supported by refungible collection
+		RepartitionCalledOnNonRefungibleCollection,
 	}
 }
 
-pub trait Config: system::Config + pallet_common::Config + Sized + TypeInfo {
+pub trait Config:
+	system::Config + pallet_common::Config + pallet_refungible::Config + Sized + TypeInfo
+{
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	/// Weight information for extrinsics in this pallet.
@@ -897,6 +902,25 @@ decl_module! {
 			));
 
 			target_collection.save()
+		}
+
+		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
+		#[transactional]
+		pub fn repartition(
+			origin,
+			collection_id: CollectionId,
+			token: TokenId,
+			amount: u128,
+		) -> DispatchResult {
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			target_collection.check_is_internal()?;
+			let refungible_collection = match target_collection.mode {
+				CollectionMode::ReFungible => RefungibleHandle::cast(target_collection),
+				_ => fail!(<Error<T>>::RepartitionCalledOnNonRefungibleCollection),
+			};
+			<PalletRefungible<T>>::repartition(&sender, &refungible_collection, token, amount)?;
+			Ok(())
 		}
 	}
 }

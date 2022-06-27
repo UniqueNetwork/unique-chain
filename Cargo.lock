@@ -6608,6 +6608,7 @@ dependencies = [
  "pallet-evm",
  "pallet-evm-coder-substrate",
  "pallet-nonfungible",
+ "pallet-refungible",
  "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",

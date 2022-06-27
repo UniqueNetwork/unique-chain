@@ -1630,3 +1630,17 @@ export async function waitNewBlocks(blocksCount = 1): Promise<void> {
     return promise;
   });
 }
+
+export async function repartitionRFT(
+  api: ApiPromise,
+  collectionId: number,
+  sender: IKeyringPair,
+  tokenId: number,
+  amount: bigint,
+): Promise<boolean> {
+  const tx = api.tx.unique.repartition(collectionId, tokenId, amount);
+  const events = await submitTransactionAsync(sender, tx);
+  const result = getGenericResult(events);
+
+  return result.success;
+}
