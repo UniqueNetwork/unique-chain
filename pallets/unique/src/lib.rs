@@ -290,7 +290,7 @@ decl_module! {
 			Ok(())
 		}
 
-		/// **DANGEROUS**: Destroys collection and all NFTs within this collection. Users irrecoverably lose their assets and may lose real money.
+		/// Destroys collection if no tokens within this collection
 		///
 		/// # Permissions
 		///
