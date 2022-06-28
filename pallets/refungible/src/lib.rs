@@ -91,7 +91,7 @@ use frame_support::{ensure, BoundedVec, transactional, storage::with_transaction
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, MAX_REFUNGIBLE_PIECES, TokenId,
 	CreateCollectionData, CreateRefungibleExData, mapping::TokenAddressMapping, budget::Budget,
-	Property, PropertyScope, TrySetProperty, PropertyKey, PropertyPermission
+	Property, PropertyScope, TrySetProperty, PropertyKey, PropertyPermission, PropertyKeyPermission
 };
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{Error as CommonError, Event as CommonEvent, Pallet as PalletCommon, CommonCollectionOperations as _};
@@ -1063,5 +1063,29 @@ impl<T: Config> Pallet<T> {
 
 	fn total_pieces(collection_id: CollectionId, token_id: TokenId) -> Option<u128> {
 		<TotalSupply<T>>::try_get((collection_id, token_id)).ok()
+	}
+	
+	pub fn set_collection_properties(
+		collection: &RefungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		properties: Vec<Property>,
+	) -> DispatchResult {
+		<PalletCommon<T>>::set_collection_properties(collection, sender, properties)
+	}
+
+	pub fn delete_collection_properties(
+		collection: &RefungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResult {
+		<PalletCommon<T>>::delete_collection_properties(collection, sender, property_keys)
+	}
+
+	pub fn set_token_property_permissions(
+		collection: &RefungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResult {
+		<PalletCommon<T>>::set_token_property_permissions(collection, sender, property_permissions)
 	}
 }

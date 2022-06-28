@@ -212,17 +212,20 @@ describe('Test Refungible properties:', () => {
     });
   });
 
-  it.only('Set properties for exist collection', async () => {
+  it('Set properties for exist collection', async () => {
     await usingApi(async api => {
       const collectionId = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'ReFungible'},
       });
 
-      const properties = [{key: 'key1', value: 'val1'}];
-      // await expect(executeTransaction(
-      //   api, 
-      //   alice, 
-      //   api.tx.unique.setCollectionProperties(collectionId, properties), 
-      // )).to.not.be.rejected;
+      const properties = [
+        {key: 'key1', value: 'val1'},
+        {key: 'key2', value: 'val2'},
+      ];
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setCollectionProperties(collectionId, properties), 
+      )).to.not.be.rejected;
 
       const propertyPermissions = [
         {key: 'key1', permission: {collectionAdmin: true, mutable: false, tokenOwner: true}},

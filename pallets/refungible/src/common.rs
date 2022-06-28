@@ -298,46 +298,72 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 
 	fn set_collection_properties(
 		&self,
-		_sender: T::CrossAccountId,
-		_property: Vec<Property>,
+		sender: T::CrossAccountId,
+		properties: Vec<Property>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight = <CommonWeights<T>>::set_collection_properties(properties.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::set_collection_properties(self, &sender, properties),
+			weight,
+		)
 	}
 
 	fn delete_collection_properties(
 		&self,
-		_sender: &T::CrossAccountId,
-		_property_keys: Vec<PropertyKey>,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight = <CommonWeights<T>>::delete_collection_properties(property_keys.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::delete_collection_properties(self, sender, property_keys),
+			weight,
+		)
 	}
 
 	fn set_token_properties(
 		&self,
-		_sender: T::CrossAccountId,
-		_token_id: TokenId,
-		_property: Vec<Property>,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		properties: Vec<Property>,
 		_nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight = <CommonWeights<T>>::set_token_properties(properties.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::set_token_properties(self, &sender, token_id, properties, false),
+			weight,
+		)
 	}
 
 	fn set_token_property_permissions(
 		&self,
-		_sender: &T::CrossAccountId,
-		_property_permissions: Vec<PropertyKeyPermission>,
+		sender: &T::CrossAccountId,
+		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight =
+			<CommonWeights<T>>::set_token_property_permissions(property_permissions.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::set_token_property_permissions(self, sender, property_permissions),
+			weight,
+		)
 	}
 
 	fn delete_token_properties(
 		&self,
-		_sender: T::CrossAccountId,
-		_token_id: TokenId,
-		_property_keys: Vec<PropertyKey>,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		property_keys: Vec<PropertyKey>,
 		_nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight = <CommonWeights<T>>::delete_token_properties(property_keys.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::delete_token_properties(self, &sender, token_id, property_keys),
+			weight,
+		)
 	}
 
 	fn check_nesting(
