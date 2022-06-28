@@ -203,4 +203,12 @@ benchmarks! {
 		let item = create_max_item(&collection, &owner, [(sender.clone(), 200)])?;
 		<Pallet<T>>::set_allowance(&collection, &sender, &burner, item, 200)?;
 	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, item, 200, &Unlimited)?}
+
+	repartition_item {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			sender: cross_from_sub(owner); owner: cross_sub;
+		};
+		let item = create_max_item(&collection, &sender, [(owner.clone(), 100)])?;
+	}: {<Pallet<T>>::repartition(&collection, &owner, item, 200)?}
 }

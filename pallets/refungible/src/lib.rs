@@ -64,6 +64,8 @@ pub mod pallet {
 		NotRefungibleDataUsedToMintFungibleCollectionToken,
 		/// Maximum refungibility exceeded
 		WrongRefungiblePieces,
+		/// Refungible token can't be repartitioned by user who isn't owns all pieces
+		RepartitionWhileNotOwningAllPieces,
 		/// Refungible token can't nest other tokens
 		RefungibleDisallowsNesting,
 		/// Setting item properties is not allowed
@@ -683,5 +685,29 @@ impl<T: Config> Pallet<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::create_multiple_items(collection, sender, vec![data], nesting_budget)
+	}
+
+	pub fn repartition(
+		collection: &RefungibleHandle<T>,
+		owner: &T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResult {
+		ensure!(
+			amount <= MAX_REFUNGIBLE_PIECES,
+			<Error<T>>::WrongRefungiblePieces
+		);
+		ensure!(amount > 0, <CommonError<T>>::TokenValueTooLow);
+		// Ensure user owns all pieces
+		let total_supply = <TotalSupply<T>>::get((collection.id, token));
+		let balance = <Balance<T>>::get((collection.id, token, owner));
+		ensure!(
+			total_supply == balance,
+			<Error<T>>::RepartitionWhileNotOwningAllPieces
+		);
+
+		<Balance<T>>::insert((collection.id, token, owner), amount);
+		<TotalSupply<T>>::insert((collection.id, token), amount);
+		Ok(())
 	}
 }

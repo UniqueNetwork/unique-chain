@@ -22,7 +22,8 @@ use up_data_structs::{
 	PropertyKeyPermission, PropertyValue,
 };
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, with_weight, weights::WeightInfo as _,
+	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
+	weights::WeightInfo as _,
 };
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
@@ -466,5 +467,9 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		} else {
 			0
 		}
+	}
+
+	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
+		None
 	}
 }
