@@ -22,9 +22,9 @@ use up_data_structs::{
 	CollectionId, TokenId, CreateItemExData, CreateRefungibleExData, budget::Budget, Property,
 	PropertyKey, PropertyValue, PropertyKeyPermission, CreateItemData,
 };
-use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
+use pallet_common::{CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight};
 use pallet_structure::Error as StructureError;
-use sp_runtime::DispatchError;
+use sp_runtime::{DispatchError};
 use sp_std::{vec::Vec, vec};
 
 use crate::{
@@ -404,5 +404,23 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		token: TokenId,
 	) -> u128 {
 		<Allowance<T>>::get((self.id, token, sender, spender))
+	}
+
+	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
+		Some(self)
+	}
+}
+
+impl<T: Config> RefungibleExtensions<T> for RefungibleHandle<T> {
+	fn repartition(
+		&self,
+		owner: &T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo {
+		with_weight(
+			<Pallet<T>>::repartition(self, owner, token, amount),
+			<SelfWeightOf<T>>::repartition_item(),
+		)
 	}
 }

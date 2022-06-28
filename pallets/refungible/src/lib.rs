@@ -688,8 +688,8 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn repartition(
-		owner: &T::CrossAccountId,
 		collection: &RefungibleHandle<T>,
+		owner: &T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult {

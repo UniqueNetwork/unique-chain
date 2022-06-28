@@ -1258,6 +1258,10 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	}
 }
 
+pub trait RefungibleExtensionsWeightInfo {
+	fn repartition() -> Weight;
+}
+
 pub trait CommonCollectionOperations<T: Config> {
 	fn create_item(
 		&self,
@@ -1384,6 +1388,19 @@ pub trait CommonCollectionOperations<T: Config> {
 		spender: T::CrossAccountId,
 		token: TokenId,
 	) -> u128;
+	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>>;
+}
+
+pub trait RefungibleExtensions<T>
+where
+	T: Config,
+{
+	fn repartition(
+		&self,
+		owner: &T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo;
 }
 
 // Flexible enough for implementing CommonCollectionOperations

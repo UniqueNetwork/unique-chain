@@ -45,9 +45,8 @@ use up_data_structs::{
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
 	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_tx,
-	dispatch::CollectionDispatch,
+	dispatch::CollectionDispatch, RefungibleExtensionsWeightInfo,
 };
-use pallet_refungible::{Pallet as PalletRefungible, RefungibleHandle};
 pub mod eth;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -71,14 +70,13 @@ decl_error! {
 	}
 }
 
-pub trait Config:
-	system::Config + pallet_common::Config + pallet_refungible::Config + Sized + TypeInfo
-{
+pub trait Config: system::Config + pallet_common::Config + Sized + TypeInfo {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 	type CommonWeightInfo: CommonWeightInfo<Self::CrossAccountId>;
+	type RefungibleExtensionsWeightInfo: RefungibleExtensionsWeightInfo;
 }
 
 decl_event! {
@@ -904,23 +902,22 @@ decl_module! {
 			target_collection.save()
 		}
 
-		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
+		#[weight = T::RefungibleExtensionsWeightInfo::repartition()]
 		#[transactional]
 		pub fn repartition(
 			origin,
 			collection_id: CollectionId,
 			token: TokenId,
 			amount: u128,
-		) -> DispatchResult {
+		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_internal()?;
-			let refungible_collection = match target_collection.mode {
-				CollectionMode::ReFungible => RefungibleHandle::cast(target_collection),
-				_ => fail!(<Error<T>>::RepartitionCalledOnNonRefungibleCollection),
-			};
-			<PalletRefungible<T>>::repartition(&sender, &refungible_collection, token, amount)?;
-			Ok(())
+			dispatch_tx::<T, _>(collection_id, |d| {
+				if let Some(refungible_extensions) = d.refungible_extensions() {
+					refungible_extensions.repartition(&sender, token, amount)
+				} else {
+					fail!(<Error<T>>::RepartitionCalledOnNonRefungibleCollection)
+				}
+			})
 		}
 	}
 }

@@ -18,7 +18,7 @@ use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
 use up_data_structs::{TokenId, CollectionId, CreateItemExData, budget::Budget, CreateItemData};
-use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
+use pallet_common::{CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight};
 use pallet_structure::Error as StructureError;
 use sp_runtime::ArithmeticError;
 use sp_std::{vec::Vec, vec};
@@ -398,5 +398,9 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 			return 0;
 		}
 		<Allowance<T>>::get((self.id, sender, spender))
+	}
+
+	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
+		None
 	}
 }

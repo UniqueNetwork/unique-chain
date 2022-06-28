@@ -103,4 +103,3 @@ pallet-common = { default-features = false, path = "../common" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }
 pallet-nonfungible = { default-features = false, path = '../../pallets/nonfungible' }
-pallet-refungible = { default-features = false, path = '../../pallets/refungible' }
