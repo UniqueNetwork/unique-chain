@@ -473,6 +473,11 @@ pub fn run() -> Result<()> {
 
 					let autoseal_interval = Duration::from_millis(cli.idle_autoseal_interval);
 
+					let mut config = config;
+					if config.state_pruning == None {
+						config.state_pruning = Some(sc_service::PruningMode::ArchiveAll);
+					}
+
 					return start_node_using_chain_runtime! {
 						start_dev_node(config, autoseal_interval).map_err(Into::into)
 					};
