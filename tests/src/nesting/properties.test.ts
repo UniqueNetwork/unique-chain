@@ -647,8 +647,7 @@ describe('Integration Test: Token Properties', () => {
       nestedToken = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: tokenIdToAddress(collection, token)});
 
       await addCollectionAdminExpectSuccess(alice, collection, bob.address);
-      await transferExpectSuccess(collection, token, alice, charlie);
-    });
+      await transferExpectSuccess(collection, token, alice, charlie);    });
   });
   
   it('Reads yet empty properties of a token', async () => {
@@ -696,6 +695,45 @@ describe('Integration Test: Token Properties', () => {
         expect(properties[i].value).to.be.equal('Serotonin increase');
         expect(tokensData[i].value).to.be.equal('Serotonin increase');
       }
+    });
+  });
+
+  it.only('Assigns properties to a token according to permissions (ReFungible)', async () => {
+    await usingApi(async api => {
+      const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+      const token = await createItemExpectSuccess(alice, collection, 'ReFungible');
+      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
+      await transferExpectSuccess(collection, token, alice, charlie, 1, 'ReFungible');
+
+      const propertyKeys: string[] = [];
+      let i = 0;
+      for (const permission of permissions) {
+        for (const signer of permission.signers) {
+          const key = i + '_' + signer.address;
+          propertyKeys.push(key);
+
+          await expect(executeTransaction(
+            api, 
+            alice, 
+            api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
+          ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
+
+          await expect(executeTransaction(
+            api, 
+            signer, 
+            api.tx.unique.setTokenProperties(collection, token, [{key: key, value: 'Serotonin increase'}]), 
+          ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
+        }
+
+        i++;
+      }
+
+      // const properties = (await api.rpc.unique.tokenProperties(collection, token, propertyKeys)).toHuman() as any[];
+      // const tokensData = (await api.rpc.unique.tokenData(collection, token, propertyKeys)).toHuman().properties as any[];
+      // for (let i = 0; i < properties.length; i++) {
+      //   expect(properties[i].value).to.be.equal('Serotonin increase');
+      //   expect(tokensData[i].value).to.be.equal('Serotonin increase');
+      // }
     });
   });
 
