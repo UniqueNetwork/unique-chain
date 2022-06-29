@@ -379,10 +379,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let token_data =
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
-		ensure!(
-			&token_data.owner == sender,
-			<CommonError<T>>::NoPermission
-		);
+		ensure!(&token_data.owner == sender, <CommonError<T>>::NoPermission);
 
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(sender)?;
@@ -664,10 +661,7 @@ impl<T: Config> Pallet<T> {
 
 		let token_data =
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
-		ensure!(
-			&token_data.owner == from,
-			<CommonError<T>>::NoPermission
-		);
+		ensure!(&token_data.owner == from, <CommonError<T>>::NoPermission);
 
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(from)?;
