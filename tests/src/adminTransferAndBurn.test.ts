@@ -69,4 +69,4 @@ describe('Integration Test: ownerCanTransfer allows admins to use only transferF
       await burnFromExpectSuccess(alice, bob, collectionId, tokenId);
     });
   });
-})
+});
