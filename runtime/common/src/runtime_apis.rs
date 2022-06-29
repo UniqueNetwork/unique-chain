@@ -142,6 +142,10 @@ macro_rules! impl_common_runtime_apis {
                 fn effective_collection_limits(collection: CollectionId) -> Result<Option<CollectionLimits>, DispatchError> {
                     Ok(<pallet_common::Pallet<Runtime>>::effective_collection_limits(collection))
                 }
+
+                fn total_pieces(collection: CollectionId, token_id: TokenId) -> Result<u128, DispatchError> {
+                    dispatch_unique_runtime!(collection.total_pieces(token_id))
+                }
             }
 
             impl sp_api::Core<Block> for Runtime {

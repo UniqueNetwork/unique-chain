@@ -472,4 +472,8 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
 		None
 	}
+
+	fn total_pieces(&self, _token: TokenId) -> u128 {
+		1
+	}
 }

@@ -710,4 +710,9 @@ impl<T: Config> Pallet<T> {
 		<TotalSupply<T>>::insert((collection.id, token), amount);
 		Ok(())
 	}
+
+	fn total_pieces(collection_id: CollectionId, token_id: TokenId) -> u128 {
+		// Not "try_fold" because total count of pieces is limited by 'MAX_REFUNGIBLE_PIECES'.
+		<Balance<T>>::iter_prefix((collection_id, token_id)).fold(0, |total, piece| total + piece.1)
+	}
 }
