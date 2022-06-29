@@ -211,35 +211,4 @@ describe('Test Refungible properties:', () => {
       expect(collection.tokenPropertyPermissions.toHuman()).to.be.deep.equal(propertyPermissions);
     });
   });
-
-  it('Set properties for exist collection', async () => {
-    await usingApi(async api => {
-      const collectionId = await createCollectionExpectSuccess({name: 'A', description: 'B', tokenPrefix: 'C', mode: {type: 'ReFungible'},
-      });
-
-      const properties = [
-        {key: 'key1', value: 'val1'},
-        {key: 'key2', value: 'val2'},
-      ];
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setCollectionProperties(collectionId, properties), 
-      )).to.not.be.rejected;
-
-      const propertyPermissions = [
-        {key: 'key1', permission: {collectionAdmin: true, mutable: false, tokenOwner: true}},
-        {key: 'key2', permission: {collectionAdmin: false, mutable: true, tokenOwner: false}},
-      ];
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collectionId, propertyPermissions), 
-      )).to.not.be.rejected;
-
-      const collection = (await getDetailedCollectionInfo(api, collectionId))!;
-      expect(collection.properties.toHuman()).to.be.deep.equal(properties);
-      expect(collection.tokenPropertyPermissions.toHuman()).to.be.deep.equal(propertyPermissions);
-    });
-  });
 });

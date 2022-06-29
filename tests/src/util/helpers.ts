@@ -284,7 +284,7 @@ interface ReFungible {
   type: 'ReFungible';
 }
 
-type CollectionMode = Nft | Fungible | ReFungible;
+export type CollectionMode = Nft | Fungible | ReFungible;
 
 export type Property = {
   key: any,
