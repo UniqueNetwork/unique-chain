@@ -830,6 +830,25 @@ export async function burnItemExpectSuccess(sender: IKeyringPair, collectionId: 
   });
 }
 
+export async function burnItemExpectFailure(sender: IKeyringPair, collectionId: number, tokenId: number, value: number | bigint = 1) {
+  await usingApi(async (api) => {
+    const tx = api.tx.unique.burnItem(collectionId, tokenId, value);
+
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getCreateCollectionResult(events);
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.false;
+  });
+}
+
+export async function burnFromExpectSuccess(sender: IKeyringPair, from: IKeyringPair | CrossAccountId, collectionId: number, tokenId: number, value: number | bigint = 1) {
+  await usingApi(async (api) => {
+    const tx = api.tx.unique.burnFrom(collectionId, normalizeAccountId(from), tokenId, value);
+    const events = await submitTransactionAsync(sender, tx);
+    return getGenericResult(events).success;
+  });
+}
+
 export async function
 approve(
   api: ApiPromise,
