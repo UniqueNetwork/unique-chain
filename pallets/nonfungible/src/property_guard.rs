@@ -32,16 +32,13 @@ impl<'a, T: Config> PropertyGuard<'a, T> {
 	}
 
 	pub fn check_collection_admin(&mut self) -> DispatchResult {
-		if self.collection_admin_result.is_none() {
-			self.collection_admin_result =
-				Some(self.collection.check_is_owner_or_admin(self.sender));
-		}
-
-		self.collection_admin_result.unwrap()
+		*self.collection_admin_result.get_or_insert_with(|| {
+			self.collection.check_is_owner_or_admin(self.sender)
+		})
 	}
 
 	pub fn check_token_owner(&mut self) -> DispatchResult {
-		if self.token_owner_result.is_none() {
+		*self.token_owner_result.get_or_insert_with(|| {
 			let is_owned = <PalletStructure<T>>::check_indirectly_owned(
 				self.sender.clone(),
 				self.collection.id,
@@ -50,15 +47,11 @@ impl<'a, T: Config> PropertyGuard<'a, T> {
 				self.budget,
 			)?;
 
-			let result = if is_owned {
+			if is_owned {
 				Ok(())
 			} else {
 				Err(<CommonError<T>>::NoPermission.into())
-			};
-
-			self.token_owner_result = Some(result);
-		}
-
-		self.token_owner_result.unwrap()
+			}
+		})
 	}
 }
