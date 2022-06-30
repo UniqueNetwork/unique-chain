@@ -132,17 +132,6 @@ pub fn nft_children<T: Config>(
 	Ok(
 		pallet_nonfungible::TokenChildren::<T>::iter_prefix((collection_id, nft_id))
 			.filter_map(|((child_collection, child_token), _)| {
-				let is_pending = <Pallet<T>>::get_nft_property_decoded(
-					child_collection,
-					child_token,
-					RmrkProperty::PendingNftAccept,
-				)
-				.ok()?;
-
-				if is_pending {
-					return None;
-				}
-
 				let rmrk_child_collection =
 					<Pallet<T>>::rmrk_collection_id(child_collection).ok()?;
 
@@ -151,6 +140,13 @@ pub fn nft_children<T: Config>(
 					nft_id: child_token.0,
 				})
 			})
+			.chain(
+				<Pallet<T>>::iterate_pending_children(collection_id, nft_id)?
+					.map(|(child_collection, child_nft_id)| RmrkNftChild {
+						collection_id: child_collection,
+						nft_id: child_nft_id,
+					})
+			)
 			.collect(),
 	)
 }
@@ -224,7 +220,11 @@ pub fn nft_resources<T: Config>(
 		nft_id,
 		PropertyScope::Rmrk,
 	)
-	.filter_map(|(_, value)| {
+	.filter_map(|(key, value)| {
+		if !is_valid_key_prefix(&key, RESOURCE_ID_PREFIX) {
+			return None;
+		}
+
 		let resource_info: RmrkResourceInfo = <Pallet<T>>::decode_property(&value).ok()?;
 
 		Some(resource_info)
