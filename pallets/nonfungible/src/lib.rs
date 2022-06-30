@@ -488,7 +488,10 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	pub fn set_token_property(property: Property, guard: &mut PropertyGuard<'_, T>) -> DispatchResult {
+	pub fn set_token_property(
+		property: Property,
+		guard: &mut PropertyGuard<'_, T>,
+	) -> DispatchResult {
 		Self::check_token_change_permission(&property.key, guard)?;
 
 		<TokenProperties<T>>::try_mutate((guard.collection.id, guard.token), |properties| {
@@ -530,7 +533,10 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn delete_token_property(property_key: PropertyKey, guard: &mut PropertyGuard<'_, T>) -> DispatchResult {
+	pub fn delete_token_property(
+		property_key: PropertyKey,
+		guard: &mut PropertyGuard<'_, T>,
+	) -> DispatchResult {
 		Self::check_token_change_permission(&property_key, guard)?;
 
 		<TokenProperties<T>>::try_mutate((guard.collection.id, guard.token), |properties| {
@@ -547,7 +553,10 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn check_token_change_permission(property_key: &PropertyKey, guard: &mut PropertyGuard<'_, T>) -> DispatchResult {
+	fn check_token_change_permission(
+		property_key: &PropertyKey,
+		guard: &mut PropertyGuard<'_, T>,
+	) -> DispatchResult {
 		let permission = <PalletCommon<T>>::property_permissions(guard.collection.id)
 			.get(property_key)
 			.cloned()

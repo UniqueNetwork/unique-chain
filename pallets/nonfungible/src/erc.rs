@@ -37,8 +37,7 @@ use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
-	SelfWeightOf, weights::WeightInfo, TokenProperties,
-	property_guard::PropertyGuard,
+	SelfWeightOf, weights::WeightInfo, TokenProperties, property_guard::PropertyGuard,
 };
 
 #[solidity_interface(name = "TokenProperties")]
@@ -88,13 +87,8 @@ impl<T: Config> NonfungibleHandle<T> {
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		let mut guard = PropertyGuard::new(
-			&caller,
-			self,
-			TokenId(token_id),
-			is_token_create,
-			&budget,
-		);
+		let mut guard =
+			PropertyGuard::new(&caller, self, TokenId(token_id), is_token_create, &budget);
 
 		<Pallet<T>>::set_token_property(Property { key, value }, &mut guard)
 			.map_err(dispatch_to_evm::<T>)
@@ -112,16 +106,10 @@ impl<T: Config> NonfungibleHandle<T> {
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		let mut guard = PropertyGuard::new(
-			&caller,
-			self,
-			TokenId(token_id),
-			is_token_create,
-			&budget,
-		);
+		let mut guard =
+			PropertyGuard::new(&caller, self, TokenId(token_id), is_token_create, &budget);
 
-		<Pallet<T>>::delete_token_property(key, &mut guard)
-			.map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::delete_token_property(key, &mut guard).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Throws error if key not found
