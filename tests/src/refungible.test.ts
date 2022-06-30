@@ -68,6 +68,27 @@ describe('integration test: Refungible functionality:', () => {
     });
   });
 
+  it.only('Check total pieces of token', async () => {
+    await usingApi(async api => {
+      const createCollectionResult = await createCollection(api, alice, {mode: {type: 'ReFungible'}});
+      expect(createCollectionResult.success).to.be.true;    
+      const collectionId  = createCollectionResult.collectionId;
+      const amountPieces = 100n;
+      const result = await createRefungibleToken(api, alice, collectionId, amountPieces);
+      expect(result.success).to.be.true;
+      {
+        const totalPieces = await api.rpc.unique.totalPieces(collectionId, result.itemId);
+        expect(totalPieces.toBigInt()).to.be.eq(amountPieces);
+      }
+
+      await transfer(api, collectionId, result.itemId, alice, bob, 60n);
+      {
+        const totalPieces = await api.rpc.unique.totalPieces(collectionId, result.itemId);
+        expect(totalPieces.toBigInt()).to.be.eq(amountPieces);
+      }
+    });
+  });
+
   it('Transfer token pieces', async () => {
     await usingApi(async api => {
       const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
