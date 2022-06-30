@@ -9,7 +9,7 @@ import {
   transferExpectSuccess,
 } from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
-import { tokenIdToAddress } from '../eth/util/helpers';
+import {tokenIdToAddress} from '../eth/util/helpers';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
