@@ -141,11 +141,12 @@ pub fn nft_children<T: Config>(
 				})
 			})
 			.chain(
-				<Pallet<T>>::iterate_pending_children(collection_id, nft_id)?
-					.map(|(child_collection, child_nft_id)| RmrkNftChild {
+				<Pallet<T>>::iterate_pending_children(collection_id, nft_id)?.map(
+					|(child_collection, child_nft_id)| RmrkNftChild {
 						collection_id: child_collection,
 						nft_id: child_nft_id,
-					})
+					},
+				),
 			)
 			.collect(),
 	)

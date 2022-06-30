@@ -16,15 +16,13 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{
-	pallet_prelude::*,
-	transactional,
-	BoundedVec,
-	dispatch::DispatchResult,
-};
+use frame_support::{pallet_prelude::*, transactional, BoundedVec, dispatch::DispatchResult};
 use frame_system::{pallet_prelude::*, ensure_signed};
 use sp_runtime::{DispatchError, Permill, traits::StaticLookup};
-use sp_std::{vec::Vec, collections::{btree_set::BTreeSet, btree_map::BTreeMap}};
+use sp_std::{
+	vec::Vec,
+	collections::{btree_set::BTreeSet, btree_map::BTreeMap},
+};
 use up_data_structs::{*, mapping::TokenAddressMapping};
 use pallet_common::{
 	Pallet as PalletCommon, Error as CommonError, CollectionHandle, CommonCollectionOperations,
@@ -500,7 +498,8 @@ pub mod pallet {
 					collection_id,
 					nft_id,
 					RmrkProperty::PendingNftAccept
-				)?.is_none(),
+				)?
+				.is_none(),
 				<Error<T>>::NoPermission
 			);
 
@@ -539,7 +538,7 @@ pub mod pallet {
 							PropertyScope::Rmrk,
 							Self::rmrk_property::<Option<PendingTarget>>(
 								PendingNftAccept,
-								&Some((target_collection_id, target_nft_id.into()))
+								&Some((target_collection_id, target_nft_id.into())),
 							)?,
 						)?;
 
@@ -642,7 +641,7 @@ pub mod pallet {
 			let pending_target = Self::get_nft_property_decoded::<Option<PendingTarget>>(
 				collection_id,
 				nft_id,
-				RmrkProperty::PendingNftAccept
+				RmrkProperty::PendingNftAccept,
 			)?;
 
 			if let Some(pending_target) = pending_target {
@@ -694,15 +693,16 @@ pub mod pallet {
 				<Error<T>>::NoAvailableNftId
 			);
 
-
 			let pending_target = Self::get_nft_property_decoded::<Option<PendingTarget>>(
 				collection_id,
 				nft_id,
-				RmrkProperty::PendingNftAccept
+				RmrkProperty::PendingNftAccept,
 			)?;
 
 			match pending_target {
-				Some(pending_target) => Self::remove_pending_child(pending_target, (rmrk_collection_id, rmrk_nft_id))?,
+				Some(pending_target) => {
+					Self::remove_pending_child(pending_target, (rmrk_collection_id, rmrk_nft_id))?
+				}
 				None => return Err(<Error<T>>::CannotRejectNonPendingNft.into()),
 			}
 
@@ -995,14 +995,14 @@ pub mod pallet {
 				|value| -> DispatchResult {
 					let mut bases: BasesMap = match value {
 						Some(value) => Self::decode_property(value)?,
-						None => BasesMap::new()
+						None => BasesMap::new(),
 					};
-	
+
 					*bases.entry(base_id).or_insert(0) += 1;
-	
+
 					*value = Some(Self::encode_property(&bases)?);
 					Ok(())
-				}
+				},
 			)?;
 
 			Self::deposit_event(Event::ResourceAdded {
@@ -1249,12 +1249,15 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	fn iterate_pending_children(collection_id: CollectionId, nft_id: TokenId) -> Result<impl Iterator<Item=PendingChild>, DispatchError> {
+	fn iterate_pending_children(
+		collection_id: CollectionId,
+		nft_id: TokenId,
+	) -> Result<impl Iterator<Item = PendingChild>, DispatchError> {
 		let property = <PalletNft<T>>::token_aux_property((
 			collection_id,
 			nft_id,
 			PropertyScope::Rmrk,
-			Self::rmrk_property_key(PendingChildren)?
+			Self::rmrk_property_key(PendingChildren)?,
 		));
 
 		let pending_children = match property {
@@ -1345,8 +1348,9 @@ impl<T: Config> Pallet<T> {
 			collection_id,
 			nft_id,
 			scope,
-			resource_id_key.clone()
-		)).ok_or(<Error<T>>::ResourceDoesntExist)?;
+			resource_id_key.clone(),
+		))
+		.ok_or(<Error<T>>::ResourceDoesntExist)?;
 
 		let resource_info: RmrkResourceInfo = Self::decode_property(&resource)?;
 
@@ -1392,7 +1396,7 @@ impl<T: Config> Pallet<T> {
 			|value| -> DispatchResult {
 				let mut bases: BasesMap = match value {
 					Some(value) => Self::decode_property(value)?,
-					None => BasesMap::new()
+					None => BasesMap::new(),
 				};
 
 				let remaining = bases.get(&base_id);
@@ -1405,7 +1409,7 @@ impl<T: Config> Pallet<T> {
 
 				*value = Some(Self::encode_property(&bases)?);
 				Ok(())
-			}
+			},
 		)
 	}
 

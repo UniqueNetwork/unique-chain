@@ -98,8 +98,11 @@ pub fn strip_key_prefix(key: &PropertyKey, prefix: &str) -> Option<PropertyKey> 
 	let key_prefix = PropertyKey::try_from(prefix.as_bytes().to_vec()).ok()?;
 	let key_prefix = PropertyScope::Rmrk.apply(key_prefix).ok()?;
 
-	key.as_slice().strip_prefix(key_prefix.as_slice())?
-		.to_vec().try_into().ok()
+	key.as_slice()
+		.strip_prefix(key_prefix.as_slice())?
+		.to_vec()
+		.try_into()
+		.ok()
 }
 
 pub fn is_valid_key_prefix(key: &PropertyKey, prefix: &str) -> bool {
