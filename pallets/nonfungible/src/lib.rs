@@ -52,6 +52,10 @@ pub mod common;
 pub mod erc;
 pub mod weights;
 
+mod property_guard;
+
+use property_guard::*;
+
 pub type CreateItemData<T> = CreateNftExData<<T as pallet_evm::account::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
@@ -484,30 +488,18 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	pub fn set_token_property(
-		collection: &NonfungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		token_id: TokenId,
-		property: Property,
-		is_token_create: bool,
-	) -> DispatchResult {
-		Self::check_token_change_permission(
-			collection,
-			sender,
-			token_id,
-			&property.key,
-			is_token_create,
-		)?;
+	pub fn set_token_property(property: Property, guard: &mut PropertyGuard<'_, T>) -> DispatchResult {
+		Self::check_token_change_permission(&property.key, guard)?;
 
-		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
+		<TokenProperties<T>>::try_mutate((guard.collection.id, guard.token), |properties| {
 			let property = property.clone();
 			properties.try_set(property.key, property.value)
 		})
 		.map_err(<CommonError<T>>::from)?;
 
 		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
-			collection.id,
-			token_id,
+			guard.collection.id,
+			guard.token,
 			property.key,
 		));
 
@@ -521,57 +513,47 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		properties: Vec<Property>,
 		is_token_create: bool,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
+		let mut guard = PropertyGuard::new(
+			sender,
+			collection,
+			token_id,
+			is_token_create,
+			nesting_budget,
+		);
+
 		for property in properties {
-			Self::set_token_property(collection, sender, token_id, property, is_token_create)?;
+			Self::set_token_property(property, &mut guard)?;
 		}
 
 		Ok(())
 	}
 
-	pub fn delete_token_property(
-		collection: &NonfungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		token_id: TokenId,
-		property_key: PropertyKey,
-	) -> DispatchResult {
-		Self::check_token_change_permission(collection, sender, token_id, &property_key, false)?;
+	pub fn delete_token_property(property_key: PropertyKey, guard: &mut PropertyGuard<'_, T>) -> DispatchResult {
+		Self::check_token_change_permission(&property_key, guard)?;
 
-		<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
+		<TokenProperties<T>>::try_mutate((guard.collection.id, guard.token), |properties| {
 			properties.remove(&property_key)
 		})
 		.map_err(<CommonError<T>>::from)?;
 
 		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertyDeleted(
-			collection.id,
-			token_id,
+			guard.collection.id,
+			guard.token,
 			property_key,
 		));
 
 		Ok(())
 	}
 
-	fn check_token_change_permission(
-		collection: &NonfungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		token_id: TokenId,
-		property_key: &PropertyKey,
-		is_token_create: bool,
-	) -> DispatchResult {
-		let permission = <PalletCommon<T>>::property_permissions(collection.id)
+	fn check_token_change_permission(property_key: &PropertyKey, guard: &mut PropertyGuard<'_, T>) -> DispatchResult {
+		let permission = <PalletCommon<T>>::property_permissions(guard.collection.id)
 			.get(property_key)
 			.cloned()
 			.unwrap_or_else(PropertyPermission::none);
 
-		let token_data = <TokenData<T>>::get((collection.id, token_id))
-			.ok_or(<CommonError<T>>::TokenNotFound)?;
-
-		let check_token_owner = || -> DispatchResult {
-			ensure!(&token_data.owner == sender, <CommonError<T>>::NoPermission);
-			Ok(())
-		};
-
-		let is_property_exists = TokenProperties::<T>::get((collection.id, token_id))
+		let is_property_exists = TokenProperties::<T>::get((guard.collection.id, guard.token))
 			.get(property_key)
 			.is_some();
 
@@ -586,18 +568,18 @@ impl<T: Config> Pallet<T> {
 				..
 			} => {
 				//TODO: investigate threats during public minting.
-				if is_token_create && (collection_admin || token_owner) {
+				if guard.is_token_create && (collection_admin || token_owner) {
 					return Ok(());
 				}
 
 				let mut check_result = Err(<CommonError<T>>::NoPermission.into());
 
 				if collection_admin {
-					check_result = collection.check_is_owner_or_admin(sender);
+					check_result = guard.check_collection_admin();
 				}
 
 				if token_owner {
-					check_result.or_else(|_| check_token_owner())
+					check_result.or_else(|_| guard.check_token_owner())
 				} else {
 					check_result
 				}
@@ -611,9 +593,20 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		property_keys: Vec<PropertyKey>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
+		let is_token_create = false;
+
+		let mut guard = PropertyGuard::new(
+			sender,
+			collection,
+			token_id,
+			is_token_create,
+			nesting_budget,
+		);
+
 		for key in property_keys {
-			Self::delete_token_property(collection, sender, token_id, key)?;
+			Self::delete_token_property(key, &mut guard)?;
 		}
 
 		Ok(())
@@ -829,6 +822,7 @@ impl<T: Config> Pallet<T> {
 					TokenId(token),
 					data.properties.clone().into_inner(),
 					true,
+					nesting_budget,
 				) {
 					return TransactionOutcome::Rollback(Err(e));
 				}

@@ -1311,12 +1311,14 @@ pub trait CommonCollectionOperations<T: Config> {
 		sender: T::CrossAccountId,
 		token_id: TokenId,
 		property: Vec<Property>,
+		budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn delete_token_properties(
 		&self,
 		sender: T::CrossAccountId,
 		token_id: TokenId,
 		property_keys: Vec<PropertyKey>,
+		budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn set_token_property_permissions(
 		&self,

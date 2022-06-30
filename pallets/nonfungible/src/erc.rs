@@ -38,6 +38,7 @@ use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
 	SelfWeightOf, weights::WeightInfo, TokenProperties,
+	property_guard::PropertyGuard,
 };
 
 #[solidity_interface(name = "TokenProperties")]
@@ -82,14 +83,21 @@ impl<T: Config> NonfungibleHandle<T> {
 			.map_err(|_| "key too long")?;
 		let value = value.try_into().map_err(|_| "value too long")?;
 
-		<Pallet<T>>::set_token_property(
-			self,
+		let is_token_create = false;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let mut guard = PropertyGuard::new(
 			&caller,
+			self,
 			TokenId(token_id),
-			Property { key, value },
-			false,
-		)
-		.map_err(dispatch_to_evm::<T>)
+			is_token_create,
+			&budget,
+		);
+
+		<Pallet<T>>::set_token_property(Property { key, value }, &mut guard)
+			.map_err(dispatch_to_evm::<T>)
 	}
 
 	fn delete_property(&mut self, token_id: uint256, caller: caller, key: string) -> Result<()> {
@@ -99,7 +107,20 @@ impl<T: Config> NonfungibleHandle<T> {
 			.try_into()
 			.map_err(|_| "key too long")?;
 
-		<Pallet<T>>::delete_token_property(self, &caller, TokenId(token_id), key)
+		let is_token_create = false;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let mut guard = PropertyGuard::new(
+			&caller,
+			self,
+			TokenId(token_id),
+			is_token_create,
+			&budget,
+		);
+
+		<Pallet<T>>::delete_token_property(key, &mut guard)
 			.map_err(dispatch_to_evm::<T>)
 	}
 

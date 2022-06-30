@@ -298,6 +298,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		_sender: T::CrossAccountId,
 		_token_id: TokenId,
 		_property: Vec<Property>,
+		_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
@@ -315,6 +316,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		_sender: T::CrossAccountId,
 		_token_id: TokenId,
 		_property_keys: Vec<PropertyKey>,
+		_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
