@@ -143,7 +143,7 @@ macro_rules! impl_common_runtime_apis {
                     Ok(<pallet_common::Pallet<Runtime>>::effective_collection_limits(collection))
                 }
 
-                fn total_pieces(collection: CollectionId, token_id: TokenId) -> Result<u128, DispatchError> {
+                fn total_pieces(collection: CollectionId, token_id: TokenId) -> Result<Option<u128>, DispatchError> {
                     dispatch_unique_runtime!(collection.total_pieces(token_id))
                 }
             }

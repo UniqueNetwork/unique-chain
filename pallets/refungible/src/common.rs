@@ -410,7 +410,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		Some(self)
 	}
 
-	fn total_pieces(&self, token: TokenId) -> u128 {
+	fn total_pieces(&self, token: TokenId) -> Option<u128> {
 		<Pallet<T>>::total_pieces(self.id, token)
 	}
 }

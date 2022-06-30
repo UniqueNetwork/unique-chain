@@ -473,7 +473,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		None
 	}
 
-	fn total_pieces(&self, _token: TokenId) -> u128 {
-		1
+	fn total_pieces(&self, _token: TokenId) -> Option<u128> {
+		Some(1)
 	}
 }

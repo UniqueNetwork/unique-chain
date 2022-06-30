@@ -711,7 +711,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn total_pieces(collection_id: CollectionId, token_id: TokenId) -> u128 {
-		<TotalSupply<T>>::get((collection_id, token_id))
+	fn total_pieces(collection_id: CollectionId, token_id: TokenId) -> Option<u128> {
+		<TotalSupply<T>>::try_get((collection_id, token_id)).ok()
 	}
 }

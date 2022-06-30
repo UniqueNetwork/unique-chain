@@ -198,7 +198,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		collection_id: CollectionId,
 		token_id: TokenId,
 		at: Option<BlockHash>,
-	) -> Result<u128>;
+	) -> Result<Option<u128>>;
 }
 
 mod rmrk_unique_rpc {
@@ -472,7 +472,7 @@ where
 	pass_method!(collection_stats() -> CollectionStats, unique_api);
 	pass_method!(next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Option<u64>, unique_api);
 	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>, unique_api);
-	pass_method!(total_pieces(collection_id: CollectionId, token_id: TokenId) -> u128, unique_api);
+	pass_method!(total_pieces(collection_id: CollectionId, token_id: TokenId) -> Option<u128>, unique_api);
 }
 
 #[allow(deprecated)]

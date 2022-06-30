@@ -1383,7 +1383,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	/// Amount of specific token account have (Applicable to fungible/refungible)
 	fn balance(&self, account: T::CrossAccountId, token: TokenId) -> u128;
 	/// Amount of token pieces
-	fn total_pieces(&self, token: TokenId) -> u128;
+	fn total_pieces(&self, token: TokenId) -> Option<u128>;
 	fn allowance(
 		&self,
 		sender: T::CrossAccountId,

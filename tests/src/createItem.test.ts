@@ -24,6 +24,8 @@ import {
   createCollectionWithPropsExpectSuccess,
   createItemWithPropsExpectSuccess,
   createItemWithPropsExpectFailure,
+  createCollection,
+  transferExpectSuccess,
 } from './util/helpers';
 
 const expect = chai.expect;
@@ -94,6 +96,68 @@ describe('integration test: ext. ():', () => {
       propPerm:   [{key: 'key1', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]});
     
     await createItemWithPropsExpectSuccess(alice, newCollectionID, createMode, [{key: 'key1', value: 'val1'}]);
+  });
+
+  it.only('Check total pieces of Fungible token', async () => {
+    await usingApi(async api => {
+      const createMode = 'Fungible';
+      const collectionId = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0}});
+      const tokenId = await createItemExpectSuccess(alice, collectionId, createMode, bob.address);
+      {
+        const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
+        expect(totalPieces.isSome).to.be.true;
+        expect(totalPieces.unwrap().toBigInt()).to.be.eq(10n);
+      }
+
+      await transferExpectSuccess(collectionId, tokenId, bob, alice, 1, createMode);
+      {
+        const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
+        expect(totalPieces.isSome).to.be.true;
+        expect(totalPieces.unwrap().toBigInt()).to.be.eq(10n);
+      }
+    });
+  });
+
+  it.only('Check total pieces of NFT token', async () => {
+    await usingApi(async api => {
+      const createMode = 'NFT';
+      const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
+      const tokenId = await createItemExpectSuccess(alice, collectionId, createMode, bob.address);
+      {
+        const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
+        expect(totalPieces.isSome).to.be.true;
+        expect(totalPieces.unwrap().toBigInt()).to.be.eq(1n);
+      }
+
+      await transferExpectSuccess(collectionId, tokenId, bob, alice, 1, createMode);
+      {
+        const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
+        expect(totalPieces.isSome).to.be.true;
+        expect(totalPieces.unwrap().toBigInt()).to.be.eq(1n);
+      }
+    });
+  });
+
+  it.only('Check total pieces of ReFungible token', async () => {
+    await usingApi(async api => {
+      const createMode = 'ReFungible';
+      const createCollectionResult = await createCollection(api, alice, {mode: {type: createMode}});
+      const collectionId  = createCollectionResult.collectionId;
+      const amountPieces = 100n;
+      const tokenId = await createItemExpectSuccess(alice, collectionId, createMode, bob.address);
+      {
+        const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
+        expect(totalPieces.isSome).to.be.true;
+        expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
+      }
+
+      await transferExpectSuccess(collectionId, tokenId, bob, alice, 60n, createMode);
+      {
+        const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
+        expect(totalPieces.isSome).to.be.true;
+        expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
+      }
+    });
   });
 });
 
