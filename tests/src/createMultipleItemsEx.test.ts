@@ -15,30 +15,279 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-import privateKey from './substrate/privateKey';
 import usingApi, {executeTransaction} from './substrate/substrate-api';
-import {createCollectionExpectSuccess} from './util/helpers';
+import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess} from './util/helpers';
 
 describe('createMultipleItemsEx', () => {
   it('can initialize multiple NFT with different owners', async () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-    const alice = privateKey('//Alice');
-    const bob = privateKey('//Bob');
-    const charlie = privateKey('//Charlie');
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
       const data = [
         {
           owner: {substrate: alice.address},
-          constData: '0x0000',
-          variableData: '0x1111',
         }, {
           owner: {substrate: bob.address},
-          constData: '0x2222',
-          variableData: '0x3333',
         }, {
           owner: {substrate: charlie.address},
-          constData: '0x4444',
-          variableData: '0x5555',
+        },
+      ];
+
+      await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
+        NFT: data,
+      }));
+      const tokens = await api.query.nonfungible.tokenData.entries(collection);
+      const json = tokens.map(([, token]) => token.toJSON());
+      expect(json).to.be.deep.equal(data);
+    });
+  });
+
+  it('createMultipleItemsEx with property Admin', async () => {
+    const collection = await createCollectionWithPropsExpectSuccess({mode: {type: 'NFT'}, propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]});
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
+      const data = [
+        {
+          owner: {substrate: alice.address},
+          properties: [{key: 'k', value: 'v1'}],
+        }, {
+          owner: {substrate: bob.address},
+          properties: [{key: 'k', value: 'v2'}],
+        }, {
+          owner: {substrate: charlie.address},
+          properties: [{key: 'k', value: 'v3'}],
+        },
+      ];
+
+      await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
+        NFT: data,
+      }));
+      for (let i = 1; i < 4; i++) {
+        expect(await api.rpc.unique.tokenProperties(collection, i)).not.to.be.empty;
+      }
+    });
+  });
+
+  it('createMultipleItemsEx with property AdminConst', async () => {
+    const collection = await createCollectionWithPropsExpectSuccess({mode: {type: 'NFT'}, propPerm: [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]});
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
+      const data = [
+        {
+          owner: {substrate: alice.address},
+          properties: [{key: 'k', value: 'v1'}],
+        }, {
+          owner: {substrate: bob.address},
+          properties: [{key: 'k', value: 'v2'}],
+        }, {
+          owner: {substrate: charlie.address},
+          properties: [{key: 'k', value: 'v3'}],
+        },
+      ];
+
+      await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
+        NFT: data,
+      }));
+      for (let i = 1; i < 4; i++) {
+        expect(await api.rpc.unique.tokenProperties(collection, i)).not.to.be.empty;
+      }
+    });
+  });
+
+  it('createMultipleItemsEx with property itemOwnerOrAdmin', async () => {
+    const collection = await createCollectionWithPropsExpectSuccess({mode: {type: 'NFT'}, propPerm: [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: true}}]});
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
+      const data = [
+        {
+          owner: {substrate: alice.address},
+          properties: [{key: 'k', value: 'v1'}],
+        }, {
+          owner: {substrate: bob.address},
+          properties: [{key: 'k', value: 'v2'}],
+        }, {
+          owner: {substrate: charlie.address},
+          properties: [{key: 'k', value: 'v3'}],
+        },
+      ];
+
+      await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
+        NFT: data,
+      }));
+      for (let i = 1; i < 4; i++) {
+        expect(await api.rpc.unique.tokenProperties(collection, i)).not.to.be.empty;
+      }
+    });
+  });
+
+  it('No editing rights', async () => {
+    const collection = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}],
+      propPerm:   [{key: 'key1', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}]});
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
+      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
+      const data = [
+        {
+          owner: {substrate: alice.address},
+          properties: [{key: 'key1', value: 'v2'}],
+        }, {
+          owner: {substrate: bob.address},
+          properties: [{key: 'key1', value: 'v2'}],
+        }, {
+          owner: {substrate: charlie.address},
+          properties: [{key: 'key1', value: 'v2'}],
+        },
+      ];
+
+      const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
+      // await executeTransaction(api, alice, tx);
+
+      //await submitTransactionExpectFailAsync(alice, tx);
+      await expect(executeTransaction(api, alice, tx)).to.be.rejectedWith(/common\.NoPermission/);
+    });
+  });
+
+  it('User doesnt have editing rights', async () => {
+    const collection = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}],
+      propPerm:   [{key: 'key1', permission: {mutable: false, collectionAdmin: false, tokenOwner: false}}]});
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
+      const data = [
+        {
+          owner: {substrate: alice.address},
+          properties: [{key: 'key1', value: 'v2'}],
+        }, {
+          owner: {substrate: alice.address},
+          properties: [{key: 'key1', value: 'v2'}],
+        }, {
+          owner: {substrate: alice.address},
+          properties: [{key: 'key1', value: 'v2'}],
+        },
+      ];
+
+      const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
+      // await executeTransaction(api, alice, tx);
+
+      //await submitTransactionExpectFailAsync(alice, tx);
+      await expect(executeTransaction(api, alice, tx)).to.be.rejectedWith(/common\.NoPermission/);
+    });
+  });
+
+  it('Adding property without access rights', async () => {
+    const collection = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}]});
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
+      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
+      const data = [
+        {
+          owner: {substrate: alice.address},
+          properties: [{key: 'key1', value: 'v2'}],
+        }, {
+          owner: {substrate: bob.address},
+          properties: [{key: 'key1', value: 'v2'}],
+        }, {
+          owner: {substrate: charlie.address},
+          properties: [{key: 'key1', value: 'v2'}],
+        },
+      ];
+
+      const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
+
+      await expect(executeTransaction(api, alice, tx)).to.be.rejectedWith(/common\.NoPermission/);
+      //await submitTransactionExpectFailAsync(alice, tx);
+    });
+  });
+
+  it('Adding more than 64 properties', async () => {
+    const propPerms = [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}];
+
+    for (let i = 0; i < 65; i++) {
+      propPerms.push({key: `key${i}`, permission: {mutable: true, collectionAdmin: true, tokenOwner: true}});
+    }
+
+    const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      await expect(executeTransaction(api, alice, api.tx.unique.setTokenPropertyPermissions(collection, propPerms))).to.be.rejectedWith(/common\.PropertyLimitReached/);
+    });
+  });
+
+  it('Trying to add bigger property than allowed', async () => {
+    const collection = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]});
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
+      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
+      const data = [
+        {
+          owner: {substrate: alice.address}, properties: [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}],
+        }, {
+          owner: {substrate: bob.address}, properties: [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}],
+        }, {
+          owner: {substrate: charlie.address}, properties: [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}],
+        },
+      ];
+
+      const tx = api.tx.unique.createMultipleItemsEx(collection, {NFT: data});
+
+      //await submitTransactionExpectFailAsync(alice, tx);
+      await expect(executeTransaction(api, alice, tx)).to.be.rejectedWith(/common\.NoPermission/);
+    });
+  });
+
+  it('can initialize multiple NFT with different owners', async () => {
+    const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
+      const data = [
+        {
+          owner: {substrate: alice.address},
+        }, {
+          owner: {substrate: bob.address},
+        }, {
+          owner: {substrate: charlie.address},
+        },
+      ];
+
+      await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
+        NFT: data,
+      }));
+      const tokens = await api.query.nonfungible.tokenData.entries(collection);
+      const json = tokens.map(([, token]) => token.toJSON());
+      expect(json).to.be.deep.equal(data);
+    });
+  });
+
+  it('can initialize multiple NFT with different owners', async () => {
+    const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+      const charlie = privateKeyWrapper('//Charlie');
+      const data = [
+        {
+          owner: {substrate: alice.address},
+        }, {
+          owner: {substrate: bob.address},
+        }, {
+          owner: {substrate: charlie.address},
         },
       ];
 
@@ -53,10 +302,10 @@ describe('createMultipleItemsEx', () => {
 
   it('fails when trying to set multiple owners when creating multiple refungibles', async () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    const alice = privateKey('//Alice');
-    const bob = privateKey('//Bob');
-
-    await usingApi(async (api) => {
+    
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
       // Polkadot requires map, and yet requires keys to be JSON encoded
       const users = new Map();
       users.set(JSON.stringify({substrate: alice.address}), 1);
@@ -72,3 +321,4 @@ describe('createMultipleItemsEx', () => {
     });
   });
 });
+'';

@@ -65,6 +65,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       CantApproveMoreThanOwned: AugmentedError<ApiType>;
       /**
+       * Destroying only empty collections is allowed
+       **/
+      CantDestroyNotEmptyCollection: AugmentedError<ApiType>;
+      /**
        * Exceeded max admin count
        **/
       CollectionAdminCountExceeded: AugmentedError<ApiType>;
@@ -72,6 +76,18 @@ declare module '@polkadot/api-base/types/errors' {
        * Collection description can not be longer than 255 char.
        **/
       CollectionDescriptionLimitExceeded: AugmentedError<ApiType>;
+      /**
+       * Tried to store more data than allowed in collection field
+       **/
+      CollectionFieldSizeExceeded: AugmentedError<ApiType>;
+      /**
+       * Tried to access an external collection with an internal API
+       **/
+      CollectionIsExternal: AugmentedError<ApiType>;
+      /**
+       * Tried to access an internal collection with an external API
+       **/
+      CollectionIsInternal: AugmentedError<ApiType>;
       /**
        * Collection limit bounds per collection exceeded
        **/
@@ -93,6 +109,14 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       CollectionTokenPrefixLimitExceeded: AugmentedError<ApiType>;
       /**
+       * Empty property keys are forbidden
+       **/
+      EmptyPropertyKey: AugmentedError<ApiType>;
+      /**
+       * Only ASCII letters, digits, and '_', '-' are allowed
+       **/
+      InvalidCharacterInPropertyKey: AugmentedError<ApiType>;
+      /**
        * Metadata flag frozen
        **/
       MetadataFlagFrozen: AugmentedError<ApiType>;
@@ -105,7 +129,11 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NoPermission: AugmentedError<ApiType>;
       /**
-       * Not sufficient founds to perform action
+       * Tried to store more property data than allowed
+       **/
+      NoSpaceForProperty: AugmentedError<ApiType>;
+      /**
+       * Not sufficient funds to perform action
        **/
       NotSufficientFounds: AugmentedError<ApiType>;
       /**
@@ -113,9 +141,21 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       OwnerPermissionsCantBeReverted: AugmentedError<ApiType>;
       /**
+       * Property key is too long
+       **/
+      PropertyKeyIsTooLong: AugmentedError<ApiType>;
+      /**
+       * Tried to store more property keys than allowed
+       **/
+      PropertyLimitReached: AugmentedError<ApiType>;
+      /**
        * Collection is not in mint mode.
        **/
       PublicMintingNotAllowed: AugmentedError<ApiType>;
+      /**
+       * Only tokens from specific collections may nest tokens under this
+       **/
+      SourceCollectionIsNotAllowedToNest: AugmentedError<ApiType>;
       /**
        * Item not exists.
        **/
@@ -124,10 +164,6 @@ declare module '@polkadot/api-base/types/errors' {
        * Item balance not enough.
        **/
       TokenValueTooLow: AugmentedError<ApiType>;
-      /**
-       * variable_data exceeded data limit.
-       **/
-      TokenVariableDataLimitExceeded: AugmentedError<ApiType>;
       /**
        * Total collections bound exceeded.
        **/
@@ -140,6 +176,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Target collection doesn't supports this operation
        **/
       UnsupportedOperation: AugmentedError<ApiType>;
+      /**
+       * User not passed nesting rule
+       **/
+      UserIsNotAllowedToNest: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -237,6 +277,10 @@ declare module '@polkadot/api-base/types/errors' {
     };
     fungible: {
       /**
+       * Fungible token does not support nested
+       **/
+      FungibleDisallowsNesting: AugmentedError<ApiType>;
+      /**
        * Tried to set data for fungible item
        **/
       FungibleItemsDontHaveData: AugmentedError<ApiType>;
@@ -249,11 +293,19 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotFungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
       /**
+       * Setting item properties is not allowed
+       **/
+      SettingPropertiesNotAllowed: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
     };
     nonfungible: {
+      /**
+       * Unable to burn NFT with children
+       **/
+      CantBurnNftWithChildren: AugmentedError<ApiType>;
       /**
        * Used amount > 1 with NFT
        **/
@@ -373,9 +425,95 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotRefungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
       /**
+       * Refungible token can't nest other tokens
+       **/
+      RefungibleDisallowsNesting: AugmentedError<ApiType>;
+      /**
+       * Setting item properties is not allowed
+       **/
+      SettingPropertiesNotAllowed: AugmentedError<ApiType>;
+      /**
        * Maximum refungibility exceeded
        **/
       WrongRefungiblePieces: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    rmrkCore: {
+      CannotAcceptNonOwnedNft: AugmentedError<ApiType>;
+      CannotRejectNonOwnedNft: AugmentedError<ApiType>;
+      CannotSendToDescendentOrSelf: AugmentedError<ApiType>;
+      CollectionFullOrLocked: AugmentedError<ApiType>;
+      CollectionNotEmpty: AugmentedError<ApiType>;
+      CollectionUnknown: AugmentedError<ApiType>;
+      CorruptedCollectionType: AugmentedError<ApiType>;
+      NftTypeEncodeError: AugmentedError<ApiType>;
+      NoAvailableCollectionId: AugmentedError<ApiType>;
+      NoAvailableNftId: AugmentedError<ApiType>;
+      NonTransferable: AugmentedError<ApiType>;
+      NoPermission: AugmentedError<ApiType>;
+      ResourceDoesntExist: AugmentedError<ApiType>;
+      ResourceNotPending: AugmentedError<ApiType>;
+      RmrkPropertyKeyIsTooLong: AugmentedError<ApiType>;
+      RmrkPropertyValueIsTooLong: AugmentedError<ApiType>;
+      UnableToDecodeRmrkData: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    rmrkEquip: {
+      BaseDoesntExist: AugmentedError<ApiType>;
+      NeedsDefaultThemeFirst: AugmentedError<ApiType>;
+      NoAvailableBaseId: AugmentedError<ApiType>;
+      NoAvailablePartId: AugmentedError<ApiType>;
+      PermissionError: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    scheduler: {
+      /**
+       * Failed to schedule a call
+       **/
+      FailedToSchedule: AugmentedError<ApiType>;
+      /**
+       * Cannot find the scheduled call.
+       **/
+      NotFound: AugmentedError<ApiType>;
+      /**
+       * Reschedule failed because it does not change scheduled time.
+       **/
+      RescheduleNoChange: AugmentedError<ApiType>;
+      /**
+       * Given target block number is in the past.
+       **/
+      TargetBlockNumberInPast: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    structure: {
+      /**
+       * While iterating over children, encountered breadth limit
+       **/
+      BreadthLimit: AugmentedError<ApiType>;
+      /**
+       * While searched for owner, encountered depth limit
+       **/
+      DepthLimit: AugmentedError<ApiType>;
+      /**
+       * While searched for owner, got already checked account
+       **/
+      OuroborosDetected: AugmentedError<ApiType>;
+      /**
+       * While searched for owner, found token owner by not-yet-existing token
+       **/
+      TokenNotFound: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -434,6 +572,10 @@ declare module '@polkadot/api-base/types/errors' {
        * No proposal or bounty at that index.
        **/
       InvalidIndex: AugmentedError<ApiType>;
+      /**
+       * Proposal has not been approved.
+       **/
+      ProposalNotApproved: AugmentedError<ApiType>;
       /**
        * Too many approvals in the queue.
        **/

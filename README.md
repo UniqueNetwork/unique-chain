@@ -42,7 +42,7 @@ so that we can keep the builds stable.
 1. Install Rust:
 
 ```bash
-sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang
+sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make
 curl https://sh.rustup.rs -sSf | sh
 ```
 
@@ -51,19 +51,29 @@ curl https://sh.rustup.rs -sSf | sh
 3. Install install nightly 2021-11-11 and make it default:
 
 ```bash
-rustup toolchain install nightly-2021-11-11
-rustup default nightly-2021-11-11
+rustup toolchain install nightly-2022-05-11
+rustup default nightly-2022-05-11
 ```
 
 4. Add wasm target for nightly toolchain:
 
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2021-11-11
+rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
 ```
 
 5. Build:
+
+Opal
 ```bash
-cargo build --features=unique-runtime,quartz-runtime --release
+cargo build --release
+```
+Quartz
+```bash
+cargo build --features=quartz-runtime --release
+```
+Unique
+```bash
+cargo build --features=unique-runtime --release
 ```
 
 ## Building as Parachain locally
@@ -81,7 +91,7 @@ git clone https://github.com/paritytech/polkadot-launch
 ```
 git clone https://github.com/paritytech/polkadot.git
 cd polkadot
-git checkout release-v0.9.18
+git checkout release-v0.9.23
 cargo build --release
 ```
 
@@ -155,13 +165,13 @@ assetRegistry -> registerForeignAsset(location, metadata)
 location:
 	V0(X2(Parent, Parachain(PARA_ID)))
 metadata:
-	name         OPL
-	symbol       OPL
+	name         QTZ
+	symbol       QTZ
 	decimals     18
 minimalBalance	 1
 ```
 
-### Next, we can send tokens from Opal to Karura:
+### Next, we can send tokens from Quartz to Karura:
 ```
 polkadotXcm -> reserveTransferAssets
 dest:
@@ -179,7 +189,7 @@ weightLimit:
 The result will be displayed in ChainState
 tokens -> accounts
 
-### To send tokens from Karura to Opal:
+### To send tokens from Karura to Quartz:
 ```
 xtokens -> transfer
 

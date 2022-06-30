@@ -19,7 +19,6 @@ import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from '../substrate/privateKey';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
 import {createCollectionExpectSuccess, uniqueEventMessage, normalizeAccountId} from '../util/helpers';
 
@@ -32,14 +31,14 @@ describe('Create Multiple Items Event event ', () => {
   const checkTreasury = 'Deposit';
   const checkSystem = 'ExtrinsicSuccess';
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
     });
   });
   it('Check event from createMultipleItems(): ', async () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionID = await createCollectionExpectSuccess();
-      const args = [{NFT: ['0x31', '0x31']}, {NFT: ['0x32', '0x32']}, {NFT: ['0x33', '0x33']}];
+      const args = [{NFT: {}}, {NFT: {}}, {NFT: {}}];
       const createMultipleItems = api.tx.unique.createMultipleItems(collectionID, normalizeAccountId(alice.address), args);
       const events = await submitTransactionAsync(alice, createMultipleItems);
       const msg = JSON.stringify(uniqueEventMessage(events));

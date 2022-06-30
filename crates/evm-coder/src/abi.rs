@@ -129,7 +129,7 @@ impl<'i> AbiReader<'i> {
 	pub fn bytes(&mut self) -> Result<Vec<u8>> {
 		let mut subresult = self.subresult()?;
 		let length = subresult.read_usize()?;
-		if subresult.buf.len() <= subresult.offset + length {
+		if subresult.buf.len() < subresult.offset + length {
 			return Err(Error::Error(ExitError::OutOfOffset));
 		}
 		Ok(subresult.buf[subresult.offset..subresult.offset + length].into())

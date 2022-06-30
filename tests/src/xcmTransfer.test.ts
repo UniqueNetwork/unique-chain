@@ -20,12 +20,10 @@ import chaiAsPromised from 'chai-as-promised';
 import {WsProvider} from '@polkadot/api';
 import {ApiOptions} from '@polkadot/api/types';
 import {IKeyringPair} from '@polkadot/types/types';
-import privateKey from './substrate/privateKey';
 import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
 import {getGenericResult} from './util/helpers';
 import waitNewBlocks from './substrate/wait-new-blocks';
 import getBalance from './substrate/get-balance';
-import {alicesPublicKey} from './accounts';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -34,12 +32,12 @@ const UNIQUE_CHAIN = 1000;
 const KARURA_CHAIN = 2000;
 const KARURA_PORT = '9946';
 
-describe('Integration test: Exchanging OPL with Karura', () => {
+describe('Integration test: Exchanging QTZ with Karura', () => {
   let alice: IKeyringPair;
   
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
     });
 
     const karuraApiOptions: ApiOptions = {
@@ -60,8 +58,8 @@ describe('Integration test: Exchanging OPL with Karura', () => {
 
       const metadata =
       {
-        name: 'OPL',
-        symbol: 'OPL',
+        name: 'QTZ',
+        symbol: 'QTZ',
         decimals: 18,
         minimalBalance: 1,
       };
@@ -74,7 +72,7 @@ describe('Integration test: Exchanging OPL with Karura', () => {
     }, karuraApiOptions);
   });
 
-  it('Should connect and send OPL to Karura', async () => {
+  it('Should connect and send QTZ to Karura', async () => {
     let balanceOnKaruraBefore: bigint;
     
     await usingApi(async (api) => {
@@ -141,11 +139,11 @@ describe('Integration test: Exchanging OPL with Karura', () => {
     }, {provider: new WsProvider('ws://127.0.0.1:' + KARURA_PORT)});
   });
 
-  it('Should connect to Karura and send OPL back', async () => {
+  it('Should connect to Karura and send QTZ back', async () => {
     let balanceBefore: bigint;
     
     await usingApi(async (api) => {
-      [balanceBefore] = await getBalance(api, [alicesPublicKey]);
+      [balanceBefore] = await getBalance(api, [alice.address]);
     });
 
     await usingApi(async (api) => {
@@ -182,7 +180,7 @@ describe('Integration test: Exchanging OPL with Karura', () => {
     await usingApi(async (api) => {
       // todo do something about instant sealing, where there might not be any new blocks
       await waitNewBlocks(api, 3);
-      const [balanceAfter] = await getBalance(api, [alicesPublicKey]);
+      const [balanceAfter] = await getBalance(api, [alice.address]);
       expect(balanceAfter > balanceBefore).to.be.true;
     });
   });

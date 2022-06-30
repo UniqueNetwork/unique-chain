@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-import privateKey from '../substrate/privateKey';
 import {submitTransactionAsync} from '../substrate/substrate-api';
 import {createEthAccountWithBalance, deployCollector, GAS_ARGS, itWeb3, subToEth, transferBalanceToEth} from './util/helpers';
 import {evmToAddress} from '@polkadot/util-crypto';
@@ -23,8 +22,8 @@ import {getGenericResult, UNIQUE} from '../util/helpers';
 import {getBalanceSingle, transferBalanceExpectSuccess} from '../substrate/get-balance';
 
 describe('EVM payable contracts', () => {
-  itWeb3('Evm contract can receive wei from eth account', async ({api, web3}) => {
-    const deployer = await createEthAccountWithBalance(api, web3);
+  itWeb3('Evm contract can receive wei from eth account', async ({api, web3, privateKeyWrapper}) => {
+    const deployer = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const contract = await deployCollector(web3, deployer);
 
     await web3.eth.sendTransaction({from: deployer, to: contract.options.address, value: '10000', ...GAS_ARGS});
@@ -32,10 +31,10 @@ describe('EVM payable contracts', () => {
     expect(await contract.methods.getCollected().call()).to.be.equal('10000');
   });
 
-  itWeb3('Evm contract can receive wei from substrate account', async ({api, web3}) => {
-    const deployer = await createEthAccountWithBalance(api, web3);
+  itWeb3('Evm contract can receive wei from substrate account', async ({api, web3, privateKeyWrapper}) => {
+    const deployer = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const contract = await deployCollector(web3, deployer);
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     // Transaction fee/value will be payed from subToEth(sender) evm balance,
     // which is backed by evmToAddress(subToEth(sender)) substrate balance
@@ -62,27 +61,27 @@ describe('EVM payable contracts', () => {
   });
 
   // We can't handle sending balance to backing storage of evm balance, because evmToAddress operation is irreversible
-  itWeb3('Wei sent directly to backing storage of evm contract balance is unaccounted', async({api, web3}) => {
-    const deployer = await createEthAccountWithBalance(api, web3);
+  itWeb3('Wei sent directly to backing storage of evm contract balance is unaccounted', async({api, web3, privateKeyWrapper}) => {
+    const deployer = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const contract = await deployCollector(web3, deployer);
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     await transferBalanceExpectSuccess(api, alice, evmToAddress(contract.options.address), '10000');
 
     expect(await contract.methods.getUnaccounted().call()).to.be.equal('10000');
   });
 
-  itWeb3('Balance can be retrieved from evm contract', async({api, web3}) => {
+  itWeb3('Balance can be retrieved from evm contract', async({api, web3, privateKeyWrapper}) => {
     const FEE_BALANCE = 1000n * UNIQUE;
     const CONTRACT_BALANCE = 1n * UNIQUE;
 
-    const deployer = await createEthAccountWithBalance(api, web3);
+    const deployer = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const contract = await deployCollector(web3, deployer);
-    const alice = privateKey('//Alice');
+    const alice = privateKeyWrapper('//Alice');
 
     await web3.eth.sendTransaction({from: deployer, to: contract.options.address, value: CONTRACT_BALANCE.toString(), ...GAS_ARGS});
 
-    const receiver = privateKey(`//Receiver${Date.now()}`);
+    const receiver = privateKeyWrapper(`//Receiver${Date.now()}`);
 
     // First receive balance on eth balance of bob
     {

@@ -17,7 +17,6 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import {default as usingApi} from './substrate/substrate-api';
 import {createCollectionExpectSuccess,
   destroyCollectionExpectSuccess,
@@ -25,6 +24,7 @@ import {createCollectionExpectSuccess,
   setCollectionLimitsExpectSuccess,
   addCollectionAdminExpectSuccess,
   getCreatedCollectionCount,
+  createItemExpectSuccess,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -49,9 +49,9 @@ describe('(!negative test!) integration test: ext. destroyCollection():', () => 
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -80,6 +80,12 @@ describe('(!negative test!) integration test: ext. destroyCollection():', () => 
   it('fails when OwnerCanDestroy == false', async () => {
     const collectionId = await createCollectionExpectSuccess();
     await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanDestroy: false});
+
+    await destroyCollectionExpectFailure(collectionId, '//Alice');
+  });
+  it('fails when a collection still has a token', async () => {
+    const collectionId = await createCollectionExpectSuccess();
+    await createItemExpectSuccess(alice, collectionId, 'NFT');
 
     await destroyCollectionExpectFailure(collectionId, '//Alice');
   });

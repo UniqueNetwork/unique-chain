@@ -327,7 +327,7 @@ impl SolidityArguments for () {
 	}
 }
 
-#[impl_for_tuples(1, 5)]
+#[impl_for_tuples(1, 12)]
 impl SolidityArguments for Tuple {
 	for_tuples!( where #( Tuple: SolidityArguments ),* );
 
@@ -455,7 +455,7 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 	}
 }
 
-#[impl_for_tuples(0, 12)]
+#[impl_for_tuples(0, 24)]
 impl SolidityFunctions for Tuple {
 	for_tuples!( where #( Tuple: SolidityFunctions ),* );
 

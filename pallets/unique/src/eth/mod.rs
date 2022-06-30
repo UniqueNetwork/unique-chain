@@ -14,83 +14,131 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-pub mod sponsoring;
-
-use fp_evm::PrecompileResult;
+use core::marker::PhantomData;
+use evm_coder::{execution::*, generate_stubgen, solidity_interface, weight, types::*};
+use ethereum as _;
+use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
+use pallet_evm::{OnMethodCall, PrecompileResult, account::CrossAccountId, PrecompileHandle};
+use up_data_structs::{
+	CreateCollectionData, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
+	MAX_COLLECTION_NAME_LENGTH,
+};
+use frame_support::traits::Get;
 use pallet_common::{
 	CollectionById,
-	erc::CommonEvmHandler,
-	eth::{map_eth_to_id, map_eth_to_token_id},
+	erc::{token_uri_key, CollectionHelpersEvents},
 };
-use pallet_fungible::FungibleHandle;
-use pallet_nonfungible::NonfungibleHandle;
-use pallet_refungible::{RefungibleHandle, erc::RefungibleTokenHandle};
-use sp_std::borrow::ToOwned;
+use crate::{SelfWeightOf, Config, weights::WeightInfo};
+
 use sp_std::vec::Vec;
-use sp_core::{H160, U256};
-use crate::{CollectionMode, Config, dispatch::Dispatched};
-use pallet_common::CollectionHandle;
+use alloc::format;
 
-pub struct UniqueErcSupport<T: Config>(core::marker::PhantomData<T>);
+struct EvmCollectionHelpers<T: Config>(SubstrateRecorder<T>);
+impl<T: Config> WithRecorder<T> for EvmCollectionHelpers<T> {
+	fn recorder(&self) -> &SubstrateRecorder<T> {
+		&self.0
+	}
 
-impl<T: Config> pallet_evm::OnMethodCall<T> for UniqueErcSupport<T> {
-	fn is_reserved(target: &H160) -> bool {
-		map_eth_to_id(target).is_some()
+	fn into_recorder(self) -> SubstrateRecorder<T> {
+		self.0
 	}
-	fn is_used(target: &H160) -> bool {
-		map_eth_to_id(target)
-			.map(<CollectionById<T>>::contains_key)
-			.unwrap_or(false)
+}
+
+#[solidity_interface(name = "CollectionHelpers", events(CollectionHelpersEvents))]
+impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelpers<T> {
+	#[weight(<SelfWeightOf<T>>::create_collection())]
+	fn create_nonfungible_collection(
+		&self,
+		caller: caller,
+		name: string,
+		description: string,
+		token_prefix: string,
+	) -> Result<address> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let name = name
+			.encode_utf16()
+			.collect::<Vec<u16>>()
+			.try_into()
+			.map_err(|_| error_feild_too_long(stringify!(name), MAX_COLLECTION_NAME_LENGTH))?;
+		let description = description
+			.encode_utf16()
+			.collect::<Vec<u16>>()
+			.try_into()
+			.map_err(|_| {
+				error_feild_too_long(stringify!(description), MAX_COLLECTION_DESCRIPTION_LENGTH)
+			})?;
+		let token_prefix = token_prefix
+			.into_bytes()
+			.try_into()
+			.map_err(|_| error_feild_too_long(stringify!(token_prefix), MAX_TOKEN_PREFIX_LENGTH))?;
+
+		let key = token_uri_key();
+		let permission = up_data_structs::PropertyPermission {
+			mutable: true,
+			collection_admin: true,
+			token_owner: false,
+		};
+		let mut token_property_permissions =
+			up_data_structs::CollectionPropertiesPermissionsVec::default();
+		token_property_permissions
+			.try_push(up_data_structs::PropertyKeyPermission { key, permission })
+			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
+
+		let data = CreateCollectionData {
+			name,
+			description,
+			token_prefix,
+			token_property_permissions,
+			..Default::default()
+		};
+
+		let collection_id =
+			<pallet_nonfungible::Pallet<T>>::init_collection(caller.clone(), data, false)
+				.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+
+		let address = pallet_common::eth::collection_id_to_address(collection_id);
+		Ok(address)
 	}
-	fn get_code(target: &H160) -> Option<Vec<u8>> {
-		if let Some(collection_id) = map_eth_to_id(target) {
-			let collection = <CollectionById<T>>::get(collection_id)?;
-			Some(
-				match collection.mode {
-					CollectionMode::NFT => <NonfungibleHandle<T>>::CODE,
-					CollectionMode::Fungible(_) => <FungibleHandle<T>>::CODE,
-					CollectionMode::ReFungible => <RefungibleHandle<T>>::CODE,
-				}
-				.to_owned(),
-			)
-		} else if let Some((collection_id, _token_id)) = map_eth_to_token_id(target) {
-			let collection = <CollectionById<T>>::get(collection_id)?;
-			if collection.mode != CollectionMode::ReFungible {
-				return None;
-			}
-			// TODO: check token existence
-			Some(<RefungibleTokenHandle<T>>::CODE.to_owned())
-		} else {
-			None
+
+	fn is_collection_exist(&self, _caller: caller, collection_address: address) -> Result<bool> {
+		if let Some(id) = pallet_common::eth::map_eth_to_id(&collection_address) {
+			let collection_id = id;
+			return Ok(<CollectionById<T>>::contains_key(collection_id));
 		}
+
+		Ok(false)
 	}
-	fn call(
-		source: &H160,
-		target: &H160,
-		gas_limit: u64,
-		input: &[u8],
-		value: U256,
-	) -> Option<PrecompileResult> {
-		if let Some(collection_id) = map_eth_to_id(target) {
-			let collection = <CollectionHandle<T>>::new_with_gas_limit(collection_id, gas_limit)?;
-			let dispatched = Dispatched::dispatch(collection);
+}
 
-			match dispatched {
-				Dispatched::Fungible(h) => h.call(source, input, value),
-				Dispatched::Nonfungible(h) => h.call(source, input, value),
-				Dispatched::Refungible(h) => h.call(source, input, value),
-			}
-		} else if let Some((collection_id, token_id)) = map_eth_to_token_id(target) {
-			let collection = <CollectionHandle<T>>::new_with_gas_limit(collection_id, gas_limit)?;
-			if collection.mode != CollectionMode::ReFungible {
-				return None;
-			}
+pub struct CollectionHelpersOnMethodCall<T: Config>(PhantomData<*const T>);
+impl<T: Config + pallet_nonfungible::Config> OnMethodCall<T> for CollectionHelpersOnMethodCall<T> {
+	fn is_reserved(contract: &sp_core::H160) -> bool {
+		contract == &T::ContractAddress::get()
+	}
 
-			let handle = RefungibleHandle::cast(collection);
-			// TODO: check token existence
-			RefungibleTokenHandle(handle, token_id).call(source, input, value)
-		} else {
-			None
+	fn is_used(contract: &sp_core::H160) -> bool {
+		contract == &T::ContractAddress::get()
+	}
+
+	fn call(handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
+		if handle.code_address() != T::ContractAddress::get() {
+			return None;
 		}
+
+		let helpers =
+			EvmCollectionHelpers::<T>(SubstrateRecorder::<T>::new(handle.remaining_gas()));
+		pallet_evm_coder_substrate::call(handle, helpers)
 	}
+
+	fn get_code(contract: &sp_core::H160) -> Option<Vec<u8>> {
+		(contract == &T::ContractAddress::get())
+			.then(|| include_bytes!("./stubs/CollectionHelpers.raw").to_vec())
+	}
+}
+
+generate_stubgen!(collection_helper_impl, CollectionHelpersCall<()>, true);
+generate_stubgen!(collection_helper_iface, CollectionHelpersCall<()>, false);
+
+fn error_feild_too_long(feild: &str, bound: u32) -> Error {
+	Error::Revert(format!("{} is too long. Max length is {}.", feild, bound))
 }

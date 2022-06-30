@@ -21,28 +21,100 @@ use core::{
 };
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
 use frame_support::BoundedVec;
-use up_data_structs::{TokenId, SchemaVersion};
-use pallet_evm_coder_substrate::dispatch_to_evm;
-use sp_core::{H160, U256};
-use sp_std::{vec::Vec, vec};
-use pallet_common::{
-	erc::{CommonEvmHandler, PrecompileResult},
+use up_data_structs::{
+	TokenId, PropertyPermission, PropertyKeyPermission, Property, CollectionId, PropertyKey,
+	CollectionPropertiesVec,
 };
-use pallet_evm::account::CrossAccountId;
+use pallet_evm_coder_substrate::dispatch_to_evm;
+use sp_std::vec::Vec;
+use pallet_common::{
+	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, token_uri_key},
+	CollectionHandle, CollectionPropertyPermissions,
+};
+use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
+use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
-	SelfWeightOf, weights::WeightInfo,
+	SelfWeightOf, weights::WeightInfo, TokenProperties,
 };
 
-fn error_unsupported_schema_version() -> Error {
-	alloc::format!(
-		"Unsupported schema version! Support only {:?}",
-		SchemaVersion::ImageURL
-	)
-	.as_str()
-	.into()
+#[solidity_interface(name = "TokenProperties")]
+impl<T: Config> NonfungibleHandle<T> {
+	fn set_token_property_permission(
+		&mut self,
+		caller: caller,
+		key: string,
+		is_mutable: bool,
+		collection_admin: bool,
+		token_owner: bool,
+	) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		<Pallet<T>>::set_property_permission(
+			self,
+			&caller,
+			PropertyKeyPermission {
+				key: <Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| "too long key")?,
+				permission: PropertyPermission {
+					mutable: is_mutable,
+					collection_admin,
+					token_owner,
+				},
+			},
+		)
+		.map_err(dispatch_to_evm::<T>)
+	}
+
+	fn set_property(
+		&mut self,
+		caller: caller,
+		token_id: uint256,
+		key: string,
+		value: bytes,
+	) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+		let key = <Vec<u8>>::from(key)
+			.try_into()
+			.map_err(|_| "key too long")?;
+		let value = value.try_into().map_err(|_| "value too long")?;
+
+		<Pallet<T>>::set_token_property(
+			self,
+			&caller,
+			TokenId(token_id),
+			Property { key, value },
+			false,
+		)
+		.map_err(dispatch_to_evm::<T>)
+	}
+
+	fn delete_property(&mut self, token_id: uint256, caller: caller, key: string) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+		let key = <Vec<u8>>::from(key)
+			.try_into()
+			.map_err(|_| "key too long")?;
+
+		<Pallet<T>>::delete_token_property(self, &caller, TokenId(token_id), key)
+			.map_err(dispatch_to_evm::<T>)
+	}
+
+	/// Throws error if key not found
+	fn property(&self, token_id: uint256, key: string) -> Result<bytes> {
+		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+		let key = <Vec<u8>>::from(key)
+			.try_into()
+			.map_err(|_| "key too long")?;
+
+		let props = <TokenProperties<T>>::get((self.id, token_id));
+		let prop = props.get(&key).ok_or("key not found")?;
+
+		Ok(prop.to_vec())
+	}
 }
 
 #[derive(ToLog)]
@@ -94,18 +166,21 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// Returns token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
-		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
-			return Err(error_unsupported_schema_version());
+		let key = token_uri_key();
+		if !has_token_permission::<T>(self.id, &key) {
+			return Err("No tokenURI permission".into());
 		}
 
 		self.consume_store_reads(1)?;
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
-		Ok(string::from_utf8_lossy(
-			&<TokenData<T>>::get((self.id, token_id))
-				.ok_or("token not found")?
-				.const_data,
-		)
-		.into())
+
+		let properties = <TokenProperties<T>>::try_get((self.id, token_id))
+			.map_err(|_| Error::Revert("Token properties not found".into()))?;
+		if let Some(property) = properties.get(&key) {
+			return Ok(string::from_utf8_lossy(property).into());
+		}
+
+		Err("Property tokenURI not found".into())
 	}
 }
 
@@ -180,8 +255,11 @@ impl<T: Config> NonfungibleHandle<T> {
 		let from = T::CrossAccountId::from_eth(from);
 		let to = T::CrossAccountId::from_eth(to);
 		let token = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer_from(self, &caller, &from, &to, token)
+		<Pallet<T>>::transfer_from(self, &caller, &from, &to, token, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -252,6 +330,10 @@ impl<T: Config> NonfungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id: u32 = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
 		if <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
 			.ok_or("item id overflow")?
@@ -264,10 +346,10 @@ impl<T: Config> NonfungibleHandle<T> {
 			self,
 			&caller,
 			CreateItemData::<T> {
-				const_data: BoundedVec::default(),
-				variable_data: BoundedVec::default(),
+				properties: BoundedVec::default(),
 				owner: to,
 			},
+			&budget,
 		)
 		.map_err(dispatch_to_evm::<T>)?;
 
@@ -285,13 +367,19 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_id: uint256,
 		token_uri: string,
 	) -> Result<bool> {
-		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
-			return Err(error_unsupported_schema_version());
+		let key = token_uri_key();
+		let permission = get_token_permission::<T>(self.id, &key)?;
+		if !permission.collection_admin {
+			return Err("Operation is not allowed".into());
 		}
 
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id: u32 = token_id.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
 		if <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
 			.ok_or("item id overflow")?
@@ -300,16 +388,25 @@ impl<T: Config> NonfungibleHandle<T> {
 			return Err("item id should be next".into());
 		}
 
+		let mut properties = CollectionPropertiesVec::default();
+		properties
+			.try_push(Property {
+				key,
+				value: token_uri
+					.into_bytes()
+					.try_into()
+					.map_err(|_| "token uri is too long")?,
+			})
+			.map_err(|e| Error::Revert(alloc::format!("Can't add property: {:?}", e)))?;
+
 		<Pallet<T>>::create_item(
 			self,
 			&caller,
 			CreateItemData::<T> {
-				const_data: Vec::<u8>::from(token_uri)
-					.try_into()
-					.map_err(|_| "token uri is too long")?,
-				variable_data: BoundedVec::default(),
+				properties,
 				owner: to,
 			},
+			&budget,
 		)
 		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
@@ -319,6 +416,29 @@ impl<T: Config> NonfungibleHandle<T> {
 	fn finish_minting(&mut self, _caller: caller) -> Result<bool> {
 		Err("not implementable".into())
 	}
+}
+
+fn get_token_permission<T: Config>(
+	collection_id: CollectionId,
+	key: &PropertyKey,
+) -> Result<PropertyPermission> {
+	let token_property_permissions = CollectionPropertyPermissions::<T>::try_get(collection_id)
+		.map_err(|_| Error::Revert("No permissions for collection".into()))?;
+	let a = token_property_permissions
+		.get(key)
+		.map(|p| p.clone())
+		.ok_or_else(|| Error::Revert("No permission".into()))?;
+	Ok(a)
+}
+
+fn has_token_permission<T: Config>(collection_id: CollectionId, key: &PropertyKey) -> bool {
+	if let Ok(token_property_permissions) =
+		CollectionPropertyPermissions::<T>::try_get(collection_id)
+	{
+		return token_property_permissions.contains_key(key);
+	}
+
+	false
 }
 
 #[solidity_interface(name = "ERC721UniqueExtensions")]
@@ -334,8 +454,11 @@ impl<T: Config> NonfungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, token).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer(self, &caller, &to, token, &budget).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
@@ -350,8 +473,12 @@ impl<T: Config> NonfungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let token = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::burn_from(self, &caller, &from, token).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::burn_from(self, &caller, &from, token, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
@@ -363,37 +490,6 @@ impl<T: Config> NonfungibleHandle<T> {
 			.into())
 	}
 
-	#[weight(<SelfWeightOf<T>>::set_variable_metadata(data.len() as u32))]
-	fn set_variable_metadata(
-		&mut self,
-		caller: caller,
-		token_id: uint256,
-		data: bytes,
-	) -> Result<void> {
-		let caller = T::CrossAccountId::from_eth(caller);
-		let token = token_id.try_into()?;
-
-		<Pallet<T>>::set_variable_metadata(
-			self,
-			&caller,
-			token,
-			data.try_into()
-				.map_err(|_| "metadata size exceeded limit")?,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
-		Ok(())
-	}
-
-	fn get_variable_metadata(&self, token_id: uint256) -> Result<bytes> {
-		self.consume_store_reads(1)?;
-		let token: TokenId = token_id.try_into()?;
-
-		Ok(<TokenData<T>>::get((self.id, token))
-			.ok_or("token not found")?
-			.variable_data
-			.into_inner())
-	}
-
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(token_ids.len() as u32))]
 	fn mint_bulk(&mut self, caller: caller, to: address, token_ids: Vec<uint256>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -401,6 +497,9 @@ impl<T: Config> NonfungibleHandle<T> {
 		let mut expected_index = <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
 			.ok_or("item id overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		let total_tokens = token_ids.len();
 		for id in token_ids.into_iter() {
@@ -412,13 +511,13 @@ impl<T: Config> NonfungibleHandle<T> {
 		}
 		let data = (0..total_tokens)
 			.map(|_| CreateItemData::<T> {
-				const_data: BoundedVec::default(),
-				variable_data: BoundedVec::default(),
+				properties: BoundedVec::default(),
 				owner: to.clone(),
 			})
 			.collect();
 
-		<Pallet<T>>::create_multiple_items(self, &caller, data).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::create_multiple_items(self, &caller, data, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -430,34 +529,43 @@ impl<T: Config> NonfungibleHandle<T> {
 		to: address,
 		tokens: Vec<(uint256, string)>,
 	) -> Result<bool> {
-		if !matches!(self.schema_version, SchemaVersion::ImageURL) {
-			return Err(error_unsupported_schema_version());
-		}
-
+		let key = token_uri_key();
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let mut expected_index = <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
 			.ok_or("item id overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		let mut data = Vec::with_capacity(tokens.len());
 		for (id, token_uri) in tokens {
 			let id: u32 = id.try_into().map_err(|_| "token id overflow")?;
 			if id != expected_index {
-				panic!("item id should be next ({}) but got {}", expected_index, id);
+				return Err("item id should be next".into());
 			}
 			expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
 
+			let mut properties = CollectionPropertiesVec::default();
+			properties
+				.try_push(Property {
+					key: key.clone(),
+					value: token_uri
+						.into_bytes()
+						.try_into()
+						.map_err(|_| "token uri is too long")?,
+				})
+				.map_err(|e| Error::Revert(alloc::format!("Can't add property: {:?}", e)))?;
+
 			data.push(CreateItemData::<T> {
-				const_data: Vec::<u8>::from(token_uri)
-					.try_into()
-					.map_err(|_| "token uri is too long")?,
-				variable_data: vec![].try_into().unwrap(),
+				properties,
 				owner: to.clone(),
 			});
 		}
 
-		<Pallet<T>>::create_multiple_items(self, &caller, data).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::create_multiple_items(self, &caller, data, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 }
@@ -471,18 +579,23 @@ impl<T: Config> NonfungibleHandle<T> {
 		ERC721UniqueExtensions,
 		ERC721Mintable,
 		ERC721Burnable,
+		via("CollectionHandle<T>", common_mut, Collection),
+		TokenProperties,
 	)
 )]
-impl<T: Config> NonfungibleHandle<T> {}
+impl<T: Config> NonfungibleHandle<T> where T::AccountId: From<[u8; 32]> {}
 
 // Not a tests, but code generators
 generate_stubgen!(gen_impl, UniqueNFTCall<()>, true);
 generate_stubgen!(gen_iface, UniqueNFTCall<()>, false);
 
-impl<T: Config> CommonEvmHandler for NonfungibleHandle<T> {
+impl<T: Config> CommonEvmHandler for NonfungibleHandle<T>
+where
+	T::AccountId: From<[u8; 32]>,
+{
 	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueNFT.raw");
 
-	fn call(self, source: &H160, input: &[u8], value: U256) -> Option<PrecompileResult> {
-		call::<T, UniqueNFTCall<T>, _>(*source, self, value, input)
+	fn call(self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
+		call::<T, UniqueNFTCall<T>, _, _>(handle, self)
 	}
 }

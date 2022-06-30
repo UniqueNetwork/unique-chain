@@ -6,6 +6,7 @@ members = [
     'client/*',
     'primitives/*',
     'crates/*',
+    'runtime/tests',
 ]
 exclude = [
     "runtime/unique",

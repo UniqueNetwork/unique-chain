@@ -30,6 +30,7 @@ const requiredPallets = [
   'timestamp',
   'transactionpayment',
   'treasury',
+  'structure',
   'system',
   'vesting',
   'parachainsystem',
@@ -49,7 +50,7 @@ const requiredPallets = [
   'unique',
   'nonfungible',
   'refungible',
-  //'scheduler',
+  'scheduler',
   'charging',
 ];
 
@@ -61,6 +62,16 @@ const consensusPallets = [
 ];
 
 describe('Pallet presence', () => {
+  before(async () => {
+    await usingApi(async api => {
+      const chain = await api.rpc.system.chain();
+
+      if (!chain.eq('UNIQUE')) {
+        requiredPallets.push(...['rmrkcore', 'rmrkequip']);
+      }
+    });
+  });
+
   it('Required pallets are present', async () => {
     await usingApi(async api => {
       for (let i=0; i<requiredPallets.length; i++) {

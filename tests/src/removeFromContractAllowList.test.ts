@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import {deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess} from './util/contracthelpers';
 import {addToContractAllowListExpectSuccess, isAllowlistedInContract, removeFromContractAllowListExpectFailure, removeFromContractAllowListExpectSuccess, toggleContractAllowlistExpectSuccess} from './util/helpers';
@@ -25,14 +24,14 @@ describe.skip('Integration Test removeFromContractAllowList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
   it('user is no longer allowlisted after removal', async () => {
-    await usingApi(async (api) => {
-      const [flipper, deployer] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [flipper, deployer] = await deployFlipper(api, privateKeyWrapper);
 
       await addToContractAllowListExpectSuccess(deployer, flipper.address.toString(), bob.address);
       await removeFromContractAllowListExpectSuccess(deployer, flipper.address.toString(), bob.address);
@@ -42,8 +41,8 @@ describe.skip('Integration Test removeFromContractAllowList', () => {
   });
 
   it('user can\'t execute contract after removal', async () => {
-    await usingApi(async (api) => {
-      const [flipper, deployer] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [flipper, deployer] = await deployFlipper(api, privateKeyWrapper);
       await toggleContractAllowlistExpectSuccess(deployer, flipper.address.toString(), true);
 
       await addToContractAllowListExpectSuccess(deployer, flipper.address.toString(), bob.address);
@@ -55,8 +54,8 @@ describe.skip('Integration Test removeFromContractAllowList', () => {
   });
 
   it('can be called twice', async () => {
-    await usingApi(async (api) => {
-      const [flipper, deployer] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [flipper, deployer] = await deployFlipper(api, privateKeyWrapper);
 
       await addToContractAllowListExpectSuccess(deployer, flipper.address.toString(), bob.address);
       await removeFromContractAllowListExpectSuccess(deployer, flipper.address.toString(), bob.address);
@@ -70,9 +69,9 @@ describe.skip('Negative Integration Test removeFromContractAllowList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -83,8 +82,8 @@ describe.skip('Negative Integration Test removeFromContractAllowList', () => {
   });
 
   it('fails when executed by non owner', async () => {
-    await usingApi(async (api) => {
-      const [flipper] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [flipper] = await deployFlipper(api, privateKeyWrapper);
 
       await removeFromContractAllowListExpectFailure(alice, flipper.address.toString(), bob.address);
     });

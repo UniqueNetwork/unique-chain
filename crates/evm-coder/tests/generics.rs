@@ -22,15 +22,27 @@ struct Generic<T>(PhantomData<T>);
 #[solidity_interface(name = "GenericIs")]
 impl<T> Generic<T> {
 	fn test_1(&self) -> Result<uint256> {
-		todo!()
+		unreachable!()
 	}
 }
 
 #[solidity_interface(name = "Generic", is(GenericIs))]
 impl<T: Into<u32>> Generic<T> {
 	fn test_2(&self) -> Result<uint256> {
-		todo!()
+		unreachable!()
 	}
 }
 
 generate_stubgen!(gen_iface, GenericCall<()>, false);
+
+#[solidity_interface(name = "GenericWhere")]
+impl<T> Generic<T>
+where
+	T: core::fmt::Debug,
+{
+	fn test_3(&self) -> Result<uint256> {
+		unreachable!()
+	}
+}
+
+generate_stubgen!(gen_where_iface, GenericWhereCall<()>, false);

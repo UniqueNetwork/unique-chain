@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import waitNewBlocks from './substrate/wait-new-blocks';
 import {deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess} from './util/contracthelpers';
@@ -28,10 +27,10 @@ import {
 
 describe.skip('Integration Test setContractSponsoringRateLimit', () => {
   it('ensure sponsored contract can\'t be called twice without pause for free', async () => {
-    await usingApi(async (api) => {
-      const user = await findUnusedAddress(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const user = await findUnusedAddress(api, privateKeyWrapper);
 
-      const [flipper, deployer] = await deployFlipper(api);
+      const [flipper, deployer] = await deployFlipper(api, privateKeyWrapper);
       await enableContractSponsoringExpectSuccess(deployer, flipper.address, true);
       await setContractSponsoringRateLimitExpectSuccess(deployer, flipper.address, 10);
       await toggleFlipValueExpectSuccess(user, flipper);
@@ -40,10 +39,10 @@ describe.skip('Integration Test setContractSponsoringRateLimit', () => {
   });
 
   it('ensure sponsored contract can be called twice with pause for free', async () => {
-    await usingApi(async (api) => {
-      const user = await findUnusedAddress(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const user = await findUnusedAddress(api, privateKeyWrapper);
 
-      const [flipper, deployer] = await deployFlipper(api);
+      const [flipper, deployer] = await deployFlipper(api, privateKeyWrapper);
       await enableContractSponsoringExpectSuccess(deployer, flipper.address, true);
       await setContractSponsoringRateLimitExpectSuccess(deployer, flipper.address, 1);
       await toggleFlipValueExpectSuccess(user, flipper);
@@ -57,20 +56,22 @@ describe.skip('Negative Integration Test setContractSponsoringRateLimit', () => 
   let alice: IKeyringPair;
 
   before(async () => {
-    alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+    });
   });
 
   it('fails when called for non-contract address', async () => {
-    await usingApi(async (api) => {
-      const user = await findUnusedAddress(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const user = await findUnusedAddress(api, privateKeyWrapper);
 
       await setContractSponsoringRateLimitExpectFailure(alice, user.address, 1);
     });
   });
 
   it('fails when called by non-owning user', async () => {
-    await usingApi(async (api) => {
-      const [flipper] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [flipper] = await deployFlipper(api, privateKeyWrapper);
 
       await setContractSponsoringRateLimitExpectFailure(alice, flipper.address, 1);
     });

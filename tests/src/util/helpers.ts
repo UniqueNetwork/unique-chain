@@ -16,18 +16,18 @@
 
 import '../interfaces/augment-api-rpc';
 import '../interfaces/augment-api-query';
-import {ApiPromise, Keyring} from '@polkadot/api';
-import type {AccountId, EventRecord} from '@polkadot/types/interfaces';
-import {IKeyringPair} from '@polkadot/types/types';
+import {ApiPromise} from '@polkadot/api';
+import type {AccountId, EventRecord, Event} from '@polkadot/types/interfaces';
+import type {GenericEventData} from '@polkadot/types';
+import {AnyTuple, IEvent, IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
 import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {alicesPublicKey} from '../accounts';
-import privateKey from '../substrate/privateKey';
-import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
+import {default as usingApi, executeTransaction, submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
-import {UpDataStructsCollection} from '@polkadot/types/lookup';
+import {UpDataStructsRpcCollection, UpDataStructsCreateItemData, UpDataStructsProperty} from '@polkadot/types/lookup';
+import {UpDataStructsTokenChild} from '../interfaces';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -40,7 +40,7 @@ export type CrossAccountId = {
 
 export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {
   if (typeof input === 'string') {
-    if (input.length === 48 || input.length === 47) {
+    if (input.length >= 47) {
       return {Substrate: input};
     } else if (input.length === 42 && input.startsWith('0x')) {
       return {Ethereum: input.toLowerCase()};
@@ -88,9 +88,10 @@ const MILLIUNIQUE = 1_000n * MICROUNIQUE;
 const CENTIUNIQUE = 10n * MILLIUNIQUE;
 export const UNIQUE = 100n * CENTIUNIQUE;
 
-type GenericResult = {
-  success: boolean,
-};
+interface GenericResult<T> {
+  success: boolean;
+  data: T | null;
+}
 
 interface CreateCollectionResult {
   success: boolean;
@@ -105,7 +106,6 @@ interface CreateItemResult {
 }
 
 interface TransferResult {
-  success: boolean;
   collectionId: number;
   itemId: number;
   sender?: CrossAccountId;
@@ -136,15 +136,12 @@ export interface IChainLimits {
   nftSponsorTransferTimeout: number;
   fungibleSponsorTransferTimeout: number;
   refungibleSponsorTransferTimeout: number;
-  offchainSchemaLimit: number;
-  variableOnChainSchemaLimit: number;
-  constOnChainSchemaLimit: number;
+  //offchainSchemaLimit: number;
+  //constOnChainSchemaLimit: number;
 }
 
 export interface IReFungibleTokenDataType {
   owner: IReFungibleOwner[];
-  constData: number[];
-  variableData: number[];
 }
 
 export function uniqueEventMessage(events: EventRecord[]): IGetMessage {
@@ -168,84 +165,110 @@ export function uniqueEventMessage(events: EventRecord[]): IGetMessage {
   return result;
 }
 
-export function getGenericResult(events: EventRecord[]): GenericResult {
-  const result: GenericResult = {
-    success: false,
-  };
-  events.forEach(({event: {method}}) => {
+export function getEvent<T extends Event>(events: EventRecord[], check: (event: IEvent<AnyTuple>) => event is T): T | undefined {
+  const event = events.find(r => check(r.event));
+  if (!event) return;
+  return event.event as T;
+}
+
+export function getGenericResult<T>(events: EventRecord[]): GenericResult<T>;
+export function getGenericResult<T>(
+  events: EventRecord[],
+  expectSection: string,
+  expectMethod: string,
+  extractAction: (data: GenericEventData) => T
+): GenericResult<T>;
+
+export function getGenericResult<T>(
+  events: EventRecord[],
+  expectSection?: string,
+  expectMethod?: string,
+  extractAction?: (data: GenericEventData) => T,
+): GenericResult<T> {
+  let success = false;
+  let successData = null;
+
+  events.forEach(({event: {data, method, section}}) => {
     // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
     if (method === 'ExtrinsicSuccess') {
-      result.success = true;
+      success = true;
+    } else if ((expectSection == section) && (expectMethod == method)) {
+      successData = extractAction!(data as any);
     }
   });
+
+  const result: GenericResult<T> = {
+    success,
+    data: successData,
+  };
   return result;
 }
 
-
-
 export function getCreateCollectionResult(events: EventRecord[]): CreateCollectionResult {
-  let success = false;
-  let collectionId = 0;
-  events.forEach(({event: {data, method, section}}) => {
-    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
-    if (method == 'ExtrinsicSuccess') {
-      success = true;
-    } else if ((section == 'common') && (method == 'CollectionCreated')) {
-      collectionId = parseInt(data[0].toString(), 10);
-    }
-  });
+  const genericResult = getGenericResult(events, 'common', 'CollectionCreated', (data) => parseInt(data[0].toString(), 10));
   const result: CreateCollectionResult = {
-    success,
-    collectionId,
+    success: genericResult.success,
+    collectionId: genericResult.data ?? 0,
   };
   return result;
+}
+
+export function getCreateItemsResult(events: EventRecord[]): CreateItemResult[] {
+  const results: CreateItemResult[] = [];
+  
+  const genericResult = getGenericResult<CreateItemResult[]>(events, 'common', 'ItemCreated', (data) => {
+    const collectionId = parseInt(data[0].toString(), 10);
+    const itemId = parseInt(data[1].toString(), 10);
+    const recipient = normalizeAccountId(data[2].toJSON() as any);
+
+    const itemRes: CreateItemResult = {
+      success: true,
+      collectionId,
+      itemId,
+      recipient,
+    };
+
+    results.push(itemRes);
+    return results;
+  });
+
+  if (!genericResult.success) return [];
+  return results;
 }
 
 export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
-  let success = false;
-  let collectionId = 0;
-  let itemId = 0;
-  let recipient;
-  events.forEach(({event: {data, method, section}}) => {
-    // console.log(`    ${phase}: ${section}.${method}:: ${data}`);
-    if (method == 'ExtrinsicSuccess') {
-      success = true;
-    } else if ((section == 'common') && (method == 'ItemCreated')) {
-      collectionId = parseInt(data[0].toString(), 10);
-      itemId = parseInt(data[1].toString(), 10);
-      recipient = normalizeAccountId(data[2].toJSON() as any);
-    }
-  });
+  const genericResult = getGenericResult<[number, number, CrossAccountId?]>(events, 'common', 'ItemCreated', (data) => [
+    parseInt(data[0].toString(), 10),
+    parseInt(data[1].toString(), 10),
+    normalizeAccountId(data[2].toJSON() as any),
+  ]);
+
+  if (genericResult.data == null) genericResult.data = [0, 0];
+
   const result: CreateItemResult = {
-    success,
-    collectionId,
-    itemId,
-    recipient,
+    success: genericResult.success,
+    collectionId: genericResult.data[0],
+    itemId: genericResult.data[1],
+    recipient: genericResult.data![2],
   };
+  
   return result;
 }
 
-export function getTransferResult(events: EventRecord[]): TransferResult {
-  const result: TransferResult = {
-    success: false,
-    collectionId: 0,
-    itemId: 0,
-    value: 0n,
-  };
-
-  events.forEach(({event: {data, method, section}}) => {
-    if (method === 'ExtrinsicSuccess') {
-      result.success = true;
-    } else if (section === 'common' && method === 'Transfer') {
-      result.collectionId = +data[0].toString();
-      result.itemId = +data[1].toString();
-      result.sender = normalizeAccountId(data[2].toJSON() as any);
-      result.recipient = normalizeAccountId(data[3].toJSON() as any);
-      result.value = BigInt(data[4].toString());
+export function getTransferResult(api: ApiPromise, events: EventRecord[]): TransferResult {
+  for (const {event} of events) {
+    if (api.events.common.Transfer.is(event)) {
+      const [collection, token, sender, recipient, value] = event.data;
+      return {
+        collectionId: collection.toNumber(),
+        itemId: token.toNumber(),
+        sender: normalizeAccountId(sender.toJSON() as any),
+        recipient: normalizeAccountId(recipient.toJSON() as any),
+        value: value.toBigInt(),
+      };
     }
-  });
-
-  return result;
+  }
+  throw new Error('no transfer event');
 }
 
 interface Nft {
@@ -263,12 +286,29 @@ interface ReFungible {
 
 type CollectionMode = Nft | Fungible | ReFungible;
 
+export type Property = {
+  key: any,
+  value: any,
+};
+
+type Permission = {
+  mutable: boolean;
+  collectionAdmin: boolean;
+  tokenOwner: boolean;
+}
+
+type PropertyPermission = {
+  key: any;
+  permission: Permission;
+}
+
 export type CreateCollectionParams = {
   mode: CollectionMode,
   name: string,
   description: string,
   tokenPrefix: string,
-  schemaVersion: string,
+  properties?: Array<Property>,
+  propPerm?: Array<PropertyPermission>
 };
 
 const defaultCreateCollectionParams: CreateCollectionParams = {
@@ -276,19 +316,82 @@ const defaultCreateCollectionParams: CreateCollectionParams = {
   mode: {type: 'NFT'},
   name: 'name',
   tokenPrefix: 'prefix',
-  schemaVersion: 'ImageURL',
 };
 
+export async function
+createCollection(
+  api: ApiPromise,
+  sender: IKeyringPair,
+  params: Partial<CreateCollectionParams> = {},
+): Promise<CreateCollectionResult> {
+  const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
+
+  let modeprm = {};
+  if (mode.type === 'NFT') {
+    modeprm = {nft: null};
+  } else if (mode.type === 'Fungible') {
+    modeprm = {fungible: mode.decimalPoints};
+  } else if (mode.type === 'ReFungible') {
+    modeprm = {refungible: null};
+  }
+
+  const tx = api.tx.unique.createCollectionEx({
+    name: strToUTF16(name),
+    description: strToUTF16(description),
+    tokenPrefix: strToUTF16(tokenPrefix),
+    mode: modeprm as any,
+  });
+  const events = await submitTransactionAsync(sender, tx);
+  return getCreateCollectionResult(events);
+}
+
 export async function createCollectionExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
-  const {name, description, mode, tokenPrefix, schemaVersion} = {...defaultCreateCollectionParams, ...params};
+  const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
 
   let collectionId = 0;
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Get number of collections before the transaction
     const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKeyWrapper('//Alice');
+
+    const result = await createCollection(api, alicePrivateKey, params);
+
+    // Get number of collections after the transaction
+    const collectionCountAfter = await getCreatedCollectionCount(api);
+
+    // Get the collection
+    const collection = await queryCollectionExpectSuccess(api, result.collectionId);
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.true;
+    expect(result.collectionId).to.be.equal(collectionCountAfter);
+    // tslint:disable-next-line:no-unused-expression
+    expect(collection).to.be.not.null;
+    expect(collectionCountAfter).to.be.equal(collectionCountBefore + 1, 'Error: NFT collection NOT created.');
+    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicePrivateKey));
+    expect(utf16ToStr(collection.name.toJSON() as any)).to.be.equal(name);
+    expect(utf16ToStr(collection.description.toJSON() as any)).to.be.equal(description);
+    expect(hexToStr(collection.tokenPrefix.toJSON())).to.be.equal(tokenPrefix);
+
+    collectionId = result.collectionId;
+  });
+
+  return collectionId;
+}
+
+export async function createCollectionWithPropsExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
+  const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
+
+  let collectionId = 0;
+  await usingApi(async (api, privateKeyWrapper) => {
+    // Get number of collections before the transaction
+    const collectionCountBefore = await getCreatedCollectionCount(api);
+
+    // Run the CreateCollection transaction
+    const alicePrivateKey = privateKeyWrapper('//Alice');
 
     let modeprm = {};
     if (mode.type === 'NFT') {
@@ -299,13 +402,7 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
       modeprm = {refungible: null};
     }
 
-    const tx = api.tx.unique.createCollectionEx({
-      name: strToUTF16(name), 
-      description: strToUTF16(description), 
-      tokenPrefix: strToUTF16(tokenPrefix), 
-      mode: modeprm as any,
-      schemaVersion: schemaVersion,
-    });
+    const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any, properties: params.properties, tokenPropertyPermissions: params.propPerm});
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getCreateCollectionResult(events);
 
@@ -322,15 +419,46 @@ export async function createCollectionExpectSuccess(params: Partial<CreateCollec
     // tslint:disable-next-line:no-unused-expression
     expect(collection).to.be.not.null;
     expect(collectionCountAfter).to.be.equal(collectionCountBefore + 1, 'Error: NFT collection NOT created.');
-    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicesPublicKey));
+    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(alicePrivateKey));
     expect(utf16ToStr(collection.name.toJSON() as any)).to.be.equal(name);
     expect(utf16ToStr(collection.description.toJSON() as any)).to.be.equal(description);
     expect(hexToStr(collection.tokenPrefix.toJSON())).to.be.equal(tokenPrefix);
+
 
     collectionId = result.collectionId;
   });
 
   return collectionId;
+}
+
+export async function createCollectionWithPropsExpectFailure(params: Partial<CreateCollectionParams> = {}) {
+  const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
+
+  await usingApi(async (api, privateKeyWrapper) => {
+    // Get number of collections before the transaction
+    const collectionCountBefore = await getCreatedCollectionCount(api);
+
+    // Run the CreateCollection transaction
+    const alicePrivateKey = privateKeyWrapper('//Alice');
+
+    let modeprm = {};
+    if (mode.type === 'NFT') {
+      modeprm = {nft: null};
+    } else if (mode.type === 'Fungible') {
+      modeprm = {fungible: mode.decimalPoints};
+    } else if (mode.type === 'ReFungible') {
+      modeprm = {refungible: null};
+    }
+
+    const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any, properties: params.properties, tokenPropertyPermissions: params.propPerm});
+    await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
+
+
+    // Get number of collections after the transaction
+    const collectionCountAfter = await getCreatedCollectionCount(api);
+
+    expect(collectionCountAfter).to.be.equal(collectionCountBefore, 'Error: Collection with incorrect data created.');
+  });
 }
 
 export async function createCollectionExpectFailure(params: Partial<CreateCollectionParams> = {}) {
@@ -345,12 +473,12 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
     modeprm = {refungible: null};
   }
 
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Get number of collections before the transaction
     const collectionCountBefore = await getCreatedCollectionCount(api);
 
     // Run the CreateCollection transaction
-    const alicePrivateKey = privateKey('//Alice');
+    const alicePrivateKey = privateKeyWrapper('//Alice');
     const tx = api.tx.unique.createCollectionEx({name: strToUTF16(name), description: strToUTF16(description), tokenPrefix: strToUTF16(tokenPrefix), mode: modeprm as any});
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
 
@@ -362,24 +490,23 @@ export async function createCollectionExpectFailure(params: Partial<CreateCollec
   });
 }
 
-export async function findUnusedAddress(api: ApiPromise, seedAddition = ''): Promise<IKeyringPair> {
+export async function findUnusedAddress(api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair, seedAddition = ''): Promise<IKeyringPair> {
   let bal = 0n;
   let unused;
   do {
     const randomSeed = 'seed' + Math.floor(Math.random() * Math.floor(10000)) + seedAddition;
-    const keyring = new Keyring({type: 'sr25519'});
-    unused = keyring.addFromUri(`//${randomSeed}`);
+    unused = privateKeyWrapper(`//${randomSeed}`);
     bal = (await api.query.system.account(unused.address)).data.free.toBigInt();
   } while (bal !== 0n);
   return unused;
 }
 
-export async function getAllowance(api: ApiPromise, collectionId: number, owner: CrossAccountId | string, approved: CrossAccountId | string, tokenId: number) {
+export async function getAllowance(api: ApiPromise, collectionId: number, owner: CrossAccountId | string | IKeyringPair, approved: CrossAccountId | string | IKeyringPair, tokenId: number) {
   return (await api.rpc.unique.allowance(collectionId, normalizeAccountId(owner), normalizeAccountId(approved), tokenId)).toBigInt();
 }
 
-export function findUnusedAddresses(api: ApiPromise, amount: number): Promise<IKeyringPair[]> {
-  return Promise.all(new Array(amount).fill(null).map(() => findUnusedAddress(api, '_' + Date.now())));
+export function findUnusedAddresses(api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair, amount: number): Promise<IKeyringPair[]> {
+  return Promise.all(new Array(amount).fill(null).map(() => findUnusedAddress(api, privateKeyWrapper, '_' + Date.now())));
 }
 
 export async function findNotExistingCollection(api: ApiPromise): Promise<number> {
@@ -399,18 +526,18 @@ function getDestroyResult(events: EventRecord[]): boolean {
 }
 
 export async function destroyCollectionExpectFailure(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Run the DestroyCollection transaction
-    const alicePrivateKey = privateKey(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.destroyCollection(collectionId);
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
 }
 
 export async function destroyCollectionExpectSuccess(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
     // Run the DestroyCollection transaction
-    const alicePrivateKey = privateKey(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.destroyCollection(collectionId);
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getDestroyResult(events);
@@ -431,6 +558,16 @@ export async function setCollectionLimitsExpectSuccess(sender: IKeyringPair, col
   });
 }
 
+export const setCollectionPermissionsExpectSuccess = async (sender: IKeyringPair, collectionId: number, permissions: any) => {
+  await usingApi(async(api) => {
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, permissions);
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getGenericResult(events);
+
+    expect(result.success).to.be.true;
+  });
+};
+
 export async function setCollectionLimitsExpectFailure(sender: IKeyringPair, collectionId: number, limits: any) {
   await usingApi(async (api) => {
     const tx = api.tx.unique.setCollectionLimits(collectionId, limits);
@@ -442,10 +579,10 @@ export async function setCollectionLimitsExpectFailure(sender: IKeyringPair, col
 }
 
 export async function setCollectionSponsorExpectSuccess(collectionId: number, sponsor: string, sender = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const senderPrivateKey = privateKey(sender);
+    const senderPrivateKey = privateKeyWrapper(sender);
     const tx = api.tx.unique.setCollectionSponsor(collectionId, sponsor);
     const events = await submitTransactionAsync(senderPrivateKey, tx);
     const result = getGenericResult(events);
@@ -462,10 +599,10 @@ export async function setCollectionSponsorExpectSuccess(collectionId: number, sp
 }
 
 export async function removeCollectionSponsorExpectSuccess(collectionId: number, sender = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey(sender);
+    const alicePrivateKey = privateKeyWrapper(sender);
     const tx = api.tx.unique.removeCollectionSponsor(collectionId);
     const events = await submitTransactionAsync(alicePrivateKey, tx);
     const result = getGenericResult(events);
@@ -480,30 +617,38 @@ export async function removeCollectionSponsorExpectSuccess(collectionId: number,
 }
 
 export async function removeCollectionSponsorExpectFailure(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.removeCollectionSponsor(collectionId);
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
 }
 
 export async function setCollectionSponsorExpectFailure(collectionId: number, sponsor: string, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const alicePrivateKey = privateKey(senderSeed);
+    const alicePrivateKey = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.setCollectionSponsor(collectionId, sponsor);
     await expect(submitTransactionExpectFailAsync(alicePrivateKey, tx)).to.be.rejected;
   });
 }
 
 export async function confirmSponsorshipExpectSuccess(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const sender = privateKey(senderSeed);
+    const sender = privateKeyWrapper(senderSeed);
+    await confirmSponsorshipByKeyExpectSuccess(collectionId, sender);
+  });
+}
+
+export async function confirmSponsorshipByKeyExpectSuccess(collectionId: number, sender: IKeyringPair) {
+  await usingApi(async (api, privateKeyWrapper) => {
+
+    // Run the transaction
     const tx = api.tx.unique.confirmSponsorship(collectionId);
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
@@ -521,34 +666,12 @@ export async function confirmSponsorshipExpectSuccess(collectionId: number, send
 
 
 export async function confirmSponsorshipExpectFailure(collectionId: number, senderSeed = '//Alice') {
-  await usingApi(async (api) => {
+  await usingApi(async (api, privateKeyWrapper) => {
 
     // Run the transaction
-    const sender = privateKey(senderSeed);
+    const sender = privateKeyWrapper(senderSeed);
     const tx = api.tx.unique.confirmSponsorship(collectionId);
     await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
-  });
-}
-
-export async function setMetadataUpdatePermissionFlagExpectSuccess(sender: IKeyringPair, collectionId: number, flag: string) {
-
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setMetaUpdatePermissionFlag(collectionId, flag as any);
-    const events = await submitTransactionAsync(sender, tx);
-    const result = getGenericResult(events);
-
-    expect(result.success).to.be.true;
-  });
-}
-
-export async function setMetadataUpdatePermissionFlagExpectFailure(sender: IKeyringPair, collectionId: number, flag: string) {
-
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setMetaUpdatePermissionFlag(collectionId, flag as any);
-    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
-    const result = getGenericResult(events);
-
-    expect(result.success).to.be.false;
   });
 }
 
@@ -673,40 +796,6 @@ export async function removeFromContractAllowListExpectFailure(sender: IKeyringP
   });
 }
 
-export async function setVariableMetaDataExpectSuccess(sender: IKeyringPair, collectionId: number, itemId: number, data: number[]) {
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setVariableMetaData(collectionId, itemId, '0x' + Buffer.from(data).toString('hex'));
-    const events = await submitTransactionAsync(sender, tx);
-    const result = getGenericResult(events);
-
-    expect(result.success).to.be.true;
-  });
-}
-
-export async function setVariableMetaDataExpectFailure(sender: IKeyringPair, collectionId: number, itemId: number, data: number[]) {
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setVariableMetaData(collectionId, itemId, '0x' + Buffer.from(data).toString('hex'));
-    await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
-  });
-}
-
-export async function setOffchainSchemaExpectSuccess(sender: IKeyringPair, collectionId: number, data: number[]) {
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setOffchainSchema(collectionId, '0x' + Buffer.from(data).toString('hex'));
-    const events = await submitTransactionAsync(sender, tx);
-    const result = getGenericResult(events);
-
-    expect(result.success).to.be.true;
-  });
-}
-
-export async function setOffchainSchemaExpectFailure(sender: IKeyringPair, collectionId: number, data: number[]) {
-  await usingApi(async (api) => {
-    const tx = api.tx.unique.setOffchainSchema(collectionId, '0x' + Buffer.from(data).toString('hex'));
-    await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
-  });
-}
-
 export interface CreateFungibleData {
   readonly Value: bigint;
 }
@@ -722,20 +811,34 @@ export type CreateItemData = {
   ReFungible: CreateReFungibleData;
 };
 
-export async function burnItemExpectSuccess(sender: IKeyringPair, collectionId: number, tokenId: number, value = 1) {
+export async function burnItem(api: ApiPromise, sender: IKeyringPair, collectionId: number, tokenId: number, value: number | bigint) : Promise<boolean> {
+  const tx = api.tx.unique.burnItem(collectionId, tokenId, value);
+  const events = await submitTransactionAsync(sender, tx);
+  return getGenericResult(events).success;
+}
+
+export async function burnItemExpectSuccess(sender: IKeyringPair, collectionId: number, tokenId: number, value: number | bigint = 1) {
   await usingApi(async (api) => {
     const balanceBefore = await getBalance(api, collectionId, normalizeAccountId(sender), tokenId);
     // if burning token by admin - use adminButnItemExpectSuccess
     expect(balanceBefore >= BigInt(value)).to.be.true;
 
-    const tx = api.tx.unique.burnItem(collectionId, tokenId, value);
-    const events = await submitTransactionAsync(sender, tx);
-    const result = getGenericResult(events);
-    expect(result.success).to.be.true;
+    expect(await burnItem(api, sender, collectionId, tokenId, value)).to.be.true;
 
     const balanceAfter = await getBalance(api, collectionId, normalizeAccountId(sender), tokenId);
     expect(balanceAfter + BigInt(value)).to.be.equal(balanceBefore);
   });
+}
+
+export async function
+approve(
+  api: ApiPromise,
+  collectionId: number,
+  tokenId: number, owner: IKeyringPair, approved: CrossAccountId | string | IKeyringPair, amount: number | bigint,
+) {
+  const approveUniqueTx = api.tx.unique.approve(normalizeAccountId(approved), collectionId, tokenId, amount);
+  const events = await submitTransactionAsync(owner, approveUniqueTx);
+  return getGenericResult(events).success;
 }
 
 export async function
@@ -744,12 +847,10 @@ approveExpectSuccess(
   tokenId: number, owner: IKeyringPair, approved: CrossAccountId | string, amount: number | bigint = 1,
 ) {
   await usingApi(async (api: ApiPromise) => {
-    const approveUniqueTx = api.tx.unique.approve(normalizeAccountId(approved), collectionId, tokenId, amount);
-    const events = await submitTransactionAsync(owner, approveUniqueTx);
-    const result = getGenericResult(events);
-    expect(result.success).to.be.true;
+    const result = await approve(api, collectionId, tokenId, owner, approved, amount);
+    expect(result).to.be.true;
 
-    expect(await getAllowance(api, collectionId, owner.address, approved, tokenId)).to.be.equal(BigInt(amount));
+    expect(await getAllowance(api, collectionId, owner, approved, tokenId)).to.be.equal(BigInt(amount));
   });
 }
 
@@ -768,6 +869,23 @@ export async function adminApproveFromExpectSuccess(
 }
 
 export async function
+transferFrom(
+  api: ApiPromise,
+  collectionId: number,
+  tokenId: number,
+  accountApproved: IKeyringPair,
+  accountFrom: IKeyringPair | CrossAccountId,
+  accountTo: IKeyringPair | CrossAccountId,
+  value: number | bigint,
+) {
+  const from = normalizeAccountId(accountFrom);
+  const to = normalizeAccountId(accountTo);
+  const transferFromTx = api.tx.unique.transferFrom(from, to, collectionId, tokenId, value);
+  const events = await submitTransactionAsync(accountApproved, transferFromTx);
+  return getGenericResult(events).success;
+}
+
+export async function
 transferFromExpectSuccess(
   collectionId: number,
   tokenId: number,
@@ -781,14 +899,10 @@ transferFromExpectSuccess(
     const from = normalizeAccountId(accountFrom);
     const to = normalizeAccountId(accountTo);
     let balanceBefore = 0n;
-    if (type === 'Fungible') {
+    if (type === 'Fungible' || type === 'ReFungible') {
       balanceBefore = await getBalance(api, collectionId, to, tokenId);
     }
-    const transferFromTx = api.tx.unique.transferFrom(normalizeAccountId(accountFrom), to, collectionId, tokenId, value);
-    const events = await submitTransactionAsync(accountApproved, transferFromTx);
-    const result = getCreateItemResult(events);
-    // tslint:disable-next-line:no-unused-expression
-    expect(result.success).to.be.true;
+    expect(await transferFrom(api, collectionId, tokenId, accountApproved, accountFrom, accountTo, value)).to.be.true;
     if (type === 'NFT') {
       expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(to);
     }
@@ -801,7 +915,7 @@ transferFromExpectSuccess(
       }
     }
     if (type === 'ReFungible') {
-      expect(await getBalance(api, collectionId, to, tokenId)).to.be.equal(BigInt(value));
+      expect(await getBalance(api, collectionId, to, tokenId)).to.be.equal(balanceBefore + BigInt(value));
     }
   });
 }
@@ -825,7 +939,7 @@ transferFromExpectFail(
 }
 
 /* eslint no-async-promise-executor: "off" */
-async function getBlockNumber(api: ApiPromise): Promise<number> {
+export async function getBlockNumber(api: ApiPromise): Promise<number> {
   return new Promise<number>(async (resolve) => {
     const unsubscribe = await api.rpc.chain.subscribeNewHeads((head) => {
       unsubscribe();
@@ -840,6 +954,18 @@ export async function addCollectionAdminExpectSuccess(sender: IKeyringPair, coll
     const events = await submitTransactionAsync(sender, changeAdminTx);
     const result = getCreateCollectionResult(events);
     expect(result.success).to.be.true;
+  });
+}
+
+export async function adminApproveFromExpectFail(
+  collectionId: number,
+  tokenId: number, admin: IKeyringPair, owner: CrossAccountId | string, approved: CrossAccountId | string, amount: number | bigint = 1,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    const approveUniqueTx = api.tx.unique.approve(normalizeAccountId(approved), collectionId, tokenId, amount);
+    const events = await expect(submitTransactionAsync(admin, approveUniqueTx)).to.be.rejected;
+    const result = getGenericResult(events);
+    expect(result.success).to.be.false;
   });
 }
 
@@ -861,29 +987,76 @@ export async function transferBalanceTo(api: ApiPromise, source: IKeyringPair, t
 }
 
 export async function
-scheduleTransferExpectSuccess(
-  collectionId: number,
-  tokenId: number,
+scheduleExpectSuccess(
+  operationTx: any,
   sender: IKeyringPair,
-  recipient: IKeyringPair,
-  value: number | bigint = 1,
   blockSchedule: number,
+  scheduledId: string,
+  period = 1,
+  repetitions = 1,
 ) {
   await usingApi(async (api: ApiPromise) => {
     const blockNumber: number | undefined = await getBlockNumber(api);
     const expectedBlockNumber = blockNumber + blockSchedule;
 
     expect(blockNumber).to.be.greaterThan(0);
-    const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value);
-    const scheduleTx = api.tx.scheduler.schedule(expectedBlockNumber, null, 0, transferTx as any);
+    const scheduleTx = api.tx.scheduler.scheduleNamed( // schedule
+      scheduledId,
+      expectedBlockNumber, 
+      repetitions > 1 ? [period, repetitions] : null, 
+      0, 
+      {value: operationTx as any},
+    );
 
-    await submitTransactionAsync(sender, scheduleTx);
+    const events = await submitTransactionAsync(sender, scheduleTx);
+    expect(getGenericResult(events).success).to.be.true;
+  });
+}
+
+export async function
+scheduleExpectFailure(
+  operationTx: any,
+  sender: IKeyringPair,
+  blockSchedule: number,
+  scheduledId: string,
+  period = 1,
+  repetitions = 1,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    const blockNumber: number | undefined = await getBlockNumber(api);
+    const expectedBlockNumber = blockNumber + blockSchedule;
+
+    expect(blockNumber).to.be.greaterThan(0);
+    const scheduleTx = api.tx.scheduler.scheduleNamed( // schedule
+      scheduledId,
+      expectedBlockNumber, 
+      repetitions <= 1 ? null : [period, repetitions], 
+      0, 
+      {value: operationTx as any},
+    );
+
+    //const events = 
+    await expect(submitTransactionExpectFailAsync(sender, scheduleTx)).to.be.rejected;
+    //expect(getGenericResult(events).success).to.be.false;
+  });
+}
+
+export async function
+scheduleTransferAndWaitExpectSuccess(
+  collectionId: number,
+  tokenId: number,
+  sender: IKeyringPair,
+  recipient: IKeyringPair,
+  value: number | bigint = 1,
+  blockSchedule: number,
+  scheduledId: string,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    await scheduleTransferExpectSuccess(collectionId, tokenId, sender, recipient, value, blockSchedule, scheduledId);
 
     const recipientBalanceBefore = (await api.query.system.account(recipient.address)).data.free.toBigInt();
 
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(sender.address));
-
-    // sleep for 4 blocks
+    // sleep for n + 1 blocks
     await waitNewBlocks(blockSchedule + 1);
 
     const recipientBalanceAfter = (await api.query.system.account(recipient.address)).data.free.toBigInt();
@@ -893,6 +1066,59 @@ scheduleTransferExpectSuccess(
   });
 }
 
+export async function
+scheduleTransferExpectSuccess(
+  collectionId: number,
+  tokenId: number,
+  sender: IKeyringPair,
+  recipient: IKeyringPair,
+  value: number | bigint = 1,
+  blockSchedule: number,
+  scheduledId: string,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value);
+
+    await scheduleExpectSuccess(transferTx, sender, blockSchedule, scheduledId);
+
+    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(sender.address));
+  });
+}
+
+export async function
+scheduleTransferFundsPeriodicExpectSuccess(
+  amount: bigint,
+  sender: IKeyringPair,
+  recipient: IKeyringPair,
+  blockSchedule: number,
+  scheduledId: string,
+  period: number,
+  repetitions: number,
+) {
+  await usingApi(async (api: ApiPromise) => {
+    const transferTx = api.tx.balances.transfer(recipient.address, amount);
+
+    const balanceBefore = await getFreeBalance(recipient);
+    
+    await scheduleExpectSuccess(transferTx, sender, blockSchedule, scheduledId, period, repetitions);
+
+    expect(await getFreeBalance(recipient)).to.be.equal(balanceBefore);
+  });
+}
+
+export async function
+transfer(
+  api: ApiPromise,
+  collectionId: number,
+  tokenId: number,
+  sender: IKeyringPair,
+  recipient: IKeyringPair | CrossAccountId,
+  value: number | bigint,
+) : Promise<boolean> {
+  const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient), collectionId, tokenId, value);
+  const events = await executeTransaction(api, sender, transferTx);
+  return getGenericResult(events).success;
+}
 
 export async function
 transferExpectSuccess(
@@ -908,32 +1134,30 @@ transferExpectSuccess(
     const to = normalizeAccountId(recipient);
 
     let balanceBefore = 0n;
-    if (type === 'Fungible') {
+    if (type === 'Fungible' || type === 'ReFungible') {
       balanceBefore = await getBalance(api, collectionId, to, tokenId);
     }
-    const transferTx = api.tx.unique.transfer(to, collectionId, tokenId, value);
-    const events = await submitTransactionAsync(sender, transferTx);
-    const result = getTransferResult(events);
-    // tslint:disable-next-line:no-unused-expression
-    expect(result.success).to.be.true;
+
+    const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient), collectionId, tokenId, value);
+    const events = await executeTransaction(api, sender, transferTx);
+    const result = getTransferResult(api, events);
+
     expect(result.collectionId).to.be.equal(collectionId);
     expect(result.itemId).to.be.equal(tokenId);
     expect(result.sender).to.be.deep.equal(normalizeAccountId(sender.address));
     expect(result.recipient).to.be.deep.equal(to);
     expect(result.value).to.be.equal(BigInt(value));
+
     if (type === 'NFT') {
       expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(to);
     }
-    if (type === 'Fungible') {
+    if (type === 'Fungible' || type === 'ReFungible') {
       const balanceAfter = await getBalance(api, collectionId, to, tokenId);
       if (JSON.stringify(to) !== JSON.stringify(from)) {
         expect(balanceAfter - balanceBefore).to.be.equal(BigInt(value));
       } else {
         expect(balanceAfter).to.be.equal(balanceBefore);
       }
-    }
-    if (type === 'ReFungible') {
-      expect(await getBalance(api, collectionId, to, tokenId) >= value).to.be.true;
     }
   });
 }
@@ -943,11 +1167,11 @@ transferExpectFailure(
   collectionId: number,
   tokenId: number,
   sender: IKeyringPair,
-  recipient: IKeyringPair,
+  recipient: IKeyringPair | CrossAccountId,
   value: number | bigint = 1,
 ) {
   await usingApi(async (api: ApiPromise) => {
-    const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient.address), collectionId, tokenId, value);
+    const transferTx = api.tx.unique.transfer(normalizeAccountId(recipient), collectionId, tokenId, value);
     const events = await expect(submitTransactionExpectFailAsync(sender, transferTx)).to.be.rejected;
     const result = getGenericResult(events);
     // if (events && Array.isArray(events)) {
@@ -975,7 +1199,7 @@ approveExpectFail(
 export async function getBalance(
   api: ApiPromise,
   collectionId: number,
-  owner: string | CrossAccountId,
+  owner: string | CrossAccountId | IKeyringPair,
   token: number,
 ): Promise<bigint> {
   return (await api.rpc.unique.balance(collectionId, normalizeAccountId(owner), token)).toBigInt();
@@ -985,7 +1209,25 @@ export async function getTokenOwner(
   collectionId: number,
   token: number,
 ): Promise<CrossAccountId> {
-  return normalizeAccountId((await api.rpc.unique.tokenOwner(collectionId, token)).toJSON() as any);
+  const owner = (await api.rpc.unique.tokenOwner(collectionId, token)).toJSON() as any;
+  if (owner == null) throw new Error('owner == null');
+  return normalizeAccountId(owner);
+}
+export async function getTopmostTokenOwner(
+  api: ApiPromise,
+  collectionId: number,
+  token: number,
+): Promise<CrossAccountId> {
+  const owner = (await api.rpc.unique.topmostTokenOwner(collectionId, token)).toJSON() as any;
+  if (owner == null) throw new Error('owner == null');
+  return normalizeAccountId(owner);
+}
+export async function getTokenChildren(
+  api: ApiPromise,
+  collectionId: number,
+  tokenId: number,
+): Promise<UpDataStructsTokenChild[]> {
+  return (await api.rpc.unique.tokenChildren(collectionId, tokenId)).toJSON() as any;
 }
 export async function isTokenExists(
   api: ApiPromise,
@@ -1006,19 +1248,13 @@ export async function getAdminList(
 ): Promise<string[]> {
   return (await api.rpc.unique.adminlist(collectionId)).toHuman() as any;
 }
-export async function getVariableMetadata(
+export async function getTokenProperties(
   api: ApiPromise,
   collectionId: number,
   tokenId: number,
-): Promise<number[]> {
-  return [...(await api.rpc.unique.variableMetadata(collectionId, tokenId))];
-}
-export async function getConstMetadata(
-  api: ApiPromise,
-  collectionId: number,
-  tokenId: number,
-): Promise<number[]> {
-  return [...(await api.rpc.unique.constMetadata(collectionId, tokenId))];
+  propertyKeys: string[],
+): Promise<UpDataStructsProperty[]> {
+  return (await api.rpc.unique.tokenProperties(collectionId, tokenId, propertyKeys)).toHuman() as any;
 }
 
 export async function createFungibleItemExpectSuccess(
@@ -1038,6 +1274,108 @@ export async function createFungibleItemExpectSuccess(
   });
 }
 
+export async function createMultipleItemsExpectSuccess(sender: IKeyringPair, collectionId: number, itemsData: any, owner: CrossAccountId | string = sender.address) {
+  await usingApi(async (api) => {
+    const to = normalizeAccountId(owner);
+    const tx = api.tx.unique.createMultipleItems(collectionId, to, itemsData);
+
+    const events = await submitTransactionAsync(sender, tx);
+    expect(getGenericResult(events).success).to.be.true;
+  });
+}
+
+export async function createMultipleItemsWithPropsExpectSuccess(sender: IKeyringPair, collectionId: number, itemsData: any, owner: CrossAccountId | string = sender.address) {
+  await usingApi(async (api) => {
+    const to = normalizeAccountId(owner);
+    const tx = api.tx.unique.createMultipleItems(collectionId, to, itemsData);
+
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getCreateItemsResult(events);
+
+    for (const res of result) {
+      expect(await api.rpc.unique.tokenProperties(collectionId, res.itemId)).not.to.be.empty;
+    }
+  });
+}
+
+export async function createMultipleItemsExWithPropsExpectSuccess(sender: IKeyringPair, collectionId: number, itemsData: any) {
+  await usingApi(async (api) => {
+    const tx = api.tx.unique.createMultipleItemsEx(collectionId, itemsData);
+
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getCreateItemsResult(events);
+
+    for (const res of result) {
+      expect(await api.rpc.unique.tokenProperties(collectionId, res.itemId)).not.to.be.empty;
+    }
+  });
+}
+
+export async function createItemWithPropsExpectSuccess(sender: IKeyringPair, collectionId: number, createMode: string, props:  Array<Property>, owner: CrossAccountId | string = sender.address) {
+  let newItemId = 0;
+  await usingApi(async (api) => {
+    const to = normalizeAccountId(owner);
+    const itemCountBefore = await getLastTokenId(api, collectionId);
+    const itemBalanceBefore = await getBalance(api, collectionId, to, newItemId);
+
+    let tx;
+    if (createMode === 'Fungible') {
+      const createData = {fungible: {value: 10}};
+      tx = api.tx.unique.createItem(collectionId, to, createData as any);
+    } else if (createMode === 'ReFungible') {
+      const createData = {refungible: {pieces: 100}};
+      tx = api.tx.unique.createItem(collectionId, to, createData as any);
+    } else {
+      const data = api.createType('UpDataStructsCreateItemData', {NFT: {properties: props}});
+      tx = api.tx.unique.createItem(collectionId, to, data as UpDataStructsCreateItemData);
+    }
+
+    const events = await submitTransactionAsync(sender, tx);
+    const result = getCreateItemResult(events);
+
+    const itemCountAfter = await getLastTokenId(api, collectionId);
+    const itemBalanceAfter = await getBalance(api, collectionId, to, newItemId);
+
+    if (createMode === 'NFT') {
+      expect(await api.rpc.unique.tokenProperties(collectionId, result.itemId)).not.to.be.empty;
+    }
+
+    // What to expect
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.true;
+    if (createMode === 'Fungible') {
+      expect(itemBalanceAfter - itemBalanceBefore).to.be.equal(10n);
+    } else {
+      expect(itemCountAfter).to.be.equal(itemCountBefore + 1);
+    }
+    expect(collectionId).to.be.equal(result.collectionId);
+    expect(itemCountAfter.toString()).to.be.equal(result.itemId.toString());
+    expect(to).to.be.deep.equal(result.recipient);
+    newItemId = result.itemId;
+  });
+  return newItemId;
+}
+
+export async function createItemWithPropsExpectFailure(sender: IKeyringPair, collectionId: number, createMode: string, props: Array<Property>, owner: CrossAccountId | string = sender.address) {
+  await usingApi(async (api) => {
+
+    let tx;
+    if (createMode === 'NFT') {
+      const data = api.createType('UpDataStructsCreateItemData', {NFT: {properties: props}});
+      tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), data);
+    } else {
+      tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), createMode);
+    }
+
+
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    if(events.message && events.message.toString().indexOf('1002: Verification Error') > -1) return;
+    const result = getCreateItemResult(events);
+
+    expect(result.success).to.be.false;
+  });
+}
+
 export async function createItemExpectSuccess(sender: IKeyringPair, collectionId: number, createMode: string, owner: CrossAccountId | string = sender.address) {
   let newItemId = 0;
   await usingApi(async (api) => {
@@ -1050,10 +1388,10 @@ export async function createItemExpectSuccess(sender: IKeyringPair, collectionId
       const createData = {fungible: {value: 10}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     } else if (createMode === 'ReFungible') {
-      const createData = {refungible: {const_data: [], variable_data: [], pieces: 100}};
+      const createData = {refungible: {pieces: 100}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     } else {
-      const createData = {nft: {const_data: [], variable_data: []}};
+      const createData = {nft: {}};
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     }
 
@@ -1079,7 +1417,15 @@ export async function createItemExpectSuccess(sender: IKeyringPair, collectionId
   return newItemId;
 }
 
-export async function createItemExpectFailure(sender: IKeyringPair, collectionId: number, createMode: string, owner: string = sender.address) {
+export async function createRefungibleToken(api: ApiPromise, sender: IKeyringPair, collectionId: number, amount: bigint, owner: CrossAccountId | IKeyringPair | string = sender.address) : Promise<CreateItemResult> {
+  const createData = {refungible: {pieces: amount}};
+  const tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), createData as any);
+
+  const events = await submitTransactionAsync(sender, tx);
+  return  getCreateItemResult(events);
+}
+
+export async function createItemExpectFailure(sender: IKeyringPair, collectionId: number, createMode: string, owner: CrossAccountId | string = sender.address) {
   await usingApi(async (api) => {
     const tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), createMode);
 
@@ -1097,7 +1443,7 @@ export async function setPublicAccessModeExpectSuccess(
   await usingApi(async (api) => {
 
     // Run the transaction
-    const tx = api.tx.unique.setPublicAccessMode(collectionId, accessMode);
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: accessMode});
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
 
@@ -1107,7 +1453,7 @@ export async function setPublicAccessModeExpectSuccess(
     // What to expect
     // tslint:disable-next-line:no-unused-expression
     expect(result.success).to.be.true;
-    expect(collection.access.toHuman()).to.be.equal(accessMode);
+    expect(collection.permissions.access.toHuman()).to.be.equal(accessMode);
   });
 }
 
@@ -1118,7 +1464,7 @@ export async function setPublicAccessModeExpectFail(
   await usingApi(async (api) => {
 
     // Run the transaction
-    const tx = api.tx.unique.setPublicAccessMode(collectionId, accessMode);
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: accessMode});
     const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
     const result = getGenericResult(events);
 
@@ -1144,7 +1490,7 @@ export async function setMintPermissionExpectSuccess(sender: IKeyringPair, colle
   await usingApi(async (api) => {
 
     // Run the transaction
-    const tx = api.tx.unique.setMintPermission(collectionId, enabled);
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, {mintMode: enabled});
     const events = await submitTransactionAsync(sender, tx);
     const result = getGenericResult(events);
     expect(result.success).to.be.true;
@@ -1152,7 +1498,7 @@ export async function setMintPermissionExpectSuccess(sender: IKeyringPair, colle
     // Get the collection
     const collection = await queryCollectionExpectSuccess(api, collectionId);
 
-    expect(collection.mintMode.toHuman()).to.be.equal(enabled);
+    expect(collection.permissions.mintMode.toHuman()).to.be.equal(enabled);
   });
 }
 
@@ -1163,7 +1509,7 @@ export async function enablePublicMintingExpectSuccess(sender: IKeyringPair, col
 export async function setMintPermissionExpectFailure(sender: IKeyringPair, collectionId: number, enabled: boolean) {
   await usingApi(async (api) => {
     // Run the transaction
-    const tx = api.tx.unique.setMintPermission(collectionId, enabled);
+    const tx = api.tx.unique.setCollectionPermissions(collectionId, {mintMode: enabled});
     const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
     const result = getCreateCollectionResult(events);
     // tslint:disable-next-line:no-unused-expression
@@ -1256,7 +1602,7 @@ export async function removeFromAllowListExpectFailure(sender: IKeyringPair, col
 }
 
 export const getDetailedCollectionInfo = async (api: ApiPromise, collectionId: number)
-  : Promise<UpDataStructsCollection | null> => {
+  : Promise<UpDataStructsRpcCollection | null> => {
   return (await api.rpc.unique.collectionById(collectionId)).unwrapOr(null);
 };
 
@@ -1265,7 +1611,7 @@ export const getCreatedCollectionCount = async (api: ApiPromise): Promise<number
   return (await api.rpc.unique.collectionStats()).created.toNumber();
 };
 
-export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId: number): Promise<UpDataStructsCollection> {
+export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId: number): Promise<UpDataStructsRpcCollection> {
   return (await api.rpc.unique.collectionById(collectionId)).unwrap();
 }
 

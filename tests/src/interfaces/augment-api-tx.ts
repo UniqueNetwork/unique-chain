@@ -2,10 +2,10 @@
 /* eslint-disable */
 
 import type { ApiTypes } from '@polkadot/api-base/types';
-import type { Bytes, Compact, Option, U256, Vec, bool, u128, u16, u32, u64 } from '@polkadot/types-codec';
-import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
-import type { AccountId32, Call, H160, H256, MultiAddress, Perbill } from '@polkadot/types/interfaces/runtime';
-import type { CumulusPrimitivesParachainInherentParachainInherentData, EthereumTransactionTransactionV2, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsAccessMode, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCreateCollectionData, UpDataStructsCreateItemData, UpDataStructsCreateItemExData, UpDataStructsMetaUpdatePermission, UpDataStructsSchemaVersion, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
+import type { Bytes, Compact, Option, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { AnyNumber, IMethod, ITuple } from '@polkadot/types-codec/types';
+import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
+import type { CumulusPrimitivesParachainInherentParachainInherentData, EthereumTransactionTransactionV2, FrameSupportScheduleMaybeHashed, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, RmrkTraitsNftAccountIdOrCollectionNftTuple, RmrkTraitsPartPartType, RmrkTraitsResourceBasicResource, RmrkTraitsResourceComposableResource, RmrkTraitsResourceResourceTypes, RmrkTraitsResourceSlotResource, RmrkTraitsTheme, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCollectionPermissions, UpDataStructsCreateCollectionData, UpDataStructsCreateItemData, UpDataStructsCreateItemExData, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/submittable' {
   export interface AugmentedSubmittables<ApiType extends ApiTypes> {
@@ -263,10 +263,13 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       forceXcmVersion: AugmentedSubmittable<(location: XcmV1MultiLocation | { parents?: any; interior?: any } | string | Uint8Array, xcmVersion: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [XcmV1MultiLocation, u32]>;
       /**
-       * Transfer some assets from the local chain to the sovereign account of a destination chain and forward
-       * a notification XCM.
+       * Transfer some assets from the local chain to the sovereign account of a destination
+       * chain and forward a notification XCM.
        * 
-       * Fee payment on the destination side is made from the first asset listed in the `assets` vector.
+       * Fee payment on the destination side is made from the asset in the `assets` vector of
+       * index `fee_asset_item`, up to enough to pay for `weight_limit` of weight. If more weight
+       * is needed than `weight_limit`, then the operation will fail and the assets send may be
+       * at risk.
        * 
        * - `origin`: Must be capable of withdrawing the `assets` and executing XCM.
        * - `dest`: Destination context for the assets. Will typically be `X2(Parent, Parachain(..))` to send
@@ -283,7 +286,10 @@ declare module '@polkadot/api-base/types/submittable' {
       /**
        * Teleport some assets from the local chain to some destination chain.
        * 
-       * Fee payment on the destination side is made from the first asset listed in the `assets` vector.
+       * Fee payment on the destination side is made from the asset in the `assets` vector of
+       * index `fee_asset_item`, up to enough to pay for `weight_limit` of weight. If more weight
+       * is needed than `weight_limit`, then the operation will fail and the assets send may be
+       * at risk.
        * 
        * - `origin`: Must be capable of withdrawing the `assets` and executing XCM.
        * - `dest`: Destination context for the assets. Will typically be `X2(Parent, Parachain(..))` to send
@@ -298,12 +304,12 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       limitedTeleportAssets: AugmentedSubmittable<(dest: XcmVersionedMultiLocation | { V0: any } | { V1: any } | string | Uint8Array, beneficiary: XcmVersionedMultiLocation | { V0: any } | { V1: any } | string | Uint8Array, assets: XcmVersionedMultiAssets | { V0: any } | { V1: any } | string | Uint8Array, feeAssetItem: u32 | AnyNumber | Uint8Array, weightLimit: XcmV2WeightLimit | { Unlimited: any } | { Limited: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [XcmVersionedMultiLocation, XcmVersionedMultiLocation, XcmVersionedMultiAssets, u32, XcmV2WeightLimit]>;
       /**
-       * Transfer some assets from the local chain to the sovereign account of a destination chain and forward
-       * a notification XCM.
+       * Transfer some assets from the local chain to the sovereign account of a destination
+       * chain and forward a notification XCM.
        * 
-       * Fee payment on the destination side is made from the first asset listed in the `assets` vector and
-       * fee-weight is calculated locally and thus remote weights are assumed to be equal to
-       * local weights.
+       * Fee payment on the destination side is made from the asset in the `assets` vector of
+       * index `fee_asset_item`. The weight limit for fees is not provided and thus is unlimited,
+       * with all fees taken as needed from the asset.
        * 
        * - `origin`: Must be capable of withdrawing the `assets` and executing XCM.
        * - `dest`: Destination context for the assets. Will typically be `X2(Parent, Parachain(..))` to send
@@ -320,9 +326,9 @@ declare module '@polkadot/api-base/types/submittable' {
       /**
        * Teleport some assets from the local chain to some destination chain.
        * 
-       * Fee payment on the destination side is made from the first asset listed in the `assets` vector and
-       * fee-weight is calculated locally and thus remote weights are assumed to be equal to
-       * local weights.
+       * Fee payment on the destination side is made from the asset in the `assets` vector of
+       * index `fee_asset_item`. The weight limit for fees is not provided and thus is unlimited,
+       * with all fees taken as needed from the asset.
        * 
        * - `origin`: Must be capable of withdrawing the `assets` and executing XCM.
        * - `dest`: Destination context for the assets. Will typically be `X2(Parent, Parachain(..))` to send
@@ -335,6 +341,174 @@ declare module '@polkadot/api-base/types/submittable' {
        * fees.
        **/
       teleportAssets: AugmentedSubmittable<(dest: XcmVersionedMultiLocation | { V0: any } | { V1: any } | string | Uint8Array, beneficiary: XcmVersionedMultiLocation | { V0: any } | { V1: any } | string | Uint8Array, assets: XcmVersionedMultiAssets | { V0: any } | { V1: any } | string | Uint8Array, feeAssetItem: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [XcmVersionedMultiLocation, XcmVersionedMultiLocation, XcmVersionedMultiAssets, u32]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
+    rmrkCore: {
+      /**
+       * Accepts an NFT sent from another account to self or owned NFT
+       * 
+       * Parameters:
+       * - `origin`: sender of the transaction
+       * - `rmrk_collection_id`: collection id of the nft to be accepted
+       * - `rmrk_nft_id`: nft id of the nft to be accepted
+       * - `new_owner`: either origin's account ID or origin-owned NFT, whichever the NFT was
+       * sent to
+       **/
+      acceptNft: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, newOwner: RmrkTraitsNftAccountIdOrCollectionNftTuple | { AccountId: any } | { CollectionAndNftTuple: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsNftAccountIdOrCollectionNftTuple]>;
+      /**
+       * accept the addition of a new resource to an existing NFT
+       **/
+      acceptResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, rmrkResourceId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u32]>;
+      /**
+       * accept the removal of a resource of an existing NFT
+       **/
+      acceptResourceRemoval: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, rmrkResourceId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u32]>;
+      /**
+       * Create basic resource
+       **/
+      addBasicResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, resource: RmrkTraitsResourceBasicResource | { src?: any; metadata?: any; license?: any; thumb?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsResourceBasicResource]>;
+      /**
+       * Create composable resource
+       **/
+      addComposableResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, resource: RmrkTraitsResourceComposableResource | { parts?: any; base?: any; src?: any; metadata?: any; license?: any; thumb?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsResourceComposableResource]>;
+      /**
+       * Create slot resource
+       **/
+      addSlotResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, resource: RmrkTraitsResourceSlotResource | { base?: any; src?: any; metadata?: any; slot?: any; license?: any; thumb?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsResourceSlotResource]>;
+      /**
+       * burn nft
+       **/
+      burnNft: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, maxBurns: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u32]>;
+      /**
+       * Change the issuer of a collection
+       * 
+       * Parameters:
+       * - `origin`: sender of the transaction
+       * - `collection_id`: collection id of the nft to change issuer of
+       * - `new_issuer`: Collection's new issuer
+       **/
+      changeCollectionIssuer: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newIssuer: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, MultiAddress]>;
+      /**
+       * Create a collection
+       **/
+      createCollection: AugmentedSubmittable<(metadata: Bytes | string | Uint8Array, max: Option<u32> | null | object | string | Uint8Array, symbol: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes, Option<u32>, Bytes]>;
+      /**
+       * destroy collection
+       **/
+      destroyCollection: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
+      /**
+       * lock collection
+       **/
+      lockCollection: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
+      /**
+       * Mints an NFT in the specified collection
+       * Sets metadata and the royalty attribute
+       * 
+       * Parameters:
+       * - `collection_id`: The class of the asset to be minted.
+       * - `nft_id`: The nft value of the asset to be minted.
+       * - `recipient`: Receiver of the royalty
+       * - `royalty`: Permillage reward from each trade for the Recipient
+       * - `metadata`: Arbitrary data about an nft, e.g. IPFS hash
+       * - `transferable`: Ability to transfer this NFT
+       **/
+      mintNft: AugmentedSubmittable<(owner: AccountId32 | string | Uint8Array, collectionId: u32 | AnyNumber | Uint8Array, recipient: Option<AccountId32> | null | object | string | Uint8Array, royaltyAmount: Option<Permill> | null | object | string | Uint8Array, metadata: Bytes | string | Uint8Array, transferable: bool | boolean | Uint8Array, resources: Option<Vec<RmrkTraitsResourceResourceTypes>> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32, u32, Option<AccountId32>, Option<Permill>, Bytes, bool, Option<Vec<RmrkTraitsResourceResourceTypes>>]>;
+      /**
+       * Rejects an NFT sent from another account to self or owned NFT
+       * 
+       * Parameters:
+       * - `origin`: sender of the transaction
+       * - `rmrk_collection_id`: collection id of the nft to be accepted
+       * - `rmrk_nft_id`: nft id of the nft to be accepted
+       **/
+      rejectNft: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32]>;
+      /**
+       * remove resource
+       **/
+      removeResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, resourceId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u32]>;
+      /**
+       * Transfers a NFT from an Account or NFT A to another Account or NFT B
+       * 
+       * Parameters:
+       * - `origin`: sender of the transaction
+       * - `rmrk_collection_id`: collection id of the nft to be transferred
+       * - `rmrk_nft_id`: nft id of the nft to be transferred
+       * - `new_owner`: new owner of the nft which can be either an account or a NFT
+       **/
+      send: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, newOwner: RmrkTraitsNftAccountIdOrCollectionNftTuple | { AccountId: any } | { CollectionAndNftTuple: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsNftAccountIdOrCollectionNftTuple]>;
+      /**
+       * set a different order of resource priority
+       **/
+      setPriority: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, priorities: Vec<u32> | (u32 | AnyNumber | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, u32, Vec<u32>]>;
+      /**
+       * set a custom value on an NFT
+       **/
+      setProperty: AugmentedSubmittable<(rmrkCollectionId: Compact<u32> | AnyNumber | Uint8Array, maybeNftId: Option<u32> | null | object | string | Uint8Array, key: Bytes | string | Uint8Array, value: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u32>, Option<u32>, Bytes, Bytes]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
+    rmrkEquip: {
+      /**
+       * Creates a new Base.
+       * Modeled after [base interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/base.md)
+       * 
+       * Parameters:
+       * - origin: Caller, will be assigned as the issuer of the Base
+       * - base_type: media type, e.g. "svg"
+       * - symbol: arbitrary client-chosen symbol
+       * - parts: array of Fixed and Slot parts composing the base, confined in length by
+       * RmrkPartsLimit
+       **/
+      createBase: AugmentedSubmittable<(baseType: Bytes | string | Uint8Array, symbol: Bytes | string | Uint8Array, parts: Vec<RmrkTraitsPartPartType> | (RmrkTraitsPartPartType | { FixedPart: any } | { SlotPart: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Bytes, Bytes, Vec<RmrkTraitsPartPartType>]>;
+      /**
+       * Adds a Theme to a Base.
+       * Modeled after [themeadd interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/themeadd.md)
+       * Themes are stored in the Themes storage
+       * A Theme named "default" is required prior to adding other Themes.
+       * 
+       * Parameters:
+       * - origin: The caller of the function, must be issuer of the base
+       * - base_id: The Base containing the Theme to be updated
+       * - theme: The Theme to add to the Base.  A Theme has a name and properties, which are an
+       * array of [key, value, inherit].
+       * - key: arbitrary BoundedString, defined by client
+       * - value: arbitrary BoundedString, defined by client
+       * - inherit: optional bool
+       **/
+      themeAdd: AugmentedSubmittable<(baseId: u32 | AnyNumber | Uint8Array, theme: RmrkTraitsTheme | { name?: any; properties?: any; inherit?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, RmrkTraitsTheme]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
+    scheduler: {
+      /**
+       * Cancel a named scheduled task.
+       **/
+      cancelNamed: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed]>;
+      /**
+       * Schedule a named task.
+       **/
+      scheduleNamed: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array, when: u32 | AnyNumber | Uint8Array, maybePeriodic: Option<ITuple<[u32, u32]>> | null | object | string | Uint8Array, priority: u8 | AnyNumber | Uint8Array, call: FrameSupportScheduleMaybeHashed | { Value: any } | { Hash: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed, u32, Option<ITuple<[u32, u32]>>, u8, FrameSupportScheduleMaybeHashed]>;
+      /**
+       * Schedule a named task after a delay.
+       * 
+       * # <weight>
+       * Same as [`schedule_named`](Self::schedule_named).
+       * # </weight>
+       **/
+      scheduleNamedAfter: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array, after: u32 | AnyNumber | Uint8Array, maybePeriodic: Option<ITuple<[u32, u32]>> | null | object | string | Uint8Array, priority: u8 | AnyNumber | Uint8Array, call: FrameSupportScheduleMaybeHashed | { Value: any } | { Hash: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed, u32, Option<ITuple<[u32, u32]>>, u8, FrameSupportScheduleMaybeHashed]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
+    structure: {
       /**
        * Generic tx
        **/
@@ -366,7 +540,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Weight of derivative `call` execution + 10,000.
        * # </weight>
        **/
-      sudo: AugmentedSubmittable<(call: Call | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Call]>;
+      sudo: AugmentedSubmittable<(call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Call]>;
       /**
        * Authenticates the sudo key and dispatches a function call with `Signed` origin from
        * a given account.
@@ -380,7 +554,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Weight of derivative `call` execution + 10,000.
        * # </weight>
        **/
-      sudoAs: AugmentedSubmittable<(who: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, call: Call | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [MultiAddress, Call]>;
+      sudoAs: AugmentedSubmittable<(who: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [MultiAddress, Call]>;
       /**
        * Authenticates the sudo key and dispatches a function call with `Root` origin.
        * This function does not check the weight of the call, and instead allows the
@@ -393,7 +567,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - The weight of this call is defined by the caller.
        * # </weight>
        **/
-      sudoUncheckedWeight: AugmentedSubmittable<(call: Call | string | Uint8Array, weight: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Call, u64]>;
+      sudoUncheckedWeight: AugmentedSubmittable<(call: Call | IMethod | string | Uint8Array, weight: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Call, u64]>;
       /**
        * Generic tx
        **/
@@ -531,6 +705,24 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       rejectProposal: AugmentedSubmittable<(proposalId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u32>]>;
       /**
+       * Force a previously approved proposal to be removed from the approval queue.
+       * The original deposit will no longer be returned.
+       * 
+       * May only be called from `T::RejectOrigin`.
+       * - `proposal_id`: The index of a proposal
+       * 
+       * # <weight>
+       * - Complexity: O(A) where `A` is the number of approvals
+       * - Db reads and writes: `Approvals`
+       * # </weight>
+       * 
+       * Errors:
+       * - `ProposalNotApproved`: The `proposal_id` supplied was not found in the approval queue,
+       * i.e., the proposal has not been approved. This could also mean the proposal does not
+       * exist altogether, thus there is no way it would have been approved in the first place.
+       **/
+      removeApproval: AugmentedSubmittable<(proposalId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u32>]>;
+      /**
        * Generic tx
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
@@ -667,7 +859,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Prefer it to deprecated [`created_collection`] method
        **/
-      createCollectionEx: AugmentedSubmittable<(data: UpDataStructsCreateCollectionData | { mode?: any; access?: any; name?: any; description?: any; tokenPrefix?: any; offchainSchema?: any; schemaVersion?: any; pendingSponsor?: any; limits?: any; variableOnChainSchema?: any; constOnChainSchema?: any; metaUpdatePermission?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [UpDataStructsCreateCollectionData]>;
+      createCollectionEx: AugmentedSubmittable<(data: UpDataStructsCreateCollectionData | { mode?: any; access?: any; name?: any; description?: any; tokenPrefix?: any; pendingSponsor?: any; limits?: any; permissions?: any; tokenPropertyPermissions?: any; properties?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [UpDataStructsCreateCollectionData]>;
       /**
        * This method creates a concrete instance of NFT Collection created with CreateCollection method.
        * 
@@ -711,6 +903,8 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       createMultipleItems: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, owner: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, itemsData: Vec<UpDataStructsCreateItemData> | (UpDataStructsCreateItemData | { NFT: any } | { Fungible: any } | { ReFungible: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr, Vec<UpDataStructsCreateItemData>]>;
       createMultipleItemsEx: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, data: UpDataStructsCreateItemExData | { NFT: any } | { Fungible: any } | { RefungibleMultipleItems: any } | { RefungibleMultipleOwners: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsCreateItemExData]>;
+      deleteCollectionProperties: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, propertyKeys: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, Vec<Bytes>]>;
+      deleteTokenProperties: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, u32, Vec<Bytes>]>;
       /**
        * **DANGEROUS**: Destroys collection and all NFTs within this collection. Users irrecoverably lose their assets and may lose real money.
        * 
@@ -766,6 +960,8 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       removeFromAllowList: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, address: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       setCollectionLimits: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newLimit: UpDataStructsCollectionLimits | { accountTokenOwnershipLimit?: any; sponsoredDataSize?: any; sponsoredDataRateLimit?: any; tokenLimit?: any; sponsorTransferTimeout?: any; sponsorApproveTimeout?: any; ownerCanTransfer?: any; ownerCanDestroy?: any; transfersEnabled?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsCollectionLimits]>;
+      setCollectionPermissions: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newLimit: UpDataStructsCollectionPermissions | { access?: any; mintMode?: any; nesting?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsCollectionPermissions]>;
+      setCollectionProperties: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, properties: Vec<UpDataStructsProperty> | (UpDataStructsProperty | { key?: any; value?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, Vec<UpDataStructsProperty>]>;
       /**
        * # Permissions
        * 
@@ -778,97 +974,8 @@ declare module '@polkadot/api-base/types/submittable' {
        * * new_sponsor.
        **/
       setCollectionSponsor: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newSponsor: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, AccountId32]>;
-      /**
-       * Set const on-chain data schema.
-       * 
-       * # Permissions
-       * 
-       * * Collection Owner
-       * * Collection Admin
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * schema: String representing the const on-chain data schema.
-       **/
-      setConstOnChainSchema: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, schema: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, Bytes]>;
-      /**
-       * Set meta_update_permission value for particular collection
-       * 
-       * # Permissions
-       * 
-       * * Collection Owner.
-       * 
-       * # Arguments
-       * 
-       * * collection_id: ID of the collection.
-       * 
-       * * value: New flag value.
-       **/
-      setMetaUpdatePermissionFlag: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, value: UpDataStructsMetaUpdatePermission | 'ItemOwner' | 'Admin' | 'None' | number | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsMetaUpdatePermission]>;
-      /**
-       * Allows Anyone to create tokens if:
-       * * Allow List is enabled, and
-       * * Address is added to allow list, and
-       * * This method was called with True parameter
-       * 
-       * # Permissions
-       * * Collection Owner
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * mint_permission: Boolean parameter. If True, allows minting to Anyone with conditions above.
-       **/
-      setMintPermission: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, mintPermission: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, bool]>;
-      /**
-       * Set off-chain data schema.
-       * 
-       * # Permissions
-       * 
-       * * Collection Owner
-       * * Collection Admin
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * schema: String representing the offchain data schema.
-       **/
-      setOffchainSchema: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, schema: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, Bytes]>;
-      /**
-       * Toggle between normal and allow list access for the methods with access for `Anyone`.
-       * 
-       * # Permissions
-       * 
-       * * Collection Owner.
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * mode: [AccessMode]
-       **/
-      setPublicAccessMode: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, mode: UpDataStructsAccessMode | 'Normal' | 'AllowList' | number | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsAccessMode]>;
-      /**
-       * Set schema standard
-       * ImageURL
-       * Unique
-       * 
-       * # Permissions
-       * 
-       * * Collection Owner
-       * * Collection Admin
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * schema: SchemaVersion: enum
-       **/
-      setSchemaVersion: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, version: UpDataStructsSchemaVersion | 'ImageURL' | 'Unique' | number | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsSchemaVersion]>;
+      setTokenProperties: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, properties: Vec<UpDataStructsProperty> | (UpDataStructsProperty | { key?: any; value?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, u32, Vec<UpDataStructsProperty>]>;
+      setTokenPropertyPermissions: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, propertyPermissions: Vec<UpDataStructsPropertyKeyPermission> | (UpDataStructsPropertyKeyPermission | { key?: any; permission?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, Vec<UpDataStructsPropertyKeyPermission>]>;
       /**
        * Set transfers_enabled value for particular collection
        * 
@@ -883,36 +990,6 @@ declare module '@polkadot/api-base/types/submittable' {
        * * value: New flag value.
        **/
       setTransfersEnabledFlag: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, value: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, bool]>;
-      /**
-       * Set off-chain data schema.
-       * 
-       * # Permissions
-       * 
-       * * Collection Owner
-       * * Collection Admin
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * schema: String representing the offchain data schema.
-       **/
-      setVariableMetaData: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, itemId: u32 | AnyNumber | Uint8Array, data: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, Bytes]>;
-      /**
-       * Set variable on-chain data schema.
-       * 
-       * # Permissions
-       * 
-       * * Collection Owner
-       * * Collection Admin
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * schema: String representing the variable on-chain data schema.
-       **/
-      setVariableOnChainSchema: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, schema: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, Bytes]>;
       /**
        * Change ownership of the token.
        * 

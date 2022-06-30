@@ -34,7 +34,6 @@ import {
   getCreatedCollectionCount,
   UNIQUE,
 } from './util/helpers';
-import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 
 chai.use(chaiAsPromised);
@@ -47,11 +46,10 @@ let charlie: IKeyringPair;
 describe('integration test: ext. confirmSponsorship():', () => {
 
   before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({type: 'sr25519'});
-      alice = keyring.addFromUri('//Alice');
-      bob = keyring.addFromUri('//Bob');
-      charlie = keyring.addFromUri('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 
@@ -78,11 +76,11 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const sponsorBalanceBefore = (await api.query.system.account(bob.address)).data.free.toBigInt();
 
       // Find unused address
-      const zeroBalance = await findUnusedAddress(api);
+      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
       // Mint token for unused address
       const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', zeroBalance.address);
@@ -105,11 +103,11 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const sponsorBalanceBefore = (await api.query.system.account(bob.address)).data.free.toBigInt();
 
       // Find unused address
-      const zeroBalance = await findUnusedAddress(api);
+      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
       // Mint token for unused address
       const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', zeroBalance.address);
@@ -131,11 +129,11 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const sponsorBalanceBefore = (await api.query.system.account(bob.address)).data.free.toBigInt();
 
       // Find unused address
-      const zeroBalance = await findUnusedAddress(api);
+      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
       // Mint token for unused address
       const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', zeroBalance.address);
@@ -164,11 +162,11 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await enablePublicMintingExpectSuccess(alice, collectionId);
 
     // Create Item
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       const sponsorBalanceBefore = (await api.query.system.account(bob.address)).data.free.toBigInt();
 
       // Find unused address
-      const zeroBalance = await findUnusedAddress(api);
+      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
       // Add zeroBalance address to allow list
       await addToAllowListExpectSuccess(alice, collectionId, zeroBalance.address);
@@ -187,9 +185,9 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       // Find unused address
-      const zeroBalance = await findUnusedAddress(api);
+      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
       // Mint token for alice
       const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
@@ -226,9 +224,9 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       // Find unused address
-      const zeroBalance = await findUnusedAddress(api);
+      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
       // Mint token for unused address
       const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', zeroBalance.address);
@@ -259,9 +257,9 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       // Find unused address
-      const zeroBalance = await findUnusedAddress(api);
+      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
       // Mint token for alice
       const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', zeroBalance.address);
@@ -299,9 +297,9 @@ describe('integration test: ext. confirmSponsorship():', () => {
     // Enable public minting
     await enablePublicMintingExpectSuccess(alice, collectionId);
 
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       // Find unused address
-      const zeroBalance = await findUnusedAddress(api);
+      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
       // Add zeroBalance address to allow list
       await addToAllowListExpectSuccess(alice, collectionId, zeroBalance.address);
@@ -331,11 +329,10 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
 describe('(!negative test!) integration test: ext. confirmSponsorship():', () => {
   before(async () => {
-    await usingApi(async () => {
-      const keyring = new Keyring({type: 'sr25519'});
-      alice = keyring.addFromUri('//Alice');
-      bob = keyring.addFromUri('//Bob');
-      charlie = keyring.addFromUri('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
     });
   });
 
@@ -390,12 +387,12 @@ describe('(!negative test!) integration test: ext. confirmSponsorship():', () =>
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
-    await usingApi(async (api) => {
+    await usingApi(async (api, privateKeyWrapper) => {
       // Find unused address
-      const ownerZeroBalance = await findUnusedAddress(api);
+      const ownerZeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
       // Find another unused address
-      const senderZeroBalance = await findUnusedAddress(api);
+      const senderZeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
       // Mint token for an unused address
       const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', ownerZeroBalance.address);

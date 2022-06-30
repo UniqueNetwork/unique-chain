@@ -14,10 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use substrate_wasm_builder::WasmBuilder;
-
 fn main() {
-	WasmBuilder::new()
+	#[cfg(feature = "std")]
+	substrate_wasm_builder::WasmBuilder::new()
 		.with_current_project()
 		.import_memory()
 		.export_heap_base()

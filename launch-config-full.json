@@ -67,7 +67,7 @@
     "parachains": [
         {
             "bin": "../unique-chain/target/release/unique-collator",
-            "id": "1000",
+            "id": "5000",
             "balance": "1000000000000000000000000",
             "nodes": [
                 {
@@ -97,7 +97,7 @@
             ]
         },
         {
-            "bin": "../Acala/target/release/acala",
+            "bin": "../Acala/target/production/acala",
             "id": "2000",
             "chain":  "karura-dev",
 			"balance": "1000000000000000000000",
@@ -120,12 +120,12 @@
     "hrmpChannels": [
         {
             "sender": 2000,
-            "recipient": 1000,
+            "recipient": 5000,
             "maxCapacity": 8,
             "maxMessageSize": 512
         },
         {
-            "sender": 1000,
+            "sender": 5000,
             "recipient": 2000,
             "maxCapacity": 8,
             "maxMessageSize": 512

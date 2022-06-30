@@ -17,7 +17,6 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import {deployFlipper, getFlipValue, toggleFlipValueExpectSuccess} from './util/contracthelpers';
 import {
@@ -32,10 +31,10 @@ const expect = chai.expect;
 
 describe.skip('Integration Test enableContractSponsoring', () => {
   it('ensure tx fee is paid from endowment', async () => {
-    await usingApi(async (api) => {
-      const user = await findUnusedAddress(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const user = await findUnusedAddress(api, privateKeyWrapper);
 
-      const [flipper, deployer] = await deployFlipper(api);
+      const [flipper, deployer] = await deployFlipper(api, privateKeyWrapper);
       await enableContractSponsoringExpectSuccess(deployer, flipper.address, true);
       await setContractSponsoringRateLimitExpectSuccess(deployer, flipper.address, 1);
       await toggleFlipValueExpectSuccess(user, flipper);
@@ -45,8 +44,8 @@ describe.skip('Integration Test enableContractSponsoring', () => {
   });
 
   it('ensure it can be enabled twice', async () => {
-    await usingApi(async (api) => {
-      const [flipper, deployer] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [flipper, deployer] = await deployFlipper(api, privateKeyWrapper);
 
       await enableContractSponsoringExpectSuccess(deployer, flipper.address, true);
       await enableContractSponsoringExpectSuccess(deployer, flipper.address, true);
@@ -54,8 +53,8 @@ describe.skip('Integration Test enableContractSponsoring', () => {
   });
 
   it('ensure it can be disabled twice', async () => {
-    await usingApi(async (api) => {
-      const [flipper, deployer] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [flipper, deployer] = await deployFlipper(api, privateKeyWrapper);
 
       await enableContractSponsoringExpectSuccess(deployer, flipper.address, true);
       await enableContractSponsoringExpectSuccess(deployer, flipper.address, false);
@@ -64,8 +63,8 @@ describe.skip('Integration Test enableContractSponsoring', () => {
   });
 
   it('ensure it can be re-enabled', async () => {
-    await usingApi(async (api) => {
-      const [flipper, deployer] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [flipper, deployer] = await deployFlipper(api, privateKeyWrapper);
 
       await enableContractSponsoringExpectSuccess(deployer, flipper.address, true);
       await enableContractSponsoringExpectSuccess(deployer, flipper.address, false);
@@ -79,20 +78,22 @@ describe.skip('Negative Integration Test enableContractSponsoring', () => {
   let alice: IKeyringPair;
 
   before(async () => {
-    alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+    });
   });
 
   it('fails when called for non-contract address', async () => {
-    await usingApi(async (api) => {
-      const user = await findUnusedAddress(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const user = await findUnusedAddress(api, privateKeyWrapper);
 
       await enableContractSponsoringExpectFailure(alice, user.address, true);
     });
   });
 
   it('fails when called by non-owning user', async () => {
-    await usingApi(async (api) => {
-      const [flipper] = await deployFlipper(api);
+    await usingApi(async (api, privateKeyWrapper) => {
+      const [flipper] = await deployFlipper(api, privateKeyWrapper);
 
       await enableContractSponsoringExpectFailure(alice, flipper.address, true);
     });

@@ -26,13 +26,13 @@ use serde_json::map::Map;
 use unique_runtime_common::types::*;
 
 #[cfg(feature = "unique-runtime")]
-use unique_runtime as default_runtime;
+pub use unique_runtime as default_runtime;
 
 #[cfg(all(not(feature = "unique-runtime"), feature = "quartz-runtime"))]
-use quartz_runtime as default_runtime;
+pub use quartz_runtime as default_runtime;
 
 #[cfg(all(not(feature = "unique-runtime"), not(feature = "quartz-runtime")))]
-use opal_runtime as default_runtime;
+pub use opal_runtime as default_runtime;
 
 /// The `ChainSpec` parameterized for the unique runtime.
 #[cfg(feature = "unique-runtime")]
@@ -187,21 +187,33 @@ macro_rules! testnet_genesis {
 	}};
 }
 
-pub fn development_config() -> OpalChainSpec {
+pub fn development_config() -> DefaultChainSpec {
 	let mut properties = Map::new();
-	properties.insert("tokenSymbol".into(), opal_runtime::TOKEN_SYMBOL.into());
+	properties.insert("tokenSymbol".into(), default_runtime::TOKEN_SYMBOL.into());
 	properties.insert("tokenDecimals".into(), 18.into());
-	properties.insert("ss58Format".into(), opal_runtime::SS58Prefix::get().into());
+	properties.insert(
+		"ss58Format".into(),
+		default_runtime::SS58Prefix::get().into(),
+	);
 
-	OpalChainSpec::from_genesis(
+	DefaultChainSpec::from_genesis(
 		// Name
-		"OPAL by UNIQUE",
+		format!(
+			"{}{}",
+			default_runtime::RUNTIME_NAME.to_uppercase(),
+			if cfg!(feature = "unique-runtime") {
+				""
+			} else {
+				" by UNIQUE"
+			}
+		)
+		.as_str(),
 		// ID
-		"opal_dev",
+		format!("{}_dev", default_runtime::RUNTIME_NAME).as_str(),
 		ChainType::Local,
 		move || {
 			testnet_genesis!(
-				opal_runtime,
+				default_runtime,
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![
@@ -243,7 +255,7 @@ pub fn development_config() -> OpalChainSpec {
 	)
 }
 
-pub fn local_testnet_rococo_config() -> DefaultChainSpec {
+pub fn local_testnet_config() -> DefaultChainSpec {
 	let mut properties = Map::new();
 	properties.insert("tokenSymbol".into(), default_runtime::TOKEN_SYMBOL.into());
 	properties.insert("tokenDecimals".into(), 18.into());

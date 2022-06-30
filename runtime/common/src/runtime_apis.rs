@@ -1,3 +1,19 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 #[macro_export]
 macro_rules! impl_common_runtime_apis {
     (
@@ -14,6 +30,9 @@ macro_rules! impl_common_runtime_apis {
                 fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Result<Vec<TokenId>, DispatchError> {
                     dispatch_unique_runtime!(collection.account_tokens(account))
                 }
+                fn collection_tokens(collection: CollectionId) -> Result<Vec<TokenId>, DispatchError> {
+                    dispatch_unique_runtime!(collection.collection_tokens())
+                }
                 fn token_exists(collection: CollectionId, token: TokenId) -> Result<bool, DispatchError> {
                     dispatch_unique_runtime!(collection.token_exists(token))
                 }
@@ -21,15 +40,63 @@ macro_rules! impl_common_runtime_apis {
                 fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
                     dispatch_unique_runtime!(collection.token_owner(token))
                 }
-                fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
-                    dispatch_unique_runtime!(collection.const_metadata(token))
+                fn topmost_token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
+                    let budget = up_data_structs::budget::Value::new(10);
+
+                    Ok(Some(<pallet_structure::Pallet<Runtime>>::find_topmost_owner(collection, token, &budget)?))
                 }
-                fn variable_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>, DispatchError> {
-                    dispatch_unique_runtime!(collection.variable_metadata(token))
+                fn token_children(collection: CollectionId, token: TokenId) -> Result<Vec<TokenChild>, DispatchError> {
+                    Ok(<pallet_nonfungible::Pallet<Runtime>>::token_children_ids(collection, token))
+                }
+                fn collection_properties(
+                    collection: CollectionId,
+                    keys: Option<Vec<Vec<u8>>>
+                ) -> Result<Vec<Property>, DispatchError> {
+                    let keys = keys.map(
+                        |keys| Common::bytes_keys_to_property_keys(keys)
+                    ).transpose()?;
+
+                    Common::filter_collection_properties(collection, keys)
                 }
 
-                fn collection_tokens(collection: CollectionId) -> Result<u32, DispatchError> {
-                    dispatch_unique_runtime!(collection.collection_tokens())
+                fn token_properties(
+                    collection: CollectionId,
+                    token_id: TokenId,
+                    keys: Option<Vec<Vec<u8>>>
+                ) -> Result<Vec<Property>, DispatchError> {
+                    let keys = keys.map(
+                        |keys| Common::bytes_keys_to_property_keys(keys)
+                    ).transpose()?;
+
+                    dispatch_unique_runtime!(collection.token_properties(token_id, keys))
+                }
+
+                fn property_permissions(
+                    collection: CollectionId,
+                    keys: Option<Vec<Vec<u8>>>
+                ) -> Result<Vec<PropertyKeyPermission>, DispatchError> {
+                    let keys = keys.map(
+                        |keys| Common::bytes_keys_to_property_keys(keys)
+                    ).transpose()?;
+
+                    Common::filter_property_permissions(collection, keys)
+                }
+
+                fn token_data(
+                    collection: CollectionId,
+                    token_id: TokenId,
+                    keys: Option<Vec<Vec<u8>>>
+                ) -> Result<TokenData<CrossAccountId>, DispatchError> {
+                    let token_data = TokenData {
+                        properties: Self::token_properties(collection, token_id, keys)?,
+                        owner: Self::token_owner(collection, token_id)?
+                    };
+
+                    Ok(token_data)
+                }
+
+                fn total_supply(collection: CollectionId) -> Result<u32, DispatchError> {
+                    dispatch_unique_runtime!(collection.total_supply())
                 }
                 fn account_balance(collection: CollectionId, account: CrossAccountId) -> Result<u32, DispatchError> {
                     dispatch_unique_runtime!(collection.account_balance(account))
@@ -46,11 +113,6 @@ macro_rules! impl_common_runtime_apis {
                     dispatch_unique_runtime!(collection.allowance(sender, spender, token))
                 }
 
-                fn eth_contract_code(account: H160) -> Option<Vec<u8>> {
-                    <pallet_unique::UniqueErcSupport<Runtime>>::get_code(&account)
-                        .or_else(|| <pallet_evm_migration::OnMethodCall<Runtime>>::get_code(&account))
-                        .or_else(|| <pallet_evm_contract_helpers::HelpersOnMethodCall<Self>>::get_code(&account))
-                }
                 fn adminlist(collection: CollectionId) -> Result<Vec<CrossAccountId>, DispatchError> {
                     Ok(<pallet_common::Pallet<Runtime>>::adminlist(collection))
                 }
@@ -63,15 +125,15 @@ macro_rules! impl_common_runtime_apis {
                 fn last_token_id(collection: CollectionId) -> Result<TokenId, DispatchError> {
                     dispatch_unique_runtime!(collection.last_token_id())
                 }
-                fn collection_by_id(collection: CollectionId) -> Result<Option<Collection<AccountId>>, DispatchError> {
-                    Ok(<pallet_common::CollectionById<Runtime>>::get(collection))
+                fn collection_by_id(collection: CollectionId) -> Result<Option<RpcCollection<AccountId>>, DispatchError> {
+                    Ok(<pallet_common::Pallet<Runtime>>::rpc_collection(collection))
                 }
                 fn collection_stats() -> Result<CollectionStats, DispatchError> {
                     Ok(<pallet_common::Pallet<Runtime>>::collection_stats())
                 }
                 fn next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<Option<u64>, DispatchError> {
-                    Ok(<pallet_unique::UniqueSponsorshipPredict<Runtime> as
-                            pallet_unique::SponsorshipPredict<Runtime>>::predict(
+                    Ok(<$crate::sponsoring::UniqueSponsorshipPredict<Runtime> as
+                            $crate::sponsoring::SponsorshipPredict<Runtime>>::predict(
                         collection,
                         account,
                         token))
@@ -149,11 +211,13 @@ macro_rules! impl_common_runtime_apis {
                 }
 
                 fn account_basic(address: H160) -> EVMAccount {
-                    EVM::account_basic(&address)
+                    let (account, _) = EVM::account_basic(&address);
+                    account
                 }
 
                 fn gas_price() -> U256 {
-                    <Runtime as pallet_evm::Config>::FeeCalculator::min_gas_price()
+                    let (price, _) = <Runtime as pallet_evm::Config>::FeeCalculator::min_gas_price();
+                    price
                 }
 
                 fn account_code_at(address: H160) -> Vec<u8> {
@@ -191,6 +255,7 @@ macro_rules! impl_common_runtime_apis {
                         None
                     };
 
+                    let is_transactional = false;
                     <Runtime as pallet_evm::Config>::Runner::call(
                         CrossAccountId::from_eth(from),
                         to,
@@ -201,8 +266,9 @@ macro_rules! impl_common_runtime_apis {
                         max_priority_fee_per_gas,
                         nonce,
                         access_list.unwrap_or_default(),
+                        is_transactional,
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
-                    ).map_err(|err| err.into())
+                    ).map_err(|err| err.error.into())
                 }
 
                 #[allow(clippy::redundant_closure)]
@@ -225,6 +291,7 @@ macro_rules! impl_common_runtime_apis {
                         None
                     };
 
+                    let is_transactional = false;
                     <Runtime as pallet_evm::Config>::Runner::create(
                         CrossAccountId::from_eth(from),
                         data,
@@ -234,8 +301,9 @@ macro_rules! impl_common_runtime_apis {
                         max_priority_fee_per_gas,
                         nonce,
                         access_list.unwrap_or_default(),
+                        is_transactional,
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
-                    ).map_err(|err| err.into())
+                    ).map_err(|err| err.error.into())
                 }
 
                 fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
@@ -271,6 +339,14 @@ macro_rules! impl_common_runtime_apis {
 
                 fn elasticity() -> Option<Permill> {
                     None
+                }
+            }
+
+            impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
+                fn convert_transaction(transaction: pallet_ethereum::Transaction) -> <Block as BlockT>::Extrinsic  {
+                    UncheckedExtrinsic::new_unsigned(
+                        pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
+                    )
                 }
             }
 
@@ -370,11 +446,21 @@ macro_rules! impl_common_runtime_apis {
                     let mut list = Vec::<BenchmarkList>::new();
 
                     list_benchmark!(list, extra, pallet_evm_migration, EvmMigration);
+                    list_benchmark!(list, extra, pallet_common, Common);
                     list_benchmark!(list, extra, pallet_unique, Unique);
+                    list_benchmark!(list, extra, pallet_structure, Structure);
                     list_benchmark!(list, extra, pallet_inflation, Inflation);
                     list_benchmark!(list, extra, pallet_fungible, Fungible);
                     list_benchmark!(list, extra, pallet_refungible, Refungible);
                     list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
+                    list_benchmark!(list, extra, pallet_unique_scheduler, Scheduler);
+
+                    #[cfg(not(feature = "unique-runtime"))]
+                    list_benchmark!(list, extra, pallet_proxy_rmrk_core, RmrkCore);
+
+                    #[cfg(not(feature = "unique-runtime"))]
+                    list_benchmark!(list, extra, pallet_proxy_rmrk_equip, RmrkEquip);
+
                     // list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
                     let storage_info = AllPalletsReversedWithSystemFirst::storage_info();
@@ -388,31 +474,61 @@ macro_rules! impl_common_runtime_apis {
                     use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
                     let allowlist: Vec<TrackedStorageKey> = vec![
-                        // Block Number
-                        hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
                         // Total Issuance
                         hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
+
+                        // Block Number
+                        hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
                         // Execution Phase
                         hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
                         // Event Count
                         hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
                         // System Events
                         hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
+
+                        // Evm CurrentLogs
+                        hex_literal::hex!("1da53b775b270400e7e61ed5cbc5a146547f210cec367e9af919603343b9cb56").to_vec().into(),
+
+                        // Transactional depth
+                        hex_literal::hex!("3a7472616e73616374696f6e5f6c6576656c3a").to_vec().into(),
                     ];
 
                     let mut batches = Vec::<BenchmarkBatch>::new();
                     let params = (&config, &allowlist);
 
                     add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
+                    add_benchmark!(params, batches, pallet_common, Common);
                     add_benchmark!(params, batches, pallet_unique, Unique);
+                    add_benchmark!(params, batches, pallet_structure, Structure);
                     add_benchmark!(params, batches, pallet_inflation, Inflation);
                     add_benchmark!(params, batches, pallet_fungible, Fungible);
                     add_benchmark!(params, batches, pallet_refungible, Refungible);
                     add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
+                    add_benchmark!(params, batches, pallet_unique_scheduler, Scheduler);
+
+                    #[cfg(not(feature = "unique-runtime"))]
+                    add_benchmark!(params, batches, pallet_proxy_rmrk_core, RmrkCore);
+
+                    #[cfg(not(feature = "unique-runtime"))]
+                    add_benchmark!(params, batches, pallet_proxy_rmrk_equip, RmrkEquip);
+
                     // add_benchmark!(params, batches, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
                     if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
                     Ok(batches)
+                }
+            }
+
+            #[cfg(feature = "try-runtime")]
+            impl frame_try_runtime::TryRuntime<Block> for Runtime {
+                fn on_runtime_upgrade() -> (Weight, Weight) {
+                    log::info!("try-runtime::on_runtime_upgrade unique-chain.");
+                    let weight = Executive::try_runtime_upgrade().unwrap();
+                    (weight, RuntimeBlockWeights::get().max_block)
+                }
+
+                fn execute_block_no_check(block: Block) -> Weight {
+                    Executive::execute_block_no_check(block)
                 }
             }
         }

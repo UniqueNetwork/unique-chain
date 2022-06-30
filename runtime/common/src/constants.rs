@@ -1,3 +1,19 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 use sp_runtime::Perbill;
 use frame_support::{
 	parameter_types,
@@ -19,10 +35,11 @@ pub const MILLIUNIQUE: Balance = 1_000 * MICROUNIQUE;
 pub const CENTIUNIQUE: Balance = 10 * MILLIUNIQUE;
 pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
 
-pub const WEIGHT_TO_FEE_COEFF: u32 = 142_688_000;
+// Targeting 0.1 UNQ per transfer
+pub const WEIGHT_TO_FEE_COEFF: u32 = 207_890_902;
 
-// Targeting 0.15 UNQ per transfer
-pub const MIN_GAS_PRICE: u64 = 1_018_751_825_264;
+// Targeting 0.15 UNQ per transfer via ETH
+pub const MIN_GAS_PRICE: u64 = 1_019_493_469_850;
 
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.
@@ -36,5 +53,5 @@ pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 parameter_types! {
 	pub const DefaultSponsoringRateLimit: BlockNumber = 1 * DAYS;
 
-	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE; // Targeting 0.1 Unique per NFT transfer
+	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE;
 }

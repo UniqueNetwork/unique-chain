@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import privateKey from './substrate/privateKey';
 import usingApi from './substrate/substrate-api';
 import {
   addToAllowListExpectSuccess,
@@ -35,9 +34,9 @@ describe('Integration Test setMintPermission', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -68,6 +67,14 @@ describe('Integration Test setMintPermission', () => {
       await setMintPermissionExpectSuccess(alice, collectionId, false);
     });
   });
+
+  it('Collection admin success on set', async () => {
+    await usingApi(async () => {
+      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+      await setMintPermissionExpectSuccess(bob, collectionId, true);
+    });
+  });
 });
 
 describe('Negative Integration Test setMintPermission', () => {
@@ -75,9 +82,9 @@ describe('Negative Integration Test setMintPermission', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
     });
   });
 
@@ -101,14 +108,6 @@ describe('Negative Integration Test setMintPermission', () => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await enableAllowListExpectSuccess(alice, collectionId);
     await setMintPermissionExpectFailure(bob, collectionId, true);
-  });
-
-  it('Collection admin fails on set', async () => {
-    await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      await setMintPermissionExpectFailure(bob, collectionId, true);
-    });
   });
 
   it('ensure non-allow-listed non-privileged address can\'t mint tokens', async () => {

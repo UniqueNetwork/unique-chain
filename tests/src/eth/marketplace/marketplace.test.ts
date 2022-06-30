@@ -16,7 +16,6 @@
 
 import {readFile} from 'fs/promises';
 import {getBalanceSingle} from '../../substrate/get-balance';
-import privateKey from '../../substrate/privateKey';
 import {
   addToAllowListExpectSuccess, 
   confirmSponsorshipExpectSuccess, 
@@ -38,9 +37,9 @@ import {expect} from 'chai';
 const PRICE = 2000n;
 
 describe('Matcher contract usage', () => {
-  itWeb3('With UNQ', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
-    const matcherOwner = await createEthAccountWithBalance(api, web3);
+  itWeb3('With UNQ', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
+    const matcherOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
       from: matcherOwner,
       ...GAS_ARGS,
@@ -61,7 +60,7 @@ describe('Matcher contract usage', () => {
     await helpers.methods.toggleAllowed(matcher.options.address, subToEth(alice.address), true).send({from: matcherOwner});
     await addToAllowListExpectSuccess(alice, collectionId, evmToAddress(subToEth(alice.address)));
 
-    const seller = privateKey(`//Seller/${Date.now()}`);
+    const seller = privateKeyWrapper(`//Seller/${Date.now()}`);
     await helpers.methods.toggleAllowed(matcher.options.address, subToEth(seller.address), true).send({from: matcherOwner});
 
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', seller.address);
@@ -99,10 +98,10 @@ describe('Matcher contract usage', () => {
   });
 
 
-  itWeb3('With escrow', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
-    const matcherOwner = await createEthAccountWithBalance(api, web3);
-    const escrow = await createEthAccountWithBalance(api, web3);
+  itWeb3('With escrow', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
+    const matcherOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const escrow = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
       from: matcherOwner,
       ...GAS_ARGS,
@@ -124,7 +123,7 @@ describe('Matcher contract usage', () => {
     await helpers.methods.toggleAllowed(matcher.options.address, subToEth(alice.address), true).send({from: matcherOwner});
     await addToAllowListExpectSuccess(alice, collectionId, evmToAddress(subToEth(alice.address)));
 
-    const seller = privateKey(`//Seller/${Date.now()}`);
+    const seller = privateKeyWrapper(`//Seller/${Date.now()}`);
     await helpers.methods.toggleAllowed(matcher.options.address, subToEth(seller.address), true).send({from: matcherOwner});
 
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', seller.address);
@@ -170,9 +169,9 @@ describe('Matcher contract usage', () => {
   });
 
 
-  itWeb3('Sell tokens from substrate user via EVM contract', async ({api, web3}) => {
-    const alice = privateKey('//Alice');
-    const matcherOwner = await createEthAccountWithBalance(api, web3);
+  itWeb3('Sell tokens from substrate user via EVM contract', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
+    const matcherOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
       from: matcherOwner,
       ...GAS_ARGS,
@@ -184,7 +183,7 @@ describe('Matcher contract usage', () => {
     await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorApproveTimeout: 1});
     const evmCollection = new web3.eth.Contract(nonFungibleAbi as any, collectionIdToAddress(collectionId), {from: matcherOwner});
 
-    const seller = privateKey(`//Seller/${Date.now()}`);
+    const seller = privateKeyWrapper(`//Seller/${Date.now()}`);
     await transferBalanceTo(api, alice, seller.address);
     
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', seller.address);

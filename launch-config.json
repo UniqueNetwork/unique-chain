@@ -1,7 +1,7 @@
 {
     "relaychain": {
         "bin": "../polkadot/target/release/polkadot",
-        "chain": "rococo-local",
+        "chain": "westend-local",
         "nodes": [
             {
                 "name": "alice",
@@ -10,7 +10,10 @@
                 "port": 30444,
                 "flags": [
                     "-lparachain::candidate_validation=debug",
-                    "-lxcm=trace"
+                    "-lxcm=trace",
+                    "--rpc-cors=all",
+                    "--unsafe-rpc-external",
+                    "--unsafe-ws-external"
                 ]
             },
             {
@@ -20,7 +23,10 @@
                 "port": 30555,
                 "flags": [
                     "-lparachain::candidate_validation=debug",
-                    "-lxcm=trace"
+                    "-lxcm=trace",
+                    "--rpc-cors=all",
+                    "--unsafe-rpc-external",
+                    "--unsafe-ws-external"
                 ]
             },
             {
@@ -29,7 +35,11 @@
                 "rpcPort": 9865,
                 "port": 30666,
                 "flags": [
-                    "-lparachain::candidate_validation=debug"
+                    "-lparachain::candidate_validation=debug",
+                    "-lxcm=trace",
+                    "--rpc-cors=all",
+                    "--unsafe-rpc-external",
+                    "--unsafe-ws-external"
                 ]
             },
             {
@@ -38,7 +48,11 @@
                 "rpcPort": 9876,
                 "port": 30777,
                 "flags": [
-                    "-lparachain::candidate_validation=debug"
+                    "-lparachain::candidate_validation=debug",
+                    "-lxcm=trace",
+                    "--rpc-cors=all",
+                    "--unsafe-rpc-external",
+                    "--unsafe-ws-external"
                 ]
             },
             {
@@ -47,7 +61,11 @@
                 "rpcPort": 9887,
                 "port": 30888,
                 "flags": [
-                    "-lparachain::candidate_validation=debug"
+                    "-lparachain::candidate_validation=debug",
+                    "-lxcm=trace",
+                    "--rpc-cors=all",
+                    "--unsafe-rpc-external",
+                    "--unsafe-ws-external"
                 ]
             }
         ],

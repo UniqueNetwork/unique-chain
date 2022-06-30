@@ -78,6 +78,8 @@ use xcm::{v1::MultiLocation, VersionedMultiLocation};
 use xcm_builder::TakeRevenue;
 use xcm_executor::{traits::WeightTrader, Assets};
 
+use pallet_common::erc::CrossAccountId;
+
 pub type ForeignAssetId = u32;
 pub type CurrencyId = ForeignAssetId;
 
@@ -337,7 +339,7 @@ pub mod module {
 			};
 
 			// throw an error on bad result
-			let bounded_collection_id = <PalletCommon<T>>::init_collection(owner, data).unwrap();
+			let bounded_collection_id = <PalletCommon<T>>::init_collection(CrossAccountId::from_sub(owner), data, true)?;//.unwrap();
 			//let bounded_collection_id = CollectionId(0);
 			let foreign_asset_id = Self::do_register_foreign_asset(&location, &metadata, bounded_collection_id)?;
 

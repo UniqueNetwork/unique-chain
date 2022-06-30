@@ -18,7 +18,6 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from './substrate/privateKey';
 import {default as usingApi} from './substrate/substrate-api';
 import {
   approveExpectFail,
@@ -29,7 +28,7 @@ import {
   setCollectionLimitsExpectSuccess,
   transferExpectSuccess,
   addCollectionAdminExpectSuccess,
-  adminApproveFromExpectSuccess,
+  adminApproveFromExpectFail,
   getCreatedCollectionCount,
   transferFromExpectSuccess,
   transferFromExpectFail,
@@ -43,10 +42,10 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 
@@ -85,11 +84,11 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
     await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, alice, bob.address, 0);
   });
 
-  it('can be called by collection owner on non-owned item when OwnerCanTransfer == true', async () => {
+  it('can`t be called by collection owner on non-owned item when OwnerCanTransfer == false', async () => {
     const collectionId = await createCollectionExpectSuccess();
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
 
-    await adminApproveFromExpectSuccess(collectionId, itemId, alice, bob.address, charlie.address);
+    await adminApproveFromExpectFail(collectionId, itemId, alice, bob.address, charlie.address);
   });
 });
 
@@ -99,10 +98,10 @@ describe('Normal user can approve other users to transfer:', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });  
 
@@ -131,10 +130,10 @@ describe('Approved users can transferFrom up to approved amount:', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });  
 
@@ -166,10 +165,10 @@ describe('Approved users cannot use transferFrom to repeat transfers if approved
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });  
 
@@ -205,11 +204,11 @@ describe('Approved amount decreases by the transferred amount.:', () => {
   let dave: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
-      dave = privateKey('//Dave');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
+      dave =  privateKeyWrapper('//Dave');
     });
   });  
 
@@ -228,10 +227,10 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 
@@ -267,10 +266,10 @@ describe('User cannot approve for the amount greater than they own:', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 
@@ -293,23 +292,24 @@ describe('User cannot approve for the amount greater than they own:', () => {
   });
 });
 
-describe('Administrator and collection owner do not need approval in order to execute TransferFrom:', () => {
+describe('Administrator and collection owner do not need approval in order to execute TransferFrom (with owner_can_transfer_flag = true):', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
   let dave: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
-      dave = privateKey('//Dave');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
+      dave =  privateKeyWrapper('//Dave');
     });
   });  
 
   it('NFT', async () => {
     const collectionId = await createCollectionExpectSuccess();
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', charlie.address);
     await transferFromExpectSuccess(collectionId, itemId, alice, charlie, dave, 1, 'NFT');
     await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
@@ -318,6 +318,7 @@ describe('Administrator and collection owner do not need approval in order to ex
 
   it('Fungible up to an approved amount', async () => {
     const collectionId = await createCollectionExpectSuccess({mode:{type: 'Fungible', decimalPoints: 0}});
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
     const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', charlie.address); 
     await transferFromExpectSuccess(collectionId, itemId, alice, charlie, dave, 1, 'Fungible');
     await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
@@ -326,6 +327,7 @@ describe('Administrator and collection owner do not need approval in order to ex
 
   it('ReFungible up to an approved amount', async () => {
     const collectionId = await createCollectionExpectSuccess({mode:{type: 'ReFungible'}});
+    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
     const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', charlie.address);
     await transferFromExpectSuccess(collectionId, itemId, alice, charlie, dave, 1, 'ReFungible');
     await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
@@ -340,11 +342,11 @@ describe('Repeated approvals add up', () => {
   let dave: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
-      dave = privateKey('//Dave');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
+      dave =  privateKeyWrapper('//Dave');
     });
   });  
 
@@ -391,10 +393,10 @@ describe('Integration Test approve(spender, collection_id, item_id, amount) with
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 
@@ -403,7 +405,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount) with
     const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
 
     await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-    await adminApproveFromExpectSuccess(collectionId, itemId, bob, alice.address, charlie.address);
+    await adminApproveFromExpectFail(collectionId, itemId, bob, alice.address, charlie.address);
   });
 });
 
@@ -413,10 +415,10 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice =  privateKeyWrapper('//Alice');
+      bob =  privateKeyWrapper('//Bob');
+      charlie =  privateKeyWrapper('//Charlie');
     });
   });
 

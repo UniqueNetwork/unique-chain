@@ -15,11 +15,13 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use sp_std::vec::Vec;
-use crate::{Config, CollectionHandle};
+use crate::{Config, CollectionHandle, Pallet};
+use pallet_evm::account::CrossAccountId;
+use frame_benchmarking::{benchmarks, account};
 use up_data_structs::{
-	CollectionMode, CreateCollectionData, CollectionId, MAX_COLLECTION_NAME_LENGTH,
-	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, OFFCHAIN_SCHEMA_LIMIT,
-	VARIABLE_ON_CHAIN_SCHEMA_LIMIT, CONST_ON_CHAIN_SCHEMA_LIMIT,
+	CollectionMode, CreateCollectionData, CollectionId, Property, PropertyKey, PropertyValue,
+	CollectionPermissions, NestingPermissions, MAX_COLLECTION_NAME_LENGTH,
+	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, MAX_PROPERTIES_PER_ITEM,
 };
 use frame_support::{
 	traits::{Currency, Get},
@@ -28,6 +30,8 @@ use frame_support::{
 };
 use core::convert::TryInto;
 use sp_runtime::DispatchError;
+
+const SEED: u32 = 1;
 
 pub fn create_data<const S: u32>() -> BoundedVec<u8, ConstU32<S>> {
 	create_var_data::<S>(S)
@@ -52,23 +56,36 @@ pub fn create_var_data<const S: u32>(size: u32) -> BoundedVec<u8, ConstU32<S>> {
 		.try_into()
 		.unwrap()
 }
+pub fn property_key(id: usize) -> PropertyKey {
+	#[cfg(not(feature = "std"))]
+	use alloc::string::ToString;
+	let mut data = create_data();
+	// No DerefMut available for .fill
+	for i in 0..data.len() {
+		data[i] = b'0';
+	}
+	let bytes = id.to_string();
+	let len = data.len();
+	data[len - bytes.len()..].copy_from_slice(&bytes.as_bytes());
+	data
+}
+pub fn property_value() -> PropertyValue {
+	create_data()
+}
 
 pub fn create_collection_raw<T: Config, R>(
-	owner: T::AccountId,
+	owner: T::CrossAccountId,
 	mode: CollectionMode,
 	handler: impl FnOnce(
-		T::AccountId,
+		T::CrossAccountId,
 		CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError>,
 	cast: impl FnOnce(CollectionHandle<T>) -> R,
 ) -> Result<R, DispatchError> {
-	T::Currency::deposit_creating(&owner, T::CollectionCreationPrice::get());
+	<T as Config>::Currency::deposit_creating(&owner.as_sub(), T::CollectionCreationPrice::get());
 	let name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
 	let description = create_u16_data::<MAX_COLLECTION_DESCRIPTION_LENGTH>();
 	let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
-	let offchain_schema = create_data::<OFFCHAIN_SCHEMA_LIMIT>();
-	let variable_on_chain_schema = create_data::<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>();
-	let const_on_chain_schema = create_data::<CONST_ON_CHAIN_SCHEMA_LIMIT>();
 	handler(
 		owner,
 		CreateCollectionData {
@@ -76,14 +93,32 @@ pub fn create_collection_raw<T: Config, R>(
 			name,
 			description,
 			token_prefix,
-			offchain_schema,
-			variable_on_chain_schema,
-			const_on_chain_schema,
+			permissions: Some(CollectionPermissions {
+				nesting: Some(NestingPermissions {
+					token_owner: false,
+					collection_admin: false,
+					restricted: None,
+					#[cfg(feature = "runtime-benchmarks")]
+					permissive: true,
+				}),
+				mint_mode: Some(true),
+				..Default::default()
+			}),
 			..Default::default()
 		},
 	)
 	.and_then(CollectionHandle::try_get)
 	.map(cast)
+}
+fn create_collection<T: Config>(
+	owner: T::CrossAccountId,
+) -> Result<CollectionHandle<T>, DispatchError> {
+	create_collection_raw(
+		owner,
+		CollectionMode::NFT,
+		|owner, data| <Pallet<T>>::init_collection(owner, data, true),
+		|h| h,
+	)
 }
 
 /// Helper macros, which handles all benchmarking preparation in semi-declarative way
@@ -105,7 +140,7 @@ macro_rules! bench_init {
 		bench_init!($($rest)*);
 	};
 	($name:ident: collection($owner:ident); $($rest:tt)*) => {
-		let $name = create_collection::<T>($owner.clone())?;
+		let $name = create_collection::<T>(T::CrossAccountId::from_sub($owner.clone()))?;
 		bench_init!($($rest)*);
 	};
 	($name:ident: cross; $($rest:tt)*) => {
@@ -126,4 +161,32 @@ macro_rules! bench_init {
 		bench_init!($($rest)*);
 	};
 	() => {}
+}
+
+benchmarks! {
+	set_collection_properties {
+		let b in 0..MAX_PROPERTIES_PER_ITEM;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub;
+		};
+		let props = (0..b).map(|p| Property {
+			key: property_key(p as usize),
+			value: property_value(),
+		}).collect::<Vec<_>>();
+	}: {<Pallet<T>>::set_collection_properties(&collection, &owner, props)?}
+
+	delete_collection_properties {
+		let b in 0..MAX_PROPERTIES_PER_ITEM;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub;
+		};
+		let props = (0..b).map(|p| Property {
+			key: property_key(p as usize),
+			value: property_value(),
+		}).collect::<Vec<_>>();
+		<Pallet<T>>::set_collection_properties(&collection, &owner, props)?;
+		let to_delete = (0..b).map(|p| property_key(p as usize)).collect::<Vec<_>>();
+	}: {<Pallet<T>>::delete_collection_properties(&collection, &owner, to_delete)?}
 }

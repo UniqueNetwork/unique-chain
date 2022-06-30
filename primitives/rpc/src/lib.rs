@@ -16,9 +16,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use up_data_structs::{CollectionId, TokenId, Collection, CollectionStats, CollectionLimits};
+use up_data_structs::{
+	CollectionId, TokenId, RpcCollection, CollectionStats, CollectionLimits, Property,
+	PropertyKeyPermission, TokenData, TokenChild,
+};
 use sp_std::vec::Vec;
-use sp_core::H160;
 use codec::Decode;
 use sp_runtime::DispatchError;
 
@@ -34,13 +36,33 @@ sp_api::decl_runtime_apis! {
 		fn token_owner(collection: CollectionId, token: TokenId) -> Result<CrossAccountId>;
 
 		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Result<Vec<TokenId>>;
+		fn collection_tokens(collection: CollectionId) -> Result<Vec<TokenId>>;
 		fn token_exists(collection: CollectionId, token: TokenId) -> Result<bool>;
 
 		fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>>;
-		fn const_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>>;
-		fn variable_metadata(collection: CollectionId, token: TokenId) -> Result<Vec<u8>>;
+		fn topmost_token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>>;
+		fn token_children(collection: CollectionId, token: TokenId) -> Result<Vec<TokenChild>>;
 
-		fn collection_tokens(collection: CollectionId) -> Result<u32>;
+		fn collection_properties(collection: CollectionId, properties: Option<Vec<Vec<u8>>>) -> Result<Vec<Property>>;
+
+		fn token_properties(
+			collection: CollectionId,
+			token_id: TokenId,
+			properties: Option<Vec<Vec<u8>>>
+		) -> Result<Vec<Property>>;
+
+		fn property_permissions(
+			collection: CollectionId,
+			properties: Option<Vec<Vec<u8>>>
+		) -> Result<Vec<PropertyKeyPermission>>;
+
+		fn token_data(
+			collection: CollectionId,
+			token_id: TokenId,
+			keys: Option<Vec<Vec<u8>>>
+		) -> Result<TokenData<CrossAccountId>>;
+
+		fn total_supply(collection: CollectionId) -> Result<u32>;
 		fn account_balance(collection: CollectionId, account: CrossAccountId) -> Result<u32>;
 		fn balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<u128>;
 		fn allowance(
@@ -50,14 +72,11 @@ sp_api::decl_runtime_apis! {
 			token: TokenId,
 		) -> Result<u128>;
 
-		/// Used for ethereum integration
-		fn eth_contract_code(account: H160) -> Option<Vec<u8>>;
-
 		fn adminlist(collection: CollectionId) -> Result<Vec<CrossAccountId>>;
 		fn allowlist(collection: CollectionId) -> Result<Vec<CrossAccountId>>;
 		fn allowed(collection: CollectionId, user: CrossAccountId) -> Result<bool>;
 		fn last_token_id(collection: CollectionId) -> Result<TokenId>;
-		fn collection_by_id(collection: CollectionId) -> Result<Option<Collection<AccountId>>>;
+		fn collection_by_id(collection: CollectionId) -> Result<Option<RpcCollection<AccountId>>>;
 		fn collection_stats() -> Result<CollectionStats>;
 		fn next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<Option<u64>>;
 		fn effective_collection_limits(collection_id: CollectionId) -> Result<Option<CollectionLimits>>;

@@ -60,7 +60,7 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
         asset: Self::AssetId,
 		who: &<T as SystemConfig>::AccountId,
 		amount: Self::Balance,
-		//mint: bool,
+		mint: bool,
 	) -> DepositConsequence {
         DepositConsequence::Success
 		// Pallet::<T, I>::can_increase(asset, who, amount, mint)

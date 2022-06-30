@@ -19,7 +19,6 @@ import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import privateKey from '../substrate/privateKey';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
 import {createCollectionExpectSuccess, createItemExpectSuccess, uniqueEventMessage} from '../util/helpers';
 
@@ -32,8 +31,8 @@ describe('Burn Item event ', () => {
   const checkTreasury = 'Deposit';
   const checkSystem = 'ExtrinsicSuccess';
   before(async () => {
-    await usingApi(async () => {
-      alice = privateKey('//Alice');
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
     });
   });
   it('Check event from burnItem(): ', async () => {
