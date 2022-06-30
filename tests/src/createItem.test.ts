@@ -98,47 +98,57 @@ describe('integration test: ext. ():', () => {
     await createItemWithPropsExpectSuccess(alice, newCollectionID, createMode, [{key: 'key1', value: 'val1'}]);
   });
 
-  it.only('Check total pieces of Fungible token', async () => {
+  it('Check total pieces of Fungible token', async () => {
     await usingApi(async api => {
       const createMode = 'Fungible';
       const collectionId = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0}});
+      const amountPieces = 10n;
       const tokenId = await createItemExpectSuccess(alice, collectionId, createMode, bob.address);
       {
         const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
         expect(totalPieces.isSome).to.be.true;
-        expect(totalPieces.unwrap().toBigInt()).to.be.eq(10n);
+        expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
       }
 
       await transferExpectSuccess(collectionId, tokenId, bob, alice, 1, createMode);
       {
         const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
         expect(totalPieces.isSome).to.be.true;
-        expect(totalPieces.unwrap().toBigInt()).to.be.eq(10n);
+        expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
       }
+
+      const totalPieces = (await api.rpc.unique.tokenData(collectionId, tokenId, [])).pieces;
+      expect(totalPieces.isSome).to.be.true;
+      expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
     });
   });
 
-  it.only('Check total pieces of NFT token', async () => {
+  it('Check total pieces of NFT token', async () => {
     await usingApi(async api => {
       const createMode = 'NFT';
       const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
+      const amountPieces = 1n;
       const tokenId = await createItemExpectSuccess(alice, collectionId, createMode, bob.address);
       {
         const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
         expect(totalPieces.isSome).to.be.true;
-        expect(totalPieces.unwrap().toBigInt()).to.be.eq(1n);
+        expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
       }
 
       await transferExpectSuccess(collectionId, tokenId, bob, alice, 1, createMode);
       {
         const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
         expect(totalPieces.isSome).to.be.true;
-        expect(totalPieces.unwrap().toBigInt()).to.be.eq(1n);
+        expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
       }
+
+      const totalPieces = (await api.rpc.unique.tokenData(collectionId, tokenId, [])).pieces;
+      expect(totalPieces.isSome).to.be.true;
+      expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
     });
   });
 
-  it.only('Check total pieces of ReFungible token', async () => {
+  it('Check total pieces of ReFungible token', async () => {
     await usingApi(async api => {
       const createMode = 'ReFungible';
       const createCollectionResult = await createCollection(api, alice, {mode: {type: createMode}});
@@ -157,6 +167,10 @@ describe('integration test: ext. ():', () => {
         expect(totalPieces.isSome).to.be.true;
         expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
       }
+
+      const totalPieces = (await api.rpc.unique.tokenData(collectionId, tokenId, [])).pieces;
+      expect(totalPieces.isSome).to.be.true;
+      expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
     });
   });
 });
@@ -231,6 +245,39 @@ describe('Negative integration test: ext. createItem():', () => {
       const newCollectionID = await createCollectionWithPropsExpectSuccess();
       
       await createItemWithPropsExpectFailure(alice, newCollectionID, 'NFT', [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]);
+    });
+  });
+
+  it('Check total pieces for invalid Fungible token', async () => {
+    await usingApi(async api => {
+      const createCollectionResult = await createCollection(api, alice, {mode: {type: 'Fungible', decimalPoints: 0}});
+      const collectionId  = createCollectionResult.collectionId;
+      const invalidTokenId = 1000_000;
+      
+      expect((await api.rpc.unique.totalPieces(collectionId, invalidTokenId)).isNone).to.be.true;
+      expect((await api.rpc.unique.tokenData(collectionId, invalidTokenId, [])).pieces.isNone).to.be.true;
+    });
+  });
+
+  it('Check total pieces for invalid NFT token', async () => {
+    await usingApi(async api => {
+      const createCollectionResult = await createCollection(api, alice, {mode: {type: 'NFT'}});
+      const collectionId  = createCollectionResult.collectionId;
+      const invalidTokenId = 1000_000;
+      
+      expect((await api.rpc.unique.totalPieces(collectionId, invalidTokenId)).isNone).to.be.true;
+      expect((await api.rpc.unique.tokenData(collectionId, invalidTokenId, [])).pieces.isNone).to.be.true;
+    });
+  });
+
+  it('Check total pieces for invalid Refungible token', async () => {
+    await usingApi(async api => {
+      const createCollectionResult = await createCollection(api, alice, {mode: {type: 'ReFungible'}});
+      const collectionId  = createCollectionResult.collectionId;
+      const invalidTokenId = 1000_000;
+      
+      expect((await api.rpc.unique.totalPieces(collectionId, invalidTokenId)).isNone).to.be.true;
+      expect((await api.rpc.unique.tokenData(collectionId, invalidTokenId, [])).pieces.isNone).to.be.true;
     });
   });
 });

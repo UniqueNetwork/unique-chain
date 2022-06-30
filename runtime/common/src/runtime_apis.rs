@@ -89,7 +89,8 @@ macro_rules! impl_common_runtime_apis {
                 ) -> Result<TokenData<CrossAccountId>, DispatchError> {
                     let token_data = TokenData {
                         properties: Self::token_properties(collection, token_id, keys)?,
-                        owner: Self::token_owner(collection, token_id)?
+                        owner: Self::token_owner(collection, token_id)?,
+                        pieces: Self::total_pieces(collection, token_id)?
                     };
 
                     Ok(token_data)

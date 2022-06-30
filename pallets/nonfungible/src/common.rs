@@ -473,7 +473,11 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		None
 	}
 
-	fn total_pieces(&self, _token: TokenId) -> Option<u128> {
-		Some(1)
+	fn total_pieces(&self, token: TokenId) -> Option<u128> {
+		if <TokenData<T>>::contains_key((self.id, token)) {
+			Some(1)
+		} else {
+			None
+		}
 	}
 }
