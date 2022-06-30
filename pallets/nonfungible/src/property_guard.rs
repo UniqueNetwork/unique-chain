@@ -32,9 +32,9 @@ impl<'a, T: Config> PropertyGuard<'a, T> {
 	}
 
 	pub fn check_collection_admin(&mut self) -> DispatchResult {
-		*self.collection_admin_result.get_or_insert_with(|| {
-			self.collection.check_is_owner_or_admin(self.sender)
-		})
+		*self
+			.collection_admin_result
+			.get_or_insert_with(|| self.collection.check_is_owner_or_admin(self.sender))
 	}
 
 	pub fn check_token_owner(&mut self) -> DispatchResult {
