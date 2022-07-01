@@ -60,6 +60,7 @@
     "testAddToContractAllowList": "mocha --timeout 9999999 -r ts-node/register ./**/addToContractAllowList.test.ts",
     "testTransfer": "mocha --timeout 9999999 -r ts-node/register ./**/transfer.test.ts",
     "testBurnItem": "mocha --timeout 9999999 -r ts-node/register ./**/burnItem.test.ts",
+    "testAdminTransferAndBurn": "mocha --timeout 9999999 -r ts-node/register ./**/adminTransferAndBurn.test.ts",
     "testSetMintPermission": "mocha --timeout 9999999 -r ts-node/register ./**/setMintPermission.test.ts",
     "testCreditFeesToTreasury": "mocha --timeout 9999999 -r ts-node/register ./**/creditFeesToTreasury.test.ts",
     "testContractSponsoring": "mocha --timeout 9999999 -r ts-node/register ./**/contractSponsoring.test.ts",
