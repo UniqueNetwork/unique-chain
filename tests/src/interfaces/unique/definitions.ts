@@ -79,5 +79,6 @@ export default {
     allowed: fun('Check if user is allowed to use collection', [collectionParam, crossAccountParam()], 'bool'),
     nextSponsored: fun('Get number of blocks when sponsored transaction is available', [collectionParam, crossAccountParam(), tokenParam], 'Option<u64>'),
     effectiveCollectionLimits: fun('Get effective collection limits', [collectionParam], 'Option<UpDataStructsCollectionLimits>'),
+    totalPieces: fun('Get total pieces of token', [collectionParam, tokenParam], 'Option<u128>'),
   },
 };
