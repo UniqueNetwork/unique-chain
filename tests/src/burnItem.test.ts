@@ -155,7 +155,7 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
     await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
 
     await usingApi(async (api) => {
-      const tx = api.tx.unique.burnItem(collectionId, tokenId, 1);
+      const tx = api.tx.unique.burnFrom(collectionId, {Substrate: alice.address}, tokenId, 1);
       const events = await submitTransactionAsync(bob, tx);
       const result = getGenericResult(events);
 

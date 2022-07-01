@@ -36,7 +36,7 @@ describe('Graphs', () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
       const collection = await buildComplexObjectGraph(api, alice);
-      await setCollectionLimitsExpectSuccess(alice, collection, {ownerCanTransfer: true});
+      const tokenTwoParent = tokenIdToCross(collection, 1);
 
       // to self
       await expect(
@@ -49,7 +49,7 @@ describe('Graphs', () => {
         'second transaction',
       ).to.be.rejectedWith(/structure\.OuroborosDetected/);
       await expect(
-        executeTransaction(api, alice, api.tx.unique.transfer(tokenIdToCross(collection, 8), collection, 2, 1)),
+        executeTransaction(api, alice, api.tx.unique.transferFrom(tokenTwoParent, tokenIdToCross(collection, 8), collection, 2, 1)),
         'third transaction',
       ).to.be.rejectedWith(/structure\.OuroborosDetected/);
     });

@@ -123,7 +123,7 @@ describe('Integration Test: Composite nesting tests', () => {
       ], 'Children contents check at nesting #2');
 
       // Move token B to a different user outside the nesting tree
-      await transferExpectSuccess(collectionA, tokenB, alice, bob);
+      await transferFromExpectSuccess(collectionA, tokenB, alice, targetAddress, bob);
       children = await getTokenChildren(api, collectionA, targetToken);
       expect(children.length).to.be.equal(1, 'Children length check at unnesting');
       expect(children).to.be.have.deep.members([
@@ -470,7 +470,7 @@ describe('Negative Test: Nesting', async() => {
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.transfer(targetAddress, collection, newToken, 1),
+        api.tx.unique.transferFrom(targetAddress, {Substrate: bob.address}, collection, newToken, 1),
       ), 'while nesting another\'s token token').to.be.rejectedWith(/common\.AddressNotInAllowlist/);
       expect(await getTokenOwner(api, collection, newToken)).to.be.deep.equal({Substrate: bob.address});
 
