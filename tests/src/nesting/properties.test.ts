@@ -1123,3 +1123,97 @@ describe('Negative Integration Test: Token Properties', () => {
     await testForbidsAddingTooManyProperties({type: 'ReFungible'}, 100);
   });
 });
+<<<<<<< HEAD
+=======
+
+describe('ReFungible token properties permissions tests', () => {
+  let collection: number;
+  let token: number;
+
+  before(async () => {
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      charlie = privateKeyWrapper('//Charlie');
+    });
+  });
+
+  beforeEach(async () => {
+    await usingApi(async api => {
+      collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+      token = await createItemExpectSuccess(alice, collection, 'ReFungible');
+      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
+
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'key', permission: {mutable:true, tokenOwner: true}}]), 
+      )).to.not.be.rejected;
+    });
+  });
+
+  it('Forbids add token property with tokenOwher==true but signer have\'t all pieces', async () => {
+    await usingApi(async api => {
+      await transferExpectSuccess(collection, token, alice, charlie, 33, 'ReFungible');
+  
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setTokenProperties(collection, token, [
+          {key: 'key', value: 'word'}, 
+        ]), 
+      )).to.be.rejectedWith(/common\.NoPermission/);
+    });
+  });
+
+  it('Forbids mutate token property with tokenOwher==true but signer have\'t all pieces', async () => {
+    await usingApi(async api => {
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'key', permission: {mutable:true, tokenOwner: true}}]), 
+      )).to.not.be.rejected;
+  
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setTokenProperties(collection, token, [
+          {key: 'key', value: 'word'}, 
+        ]), 
+      )).to.be.not.rejected;
+
+      await transferExpectSuccess(collection, token, alice, charlie, 33, 'ReFungible');
+  
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setTokenProperties(collection, token, [
+          {key: 'key', value: 'bad word'}, 
+        ]), 
+      )).to.be.rejectedWith(/common\.NoPermission/);
+    });
+  });
+
+  it('Forbids delete token property with tokenOwher==true but signer have\'t all pieces', async () => {
+    await usingApi(async api => {
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.setTokenProperties(collection, token, [
+          {key: 'key', value: 'word'}, 
+        ]), 
+      )).to.be.not.rejected;
+
+      await transferExpectSuccess(collection, token, alice, charlie, 33, 'ReFungible');
+  
+      await expect(executeTransaction(
+        api, 
+        alice, 
+        api.tx.unique.deleteTokenProperties(collection, token, [
+          'key',
+        ]), 
+      )).to.be.rejectedWith(/common\.NoPermission/);
+    });
+  });
+});
+>>>>>>> 39e5dede (CORE-410 Add specific ReFungible test for toke permissions.)
