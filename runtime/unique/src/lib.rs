@@ -913,6 +913,7 @@ impl pallet_unique::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
 	type CommonWeightInfo = CommonWeights<Self>;
+	type RefungibleExtensionsWeightInfo = CommonWeights<Self>;
 }
 
 parameter_types! {
