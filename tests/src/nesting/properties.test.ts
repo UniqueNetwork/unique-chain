@@ -616,16 +616,13 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
 // ---------- TOKEN PROPERTIES
 
 describe('Integration Test: Token Properties', () => {
-  let collection: number;
-  let token: number;
-  let nestedToken: number;
   let permissions: {permission: any, signers: IKeyringPair[]}[];
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      charlie = privateKeyWrapper('//Charlie');
+      alice = privateKeyWrapper('//Alice'); // collection owner
+      bob = privateKeyWrapper('//Bob'); // collection admin
+      charlie = privateKeyWrapper('//Charlie'); // token owner
 
       permissions = [
         {permission: {mutable: true, collectionAdmin: true}, signers: [alice, bob]},
@@ -637,35 +634,34 @@ describe('Integration Test: Token Properties', () => {
       ];
     });
   });
-
-  beforeEach(async () => {
-    await usingApi(async () => {
-      collection = await createCollectionExpectSuccess();
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true}});
-
-      token = await createItemExpectSuccess(alice, collection, 'NFT');
-      nestedToken = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: tokenIdToAddress(collection, token)});
-
-      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
-      await transferExpectSuccess(collection, token, alice, charlie);    });
-  });
   
-  it('Reads yet empty properties of a token', async () => {
+  async function testReadsYetEmptyProperties(mode: CollectionMode) {
     await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess();
-      const token = await createItemExpectSuccess(alice, collection, 'NFT');
+      const collection = await createCollectionExpectSuccess({mode: mode});
+      const token = await createItemExpectSuccess(alice, collection, mode.type);
   
       const properties = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON();
       expect(properties.map).to.be.empty;
       expect(properties.consumedSpace).to.be.equal(0);
-
+  
       const tokenData = (await api.rpc.unique.tokenData(collection, token, ['anything'])).toJSON().properties;
       expect(tokenData).to.be.empty;
     });
+  }
+  it('Reads yet empty properties of a token (NFT)', async () => {
+    await testReadsYetEmptyProperties({type: 'NFT'});
+  });
+  it('Reads yet empty properties of a token (ReFungible)', async () => {
+    await testReadsYetEmptyProperties({type: 'ReFungible'});
   });
 
-  it('Assigns properties to a token according to permissions', async () => {
+  async function testAssignPropertiesAccordingToPermissions(mode: CollectionMode, pieces: number) {
     await usingApi(async api => {
+      const collection = await createCollectionExpectSuccess({mode: mode});
+      const token = await createItemExpectSuccess(alice, collection, mode.type);
+      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
+      await transferExpectSuccess(collection, token, alice, charlie, pieces, mode.type);
+
       const propertyKeys: string[] = [];
       let i = 0;
       for (const permission of permissions) {
@@ -696,49 +692,21 @@ describe('Integration Test: Token Properties', () => {
         expect(tokensData[i].value).to.be.equal('Serotonin increase');
       }
     });
+  }
+  it('Assigns properties to a token according to permissions (NFT)', async () => {
+    await testAssignPropertiesAccordingToPermissions({type: 'NFT'}, 1);
+  });
+  it('Assigns properties to a token according to permissions (ReFungible)', async () => {
+    await testAssignPropertiesAccordingToPermissions({type: 'ReFungible'}, 100);
   });
 
-  it.only('Assigns properties to a token according to permissions (ReFungible)', async () => {
+  async function testChangesPropertiesAccordingPermission(mode: CollectionMode, pieces: number) {
     await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-      const token = await createItemExpectSuccess(alice, collection, 'ReFungible');
+      const collection = await createCollectionExpectSuccess({mode: mode});
+      const token = await createItemExpectSuccess(alice, collection, mode.type);
       await addCollectionAdminExpectSuccess(alice, collection, bob.address);
-      await transferExpectSuccess(collection, token, alice, charlie, 1, 'ReFungible');
+      await transferExpectSuccess(collection, token, alice, charlie, pieces, mode.type);
 
-      const propertyKeys: string[] = [];
-      let i = 0;
-      for (const permission of permissions) {
-        for (const signer of permission.signers) {
-          const key = i + '_' + signer.address;
-          propertyKeys.push(key);
-
-          await expect(executeTransaction(
-            api, 
-            alice, 
-            api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
-          ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
-
-          await expect(executeTransaction(
-            api, 
-            signer, 
-            api.tx.unique.setTokenProperties(collection, token, [{key: key, value: 'Serotonin increase'}]), 
-          ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
-        }
-
-        i++;
-      }
-
-      // const properties = (await api.rpc.unique.tokenProperties(collection, token, propertyKeys)).toHuman() as any[];
-      // const tokensData = (await api.rpc.unique.tokenData(collection, token, propertyKeys)).toHuman().properties as any[];
-      // for (let i = 0; i < properties.length; i++) {
-      //   expect(properties[i].value).to.be.equal('Serotonin increase');
-      //   expect(tokensData[i].value).to.be.equal('Serotonin increase');
-      // }
-    });
-  });
-
-  it('Changes properties of a token according to permissions', async () => {
-    await usingApi(async api => {
       const propertyKeys: string[] = [];
       let i = 0;
       for (const permission of permissions) {
@@ -747,29 +715,29 @@ describe('Integration Test: Token Properties', () => {
         for (const signer of permission.signers) {
           const key = i + '_' + signer.address;
           propertyKeys.push(key);
-
+  
           await expect(executeTransaction(
             api, 
             alice, 
             api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
           ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
-
+  
           await expect(executeTransaction(
             api, 
             signer, 
             api.tx.unique.setTokenProperties(collection, token, [{key: key, value: 'Serotonin increase'}]), 
           ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
-
+  
           await expect(executeTransaction(
             api, 
             signer, 
             api.tx.unique.setTokenProperties(collection, token, [{key: key, value: 'Serotonin stable'}]), 
           ), `on changing property ${i} by ${signer.address}`).to.not.be.rejected;
         }
-
+  
         i++;
       }
-
+  
       const properties = (await api.rpc.unique.tokenProperties(collection, token, propertyKeys)).toHuman() as any[];
       const tokensData = (await api.rpc.unique.tokenData(collection, token, propertyKeys)).toHuman().properties as any[];
       for (let i = 0; i < properties.length; i++) {
@@ -777,32 +745,43 @@ describe('Integration Test: Token Properties', () => {
         expect(tokensData[i].value).to.be.equal('Serotonin stable');
       }
     });
+  }
+  it('Changes properties of a token according to permissions (NFT)', async () => {
+    await testChangesPropertiesAccordingPermission({type: 'NFT'}, 1);
+  });
+  it('Changes properties of a token according to permissions (ReFungible)', async () => {
+    await testChangesPropertiesAccordingPermission({type: 'ReFungible'}, 100);
   });
 
-  it('Deletes properties of a token according to permissions', async () => {
+  async function testDeletePropertiesAccordingPermission(mode: CollectionMode, pieces: number) {
     await usingApi(async api => {
+      const collection = await createCollectionExpectSuccess({mode: mode});
+      const token = await createItemExpectSuccess(alice, collection, mode.type);
+      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
+      await transferExpectSuccess(collection, token, alice, charlie, pieces, mode.type);
+
       const propertyKeys: string[] = [];
       let i = 0;
-
+  
       for (const permission of permissions) {
         if (!permission.permission.mutable) continue;
         
         for (const signer of permission.signers) {
           const key = i + '_' + signer.address;
           propertyKeys.push(key);
-
+  
           await expect(executeTransaction(
             api, 
             alice, 
             api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
           ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
-
+  
           await expect(executeTransaction(
             api, 
             signer, 
             api.tx.unique.setTokenProperties(collection, token, [{key: key, value: 'Serotonin increase'}]), 
           ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
-
+  
           await expect(executeTransaction(
             api, 
             signer, 
@@ -812,13 +791,19 @@ describe('Integration Test: Token Properties', () => {
         
         i++;
       }
-
+  
       const properties = (await api.rpc.unique.tokenProperties(collection, token, propertyKeys)).toJSON() as any[];
       expect(properties).to.be.empty;
       const tokensData = (await api.rpc.unique.tokenData(collection, token, propertyKeys)).toJSON().properties as any[];
       expect(tokensData).to.be.empty;
       expect((await api.query.nonfungible.tokenProperties(collection, token)).toJSON().consumedSpace).to.be.equal(0);
     });
+  }
+  it('Deletes properties of a token according to permissions (NFT)', async () => {
+    await testDeletePropertiesAccordingPermission({type: 'NFT'}, 1);
+  });
+  it('Deletes properties of a token according to permissions (ReFungible)', async () => {
+    await testDeletePropertiesAccordingPermission({type: 'ReFungible'}, 100);
   });
 
   it('Assigns properties to a nested token according to permissions', async () => {
@@ -964,11 +949,11 @@ describe('Negative Integration Test: Token Properties', () => {
     });
   });
 
-  beforeEach(async () => {
-    collection = await createCollectionExpectSuccess();
-    token = await createItemExpectSuccess(alice, collection, 'NFT');
+  async function prepare(mode: CollectionMode, pieces: number) {
+    collection = await createCollectionExpectSuccess({mode: mode});
+    token = await createItemExpectSuccess(alice, collection, mode.type);
     await addCollectionAdminExpectSuccess(alice, collection, bob.address);
-    await transferExpectSuccess(collection, token, alice, charlie);
+    await transferExpectSuccess(collection, token, alice, charlie, pieces, mode.type);
         
     await usingApi(async api => {
       let i = 0;
@@ -980,71 +965,89 @@ describe('Negative Integration Test: Token Properties', () => {
           alice, 
           api.tx.unique.setTokenPropertyPermissions(collection, [{key: `${i}`, permission: passage.permission}]), 
         ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
-
+  
         await expect(executeTransaction(
           api, 
           signer, 
           api.tx.unique.setTokenProperties(collection, token, [{key: `${i}`, value: 'Serotonin increase'}]), 
         ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
-
+  
         i++;
       }
-
+  
       originalSpace = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON().consumedSpace as number;
-    });
-  });
+    }); 
+  }
 
-  it('Forbids changing/deleting properties of a token if the user is outside of permissions', async () => {
+  async function testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(mode: CollectionMode, pieces: number) {
+    await prepare(mode, pieces);
+  
     await usingApi(async api => {
       let i = -1;
       for (const forbiddance of constitution) {
         i++;
         if (!forbiddance.permission.mutable) continue;
-
+  
         await expect(executeTransaction(
           api, 
           forbiddance.sinner, 
           api.tx.unique.setTokenProperties(collection, token, [{key: `${i}`, value: 'Serotonin down'}]), 
         ), `on failing to change property ${i} by ${forbiddance.sinner.address}`).to.be.rejectedWith(/common\.NoPermission/);
-
+  
         await expect(executeTransaction(
           api, 
           forbiddance.sinner, 
           api.tx.unique.deleteTokenProperties(collection, token, [`${i}`]), 
         ), `on failing to delete property ${i} by ${forbiddance.sinner.address}`).to.be.rejectedWith(/common\.NoPermission/);
       }
-
+  
       const properties = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON();
       expect(properties.consumedSpace).to.be.equal(originalSpace);
     });
+  }
+  it('Forbids changing/deleting properties of a token if the user is outside of permissions (NFT)', async () => {
+    await testForbidsChangingDeletingPropertiesUserOutsideOfPermissions({type: 'NFT'}, 1);
+  });
+  it('Forbids changing/deleting properties of a token if the user is outside of permissions (ReFungible)', async () => {
+    await testForbidsChangingDeletingPropertiesUserOutsideOfPermissions({type: 'ReFungible'}, 100);
   });
 
-  it('Forbids changing/deleting properties of a token if the property is permanent (immutable)', async () => {
+  async function testForbidsChangingDeletingPropertiesIfPropertyImmutable(mode: CollectionMode, pieces: number) {
+    await prepare(mode, pieces);
+    
     await usingApi(async api => {
       let i = -1;
       for (const permission of constitution) {
         i++;
         if (permission.permission.mutable) continue;
-
+  
         await expect(executeTransaction(
           api, 
           permission.signers[0], 
           api.tx.unique.setTokenProperties(collection, token, [{key: `${i}`, value: 'Serotonin down'}]), 
         ), `on failing to change property ${i} by ${permission.signers[0].address}`).to.be.rejectedWith(/common\.NoPermission/);
-
+  
         await expect(executeTransaction(
           api, 
           permission.signers[0], 
           api.tx.unique.deleteTokenProperties(collection, token, [i.toString()]), 
         ), `on failing to delete property ${i} by ${permission.signers[0].address}`).to.be.rejectedWith(/common\.NoPermission/);
       }
-
+  
       const properties = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON();
       expect(properties.consumedSpace).to.be.equal(originalSpace);
-    });
+    });  
+  }
+  it('Forbids changing/deleting properties of a token if the property is permanent (immutable) (NFT)', async () => {
+    await testForbidsChangingDeletingPropertiesIfPropertyImmutable({type: 'NFT'}, 1);
+  });
+  it('Forbids changing/deleting properties of a token if the property is permanent (immutable) (ReFungible)', async () => {
+    await testForbidsChangingDeletingPropertiesIfPropertyImmutable({type: 'ReFungible'}, 100);
   });
 
-  it('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission', async () => {
+  async function testForbidsAddingPropertiesIfPropertyNotDeclared(mode: CollectionMode, pieces: number) {
+    await prepare(mode, pieces);
+
     await usingApi(async api => {
       await expect(executeTransaction(
         api, 
@@ -1057,20 +1060,28 @@ describe('Negative Integration Test: Token Properties', () => {
         alice, 
         api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'now-existent', permission: {}}]), 
       ), 'on setting a new non-permitted property').to.not.be.rejected;
-
+  
       await expect(executeTransaction(
         api, 
         alice, 
         api.tx.unique.setTokenProperties(collection, token, [{key: 'now-existent', value: 'I exist!'}]), 
       ), 'on failing to add a property forbidden by the \'None\' permission').to.be.rejectedWith(/common\.NoPermission/);
-
+  
       expect((await api.rpc.unique.tokenProperties(collection, token, ['non-existent', 'now-existent'])).toJSON()).to.be.empty;
       const properties = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON();
       expect(properties.consumedSpace).to.be.equal(originalSpace);
     });
+  }
+  it('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (NFT)', async () => {
+    await testForbidsAddingPropertiesIfPropertyNotDeclared({type: 'NFT'}, 1);
+  });
+  it('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (ReFungible)', async () => {
+    await testForbidsAddingPropertiesIfPropertyNotDeclared({type: 'ReFungible'}, 100);
   });
 
-  it('Forbids adding too many properties to a token', async () => {
+  async function testForbidsAddingTooManyProperties(mode: CollectionMode, pieces: number) {
+    await prepare(mode, pieces);
+
     await usingApi(async api => {
       await expect(executeTransaction(
         api, 
@@ -1080,7 +1091,7 @@ describe('Negative Integration Test: Token Properties', () => {
           {key: 'young_years', permission: {collectionAdmin: true, tokenOwner: true}},
         ]), 
       ), 'on setting a new non-permitted property').to.not.be.rejected;
-
+  
       // Mute the general tx parsing error
       {
         console.error = () => {};
@@ -1090,7 +1101,7 @@ describe('Negative Integration Test: Token Properties', () => {
           api.tx.unique.setCollectionProperties(collection, [{key: 'a_holy_book', value: 'word '.repeat(6554)}]), 
         )).to.be.rejected;
       }
-
+  
       await expect(executeTransaction(
         api, 
         alice, 
@@ -1099,10 +1110,16 @@ describe('Negative Integration Test: Token Properties', () => {
           {key: 'young_years', value: 'neverending'.repeat(1490)},
         ]), 
       )).to.be.rejectedWith(/common\.NoSpaceForProperty/);
-
+  
       expect((await api.rpc.unique.tokenProperties(collection, token, ['a_holy_book', 'young_years'])).toJSON()).to.be.empty;
       const propertiesMap = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON();
       expect(propertiesMap.consumedSpace).to.be.equal(originalSpace);
     });
+  }
+  it('Forbids adding too many properties to a token (NFT)', async () => {
+    await testForbidsAddingTooManyProperties({type: 'NFT'}, 1);
+  });
+  it('Forbids adding too many properties to a token (ReFungible)', async () => {
+    await testForbidsAddingTooManyProperties({type: 'ReFungible'}, 100);
   });
 });
