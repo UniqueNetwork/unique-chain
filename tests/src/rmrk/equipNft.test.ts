@@ -119,7 +119,7 @@ async function checkEquipStatus(
     .to.be.equal(expectedStatus === 'equipped');
 }
 
-describe('integration test: Equip NFT', () => {
+describe.skip('integration test: Equip NFT', () => {
 
   let api: any;
   before(async () => {
