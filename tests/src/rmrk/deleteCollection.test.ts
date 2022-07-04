@@ -37,7 +37,7 @@ describe('integration test: delete collection', () => {
       'test-symbol',
     ).then(async (collectionId) => {
       const tx = deleteCollection(api, Bob, collectionId.toString());
-      await expectTxFailure(/uniques.NoPermission/, tx);
+      await expectTxFailure(/rmrkCore.NoPermission/, tx);
     });
   });
 
