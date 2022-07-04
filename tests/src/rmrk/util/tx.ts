@@ -296,24 +296,27 @@ export async function mintNft(
       // try to find the matching resource from the query
       for (let j = 0; j < nftResources.length && !successFindingResource; j++) {
         const nftResourceData = nftResources[j].toHuman();
-        expect(nftResourceData.hasOwnProperty('resource'), `Error: Corrupted resource data on resource #${i}`);
+        expect(
+          Object.prototype.hasOwnProperty.call(nftResourceData, 'resource'),
+          `Error: Corrupted resource data on resource #${i}`,
+        ).to.be.true;
         const nftResource = nftResourceData.resource!;
                 type NftResourceKey = keyof typeof nftResource;
 
                 let typedResource = null;
                 let typedNftResource = null;
 
-                if (resource.basic && nftResource.hasOwnProperty('Basic')) {
+                if (resource.basic && Object.prototype.hasOwnProperty.call(nftResource, 'Basic')) {
                   typedResource = resource.basic!;
                   typedNftResource = nftResource['Basic' as NftResourceKey]!;
-                } else if (resource.composable && nftResource.hasOwnProperty('Composable')) {
+                } else if (resource.composable && Object.prototype.hasOwnProperty.call(nftResource, 'Composable')) {
                   typedResource = resource.composable!;
                   typedNftResource = nftResource['Composable' as NftResourceKey]! as any;
                   if (typedResource.parts != undefined && typedResource.parts.toString() != typedNftResource.parts.toString()
                         || typedResource.base != typedNftResource.base && typedResource.base != undefined) {
                     continue;
                   }
-                } else if (resource.slot && nftResource.hasOwnProperty('Slot')) {
+                } else if (resource.slot && Object.prototype.hasOwnProperty.call(nftResource, 'Slot')) {
                   typedResource = resource.slot!;
                   typedNftResource = nftResource['Slot' as NftResourceKey]! as any;
                   if (typedResource.slot != typedNftResource.slot && typedResource.slot != undefined 
@@ -854,7 +857,7 @@ export async function addNftBasicResource(
   // console.log('>>> slot:', resource.resource.isSlot);
   const resourceJson = resource.resource.toHuman() as any;
 
-  expect(resourceJson.hasOwnProperty('Basic'), 'Error: Expected basic resource type')
+  expect(Object.prototype.hasOwnProperty.call(resourceJson, 'Basic'), 'Error: Expected basic resource type')
     .to.be.true;
 
   const recvBasicRes = resourceJson['Basic'];
@@ -912,7 +915,7 @@ export async function addNftComposableResource(
   // console.log('>>> slot:', resource.resource.isSlot);
   const resourceJson = resource.resource.toHuman() as any;
 
-  expect(resourceJson.hasOwnProperty('Composable'), 'Error: Expected composable resource type')
+  expect(Object.prototype.hasOwnProperty.call(resourceJson, 'Composable'), 'Error: Expected composable resource type')
     .to.be.true;
 
   const recvComposableRes = resourceJson['Composable'];
@@ -974,7 +977,7 @@ export async function addNftSlotResource(
   // console.log('>>> slot:', resource.resource.isSlot);
   const resourceJson = resource.resource.toHuman() as any;
 
-  expect(resourceJson.hasOwnProperty('Slot'), 'Error: Expected slot resource type')
+  expect(Object.prototype.hasOwnProperty.call(resourceJson, 'Slot'), 'Error: Expected slot resource type')
     .to.be.true;
 
   const recvSlotRes = resourceJson['Slot'];

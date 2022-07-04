@@ -79,13 +79,13 @@ describe('integration test: add Theme to Base', () => {
       'second-theme',
     ];
 
-    for (var i = 0; i < names.length; i++) {
+    for (let i = 0; i < names.length; i++) {
       await addTheme(api, alice, baseId, {name: names[i], properties: [{key: 'dummy', value: 'dummy'}]});
     }
 
     const fetchedNames = await getThemeNames(api, baseId);
 
-    for (var i = 0; i < names.length; i++) {
+    for (let i = 0; i < names.length; i++) {
       const isFound = fetchedNames.find((name) => name === names[i]) !== undefined;
 
       expect(isFound, 'Error: invalid theme names').to.be.true;
