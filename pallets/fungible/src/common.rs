@@ -298,7 +298,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		_sender: T::CrossAccountId,
 		_token_id: TokenId,
 		_property: Vec<Property>,
-		_budget: &dyn Budget,
+		_nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
@@ -316,7 +316,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		_sender: T::CrossAccountId,
 		_token_id: TokenId,
 		_property_keys: Vec<PropertyKey>,
-		_budget: &dyn Budget,
+		_nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
@@ -326,7 +326,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		_sender: <T>::CrossAccountId,
 		_from: (CollectionId, TokenId),
 		_under: TokenId,
-		_budget: &dyn Budget,
+		_nesting_budget: &dyn Budget,
 	) -> sp_runtime::DispatchResult {
 		fail!(<Error<T>>::FungibleDisallowsNesting)
 	}
