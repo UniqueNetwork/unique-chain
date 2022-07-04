@@ -59,6 +59,17 @@ function defaultApiOptions(): ApiOptions {
   };
 }
 
+export async function getApiConnection(settings: ApiOptions | undefined = undefined): Promise<ApiPromise> {
+  settings = settings || defaultApiOptions();
+  let api = new ApiPromise(settings);
+
+  if (api) {
+    await api.isReadyOrError;
+  }
+
+  return api;
+}
+
 export default async function usingApi<T = void>(action: (api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair) => Promise<T>, settings: ApiOptions | undefined = undefined): Promise<T> {
   settings = settings || defaultApiOptions();
   const api: ApiPromise = new ApiPromise(settings);
