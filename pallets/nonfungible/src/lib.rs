@@ -497,10 +497,8 @@ impl<T: Config> Pallet<T> {
 		let mut collection_admin_status = None;
 		let mut token_owner_result = None;
 
-		let mut is_collection_admin = || {
-			*collection_admin_status
-				.get_or_insert_with(|| collection.is_owner_or_admin(sender))
-		};
+		let mut is_collection_admin =
+			|| *collection_admin_status.get_or_insert_with(|| collection.is_owner_or_admin(sender));
 
 		let mut is_token_owner = || {
 			*token_owner_result.get_or_insert_with(|| -> Result<bool, DispatchError> {
