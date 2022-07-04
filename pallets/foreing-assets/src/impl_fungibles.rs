@@ -27,16 +27,21 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 	type Balance = BalanceOf<T>;
 
 	fn total_issuance(asset: Self::AssetId) -> Self::Balance {
+		log::info!(target: "total_issuance", "call");
         Zero::zero()
 		//let h = AssetMetadatas::<T>::get(asset).map(|x| x.supply);//.unwrap_or_else(Zero::zero)
 	}
 
 	fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
+		log::info!(target: "minimum_balance", "call");
+
         Zero::zero()
 		//Asset::<T, I>::get(asset).map(|x| x.min_balance).unwrap_or_else(Zero::zero)
 	}
 
 	fn balance(asset: Self::AssetId, who: &<T as SystemConfig>::AccountId) -> Self::Balance {
+		log::info!(target: "balance", "call");
+
         Zero::zero()
 
         // let g = AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(asset)).unwrap();
@@ -48,6 +53,8 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 		who: &<T as SystemConfig>::AccountId,
 		keep_alive: bool,
 	) -> Self::Balance {
+		log::info!(target: "reducible_balance", "call");
+
         Zero::zero()
 	}
 
@@ -62,6 +69,8 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 		amount: Self::Balance,
 		mint: bool,
 	) -> DepositConsequence {
+		log::info!(target: "can_deposit", "call");
+
         DepositConsequence::Success
 		// Pallet::<T, I>::can_increase(asset, who, amount, mint)
 	}
@@ -71,6 +80,8 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 		who: &<T as SystemConfig>::AccountId,
 		amount: Self::Balance,
 	) -> WithdrawConsequence<Self::Balance> {
+		log::info!(target: "can_withdraw", "call");
+
         WithdrawConsequence::Success
 		// Pallet::<T, I>::can_decrease(asset, who, amount, false)
 	}
@@ -102,6 +113,8 @@ impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> 
 		amount: Self::Balance,
 	) -> DispatchResult {
 		//Self::do_mint(asset, who, amount, None)
+		log::info!(target: "mint_into", "call");
+
         Ok(())
 	}
 
@@ -112,6 +125,8 @@ impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> 
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = DebitFlags { keep_alive: false, best_effort: false };
 		// Self::do_burn(asset, who, amount, None, f)
+		log::info!(target: "burn_from", "call");
+
         Ok(Zero::zero())
 
 	}
@@ -123,6 +138,8 @@ impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> 
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = DebitFlags { keep_alive: false, best_effort: true };
 		// Self::do_burn(asset, who, amount, None, f)
+		log::info!(target: "slash", "call");
+
         Ok(Zero::zero())
 
 	}
@@ -138,6 +155,7 @@ impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T> {
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = TransferFlags { keep_alive, best_effort: false, burn_dust: false };
 		// Self::do_transfer(asset, source, dest, amount, None, f)
+		log::info!(target: "transfer", "call");
 
         Ok(Zero::zero())
 	}

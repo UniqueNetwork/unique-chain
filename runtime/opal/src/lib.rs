@@ -725,8 +725,11 @@ parameter_types! {
 	pub StatemintAssetsPalletLocation: MultiLocation =
 		MultiLocation::new(1, X2(Parachain(2000), PalletInstance(122)));
 
+	// pub KaruraPalletLocation: MultiLocation =
+	// 	MultiLocation::new(1, X2(Parachain(2000), PalletInstance(50)));
+
 	pub KaruraPalletLocation: MultiLocation =
-		MultiLocation::new(1, X2(Parachain(2000), PalletInstance(50)));
+		MultiLocation::new(1, X1(Parachain(2000)));	
 
 	pub CheckingAccount: AccountId = PolkadotXcm::check_account();
 }
@@ -791,6 +794,59 @@ impl<
 // 	}
 // }
 
+
+/// Converter struct implementing `AssetIdConversion` converting a numeric asset ID (must be `TryFrom/TryInto<u128>`) into
+/// a `GeneralIndex` junction, prefixed by some `MultiLocation` value. The `MultiLocation` value will typically be a
+/// `PalletInstance` junction.
+
+use xcm::opaque::latest::Junction;
+use sp_std::{borrow::Borrow};
+ 
+pub struct AsIndex<Prefix, AssetId, ConvertAssetId>(
+	PhantomData<(Prefix, AssetId, ConvertAssetId)>,
+);
+impl<Prefix: Get<MultiLocation>, AssetId: Clone, ConvertAssetId: ConvertXcm<u128, AssetId>>
+	ConvertXcm<MultiLocation, AssetId> for AsIndex<Prefix, AssetId, ConvertAssetId>
+{
+	fn convert_ref(id: impl Borrow<MultiLocation>) -> Result<AssetId, ()> {
+
+		let prefix = Prefix::get();
+		let id = id.borrow();
+
+		log::info!(
+			target: "xcm::AsIndex::Convert",
+			"AsIndex {:?}",
+			id.interior(), //.at(prefix.interior().len()) //.interior(), 
+		);
+		ConvertAssetId::convert_ref(999)
+
+
+		// if prefix.parent_count() != id.parent_count() ||
+		// 	prefix
+		// 		.interior()
+		// 		.iter()
+		// 		.enumerate()
+		// 		.any(|(index, junction)| id.interior().at(index) != Some(junction))
+		// {
+		// 	return Err(())
+		// }
+		// match id.interior().at(prefix.interior().len()) {
+		// 	Some(Junction::GeneralIndex(id)) => ConvertAssetId::convert_ref(id),
+		// 	Some(Junction::GeneralKey(id)) => ConvertAssetId::convert_ref(122),
+		// 	_ => ConvertAssetId::convert_ref(999),
+		// //	_ => Err(()),
+		// }
+	}
+	fn reverse_ref(what: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
+		let mut location = Prefix::get();
+		let id = ConvertAssetId::reverse_ref(what)?;
+		location.push_interior(Junction::GeneralIndex(id)).map_err(|_| ())?;
+		Ok(location)
+	}
+}
+
+
+
 /// Means for transacting assets besides the native currency on this chain.
 pub type FungiblesTransactor = FungiblesAdapter<
 	// Use this fungibles implementation:
@@ -804,7 +860,7 @@ pub type FungiblesTransactor = FungiblesAdapter<
 		AssetId,
 		Balance,
 		//AsPrefixedGeneralIndex<StatemintAssetsPalletLocation, AssetId, JustTry>,
-		AsPrefixedGeneralIndex<KaruraPalletLocation, AssetId, JustTry>,
+		AsIndex<KaruraPalletLocation, AssetId, JustTry>,
 		JustTry,
 	>,
 

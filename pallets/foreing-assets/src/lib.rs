@@ -114,20 +114,26 @@ impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<Bala
 	for XcmForeignAssetIdMapping<T>
 {
 	fn get_asset_metadata(foreign_asset_id: ForeignAssetId) -> Option<AssetMetadata<BalanceOf<T>>> {
+		log::info!(target: "asset_metadatas", "call");
 		Pallet::<T>::asset_metadatas(AssetIds::ForeignAssetId(foreign_asset_id))
 	}
 
 	fn get_multi_location(foreign_asset_id: ForeignAssetId) -> Option<MultiLocation> {
+		log::info!(target: "get_multi_location", "call");
 		Pallet::<T>::foreign_asset_locations(foreign_asset_id)
 	}
 
 	fn get_multi_location2(foreign_asset_id: AssetIds) -> Option<MultiLocation> {
+		log::info!(target: "get_multi_location2", "call");
+
 		match foreign_asset_id {
 			AssetIds::ForeignAssetId(id) =>  Pallet::<T>::foreign_asset_locations(id),
 		}
 	}
 
 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
+		log::info!(target: "get_currency_id", "call");
+
 		Pallet::<T>::location_to_currency_ids(multi_location)
 	}
 }
@@ -248,7 +254,7 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn next_foreign_asset_id)]
 	pub type NextForeignAssetId<T: Config> = StorageValue<_, ForeignAssetId, ValueQuery>;
-
+	foreign-assets pallet
 	/// The storages for MultiLocations.
 	///
 	/// ForeignAssetLocations: map ForeignAssetId => Option<MultiLocation>
@@ -580,198 +586,3 @@ impl<T, FixedRate: Get<u128>, R: TakeRevenue> Drop for FixedRateOfForeignAsset<T
 		}
 	}
 }
-
-// pub struct EvmErc20InfoMapping<T>(sp_std::marker::PhantomData<T>);
-
-// impl<T: Config> Erc20InfoMapping for EvmErc20InfoMapping<T> {
-// 	// Returns the name associated with a given CurrencyId.
-// 	// If CurrencyId is CurrencyId::DexShare and contain DexShare::Erc20,
-// 	// the EvmAddress must have been mapped.
-// 	fn name(currency_id: CurrencyId) -> Option<Vec<u8>> {
-// 		let name = match currency_id {
-// 			CurrencyId::Token(_) => AssetMetadatas::<T>::get(AssetIds::NativeAssetId(currency_id)).map(|v| v.name),
-// 			CurrencyId::DexShare(symbol_0, symbol_1) => {
-// 				let name_0 = match symbol_0 {
-// 					DexShare::Token(symbol) => CurrencyId::Token(symbol).name().map(|v| v.as_bytes().to_vec()),
-// 					DexShare::Erc20(address) => AssetMetadatas::<T>::get(AssetIds::Erc20(address)).map(|v| v.name),
-// 					DexShare::LiquidCrowdloan(lease) => Some(
-// 						format!(
-// 							"LiquidCrowdloan-{}-{}",
-// 							T::StakingCurrencyId::get().name().expect("constant never failed; qed"),
-// 							lease
-// 						)
-// 						.into_bytes(),
-// 					),
-// 					DexShare::ForeignAsset(foreign_asset_id) => {
-// 						AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(foreign_asset_id)).map(|v| v.name)
-// 					}
-// 					DexShare::StableAssetPoolToken(stable_asset_pool_id) => {
-// 						AssetMetadatas::<T>::get(AssetIds::StableAssetId(stable_asset_pool_id)).map(|v| v.name)
-// 					}
-// 				}?;
-// 				let name_1 = match symbol_1 {
-// 					DexShare::Token(symbol) => CurrencyId::Token(symbol).name().map(|v| v.as_bytes().to_vec()),
-// 					DexShare::Erc20(address) => AssetMetadatas::<T>::get(AssetIds::Erc20(address)).map(|v| v.name),
-// 					DexShare::LiquidCrowdloan(lease) => Some(
-// 						format!(
-// 							"LiquidCrowdloan-{}-{}",
-// 							T::StakingCurrencyId::get().name().expect("constant never failed; qed"),
-// 							lease
-// 						)
-// 						.into_bytes(),
-// 					),
-// 					DexShare::ForeignAsset(foreign_asset_id) => {
-// 						AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(foreign_asset_id)).map(|v| v.name)
-// 					}
-// 					DexShare::StableAssetPoolToken(stable_asset_pool_id) => {
-// 						AssetMetadatas::<T>::get(AssetIds::StableAssetId(stable_asset_pool_id)).map(|v| v.name)
-// 					}
-// 				}?;
-
-// 				let mut vec = Vec::new();
-// 				vec.extend_from_slice(&b"LP "[..]);
-// 				vec.extend_from_slice(&name_0);
-// 				vec.extend_from_slice(&b" - ".to_vec());
-// 				vec.extend_from_slice(&name_1);
-// 				Some(vec)
-// 			}
-// 			CurrencyId::Erc20(address) => AssetMetadatas::<T>::get(AssetIds::Erc20(address)).map(|v| v.name),
-// 			CurrencyId::StableAssetPoolToken(stable_asset_id) => {
-// 				AssetMetadatas::<T>::get(AssetIds::StableAssetId(stable_asset_id)).map(|v| v.name)
-// 			}
-// 			CurrencyId::LiquidCrowdloan(lease) => Some(
-// 				format!(
-// 					"LiquidCrowdloan-{}-{}",
-// 					T::StakingCurrencyId::get().name().expect("constant never failed; qed"),
-// 					lease
-// 				)
-// 				.into_bytes(),
-// 			),
-// 			CurrencyId::ForeignAsset(foreign_asset_id) => {
-// 				AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(foreign_asset_id)).map(|v| v.name)
-// 			}
-// 		}?;
-
-// 		// More than 32 bytes will be truncated.
-// 		if name.len() > 32 {
-// 			Some(name[..32].to_vec())
-// 		} else {
-// 			Some(name)
-// 		}
-// 	}
-
-// 	// Returns the symbol associated with a given CurrencyId.
-// 	// If CurrencyId is CurrencyId::DexShare and contain DexShare::Erc20,
-// 	// the EvmAddress must have been mapped.
-// 	fn symbol(currency_id: CurrencyId) -> Option<Vec<u8>> {
-// 		let symbol = match currency_id {
-// 			CurrencyId::Token(_) => AssetMetadatas::<T>::get(AssetIds::NativeAssetId(currency_id)).map(|v| v.symbol),
-// 			CurrencyId::DexShare(symbol_0, symbol_1) => {
-// 				let token_symbol_0 = match symbol_0 {
-// 					DexShare::Token(symbol) => CurrencyId::Token(symbol).symbol().map(|v| v.as_bytes().to_vec()),
-// 					DexShare::Erc20(address) => AssetMetadatas::<T>::get(AssetIds::Erc20(address)).map(|v| v.symbol),
-// 					DexShare::LiquidCrowdloan(lease) => Some(
-// 						format!(
-// 							"LC{}-{}",
-// 							T::StakingCurrencyId::get()
-// 								.symbol()
-// 								.expect("constant never failed; qed"),
-// 							lease
-// 						)
-// 						.into_bytes(),
-// 					),
-// 					DexShare::ForeignAsset(foreign_asset_id) => {
-// 						AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(foreign_asset_id)).map(|v| v.symbol)
-// 					}
-// 					DexShare::StableAssetPoolToken(stable_asset_pool_id) => {
-// 						AssetMetadatas::<T>::get(AssetIds::StableAssetId(stable_asset_pool_id)).map(|v| v.symbol)
-// 					}
-// 				}?;
-// 				let token_symbol_1 = match symbol_1 {
-// 					DexShare::Token(symbol) => CurrencyId::Token(symbol).symbol().map(|v| v.as_bytes().to_vec()),
-// 					DexShare::Erc20(address) => AssetMetadatas::<T>::get(AssetIds::Erc20(address)).map(|v| v.symbol),
-// 					DexShare::LiquidCrowdloan(lease) => Some(
-// 						format!(
-// 							"LC{}-{}",
-// 							T::StakingCurrencyId::get()
-// 								.symbol()
-// 								.expect("constant never failed; qed"),
-// 							lease
-// 						)
-// 						.into_bytes(),
-// 					),
-// 					DexShare::ForeignAsset(foreign_asset_id) => {
-// 						AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(foreign_asset_id)).map(|v| v.symbol)
-// 					}
-// 					DexShare::StableAssetPoolToken(stable_asset_pool_id) => {
-// 						AssetMetadatas::<T>::get(AssetIds::StableAssetId(stable_asset_pool_id)).map(|v| v.symbol)
-// 					}
-// 				}?;
-
-// 				let mut vec = Vec::new();
-// 				vec.extend_from_slice(&b"LP_"[..]);
-// 				vec.extend_from_slice(&token_symbol_0);
-// 				vec.extend_from_slice(&b"_".to_vec());
-// 				vec.extend_from_slice(&token_symbol_1);
-// 				Some(vec)
-// 			}
-// 			CurrencyId::Erc20(address) => AssetMetadatas::<T>::get(AssetIds::Erc20(address)).map(|v| v.symbol),
-// 			CurrencyId::StableAssetPoolToken(stable_asset_id) => {
-// 				AssetMetadatas::<T>::get(AssetIds::StableAssetId(stable_asset_id)).map(|v| v.symbol)
-// 			}
-// 			CurrencyId::LiquidCrowdloan(lease) => Some(
-// 				format!(
-// 					"LC{}-{}",
-// 					T::StakingCurrencyId::get()
-// 						.symbol()
-// 						.expect("constant never failed; qed"),
-// 					lease
-// 				)
-// 				.into_bytes(),
-// 			),
-// 			CurrencyId::ForeignAsset(foreign_asset_id) => {
-// 				AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(foreign_asset_id)).map(|v| v.symbol)
-// 			}
-// 		}?;
-
-// 		// More than 32 bytes will be truncated.
-// 		if symbol.len() > 32 {
-// 			Some(symbol[..32].to_vec())
-// 		} else {
-// 			Some(symbol)
-// 		}
-// 	}
-
-// 	// Returns the decimals associated with a given CurrencyId.
-// 	// If CurrencyId is CurrencyId::DexShare and contain DexShare::Erc20,
-// 	// the EvmAddress must have been mapped.
-// 	fn decimals(currency_id: CurrencyId) -> Option<u8> {
-// 		match currency_id {
-// 			CurrencyId::Token(_) => AssetMetadatas::<T>::get(AssetIds::NativeAssetId(currency_id)).map(|v| v.decimals),
-// 			CurrencyId::DexShare(symbol_0, _) => {
-// 				// initial dex share amount is calculated based on currency_id_0,
-// 				// use the decimals of currency_id_0 as the decimals of lp token.
-// 				match symbol_0 {
-// 					DexShare::Token(symbol) => CurrencyId::Token(symbol).decimals(),
-// 					DexShare::Erc20(address) => AssetMetadatas::<T>::get(AssetIds::Erc20(address)).map(|v| v.decimals),
-// 					DexShare::LiquidCrowdloan(_) => T::StakingCurrencyId::get().decimals(),
-// 					DexShare::ForeignAsset(foreign_asset_id) => {
-// 						AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(foreign_asset_id)).map(|v| v.decimals)
-// 					}
-// 					DexShare::StableAssetPoolToken(stable_asset_pool_id) => {
-// 						AssetMetadatas::<T>::get(AssetIds::StableAssetId(stable_asset_pool_id)).map(|v| v.decimals)
-// 					}
-// 				}
-// 			}
-// 			CurrencyId::Erc20(address) => AssetMetadatas::<T>::get(AssetIds::Erc20(address)).map(|v| v.decimals),
-// 			CurrencyId::StableAssetPoolToken(stable_asset_id) => {
-// 				AssetMetadatas::<T>::get(AssetIds::StableAssetId(stable_asset_id)).map(|v| v.decimals)
-// 			}
-// 			CurrencyId::LiquidCrowdloan(_) => T::StakingCurrencyId::get().decimals(),
-// 			CurrencyId::ForeignAsset(foreign_asset_id) => {
-// 				AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(foreign_asset_id)).map(|v| v.decimals)
-// 			}
-// 		}
-// 	}
-
-// }
