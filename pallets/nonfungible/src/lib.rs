@@ -542,7 +542,7 @@ impl<T: Config> Pallet<T> {
 					} else if token_owner && is_token_owner()? {
 						// Pass
 					} else {
-						return Err(<CommonError<T>>::NoPermission.into());
+						fail!(<CommonError<T>>::NoPermission);
 					}
 				}
 			}
