@@ -48,7 +48,7 @@ impl<T: Config> WithRecorder<T> for EvmCollectionHelpers<T> {
 impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelpers<T> {
 	#[weight(<SelfWeightOf<T>>::create_collection())]
 	fn create_nonfungible_collection(
-		&self,
+		&mut self,
 		caller: caller,
 		name: string,
 		description: string,
