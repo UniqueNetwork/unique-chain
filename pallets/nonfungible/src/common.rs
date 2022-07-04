@@ -225,7 +225,14 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		let weight = <CommonWeights<T>>::set_token_properties(properties.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::set_token_properties(self, &sender, token_id, properties, false, nesting_budget),
+			<Pallet<T>>::set_token_properties(
+				self,
+				&sender,
+				token_id,
+				properties,
+				false,
+				nesting_budget,
+			),
 			weight,
 		)
 	}
@@ -240,7 +247,13 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		let weight = <CommonWeights<T>>::delete_token_properties(property_keys.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::delete_token_properties(self, &sender, token_id, property_keys, nesting_budget),
+			<Pallet<T>>::delete_token_properties(
+				self,
+				&sender,
+				token_id,
+				property_keys,
+				nesting_budget,
+			),
 			weight,
 		)
 	}

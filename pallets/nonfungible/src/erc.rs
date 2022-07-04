@@ -87,14 +87,13 @@ impl<T: Config> NonfungibleHandle<T> {
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		let mut guard =
-			PropertyGuard::new(PropertyGuardData {
-				sender: &caller,
-				collection: self,
-				token_id: TokenId(token_id),
-				is_token_create,
-				nesting_budget: &nesting_budget
-			});
+		let mut guard = PropertyGuard::new(PropertyGuardData {
+			sender: &caller,
+			collection: self,
+			token_id: TokenId(token_id),
+			is_token_create,
+			nesting_budget: &nesting_budget,
+		});
 
 		<Pallet<T>>::set_token_property(Property { key, value }, &mut guard)
 			.map_err(dispatch_to_evm::<T>)
@@ -112,14 +111,13 @@ impl<T: Config> NonfungibleHandle<T> {
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		let mut guard =
-			PropertyGuard::new(PropertyGuardData {
-				sender: &caller,
-				collection: self,
-				token_id: TokenId(token_id),
-				is_token_create,
-				nesting_budget: &nesting_budget
-			});
+		let mut guard = PropertyGuard::new(PropertyGuardData {
+			sender: &caller,
+			collection: self,
+			token_id: TokenId(token_id),
+			is_token_create,
+			nesting_budget: &nesting_budget,
+		});
 
 		<Pallet<T>>::delete_token_property(key, &mut guard).map_err(dispatch_to_evm::<T>)
 	}
