@@ -86,8 +86,6 @@ pub mod pallet {
 		NonfungibleItemsHaveNoAmount,
 		/// Unable to burn NFT with children
 		CantBurnNftWithChildren,
-		/// Unable to create an empty property
-		UnableToCreateEmptyProperty,
 	}
 
 	#[pallet::config]
@@ -496,16 +494,16 @@ impl<T: Config> Pallet<T> {
 		is_token_create: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let mut collection_admin_result = None;
+		let mut collection_admin_status = None;
 		let mut token_owner_result = None;
 
-		let mut check_collection_admin = || {
-			*collection_admin_result
-				.get_or_insert_with(|| collection.check_is_owner_or_admin(sender))
+		let mut is_collection_admin = || {
+			*collection_admin_status
+				.get_or_insert_with(|| collection.is_owner_or_admin(sender))
 		};
 
-		let mut check_token_owner = || {
-			*token_owner_result.get_or_insert_with(|| {
+		let mut is_token_owner = || {
+			*token_owner_result.get_or_insert_with(|| -> Result<bool, DispatchError> {
 				let is_owned = <PalletStructure<T>>::check_indirectly_owned(
 					sender.clone(),
 					collection.id,
@@ -514,11 +512,7 @@ impl<T: Config> Pallet<T> {
 					nesting_budget,
 				)?;
 
-				if is_owned {
-					Ok(())
-				} else {
-					Err(<CommonError<T>>::NoPermission.into())
-				}
+				Ok(is_owned)
 			})
 		};
 
@@ -543,25 +537,15 @@ impl<T: Config> Pallet<T> {
 					..
 				} => {
 					//TODO: investigate threats during public minting.
-					if is_token_create && (collection_admin || token_owner) {
-						if value.is_some() {
-							return Ok(());
-						} else {
-							return Err(<Error<T>>::UnableToCreateEmptyProperty.into());
-						}
+					if is_token_create && (collection_admin || token_owner) && value.is_some() {
+						// Pass
+					} else if collection_admin && is_collection_admin() {
+						// Pass
+					} else if token_owner && is_token_owner()? {
+						// Pass
+					} else {
+						return Err(<CommonError<T>>::NoPermission.into());
 					}
-
-					let mut check_result = Err(<CommonError<T>>::NoPermission.into());
-
-					if collection_admin {
-						check_result = check_collection_admin();
-					}
-
-					if token_owner {
-						check_result = check_result.or_else(|_| check_token_owner())
-					}
-
-					check_result?;
 				}
 			}
 
@@ -596,7 +580,6 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	#[transactional]
 	pub fn set_token_properties(
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
@@ -634,7 +617,6 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	#[transactional]
 	pub fn delete_token_properties(
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
