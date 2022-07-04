@@ -3,28 +3,30 @@ use super::*;
 pub struct PropertyGuard<'a, T: Config> {
 	pub sender: &'a T::CrossAccountId,
 	pub collection: &'a NonfungibleHandle<T>,
-	pub token: TokenId,
+	pub token_id: TokenId,
 	pub is_token_create: bool,
-	budget: &'a dyn Budget,
+	nesting_budget: &'a dyn Budget,
 
 	collection_admin_result: Option<DispatchResult>,
 	token_owner_result: Option<DispatchResult>,
 }
 
+pub struct PropertyGuardData<'a, T: Config> {
+	pub sender: &'a T::CrossAccountId,
+	pub collection: &'a NonfungibleHandle<T>,
+	pub token_id: TokenId,
+	pub is_token_create: bool,
+	pub nesting_budget: &'a dyn Budget,
+}
+
 impl<'a, T: Config> PropertyGuard<'a, T> {
-	pub fn new(
-		sender: &'a T::CrossAccountId,
-		collection: &'a NonfungibleHandle<T>,
-		token: TokenId,
-		is_token_create: bool,
-		budget: &'a dyn Budget,
-	) -> Self {
+	pub fn new(data: PropertyGuardData<'a, T>) -> Self {
 		Self {
-			sender,
-			collection,
-			token,
-			is_token_create,
-			budget,
+			sender: data.sender,
+			collection: data.collection,
+			token_id: data.token_id,
+			is_token_create: data.is_token_create,
+			nesting_budget: data.nesting_budget,
 
 			collection_admin_result: None,
 			token_owner_result: None,
@@ -42,9 +44,9 @@ impl<'a, T: Config> PropertyGuard<'a, T> {
 			let is_owned = <PalletStructure<T>>::check_indirectly_owned(
 				self.sender.clone(),
 				self.collection.id,
-				self.token,
+				self.token_id,
 				None,
-				self.budget,
+				self.nesting_budget,
 			)?;
 
 			if is_owned {

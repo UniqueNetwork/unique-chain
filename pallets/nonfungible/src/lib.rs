@@ -494,7 +494,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		Self::check_token_change_permission(&property.key, guard)?;
 
-		<TokenProperties<T>>::try_mutate((guard.collection.id, guard.token), |properties| {
+		<TokenProperties<T>>::try_mutate((guard.collection.id, guard.token_id), |properties| {
 			let property = property.clone();
 			properties.try_set(property.key, property.value)
 		})
@@ -502,7 +502,7 @@ impl<T: Config> Pallet<T> {
 
 		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
 			guard.collection.id,
-			guard.token,
+			guard.token_id,
 			property.key,
 		));
 
@@ -518,13 +518,13 @@ impl<T: Config> Pallet<T> {
 		is_token_create: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let mut guard = PropertyGuard::new(
+		let mut guard = PropertyGuard::new(PropertyGuardData {
 			sender,
 			collection,
 			token_id,
 			is_token_create,
 			nesting_budget,
-		);
+		});
 
 		for property in properties {
 			Self::set_token_property(property, &mut guard)?;
@@ -539,14 +539,14 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		Self::check_token_change_permission(&property_key, guard)?;
 
-		<TokenProperties<T>>::try_mutate((guard.collection.id, guard.token), |properties| {
+		<TokenProperties<T>>::try_mutate((guard.collection.id, guard.token_id), |properties| {
 			properties.remove(&property_key)
 		})
 		.map_err(<CommonError<T>>::from)?;
 
 		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertyDeleted(
 			guard.collection.id,
-			guard.token,
+			guard.token_id,
 			property_key,
 		));
 
@@ -562,7 +562,7 @@ impl<T: Config> Pallet<T> {
 			.cloned()
 			.unwrap_or_else(PropertyPermission::none);
 
-		let is_property_exists = TokenProperties::<T>::get((guard.collection.id, guard.token))
+		let is_property_exists = TokenProperties::<T>::get((guard.collection.id, guard.token_id))
 			.get(property_key)
 			.is_some();
 
@@ -606,13 +606,13 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let is_token_create = false;
 
-		let mut guard = PropertyGuard::new(
+		let mut guard = PropertyGuard::new(PropertyGuardData {
 			sender,
 			collection,
 			token_id,
 			is_token_create,
 			nesting_budget,
-		);
+		});
 
 		for key in property_keys {
 			Self::delete_token_property(key, &mut guard)?;

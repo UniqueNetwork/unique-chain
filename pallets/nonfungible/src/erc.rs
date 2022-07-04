@@ -37,7 +37,7 @@ use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
-	SelfWeightOf, weights::WeightInfo, TokenProperties, property_guard::PropertyGuard,
+	SelfWeightOf, weights::WeightInfo, TokenProperties, property_guard::*,
 };
 
 #[solidity_interface(name = "TokenProperties")]
@@ -83,12 +83,18 @@ impl<T: Config> NonfungibleHandle<T> {
 		let value = value.try_into().map_err(|_| "value too long")?;
 
 		let is_token_create = false;
-		let budget = self
+		let nesting_budget = self
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		let mut guard =
-			PropertyGuard::new(&caller, self, TokenId(token_id), is_token_create, &budget);
+			PropertyGuard::new(PropertyGuardData {
+				sender: &caller,
+				collection: self,
+				token_id: TokenId(token_id),
+				is_token_create,
+				nesting_budget: &nesting_budget
+			});
 
 		<Pallet<T>>::set_token_property(Property { key, value }, &mut guard)
 			.map_err(dispatch_to_evm::<T>)
@@ -102,12 +108,18 @@ impl<T: Config> NonfungibleHandle<T> {
 			.map_err(|_| "key too long")?;
 
 		let is_token_create = false;
-		let budget = self
+		let nesting_budget = self
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		let mut guard =
-			PropertyGuard::new(&caller, self, TokenId(token_id), is_token_create, &budget);
+			PropertyGuard::new(PropertyGuardData {
+				sender: &caller,
+				collection: self,
+				token_id: TokenId(token_id),
+				is_token_create,
+				nesting_budget: &nesting_budget
+			});
 
 		<Pallet<T>>::delete_token_property(key, &mut guard).map_err(dispatch_to_evm::<T>)
 	}
