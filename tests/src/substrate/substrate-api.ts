@@ -61,7 +61,7 @@ function defaultApiOptions(): ApiOptions {
 
 export async function getApiConnection(settings: ApiOptions | undefined = undefined): Promise<ApiPromise> {
   settings = settings || defaultApiOptions();
-  let api = new ApiPromise(settings);
+  const api = new ApiPromise(settings);
 
   if (api) {
     await api.isReadyOrError;

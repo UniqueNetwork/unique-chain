@@ -1,8 +1,8 @@
-import { ApiPromise } from "@polkadot/api";
-import { expect } from "chai";
-import { getApiConnection } from "../substrate/substrate-api";
-import { getNft, getParts, NftIdTuple } from "./util/fetch";
-import { expectTxFailure } from "./util/helpers";
+import {ApiPromise} from '@polkadot/api';
+import {expect} from 'chai';
+import {getApiConnection} from '../substrate/substrate-api';
+import {getNft, getParts, NftIdTuple} from './util/fetch';
+import {expectTxFailure} from './util/helpers';
 import {
   addNftComposableResource,
   addNftSlotResource,
@@ -11,11 +11,11 @@ import {
   equipNft,
   mintNft,
   sendNft,
-  unequipNft
-} from "./util/tx";
+  unequipNft,
+} from './util/tx';
 
-const Alice = "//Alice";
-const Bob = "//Bob";
+const Alice = '//Alice';
+const Bob = '//Bob';
 
 const composableParts: number[] = [5, 2, 7];
 const composableSrc = 'test-cmp-src';
@@ -34,9 +34,9 @@ async function createTestCollection(api: ApiPromise): Promise<number> {
   return createCollection(
     api,
     Alice,
-    "test-metadata",
+    'test-metadata',
     null,
-    "test-symbol"
+    'test-symbol',
   );
 }
 
@@ -46,7 +46,7 @@ async function mintTestNft(api: ApiPromise, collectionId: number): Promise<numbe
     Alice,
     Alice,
     collectionId,
-    "nft-metadata"
+    'nft-metadata',
   );
 }
 
@@ -55,17 +55,17 @@ async function mintChildNft(api: ApiPromise, collectionId: number, parentNftId: 
 
   const parentNFT: NftIdTuple = [collectionId, parentNftId];
 
-  await sendNft(api, "sent", Alice, collectionId, nftChildId, parentNFT);
+  await sendNft(api, 'sent', Alice, collectionId, nftChildId, parentNFT);
 
   return nftChildId;
 }
 
 async function createTestBase(api: ApiPromise): Promise<number> {
-  return createBase(api, Alice, "test-base", "DTBase", [
+  return createBase(api, Alice, 'test-base', 'DTBase', [
     {
       SlotPart: {
         id: slotId,
-        equippable: "All",
+        equippable: 'All',
         z: 1,
         src: slotSrc,
       },
@@ -77,7 +77,7 @@ async function addTestComposable(api: ApiPromise, collectionId: number, nftId: n
   await addNftComposableResource(
     api,
     Alice,
-    "added",
+    'added',
     collectionId,
     nftId,
     composableParts,
@@ -85,7 +85,7 @@ async function addTestComposable(api: ApiPromise, collectionId: number, nftId: n
     composableSrc,
     composableMetadata,
     composableLicense,
-    composableThumb
+    composableThumb,
   );
 }
 
@@ -93,7 +93,7 @@ async function addTestSlot(api: ApiPromise, collectionId: number, nftId: number,
   return await addNftSlotResource(
     api,
     Alice,
-    "added",
+    'added',
     collectionId,
     nftId,
     baseId,
@@ -101,32 +101,32 @@ async function addTestSlot(api: ApiPromise, collectionId: number, nftId: number,
     slotSrc,
     slotMetadata,
     slotLicense,
-    slotThumb
+    slotThumb,
   );
 }
 
 async function checkEquipStatus(
   api: ApiPromise,
-  expectedStatus: "equipped" | "unequipped",
+  expectedStatus: 'equipped' | 'unequipped',
   collectionId: number,
-  nftId: number
+  nftId: number,
 ) {
   const itemNftDataOpt = await getNft(api, collectionId, nftId);
   expect(itemNftDataOpt.isSome, 'Error: unable to fetch item NFT data');
 
   const itemNftData = itemNftDataOpt.unwrap();
   expect(itemNftData.equipped.isTrue, `Error: item NFT should be ${expectedStatus}`)
-    .to.be.equal(expectedStatus === "equipped");
+    .to.be.equal(expectedStatus === 'equipped');
 }
 
-describe("integration test: Equip NFT", () => {
+describe('integration test: Equip NFT', () => {
 
   let api: any;
   before(async () => {
     api = await getApiConnection();
   });
 
-  it("equip nft", async () => {
+  it('equip nft', async () => {
     const collectionId = await createTestCollection(api);
     const nftParentId = await mintTestNft(api, collectionId);
     const nftChildId = await mintChildNft(api, collectionId, nftParentId);
@@ -141,10 +141,10 @@ describe("integration test: Equip NFT", () => {
 
     await equipNft(api, Alice, itemNFT, equipperNFT, resourceId, baseId, slotId);
 
-    await checkEquipStatus(api, "equipped", collectionId, nftChildId);
+    await checkEquipStatus(api, 'equipped', collectionId, nftChildId);
   });
 
-  it("unequip nft", async () => {
+  it('unequip nft', async () => {
     const collectionId = await createTestCollection(api);
     const nftParentId = await mintTestNft(api, collectionId);
     const nftChildId = await mintChildNft(api, collectionId, nftParentId);
@@ -159,13 +159,13 @@ describe("integration test: Equip NFT", () => {
 
     await equipNft(api, Alice, itemNFT, equipperNFT, resourceId, baseId, slotId);
 
-    await checkEquipStatus(api, "equipped", collectionId, nftChildId);
+    await checkEquipStatus(api, 'equipped', collectionId, nftChildId);
 
     await unequipNft(api, Alice, itemNFT, equipperNFT, resourceId, baseId, slotId);
-    await checkEquipStatus(api, "unequipped", collectionId, nftChildId);
+    await checkEquipStatus(api, 'unequipped', collectionId, nftChildId);
   });
 
-  it("[negative] equip NFT onto non-existing NFT", async () => {
+  it('[negative] equip NFT onto non-existing NFT', async () => {
     const collectionId = await createTestCollection(api);
 
     const nftChildId = await mintNft(
@@ -173,7 +173,7 @@ describe("integration test: Equip NFT", () => {
       Alice,
       Alice,
       collectionId,
-      "nft-metadata"
+      'nft-metadata',
     );
 
     const itemNFT: NftIdTuple = [collectionId, nftChildId];
@@ -186,14 +186,14 @@ describe("integration test: Equip NFT", () => {
     await expectTxFailure(/rmrkCore\.NoAvailableNftId/, tx);
   });
 
-  it("[negative] equip non-existing NFT", async () => {
+  it('[negative] equip non-existing NFT', async () => {
     const collectionId = await createTestCollection(api);
     const nftParentId = await mintNft(
       api,
       Alice,
       Alice,
       collectionId,
-      "nft-metadata"
+      'nft-metadata',
     );
 
     const baseId = await createTestBase(api);
@@ -209,7 +209,7 @@ describe("integration test: Equip NFT", () => {
     await expectTxFailure(/rmrkCore\.NoAvailableNftId/, tx);
   });
 
-  it("[negative] equip NFT by a not-an-owner user", async () => {
+  it('[negative] equip NFT by a not-an-owner user', async () => {
     const collectionId = await createTestCollection(api);
     const nftParentId = await mintTestNft(api, collectionId);
     const nftChildId = await mintChildNft(api, collectionId, nftParentId);
@@ -227,7 +227,7 @@ describe("integration test: Equip NFT", () => {
     await expectTxFailure(/rmrkEquip\.PermissionError/, tx);
   });
 
-  it("[negative] unable to equip NFT onto indirect parent NFT", async () => {
+  it('[negative] unable to equip NFT onto indirect parent NFT', async () => {
     const collectionId = await createTestCollection(api);
     const nftParentId = await mintTestNft(api, collectionId);
     const nftChildId = await mintChildNft(api, collectionId, nftParentId);
@@ -245,7 +245,7 @@ describe("integration test: Equip NFT", () => {
     await expectTxFailure(/rmrkEquip\.MustBeDirectParent/, tx);
   });
 
-  it("[negative] unable to equip NFT onto parent NFT with another base", async () => {
+  it('[negative] unable to equip NFT onto parent NFT with another base', async () => {
     const collectionId = await createTestCollection(api);
     const nftParentId = await mintTestNft(api, collectionId);
     const nftChildId = await mintChildNft(api, collectionId, nftParentId);
@@ -264,7 +264,7 @@ describe("integration test: Equip NFT", () => {
     await expectTxFailure(/rmrkEquip\.NoResourceForThisBaseFoundOnNft/, tx);
   });
 
-  it("[negative] unable to equip NFT into slot with another id", async () => {
+  it('[negative] unable to equip NFT into slot with another id', async () => {
     const collectionId = await createTestCollection(api);
     const nftParentId = await mintTestNft(api, collectionId);
     const nftChildId = await mintChildNft(api, collectionId, nftParentId);
@@ -282,16 +282,16 @@ describe("integration test: Equip NFT", () => {
     await expectTxFailure(/rmrkEquip\.ItemHasNoResourceToEquipThere/, tx);
   });
 
-  it("[negative] unable to equip NFT with incorrect slot (fixed part)", async () => {
+  it('[negative] unable to equip NFT with incorrect slot (fixed part)', async () => {
     const collectionId = await createTestCollection(api);
     const nftParentId = await mintTestNft(api, collectionId);
     const nftChildId = await mintChildNft(api, collectionId, nftParentId);
 
-    const baseId = await createBase(api, Alice, "test-base", "DTBase", [
+    const baseId = await createBase(api, Alice, 'test-base', 'DTBase', [
       {
         FixedPart: {
           id: slotId,
-          equippable: "All",
+          equippable: 'All',
           z: 1,
           src: slotSrc,
         },
@@ -308,17 +308,17 @@ describe("integration test: Equip NFT", () => {
     await expectTxFailure(/rmrkEquip\.CantEquipFixedPart/, tx);
   });
 
-  it("[negative] unable to equip NFT from a collection that is not allowed by the slot", async () => {
+  it('[negative] unable to equip NFT from a collection that is not allowed by the slot', async () => {
     const collectionId = await createTestCollection(api);
     const nftParentId = await mintTestNft(api, collectionId);
     const nftChildId = await mintChildNft(api, collectionId, nftParentId);
 
-    const baseId = await createBase(api, Alice, "test-base", "DTBase", [
+    const baseId = await createBase(api, Alice, 'test-base', 'DTBase', [
       {
         SlotPart: {
           id: 1,
           z: 1,
-          equippable: "Empty",
+          equippable: 'Empty',
           src: slotSrc,
         },
       },

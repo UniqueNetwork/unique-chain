@@ -1,7 +1,7 @@
-import { expect } from "chai";
-import { getApiConnection } from "../substrate/substrate-api";
-import { NftIdTuple } from "./util/fetch";
-import { expectTxFailure, getResourceById } from "./util/helpers";
+import {expect} from 'chai';
+import {getApiConnection} from '../substrate/substrate-api';
+import {NftIdTuple} from './util/fetch';
+import {expectTxFailure, getResourceById} from './util/helpers';
 import {
   addNftBasicResource,
   acceptNftResource,
@@ -10,16 +10,16 @@ import {
   sendNft,
   addNftSlotResource,
   addNftComposableResource,
-} from "./util/tx";
-import {RmrkTraitsResourceResourceInfo as ResourceInfo} from "@polkadot/types/lookup";
+} from './util/tx';
+import {RmrkTraitsResourceResourceInfo as ResourceInfo} from '@polkadot/types/lookup';
 
-describe("integration test: add NFT resource", () => {
-  const Alice = "//Alice";
-  const Bob = "//Bob";
-  const src = "test-res-src";
-  const metadata = "test-res-metadata";
-  const license = "test-res-license";
-  const thumb = "test-res-thumb";
+describe('integration test: add NFT resource', () => {
+  const Alice = '//Alice';
+  const Bob = '//Bob';
+  const src = 'test-res-src';
+  const metadata = 'test-res-metadata';
+  const license = 'test-res-license';
+  const thumb = 'test-res-thumb';
 
   const nonexistentId = 99999;
 
@@ -28,13 +28,13 @@ describe("integration test: add NFT resource", () => {
     api = await getApiConnection();
   });
 
-  it("add resource", async () => {
+  it('add resource', async () => {
     const collectionIdAlice = await createCollection(
       api,
       Alice,
-      "test-metadata",
+      'test-metadata',
       null,
-      "test-symbol"
+      'test-symbol',
     );
 
     const nftAlice = await mintNft(
@@ -42,19 +42,19 @@ describe("integration test: add NFT resource", () => {
       Alice,
       Alice,
       collectionIdAlice,
-      "nft-metadata"
+      'nft-metadata',
     );
 
     await addNftBasicResource(
       api,
       Alice,
-      "added",
+      'added',
       collectionIdAlice,
       nftAlice,
       src,
       metadata,
       license,
-      thumb
+      thumb,
     );
   });
 
@@ -62,28 +62,28 @@ describe("integration test: add NFT resource", () => {
     const collectionIdAlice = await createCollection(
       api,
       Alice,
-      "test-metadata",
+      'test-metadata',
       null,
-      "test-symbol"
+      'test-symbol',
     );
 
-    const parentNftId = await mintNft(api, Alice, Alice, collectionIdAlice, "parent-nft-metadata");
-    const childNftId = await mintNft(api, Alice, Alice, collectionIdAlice, "child-nft-metadata");
+    const parentNftId = await mintNft(api, Alice, Alice, collectionIdAlice, 'parent-nft-metadata');
+    const childNftId = await mintNft(api, Alice, Alice, collectionIdAlice, 'child-nft-metadata');
 
     const newOwnerNFT: NftIdTuple = [collectionIdAlice, parentNftId];
 
-    await sendNft(api, "sent", Alice, collectionIdAlice, childNftId, newOwnerNFT);
+    await sendNft(api, 'sent', Alice, collectionIdAlice, childNftId, newOwnerNFT);
 
     await addNftBasicResource(
       api,
       Alice,
-      "added",
+      'added',
       collectionIdAlice,
       childNftId,
       src,
       metadata,
       license,
-      thumb
+      thumb,
     );
   });
 
@@ -91,9 +91,9 @@ describe("integration test: add NFT resource", () => {
     const collectionIdAlice = await createCollection(
       api,
       Alice,
-      "test-metadata",
+      'test-metadata',
       null,
-      "test-symbol"
+      'test-symbol',
     );
 
     const nftAlice = await mintNft(
@@ -101,14 +101,14 @@ describe("integration test: add NFT resource", () => {
       Alice,
       Alice,
       collectionIdAlice,
-      "nft-metadata"
+      'nft-metadata',
     );
 
     const baseId = 42;
     const slotId = 10;
     const parts = [0, 5, 2];
 
-    let resourcesInfo = [];
+    const resourcesInfo = [];
     const resourceNum = 4;
 
     const checkResource = async (resource: ResourceInfo, resType: string, expectedId: number, expected: {
@@ -144,38 +144,38 @@ describe("integration test: add NFT resource", () => {
         src: src + 'r-' + i,
         metadata: metadata + 'r-' + i,
         license: license + 'r-' + i,
-        thumb: thumb + 'r-' + i
+        thumb: thumb + 'r-' + i,
       });
     }
 
     const firstBasicResourceId = await addNftBasicResource(
       api,
       Alice,
-      "added",
+      'added',
       collectionIdAlice,
       nftAlice,
       resourcesInfo[0].src,
       resourcesInfo[0].metadata,
       resourcesInfo[0].license,
-      resourcesInfo[0].thumb
+      resourcesInfo[0].thumb,
     );
 
     const secondBasicResourceId = await addNftBasicResource(
       api,
       Alice,
-      "added",
+      'added',
       collectionIdAlice,
       nftAlice,
       resourcesInfo[1].src,
       resourcesInfo[1].metadata,
       resourcesInfo[1].license,
-      resourcesInfo[1].thumb
+      resourcesInfo[1].thumb,
     );
 
     const composableResourceId = await addNftComposableResource(
       api,
       Alice,
-      "added",
+      'added',
       collectionIdAlice,
       nftAlice,
       parts,
@@ -189,7 +189,7 @@ describe("integration test: add NFT resource", () => {
     const slotResourceId = await addNftSlotResource(
       api,
       Alice,
-      "added",
+      'added',
       collectionIdAlice,
       nftAlice,
       baseId,
@@ -197,7 +197,7 @@ describe("integration test: add NFT resource", () => {
       resourcesInfo[3].src,
       resourcesInfo[3].metadata,
       resourcesInfo[3].license,
-      resourcesInfo[3].thumb
+      resourcesInfo[3].thumb,
     );
 
     const firstResource = await getResourceById(api, collectionIdAlice, nftAlice, firstBasicResourceId);
@@ -217,21 +217,21 @@ describe("integration test: add NFT resource", () => {
     const collectionIdAlice = await createCollection(
       api,
       Alice,
-      "test-metadata",
+      'test-metadata',
       null,
-      "test-symbol"
+      'test-symbol',
     );
 
     const tx = addNftBasicResource(
       api,
       Alice,
-      "added",
+      'added',
       collectionIdAlice,
       nonexistentId,
       src,
       metadata,
       license,
-      thumb
+      thumb,
     );
   
     await expectTxFailure(/rmrkCore\.NoAvailableNftId/, tx);
@@ -241,9 +241,9 @@ describe("integration test: add NFT resource", () => {
     const collectionIdAlice = await createCollection(
       api,
       Alice,
-      "test-metadata",
+      'test-metadata',
       null,
-      "test-symbol"
+      'test-symbol',
     );
 
     const nftAlice = await mintNft(
@@ -251,19 +251,19 @@ describe("integration test: add NFT resource", () => {
       Alice,
       Alice,
       collectionIdAlice,
-      "nft-metadata"
+      'nft-metadata',
     );
 
     const tx = addNftBasicResource(
       api,
       Bob,
-      "added",
+      'added',
       collectionIdAlice,
       nftAlice,
       src,
       metadata,
       license,
-      thumb
+      thumb,
     );
   
     await expectTxFailure(/rmrkCore\.NoPermission/, tx);
@@ -273,113 +273,113 @@ describe("integration test: add NFT resource", () => {
     const collectionIdAlice = await createCollection(
       api,
       Alice,
-      "test-metadata",
+      'test-metadata',
       null,
-      "test-symbol"
+      'test-symbol',
     );
 
-    const parentNftId = await mintNft(api, Alice, Alice, collectionIdAlice, "parent-nft-metadata");
-    const childNftId = await mintNft(api, Alice, Alice, collectionIdAlice, "child-nft-metadata");
+    const parentNftId = await mintNft(api, Alice, Alice, collectionIdAlice, 'parent-nft-metadata');
+    const childNftId = await mintNft(api, Alice, Alice, collectionIdAlice, 'child-nft-metadata');
 
     const newOwnerNFT: NftIdTuple = [collectionIdAlice, parentNftId];
 
-    await sendNft(api, "sent", Alice, collectionIdAlice, childNftId, newOwnerNFT);
+    await sendNft(api, 'sent', Alice, collectionIdAlice, childNftId, newOwnerNFT);
 
     const tx = addNftBasicResource(
       api,
       Bob,
-      "added",
+      'added',
       collectionIdAlice,
       childNftId,
       src,
       metadata,
       license,
-      thumb
+      thumb,
     );
     
     await expectTxFailure(/rmrkCore\.NoPermission/, tx);
   });
 
-  it("accept resource", async () => {
+  it('accept resource', async () => {
     const collectionIdBob = await createCollection(
       api,
       Bob,
-      "test-metadata",
+      'test-metadata',
       null,
-      "test-symbol"
+      'test-symbol',
     );
 
     const nftAlice = await mintNft(
-        api,
-        Bob,
-        Alice,
-        collectionIdBob,
-        "nft-metadata"
+      api,
+      Bob,
+      Alice,
+      collectionIdBob,
+      'nft-metadata',
     );
 
     const resourceId = await addNftBasicResource(
       api,
       Bob,
-      "pending",
+      'pending',
       collectionIdBob,
       nftAlice,
       src,
       metadata,
       license,
-      thumb
+      thumb,
     );
 
     await acceptNftResource(api, Alice, collectionIdBob, nftAlice, resourceId);
   });
 
-  it("[negative]: unable to accept a non-existing resource", async () => {
+  it('[negative]: unable to accept a non-existing resource', async () => {
     const collectionIdBob = await createCollection(
       api,
       Bob,
-      "test-metadata",
+      'test-metadata',
       null,
-      "test-symbol"
+      'test-symbol',
     );
 
     const nftAlice = await mintNft(
-        api,
-        Bob,
-        Alice,
-        collectionIdBob,
-        "nft-metadata"
+      api,
+      Bob,
+      Alice,
+      collectionIdBob,
+      'nft-metadata',
     );
 
     const tx = acceptNftResource(api, Alice, collectionIdBob, nftAlice, nonexistentId);
     await expectTxFailure(/rmrkCore\.ResourceDoesntExist/, tx);
   });
 
-  it("[negative]: unable to accept a resource by a not-an-NFT-owner user", async () => {
+  it('[negative]: unable to accept a resource by a not-an-NFT-owner user', async () => {
     const collectionIdBob = await createCollection(
       api,
       Bob,
-      "test-metadata",
+      'test-metadata',
       null,
-      "test-symbol"
+      'test-symbol',
     );
 
     const nftAlice = await mintNft(
-        api,
-        Bob,
-        Alice,
-        collectionIdBob,
-        "nft-metadata"
+      api,
+      Bob,
+      Alice,
+      collectionIdBob,
+      'nft-metadata',
     );
 
     const resourceId = await addNftBasicResource(
       api,
       Bob,
-      "pending",
+      'pending',
       collectionIdBob,
       nftAlice,
       src,
       metadata,
       license,
-      thumb
+      thumb,
     );
 
     const tx = acceptNftResource(api, Bob, collectionIdBob, nftAlice, resourceId);
@@ -387,41 +387,41 @@ describe("integration test: add NFT resource", () => {
     await expectTxFailure(/rmrkCore\.NoPermission/, tx);
   });
 
-  it("[negative]: unable to accept a resource to a non-target NFT", async () => {
+  it('[negative]: unable to accept a resource to a non-target NFT', async () => {
     const collectionIdBob = await createCollection(
       api,
       Bob,
-      "test-metadata",
+      'test-metadata',
       null,
-      "test-symbol"
+      'test-symbol',
     );
 
     const nftAlice = await mintNft(
-        api,
-        Bob,
-        Alice,
-        collectionIdBob,
-        "nft-metadata"
+      api,
+      Bob,
+      Alice,
+      collectionIdBob,
+      'nft-metadata',
     );
 
     const wrongNft = await mintNft(
-        api,
-        Bob,
-        Alice,
-        collectionIdBob,
-        "nft-metadata"
+      api,
+      Bob,
+      Alice,
+      collectionIdBob,
+      'nft-metadata',
     );
     
     const resourceId = await addNftBasicResource(
       api,
       Bob,
-      "pending",
+      'pending',
       collectionIdBob,
       nftAlice,
       src,
       metadata,
       license,
-      thumb
+      thumb,
     );
 
     const tx = acceptNftResource(api, Bob, collectionIdBob, wrongNft, resourceId);
