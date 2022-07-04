@@ -28,7 +28,8 @@ use frame_support::{
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, budget::Budget, Property, PropertyPermission, PropertyKey,
-	PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild, AuxPropertyValue,
+	PropertyValue, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild,
+	AuxPropertyValue,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
@@ -51,10 +52,6 @@ pub mod benchmarking;
 pub mod common;
 pub mod erc;
 pub mod weights;
-
-mod property_guard;
-
-use property_guard::*;
 
 pub type CreateItemData<T> = CreateNftExData<<T as pallet_evm::account::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
@@ -89,6 +86,8 @@ pub mod pallet {
 		NonfungibleItemsHaveNoAmount,
 		/// Unable to burn NFT with children
 		CantBurnNftWithChildren,
+		/// Unable to create an empty property
+		UnableToCreateEmptyProperty,
 	}
 
 	#[pallet::config]
@@ -488,23 +487,111 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	pub fn set_token_property(
-		property: Property,
-		guard: &mut PropertyGuard<'_, T>,
+	#[transactional]
+	fn modify_token_properties(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		properties: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
+		is_token_create: bool,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::check_token_change_permission(&property.key, guard)?;
+		let mut collection_admin_result = None;
+		let mut token_owner_result = None;
 
-		<TokenProperties<T>>::try_mutate((guard.collection.id, guard.token_id), |properties| {
-			let property = property.clone();
-			properties.try_set(property.key, property.value)
-		})
-		.map_err(<CommonError<T>>::from)?;
+		let mut check_collection_admin = || {
+			*collection_admin_result
+				.get_or_insert_with(|| collection.check_is_owner_or_admin(sender))
+		};
 
-		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
-			guard.collection.id,
-			guard.token_id,
-			property.key,
-		));
+		let mut check_token_owner = || {
+			*token_owner_result.get_or_insert_with(|| {
+				let is_owned = <PalletStructure<T>>::check_indirectly_owned(
+					sender.clone(),
+					collection.id,
+					token_id,
+					None,
+					nesting_budget,
+				)?;
+
+				if is_owned {
+					Ok(())
+				} else {
+					Err(<CommonError<T>>::NoPermission.into())
+				}
+			})
+		};
+
+		for (key, value) in properties {
+			let permission = <PalletCommon<T>>::property_permissions(collection.id)
+				.get(&key)
+				.cloned()
+				.unwrap_or_else(PropertyPermission::none);
+
+			let is_property_exists = TokenProperties::<T>::get((collection.id, token_id))
+				.get(&key)
+				.is_some();
+
+			match permission {
+				PropertyPermission { mutable: false, .. } if is_property_exists => {
+					return Err(<CommonError<T>>::NoPermission.into());
+				}
+
+				PropertyPermission {
+					collection_admin,
+					token_owner,
+					..
+				} => {
+					//TODO: investigate threats during public minting.
+					if is_token_create && (collection_admin || token_owner) {
+						if value.is_some() {
+							return Ok(());
+						} else {
+							return Err(<Error<T>>::UnableToCreateEmptyProperty.into());
+						}
+					}
+
+					let mut check_result = Err(<CommonError<T>>::NoPermission.into());
+
+					if collection_admin {
+						check_result = check_collection_admin();
+					}
+
+					if token_owner {
+						check_result = check_result.or_else(|_| check_token_owner())
+					}
+
+					check_result?;
+				}
+			}
+
+			match value {
+				Some(value) => {
+					<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
+						properties.try_set(key.clone(), value)
+					})
+					.map_err(<CommonError<T>>::from)?;
+
+					<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
+						collection.id,
+						token_id,
+						key,
+					));
+				}
+				None => {
+					<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
+						properties.remove(&key)
+					})
+					.map_err(<CommonError<T>>::from)?;
+
+					<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertyDeleted(
+						collection.id,
+						token_id,
+						key,
+					));
+				}
+			}
+		}
 
 		Ok(())
 	}
@@ -514,86 +601,37 @@ impl<T: Config> Pallet<T> {
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
-		properties: Vec<Property>,
+		properties: impl Iterator<Item = Property>,
 		is_token_create: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let mut guard = PropertyGuard::new(PropertyGuardData {
-			sender,
+		Self::modify_token_properties(
 			collection,
+			sender,
 			token_id,
+			properties.map(|p| (p.key, Some(p.value))),
 			is_token_create,
 			nesting_budget,
-		});
-
-		for property in properties {
-			Self::set_token_property(property, &mut guard)?;
-		}
-
-		Ok(())
+		)
 	}
 
-	pub fn delete_token_property(
-		property_key: PropertyKey,
-		guard: &mut PropertyGuard<'_, T>,
+	pub fn set_token_property(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		property: Property,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::check_token_change_permission(&property_key, guard)?;
+		let is_token_create = false;
 
-		<TokenProperties<T>>::try_mutate((guard.collection.id, guard.token_id), |properties| {
-			properties.remove(&property_key)
-		})
-		.map_err(<CommonError<T>>::from)?;
-
-		<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertyDeleted(
-			guard.collection.id,
-			guard.token_id,
-			property_key,
-		));
-
-		Ok(())
-	}
-
-	fn check_token_change_permission(
-		property_key: &PropertyKey,
-		guard: &mut PropertyGuard<'_, T>,
-	) -> DispatchResult {
-		let permission = <PalletCommon<T>>::property_permissions(guard.collection.id)
-			.get(property_key)
-			.cloned()
-			.unwrap_or_else(PropertyPermission::none);
-
-		let is_property_exists = TokenProperties::<T>::get((guard.collection.id, guard.token_id))
-			.get(property_key)
-			.is_some();
-
-		match permission {
-			PropertyPermission { mutable: false, .. } if is_property_exists => {
-				Err(<CommonError<T>>::NoPermission.into())
-			}
-
-			PropertyPermission {
-				collection_admin,
-				token_owner,
-				..
-			} => {
-				//TODO: investigate threats during public minting.
-				if guard.is_token_create && (collection_admin || token_owner) {
-					return Ok(());
-				}
-
-				let mut check_result = Err(<CommonError<T>>::NoPermission.into());
-
-				if collection_admin {
-					check_result = guard.check_collection_admin();
-				}
-
-				if token_owner {
-					check_result.or_else(|_| guard.check_token_owner())
-				} else {
-					check_result
-				}
-			}
-		}
+		Self::set_token_properties(
+			collection,
+			sender,
+			token_id,
+			[property].into_iter(),
+			is_token_create,
+			nesting_budget,
+		)
 	}
 
 	#[transactional]
@@ -601,24 +639,35 @@ impl<T: Config> Pallet<T> {
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
-		property_keys: Vec<PropertyKey>,
+		property_keys: impl Iterator<Item = PropertyKey>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let is_token_create = false;
 
-		let mut guard = PropertyGuard::new(PropertyGuardData {
-			sender,
+		Self::modify_token_properties(
 			collection,
+			sender,
 			token_id,
+			property_keys.into_iter().map(|key| (key, None)),
 			is_token_create,
 			nesting_budget,
-		});
+		)
+	}
 
-		for key in property_keys {
-			Self::delete_token_property(key, &mut guard)?;
-		}
-
-		Ok(())
+	pub fn delete_token_property(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		property_key: PropertyKey,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResult {
+		Self::delete_token_properties(
+			collection,
+			sender,
+			token_id,
+			[property_key].into_iter(),
+			nesting_budget,
+		)
 	}
 
 	pub fn set_collection_properties(
@@ -829,7 +878,7 @@ impl<T: Config> Pallet<T> {
 					collection,
 					sender,
 					TokenId(token),
-					data.properties.clone().into_inner(),
+					data.properties.clone().into_iter(),
 					true,
 					nesting_budget,
 				) {
