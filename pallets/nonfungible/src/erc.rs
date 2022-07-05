@@ -82,12 +82,16 @@ impl<T: Config> NonfungibleHandle<T> {
 			.map_err(|_| "key too long")?;
 		let value = value.try_into().map_err(|_| "value too long")?;
 
+		let nesting_budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
 		<Pallet<T>>::set_token_property(
 			self,
 			&caller,
 			TokenId(token_id),
 			Property { key, value },
-			false,
+			&nesting_budget,
 		)
 		.map_err(dispatch_to_evm::<T>)
 	}
@@ -99,7 +103,11 @@ impl<T: Config> NonfungibleHandle<T> {
 			.try_into()
 			.map_err(|_| "key too long")?;
 
-		<Pallet<T>>::delete_token_property(self, &caller, TokenId(token_id), key)
+		let nesting_budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		<Pallet<T>>::delete_token_property(self, &caller, TokenId(token_id), key, &nesting_budget)
 			.map_err(dispatch_to_evm::<T>)
 	}
 

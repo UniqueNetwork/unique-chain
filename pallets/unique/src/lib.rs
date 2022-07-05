@@ -654,8 +654,9 @@ decl_module! {
 			ensure!(!properties.is_empty(), Error::<T>::EmptyArgument);
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.set_token_properties(sender, token_id, properties))
+			dispatch_tx::<T, _>(collection_id, |d| d.set_token_properties(sender, token_id, properties, &budget))
 		}
 
 		#[weight = T::CommonWeightInfo::delete_token_properties(property_keys.len() as u32)]
@@ -669,8 +670,9 @@ decl_module! {
 			ensure!(!property_keys.is_empty(), Error::<T>::EmptyArgument);
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.delete_token_properties(sender, token_id, property_keys))
+			dispatch_tx::<T, _>(collection_id, |d| d.delete_token_properties(sender, token_id, property_keys, &budget))
 		}
 
 		#[weight = T::CommonWeightInfo::set_token_property_permissions(property_permissions.len() as u32)]
