@@ -27,7 +27,7 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
-	) external view returns (address);
+	) external returns (address);
 
 	// Selector: isCollectionExist(address) c3de1494
 	function isCollectionExist(address collectionAddress)
