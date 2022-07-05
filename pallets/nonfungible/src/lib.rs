@@ -380,11 +380,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let token_data =
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
-		ensure!(
-			&token_data.owner == sender
-				|| (collection.limits.owner_can_transfer() && collection.is_owner_or_admin(sender)),
-			<CommonError<T>>::NoPermission
-		);
+		ensure!(&token_data.owner == sender, <CommonError<T>>::NoPermission);
 
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(sender)?;
@@ -696,12 +692,7 @@ impl<T: Config> Pallet<T> {
 
 		let token_data =
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
-		// TODO: require sender to be token, owner, require admins to go through transfer_from
-		ensure!(
-			&token_data.owner == from
-				|| (collection.limits.owner_can_transfer() && collection.is_owner_or_admin(from)),
-			<CommonError<T>>::NoPermission
-		);
+		ensure!(&token_data.owner == from, <CommonError<T>>::NoPermission);
 
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(from)?;
@@ -1008,8 +999,12 @@ impl<T: Config> Pallet<T> {
 			// `from`, `to` checked in [`transfer`]
 			collection.check_allowlist(spender)?;
 		}
+
+		if collection.limits.owner_can_transfer() && collection.is_owner_or_admin(spender) {
+			return Ok(());
+		}
+
 		if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
-			// TODO: should collection owner be allowed to perform this transfer?
 			ensure!(
 				<PalletStructure<T>>::check_indirectly_owned(
 					spender.clone(),
