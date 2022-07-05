@@ -90,7 +90,7 @@ macro_rules! impl_common_runtime_apis {
                     let token_data = TokenData {
                         properties: Self::token_properties(collection, token_id, keys)?,
                         owner: Self::token_owner(collection, token_id)?,
-                        pieces: Self::total_pieces(collection, token_id)?.expect("Token pieces always must have some value"),
+                        pieces: Self::total_pieces(collection, token_id)?.unwrap_or(0),
                     };
 
                     Ok(token_data)
