@@ -1024,7 +1024,7 @@ scheduleExpectSuccess(
       expectedBlockNumber, 
       repetitions > 1 ? [period, repetitions] : null, 
       0, 
-      {value: operationTx as any},
+      {Value: operationTx as any},
     );
 
     const events = await submitTransactionAsync(sender, scheduleTx);
@@ -1051,7 +1051,7 @@ scheduleExpectFailure(
       expectedBlockNumber, 
       repetitions <= 1 ? null : [period, repetitions], 
       0, 
-      {value: operationTx as any},
+      {Value: operationTx as any},
     );
 
     //const events = 
@@ -1380,7 +1380,7 @@ export async function createItemWithPropsExpectFailure(sender: IKeyringPair, col
 
     let tx;
     if (createMode === 'NFT') {
-      const data = api.createType('UpDataStructsCreateItemData', {NFT: {properties: props}});
+      const data = api.createType('UpDataStructsCreateItemData', {NFT: {properties: props}}) as UpDataStructsCreateItemData;
       tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), data);
     } else {
       tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), createMode);

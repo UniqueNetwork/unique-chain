@@ -1,5 +1,4 @@
 import {expect} from 'chai';
-import privateKey from '../substrate/privateKey';
 import usingApi, {executeTransaction} from '../substrate/substrate-api';
 import {
   createCollectionExpectSuccess,
