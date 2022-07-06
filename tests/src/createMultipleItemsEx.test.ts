@@ -16,9 +16,9 @@
 
 import {expect} from 'chai';
 import usingApi, {executeTransaction} from './substrate/substrate-api';
-import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess} from './util/helpers';
+import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess, getBalance, getLastTokenId} from './util/helpers';
 
-describe('createMultipleItemsEx', () => {
+describe('Integration Test: createMultipleItemsEx', () => {
   it('can initialize multiple NFT with different owners', async () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await usingApi(async (api, privateKeyWrapper) => {
@@ -128,6 +128,77 @@ describe('createMultipleItemsEx', () => {
     });
   });
 
+  it('can initialize fungible with multiple owners', async () => {
+    const collection = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+
+      const users = new Map();
+      users.set(JSON.stringify({Substrate: alice.address}), 50);
+      users.set(JSON.stringify({Substrate: bob.address}), 100);
+
+      await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
+        Fungible: users,
+      }));
+
+      expect(await getBalance(api, collection, alice.address, 0)).to.equal(50n);
+      expect(await getBalance(api, collection, bob.address, 0)).to.equal(100n);
+    });
+  });
+
+  it('can initialize an RFT with multiple owners', async () => {
+    const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+      const bob = privateKeyWrapper('//Bob');
+
+      const users = new Map();
+      users.set(JSON.stringify({Substrate: alice.address}), 1);
+      users.set(JSON.stringify({Substrate: bob.address}), 2);
+
+      await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
+        RefungibleMultipleOwners: {
+          users: users,
+        },
+      }));
+      
+      const itemsListIndexAfter = await getLastTokenId(api, collection);
+      expect(itemsListIndexAfter).to.be.equal(1);
+
+      expect(await getBalance(api, collection, alice.address, 1)).to.be.equal(1n);
+      expect(await getBalance(api, collection, bob.address, 1)).to.be.equal(2n);
+    });
+  });
+
+  it('can initialize multiple RFTs with the same owner', async () => {
+    const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+    await usingApi(async (api, privateKeyWrapper) => {
+      const alice = privateKeyWrapper('//Alice');
+
+      const item1User = new Map();
+      item1User.set(JSON.stringify({Substrate: alice.address}), 1);
+
+      const item2User = new Map();
+      item2User.set(JSON.stringify({Substrate: alice.address}), 3);
+
+      await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
+        RefungibleMultipleItems: [
+          {users: item1User},
+          {users: item2User},
+        ],
+      }));
+      
+      const itemsListIndexAfter = await getLastTokenId(api, collection);
+      expect(itemsListIndexAfter).to.be.equal(2);
+
+      expect(await getBalance(api, collection, alice.address, 1)).to.be.equal(1n);
+      expect(await getBalance(api, collection, alice.address, 2)).to.be.equal(3n);
+    });
+  });
+});
+
+describe('Negative test: createMultipleItemsEx', () => {
   it('No editing rights', async () => {
     const collection = await createCollectionWithPropsExpectSuccess({properties: [{key: 'key1', value: 'v'}],
       propPerm:   [{key: 'key1', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}]});
@@ -321,4 +392,3 @@ describe('createMultipleItemsEx', () => {
     });
   });
 });
-'';

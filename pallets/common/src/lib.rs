@@ -1258,6 +1258,10 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	}
 }
 
+pub trait RefungibleExtensionsWeightInfo {
+	fn repartition() -> Weight;
+}
+
 pub trait CommonCollectionOperations<T: Config> {
 	fn create_item(
 		&self,
@@ -1307,12 +1311,14 @@ pub trait CommonCollectionOperations<T: Config> {
 		sender: T::CrossAccountId,
 		token_id: TokenId,
 		property: Vec<Property>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn delete_token_properties(
 		&self,
 		sender: T::CrossAccountId,
 		token_id: TokenId,
 		property_keys: Vec<PropertyKey>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 	fn set_token_property_permissions(
 		&self,
@@ -1357,7 +1363,7 @@ pub trait CommonCollectionOperations<T: Config> {
 		sender: T::CrossAccountId,
 		from: (CollectionId, TokenId),
 		under: TokenId,
-		budget: &dyn Budget,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResult;
 
 	fn nest(&self, under: TokenId, to_nest: (CollectionId, TokenId));
@@ -1384,6 +1390,19 @@ pub trait CommonCollectionOperations<T: Config> {
 		spender: T::CrossAccountId,
 		token: TokenId,
 	) -> u128;
+	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>>;
+}
+
+pub trait RefungibleExtensions<T>
+where
+	T: Config,
+{
+	fn repartition(
+		&self,
+		owner: &T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo;
 }
 
 // Flexible enough for implementing CommonCollectionOperations

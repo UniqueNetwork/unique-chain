@@ -29,6 +29,7 @@ import {
   createRefungibleToken,
   transfer,
   burnItem,
+  repartitionRFT,
 } from './util/helpers';
 
 import chai from 'chai';
@@ -160,6 +161,29 @@ describe('integration test: Refungible functionality:', () => {
       expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(80n);
       expect(await getBalance(api, collectionId, bob, tokenId)).to.be.equal(20n);
       expect(await getAllowance(api, collectionId, alice, bob, tokenId)).to.be.equal(40n);
+    });
+  });
+
+  it('Repartition', async () => {
+    await usingApi(async api => {
+      const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
+      const tokenId = (await createRefungibleToken(api, alice, collectionId, 100n)).itemId;
+
+      expect(await repartitionRFT(api, collectionId, alice, tokenId, 200n)).to.be.true;
+      expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(200n);
+
+      expect(await transfer(api, collectionId, tokenId, alice, bob, 110n)).to.be.true;
+      expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(90n);
+      expect(await getBalance(api, collectionId, bob, tokenId)).to.be.equal(110n);
+
+      await expect(repartitionRFT(api, collectionId, alice, tokenId, 80n)).to.eventually.be.rejected;
+
+      expect(await transfer(api, collectionId, tokenId, alice, bob, 90n)).to.be.true;
+      expect(await getBalance(api, collectionId, alice, tokenId)).to.be.equal(0n);
+      expect(await getBalance(api, collectionId, bob, tokenId)).to.be.equal(200n);
+
+      expect(await repartitionRFT(api, collectionId, bob, tokenId, 150n)).to.be.true;
+      await expect(transfer(api, collectionId, tokenId, bob, alice, 160n)).to.eventually.be.rejected;
     });
   });
 });

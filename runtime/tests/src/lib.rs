@@ -255,6 +255,7 @@ impl pallet_unique::Config for Test {
 	type Event = ();
 	type WeightInfo = ();
 	type CommonWeightInfo = CommonWeights<Self>;
+	type RefungibleExtensionsWeightInfo = CommonWeights<Self>;
 }
 
 // Build genesis storage according to the mock runtime.

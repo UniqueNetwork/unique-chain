@@ -830,6 +830,25 @@ export async function burnItemExpectSuccess(sender: IKeyringPair, collectionId: 
   });
 }
 
+export async function burnItemExpectFailure(sender: IKeyringPair, collectionId: number, tokenId: number, value: number | bigint = 1) {
+  await usingApi(async (api) => {
+    const tx = api.tx.unique.burnItem(collectionId, tokenId, value);
+
+    const events = await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
+    const result = getCreateCollectionResult(events);
+    // tslint:disable-next-line:no-unused-expression
+    expect(result.success).to.be.false;
+  });
+}
+
+export async function burnFromExpectSuccess(sender: IKeyringPair, from: IKeyringPair | CrossAccountId, collectionId: number, tokenId: number, value: number | bigint = 1) {
+  await usingApi(async (api) => {
+    const tx = api.tx.unique.burnFrom(collectionId, normalizeAccountId(from), tokenId, value);
+    const events = await submitTransactionAsync(sender, tx);
+    return getGenericResult(events).success;
+  });
+}
+
 export async function
 approve(
   api: ApiPromise,
@@ -1005,7 +1024,7 @@ scheduleExpectSuccess(
       expectedBlockNumber, 
       repetitions > 1 ? [period, repetitions] : null, 
       0, 
-      {value: operationTx as any},
+      {Value: operationTx as any},
     );
 
     const events = await submitTransactionAsync(sender, scheduleTx);
@@ -1032,7 +1051,7 @@ scheduleExpectFailure(
       expectedBlockNumber, 
       repetitions <= 1 ? null : [period, repetitions], 
       0, 
-      {value: operationTx as any},
+      {Value: operationTx as any},
     );
 
     //const events = 
@@ -1361,7 +1380,7 @@ export async function createItemWithPropsExpectFailure(sender: IKeyringPair, col
 
     let tx;
     if (createMode === 'NFT') {
-      const data = api.createType('UpDataStructsCreateItemData', {NFT: {properties: props}});
+      const data = api.createType('UpDataStructsCreateItemData', {NFT: {properties: props}}) as UpDataStructsCreateItemData;
       tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), data);
     } else {
       tx = api.tx.unique.createItem(collectionId, normalizeAccountId(owner), createMode);
@@ -1629,4 +1648,18 @@ export async function waitNewBlocks(blocksCount = 1): Promise<void> {
     });
     return promise;
   });
+}
+
+export async function repartitionRFT(
+  api: ApiPromise,
+  collectionId: number,
+  sender: IKeyringPair,
+  tokenId: number,
+  amount: bigint,
+): Promise<boolean> {
+  const tx = api.tx.unique.repartition(collectionId, tokenId, amount);
+  const events = await submitTransactionAsync(sender, tx);
+  const result = getGenericResult(events);
+
+  return result.success;
 }

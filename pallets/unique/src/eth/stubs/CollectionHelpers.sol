@@ -36,12 +36,12 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
-	) public view returns (address) {
+	) public returns (address) {
 		require(false, stub_error);
 		name;
 		description;
 		tokenPrefix;
-		dummy;
+		dummy = 0;
 		return 0x0000000000000000000000000000000000000000;
 	}
 

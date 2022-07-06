@@ -27,7 +27,7 @@ extern crate alloc;
 use frame_support::{
 	decl_module, decl_storage, decl_error, decl_event,
 	dispatch::DispatchResult,
-	ensure,
+	ensure, fail,
 	weights::{Weight},
 	transactional,
 	pallet_prelude::{DispatchResultWithPostInfo, ConstU32},
@@ -45,7 +45,7 @@ use up_data_structs::{
 use pallet_evm::account::CrossAccountId;
 use pallet_common::{
 	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_tx,
-	dispatch::CollectionDispatch,
+	dispatch::CollectionDispatch, RefungibleExtensionsWeightInfo,
 };
 pub mod eth;
 
@@ -65,6 +65,8 @@ decl_error! {
 		ConfirmUnsetSponsorFail,
 		/// Length of items properties must be greater than 0.
 		EmptyArgument,
+		/// Repertition is only supported by refungible collection
+		RepartitionCalledOnNonRefungibleCollection,
 	}
 }
 
@@ -74,6 +76,7 @@ pub trait Config: system::Config + pallet_common::Config + Sized + TypeInfo {
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 	type CommonWeightInfo: CommonWeightInfo<Self::CrossAccountId>;
+	type RefungibleExtensionsWeightInfo: RefungibleExtensionsWeightInfo;
 }
 
 decl_event! {
@@ -651,8 +654,9 @@ decl_module! {
 			ensure!(!properties.is_empty(), Error::<T>::EmptyArgument);
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.set_token_properties(sender, token_id, properties))
+			dispatch_tx::<T, _>(collection_id, |d| d.set_token_properties(sender, token_id, properties, &budget))
 		}
 
 		#[weight = T::CommonWeightInfo::delete_token_properties(property_keys.len() as u32)]
@@ -666,8 +670,9 @@ decl_module! {
 			ensure!(!property_keys.is_empty(), Error::<T>::EmptyArgument);
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.delete_token_properties(sender, token_id, property_keys))
+			dispatch_tx::<T, _>(collection_id, |d| d.delete_token_properties(sender, token_id, property_keys, &budget))
 		}
 
 		#[weight = T::CommonWeightInfo::set_token_property_permissions(property_permissions.len() as u32)]
@@ -897,6 +902,24 @@ decl_module! {
 			));
 
 			target_collection.save()
+		}
+
+		#[weight = T::RefungibleExtensionsWeightInfo::repartition()]
+		#[transactional]
+		pub fn repartition(
+			origin,
+			collection_id: CollectionId,
+			token: TokenId,
+			amount: u128,
+		) -> DispatchResultWithPostInfo {
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			dispatch_tx::<T, _>(collection_id, |d| {
+				if let Some(refungible_extensions) = d.refungible_extensions() {
+					refungible_extensions.repartition(&sender, token, amount)
+				} else {
+					fail!(<Error<T>>::RepartitionCalledOnNonRefungibleCollection)
+				}
+			})
 		}
 	}
 }

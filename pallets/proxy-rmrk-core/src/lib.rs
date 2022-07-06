@@ -19,7 +19,10 @@
 use frame_support::{pallet_prelude::*, transactional, BoundedVec, dispatch::DispatchResult};
 use frame_system::{pallet_prelude::*, ensure_signed};
 use sp_runtime::{DispatchError, Permill, traits::StaticLookup};
-use sp_std::vec::Vec;
+use sp_std::{
+	vec::Vec,
+	collections::{btree_set::BTreeSet, btree_map::BTreeMap},
+};
 use up_data_structs::{*, mapping::TokenAddressMapping};
 use pallet_common::{
 	Pallet as PalletCommon, Error as CommonError, CollectionHandle, CommonCollectionOperations,
@@ -47,6 +50,12 @@ pub use property::*;
 use RmrkProperty::*;
 
 pub const NESTING_BUDGET: u32 = 5;
+
+type PendingTarget = (CollectionId, TokenId);
+type PendingChild = (RmrkCollectionId, RmrkNftId);
+type PendingChildrenSet = BTreeSet<PendingChild>;
+
+type BasesMap = BTreeMap<RmrkBaseId, u32>;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -383,12 +392,14 @@ pub mod pallet {
 				[
 					Self::rmrk_property(TokenType, &NftType::Regular)?,
 					Self::rmrk_property(Transferable, &transferable)?,
-					Self::rmrk_property(PendingNftAccept, &false)?,
+					Self::rmrk_property(PendingNftAccept, &None::<PendingTarget>)?,
 					Self::rmrk_property(RoyaltyInfo, &royalty_info)?,
 					Self::rmrk_property(Metadata, &metadata)?,
 					Self::rmrk_property(Equipped, &false)?,
 					Self::rmrk_property(ResourcePriorities, &<Vec<u8>>::new())?,
 					Self::rmrk_property(NextResourceId, &(0 as RmrkResourceId))?,
+					Self::rmrk_property(PendingChildren, &PendingChildrenSet::new())?,
+					Self::rmrk_property(AssociatedBases, &BasesMap::new())?,
 				]
 				.into_iter(),
 			)
@@ -483,11 +494,12 @@ pub mod pallet {
 			);
 
 			ensure!(
-				!Self::get_nft_property_decoded(
+				Self::get_nft_property_decoded::<Option<PendingTarget>>(
 					collection_id,
 					nft_id,
 					RmrkProperty::PendingNftAccept
-				)?,
+				)?
+				.is_none(),
 				<Error<T>>::NoPermission
 			);
 
@@ -524,7 +536,15 @@ pub mod pallet {
 							collection.id,
 							nft_id,
 							PropertyScope::Rmrk,
-							Self::rmrk_property(PendingNftAccept, &approval_required)?,
+							Self::rmrk_property::<Option<PendingTarget>>(
+								PendingNftAccept,
+								&Some((target_collection_id, target_nft_id.into())),
+							)?,
+						)?;
+
+						Self::insert_pending_child(
+							(target_collection_id, target_nft_id.into()),
+							(rmrk_collection_id, rmrk_nft_id),
 						)?;
 					} else {
 						target_owner = T::CrossTokenAddressMapping::token_to_address(
@@ -618,12 +638,22 @@ pub mod pallet {
 				}
 			})?;
 
-			<PalletNft<T>>::set_scoped_token_property(
-				collection.id,
+			let pending_target = Self::get_nft_property_decoded::<Option<PendingTarget>>(
+				collection_id,
 				nft_id,
-				PropertyScope::Rmrk,
-				Self::rmrk_property(PendingNftAccept, &false)?,
+				RmrkProperty::PendingNftAccept,
 			)?;
+
+			if let Some(pending_target) = pending_target {
+				Self::remove_pending_child(pending_target, (rmrk_collection_id, rmrk_nft_id))?;
+
+				<PalletNft<T>>::set_scoped_token_property(
+					collection.id,
+					nft_id,
+					PropertyScope::Rmrk,
+					Self::rmrk_property(PendingNftAccept, &None::<PendingTarget>)?,
+				)?;
+			}
 
 			Self::deposit_event(Event::NFTAccepted {
 				sender,
@@ -663,14 +693,18 @@ pub mod pallet {
 				<Error<T>>::NoAvailableNftId
 			);
 
-			ensure!(
-				Self::get_nft_property_decoded(
-					collection_id,
-					nft_id,
-					RmrkProperty::PendingNftAccept
-				)?,
-				<Error<T>>::CannotRejectNonPendingNft
-			);
+			let pending_target = Self::get_nft_property_decoded::<Option<PendingTarget>>(
+				collection_id,
+				nft_id,
+				RmrkProperty::PendingNftAccept,
+			)?;
+
+			match pending_target {
+				Some(pending_target) => {
+					Self::remove_pending_child(pending_target, (rmrk_collection_id, rmrk_nft_id))?
+				}
+				None => return Err(<Error<T>>::CannotRejectNonPendingNft.into()),
+			}
 
 			Self::destroy_nft(
 				cross_sender,
@@ -784,6 +818,12 @@ pub mod pallet {
 				PropertyScope::Rmrk,
 				resource_id_key,
 			);
+
+			if let RmrkResourceTypes::Composable(resource) = resource_info.resource {
+				let base_id = resource.base;
+
+				Self::remove_associated_base_id(collection_id, nft_id, base_id)?;
+			}
 
 			Self::deposit_event(Event::<T>::ResourceRemovalAccepted {
 				nft_id: rmrk_nft_id,
@@ -938,11 +978,31 @@ pub mod pallet {
 				Self::get_typed_nft_collection(collection_id, misc::CollectionType::Regular)?;
 			collection.check_is_external()?;
 
+			let base_id = resource.base;
+
 			let resource_id = Self::resource_add(
 				sender,
 				collection_id,
 				nft_id.into(),
 				RmrkResourceTypes::Composable(resource),
+			)?;
+
+			<PalletNft<T>>::try_mutate_token_aux_property(
+				collection_id,
+				nft_id.into(),
+				PropertyScope::Rmrk,
+				Self::rmrk_property_key(AssociatedBases)?,
+				|value| -> DispatchResult {
+					let mut bases: BasesMap = match value {
+						Some(value) => Self::decode_property(value)?,
+						None => BasesMap::new(),
+					};
+
+					*bases.entry(base_id).or_insert(0) += 1;
+
+					*value = Some(Self::encode_property(&bases)?);
+					Ok(())
+				},
 			)?;
 
 			Self::deposit_event(Event::ResourceAdded {
@@ -1147,6 +1207,67 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
+	fn insert_pending_child(
+		target: (CollectionId, TokenId),
+		child: (RmrkCollectionId, RmrkNftId),
+	) -> DispatchResult {
+		Self::mutate_pending_child(target, |pending_children| {
+			pending_children.insert(child);
+		})
+	}
+
+	fn remove_pending_child(
+		target: (CollectionId, TokenId),
+		child: (RmrkCollectionId, RmrkNftId),
+	) -> DispatchResult {
+		Self::mutate_pending_child(target, |pending_children| {
+			pending_children.remove(&child);
+		})
+	}
+
+	fn mutate_pending_child(
+		(target_collection_id, target_nft_id): (CollectionId, TokenId),
+		f: impl FnOnce(&mut PendingChildrenSet),
+	) -> DispatchResult {
+		<PalletNft<T>>::try_mutate_token_aux_property(
+			target_collection_id,
+			target_nft_id,
+			PropertyScope::Rmrk,
+			Self::rmrk_property_key(PendingChildren)?,
+			|pending_children| -> DispatchResult {
+				let mut map = match pending_children {
+					Some(map) => Self::decode_property(map)?,
+					None => PendingChildrenSet::new(),
+				};
+
+				f(&mut map);
+
+				*pending_children = Some(Self::encode_property(&map)?);
+
+				Ok(())
+			},
+		)
+	}
+
+	fn iterate_pending_children(
+		collection_id: CollectionId,
+		nft_id: TokenId,
+	) -> Result<impl Iterator<Item = PendingChild>, DispatchError> {
+		let property = <PalletNft<T>>::token_aux_property((
+			collection_id,
+			nft_id,
+			PropertyScope::Rmrk,
+			Self::rmrk_property_key(PendingChildren)?,
+		));
+
+		let pending_children = match property {
+			Some(map) => Self::decode_property(&map)?,
+			None => PendingChildrenSet::new(),
+		};
+
+		Ok(pending_children.into_iter())
+	}
+
 	fn acquire_next_resource_id(
 		collection_id: CollectionId,
 		nft_id: TokenId,
@@ -1223,16 +1344,15 @@ impl<T: Config> Pallet<T> {
 		let resource_id_key = Self::rmrk_property_key(ResourceId(resource_id))?;
 		let scope = PropertyScope::Rmrk;
 
-		ensure!(
-			<PalletNft<T>>::token_aux_property((
-				collection_id,
-				nft_id,
-				scope,
-				resource_id_key.clone()
-			))
-			.is_some(),
-			<Error<T>>::ResourceDoesntExist
-		);
+		let resource = <PalletNft<T>>::token_aux_property((
+			collection_id,
+			nft_id,
+			scope,
+			resource_id_key.clone(),
+		))
+		.ok_or(<Error<T>>::ResourceDoesntExist)?;
+
+		let resource_info: RmrkResourceInfo = Self::decode_property(&resource)?;
 
 		let budget = up_data_structs::budget::Value::new(NESTING_BUDGET);
 		let topmost_owner =
@@ -1246,6 +1366,12 @@ impl<T: Config> Pallet<T> {
 				PropertyScope::Rmrk,
 				Self::rmrk_property_key(ResourceId(resource_id))?,
 			);
+
+			if let RmrkResourceTypes::Composable(resource) = resource_info.resource {
+				let base_id = resource.base;
+
+				Self::remove_associated_base_id(collection_id, nft_id, base_id)?;
+			}
 		} else {
 			Self::try_mutate_resource_info(collection_id, nft_id, resource_id, |res| {
 				res.pending_removal = true;
@@ -1255,6 +1381,36 @@ impl<T: Config> Pallet<T> {
 		}
 
 		Ok(())
+	}
+
+	fn remove_associated_base_id(
+		collection_id: CollectionId,
+		nft_id: TokenId,
+		base_id: RmrkBaseId,
+	) -> DispatchResult {
+		<PalletNft<T>>::try_mutate_token_aux_property(
+			collection_id,
+			nft_id,
+			PropertyScope::Rmrk,
+			Self::rmrk_property_key(AssociatedBases)?,
+			|value| -> DispatchResult {
+				let mut bases: BasesMap = match value {
+					Some(value) => Self::decode_property(value)?,
+					None => BasesMap::new(),
+				};
+
+				let remaining = bases.get(&base_id);
+
+				if let Some(remaining) = remaining {
+					if let Some(0) | None = remaining.checked_sub(1) {
+						bases.remove(&base_id);
+					}
+				}
+
+				*value = Some(Self::encode_property(&bases)?);
+				Ok(())
+			},
+		)
 	}
 
 	fn try_mutate_resource_info(
@@ -1526,15 +1682,13 @@ impl<T: Config> Pallet<T> {
 		Value: Decode + Default,
 		Mapper: Fn(Key, Value) -> R,
 	{
-		let key_prefix = Self::rmrk_property_key(UserProperty(b""))?;
-
 		let properties = match token_id {
 			Some(token_id) => <PalletNft<T>>::token_properties((collection_id, token_id)),
 			None => <PalletCommon<T>>::collection_properties(collection_id),
 		};
 
 		let properties = properties.into_iter().filter_map(move |(key, value)| {
-			let key = key.as_slice().strip_prefix(key_prefix.as_slice())?;
+			let key = strip_key_prefix(&key, USER_PROPERTY_PREFIX)?;
 
 			let key: Key = key.to_vec().try_into().ok()?;
 			let value: Value = value.decode().ok()?;
