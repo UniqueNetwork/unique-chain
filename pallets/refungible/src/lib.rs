@@ -710,4 +710,8 @@ impl<T: Config> Pallet<T> {
 		<TotalSupply<T>>::insert((collection.id, token), amount);
 		Ok(())
 	}
+
+	fn total_pieces(collection_id: CollectionId, token_id: TokenId) -> Option<u128> {
+		<TotalSupply<T>>::try_get((collection_id, token_id)).ok()
+	}
 }

@@ -411,6 +411,10 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
 		Some(self)
 	}
+
+	fn total_pieces(&self, token: TokenId) -> Option<u128> {
+		<Pallet<T>>::total_pieces(self.id, token)
+	}
 }
 
 impl<T: Config> RefungibleExtensions<T> for RefungibleHandle<T> {
