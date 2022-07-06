@@ -2977,6 +2977,7 @@ declare module '@polkadot/types/lookup' {
   export interface UpDataStructsTokenData extends Struct {
     readonly properties: Vec<UpDataStructsProperty>;
     readonly owner: Option<PalletEvmAccountBasicCrossAccountIdRepr>;
+    readonly pieces: u128;
   }
 
   /** @name UpDataStructsRpcCollection (376) */

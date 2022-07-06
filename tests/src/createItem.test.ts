@@ -118,8 +118,7 @@ describe('integration test: ext. ():', () => {
       }
 
       const totalPieces = (await api.rpc.unique.tokenData(collectionId, tokenId, [])).pieces;
-      expect(totalPieces.isSome).to.be.true;
-      expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
+      expect(totalPieces.toBigInt()).to.be.eq(amountPieces);
     });
   });
 
@@ -143,8 +142,7 @@ describe('integration test: ext. ():', () => {
       }
 
       const totalPieces = (await api.rpc.unique.tokenData(collectionId, tokenId, [])).pieces;
-      expect(totalPieces.isSome).to.be.true;
-      expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
+      expect(totalPieces.toBigInt()).to.be.eq(amountPieces);
     });
   });
 
@@ -169,8 +167,7 @@ describe('integration test: ext. ():', () => {
       }
 
       const totalPieces = (await api.rpc.unique.tokenData(collectionId, tokenId, [])).pieces;
-      expect(totalPieces.isSome).to.be.true;
-      expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
+      expect(totalPieces.toBigInt()).to.be.eq(amountPieces);
     });
   });
 });
@@ -255,7 +252,7 @@ describe('Negative integration test: ext. createItem():', () => {
       const invalidTokenId = 1000_000;
       
       expect((await api.rpc.unique.totalPieces(collectionId, invalidTokenId)).isNone).to.be.true;
-      expect((await api.rpc.unique.tokenData(collectionId, invalidTokenId, [])).pieces.isNone).to.be.true;
+      expect((await api.rpc.unique.tokenData(collectionId, invalidTokenId, [])).pieces.toBigInt()).to.be.eq(0n);
     });
   });
 
@@ -266,7 +263,7 @@ describe('Negative integration test: ext. createItem():', () => {
       const invalidTokenId = 1000_000;
       
       expect((await api.rpc.unique.totalPieces(collectionId, invalidTokenId)).isNone).to.be.true;
-      expect((await api.rpc.unique.tokenData(collectionId, invalidTokenId, [])).pieces.isNone).to.be.true;
+      expect((await api.rpc.unique.tokenData(collectionId, invalidTokenId, [])).pieces.toBigInt()).to.be.eq(0n);
     });
   });
 
@@ -277,7 +274,7 @@ describe('Negative integration test: ext. createItem():', () => {
       const invalidTokenId = 1000_000;
       
       expect((await api.rpc.unique.totalPieces(collectionId, invalidTokenId)).isNone).to.be.true;
-      expect((await api.rpc.unique.tokenData(collectionId, invalidTokenId, [])).pieces.isNone).to.be.true;
+      expect((await api.rpc.unique.tokenData(collectionId, invalidTokenId, [])).pieces.toBigInt()).to.be.eq(0n);
     });
   });
 });
