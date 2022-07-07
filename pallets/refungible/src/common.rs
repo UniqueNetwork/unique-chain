@@ -413,8 +413,8 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		TokenId(<TokensMinted<T>>::get(self.id))
 	}
 
-	fn token_owner(&self, _token: TokenId) -> Option<T::CrossAccountId> {
-		None
+	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId> {
+		<Pallet<T>>::token_owner(self.id, token)
 	}
 
 	fn token_property(&self, _token_id: TokenId, _key: &PropertyKey) -> Option<PropertyValue> {

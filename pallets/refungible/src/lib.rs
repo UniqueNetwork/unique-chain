@@ -1094,6 +1094,19 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	fn token_owner(collection_id: CollectionId, token_id: TokenId) -> Option<T::CrossAccountId> {
+		let mut owner = None;
+		let mut count = 0;
+		for key in Balance::<T>::iter_key_prefix((collection_id, token_id)) {
+			count += 1;
+			if count > 1 {
+				return None;
+			}
+			owner = Some(key);
+		}
+		owner
+	}
+
 	fn total_pieces(collection_id: CollectionId, token_id: TokenId) -> Option<u128> {
 		<TotalSupply<T>>::try_get((collection_id, token_id)).ok()
 	}
