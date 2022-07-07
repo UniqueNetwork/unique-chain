@@ -534,9 +534,9 @@ pub struct CreateReFungibleData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
-	
+
 	pub pieces: u128,
-	
+
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub properties: CollectionPropertiesVec,

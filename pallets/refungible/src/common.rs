@@ -327,12 +327,19 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		sender: T::CrossAccountId,
 		token_id: TokenId,
 		properties: Vec<Property>,
-		_nesting_budget: &dyn Budget,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		let weight = <CommonWeights<T>>::set_token_properties(properties.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::set_token_properties(self, &sender, token_id, properties, false),
+			<Pallet<T>>::set_token_properties(
+				self,
+				&sender,
+				token_id,
+				properties.into_iter(),
+				false,
+				nesting_budget,
+			),
 			weight,
 		)
 	}
@@ -356,12 +363,18 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		sender: T::CrossAccountId,
 		token_id: TokenId,
 		property_keys: Vec<PropertyKey>,
-		_nesting_budget: &dyn Budget,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		let weight = <CommonWeights<T>>::delete_token_properties(property_keys.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::delete_token_properties(self, &sender, token_id, property_keys),
+			<Pallet<T>>::delete_token_properties(
+				self,
+				&sender,
+				token_id,
+				property_keys.into_iter(),
+				nesting_budget,
+			),
 			weight,
 		)
 	}
