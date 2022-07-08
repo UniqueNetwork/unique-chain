@@ -1414,7 +1414,7 @@ export async function createItemExpectSuccess(sender: IKeyringPair, collectionId
       tx = api.tx.unique.createItem(collectionId, to, createData as any);
     }
 
-    const events = await submitTransactionAsync(sender, tx);
+    const events = await executeTransaction(api, sender, tx);
     const result = getCreateItemResult(events);
 
     const itemCountAfter = await getLastTokenId(api, collectionId);

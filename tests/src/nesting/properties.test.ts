@@ -806,123 +806,144 @@ describe('Integration Test: Token Properties', () => {
     await testDeletePropertiesAccordingPermission({type: 'ReFungible'}, 100);
   });
 
-  // it('Assigns properties to a nested token according to permissions', async () => {
-  //   await usingApi(async api => {
-  //     const propertyKeys: string[] = [];
-  //     let i = 0;
-  //     for (const permission of permissions) {
-  //       for (const signer of permission.signers) {
-  //         const key = i + '_' + signer.address;
-  //         propertyKeys.push(key);
+  it('Assigns properties to a nested token according to permissions', async () => {
+    await usingApi(async api => {
+      const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true}});
+      const token = await createItemExpectSuccess(alice, collection, 'NFT');
+      const nestedToken = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: tokenIdToAddress(collection, token)});
+      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
+      await transferExpectSuccess(collection, token, alice, charlie);
 
-  //         await expect(executeTransaction(
-  //           api, 
-  //           alice, 
-  //           api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
-  //         ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
+      const propertyKeys: string[] = [];
+      let i = 0;
+      for (const permission of permissions) {
+        for (const signer of permission.signers) {
+          const key = i + '_' + signer.address;
+          propertyKeys.push(key);
 
-  //         await expect(executeTransaction(
-  //           api, 
-  //           signer, 
-  //           api.tx.unique.setTokenProperties(collection, nestedToken, [{key: key, value: 'Serotonin increase'}]), 
-  //         ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
-  //       }
+          await expect(executeTransaction(
+            api, 
+            alice, 
+            api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
+          ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
 
-  //       i++;
-  //     }
+          await expect(executeTransaction(
+            api, 
+            signer, 
+            api.tx.unique.setTokenProperties(collection, nestedToken, [{key: key, value: 'Serotonin increase'}]), 
+          ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
+        }
 
-  //     const properties = (await api.rpc.unique.tokenProperties(collection, nestedToken, propertyKeys)).toHuman() as any[];
-  //     const tokensData = (await api.rpc.unique.tokenData(collection, nestedToken, propertyKeys)).toHuman().properties as any[];
-  //     for (let i = 0; i < properties.length; i++) {
-  //       expect(properties[i].value).to.be.equal('Serotonin increase');
-  //       expect(tokensData[i].value).to.be.equal('Serotonin increase');
-  //     }
-  //   });
-  // });
+        i++;
+      }
 
-  // it('Changes properties of a nested token according to permissions', async () => {
-  //   await usingApi(async api => {
-  //     const propertyKeys: string[] = [];
-  //     let i = 0;
-  //     for (const permission of permissions) {
-  //       if (!permission.permission.mutable) continue;
+      const properties = (await api.rpc.unique.tokenProperties(collection, nestedToken, propertyKeys)).toHuman() as any[];
+      const tokensData = (await api.rpc.unique.tokenData(collection, nestedToken, propertyKeys)).toHuman().properties as any[];
+      for (let i = 0; i < properties.length; i++) {
+        expect(properties[i].value).to.be.equal('Serotonin increase');
+        expect(tokensData[i].value).to.be.equal('Serotonin increase');
+      }
+    });
+  });
+
+  it('Changes properties of a nested token according to permissions', async () => {
+    await usingApi(async api => {
+      const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true}});
+      const token = await createItemExpectSuccess(alice, collection, 'NFT');
+      const nestedToken = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: tokenIdToAddress(collection, token)});
+      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
+      await transferExpectSuccess(collection, token, alice, charlie);
+
+      const propertyKeys: string[] = [];
+      let i = 0;
+      for (const permission of permissions) {
+        if (!permission.permission.mutable) continue;
         
-  //       for (const signer of permission.signers) {
-  //         const key = i + '_' + signer.address;
-  //         propertyKeys.push(key);
+        for (const signer of permission.signers) {
+          const key = i + '_' + signer.address;
+          propertyKeys.push(key);
 
-  //         await expect(executeTransaction(
-  //           api, 
-  //           alice, 
-  //           api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
-  //         ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
+          await expect(executeTransaction(
+            api, 
+            alice, 
+            api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
+          ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
 
-  //         await expect(executeTransaction(
-  //           api, 
-  //           signer, 
-  //           api.tx.unique.setTokenProperties(collection, nestedToken, [{key: key, value: 'Serotonin increase'}]), 
-  //         ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
+          await expect(executeTransaction(
+            api, 
+            signer, 
+            api.tx.unique.setTokenProperties(collection, nestedToken, [{key: key, value: 'Serotonin increase'}]), 
+          ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
 
-  //         await expect(executeTransaction(
-  //           api, 
-  //           signer, 
-  //           api.tx.unique.setTokenProperties(collection, nestedToken, [{key: key, value: 'Serotonin stable'}]), 
-  //         ), `on changing property ${i} by ${signer.address}`).to.not.be.rejected;
-  //       }
+          await expect(executeTransaction(
+            api, 
+            signer, 
+            api.tx.unique.setTokenProperties(collection, nestedToken, [{key: key, value: 'Serotonin stable'}]), 
+          ), `on changing property ${i} by ${signer.address}`).to.not.be.rejected;
+        }
 
-  //       i++;
-  //     }
+        i++;
+      }
 
-  //     const properties = (await api.rpc.unique.tokenProperties(collection, nestedToken, propertyKeys)).toHuman() as any[];
-  //     const tokensData = (await api.rpc.unique.tokenData(collection, nestedToken, propertyKeys)).toHuman().properties as any[];
-  //     for (let i = 0; i < properties.length; i++) {
-  //       expect(properties[i].value).to.be.equal('Serotonin stable');
-  //       expect(tokensData[i].value).to.be.equal('Serotonin stable');
-  //     }
-  //   });
-  // });
+      const properties = (await api.rpc.unique.tokenProperties(collection, nestedToken, propertyKeys)).toHuman() as any[];
+      const tokensData = (await api.rpc.unique.tokenData(collection, nestedToken, propertyKeys)).toHuman().properties as any[];
+      for (let i = 0; i < properties.length; i++) {
+        expect(properties[i].value).to.be.equal('Serotonin stable');
+        expect(tokensData[i].value).to.be.equal('Serotonin stable');
+      }
+    });
+  });
 
-  // it('Deletes properties of a nested token according to permissions', async () => {
-  //   await usingApi(async api => {
-  //     const propertyKeys: string[] = [];
-  //     let i = 0;
+  it('Deletes properties of a nested token according to permissions', async () => {
+    await usingApi(async api => {
+      const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
+      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true}});
+      const token = await createItemExpectSuccess(alice, collection, 'NFT');
+      const nestedToken = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: tokenIdToAddress(collection, token)});
+      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
+      await transferExpectSuccess(collection, token, alice, charlie);
 
-  //     for (const permission of permissions) {
-  //       if (!permission.permission.mutable) continue;
+      const propertyKeys: string[] = [];
+      let i = 0;
+
+      for (const permission of permissions) {
+        if (!permission.permission.mutable) continue;
         
-  //       for (const signer of permission.signers) {
-  //         const key = i + '_' + signer.address;
-  //         propertyKeys.push(key);
+        for (const signer of permission.signers) {
+          const key = i + '_' + signer.address;
+          propertyKeys.push(key);
 
-  //         await expect(executeTransaction(
-  //           api, 
-  //           alice, 
-  //           api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
-  //         ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
+          await expect(executeTransaction(
+            api, 
+            alice, 
+            api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
+          ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
 
-  //         await expect(executeTransaction(
-  //           api, 
-  //           signer, 
-  //           api.tx.unique.setTokenProperties(collection, nestedToken, [{key: key, value: 'Serotonin increase'}]), 
-  //         ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
+          await expect(executeTransaction(
+            api, 
+            signer, 
+            api.tx.unique.setTokenProperties(collection, nestedToken, [{key: key, value: 'Serotonin increase'}]), 
+          ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
 
-  //         await expect(executeTransaction(
-  //           api, 
-  //           signer, 
-  //           api.tx.unique.deleteTokenProperties(collection, nestedToken, [key]), 
-  //         ), `on deleting property ${i} by ${signer.address}`).to.not.be.rejected;
-  //       }
+          await expect(executeTransaction(
+            api, 
+            signer, 
+            api.tx.unique.deleteTokenProperties(collection, nestedToken, [key]), 
+          ), `on deleting property ${i} by ${signer.address}`).to.not.be.rejected;
+        }
         
-  //       i++;
-  //     }
+        i++;
+      }
 
-  //     const properties = (await api.rpc.unique.tokenProperties(collection, nestedToken, propertyKeys)).toJSON() as any[];
-  //     expect(properties).to.be.empty;
-  //     const tokensData = (await api.rpc.unique.tokenData(collection, nestedToken, propertyKeys)).toJSON().properties as any[];
-  //     expect(tokensData).to.be.empty;
-  //     expect((await api.query.nonfungible.tokenProperties(collection, nestedToken)).toJSON().consumedSpace).to.be.equal(0);
-  //   });
-  // });
+      const properties = (await api.rpc.unique.tokenProperties(collection, nestedToken, propertyKeys)).toJSON() as any[];
+      expect(properties).to.be.empty;
+      const tokensData = (await api.rpc.unique.tokenData(collection, nestedToken, propertyKeys)).toJSON().properties as any[];
+      expect(tokensData).to.be.empty;
+      expect((await api.query.nonfungible.tokenProperties(collection, nestedToken)).toJSON().consumedSpace).to.be.equal(0);
+    });
+  });
 });
 
 describe('Negative Integration Test: Token Properties', () => {
