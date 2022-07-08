@@ -8,30 +8,36 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
+      - uses: actions-rs/toolchain@v1
         with:
             toolchain: nightly
             default: true
             target: wasm32-unknown-unknown
-            components: rustfmt, clippy
+            components: rustfmt
       - name: Run cargo fmt
         run: cargo fmt -- --check
 
   clippy:
-    if: ${{ false }}
     runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v1
-      - name: Install substrate dependencies
-        run: sudo apt-get install libssl-dev pkg-config libclang-dev clang
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo
+      - uses: actions-rs/toolchain@v1
         with:
             toolchain: nightly
             default: true
-            target: wasm32-unknown-unknown
-            components: rustfmt, clippy
+            components: clippy
       - name: Run cargo check
-        run: cargo clippy -- -Dwarnings
+        run: cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests
+        env:
+          # We only need to check
+          SKIP_WASM_BUILD: '1'
+          # Has no sense in CI
+          CARGO_INCREMENTAL: '0'
