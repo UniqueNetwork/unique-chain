@@ -235,5 +235,6 @@ benchmarks! {
 		);
 	}
 
-	impl_benchmark_test_suite!(Scheduler, crate::mock::new_test_ext(), crate::mock::Test);
+    // FIXME: no mock in crate
+	// impl_benchmark_test_suite!(Scheduler, crate::mock::new_test_ext(), crate::mock::Test);
 }
