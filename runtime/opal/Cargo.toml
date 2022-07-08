@@ -46,6 +46,7 @@ try-runtime = [
     'frame-try-runtime',
     'frame-executive/try-runtime',
     'frame-system/try-runtime',
+    'unique-runtime-common/try-runtime',
 ]
 std = [
     'codec/std',
