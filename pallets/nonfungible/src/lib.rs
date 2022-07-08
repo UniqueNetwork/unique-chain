@@ -15,6 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+// https://github.com/rust-lang/rust-clippy/issues/8926
+#![allow(clippy::if_same_then_else)]
 
 use erc::ERC721Events;
 use evm_coder::ToLog;
