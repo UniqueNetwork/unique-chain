@@ -1,3 +1,5 @@
+use cumulus_pallet_xcm;
+use frame_support::{parameter_types, weights::Weight};
 use sp_runtime::create_runtime_str;
 use sp_version::RuntimeVersion;
 

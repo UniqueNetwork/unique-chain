@@ -10,17 +10,20 @@ use sp_runtime::{generic, MultiAddress, traits::BlakeTwo256};
 use sp_std::prelude::{Box, Vec};
 use sp_version::{ApisVec, RuntimeVersion};
 
-use unique_runtime_common::{impl_common_runtime_apis, types::{AccountId, BlockNumber, Signature}};
+use unique_runtime_common::{
+    impl_common_runtime_apis,
+    types::{AccountId, Block as OpaqueBlock, BlockNumber, Signature},
+};
 
 use super::*;
-use super::opaque;
+use super::opaque::SessionKeys;
 
 pub(crate) const RUNTIME_API_VERSIONS_PUB: ApisVec = RUNTIME_API_VERSIONS;
 
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
-		NodeBlock = opaque::Block,
+		NodeBlock = OpaqueBlock,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
