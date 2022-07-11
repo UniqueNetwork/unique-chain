@@ -25,10 +25,9 @@ import * as solc from 'solc';
 import Web3 from 'web3';
 import config from '../../config';
 import getBalance from '../../substrate/get-balance';
-import privateKey from '../../substrate/privateKey';
 import usingApi, {submitTransactionAsync} from '../../substrate/substrate-api';
 import waitNewBlocks from '../../substrate/wait-new-blocks';
-import {CrossAccountId, getDetailedCollectionInfo, getGenericResult, UNIQUE} from '../../util/helpers';
+import {CrossAccountId, getDetailedCollectionInfo, getGenericResult, topUpSubBalance, UNIQUE} from '../../util/helpers';
 import collectionHelpersAbi from '../collectionHelpersAbi.json';
 import nonFungibleAbi from '../nonFungibleAbi.json';
 import contractHelpersAbi from './contractHelpersAbi.json';
@@ -112,12 +111,15 @@ export function createEthAccount(web3: Web3) {
   return account.address;
 }
 
-export async function createEthAccountWithBalance(api: ApiPromise, web3: Web3, privateKeyWrapper: (account: string) => IKeyringPair) {
-  const alice = privateKeyWrapper('//Alice');
+export async function createEthAccountWithBalance(api: ApiPromise, web3: Web3, privateKeyWrapper: (account: string) => IKeyringPair, amount = 1000n * UNIQUE) {
   const account = createEthAccount(web3);
-  await transferBalanceToEth(api, alice, account);
+  await topUpEthereumBalance(account, amount, api, privateKeyWrapper);
 
   return account;
+}
+
+export async function topUpEthereumBalance(target: string, amount: bigint, api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair) {
+  await topUpSubBalance(evmToAddress(target), amount, api, privateKeyWrapper);
 }
 
 export async function transferBalanceToEth(api: ApiPromise, source: IKeyringPair, target: string, amount = 1000n * UNIQUE) {

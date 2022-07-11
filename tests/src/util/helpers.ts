@@ -20,7 +20,7 @@ import {ApiPromise} from '@polkadot/api';
 import type {AccountId, EventRecord, Event} from '@polkadot/types/interfaces';
 import type {GenericEventData} from '@polkadot/types';
 import {AnyTuple, IEvent, IKeyringPair} from '@polkadot/types/types';
-import {evmToAddress} from '@polkadot/util-crypto';
+import {evmToAddress, mnemonicGenerate} from '@polkadot/util-crypto';
 import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -1662,4 +1662,41 @@ export async function repartitionRFT(
   const result = getGenericResult(events);
 
   return result.success;
+}
+
+export async function createSubAccountWithBalance(api: ApiPromise, privateKeyWrapper: (seed: string) => IKeyringPair, balance = 100n * UNIQUE) {
+  const mnemonic = mnemonicGenerate();
+  const keyringPair = privateKeyWrapper(mnemonic);
+
+  await topUpSubBalance(keyringPair.address, balance, api, privateKeyWrapper);
+
+  return keyringPair;
+}
+
+export async function topUpSubBalance(recepient: string, amountWei: bigint, api: ApiPromise, privateKeyWrapper: (seed: string) => IKeyringPair) {
+  // Do not use Alice as a donor as it is used in some tests as a sudo
+  const donors = ['//Bob', '//Charlie', '//Dave', '//Eve', '//Ferdie'];
+
+  // Try to transfer balance using one of the donors
+  console.log(`Transfering ${amountWei} to ${recepient}`);
+  let success = false;
+  for (const donor of donors) {
+    try {
+      const donorKeyringPair = privateKeyWrapper(donor);
+      console.log(`Transfering ${amountWei} to ${recepient} from ${donor}...`);
+      const nonce = await api.rpc.system.accountNextIndex(donorKeyringPair.address);
+      const tx = await api.tx.balances.transfer(recepient, amountWei)
+        .signAsync(privateKeyWrapper(donor), {nonce});
+        
+      const events = await submitTransactionAsync(donorKeyringPair, tx);
+      const result = getGenericResult(events);
+      expect(result.success).to.be.true;
+      success = true;
+      break;
+    } catch (error) {
+      console.log(`Can't transfer balance from ${donor}`);
+    }
+  }
+
+  expect(success).to.be.true;
 }
