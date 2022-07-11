@@ -54,7 +54,7 @@
 //! Priority limited by HARD DEADLINE (<= 63). Calls over maximum weight don't include to block
 //! Maybe_periodic limit is 100 calls
 //! Any account allowed to schedule any calls. Account withdraw implemented through default transaction logic.
-//! 
+//!
 //! ## Interface
 //!
 //! ### Dispatchable Functions
@@ -276,7 +276,7 @@ pub mod pallet {
 			count: u32,
 		) -> Result<(), DispatchError>;
 
-		/// Unlock centain amount from payer 
+		/// Unlock centain amount from payer
 		fn pay_for_call(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
@@ -497,7 +497,7 @@ pub mod pallet {
 					Agenda::<T>::append(wake, Some(s));
 				}
 			}
-			/// Weight should be 0, because transaction already paid 
+			/// Weight should be 0, because transaction already paid
 			0
 		}
 	}
