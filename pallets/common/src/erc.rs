@@ -422,10 +422,53 @@ fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
 	Ok(())
 }
 
-/// Get the "tokenURI" key as [PropertyKey](up_data_structs::PropertyKey).
-pub fn token_uri_key() -> up_data_structs::PropertyKey {
-	b"tokenURI"
-		.to_vec()
-		.try_into()
-		.expect("length < limit; qed")
+pub mod static_property_key_value {
+	use evm_coder::{
+		execution::{Result, Error},
+	};
+	use alloc::format;
+
+	const EXPECT_CONVERT_ERROR: &str = "length < limit";
+	/// Get the "tokenURI" key as [PropertyKey](up_data_structs::PropertyKey).
+	pub fn token_uri_key() -> up_data_structs::PropertyKey {
+		property_key_from_bytes(b"tokenURI").expect(EXPECT_CONVERT_ERROR)
+	}
+
+	pub fn schema_name_key() -> up_data_structs::PropertyKey {
+		property_key_from_bytes(b"schemaName").expect(EXPECT_CONVERT_ERROR)
+	}
+
+	pub fn base_uri_key() -> up_data_structs::PropertyKey {
+		property_key_from_bytes(b"baseURI").expect(EXPECT_CONVERT_ERROR)
+	}
+
+	pub fn u_key() -> up_data_structs::PropertyKey {
+		property_key_from_bytes(b"u").expect(EXPECT_CONVERT_ERROR)
+	}
+
+	pub fn s_key() -> up_data_structs::PropertyKey {
+		property_key_from_bytes(b"s").expect(EXPECT_CONVERT_ERROR)
+	}
+
+	pub fn erc721_value() -> up_data_structs::PropertyValue {
+		property_value_from_bytes(b"ERC721").expect(EXPECT_CONVERT_ERROR)
+	}
+
+	pub fn property_key_from_bytes(bytes: &[u8]) -> Result<up_data_structs::PropertyKey> {
+		bytes.to_vec().try_into().map_err(|_| {
+			Error::Revert(format!(
+				"Property key is too long. Max length is {}.",
+				up_data_structs::PropertyKey::bound()
+			))
+		})
+	}
+
+	pub fn property_value_from_bytes(bytes: &[u8]) -> Result<up_data_structs::PropertyValue> {
+		bytes.to_vec().try_into().map_err(|_| {
+			Error::Revert(format!(
+				"Property key is too long. Max length is {}.",
+				up_data_structs::PropertyKey::bound()
+			))
+		})
+	}
 }
