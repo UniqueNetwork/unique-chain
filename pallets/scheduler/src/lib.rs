@@ -32,7 +32,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! # Schedulerdo_reschedule
+//! # Unique scheduler
+//! A Pallet for scheduling dispatches.
+//!
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Pallet`]
+//!
+//! ## Overview
 //!
 //! This Pallet exposes capabilities for scheduling dispatches to occur at a
 //! specified block number or at a specified period. These scheduled dispatches
@@ -46,7 +53,7 @@
 //! If a call is scheduled using proxy or whatever mecanism which adds filter,
 //! then those filter will not be used when dispatching the schedule call.
 //!
-//! The scheduler is designed for deferred transaction calls by block number.
+//! **NOTE:** The unique scheduler is designed for deferred transaction calls by block number.
 //! Any user can book a call of a certain transaction to a specific block number.
 //! Also possible to book a call with a certain frequency.
 //! Key differences from original pallet:
@@ -54,6 +61,17 @@
 //! Priority limited by HARD DEADLINE (<= 63). Calls over maximum weight don't include to block
 //! Maybe_periodic limit is 100 calls
 //! Any account allowed to schedule any calls. Account withdraw implemented through default transaction logic.
+//!
+//! ## Interface
+//!
+//! ### Dispatchable Functions
+//!
+//! * `schedule` - schedule a dispatch, which may be periodic, to occur at a specified block and
+//!   with a specified priority.
+//! * `cancel` - cancel a scheduled dispatch, specified by block number and index.
+//! * `schedule_named` - augments the `schedule` interface with an additional `Vec<u8>` parameter
+//!   that can be used for identification.
+//! * `cancel_named` - the named complement to the cancel function.
 //!
 //! ## Interface
 //!
