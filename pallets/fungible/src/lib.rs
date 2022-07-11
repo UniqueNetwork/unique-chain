@@ -120,6 +120,7 @@ pub mod pallet {
 		/// Not Fungible item data used to mint in Fungible collection.
 		NotFungibleDataUsedToMintFungibleCollectionToken,
 		/// Not default id passed as TokenId argument.
+		/// The default value of TokenId for Fungible collection is 0.
 		FungibleItemsHaveNoId,
 		/// Tried to set data for fungible item.
 		FungibleItemsDontHaveData,
