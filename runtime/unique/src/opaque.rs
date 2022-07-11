@@ -4,9 +4,9 @@
 /// to even the core data structures.
 
 use sp_runtime::impl_opaque_keys;
-use sp_std::prelude::*;
+use sp_std::prelude::Vec;
 
-pub use unique_runtime_common::types::*;
+pub use unique_runtime_common::types::{Block, UncheckedExtrinsic};
 
 use super::constructor::Aura;
 

@@ -152,10 +152,10 @@ pub fn native_version() -> NativeVersion {
 type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 
 impl RuntimeInstance for Runtime {
-    type CrossAccountId = self::CrossAccountId;
-    type TransactionConverter = self::TransactionConverter;
+    type CrossAccountId = CrossAccountId;
+    type TransactionConverter = TransactionConverter;
 
-    fn get_transaction_converter() -> TransactionConverter {
+    fn get_transaction_converter() -> Self::TransactionConverter {
         TransactionConverter
     }
 }
