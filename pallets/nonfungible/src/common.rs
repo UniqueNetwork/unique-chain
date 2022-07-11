@@ -26,7 +26,7 @@ use pallet_common::{
 	weights::WeightInfo as _,
 };
 use sp_runtime::DispatchError;
-use sp_std::vec::Vec;
+use sp_std::{vec::Vec, vec};
 
 use crate::{
 	AccountBalance, Allowance, Config, CreateItemData, Error, NonfungibleHandle, Owned, Pallet,
@@ -420,6 +420,10 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId> {
 		<TokenData<T>>::get((self.id, token)).map(|t| t.owner)
+	}
+
+	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
+		self.token_owner(token).map_or_else(|| vec![], |t| vec![t])
 	}
 
 	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {

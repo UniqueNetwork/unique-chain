@@ -95,7 +95,7 @@ use pallet_structure::Pallet as PalletStructure;
 use pallet_evm_coder_substrate::WithRecorder;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
-use sp_std::{collections::btree_map::BTreeMap};
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 pub use pallet::*;
 
@@ -612,5 +612,21 @@ impl<T: Config> Pallet<T> {
 			[(data.0, data.1)].into_iter().collect(),
 			nesting_budget,
 		)
+	}
+
+	pub fn token_owners(
+		collection: CollectionId,
+		_token: TokenId,
+	) -> Option<Vec<T::CrossAccountId>> {
+		let res: Vec<T::CrossAccountId> = <Balance<T>>::iter_prefix((collection,))
+			.map(|r| r.0)
+			.take(10)
+			.collect();
+
+		if res.len() == 0 {
+			None
+		} else {
+			Some(res)
+		}
 	}
 }

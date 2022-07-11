@@ -1134,4 +1134,20 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		<PalletCommon<T>>::set_token_property_permissions(collection, sender, property_permissions)
 	}
+	
+	pub fn token_owners(
+		collection_id: CollectionId,
+		token: TokenId,
+	) -> Option<Vec<T::CrossAccountId>> {
+		let res: Vec<T::CrossAccountId> = <Balance<T>>::iter_prefix((collection_id, token))
+			.map(|r| r.0)
+			.take(10)
+			.collect();
+
+		if res.len() == 0 {
+			None
+		} else {
+			Some(res)
+		}
+	}
 }

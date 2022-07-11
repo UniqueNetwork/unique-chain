@@ -70,6 +70,15 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<CrossAccountId>>;
+
+	#[method(name = "unique_tokenOwners")]
+	fn token_owners(
+		&self,
+		collection: CollectionId,
+		token: TokenId,
+		at: Option<BlockHash>,
+	) -> Result<Vec<CrossAccountId>>;
+
 	#[method(name = "unique_topmostTokenOwner")]
 	fn topmost_token_owner(
 		&self,
@@ -473,6 +482,7 @@ where
 	pass_method!(next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Option<u64>, unique_api);
 	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>, unique_api);
 	pass_method!(total_pieces(collection_id: CollectionId, token_id: TokenId) -> Option<u128>, unique_api);
+	pass_method!(token_owners(collection: CollectionId, token: TokenId) -> Vec<CrossAccountId>, unique_api);
 }
 
 #[allow(deprecated)]

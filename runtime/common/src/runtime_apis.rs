@@ -40,6 +40,11 @@ macro_rules! impl_common_runtime_apis {
                 fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
                     dispatch_unique_runtime!(collection.token_owner(token))
                 }
+
+                fn token_owners(collection: CollectionId, token: TokenId) -> Result<Vec::<CrossAccountId>, DispatchError>  {
+                   dispatch_unique_runtime!(collection.token_owners(token))
+                }
+
                 fn topmost_token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
                     let budget = up_data_structs::budget::Value::new(10);
 
