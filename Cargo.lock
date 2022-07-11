@@ -5953,7 +5953,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-fungible"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -6198,7 +6198,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-nonfungible"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -12374,7 +12374,7 @@ checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
 
 [[package]]
 name = "uc-rpc"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "jsonrpsee",
@@ -12679,7 +12679,7 @@ dependencies = [
 
 [[package]]
 name = "unique-runtime-common"
-version = "0.9.24"
+version = "0.9.25"
 dependencies = [
  "evm-coder",
  "fp-rpc",
@@ -12751,7 +12751,7 @@ dependencies = [
 
 [[package]]
 name = "up-rpc"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "pallet-common",
  "pallet-evm",

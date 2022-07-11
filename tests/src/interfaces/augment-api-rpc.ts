@@ -709,7 +709,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       tokenOwner: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<PalletEvmAccountBasicCrossAccountIdRepr>>>;
       /**
-       * Get token owners
+       * Returns 10 tokens owners in no particular order
        **/
       tokenOwners: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletEvmAccountBasicCrossAccountIdRepr>>>;
       /**

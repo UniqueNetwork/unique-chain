@@ -48,6 +48,10 @@ describe('integration test: RPC methods', () => {
       // tslint:disable-next-line:no-unused-expression
       expect(ids).to.deep.include.members([aliceID, ethAcc, bobId, ...facelessCrowd]);
       expect(owners.length == 10).to.be.true;
+      
+      const eleven = privateKeyWrapper('11');
+      expect(await transfer(api, collectionId, aliceTokenId, alice, eleven, 10n)).to.be.true;
+      expect((await api.rpc.unique.tokenOwners(collectionId, aliceTokenId)).length).to.be.equal(10);
     });
   });
 });

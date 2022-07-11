@@ -422,6 +422,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		<TokenData<T>>::get((self.id, token)).map(|t| t.owner)
 	}
 
+	/// Returns token owners.
 	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
 		self.token_owner(token).map_or_else(|| vec![], |t| vec![t])
 	}

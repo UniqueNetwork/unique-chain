@@ -71,6 +71,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Option<CrossAccountId>>;
 
+	/// Returns 10 tokens owners in no particular order.
 	#[method(name = "unique_tokenOwners")]
 	fn token_owners(
 		&self,
