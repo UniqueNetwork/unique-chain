@@ -44,6 +44,7 @@ pub mod common;
 pub mod erc;
 pub mod weights;
 
+/// todo:doc?
 pub type CreateItemData<T> = (<T as pallet_evm::account::Config>::CrossAccountId, u128);
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
@@ -78,10 +79,12 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// Total amount of fungible tokens inside a collection.
 	#[pallet::storage]
 	pub type TotalSupply<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u128, QueryKind = ValueQuery>;
 
+	/// Amount of tokens owned by an account inside a collection.
 	#[pallet::storage]
 	pub type Balance<T: Config> = StorageNMap<
 		Key = (
@@ -92,6 +95,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// todo:doc
 	#[pallet::storage]
 	pub type Allowance<T: Config> = StorageNMap<
 		Key = (

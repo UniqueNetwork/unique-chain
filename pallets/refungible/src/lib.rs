@@ -38,6 +38,8 @@ pub mod erc;
 pub mod weights;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
+/// Token data, stored independently from other data used to describe it.
+/// Notably contains the token metadata.
 #[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Default, TypeInfo, MaxEncodedLen)]
 pub struct ItemData {
@@ -86,13 +88,17 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// Total amount of minted tokens in a collection.
 	#[pallet::storage]
 	pub type TokensMinted<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
+	
+	/// Amount of tokens burnt in a collection.
 	#[pallet::storage]
 	pub type TokensBurnt<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
 
+	/// Token data, used to partially describe a token.
 	#[pallet::storage]
 	pub type TokenData<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
@@ -100,6 +106,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// Amount of pieces a refungible token is split into.
 	#[pallet::storage]
 	pub type TotalSupply<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
@@ -107,7 +114,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Used to enumerate tokens owned by account
+	/// Used to enumerate tokens owned by account.
 	#[pallet::storage]
 	pub type Owned<T: Config> = StorageNMap<
 		Key = (
@@ -119,6 +126,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// Amount of tokens (not pieces) partially owned by an account within a collection.
 	#[pallet::storage]
 	pub type AccountBalance<T: Config> = StorageNMap<
 		Key = (
@@ -130,6 +138,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// Amount of pieces of a token owned by an account.
 	#[pallet::storage]
 	pub type Balance<T: Config> = StorageNMap<
 		Key = (
@@ -142,6 +151,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// todo:doc
 	#[pallet::storage]
 	pub type Allowance<T: Config> = StorageNMap<
 		Key = (
@@ -248,7 +258,7 @@ impl<T: Config> Pallet<T> {
 		// TODO: ERC721 transfer event
 		Ok(())
 	}
-
+	
 	pub fn burn(
 		collection: &RefungibleHandle<T>,
 		owner: &T::CrossAccountId,
@@ -595,6 +605,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// todo:doc oh look, a precedent. not pub, too. but it has an unclear use-case.
 	/// Returns allowance, which should be set after transaction
 	fn check_allowed(
 		collection: &RefungibleHandle<T>,

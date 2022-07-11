@@ -25,19 +25,19 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// While searched for owner, got already checked account
+		/// While searching for the owner, encountered an already checked account, detecting a loop.
 		OuroborosDetected,
-		/// While searched for owner, encountered depth limit
+		/// While searching for the owner, reached the depth limit.
 		DepthLimit,
-		/// While iterating over children, encountered breadth limit
+		/// While iterating over children, reached the breadth limit.
 		BreadthLimit,
-		/// While searched for owner, found token owner by not-yet-existing token
+		/// Couldn't find the token owner that is a token. Perhaps, it does not yet exist. todo:doc? rephrase?
 		TokenNotFound,
 	}
 
 	#[pallet::event]
 	pub enum Event<T> {
-		/// Executed call on behalf of token
+		/// Executed call on behalf of the token.
 		Executed(DispatchResult),
 	}
 
@@ -73,11 +73,11 @@ pub mod pallet {
 
 #[derive(PartialEq)]
 pub enum Parent<CrossAccountId> {
-	/// Token owned by normal account
+	/// Token owned by a normal account.
 	User(CrossAccountId),
-	/// Passed token not found
+	/// Could not find the token provided as the owner.
 	TokenNotFound,
-	/// Token owner is another token (target token still may not exist)
+	/// Token owner is another token (still, the target token may not exist).
 	Token(CollectionId, TokenId),
 }
 

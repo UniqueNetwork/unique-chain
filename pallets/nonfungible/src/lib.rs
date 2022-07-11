@@ -56,6 +56,8 @@ pub mod weights;
 pub type CreateItemData<T> = CreateNftExData<<T as pallet_evm::account::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
+/// Token data, stored independently from other data used to describe it.
+/// Notably contains the owner account address.
 #[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub struct ItemData<CrossAccountId> {
@@ -102,13 +104,17 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// Total amount of minted tokens in a collection.
 	#[pallet::storage]
 	pub type TokensMinted<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
+
+	/// Amount of burnt tokens in a collection.
 	#[pallet::storage]
 	pub type TokensBurnt<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
 
+	/// Token data, used to partially describe a token.
 	#[pallet::storage]
 	pub type TokenData<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
@@ -116,6 +122,7 @@ pub mod pallet {
 		QueryKind = OptionQuery,
 	>;
 
+	/// Key-value pairs, describing the metadata of a token.
 	#[pallet::storage]
 	#[pallet::getter(fn token_properties)]
 	pub type TokenProperties<T: Config> = StorageNMap<
@@ -125,6 +132,7 @@ pub mod pallet {
 		OnEmpty = up_data_structs::TokenProperties,
 	>;
 
+	/// Scoped, auxiliary properties of a token, primarily used for on-chain operations.
 	#[pallet::storage]
 	#[pallet::getter(fn token_aux_property)]
 	pub type TokenAuxProperties<T: Config> = StorageNMap<
@@ -138,7 +146,7 @@ pub mod pallet {
 		QueryKind = OptionQuery,
 	>;
 
-	/// Used to enumerate tokens owned by account
+	/// Used to enumerate tokens owned by account.
 	#[pallet::storage]
 	pub type Owned<T: Config> = StorageNMap<
 		Key = (
@@ -150,7 +158,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Used to enumerate token's children
+	/// Used to enumerate token's children.
 	#[pallet::storage]
 	#[pallet::getter(fn token_children)]
 	pub type TokenChildren<T: Config> = StorageNMap<
@@ -163,6 +171,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// Amount of tokens owned in a collection.s
 	#[pallet::storage]
 	pub type AccountBalance<T: Config> = StorageNMap<
 		Key = (
@@ -173,6 +182,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// todo doc
 	#[pallet::storage]
 	pub type Allowance<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
@@ -180,6 +190,7 @@ pub mod pallet {
 		QueryKind = OptionQuery,
 	>;
 
+	/// Upgrade from the old schema to properties.
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {

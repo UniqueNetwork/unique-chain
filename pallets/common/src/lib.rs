@@ -299,46 +299,48 @@ pub mod pallet {
 		///
 		/// # Arguments
 		///
-		/// * collection_id: Globally unique identifier of collection.
+		/// * collection_id: Globally unique identifier of collection that has been destroyed.
 		CollectionDestroyed(CollectionId),
 
 		/// New item was created.
 		///
 		/// # Arguments
 		///
-		/// * collection_id: Id of the collection where item was created.
+		/// * collection_id: ID of the collection where the item was created.
 		///
-		/// * item_id: Id of an item. Unique within the collection.
+		/// * item_id: ID of the item. Unique within the collection.
 		///
-		/// * recipient: Owner of newly created item
+		/// * recipient: Owner of the newly created item.
 		///
-		/// * amount: Always 1 for NFT
+		/// * amount: The amount of tokens that were created (always 1 for NFT).
 		ItemCreated(CollectionId, TokenId, T::CrossAccountId, u128),
 
 		/// Collection item was burned.
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
+		/// * collection_id: Identifier of the collection to which the burned NFT belonged.
 		///
 		/// * item_id: Identifier of burned NFT.
 		///
-		/// * owner: which user has destroyed its tokens
+		/// * owner: Which user has destroyed their tokens.
 		///
-		/// * amount: Always 1 for NFT
+		/// * amount: The amount of tokens that were destroyed (always 1 for NFT).
 		ItemDestroyed(CollectionId, TokenId, T::CrossAccountId, u128),
 
-		/// Item was transferred
+		/// Item was transferred.
+		/// 
+		/// # Arguments
 		///
-		/// * collection_id: Id of collection to which item is belong
+		/// * collection_id: ID of the collection to which the item belongs.
 		///
-		/// * item_id: Id of an item
+		/// * item_id: ID of the item trasnferred.
 		///
-		/// * sender: Original owner of item
+		/// * sender: Original owner of the item.
 		///
-		/// * recipient: New owner of item
+		/// * recipient: New owner of the item.
 		///
-		/// * amount: Always 1 for NFT
+		/// * amount: The amount of tokens that were transferred (always 1 for NFT).
 		Transfer(
 			CollectionId,
 			TokenId,
@@ -347,6 +349,10 @@ pub mod pallet {
 			u128,
 		),
 
+		/// Sponsoring allowance was approved.
+		/// 
+		/// # Arguments
+		/// 
 		/// * collection_id
 		///
 		/// * item_id
@@ -364,14 +370,53 @@ pub mod pallet {
 			u128,
 		),
 
+		/// Collection property was added or edited.
+		/// 
+		/// # Arguments
+		/// 
+		/// * collection_id: ID of the collection, whose property was just set.
+		/// 
+		/// * property_key: Key of the property that was just set.
 		CollectionPropertySet(CollectionId, PropertyKey),
 
+		/// Collection property was deleted.
+		/// 
+		/// # Arguments
+		/// 
+		/// * collection_id: ID of the collection, whose property was just deleted.
+		/// 
+		/// * property_key: Key of the property that was just deleted.
 		CollectionPropertyDeleted(CollectionId, PropertyKey),
 
+		/// Item property was added or edited.
+		/// 
+		/// # Arguments
+		/// 
+		/// * collection_id: ID of the collection, whose token's property was just set.
+		/// 
+		/// * item_id: ID of the item, whose property was just set.
+		/// 
+		/// * property_key: Key of the property that was just set.
 		TokenPropertySet(CollectionId, TokenId, PropertyKey),
 
+		/// Item property was deleted.
+		/// 
+		/// # Arguments
+		/// 
+		/// * collection_id: ID of the collection, whose token's property was just deleted.
+		/// 
+		/// * item_id: ID of the item, whose property was just deleted.
+		/// 
+		/// * property_key: Key of the property that was just deleted.
 		TokenPropertyDeleted(CollectionId, TokenId, PropertyKey),
 
+		/// Token property permission was added or updated for a collection.
+		/// 
+		/// # Arguments
+		/// 
+		/// * collection_id: ID of the collection, whose permissions were just set/updated.
+		/// 
+		/// * property_key: Key of the property of the set/updated permission.
 		PropertyPermissionSet(CollectionId, PropertyKey),
 	}
 
@@ -413,26 +458,26 @@ pub mod pallet {
 		/// Metadata flag frozen
 		MetadataFlagFrozen,
 
-		/// Item not exists.
+		/// Item does not exist
 		TokenNotFound,
-		/// Item balance not enough.
+		/// Item is balance not enough
 		TokenValueTooLow,
-		/// Requested value more than approved.
+		/// Requested value is more than the approved
 		ApprovedValueTooLow,
 		/// Tried to approve more than owned
 		CantApproveMoreThanOwned,
 
 		/// Can't transfer tokens to ethereum zero address
 		AddressIsZero,
-		/// Target collection doesn't supports this operation
+		/// Target collection doesn't support this operation
 		UnsupportedOperation,
 
-		/// Not sufficient funds to perform action
+		/// Insufficient funds to perform an action
 		NotSufficientFounds,
 
-		/// User not passed nesting rule
+		/// User does not satisfy the nesting rule
 		UserIsNotAllowedToNest,
-		/// Only tokens from specific collections may nest tokens under this
+		/// Only tokens from specific collections may nest tokens under this one
 		SourceCollectionIsNotAllowedToNest,
 
 		/// Tried to store more data than allowed in collection field
@@ -447,7 +492,7 @@ pub mod pallet {
 		/// Property key is too long
 		PropertyKeyIsTooLong,
 
-		/// Only ASCII letters, digits, and '_', '-' are allowed
+		/// Only ASCII letters, digits, and symbols '_', '-', and '.' are allowed
 		InvalidCharacterInPropertyKey,
 
 		/// Empty property keys are forbidden
@@ -460,8 +505,11 @@ pub mod pallet {
 		CollectionIsInternal,
 	}
 
+	/// The number of created collections. Essentially contains the last collection ID.
 	#[pallet::storage]
 	pub type CreatedCollectionCount<T> = StorageValue<Value = CollectionId, QueryKind = ValueQuery>;
+
+	/// The number of destroyed collections
 	#[pallet::storage]
 	pub type DestroyedCollectionCount<T> =
 		StorageValue<Value = CollectionId, QueryKind = ValueQuery>;
@@ -486,6 +534,7 @@ pub mod pallet {
 		OnEmpty = up_data_structs::CollectionProperties,
 	>;
 
+	/// Token permissions of a collection
 	#[pallet::storage]
 	#[pallet::getter(fn property_permissions)]
 	pub type CollectionPropertyPermissions<T> = StorageMap<
@@ -495,6 +544,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// Amount of collection admins
 	#[pallet::storage]
 	pub type AdminAmount<T> = StorageMap<
 		Hasher = Blake2_128Concat,

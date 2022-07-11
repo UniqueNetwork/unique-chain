@@ -258,6 +258,7 @@ pub mod pallet {
 
 	/// A Scheduler-Runtime interface for finer payment handling.
 	pub trait DispatchCall<T: frame_system::Config + Config, SelfContainedSignedInfo> {
+		/// Reserve the maximum spendings on a call.
 		fn reserve_balance(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
@@ -265,6 +266,7 @@ pub mod pallet {
 			count: u32,
 		) -> Result<(), DispatchError>;
 
+		/// Pay for call dispatch (un-reserve) from the reserved funds, returning the change.
 		fn pay_for_call(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
@@ -280,6 +282,7 @@ pub mod pallet {
 			TransactionValidityError,
 		>;
 
+		/// Release reserved funds.
 		fn cancel_reserve(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,

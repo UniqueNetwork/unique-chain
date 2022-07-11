@@ -197,7 +197,6 @@ pub type DecimalPoints = u8;
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum CollectionMode {
 	NFT,
-	// decimal points
 	Fungible(DecimalPoints),
 	ReFungible,
 }
@@ -252,12 +251,14 @@ pub struct Ownership<AccountId> {
 pub enum SponsorshipState<AccountId> {
 	/// The fees are applied to the transaction sender
 	Disabled,
+	/// Pending confirmation from a sponsor-to-be
 	Unconfirmed(AccountId),
 	/// Transactions are sponsored by specified account
 	Confirmed(AccountId),
 }
 
 impl<AccountId> SponsorshipState<AccountId> {
+	/// Get the acting sponsor account, if present
 	pub fn sponsor(&self) -> Option<&AccountId> {
 		match self {
 			Self::Confirmed(sponsor) => Some(sponsor),
@@ -265,6 +266,7 @@ impl<AccountId> SponsorshipState<AccountId> {
 		}
 	}
 
+	/// Get the sponsor account currently pending confirmation, if present
 	pub fn pending_sponsor(&self) -> Option<&AccountId> {
 		match self {
 			Self::Unconfirmed(sponsor) | Self::Confirmed(sponsor) => Some(sponsor),
@@ -272,6 +274,7 @@ impl<AccountId> SponsorshipState<AccountId> {
 		}
 	}
 
+	/// Is sponsorship set and acting
 	pub fn confirmed(&self) -> bool {
 		matches!(self, Self::Confirmed(_))
 	}
@@ -283,7 +286,7 @@ impl<T> Default for SponsorshipState<T> {
 	}
 }
 
-/// Used in storage
+/// Collection parameters, used in storage (see [`RpcCollection`] for the RPC version)
 #[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct Collection<AccountId> {
@@ -324,7 +327,7 @@ pub struct Collection<AccountId> {
 	pub meta_update_permission: MetaUpdatePermission,
 }
 
-/// Used in RPC calls
+/// Collection parameters, used in RPC calls (see [`Collection`] for the storage version)
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct RpcCollection<AccountId> {
@@ -362,12 +365,15 @@ pub type CollectionPropertiesPermissionsVec =
 
 pub type CollectionPropertiesVec = BoundedVec<Property, ConstU32<MAX_PROPERTIES_PER_ITEM>>;
 
-/// All fields are wrapped in `Option`s, where None means chain default
+/// Limits and restrictions of a collection.
+/// All fields are wrapped in `Option`s, where None means chain default.
 // When adding/removing fields from this struct - don't forget to also update clamp_limits
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionLimits {
+	/// Maximum number of owned tokens per account
 	pub account_token_ownership_limit: Option<u32>,
+	/// Maximum size of data of a sponsored transaction
 	pub sponsored_data_size: Option<u32>,
 
 	/// FIXME should we delete this or repurpose it?
@@ -375,13 +381,18 @@ pub struct CollectionLimits {
 	/// Some(v) - setVariableMetadata is sponsored
 	///           if there is v block between txs
 	pub sponsored_data_rate_limit: Option<SponsoringRateLimit>,
+	/// Maximum amount of tokens inside the collection
 	pub token_limit: Option<u32>,
 
-	// Timeouts for item types in passed blocks
+	/// Timeout for sponsoring a token transfer in passed blocks
 	pub sponsor_transfer_timeout: Option<u32>,
+	/// Timeout for sponsoring an approval in passed blocks
 	pub sponsor_approve_timeout: Option<u32>,
+	/// Can a token be transferred by the owner
 	pub owner_can_transfer: Option<bool>,
+	/// Can a token be burned by the owner
 	pub owner_can_destroy: Option<bool>,
+	/// Can a token be transferred at all
 	pub transfers_enabled: Option<bool>,
 }
 
@@ -509,6 +520,7 @@ pub struct NestingPermissions {
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum SponsoringRateLimit {
 	SponsoringDisabled,
+	/// Once per how many blocks can sponsorship of a transaction type occur
 	Blocks(u32),
 }
 
@@ -516,6 +528,7 @@ pub enum SponsoringRateLimit {
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 #[derivative(Debug)]
 pub struct CreateNftData {
+	/// Key-value pairs used to describe the token as metadata
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub properties: CollectionPropertiesVec,
@@ -524,6 +537,7 @@ pub struct CreateNftData {
 #[derive(Encode, Decode, MaxEncodedLen, Default, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CreateFungibleData {
+	/// Number of fungible tokens minted
 	pub value: u128,
 }
 
@@ -534,6 +548,7 @@ pub struct CreateReFungibleData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
+	/// Number of pieces the RFT is split into
 	pub pieces: u128,
 }
 
@@ -553,6 +568,7 @@ pub enum CreateItemData {
 	ReFungible(CreateReFungibleData),
 }
 
+/// Explicit NFT creation data with meta parameters
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
 #[derivative(Debug)]
 pub struct CreateNftExData<CrossAccountId> {
@@ -561,6 +577,7 @@ pub struct CreateNftExData<CrossAccountId> {
 	pub owner: CrossAccountId,
 }
 
+/// Explicit RFT creation data with meta parameters
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
 #[derivative(Debug(bound = "CrossAccountId: fmt::Debug + Ord"))]
 pub struct CreateRefungibleExData<CrossAccountId> {
@@ -570,6 +587,7 @@ pub struct CreateRefungibleExData<CrossAccountId> {
 	pub users: BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
 }
 
+/// Explicit item creation data with meta parameters, namely the owner
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
 #[derivative(Debug(bound = "CrossAccountId: fmt::Debug + Ord"))]
 pub enum CreateItemExData<CrossAccountId> {
@@ -617,6 +635,7 @@ impl From<CreateFungibleData> for CreateItemData {
 	}
 }
 
+/// Token's address, dictated by its collection and token IDs
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 // todo possibly rename to be used generally as an address pair

@@ -42,6 +42,7 @@ pub use rmrk_unique_rpc::RmrkApiServer;
 #[rpc(server)]
 #[async_trait]
 pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
+	/// Get tokens owned by account
 	#[method(name = "unique_accountTokens")]
 	fn account_tokens(
 		&self,
@@ -49,12 +50,14 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		account: CrossAccountId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<TokenId>>;
+	/// Get tokens contained in collection
 	#[method(name = "unique_collectionTokens")]
 	fn collection_tokens(
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<TokenId>>;
+	/// Check if token exists
 	#[method(name = "unique_tokenExists")]
 	fn token_exists(
 		&self,
@@ -62,7 +65,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<bool>;
-
+	/// Get token owner
 	#[method(name = "unique_tokenOwner")]
 	fn token_owner(
 		&self,
@@ -70,6 +73,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<CrossAccountId>>;
+	/// Get token owner, in case of nested token - find the parent recursively
 	#[method(name = "unique_topmostTokenOwner")]
 	fn topmost_token_owner(
 		&self,
@@ -77,6 +81,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<CrossAccountId>>;
+	/// Get tokens nested directly into the token
 	#[method(name = "unique_tokenChildren")]
 	fn token_children(
 		&self,
@@ -84,7 +89,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<TokenChild>>;
-
+	/// Get collection properties
 	#[method(name = "unique_collectionProperties")]
 	fn collection_properties(
 		&self,
@@ -92,7 +97,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		keys: Option<Vec<String>>,
 		at: Option<BlockHash>,
 	) -> Result<Vec<Property>>;
-
+	/// Get token properties
 	#[method(name = "unique_tokenProperties")]
 	fn token_properties(
 		&self,
@@ -101,7 +106,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		keys: Option<Vec<String>>,
 		at: Option<BlockHash>,
 	) -> Result<Vec<Property>>;
-
+	/// Get property permissions
 	#[method(name = "unique_propertyPermissions")]
 	fn property_permissions(
 		&self,
@@ -109,7 +114,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		keys: Option<Vec<String>>,
 		at: Option<BlockHash>,
 	) -> Result<Vec<PropertyKeyPermission>>;
-
+	/// Get token data
 	#[method(name = "unique_tokenData")]
 	fn token_data(
 		&self,
@@ -118,9 +123,10 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		keys: Option<Vec<String>>,
 		at: Option<BlockHash>,
 	) -> Result<TokenData<CrossAccountId>>;
-
+	/// Get amount of unique collection tokens
 	#[method(name = "unique_totalSupply")]
 	fn total_supply(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<u32>;
+	/// Get owned amount of any user tokens
 	#[method(name = "unique_accountBalance")]
 	fn account_balance(
 		&self,
@@ -128,6 +134,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		account: CrossAccountId,
 		at: Option<BlockHash>,
 	) -> Result<u32>;
+	/// Get owned amount of specific account token
 	#[method(name = "unique_balance")]
 	fn balance(
 		&self,
@@ -136,6 +143,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<String>;
+	/// Get allowed amount
 	#[method(name = "unique_allowance")]
 	fn allowance(
 		&self,
@@ -145,19 +153,21 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<String>;
-
+	/// Get admin list
 	#[method(name = "unique_adminlist")]
 	fn adminlist(
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<CrossAccountId>>;
+	/// Get allowlist
 	#[method(name = "unique_allowlist")]
 	fn allowlist(
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<CrossAccountId>>;
+	/// Check if user is allowed to use collection
 	#[method(name = "unique_allowed")]
 	fn allowed(
 		&self,
@@ -165,17 +175,20 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		user: CrossAccountId,
 		at: Option<BlockHash>,
 	) -> Result<bool>;
+	/// Get last token ID created in a collection
 	#[method(name = "unique_lastTokenId")]
 	fn last_token_id(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<TokenId>;
+	/// Get collection by specified ID
 	#[method(name = "unique_collectionById")]
 	fn collection_by_id(
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Option<RpcCollection<AccountId>>>;
+	/// Get collection stats
 	#[method(name = "unique_collectionStats")]
 	fn collection_stats(&self, at: Option<BlockHash>) -> Result<CollectionStats>;
-
+	/// Get number of blocks when sponsored transaction is available
 	#[method(name = "unique_nextSponsored")]
 	fn next_sponsored(
 		&self,
@@ -184,14 +197,14 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<u64>>;
-
+	/// Get effective collection limits
 	#[method(name = "unique_effectiveCollectionLimits")]
 	fn effective_collection_limits(
 		&self,
 		collection_id: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Option<CollectionLimits>>;
-
+	/// Get total pieces of token
 	#[method(name = "unique_totalPieces")]
 	fn total_pieces(
 		&self,
@@ -304,6 +317,7 @@ mod rmrk_unique_rpc {
 		fn base_parts(&self, base_id: RmrkBaseId, at: Option<BlockHash>) -> Result<Vec<PartType>>;
 
 		#[method(name = "rmrk_themeNames")]
+		/// Get Base's theme names
 		fn theme_names(
 			&self,
 			base_id: RmrkBaseId,
@@ -311,6 +325,7 @@ mod rmrk_unique_rpc {
 		) -> Result<Vec<RmrkThemeName>>;
 
 		#[method(name = "rmrk_themes")]
+		/// Get Theme info -- name, properties, and inherit flag
 		fn theme(
 			&self,
 			base_id: RmrkBaseId,
