@@ -64,13 +64,13 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Not Refungible item data used to mint in Refungible collection.
 		NotRefungibleDataUsedToMintFungibleCollectionToken,
-		/// Maximum refungibility exceeded
+		/// Maximum refungibility exceeded.
 		WrongRefungiblePieces,
-		/// Refungible token can't be repartitioned by user who isn't owns all pieces
+		/// Refungible token can't be repartitioned by user who isn't owns all pieces.
 		RepartitionWhileNotOwningAllPieces,
-		/// Refungible token can't nest other tokens
+		/// Refungible token can't nest other tokens.
 		RefungibleDisallowsNesting,
-		/// Setting item properties is not allowed
+		/// Setting item properties is not allowed.
 		SettingPropertiesNotAllowed,
 	}
 
@@ -605,7 +605,6 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// todo:doc oh look, a precedent. not pub, too. but it has an unclear use-case.
 	/// Returns allowance, which should be set after transaction
 	fn check_allowed(
 		collection: &RefungibleHandle<T>,

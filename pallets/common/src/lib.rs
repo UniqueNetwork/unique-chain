@@ -334,7 +334,7 @@ pub mod pallet {
 		///
 		/// * collection_id: ID of the collection to which the item belongs.
 		///
-		/// * item_id: ID of the item trasnferred.
+		/// * item_id: ID of the item transferred.
 		///
 		/// * sender: Original owner of the item.
 		///

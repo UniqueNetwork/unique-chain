@@ -286,7 +286,7 @@ impl<T> Default for SponsorshipState<T> {
 	}
 }
 
-/// Collection parameters, used in storage (see [`RpcCollection`] for the RPC version)
+/// Collection parameters, used in storage (see [`RpcCollection`] for the RPC version).
 #[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct Collection<AccountId> {
@@ -327,7 +327,7 @@ pub struct Collection<AccountId> {
 	pub meta_update_permission: MetaUpdatePermission,
 }
 
-/// Collection parameters, used in RPC calls (see [`Collection`] for the storage version)
+/// Collection parameters, used in RPC calls (see [`Collection`] for the storage version).
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct RpcCollection<AccountId> {
@@ -568,7 +568,7 @@ pub enum CreateItemData {
 	ReFungible(CreateReFungibleData),
 }
 
-/// Explicit NFT creation data with meta parameters
+/// Explicit NFT creation data with meta parameters.
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
 #[derivative(Debug)]
 pub struct CreateNftExData<CrossAccountId> {
@@ -577,7 +577,7 @@ pub struct CreateNftExData<CrossAccountId> {
 	pub owner: CrossAccountId,
 }
 
-/// Explicit RFT creation data with meta parameters
+/// Explicit RFT creation data with meta parameters.
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
 #[derivative(Debug(bound = "CrossAccountId: fmt::Debug + Ord"))]
 pub struct CreateRefungibleExData<CrossAccountId> {
@@ -587,7 +587,7 @@ pub struct CreateRefungibleExData<CrossAccountId> {
 	pub users: BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
 }
 
-/// Explicit item creation data with meta parameters, namely the owner
+/// Explicit item creation data with meta parameters, namely the owner.
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
 #[derivative(Debug(bound = "CrossAccountId: fmt::Debug + Ord"))]
 pub enum CreateItemExData<CrossAccountId> {
@@ -635,7 +635,7 @@ impl From<CreateFungibleData> for CreateItemData {
 	}
 }
 
-/// Token's address, dictated by its collection and token IDs
+/// Token's address, dictated by its collection and token IDs.
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 // todo possibly rename to be used generally as an address pair

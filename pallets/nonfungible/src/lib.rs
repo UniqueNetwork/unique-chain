@@ -171,7 +171,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Amount of tokens owned in a collection.s
+	/// Amount of tokens owned in a collection.
 	#[pallet::storage]
 	pub type AccountBalance<T: Config> = StorageNMap<
 		Key = (
@@ -182,7 +182,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// todo doc
+	/// todo:doc
 	#[pallet::storage]
 	pub type Allowance<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),

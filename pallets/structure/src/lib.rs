@@ -31,7 +31,7 @@ pub mod pallet {
 		DepthLimit,
 		/// While iterating over children, reached the breadth limit.
 		BreadthLimit,
-		/// Couldn't find the token owner that is a token. Perhaps, it does not yet exist. todo:doc? rephrase?
+		/// Couldn't find the token owner that is itself a token.
 		TokenNotFound,
 	}
 

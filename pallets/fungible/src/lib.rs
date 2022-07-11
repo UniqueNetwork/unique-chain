@@ -58,13 +58,13 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Not Fungible item data used to mint in Fungible collection.
 		NotFungibleDataUsedToMintFungibleCollectionToken,
-		/// Not default id passed as TokenId argument
+		/// Not default id passed as TokenId argument.
 		FungibleItemsHaveNoId,
-		/// Tried to set data for fungible item
+		/// Tried to set data for fungible item.
 		FungibleItemsDontHaveData,
-		/// Fungible token does not support nested
+		/// Fungible token does not support nesting.
 		FungibleDisallowsNesting,
-		/// Setting item properties is not allowed
+		/// Setting item properties is not allowed.
 		SettingPropertiesNotAllowed,
 	}
 
