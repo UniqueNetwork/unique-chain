@@ -261,12 +261,9 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_name: UTF-16 string with collection name (limit 64 characters), will be stored as zero-terminated.
-		///
-		/// * collection_description: UTF-16 string with collection description (limit 256 characters), will be stored as zero-terminated.
-		///
-		/// * token_prefix: UTF-8 string with token prefix.
-		///
-		/// * mode: [CollectionMode] collection type and type dependent data.
+		/// * collection_description - UTF-16 string with collection description (limit 256 characters), will be stored as zero-terminated.
+		/// * token_prefix - UTF-8 string with token prefix.
+		/// * mode - [CollectionMode] collection type and type dependent data.
 		// returns collection ID
 		#[weight = <SelfWeightOf<T>>::create_collection()]
 		#[transactional]
@@ -316,7 +313,7 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * collection_id: collection to destroy.
+		/// * collection_id - collection to destroy.
 		#[weight = <SelfWeightOf<T>>::destroy_collection()]
 		#[transactional]
 		pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
@@ -349,7 +346,6 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		///
 		/// * address.
 		#[weight = <SelfWeightOf<T>>::add_to_allow_list()]
 		#[transactional]
@@ -384,7 +380,6 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		///
 		/// * address.
 		#[weight = <SelfWeightOf<T>>::remove_from_allow_list()]
 		#[transactional]
@@ -418,7 +413,6 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		///
 		/// * new_owner.
 		#[weight = <SelfWeightOf<T>>::change_collection_owner()]
 		#[transactional]
@@ -449,9 +443,8 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the Collection to add admin for.
-		///
-		/// * new_admin: Address of new admin to add.
+		/// * collection_id - ID of the Collection to add admin for.
+		/// * new_admin - Address of new admin to add.
 		#[weight = <SelfWeightOf<T>>::add_collection_admin()]
 		#[transactional]
 		pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin: T::CrossAccountId) -> DispatchResult {
@@ -476,9 +469,8 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the Collection to remove admin for.
-		///
-		/// * account_id: Address of admin to remove.
+		/// * collection_id - ID of the Collection to remove admin for.
+		/// * account_id - Address of admin to remove.
 		#[weight = <SelfWeightOf<T>>::remove_collection_admin()]
 		#[transactional]
 		pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::CrossAccountId) -> DispatchResult {
@@ -504,7 +496,6 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		///
 		/// * new_sponsor.
 		#[weight = <SelfWeightOf<T>>::set_collection_sponsor()]
 		#[transactional]
@@ -529,7 +520,7 @@ decl_module! {
 		///
 		/// # Permissions
 		///
-		/// * The sponsor to-be
+		/// * Sponsor-to-be
 		///
 		/// # Arguments
 		///
@@ -593,11 +584,9 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the collection.
-		///
-		/// * owner: Address, initial owner of the NFT.
-		///
-		/// * data: Token data to store on chain.
+		/// * collection_id - ID of the collection.
+		/// * owner - Address, initial owner of the NFT.
+		/// * data - Token data to store on chain.
 		#[weight = T::CommonWeightInfo::create_item()]
 		#[transactional]
 		pub fn create_item(origin, collection_id: CollectionId, owner: T::CrossAccountId, data: CreateItemData) -> DispatchResultWithPostInfo {
@@ -620,11 +609,9 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the collection.
-		///
-		/// * itemsData: Array items properties. Each property is an array of bytes itself, see [create_item].
-		///
-		/// * owner: Address, initial owner of the NFT.
+		/// * collection_id - ID of the collection.
+		/// * owner - Address, initial owner of the NFT.
+		/// * items_data - Array items properties. Each property is an array of bytes itself, see [`create_item`].
 		#[weight = T::CommonWeightInfo::create_multiple_items(&items_data)]
 		#[transactional]
 		pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::CrossAccountId, items_data: Vec<CreateItemData>) -> DispatchResultWithPostInfo {
@@ -645,8 +632,7 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		///
-		/// * properties: a vector of key-value pairs stored as the collection's metadata. Keys support Latin letters, '-', '_', and '.' as symbols.
+		/// * properties - Vector of key-value pairs stored as the collection's metadata. Keys support Latin letters, '-', '_', and '.' as symbols.
 		#[weight = T::CommonWeightInfo::set_collection_properties(properties.len() as u32)]
 		#[transactional]
 		pub fn set_collection_properties(
@@ -671,8 +657,7 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		///
-		/// * property_keys: a vector of keys of the properties to be deleted.
+		/// * property_keys - Vector of keys of the properties to be deleted.
 		#[weight = T::CommonWeightInfo::delete_collection_properties(property_keys.len() as u32)]
 		#[transactional]
 		pub fn delete_collection_properties(
@@ -699,10 +684,8 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		///
 		/// * token_id.
-		///
-		/// * properties: a vector of key-value pairs stored as the token's metadata. Keys support Latin letters, '-', '_', and '.' as symbols.
+		/// * properties - Vector of key-value pairs stored as the token's metadata. Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[weight = T::CommonWeightInfo::set_token_properties(properties.len() as u32)]
 		#[transactional]
 		pub fn set_token_properties(
@@ -731,10 +714,8 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		///
 		/// * token_id.
-		///
-		/// * property_keys: a vector of keys of the properties to be deleted.
+		/// * property_keys - Vector of keys of the properties to be deleted.
 		#[weight = T::CommonWeightInfo::delete_token_properties(property_keys.len() as u32)]
 		#[transactional]
 		pub fn delete_token_properties(
@@ -761,8 +742,7 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		///
-		/// * property_permissions: a vector of permissions for property keys. Keys support Latin letters, '-', '_', and '.' as symbols.
+		/// * property_permissions - Vector of permissions for property keys. Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[weight = T::CommonWeightInfo::set_token_property_permissions(property_permissions.len() as u32)]
 		#[transactional]
 		pub fn set_token_property_permissions(
@@ -790,9 +770,8 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the collection.
-		///
-		/// * data: explicit item creation data.
+		/// * collection_id - ID of the collection.
+		/// * data - Explicit item creation data.
 		#[weight = T::CommonWeightInfo::create_multiple_items_ex(&data)]
 		#[transactional]
 		pub fn create_multiple_items_ex(origin, collection_id: CollectionId, data: CreateItemExData<T::CrossAccountId>) -> DispatchResultWithPostInfo {
@@ -810,9 +789,8 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the collection.
-		///
-		/// * value: New flag value.
+		/// * collection_id - ID of the collection.
+		/// * value - New flag value.
 		#[weight = <SelfWeightOf<T>>::set_transfers_enabled_flag()]
 		#[transactional]
 		pub fn set_transfers_enabled_flag(origin, collection_id: CollectionId, value: bool) -> DispatchResult {
@@ -837,9 +815,8 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the collection.
-		///
-		/// * item_id: ID of NFT to burn.
+		/// * collection_id - ID of the collection.
+		/// * item_id - ID of NFT to burn.
 		#[weight = T::CommonWeightInfo::burn_item()]
 		#[transactional]
 		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
@@ -867,11 +844,9 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the collection.
-		///
-		/// * item_id: ID of NFT to burn.
-		///
-		/// * from: owner of item
+		/// * collection_id - ID of the collection.
+		/// * item_id - ID of NFT to burn.
+		/// * from - The owner of the item from whom it is taken away.
 		#[weight = T::CommonWeightInfo::burn_from()]
 		#[transactional]
 		pub fn burn_from(origin, collection_id: CollectionId, from: T::CrossAccountId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
@@ -891,16 +866,16 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * recipient: Address of token recipient.
+		/// * recipient - Address of token recipient.
 		///
 		/// * collection_id.
 		///
-		/// * item_id: ID of the item
+		/// * item_id - ID of the item
 		///     * Non-Fungible Mode: Required.
 		///     * Fungible Mode: Ignored.
 		///     * Re-Fungible Mode: Required.
 		///
-		/// * value: Amount to transfer.
+		/// * value - Amount to transfer.
 		///     * Non-Fungible Mode: Ignored
 		///     * Fungible Mode: Must specify transferred amount
 		///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
@@ -923,11 +898,9 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * approved: Address that is approved to transfer this NFT or zero (if needed to remove approval).
-		///
+		/// * approved - Address that is approved to transfer this NFT or zero (if needed to remove approval).
 		/// * collection_id.
-		///
-		/// * item_id: ID of the item.
+		/// * item_id - ID of the item.
 		#[weight = T::CommonWeightInfo::approve()]
 		#[transactional]
 		pub fn approve(origin, spender: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResultWithPostInfo {
@@ -947,15 +920,11 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * from: Address that owns token.
-		///
-		/// * recipient: Address of token recipient.
-		///
+		/// * from - Address that currently owns the token.
+		/// * recipient - Address of the new token-owner-to-be.
 		/// * collection_id.
-		///
-		/// * item_id: ID of the item.
-		///
-		/// * value: Amount to transfer.
+		/// * item_id - ID of the item to be transferred.
+		/// * value - Amount to transfer.
 		#[weight = T::CommonWeightInfo::transfer_from()]
 		#[transactional]
 		pub fn transfer_from(origin, from: T::CrossAccountId, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResultWithPostInfo {
@@ -966,7 +935,7 @@ decl_module! {
 		}
 
 		/// Set specific limits of a collection. Empty, or None fields mean chain default.
-		///.
+		///
 		/// # Permissions
 		///
 		/// * Collection Owner
@@ -975,8 +944,7 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		///
-		/// * new_limit: The new limits of the collection. They will overwrite the current ones.
+		/// * new_limit - New limits of the collection. They will overwrite the current ones.
 		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
 		#[transactional]
 		pub fn set_collection_limits(
@@ -1009,8 +977,7 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		///
-		/// * new_permission: The new permissions of the collection. They will overwrite the current ones.
+		/// * new_permission - New permissions of the collection. They will overwrite the current ones.
 		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
 		#[transactional]
 		pub fn set_collection_permissions(
@@ -1042,16 +1009,14 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		///
-		/// * token: the ID of the RFT.
-		///
-		/// * amount: The new number of parts into which the token shall be partitioned.
+		/// * token_id - ID of the RFT.
+		/// * amount - New number of parts into which the token shall be partitioned.
 		#[weight = T::RefungibleExtensionsWeightInfo::repartition()]
 		#[transactional]
 		pub fn repartition(
 			origin,
 			collection_id: CollectionId,
-			token: TokenId,
+			token_id: TokenId,
 			amount: u128,
 		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);

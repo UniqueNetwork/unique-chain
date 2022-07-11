@@ -288,59 +288,47 @@ pub mod pallet {
 		///
 		/// # Arguments
 		///
-		/// * collection_id: Globally unique identifier of newly created collection.
-		///
-		/// * mode: [CollectionMode] converted into u8.
-		///
-		/// * account_id: Collection owner.
+		/// * collection_id - Globally unique identifier of newly created collection.
+		/// * mode - [CollectionMode] converted into u8.
+		/// * account_id - Collection owner.
 		CollectionCreated(CollectionId, u8, T::AccountId),
 
 		/// New collection was destroyed
 		///
 		/// # Arguments
 		///
-		/// * collection_id: Globally unique identifier of collection that has been destroyed.
+		/// * collection_id - Globally unique identifier of collection that has been destroyed.
 		CollectionDestroyed(CollectionId),
 
 		/// New item was created.
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the collection where the item was created.
-		///
-		/// * item_id: ID of the item. Unique within the collection.
-		///
-		/// * recipient: Owner of the newly created item.
-		///
-		/// * amount: The amount of tokens that were created (always 1 for NFT).
+		/// * collection_id - ID of the collection where the item was created.
+		/// * item_id - ID of the item. Unique within the collection.
+		/// * recipient - Owner of the newly created item.
+		/// * amount - The amount of tokens that were created (always 1 for NFT).
 		ItemCreated(CollectionId, TokenId, T::CrossAccountId, u128),
 
 		/// Collection item was burned.
 		///
 		/// # Arguments
 		///
-		/// * collection_id: Identifier of the collection to which the burned NFT belonged.
-		///
-		/// * item_id: Identifier of burned NFT.
-		///
-		/// * owner: Which user has destroyed their tokens.
-		///
-		/// * amount: The amount of tokens that were destroyed (always 1 for NFT).
+		/// * collection_id - Identifier of the collection to which the burned NFT belonged.
+		/// * item_id - Identifier of burned NFT.
+		/// * owner - Which user has destroyed their tokens.
+		/// * amount - Amount of tokens that were destroyed (always 1 for NFT).
 		ItemDestroyed(CollectionId, TokenId, T::CrossAccountId, u128),
 
 		/// Item was transferred.
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the collection to which the item belongs.
-		///
-		/// * item_id: ID of the item transferred.
-		///
-		/// * sender: Original owner of the item.
-		///
-		/// * recipient: New owner of the item.
-		///
-		/// * amount: The amount of tokens that were transferred (always 1 for NFT).
+		/// * collection_id - ID of the collection to which the item belongs.
+		/// * item_id - ID of the item transferred.
+		/// * sender - Original owner of the item.
+		/// * recipient - New owner of the item.
+		/// * amount - Amount of tokens that were transferred (always 1 for NFT).
 		Transfer(
 			CollectionId,
 			TokenId,
@@ -353,14 +341,10 @@ pub mod pallet {
 		///
 		/// # Arguments
 		///
-		/// * collection_id
-		///
+		/// * collection_id - todo:doc flesh out
 		/// * item_id
-		///
 		/// * sender
-		///
 		/// * spender
-		///
 		/// * amount
 		Approved(
 			CollectionId,
@@ -374,49 +358,42 @@ pub mod pallet {
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the collection, whose property was just set.
-		///
-		/// * property_key: Key of the property that was just set.
+		/// * collection_id - ID of the collection, whose property was just set.
+		/// * property_key - Key of the property that was just set.
 		CollectionPropertySet(CollectionId, PropertyKey),
 
 		/// Collection property was deleted.
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the collection, whose property was just deleted.
-		///
-		/// * property_key: Key of the property that was just deleted.
+		/// * collection_id - ID of the collection, whose property was just deleted.
+		/// * property_key - Key of the property that was just deleted.
 		CollectionPropertyDeleted(CollectionId, PropertyKey),
 
 		/// Item property was added or edited.
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the collection, whose token's property was just set.
-		///
-		/// * item_id: ID of the item, whose property was just set.
-		///
-		/// * property_key: Key of the property that was just set.
+		/// * collection_id - ID of the collection, whose token's property was just set.
+		/// * item_id - ID of the item, whose property was just set.
+		/// * property_key - Key of the property that was just set.
 		TokenPropertySet(CollectionId, TokenId, PropertyKey),
 
 		/// Item property was deleted.
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the collection, whose token's property was just deleted.
-		///
-		/// * item_id: ID of the item, whose property was just deleted.
-		///
-		/// * property_key: Key of the property that was just deleted.
+		/// * collection_id - ID of the collection, whose token's property was just deleted.
+		/// * item_id - ID of the item, whose property was just deleted.
+		/// * property_key - Key of the property that was just deleted.
 		TokenPropertyDeleted(CollectionId, TokenId, PropertyKey),
 
 		/// Token property permission was added or updated for a collection.
 		///
 		/// # Arguments
 		///
-		/// * collection_id: ID of the collection, whose permissions were just set/updated.
-		///
-		/// * property_key: Key of the property of the set/updated permission.
+		/// * collection_id - ID of the collection, whose permissions were just set/updated.
+		/// * property_key - Key of the property of the set/updated permission.
 		PropertyPermissionSet(CollectionId, PropertyKey),
 	}
 
