@@ -345,6 +345,40 @@ createCollection(
   return getCreateCollectionResult(events);
 }
 
+export async function createCollectionExpectSuccessNew(sender: IKeyringPair, params: Partial<CreateCollectionParams> = {}): Promise<number> {
+  const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
+
+  let collectionId = 0;
+  await usingApi(async (api, privateKeyWrapper) => {
+    // Run the CreateCollection transaction
+    if (!sender) {
+      sender = await createSubAccountWithBalance(api, privateKeyWrapper);
+    }
+
+    const result = await createCollection(api, sender, params);
+
+    // Get the collection
+    const collection = await queryCollectionExpectSuccess(api, result.collectionId);
+
+    expect(result.success).to.be.true;
+    expect(collection).to.be.not.null;
+    
+    // TODO maksandre: test 'collection count +1' in different way
+    // expect(collectionCountAfter).to.be.equal(collectionCountBefore + 1, 'Error: NFT collection NOT created.');
+    expect(collection.owner.toString()).to.be.equal(toSubstrateAddress(sender.address));
+    expect(utf16ToStr(collection.name.toJSON() as any)).to.be.equal(name);
+    expect(utf16ToStr(collection.description.toJSON() as any)).to.be.equal(description);
+    expect(hexToStr(collection.tokenPrefix.toJSON())).to.be.equal(tokenPrefix);
+
+    collectionId = result.collectionId;
+  });
+
+  return collectionId;
+}
+
+/**
+ * @deprecated Use createCollectionExpectSuccessNew
+ */
 export async function createCollectionExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
   const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
 
