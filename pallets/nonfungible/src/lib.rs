@@ -363,13 +363,13 @@ impl<T: Config> Pallet<T> {
 
 		PalletCommon::destroy_collection(collection.0, sender)?;
 
-		<TokenData<T>>::remove_prefix((id,), None);
-		<TokenChildren<T>>::remove_prefix((id,), None);
-		<Owned<T>>::remove_prefix((id,), None);
+		let _ = <TokenData<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <TokenChildren<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <Owned<T>>::clear_prefix((id,), u32::MAX, None);
 		<TokensMinted<T>>::remove(id);
 		<TokensBurnt<T>>::remove(id);
-		<Allowance<T>>::remove_prefix((id,), None);
-		<AccountBalance<T>>::remove_prefix((id,), None);
+		let _ = <Allowance<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <AccountBalance<T>>::clear_prefix((id,), u32::MAX, None);
 		Ok(())
 	}
 
@@ -412,7 +412,7 @@ impl<T: Config> Pallet<T> {
 		<TokensBurnt<T>>::insert(collection.id, burnt);
 		<TokenData<T>>::remove((collection.id, token));
 		<TokenProperties<T>>::remove((collection.id, token));
-		<TokenAuxProperties<T>>::remove_prefix((collection.id, token), None);
+		let _ = <TokenAuxProperties<T>>::clear_prefix((collection.id, token), u32::MAX, None);
 		let old_spender = <Allowance<T>>::take((collection.id, token));
 
 		if let Some(old_spender) = old_spender {

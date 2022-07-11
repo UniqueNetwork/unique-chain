@@ -23,7 +23,7 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{pallet_prelude::*, transactional};
+	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 	use sp_core::{H160, H256};
 	use sp_std::vec::Vec;
@@ -84,7 +84,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(<SelfWeightOf<T>>::finish(code.len() as u32))]
-		#[transactional]
 		pub fn finish(origin: OriginFor<T>, address: H160, code: Vec<u8>) -> DispatchResult {
 			ensure_root(origin)?;
 			ensure!(

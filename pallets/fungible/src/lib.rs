@@ -154,8 +154,8 @@ impl<T: Config> Pallet<T> {
 		PalletCommon::destroy_collection(collection.0, sender)?;
 
 		<TotalSupply<T>>::remove(id);
-		<Balance<T>>::remove_prefix((id,), None);
-		<Allowance<T>>::remove_prefix((id,), None);
+		let _ = <Balance<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <Allowance<T>>::clear_prefix((id,), u32::MAX, None);
 		Ok(())
 	}
 
