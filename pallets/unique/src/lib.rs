@@ -163,9 +163,9 @@ decl_event! {
 		CollectionLimitSet(CollectionId),
 
 		/// Collection permissions were set
-		/// 
+		///
 		/// # Arguments
-		/// 
+		///
 		/// * collection_id: Globally unique collection identifier.
 		CollectionPermissionSet(CollectionId),
 	}
@@ -219,7 +219,7 @@ decl_storage! {
 		/// Collection id (controlled?2), token id (controlled?2)
 		#[deprecated]
 		pub VariableMetaDataBasket get(fn variable_meta_data_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber>;
-		/// Last sponsoring of token property setting // todo:doc rephrase this and the following 
+		/// Last sponsoring of token property setting // todo:doc rephrase this and the following
 		pub TokenPropertyBasket get(fn token_property_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber>;
 
 		/// Last sponsoring of NFT approval in a collection
@@ -294,7 +294,7 @@ decl_module! {
 		/// * Anyone.
 		///
 		/// # Arguments
-		/// 
+		///
 		/// * data: explicit create-collection data.
 		#[weight = <SelfWeightOf<T>>::create_collection()]
 		#[transactional]
@@ -495,7 +495,7 @@ decl_module! {
 		}
 
 		/// Set (invite) a new collection sponsor. If successful, confirmation from the sponsor-to-be will be pending.
-		/// 
+		///
 		/// # Permissions
 		///
 		/// * Collection Owner
@@ -526,7 +526,7 @@ decl_module! {
 		}
 
 		/// Confirm own sponsorship of a collection.
-		/// 
+		///
 		/// # Permissions
 		///
 		/// * The sponsor to-be
@@ -699,7 +699,7 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		/// 
+		///
 		/// * token_id.
 		///
 		/// * properties: a vector of key-value pairs stored as the token's metadata. Keys support Latin letters, '-', '_', and '.' as symbols.
@@ -778,7 +778,7 @@ decl_module! {
 		}
 
 		/// Create multiple items inside a collection with explicitly specified initial parameters.
-		/// 
+		///
 		/// # Permissions
 		///
 		/// * Collection Owner
@@ -792,7 +792,7 @@ decl_module! {
 		///
 		/// * collection_id: ID of the collection.
 		///
-		/// * data: explicit item creation data. 
+		/// * data: explicit item creation data.
 		#[weight = T::CommonWeightInfo::create_multiple_items_ex(&data)]
 		#[transactional]
 		pub fn create_multiple_items_ex(origin, collection_id: CollectionId, data: CreateItemExData<T::CrossAccountId>) -> DispatchResultWithPostInfo {
@@ -939,7 +939,7 @@ decl_module! {
 		/// Change ownership of a NFT on behalf of the owner. See Approve method for additional information. After this method executes, the approval is removed so that the approved address will not be able to transfer this NFT again from this owner.
 		///
 		/// # Permissions
-		/// 
+		///
 		/// * Collection Owner
 		/// * Collection Admin
 		/// * Current NFT owner
@@ -968,7 +968,7 @@ decl_module! {
 		/// Set specific limits of a collection. Empty, or None fields mean chain default.
 		///.
 		/// # Permissions
-		/// 
+		///
 		/// * Collection Owner
 		/// * Collection Admin
 		///
@@ -1002,7 +1002,7 @@ decl_module! {
 		/// Set specific permissions of a collection. Empty, or None fields mean chain default.
 		///
 		/// # Permissions
-		/// 
+		///
 		/// * Collection Owner
 		/// * Collection Admin
 		///
@@ -1036,14 +1036,14 @@ decl_module! {
 		/// Re-partition a refungible token, while owning all of its parts.
 		///
 		/// # Permissions
-		/// 
+		///
 		/// * Token Owner (must own every part)
 		///
 		/// # Arguments
 		///
 		/// * collection_id.
-		/// 
-		/// * token: the ID of the RFT. 
+		///
+		/// * token: the ID of the RFT.
 		///
 		/// * amount: The new number of parts into which the token shall be partitioned.
 		#[weight = T::RefungibleExtensionsWeightInfo::repartition()]

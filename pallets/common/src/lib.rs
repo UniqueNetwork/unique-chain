@@ -329,7 +329,7 @@ pub mod pallet {
 		ItemDestroyed(CollectionId, TokenId, T::CrossAccountId, u128),
 
 		/// Item was transferred.
-		/// 
+		///
 		/// # Arguments
 		///
 		/// * collection_id: ID of the collection to which the item belongs.
@@ -350,9 +350,9 @@ pub mod pallet {
 		),
 
 		/// Sponsoring allowance was approved.
-		/// 
+		///
 		/// # Arguments
-		/// 
+		///
 		/// * collection_id
 		///
 		/// * item_id
@@ -371,51 +371,51 @@ pub mod pallet {
 		),
 
 		/// Collection property was added or edited.
-		/// 
+		///
 		/// # Arguments
-		/// 
+		///
 		/// * collection_id: ID of the collection, whose property was just set.
-		/// 
+		///
 		/// * property_key: Key of the property that was just set.
 		CollectionPropertySet(CollectionId, PropertyKey),
 
 		/// Collection property was deleted.
-		/// 
+		///
 		/// # Arguments
-		/// 
+		///
 		/// * collection_id: ID of the collection, whose property was just deleted.
-		/// 
+		///
 		/// * property_key: Key of the property that was just deleted.
 		CollectionPropertyDeleted(CollectionId, PropertyKey),
 
 		/// Item property was added or edited.
-		/// 
+		///
 		/// # Arguments
-		/// 
+		///
 		/// * collection_id: ID of the collection, whose token's property was just set.
-		/// 
+		///
 		/// * item_id: ID of the item, whose property was just set.
-		/// 
+		///
 		/// * property_key: Key of the property that was just set.
 		TokenPropertySet(CollectionId, TokenId, PropertyKey),
 
 		/// Item property was deleted.
-		/// 
+		///
 		/// # Arguments
-		/// 
+		///
 		/// * collection_id: ID of the collection, whose token's property was just deleted.
-		/// 
+		///
 		/// * item_id: ID of the item, whose property was just deleted.
-		/// 
+		///
 		/// * property_key: Key of the property that was just deleted.
 		TokenPropertyDeleted(CollectionId, TokenId, PropertyKey),
 
 		/// Token property permission was added or updated for a collection.
-		/// 
+		///
 		/// # Arguments
-		/// 
+		///
 		/// * collection_id: ID of the collection, whose permissions were just set/updated.
-		/// 
+		///
 		/// * property_key: Key of the property of the set/updated permission.
 		PropertyPermissionSet(CollectionId, PropertyKey),
 	}

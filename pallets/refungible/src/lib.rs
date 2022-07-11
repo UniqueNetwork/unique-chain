@@ -92,7 +92,7 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type TokensMinted<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
-	
+
 	/// Amount of tokens burnt in a collection.
 	#[pallet::storage]
 	pub type TokensBurnt<T: Config> =
@@ -258,7 +258,7 @@ impl<T: Config> Pallet<T> {
 		// TODO: ERC721 transfer event
 		Ok(())
 	}
-	
+
 	pub fn burn(
 		collection: &RefungibleHandle<T>,
 		owner: &T::CrossAccountId,
