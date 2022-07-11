@@ -1,18 +1,31 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 use cumulus_pallet_parachain_system;
-use fp_self_contained;
-use frame_executive;
 use frame_support::construct_runtime;
 use frame_system;
 use pallet_charge_transaction;
 use pallet_ethereum;
 use sp_api::impl_runtime_apis;
-use sp_runtime::{generic, MultiAddress, traits::BlakeTwo256};
 use sp_std::prelude::{Box, Vec};
 use sp_version::{ApisVec, RuntimeVersion};
 
 use unique_runtime_common::{
-    impl_common_runtime_apis,
-    types::{AccountId, Block as OpaqueBlock, BlockNumber, Signature},
+	impl_common_runtime_apis,
+	types::{AccountId, Block as OpaqueBlock},
 };
 
 use super::*;
@@ -159,22 +172,22 @@ impl_common_runtime_apis! {
 pub(crate) struct CheckInherents;
 
 impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
-    fn check_inherents(
-        block: &Block,
-        relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
-    ) -> sp_inherents::CheckInherentsResult {
-        let relay_chain_slot = relay_state_proof
-            .read_slot()
-            .expect("Could not read the relay chain slot from the proof");
+	fn check_inherents(
+		block: &Block,
+		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
+	) -> sp_inherents::CheckInherentsResult {
+		let relay_chain_slot = relay_state_proof
+			.read_slot()
+			.expect("Could not read the relay chain slot from the proof");
 
-        let inherent_data =
-            cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
-                relay_chain_slot,
-                sp_std::time::Duration::from_secs(6),
-            )
-                .create_inherent_data()
-                .expect("Could not create the timestamp inherent data");
+		let inherent_data =
+			cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
+				relay_chain_slot,
+				sp_std::time::Duration::from_secs(6),
+			)
+			.create_inherent_data()
+			.expect("Could not create the timestamp inherent data");
 
-        inherent_data.check_extrinsics(block)
-    }
+		inherent_data.check_extrinsics(block)
+	}
 }
