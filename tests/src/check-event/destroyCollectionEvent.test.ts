@@ -20,7 +20,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
-import {createCollectionExpectSuccess, uniqueEventMessage} from '../util/helpers';
+import {createCollectionExpectSuccessNew, createSubAccountWithBalance, uniqueEventMessage} from '../util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -31,12 +31,12 @@ describe('Destroy collection event ', () => {
   const checkSystem = 'ExtrinsicSuccess';
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
+      alice = await createSubAccountWithBalance(api, privateKeyWrapper);
     });
   });
   it('Check event from destroyCollection(): ', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const collectionID = await createCollectionExpectSuccess();
+      const collectionID = await createCollectionExpectSuccessNew(alice);
       const destroyCollection = api.tx.unique.destroyCollection(collectionID);
       const events = await submitTransactionAsync(alice, destroyCollection);
       const msg = JSON.stringify(uniqueEventMessage(events));

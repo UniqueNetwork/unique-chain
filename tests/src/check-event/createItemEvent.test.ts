@@ -20,7 +20,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
-import {createCollectionExpectSuccess, uniqueEventMessage, normalizeAccountId} from '../util/helpers';
+import {createCollectionExpectSuccessNew, uniqueEventMessage, normalizeAccountId, createSubAccountWithBalance} from '../util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -32,12 +32,12 @@ describe('Create Item event ', () => {
   const checkSystem = 'ExtrinsicSuccess';
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
+      alice = await createSubAccountWithBalance(api, privateKeyWrapper);
     });
   });
   it('Check event from createItem(): ', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const collectionID = await createCollectionExpectSuccess();
+      const collectionID = await createCollectionExpectSuccessNew(alice);
       const createItem = api.tx.unique.createItem(collectionID, normalizeAccountId(alice.address), 'NFT');
       const events = await submitTransactionAsync(alice, createItem);
       const msg = JSON.stringify(uniqueEventMessage(events));

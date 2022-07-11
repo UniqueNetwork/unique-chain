@@ -20,7 +20,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
-import {createCollectionExpectSuccess, createItemExpectSuccess, uniqueEventMessage} from '../util/helpers';
+import {createCollectionExpectSuccessNew, createItemExpectSuccess, createSubAccountWithBalance, uniqueEventMessage} from '../util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -32,12 +32,12 @@ describe('Burn Item event ', () => {
   const checkSystem = 'ExtrinsicSuccess';
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
+      alice = await createSubAccountWithBalance(api, privateKeyWrapper);
     });
   });
   it('Check event from burnItem(): ', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const collectionID = await createCollectionExpectSuccess();
+      const collectionID = await createCollectionExpectSuccessNew(alice);
       const itemID = await createItemExpectSuccess(alice, collectionID, 'NFT');
       const burnItem = api.tx.unique.burnItem(collectionID, itemID, 1);
       const events = await submitTransactionAsync(alice, burnItem);

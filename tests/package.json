@@ -32,7 +32,7 @@
     "load": "mocha --timeout 9999999 -r ts-node/register './**/*.load.ts'",
     "loadTransfer": "ts-node src/transfer.nload.ts",
     "testCollision": "mocha --timeout 9999999 -r ts-node/register ./src/collision-tests/*.test.ts",
-    "testEvent": "mocha --timeout 9999999 -r ts-node/register ./src/check-event/*.test.ts",
+    "testEvent": "mocha --timeout 9999999 --parallel -r ts-node/register ./src/check-event/*.test.ts",
     "testNesting": "mocha --timeout 9999999 -r ts-node/register ./**/nest.test.ts",
     "testUnnesting": "mocha --timeout 9999999 -r ts-node/register ./**/unnest.test.ts",
     "testStructure": "mocha --timeout 9999999 -r ts-node/register ./**/nesting/**.test.ts",

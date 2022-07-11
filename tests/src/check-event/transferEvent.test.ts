@@ -20,7 +20,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
-import {createCollectionExpectSuccess, createItemExpectSuccess, uniqueEventMessage, normalizeAccountId} from '../util/helpers';
+import {createCollectionExpectSuccessNew, createItemExpectSuccess, uniqueEventMessage, normalizeAccountId, createSubAccountWithBalance} from '../util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -33,13 +33,16 @@ describe('Transfer event ', () => {
   const checkSystem = 'ExtrinsicSuccess';
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+      [alice, bob] = await Promise.all([
+        createSubAccountWithBalance(api, privateKeyWrapper),
+        createSubAccountWithBalance(api, privateKeyWrapper),
+      ]);
     });
   });
+
   it('Check event from transfer(): ', async () => {
     await usingApi(async (api: ApiPromise) => {
-      const collectionID = await createCollectionExpectSuccess();
+      const collectionID = await createCollectionExpectSuccessNew(alice);
       const itemID = await createItemExpectSuccess(alice, collectionID, 'NFT');
       const transfer = api.tx.unique.transfer(normalizeAccountId(bob.address), collectionID, itemID, 1);
       const events = await submitTransactionAsync(alice, transfer);

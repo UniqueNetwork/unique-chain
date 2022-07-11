@@ -20,7 +20,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
-import {uniqueEventMessage} from '../util/helpers';
+import {createSubAccountWithBalance, uniqueEventMessage} from '../util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -32,7 +32,7 @@ describe('Create collection event ', () => {
   const checkSystem = 'ExtrinsicSuccess';
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
+      alice = await createSubAccountWithBalance(api, privateKeyWrapper);
     });
   });
   it('Check event from createCollection(): ', async () => {

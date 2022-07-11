@@ -377,7 +377,7 @@ export async function createCollectionExpectSuccessNew(sender: IKeyringPair, par
 }
 
 /**
- * @deprecated Use createCollectionExpectSuccessNew
+ * @deprecated use the createCollectionExpectSuccessNew method in conjunction with the createSubAccountWithBalance method
  */
 export async function createCollectionExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
   const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
@@ -1712,7 +1712,6 @@ export async function topUpSubBalance(recepient: string, amountWei: bigint, api:
   const donors = ['//Bob', '//Charlie', '//Dave', '//Eve', '//Ferdie'];
 
   // Try to transfer balance using one of the donors
-  console.log(`Transfering ${amountWei} to ${recepient}`);
   let success = false;
   for (const donor of donors) {
     try {
