@@ -46,6 +46,15 @@
 //! If a call is scheduled using proxy or whatever mecanism which adds filter,
 //! then those filter will not be used when dispatching the schedule call.
 //!
+//! The scheduler is designed for deferred transaction calls by block number.
+//! Any user can book a call of a certain transaction to a specific block number.
+//! Also possible to book a call with a certain frequency.
+//! Key differences from original pallet:
+//! Id restricted by 16 bytes
+//! Priority limited by HARD DEADLINE (<= 63). Calls over maximum weight don't include to block
+//! Maybe_periodic limit is 100 calls
+//! Any account allowed to schedule any calls. Account withdraw implemented through default transaction logic.
+//! 
 //! ## Interface
 //!
 //! ### Dispatchable Functions
@@ -143,6 +152,7 @@ mod preimage_provider {
 
 pub use preimage_provider::PreimageProviderAndMaybeRecipient;
 
+/// Weight templates for calculating actual fees
 pub(crate) trait MarginalWeightInfo: WeightInfo {
 	fn item(periodic: bool, named: bool, resolved: Option<bool>) -> Weight {
 		match (periodic, named, resolved) {
@@ -249,7 +259,7 @@ pub mod pallet {
 		/// If `Some` then the number of blocks to postpone execution for when the item is delayed.
 		type NoPreimagePostponement: Get<Option<Self::BlockNumber>>;
 
-		/// Sponsoring function.
+		/// Sponsoring function. In this version sposorship is disabled
 		// type SponsorshipHandler: SponsorshipHandler<Self::AccountId, <Self as Config>::Call>;
 
 		/// The helper type used for custom transaction fee logic.
@@ -258,6 +268,7 @@ pub mod pallet {
 
 	/// A Scheduler-Runtime interface for finer payment handling.
 	pub trait DispatchCall<T: frame_system::Config + Config, SelfContainedSignedInfo> {
+		/// Lock balance required for transaction payment
 		fn reserve_balance(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
@@ -265,6 +276,7 @@ pub mod pallet {
 			count: u32,
 		) -> Result<(), DispatchError>;
 
+		/// Unlock centain amount from payer 
 		fn pay_for_call(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
@@ -280,6 +292,7 @@ pub mod pallet {
 			TransactionValidityError,
 		>;
 
+		/// Cancel schedule reservation and unlock balance
 		fn cancel_reserve(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
@@ -423,6 +436,7 @@ pub mod pallet {
 					continue;
 				}
 
+				// Sender is the account who signed transaction
 				let sender = ensure_signed(
 					<<T as Config>::Origin as From<T::PalletsOrigin>>::from(s.origin.clone())
 						.into(),
@@ -438,6 +452,7 @@ pub mod pallet {
 				// 	);
 				// }
 
+				// Execute transaction via chain default pipeline
 				let r = T::CallExecutor::dispatch_call(sender, call.clone());
 
 				let mut actual_call_weight: Weight = item_weight;
@@ -482,8 +497,8 @@ pub mod pallet {
 					Agenda::<T>::append(wake, Some(s));
 				}
 			}
+			/// Weight should be 0, because transaction already paid 
 			0
-			//total_weight
 		}
 	}
 
