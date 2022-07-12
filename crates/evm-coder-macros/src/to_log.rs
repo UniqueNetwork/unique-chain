@@ -207,7 +207,7 @@ impl Events {
 						)*),
 					};
 					let mut out = string::new();
-					out.push_str("// Inline\n");
+					out.push_str("/// @dev inlined interface\n");
 					let _ = interface.format(is_impl, &mut out, tc);
 					tc.collect(out);
 				}

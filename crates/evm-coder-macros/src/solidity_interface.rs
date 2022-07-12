@@ -16,14 +16,15 @@
 
 #![allow(dead_code)]
 
-use quote::quote;
-use darling::{FromMeta, ToTokens};
+use quote::{quote, ToTokens};
 use inflector::cases;
 use std::fmt::Write;
 use syn::{
 	Expr, FnArg, GenericArgument, Generics, Ident, ImplItem, ImplItemMethod, ItemImpl, Lit, Meta,
-	MetaNameValue, NestedMeta, PatType, Path, PathArguments, ReturnType, Type, spanned::Spanned,
-	parse_str,
+	MetaNameValue, PatType, PathArguments, ReturnType, Type,
+	spanned::Spanned,
+	parse::{Parse, ParseStream},
+	parenthesized, Token, LitInt, LitStr,
 };
 
 use crate::{
@@ -39,19 +40,6 @@ struct Is {
 	via: Option<(Type, Ident)>,
 }
 impl Is {
-	fn new_via(path: &Path, via: Option<(Type, Ident)>) -> syn::Result<Self> {
-		let name = parse_ident_from_path(path, false)?.clone();
-		Ok(Self {
-			pascal_call_name: pascal_ident_to_call(&name),
-			snake_call_name: pascal_ident_to_snake_call(&name),
-			name,
-			via,
-		})
-	}
-	fn new(path: &Path) -> syn::Result<Self> {
-		Self::new_via(path, None)
-	}
-
 	fn expand_call_def(&self, gen_ref: &proc_macro2::TokenStream) -> proc_macro2::TokenStream {
 		let name = &self.name;
 		let pascal_call_name = &self.pascal_call_name;
@@ -137,72 +125,140 @@ impl Is {
 
 #[derive(Default)]
 struct IsList(Vec<Is>);
-impl FromMeta for IsList {
-	fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
-		let mut out = Vec::new();
-		for item in items {
-			match item {
-				NestedMeta::Meta(Meta::Path(path)) => out.push(Is::new(path)?),
-				// TODO: replace meta parsing with manual
-				NestedMeta::Meta(Meta::List(list))
-					if list.path.is_ident("via") && list.nested.len() == 3 =>
-				{
-					let mut data = list.nested.iter();
-					let typ = match data.next().expect("len == 3") {
-						NestedMeta::Lit(Lit::Str(s)) => {
-							let v = s.value();
-							let typ: Type = parse_str(&v)?;
-							typ
-						}
-						_ => {
-							return Err(syn::Error::new(
-								item.span(),
-								"via typ should be type in string",
-							)
-							.into())
-						}
-					};
-					let via = match data.next().expect("len == 3") {
-						NestedMeta::Meta(Meta::Path(path)) => path
-							.get_ident()
-							.ok_or_else(|| syn::Error::new(item.span(), "via should be ident"))?,
-						_ => return Err(syn::Error::new(item.span(), "via should be ident").into()),
-					};
-					let path = match data.next().expect("len == 3") {
-						NestedMeta::Meta(Meta::Path(path)) => path,
-						_ => return Err(syn::Error::new(item.span(), "path should be path").into()),
-					};
-
-					out.push(Is::new_via(path, Some((typ, via.clone())))?)
-				}
-				_ => {
-					return Err(syn::Error::new(
-						item.span(),
-						"expected either Name or via(\"Type\", getter, Name)",
-					)
-					.into())
-				}
+impl Parse for IsList {
+	fn parse(input: ParseStream) -> syn::Result<Self> {
+		let mut out = vec![];
+		loop {
+			if input.is_empty() {
+				break;
+			}
+			let name = input.parse::<Ident>()?;
+			let lookahead = input.lookahead1();
+			let via = if lookahead.peek(syn::token::Paren) {
+				let contents;
+				parenthesized!(contents in input);
+				let method = contents.parse::<Ident>()?;
+				contents.parse::<Token![,]>()?;
+				let ty = contents.parse::<Type>()?;
+				Some((ty, method))
+			} else if lookahead.peek(Token![,]) {
+				None
+			} else if input.is_empty() {
+				None
+			} else {
+				return Err(lookahead.error());
+			};
+			out.push(Is {
+				pascal_call_name: pascal_ident_to_call(&name),
+				snake_call_name: pascal_ident_to_snake_call(&name),
+				name,
+				via,
+			});
+			if input.peek(Token![,]) {
+				input.parse::<Token![,]>()?;
+				continue;
+			} else {
+				break;
 			}
 		}
 		Ok(Self(out))
 	}
 }
 
-#[derive(FromMeta)]
 pub struct InterfaceInfo {
 	name: Ident,
-	#[darling(default)]
 	is: IsList,
-	#[darling(default)]
 	inline_is: IsList,
-	#[darling(default)]
 	events: IsList,
+	expect_selector: Option<u32>,
+}
+impl Parse for InterfaceInfo {
+	fn parse(input: ParseStream) -> syn::Result<Self> {
+		let mut name = None;
+		let mut is = None;
+		let mut inline_is = None;
+		let mut events = None;
+		let mut expect_selector = None;
+		// TODO: create proc-macro to optimize proc-macro boilerplate? :D
+		loop {
+			let lookahead = input.lookahead1();
+			if lookahead.peek(kw::name) {
+				let k = input.parse::<kw::name>()?;
+				input.parse::<Token![=]>()?;
+				if name.replace(input.parse::<Ident>()?).is_some() {
+					return Err(syn::Error::new(k.span(), "name is already set"));
+				}
+			} else if lookahead.peek(kw::is) {
+				let k = input.parse::<kw::is>()?;
+				let contents;
+				parenthesized!(contents in input);
+				if is.replace(contents.parse::<IsList>()?).is_some() {
+					return Err(syn::Error::new(k.span(), "is is already set"));
+				}
+			} else if lookahead.peek(kw::inline_is) {
+				let k = input.parse::<kw::inline_is>()?;
+				let contents;
+				parenthesized!(contents in input);
+				if inline_is.replace(contents.parse::<IsList>()?).is_some() {
+					return Err(syn::Error::new(k.span(), "inline_is is already set"));
+				}
+			} else if lookahead.peek(kw::events) {
+				let k = input.parse::<kw::events>()?;
+				let contents;
+				parenthesized!(contents in input);
+				if events.replace(contents.parse::<IsList>()?).is_some() {
+					return Err(syn::Error::new(k.span(), "events is already set"));
+				}
+			} else if lookahead.peek(kw::expect_selector) {
+				let k = input.parse::<kw::expect_selector>()?;
+				input.parse::<Token![=]>()?;
+				let value = input.parse::<LitInt>()?;
+				if expect_selector
+					.replace(value.base10_parse::<u32>()?)
+					.is_some()
+				{
+					return Err(syn::Error::new(k.span(), "expect_selector is already set"));
+				}
+			} else if input.is_empty() {
+				break;
+			} else {
+				return Err(lookahead.error());
+			}
+			if input.peek(Token![,]) {
+				input.parse::<Token![,]>()?;
+			} else {
+				break;
+			}
+		}
+		Ok(Self {
+			name: name.ok_or_else(|| syn::Error::new(input.span(), "missing name"))?,
+			is: is.unwrap_or_default(),
+			inline_is: inline_is.unwrap_or_default(),
+			events: events.unwrap_or_default(),
+			expect_selector,
+		})
+	}
 }
 
-#[derive(FromMeta)]
 struct MethodInfo {
-	#[darling(default)]
 	rename_selector: Option<String>,
+}
+impl Parse for MethodInfo {
+	fn parse(input: ParseStream) -> syn::Result<Self> {
+		let mut rename_selector = None;
+		let lookahead = input.lookahead1();
+		if lookahead.peek(kw::rename_selector) {
+			let k = input.parse::<kw::rename_selector>()?;
+			input.parse::<Token![=]>()?;
+			if rename_selector
+				.replace(input.parse::<LitStr>()?.value())
+				.is_some()
+			{
+				return Err(syn::Error::new(k.span(), "rename_selector is already set"));
+			}
+		}
+		Ok(Self { rename_selector })
+	}
 }
 
 enum AbiType {
@@ -258,7 +314,7 @@ impl AbiType {
 							"expected only one generic for vec",
 						));
 					}
-					let arg = args.first().unwrap();
+					let arg = args.first().expect("first arg");
 
 					let ty = match arg {
 						GenericArgument::Type(ty) => ty,
@@ -429,23 +485,17 @@ enum Mutability {
 	Pure,
 }
 
-pub struct WeightAttr(syn::Expr);
-
-mod keyword {
+mod kw {
 	syn::custom_keyword!(weight);
-}
 
-impl syn::parse::Parse for WeightAttr {
-	fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-		input.parse::<syn::Token![#]>()?;
-		let content;
-		syn::bracketed!(content in input);
-		content.parse::<keyword::weight>()?;
+	syn::custom_keyword!(via);
+	syn::custom_keyword!(name);
+	syn::custom_keyword!(is);
+	syn::custom_keyword!(inline_is);
+	syn::custom_keyword!(events);
+	syn::custom_keyword!(expect_selector);
 
-		let weight_content;
-		syn::parenthesized!(weight_content in content);
-		Ok(WeightAttr(weight_content.parse::<syn::Expr>()?))
-	}
+	syn::custom_keyword!(rename_selector);
 }
 
 struct Method {
@@ -472,8 +522,7 @@ impl Method {
 		for attr in &value.attrs {
 			let ident = parse_ident_from_path(&attr.path, false)?;
 			if ident == "solidity" {
-				let args = attr.parse_meta().unwrap();
-				info = MethodInfo::from_meta(&args).unwrap();
+				info = attr.parse_args::<MethodInfo>()?;
 			} else if ident == "doc" {
 				let args = attr.parse_meta().unwrap();
 				let value = match args {
@@ -484,7 +533,7 @@ impl Method {
 				};
 				docs.push(value);
 			} else if ident == "weight" {
-				weight = Some(syn::parse2::<WeightAttr>(attr.to_token_stream())?.0);
+				weight = Some(attr.parse_args::<Expr>()?);
 			}
 		}
 		let ident = &value.sig.ident;
@@ -869,6 +918,28 @@ impl SolidityInterface {
 			.map(|is| Is::expand_generator(is, &gen_ref));
 		let solidity_event_generators = self.info.events.0.iter().map(Is::expand_event_generator);
 
+		if let Some(expect_selector) = &self.info.expect_selector {
+			if !self.info.inline_is.0.is_empty() {
+				return syn::Error::new(
+					name.span(),
+					"expect_selector is not compatible with inline_is",
+				)
+				.to_compile_error();
+			}
+			let selector = self
+				.methods
+				.iter()
+				.map(|m| m.selector)
+				.fold(0, |a, b| a ^ b);
+
+			if *expect_selector != selector {
+				let mut methods = String::new();
+				for meth in self.methods.iter() {
+					write!(methods, "\n- {}", meth.selector_str).expect("write to string");
+				}
+				return syn::Error::new(name.span(), format!("expected selector mismatch, expected {expect_selector:0>8x}, but implementation has {selector:0>8x}{methods}")).to_compile_error();
+			}
+		}
 		// let methods = self.methods.iter().map(Method::solidity_def);
 
 		quote! {
@@ -917,9 +988,9 @@ impl SolidityInterface {
 						)*),
 					};
 					if is_impl {
-						tc.collect("// Common stubs holder\ncontract Dummy {\n\tuint8 dummy;\n\tstring stub_error = \"this contract is implemented in native\";\n}\ncontract ERC165 is Dummy {\n\tfunction supportsInterface(bytes4 interfaceID) external view returns (bool) {\n\t\trequire(false, stub_error);\n\t\tinterfaceID;\n\t\treturn true;\n\t}\n}\n".into());
+						tc.collect("/// @dev common stubs holder\ncontract Dummy {\n\tuint8 dummy;\n\tstring stub_error = \"this contract is implemented in native\";\n}\ncontract ERC165 is Dummy {\n\tfunction supportsInterface(bytes4 interfaceID) external view returns (bool) {\n\t\trequire(false, stub_error);\n\t\tinterfaceID;\n\t\treturn true;\n\t}\n}\n".into());
 					} else {
-						tc.collect("// Common stubs holder\ninterface Dummy {\n}\ninterface ERC165 is Dummy {\n\tfunction supportsInterface(bytes4 interfaceID) external view returns (bool);\n}\n".into());
+						tc.collect("/// @dev common stubs holder\ninterface Dummy {\n}\ninterface ERC165 is Dummy {\n\tfunction supportsInterface(bytes4 interfaceID) external view returns (bool);\n}\n".into());
 					}
 					#(
 						#solidity_generators
@@ -930,9 +1001,9 @@ impl SolidityInterface {
 
 					let mut out = string::new();
 					// In solidity interface usage (is) should be preceeded by interface definition
-					// This comment helps to sort it in a set
+					// HACK: this comment helps to sort it in a set
 					if #solidity_name.starts_with("Inline") {
-						out.push_str("// Inline\n");
+						out.push_str("/// @dev inlined interface\n");
 					}
 					let _ = interface.format(is_impl, &mut out, tc);
 					tc.collect(out);

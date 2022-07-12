@@ -56,7 +56,7 @@ impl TypeCollector {
 		}
 		let id = self.next_id();
 		let mut str = String::new();
-		writeln!(str, "// Anonymous struct").unwrap();
+		writeln!(str, "/// @dev anonymous struct").unwrap();
 		writeln!(str, "struct Tuple{} {{", id).unwrap();
 		for (i, name) in names.iter().enumerate() {
 			writeln!(str, "\t{} field_{};", name, i).unwrap();
@@ -416,12 +416,12 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		tc: &TypeCollector,
 	) -> fmt::Result {
 		for doc in self.docs {
-			writeln!(writer, "\t//{}", doc)?;
+			writeln!(writer, "\t///{}", doc)?;
 		}
 		if !self.docs.is_empty() {
-			writeln!(writer, "\t//")?;
+			writeln!(writer, "\t///")?;
 		}
-		writeln!(writer, "\t// Selector: {}", self.selector)?;
+		writeln!(writer, "\t/// Selector: {}", self.selector)?;
 		write!(writer, "\tfunction {}(", self.name)?;
 		self.args.solidity_name(writer, tc)?;
 		write!(writer, ")")?;
@@ -498,7 +498,7 @@ impl<F: SolidityFunctions> SolidityInterface<F> {
 		if self.selector != ZERO_BYTES {
 			writeln!(
 				out,
-				"// Selector: {:0>8x}",
+				"/// @dev the ERC-165 identifier for this interface is 0x{:0>8x}",
 				u32::from_be_bytes(self.selector)
 			)?;
 		}

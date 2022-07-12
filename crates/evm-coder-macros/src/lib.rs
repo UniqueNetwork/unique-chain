@@ -16,14 +16,13 @@
 
 #![allow(dead_code)]
 
-use darling::FromMeta;
 use inflector::cases;
 use proc_macro::TokenStream;
 use quote::quote;
 use sha3::{Digest, Keccak256};
 use syn::{
-	AttributeArgs, DeriveInput, GenericArgument, Ident, ItemImpl, Pat, Path, PathArguments,
-	PathSegment, Type, parse_macro_input, spanned::Spanned,
+	DeriveInput, GenericArgument, Ident, ItemImpl, Pat, Path, PathArguments,
+	PathSegment, Type, parse_macro_input, spanned::Spanned, Attribute, parse::Parse,
 };
 
 mod solidity_interface;
@@ -254,8 +253,7 @@ fn pascal_ident_to_snake_call(ident: &Ident) -> Ident {
 /// ```
 #[proc_macro_attribute]
 pub fn solidity_interface(args: TokenStream, stream: TokenStream) -> TokenStream {
-	let args = parse_macro_input!(args as AttributeArgs);
-	let args = solidity_interface::InterfaceInfo::from_list(&args).unwrap();
+	let args = parse_macro_input!(args as solidity_interface::InterfaceInfo);
 
 	let input: ItemImpl = match syn::parse(stream) {
 		Ok(t) => t,
