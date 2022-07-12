@@ -632,7 +632,7 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * collection_id.
-		/// * properties - Vector of key-value pairs stored as the collection's metadata. Keys support Latin letters, '-', '_', and '.' as symbols.
+		/// * properties - Vector of key-value pairs stored as the collection's metadata. Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[weight = T::CommonWeightInfo::set_collection_properties(properties.len() as u32)]
 		#[transactional]
 		pub fn set_collection_properties(
@@ -1022,7 +1022,7 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			dispatch_tx::<T, _>(collection_id, |d| {
 				if let Some(refungible_extensions) = d.refungible_extensions() {
-					refungible_extensions.repartition(&sender, token, amount)
+					refungible_extensions.repartition(&sender, token_id, amount)
 				} else {
 					fail!(<Error<T>>::RepartitionCalledOnNonRefungibleCollection)
 				}

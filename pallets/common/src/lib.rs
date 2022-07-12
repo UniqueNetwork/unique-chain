@@ -469,7 +469,7 @@ pub mod pallet {
 		/// Property key is too long
 		PropertyKeyIsTooLong,
 
-		/// Only ASCII letters, digits, and symbols '_', '-', and '.' are allowed
+		/// Only ASCII letters, digits, and symbols `_`, `-`, and `.` are allowed
 		InvalidCharacterInPropertyKey,
 
 		/// Empty property keys are forbidden
