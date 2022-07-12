@@ -14,6 +14,77 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//! # Refungible Pallet
+//!
+//! The Refungible pallet provides functionality for handling refungible collections and tokens.
+//!
+//! - [`Config`]
+//! - [`RefungibleHandle`]
+//! - [`Pallet`]
+//! - [`CommonWeights`]
+//!
+//! ## Overview
+//!
+//! The Refungible pallet provides functions for:
+//!
+//! - RFT collection creation and removal
+//! - Minting and burning of RFT tokens
+//! - Partition and repartition of RFT tokens
+//! - Retrieving number of pieces of RFT token
+//! - Retrieving account balances
+//! - Transfering RFT token pieces
+//! - Burning RFT token pieces
+//! - Setting and checking allowance for RFT tokens
+//!
+//! ### Terminology
+//!
+//! - **RFT token:** Non fungible token that was partitioned to pieces. If an account owns all
+//!   of the RFT token pieces than it owns the RFT token and can repartition it.
+//!
+//! - **RFT Collection:** A collection of RFT tokens. All RFT tokens are part of a collection.
+//!   Each collection has its own settings and set of permissions.
+//!
+//! - **RFT token piece:** A fungible part of an RFT token.
+//!
+//! - **Balance:** RFT token pieces owned by an account
+//!
+//! - **Allowance:** Maximum number of RFT token pieces that one account is allowed to
+//!   transfer from the balance of another account
+//!
+//! - **Burning:** The process of “deleting” a token from a collection or removing token pieces from
+//!   an account balance.
+//!
+//! ### Implementations
+//!
+//! The Refungible pallet provides implementations for the following traits. If these traits provide
+//! the functionality that you need, then you can avoid coupling with the Refungible pallet.
+//!
+//! - [`CommonWeightInfo`](pallet_common::CommonWeightInfo): Functions for retrieval of transaction weight
+//! - [`CommonCollectionOperations`](pallet_common::CommonCollectionOperations): Functions for dealing
+//!   with collections
+//! - [`RefungibleExtensions`](pallet_common::RefungibleExtensions): Functions specific for refungible
+//!   collection
+//!
+//! ## Interface
+//!
+//! ### Dispatchable Functions
+//!
+//! - `init_collection` - Create RFT collection. RFT collection can be configured to allow or deny access for
+//!   some accounts.
+//! - `destroy_collection` - Destroy exising RFT collection. There should be no tokens in the collection.
+//! - `burn` - Burn some amount of RFT token pieces owned by account. Burns the RFT token if no pieces left.
+//! - `transfer` - Transfer some amount of RFT token pieces. Transfers should be enabled for RFT collection.
+//!   Nests the RFT token if RFT token pieces are sent to another token.
+//! - `create_item` - Mint RFT token in collection. Sender should have permission to mint tokens.
+//! - `set_allowance` - Set allowance for another account to transfer balance from sender's account.
+//! - `repartition` - Repartition token to selected number of pieces. Sender should own all existing pieces.
+//!
+//! ## Assumptions
+//!
+//! * Total number of pieces for one token shouldn't exceed `up_data_structs::MAX_REFUNGIBLE_PIECES`.
+//! * Total number of tokens of all types shouldn't be greater than `up_data_structs::MAX_TOKEN_PREFIX_LENGTH`.
+//! * Sender should be in collection's allow list to perform operations on tokens.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{ensure, BoundedVec};
@@ -86,13 +157,17 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// Amount of tokens minted for collection
 	#[pallet::storage]
 	pub type TokensMinted<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
+
+	/// Amount of burnt tokens for collection
 	#[pallet::storage]
 	pub type TokensBurnt<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
 
+	/// Custom data serialized to bytes for token
 	#[pallet::storage]
 	pub type TokenData<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
@@ -100,6 +175,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// Total amount of pieces for token
 	#[pallet::storage]
 	pub type TotalSupply<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
@@ -119,6 +195,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// Amount of tokens owned by account
 	#[pallet::storage]
 	pub type AccountBalance<T: Config> = StorageNMap<
 		Key = (
@@ -130,6 +207,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// Amount of token pieces owned by account
 	#[pallet::storage]
 	pub type Balance<T: Config> = StorageNMap<
 		Key = (
@@ -142,6 +220,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// Allowance set by an owner for a spender for a token
 	#[pallet::storage]
 	pub type Allowance<T: Config> = StorageNMap<
 		Key = (
@@ -188,9 +267,14 @@ impl<T: Config> Deref for RefungibleHandle<T> {
 }
 
 impl<T: Config> Pallet<T> {
+	/// Get number of RFT tokens in collection
 	pub fn total_supply(collection: &RefungibleHandle<T>) -> u32 {
 		<TokensMinted<T>>::get(collection.id) - <TokensBurnt<T>>::get(collection.id)
 	}
+
+	/// Check that RFT token exists
+	///
+	/// - `token`: Token ID.
 	pub fn token_exists(collection: &RefungibleHandle<T>, token: TokenId) -> bool {
 		<TotalSupply<T>>::contains_key((collection.id, token))
 	}
@@ -198,12 +282,22 @@ impl<T: Config> Pallet<T> {
 
 // unchecked calls skips any permission checks
 impl<T: Config> Pallet<T> {
+	/// Create RFT collection
+	///
+	/// `init_collection` will take non-refundable deposit for collection creation.
+	///
+	/// - `data`: Contains settings for collection limits and permissions.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		<PalletCommon<T>>::init_collection(owner, data, false)
 	}
+
+	/// Destroy RFT collection
+	///
+	/// `destroy_collection` will throw error if collection contains any tokens.
+	/// Only owner can destroy collection.
 	pub fn destroy_collection(
 		collection: RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
@@ -235,7 +329,10 @@ impl<T: Config> Pallet<T> {
 			.is_some()
 	}
 
-	pub fn burn_token(collection: &RefungibleHandle<T>, token_id: TokenId) -> DispatchResult {
+	pub fn burn_token_unchecked(
+		collection: &RefungibleHandle<T>,
+		token_id: TokenId,
+	) -> DispatchResult {
 		let burnt = <TokensBurnt<T>>::get(collection.id)
 			.checked_add(1)
 			.ok_or(ArithmeticError::Overflow)?;
@@ -249,6 +346,16 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Burn RFT token pieces
+	///
+	/// `burn` will decrease total amount of token pieces and amount owned by sender.
+	/// If sender wouldn't have any pieces left after `burn` than she will stop being
+	/// one of the owners of the token. If there is no account that owns any pieces of
+	/// the token than token will be burned too.
+	///
+	/// - `amount`: Amount of token pieces to burn.
+	/// - `token`: Token who's pieces should be burned
+	/// - `collection`: Collection that contains the token
 	pub fn burn(
 		collection: &RefungibleHandle<T>,
 		owner: &T::CrossAccountId,
@@ -276,7 +383,7 @@ impl<T: Config> Pallet<T> {
 			<Owned<T>>::remove((collection.id, owner, token));
 			<PalletStructure<T>>::unnest_if_nested(owner, collection.id, token);
 			<AccountBalance<T>>::insert((collection.id, owner), account_balance);
-			Self::burn_token(collection, token)?;
+			Self::burn_token_unchecked(collection, token)?;
 			<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
 				collection.id,
 				token,
@@ -319,6 +426,15 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Transfer RFT token pieces from one account to another.
+	///
+	/// If the sender is no longer owns any pieces after the `transfer` than she stops being an owner of the token.
+	///
+	/// - `from`: Owner of token pieces to transfer.
+	/// - `to`: Recepient of transfered token pieces.
+	/// - `amount`: Amount of token pieces to transfer.
+	/// - `token`: Token whos pieces should be transfered
+	/// - `collection`: Collection that contains the token
 	pub fn transfer(
 		collection: &RefungibleHandle<T>,
 		from: &T::CrossAccountId,
@@ -423,6 +539,11 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Batched operation to create multiple RFT tokens.
+	///
+	/// Same as `create_item` but creates multiple tokens.
+	///
+	/// - `data`: Same as 'data` in `create_item` but contains data for multiple tokens.
 	pub fn create_multiple_items(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
@@ -568,6 +689,9 @@ impl<T: Config> Pallet<T> {
 		))
 	}
 
+	/// Set allowance for the spender to `transfer` or `burn` sender's token pieces.
+	///
+	/// - `amount`: Amount of token pieces the spender is allowed to `transfer` or `burn.
 	pub fn set_allowance(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
@@ -636,6 +760,12 @@ impl<T: Config> Pallet<T> {
 		Ok(allowance)
 	}
 
+	/// Transfer RFT token pieces from one account to another.
+	///
+	/// Same as the [`transfer`] but spender doesn't needs to be an owner of the token pieces.
+	/// The owner should set allowance for the spender to transfer pieces.
+	///
+	/// [`transfer`]: struct.Pallet.html#method.transfer
 	pub fn transfer_from(
 		collection: &RefungibleHandle<T>,
 		spender: &T::CrossAccountId,
@@ -657,6 +787,12 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Burn RFT token pieces from the account.
+	///
+	/// Same as the [`burn`] but spender doesn't need to be an owner of the token pieces. The owner should
+	/// set allowance for the spender to burn pieces
+	///
+	/// [`burn`]: struct.Pallet.html#method.burn
 	pub fn burn_from(
 		collection: &RefungibleHandle<T>,
 		spender: &T::CrossAccountId,
@@ -677,7 +813,13 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Delegated to `create_multiple_items`
+	/// Create RFT token.
+	///
+	/// The sender should be the owner/admin of the collection or collection should be configured
+	/// to allow public minting.
+	///
+	/// - `data`: Contains list of users who will become the owners of the token pieces and amount
+	///   of token pieces they will receive.
 	pub fn create_item(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
@@ -687,6 +829,12 @@ impl<T: Config> Pallet<T> {
 		Self::create_multiple_items(collection, sender, vec![data], nesting_budget)
 	}
 
+	/// Repartition RFT token.
+	///
+	/// Repartition will set token balance of the sender and total amount of token pieces.
+	/// Sender should own all of the token pieces.
+	///
+	/// - `amount`: Total amount of token pieces that the token will have after `repartition`.
 	pub fn repartition(
 		collection: &RefungibleHandle<T>,
 		owner: &T::CrossAccountId,

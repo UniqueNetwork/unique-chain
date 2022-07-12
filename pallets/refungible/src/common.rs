@@ -145,6 +145,8 @@ fn map_create_data<T: Config>(
 	}
 }
 
+/// Implementation of `CommonCollectionOperations` for `RefungibleHandle`. It wraps Refungible Pallete
+/// methods and adds weight info.
 impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	fn create_item(
 		&self,
