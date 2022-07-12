@@ -627,9 +627,12 @@ impl Method {
 			.filter(|a| !a.is_special())
 			.map(|a| a.expand_call_def());
 		let pascal_name = &self.pascal_name;
+		let docs = &self.docs;
 
 		if self.has_normal_args {
 			quote! {
+				#(#[doc = #docs])*
+				#[allow(missing_docs)]
 				#pascal_name {
 					#(
 						#defs,
@@ -764,7 +767,7 @@ impl Method {
 			.iter()
 			.filter(|a| !a.is_special())
 			.map(MethodArg::expand_solidity_argument);
-		let docs = self.docs.iter();
+		let docs = &self.docs;
 		let selector_str = &self.selector_str;
 		let selector = self.selector;
 
@@ -936,7 +939,7 @@ impl SolidityInterface {
 			.map(|is| Is::expand_generator(is, &gen_ref));
 		let solidity_event_generators = self.info.events.0.iter().map(Is::expand_event_generator);
 
-		let docs = self.docs.iter();
+		let docs = &self.docs;
 
 		if let Some(expect_selector) = &self.info.expect_selector {
 			if !self.info.inline_is.0.is_empty() {
@@ -964,7 +967,9 @@ impl SolidityInterface {
 
 		quote! {
 			#[derive(Debug)]
+			#(#[doc = #docs])*
 			pub enum #call_name #gen_ref {
+				/// Inherited method
 				ERC165Call(::evm_coder::ERC165Call, ::core::marker::PhantomData<#gen_data>),
 				#(
 					#calls,
@@ -977,12 +982,14 @@ impl SolidityInterface {
 				#(
 					#consts
 				)*
+				/// Return this call ERC165 selector
 				pub fn interface_id() -> ::evm_coder::types::bytes4 {
 					let mut interface_id = 0;
 					#(#interface_id)*
 					#(#inline_interface_id)*
 					u32::to_be_bytes(interface_id)
 				}
+				/// Is this contract implements specified ERC165 selector
 				pub fn supports_interface(interface_id: ::evm_coder::types::bytes4) -> bool {
 					interface_id != u32::to_be_bytes(0xffffff) && (
 						interface_id == ::evm_coder::ERC165Call::INTERFACE_ID ||
@@ -992,6 +999,7 @@ impl SolidityInterface {
 						)*
 					)
 				}
+				/// Generate solidity definitions for methods described in this interface
 				pub fn generate_solidity_interface(tc: &evm_coder::solidity::TypeCollector, is_impl: bool) {
 					use evm_coder::solidity::*;
 					use core::fmt::Write;
