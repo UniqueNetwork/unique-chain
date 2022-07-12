@@ -827,6 +827,7 @@ pub struct SolidityInterface {
 	name: Box<syn::Type>,
 	info: InterfaceInfo,
 	methods: Vec<Method>,
+	docs: Vec<String>,
 }
 impl SolidityInterface {
 	pub fn try_from(info: InterfaceInfo, value: &ItemImpl) -> syn::Result<Self> {
@@ -837,11 +838,26 @@ impl SolidityInterface {
 				methods.push(Method::try_from(method)?)
 			}
 		}
+		let mut docs = vec![];
+		for attr in &value.attrs {
+			let ident = parse_ident_from_path(&attr.path, false)?;
+			if ident == "doc" {
+				let args = attr.parse_meta().unwrap();
+				let value = match args {
+					Meta::NameValue(MetaNameValue {
+						lit: Lit::Str(str), ..
+					}) => str.value(),
+					_ => unreachable!(),
+				};
+				docs.push(value);
+			}
+		}
 		Ok(Self {
 			generics: value.generics.clone(),
 			name: value.self_ty.clone(),
 			info,
 			methods,
+			docs,
 		})
 	}
 	pub fn expand(self) -> proc_macro2::TokenStream {
@@ -920,6 +936,8 @@ impl SolidityInterface {
 			.map(|is| Is::expand_generator(is, &gen_ref));
 		let solidity_event_generators = self.info.events.0.iter().map(Is::expand_event_generator);
 
+		let docs = self.docs.iter();
+
 		if let Some(expect_selector) = &self.info.expect_selector {
 			if !self.info.inline_is.0.is_empty() {
 				return syn::Error::new(
@@ -978,6 +996,7 @@ impl SolidityInterface {
 					use evm_coder::solidity::*;
 					use core::fmt::Write;
 					let interface = SolidityInterface {
+						docs: &[#(#docs),*],
 						name: #solidity_name,
 						selector: Self::interface_id(),
 						is: &["Dummy", "ERC165", #(

@@ -2172,7 +2172,7 @@ name = "evm-coder"
 version = "0.1.1"
 dependencies = [
  "ethereum",
- "evm-coder-macros",
+ "evm-coder-procedural",
  "evm-core",
  "hex",
  "hex-literal",
@@ -2181,7 +2181,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "evm-coder-macros"
+name = "evm-coder-procedural"
 version = "0.2.0"
 dependencies = [
  "Inflector",

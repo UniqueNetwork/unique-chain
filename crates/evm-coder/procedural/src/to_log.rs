@@ -199,6 +199,7 @@ impl Events {
 					use evm_coder::solidity::*;
 					use core::fmt::Write;
 					let interface = SolidityInterface {
+						docs: &[],
 						selector: [0; 4],
 						name: #solidity_name,
 						is: &[],

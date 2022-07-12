@@ -427,9 +427,6 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		for doc in self.docs {
 			writeln!(writer, "\t///{}", doc)?;
 		}
-		if !self.docs.is_empty() {
-			writeln!(writer, "\t///")?;
-		}
 		writeln!(writer, "\t/// @dev EVM selector for this function is: 0x{:0>8x},", self.selector)?;
 		writeln!(writer, "\t///  or in textual repr: {}", self.selector_str)?;
 		write!(writer, "\tfunction {}(", self.name)?;
@@ -491,6 +488,7 @@ impl SolidityFunctions for Tuple {
 }
 
 pub struct SolidityInterface<F: SolidityFunctions> {
+	pub docs: &'static [&'static str],
 	pub selector: bytes4,
 	pub name: &'static str,
 	pub is: &'static [&'static str],
@@ -505,6 +503,9 @@ impl<F: SolidityFunctions> SolidityInterface<F> {
 		tc: &TypeCollector,
 	) -> fmt::Result {
 		const ZERO_BYTES: [u8; 4] = [0; 4];
+		for doc in self.docs {
+			writeln!(out, "///{}", doc)?;
+		}
 		if self.selector != ZERO_BYTES {
 			writeln!(
 				out,
