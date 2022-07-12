@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+#![doc = include_str!("../README.md")]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![deny(missing_docs)]
 
 use codec::{Decode, Encode, MaxEncodedLen};
 pub use pallet::*;
@@ -35,13 +37,16 @@ pub mod pallet {
 	pub trait Config:
 		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_evm::account::Config
 	{
+		/// Address, under which magic contract will be available
 		type ContractAddress: Get<H160>;
+		/// In case of enabled sponsoring, but no sponsoring rate limit set,
+		/// this value will be used implicitly
 		type DefaultSponsoringRateLimit: Get<Self::BlockNumber>;
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// This method is only executable by owner.
+		/// This method is only executable by contract owner
 		NoPermission,
 
 		/// No pending sponsor for contract.
@@ -217,6 +222,7 @@ pub mod pallet {
 			}
 		}
 
+		/// Get current sponsoring mode, performing lazy migration from legacy storage
 		pub fn sponsoring_mode(contract: H160) -> SponsoringModeT {
 			<SponsoringMode<T>>::get(contract)
 				.or_else(|| {
@@ -225,6 +231,7 @@ pub mod pallet {
 				.unwrap_or_default()
 		}
 
+		/// Reconfigure contract sponsoring mode
 		pub fn set_sponsoring_mode(contract: H160, mode: SponsoringModeT) {
 			if mode == SponsoringModeT::Disabled {
 				<SponsoringMode<T>>::remove(contract);
@@ -234,22 +241,27 @@ pub mod pallet {
 			<SelfSponsoring<T>>::remove(contract)
 		}
 
+		/// Set duration between two sponsored contract calls
 		pub fn set_sponsoring_rate_limit(contract: H160, rate_limit: T::BlockNumber) {
 			<SponsoringRateLimit<T>>::insert(contract, rate_limit);
 		}
 
+		/// Is user added to allowlist, or he is owner of specified contract
 		pub fn allowed(contract: H160, user: H160) -> bool {
 			<Allowlist<T>>::get(&contract, &user) || <Owner<T>>::get(&contract) == user
 		}
 
+		/// Toggle contract allowlist access
 		pub fn toggle_allowlist(contract: H160, enabled: bool) {
 			<AllowlistEnabled<T>>::insert(contract, enabled)
 		}
 
+		/// Toggle user presence in contract's allowlist
 		pub fn toggle_allowed(contract: H160, user: H160, allowed: bool) {
 			<Allowlist<T>>::insert(contract, user, allowed);
 		}
 
+		/// Throw error if user is not allowed to reconfigure target contract
 		pub fn ensure_owner(contract: H160, user: H160) -> DispatchResult {
 			ensure!(<Owner<T>>::get(&contract) == user, Error::<T>::NoPermission);
 			Ok(())
@@ -257,10 +269,15 @@ pub mod pallet {
 	}
 }
 
-#[derive(Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen)]
+/// Available contract sponsoring modes
+#[derive(Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen, Default)]
 pub enum SponsoringModeT {
+	/// Sponsoring is disabled
+	#[default]
 	Disabled,
+	/// Only users from allowlist will be sponsored
 	Allowlisted,
+	/// All users will be sponsored
 	Generous,
 }
 
@@ -279,11 +296,5 @@ impl SponsoringModeT {
 			SponsoringModeT::Allowlisted => 1,
 			SponsoringModeT::Generous => 2,
 		}
-	}
-}
-
-impl Default for SponsoringModeT {
-	fn default() -> Self {
-		Self::Disabled
 	}
 }

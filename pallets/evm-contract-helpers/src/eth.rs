@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//! Implementation of magic contract
+
 use core::marker::PhantomData;
 use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder, dispatch_to_evm};
@@ -31,7 +33,8 @@ use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
 use sp_std::vec::Vec;
 
-struct ContractHelpers<T: Config>(SubstrateRecorder<T>);
+/// See [`ContractHelpersCall`]
+pub struct ContractHelpers<T: Config>(SubstrateRecorder<T>);
 impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
 	fn recorder(&self) -> &SubstrateRecorder<T> {
 		&self.0
@@ -42,21 +45,24 @@ impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
 	}
 }
 
+/// @title Magic contract, which allows users to reconfigure other contracts
 #[solidity_interface(name = ContractHelpers)]
 impl<T: Config> ContractHelpers<T>
 where
 	T::AccountId: AsRef<[u8; 32]>,
 {
-	/// Get contract ovner
-	///
-	/// @param contractAddress contract for which the owner is being determined.
-	/// @return Contract owner.
+	/// Get user, which deployed specified contract
+	/// @dev May return zero address in case if contract is deployed
+	///  using uniquenetwork evm-migration pallet, or using other terms not
+	///  intended by pallet-evm
+	/// @dev Returns zero address if contract does not exists
+	/// @param contractAddress Contract to get owner of
+	/// @return address Owner of contract
 	fn contract_owner(&self, contract_address: address) -> Result<address> {
 		Ok(<Owner<T>>::get(contract_address))
 	}
 
 	/// Set sponsor.
-	///
 	/// @param contractAddress Contract for which a sponsor is being established.
 	/// @param sponsor User address who set as pending sponsor.
 	fn set_sponsor(
@@ -163,6 +169,7 @@ where
 		&mut self,
 		caller: caller,
 		contract_address: address,
+		// TODO: implement support for enums in evm-coder
 		mode: uint8,
 	) -> Result<void> {
 		self.recorder().consume_sload()?;
@@ -175,10 +182,21 @@ where
 		Ok(())
 	}
 
-	fn sponsoring_mode(&self, contract_address: address) -> Result<uint8> {
-		Ok(<Pallet<T>>::sponsoring_mode(contract_address).to_eth())
+	/// Get current contract sponsoring rate limit
+	/// @param contractAddress Contract to get sponsoring mode of
+	/// @return uint32 Amount of blocks between two sponsored transactions
+	fn get_sponsoring_rate_limit(&self, contract_address: address) -> Result<uint32> {
+		Ok(<SponsoringRateLimit<T>>::get(contract_address)
+			.try_into()
+			.map_err(|_| "rate limit > u32::MAX")?)
 	}
 
+	/// Set contract sponsoring rate limit
+	/// @dev Sponsoring rate limit - is a minimum amount of blocks that should
+	///  pass between two sponsored transactions
+	/// @param contractAddress Contract to change sponsoring rate limit of
+	/// @param rateLimit Target rate limit
+	/// @dev Only contract owner can change this setting
 	fn set_sponsoring_rate_limit(
 		&mut self,
 		caller: caller,
@@ -190,40 +208,25 @@ where
 
 		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		<Pallet<T>>::set_sponsoring_rate_limit(contract_address, rate_limit.into());
-
 		Ok(())
 	}
 
-	fn get_sponsoring_rate_limit(&self, contract_address: address) -> Result<uint32> {
-		Ok(<SponsoringRateLimit<T>>::get(contract_address)
-			.try_into()
-			.map_err(|_| "rate limit > u32::MAX")?)
-	}
-
+	/// Is specified user present in contract allow list
+	/// @dev Contract owner always implicitly included
+	/// @param contractAddress Contract to check allowlist of
+	/// @param user User to check
+	/// @return bool Is specified users exists in contract allowlist
 	fn allowed(&self, contract_address: address, user: address) -> Result<bool> {
 		self.0.consume_sload()?;
 		Ok(<Pallet<T>>::allowed(contract_address, user))
 	}
 
-	fn allowlist_enabled(&self, contract_address: address) -> Result<bool> {
-		Ok(<AllowlistEnabled<T>>::get(contract_address))
-	}
-
-	fn toggle_allowlist(
-		&mut self,
-		caller: caller,
-		contract_address: address,
-		enabled: bool,
-	) -> Result<void> {
-		self.recorder().consume_sload()?;
-		self.recorder().consume_sstore()?;
-
-		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
-		<Pallet<T>>::toggle_allowlist(contract_address, enabled);
-
-		Ok(())
-	}
-
+	/// Toggle user presence in contract allowlist
+	/// @param contractAddress Contract to change allowlist of
+	/// @param user Which user presence should be toggled
+	/// @param isAllowed `true` if user should be allowed to be sponsored
+	///  or call this contract, `false` otherwise
+	/// @dev Only contract owner can change this setting
 	fn toggle_allowed(
 		&mut self,
 		caller: caller,
@@ -239,8 +242,36 @@ where
 
 		Ok(())
 	}
+
+	/// Is this contract has allowlist access enabled
+	/// @dev Allowlist always can have users, and it is used for two purposes:
+	///  in case of allowlist sponsoring mode, users will be sponsored if they exist in allowlist
+	///  in case of allowlist access enabled, only users from allowlist may call this contract
+	/// @param contractAddress Contract to get allowlist access of
+	/// @return bool Is specified contract has allowlist access enabled
+	fn allowlist_enabled(&self, contract_address: address) -> Result<bool> {
+		Ok(<AllowlistEnabled<T>>::get(contract_address))
+	}
+
+	/// Toggle contract allowlist access
+	/// @param contractAddress Contract to change allowlist access of
+	/// @param enabled Should allowlist access to be enabled?
+	fn toggle_allowlist(
+		&mut self,
+		caller: caller,
+		contract_address: address,
+		enabled: bool,
+	) -> Result<void> {
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
+		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::toggle_allowlist(contract_address, enabled);
+		Ok(())
+	}
 }
 
+/// Implements [`OnMethodCall`], which delegates call to [`ContractHelpers`]
 pub struct HelpersOnMethodCall<T: Config>(PhantomData<*const T>);
 impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T>
 where
@@ -283,6 +314,7 @@ where
 	}
 }
 
+/// Hooks into contract creation, storing owner of newly deployed contract
 pub struct HelpersOnCreate<T: Config>(PhantomData<*const T>);
 impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 	fn on_create(owner: H160, contract: H160) {
@@ -290,6 +322,7 @@ impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 	}
 }
 
+/// Bridge to pallet-sponsoring
 pub struct HelpersContractSponsoring<T: Config>(PhantomData<*const T>);
 impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 	for HelpersContractSponsoring<T>
