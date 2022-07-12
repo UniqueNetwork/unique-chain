@@ -50,7 +50,7 @@ pub enum ERC20Events {
 	},
 }
 
-#[solidity_interface(name = "ERC20", events(ERC20Events))]
+#[solidity_interface(name = ERC20, events(ERC20Events))]
 impl<T: Config> FungibleHandle<T> {
 	fn name(&self) -> Result<string> {
 		Ok(decode_utf16(self.name.iter().copied())
@@ -129,7 +129,7 @@ impl<T: Config> FungibleHandle<T> {
 	}
 }
 
-#[solidity_interface(name = "ERC20UniqueExtensions")]
+#[solidity_interface(name = ERC20UniqueExtensions)]
 impl<T: Config> FungibleHandle<T> {
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 	fn burn_from(&mut self, caller: caller, from: address, amount: uint256) -> Result<bool> {
@@ -147,11 +147,11 @@ impl<T: Config> FungibleHandle<T> {
 }
 
 #[solidity_interface(
-	name = "UniqueFungible",
+	name = UniqueFungible,
 	is(
 		ERC20,
 		ERC20UniqueExtensions,
-		via("CollectionHandle<T>", common_mut, Collection)
+		Collection(common_mut, CollectionHandle<T>),
 	)
 )]
 impl<T: Config> FungibleHandle<T> where T::AccountId: From<[u8; 32]> {}

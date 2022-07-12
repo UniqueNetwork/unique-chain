@@ -225,7 +225,7 @@
         "type": "address"
       },
       { "internalType": "address", "name": "user", "type": "address" },
-      { "internalType": "bool", "name": "allowed", "type": "bool" }
+      { "internalType": "bool", "name": "isAllowed", "type": "bool" }
     ],
     "name": "toggleAllowed",
     "outputs": [],

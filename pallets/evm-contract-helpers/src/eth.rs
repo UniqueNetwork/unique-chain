@@ -42,14 +42,14 @@ impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
 	}
 }
 
-#[solidity_interface(name = "ContractHelpers")]
+#[solidity_interface(name = ContractHelpers)]
 impl<T: Config> ContractHelpers<T>
 where
 	T::AccountId: AsRef<[u8; 32]>,
 {
 	/// Get contract ovner
 	///
-	/// @param Contract_address contract for which the owner is being determined.
+	/// @param contractAddress contract for which the owner is being determined.
 	/// @return Contract owner.
 	fn contract_owner(&self, contract_address: address) -> Result<address> {
 		Ok(<Owner<T>>::get(contract_address))
@@ -57,7 +57,7 @@ where
 
 	/// Set sponsor.
 	///
-	/// @param contract_address Contract for which a sponsor is being established.
+	/// @param contractAddress Contract for which a sponsor is being established.
 	/// @param sponsor User address who set as pending sponsor.
 	fn set_sponsor(
 		&mut self,
@@ -80,7 +80,7 @@ where
 
 	/// Set contract as self sponsored.
 	///
-	/// @param contract_address Contract for which a self sponsoring is being enabled.
+	/// @param contractAddress Contract for which a self sponsoring is being enabled.
 	fn self_sponsored_enable(&mut self, caller: caller, contract_address: address) -> Result<void> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
@@ -93,7 +93,7 @@ where
 
 	/// Remove sponsor.
 	///
-	/// @param contract_address Contract for which a sponsorship is being removed.
+	/// @param contractAddress Contract for which a sponsorship is being removed.
 	fn remove_sponsor(&mut self, caller: caller, contract_address: address) -> Result<void> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
@@ -106,9 +106,9 @@ where
 
 	/// Confirm sponsorship.
 	///
-	/// @dev Caller must be same that set via [`set_sponsor`].
+	/// @dev Caller must be same that set via [`setSponsor`].
 	///
-	/// @param contract_address Сontract for which need to confirm sponsorship.
+	/// @param contractAddress Сontract for which need to confirm sponsorship.
 	fn confirm_sponsorship(&mut self, caller: caller, contract_address: address) -> Result<void> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
@@ -121,7 +121,7 @@ where
 
 	/// Get current sponsor.
 	///
-	/// @param contract_address The contract for which a sponsor is requested.
+	/// @param contractAddress The contract for which a sponsor is requested.
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	fn get_sponsor(&self, contract_address: address) -> Result<(address, uint256)> {
 		let sponsor =
@@ -138,7 +138,7 @@ where
 
 	/// Check tat contract has confirmed sponsor.
 	///
-	/// @param contract_address The contract for which the presence of a confirmed sponsor is checked.
+	/// @param contractAddress The contract for which the presence of a confirmed sponsor is checked.
 	/// @return **true** if contract has confirmed sponsor.
 	fn has_sponsor(&self, contract_address: address) -> Result<bool> {
 		Ok(Pallet::<T>::get_sponsor(contract_address).is_some())
@@ -146,7 +146,7 @@ where
 
 	/// Check tat contract has pending sponsor.
 	///
-	/// @param contract_address The contract for which the presence of a pending sponsor is checked.
+	/// @param contractAddress The contract for which the presence of a pending sponsor is checked.
 	/// @return **true** if contract has pending sponsor.
 	fn has_pending_sponsor(&self, contract_address: address) -> Result<bool> {
 		Ok(match Sponsoring::<T>::get(contract_address) {
@@ -229,13 +229,13 @@ where
 		caller: caller,
 		contract_address: address,
 		user: address,
-		allowed: bool,
+		is_allowed: bool,
 	) -> Result<void> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
 		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
-		<Pallet<T>>::toggle_allowed(contract_address, user, allowed);
+		<Pallet<T>>::toggle_allowed(contract_address, user, is_allowed);
 
 		Ok(())
 	}
