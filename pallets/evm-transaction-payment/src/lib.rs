@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+#![doc = include_str!("../README.md")]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![deny(missing_docs)]
 
 use core::marker::PhantomData;
 use fp_evm::WithdrawReason;
@@ -29,13 +31,12 @@ use up_sponsorship::SponsorshipHandler;
 pub mod pallet {
 	use super::*;
 
-	use frame_support::traits::Currency;
 	use sp_std::vec::Vec;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm::account::Config {
+		/// Loosly-coupled handlers for evm call sponsoring
 		type EvmSponsorshipHandler: SponsorshipHandler<Self::CrossAccountId, (H160, Vec<u8>)>;
-		type Currency: Currency<Self::AccountId>;
 	}
 
 	#[pallet::pallet]
@@ -43,6 +44,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 }
 
+/// Implements [`fp_evm::TransactionValidityHack`], which provides sponsor address to pallet-evm
 pub struct TransactionValidityHack<T: Config>(PhantomData<*const T>);
 impl<T: Config> fp_evm::TransactionValidityHack<T::CrossAccountId> for TransactionValidityHack<T> {
 	fn who_pays_fee(origin: H160, reason: &WithdrawReason) -> Option<T::CrossAccountId> {
