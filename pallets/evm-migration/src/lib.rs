@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+#![doc = include_str!("../README.md")]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![deny(missing_docs)]
 
 pub use pallet::*;
 #[cfg(feature = "runtime-benchmarks")]
@@ -32,6 +34,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm::Config {
+		/// Weights
 		type WeightInfo: WeightInfo;
 	}
 
@@ -43,7 +46,9 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+		/// Can only migrate to empty address.
 		AccountNotEmpty,
+		/// Migration of this account is not yet started, or already finished.
 		AccountIsNotMigrating,
 	}
 
@@ -53,6 +58,8 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Start contract migration, inserts contract stub at target address,
+		/// and marks account as pending, allowing to insert storage
 		#[pallet::weight(<SelfWeightOf<T>>::begin())]
 		pub fn begin(origin: OriginFor<T>, address: H160) -> DispatchResult {
 			ensure_root(origin)?;
@@ -65,6 +72,8 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Insert items into contract storage, this method can be called
+		/// multiple times
 		#[pallet::weight(<SelfWeightOf<T>>::set_data(data.len() as u32))]
 		pub fn set_data(
 			origin: OriginFor<T>,
@@ -83,6 +92,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Finish contract migration, allows it to be called.
+		/// It is not possible to alter contract storage via [`Self::set_data`]
+		/// after this call.
 		#[pallet::weight(<SelfWeightOf<T>>::finish(code.len() as u32))]
 		pub fn finish(origin: OriginFor<T>, address: H160, code: Vec<u8>) -> DispatchResult {
 			ensure_root(origin)?;
@@ -97,6 +109,7 @@ pub mod pallet {
 		}
 	}
 
+	/// Implements [`pallet_evm::OnMethodCall`], which reserves accounts with pending migration
 	pub struct OnMethodCall<T>(PhantomData<T>);
 	impl<T: Config> pallet_evm::OnMethodCall<T> for OnMethodCall<T> {
 		fn is_reserved(contract: &H160) -> bool {
