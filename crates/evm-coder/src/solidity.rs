@@ -14,15 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-//! Implementation detail of [`evm_coder::solidity_interface`] macro code-generation
+//! Implementation detail of [`crate::solidity_interface`] macro code-generation.
+//! You should not rely on any public item from this module, as it is only intended to be used
+//! by procedural macro, API and output format may be changed at any time.
+//!
+//! Purpose of this module is to receive solidity contract definition in module-specified
+//! format, and then output string, representing interface of this contract in solidity language
 
 #[cfg(not(feature = "std"))]
-use alloc::{
-	string::String,
-	vec::Vec,
-	collections::BTreeMap,
-	format,
-};
+use alloc::{string::String, vec::Vec, collections::BTreeMap, format};
 #[cfg(feature = "std")]
 use std::collections::BTreeMap;
 use core::{
@@ -81,8 +81,10 @@ impl TypeCollector {
 
 pub trait SolidityTypeName: 'static {
 	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
+	/// "simple" types are stored inline, no `memory` modifier should be used in solidity
 	fn is_simple() -> bool;
 	fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
+	/// Specialization
 	fn is_void() -> bool {
 		false
 	}
@@ -133,6 +135,10 @@ impl SolidityTypeName for void {
 }
 
 mod sealed {
+	/// Not every type should be directly placed in vec.
+	/// Vec encoding is not memory efficient, as every item will be padded
+	/// to 32 bytes.
+	/// Instead you should use specialized types (`bytes` in case of `Vec<u8>`)
 	pub trait CanBePlacedInVec {}
 }
 
@@ -427,7 +433,11 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		for doc in self.docs {
 			writeln!(writer, "\t///{}", doc)?;
 		}
-		writeln!(writer, "\t/// @dev EVM selector for this function is: 0x{:0>8x},", self.selector)?;
+		writeln!(
+			writer,
+			"\t/// @dev EVM selector for this function is: 0x{:0>8x},",
+			self.selector
+		)?;
 		writeln!(writer, "\t///  or in textual repr: {}", self.selector_str)?;
 		write!(writer, "\tfunction {}(", self.name)?;
 		self.args.solidity_name(writer, tc)?;

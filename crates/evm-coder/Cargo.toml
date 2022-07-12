@@ -5,15 +5,21 @@ license = "GPLv3"
 edition = "2021"
 
 [dependencies]
-evm-coder-macros = { path = "../evm-coder-macros" }
+# evm-coder reexports those proc-macro
+evm-coder-procedural = { path = "./procedural" }
+# Evm uses primitive-types for H160, H256 and others
 primitive-types = { version = "0.11.1", default-features = false }
-hex-literal = "0.3.3"
+# Evm doesn't have reexports for log and others
 ethereum = { version = "0.12.0", default-features = false }
+# Error types for execution
 evm-core = { default-features = false, git = "https://github.com/uniquenetwork/evm", branch = "unique-polkadot-v0.9.27" }
-impl-trait-for-tuples = "0.2.1"
+# We have tuple-heavy code in solidity.rs
+impl-trait-for-tuples = "0.2.2"
 
 [dev-dependencies]
+# We want to assert some large binary blobs equality in tests
 hex = "0.4.3"
+hex-literal = "0.3.4"
 
 [features]
 default = ["std"]
