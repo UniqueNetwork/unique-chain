@@ -402,7 +402,8 @@ pub enum SolidityMutability {
 }
 pub struct SolidityFunction<A, R> {
 	pub docs: &'static [&'static str],
-	pub selector: &'static str,
+	pub selector_str: &'static str,
+	pub selector: u32,
 	pub name: &'static str,
 	pub args: A,
 	pub result: R,
@@ -421,7 +422,8 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		if !self.docs.is_empty() {
 			writeln!(writer, "\t///")?;
 		}
-		writeln!(writer, "\t/// Selector: {}", self.selector)?;
+		writeln!(writer, "\t/// @dev EVM selector for this function is: 0x{:0>8x},", self.selector)?;
+		writeln!(writer, "\t///  or in textual repr: {}", self.selector_str)?;
 		write!(writer, "\tfunction {}(", self.name)?;
 		self.args.solidity_name(writer, tc)?;
 		write!(writer, ")")?;

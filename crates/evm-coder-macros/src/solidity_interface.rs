@@ -765,11 +765,13 @@ impl Method {
 			.filter(|a| !a.is_special())
 			.map(MethodArg::expand_solidity_argument);
 		let docs = self.docs.iter();
-		let selector = format!("{} {:0>8x}", self.selector_str, self.selector);
+		let selector_str = &self.selector_str;
+		let selector = self.selector;
 
 		quote! {
 			SolidityFunction {
 				docs: &[#(#docs),*],
+				selector_str: #selector_str,
 				selector: #selector,
 				name: #camel_name,
 				mutability: #mutability,
