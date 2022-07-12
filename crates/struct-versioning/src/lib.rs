@@ -1,3 +1,49 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
+//! struct-versioning
+//! The crate contains procedural macros for versioning data structures.
+//! Macros `versioned` generate versioned variants of a struct.
+//!
+//! Example:
+//! #[struct_versioning::versioned(version = 2, upper)]
+//! ...
+//! pub struct ItemData {
+//! 	pub const_data: BoundedVec<u8, CustomDataLimit>,
+//!
+//! 	#[version(..2)]
+//! 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
+//! }
+//! ...
+//! `#[version(..2)]` that means that any version before 2 will be upgraded to 2 via the `upper` function
+//! *upper* - generate From impls, which converts old version of structs to new
+//! In this case, the upgrade is described in `on_runtime_upgrade` using the `translate_values` substrate feature
+//!
+//! #[pallet::hooks]
+//! impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+//! 	fn on_runtime_upgrade() -> Weight {
+//! 		if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
+//! 			<TokenData<T>>::translate_values::<ItemDataVersion1, _>(|v| {
+//! 				Some(<ItemDataVersion2>::from(v))
+//! 			})
+//! 		}
+//! 		0
+//! 	}
+//! }
+
 use proc_macro::TokenStream;
 use quote::format_ident;
 use syn::{
@@ -158,7 +204,7 @@ impl Default for VersionAttr {
 /// - *versions* - generate enum, which contains all possible versions of struct
 ///
 /// Each field may have version attribute
-/// `#[version([1]..[2][, upper(old)])]`
+/// `#[[1]..[2][, upper(old)])]`
 /// - *1* - version, on which this field is appeared
 /// - *2* - version, in which this field was removed
 /// (i.e if set to 2, this field was exist on version 1, and no longer exist on version 2)
