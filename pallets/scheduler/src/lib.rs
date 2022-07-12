@@ -72,17 +72,6 @@
 //! * `schedule_named` - augments the `schedule` interface with an additional `Vec<u8>` parameter
 //!   that can be used for identification.
 //! * `cancel_named` - the named complement to the cancel function.
-//!
-//! ## Interface
-//!
-//! ### Dispatchable Functions
-//!
-//! * `schedule` - schedule a dispatch, which may be periodic, to occur at a specified block and
-//!   with a specified priority.
-//! * `cancel` - cancel a scheduled dispatch, specified by block number and index.
-//! * `schedule_named` - augments the `schedule` interface with an additional `Vec<u8>` parameter
-//!   that can be used for identification.
-//! * `cancel_named` - the named complement to the cancel function.
 
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
