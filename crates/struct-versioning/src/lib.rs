@@ -204,7 +204,7 @@ impl Default for VersionAttr {
 /// - *versions* - generate enum, which contains all possible versions of struct
 ///
 /// Each field may have version attribute
-/// `#[[1]..[2][, upper(old)])]`
+/// `#[version([1]..[2][, upper(old)])]`
 /// - *1* - version, on which this field is appeared
 /// - *2* - version, in which this field was removed
 /// (i.e if set to 2, this field was exist on version 1, and no longer exist on version 2)
