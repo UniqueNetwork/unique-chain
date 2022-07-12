@@ -989,26 +989,24 @@ impl SolidityInterface {
 							#solidity_functions,
 						)*),
 					};
-					if is_impl {
-						tc.collect("/// @dev common stubs holder\ncontract Dummy {\n\tuint8 dummy;\n\tstring stub_error = \"this contract is implemented in native\";\n}\ncontract ERC165 is Dummy {\n\tfunction supportsInterface(bytes4 interfaceID) external view returns (bool) {\n\t\trequire(false, stub_error);\n\t\tinterfaceID;\n\t\treturn true;\n\t}\n}\n".into());
-					} else {
-						tc.collect("/// @dev common stubs holder\ninterface Dummy {\n}\ninterface ERC165 is Dummy {\n\tfunction supportsInterface(bytes4 interfaceID) external view returns (bool);\n}\n".into());
-					}
-					#(
-						#solidity_generators
-					)*
-					#(
-						#solidity_event_generators
-					)*
 
 					let mut out = string::new();
-					// In solidity interface usage (is) should be preceeded by interface definition
-					// HACK: this comment helps to sort it in a set
 					if #solidity_name.starts_with("Inline") {
 						out.push_str("/// @dev inlined interface\n");
 					}
 					let _ = interface.format(is_impl, &mut out, tc);
 					tc.collect(out);
+					#(
+						#solidity_event_generators
+					)*
+					#(
+						#solidity_generators
+					)*
+					if is_impl {
+						tc.collect("/// @dev common stubs holder\ncontract Dummy {\n\tuint8 dummy;\n\tstring stub_error = \"this contract is implemented in native\";\n}\ncontract ERC165 is Dummy {\n\tfunction supportsInterface(bytes4 interfaceID) external view returns (bool) {\n\t\trequire(false, stub_error);\n\t\tinterfaceID;\n\t\treturn true;\n\t}\n}\n".into());
+					} else {
+						tc.collect("/// @dev common stubs holder\ninterface Dummy {\n}\ninterface ERC165 is Dummy {\n\tfunction supportsInterface(bytes4 interfaceID) external view returns (bool);\n}\n".into());
+					}
 				}
 			}
 			impl #gen_ref ::evm_coder::Call for #call_name #gen_ref {

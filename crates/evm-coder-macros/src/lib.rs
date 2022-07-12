@@ -22,7 +22,7 @@ use quote::quote;
 use sha3::{Digest, Keccak256};
 use syn::{
 	DeriveInput, GenericArgument, Ident, ItemImpl, Pat, Path, PathArguments,
-	PathSegment, Type, parse_macro_input, spanned::Spanned, Attribute, parse::Parse,
+	PathSegment, Type, parse_macro_input, spanned::Spanned,
 };
 
 mod solidity_interface;
@@ -241,7 +241,7 @@ fn pascal_ident_to_snake_call(ident: &Ident) -> Ident {
 ///     Event(#[indexed] uint32),
 /// }
 ///
-/// #[solidity_interface(name = "MyContract", is(SuperContract), inline_is(InlineContract))]
+/// #[solidity_interface(name = MyContract, is(SuperContract), inline_is(InlineContract))]
 /// impl Contract {
 ///     /// Multiply two numbers
 ///     #[weight(200 + a + b)]

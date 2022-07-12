@@ -14,26 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//! Implementation detail of [`evm_coder::solidity_interface`] macro code-generation
+
 #[cfg(not(feature = "std"))]
 use alloc::{
 	string::String,
 	vec::Vec,
-	collections::{BTreeSet, BTreeMap},
+	collections::BTreeMap,
 	format,
 };
 #[cfg(feature = "std")]
-use std::collections::{BTreeSet, BTreeMap};
+use std::collections::BTreeMap;
 use core::{
 	fmt::{self, Write},
 	marker::PhantomData,
 	cell::{Cell, RefCell},
+	cmp::Reverse,
 };
 use impl_trait_for_tuples::impl_for_tuples;
 use crate::types::*;
 
 #[derive(Default)]
 pub struct TypeCollector {
-	structs: RefCell<BTreeSet<string>>,
+	/// Code => id
+	/// id ordering is required to perform topo-sort on the resulting data
+	structs: RefCell<BTreeMap<string, usize>>,
 	anonymous: RefCell<BTreeMap<Vec<string>, usize>>,
 	id: Cell<usize>,
 }
@@ -42,7 +47,8 @@ impl TypeCollector {
 		Self::default()
 	}
 	pub fn collect(&self, item: string) {
-		self.structs.borrow_mut().insert(item);
+		let id = self.next_id();
+		self.structs.borrow_mut().insert(item, id);
 	}
 	pub fn next_id(&self) -> usize {
 		let v = self.id.get();
@@ -66,8 +72,10 @@ impl TypeCollector {
 		self.anonymous.borrow_mut().insert(names, id);
 		format!("Tuple{}", id)
 	}
-	pub fn finish(self) -> BTreeSet<string> {
-		self.structs.into_inner()
+	pub fn finish(self) -> Vec<string> {
+		let mut data = self.structs.into_inner().into_iter().collect::<Vec<_>>();
+		data.sort_by_key(|(_, id)| Reverse(*id));
+		data.into_iter().map(|(code, _)| code).collect()
 	}
 }
 
