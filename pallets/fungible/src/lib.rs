@@ -14,6 +14,68 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//! # Fungible Pallet
+//!
+//! The Fungible pallet provides functionality for dealing with fungible assets.
+//!
+//! - [`CreateItemData`]
+//! - [`Config`]
+//! - [`FungibleHandle`]
+//! - [`Pallet`]
+//! - [`TotalSupply`]
+//! - [`Balance`]
+//! - [`Allowance`]
+//! - [`Error`]
+//!
+//! ## Fungible tokens
+//!
+//! Fungible tokens or assets are divisible and non-unique. For instance,
+//! fiat currencies like the dollar are fungible: A $1 bill
+//! in New York City has the same value as a $1 bill in Miami.
+//! A fungible token can also be a cryptocurrency like Bitcoin: 1 BTC is worth 1 BTC,
+//! no matter where it is issued. Thus, the fungibility refers to a specific currency’s
+//! ability to maintain one standard value. As well, it needs to have uniform acceptance.
+//! This means that a currency’s history should not be able to affect its value,
+//! and this is due to the fact that each piece that is a part of the currency is equal
+//! in value when compared to every other piece of that exact same currency.
+//! In the world of cryptocurrencies, this is essentially a coin or a token
+//! that can be replaced by another identical coin or token, and they are
+//! both mutually interchangeable. A popular implementation of fungible tokens is
+//! the ERC-20 token standard.
+//!
+//! ### ERC-20
+//!
+//! The [ERC-20](https://ethereum.org/en/developers/docs/standards/tokens/erc-20/) (Ethereum Request for Comments 20), proposed by Fabian Vogelsteller in November 2015,
+//! is a Token Standard that implements an API for tokens within Smart Contracts.
+//!
+//! Example functionalities ERC-20 provides:
+//!
+//! * transfer tokens from one account to another
+//! * get the current token balance of an account
+//! * get the total supply of the token available on the network
+//! * approve whether an amount of token from an account can be spent by a third-party account
+//!
+//! ## Overview
+//!
+//! The module provides functionality for asset management of fungible asset, supports ERC-20 standart, includes:
+//!
+//! * Asset Issuance
+//! * Asset Transferal
+//! * Asset Destruction
+//! * Delegated Asset Transfers
+//!
+//! **NOTE:** The created fungible asset always has `token_id` = 0.
+//! So `tokenA` and `tokenB` will have different `collection_id`.
+//!
+//! ### Implementations
+//!
+//! The Fungible pallet provides implementations for the following traits.
+//!
+//! - [`WithRecorder`](pallet_evm_coder_substrate::WithRecorder):
+//! - [`CommonCollectionOperations`](pallet_common::CommonCollectionOperations): Functions for dealing with collections
+//!	- [`CommonWeightInfo`](pallet_common::CommonWeightInfo): Functions for retrieval of transaction weight
+//! - [`CommonEvmHandler`](pallet_common::erc::CommonEvmHandler): Function for handling EVM runtime calls
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use core::ops::Deref;
@@ -57,13 +119,13 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Not Fungible item data used to mint in Fungible collection.
 		NotFungibleDataUsedToMintFungibleCollectionToken,
-		/// Not default id passed as TokenId argument
+		/// Not default id passed as TokenId argument.
 		FungibleItemsHaveNoId,
-		/// Tried to set data for fungible item
+		/// Tried to set data for fungible item.
 		FungibleItemsDontHaveData,
-		/// Fungible token does not support nested
+		/// Fungible token does not support nesting.
 		FungibleDisallowsNesting,
-		/// Setting item properties is not allowed
+		/// Setting item properties is not allowed.
 		SettingPropertiesNotAllowed,
 	}
 
@@ -78,10 +140,12 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// Total amount of fungible tokens inside a collection.
 	#[pallet::storage]
 	pub type TotalSupply<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u128, QueryKind = ValueQuery>;
 
+	/// Amount of tokens owned by an account inside a collection.
 	#[pallet::storage]
 	pub type Balance<T: Config> = StorageNMap<
 		Key = (
@@ -92,6 +156,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// Storage for delegated assets.
 	#[pallet::storage]
 	pub type Allowance<T: Config> = StorageNMap<
 		Key = (
@@ -103,15 +168,19 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 }
-
+/// Handler for fungible assets.
 pub struct FungibleHandle<T: Config>(pallet_common::CollectionHandle<T>);
 impl<T: Config> FungibleHandle<T> {
+	/// Casts [pallet_common::CollectionHandle] into [FungibleHandle].
 	pub fn cast(inner: pallet_common::CollectionHandle<T>) -> Self {
 		Self(inner)
 	}
+
+	/// Casts [FungibleHandle] into [pallet_common::CollectionHandle].
 	pub fn into_inner(self) -> pallet_common::CollectionHandle<T> {
 		self.0
 	}
+	/// Returns a mutable reference to the internal [pallet_common::CollectionHandle].
 	pub fn common_mut(&mut self) -> &mut pallet_common::CollectionHandle<T> {
 		&mut self.0
 	}
@@ -132,13 +201,17 @@ impl<T: Config> Deref for FungibleHandle<T> {
 	}
 }
 
+/// Pallet implementation for fungible assets
 impl<T: Config> Pallet<T> {
+	/// Initializes the collection. Returns [CollectionId] on success, [DispatchError] otherwise.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		<PalletCommon<T>>::init_collection(owner, data, false)
 	}
+
+	/// Destroys a collection.
 	pub fn destroy_collection(
 		collection: FungibleHandle<T>,
 		sender: &T::CrossAccountId,
@@ -159,10 +232,14 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	///Checks if collection has tokens. Return `true` if it has.
 	fn collection_has_tokens(collection_id: CollectionId) -> bool {
 		<TotalSupply<T>>::get(collection_id) != 0
 	}
 
+	/// Burns the specified amount of the token. If the token balance
+	/// or total supply is less than the given value,
+	/// it will return [DispatchError].
 	pub fn burn(
 		collection: &FungibleHandle<T>,
 		owner: &T::CrossAccountId,
@@ -207,6 +284,8 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Transfers the specified amount of tokens. Will check that
+	/// the transfer is allowed for the token.
 	pub fn transfer(
 		collection: &FungibleHandle<T>,
 		from: &T::CrossAccountId,
@@ -277,6 +356,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Minting tokens for multiple IDs.
 	pub fn create_multiple_items(
 		collection: &FungibleHandle<T>,
 		sender: &T::CrossAccountId,
@@ -378,6 +458,7 @@ impl<T: Config> Pallet<T> {
 		));
 	}
 
+	/// Sets the amount of owner tokens that the spender can manage.
 	pub fn set_allowance(
 		collection: &FungibleHandle<T>,
 		owner: &T::CrossAccountId,
@@ -441,6 +522,7 @@ impl<T: Config> Pallet<T> {
 		Ok(allowance)
 	}
 
+	/// Transfers of tokens that `from` gave to `spender` to manage, to `to` ID.
 	pub fn transfer_from(
 		collection: &FungibleHandle<T>,
 		spender: &T::CrossAccountId,
@@ -460,6 +542,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Burns managed tokens.
 	pub fn burn_from(
 		collection: &FungibleHandle<T>,
 		spender: &T::CrossAccountId,
