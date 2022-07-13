@@ -28,7 +28,8 @@
 //! 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
 //! }
 //! ...
-//! `#[version(..2)]` that means that any version before 2 will be upgraded to 2 via the `upper` function
+//! `#[version(..2)]` that means that any version before 2 will be upgraded to 2 via the `upper` function.
+//! When version become 3 `#[struct_versioning::versioned(version = 3, upper)]` this field will be removed.
 //! *upper* - generate From impls, which converts old version of structs to new
 //! In this case, the upgrade is described in `on_runtime_upgrade` using the `translate_values` substrate feature
 //!
@@ -43,7 +44,12 @@
 //! 		0
 //! 	}
 //! }
-
+//!
+//! Another functionality
+///
+/// `#[versioned(version = 1[, first_version = 1][, upper][, versions])]`
+/// - *first_version* - allows to skip generation of structs, which predates first supported version
+/// - *versions* - generate enum, which contains all possible versions of struct
 use proc_macro::TokenStream;
 use quote::format_ident;
 use syn::{
