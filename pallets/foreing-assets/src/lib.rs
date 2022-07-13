@@ -254,7 +254,7 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn next_foreign_asset_id)]
 	pub type NextForeignAssetId<T: Config> = StorageValue<_, ForeignAssetId, ValueQuery>;
-	//foreign-assets pallet
+	foreign-assets pallet
 	/// The storages for MultiLocations.
 	///
 	/// ForeignAssetLocations: map ForeignAssetId => Option<MultiLocation>
