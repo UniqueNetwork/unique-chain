@@ -56,8 +56,10 @@
 //! **NOTE:** The unique scheduler is designed for deferred transaction calls by block number.
 //! Any user can book a call of a certain transaction to a specific block number.
 //! Also possible to book a call with a certain frequency.
+//!
 //! Key differences from original pallet:
-//! Id restricted by 16 bytes
+//! https://crates.io/crates/pallet-scheduler
+//! Schedule Id restricted by 16 bytes
 //! Priority limited by HARD DEADLINE (<= 63). Calls over maximum weight don't include to block
 //! Maybe_periodic limit is 100 calls
 //! Any account allowed to schedule any calls. Account withdraw implemented through default transaction logic.
@@ -460,6 +462,7 @@ pub mod pallet {
 				// }
 
 				// Execute transaction via chain default pipeline
+				// That means dispatch will be processed like any user's extrinsic e.g. transaction fees will be taken
 				let r = T::CallExecutor::dispatch_call(sender, call.clone());
 
 				let mut actual_call_weight: Weight = item_weight;
