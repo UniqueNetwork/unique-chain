@@ -14,29 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-
-
-// This file is part of Acala.
-
-// Copyright (C) 2020-2022 Acala Foundation.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
-
-//! # Asset Registry Module
+//! # Foreing assets
 //!
-//! Local and foreign assets management. The foreign assets can be updated without runtime upgrade.
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Pallet`]
+//!
+//! ## Overview
+//!
+//! The foreing assests pallet provides functions for:
+//!
+//! - Local and foreign assets management. The foreign assets can be updated without runtime upgrade.
+//! - Bounds between asset and target collection for cross chain transfer and inner transfers.
+//!
+//! ## Overview
+//!
+//! Under construction
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
@@ -91,9 +84,6 @@ mod weights;
 pub use module::*;
 pub use weights::WeightInfo;
 
-
-
-
 /// Type alias for currency balance.
 pub type BalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
@@ -103,7 +93,6 @@ pub trait AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata> {
 	fn get_asset_metadata(foreign_asset_id: ForeignAssetId) -> Option<AssetMetadata>;
 	/// Returns the MultiLocation associated with a given ForeignAssetId.
 	fn get_multi_location(foreign_asset_id: ForeignAssetId) -> Option<MultiLocation>;
-	fn get_multi_location2(foreign_asset_id: AssetIds) -> Option<MultiLocation>;
 	/// Returns the CurrencyId associated with a given MultiLocation.
 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId>;
 }
@@ -123,13 +112,13 @@ impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<Bala
 		Pallet::<T>::foreign_asset_locations(foreign_asset_id)
 	}
 
-	fn get_multi_location2(foreign_asset_id: AssetIds) -> Option<MultiLocation> {
-		log::info!(target: "get_multi_location2", "call");
+	// fn get_multi_location2(foreign_asset_id: AssetIds) -> Option<MultiLocation> {
+	// 	log::info!(target: "get_multi_location2", "call");
 
-		match foreign_asset_id {
-			AssetIds::ForeignAssetId(id) =>  Pallet::<T>::foreign_asset_locations(id),
-		}
-	}
+	// 	match foreign_asset_id {
+	// 		AssetIds::ForeignAssetId(id) =>  Pallet::<T>::foreign_asset_locations(id),
+	// 	}
+	// }
 
 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
 		log::info!(target: "get_currency_id", "call");
@@ -254,7 +243,6 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn next_foreign_asset_id)]
 	pub type NextForeignAssetId<T: Config> = StorageValue<_, ForeignAssetId, ValueQuery>;
-	foreign-assets pallet
 	/// The storages for MultiLocations.
 	///
 	/// ForeignAssetLocations: map ForeignAssetId => Option<MultiLocation>

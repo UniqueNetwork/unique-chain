@@ -1,19 +1,18 @@
-// This file is part of Substrate.
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
 
-// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
-// SPDX-License-Identifier: Apache-2.0
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// 	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 //! Implementations for fungibles trait.
 
@@ -21,31 +20,51 @@ use super::*;
 use frame_system::Config as SystemConfig;
 
 use frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
+use up_data_structs::{ CollectionId };
+use pallet_common::CollectionHandle;
+use pallet_fungible::FungibleHandle;
+use pallet_common::CommonCollectionOperations;
+use up_data_structs::budget::Unlimited;
 
 impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T> {
 	type AssetId = ForeignAssetId;
 	type Balance = BalanceOf<T>;
 
 	fn total_issuance(asset: Self::AssetId) -> Self::Balance {
-		log::info!(target: "total_issuance", "call");
-        Zero::zero()
-		//let h = AssetMetadatas::<T>::get(asset).map(|x| x.supply);//.unwrap_or_else(Zero::zero)
+		log::trace!(target: "foreing-assets", "impl_fungible total_issuance");
+		let target_collection_id = match <AssetBinding<T>>::get(asset) {
+			Some(v) => v,
+			None => return Zero::zero(),
+		};
+		let collection_handle = match <CollectionHandle<T>>::try_get(target_collection_id) {
+			Ok(v) => v,
+			Err(_) => return Zero::zero(),		
+		};
+		let collection = FungibleHandle::cast(collection_handle);
+		Self::Balance::try_from(collection.total_supply()).unwrap_or(Zero::zero())
 	}
 
 	fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
-		log::info!(target: "minimum_balance", "call");
+		log::trace!(target: "foreing-assets", "impl_fungible minimum_balance");
 
-        Zero::zero()
-		//Asset::<T, I>::get(asset).map(|x| x.min_balance).unwrap_or_else(Zero::zero)
+		AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(asset)).map(|x| x.minimal_balance).unwrap_or_else(Zero::zero)
 	}
 
 	fn balance(asset: Self::AssetId, who: &<T as SystemConfig>::AccountId) -> Self::Balance {
-		log::info!(target: "balance", "call");
-
-        Zero::zero()
-
-        // let g = AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(asset)).unwrap();
-        // <T as PalletFungible>::Balance::<T>::get(g) 
+		log::trace!(target: "foreing-assets", "impl_fungible balance");
+		let target_collection_id = match <AssetBinding<T>>::get(asset) {
+			Some(v) => v,
+			None => return Zero::zero(),
+		};
+		let collection_handle = match <CollectionHandle<T>>::try_get(target_collection_id) {
+			Ok(v) => v,
+			Err(_) => return Zero::zero(),		
+		};
+		let collection = FungibleHandle::cast(collection_handle);
+		Self::Balance::try_from(collection.balance(
+			T::CrossAccountId::from_sub(who.clone()), 
+			TokenId(0)))
+		.unwrap_or(Zero::zero())
 	}
 
 	fn reducible_balance(
@@ -53,26 +72,20 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 		who: &<T as SystemConfig>::AccountId,
 		keep_alive: bool,
 	) -> Self::Balance {
-		log::info!(target: "reducible_balance", "call");
-
-        Zero::zero()
+		log::trace!(target: "foreing-assets", "impl_fungible reducible_balance");
+		// TODO: check correctness
+		Self::balance(asset, who)
 	}
 
 	fn can_deposit(
- 
-		// asset: Self::AssetId,
-		// who: &<T as SystemConfig>::AccountId,
-		// amount: Self::Balance,
-		// mint: bool,
         asset: Self::AssetId,
 		who: &<T as SystemConfig>::AccountId,
 		amount: Self::Balance,
 		mint: bool,
 	) -> DepositConsequence {
-		log::info!(target: "can_deposit", "call");
-
+		log::trace!(target: "foreing-assets", "impl_fungible can_deposit");
+		// TODO: check correctness
         DepositConsequence::Success
-		// Pallet::<T, I>::can_increase(asset, who, amount, mint)
 	}
 
 	fn can_withdraw(
@@ -80,10 +93,9 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 		who: &<T as SystemConfig>::AccountId,
 		amount: Self::Balance,
 	) -> WithdrawConsequence<Self::Balance> {
-		log::info!(target: "can_withdraw", "call");
-
+		log::trace!(target: "foreing-assets", "impl_fungible can_withdraw");
+		// TODO: check correctness
         WithdrawConsequence::Success
-		// Pallet::<T, I>::can_decrease(asset, who, amount, false)
 	}
 }
 
@@ -113,7 +125,33 @@ impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> 
 		amount: Self::Balance,
 	) -> DispatchResult {
 		//Self::do_mint(asset, who, amount, None)
-		log::info!(target: "mint_into", "call");
+		log::trace!(target: "foreing-assets", "impl_fungible mint_into");
+
+		// pub fn create_item(
+		// 	collection: &FungibleHandle<T>,
+		// 	sender: &T::CrossAccountId,
+		// 	data: CreateItemData<T>,
+		// 	nesting_budget: &dyn Budget,
+
+		let target_collection_id = match <AssetBinding<T>>::get(asset) {
+			Some(v) => v,
+			None => return Err(DispatchError::Other("Associated collection not found for asset")),
+		};
+		let collection = FungibleHandle::cast(<CollectionHandle<T>>::try_get(target_collection_id)?);
+		let account = T::CrossAccountId::from_sub(who.clone());
+
+		let value: u128 = match amount.try_into() { 
+			Ok(val) => val, 
+			Err(_) => return Err(DispatchError::Other("Bad amount to value conversion")), 
+		}; 
+
+		let amount_data: pallet_fungible::CreateItemData<T> = (account.clone(), value);
+
+		pallet_fungible::Pallet::<T>::create_item(
+			&collection, 
+			&account,
+			amount_data, 
+			&Unlimited)?;
 
         Ok(())
 	}
@@ -124,11 +162,26 @@ impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> 
 		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = DebitFlags { keep_alive: false, best_effort: false };
-		// Self::do_burn(asset, who, amount, None, f)
-		log::info!(target: "burn_from", "call");
+		log::trace!(target: "foreing-assets", "impl_fungible burn_from");
 
-        Ok(Zero::zero())
+		let target_collection_id = match <AssetBinding<T>>::get(asset) {
+			Some(v) => v,
+			None => return Err(DispatchError::Other("Associated collection not found for asset")),
+		};
+		let collection = FungibleHandle::cast(<CollectionHandle<T>>::try_get(target_collection_id)?);
+		let account = T::CrossAccountId::from_sub(who.clone());
+		let value: u128 = match amount.try_into() { 
+			Ok(val) => val, 
+			Err(_) => return Err(DispatchError::Other("Bad amount to value conversion")), 
+		}; 
+		pallet_fungible::Pallet::<T>::burn_from(
+			&collection, 
+			&account.clone(),
+			&account,
+			value, 
+			&Unlimited)?;
 
+        Ok(amount)
 	}
 
 	fn slash(
@@ -137,10 +190,9 @@ impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> 
 		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = DebitFlags { keep_alive: false, best_effort: true };
-		// Self::do_burn(asset, who, amount, None, f)
-		log::info!(target: "slash", "call");
-
-        Ok(Zero::zero())
+		log::trace!(target: "foreing-assets", "impl_fungible slash");
+		Self::burn_from(asset, who, amount)?;
+        Ok(amount)
 
 	}
 }
@@ -154,10 +206,27 @@ impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T> {
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = TransferFlags { keep_alive, best_effort: false, burn_dust: false };
-		// Self::do_transfer(asset, source, dest, amount, None, f)
-		log::info!(target: "transfer", "call");
+		log::trace!(target: "foreing-assets", "impl_fungible transfer");
 
-        Ok(Zero::zero())
+		let target_collection_id = match <AssetBinding<T>>::get(asset) {
+			Some(v) => v,
+			None => return Err(DispatchError::Other("Associated collection not found for asset")),
+		};
+		let collection = FungibleHandle::cast(<CollectionHandle<T>>::try_get(target_collection_id)?);
+
+		let value: u128 = match amount.try_into() { 
+			Ok(val) => val, 
+			Err(_) => return Err(DispatchError::Other("Bad amount to value conversion")), 
+		}; 
+
+		pallet_fungible::Pallet::<T>::transfer(
+			&collection, 
+			&T::CrossAccountId::from_sub(source.clone()), 
+			&T::CrossAccountId::from_sub(dest.clone()), 
+			value, 
+			&Unlimited)?;
+
+        Ok(amount)
 	}
 }
 
