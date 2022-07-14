@@ -331,6 +331,8 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Nests `token_id` under `owner` token
+	///
+	/// Caller should check that nesting wouldn't cause recursion in nesting
 	pub fn nest_if_sent_to_token_unchecked(
 		owner: &T::CrossAccountId,
 		collection_id: CollectionId,
