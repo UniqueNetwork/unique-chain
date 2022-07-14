@@ -349,6 +349,7 @@ impl<T: Config> Pallet<T> {
 	/// Burn RFT token pieces
 	///
 	/// `burn` will decrease total amount of token pieces and amount owned by sender.
+	/// `burn` can be called even if there are multiple owners of the RFT token.
 	/// If sender wouldn't have any pieces left after `burn` than she will stop being
 	/// one of the owners of the token. If there is no account that owns any pieces of
 	/// the token than token will be burned too.
@@ -831,8 +832,9 @@ impl<T: Config> Pallet<T> {
 
 	/// Repartition RFT token.
 	///
-	/// Repartition will set token balance of the sender and total amount of token pieces.
-	/// Sender should own all of the token pieces.
+	/// `repartition` will set token balance of the sender and total amount of token pieces.
+	/// Sender should own all of the token pieces. `repartition' could be done even if some
+	/// token pieces were burned before.
 	///
 	/// - `amount`: Total amount of token pieces that the token will have after `repartition`.
 	pub fn repartition(
