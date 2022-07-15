@@ -59,14 +59,14 @@ declare module '@polkadot/api-base/types/events' {
     };
     common: {
       /**
-       * * collection_id
+       * Sponsoring allowance was approved.
        * 
+       * # Arguments
+       * 
+       * * collection_id - todo:doc flesh out
        * * item_id
-       * 
        * * sender
-       * 
        * * spender
-       * 
        * * amount
        **/
       Approved: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
@@ -75,11 +75,9 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * # Arguments
        * 
-       * * collection_id: Globally unique identifier of newly created collection.
-       * 
-       * * mode: [CollectionMode] converted into u8.
-       * 
-       * * account_id: Collection owner.
+       * * collection_id - Globally unique identifier of newly created collection.
+       * * mode - [CollectionMode] converted into u8.
+       * * account_id - Collection owner.
        **/
       CollectionCreated: AugmentedEvent<ApiType, [u32, u8, AccountId32]>;
       /**
@@ -87,23 +85,36 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * # Arguments
        * 
-       * * collection_id: Globally unique identifier of collection.
+       * * collection_id - Globally unique identifier of collection that has been destroyed.
        **/
       CollectionDestroyed: AugmentedEvent<ApiType, [u32]>;
+      /**
+       * Collection property was deleted.
+       * 
+       * # Arguments
+       * 
+       * * collection_id - ID of the collection, whose property was just deleted.
+       * * property_key - Key of the property that was just deleted.
+       **/
       CollectionPropertyDeleted: AugmentedEvent<ApiType, [u32, Bytes]>;
+      /**
+       * Collection property was added or edited.
+       * 
+       * # Arguments
+       * 
+       * * collection_id - ID of the collection, whose property was just set.
+       * * property_key - Key of the property that was just set.
+       **/
       CollectionPropertySet: AugmentedEvent<ApiType, [u32, Bytes]>;
       /**
        * New item was created.
        * 
        * # Arguments
        * 
-       * * collection_id: Id of the collection where item was created.
-       * 
-       * * item_id: Id of an item. Unique within the collection.
-       * 
-       * * recipient: Owner of newly created item
-       * 
-       * * amount: Always 1 for NFT
+       * * collection_id - ID of the collection where the item was created.
+       * * item_id - ID of the item. Unique within the collection.
+       * * recipient - Owner of the newly created item.
+       * * amount - The amount of tokens that were created (always 1 for NFT).
        **/
       ItemCreated: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
@@ -111,30 +122,51 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * # Arguments
        * 
-       * * collection_id.
-       * 
-       * * item_id: Identifier of burned NFT.
-       * 
-       * * owner: which user has destroyed its tokens
-       * 
-       * * amount: Always 1 for NFT
+       * * collection_id - Identifier of the collection to which the burned NFT belonged.
+       * * item_id - Identifier of burned NFT.
+       * * owner - Which user has destroyed their tokens.
+       * * amount - Amount of tokens that were destroyed (always 1 for NFT).
        **/
       ItemDestroyed: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
+      /**
+       * Token property permission was added or updated for a collection.
+       * 
+       * # Arguments
+       * 
+       * * collection_id - ID of the collection, whose permissions were just set/updated.
+       * * property_key - Key of the property of the set/updated permission.
+       **/
       PropertyPermissionSet: AugmentedEvent<ApiType, [u32, Bytes]>;
+      /**
+       * Item property was deleted.
+       * 
+       * # Arguments
+       * 
+       * * collection_id - ID of the collection, whose token's property was just deleted.
+       * * item_id - ID of the item, whose property was just deleted.
+       * * property_key - Key of the property that was just deleted.
+       **/
       TokenPropertyDeleted: AugmentedEvent<ApiType, [u32, u32, Bytes]>;
+      /**
+       * Item property was added or edited.
+       * 
+       * # Arguments
+       * 
+       * * collection_id - ID of the collection, whose token's property was just set.
+       * * item_id - ID of the item, whose property was just set.
+       * * property_key - Key of the property that was just set.
+       **/
       TokenPropertySet: AugmentedEvent<ApiType, [u32, u32, Bytes]>;
       /**
-       * Item was transferred
+       * Item was transferred.
        * 
-       * * collection_id: Id of collection to which item is belong
+       * # Arguments
        * 
-       * * item_id: Id of an item
-       * 
-       * * sender: Original owner of item
-       * 
-       * * recipient: New owner of item
-       * 
-       * * amount: Always 1 for NFT
+       * * collection_id - ID of the collection to which the item belongs.
+       * * item_id - ID of the item transferred.
+       * * sender - Original owner of the item.
+       * * recipient - New owner of the item.
+       * * amount - Amount of tokens that were transferred (always 1 for NFT).
        **/
       Transfer: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
@@ -442,7 +474,7 @@ declare module '@polkadot/api-base/types/events' {
     };
     structure: {
       /**
-       * Executed call on behalf of token
+       * Executed call on behalf of the token.
        **/
       Executed: AugmentedEvent<ApiType, [Result<Null, SpRuntimeDispatchError>]>;
       /**
@@ -534,7 +566,7 @@ declare module '@polkadot/api-base/types/events' {
     };
     unique: {
       /**
-       * Address was add to allow list
+       * Address was added to the allow list
        * 
        * # Arguments
        * 
@@ -544,7 +576,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       AllowListAddressAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
-       * Address was remove from allow list
+       * Address was removed from the allow list
        * 
        * # Arguments
        * 
@@ -574,7 +606,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       CollectionAdminRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
-       * Collection limits was set
+       * Collection limits were set
        * 
        * # Arguments
        * 
@@ -582,7 +614,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       CollectionLimitSet: AugmentedEvent<ApiType, [u32]>;
       /**
-       * Collection owned was change
+       * Collection owned was changed
        * 
        * # Arguments
        * 
@@ -591,6 +623,13 @@ declare module '@polkadot/api-base/types/events' {
        * * owner:  New owner address.
        **/
       CollectionOwnedChanged: AugmentedEvent<ApiType, [u32, AccountId32]>;
+      /**
+       * Collection permissions were set
+       * 
+       * # Arguments
+       * 
+       * * collection_id: Globally unique collection identifier.
+       **/
       CollectionPermissionSet: AugmentedEvent<ApiType, [u32]>;
       /**
        * Collection sponsor was removed

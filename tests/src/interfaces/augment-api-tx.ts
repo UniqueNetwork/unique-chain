@@ -730,21 +730,20 @@ declare module '@polkadot/api-base/types/submittable' {
     };
     unique: {
       /**
-       * Adds an admin of the Collection.
+       * Adds an admin of the collection.
        * NFT Collection can be controlled by multiple admin addresses (some which can also be servers, for example). Admins can issue and burn NFTs, as well as add and remove other admins, but cannot change NFT or Collection ownership.
        * 
        * # Permissions
        * 
-       * * Collection Owner.
-       * * Collection Admin.
+       * * Collection Owner
+       * * Collection Admin
        * 
        * # Arguments
        * 
-       * * collection_id: ID of the Collection to add admin for.
-       * 
-       * * new_admin_id: Address of new admin to add.
+       * * collection_id - ID of the Collection to add admin for.
+       * * new_admin - Address of new admin to add.
        **/
-      addCollectionAdmin: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newAdminId: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
+      addCollectionAdmin: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newAdmin: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Add an address to allow list.
        * 
@@ -756,7 +755,6 @@ declare module '@polkadot/api-base/types/submittable' {
        * # Arguments
        * 
        * * collection_id.
-       * 
        * * address.
        **/
       addToAllowList: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, address: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
@@ -771,15 +769,13 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * # Arguments
        * 
-       * * approved: Address that is approved to transfer this NFT or zero (if needed to remove approval).
-       * 
+       * * approved - Address that is approved to transfer this NFT or zero (if needed to remove approval).
        * * collection_id.
-       * 
-       * * item_id: ID of the item.
+       * * item_id - ID of the item.
        **/
       approve: AugmentedSubmittable<(spender: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, collectionId: u32 | AnyNumber | Uint8Array, itemId: u32 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletEvmAccountBasicCrossAccountIdRepr, u32, u32, u128]>;
       /**
-       * Destroys a concrete instance of NFT on behalf of the owner
+       * Destroy a concrete instance of NFT on behalf of the owner.
        * See also: [`approve`]
        * 
        * # Permissions
@@ -790,27 +786,24 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * # Arguments
        * 
-       * * collection_id: ID of the collection.
-       * 
-       * * item_id: ID of NFT to burn.
-       * 
-       * * from: owner of item
+       * * collection_id - ID of the collection.
+       * * item_id - ID of NFT to burn.
+       * * from - The owner of the item from whom it is taken away.
        **/
       burnFrom: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, from: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, itemId: u32 | AnyNumber | Uint8Array, value: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr, u32, u128]>;
       /**
-       * Destroys a concrete instance of NFT.
+       * Destroy a concrete instance of NFT.
        * 
        * # Permissions
        * 
-       * * Collection Owner.
-       * * Collection Admin.
-       * * Current NFT Owner.
+       * * Collection Owner
+       * * Collection Admin
+       * * Current NFT Owner
        * 
        * # Arguments
        * 
-       * * collection_id: ID of the collection.
-       * 
-       * * item_id: ID of NFT to burn.
+       * * collection_id - ID of the collection.
+       * * item_id - ID of NFT to burn.
        **/
       burnItem: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, itemId: u32 | AnyNumber | Uint8Array, value: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u128]>;
       /**
@@ -818,19 +811,20 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * # Permissions
        * 
-       * * Collection Owner.
+       * * Collection Owner
        * 
        * # Arguments
        * 
        * * collection_id.
-       * 
        * * new_owner.
        **/
       changeCollectionOwner: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newOwner: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, AccountId32]>;
       /**
+       * Confirm own sponsorship of a collection.
+       * 
        * # Permissions
        * 
-       * * Sponsor.
+       * * Sponsor-to-be
        * 
        * # Arguments
        * 
@@ -847,27 +841,31 @@ declare module '@polkadot/api-base/types/submittable' {
        * # Arguments
        * 
        * * collection_name: UTF-16 string with collection name (limit 64 characters), will be stored as zero-terminated.
-       * 
-       * * collection_description: UTF-16 string with collection description (limit 256 characters), will be stored as zero-terminated.
-       * 
-       * * token_prefix: UTF-8 string with token prefix.
-       * 
-       * * mode: [CollectionMode] collection type and type dependent data.
+       * * collection_description - UTF-16 string with collection description (limit 256 characters), will be stored as zero-terminated.
+       * * token_prefix - UTF-8 string with token prefix.
+       * * mode - [CollectionMode] collection type and type dependent data.
        **/
       createCollection: AugmentedSubmittable<(collectionName: Vec<u16> | (u16 | AnyNumber | Uint8Array)[], collectionDescription: Vec<u16> | (u16 | AnyNumber | Uint8Array)[], tokenPrefix: Bytes | string | Uint8Array, mode: UpDataStructsCollectionMode | { NFT: any } | { Fungible: any } | { ReFungible: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Vec<u16>, Vec<u16>, Bytes, UpDataStructsCollectionMode]>;
       /**
-       * This method creates a collection
+       * Create a collection with explicit parameters.
+       * Prefer it to the deprecated [`created_collection`] method.
        * 
-       * Prefer it to deprecated [`created_collection`] method
+       * # Permissions
+       * 
+       * * Anyone.
+       * 
+       * # Arguments
+       * 
+       * * data: explicit create-collection data.
        **/
       createCollectionEx: AugmentedSubmittable<(data: UpDataStructsCreateCollectionData | { mode?: any; access?: any; name?: any; description?: any; tokenPrefix?: any; pendingSponsor?: any; limits?: any; permissions?: any; tokenPropertyPermissions?: any; properties?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [UpDataStructsCreateCollectionData]>;
       /**
-       * This method creates a concrete instance of NFT Collection created with CreateCollection method.
+       * Create a concrete instance of NFT Collection created with CreateCollection method.
        * 
        * # Permissions
        * 
-       * * Collection Owner.
-       * * Collection Admin.
+       * * Collection Owner
+       * * Collection Admin
        * * Anyone if
        * * Allow List is enabled, and
        * * Address is added to allow list, and
@@ -875,20 +873,18 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * # Arguments
        * 
-       * * collection_id: ID of the collection.
-       * 
-       * * owner: Address, initial owner of the NFT.
-       * 
-       * * data: Token data to store on chain.
+       * * collection_id - ID of the collection.
+       * * owner - Address, initial owner of the NFT.
+       * * data - Token data to store on chain.
        **/
       createItem: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, owner: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, data: UpDataStructsCreateItemData | { NFT: any } | { Fungible: any } | { ReFungible: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsCreateItemData]>;
       /**
-       * This method creates multiple items in a collection created with CreateCollection method.
+       * Create multiple items in a collection created with CreateCollection method.
        * 
        * # Permissions
        * 
-       * * Collection Owner.
-       * * Collection Admin.
+       * * Collection Owner
+       * * Collection Admin
        * * Anyone if
        * * Allow List is enabled, and
        * * Address is added to allow list, and
@@ -896,26 +892,70 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * # Arguments
        * 
-       * * collection_id: ID of the collection.
-       * 
-       * * itemsData: Array items properties. Each property is an array of bytes itself, see [create_item].
-       * 
-       * * owner: Address, initial owner of the NFT.
+       * * collection_id - ID of the collection.
+       * * owner - Address, initial owner of the NFT.
+       * * items_data - Array items properties. Each property is an array of bytes itself, see [`create_item`].
        **/
       createMultipleItems: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, owner: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, itemsData: Vec<UpDataStructsCreateItemData> | (UpDataStructsCreateItemData | { NFT: any } | { Fungible: any } | { ReFungible: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr, Vec<UpDataStructsCreateItemData>]>;
-      createMultipleItemsEx: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, data: UpDataStructsCreateItemExData | { NFT: any } | { Fungible: any } | { RefungibleMultipleItems: any } | { RefungibleMultipleOwners: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsCreateItemExData]>;
-      deleteCollectionProperties: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, propertyKeys: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, Vec<Bytes>]>;
-      deleteTokenProperties: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, u32, Vec<Bytes>]>;
       /**
-       * Destroys collection if no tokens within this collection
+       * Create multiple items inside a collection with explicitly specified initial parameters.
        * 
        * # Permissions
        * 
-       * * Collection Owner.
+       * * Collection Owner
+       * * Collection Admin
+       * * Anyone if
+       * * Allow List is enabled, and
+       * * Address is added to allow list, and
+       * * MintPermission is enabled (see SetMintPermission method)
        * 
        * # Arguments
        * 
-       * * collection_id: collection to destroy.
+       * * collection_id - ID of the collection.
+       * * data - Explicit item creation data.
+       **/
+      createMultipleItemsEx: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, data: UpDataStructsCreateItemExData | { NFT: any } | { Fungible: any } | { RefungibleMultipleItems: any } | { RefungibleMultipleOwners: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsCreateItemExData]>;
+      /**
+       * Delete specified collection properties.
+       * 
+       * # Permissions
+       * 
+       * * Collection Owner
+       * * Collection Admin
+       * 
+       * # Arguments
+       * 
+       * * collection_id.
+       * * property_keys - Vector of keys of the properties to be deleted.
+       **/
+      deleteCollectionProperties: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, propertyKeys: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, Vec<Bytes>]>;
+      /**
+       * Delete specified token properties.
+       * 
+       * # Permissions
+       * 
+       * * Depends on collection's token property permissions and specified property mutability:
+       * * Collection Owner
+       * * Collection Admin
+       * * Token Owner
+       * 
+       * # Arguments
+       * 
+       * * collection_id.
+       * * token_id.
+       * * property_keys - Vector of keys of the properties to be deleted.
+       **/
+      deleteTokenProperties: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, u32, Vec<Bytes>]>;
+      /**
+       * Destroy the collection if no tokens exist within.
+       * 
+       * # Permissions
+       * 
+       * * Collection Owner
+       * 
+       * # Arguments
+       * 
+       * * collection_id - collection to destroy.
        **/
       destroyCollection: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
       /**
@@ -923,14 +963,13 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * # Permissions
        * 
-       * * Collection Owner.
-       * * Collection Admin.
+       * * Collection Owner
+       * * Collection Admin
        * 
        * # Arguments
        * 
-       * * collection_id: ID of the Collection to remove admin for.
-       * 
-       * * account_id: Address of admin to remove.
+       * * collection_id - ID of the Collection to remove admin for.
+       * * account_id - Address of admin to remove.
        **/
       removeCollectionAdmin: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, accountId: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
@@ -938,7 +977,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * # Permissions
        * 
-       * * Collection owner.
+       * * Collection Owner
        * 
        * # Arguments
        * 
@@ -956,40 +995,121 @@ declare module '@polkadot/api-base/types/submittable' {
        * # Arguments
        * 
        * * collection_id.
-       * 
        * * address.
        **/
       removeFromAllowList: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, address: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
-      repartition: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, token: u32 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u128]>;
+      /**
+       * Re-partition a refungible token, while owning all of its parts.
+       * 
+       * # Permissions
+       * 
+       * * Token Owner (must own every part)
+       * 
+       * # Arguments
+       * 
+       * * collection_id.
+       * * token_id - ID of the RFT.
+       * * amount - New number of parts into which the token shall be partitioned.
+       **/
+      repartition: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u128]>;
+      /**
+       * Set specific limits of a collection. Empty, or None fields mean chain default.
+       * 
+       * # Permissions
+       * 
+       * * Collection Owner
+       * * Collection Admin
+       * 
+       * # Arguments
+       * 
+       * * collection_id.
+       * * new_limit - New limits of the collection. They will overwrite the current ones.
+       **/
       setCollectionLimits: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newLimit: UpDataStructsCollectionLimits | { accountTokenOwnershipLimit?: any; sponsoredDataSize?: any; sponsoredDataRateLimit?: any; tokenLimit?: any; sponsorTransferTimeout?: any; sponsorApproveTimeout?: any; ownerCanTransfer?: any; ownerCanDestroy?: any; transfersEnabled?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsCollectionLimits]>;
-      setCollectionPermissions: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newLimit: UpDataStructsCollectionPermissions | { access?: any; mintMode?: any; nesting?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsCollectionPermissions]>;
+      /**
+       * Set specific permissions of a collection. Empty, or None fields mean chain default.
+       * 
+       * # Permissions
+       * 
+       * * Collection Owner
+       * * Collection Admin
+       * 
+       * # Arguments
+       * 
+       * * collection_id.
+       * * new_permission - New permissions of the collection. They will overwrite the current ones.
+       **/
+      setCollectionPermissions: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newPermission: UpDataStructsCollectionPermissions | { access?: any; mintMode?: any; nesting?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, UpDataStructsCollectionPermissions]>;
+      /**
+       * Add or change collection properties.
+       * 
+       * # Permissions
+       * 
+       * * Collection Owner
+       * * Collection Admin
+       * 
+       * # Arguments
+       * 
+       * * collection_id.
+       * * properties - Vector of key-value pairs stored as the collection's metadata. Keys support Latin letters, `-`, `_`, and `.` as symbols.
+       **/
       setCollectionProperties: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, properties: Vec<UpDataStructsProperty> | (UpDataStructsProperty | { key?: any; value?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, Vec<UpDataStructsProperty>]>;
       /**
+       * Set (invite) a new collection sponsor. If successful, confirmation from the sponsor-to-be will be pending.
+       * 
+       * # Permissions
+       * 
+       * * Collection Owner
+       * * Collection Admin
+       * 
+       * # Arguments
+       * 
+       * * collection_id.
+       * * new_sponsor.
+       **/
+      setCollectionSponsor: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newSponsor: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, AccountId32]>;
+      /**
+       * Add or change token properties according to collection's permissions.
+       * 
+       * # Permissions
+       * 
+       * * Depends on collection's token property permissions and specified property mutability:
+       * * Collection Owner
+       * * Collection Admin
+       * * Token Owner
+       * 
+       * # Arguments
+       * 
+       * * collection_id.
+       * * token_id.
+       * * properties - Vector of key-value pairs stored as the token's metadata. Keys support Latin letters, `-`, `_`, and `.` as symbols.
+       **/
+      setTokenProperties: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, properties: Vec<UpDataStructsProperty> | (UpDataStructsProperty | { key?: any; value?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, u32, Vec<UpDataStructsProperty>]>;
+      /**
+       * Add or change token property permissions of a collection.
+       * 
+       * # Permissions
+       * 
+       * * Collection Owner
+       * * Collection Admin
+       * 
+       * # Arguments
+       * 
+       * * collection_id.
+       * * property_permissions - Vector of permissions for property keys. Keys support Latin letters, `-`, `_`, and `.` as symbols.
+       **/
+      setTokenPropertyPermissions: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, propertyPermissions: Vec<UpDataStructsPropertyKeyPermission> | (UpDataStructsPropertyKeyPermission | { key?: any; permission?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, Vec<UpDataStructsPropertyKeyPermission>]>;
+      /**
+       * Set transfers_enabled value for particular collection.
+       * 
        * # Permissions
        * 
        * * Collection Owner
        * 
        * # Arguments
        * 
-       * * collection_id.
-       * 
-       * * new_sponsor.
-       **/
-      setCollectionSponsor: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newSponsor: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, AccountId32]>;
-      setTokenProperties: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, properties: Vec<UpDataStructsProperty> | (UpDataStructsProperty | { key?: any; value?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, u32, Vec<UpDataStructsProperty>]>;
-      setTokenPropertyPermissions: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, propertyPermissions: Vec<UpDataStructsPropertyKeyPermission> | (UpDataStructsPropertyKeyPermission | { key?: any; permission?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, Vec<UpDataStructsPropertyKeyPermission>]>;
-      /**
-       * Set transfers_enabled value for particular collection
-       * 
-       * # Permissions
-       * 
-       * * Collection Owner.
-       * 
-       * # Arguments
-       * 
-       * * collection_id: ID of the collection.
-       * 
-       * * value: New flag value.
+       * * collection_id - ID of the collection.
+       * * value - New flag value.
        **/
       setTransfersEnabledFlag: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, value: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, bool]>;
       /**
@@ -1003,16 +1123,16 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * # Arguments
        * 
-       * * recipient: Address of token recipient.
+       * * recipient - Address of token recipient.
        * 
        * * collection_id.
        * 
-       * * item_id: ID of the item
+       * * item_id - ID of the item
        * * Non-Fungible Mode: Required.
        * * Fungible Mode: Ignored.
        * * Re-Fungible Mode: Required.
        * 
-       * * value: Amount to transfer.
+       * * value - Amount to transfer.
        * * Non-Fungible Mode: Ignored
        * * Fungible Mode: Must specify transferred amount
        * * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
@@ -1022,6 +1142,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * Change ownership of a NFT on behalf of the owner. See Approve method for additional information. After this method executes, the approval is removed so that the approved address will not be able to transfer this NFT again from this owner.
        * 
        * # Permissions
+       * 
        * * Collection Owner
        * * Collection Admin
        * * Current NFT owner
@@ -1029,15 +1150,11 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * # Arguments
        * 
-       * * from: Address that owns token.
-       * 
-       * * recipient: Address of token recipient.
-       * 
+       * * from - Address that currently owns the token.
+       * * recipient - Address of the new token-owner-to-be.
        * * collection_id.
-       * 
-       * * item_id: ID of the item.
-       * 
-       * * value: Amount to transfer.
+       * * item_id - ID of the item to be transferred.
+       * * value - Amount to transfer.
        **/
       transferFrom: AugmentedSubmittable<(from: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, recipient: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, collectionId: u32 | AnyNumber | Uint8Array, itemId: u32 | AnyNumber | Uint8Array, value: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u32, u32, u128]>;
       /**
