@@ -367,32 +367,37 @@ pub type CollectionPropertiesVec = BoundedVec<Property, ConstU32<MAX_PROPERTIES_
 
 /// Limits and restrictions of a collection.
 /// All fields are wrapped in `Option`s, where None means chain default.
-// When adding/removing fields from this struct - don't forget to also update clamp_limits
+///
+/// todo:doc links to chain defaults
+// IMPORTANT: When adding/removing fields from this struct - don't forget to also
+// update clamp_limits() in pallet-common.
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionLimits {
-	/// Maximum number of owned tokens per account
+	/// Maximum number of owned tokens per account. Chain default: [`ACCOUNT_TOKEN_OWNERSHIP_LIMIT`]
 	pub account_token_ownership_limit: Option<u32>,
-	/// Maximum size of data of a sponsored transaction
+	/// Maximum size of data in bytes of a sponsored transaction. Chain default: [`CUSTOM_DATA_LIMIT`]
 	pub sponsored_data_size: Option<u32>,
 
 	/// FIXME should we delete this or repurpose it?
 	/// None - setVariableMetadata is not sponsored
 	/// Some(v) - setVariableMetadata is sponsored
 	///           if there is v block between txs
+	///
+	/// In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
 	pub sponsored_data_rate_limit: Option<SponsoringRateLimit>,
-	/// Maximum amount of tokens inside the collection
+	/// Maximum amount of tokens inside the collection. Chain default: [`COLLECTION_TOKEN_LIMIT`]
 	pub token_limit: Option<u32>,
 
-	/// Timeout for sponsoring a token transfer in passed blocks
+	/// Timeout for sponsoring a token transfer in passed blocks. Chain default: [`MAX_SPONSOR_TIMEOUT`]
 	pub sponsor_transfer_timeout: Option<u32>,
-	/// Timeout for sponsoring an approval in passed blocks
+	/// Timeout for sponsoring an approval in passed blocks. Chain default: [`SPONSOR_APPROVE_TIMEOUT`]
 	pub sponsor_approve_timeout: Option<u32>,
-	/// Can a token be transferred by the owner
+	/// Can a token be transferred by the owner. Chain default: `false`
 	pub owner_can_transfer: Option<bool>,
-	/// Can a token be burned by the owner
+	/// Can a token be burned by the owner. Chain default: `true`
 	pub owner_can_destroy: Option<bool>,
-	/// Can a token be transferred at all
+	/// Can a token be transferred at all. Chain default: `true`
 	pub transfers_enabled: Option<bool>,
 }
 
@@ -445,7 +450,10 @@ impl CollectionLimits {
 	}
 }
 
-// When adding/removing fields from this struct - don't forget to also update clamp_limits
+/// Permissions on certain operations within a collection.
+/// All fields are wrapped in `Option`s, where None means chain default.
+// IMPORTANT: When adding/removing fields from this struct - don't forget to also
+// update clamp_limits() in pallet-common.
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionPermissions {
@@ -500,6 +508,7 @@ impl core::ops::DerefMut for OwnerRestrictedSet {
 	}
 }
 
+/// Part of collection permissions, if set, defines who is able to nest tokens into other tokens.
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen, Derivative)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 #[derivative(Debug)]
@@ -516,14 +525,17 @@ pub struct NestingPermissions {
 	pub permissive: bool,
 }
 
+/// Enum denominating how often can sponsoring occur if it is enabled.
 #[derive(Encode, Decode, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum SponsoringRateLimit {
+	/// Sponsoring is disabled, and the collection sponsor will not pay for transactions
 	SponsoringDisabled,
 	/// Once per how many blocks can sponsorship of a transaction type occur
 	Blocks(u32),
 }
 
+/// Data used to describe an NFT at creation.
 #[derive(Encode, Decode, MaxEncodedLen, Default, PartialEq, Clone, Derivative, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 #[derivative(Debug)]
@@ -534,17 +546,20 @@ pub struct CreateNftData {
 	pub properties: CollectionPropertiesVec,
 }
 
+/// Data used to describe a Fungible token at creation.
 #[derive(Encode, Decode, MaxEncodedLen, Default, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CreateFungibleData {
-	/// Number of fungible tokens minted
+	/// Number of fungible coins minted
 	pub value: u128,
 }
 
+/// Data used to describe a Refungible token at creation.
 #[derive(Encode, Decode, MaxEncodedLen, Default, PartialEq, Clone, Derivative, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 #[derivative(Debug)]
 pub struct CreateReFungibleData {
+	/// Immutable metadata of the token
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
@@ -560,6 +575,7 @@ pub enum MetaUpdatePermission {
 	None,
 }
 
+/// Enum holding data used for creation of all three item types.
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum CreateItemData {
