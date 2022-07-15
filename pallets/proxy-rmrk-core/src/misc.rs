@@ -19,7 +19,7 @@
 use super::*;
 use codec::{Encode, Decode, Error};
 
-/// Match errors from one type to another and return an error 
+/// Match errors from one type to another and return an error
 /// if a match is successful.
 #[macro_export]
 macro_rules! map_unique_err_to_proxy {

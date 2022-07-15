@@ -104,7 +104,6 @@ pub fn nft_by_id<T: Config>(
 	}))
 }
 
-
 /// Get tokens owned by an account in a collection.
 pub fn account_tokens<T: Config>(
 	account_id: T::AccountId,

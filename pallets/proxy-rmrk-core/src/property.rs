@@ -24,7 +24,7 @@ use core::convert::AsRef;
 pub const RESOURCE_ID_PREFIX: &str = "rsid-";
 /// Property prefix for storing custom user-defined properties.
 pub const USER_PROPERTY_PREFIX: &str = "userprop-";
-/// Property scope for RMRK, used to signify that this property 
+/// Property scope for RMRK, used to signify that this property
 /// was created and is used by RMRK.
 pub const RMRK_SCOPE: PropertyScope = PropertyScope::Rmrk;
 

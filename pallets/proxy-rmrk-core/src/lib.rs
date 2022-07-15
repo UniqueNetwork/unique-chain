@@ -15,83 +15,83 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 //! # RMRK Core Proxy Pallet
-//! 
+//!
 //! A pallet used as proxy for RMRK Core (<https://rmrk-team.github.io/rmrk-substrate/#/pallets/rmrk-core>).
-//! 
+//!
 //! - [`Config`]
 //! - [`Call`]
 //! - [`Pallet`]
-//! 
+//!
 //! ## Overview
-//! 
-//! The RMRK Core Proxy pallet mirrors the functionality of RMRK Core, 
+//!
+//! The RMRK Core Proxy pallet mirrors the functionality of RMRK Core,
 //! binding its externalities to Unique's own underlying structure.
 //! It is purposed to mimic RMRK Core exactly, allowing seamless integrations
 //! of solutions based on RMRK.
-//! 
+//!
 //! RMRK Core itself contains essential functionality for RMRK's nested and
 //! multi-resourced NFTs.
-//! 
+//!
 //! *Note*, that while RMRK itself is subject to active development and restructuring,
 //! the proxy may be caught temporarily out of date.
-//! 
+//!
 //! ### What is RMRK?
-//! 
-//! RMRK is a set of NFT standards which compose several "NFT 2.0 lego" primitives. 
+//!
+//! RMRK is a set of NFT standards which compose several "NFT 2.0 lego" primitives.
 //! Putting these legos together allows a user to create NFT systems of arbitrary complexity.
-//! 
+//!
 //! Meaning, RMRK NFTs are dynamic, able to nest into each other and form a hierarchy,
-//! make use of specific changeable and partially shared metadata in the form of resources, 
+//! make use of specific changeable and partially shared metadata in the form of resources,
 //! and more.
-//! 
+//!
 //! Visit RMRK documentation and repositories to learn more:
 //! - Docs: <https://docs.rmrk.app/getting-started/>
 //! - FAQ: <https://coda.io/@rmrk/faq>
 //! - Substrate code repository: <https://github.com/rmrk-team/rmrk-substrate>
 //! - RMRK spec repository: <https://github.com/rmrk-team/rmrk-spec>
-//! 
+//!
 //! ## Proxy Implementation
-//! 
+//!
 //! An external user is supposed to be able to utilize this proxy as they would
 //! utilize RMRK, and get exactly the same results. Normally, Unique transactions
 //! are off-limits to RMRK collections and tokens, and vice versa. However,
 //! the information stored on chain can be freely interpreted by storage reads and RPCs.
-//! 
+//!
 //! ### ID Mapping
-//! 
+//!
 //! RMRK's collections' IDs are counted independently of Unique's and start at 0.
 //! Note that tokens' IDs still start at 1.
 //! The collections themselves, as well as tokens, are stored as Unique collections,
 //! and thus RMRK IDs are mapped to Unique IDs (but not vice versa).
-//! 
+//!
 //! ### External/Internal Collection Insulation
-//! 
+//!
 //! A Unique transaction cannot target collections purposed for RMRK,
-//! and they are flagged as `external` to specify that. On the other hand, 
+//! and they are flagged as `external` to specify that. On the other hand,
 //! due to the mapping, RMRK transactions and RPCs simply cannot reach Unique collections.
-//! 
+//!
 //! ### Native Properties
-//! 
-//! Many of RMRK's native parameters are stored as scoped properties of a collection 
+//!
+//! Many of RMRK's native parameters are stored as scoped properties of a collection
 //! or an NFT on the chain. Scoped properties are prefixed with `rmrk:`, where `:`
 //! is an unacceptable symbol in user-defined proeprties, which, along with other safeguards,
 //! makes them impossible to tamper with.
-//! 
+//!
 //! ### Collection and NFT Types
-//! 
-//! RMRK introduces the concept of a Base, which is a catalgoue of Parts, 
+//!
+//! RMRK introduces the concept of a Base, which is a catalgoue of Parts,
 //! possible components of an NFT. Due to its similarity with the functionality
 //! of a token collection, a Base is stored and handled as one, and the Base's Parts and Themes
-//! are the collection's NFTs. See [`CollectionType`](pallet_rmrk_core::misc::CollectionType) and 
+//! are the collection's NFTs. See [`CollectionType`](pallet_rmrk_core::misc::CollectionType) and
 //! [`NftType`](pallet_rmrk_core::misc::NftType).
-//! 
+//!
 //! ## Interface
-//! 
+//!
 //! ### Dispatchables
-//! 
+//!
 //! - `create_collection` - Create a new collection of NFTs.
 //! - `destroy_collection` - Destroy a collection.
-//! - `change_collection_issuer` - Change the issuer of a collection. 
+//! - `change_collection_issuer` - Change the issuer of a collection.
 //! Analogous to Unique's collection's [`owner`](up_data_structs::Collection).
 //! - `lock_collection` - "Lock" the collection and prevent new token creation. **Cannot be undone.**
 //! - `mint_nft` - Mint an NFT in a specified collection.
@@ -163,7 +163,7 @@ pub mod pallet {
 	{
 		/// Overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		
+
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
 	}
@@ -269,7 +269,7 @@ pub mod pallet {
 		RmrkPropertyValueIsTooLong,
 		/// Could not find a property by the supplied key.
 		RmrkPropertyIsNotFound,
-		/// Something went wrong when decoding encoded data from the storage. 
+		/// Something went wrong when decoding encoded data from the storage.
 		/// Perhaps, there was a wrong key supplied for the type, or the data was improperly stored.
 		UnableToDecodeRmrkData,
 
@@ -290,7 +290,7 @@ pub mod pallet {
 		CollectionFullOrLocked,
 		/// No such resource found.
 		ResourceDoesntExist,
-		/// If an NFT is sent to a descendant, that would form a nesting loop, an ouroboros. 
+		/// If an NFT is sent to a descendant, that would form a nesting loop, an ouroboros.
 		/// Sending to self is redundant.
 		CannotSendToDescendentOrSelf,
 		/// Not the target owner of the sent NFT.
@@ -317,7 +317,7 @@ pub mod pallet {
 		/// # Arguments:
 		/// - `metadata`: Metadata describing the collection, e.g. IPFS hash. Cannot be changed.
 		/// - `max`: Optional maximum number of tokens.
-		/// - `symbol`: UTF-8 string with token prefix, by which to represent the token in wallets and UIs. 
+		/// - `symbol`: UTF-8 string with token prefix, by which to represent the token in wallets and UIs.
 		/// Analogous to Unique's [`token_prefix`](up_data_structs::Collection). Cannot be changed.
 		#[transactional]
 		#[pallet::weight(<SelfWeightOf<T>>::create_collection())]
@@ -383,8 +383,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Destroy a collection. 
-		/// 
+		/// Destroy a collection.
+		///
 		/// Only empty collections can be destroyed. If it has any tokens, they must be burned first.
 		///
 		/// # Permissions:
@@ -419,7 +419,7 @@ pub mod pallet {
 		}
 
 		/// Change the issuer of a collection. Analogous to Unique's collection's [`owner`](up_data_structs::Collection).
-		/// 
+		///
 		/// # Permissions:
 		/// * Collection issuer
 		///
@@ -457,7 +457,7 @@ pub mod pallet {
 		}
 
 		/// "Lock" the collection and prevent new token creation. Cannot be undone.
-		/// 
+		///
 		/// # Permissions:
 		/// * Collection issuer
 		///
@@ -498,7 +498,7 @@ pub mod pallet {
 		///
 		/// # Permissions:
 		/// * Collection issuer
-		/// 
+		///
 		/// # Arguments:
 		/// - `owner`: Owner account of the NFT. If set to None, defaults to the sender (collection issuer).
 		/// - `collection_id`: RMRK collection ID for the NFT to be minted within. Cannot be changed.
@@ -574,20 +574,20 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Burn an NFT, destroying it and its nested tokens up to the specified limit. 
+		/// Burn an NFT, destroying it and its nested tokens up to the specified limit.
 		/// If the burning budget is exceeded, the transaction is reverted.
-		/// 
+		///
 		/// This is the way to burn a nested token as well.
-		/// 
+		///
 		/// For more information, see [`burn_recursively`](pallet_nonfungible::pallet::Pallet::burn_recursively).
-		/// 
+		///
 		/// # Permissions:
 		/// * Token owner
-		/// 
+		///
 		/// # Arguments:
 		/// - `collection_id`: RMRK ID of the collection in which the NFT to burn belongs to.
 		/// - `nft_id`: ID of the NFT to be destroyed.
-		/// - `max_burns`: Maximum number of tokens to burn, used for nesting. The transaction 
+		/// - `max_burns`: Maximum number of tokens to burn, used for nesting. The transaction
 		/// is reverted if there are more tokens to burn in the nesting tree than this number.
 		#[transactional]
 		#[pallet::weight(<SelfWeightOf<T>>::burn_nft(*max_burns))]
@@ -625,13 +625,13 @@ pub mod pallet {
 
 		/// Transfer an NFT from an account/NFT A to another account/NFT B.
 		/// The token must be transferable. Nesting cannot occur deeper than the [`NESTING_BUDGET`].
-		/// 
+		///
 		/// If the target owner is an NFT owned by another account, then the NFT will enter
 		/// the pending state and will have to be accepted by the other account.
 		///
 		/// # Permissions:
 		/// - Token owner
-		/// 
+		///
 		/// # Arguments:
 		/// - `collection_id`: RMRK ID of the collection of the NFT to be transferred.
 		/// - `nft_id`: ID of the NFT to be transferred.
@@ -750,16 +750,16 @@ pub mod pallet {
 		}
 
 		/// Accept an NFT sent from another account to self or an owned NFT.
-		/// 
+		///
 		/// The NFT in question must be pending, and, thus, be [sent](`crate::pallet::Call::send`) first.
-		/// 
+		///
 		/// # Permissions:
 		/// - Token-owner-to-be
 		///
 		/// # Arguments:
 		/// - `rmrk_collection_id`: RMRK collection ID of the NFT to be accepted.
 		/// - `rmrk_nft_id`: ID of the NFT to be accepted.
-		/// - `new_owner`: Either the sender's account ID or a sender-owned NFT, 
+		/// - `new_owner`: Either the sender's account ID or a sender-owned NFT,
 		/// whichever the accepted NFT was sent to.
 		#[transactional]
 		#[pallet::weight(<SelfWeightOf<T>>::accept_nft())]
@@ -842,12 +842,12 @@ pub mod pallet {
 
 		/// Reject an NFT sent from another account to self or owned NFT.
 		/// The NFT in question will not be sent back and burnt instead.
-		/// 
+		///
 		/// The NFT in question must be pending, and, thus, be [sent](`crate::pallet::Call::send`) first.
-		/// 
+		///
 		/// # Permissions:
 		/// - Token-owner-to-be-not
-		/// 
+		///
 		/// # Arguments:
 		/// - `rmrk_collection_id`: RMRK ID of the NFT to be rejected.
 		/// - `rmrk_nft_id`: ID of the NFT to be rejected.
@@ -905,11 +905,11 @@ pub mod pallet {
 		}
 
 		/// Accept the addition of a newly created pending resource to an existing NFT.
-		/// 
+		///
 		/// This transaction is needed when a resource is created and assigned to an NFT
-		/// by a non-owner, i.e. the collection issuer, with one of the 
+		/// by a non-owner, i.e. the collection issuer, with one of the
 		/// [`add_...` transactions](crate::pallet::Call::add_basic_resource).
-		/// 
+		///
 		/// # Permissions:
 		/// - Token owner
 		///
@@ -960,10 +960,10 @@ pub mod pallet {
 		}
 
 		/// Accept the removal of a removal-pending resource from an NFT.
-		/// 
-		/// This transaction is needed when a non-owner, i.e. the collection issuer, 
+		///
+		/// This transaction is needed when a non-owner, i.e. the collection issuer,
 		/// requests a [removal](`crate::pallet::Call::remove_resource`) of a resource from an NFT.
-		/// 
+		///
 		/// # Permissions:
 		/// - Token owner
 		///
@@ -1036,13 +1036,13 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Add or edit a custom user property, a key-value pair, describing the metadata 
+		/// Add or edit a custom user property, a key-value pair, describing the metadata
 		/// of a token or a collection, on either one of these.
-		/// 
-		/// Note that in this proxy implementation many details regarding RMRK are stored 
-		/// as scoped properties prefixed with "rmrk:", normally inaccessible 
+		///
+		/// Note that in this proxy implementation many details regarding RMRK are stored
+		/// as scoped properties prefixed with "rmrk:", normally inaccessible
 		/// to external transactions and RPCs.
-		/// 
+		///
 		/// # Permissions:
 		/// - Collection issuer - in case of collection property
 		/// - Token owner - in case of NFT property
@@ -1113,11 +1113,11 @@ pub mod pallet {
 
 		/// Set a different order of resource priorities for an NFT. Priorities can be used,
 		/// for example, for order of rendering.
-		/// 
+		///
 		/// Note that the priorities are not updated automatically, and are an empty vector
 		/// by default. There is no pre-set definition for the order to be particular,
 		/// it can be interpreted arbitrarily use-case by use-case.
-		/// 
+		///
 		/// # Permissions:
 		/// - Token owner
 		///
@@ -1164,16 +1164,16 @@ pub mod pallet {
 		}
 
 		/// Create and set/propose a basic resource for an NFT.
-		/// 
+		///
 		/// A resource is considered a part of an NFT, an additional piece of metadata
 		/// usually serving to add a piece of media on top of the root metadata, be it
 		/// a different wing on the root template bird or something entirely unrelated.
 		/// A basic resource is the simplest, lacking a base or composables.
-		/// 
+		///
 		/// See RMRK docs for more information and examples.
-		/// 
+		///
 		/// # Permissions:
-		/// - Collection issuer - if not the token owner, adding the resource will warrant 
+		/// - Collection issuer - if not the token owner, adding the resource will warrant
 		/// the owner's [acceptance](crate::pallet::Call::accept_resource).
 		///
 		/// # Arguments:
@@ -1210,16 +1210,16 @@ pub mod pallet {
 		}
 
 		/// Create and set/propose a composable resource for an NFT.
-		/// 
+		///
 		/// A resource is considered a part of an NFT, an additional piece of metadata
 		/// usually serving to add a piece of media on top of the root metadata, be it
 		/// a different wing on the root template bird or something entirely unrelated.
 		/// A composable resource links to a base and has a subset of its parts it is composed of.
-		/// 
+		///
 		/// See RMRK docs for more information and examples.
-		/// 
+		///
 		/// # Permissions:
-		/// - Collection issuer - if not the token owner, adding the resource will warrant 
+		/// - Collection issuer - if not the token owner, adding the resource will warrant
 		/// the owner's [acceptance](crate::pallet::Call::accept_resource).
 		///
 		/// # Arguments:
@@ -1276,16 +1276,16 @@ pub mod pallet {
 		}
 
 		/// Create and set/propose a slot resource for an NFT.
-		/// 
+		///
 		/// A resource is considered a part of an NFT, an additional piece of metadata
 		/// usually serving to add a piece of media on top of the root metadata, be it
 		/// a different wing on the root template bird or something entirely unrelated.
 		/// A slot resource links to a base and a slot in it which it now occupies.
-		/// 
+		///
 		/// See RMRK docs for more information and examples.
-		/// 
+		///
 		/// # Permissions:
-		/// - Collection issuer - if not the token owner, adding the resource will warrant 
+		/// - Collection issuer - if not the token owner, adding the resource will warrant
 		/// the owner's [acceptance](crate::pallet::Call::accept_resource).
 		///
 		/// # Arguments:
@@ -1322,13 +1322,13 @@ pub mod pallet {
 		}
 
 		/// Remove and erase a resource from an NFT.
-		/// 
+		///
 		/// If the sender does not own the NFT, then it will be pending confirmation,
 		/// and will have to be [accepted](crate::pallet::Call::accept_resource_removal) by the token owner.
-		/// 
+		///
 		/// # Permissions
 		/// - Collection issuer
-		/// 
+		///
 		/// # Arguments
 		/// - `collection_id`: RMRK ID of a collection to which the NFT making use of the resource belongs to.
 		/// - `nft_id`: ID of the NFT with a resource to be removed.
@@ -1371,7 +1371,7 @@ impl<T: Config> Pallet<T> {
 		Ok(scoped_key)
 	}
 
-	/// Form a Unique property, transforming a RMRK key into bytes (without assigning the scope yet) 
+	/// Form a Unique property, transforming a RMRK key into bytes (without assigning the scope yet)
 	/// and encoding the value from an arbitrary type into bytes.
 	pub fn encode_rmrk_property<E: Encode>(
 		rmrk_key: RmrkProperty,
@@ -1416,7 +1416,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Initialize a new NFT collection with certain RMRK-scoped properties.
-	/// 
+	///
 	/// See [`init_collection`](pallet_nonfungible::pallet::Pallet::init_collection) for more details.
 	fn init_collection(
 		sender: T::CrossAccountId,
@@ -1439,7 +1439,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Mint a new NFT with certain RMRK-scoped properties. Sender must be the collection owner.
-	/// 
+	///
 	/// See [`create_item`](pallet_nonfungible::pallet::Pallet::create_item) for more details.
 	pub fn create_nft(
 		sender: &T::CrossAccountId,
@@ -1458,18 +1458,13 @@ impl<T: Config> Pallet<T> {
 
 		let nft_id = <PalletNft<T>>::current_token_id(collection.id);
 
-		<PalletNft<T>>::set_scoped_token_properties(
-			collection.id,
-			nft_id,
-			RMRK_SCOPE,
-			properties,
-		)?;
+		<PalletNft<T>>::set_scoped_token_properties(collection.id, nft_id, RMRK_SCOPE, properties)?;
 
 		Ok(nft_id)
 	}
 
 	/// Burn an NFT, along with its nested children, limited by `max_burns`. The sender must be the token owner.
-	/// 
+	///
 	/// See [`burn_recursively`](pallet_nonfungible::pallet::Pallet::burn_recursively) for more details.
 	fn destroy_nft(
 		sender: T::CrossAccountId,
@@ -1531,7 +1526,7 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	/// Apply a mutation to the property of a token containing sent tokens 
+	/// Apply a mutation to the property of a token containing sent tokens
 	/// that are currently pending acceptance.
 	fn mutate_pending_children(
 		(target_collection_id, target_nft_id): (CollectionId, TokenId),
@@ -1557,7 +1552,7 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	/// Get an iterator from a token's property containing tokens sent to it 
+	/// Get an iterator from a token's property containing tokens sent to it
 	/// that are currently pending acceptance.
 	fn iterate_pending_children(
 		collection_id: CollectionId,
@@ -1601,7 +1596,7 @@ impl<T: Config> Pallet<T> {
 		Ok(resource_id)
 	}
 
-	/// Create and add a resource for a regular NFT, mark it as pending if the sender 
+	/// Create and add a resource for a regular NFT, mark it as pending if the sender
 	/// is not the token owner. The sender must be the collection owner.
 	fn resource_add(
 		sender: T::AccountId,
@@ -1698,7 +1693,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Remove one usage of a base from an NFT's property of associated bases. The base will stay, however, 
+	/// Remove one usage of a base from an NFT's property of associated bases. The base will stay, however,
 	/// if the count of resources using the base is still non-zero.
 	fn remove_associated_base_id(
 		collection_id: CollectionId,
@@ -1843,7 +1838,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get the type of a collection stored in it as a scoped property.
-	/// 
+	///
 	/// RMRK Core proxy differentiates between regular collections as well as RMRK bases as collections.
 	pub fn get_collection_type(
 		collection_id: CollectionId,
@@ -1882,7 +1877,7 @@ impl<T: Config> Pallet<T> {
 		Self::get_nft_collection(collection_id)
 	}
 
-	/// Same as [`get_typed_nft_collection`](crate::pallet::Pallet::get_typed_nft_collection), 
+	/// Same as [`get_typed_nft_collection`](crate::pallet::Pallet::get_typed_nft_collection),
 	/// but also return the Unique collection ID.
 	pub fn get_typed_nft_collection_mapped(
 		rmrk_collection_id: RmrkCollectionId,
@@ -1927,7 +1922,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get the type of an NFT stored in it as a scoped property.
-	/// 
+	///
 	/// RMRK Core proxy differentiates between regular NFTs, and RMRK parts and themes.
 	pub fn get_nft_type(
 		collection_id: CollectionId,
@@ -1949,7 +1944,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Ensure that an account is the owner of the token, either directly 
+	/// Ensure that an account is the owner of the token, either directly
 	/// or at the top of the nesting hierarchy; return an error if it is not.
 	pub fn ensure_nft_owner(
 		collection_id: CollectionId,
@@ -1971,7 +1966,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Fetch non-scoped properties of a collection or a token that match the filter keys supplied, 
+	/// Fetch non-scoped properties of a collection or a token that match the filter keys supplied,
 	/// or, if None are provided, return all non-scoped properties.
 	pub fn filter_user_properties<Key, Value, R, Mapper>(
 		collection_id: CollectionId,
@@ -2018,7 +2013,7 @@ impl<T: Config> Pallet<T> {
 			})
 	}
 
-	/// Get all non-scoped properties from a collection or a token, and apply some transformation 
+	/// Get all non-scoped properties from a collection or a token, and apply some transformation
 	/// to each key-value pair.
 	pub fn iterate_user_properties<Key, Value, R, Mapper>(
 		collection_id: CollectionId,
