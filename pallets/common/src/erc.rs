@@ -61,7 +61,7 @@ where
 	T::AccountId: From<[u8; 32]>,
 {
 	/// Set collection property.
-	/// 
+	///
 	/// @param key Property key.
 	/// @param value Propery value.
 	fn set_collection_property(
@@ -72,16 +72,16 @@ where
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
-		.try_into()
-		.map_err(|_| "key too large")?;
+			.try_into()
+			.map_err(|_| "key too large")?;
 		let value = value.try_into().map_err(|_| "value too large")?;
-		
+
 		<Pallet<T>>::set_collection_property(self, &caller, Property { key, value })
-		.map_err(dispatch_to_evm::<T>)
+			.map_err(dispatch_to_evm::<T>)
 	}
-	
+
 	/// Delete collection property.
-	/// 
+	///
 	/// @param key Property key.
 	fn delete_collection_property(&mut self, caller: caller, key: string) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -93,9 +93,9 @@ where
 	}
 
 	/// Get collection property.
-	/// 
+	///
 	/// @dev Throws error if key not found.
-	/// 
+	///
 	/// @param key Property key.
 	/// @return bytes The property corresponding to the key.
 	fn collection_property(&self, key: string) -> Result<bytes> {
@@ -110,9 +110,9 @@ where
 	}
 
 	/// Set the sponsor of the collection.
-	/// 
+	///
 	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
-	/// 
+	///
 	/// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
 	fn set_collection_sponsor(&mut self, caller: caller, sponsor: address) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;
@@ -124,7 +124,7 @@ where
 	}
 
 	/// Collection sponsorship confirmation.
-	/// 
+	///
 	/// @dev After setting the sponsor for the collection, it must be confirmed with this function.
 	fn confirm_collection_sponsorship(&mut self, caller: caller) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -236,18 +236,13 @@ where
 
 	/// Remove collection admin by substrate address.
 	/// @param admin Substrate administrator address.
-	fn remove_collection_admin_substrate(
-		&self,
-		caller: caller,
-		admin: uint256,
-	) -> Result<void> {
+	fn remove_collection_admin_substrate(&self, caller: caller, admin: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let mut admin_arr: [u8; 32] = Default::default();
 		admin.to_big_endian(&mut admin_arr);
 		let account_id = T::AccountId::from(admin_arr);
 		let admin = T::CrossAccountId::from_sub(account_id);
-		<Pallet<T>>::toggle_admin(self, &caller, &admin, false)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
@@ -261,7 +256,7 @@ where
 	}
 
 	/// Remove collection admin.
-	/// 
+	///
 	/// @param new_admin Address of the removed administrator.
 	fn remove_collection_admin(&self, caller: caller, admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -271,7 +266,7 @@ where
 	}
 
 	/// Toggle accessibility of collection nesting.
-	/// 
+	///
 	/// @param enable If "true" degenerates to nesting: 'Owner' else to nesting: 'Disabled'
 	#[solidity(rename_selector = "setCollectionNesting")]
 	fn set_nesting_bool(&mut self, caller: caller, enable: bool) -> Result<void> {
@@ -294,7 +289,7 @@ where
 	}
 
 	/// Toggle accessibility of collection nesting.
-	/// 
+	///
 	/// @param enable If "true" degenerates to nesting: {OwnerRestricted: [1, 2, 3]} else to nesting: 'Disabled'
 	/// @param collections Addresses of collections that will be available for nesting.
 	#[solidity(rename_selector = "setCollectionNesting")]
@@ -367,7 +362,7 @@ where
 	}
 
 	/// Add the user to the allowed list.
-	/// 
+	///
 	/// @param user Address of a trusted user.
 	fn add_to_collection_allow_list(&self, caller: caller, user: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -375,9 +370,9 @@ where
 		<Pallet<T>>::toggle_allowlist(self, &caller, &user, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
-	
+
 	/// Remove the user from the allowed list.
-	/// 
+	///
 	/// @param user Address of a removed user.
 	fn remove_from_collection_allow_list(&self, caller: caller, user: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -387,7 +382,7 @@ where
 	}
 
 	/// Switch permission for minting.
-	/// 
+	///
 	/// @param mode Enable if "true".
 	fn set_collection_mint_mode(&mut self, caller: caller, mode: bool) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;

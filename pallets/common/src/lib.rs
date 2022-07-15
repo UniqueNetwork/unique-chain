@@ -17,11 +17,11 @@
 //! # Common pallet
 //!
 //! The Common pallet provides functionality for handling collections.
-//! 
+//!
 //! ## Overview
-//! 
+//!
 //! The Common pallet provides functions for:
-//! 
+//!
 //! - Setting and approving collection soponsor.
 //! - Get\set\delete allow list.
 //! - Get\set\delete collection properties.
@@ -32,25 +32,24 @@
 //! - Provides an interface for common collection operations for different collection types.
 //! - Provides dispatching for implementations of common collection operations, see [dispatch] module.
 //! - Provides functionality of collection into evm, see [erc] and [eth] module.
-//! 
+//!
 //! ### Terminology
-//! **Collection sponsor** - For the collection, you can set a sponsor, at whose expense it will 
+//! **Collection sponsor** - For the collection, you can set a sponsor, at whose expense it will
 //! be possible to mint tokens.
-//! 
+//!
 //! **Allow list** - List of users who have the right to minting tokens.
-//! 
-//! **Collection properties** - Collection properties are simply key-value stores where various 
+//!
+//! **Collection properties** - Collection properties are simply key-value stores where various
 //! metadata can be placed.
-//! 
-//! **Collection property permissions** - For each property in the collection can be set permission 
+//!
+//! **Collection property permissions** - For each property in the collection can be set permission
 //! to change, see [PropertyPermission].
-//! 
-//! **Permissions on token properties** - Similar to _permissions on collection properties_, 
+//!
+//! **Permissions on token properties** - Similar to _permissions on collection properties_,
 //! only restrictions apply to token properties.
-//! 
-//! **Collection administrator** - For a collection, you can set administrators who have the right 
+//!
+//! **Collection administrator** - For a collection, you can set administrators who have the right
 //! to most actions on the collection.
-
 
 #![warn(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -131,7 +130,7 @@ pub mod weights;
 /// Weight info.
 pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
-/// Collection handle contains information about collection data and id. 
+/// Collection handle contains information about collection data and id.
 /// Also provides functionality to count consumed gas.
 #[must_use = "Should call submit_logs or save, otherwise some data will be lost for evm side"]
 pub struct CollectionHandle<T: Config> {
@@ -208,9 +207,9 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Set collection sponsor.
-	/// 
-	/// Unique collections allows sponsoring for certain actions. 
-	/// This method allows you to set the sponsor of the collection. 
+	///
+	/// Unique collections allows sponsoring for certain actions.
+	/// This method allows you to set the sponsor of the collection.
 	/// In order for sponsorship to become active, it must be confirmed through [Self::confirm_sponsorship].
 	pub fn set_sponsor(&mut self, sponsor: T::AccountId) -> DispatchResult {
 		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor);
@@ -218,7 +217,7 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Confirm sponsorship
-	/// 
+	///
 	/// In order for the sponsorship to become active, the user set as the sponsor must confirm their participation.
 	/// Before confirming sponsorship, the user must be specified as the sponsor of the collection via [Self::set_sponsor].
 	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> Result<bool, DispatchError> {
@@ -379,13 +378,13 @@ pub mod pallet {
 			/// [CollectionMode] converted into _u8_.
 			u8,
 			/// Collection owner.
-			T::AccountId
+			T::AccountId,
 		),
 
 		/// New collection was destroyed
 		CollectionDestroyed(
 			/// Globally unique identifier of collection.
-			CollectionId
+			CollectionId,
 		),
 
 		/// New item was created.
@@ -397,7 +396,7 @@ pub mod pallet {
 			/// Owner of newly created item
 			T::CrossAccountId,
 			/// Always 1 for NFT
-			u128
+			u128,
 		),
 
 		/// Collection item was burned.
@@ -409,7 +408,8 @@ pub mod pallet {
 			/// Which user has destroyed its tokens.
 			T::CrossAccountId,
 			/// Amount of token pieces destroed. Always 1 for NFT.
-			u128),
+			u128,
+		),
 
 		/// Item was transferred
 		Transfer(
@@ -444,17 +444,17 @@ pub mod pallet {
 			/// Id of collection to which property has been set.
 			CollectionId,
 			/// The property that was set.
-			PropertyKey
+			PropertyKey,
 		),
-		
+
 		/// The property has been deleted.
 		CollectionPropertyDeleted(
 			/// Id of collection to which property has been deleted.
 			CollectionId,
 			/// The property that was deleted.
-			PropertyKey
+			PropertyKey,
 		),
-		
+
 		/// The token property has been set.
 		TokenPropertySet(
 			/// Identifier of the collection whose token has the property set.
@@ -462,10 +462,9 @@ pub mod pallet {
 			/// The token for which the property was set.
 			TokenId,
 			/// The property that was set.
-			PropertyKey
+			PropertyKey,
 		),
-		
-		
+
 		/// The token property has been deleted.
 		TokenPropertyDeleted(
 			/// Identifier of the collection whose token has the property deleted.
@@ -473,15 +472,15 @@ pub mod pallet {
 			/// The token for which the property was deleted.
 			TokenId,
 			/// The property that was deleted.
-			PropertyKey
+			PropertyKey,
 		),
-		
+
 		/// The colletion property permission has been set.
 		PropertyPermissionSet(
 			/// Id of collection to which property permission has been set.
 			CollectionId,
 			/// The property permission that was set.
-			PropertyKey
+			PropertyKey,
 		),
 	}
 
@@ -735,7 +734,7 @@ pub mod pallet {
 
 impl<T: Config> Pallet<T> {
 	/// Enshure that receiver address is correct.
-	/// 
+	///
 	/// Ethereum receiver 0x0000000000000000000000000000000000000000 is reserved, and shouldn't own tokens.
 	pub fn ensure_correct_receiver(receiver: &T::CrossAccountId) -> DispatchResult {
 		ensure!(
@@ -886,13 +885,13 @@ macro_rules! limit_default_clone {
 
 impl<T: Config> Pallet<T> {
 	/// Create new collection.
-	/// 
+	///
 	/// * `owner` - The owner of the collection.
 	/// * `data` - Description of the created collection.
 	/// * `is_external` - Marks that collection managet by not "Unique network".
 	pub fn init_collection(
 		owner: T::CrossAccountId,
-		data: CreateCollectionData<T::AccountId>, 
+		data: CreateCollectionData<T::AccountId>,
 		is_external: bool,
 	) -> Result<CollectionId, DispatchError> {
 		{
@@ -991,7 +990,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Destroy collection.
-	/// 
+	///
 	/// * `collection` - Collection handler.
 	/// * `sender` - The owner or administrator of the collection.
 	pub fn destroy_collection(
@@ -1023,7 +1022,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Set collection property.
-	/// 
+	///
 	/// * `collection` - Collection handler.
 	/// * `sender` - The owner or administrator of the collection.
 	/// * `property` - The property to set.
@@ -1046,7 +1045,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Set scouped collection property.
-	/// 
+	///
 	/// * `collection_id` - ID of the collection for which the property is being set.
 	/// * `scope` - Property scope.
 	/// * `property` - The property to set.
@@ -1059,12 +1058,12 @@ impl<T: Config> Pallet<T> {
 			properties.try_scoped_set(scope, property.key, property.value)
 		})
 		.map_err(<Error<T>>::from)?;
-		
+
 		Ok(())
 	}
-	
+
 	/// Set scouped collection properties.
-	/// 
+	///
 	/// * `collection_id` - ID of the collection for which the properties is being set.
 	/// * `scope` - Property scope.
 	/// * `properties` - The properties to set.
@@ -1082,7 +1081,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Set collection properties.
-	/// 
+	///
 	/// * `collection` - Collection handler.
 	/// * `sender` - The owner or administrator of the collection.
 	/// * `properties` - The properties to set.
@@ -1095,12 +1094,12 @@ impl<T: Config> Pallet<T> {
 		for property in properties {
 			Self::set_collection_property(collection, sender, property)?;
 		}
-		
+
 		Ok(())
 	}
-	
+
 	/// Delete collection property.
-	/// 
+	///
 	/// * `collection` - Collection handler.
 	/// * `sender` - The owner or administrator of the collection.
 	/// * `property` - The property to delete.
@@ -1110,22 +1109,22 @@ impl<T: Config> Pallet<T> {
 		property_key: PropertyKey,
 	) -> DispatchResult {
 		collection.check_is_owner_or_admin(sender)?;
-		
+
 		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
 			properties.remove(&property_key)
 		})
 		.map_err(<Error<T>>::from)?;
-		
+
 		Self::deposit_event(Event::CollectionPropertyDeleted(
 			collection.id,
 			property_key,
 		));
-		
+
 		Ok(())
 	}
-	
+
 	/// Delete collection properties.
-	/// 
+	///
 	/// * `collection` - Collection handler.
 	/// * `sender` - The owner or administrator of the collection.
 	/// * `properties` - The properties to delete.
@@ -1138,14 +1137,14 @@ impl<T: Config> Pallet<T> {
 		for key in property_keys {
 			Self::delete_collection_property(collection, sender, key)?;
 		}
-		
+
 		Ok(())
 	}
-	
+
 	/// Set collection propetry permission without any checks.
-	/// 
+	///
 	/// Used for migrations.
-	/// 
+	///
 	/// * `collection` - Collection handler.
 	/// * `property_permissions` - Property permissions.
 	pub fn set_property_permission_unchecked(
@@ -1160,7 +1159,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Set collection property permission.
-	/// 
+	///
 	/// * `collection` - Collection handler.
 	/// * `sender` - The owner or administrator of the collection.
 	/// * `property_permission` - Property permission.
@@ -1195,7 +1194,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Set token property permission.
-	/// 
+	///
 	/// * `collection` - Collection handler.
 	/// * `sender` - The owner or administrator of the collection.
 	/// * `property_permissions` - Property permissions.
@@ -1430,12 +1429,12 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn burn_item() -> Weight;
 
 	/// Property setting weight.
-	/// 
+	///
 	/// * `amount`- The number of properties to set.
 	fn set_collection_properties(amount: u32) -> Weight;
 
 	/// Collection property deletion weight.
-	/// 
+	///
 	/// * `amount`- The number of properties to set.
 	fn delete_collection_properties(amount: u32) -> Weight;
 
@@ -1445,13 +1444,12 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn set_token_properties(amount: u32) -> Weight;
 
 	/// Token property deletion weight.
-	/// 
+	///
 	/// * `amount`- The number of properties to delete.
 	fn delete_token_properties(amount: u32) -> Weight;
-	
-	
+
 	/// Token property permissions set weight.
-	/// 
+	///
 	/// * `amount`- The number of property permissions to set.
 	fn set_token_property_permissions(amount: u32) -> Weight;
 
@@ -1466,21 +1464,21 @@ pub trait CommonWeightInfo<CrossAccountId> {
 
 	/// The price of burning a token from another user.
 	fn burn_from() -> Weight;
-	
+
 	/// Differs from burn_item in case of Fungible and Refungible, as it should burn
 	/// whole users's balance
 	///
 	/// This method shouldn't be used directly, as it doesn't count breadth price, use [burn_recursively](CommonWeightInfo::burn_recursively) instead
 	fn burn_recursively_self_raw() -> Weight;
-	
+
 	/// Cost of iterating over `amount` children while burning, without counting child burning itself
 	///
 	/// This method shouldn't be used directly, as it doesn't count depth price, use [burn_recursively](CommonWeightInfo::burn_recursively) instead
 	fn burn_recursively_breadth_raw(amount: u32) -> Weight;
-	
+
 	/// The price of recursive burning a token.
 	///
-	/// `max_selfs` - 
+	/// `max_selfs` -
 	fn burn_recursively(max_selfs: u32, max_breadth: u32) -> Weight {
 		Self::burn_recursively_self_raw()
 			.saturating_mul(max_selfs.max(1) as u64)
@@ -1495,12 +1493,12 @@ pub trait RefungibleExtensionsWeightInfo {
 }
 
 /// Common collection operations.
-/// 
+///
 /// It wraps methods in Fungible, Nonfungible and Refungible pallets
 /// and adds weight info.
 pub trait CommonCollectionOperations<T: Config> {
 	/// Create token.
-	/// 
+	///
 	/// * `sender` - The user who mint the token and pays for the transaction.
 	/// * `to` - The user who will own the token.
 	/// * `data` - Token data.
@@ -1514,7 +1512,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> DispatchResultWithPostInfo;
 
 	/// Create multiple tokens.
-	/// 
+	///
 	/// * `sender` - The user who mint the token and pays for the transaction.
 	/// * `to` - The user who will own the token.
 	/// * `data` - Token data.
@@ -1526,9 +1524,9 @@ pub trait CommonCollectionOperations<T: Config> {
 		data: Vec<CreateItemData>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
-	
+
 	/// Create multiple tokens.
-	/// 
+	///
 	/// * `sender` - The user who mint the token and pays for the transaction.
 	/// * `to` - The user who will own the token.
 	/// * `data` - Token data.
@@ -1541,7 +1539,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> DispatchResultWithPostInfo;
 
 	/// Burn token.
-	/// 
+	///
 	/// * `sender` - The user who owns the token.
 	/// * `token` - Token id that will burned.
 	/// * `amount` - The number of parts of the token that will be burned.
@@ -1551,9 +1549,9 @@ pub trait CommonCollectionOperations<T: Config> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResultWithPostInfo;
-	
+
 	/// Burn token and all nested tokens recursievly.
-	/// 
+	///
 	/// * `sender` - The user who owns the token.
 	/// * `token` - Token id that will burned.
 	/// * `self_budget` - The budget that can be spent on burning tokens.
@@ -1567,7 +1565,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> DispatchResultWithPostInfo;
 
 	/// Set collection properties.
-	/// 
+	///
 	/// * `sender` - Must be either the owner of the collection or its admin.
 	/// * `properties` - Properties to be set.
 	fn set_collection_properties(
@@ -1577,7 +1575,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> DispatchResultWithPostInfo;
 
 	/// Delete collection properties.
-	/// 
+	///
 	/// * `sender` - Must be either the owner of the collection or its admin.
 	/// * `properties` - The properties to be removed.
 	fn delete_collection_properties(
@@ -1587,11 +1585,11 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> DispatchResultWithPostInfo;
 
 	/// Set token properties.
-	/// 
-	/// The appropriate [PropertyPermission] for the token property 
+	///
+	/// The appropriate [PropertyPermission] for the token property
 	/// must be set with [Self::set_token_property_permissions].
-	/// 
-	/// * `sender` - Must be either the owner of the token or its admin. 
+	///
+	/// * `sender` - Must be either the owner of the token or its admin.
 	/// * `token_id` - The token for which the properties are being set.
 	/// * `properties` - Properties to be set.
 	/// * `budget` - Budget for setting properties.
@@ -1604,11 +1602,11 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> DispatchResultWithPostInfo;
 
 	/// Remove token properties.
-	/// 
-	/// The appropriate [PropertyPermission] for the token property 
+	///
+	/// The appropriate [PropertyPermission] for the token property
 	/// must be set with [Self::set_token_property_permissions].
-	/// 
-	/// * `sender` - Must be either the owner of the token or its admin. 
+	///
+	/// * `sender` - Must be either the owner of the token or its admin.
 	/// * `token_id` - The token for which the properties are being remove.
 	/// * `property_keys` - Keys to remove corresponding properties.
 	/// * `budget` - Budget for removing properties.
@@ -1621,8 +1619,8 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> DispatchResultWithPostInfo;
 
 	/// Set token property permissions.
-	/// 
-	/// * `sender` - Must be either the owner of the token or its admin. 
+	///
+	/// * `sender` - Must be either the owner of the token or its admin.
 	/// * `token_id` - The token for which the properties are being set.
 	/// * `properties` - Properties to be set.
 	/// * `budget` - Budget for setting properties.
@@ -1633,7 +1631,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> DispatchResultWithPostInfo;
 
 	/// Transfer amount of token pieces.
-	/// 
+	///
 	/// * `sender` - Donor user.
 	/// * `to` - Recepient user.
 	/// * `token` - The token of which parts are being sent.
@@ -1649,7 +1647,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> DispatchResultWithPostInfo;
 
 	/// Grant access to another account to transfer parts of the token owned by the calling user via [Self::transfer_from].
-	/// 
+	///
 	/// * `sender` - The user who grants access to the token.
 	/// * `spender` - The user to whom the rights are granted.
 	/// * `token` - The token to which access is granted.
@@ -1661,11 +1659,11 @@ pub trait CommonCollectionOperations<T: Config> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResultWithPostInfo;
-	
+
 	/// Send parts of a token owned by another user.
-	/// 
+	///
 	/// Before calling this method, you must grant rights to the calling user via [Self::approve].
-	/// 
+	///
 	/// * `sender` - The user who has access to the token.
 	/// * `from` - The user who owns the token.
 	/// * `to` - Recepient user.
@@ -1681,11 +1679,11 @@ pub trait CommonCollectionOperations<T: Config> {
 		amount: u128,
 		budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
-	
+
 	/// Burn parts of a token owned by another user.
-	/// 
+	///
 	/// Before calling this method, you must grant rights to the calling user via [Self::approve].
-	/// 
+	///
 	/// * `sender` - The user who has access to the token.
 	/// * `from` - The user who owns the token.
 	/// * `token` - The token of which parts are being sent.
@@ -1701,7 +1699,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> DispatchResultWithPostInfo;
 
 	/// Check permission to nest token.
-	/// 
+	///
 	/// * `sender` - The user who initiated the check.
 	/// * `from` - The token that is checked for embedding.
 	/// * `under` - Token under which to check.
@@ -1715,19 +1713,19 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> DispatchResult;
 
 	/// Nest one token into another.
-	/// 
+	///
 	/// * `under` - Token holder.
 	/// * `to_nest` - Nested token.
 	fn nest(&self, under: TokenId, to_nest: (CollectionId, TokenId));
 
 	/// Unnest token.
-	/// 
+	///
 	/// * `under` - Token holder.
 	/// * `to_nest` - Token to unnest.
 	fn unnest(&self, under: TokenId, to_nest: (CollectionId, TokenId));
 
 	/// Get all user tokens.
-	/// 
+	///
 	/// * `account` - Account for which you need to get tokens.
 	fn account_tokens(&self, account: T::CrossAccountId) -> Vec<TokenId>;
 
@@ -1735,7 +1733,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	fn collection_tokens(&self) -> Vec<TokenId>;
 
 	/// Check if the token exists.
-	/// 
+	///
 	/// * `token` - Id token to check.
 	fn token_exists(&self, token: TokenId) -> bool;
 
@@ -1743,18 +1741,18 @@ pub trait CommonCollectionOperations<T: Config> {
 	fn last_token_id(&self) -> TokenId;
 
 	/// Get the owner of the token.
-	/// 
+	///
 	/// * `token` - The token for which you need to find out the owner.
 	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
 
 	/// Get the value of the token property by key.
-	/// 
+	///
 	/// * `token` - Token property to get.
 	/// * `key` - Property name.
 	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue>;
 
 	/// Get a set of token properties by key vector.
-	/// 
+	///
 	/// * `token` - Token property to get.
 	/// * `keys` - Vector of keys. If this parameter is [None](sp_std::result::Result),
 	/// then all properties are returned.
@@ -1764,7 +1762,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	fn total_supply(&self) -> u32;
 
 	/// Amount of different tokens account has.
-	/// 
+	///
 	/// * `account` - The account for which need to get the balance.
 	fn account_balance(&self, account: T::CrossAccountId) -> u32;
 
@@ -1775,7 +1773,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	fn total_pieces(&self, token: TokenId) -> Option<u128>;
 
 	/// Get the number of parts of the token that a trusted user can manage.
-	/// 
+	///
 	/// * `sender` - Trusted user.
 	/// * `spender` - Owner of the token.
 	/// * `token` - The token for which to get the value.
@@ -1796,9 +1794,9 @@ where
 	T: Config,
 {
 	/// Change the number of parts of the token.
-	/// 
+	///
 	/// When the value changes down, this function is equivalent to burning parts of the token.
-	/// 
+	///
 	/// * `sender` - The user calling the repartition operation. Must be the owner of the token.
 	/// * `token` - The token for which you want to change the number of parts.
 	/// * `amount` - The new value of the parts of the token.
@@ -1811,7 +1809,7 @@ where
 }
 
 /// Merge [DispatchResult] with [Weight] into [DispatchResultWithPostInfo].
-/// 
+///
 /// Used for [CommonCollectionOperations] implementations and flexible enough to do so.
 pub fn with_weight(res: DispatchResult, weight: Weight) -> DispatchResultWithPostInfo {
 	let post_info = PostDispatchInfo {
