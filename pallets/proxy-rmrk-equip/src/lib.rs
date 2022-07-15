@@ -14,6 +14,88 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//! # RMRK Core Proxy Pallet
+//! 
+//! A pallet used as proxy for RMRK Core (<https://rmrk-team.github.io/rmrk-substrate/#/pallets/rmrk-core>).
+//! 
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Pallet`]
+//! 
+//! ## Overview
+//! 
+//! The RMRK Equip Proxy pallet mirrors the functionality of RMRK Equip, 
+//! binding its externalities to Unique's own underlying structure.
+//! It is purposed to mimic RMRK Equip exactly, allowing seamless integrations
+//! of solutions based on RMRK.
+//! 
+//! RMRK Equip itself contains functionality to equip NFTs, and work with Bases,
+//! Parts, and Themes.
+//! 
+//! Equip Proxy is responsible for a more specific area of RMRK, and heavily relies on the Core. 
+//! For a more foundational description of proxy implementation, please refer to [`pallet_rmrk_core`].
+//! 
+//! *Note*, that while RMRK itself is subject to active development and restructuring,
+//! the proxy may be caught temporarily out of date.
+//! 
+//! ### What is RMRK?
+//! 
+//! RMRK is a set of NFT standards which compose several "NFT 2.0 lego" primitives. 
+//! Putting these legos together allows a user to create NFT systems of arbitrary complexity.
+//! 
+//! Meaning, RMRK NFTs are dynamic, able to nest into each other and form a hierarchy,
+//! make use of specific changeable and partially shared metadata in the form of resources, 
+//! and more.
+//! 
+//! Visit RMRK documentation and repositories to learn more:
+//! - Docs: <https://docs.rmrk.app/getting-started/>
+//! - FAQ: <https://coda.io/@rmrk/faq>
+//! - Substrate code repository: <https://github.com/rmrk-team/rmrk-substrate>
+//! - RMRK spec repository: <https://github.com/rmrk-team/rmrk-spec>
+//! 
+//! ## Proxy Implementation
+//! 
+//! An external user is supposed to be able to utilize this proxy as they would
+//! utilize RMRK, and get exactly the same results. Normally, Unique transactions
+//! are off-limits to RMRK collections and tokens, and vice versa. However,
+//! the information stored on chain can be freely interpreted by storage reads and RPCs.
+//! 
+//! ### ID Mapping
+//! 
+//! RMRK's collections' IDs are counted independently of Unique's and start at 0.
+//! Note that tokens' IDs still start at 1.
+//! The collections themselves, as well as tokens, are stored as Unique collections,
+//! and thus RMRK IDs are mapped to Unique IDs (but not vice versa).
+//! 
+//! ### External/Internal Collection Insulation
+//! 
+//! A Unique transaction cannot target collections purposed for RMRK,
+//! and they are flagged as `external` to specify that. On the other hand, 
+//! due to the mapping, RMRK transactions and RPCs simply cannot reach Unique collections.
+//! 
+//! ### Native Properties
+//! 
+//! Many of RMRK's native parameters are stored as scoped properties of a collection 
+//! or an NFT on the chain. Scoped properties are prefixed with `rmrk:`, where `:`
+//! is an unacceptable symbol in user-defined proeprties, which, along with other safeguards,
+//! makes them impossible to tamper with.
+//! 
+//! ### Collection and NFT Types
+//! 
+//! RMRK introduces the concept of a Base, which is a catalgoue of Parts, 
+//! possible components of an NFT. Due to its similarity with the functionality
+//! of a token collection, a Base is stored and handled as one, and the Base's Parts and Themes
+//! are the collection's NFTs. See [`CollectionType`](pallet_rmrk_core::misc::CollectionType) and 
+//! [`NftType`](pallet_rmrk_core::misc::NftType).
+//! 
+//! ## Interface
+//! 
+//! ### Dispatchables
+//! 
+//! - `create_base` - Create a new Base.
+//! - `theme_add` - Add a Theme to a Base.
+//! - `equippable` - Update the array of Collections allowed to be equipped to a Base's specified Slot Part.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{pallet_prelude::*, transactional, BoundedVec, dispatch::DispatchResult};
@@ -45,15 +127,20 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_rmrk_core::Config {
+		/// Overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
 	}
 
+	/// Map of a base ID and a part ID to an NFT in the base collection serving as the part.
 	#[pallet::storage]
 	#[pallet::getter(fn internal_part_id)]
 	pub type InernalPartId<T: Config> =
 		StorageDoubleMap<_, Twox64Concat, CollectionId, Twox64Concat, RmrkPartId, TokenId>;
 
+	/// Checkmark that a base has a Theme NFT named "default".
 	#[pallet::storage]
 	#[pallet::getter(fn base_has_default_theme)]
 	pub type BaseHasDefaultTheme<T: Config> =
@@ -78,26 +165,36 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+		/// No permission to perform action.
 		PermissionError,
+		/// Could not find an ID for a base collection. It is likely there were too many collections created on the chain.
 		NoAvailableBaseId,
+		/// Could not find a suitable ID for a part, likely too many part tokens were created in the base.
 		NoAvailablePartId,
+		/// Base collection linked to this ID does not exist.
 		BaseDoesntExist,
+		/// No theme named "default" is associated with the Base.
 		NeedsDefaultThemeFirst,
+		/// Part linked to this ID does not exist.
 		PartDoesntExist,
+		/// Cannot assign equippables to a fixed part.
 		NoEquippableOnFixedPart,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Creates a new Base.
-		/// Modeled after [base interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/base.md)
+		/// Create a new Base.
+		/// 
+		/// Modeled after the [base interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/base.md)
+		/// 
+		/// # Permissions
+		/// - Anyone - will be assigned as the issuer of the base.
 		///
-		/// Parameters:
-		/// - origin: Caller, will be assigned as the issuer of the Base
-		/// - base_type: media type, e.g. "svg"
-		/// - symbol: arbitrary client-chosen symbol
-		/// - parts: array of Fixed and Slot parts composing the base, confined in length by
-		///   RmrkPartsLimit
+		/// # Arguments:
+		/// - `base_type`: Arbitrary media type, e.g. "svg".
+		/// - `symbol`: Arbitrary client-chosen symbol.
+		/// - `parts`: Array of Fixed and Slot parts composing the base, 
+		/// confined in length by [`RmrkPartsLimit`](up_data_structs::RmrkPartsLimit).
 		#[transactional]
 		#[pallet::weight(<SelfWeightOf<T>>::create_base(parts.len() as u32))]
 		pub fn create_base(
@@ -131,8 +228,8 @@ pub mod pallet {
 				collection_id,
 				PropertyScope::Rmrk,
 				[
-					<PalletCore<T>>::rmrk_property(CollectionType, &misc::CollectionType::Base)?,
-					<PalletCore<T>>::rmrk_property(BaseType, &base_type)?,
+					<PalletCore<T>>::encode_rmrk_property(CollectionType, &misc::CollectionType::Base)?,
+					<PalletCore<T>>::encode_rmrk_property(BaseType, &base_type)?,
 				]
 				.into_iter(),
 			)?;
@@ -151,19 +248,21 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Adds a Theme to a Base.
-		/// Modeled after [themeadd interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/themeadd.md)
-		/// Themes are stored in the Themes storage
+		/// Add a Theme to a Base.
 		/// A Theme named "default" is required prior to adding other Themes.
+		/// 
+		/// Modeled after [themeadd interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/themeadd.md).
 		///
-		/// Parameters:
-		/// - origin: The caller of the function, must be issuer of the base
-		/// - base_id: The Base containing the Theme to be updated
-		/// - theme: The Theme to add to the Base.  A Theme has a name and properties, which are an
+		/// # Permissions:
+		/// - Base issuer
+		/// 
+		/// # Arguments:
+		/// - `base_id`: Base ID containing the Theme to be updated.
+		/// - `theme`: Theme to add to the Base.  A Theme has a name and properties, which are an
 		///   array of [key, value, inherit].
-		///   - key: arbitrary BoundedString, defined by client
-		///   - value: arbitrary BoundedString, defined by client
-		///   - inherit: optional bool
+		///   - `key`: Arbitrary BoundedString, defined by client.
+		///   - `value`: Arbitrary BoundedString, defined by client.
+		///   - `inherit`: Optional bool.
 		#[transactional]
 		#[pallet::weight(<SelfWeightOf<T>>::theme_add(theme.properties.len() as u32))]
 		pub fn theme_add(
@@ -191,9 +290,9 @@ pub mod pallet {
 				owner,
 				&collection,
 				[
-					<PalletCore<T>>::rmrk_property(TokenType, &NftType::Theme)?,
-					<PalletCore<T>>::rmrk_property(ThemeName, &theme.name)?,
-					<PalletCore<T>>::rmrk_property(ThemeInherit, &theme.inherit)?,
+					<PalletCore<T>>::encode_rmrk_property(TokenType, &NftType::Theme)?,
+					<PalletCore<T>>::encode_rmrk_property(ThemeName, &theme.name)?,
+					<PalletCore<T>>::encode_rmrk_property(ThemeInherit, &theme.inherit)?,
 				]
 				.into_iter(),
 			)
@@ -204,7 +303,7 @@ pub mod pallet {
 					collection_id,
 					token_id,
 					PropertyScope::Rmrk,
-					<PalletCore<T>>::rmrk_property(
+					<PalletCore<T>>::encode_rmrk_property(
 						UserProperty(property.key.as_slice()),
 						&property.value,
 					)?,
@@ -214,6 +313,17 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Update the array of Collections allowed to be equipped to a Base's specified Slot Part.
+		/// 
+		/// Modeled after [equippable interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/equippable.md).
+		///
+		/// # Permissions:
+		/// - Base issuer
+		/// 
+		/// # Arguments:
+		/// - `base_id`: Base containing the Slot Part to be updated.
+		/// - `part_id`: Slot Part whose Equippable List is being updated.
+		/// - `equippables`: List of equippables that will override the current Equippables list.
 		#[transactional]
 		#[pallet::weight(<SelfWeightOf<T>>::equippable())]
 		pub fn equippable(
@@ -253,7 +363,7 @@ pub mod pallet {
 						base_collection_id,
 						part_id,
 						PropertyScope::Rmrk,
-						<PalletCore<T>>::rmrk_property(EquippableList, &equippables)?,
+						<PalletCore<T>>::encode_rmrk_property(EquippableList, &equippables)?,
 					)?;
 				}
 			}
@@ -266,6 +376,8 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+	/// Create or renew an NFT serving as a part, setting its properties
+	/// to those of the part.
 	fn create_part(
 		sender: &T::CrossAccountId,
 		collection: &NonfungibleHandle<T>,
@@ -298,7 +410,7 @@ impl<T: Config> Pallet<T> {
 					collection.id,
 					token_id,
 					PropertyScope::Rmrk,
-					<PalletCore<T>>::rmrk_property(ExternalPartId, &part_id)?,
+					<PalletCore<T>>::encode_rmrk_property(ExternalPartId, &part_id)?,
 				)?;
 
 				token_id
@@ -310,9 +422,9 @@ impl<T: Config> Pallet<T> {
 			token_id,
 			PropertyScope::Rmrk,
 			[
-				<PalletCore<T>>::rmrk_property(TokenType, &nft_type)?,
-				<PalletCore<T>>::rmrk_property(Src, &src)?,
-				<PalletCore<T>>::rmrk_property(ZIndex, &z_index)?,
+				<PalletCore<T>>::encode_rmrk_property(TokenType, &nft_type)?,
+				<PalletCore<T>>::encode_rmrk_property(Src, &src)?,
+				<PalletCore<T>>::encode_rmrk_property(ZIndex, &z_index)?,
 			]
 			.into_iter(),
 		)?;
@@ -322,13 +434,15 @@ impl<T: Config> Pallet<T> {
 				collection.id,
 				token_id,
 				PropertyScope::Rmrk,
-				<PalletCore<T>>::rmrk_property(EquippableList, &part.equippable)?,
+				<PalletCore<T>>::encode_rmrk_property(EquippableList, &part.equippable)?,
 			)?;
 		}
 
 		Ok(())
 	}
 
+	/// Ensure that the collection under the base ID is a base collection,
+	/// and fetch it.
 	fn get_base(base_id: CollectionId) -> Result<NonfungibleHandle<T>, DispatchError> {
 		let collection =
 			<PalletCore<T>>::get_typed_nft_collection(base_id, misc::CollectionType::Base)

@@ -14,13 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//! Details of storing and handling RMRK properties.
+
 use super::*;
 use up_data_structs::PropertyScope;
 use core::convert::AsRef;
 
+/// Property prefix for storing resources.
 pub const RESOURCE_ID_PREFIX: &str = "rsid-";
+/// Property prefix for storing custom user-defined properties.
 pub const USER_PROPERTY_PREFIX: &str = "userprop-";
+/// Property scope for RMRK, used to signify that this property 
+/// was created and is used by RMRK.
+pub const RMRK_SCOPE: PropertyScope = PropertyScope::Rmrk;
 
+/// Predefined RMRK property keys for storage of RMRK data format on the Unique chain.
 pub enum RmrkProperty<'r> {
 	Metadata,
 	CollectionType,
@@ -49,6 +57,7 @@ pub enum RmrkProperty<'r> {
 }
 
 impl<'r> RmrkProperty<'r> {
+	/// Convert a predefined RMRK property key enum into string bytes.
 	pub fn to_key<T: Config>(self) -> Result<PropertyKey, Error<T>> {
 		fn get_bytes<T: AsRef<[u8]>>(container: &T) -> &[u8] {
 			container.as_ref()
@@ -94,9 +103,10 @@ impl<'r> RmrkProperty<'r> {
 	}
 }
 
+/// Strip a property key of its prefix and RMRK scope.
 pub fn strip_key_prefix(key: &PropertyKey, prefix: &str) -> Option<PropertyKey> {
 	let key_prefix = PropertyKey::try_from(prefix.as_bytes().to_vec()).ok()?;
-	let key_prefix = PropertyScope::Rmrk.apply(key_prefix).ok()?;
+	let key_prefix = RMRK_SCOPE.apply(key_prefix).ok()?;
 
 	key.as_slice()
 		.strip_prefix(key_prefix.as_slice())?
@@ -105,6 +115,7 @@ pub fn strip_key_prefix(key: &PropertyKey, prefix: &str) -> Option<PropertyKey> 
 		.ok()
 }
 
+/// Check that the key has the prefix.
 pub fn is_valid_key_prefix(key: &PropertyKey, prefix: &str) -> bool {
 	strip_key_prefix(key, prefix).is_some()
 }
