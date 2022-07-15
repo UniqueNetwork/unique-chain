@@ -132,6 +132,9 @@ pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 /// Collection handle contains information about collection data and id.
 /// Also provides functionality to count consumed gas.
+/// CollectionHandle is used as a generic wrapper for collections of all types.
+/// It allows to perform common operations and queries on any collection type,
+/// both completely general for all, as well as their respective implementations of [CommonCollectionOperations].
 #[must_use = "Should call submit_logs or save, otherwise some data will be lost for evm side"]
 pub struct CollectionHandle<T: Config> {
 	/// Collection id

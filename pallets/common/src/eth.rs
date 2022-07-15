@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-//! The module contains a number of functions for converting and checking etherium identifiers.
+//! The module contains a number of functions for converting and checking ethereum identifiers.
 
 use up_data_structs::CollectionId;
 use sp_core::H160;
