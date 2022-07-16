@@ -14,6 +14,55 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//! # Unique Pallet
+//!
+//! A pallet governing Unique transactions.
+//!
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Pallet`]
+//!
+//! ## Overview
+//!
+//! The Unique pallet's purpose is to be the primary interface between
+//! external users and the inner structure of the Unique chains.
+//!
+//! It also contains an implementation of [`CollectionHelpers`](eth),
+//! an Ethereum contract dealing with collection operations.
+//!
+//! ## Interface
+//!
+//! ### Dispatchables
+//!
+//! - `create_collection` - Create a collection of tokens. **Deprecated**, use `create_collection_ex`.
+//! - `create_collection_ex` - Create a collection of tokens with explicit parameters.
+//! - `destroy_collection` - Destroy a collection if no tokens exist within.
+//! - `add_to_allow_list` - Add an address to allow list.
+//! - `remove_from_allow_list` - Remove an address from allow list.
+//! - `change_collection_owner` - Change the owner of the collection.
+//! - `add_collection_admin` - Add an admin to a collection.
+//! - `remove_collection_admin` - Remove admin of a collection.
+//! - `set_collection_sponsor` - Invite a new collection sponsor.
+//! - `confirm_sponsorship` - Confirm own sponsorship of a collection, becoming the sponsor.
+//! - `remove_collection_sponsor` - Remove a sponsor from a collection.
+//! - `create_item` - Create an item within a collection.
+//! - `create_multiple_items` - Create multiple items within a collection.
+//! - `set_collection_properties` - Add or change collection properties.
+//! - `delete_collection_properties` - Delete specified collection properties.
+//! - `set_token_properties` - Add or change token properties.
+//! - `delete_token_properties` - Delete token properties.
+//! - `set_token_property_permissions` - Add or change token property permissions of a collection.
+//! - `create_multiple_items_ex` - Create multiple items within a collection with explicitly specified initial parameters.
+//! - `set_transfers_enabled_flag` - Completely allow or disallow transfers for a particular collection.
+//! - `burn_item` - Destroy an item.
+//! - `burn_from` - Destroy an item on behalf of the owner as a non-owner account.
+//! - `transfer` - Change ownership of the token.
+//! - `transfer_from` - Change ownership of the token on behalf of the owner as a non-owner account.
+//! - `approve` - Allow a non-permissioned address to transfer or burn an item.
+//! - `set_collection_limits` - Set specific limits of a collection.
+//! - `set_collection_permissions` - Set specific permissions of a collection.
+//! - `repartition` - Re-partition a refungible token, while owning all of its parts.
+
 #![recursion_limit = "1024"]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(
@@ -54,28 +103,35 @@ mod benchmarking;
 pub mod weights;
 use weights::WeightInfo;
 
-const NESTING_BUDGET: u32 = 5;
+/// Maximum number of levels of depth in the token nesting tree.
+pub const NESTING_BUDGET: u32 = 5;
 
 decl_error! {
-	/// Error for non-fungible-token module.
+	/// Errors for the common Unique transactions.
 	pub enum Error for Module<T: Config> {
-		/// Decimal_points parameter must be lower than MAX_DECIMAL_POINTS constant, currently it is 30.
+		/// Decimal_points parameter must be lower than [`up_data_structs::MAX_DECIMAL_POINTS`].
 		CollectionDecimalPointLimitExceeded,
 		/// This address is not set as sponsor, use setCollectionSponsor first.
 		ConfirmUnsetSponsorFail,
 		/// Length of items properties must be greater than 0.
 		EmptyArgument,
-		/// Repertition is only supported by refungible collection
+		/// Repertition is only supported by refungible collection.
 		RepartitionCalledOnNonRefungibleCollection,
 	}
 }
 
+/// Configuration trait of this pallet.
 pub trait Config: system::Config + pallet_common::Config + Sized + TypeInfo {
+	/// Overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
+
+	/// Weight information for common pallet operations.
 	type CommonWeightInfo: CommonWeightInfo<Self::CrossAccountId>;
+
+	/// Weight info information for extra refungible pallet operations.
 	type RefungibleExtensionsWeightInfo: RefungibleExtensionsWeightInfo;
 }
 
@@ -88,85 +144,68 @@ decl_event! {
 		/// Collection sponsor was removed
 		///
 		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
+		/// * collection_id: ID of the affected collection.
 		CollectionSponsorRemoved(CollectionId),
 
 		/// Collection admin was added
 		///
 		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
-		///
-		/// * admin:  Admin address.
+		/// * collection_id: ID of the affected collection.
+		/// * admin: Admin address.
 		CollectionAdminAdded(CollectionId, CrossAccountId),
 
 		/// Collection owned was changed
 		///
 		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
-		///
-		/// * owner:  New owner address.
+		/// * collection_id: ID of the affected collection.
+		/// * owner: New owner address.
 		CollectionOwnedChanged(CollectionId, AccountId),
 
 		/// Collection sponsor was set
 		///
 		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
-		///
-		/// * owner:  New sponsor address.
+		/// * collection_id: ID of the affected collection.
+		/// * owner: New sponsor address.
 		CollectionSponsorSet(CollectionId, AccountId),
 
 		/// New sponsor was confirm
 		///
 		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
-		///
-		/// * sponsor:  New sponsor address.
+		/// * collection_id: ID of the affected collection.
+		/// * sponsor: New sponsor address.
 		SponsorshipConfirmed(CollectionId, AccountId),
 
 		/// Collection admin was removed
 		///
 		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
-		///
-		/// * admin:  Admin address.
+		/// * collection_id: ID of the affected collection.
+		/// * admin: Removed admin address.
 		CollectionAdminRemoved(CollectionId, CrossAccountId),
 
 		/// Address was removed from the allow list
 		///
 		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
-		///
-		/// * user:  Address.
+		/// * collection_id: ID of the affected collection.
+		/// * user: Address of the removed account.
 		AllowListAddressRemoved(CollectionId, CrossAccountId),
 
 		/// Address was added to the allow list
 		///
 		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
-		///
-		/// * user:  Address.
+		/// * collection_id: ID of the affected collection.
+		/// * user: Address of the added account.
 		AllowListAddressAdded(CollectionId, CrossAccountId),
 
 		/// Collection limits were set
 		///
 		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
+		/// * collection_id: ID of the affected collection.
 		CollectionLimitSet(CollectionId),
 
 		/// Collection permissions were set
 		///
 		/// # Arguments
-		///
-		/// * collection_id: Globally unique collection identifier.
+		/// * collection_id: ID of the affected collection.
 		CollectionPermissionSet(CollectionId),
 	}
 }
@@ -232,6 +271,7 @@ decl_storage! {
 }
 
 decl_module! {
+	/// Type alias to Pallet, to be used by construct_runtime.
 	pub struct Module<T: Config> for enum Call
 	where
 		origin: T::Origin
@@ -252,27 +292,37 @@ decl_module! {
 			0
 		}
 
-		/// This method creates a Collection of NFTs. Each Token may have multiple properties encoded as an array of bytes of certain length. The initial owner of the collection is set to the address that signed the transaction and can be changed later.
+		/// DEPRECATED - use create_collection_ex. Create a Collection of tokens.
+		///
+		/// Each Token may have multiple properties encoded as an array of bytes
+		/// of certain length. The initial owner of the collection is set
+		/// to the address that signed the transaction and can be changed later.
+		///
+		/// Prefer [`create_collection_ex`](Call::create_collection_ex) instead.
 		///
 		/// # Permissions
 		///
-		/// * Anyone.
+		/// * Anyone - becomes the owner of the new collection.
 		///
 		/// # Arguments
 		///
-		/// * collection_name: UTF-16 string with collection name (limit 64 characters), will be stored as zero-terminated.
-		/// * collection_description - UTF-16 string with collection description (limit 256 characters), will be stored as zero-terminated.
-		/// * token_prefix - UTF-8 string with token prefix.
-		/// * mode - [CollectionMode] collection type and type dependent data.
+		/// * `collection_name`: UTF-16 string with collection name (limit 64 characters),
+		/// will be stored as zero-terminated.
+		/// * `collection_description`: UTF-16 string with collection description (limit 256 characters),
+		/// will be stored as zero-terminated.
+		/// * `token_prefix`: UTF-8 string with token prefix.
+		/// * `mode`: [`CollectionMode`] and type dependent data.
 		// returns collection ID
 		#[weight = <SelfWeightOf<T>>::create_collection()]
 		#[transactional]
 		#[deprecated]
-		pub fn create_collection(origin,
-								 collection_name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
-								 collection_description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
-								 token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
-								 mode: CollectionMode) -> DispatchResult  {
+		pub fn create_collection(
+			origin,
+			collection_name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
+			collection_description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
+			token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
+			mode: CollectionMode
+		) -> DispatchResult  {
 			let data: CreateCollectionData<T::AccountId> = CreateCollectionData {
 				name: collection_name,
 				description: collection_description,
@@ -284,15 +334,15 @@ decl_module! {
 		}
 
 		/// Create a collection with explicit parameters.
-		/// Prefer it to the deprecated [`created_collection`] method.
+		/// Prefer it to the deprecated [`create_collection`](Call::create_collection) method.
 		///
 		/// # Permissions
 		///
-		/// * Anyone.
+		/// * Anyone - becomes the owner of the new collection.
 		///
 		/// # Arguments
 		///
-		/// * data: explicit create-collection data.
+		/// * `data`: Explicit data of a collection used for its creation.
 		#[weight = <SelfWeightOf<T>>::create_collection()]
 		#[transactional]
 		pub fn create_collection_ex(origin, data: CreateCollectionData<T::AccountId>) -> DispatchResult {
@@ -305,15 +355,15 @@ decl_module! {
 			Ok(())
 		}
 
-		/// Destroy the collection if no tokens exist within.
+		/// Destroy a collection if no tokens exist within.
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
+		/// * Collection owner
 		///
 		/// # Arguments
 		///
-		/// * collection_id - collection to destroy.
+		/// * `collection_id`: Collection to destroy.
 		#[weight = <SelfWeightOf<T>>::destroy_collection()]
 		#[transactional]
 		pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
@@ -340,13 +390,13 @@ decl_module! {
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
+		/// * Collection owner
+		/// * Collection admin
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
-		/// * address.
+		/// * `collection_id`: ID of the modified collection.
+		/// * `address`: ID of the address to be added to the allowlist.
 		#[weight = <SelfWeightOf<T>>::add_to_allow_list()]
 		#[transactional]
 		pub fn add_to_allow_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
@@ -374,13 +424,13 @@ decl_module! {
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
+		/// * Collection owner
+		/// * Collection admin
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
-		/// * address.
+		/// * `collection_id`: ID of the modified collection.
+		/// * `address`: ID of the address to be removed from the allowlist.
 		#[weight = <SelfWeightOf<T>>::remove_from_allow_list()]
 		#[transactional]
 		pub fn remove_from_allow_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
@@ -408,12 +458,12 @@ decl_module! {
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
+		/// * Collection owner
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
-		/// * new_owner.
+		/// * `collection_id`: ID of the modified collection.
+		/// * `new_owner`: ID of the account that will become the owner.
 		#[weight = <SelfWeightOf<T>>::change_collection_owner()]
 		#[transactional]
 		pub fn change_collection_owner(origin, collection_id: CollectionId, new_owner: T::AccountId) -> DispatchResult {
@@ -433,18 +483,22 @@ decl_module! {
 			target_collection.save()
 		}
 
-		/// Adds an admin of the collection.
-		/// NFT Collection can be controlled by multiple admin addresses (some which can also be servers, for example). Admins can issue and burn NFTs, as well as add and remove other admins, but cannot change NFT or Collection ownership.
+		/// Add an admin to a collection.
+		///
+		/// NFT Collection can be controlled by multiple admin addresses
+		/// (some which can also be servers, for example). Admins can issue
+		/// and burn NFTs, as well as add and remove other admins,
+		/// but cannot change NFT or Collection ownership.
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
+		/// * Collection owner
+		/// * Collection admin
 		///
 		/// # Arguments
 		///
-		/// * collection_id - ID of the Collection to add admin for.
-		/// * new_admin - Address of new admin to add.
+		/// * `collection_id`: ID of the Collection to add an admin for.
+		/// * `new_admin`: Address of new admin to add.
 		#[weight = <SelfWeightOf<T>>::add_collection_admin()]
 		#[transactional]
 		pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin: T::CrossAccountId) -> DispatchResult {
@@ -460,17 +514,20 @@ decl_module! {
 			<PalletCommon<T>>::toggle_admin(&collection, &sender, &new_admin, true)
 		}
 
-		/// Remove admin address of the Collection. An admin address can remove itself. List of admins may become empty, in which case only Collection Owner will be able to add an Admin.
+		/// Remove admin of a collection.
+		///
+		/// An admin address can remove itself. List of admins may become empty,
+		/// in which case only Collection Owner will be able to add an Admin.
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
+		/// * Collection owner
+		/// * Collection admin
 		///
 		/// # Arguments
 		///
-		/// * collection_id - ID of the Collection to remove admin for.
-		/// * account_id - Address of admin to remove.
+		/// * `collection_id`: ID of the collection to remove the admin for.
+		/// * `account_id`: Address of the admin to remove.
 		#[weight = <SelfWeightOf<T>>::remove_collection_admin()]
 		#[transactional]
 		pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::CrossAccountId) -> DispatchResult {
@@ -486,17 +543,18 @@ decl_module! {
 			<PalletCommon<T>>::toggle_admin(&collection, &sender, &account_id, false)
 		}
 
-		/// Set (invite) a new collection sponsor. If successful, confirmation from the sponsor-to-be will be pending.
+		/// Set (invite) a new collection sponsor.
+		/// If successful, confirmation from the sponsor-to-be will be pending.
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
+		/// * Collection owner
+		/// * Collection admin
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
-		/// * new_sponsor.
+		/// * `collection_id`: ID of the modified collection.
+		/// * `new_sponsor`: ID of the account of the sponsor-to-be.
 		#[weight = <SelfWeightOf<T>>::set_collection_sponsor()]
 		#[transactional]
 		pub fn set_collection_sponsor(origin, collection_id: CollectionId, new_sponsor: T::AccountId) -> DispatchResult {
@@ -516,7 +574,11 @@ decl_module! {
 			target_collection.save()
 		}
 
-		/// Confirm own sponsorship of a collection.
+		/// Confirm own sponsorship of a collection, becoming the sponsor.
+		/// An invitation must be pending, see [`set_collection_sponsor`](Call::set_collection_sponsor).
+		///
+		/// Sponsor can pay the fees of a transaction instead of the sender,
+		/// but only within specified limits.
 		///
 		/// # Permissions
 		///
@@ -524,7 +586,7 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
+		/// * `collection_id`: ID of the collection with the pending sponsor.
 		#[weight = <SelfWeightOf<T>>::confirm_sponsorship()]
 		#[transactional]
 		pub fn confirm_sponsorship(origin, collection_id: CollectionId) -> DispatchResult {
@@ -545,15 +607,15 @@ decl_module! {
 			target_collection.save()
 		}
 
-		/// Switch back to pay-per-own-transaction model.
+		/// Remove a sponsor from a collection, making everyone pay for their own transactions.
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
+		/// * Collection owner
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
+		/// * `collection_id`: ID of the collection with the sponsor to remove.
 		#[weight = <SelfWeightOf<T>>::remove_collection_sponsor()]
 		#[transactional]
 		pub fn remove_collection_sponsor(origin, collection_id: CollectionId) -> DispatchResult {
@@ -571,22 +633,24 @@ decl_module! {
 			target_collection.save()
 		}
 
-		/// Create a concrete instance of NFT Collection created with CreateCollection method.
+		/// Mint an item within a collection.
+		///
+		/// A collection must exist first, see [`create_collection_ex`](Call::create_collection_ex).
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
+		/// * Collection owner
+		/// * Collection admin
 		/// * Anyone if
 		///     * Allow List is enabled, and
 		///     * Address is added to allow list, and
-		///     * MintPermission is enabled (see SetMintPermission method)
+		///     * MintPermission is enabled (see [`set_collection_permissions`](Call::set_collection_permissions))
 		///
 		/// # Arguments
 		///
-		/// * collection_id - ID of the collection.
-		/// * owner - Address, initial owner of the NFT.
-		/// * data - Token data to store on chain.
+		/// * `collection_id`: ID of the collection to which an item would belong.
+		/// * `owner`: Address of the initial owner of the item.
+		/// * `data`: Token data describing the item to store on chain.
 		#[weight = T::CommonWeightInfo::create_item()]
 		#[transactional]
 		pub fn create_item(origin, collection_id: CollectionId, owner: T::CrossAccountId, data: CreateItemData) -> DispatchResultWithPostInfo {
@@ -596,22 +660,24 @@ decl_module! {
 			dispatch_tx::<T, _>(collection_id, |d| d.create_item(sender, owner, data, &budget))
 		}
 
-		/// Create multiple items in a collection created with CreateCollection method.
+		/// Create multiple items within a collection.
+		///
+		/// A collection must exist first, see [`create_collection_ex`](Call::create_collection_ex).
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
+		/// * Collection owner
+		/// * Collection admin
 		/// * Anyone if
 		///     * Allow List is enabled, and
-		///     * Address is added to allow list, and
-		///     * MintPermission is enabled (see SetMintPermission method)
+		///     * Address is added to the allow list, and
+		///     * MintPermission is enabled (see [`set_collection_permissions`](Call::set_collection_permissions))
 		///
 		/// # Arguments
 		///
-		/// * collection_id - ID of the collection.
-		/// * owner - Address, initial owner of the NFT.
-		/// * items_data - Array items properties. Each property is an array of bytes itself, see [`create_item`].
+		/// * `collection_id`: ID of the collection to which the tokens would belong.
+		/// * `owner`: Address of the initial owner of the tokens.
+		/// * `items_data`: Vector of data describing each item to be created.
 		#[weight = T::CommonWeightInfo::create_multiple_items(&items_data)]
 		#[transactional]
 		pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::CrossAccountId, items_data: Vec<CreateItemData>) -> DispatchResultWithPostInfo {
@@ -626,13 +692,14 @@ decl_module! {
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
+		/// * Collection owner
+		/// * Collection admin
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
-		/// * properties - Vector of key-value pairs stored as the collection's metadata. Keys support Latin letters, `-`, `_`, and `.` as symbols.
+		/// * `collection_id`: ID of the modified collection.
+		/// * `properties`: Vector of key-value pairs stored as the collection's metadata.
+		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[weight = T::CommonWeightInfo::set_collection_properties(properties.len() as u32)]
 		#[transactional]
 		pub fn set_collection_properties(
@@ -656,8 +723,9 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
-		/// * property_keys - Vector of keys of the properties to be deleted.
+		/// * `collection_id`: ID of the modified collection.
+		/// * `property_keys`: Vector of keys of the properties to be deleted.
+		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[weight = T::CommonWeightInfo::delete_collection_properties(property_keys.len() as u32)]
 		#[transactional]
 		pub fn delete_collection_properties(
@@ -673,19 +741,23 @@ decl_module! {
 		}
 
 		/// Add or change token properties according to collection's permissions.
+		/// Currently properties only work with NFTs.
 		///
 		/// # Permissions
 		///
 		/// * Depends on collection's token property permissions and specified property mutability:
-		/// 	* Collection Owner
-		/// 	* Collection Admin
-		/// 	* Token Owner
+		/// 	* Collection owner
+		/// 	* Collection admin
+		/// 	* Token owner
+		///
+		/// See [`set_token_property_permissions`](Call::set_token_property_permissions).
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
-		/// * token_id.
-		/// * properties - Vector of key-value pairs stored as the token's metadata. Keys support Latin letters, `-`, `_`, and `.` as symbols.
+		/// * `collection_id: ID of the collection to which the token belongs.
+		/// * `token_id`: ID of the modified token.
+		/// * `properties`: Vector of key-value pairs stored as the token's metadata.
+		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[weight = T::CommonWeightInfo::set_token_properties(properties.len() as u32)]
 		#[transactional]
 		pub fn set_token_properties(
@@ -702,20 +774,21 @@ decl_module! {
 			dispatch_tx::<T, _>(collection_id, |d| d.set_token_properties(sender, token_id, properties, &budget))
 		}
 
-		/// Delete specified token properties.
+		/// Delete specified token properties. Currently properties only work with NFTs.
 		///
 		/// # Permissions
 		///
 		/// * Depends on collection's token property permissions and specified property mutability:
-		/// 	* Collection Owner
-		/// 	* Collection Admin
-		/// 	* Token Owner
+		/// 	* Collection owner
+		/// 	* Collection admin
+		/// 	* Token owner
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
-		/// * token_id.
-		/// * property_keys - Vector of keys of the properties to be deleted.
+		/// * `collection_id`: ID of the collection to which the token belongs.
+		/// * `token_id`: ID of the modified token.
+		/// * `property_keys`: Vector of keys of the properties to be deleted.
+		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[weight = T::CommonWeightInfo::delete_token_properties(property_keys.len() as u32)]
 		#[transactional]
 		pub fn delete_token_properties(
@@ -734,15 +807,19 @@ decl_module! {
 
 		/// Add or change token property permissions of a collection.
 		///
+		/// Without a permission for a particular key, a property with that key
+		/// cannot be created in a token.
+		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
+		/// * Collection owner
+		/// * Collection admin
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
-		/// * property_permissions - Vector of permissions for property keys. Keys support Latin letters, `-`, `_`, and `.` as symbols.
+		/// * `collection_id`: ID of the modified collection.
+		/// * `property_permissions`: Vector of permissions for property keys.
+		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[weight = T::CommonWeightInfo::set_token_property_permissions(property_permissions.len() as u32)]
 		#[transactional]
 		pub fn set_token_property_permissions(
@@ -757,21 +834,21 @@ decl_module! {
 			dispatch_tx::<T, _>(collection_id, |d| d.set_token_property_permissions(&sender, property_permissions))
 		}
 
-		/// Create multiple items inside a collection with explicitly specified initial parameters.
+		/// Create multiple items within a collection with explicitly specified initial parameters.
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
+		/// * Collection owner
+		/// * Collection admin
 		/// * Anyone if
 		///     * Allow List is enabled, and
 		///     * Address is added to allow list, and
-		///     * MintPermission is enabled (see SetMintPermission method)
+		///     * MintPermission is enabled (see [`set_collection_permissions`](Call::set_collection_permissions))
 		///
 		/// # Arguments
 		///
-		/// * collection_id - ID of the collection.
-		/// * data - Explicit item creation data.
+		/// * `collection_id`: ID of the collection to which the tokens would belong.
+		/// * `data`: Explicit item creation data.
 		#[weight = T::CommonWeightInfo::create_multiple_items_ex(&data)]
 		#[transactional]
 		pub fn create_multiple_items_ex(origin, collection_id: CollectionId, data: CreateItemExData<T::CrossAccountId>) -> DispatchResultWithPostInfo {
@@ -781,16 +858,16 @@ decl_module! {
 			dispatch_tx::<T, _>(collection_id, |d| d.create_multiple_items_ex(sender, data, &budget))
 		}
 
-		/// Set transfers_enabled value for particular collection.
+		/// Completely allow or disallow transfers for a particular collection.
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
+		/// * Collection owner
 		///
 		/// # Arguments
 		///
-		/// * collection_id - ID of the collection.
-		/// * value - New flag value.
+		/// * `collection_id`: ID of the collection.
+		/// * `value`: New value of the flag, are transfers allowed?
 		#[weight = <SelfWeightOf<T>>::set_transfers_enabled_flag()]
 		#[transactional]
 		pub fn set_transfers_enabled_flag(origin, collection_id: CollectionId, value: bool) -> DispatchResult {
@@ -805,18 +882,22 @@ decl_module! {
 			target_collection.save()
 		}
 
-		/// Destroy a concrete instance of NFT.
+		/// Destroy an item.
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
-		/// * Current NFT Owner
+		/// * Collection owner
+		/// * Collection admin
+		/// * Current item owner
 		///
 		/// # Arguments
 		///
-		/// * collection_id - ID of the collection.
-		/// * item_id - ID of NFT to burn.
+		/// * `collection_id`: ID of the collection to which the item belongs.
+		/// * `item_id`: ID of item to burn.
+		/// * `value`: Number of parts of the item to destroy.
+		/// 	* Non-Fungible Mode: There is always 1 NFT.
+		///     * Fungible Mode: The desired number of parts to burn.
+		///     * Re-Fungible Mode: The desired number of parts to burn.
 		#[weight = T::CommonWeightInfo::burn_item()]
 		#[transactional]
 		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
@@ -833,20 +914,28 @@ decl_module! {
 			Ok(post_info)
 		}
 
-		/// Destroy a concrete instance of NFT on behalf of the owner.
-		/// See also: [`approve`]
+		/// Destroy a token on behalf of the owner as a non-owner account.
+		/// See also: [`approve`](Call::approve).
+		///
+		/// After this method executes, one approval is removed from the total so that
+		/// the approved address will not be able to transfer this item again from this owner.
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner.
-		/// * Collection Admin.
-		/// * Current NFT Owner.
+		/// * Collection owner
+		/// * Collection admin
+		/// * Current token owner
+		/// * Address approved by current item owner
 		///
 		/// # Arguments
 		///
-		/// * collection_id - ID of the collection.
-		/// * item_id - ID of NFT to burn.
-		/// * from - The owner of the item from whom it is taken away.
+		/// * `from`: The owner of the burning item.
+		/// * `collection_id`: ID of the collection to which the item belongs.
+		/// * `item_id`: ID of item to burn.
+		/// * `value`: Number of parts to burn.
+		/// 	* Non-Fungible Mode: There is always 1 NFT.
+		///     * Fungible Mode: The desired number of parts to burn.
+		///     * Re-Fungible Mode: The desired number of parts to burn.
 		#[weight = T::CommonWeightInfo::burn_from()]
 		#[transactional]
 		pub fn burn_from(origin, collection_id: CollectionId, from: T::CrossAccountId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
@@ -860,25 +949,23 @@ decl_module! {
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
-		/// * Current NFT owner
+		/// * Collection owner
+		/// * Collection admin
+		/// * Current token owner
 		///
 		/// # Arguments
 		///
-		/// * recipient - Address of token recipient.
-		///
-		/// * collection_id.
-		///
-		/// * item_id - ID of the item
+		/// * `recipient`: Address of token recipient.
+		/// * `collection_id`: ID of the collection the item belongs to.
+		/// * `item_id`: ID of the item.
 		///     * Non-Fungible Mode: Required.
 		///     * Fungible Mode: Ignored.
 		///     * Re-Fungible Mode: Required.
 		///
-		/// * value - Amount to transfer.
-		///     * Non-Fungible Mode: Ignored
-		///     * Fungible Mode: Must specify transferred amount
-		///     * Re-Fungible Mode: Must specify transferred portion (between 0 and 1)
+		/// * `value`: Amount to transfer.
+		/// 	* Non-Fungible Mode: There is always 1 NFT.
+		///     * Fungible Mode: The desired number of parts to transfer.
+		///     * Re-Fungible Mode: The desired number of parts to transfer.
 		#[weight = T::CommonWeightInfo::transfer()]
 		#[transactional]
 		pub fn transfer(origin, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
@@ -888,19 +975,21 @@ decl_module! {
 			dispatch_tx::<T, _>(collection_id, |d| d.transfer(sender, recipient, item_id, value, &budget))
 		}
 
-		/// Set, change, or remove approved address to transfer the ownership of the NFT.
+		/// Allow a non-permissioned address to transfer or burn an item.
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
-		/// * Current NFT owner
+		/// * Collection owner
+		/// * Collection admin
+		/// * Current item owner
 		///
 		/// # Arguments
 		///
-		/// * approved - Address that is approved to transfer this NFT or zero (if needed to remove approval).
-		/// * collection_id.
-		/// * item_id - ID of the item.
+		/// * `spender`: Account to be approved to make specific transactions on non-owned tokens.
+		/// * `collection_id`: ID of the collection the item belongs to.
+		/// * `item_id`: ID of the item transactions on which are now approved.
+		/// * `amount`: Number of approved transactions overwriting the current number,
+		/// e.g. set to `0` to remove approval.
 		#[weight = T::CommonWeightInfo::approve()]
 		#[transactional]
 		pub fn approve(origin, spender: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResultWithPostInfo {
@@ -909,22 +998,29 @@ decl_module! {
 			dispatch_tx::<T, _>(collection_id, |d| d.approve(sender, spender, item_id, amount))
 		}
 
-		/// Change ownership of a NFT on behalf of the owner. See Approve method for additional information. After this method executes, the approval is removed so that the approved address will not be able to transfer this NFT again from this owner.
+		/// Change ownership of an item on behalf of the owner as a non-owner account.
+		/// See the [`approve`](Call::approve) method for additional information.
+		///
+		/// After this method executes, one approval is removed from the total so that
+		/// the approved address will not be able to transfer this item again from this owner.
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
-		/// * Current NFT owner
-		/// * Address approved by current NFT owner
+		/// * Collection owner
+		/// * Collection admin
+		/// * Current item owner
+		/// * Address approved by current item owner
 		///
 		/// # Arguments
 		///
-		/// * from - Address that currently owns the token.
-		/// * recipient - Address of the new token-owner-to-be.
-		/// * collection_id.
-		/// * item_id - ID of the item to be transferred.
-		/// * value - Amount to transfer.
+		/// * `from`: Address that currently owns the token.
+		/// * `recipient`: Address of the new token-owner-to-be.
+		/// * `collection_id`: ID of the collection the item.
+		/// * `item_id`: ID of the item to be transferred.
+		/// * `value`: Amount of parts to transfer.
+		/// 	* Non-Fungible Mode: There is always 1 NFT.
+		///     * Fungible Mode: The desired number of parts to transfer.
+		///     * Re-Fungible Mode: The desired number of parts to transfer.
 		#[weight = T::CommonWeightInfo::transfer_from()]
 		#[transactional]
 		pub fn transfer_from(origin, from: T::CrossAccountId, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResultWithPostInfo {
@@ -938,13 +1034,13 @@ decl_module! {
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
+		/// * Collection owner
+		/// * Collection admin
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
-		/// * new_limit - New limits of the collection. They will overwrite the current ones.
+		/// * `collection_id`: ID of the modified collection.
+		/// * `new_limit`: New limits of the collection. They will overwrite the current ones.
 		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
 		#[transactional]
 		pub fn set_collection_limits(
@@ -971,13 +1067,13 @@ decl_module! {
 		///
 		/// # Permissions
 		///
-		/// * Collection Owner
-		/// * Collection Admin
+		/// * Collection owner
+		/// * Collection admin
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
-		/// * new_permission - New permissions of the collection. They will overwrite the current ones.
+		/// * `collection_id`: ID of the modified collection.
+		/// * `new_permission`: New permissions of the collection. They will overwrite the current ones.
 		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
 		#[transactional]
 		pub fn set_collection_permissions(
@@ -1004,13 +1100,13 @@ decl_module! {
 		///
 		/// # Permissions
 		///
-		/// * Token Owner (must own every part)
+		/// * Token owner (must own every part)
 		///
 		/// # Arguments
 		///
-		/// * collection_id.
-		/// * token_id - ID of the RFT.
-		/// * amount - New number of parts into which the token shall be partitioned.
+		/// * `collection_id`: ID of the collection the RFT belongs to.
+		/// * `token_id`: ID of the RFT.
+		/// * `amount`: New number of parts into which the token shall be partitioned.
 		#[weight = T::RefungibleExtensionsWeightInfo::repartition()]
 		#[transactional]
 		pub fn repartition(
