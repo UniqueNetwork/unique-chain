@@ -71,7 +71,7 @@
 //!
 //! The Fungible pallet provides implementations for the following traits.
 //!
-//! - [`WithRecorder`](pallet_evm_coder_substrate::WithRecorder):
+//! - [`WithRecorder`](pallet_evm_coder_substrate::WithRecorder): Trait for EVM support
 //! - [`CommonCollectionOperations`](pallet_common::CommonCollectionOperations): Functions for dealing with collections
 //!	- [`CommonWeightInfo`](pallet_common::CommonWeightInfo): Functions for retrieval of transaction weight
 //! - [`CommonEvmHandler`](pallet_common::erc::CommonEvmHandler): Function for handling EVM runtime calls
@@ -169,19 +169,24 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 }
-/// Handler for fungible assets.
+
+/// Wrapper around untyped collection handle, asserting inner collection is of fungible type.
+/// Required for interaction with Fungible collections, type safety and implementation [`solidity_interface`][`evm_coder::solidity_interface`].
+
 pub struct FungibleHandle<T: Config>(pallet_common::CollectionHandle<T>);
+
+/// Implementation of methods required for dispatching during runtime.
 impl<T: Config> FungibleHandle<T> {
-	/// Casts [pallet_common::CollectionHandle] into [FungibleHandle].
+	/// Casts [`CollectionHandle`][`pallet_common::CollectionHandle`] into [`FungibleHandle`].
 	pub fn cast(inner: pallet_common::CollectionHandle<T>) -> Self {
 		Self(inner)
 	}
 
-	/// Casts [FungibleHandle] into [pallet_common::CollectionHandle].
+	/// Casts [`FungibleHandle`] into [`CollectionHandle`][`pallet_common::CollectionHandle`].
 	pub fn into_inner(self) -> pallet_common::CollectionHandle<T> {
 		self.0
 	}
-	/// Returns a mutable reference to the internal [pallet_common::CollectionHandle].
+	/// Returns a mutable reference to the internal [`CollectionHandle`][`pallet_common::CollectionHandle`].
 	pub fn common_mut(&mut self) -> &mut pallet_common::CollectionHandle<T> {
 		&mut self.0
 	}
@@ -287,6 +292,11 @@ impl<T: Config> Pallet<T> {
 
 	/// Transfers the specified amount of tokens. Will check that
 	/// the transfer is allowed for the token.
+	///
+	/// - `from`: Owner of tokens to transfer.
+	/// - `to`: Recepient of transfered tokens.
+	/// - `amount`: Amount of tokens to transfer.
+	/// - `collection`: Collection that contains the token
 	pub fn transfer(
 		collection: &FungibleHandle<T>,
 		from: &T::CrossAccountId,
@@ -358,6 +368,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Minting tokens for multiple IDs.
+	/// See [`create_item`][`Pallet::create_item`] for more details.
 	pub fn create_multiple_items(
 		collection: &FungibleHandle<T>,
 		sender: &T::CrossAccountId,
@@ -459,7 +470,9 @@ impl<T: Config> Pallet<T> {
 		));
 	}
 
-	/// Sets the amount of owner tokens that the spender can manage.
+	/// Set allowance for the spender to `transfer` or `burn` owner's tokens.
+	///
+	/// - `amount`: Amount of tokens the spender is allowed to `transfer` or `burn`.
 	pub fn set_allowance(
 		collection: &FungibleHandle<T>,
 		owner: &T::CrossAccountId,
@@ -484,6 +497,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Returns allowance, which should be set after transaction
 	fn check_allowed(
 		collection: &FungibleHandle<T>,
 		spender: &T::CrossAccountId,
@@ -523,7 +537,12 @@ impl<T: Config> Pallet<T> {
 		Ok(allowance)
 	}
 
-	/// Transfers of tokens that `from` gave to `spender` to manage, to `to` ID.
+	/// Transfer FT tokens from one account to another.
+	/// Same as the [`transfer`] but spender doesn't needs to be an owner of the token pieces.
+	/// The owner should set allowance for the spender to transfer pieces.
+	///	See [`set_allowance`][`Pallet::set_allowance`] for more details.
+	///  
+	///	[`transfer`]: struct.Pallet.html#method.transfer
 	pub fn transfer_from(
 		collection: &FungibleHandle<T>,
 		spender: &T::CrossAccountId,
@@ -543,7 +562,11 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Burns managed tokens.
+	/// Burn FT tokens from the account.
+	///
+	/// Same as the [`burn`][`Pallet::burn`] but spender doesn't need to be an owner of the tokens. The `from` should
+	/// set allowance for the spender to burn tokens.
+	/// See [`set_allowance`][`Pallet::set_allowance`] for more details.
 	pub fn burn_from(
 		collection: &FungibleHandle<T>,
 		spender: &T::CrossAccountId,
@@ -562,7 +585,14 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Delegated to `create_multiple_items`
+	
+	///	Creates FT token.
+	///
+	/// The sender should be the owner/admin of the collection or collection should be configured
+	/// to allow public minting.
+	///
+	/// - `data`: Contains user who will become the owners of the tokens and amount
+	///   of tokens he will receive.
 	pub fn create_item(
 		collection: &FungibleHandle<T>,
 		sender: &T::CrossAccountId,
