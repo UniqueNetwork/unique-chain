@@ -83,6 +83,7 @@ fn convert_data<T: Config>(
 	Ok((caller, name, description, token_prefix, base_uri_value))
 }
 
+//
 fn make_data<T: Config>(
 	name: CollectionName,
 	mode: CollectionMode,
