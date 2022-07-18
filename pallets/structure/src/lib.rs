@@ -162,10 +162,11 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	/// Find chain of parents of current token
+	/// Get the chain of parents of a token in the nesting hierarchy
 	///
-	/// Returns the parent of the current token, than the parent of the parent and so on until token without a parent
-	/// is returned. Returns error if cycle is detected.
+	/// Returns an iterator of addresses of the owning tokens and the owning account,
+	/// starting from the immediate parent token, ending with the account.
+	/// Returns error if cycle is detected.
 	pub fn parent_chain(
 		mut collection: CollectionId,
 		mut token: TokenId,
