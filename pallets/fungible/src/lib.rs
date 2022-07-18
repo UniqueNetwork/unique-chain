@@ -472,6 +472,9 @@ impl<T: Config> Pallet<T> {
 
 	/// Set allowance for the spender to `transfer` or `burn` owner's tokens.
 	///
+	/// - `collection`: Collection that contains the token
+	/// - `owner`: Owner of tokens that sets the allowance.
+	/// - `spender`: Recipient of the allowance rights.
 	/// - `amount`: Amount of tokens the spender is allowed to `transfer` or `burn`.
 	pub fn set_allowance(
 		collection: &FungibleHandle<T>,
@@ -497,7 +500,13 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Returns allowance, which should be set after transaction
+	/// Checks if a non-owner has (enough) allowance from the owner to perform operations on the tokens.
+	/// Returns the expected remaining allowance - it should be set manually if the transaction proceeds.
+	///
+	/// - `collection`: Collection that contains the token.
+	/// - `spender`: CrossAccountId who has the allowance rights.
+	/// - `from`: The owner of the tokens who sets the allowance.
+	/// - `amount`: Amount of tokens by which the allowance sholud be reduced.
 	fn check_allowed(
 		collection: &FungibleHandle<T>,
 		spender: &T::CrossAccountId,
@@ -538,11 +547,10 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Transfer fungible tokens from one account to another.
-	/// Same as the [`transfer`] but spender doesn't needs to be an owner of the token pieces.
+	/// Same as the [`transfer`][`Pallet::transfer`] but spender doesn't needs to be an owner of the token pieces.
 	/// The owner should set allowance for the spender to transfer pieces.
 	///	See [`set_allowance`][`Pallet::set_allowance`] for more details.
-	///  
-	///	[`transfer`]: struct.Pallet.html#method.transfer
+
 	pub fn transfer_from(
 		collection: &FungibleHandle<T>,
 		spender: &T::CrossAccountId,
