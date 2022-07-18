@@ -537,7 +537,7 @@ impl<T: Config> Pallet<T> {
 		Ok(allowance)
 	}
 
-	/// Transfer FT tokens from one account to another.
+	/// Transfer fungible tokens from one account to another.
 	/// Same as the [`transfer`] but spender doesn't needs to be an owner of the token pieces.
 	/// The owner should set allowance for the spender to transfer pieces.
 	///	See [`set_allowance`][`Pallet::set_allowance`] for more details.
@@ -562,7 +562,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Burn FT tokens from the account.
+	/// Burn fungible tokens from the account.
 	///
 	/// Same as the [`burn`][`Pallet::burn`] but spender doesn't need to be an owner of the tokens. The `from` should
 	/// set allowance for the spender to burn tokens.
@@ -585,7 +585,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	///	Creates FT token.
+	///	Creates fungible token.
 	///
 	/// The sender should be the owner/admin of the collection or collection should be configured
 	/// to allow public minting.
