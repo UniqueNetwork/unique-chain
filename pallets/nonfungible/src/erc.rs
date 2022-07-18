@@ -34,6 +34,7 @@ use pallet_common::{
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
+use alloc::string::ToString;
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
@@ -174,21 +175,35 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// Returns token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
-		let key = token_uri_key();
-		if !has_token_permission::<T>(self.id, &key) {
-			return Err("No tokenURI permission".into());
+		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;	
+
+		if let Ok(shema_name) = get_token_property(self, token_id, &schema_name_key()) {
+			if shema_name != "ERC721" {
+				return Ok("".into());
+			}
+		} else {
+			return Ok("".into());
 		}
 
-		self.consume_store_reads(1)?;
-		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
-
-		let properties = <TokenProperties<T>>::try_get((self.id, token_id))
-			.map_err(|_| Error::Revert("Token properties not found".into()))?;
-		if let Some(property) = properties.get(&key) {
-			return Ok(string::from_utf8_lossy(property).into());
+		if let Ok(url) = get_token_property(self, token_id, &u_key()) {
+			if !url.is_empty() {
+				return Ok(url);
+			}
 		}
 
-		Err("Property tokenURI not found".into())
+		if let Ok(base_uri) = get_token_property(self, token_id, &base_uri_key()) {
+			if !base_uri.is_empty() {
+				if let Ok(suffix) = get_token_property(self, token_id, &s_key()) {
+					if !suffix.is_empty() {
+						return Ok(base_uri + suffix.as_str());
+					}
+				}
+
+				return Ok(base_uri + token_id.to_string().as_str());
+			}
+		}
+
+		Ok("".into())
 	}
 }
 
@@ -424,6 +439,17 @@ impl<T: Config> NonfungibleHandle<T> {
 	fn finish_minting(&mut self, _caller: caller) -> Result<bool> {
 		Err("not implementable".into())
 	}
+}
+
+fn get_token_property<T: Config>(collection: &CollectionHandle<T>, token_id: u32, key: &up_data_structs::PropertyKey) -> Result<string> {
+	collection.consume_store_reads(1)?;
+	let properties = <TokenProperties<T>>::try_get((collection.id, token_id))
+		.map_err(|_| Error::Revert("Token properties not found".into()))?;
+	if let Some(property) = properties.get(key) {
+		return Ok(string::from_utf8_lossy(property).into());
+	}
+
+	Err("Property tokenURI not found".into())
 }
 
 fn get_token_permission<T: Config>(
