@@ -14,3 +14,9 @@ exclude = [
 ]
 [profile.release]
 panic = 'unwind'
+
+[patch.crates-io]
+jsonrpsee = {git = "https://github.com/uniquenetwork/jsonrpsee", branch = "unique-v0.13.1-fix-unknown-fields"}
+jsonrpsee-types = {git = "https://github.com/uniquenetwork/jsonrpsee", branch = "unique-v0.13.1-fix-unknown-fields"}
+jsonrpsee-core = {git = "https://github.com/uniquenetwork/jsonrpsee", branch = "unique-v0.13.1-fix-unknown-fields"}
+
