@@ -91,7 +91,7 @@ fn make_data<T: Config>(
 	base_uri_value: PropertyValue,
 	add_properties: bool,
 ) -> Result<CreateCollectionData<T::AccountId>> {
-	let mut collection_properties = up_data_structs::CollectionPropertiesVec::default();
+	let mut properties = up_data_structs::CollectionPropertiesVec::default();
 	let mut token_property_permissions =
 		up_data_structs::CollectionPropertiesPermissionsVec::default();
 
@@ -129,7 +129,7 @@ fn make_data<T: Config>(
 			})
 			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
 
-		collection_properties
+		properties
 			.try_push(up_data_structs::Property {
 				key: schema_name_key(),
 				value: erc721_value(),
@@ -137,7 +137,7 @@ fn make_data<T: Config>(
 			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
 
 		if !base_uri_value.is_empty() {
-			collection_properties
+			properties
 				.try_push(up_data_structs::Property {
 					key: base_uri_key(),
 					value: base_uri_value,
@@ -152,6 +152,7 @@ fn make_data<T: Config>(
 		description,
 		token_prefix,
 		token_property_permissions,
+		properties,
 		..Default::default()
 	};
 	Ok(data)
