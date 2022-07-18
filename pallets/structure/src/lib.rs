@@ -42,7 +42,7 @@
 //!
 //! ## Interface
 //!
-//! ### Dispatchable Functions
+//! ### Available Functions
 //!
 //! - `find_parent` - Find parent of the token. It could be an account or another token.
 //! - `parent_chain` - Find chain of parents of the token.
@@ -50,10 +50,6 @@
 //! - `check_nesting` - Check if the token could be nested in the other token
 //! - `nest_if_sent_to_token` - Nest the token in the other token
 //! - `unnest_if_nested` - Unnest the token from the other token
-//!
-//! ## Assumptions
-//!
-//! * Total issued balanced of all accounts should be less than `Config::Balance::max_value()`.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -218,8 +214,8 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	/// Find the topmost parent and check that assigning `for_nest` token as a parent for
-	/// any token in the parents chain wouldn't create a cycle.
+	/// Find the topmost parent and check that assigning `for_nest` token as a child for
+	/// `token` wouldn't create a cycle.
 	///
 	/// - `budget`: Limit for searching parents in depth.
 	pub fn get_checked_topmost_owner(
@@ -271,8 +267,7 @@ impl<T: Config> Pallet<T> {
 	///
 	/// Returns `true` if `user` is `token`'s owner. Or If token is provided as `user` then
 	/// check that `user` and `token` have same owner.
-	/// Checks that assigning `for_nest` token as a parent for any token in the `token`'s
-	/// parents chain wouldn't create a cycle.
+	/// Checks that assigning `for_nest` token as a child for `token` wouldn't create a cycle.
 	///
 	/// - `budget`: Limit for searching parents in depth.
 	pub fn check_indirectly_owned(
