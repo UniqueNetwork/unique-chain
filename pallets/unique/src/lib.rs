@@ -34,7 +34,7 @@
 //!
 //! ### Dispatchables
 //!
-//! - `create_collection` - Create a collection of tokens. **Deprecated**, use `create_collection_ex`.
+//! - `create_collection` - Create a collection of tokens. **Deprecated**, use `createCollectionEx`.
 //! - `create_collection_ex` - Create a collection of tokens with explicit parameters.
 //! - `destroy_collection` - Destroy a collection if no tokens exist within.
 //! - `add_to_allow_list` - Add an address to allow list.
@@ -292,7 +292,7 @@ decl_module! {
 			0
 		}
 
-		/// DEPRECATED - use create_collection_ex. Create a Collection of tokens.
+		/// DEPRECATED - use createCollectionEx. Create a Collection of tokens.
 		///
 		/// Each Token may have multiple properties encoded as an array of bytes
 		/// of certain length. The initial owner of the collection is set
@@ -894,10 +894,10 @@ decl_module! {
 		///
 		/// * `collection_id`: ID of the collection to which the item belongs.
 		/// * `item_id`: ID of item to burn.
-		/// * `value`: Number of parts of the item to destroy.
-		/// 	* Non-Fungible Mode: There is always 1 NFT.
-		///     * Fungible Mode: The desired number of parts to burn.
-		///     * Re-Fungible Mode: The desired number of parts to burn.
+		/// * `value`: Number of pieces of the item to destroy.
+		/// 	* Non-Fungible Mode: An NFT is indivisible, there is always 1 corresponding to an ID.
+		///     * Fungible Mode: The desired number of pieces to burn.
+		///     * Re-Fungible Mode: The desired number of pieces to burn.
 		#[weight = T::CommonWeightInfo::burn_item()]
 		#[transactional]
 		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
@@ -932,10 +932,10 @@ decl_module! {
 		/// * `from`: The owner of the burning item.
 		/// * `collection_id`: ID of the collection to which the item belongs.
 		/// * `item_id`: ID of item to burn.
-		/// * `value`: Number of parts to burn.
-		/// 	* Non-Fungible Mode: There is always 1 NFT.
-		///     * Fungible Mode: The desired number of parts to burn.
-		///     * Re-Fungible Mode: The desired number of parts to burn.
+		/// * `value`: Number of pieces to burn.
+		/// 	* Non-Fungible Mode: An NFT is indivisible, there is always 1 corresponding to an ID.
+		///     * Fungible Mode: The desired number of pieces to burn.
+		///     * Re-Fungible Mode: The desired number of pieces to burn.
 		#[weight = T::CommonWeightInfo::burn_from()]
 		#[transactional]
 		pub fn burn_from(origin, collection_id: CollectionId, from: T::CrossAccountId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
@@ -963,9 +963,9 @@ decl_module! {
 		///     * Re-Fungible Mode: Required.
 		///
 		/// * `value`: Amount to transfer.
-		/// 	* Non-Fungible Mode: There is always 1 NFT.
-		///     * Fungible Mode: The desired number of parts to transfer.
-		///     * Re-Fungible Mode: The desired number of parts to transfer.
+		/// 	* Non-Fungible Mode: An NFT is indivisible, there is always 1 corresponding to an ID.
+		///     * Fungible Mode: The desired number of pieces to transfer.
+		///     * Re-Fungible Mode: The desired number of pieces to transfer.
 		#[weight = T::CommonWeightInfo::transfer()]
 		#[transactional]
 		pub fn transfer(origin, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
@@ -988,8 +988,8 @@ decl_module! {
 		/// * `spender`: Account to be approved to make specific transactions on non-owned tokens.
 		/// * `collection_id`: ID of the collection the item belongs to.
 		/// * `item_id`: ID of the item transactions on which are now approved.
-		/// * `amount`: Number of approved transactions overwriting the current number,
-		/// e.g. set to `0` to remove approval.
+		/// * `amount`: Number of pieces of the item approved for a transaction (maximum of 1 for NFTs).
+		/// Set to 0 to revoke the approval.
 		#[weight = T::CommonWeightInfo::approve()]
 		#[transactional]
 		pub fn approve(origin, spender: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResultWithPostInfo {
@@ -1017,10 +1017,10 @@ decl_module! {
 		/// * `recipient`: Address of the new token-owner-to-be.
 		/// * `collection_id`: ID of the collection the item.
 		/// * `item_id`: ID of the item to be transferred.
-		/// * `value`: Amount of parts to transfer.
-		/// 	* Non-Fungible Mode: There is always 1 NFT.
-		///     * Fungible Mode: The desired number of parts to transfer.
-		///     * Re-Fungible Mode: The desired number of parts to transfer.
+		/// * `value`: Amount to transfer.
+		/// 	* Non-Fungible Mode: An NFT is indivisible, there is always 1 corresponding to an ID.
+		///     * Fungible Mode: The desired number of pieces to transfer.
+		///     * Re-Fungible Mode: The desired number of pieces to transfer.
 		#[weight = T::CommonWeightInfo::transfer_from()]
 		#[transactional]
 		pub fn transfer_from(origin, from: T::CrossAccountId, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResultWithPostInfo {
@@ -1040,7 +1040,8 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * `collection_id`: ID of the modified collection.
-		/// * `new_limit`: New limits of the collection. They will overwrite the current ones.
+		/// * `new_limit`: New limits of the collection. Fields that are not set (None)
+		/// will not overwrite the old ones.
 		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
 		#[transactional]
 		pub fn set_collection_limits(
@@ -1073,7 +1074,8 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * `collection_id`: ID of the modified collection.
-		/// * `new_permission`: New permissions of the collection. They will overwrite the current ones.
+		/// * `new_permission`: New permissions of the collection. Fields that are not set (None)
+		/// will not overwrite the old ones.
 		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
 		#[transactional]
 		pub fn set_collection_permissions(
@@ -1096,7 +1098,7 @@ decl_module! {
 			target_collection.save()
 		}
 
-		/// Re-partition a refungible token, while owning all of its parts.
+		/// Re-partition a refungible token, while owning all of its parts/pieces.
 		///
 		/// # Permissions
 		///
@@ -1106,7 +1108,7 @@ decl_module! {
 		///
 		/// * `collection_id`: ID of the collection the RFT belongs to.
 		/// * `token_id`: ID of the RFT.
-		/// * `amount`: New number of parts into which the token shall be partitioned.
+		/// * `amount`: New number of parts/pieces into which the token shall be partitioned.
 		#[weight = T::RefungibleExtensionsWeightInfo::repartition()]
 		#[transactional]
 		pub fn repartition(
