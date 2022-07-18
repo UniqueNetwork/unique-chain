@@ -585,7 +585,6 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	
 	///	Creates FT token.
 	///
 	/// The sender should be the owner/admin of the collection or collection should be configured
