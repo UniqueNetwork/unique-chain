@@ -25,7 +25,7 @@ const ETH_COLLECTION_PREFIX: [u8; 16] = [
 	0x17, 0xc4, 0xe6, 0x45, 0x3c, 0xc4, 0x9a, 0xaa, 0xae, 0xac, 0xa8, 0x94, 0xe6, 0xd9, 0x68, 0x3e,
 ];
 
-/// Maps the etherium address of the collection in substrate.
+/// Maps the ethereum address of the collection in substrate.
 pub fn map_eth_to_id(eth: &H160) -> Option<CollectionId> {
 	if eth[0..16] != ETH_COLLECTION_PREFIX {
 		return None;
@@ -35,7 +35,7 @@ pub fn map_eth_to_id(eth: &H160) -> Option<CollectionId> {
 	Some(CollectionId(u32::from_be_bytes(id_bytes)))
 }
 
-/// Maps the substrate collection id in etherium.
+/// Maps the substrate collection id in ethereum.
 pub fn collection_id_to_address(id: CollectionId) -> H160 {
 	let mut out = [0; 20];
 	out[0..16].copy_from_slice(&ETH_COLLECTION_PREFIX);
@@ -43,7 +43,7 @@ pub fn collection_id_to_address(id: CollectionId) -> H160 {
 	H160(out)
 }
 
-/// Check if the etherium address is a collection.
+/// Check if the ethereum address is a collection.
 pub fn is_collection(address: &H160) -> bool {
 	address[0..16] == ETH_COLLECTION_PREFIX
 }

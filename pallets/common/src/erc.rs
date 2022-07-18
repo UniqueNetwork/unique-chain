@@ -31,7 +31,7 @@ use alloc::format;
 
 use crate::{Pallet, CollectionHandle, Config, CollectionProperties};
 
-/// Events for etherium collection helper.
+/// Events for ethereum collection helper.
 #[derive(ToLog)]
 pub enum CollectionHelpersEvents {
 	/// The collection has been created.
