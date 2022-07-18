@@ -79,7 +79,8 @@
                         "--rpc-cors=all",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external",
-                        "-lxcm=trace"
+                        "-lxcm=trace",
+                        "-lfassets=trace"
                     ]
                 },
                 {
@@ -91,16 +92,17 @@
                         "--rpc-cors=all",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external",
-                        "-lxcm=trace"
+                        "-lxcm=trace",
+                        "-lfassets=trace"
                     ]
                 }
             ]
         },
         {
-            "bin": "../Acala/target/production/acala",
-            "id": "2000",
-            "chain":  "karura-dev",
-			"balance": "1000000000000000000000",
+            "bin": "../cumulus/target/release/polkadot-parachain",
+            "id": "1000",
+            "chain": "statemint-local",
+            "balance": "1000000000000000000000000",
 			"nodes": [
 				{
 					"wsPort": 9946,
@@ -119,14 +121,14 @@
     "simpleParachains": [],
     "hrmpChannels": [
         {
-            "sender": 2000,
+            "sender": 1000,
             "recipient": 5000,
             "maxCapacity": 8,
             "maxMessageSize": 512
         },
         {
             "sender": 5000,
-            "recipient": 2000,
+            "recipient": 1000,
             "maxCapacity": 8,
             "maxMessageSize": 512
         }

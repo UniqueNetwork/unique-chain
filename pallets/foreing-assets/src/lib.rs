@@ -74,7 +74,29 @@ use xcm_executor::{traits::WeightTrader, Assets};
 use pallet_common::erc::CrossAccountId;
 
 pub type ForeignAssetId = u32;
-pub type CurrencyId = ForeignAssetId;
+
+// TODO: Move to runtime primitives
+// Id of native currency. Chain accespt 2 curriencies because xcm transcation required that 
+// 0 - QTZ\UNQ
+// 1 - KSM\DOT
+#[derive(Clone, Copy, Eq, PartialEq, MaxEncodedLen, RuntimeDebug, Encode, Decode, TypeInfo)]
+pub enum NativeCurrency {
+	QTZ = 0,
+	KSM = 1,
+}
+
+#[derive(Clone, Copy, Eq, PartialEq, MaxEncodedLen, RuntimeDebug, Encode, Decode, TypeInfo)]
+pub enum AssetIds {
+//	Erc20(EvmAddress),
+//	StableAssetId(StableAssetPoolId),
+	ForeignAssetId(ForeignAssetId),
+	NativeAssetId(NativeCurrency),
+}
+
+
+pub type CurrencyId = AssetIds; 
+
+// pub type CurrencyId = ForeignAssetId;
 
 // mod mock;
 // mod tests;
@@ -103,12 +125,12 @@ impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<Bala
 	for XcmForeignAssetIdMapping<T>
 {
 	fn get_asset_metadata(foreign_asset_id: ForeignAssetId) -> Option<AssetMetadata<BalanceOf<T>>> {
-		log::info!(target: "asset_metadatas", "call");
+		log::trace!(target: "fassets::asset_metadatas", "call");
 		Pallet::<T>::asset_metadatas(AssetIds::ForeignAssetId(foreign_asset_id))
 	}
 
 	fn get_multi_location(foreign_asset_id: ForeignAssetId) -> Option<MultiLocation> {
-		log::info!(target: "get_multi_location", "call");
+		log::trace!(target: "fassets::get_multi_location", "call");
 		Pallet::<T>::foreign_asset_locations(foreign_asset_id)
 	}
 
@@ -121,9 +143,10 @@ impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<Bala
 	// }
 
 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
-		log::info!(target: "get_currency_id", "call");
+		log::trace!(target: "fassets::get_currency_id", "call");
 
-		Pallet::<T>::location_to_currency_ids(multi_location)
+		// TODO: Add native cur
+		Some(AssetIds::ForeignAssetId(Pallet::<T>::location_to_currency_ids(multi_location).unwrap_or(0)))
 	}
 }
 
@@ -178,14 +201,6 @@ pub mod module {
 
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
-	}
-
-	#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
-	pub enum AssetIds {
-	//	Erc20(EvmAddress),
-	//	StableAssetId(StableAssetPoolId),
-		ForeignAssetId(ForeignAssetId),
-	//	NativeAssetId(CurrencyId),
 	}
 
 	#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
@@ -252,10 +267,10 @@ pub mod module {
 
 	/// The storages for CurrencyIds.
 	///
-	/// LocationToCurrencyIds: map MultiLocation => Option<CurrencyId>
+	/// LocationToCurrencyIds: map MultiLocation => Option<ForeignAssetId>
 	#[pallet::storage]
 	#[pallet::getter(fn location_to_currency_ids)]
-	pub type LocationToCurrencyIds<T: Config> = StorageMap<_, Twox64Concat, MultiLocation, CurrencyId, OptionQuery>;
+	pub type LocationToCurrencyIds<T: Config> = StorageMap<_, Twox64Concat, MultiLocation, ForeignAssetId, OptionQuery>;
 
 	/// The storages for AssetMetadatas.
 	///
@@ -321,6 +336,7 @@ pub mod module {
 
 			let location: MultiLocation = (*location).try_into().map_err(|()| Error::<T>::BadLocation)?;
 
+			// TODO: Get token name from metadata
 			let name: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 			let description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 			

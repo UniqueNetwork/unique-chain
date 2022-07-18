@@ -132,7 +132,7 @@ use xcm::latest::{
 	Error as XcmError,
 };
 use xcm_executor::traits::{MatchesFungible, WeightTrader};
-use pallet_foreing_assets::{AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId};
+use pallet_foreing_assets::{AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency};
 //use xcm_executor::traits::MatchesFungible;
 
 use unique_runtime_common::{
@@ -723,7 +723,7 @@ parameter_types! {
 	// ALWAYS ensure that the index in PalletInstance stays up-to-date with
 	// Statemint's Assets pallet index
 	pub StatemintAssetsPalletLocation: MultiLocation =
-		MultiLocation::new(1, X2(Parachain(2000), PalletInstance(122)));
+		MultiLocation::new(1, X2(Parachain(1000), PalletInstance(50)));
 
 	// pub KaruraPalletLocation: MultiLocation =
 	// 	MultiLocation::new(1, X2(Parachain(2000), PalletInstance(50)));
@@ -816,26 +816,22 @@ impl<Prefix: Get<MultiLocation>, AssetId: Clone, ConvertAssetId: ConvertXcm<u128
 		log::info!(
 			target: "xcm::AsIndex::Convert",
 			"AsIndex {:?}",
-			id.interior(), //.at(prefix.interior().len()) //.interior(), 
+			id.interior().at(prefix.interior().len()) //.interior(), 
 		);
-		ConvertAssetId::convert_ref(999)
 
+		// TODO: Fix it. Need to make correct relay chain currency conversion
+		// Native currencies conversion should be first 		
+		if *id == MultiLocation::parent() {
+			return ConvertAssetId::convert_ref(999);
+		};
 
-		// if prefix.parent_count() != id.parent_count() ||
-		// 	prefix
-		// 		.interior()
-		// 		.iter()
-		// 		.enumerate()
-		// 		.any(|(index, junction)| id.interior().at(index) != Some(junction))
-		// {
-		// 	return Err(())
-		// }
-		// match id.interior().at(prefix.interior().len()) {
-		// 	Some(Junction::GeneralIndex(id)) => ConvertAssetId::convert_ref(id),
-		// 	Some(Junction::GeneralKey(id)) => ConvertAssetId::convert_ref(122),
-		// 	_ => ConvertAssetId::convert_ref(999),
-		// //	_ => Err(()),
-		// }
+		match id.interior().at(prefix.interior().len()) {
+		//	Some(Junction::GeneralIndex(id)) => ConvertAssetId::convert_ref(999),
+			Some(Junction::GeneralIndex(id)) => ConvertAssetId::convert_ref(id),
+			//Some(Junction::GeneralKey(id)) => ConvertAssetId::convert_ref(122),
+			_ => ConvertAssetId::convert_ref(888),
+		//	_ => Err(()),
+		}
 	}
 	fn reverse_ref(what: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
 		let mut location = Prefix::get();
@@ -860,7 +856,7 @@ pub type FungiblesTransactor = FungiblesAdapter<
 		AssetId,
 		Balance,
 		//AsPrefixedGeneralIndex<StatemintAssetsPalletLocation, AssetId, JustTry>,
-		AsIndex<KaruraPalletLocation, AssetId, JustTry>,
+		AsIndex<StatemintAssetsPalletLocation, AssetId, JustTry>,
 		JustTry,
 	>,
 
@@ -1463,7 +1459,6 @@ impl pallet_foreing_assets::Config for Runtime {
 	type WeightInfo = ();//weights::module_asset_registry::WeightInfo<Runtime>;
 }
 
-
 pub struct CurrencyIdConvert;
 impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
 	fn convert(id: AssetIds) -> Option<MultiLocation> {
@@ -1477,7 +1472,12 @@ impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
 		// 	_ => Err(id),
 		// }
 
+
+		// TODO: Add native curr
 		match id {
+			AssetIds::NativeAssetId(NativeCurrency::KSM) => {
+				Some(MultiLocation::parent())
+			},
 			AssetIds::ForeignAssetId(foreign_asset_id) => {
 				XcmForeignAssetIdMapping::<Runtime>::get_multi_location(foreign_asset_id)
 			}
@@ -1487,6 +1487,7 @@ impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
 }
 impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
+		// TODO: Add native curr
 		if let Some(currency_id) = XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location.clone()) {
 			return Some(currency_id);
 		}
@@ -1542,7 +1543,7 @@ parameter_types! {
 
 parameter_type_with_key! {
 	pub ParachainMinFee: |_location: MultiLocation| -> Option<u128> {
-		Some(u128::MAX)
+		Some(100_000_000)
 	};
 }
 

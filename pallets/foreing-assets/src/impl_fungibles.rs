@@ -27,11 +27,17 @@ use pallet_common::CommonCollectionOperations;
 use up_data_structs::budget::Unlimited;
 
 impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T> {
-	type AssetId = ForeignAssetId;
+	type AssetId = u32;
 	type Balance = BalanceOf<T>;
 
 	fn total_issuance(asset: Self::AssetId) -> Self::Balance {
-		log::trace!(target: "foreing-assets", "impl_fungible total_issuance");
+		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible total_issuance");
+		//stub for native
+		if asset == 999
+		{
+			return Self::Balance::try_from(u128::max_value()).unwrap_or(Zero::zero());
+		};
+
 		let target_collection_id = match <AssetBinding<T>>::get(asset) {
 			Some(v) => v,
 			None => return Zero::zero(),
@@ -45,13 +51,24 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 	}
 
 	fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
-		log::trace!(target: "foreing-assets", "impl_fungible minimum_balance");
+		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible minimum_balance");
+		//stub for native
+		if asset == 999
+		{
+			return Zero::zero();
+		};
 
 		AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(asset)).map(|x| x.minimal_balance).unwrap_or_else(Zero::zero)
 	}
 
 	fn balance(asset: Self::AssetId, who: &<T as SystemConfig>::AccountId) -> Self::Balance {
-		log::trace!(target: "foreing-assets", "impl_fungible balance");
+		//stub for native
+		if asset == 999
+		{
+			return Self::Balance::try_from(u128::max_value()).unwrap_or(Zero::zero());
+		};
+
+		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible balance");
 		let target_collection_id = match <AssetBinding<T>>::get(asset) {
 			Some(v) => v,
 			None => return Zero::zero(),
@@ -72,7 +89,7 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 		who: &<T as SystemConfig>::AccountId,
 		keep_alive: bool,
 	) -> Self::Balance {
-		log::trace!(target: "foreing-assets", "impl_fungible reducible_balance");
+		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible reducible_balance");
 		// TODO: check correctness
 		Self::balance(asset, who)
 	}
@@ -83,7 +100,7 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 		amount: Self::Balance,
 		mint: bool,
 	) -> DepositConsequence {
-		log::trace!(target: "foreing-assets", "impl_fungible can_deposit");
+		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible can_deposit");
 		// TODO: check correctness
         DepositConsequence::Success
 	}
@@ -93,7 +110,7 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 		who: &<T as SystemConfig>::AccountId,
 		amount: Self::Balance,
 	) -> WithdrawConsequence<Self::Balance> {
-		log::trace!(target: "foreing-assets", "impl_fungible can_withdraw");
+		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible can_withdraw");
 		// TODO: check correctness
         WithdrawConsequence::Success
 	}
@@ -125,13 +142,14 @@ impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> 
 		amount: Self::Balance,
 	) -> DispatchResult {
 		//Self::do_mint(asset, who, amount, None)
-		log::trace!(target: "foreing-assets", "impl_fungible mint_into");
+		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible mint_into");
 
-		// pub fn create_item(
-		// 	collection: &FungibleHandle<T>,
-		// 	sender: &T::CrossAccountId,
-		// 	data: CreateItemData<T>,
-		// 	nesting_budget: &dyn Budget,
+		//stub for native
+		if asset == 999
+		{
+			return Ok(());
+		};
+
 
 		let target_collection_id = match <AssetBinding<T>>::get(asset) {
 			Some(v) => v,
@@ -162,7 +180,13 @@ impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> 
 		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = DebitFlags { keep_alive: false, best_effort: false };
-		log::trace!(target: "foreing-assets", "impl_fungible burn_from");
+		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible burn_from");
+
+		//stub for native
+		if asset == 999
+		{
+			return Ok(amount);
+		};
 
 		let target_collection_id = match <AssetBinding<T>>::get(asset) {
 			Some(v) => v,
@@ -190,7 +214,7 @@ impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> 
 		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = DebitFlags { keep_alive: false, best_effort: true };
-		log::trace!(target: "foreing-assets", "impl_fungible slash");
+		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible slash");
 		Self::burn_from(asset, who, amount)?;
         Ok(amount)
 
@@ -206,8 +230,14 @@ impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T> {
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = TransferFlags { keep_alive, best_effort: false, burn_dust: false };
-		log::trace!(target: "foreing-assets", "impl_fungible transfer");
+		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible transfer");
 
+		//stub for native
+		if asset == 999
+		{
+			return Ok(amount);
+		};
+		
 		let target_collection_id = match <AssetBinding<T>>::get(asset) {
 			Some(v) => v,
 			None => return Err(DispatchError::Other("Associated collection not found for asset")),
