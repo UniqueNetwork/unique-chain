@@ -27,7 +27,7 @@
 //! The Unique pallet's purpose is to be the primary interface between
 //! external users and the inner structure of the Unique chains.
 //!
-//! It also contains an implementation of [`CollectionHelpers`](eth),
+//! It also contains an implementation of [`CollectionHelpers`][`eth`],
 //! an Ethereum contract dealing with collection operations.
 //!
 //! ## Interface
@@ -292,13 +292,13 @@ decl_module! {
 			0
 		}
 
-		/// DEPRECATED - use createCollectionEx. Create a Collection of tokens.
+		/// Create a collection of tokens.
 		///
 		/// Each Token may have multiple properties encoded as an array of bytes
 		/// of certain length. The initial owner of the collection is set
 		/// to the address that signed the transaction and can be changed later.
 		///
-		/// Prefer [`create_collection_ex`](Call::create_collection_ex) instead.
+		/// Deprecated! Prefer [`create_collection_ex`][`Pallet::create_collection_ex`] instead.
 		///
 		/// # Permissions
 		///
@@ -306,12 +306,13 @@ decl_module! {
 		///
 		/// # Arguments
 		///
-		/// * `collection_name`: UTF-16 string with collection name (limit 64 characters),
-		/// will be stored as zero-terminated.
-		/// * `collection_description`: UTF-16 string with collection description (limit 256 characters),
-		/// will be stored as zero-terminated.
-		/// * `token_prefix`: UTF-8 string with token prefix.
-		/// * `mode`: [`CollectionMode`] and type dependent data.
+		/// * `collection_name`: Wide-character string with collection name
+		/// (limit [`MAX_COLLECTION_NAME_LENGTH`]).
+		/// * `collection_description`: Wide-character string with collection description
+		/// (limit [`MAX_COLLECTION_DESCRIPTION_LENGTH`]).
+		/// * `token_prefix`: Byte string containing the token prefix to mark a collection
+		/// to which a token belongs (limit [`MAX_TOKEN_PREFIX_LENGTH`]).
+		/// * `mode`: Type of items stored in the collection and type dependent data.
 		// returns collection ID
 		#[weight = <SelfWeightOf<T>>::create_collection()]
 		#[transactional]
@@ -334,7 +335,8 @@ decl_module! {
 		}
 
 		/// Create a collection with explicit parameters.
-		/// Prefer it to the deprecated [`create_collection`](Call::create_collection) method.
+		///
+		/// Prefer it to the deprecated [`create_collection`][`Pallet::create_collection`] method.
 		///
 		/// # Permissions
 		///
@@ -544,6 +546,7 @@ decl_module! {
 		}
 
 		/// Set (invite) a new collection sponsor.
+		///
 		/// If successful, confirmation from the sponsor-to-be will be pending.
 		///
 		/// # Permissions
@@ -575,8 +578,8 @@ decl_module! {
 		}
 
 		/// Confirm own sponsorship of a collection, becoming the sponsor.
-		/// An invitation must be pending, see [`set_collection_sponsor`](Call::set_collection_sponsor).
 		///
+		/// An invitation must be pending, see [`set_collection_sponsor`][`Pallet::set_collection_sponsor`].
 		/// Sponsor can pay the fees of a transaction instead of the sender,
 		/// but only within specified limits.
 		///
@@ -607,7 +610,7 @@ decl_module! {
 			target_collection.save()
 		}
 
-		/// Remove a sponsor from a collection, making everyone pay for their own transactions.
+		/// Remove a collection's a sponsor, making everyone pay for their own transactions.
 		///
 		/// # Permissions
 		///
@@ -635,7 +638,7 @@ decl_module! {
 
 		/// Mint an item within a collection.
 		///
-		/// A collection must exist first, see [`create_collection_ex`](Call::create_collection_ex).
+		/// A collection must exist first, see [`create_collection_ex`][`Pallet::create_collection_ex`].
 		///
 		/// # Permissions
 		///
@@ -644,7 +647,7 @@ decl_module! {
 		/// * Anyone if
 		///     * Allow List is enabled, and
 		///     * Address is added to allow list, and
-		///     * MintPermission is enabled (see [`set_collection_permissions`](Call::set_collection_permissions))
+		///     * MintPermission is enabled (see [`set_collection_permissions`][`Pallet::set_collection_permissions`])
 		///
 		/// # Arguments
 		///
@@ -662,7 +665,7 @@ decl_module! {
 
 		/// Create multiple items within a collection.
 		///
-		/// A collection must exist first, see [`create_collection_ex`](Call::create_collection_ex).
+		/// A collection must exist first, see [`create_collection_ex`][`Pallet::create_collection_ex`].
 		///
 		/// # Permissions
 		///
@@ -671,7 +674,7 @@ decl_module! {
 		/// * Anyone if
 		///     * Allow List is enabled, and
 		///     * Address is added to the allow list, and
-		///     * MintPermission is enabled (see [`set_collection_permissions`](Call::set_collection_permissions))
+		///     * MintPermission is enabled (see [`set_collection_permissions`][`Pallet::set_collection_permissions`])
 		///
 		/// # Arguments
 		///
@@ -750,7 +753,7 @@ decl_module! {
 		/// 	* Collection admin
 		/// 	* Token owner
 		///
-		/// See [`set_token_property_permissions`](Call::set_token_property_permissions).
+		/// See [`set_token_property_permissions`][`Pallet::set_token_property_permissions`].
 		///
 		/// # Arguments
 		///
@@ -843,7 +846,7 @@ decl_module! {
 		/// * Anyone if
 		///     * Allow List is enabled, and
 		///     * Address is added to allow list, and
-		///     * MintPermission is enabled (see [`set_collection_permissions`](Call::set_collection_permissions))
+		///     * MintPermission is enabled (see [`set_collection_permissions`][`Pallet::set_collection_permissions`])
 		///
 		/// # Arguments
 		///
@@ -915,7 +918,8 @@ decl_module! {
 		}
 
 		/// Destroy a token on behalf of the owner as a non-owner account.
-		/// See also: [`approve`](Call::approve).
+		///
+		/// See also: [`approve`][`Pallet::approve`].
 		///
 		/// After this method executes, one approval is removed from the total so that
 		/// the approved address will not be able to transfer this item again from this owner.
@@ -999,7 +1003,8 @@ decl_module! {
 		}
 
 		/// Change ownership of an item on behalf of the owner as a non-owner account.
-		/// See the [`approve`](Call::approve) method for additional information.
+		///
+		/// See the [`approve`][`Pallet::approve`] method for additional information.
 		///
 		/// After this method executes, one approval is removed from the total so that
 		/// the approved address will not be able to transfer this item again from this owner.
