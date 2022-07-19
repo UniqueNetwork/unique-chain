@@ -8,9 +8,11 @@ members = [
     'crates/*',
     'runtime/tests',
 ]
-exclude = [
-    "runtime/unique",
-    "runtime/quartz"
-]
+exclude = ["runtime/unique", "runtime/quartz"]
 [profile.release]
 panic = 'unwind'
+
+[patch.crates-io]
+jsonrpsee = { git = "https://github.com/uniquenetwork/jsonrpsee", branch = "unique-v0.14.0-fix-unknown-fields" }
+jsonrpsee-types = { git = "https://github.com/uniquenetwork/jsonrpsee", branch = "unique-v0.14.0-fix-unknown-fields" }
+jsonrpsee-core = { git = "https://github.com/uniquenetwork/jsonrpsee", branch = "unique-v0.14.0-fix-unknown-fields" }
