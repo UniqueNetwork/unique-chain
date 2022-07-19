@@ -429,10 +429,6 @@ pub mod static_property_key_value {
 	use alloc::format;
 
 	const EXPECT_CONVERT_ERROR: &str = "length < limit";
-	/// Get the "tokenURI" key as [PropertyKey](up_data_structs::PropertyKey).
-	pub fn token_uri_key() -> up_data_structs::PropertyKey {
-		property_key_from_bytes(b"tokenURI").expect(EXPECT_CONVERT_ERROR)
-	}
 
 	pub fn schema_name_key() -> up_data_structs::PropertyKey {
 		property_key_from_bytes(b"schemaName").expect(EXPECT_CONVERT_ERROR)
