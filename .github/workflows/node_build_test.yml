@@ -29,7 +29,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make cmake
-          curl https://sh.rustup.rs -sSf | sh
+          sudo apt autoremove
+          curl https://sh.rustup.rs -sSf | sh -y
           rustup toolchain install nightly-2022-05-11
           rustup default nightly-2022-05-11
           rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
