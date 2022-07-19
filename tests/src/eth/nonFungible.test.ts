@@ -72,7 +72,7 @@ describe('NFT: Information getting', () => {
   });
 });
 
-describe.only('Check ERC721 token URI', () => {
+describe('Check ERC721 token URI', () => {
   itWeb3('Empty tokenURI', async ({web3, api, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, owner);
@@ -214,7 +214,7 @@ describe.only('Check ERC721 token URI', () => {
 });
 
 describe('NFT: Plain calls', () => {
-  itWeb3.only('Can perform mint()', async ({web3, api, privateKeyWrapper}) => {
+  itWeb3('Can perform mint()', async ({web3, api, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, owner);
     let result = await helper.methods.createNonfungibleCollection('Mint collection', '6', '6').send();
