@@ -219,25 +219,34 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @return token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
-		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;	
-
-		if let Ok(shema_name) = get_token_property(self, token_id, &schema_name_key()) {
-			if shema_name != "ERC721" {
-				return Ok("".into());
+		let is_erc721 = || {
+			if let Some(shema_name) = pallet_common::Pallet::<T>::get_collection_property(self.id, &schema_name_key()) {
+				let shema_name = shema_name.into_inner();
+				shema_name == b"ERC721"
+			} else {
+				false
 			}
-		} else {
-			return Ok("".into());
-		}
+		};
 
-		if let Ok(url) = get_token_property(self, token_id, &u_key()) {
+		let token_id_u32: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+
+		if let Ok(url) = get_token_property(self, token_id_u32, &u_key()) {
 			if !url.is_empty() {
 				return Ok(url);
 			}
+		} else if !is_erc721() {
+			return Err("tokenURI not set".into());
 		}
 
-		if let Ok(base_uri) = get_token_property(self, token_id, &base_uri_key()) {
+		if let Some(base_uri) = pallet_common::Pallet::<T>::get_collection_property(self.id, &base_uri_key()) {
 			if !base_uri.is_empty() {
-				if let Ok(suffix) = get_token_property(self, token_id, &s_key()) {
+				let base_uri = string::from_utf8(base_uri.into_inner()).map_err(|e| {
+					Error::Revert(alloc::format!(
+						"Can not convert value \"baseURI\" to string with error \"{}\"",
+						e
+					))
+				})?;
+				if let Ok(suffix) = get_token_property(self, token_id_u32, &s_key()) {
 					if !suffix.is_empty() {
 						return Ok(base_uri + suffix.as_str());
 					}
@@ -484,7 +493,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_id: uint256,
 		token_uri: string,
 	) -> Result<bool> {
-		let key = token_uri_key();
+		let key = u_key();
 		let permission = get_token_permission::<T>(self.id, &key)?;
 		if !permission.collection_admin {
 			return Err("Operation is not allowed".into());
@@ -535,7 +544,11 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 }
 
-fn get_token_property<T: Config>(collection: &CollectionHandle<T>, token_id: u32, key: &up_data_structs::PropertyKey) -> Result<string> {
+fn get_token_property<T: Config>(
+	collection: &CollectionHandle<T>,
+	token_id: u32,
+	key: &up_data_structs::PropertyKey,
+) -> Result<string> {
 	collection.consume_store_reads(1)?;
 	let properties = <TokenProperties<T>>::try_get((collection.id, token_id))
 		.map_err(|_| Error::Revert("Token properties not found".into()))?;
@@ -554,8 +567,11 @@ fn get_token_permission<T: Config>(
 		.map_err(|_| Error::Revert("No permissions for collection".into()))?;
 	let a = token_property_permissions
 		.get(key)
-		.map(|p| p.clone())
-		.ok_or_else(|| Error::Revert("No permission".into()))?;
+		.map(Clone::clone)
+		.ok_or_else(|| {
+			let key = string::from_utf8(key.clone().into_inner()).unwrap_or_default();
+			Error::Revert(alloc::format!("No permission for key {}", key))
+		})?;
 	Ok(a)
 }
 

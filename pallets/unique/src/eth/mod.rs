@@ -95,29 +95,18 @@ fn make_data<T: Config>(
 	let mut token_property_permissions =
 		up_data_structs::CollectionPropertiesPermissionsVec::default();
 
+	token_property_permissions
+		.try_push(up_data_structs::PropertyKeyPermission {
+			key: u_key(),
+			permission: up_data_structs::PropertyPermission {
+				mutable: false,
+				collection_admin: true,
+				token_owner: false,
+			},
+		})
+		.map_err(|e| Error::Revert(format!("{:?}", e)))?;
+
 	if add_properties {
-		token_property_permissions
-			.try_push(up_data_structs::PropertyKeyPermission {
-				key: token_uri_key(),
-				permission: up_data_structs::PropertyPermission {
-					mutable: true,
-					collection_admin: true,
-					token_owner: false,
-				},
-			})
-			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
-
-		token_property_permissions
-			.try_push(up_data_structs::PropertyKeyPermission {
-				key: u_key(),
-				permission: up_data_structs::PropertyPermission {
-					mutable: false,
-					collection_admin: true,
-					token_owner: false,
-				},
-			})
-			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
-
 		token_property_permissions
 			.try_push(up_data_structs::PropertyKeyPermission {
 				key: s_key(),
@@ -176,7 +165,14 @@ impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelpers<T> {
 	) -> Result<address> {
 		let (caller, name, description, token_prefix, _base_uri_value) =
 			convert_data::<T>(caller, name, description, token_prefix, "".into())?;
-		let data = make_data::<T>(name, CollectionMode::NFT, description, token_prefix, Default::default(), false)?;
+		let data = make_data::<T>(
+			name,
+			CollectionMode::NFT,
+			description,
+			token_prefix,
+			Default::default(),
+			false,
+		)?;
 		let collection_id =
 			<pallet_nonfungible::Pallet<T>>::init_collection(caller.clone(), data, false)
 				.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
@@ -197,9 +193,16 @@ impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelpers<T> {
 	) -> Result<address> {
 		let (caller, name, description, token_prefix, base_uri_value) =
 			convert_data::<T>(caller, name, description, token_prefix, base_uri)?;
-		let data = make_data::<T>(name, CollectionMode::NFT, description, token_prefix, base_uri_value, true)?;
+		let data = make_data::<T>(
+			name,
+			CollectionMode::NFT,
+			description,
+			token_prefix,
+			base_uri_value,
+			true,
+		)?;
 		let collection_id =
-			<pallet_nonfungible::Pallet<T>>::init_collection(caller.clone(), data, false)
+			<pallet_nonfungible::Pallet<T>>::init_collection(caller.clone(), data, true)
 				.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
