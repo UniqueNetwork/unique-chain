@@ -28,12 +28,11 @@ jobs:
      #runs ssh connection
       - name: Install dependencies
           script: |
-            sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make cmake
-            curl https://sh.rustup.rs -sSf | sh
-            rustup toolchain install nightly-2022-05-11
-            rustup default nightly-2022-05-11
-            rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
+            sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make cmake\
+            && curl https://sh.rustup.rs -sSf | sh\
+            && rustup toolchain install nightly-2022-05-11\
+            && rustup default nightly-2022-05-11\
+            && rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
 
       - name: Building code
           script: cargo build --release
-          
