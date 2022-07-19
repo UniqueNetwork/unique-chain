@@ -553,65 +553,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
-			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
-				use up_data_structs::{CollectionVersion1, CollectionVersion2};
-				<CollectionById<T>>::translate::<CollectionVersion1<T::AccountId>, _>(|id, v| {
-					let mut props = Vec::new();
-					if !v.offchain_schema.is_empty() {
-						props.push(Property {
-							key: b"_old_offchainSchema".to_vec().try_into().unwrap(),
-							value: v
-								.offchain_schema
-								.clone()
-								.into_inner()
-								.try_into()
-								.expect("offchain schema too big"),
-						});
-					}
-					if !v.variable_on_chain_schema.is_empty() {
-						props.push(Property {
-							key: b"_old_variableOnChainSchema".to_vec().try_into().unwrap(),
-							value: v
-								.variable_on_chain_schema
-								.clone()
-								.into_inner()
-								.try_into()
-								.expect("offchain schema too big"),
-						});
-					}
-					if !v.const_on_chain_schema.is_empty() {
-						props.push(Property {
-							key: b"_old_constOnChainSchema".to_vec().try_into().unwrap(),
-							value: v
-								.const_on_chain_schema
-								.clone()
-								.into_inner()
-								.try_into()
-								.expect("offchain schema too big"),
-						});
-					}
-					props.push(Property {
-						key: b"_old_schemaVersion".to_vec().try_into().unwrap(),
-						value: match v.schema_version {
-							SchemaVersion::ImageURL => b"ImageUrl".as_slice(),
-							SchemaVersion::Unique => b"Unique".as_slice(),
-						}
-						.to_vec()
-						.try_into()
-						.unwrap(),
-					});
-					Self::set_scoped_collection_properties(
-						id,
-						PropertyScope::None,
-						props.into_iter(),
-					)
-					.expect("existing data larger than properties");
-					let mut new = CollectionVersion2::from(v.clone());
-					new.permissions.access = Some(v.access);
-					new.permissions.mint_mode = Some(v.mint_mode);
-					Some(new)
-				});
-			}
+			StorageVersion::new(1).put::<Pallet<T>>();
 
 			0
 		}
