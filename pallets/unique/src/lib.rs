@@ -34,7 +34,7 @@
 //!
 //! ### Dispatchables
 //!
-//! - `create_collection` - Create a collection of tokens. **Deprecated**, use `createCollectionEx`.
+//! - `create_collection` - Create a collection of tokens. **Deprecated**, use `create_collection_ex`.
 //! - `create_collection_ex` - Create a collection of tokens with explicit parameters.
 //! - `destroy_collection` - Destroy a collection if no tokens exist within.
 //! - `add_to_allow_list` - Add an address to allow list.
@@ -298,7 +298,7 @@ decl_module! {
 		/// of certain length. The initial owner of the collection is set
 		/// to the address that signed the transaction and can be changed later.
 		///
-		/// Deprecated! Prefer [`create_collection_ex`][`Pallet::create_collection_ex`] instead.
+		/// Prefer the more advanced [`create_collection_ex`][`Pallet::create_collection_ex`] instead.
 		///
 		/// # Permissions
 		///
@@ -316,14 +316,14 @@ decl_module! {
 		// returns collection ID
 		#[weight = <SelfWeightOf<T>>::create_collection()]
 		#[transactional]
-		#[deprecated]
+		#[deprecated(note = "`create_collection_ex` is more up-to-date and advanced, prefer it instead")]
 		pub fn create_collection(
 			origin,
 			collection_name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
 			collection_description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
 			token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
 			mode: CollectionMode
-		) -> DispatchResult  {
+		) -> DispatchResult {
 			let data: CreateCollectionData<T::AccountId> = CreateCollectionData {
 				name: collection_name,
 				description: collection_description,
