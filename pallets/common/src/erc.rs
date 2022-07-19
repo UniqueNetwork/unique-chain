@@ -51,6 +51,7 @@ pub enum CollectionHelpersEvents {
 pub trait CommonEvmHandler {
 	const CODE: &'static [u8];
 
+	/// Call precompiled handle.
 	fn call(self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult>;
 }
 

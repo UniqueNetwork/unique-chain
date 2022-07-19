@@ -16,7 +16,9 @@
 
 //! # Common pallet
 //!
-//! The Common pallet provides functionality for handling collections.
+//! The Common pallet provides an interface for common collection operations for different collection types 
+//! (see [CommonCollectionOperations], as well as a generic dispatcher for these, see [dispatch] module. 
+//! It also provides this functionality to EVM, see [erc] and [eth] modules.
 //!
 //! ## Overview
 //!
@@ -42,11 +44,8 @@
 //! **Collection properties** - Collection properties are simply key-value stores where various
 //! metadata can be placed.
 //!
-//! **Collection property permissions** - For each property in the collection can be set permission
+//! **Permissions on token properties** - For each property in the token can be set permission
 //! to change, see [PropertyPermission].
-//!
-//! **Permissions on token properties** - Similar to _permissions on collection properties_,
-//! only restrictions apply to token properties.
 //!
 //! **Collection administrator** - For a collection, you can set administrators who have the right
 //! to most actions on the collection.
@@ -132,9 +131,10 @@ pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 /// Collection handle contains information about collection data and id.
 /// Also provides functionality to count consumed gas.
+/// 
 /// CollectionHandle is used as a generic wrapper for collections of all types.
 /// It allows to perform common operations and queries on any collection type,
-/// both completely general for all, as well as their respective implementations of [CommonCollectionOperations].
+/// both completely general for all, as well as their respective implementations of [`CommonCollectionOperations`].
 #[must_use = "Should call submit_logs or save, otherwise some data will be lost for evm side"]
 pub struct CollectionHandle<T: Config> {
 	/// Collection id
@@ -163,7 +163,7 @@ impl<T: Config> CollectionHandle<T> {
 		})
 	}
 
-	/// Same as [CollectionHandle::new] but with an existed [SubstrateRecorder].
+	/// Same as [CollectionHandle::new] but with an existed [`SubstrateRecorder`].
 	pub fn new_with_recorder(id: CollectionId, recorder: SubstrateRecorder<T>) -> Option<Self> {
 		<CollectionById<T>>::get(id).map(|collection| Self {
 			id,
@@ -178,7 +178,7 @@ impl<T: Config> CollectionHandle<T> {
 		Self::new_with_gas_limit(id, u64::MAX)
 	}
 
-	/// Same as [CollectionHandle::new] but if collection not found [Error::CollectionNotFound] returned.
+	/// Same as [`CollectionHandle::new`] but if collection not found [`Error::CollectionNotFound`] returned.
 	pub fn try_get(id: CollectionId) -> Result<Self, DispatchError> {
 		Ok(Self::new(id).ok_or(<Error<T>>::CollectionNotFound)?)
 	}
@@ -213,7 +213,7 @@ impl<T: Config> CollectionHandle<T> {
 	///
 	/// Unique collections allows sponsoring for certain actions.
 	/// This method allows you to set the sponsor of the collection.
-	/// In order for sponsorship to become active, it must be confirmed through [Self::confirm_sponsorship].
+	/// In order for sponsorship to become active, it must be confirmed through [`Self::confirm_sponsorship`].
 	pub fn set_sponsor(&mut self, sponsor: T::AccountId) -> DispatchResult {
 		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor);
 		Ok(())
@@ -222,7 +222,7 @@ impl<T: Config> CollectionHandle<T> {
 	/// Confirm sponsorship
 	///
 	/// In order for the sponsorship to become active, the user set as the sponsor must confirm their participation.
-	/// Before confirming sponsorship, the user must be specified as the sponsor of the collection via [Self::set_sponsor].
+	/// Before confirming sponsorship, the user must be specified as the sponsor of the collection via [`Self::set_sponsor`].
 	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> Result<bool, DispatchError> {
 		if self.collection.sponsorship.pending_sponsor() != Some(sender) {
 			return Ok(false);
@@ -233,7 +233,7 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Checks that the collection was created with, and must be operated upon through **Unique API**.
-	/// Now check only the `external_collection` flag and if it's **true**, then return [Error::CollectionIsExternal] error.
+	/// Now check only the `external_collection` flag and if it's **true**, then return [`Error::CollectionIsExternal`] error.
 	pub fn check_is_internal(&self) -> DispatchResult {
 		if self.external_collection {
 			return Err(<Error<T>>::CollectionIsExternal)?;
@@ -243,7 +243,7 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Checks that the collection was created with, and must be operated upon through an **assimilated API**.
-	/// Now check only the `external_collection` flag and if it's **false**, then return [Error::CollectionIsInternal] error.
+	/// Now check only the `external_collection` flag and if it's **false**, then return [`Error::CollectionIsInternal`] error.
 	pub fn check_is_external(&self) -> DispatchResult {
 		if !self.external_collection {
 			return Err(<Error<T>>::CollectionIsInternal)?;
@@ -325,10 +325,10 @@ pub mod pallet {
 		+ TypeInfo
 		+ account::Config
 	{
-		/// Weight info.
+		/// Weight information for functions of this pallet.
 		type WeightInfo: WeightInfo;
 
-		/// Events compatible with [frame_system::Config::Event].
+		/// Events compatible with [`frame_system::Config::Event`].
 		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
 
 		/// Currency.
@@ -340,19 +340,19 @@ pub mod pallet {
 			<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance,
 		>;
 
-		/// Collection dispatcher.
+		/// Dispatcher of operations on collections.
 		type CollectionDispatch: CollectionDispatch<Self>;
 
 		/// Treasury account id getter.
 		type TreasuryAccountId: Get<Self::AccountId>;
 
-		/// Contract address getter.
+		/// Address under which the CollectionHelper contract would be available.
 		type ContractAddress: Get<H160>;
 
 		/// Mapper for tokens to Etherium addresses.
 		type EvmTokenAddressMapping: TokenAddressMapping<H160>;
 
-		/// Mapper for tokens to [CrossAccountId].
+		/// Mapper for tokens to [`CrossAccountId`].
 		type CrossTokenAddressMapping: TokenAddressMapping<Self::CrossAccountId>;
 	}
 
@@ -378,7 +378,7 @@ pub mod pallet {
 		CollectionCreated(
 			/// Globally unique identifier of newly created collection.
 			CollectionId,
-			/// [CollectionMode] converted into _u8_.
+			/// [`CollectionMode`] converted into _u8_.
 			u8,
 			/// Collection owner.
 			T::AccountId,
@@ -1469,19 +1469,20 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn burn_from() -> Weight;
 
 	/// Differs from burn_item in case of Fungible and Refungible, as it should burn
-	/// whole users's balance
+	/// whole users's balance.
 	///
 	/// This method shouldn't be used directly, as it doesn't count breadth price, use [burn_recursively](CommonWeightInfo::burn_recursively) instead
 	fn burn_recursively_self_raw() -> Weight;
 
-	/// Cost of iterating over `amount` children while burning, without counting child burning itself
+	/// Cost of iterating over `amount` children while burning, without counting child burning itself.
 	///
 	/// This method shouldn't be used directly, as it doesn't count depth price, use [burn_recursively](CommonWeightInfo::burn_recursively) instead
 	fn burn_recursively_breadth_raw(amount: u32) -> Weight;
 
 	/// The price of recursive burning a token.
 	///
-	/// `max_selfs` -
+	/// `max_selfs` - The maximum burning weight of the token itself.
+	/// `max_breadth` - The maximum number of nested tokens to burn.
 	fn burn_recursively(max_selfs: u32, max_breadth: u32) -> Weight {
 		Self::burn_recursively_self_raw()
 			.saturating_mul(max_selfs.max(1) as u64)
@@ -1589,8 +1590,8 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Set token properties.
 	///
-	/// The appropriate [PropertyPermission] for the token property
-	/// must be set with [Self::set_token_property_permissions].
+	/// The appropriate [`PropertyPermission`] for the token property
+	/// must be set with [`Self::set_token_property_permissions`].
 	///
 	/// * `sender` - Must be either the owner of the token or its admin.
 	/// * `token_id` - The token for which the properties are being set.
@@ -1606,8 +1607,8 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Remove token properties.
 	///
-	/// The appropriate [PropertyPermission] for the token property
-	/// must be set with [Self::set_token_property_permissions].
+	/// The appropriate [`PropertyPermission`] for the token property
+	/// must be set with [`Self::set_token_property_permissions`].
 	///
 	/// * `sender` - Must be either the owner of the token or its admin.
 	/// * `token_id` - The token for which the properties are being remove.
@@ -1665,9 +1666,9 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Send parts of a token owned by another user.
 	///
-	/// Before calling this method, you must grant rights to the calling user via [Self::approve].
+	/// Before calling this method, you must grant rights to the calling user via [`Self::approve`].
 	///
-	/// * `sender` - The user who has access to the token.
+	/// * `sender` - The user who must have access to the token (see [`Self::approve`]).
 	/// * `from` - The user who owns the token.
 	/// * `to` - Recepient user.
 	/// * `token` - The token of which parts are being sent.
@@ -1685,9 +1686,9 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Burn parts of a token owned by another user.
 	///
-	/// Before calling this method, you must grant rights to the calling user via [Self::approve].
+	/// Before calling this method, you must grant rights to the calling user via [`Self::approve`].
 	///
-	/// * `sender` - The user who has access to the token.
+	/// * `sender` - The user who must have access to the token (see [`Self::approve`]).
 	/// * `from` - The user who owns the token.
 	/// * `token` - The token of which parts are being sent.
 	/// * `amount` - The number of parts of the token that will be transferred.
@@ -1750,14 +1751,14 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Get the value of the token property by key.
 	///
-	/// * `token` - Token property to get.
+	/// * `token` - Token with the property to get.
 	/// * `key` - Property name.
 	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue>;
 
 	/// Get a set of token properties by key vector.
 	///
-	/// * `token` - Token property to get.
-	/// * `keys` - Vector of keys. If this parameter is [None](sp_std::result::Result),
+	/// * `token` - Token with the property to get.
+	/// * `keys` - Vector of property keys. If this parameter is [None](sp_std::result::Result),
 	/// then all properties are returned.
 	fn token_properties(&self, token: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property>;
 
@@ -1811,9 +1812,9 @@ where
 	) -> DispatchResultWithPostInfo;
 }
 
-/// Merge [DispatchResult] with [Weight] into [DispatchResultWithPostInfo].
+/// Merge [`DispatchResult`] with [`Weight`] into [`DispatchResultWithPostInfo`].
 ///
-/// Used for [CommonCollectionOperations] implementations and flexible enough to do so.
+/// Used for [`CommonCollectionOperations`] implementations and flexible enough to do so.
 pub fn with_weight(res: DispatchResult, weight: Weight) -> DispatchResultWithPostInfo {
 	let post_info = PostDispatchInfo {
 		actual_weight: Some(weight),

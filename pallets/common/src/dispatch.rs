@@ -25,7 +25,7 @@ pub fn dispatch_weight<T: Config>() -> Weight {
 /// Helper function to implement substrate calls for common collection methods.
 ///
 /// * `collection` - The collection on which to call the method.
-/// * `call` - The function in which to call the corresponding method from [CommonCollectionOperations].
+/// * `call` - The function in which to call the corresponding method from [`CommonCollectionOperations`].
 pub fn dispatch_tx<
 	T: Config,
 	C: FnOnce(&dyn CommonCollectionOperations<T>) -> DispatchResultWithPostInfo,
