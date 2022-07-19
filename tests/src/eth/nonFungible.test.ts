@@ -72,8 +72,149 @@ describe('NFT: Information getting', () => {
   });
 });
 
+describe.only('Check ERC721 token URI', () => {
+  itWeb3('Empty tokenURI', async ({web3, api, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const helper = evmCollectionHelpers(web3, owner);
+    let result = await helper.methods.createERC721MetadataCompatibleCollection('Mint collection', '1', '1', '').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const receiver = createEthAccount(web3);
+    const contract = evmCollection(web3, owner, collectionIdAddress);
+    
+    const nextTokenId = await contract.methods.nextTokenId().call();
+    expect(nextTokenId).to.be.equal('1');
+    result = await contract.methods.mint(
+      receiver,
+      nextTokenId,
+    ).send();
+
+    const events = normalizeEvents(result.events);
+    const address = collectionIdToAddress(collectionId);
+
+    expect(events).to.be.deep.equal([
+      {
+        address,
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: receiver,
+          tokenId: nextTokenId,
+        },
+      },
+    ]);
+
+    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('');
+  });
+
+  itWeb3('TokenURI from url', async ({web3, api, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const helper = evmCollectionHelpers(web3, owner);
+    let result = await helper.methods.createERC721MetadataCompatibleCollection('Mint collection', '1', '1', 'BaseURI_').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const receiver = createEthAccount(web3);
+    const contract = evmCollection(web3, owner, collectionIdAddress);
+    
+    const nextTokenId = await contract.methods.nextTokenId().call();
+    expect(nextTokenId).to.be.equal('1');
+    result = await contract.methods.mint(
+      receiver,
+      nextTokenId,
+    ).send();
+    
+    // Set URL
+    await contract.methods.setProperty(nextTokenId, 'u', Buffer.from('Token URI')).send();
+      
+    const events = normalizeEvents(result.events);
+    const address = collectionIdToAddress(collectionId);
+
+    expect(events).to.be.deep.equal([
+      {
+        address,
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: receiver,
+          tokenId: nextTokenId,
+        },
+      },
+    ]);
+
+    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Token URI');
+  });
+
+  itWeb3('TokenURI from baseURI + tokenId', async ({web3, api, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const helper = evmCollectionHelpers(web3, owner);
+    let result = await helper.methods.createERC721MetadataCompatibleCollection('Mint collection', '1', '1', 'BaseURI_').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const receiver = createEthAccount(web3);
+    const contract = evmCollection(web3, owner, collectionIdAddress);
+    
+    const nextTokenId = await contract.methods.nextTokenId().call();
+    expect(nextTokenId).to.be.equal('1');
+    result = await contract.methods.mint(
+      receiver,
+      nextTokenId,
+    ).send();
+          
+    const events = normalizeEvents(result.events);
+    const address = collectionIdToAddress(collectionId);
+
+    expect(events).to.be.deep.equal([
+      {
+        address,
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: receiver,
+          tokenId: nextTokenId,
+        },
+      },
+    ]);
+
+    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('BaseURI_' + nextTokenId);
+  });
+
+  itWeb3('TokenURI from baseURI + suffix', async ({web3, api, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const helper = evmCollectionHelpers(web3, owner);
+    let result = await helper.methods.createERC721MetadataCompatibleCollection('Mint collection', '1', '1', 'BaseURI_').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const receiver = createEthAccount(web3);
+    const contract = evmCollection(web3, owner, collectionIdAddress);
+    
+    const nextTokenId = await contract.methods.nextTokenId().call();
+    expect(nextTokenId).to.be.equal('1');
+    result = await contract.methods.mint(
+      receiver,
+      nextTokenId,
+    ).send();
+          
+    // Set suffix
+    const suffix = '/some/suffix';
+    await contract.methods.setProperty(nextTokenId, 's', Buffer.from(suffix)).send();
+
+    const events = normalizeEvents(result.events);
+    const address = collectionIdToAddress(collectionId);
+
+    expect(events).to.be.deep.equal([
+      {
+        address,
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: receiver,
+          tokenId: nextTokenId,
+        },
+      },
+    ]);
+
+    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('BaseURI_' + suffix);
+  });
+});
+
 describe('NFT: Plain calls', () => {
-  itWeb3('Can perform mint()', async ({web3, api, privateKeyWrapper}) => {
+  itWeb3.only('Can perform mint()', async ({web3, api, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, owner);
     let result = await helper.methods.createNonfungibleCollection('Mint collection', '6', '6').send();
