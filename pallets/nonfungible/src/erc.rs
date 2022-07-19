@@ -220,7 +220,9 @@ impl<T: Config> NonfungibleHandle<T> {
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
 		let is_erc721 = || {
-			if let Some(shema_name) = pallet_common::Pallet::<T>::get_collection_property(self.id, &schema_name_key()) {
+			if let Some(shema_name) =
+				pallet_common::Pallet::<T>::get_collection_property(self.id, &schema_name_key())
+			{
 				let shema_name = shema_name.into_inner();
 				shema_name == b"ERC721"
 			} else {
@@ -238,7 +240,9 @@ impl<T: Config> NonfungibleHandle<T> {
 			return Err("tokenURI not set".into());
 		}
 
-		if let Some(base_uri) = pallet_common::Pallet::<T>::get_collection_property(self.id, &base_uri_key()) {
+		if let Some(base_uri) =
+			pallet_common::Pallet::<T>::get_collection_property(self.id, &base_uri_key())
+		{
 			if !base_uri.is_empty() {
 				let base_uri = string::from_utf8(base_uri.into_inner()).map_err(|e| {
 					Error::Revert(alloc::format!(
