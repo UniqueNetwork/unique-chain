@@ -30,11 +30,16 @@ jobs:
         run: |
           sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make cmake
           sudo apt autoremove
-          curl https://sh.rustup.rs -sSf | sh -s -- --help
           curl https://sh.rustup.rs -sSf | sh -s -- -y
           rustup toolchain install nightly-2022-05-11
           rustup default nightly-2022-05-11
           rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
 
-      - name: Building code
+      - name: Building code Opal
         run: cargo build --release
+
+      - name: Building code Quartz
+        run: cargo build --features=quartz-runtime --release
+
+      - name: Building code Unique
+        run: cargo build --features=unique-runtime --release
