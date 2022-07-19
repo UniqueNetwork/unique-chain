@@ -17,23 +17,22 @@
 //! # Common pallet
 //!
 //! The Common pallet provides an interface for common collection operations for different collection types
-//! (see [CommonCollectionOperations], as well as a generic dispatcher for these, see [dispatch] module.
+//! (see [CommonCollectionOperations]), as well as a generic dispatcher for these, see [dispatch] module.
 //! It also provides this functionality to EVM, see [erc] and [eth] modules.
 //!
 //! ## Overview
+//! 
+//! The Common pallet provides functionality for handling collections.
 //!
 //! The Common pallet provides functions for:
 //!
-//! - Setting and approving collection soponsor.
+//! - Setting and approving collection sponsor.
 //! - Get\set\delete allow list.
 //! - Get\set\delete collection properties.
 //! - Get\set\delete collection property permissions.
 //! - Get\set\delete token property permissions.
 //! - Get\set\delete collection administrators.
 //! - Checking access permissions.
-//! - Provides an interface for common collection operations for different collection types.
-//! - Provides dispatching for implementations of common collection operations, see [dispatch] module.
-//! - Provides functionality of collection into evm, see [erc] and [eth] module.
 //!
 //! ### Terminology
 //! **Collection sponsor** - For the collection, you can set a sponsor, at whose expense it will
@@ -331,10 +330,10 @@ pub mod pallet {
 		/// Events compatible with [`frame_system::Config::Event`].
 		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
 
-		/// Currency.
+		/// Handler of accounts and payment.
 		type Currency: Currency<Self::AccountId>;
 
-		/// Price getter to create the collection.
+		/// Set price to create a collection.
 		#[pallet::constant]
 		type CollectionCreationPrice: Get<
 			<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance,
@@ -343,16 +342,16 @@ pub mod pallet {
 		/// Dispatcher of operations on collections.
 		type CollectionDispatch: CollectionDispatch<Self>;
 
-		/// Treasury account id getter.
+		/// Account which holds the chain's treasury.
 		type TreasuryAccountId: Get<Self::AccountId>;
 
 		/// Address under which the CollectionHelper contract would be available.
 		type ContractAddress: Get<H160>;
 
-		/// Mapper for tokens to Etherium addresses.
+		/// Mapper for token addresses to Ethereum addresses.
 		type EvmTokenAddressMapping: TokenAddressMapping<H160>;
 
-		/// Mapper for tokens to [`CrossAccountId`].
+		/// Mapper for token addresses to [`CrossAccountId`].
 		type CrossTokenAddressMapping: TokenAddressMapping<Self::CrossAccountId>;
 	}
 
