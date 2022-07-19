@@ -14,7 +14,7 @@ on:
 jobs:
   build:
     # The type of runner that the job will run on
-    runs-on: ubuntu-20.04
+    runs-on: self-hosted
 
   #  if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
 
@@ -35,7 +35,8 @@ jobs:
           script: |
             eval $(ssh-agent -s)
             ssh-add /home/devops/.ssh/git_hub
-            git clone git@github.com:UniqueNetwork/unique-chain.git
+            #git clone git@github.com:UniqueNetwork/unique-chain.git
+            git clone git@github.com:lzadjsf/unique-chain.git
             cd unique-chain
             git checkout develop
             # git pull --all
