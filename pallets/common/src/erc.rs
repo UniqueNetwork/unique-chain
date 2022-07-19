@@ -450,8 +450,9 @@ pub mod static_property_key_value {
 		property_key_from_bytes(b"s").expect(EXPECT_CONVERT_ERROR)
 	}
 
+	pub const ERC721_METADATA: &[u8] = b"ERC721Metadata";
 	pub fn erc721_value() -> up_data_structs::PropertyValue {
-		property_value_from_bytes(b"ERC721").expect(EXPECT_CONVERT_ERROR)
+		property_value_from_bytes(ERC721_METADATA).expect(EXPECT_CONVERT_ERROR)
 	}
 
 	pub fn property_key_from_bytes(bytes: &[u8]) -> Result<up_data_structs::PropertyKey> {
