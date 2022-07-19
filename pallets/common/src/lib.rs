@@ -16,8 +16,8 @@
 
 //! # Common pallet
 //!
-//! The Common pallet provides an interface for common collection operations for different collection types 
-//! (see [CommonCollectionOperations], as well as a generic dispatcher for these, see [dispatch] module. 
+//! The Common pallet provides an interface for common collection operations for different collection types
+//! (see [CommonCollectionOperations], as well as a generic dispatcher for these, see [dispatch] module.
 //! It also provides this functionality to EVM, see [erc] and [eth] modules.
 //!
 //! ## Overview
@@ -131,7 +131,7 @@ pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 /// Collection handle contains information about collection data and id.
 /// Also provides functionality to count consumed gas.
-/// 
+///
 /// CollectionHandle is used as a generic wrapper for collections of all types.
 /// It allows to perform common operations and queries on any collection type,
 /// both completely general for all, as well as their respective implementations of [`CommonCollectionOperations`].
