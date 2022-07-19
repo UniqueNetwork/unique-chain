@@ -224,7 +224,7 @@ impl<T: Config> NonfungibleHandle<T> {
 				pallet_common::Pallet::<T>::get_collection_property(self.id, &schema_name_key())
 			{
 				let shema_name = shema_name.into_inner();
-				shema_name == b"ERC721"
+				shema_name == ERC721_METADATA
 			} else {
 				false
 			}
