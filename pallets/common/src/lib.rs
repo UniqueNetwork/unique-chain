@@ -21,7 +21,7 @@
 //! It also provides this functionality to EVM, see [erc] and [eth] modules.
 //!
 //! ## Overview
-//! 
+//!
 //! The Common pallet provides functionality for handling collections.
 //!
 //! The Common pallet provides functions for:
@@ -177,7 +177,7 @@ impl<T: Config> CollectionHandle<T> {
 		Self::new_with_gas_limit(id, u64::MAX)
 	}
 
-	/// Same as [`CollectionHandle::new`] but if collection not found [`Error::CollectionNotFound`] returned.
+	/// Same as [`CollectionHandle::new`] but if collection not found [CollectionNotFound](Error::CollectionNotFound) returned.
 	pub fn try_get(id: CollectionId) -> Result<Self, DispatchError> {
 		Ok(Self::new(id).ok_or(<Error<T>>::CollectionNotFound)?)
 	}
