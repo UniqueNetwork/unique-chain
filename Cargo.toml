@@ -8,17 +8,14 @@ members = [
     'crates/*',
     'runtime/tests',
 ]
-exclude = [
-    "runtime/unique",
-    "runtime/quartz"
-]
+exclude = ["runtime/unique", "runtime/quartz"]
 [profile.release]
 panic = 'unwind'
 
 [patch.crates-io]
-jsonrpsee = {git = "https://github.com/uniquenetwork/jsonrpsee", branch = "unique-v0.13.1-fix-unknown-fields"}
-jsonrpsee-types = {git = "https://github.com/uniquenetwork/jsonrpsee", branch = "unique-v0.13.1-fix-unknown-fields"}
-jsonrpsee-core = {git = "https://github.com/uniquenetwork/jsonrpsee", branch = "unique-v0.13.1-fix-unknown-fields"}
+jsonrpsee = { git = "https://github.com/uniquenetwork/jsonrpsee", branch = "unique-v0.14.0-fix-unknown-fields" }
+jsonrpsee-types = { git = "https://github.com/uniquenetwork/jsonrpsee", branch = "unique-v0.14.0-fix-unknown-fields" }
+jsonrpsee-core = { git = "https://github.com/uniquenetwork/jsonrpsee", branch = "unique-v0.14.0-fix-unknown-fields" }
 
 [patch."https://github.com/paritytech/substrate"]
 beefy-gadget = {git = "https://github.com/uniquenetwork/substrate", branch = "polkadot-v0.9.24-hack-substitute"}
@@ -193,4 +190,3 @@ substrate-test-utils = {git = "https://github.com/uniquenetwork/substrate", bran
 substrate-test-utils-derive = {git = "https://github.com/uniquenetwork/substrate", branch = "polkadot-v0.9.24-hack-substitute"}
 substrate-wasm-builder = {git = "https://github.com/uniquenetwork/substrate", branch = "polkadot-v0.9.24-hack-substitute"}
 try-runtime-cli = {git = "https://github.com/uniquenetwork/substrate", branch = "polkadot-v0.9.24-hack-substitute"}
-
