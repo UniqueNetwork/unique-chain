@@ -16,7 +16,7 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ci-01
 
-  #  if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
