@@ -49,6 +49,9 @@ jobs:
           ls -laR ./target/release/deps
           ls -laR ./target/release/incremental
 
+       - name: Run tests
+         run: cargo test --verbose
+
   #    - name: Building code Quartz
   #      run: cargo build --features=quartz-runtime --release
 
