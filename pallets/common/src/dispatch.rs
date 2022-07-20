@@ -71,7 +71,7 @@ pub fn dispatch_tx<
 
 /// Interface for working with different collections through the dispatcher.
 pub trait CollectionDispatch<T: Config> {
-	/// Create a collection. The collection will be created according to the value of [data.mode](CreateCollectionData::mode).
+	/// Create a collection. The collection will be created according to the value of [`data.mode`](CreateCollectionData::mode).
 	///
 	/// * `sender` - The user who will become the owner of the collection.
 	/// * `data` - Description of the created collection.
@@ -94,6 +94,6 @@ pub trait CollectionDispatch<T: Config> {
 	/// Get the collection handle for the corresponding implementation.
 	fn into_inner(self) -> CollectionHandle<T>;
 
-	/// Get the implementation of [CommonCollectionOperations].
+	/// Get the implementation of [`CommonCollectionOperations`].
 	fn as_dyn(&self) -> &dyn CommonCollectionOperations<T>;
 }

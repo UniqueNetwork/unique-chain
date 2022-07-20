@@ -16,13 +16,13 @@
 
 //! # Common pallet
 //!
-//! The Common pallet provides an interface for common collection operations for different collection types
-//! (see [CommonCollectionOperations]), as well as a generic dispatcher for these, see [dispatch] module.
-//! It also provides this functionality to EVM, see [erc] and [eth] modules.
+//! The Common pallet provides functionality for handling collections.
 //!
 //! ## Overview
 //!
-//! The Common pallet provides functionality for handling collections.
+//! The Common pallet provides an interface for common collection operations for different collection types
+//! (see [CommonCollectionOperations]), as well as a generic dispatcher for these, see [dispatch] module.
+//! It also provides this functionality to EVM, see [erc] and [eth] modules.
 //!
 //! The Common pallet provides functions for:
 //!
@@ -44,7 +44,7 @@
 //! metadata can be placed.
 //!
 //! **Permissions on token properties** - For each property in the token can be set permission
-//! to change, see [PropertyPermission].
+//! to change, see [`PropertyPermission`].
 //!
 //! **Collection administrator** - For a collection, you can set administrators who have the right
 //! to most actions on the collection.
