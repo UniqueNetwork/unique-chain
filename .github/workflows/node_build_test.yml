@@ -17,10 +17,10 @@ on:
 #Define Workflow variables
 env:
   ubuntu_version: focal
-  chains_release_dir: /opt/chains_release
-  opal_chain_workdir: /opt/src_opal_chain
-  quartz_chain_workdir: /opt/src_quartz_chain
-  unique_chain_workdir: /opt/src_unique_chain
+  chains_release_dir: /opt/runner/chains_release
+  opal_chain_workdir: /opt/runner/src_opal_chain
+  quartz_chain_workdir: /opt/runner/src_quartz_chain
+  unique_chain_workdir: /opt/runner/src_unique_chain
   src_repo_url: https://github.com/lzadjsf/unique-chain.git
   version: v924010
   actual_toolchain: nightly-2022-05-11
@@ -88,26 +88,24 @@ jobs:
   build-Quartz:
     # The type of runner that the job will run on
     runs-on: ci-01
-  
+
     needs: pre-requisites
     name: Build Quartz
-  
+
     steps:
       - name: delete workdir
         run: rm -rf ${{ env.quartz_chain_workdir }}
-  
-  
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
           #repository: ${{ src_repo_url }}
           path: ${{ env.quartz_chain_workdir }}
-  
-  
+
       - name: Building code Quartz
         run: |
           . $HOME/.cargo/env && cargo build --release --features=quartz-runtime
-  
+
       - name: Upload Quartz Artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -115,30 +113,28 @@ jobs:
           path: |
             ./target/release/unique-collator
             ./target/release/wbuild/quartz-runtime/quartz_runtime.compact.compressed.wasm
-  
+
   build-Unique:
     # The type of runner that the job will run on
     runs-on: ci-01
-  
+
     needs: pre-requisites
     name: Build Unique
-  
+
     steps:
       - name: delete workdir
         run: rm -rf ${{ env.unique_quartz_workdir }}
-  
-  
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
           #repository: ${{ src_repo_url }}
           path: ${{ env.unique_chain_workdir }}
-  
-  
+
       - name: Building code Unique
         run: |
           . $HOME/.cargo/env && cargo build --release --features=unique-runtime
-  
+
       - name: Upload Unique Artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -146,4 +142,3 @@ jobs:
           path: |
             ./target/release/unique-collator
             ./target/release/wbuild/unique-runtime/unique_runtime.compact.compressed.wasm
-  
