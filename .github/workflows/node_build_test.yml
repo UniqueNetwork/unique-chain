@@ -16,20 +16,11 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  build:
+  pre-requisites:
     # The type of runner that the job will run on
     runs-on: ci-01
-
-    #if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-        with:
-          path: develop
-
-     #runs ssh connection
+      #runs ssh connection
       - name: Install dependencies
         run: |
           sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make cmake
@@ -38,6 +29,21 @@ jobs:
           rustup toolchain install nightly-2022-05-11
           rustup default nightly-2022-05-11
           rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
+
+  build:
+    # The type of runner that the job will run on
+    runs-on: ci-01
+
+    #if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    needs: pre-requisites
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          path: develop
+
+
 
       - name: Building code Opal
         run: |
@@ -67,7 +73,6 @@ jobs:
 
       - name: Building code Unique
         run: cargo build --features=unique-runtime --release
-<<<<<<< HEAD
 
       - name: Upload Unique Artifacts
         uses: actions/upload-artifact@v3
@@ -76,15 +81,3 @@ jobs:
           path: |
             ./target/release/unique-collator
             ./target/release/wbuild/unique-runtime/unique_runtime.compact.compressed.wasm
-=======
-        
-      - name: Directory and files list for debug purposes
-        run: |
-          pwd
-          ls -la
-          ls -la ./target
-          ls -laR ./target/release/build
-          ls -laR ./target/release/deps
-          ls -laR ./target/release/incremental
-
->>>>>>> d4cb58c6f468291de20244d48a397b6ea035a25b
