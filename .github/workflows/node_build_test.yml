@@ -18,9 +18,9 @@ on:
 env:
   ubuntu_version: focal
   chains_release_dir: /opt/runner/chains_release
-  opal_chain_workdir: /opt/runner/src_opal_chain
-  quartz_chain_workdir: /opt/runner/src_quartz_chain
-  unique_chain_workdir: /opt/runner/src_unique_chain
+  opal_chain_workdir: ./src_opal_chain
+  quartz_chain_workdir: ./src_quartz_chain
+  unique_chain_workdir: ./src_unique_chain
   src_repo_url: https://github.com/lzadjsf/unique-chain.git
   version: v924010
   actual_toolchain: nightly-2022-05-11
