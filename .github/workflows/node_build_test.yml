@@ -47,6 +47,7 @@ jobs:
 
       - name: Building code Unique
         run: cargo build --features=unique-runtime --release
+        
       - name: Directory and files list for debug purposes
         run: |
           pwd
@@ -55,4 +56,4 @@ jobs:
           ls -laR ./target/release/build
           ls -laR ./target/release/deps
           ls -laR ./target/release/incremental
-      
+
