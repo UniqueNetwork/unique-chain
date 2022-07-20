@@ -73,10 +73,10 @@ jobs:
       - name: Building code Unique
         run: cargo build --features=unique-runtime --release
 
-      - name: Upload Unique Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: Unique-artifacts
-          path: |
-            ./target/release/unique-collator
-            ./target/release/wbuild/unique-runtime/unique_runtime.compact.compressed.wasm
+        
+      - name: Directory and files list for debug purposes
+        run: |
+          pwd
+          . $HOME/.cargo/env && cargo build --release
+
+ 
