@@ -40,6 +40,15 @@ jobs:
           rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
 
       - name: Building code Opal
+        run: cargo build --release
+
+      - name: Building code Quartz
+        run: cargo build --features=quartz-runtime --release
+
+      - name: Building code Unique
+        run: cargo build --features=unique-runtime --release
+        
+      - name: Directory and files list for debug purposes
         run: |
           pwd
           . $HOME/.cargo/env && cargo build --release
@@ -67,7 +76,6 @@ jobs:
 
       - name: Building code Unique
         run: cargo build --features=unique-runtime --release
-<<<<<<< HEAD
 
       - name: Upload Unique Artifacts
         uses: actions/upload-artifact@v3
@@ -76,15 +84,4 @@ jobs:
           path: |
             ./target/release/unique-collator
             ./target/release/wbuild/unique-runtime/unique_runtime.compact.compressed.wasm
-=======
-        
-      - name: Directory and files list for debug purposes
-        run: |
-          pwd
-          ls -la
-          ls -la ./target
-          ls -laR ./target/release/build
-          ls -laR ./target/release/deps
-          ls -laR ./target/release/incremental
-
->>>>>>> d4cb58c6f468291de20244d48a397b6ea035a25b
+            
