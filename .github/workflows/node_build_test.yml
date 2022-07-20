@@ -40,21 +40,19 @@ jobs:
           rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
 
       - name: Building code Opal
+        run: cargo build --release
+
+      - name: Building code Quartz
+        run: cargo build --features=quartz-runtime --release
+
+      - name: Building code Unique
+        run: cargo build --features=unique-runtime --release
+      - name: Directory and files list for debug purposes
         run: |
           pwd
           ls -la
-          cargo build --release
           ls -la ./target
           ls -laR ./target/release/build
           ls -laR ./target/release/deps
           ls -laR ./target/release/incremental
-
-      - name: Run tests
-        run: cargo test --verbose
-
-
-  #    - name: Building code Quartz
-  #      run: cargo build --features=quartz-runtime --release
-
-  #    - name: Building code Unique
-  #      run: cargo build --features=unique-runtime --release
+      
