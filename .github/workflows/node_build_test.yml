@@ -43,8 +43,6 @@ jobs:
         with:
           path: develop
 
-
-
       - name: Building code Opal
         run: |
           pwd
