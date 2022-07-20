@@ -48,10 +48,16 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-
+    
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: delete release dir
         run: echo ${{ env.chains_release_dir }}
+
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: delete release dir
+        run: echo ${{ env.chains_release_dir }} 
+
 
       - name: create release dir
         run: echo ${{ env.opal_chain_workdir }}
