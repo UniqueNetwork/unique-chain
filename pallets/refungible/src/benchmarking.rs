@@ -38,6 +38,7 @@ fn create_max_item_data<CrossAccountId: Ord>(
 			.collect::<BTreeMap<_, _>>()
 			.try_into()
 			.unwrap(),
+		properties: Default::default(),
 	}
 }
 fn create_max_item<T: Config>(
