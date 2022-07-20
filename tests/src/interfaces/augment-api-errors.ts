@@ -277,15 +277,16 @@ declare module '@polkadot/api-base/types/errors' {
     };
     fungible: {
       /**
-       * Fungible token does not support nested
+       * Fungible token does not support nesting.
        **/
       FungibleDisallowsNesting: AugmentedError<ApiType>;
       /**
-       * Tried to set data for fungible item
+       * Tried to set data for fungible item.
        **/
       FungibleItemsDontHaveData: AugmentedError<ApiType>;
       /**
-       * Not default id passed as TokenId argument
+       * Not default id passed as TokenId argument.
+       * The default value of TokenId for Fungible collection is 0.
        **/
       FungibleItemsHaveNoId: AugmentedError<ApiType>;
       /**
@@ -293,7 +294,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotFungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
       /**
-       * Setting item properties is not allowed
+       * Setting item properties is not allowed.
        **/
       SettingPropertiesNotAllowed: AugmentedError<ApiType>;
       /**

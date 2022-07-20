@@ -225,7 +225,11 @@ where
 
 	/// Add collection admin by substrate address.
 	/// @param new_admin Substrate administrator address.
-	fn add_collection_admin_substrate(&self, caller: caller, new_admin: uint256) -> Result<void> {
+	fn add_collection_admin_substrate(
+		&mut self,
+		caller: caller,
+		new_admin: uint256,
+	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let mut new_admin_arr: [u8; 32] = Default::default();
 		new_admin.to_big_endian(&mut new_admin_arr);
@@ -237,7 +241,11 @@ where
 
 	/// Remove collection admin by substrate address.
 	/// @param admin Substrate administrator address.
-	fn remove_collection_admin_substrate(&self, caller: caller, admin: uint256) -> Result<void> {
+	fn remove_collection_admin_substrate(
+		&mut self,
+		caller: caller,
+		admin: uint256,
+	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let mut admin_arr: [u8; 32] = Default::default();
 		admin.to_big_endian(&mut admin_arr);
@@ -249,7 +257,7 @@ where
 
 	/// Add collection admin.
 	/// @param new_admin Address of the added administrator.
-	fn add_collection_admin(&self, caller: caller, new_admin: address) -> Result<void> {
+	fn add_collection_admin(&mut self, caller: caller, new_admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_admin = T::CrossAccountId::from_eth(new_admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
@@ -259,7 +267,7 @@ where
 	/// Remove collection admin.
 	///
 	/// @param new_admin Address of the removed administrator.
-	fn remove_collection_admin(&self, caller: caller, admin: address) -> Result<void> {
+	fn remove_collection_admin(&mut self, caller: caller, admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let admin = T::CrossAccountId::from_eth(admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
@@ -365,7 +373,7 @@ where
 	/// Add the user to the allowed list.
 	///
 	/// @param user Address of a trusted user.
-	fn add_to_collection_allow_list(&self, caller: caller, user: address) -> Result<void> {
+	fn add_to_collection_allow_list(&mut self, caller: caller, user: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let user = T::CrossAccountId::from_eth(user);
 		<Pallet<T>>::toggle_allowlist(self, &caller, &user, true).map_err(dispatch_to_evm::<T>)?;
@@ -375,7 +383,7 @@ where
 	/// Remove the user from the allowed list.
 	///
 	/// @param user Address of a removed user.
-	fn remove_from_collection_allow_list(&self, caller: caller, user: address) -> Result<void> {
+	fn remove_from_collection_allow_list(&mut self, caller: caller, user: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let user = T::CrossAccountId::from_eth(user);
 		<Pallet<T>>::toggle_allowlist(self, &caller, &user, false).map_err(dispatch_to_evm::<T>)?;
