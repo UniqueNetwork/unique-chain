@@ -122,7 +122,7 @@ describe('Check ERC721 token URI', () => {
     ).send();
     
     // Set URL
-    await contract.methods.setProperty(nextTokenId, 'u', Buffer.from('Token URI')).send();
+    await contract.methods.setProperty(nextTokenId, 'url', Buffer.from('Token URI')).send();
       
     const events = normalizeEvents(result.events);
     const address = collectionIdToAddress(collectionId);
@@ -192,7 +192,7 @@ describe('Check ERC721 token URI', () => {
           
     // Set suffix
     const suffix = '/some/suffix';
-    await contract.methods.setProperty(nextTokenId, 's', Buffer.from(suffix)).send();
+    await contract.methods.setProperty(nextTokenId, 'suffix', Buffer.from(suffix)).send();
 
     const events = normalizeEvents(result.events);
     const address = collectionIdToAddress(collectionId);

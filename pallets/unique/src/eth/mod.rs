@@ -94,7 +94,7 @@ fn make_data<T: Config>(
 
 	token_property_permissions
 		.try_push(up_data_structs::PropertyKeyPermission {
-			key: u_key(),
+			key: url_key(),
 			permission: up_data_structs::PropertyPermission {
 				mutable: false,
 				collection_admin: true,
@@ -106,7 +106,7 @@ fn make_data<T: Config>(
 	if add_properties {
 		token_property_permissions
 			.try_push(up_data_structs::PropertyKeyPermission {
-				key: s_key(),
+				key: suffix_key(),
 				permission: up_data_structs::PropertyPermission {
 					mutable: false,
 					collection_admin: true,

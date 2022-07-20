@@ -188,7 +188,7 @@ impl<T: Config> NonfungibleHandle<T> {
 
 		let token_id_u32: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 
-		if let Ok(url) = get_token_property(self, token_id_u32, &u_key()) {
+		if let Ok(url) = get_token_property(self, token_id_u32, &url_key()) {
 			if !url.is_empty() {
 				return Ok(url);
 			}
@@ -206,7 +206,7 @@ impl<T: Config> NonfungibleHandle<T> {
 						e
 					))
 				})?;
-				if let Ok(suffix) = get_token_property(self, token_id_u32, &s_key()) {
+				if let Ok(suffix) = get_token_property(self, token_id_u32, &suffix_key()) {
 					if !suffix.is_empty() {
 						return Ok(base_uri + suffix.as_str());
 					}
@@ -403,7 +403,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_id: uint256,
 		token_uri: string,
 	) -> Result<bool> {
-		let key = u_key();
+		let key = url_key();
 		let permission = get_token_permission::<T>(self.id, &key)?;
 		if !permission.collection_admin {
 			return Err("Operation is not allowed".into());
@@ -583,7 +583,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		to: address,
 		tokens: Vec<(uint256, string)>,
 	) -> Result<bool> {
-		let key = u_key();
+		let key = url_key();
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let mut expected_index = <TokensMinted<T>>::get(self.id)

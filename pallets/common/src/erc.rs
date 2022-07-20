@@ -438,12 +438,12 @@ pub mod static_property_key_value {
 		property_key_from_bytes(b"baseURI").expect(EXPECT_CONVERT_ERROR)
 	}
 
-	pub fn u_key() -> up_data_structs::PropertyKey {
-		property_key_from_bytes(b"u").expect(EXPECT_CONVERT_ERROR)
+	pub fn url_key() -> up_data_structs::PropertyKey {
+		property_key_from_bytes(b"url").expect(EXPECT_CONVERT_ERROR)
 	}
 
-	pub fn s_key() -> up_data_structs::PropertyKey {
-		property_key_from_bytes(b"s").expect(EXPECT_CONVERT_ERROR)
+	pub fn suffix_key() -> up_data_structs::PropertyKey {
+		property_key_from_bytes(b"suffix").expect(EXPECT_CONVERT_ERROR)
 	}
 
 	pub const ERC721_METADATA: &[u8] = b"ERC721Metadata";
