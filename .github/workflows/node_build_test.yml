@@ -60,6 +60,12 @@ jobs:
         with:
           path: develop
 
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          path: develop
+
+
       - name: Building code Opal
         run: |
           pwd
@@ -89,8 +95,8 @@ jobs:
       - name: Building code Unique
         run: cargo build --features=unique-runtime --release
 
-
       - name: Directory and files list for debug purposes
         run: |
           pwd
           . $HOME/.cargo/env && cargo build --release
+
