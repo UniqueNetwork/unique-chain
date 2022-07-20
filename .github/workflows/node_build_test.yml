@@ -63,6 +63,8 @@ jobs:
       - name: delete workdir
         run: rm -rf ${{ env.opal_chain_workdir }}
 
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
@@ -74,7 +76,7 @@ jobs:
       - name: Building code Opal
         run: |
           pwd
-          . $HOME/.cargo/env && cargo build --release
+          . $HOME/.cargo/env && cargo build --features=opal-runtime
 
       - name: Upload Opal Artifacts
         uses: actions/upload-artifact@v3
@@ -96,6 +98,9 @@ jobs:
       - name: delete workdir
         run: rm -rf ${{ env.quartz_chain_workdir }}
 
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
@@ -104,7 +109,7 @@ jobs:
 
       - name: Building code Quartz
         run: |
-          . $HOME/.cargo/env && cargo build --release --features=quartz-runtime
+          . $HOME/.cargo/env && cargo build --features=quartz-runtime
 
       - name: Upload Quartz Artifacts
         uses: actions/upload-artifact@v3
@@ -125,6 +130,9 @@ jobs:
       - name: delete workdir
         run: rm -rf ${{ env.unique_quartz_workdir }}
 
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
@@ -133,7 +141,7 @@ jobs:
 
       - name: Building code Unique
         run: |
-          . $HOME/.cargo/env && cargo build --release --features=unique-runtime
+          . $HOME/.cargo/env && cargo build --features=unique-runtime
 
       - name: Upload Unique Artifacts
         uses: actions/upload-artifact@v3
@@ -142,3 +150,22 @@ jobs:
           path: |
             ./target/release/unique-collator
             ./target/release/wbuild/unique-runtime/unique_runtime.compact.compressed.wasm
+
+  Test-Opal:
+    # The type of runner that the job will run on
+    runs-on: ci-01
+
+    needs: build-Opal
+    name: Test Opal
+
+    steps:
+      - name: Run Opal Node in dev mode
+        run: |
+          pwd
+          ./target/release/unique-collator --dev
+
+      - name: Run test Opal
+        run: |
+          pwd
+          ./tests/yarn install
+          ./tests/yarn test
