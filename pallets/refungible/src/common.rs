@@ -20,7 +20,7 @@ use sp_std::collections::btree_map::BTreeMap;
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
 use up_data_structs::{
 	CollectionId, TokenId, CreateItemExData, CreateRefungibleExData, budget::Budget, Property,
-	PropertyKey, PropertyValue, PropertyKeyPermission, CreateItemData,
+	PropertyKey, PropertyValue, PropertyKeyPermission, CreateItemData, CollectionPropertiesVec,
 };
 use pallet_common::{
 	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
@@ -44,6 +44,14 @@ macro_rules! max_weight_of {
 	};
 }
 
+fn properties_weight<T: Config>(properties: &CollectionPropertiesVec) -> u64 {
+	if properties.len() > 0 {
+		<CommonWeights<T>>::set_token_properties(properties.len() as u32)
+	} else {
+		0
+	}
+}
+
 pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_item() -> Weight {
@@ -52,15 +60,28 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn create_multiple_items(data: &[CreateItemData]) -> Weight {
 		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32)
+			+ data
+				.iter()
+				.map(|data| match data {
+					CreateItemData::ReFungible(rft_data) => {
+						properties_weight::<T>(&rft_data.properties)
+					}
+					_ => 0,
+				})
+				.sum::<u64>()
 	}
 
 	fn create_multiple_items_ex(call: &CreateItemExData<T::CrossAccountId>) -> Weight {
 		match call {
 			CreateItemExData::RefungibleMultipleOwners(i) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex_multiple_owners(i.users.len() as u32)
+					+ properties_weight::<T>(&i.properties)
 			}
 			CreateItemExData::RefungibleMultipleItems(i) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex_multiple_items(i.len() as u32)
+					+ i.iter()
+						.map(|d| properties_weight::<T>(&d.properties))
+						.sum::<u64>()
 			}
 			_ => 0,
 		}
