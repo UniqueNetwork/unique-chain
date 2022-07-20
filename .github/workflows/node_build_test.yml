@@ -73,7 +73,7 @@ jobs:
       - name: Building code Opal
         run: |
           pwd
-          . $HOME/.cargo/env && cargo build --features=opal-runtime
+          . $HOME/.cargo/env && cargo build
 
       - name: Upload Opal Artifacts
         uses: actions/upload-artifact@v3
