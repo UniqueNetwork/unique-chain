@@ -2859,7 +2859,8 @@ export default {
    **/
   UpDataStructsTokenData: {
     properties: 'Vec<UpDataStructsProperty>',
-    owner: 'Option<PalletEvmAccountBasicCrossAccountIdRepr>'
+    owner: 'Option<PalletEvmAccountBasicCrossAccountIdRepr>',
+    pieces: 'u128'
   },
   /**
    * Lookup376: up_data_structs::RpcCollection<sp_core::crypto::AccountId32>

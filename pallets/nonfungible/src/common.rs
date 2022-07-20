@@ -487,4 +487,12 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
 		None
 	}
+
+	fn total_pieces(&self, token: TokenId) -> Option<u128> {
+		if <TokenData<T>>::contains_key((self.id, token)) {
+			Some(1)
+		} else {
+			None
+		}
+	}
 }

@@ -181,6 +181,7 @@ impl TryFrom<U256> for TokenId {
 pub struct TokenData<CrossAccountId> {
 	pub properties: Vec<Property>,
 	pub owner: Option<CrossAccountId>,
+	pub pieces: u128,
 }
 
 pub struct OverflowError;
