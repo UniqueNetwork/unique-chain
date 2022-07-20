@@ -84,6 +84,7 @@ jobs:
             ./target/release/unique-collator
             ./target/release/wbuild/opal-runtime/opal_runtime.compact.compressed.wasm
 
+
   build-Quartz:
     # The type of runner that the job will run on
     runs-on: ci-01
