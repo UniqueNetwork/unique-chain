@@ -14,6 +14,17 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+#Define Workflow variables
+env:
+  ubuntu_version: focal
+  chains_release_dir: /opt/chains_release
+  opal_chain_workdir: /opt/src_opal_chain
+  quartz_chain_workdir: /opt/src_quartz_chain
+  unique_chain_workdir: /opt/src_unique_chain
+  src_repo_url: https://github.com/lzadjsf/unique-chain.git
+  version: v924010
+  actual_toolchain: nightly-2022-05-11
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   pre-requisites:
@@ -31,46 +42,29 @@ jobs:
           rustup default nightly-2022-05-11
           rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
 
-  build:
+      # Re-create release directory
+      - name: delete release dir
+        run: rm -rf ${{ env.chains_release_dir }}
+
+      - name: create release dir
+        run: mkdir -p ${{ env.chains_release_dir }}
+
+  build-Opal:
     # The type of runner that the job will run on
     runs-on: ci-01
 
-    #if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
     needs: pre-requisites
+    name: Build Opal
 
-    env:
-      ubuntu_version: focal
-      chains_release_dir: /opt/chains_release
-      opal_chain_workdir: /opt/src_opal_chain
-      quartz_chain_workdir: /opt/src_quartz_chain
-      unique_chain_workdir: /opt/src_unique_chain
-      src_repo_url: https://github.com/lzadjsf/unique-chain.git
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: delete release dir
-        run: echo ${{ env.chains_release_dir }}
-
-
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: delete release dir
-        run: echo ${{ env.chains_release_dir }} 
-
-
-      - name: create release dir
-        run: echo ${{ env.opal_chain_workdir }}
-
-      - uses: actions/checkout@v3
-        with:
-          path: develop
+      - name: delete workdir
+        run: rm -rf ${{ opal_chain_workdir }}
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
-          path: develop
-
+          #repository: ${{ src_repo_url }}
+          path: ${{ opal_chain_workdir }}
 
       - name: Building code Opal
         run: |
@@ -85,24 +79,60 @@ jobs:
             ./target/release/unique-collator
             ./target/release/wbuild/opal-runtime/opal_runtime.compact.compressed.wasm
 
-      - name: Building code Quartz
-        run: |
-          . $HOME/.cargo/env && cargo build --release --features=quartz-runtime
+build-Quartz:
+  # The type of runner that the job will run on
+  runs-on: ci-01
 
-      - name: Upload Quartz Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: Quartz-artifacts
-          path: |
-            ./target/release/unique-collator
-            ./target/release/wbuild/quartz-runtime/quartz_runtime.compact.compressed.wasm
+  needs: pre-requisites
+  name: Build Quartz
 
+  steps:
+    - name: delete workdir
+      run: rm -rf ${{ quartz_chain_workdir }}
 
-      - name: Building code Unique
-        run: cargo build --features=unique-runtime --release
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v3
+      with:
+        #repository: ${{ src_repo_url }}
+        path: ${{ quartz_chain_workdir }}
 
-      - name: Directory and files list for debug purposes
-        run: |
-          pwd
-          . $HOME/.cargo/env && cargo build --release
+    - name: Building code Quartz
+      run: |
+        . $HOME/.cargo/env && cargo build --release --features=quartz-runtime
 
+    - name: Upload Quartz Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Quartz-artifacts
+        path: |
+          ./target/release/unique-collator
+          ./target/release/wbuild/quartz-runtime/quartz_runtime.compact.compressed.wasm
+
+build-Unique:
+  # The type of runner that the job will run on
+  runs-on: ci-01
+
+  needs: pre-requisites
+  name: Build Unique
+
+  steps:
+    - name: delete workdir
+      run: rm -rf ${{ unique_quartz_workdir }}
+
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v3
+      with:
+        #repository: ${{ src_repo_url }}
+        path: ${{ unique_chain_workdir }}
+
+    - name: Building code Unique
+      run: |
+        . $HOME/.cargo/env && cargo build --release --features=unique-runtime
+
+    - name: Upload Unique Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Unique-artifacts
+        path: |
+          ./target/release/unique-collator
+          ./target/release/wbuild/unique-runtime/unique_runtime.compact.compressed.wasm
