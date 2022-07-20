@@ -22,7 +22,10 @@ use up_data_structs::{
 	CollectionId, TokenId, CreateItemExData, CreateRefungibleExData, budget::Budget, Property,
 	PropertyKey, PropertyValue, PropertyKeyPermission, CreateItemData,
 };
-use pallet_common::{CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight, weights::WeightInfo as _};
+use pallet_common::{
+	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
+	weights::WeightInfo as _,
+};
 use pallet_structure::Error as StructureError;
 use sp_runtime::{DispatchError};
 use sp_std::{vec::Vec, vec};

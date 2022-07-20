@@ -20,7 +20,10 @@ use crate::{Pallet, Config, RefungibleHandle};
 use sp_std::prelude::*;
 use pallet_common::benchmarking::{create_collection_raw, property_key, property_value, create_data};
 use frame_benchmarking::{benchmarks, account};
-use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, CUSTOM_DATA_LIMIT, budget::Unlimited};
+use up_data_structs::{
+	CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, CUSTOM_DATA_LIMIT,
+	budget::Unlimited,
+};
 use pallet_common::bench_init;
 use core::convert::TryInto;
 use core::iter::IntoIterator;
