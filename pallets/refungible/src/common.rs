@@ -59,29 +59,31 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn create_multiple_items(data: &[CreateItemData]) -> Weight {
-		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32)
-			+ data
-				.iter()
+		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32).saturating_add(
+			data.iter()
 				.map(|data| match data {
 					CreateItemData::ReFungible(rft_data) => {
 						properties_weight::<T>(&rft_data.properties)
 					}
 					_ => 0,
 				})
-				.sum::<u64>()
+				.fold(0, |a, b| a.saturating_add(b)),
+		)
 	}
 
 	fn create_multiple_items_ex(call: &CreateItemExData<T::CrossAccountId>) -> Weight {
 		match call {
 			CreateItemExData::RefungibleMultipleOwners(i) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex_multiple_owners(i.users.len() as u32)
-					+ properties_weight::<T>(&i.properties)
+					.saturating_add(properties_weight::<T>(&i.properties))
 			}
 			CreateItemExData::RefungibleMultipleItems(i) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex_multiple_items(i.len() as u32)
-					+ i.iter()
-						.map(|d| properties_weight::<T>(&d.properties))
-						.sum::<u64>()
+					.saturating_add(
+						i.iter()
+							.map(|d| properties_weight::<T>(&d.properties))
+							.fold(0, |a, b| a.saturating_add(b)),
+					)
 			}
 			_ => 0,
 		}
