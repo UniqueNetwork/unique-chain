@@ -84,6 +84,7 @@ jobs:
             ./target/release/unique-collator
             ./target/release/wbuild/opal-runtime/opal_runtime.compact.compressed.wasm
 
+
   build-Quartz:
     # The type of runner that the job will run on
     runs-on: ci-01
@@ -95,13 +96,11 @@ jobs:
       - name: delete workdir
         run: rm -rf ${{ env.quartz_chain_workdir }}
 
-
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
           #repository: ${{ src_repo_url }}
           path: ${{ env.quartz_chain_workdir }}
-
 
       - name: Building code Quartz
         run: |
@@ -126,13 +125,11 @@ jobs:
       - name: delete workdir
         run: rm -rf ${{ env.unique_quartz_workdir }}
 
-
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
           #repository: ${{ src_repo_url }}
           path: ${{ env.unique_chain_workdir }}
-
 
       - name: Building code Unique
         run: |
