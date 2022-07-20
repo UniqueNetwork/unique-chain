@@ -41,6 +41,8 @@ jobs:
 
       - name: Building code Opal
         run: |
+          pwd
+          ls -laR
           cargo build --release
           ls -laR ./target
 
