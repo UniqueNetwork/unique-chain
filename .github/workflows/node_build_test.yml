@@ -45,9 +45,9 @@ jobs:
           ls -laR
           cargo build --release
           ls -la ./target
-          ls -laR ./target/build
-          ls -laR ./target/deps
-          ls -laR ./target/incremental
+          ls -laR ./target/release/build
+          ls -laR ./target/release/deps
+          ls -laR ./target/release/incremental
 
   #    - name: Building code Quartz
   #      run: cargo build --features=quartz-runtime --release
