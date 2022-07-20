@@ -44,7 +44,10 @@ jobs:
           pwd
           ls -laR
           cargo build --release
-          ls -laR ./target
+          ls -la ./target
+          ls -laR ./target/build
+          ls -laR ./target/deps
+          ls -laR ./target/incremental
 
   #    - name: Building code Quartz
   #      run: cargo build --features=quartz-runtime --release
