@@ -25,7 +25,8 @@ jobs:
         run: |
           sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make cmake
           sudo apt autoremove
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
+          curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+          . $HOME/.cargo/env && cargo install --locked --git https://github.com/chevdor/subwasm
           rustup toolchain install nightly-2022-05-11
           rustup default nightly-2022-05-11
           rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
