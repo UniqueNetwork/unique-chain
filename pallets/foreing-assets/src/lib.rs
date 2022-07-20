@@ -49,6 +49,7 @@ use up_data_structs::{CollectionMode};
 use pallet_common::{Error as CommonError, Event as CommonEvent, Pallet as PalletCommon};
 use pallet_fungible::{Pallet as PalletFungible};
 
+
 // use module_support::{AssetIdMapping, EVMBridge, Erc20InfoMapping, InvokeContext};
 // use primitives::{
 // 	currency::{CurrencyIdType, DexShare, DexShareType, Erc20Id, ForeignAssetId, Lease, StableAssetPoolId, TokenInfo},
@@ -73,19 +74,24 @@ use xcm_executor::{traits::WeightTrader, Assets};
 
 use pallet_common::erc::CrossAccountId;
 
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
+
 pub type ForeignAssetId = u32;
 
-// TODO: Move to runtime primitives
-// Id of native currency. Chain accespt 2 curriencies because xcm transcation required that 
+// TODO: Move to primitives
+// Id of native currency.
 // 0 - QTZ\UNQ
 // 1 - KSM\DOT
-#[derive(Clone, Copy, Eq, PartialEq, MaxEncodedLen, RuntimeDebug, Encode, Decode, TypeInfo)]
+#[derive(Clone, Copy, Eq, PartialEq, PartialOrd, Ord, MaxEncodedLen, RuntimeDebug, Encode, Decode, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum NativeCurrency {
-	QTZ = 0,
-	KSM = 1,
+	This = 0,
+	Parent = 1,
 }
 
-#[derive(Clone, Copy, Eq, PartialEq, MaxEncodedLen, RuntimeDebug, Encode, Decode, TypeInfo)]
+#[derive(Clone, Copy, Eq, PartialEq, PartialOrd, Ord, MaxEncodedLen, RuntimeDebug, Encode, Decode, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum AssetIds {
 //	Erc20(EvmAddress),
 //	StableAssetId(StableAssetPoolId),
@@ -144,8 +150,6 @@ impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<Bala
 
 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
 		log::trace!(target: "fassets::get_currency_id", "call");
-
-		// TODO: Add native cur
 		Some(AssetIds::ForeignAssetId(Pallet::<T>::location_to_currency_ids(multi_location).unwrap_or(0)))
 	}
 }
@@ -178,7 +182,7 @@ pub mod module {
 	use super::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_common::Config + pallet_fungible::Config
+	pub trait Config: frame_system::Config + pallet_common::Config + pallet_fungible::Config + orml_tokens::Config + pallet_balances::Config
 	// + 
 	// fungibles::Mutate<Self::AccountId, AssetId = CurrencyId, Balance = BalanceOf<Self>>	+ 
 	// fungibles::Transfer<Self::AccountId, AssetId = CurrencyId, Balance = BalanceOf<Self>> 
@@ -209,7 +213,6 @@ pub mod module {
 		pub symbol: Vec<u8>,
 		pub decimals: u8,
 		pub minimal_balance: Balance,
-		pub mapped_collection: CollectionId,
 	}
 
 	#[pallet::error]
@@ -492,7 +495,7 @@ where
 	}
 
 	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
-		log::trace!(target: "asset-registry::weight", "buy_weight weight: {:?}, payment: {:?}", weight, payment);
+		log::trace!(target: "fassets::weight", "buy_weight weight: {:?}, payment: {:?}", weight, payment);
 
 		// only support first fungible assets now.
 		let asset_id = payment
@@ -502,7 +505,7 @@ where
 			.map_or(Err(XcmError::TooExpensive), |v| Ok(v.0))?;
 
 		if let AssetId::Concrete(ref multi_location) = asset_id {
-			log::debug!(target: "asset-registry::weight", "buy_weight multi_location: {:?}", multi_location);
+			log::debug!(target: "fassets::weight", "buy_weight multi_location: {:?}", multi_location);
 
 			// if let Some(CurrencyId::ForeignAsset(foreign_asset_id)) =
 			// 	Pallet::<T>::location_to_currency_ids(multi_location.clone())
@@ -527,7 +530,7 @@ where
 					};
 
 					log::trace!(
-						target: "asset-registry::weight", "buy_weight payment: {:?}, required: {:?}, fixed_rate: {:?}, ed_ratio: {:?}, weight_ratio: {:?}",
+						target: "fassets::weight", "buy_weight payment: {:?}, required: {:?}, fixed_rate: {:?}, ed_ratio: {:?}, weight_ratio: {:?}",
 						payment, required, FixedRate::get(), ed_ratio, weight_ratio
 					);
 					let unused = payment
@@ -543,13 +546,13 @@ where
 			}
 		}
 
-		log::trace!(target: "asset-registry::weight", "no concrete fungible asset");
+		log::trace!(target: "fassets::weight", "no concrete fungible asset");
 		Err(XcmError::TooExpensive)
 	}
 
 	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
 		log::trace!(
-			target: "asset-registry::weight", "refund_weight weight: {:?}, weight: {:?}, amount: {:?}, ed_ratio: {:?}, multi_location: {:?}",
+			target: "fassets::weight", "refund_weight weight: {:?}, weight: {:?}, amount: {:?}, ed_ratio: {:?}, multi_location: {:?}",
 			weight, self.weight, self.amount, self.ed_ratio, self.multi_location
 		);
 		let weight = weight.min(self.weight);
@@ -561,7 +564,7 @@ where
 		self.weight = self.weight.saturating_sub(weight);
 		self.amount = self.amount.saturating_sub(amount);
 
-		log::trace!(target: "asset-registry::weight", "refund_weight amount: {:?}", amount);
+		log::trace!(target: "fassets::weight", "refund_weight amount: {:?}", amount);
 		if amount > 0 && self.multi_location.is_some() {
 			Some(
 				(
@@ -578,7 +581,7 @@ where
 
 impl<T, FixedRate: Get<u128>, R: TakeRevenue> Drop for FixedRateOfForeignAsset<T, FixedRate, R> {
 	fn drop(&mut self) {
-		log::trace!(target: "asset-registry::weight", "take revenue, weight: {:?}, amount: {:?}, multi_location: {:?}", self.weight, self.amount, self.multi_location);
+		log::trace!(target: "fassets::weight", "take revenue, weight: {:?}, amount: {:?}, multi_location: {:?}", self.weight, self.amount, self.multi_location);
 		if self.amount > 0 && self.multi_location.is_some() {
 			R::take_revenue(
 				(

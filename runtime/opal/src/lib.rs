@@ -166,6 +166,9 @@ pub type AccountIndex = u32;
 /// Balance of an account.
 pub type Balance = u128;
 
+// Signed version of balance
+pub type Amount = i128;
+
 /// Index of a transaction in the chain.
 pub type Index = u32;
 
@@ -819,20 +822,21 @@ impl<Prefix: Get<MultiLocation>, AssetId: Clone, ConvertAssetId: ConvertXcm<u128
 			id.interior().at(prefix.interior().len()) //.interior(), 
 		);
 
+		let parent = MultiLocation::parent();
+		let here = MultiLocation::here();
+		
 		// TODO: Fix it. Need to make correct relay chain currency conversion
 		// Native currencies conversion should be first 		
-		if *id == MultiLocation::parent() {
-			return ConvertAssetId::convert_ref(999);
-		};
-
-		match id.interior().at(prefix.interior().len()) {
-		//	Some(Junction::GeneralIndex(id)) => ConvertAssetId::convert_ref(999),
-			Some(Junction::GeneralIndex(id)) => ConvertAssetId::convert_ref(id),
-			//Some(Junction::GeneralKey(id)) => ConvertAssetId::convert_ref(122),
-			_ => ConvertAssetId::convert_ref(888),
-		//	_ => Err(()),
+		match id {
+			here => ConvertAssetId::convert_ref(9999),
+			parent => ConvertAssetId::convert_ref(999),
+			_ => match id.interior().at(prefix.interior().len()) {
+					Some(Junction::GeneralIndex(id)) => ConvertAssetId::convert_ref(id),
+					_ => ConvertAssetId::convert_ref(888),
+			}
 		}
 	}
+
 	fn reverse_ref(what: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
 		let mut location = Prefix::get();
 		let id = ConvertAssetId::reverse_ref(what)?;
@@ -1462,20 +1466,13 @@ impl pallet_foreing_assets::Config for Runtime {
 pub struct CurrencyIdConvert;
 impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
 	fn convert(id: AssetIds) -> Option<MultiLocation> {
-		// match id {
-		// 	// CurrencyId::ForeignAsset(foreign_asset_id) => {
-		// 	// 	XcmForeignAssetIdMapping::<Runtime>::get_multi_location(foreign_asset_id)
-		// 	// }
-		// 	foreign_asset_id => {
-		// 		Ok(XcmForeignAssetIdMapping::<Runtime>::get_multi_location(foreign_asset_id))
-		// 	}
-		// 	_ => Err(id),
-		// }
-
 
 		// TODO: Add native curr
 		match id {
-			AssetIds::NativeAssetId(NativeCurrency::KSM) => {
+			AssetIds::NativeAssetId(NativeCurrency::This) => {
+				Some(MultiLocation::here())
+			},
+			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
 				Some(MultiLocation::parent())
 			},
 			AssetIds::ForeignAssetId(foreign_asset_id) => {
@@ -1495,42 +1492,48 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 		None
 	}
 }
-// impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
-// 	fn convert(id: AssetIds) -> Result<Option<MultiLocation>, AssetIds> {
-// 		match id {
-// 			foreign_asset_id => {
-// 				Ok(XcmForeignAssetIdMapping::<Runtime>::get_multi_location2(foreign_asset_id))
-// 			}
-// 			_ => Err(id),
-// 		}
-// 	}
-// }
 
-// impl Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert {
-// 	fn convert(asset: MultiAsset) -> Result<Option<CurrencyId>, MultiAsset> {
-// 		if let MultiAsset {
-// 			id: Concrete(location), ..
-// 		} = asset
-// 		{
-// 			Self::convert(location)
-// 		} else {
-// 			Err(asset)
-// 		}
-// 	}
-// }
-// impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
-// 	fn convert(id: AssetIds) -> Result<Option<MultiLocation>, AssetIds> {
-// 		match id {
-// 			foreign_asset_id => {
-// 				Ok(XcmForeignAssetIdMapping::<Runtime>::get_multi_location2(foreign_asset_id))
-// 			}
-// 			_ => Err(id),
-// 		}
-// 	}
-// }
+pub fn get_all_module_accounts() -> Vec<AccountId> {
+	vec![
+		TreasuryModuleId::get().into_account_truncating(),
+	]
+}
 
+pub struct DustRemovalWhitelist;
+impl Contains<AccountId> for DustRemovalWhitelist {
+	fn contains(a: &AccountId) -> bool {
+		
+		get_all_module_accounts().contains(a)
+	}
+}
 
+parameter_type_with_key! {
+	pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+		match currency_id {
+			CurrencyId::NativeAssetId(symbol) => match symbol {
+				NativeCurrency::This => 0,
+				NativeCurrency::Parent=> 0,
+			},
+			_ => 100_000
+		}
+	};
+}
 
+impl orml_tokens::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = CurrencyId;
+	type WeightInfo = ();//weights::orml_tokens::WeightInfo<Runtime>;
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccountId>;
+	type MaxLocks = MaxLocks;
+	type MaxReserves = MaxReserves;
+	// TODO: Add all module accounts
+	type DustRemovalWhitelist = DustRemovalWhitelist;
+	/// The id type for named reserves.
+	type ReserveIdentifier = ();
+}
 
 parameter_types! {
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
@@ -1613,6 +1616,7 @@ construct_runtime!(
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 36,
 		Vesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 37,
 		XTokens: orml_xtokens = 38,
+		Tokens: orml_tokens = 40,
 		// Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
 		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 

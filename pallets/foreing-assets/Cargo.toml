@@ -13,14 +13,15 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false  }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
-#primitives = { package = "acala-primitives", path = "../../primitives", default-features = false }
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
 pallet-common = { default-features = false, path = '../common' }
 pallet-fungible = { default-features = false, path = '../fungible' }
 
 xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.23", default-features = false }
 xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.23", default-features = false }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.23", default-features = false }
+orml-tokens = { git = 'https://github.com/UniqueNetwork/open-runtime-module-library', branch = 'unique-polkadot-v0.9.23', version = "0.4.1-dev", default-features = false }
 
 #module-support = { path = "../support", default-features = false }
 
@@ -29,9 +30,8 @@ serde_json = "1.0.68"
 hex = { version = "0.4" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
-
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
 #module-evm = { path = "../evm" }
 #module-evm-bridge = { path = "../evm-bridge" }
 #orml-utilities = { path = "../../orml/utilities" }
@@ -49,7 +49,9 @@ std = [
 	"frame-system/std",
 	"up-data-structs/std",
 	"pallet-common/std",
+	"pallet-balances/std",
 	"pallet-fungible/std",
+	"orml-tokens/std"
 	# "primitives/std",
 	# "xcm/std",
 	# "xcm-builder/std",

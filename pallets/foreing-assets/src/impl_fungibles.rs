@@ -26,16 +26,49 @@ use pallet_fungible::FungibleHandle;
 use pallet_common::CommonCollectionOperations;
 use up_data_structs::budget::Unlimited;
 
-impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T> {
+impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T> where 
+	T: orml_tokens::Config<CurrencyId = AssetIds>
+{
 	type AssetId = u32;
 	type Balance = BalanceOf<T>;
 
 	fn total_issuance(asset: Self::AssetId) -> Self::Balance {
 		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible total_issuance");
-		//stub for native
+		// KSM
 		if asset == 999
 		{
-			return Self::Balance::try_from(u128::max_value()).unwrap_or(Zero::zero());
+			let amount = <orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::total_issuance(
+				AssetIds::NativeAssetId(NativeCurrency::Parent));
+	
+			let value: u128 = match amount.try_into() { 
+				Ok(val) => val, 
+				Err(_) => return Zero::zero(), 
+			}; 
+
+			let ti: Self::Balance = match value.try_into() {
+				Ok(val) => val, 
+				Err(_) => return Zero::zero(), 				
+			};
+
+			return ti;
+		};
+
+		// QTZ
+		if asset == 9999
+		{
+			let parent_amount = <pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::total_issuance();
+
+			let value: u128 = match parent_amount.try_into() { 
+				Ok(val) => val, 
+				Err(_) => return Zero::zero(), 
+			}; 
+
+			let ti: Self::Balance = match value.try_into() {
+				Ok(val) => val, 
+				Err(_) => return Zero::zero(), 				
+			};
+
+			return ti;
 		};
 
 		let target_collection_id = match <AssetBinding<T>>::get(asset) {
@@ -53,9 +86,41 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 	fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
 		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible minimum_balance");
 		//stub for native
+		// KSM
 		if asset == 999
 		{
-			return Zero::zero();
+			let amount = <orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::minimum_balance(
+				AssetIds::NativeAssetId(NativeCurrency::Parent));
+	
+			let value: u128 = match amount.try_into() { 
+				Ok(val) => val, 
+				Err(_) => return Zero::zero(), 
+			}; 
+
+			let ti: Self::Balance = match value.try_into() {
+				Ok(val) => val, 
+				Err(_) => return Zero::zero(), 				
+			};
+
+			return ti;
+		};
+
+		// QTZ
+		if asset == 9999
+		{
+			let parent_amount = <pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::minimum_balance();
+
+			let value: u128 = match parent_amount.try_into() { 
+				Ok(val) => val, 
+				Err(_) => return Zero::zero(), 
+			}; 
+
+			let ti: Self::Balance = match value.try_into() {
+				Ok(val) => val, 
+				Err(_) => return Zero::zero(), 				
+			};
+
+			return ti;
 		};
 
 		AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(asset)).map(|x| x.minimal_balance).unwrap_or_else(Zero::zero)
@@ -63,11 +128,43 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 
 	fn balance(asset: Self::AssetId, who: &<T as SystemConfig>::AccountId) -> Self::Balance {
 		//stub for native
+		// KSM
 		if asset == 999
 		{
-			return Self::Balance::try_from(u128::max_value()).unwrap_or(Zero::zero());
+			let amount = <orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::balance(
+				AssetIds::NativeAssetId(NativeCurrency::Parent), 
+				who);
+	
+			let value: u128 = match amount.try_into() { 
+				Ok(val) => val, 
+				Err(_) => return Zero::zero(), 
+			}; 
+
+			let ti: Self::Balance = match value.try_into() {
+				Ok(val) => val, 
+				Err(_) => return Zero::zero(), 				
+			};
+
+			return ti;
 		};
 
+		// QTZ
+		if asset == 9999
+		{
+			let parent_amount = <pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::balance(who);
+
+			let value: u128 = match parent_amount.try_into() { 
+				Ok(val) => val, 
+				Err(_) => return Zero::zero(), 
+			}; 
+
+			let ti: Self::Balance = match value.try_into() {
+				Ok(val) => val, 
+				Err(_) => return Zero::zero(), 				
+			};
+
+			return ti;
+		};
 		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible balance");
 		let target_collection_id = match <AssetBinding<T>>::get(asset) {
 			Some(v) => v,
@@ -135,7 +232,10 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 // 	}
 // }
 
-impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> {
+impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T>
+where 
+   T: orml_tokens::Config<CurrencyId = AssetIds>
+{
 	fn mint_into(
 		asset: Self::AssetId,
 		who: &<T as SystemConfig>::AccountId,
@@ -144,12 +244,38 @@ impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> 
 		//Self::do_mint(asset, who, amount, None)
 		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible mint_into");
 
+		let value: u128 = match amount.try_into() { 
+			Ok(val) => val, 
+			Err(_) => return Err(DispatchError::Other("Bad amount to value conversion")), 
+		}; 
+
 		//stub for native
+		// KSM
 		if asset == 999
 		{
-			return Ok(());
+			let parent_amount: <T as orml_tokens::Config>::Balance = match value.try_into() { 
+				Ok(val) => val, 
+				Err(_) => return Err(DispatchError::Other("Bad amount to relay chain value conversion")), 
+			}; 
+
+			return <orml_tokens::Pallet<T> as fungibles::Mutate<T::AccountId>>::mint_into(
+				AssetIds::NativeAssetId(NativeCurrency::Parent), 
+				who, 
+				parent_amount);
 		};
 
+		// QTZ
+		if asset == 9999
+		{
+			let this_amount: <T as pallet_balances::Config>::Balance = match value.try_into() { 
+				Ok(val) => val, 
+				Err(_) => return Err(DispatchError::Other("Bad amount to this parachain value conversion")), 
+			}; 
+
+			return <pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::mint_into(
+				who, 
+				this_amount);
+		};
 
 		let target_collection_id = match <AssetBinding<T>>::get(asset) {
 			Some(v) => v,
@@ -158,10 +284,10 @@ impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> 
 		let collection = FungibleHandle::cast(<CollectionHandle<T>>::try_get(target_collection_id)?);
 		let account = T::CrossAccountId::from_sub(who.clone());
 
-		let value: u128 = match amount.try_into() { 
-			Ok(val) => val, 
-			Err(_) => return Err(DispatchError::Other("Bad amount to value conversion")), 
-		}; 
+		// let value: u128 = match amount.try_into() { 
+		// 	Ok(val) => val, 
+		// 	Err(_) => return Err(DispatchError::Other("Bad amount to value conversion")), 
+		// }; 
 
 		let amount_data: pallet_fungible::CreateItemData<T> = (account.clone(), value);
 
@@ -181,12 +307,48 @@ impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> 
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = DebitFlags { keep_alive: false, best_effort: false };
 		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible burn_from");
+		let value: u128 = match amount.try_into() { 
+			Ok(val) => val, 
+			Err(_) => return Err(DispatchError::Other("Bad amount to value conversion")), 
+		}; 
 
 		//stub for native
+		// KSM
 		if asset == 999
 		{
-			return Ok(amount);
+			let parent_amount: <T as orml_tokens::Config>::Balance = match value.try_into() { 
+				Ok(val) => val, 
+				Err(_) => return Err(DispatchError::Other("Bad amount to relay chain value conversion")), 
+			}; 
+
+			return match <orml_tokens::Pallet<T> as fungibles::Mutate<T::AccountId>>::burn_from(
+				AssetIds::NativeAssetId(NativeCurrency::Parent), 
+				who, 
+				parent_amount) 
+				{
+					Ok(_) => Ok(amount),
+					Err(e) => Err(e)
+				};	
 		};
+
+		// QTZ
+		if asset == 9999
+		{
+			let this_amount: <T as pallet_balances::Config>::Balance = match value.try_into() { 
+				Ok(val) => val, 
+				Err(_) => return Err(DispatchError::Other("Bad amount to this parachain value conversion")), 
+			}; 
+
+			return match <pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::burn_from(
+				who, 
+				this_amount)
+				{
+					Ok(_) => Ok(amount),
+					Err(e) => Err(e)
+				};
+
+		};
+
 
 		let target_collection_id = match <AssetBinding<T>>::get(asset) {
 			Some(v) => v,
@@ -194,10 +356,6 @@ impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> 
 		};
 		let collection = FungibleHandle::cast(<CollectionHandle<T>>::try_get(target_collection_id)?);
 		let account = T::CrossAccountId::from_sub(who.clone());
-		let value: u128 = match amount.try_into() { 
-			Ok(val) => val, 
-			Err(_) => return Err(DispatchError::Other("Bad amount to value conversion")), 
-		}; 
 		pallet_fungible::Pallet::<T>::burn_from(
 			&collection, 
 			&account.clone(),
@@ -221,7 +379,10 @@ impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T> 
 	}
 }
 
-impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T> {
+impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T> 
+where 
+   T: orml_tokens::Config<CurrencyId = AssetIds>
+{
 	fn transfer(
 		asset: Self::AssetId,
 		source: &<T as SystemConfig>::AccountId,
@@ -232,10 +393,50 @@ impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T> {
 		// let f = TransferFlags { keep_alive, best_effort: false, burn_dust: false };
 		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible transfer");
 
+		let value: u128 = match amount.try_into() { 
+			Ok(val) => val, 
+			Err(_) => return Err(DispatchError::Other("Bad amount to value conversion")), 
+		}; 
+
 		//stub for native
+		// KSM
 		if asset == 999
 		{
-			return Ok(amount);
+			let parent_amount: <T as orml_tokens::Config>::Balance = match value.try_into() { 
+				Ok(val) => val, 
+				Err(_) => return Err(DispatchError::Other("Bad amount to relay chain value conversion")), 
+			}; 
+
+			return match <orml_tokens::Pallet<T> as fungibles::Transfer<T::AccountId>>::transfer(
+				AssetIds::NativeAssetId(NativeCurrency::Parent), 
+				source, 
+				dest,
+				parent_amount,
+				keep_alive) 
+				{
+					Ok(_) => Ok(amount),
+					Err(e) => Err(e)
+				};	
+		};
+
+		// QTZ
+		if asset == 9999
+		{
+			let this_amount: <T as pallet_balances::Config>::Balance = match value.try_into() { 
+				Ok(val) => val, 
+				Err(_) => return Err(DispatchError::Other("Bad amount to this parachain value conversion")), 
+			}; 
+
+			return match <pallet_balances::Pallet<T> as fungible::Transfer<T::AccountId>>::transfer(
+				source, 
+				dest,
+				this_amount,
+				keep_alive)
+				{
+					Ok(_) => Ok(amount),
+					Err(_) => Err(DispatchError::Other("Bad amount to relay chain value conversion"))
+				};
+
 		};
 		
 		let target_collection_id = match <AssetBinding<T>>::get(asset) {
@@ -243,11 +444,6 @@ impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T> {
 			None => return Err(DispatchError::Other("Associated collection not found for asset")),
 		};
 		let collection = FungibleHandle::cast(<CollectionHandle<T>>::try_get(target_collection_id)?);
-
-		let value: u128 = match amount.try_into() { 
-			Ok(val) => val, 
-			Err(_) => return Err(DispatchError::Other("Bad amount to value conversion")), 
-		}; 
 
 		pallet_fungible::Pallet::<T>::transfer(
 			&collection, 
