@@ -67,6 +67,7 @@ jobs:
 
       - name: Building code Unique
         run: cargo build --features=unique-runtime --release
+<<<<<<< HEAD
 
       - name: Upload Unique Artifacts
         uses: actions/upload-artifact@v3
@@ -75,3 +76,15 @@ jobs:
           path: |
             ./target/release/unique-collator
             ./target/release/wbuild/unique-runtime/unique_runtime.compact.compressed.wasm
+=======
+        
+      - name: Directory and files list for debug purposes
+        run: |
+          pwd
+          ls -la
+          ls -la ./target
+          ls -laR ./target/release/build
+          ls -laR ./target/release/deps
+          ls -laR ./target/release/incremental
+
+>>>>>>> d4cb58c6f468291de20244d48a397b6ea035a25b
