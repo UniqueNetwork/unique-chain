@@ -89,7 +89,8 @@ macro_rules! impl_common_runtime_apis {
                 ) -> Result<TokenData<CrossAccountId>, DispatchError> {
                     let token_data = TokenData {
                         properties: Self::token_properties(collection, token_id, keys)?,
-                        owner: Self::token_owner(collection, token_id)?
+                        owner: Self::token_owner(collection, token_id)?,
+                        pieces: Self::total_pieces(collection, token_id)?.unwrap_or(0),
                     };
 
                     Ok(token_data)
@@ -141,6 +142,10 @@ macro_rules! impl_common_runtime_apis {
 
                 fn effective_collection_limits(collection: CollectionId) -> Result<Option<CollectionLimits>, DispatchError> {
                     Ok(<pallet_common::Pallet<Runtime>>::effective_collection_limits(collection))
+                }
+
+                fn total_pieces(collection: CollectionId, token_id: TokenId) -> Result<Option<u128>, DispatchError> {
+                    dispatch_unique_runtime!(collection.total_pieces(token_id))
                 }
             }
 

@@ -25,7 +25,8 @@ use sp_std::{vec::Vec, vec};
 use up_data_structs::{Property, PropertyKey, PropertyValue, PropertyKeyPermission};
 
 use crate::{
-	Allowance, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf, weights::WeightInfo,
+	Allowance, TotalSupply, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf,
+	weights::WeightInfo,
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
@@ -404,5 +405,12 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
 		None
+	}
+
+	fn total_pieces(&self, token: TokenId) -> Option<u128> {
+		if token != TokenId::default() {
+			return None;
+		}
+		<TotalSupply<T>>::try_get(self.id).ok()
 	}
 }

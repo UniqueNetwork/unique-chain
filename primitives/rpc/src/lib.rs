@@ -80,5 +80,6 @@ sp_api::decl_runtime_apis! {
 		fn collection_stats() -> Result<CollectionStats>;
 		fn next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<Option<u64>>;
 		fn effective_collection_limits(collection_id: CollectionId) -> Result<Option<CollectionLimits>>;
+		fn total_pieces(collection_id: CollectionId, token_id: TokenId) -> Result<Option<u128>>;
 	}
 }

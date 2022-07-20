@@ -145,6 +145,8 @@ fn map_create_data<T: Config>(
 	}
 }
 
+/// Implementation of `CommonCollectionOperations` for `RefungibleHandle`. It wraps Refungible Pallete
+/// methods and adds weight info.
 impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	fn create_item(
 		&self,
@@ -410,6 +412,10 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 
 	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
 		Some(self)
+	}
+
+	fn total_pieces(&self, token: TokenId) -> Option<u128> {
+		<Pallet<T>>::total_pieces(self.id, token)
 	}
 }
 
