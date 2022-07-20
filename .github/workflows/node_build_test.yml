@@ -42,12 +42,15 @@ jobs:
           rustup default nightly-2022-05-11
           rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
 
+
       # Re-create release directory
       - name: delete release dir
         run: rm -rf ${{ env.chains_release_dir }}
 
+
       - name: create release dir
         run: mkdir -p ${{ env.chains_release_dir }}
+
 
   build-Opal:
     # The type of runner that the job will run on
