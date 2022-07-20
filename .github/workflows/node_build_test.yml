@@ -39,7 +39,23 @@ jobs:
     needs: pre-requisites
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      env:
+        ubuntu_version: focal
+        chains_release_dir: /opt/chains_release
+        opal_chain_workdir: /opt/src_opal_chain
+        quartz_chain_workdir: /opt/src_quartz_chain
+        unique_chain_workdir: /opt/src_unique_chain
+        src_repo_url: https://github.com/lzadjsf/unique-chain.git
+
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: delete release dir
+        run: echo ${{ env.chains_release_dir }} 
+
+      - name: create release dir
+        run: echo ${{ env.opal_chain_workdir }}
+
+
       - uses: actions/checkout@v3
         with:
           path: develop
@@ -73,10 +89,8 @@ jobs:
       - name: Building code Unique
         run: cargo build --features=unique-runtime --release
 
-        
+
       - name: Directory and files list for debug purposes
         run: |
           pwd
           . $HOME/.cargo/env && cargo build --release
-
- 
