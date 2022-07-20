@@ -63,9 +63,6 @@ jobs:
       - name: delete workdir
         run: rm -rf ${{ env.opal_chain_workdir }}
 
-      - name: Clean Workspace
-        uses: AutoModality/action-clean@v1.1.0
-
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
