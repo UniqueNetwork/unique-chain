@@ -152,7 +152,6 @@ mod preimage_provider {
 
 pub use preimage_provider::PreimageProviderAndMaybeRecipient;
 
-/// Weight templates for calculating actual fees
 pub(crate) trait MarginalWeightInfo: WeightInfo {
 	fn item(periodic: bool, named: bool, resolved: Option<bool>) -> Weight {
 		match (periodic, named, resolved) {
@@ -259,7 +258,7 @@ pub mod pallet {
 		/// If `Some` then the number of blocks to postpone execution for when the item is delayed.
 		type NoPreimagePostponement: Get<Option<Self::BlockNumber>>;
 
-		/// Sponsoring function. In this version sposorship is disabled
+		/// Sponsoring function.
 		// type SponsorshipHandler: SponsorshipHandler<Self::AccountId, <Self as Config>::Call>;
 
 		/// The helper type used for custom transaction fee logic.
@@ -268,7 +267,6 @@ pub mod pallet {
 
 	/// A Scheduler-Runtime interface for finer payment handling.
 	pub trait DispatchCall<T: frame_system::Config + Config, SelfContainedSignedInfo> {
-		/// Lock balance required for transaction payment
 		fn reserve_balance(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
@@ -292,7 +290,6 @@ pub mod pallet {
 			TransactionValidityError,
 		>;
 
-		/// Cancel schedule reservation and unlock balance
 		fn cancel_reserve(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
@@ -436,7 +433,6 @@ pub mod pallet {
 					continue;
 				}
 
-				// Sender is the account who signed transaction
 				let sender = ensure_signed(
 					<<T as Config>::Origin as From<T::PalletsOrigin>>::from(s.origin.clone())
 						.into(),
@@ -500,6 +496,7 @@ pub mod pallet {
 			}
 			/// Weight should be 0, because transaction already paid
 			0
+			//total_weight
 		}
 	}
 

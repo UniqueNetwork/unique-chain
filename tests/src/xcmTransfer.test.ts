@@ -31,6 +31,7 @@ const expect = chai.expect;
 const UNIQUE_CHAIN = 1000;
 const KARURA_CHAIN = 2000;
 const KARURA_PORT = '9946';
+const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
 describe('Integration test: Exchanging QTZ with Karura', () => {
   let alice: IKeyringPair;
@@ -113,7 +114,7 @@ describe('Integration test: Exchanging QTZ with Karura', () => {
               },
             },
             fun: {
-              Fungible: 5000000000,
+              Fungible: TRANSFER_AMOUNT,
             },
           },
         ],
@@ -148,19 +149,17 @@ describe('Integration test: Exchanging QTZ with Karura', () => {
 
     await usingApi(async (api) => {
       const destination = {
-        V0: {
-          X3: [
-            'Parent',
-            {
-              Parachain: UNIQUE_CHAIN,
-            },
-            {
-              AccountId32: {
+        V1: {
+          parents: 1,
+          interior: {
+            X2: [
+              {Parachain: UNIQUE_CHAIN},
+              {AccountId32: {
                 network: 'Any',
                 id: alice.addressRaw,
-              },
-            },
-          ],
+              }},
+            ],
+          },
         },
       };
 
@@ -168,7 +167,7 @@ describe('Integration test: Exchanging QTZ with Karura', () => {
         ForeignAsset: 0,
       };
 
-      const amount = 5000000000;
+      const amount = TRANSFER_AMOUNT;
       const destWeight = 50000000;
 
       const tx = api.tx.xTokens.transfer(id, amount, destination, destWeight);
