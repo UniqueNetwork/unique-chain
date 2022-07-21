@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 //! # Nonfungible Pallet EVM API
-//! 
+//!
 //! Provides ERC-721 standart support implementation and EVM API for unique extensions for Nonfungible Pallet.
 //! Method implementations are mostly doing parameter conversion and calling Nonfungible Pallet methods.
 
@@ -46,7 +46,7 @@ use crate::{
 };
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
-/// 
+///
 #[solidity_interface(name = "TokenProperties")]
 impl<T: Config> NonfungibleHandle<T> {
 	/// @notice Set permissions for token property.
@@ -212,9 +212,9 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 
 	/// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
-    /// @dev Throws if `tokenId` is not a valid NFT. URIs are defined in RFC
-    ///  3986. The URI may point to a JSON file that conforms to the "ERC721
-    ///  Metadata JSON Schema".
+	/// @dev Throws if `tokenId` is not a valid NFT. URIs are defined in RFC
+	///  3986. The URI may point to a JSON file that conforms to the "ERC721
+	///  Metadata JSON Schema".
 	/// @return token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
@@ -241,9 +241,9 @@ impl<T: Config> NonfungibleHandle<T> {
 #[solidity_interface(name = "ERC721Enumerable")]
 impl<T: Config> NonfungibleHandle<T> {
 	/// @notice Enumerate valid NFTs
-    /// @param index A counter less than `totalSupply()`
-    /// @return The token identifier for the `index`th NFT,
-    ///  (sort order not specified)
+	/// @param index A counter less than `totalSupply()`
+	/// @return The token identifier for the `index`th NFT,
+	///  (sort order not specified)
 	fn token_by_index(&self, index: uint256) -> Result<uint256> {
 		Ok(index)
 	}
@@ -255,8 +255,8 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 
 	/// @notice Count NFTs tracked by this contract
-    /// @return A count of valid NFTs tracked by this contract, where each one of
-    ///  them has an assigned and queryable owner not equal to the zero address
+	/// @return A count of valid NFTs tracked by this contract, where each one of
+	///  them has an assigned and queryable owner not equal to the zero address
 	fn total_supply(&self) -> Result<uint256> {
 		self.consume_store_reads(1)?;
 		Ok(<Pallet<T>>::total_supply(self).into())

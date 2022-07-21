@@ -48,11 +48,11 @@
 //!
 //! - **Burning:** The process of “deleting” a token from a collection and from
 //!   an account balance of the owner.
-//! 
+//!
 //! - **Nesting:** Setting up parent-child relationship between tokens. Nested tokens are inhereting
 //!   owner from their parent. There could be multiple levels of nesting. Token couldn't be nested in
 //!   it's child token i.e. parent-child relationship graph shouldn't have cycles.
-//! 
+//!
 //! - **Properties:** Key-Values pairs. Token properties are attached to a token. Collection properties are
 //!   attached to a collection. Set of permissions could be defined for each property.
 //!
@@ -83,7 +83,7 @@
 //! - `delete_collection_properties` - Remove properties from the collection.
 //! - `set_property_permission` - Set collection property permission.
 //! - `set_token_property_permissions` - Set token property permissions.
-//! 
+//!
 //! ## Assumptions
 //!
 //! * Total number of tokens of all types shouldn't be greater than `up_data_structs::MAX_TOKEN_PREFIX_LENGTH`.
@@ -369,7 +369,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Set the token property with the scope.
-	/// 
+	///
 	/// - `property`: Contains key-value pair.
 	pub fn set_scoped_token_property(
 		collection_id: CollectionId,
@@ -401,7 +401,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Add or edit auxiliary data for the property.
-	/// 
+	///
 	/// - `f`: function that adds or edits auxiliary data.
 	pub fn try_mutate_token_aux_property<R, E>(
 		collection_id: CollectionId,
@@ -424,7 +424,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get all auxiliary data in a given scope.
-	/// 
+	///
 	/// Returns iterator over Property Key - Data pairs.
 	pub fn iterate_token_aux_properties(
 		collection_id: CollectionId,
@@ -565,7 +565,7 @@ impl<T: Config> Pallet<T> {
 	///
 	/// - `self_budget`: Limit for searching children in depth.
 	/// - `breadth_budget`: Limit of breadth of searching children.
-	/// 
+	///
 	/// [`burn`]: struct.Pallet.html#method.burn
 	#[transactional]
 	pub fn burn_recursively(
@@ -607,10 +607,10 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Batch operation to add, edit or remove properties for the token
-	/// 
+	///
 	/// All affected properties should have mutable permission and sender should have
-	/// permission to edit those properties. 
-	/// 
+	/// permission to edit those properties.
+	///
 	/// - `nesting_budget`: Limit for searching parents in depth to check ownership.
 	/// - `is_token_create`: Indicates that method is called during token initialization.
 	///   Allows to bypass ownership check.
@@ -708,9 +708,9 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Batch operation to add or edit properties for the token
-	/// 
+	///
 	/// Same as [`modify_token_properties`] but doesn't allow to remove properties
-	/// 
+	///
 	/// [`modify_token_properties`]: struct.Pallet.html#method.modify_token_properties
 	pub fn set_token_properties(
 		collection: &NonfungibleHandle<T>,
@@ -731,9 +731,9 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Add or edit single property for the token
-	/// 
+	///
 	/// Calls [`set_token_properties`] internally
-	/// 
+	///
 	/// [`set_token_properties`]: struct.Pallet.html#method.set_token_properties
 	pub fn set_token_property(
 		collection: &NonfungibleHandle<T>,
@@ -755,9 +755,9 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Batch operation to remove properties from the token
-	/// 
+	///
 	/// Same as [`modify_token_properties`] but doesn't allow to add or edit properties
-	/// 
+	///
 	/// [`modify_token_properties`]: struct.Pallet.html#method.modify_token_properties
 	pub fn delete_token_properties(
 		collection: &NonfungibleHandle<T>,
@@ -779,9 +779,9 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Remove single property from the token
-	/// 
+	///
 	/// Calls [`delete_token_properties`] internally
-	/// 
+	///
 	/// [`delete_token_properties`]: struct.Pallet.html#method.delete_token_properties
 	pub fn delete_token_property(
 		collection: &NonfungibleHandle<T>,
@@ -818,7 +818,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Set property permissions for the token.
-	/// 
+	///
 	/// Sender should be the owner or admin of token's collection.
 	pub fn set_token_property_permissions(
 		collection: &CollectionHandle<T>,
@@ -829,7 +829,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Set property permissions for the collection.
-	/// 
+	///
 	/// Sender should be the owner or admin of the collection.
 	pub fn set_property_permission(
 		collection: &CollectionHandle<T>,
@@ -1250,7 +1250,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Check that `from` token could be nested in `under` token.
-	/// 
+	///
 	pub fn check_nesting(
 		handle: &NonfungibleHandle<T>,
 		sender: T::CrossAccountId,
@@ -1321,7 +1321,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Mint single NFT token.
-	/// 
+	///
 	/// Delegated to [`create_multiple_items`]
 	///
 	/// [`create_multiple_items`]: struct.Pallet.html#method.create_multiple_items
