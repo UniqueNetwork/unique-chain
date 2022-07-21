@@ -210,21 +210,44 @@ export interface CumulusPalletXcmpQueueError extends Enum {
 /** @name CumulusPalletXcmpQueueEvent */
 export interface CumulusPalletXcmpQueueEvent extends Enum {
   readonly isSuccess: boolean;
-  readonly asSuccess: Option<H256>;
+  readonly asSuccess: {
+    readonly messageHash: Option<H256>;
+    readonly weight: u64;
+  } & Struct;
   readonly isFail: boolean;
-  readonly asFail: ITuple<[Option<H256>, XcmV2TraitsError]>;
+  readonly asFail: {
+    readonly messageHash: Option<H256>;
+    readonly error: XcmV2TraitsError;
+    readonly weight: u64;
+  } & Struct;
   readonly isBadVersion: boolean;
-  readonly asBadVersion: Option<H256>;
+  readonly asBadVersion: {
+    readonly messageHash: Option<H256>;
+  } & Struct;
   readonly isBadFormat: boolean;
-  readonly asBadFormat: Option<H256>;
+  readonly asBadFormat: {
+    readonly messageHash: Option<H256>;
+  } & Struct;
   readonly isUpwardMessageSent: boolean;
-  readonly asUpwardMessageSent: Option<H256>;
+  readonly asUpwardMessageSent: {
+    readonly messageHash: Option<H256>;
+  } & Struct;
   readonly isXcmpMessageSent: boolean;
-  readonly asXcmpMessageSent: Option<H256>;
+  readonly asXcmpMessageSent: {
+    readonly messageHash: Option<H256>;
+  } & Struct;
   readonly isOverweightEnqueued: boolean;
-  readonly asOverweightEnqueued: ITuple<[u32, u32, u64, u64]>;
+  readonly asOverweightEnqueued: {
+    readonly sender: u32;
+    readonly sentAt: u32;
+    readonly index: u64;
+    readonly required: u64;
+  } & Struct;
   readonly isOverweightServiced: boolean;
-  readonly asOverweightServiced: ITuple<[u64, u64]>;
+  readonly asOverweightServiced: {
+    readonly index: u64;
+    readonly used: u64;
+  } & Struct;
   readonly type: 'Success' | 'Fail' | 'BadVersion' | 'BadFormat' | 'UpwardMessageSent' | 'XcmpMessageSent' | 'OverweightEnqueued' | 'OverweightServiced';
 }
 
@@ -1577,11 +1600,16 @@ export interface PalletTreasuryCall extends Enum {
   readonly asApproveProposal: {
     readonly proposalId: Compact<u32>;
   } & Struct;
+  readonly isSpend: boolean;
+  readonly asSpend: {
+    readonly amount: Compact<u128>;
+    readonly beneficiary: MultiAddress;
+  } & Struct;
   readonly isRemoveApproval: boolean;
   readonly asRemoveApproval: {
     readonly proposalId: Compact<u32>;
   } & Struct;
-  readonly type: 'ProposeSpend' | 'RejectProposal' | 'ApproveProposal' | 'RemoveApproval';
+  readonly type: 'ProposeSpend' | 'RejectProposal' | 'ApproveProposal' | 'Spend' | 'RemoveApproval';
 }
 
 /** @name PalletTreasuryError */
@@ -1589,8 +1617,9 @@ export interface PalletTreasuryError extends Enum {
   readonly isInsufficientProposersBalance: boolean;
   readonly isInvalidIndex: boolean;
   readonly isTooManyApprovals: boolean;
+  readonly isInsufficientPermission: boolean;
   readonly isProposalNotApproved: boolean;
-  readonly type: 'InsufficientProposersBalance' | 'InvalidIndex' | 'TooManyApprovals' | 'ProposalNotApproved';
+  readonly type: 'InsufficientProposersBalance' | 'InvalidIndex' | 'TooManyApprovals' | 'InsufficientPermission' | 'ProposalNotApproved';
 }
 
 /** @name PalletTreasuryEvent */
@@ -1626,7 +1655,13 @@ export interface PalletTreasuryEvent extends Enum {
   readonly asDeposit: {
     readonly value: u128;
   } & Struct;
-  readonly type: 'Proposed' | 'Spending' | 'Awarded' | 'Rejected' | 'Burnt' | 'Rollover' | 'Deposit';
+  readonly isSpendApproved: boolean;
+  readonly asSpendApproved: {
+    readonly proposalIndex: u32;
+    readonly amount: u128;
+    readonly beneficiary: AccountId32;
+  } & Struct;
+  readonly type: 'Proposed' | 'Spending' | 'Awarded' | 'Rejected' | 'Burnt' | 'Rollover' | 'Deposit' | 'SpendApproved';
 }
 
 /** @name PalletTreasuryProposal */

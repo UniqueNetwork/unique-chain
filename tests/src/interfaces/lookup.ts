@@ -308,6 +308,10 @@ export default {
       approve_proposal: {
         proposalId: 'Compact<u32>',
       },
+      spend: {
+        amount: 'Compact<u128>',
+        beneficiary: 'MultiAddress',
+      },
       remove_approval: {
         proposalId: 'Compact<u32>'
       }
@@ -340,7 +344,12 @@ export default {
         rolloverBalance: 'u128',
       },
       Deposit: {
-        value: 'u128'
+        value: 'u128',
+      },
+      SpendApproved: {
+        proposalIndex: 'u32',
+        amount: 'u128',
+        beneficiary: 'AccountId32'
       }
     }
   },
@@ -352,7 +361,7 @@ export default {
    * Lookup76: pallet_treasury::pallet::Error<T, I>
    **/
   PalletTreasuryError: {
-    _enum: ['InsufficientProposersBalance', 'InvalidIndex', 'TooManyApprovals', 'ProposalNotApproved']
+    _enum: ['InsufficientProposersBalance', 'InvalidIndex', 'TooManyApprovals', 'InsufficientPermission', 'ProposalNotApproved']
   },
   /**
    * Lookup77: pallet_sudo::pallet::Call<T>
@@ -1662,7 +1671,7 @@ export default {
     }
   },
   /**
-   * Lookup215: rmrk_traits::resource::ResourceTypes<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   * Lookup215: rmrk_traits::resource::ResourceTypes<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>, sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>
    **/
   RmrkTraitsResourceResourceTypes: {
     _enum: {
@@ -1672,7 +1681,7 @@ export default {
     }
   },
   /**
-   * Lookup217: rmrk_traits::resource::BasicResource<frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   * Lookup217: rmrk_traits::resource::BasicResource<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>
    **/
   RmrkTraitsResourceBasicResource: {
     src: 'Option<Bytes>',
@@ -1681,7 +1690,7 @@ export default {
     thumb: 'Option<Bytes>'
   },
   /**
-   * Lookup219: rmrk_traits::resource::ComposableResource<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   * Lookup219: rmrk_traits::resource::ComposableResource<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>, sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>
    **/
   RmrkTraitsResourceComposableResource: {
     parts: 'Vec<u32>',
@@ -1692,7 +1701,7 @@ export default {
     thumb: 'Option<Bytes>'
   },
   /**
-   * Lookup220: rmrk_traits::resource::SlotResource<frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   * Lookup220: rmrk_traits::resource::SlotResource<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>
    **/
   RmrkTraitsResourceSlotResource: {
     base: 'u32',
@@ -1733,7 +1742,7 @@ export default {
     }
   },
   /**
-   * Lookup229: rmrk_traits::part::PartType<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   * Lookup229: rmrk_traits::part::PartType<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>, sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>
    **/
   RmrkTraitsPartPartType: {
     _enum: {
@@ -1742,7 +1751,7 @@ export default {
     }
   },
   /**
-   * Lookup231: rmrk_traits::part::FixedPart<frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   * Lookup231: rmrk_traits::part::FixedPart<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>
    **/
   RmrkTraitsPartFixedPart: {
     id: 'u32',
@@ -1750,7 +1759,7 @@ export default {
     src: 'Bytes'
   },
   /**
-   * Lookup232: rmrk_traits::part::SlotPart<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   * Lookup232: rmrk_traits::part::SlotPart<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>, sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>
    **/
   RmrkTraitsPartSlotPart: {
     id: 'u32',
@@ -1759,7 +1768,7 @@ export default {
     z: 'u32'
   },
   /**
-   * Lookup233: rmrk_traits::part::EquippableList<frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   * Lookup233: rmrk_traits::part::EquippableList<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>
    **/
   RmrkTraitsPartEquippableList: {
     _enum: {
@@ -1769,7 +1778,7 @@ export default {
     }
   },
   /**
-   * Lookup235: rmrk_traits::theme::Theme<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<rmrk_traits::theme::ThemeProperty<frame_support::storage::bounded_vec::BoundedVec<T, S>>, S>>
+   * Lookup235: rmrk_traits::theme::Theme<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>, sp_runtime::bounded::bounded_vec::BoundedVec<rmrk_traits::theme::ThemeProperty<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>, S>>
    **/
   RmrkTraitsTheme: {
     name: 'Bytes',
@@ -1777,7 +1786,7 @@ export default {
     inherit: 'bool'
   },
   /**
-   * Lookup237: rmrk_traits::theme::ThemeProperty<frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   * Lookup237: rmrk_traits::theme::ThemeProperty<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>
    **/
   RmrkTraitsThemeThemeProperty: {
     key: 'Bytes',
@@ -2117,14 +2126,37 @@ export default {
    **/
   CumulusPalletXcmpQueueEvent: {
     _enum: {
-      Success: 'Option<H256>',
-      Fail: '(Option<H256>,XcmV2TraitsError)',
-      BadVersion: 'Option<H256>',
-      BadFormat: 'Option<H256>',
-      UpwardMessageSent: 'Option<H256>',
-      XcmpMessageSent: 'Option<H256>',
-      OverweightEnqueued: '(u32,u32,u64,u64)',
-      OverweightServiced: '(u64,u64)'
+      Success: {
+        messageHash: 'Option<H256>',
+        weight: 'u64',
+      },
+      Fail: {
+        messageHash: 'Option<H256>',
+        error: 'XcmV2TraitsError',
+        weight: 'u64',
+      },
+      BadVersion: {
+        messageHash: 'Option<H256>',
+      },
+      BadFormat: {
+        messageHash: 'Option<H256>',
+      },
+      UpwardMessageSent: {
+        messageHash: 'Option<H256>',
+      },
+      XcmpMessageSent: {
+        messageHash: 'Option<H256>',
+      },
+      OverweightEnqueued: {
+        sender: 'u32',
+        sentAt: 'u32',
+        index: 'u64',
+        required: 'u64',
+      },
+      OverweightServiced: {
+        index: 'u64',
+        used: 'u64'
+      }
     }
   },
   /**
@@ -2828,7 +2860,7 @@ export default {
     spaceLimit: 'u32'
   },
   /**
-   * Lookup358: up_data_structs::PropertiesMap<frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   * Lookup358: up_data_structs::PropertiesMap<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>
    **/
   UpDataStructsPropertiesMapBoundedVec: 'BTreeMap<Bytes, Bytes>',
   /**
@@ -2879,7 +2911,7 @@ export default {
     readOnly: 'bool'
   },
   /**
-   * Lookup377: rmrk_traits::collection::CollectionInfo<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>, sp_core::crypto::AccountId32>
+   * Lookup377: rmrk_traits::collection::CollectionInfo<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>, sp_runtime::bounded::bounded_vec::BoundedVec<T, S>, sp_core::crypto::AccountId32>
    **/
   RmrkTraitsCollectionCollectionInfo: {
     issuer: 'AccountId32',
@@ -2889,7 +2921,7 @@ export default {
     nftsCount: 'u32'
   },
   /**
-   * Lookup378: rmrk_traits::nft::NftInfo<sp_core::crypto::AccountId32, sp_arithmetic::per_things::Permill, frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   * Lookup378: rmrk_traits::nft::NftInfo<sp_core::crypto::AccountId32, sp_arithmetic::per_things::Permill, sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>
    **/
   RmrkTraitsNftNftInfo: {
     owner: 'RmrkTraitsNftAccountIdOrCollectionNftTuple',
@@ -2906,7 +2938,7 @@ export default {
     amount: 'Permill'
   },
   /**
-   * Lookup381: rmrk_traits::resource::ResourceInfo<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   * Lookup381: rmrk_traits::resource::ResourceInfo<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>, sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>
    **/
   RmrkTraitsResourceResourceInfo: {
     id: 'u32',
@@ -2915,14 +2947,14 @@ export default {
     pendingRemoval: 'bool'
   },
   /**
-   * Lookup382: rmrk_traits::property::PropertyInfo<frame_support::storage::bounded_vec::BoundedVec<T, S>, frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   * Lookup382: rmrk_traits::property::PropertyInfo<sp_runtime::bounded::bounded_vec::BoundedVec<T, S>, sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>
    **/
   RmrkTraitsPropertyPropertyInfo: {
     key: 'Bytes',
     value: 'Bytes'
   },
   /**
-   * Lookup383: rmrk_traits::base::BaseInfo<sp_core::crypto::AccountId32, frame_support::storage::bounded_vec::BoundedVec<T, S>>
+   * Lookup383: rmrk_traits::base::BaseInfo<sp_core::crypto::AccountId32, sp_runtime::bounded::bounded_vec::BoundedVec<T, S>>
    **/
   RmrkTraitsBaseBaseInfo: {
     issuer: 'AccountId32',
