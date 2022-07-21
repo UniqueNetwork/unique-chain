@@ -86,7 +86,7 @@
 //!
 //! ## Assumptions
 //!
-//! * Sender should be in collection's allow list to perform operations on tokens.
+//! * To perform operations on tokens sender should be in collection's allow list if collection access mode is `AllowList`.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -441,7 +441,7 @@ impl<T: Config> Pallet<T> {
 
 // unchecked calls skips any permission checks
 impl<T: Config> Pallet<T> {
-	/// Create ТFT collection
+	/// Create NFT collection
 	///
 	/// `init_collection` will take non-refundable deposit for collection creation.
 	///
@@ -454,7 +454,7 @@ impl<T: Config> Pallet<T> {
 		<PalletCommon<T>>::init_collection(owner, data, is_external)
 	}
 
-	/// Destroy ТFT collection
+	/// Destroy NFT collection
 	///
 	/// `destroy_collection` will throw error if collection contains any tokens.
 	/// Only owner can destroy collection.
