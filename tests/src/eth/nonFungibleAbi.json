@@ -86,7 +86,7 @@
     ],
     "name": "addCollectionAdmin",
     "outputs": [],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -95,7 +95,7 @@
     ],
     "name": "addCollectionAdminSubstrate",
     "outputs": [],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -104,7 +104,7 @@
     ],
     "name": "addToCollectionAllowList",
     "outputs": [],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -304,16 +304,16 @@
     ],
     "name": "removeCollectionAdmin",
     "outputs": [],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "newAdmin", "type": "uint256" }
+      { "internalType": "uint256", "name": "admin", "type": "uint256" }
     ],
     "name": "removeCollectionAdminSubstrate",
     "outputs": [],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -322,7 +322,7 @@
     ],
     "name": "removeFromCollectionAllowList",
     "outputs": [],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
