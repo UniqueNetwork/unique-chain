@@ -398,11 +398,11 @@ impl<T: Config> Pallet<T> {
 
 		<TokensMinted<T>>::remove(id);
 		<TokensBurnt<T>>::remove(id);
-		<TotalSupply<T>>::remove_prefix((id,), None);
-		<Balance<T>>::remove_prefix((id,), None);
-		<Allowance<T>>::remove_prefix((id,), None);
-		<Owned<T>>::remove_prefix((id,), None);
-		<AccountBalance<T>>::remove_prefix((id,), None);
+		let _ = <TotalSupply<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <Balance<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <Allowance<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <Owned<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <AccountBalance<T>>::clear_prefix((id,), u32::MAX, None);
 		Ok(())
 	}
 
@@ -424,6 +424,7 @@ impl<T: Config> Pallet<T> {
 		<TokensBurnt<T>>::insert(collection.id, burnt);
 		<TokenProperties<T>>::remove((collection.id, token_id));
 		<TotalSupply<T>>::remove((collection.id, token_id));
+<<<<<<< HEAD
 		<Balance<T>>::remove_prefix((collection.id, token_id), None);
 		<Allowance<T>>::remove_prefix((collection.id, token_id), None);
 
@@ -435,6 +436,11 @@ impl<T: Config> Pallet<T> {
 			}
 			.to_log(collection_id_to_address(collection.id)),
 		);
+=======
+		let _ = <Balance<T>>::clear_prefix((collection.id, token_id), u32::MAX, None);
+		let _ = <Allowance<T>>::clear_prefix((collection.id, token_id), u32::MAX, None);
+		// TODO: ERC721 transfer event
+>>>>>>> 5d9665e0... refactor: switch to new prefix removal methods
 		Ok(())
 	}
 
