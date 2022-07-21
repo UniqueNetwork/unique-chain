@@ -205,6 +205,7 @@ pub mod pallet {
 	>;
 
 	/// Custom data that is serialized to bytes and attached to a token property.
+	/// Currently used to store RMRK data.
 	#[pallet::storage]
 	#[pallet::getter(fn token_aux_property)]
 	pub type TokenAuxProperties<T: Config> = StorageNMap<
