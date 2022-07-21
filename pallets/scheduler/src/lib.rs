@@ -32,27 +32,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! # Schedulerdo_reschedule
+//! # Unique scheduler
+//! A Pallet for scheduling dispatches.
+//!
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Pallet`]
+//!
+//! ## Overview
 //!
 //! This Pallet exposes capabilities for scheduling dispatches to occur at a
 //! specified block number or at a specified period. These scheduled dispatches
-//! may be named or anonymous and may be canceled.
+//! should be named and may be canceled.
 //!
-//! **NOTE:** The scheduled calls will be dispatched with the default filter
-//! for the origin: namely `frame_system::Config::BaseCallFilter` for all origin
-//! except root which will get no filter. And not the filter contained in origin
-//! use to call `fn schedule`.
+//! **NOTE:** The unique scheduler is designed for deferred transaction calls by block number.
+//! Any user can book a call of a certain transaction to a specific block number.
+//! Also possible to book a call with a certain frequency.
 //!
-//! If a call is scheduled using proxy or whatever mecanism which adds filter,
-//! then those filter will not be used when dispatching the schedule call.
+//! Key differences from the original pallet:
+//! https://crates.io/crates/pallet-scheduler
+//! Schedule Id restricted by 16 bytes. Identificator for booked call.
+//! Priority limited by HARD DEADLINE (<= 63). Calls over maximum weight don't include to block.
+//! The maximum weight that may be scheduled per block for any dispatchables of less priority than `schedule::HARD_DEADLINE`.
+//! Maybe_periodic limit is 100 calls. Reserved for future sponsored transaction support.
+//! At 100 calls reserved amount is not so much and this is avoid potential problems with balance locks.
+//! Any account allowed to schedule any calls. Account withdraw implemented through default transaction logic.
 //!
 //! ## Interface
 //!
 //! ### Dispatchable Functions
 //!
-//! * `schedule` - schedule a dispatch, which may be periodic, to occur at a specified block and
-//!   with a specified priority.
-//! * `cancel` - cancel a scheduled dispatch, specified by block number and index.
 //! * `schedule_named` - augments the `schedule` interface with an additional `Vec<u8>` parameter
 //!   that can be used for identification.
 //! * `cancel_named` - the named complement to the cancel function.
@@ -265,6 +274,7 @@ pub mod pallet {
 			count: u32,
 		) -> Result<(), DispatchError>;
 
+		/// Unlock centain amount from payer
 		fn pay_for_call(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
@@ -438,6 +448,8 @@ pub mod pallet {
 				// 	);
 				// }
 
+				// Execute transaction via chain default pipeline
+				// That means dispatch will be processed like any user's extrinsic e.g. transaction fees will be taken
 				let r = T::CallExecutor::dispatch_call(sender, call.clone());
 
 				let mut actual_call_weight: Weight = item_weight;
@@ -482,6 +494,7 @@ pub mod pallet {
 					Agenda::<T>::append(wake, Some(s));
 				}
 			}
+			/// Weight should be 0, because transaction already paid
 			0
 			//total_weight
 		}
